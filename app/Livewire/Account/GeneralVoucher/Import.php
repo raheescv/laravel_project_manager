@@ -106,22 +106,21 @@ class Import extends Component
 
     public function loadPreview()
     {
-        $rows = Excel::toArray(new \stdClass(), Storage::disk('public')->path($this->filePath));
-        $this->previewData = array_slice($rows[0], 1, 10);
+        $filePath = Storage::disk('public')->path($this->filePath);
+        $this->previewData = $this->readFirstRows($filePath, 0, 10);
     }
 
     public function loadQuickBooksPreview()
     {
-        $rows = Excel::toArray(new \stdClass(), Storage::disk('public')->path($this->filePath));
-        $sheetData = $rows[1] ?? $rows[0] ?? []; // QuickBooks data is in Sheet1 (index 1)
+        $filePath = Storage::disk('public')->path($this->filePath);
+        $sheetData = $this->readFirstRows($filePath, 1, 500); // QB uses sheet index 1
 
-        // Parse and show only "Latest" transaction rows
+        if (empty($sheetData)) {
+            $sheetData = $this->readFirstRows($filePath, 0, 500);
+        }
+
         $preview = [];
-        $count = 0;
-        foreach ($sheetData as $index => $row) {
-            if ($index === 0) {
-                continue; // Skip header
-            }
+        foreach ($sheetData as $row) {
             $account = trim($row[17] ?? '');
             $amount = $row[21] ?? null;
 
@@ -135,14 +134,65 @@ class Import extends Component
                     'split' => trim($row[19] ?? ''),
                     'amount' => $amount,
                 ];
-                $count++;
-                if ($count >= 15) {
+                if (count($preview) >= 15) {
                     break;
                 }
             }
         }
+
         $this->previewData = $preview;
         $this->headers = ['num', 'date', 'name', 'memo', 'account', 'split', 'amount'];
+    }
+
+    /**
+     * Read only the first N data rows from a specific sheet using PhpSpreadsheet directly.
+     * Avoids loading the entire file into memory.
+     */
+    private function readFirstRows(string $filePath, int $sheetIndex = 0, int $maxRows = 10): array
+    {
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+        $readerType = match ($extension) {
+            'csv' => 'Csv',
+            'xls' => 'Xls',
+            default => 'Xlsx',
+        };
+
+        $readerClass = '\\PhpOffice\\PhpSpreadsheet\\Reader\\'.$readerType;
+        $reader = new $readerClass();
+
+        if ($readerType !== 'Csv') {
+            $reader->setReadDataOnly(true);
+        }
+
+        // Use a read filter to only load first N+1 rows (header + data)
+        $reader->setReadFilter(new class($maxRows + 1) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter
+        {
+            private int $maxRow;
+
+            public function __construct(int $maxRow)
+            {
+                $this->maxRow = $maxRow;
+            }
+
+            public function readCell($columnAddress, $row, $worksheetName = '')
+            {
+                return $row <= $this->maxRow;
+            }
+        });
+
+        try {
+            $spreadsheet = $reader->load($filePath);
+            $sheet = $spreadsheet->getSheet($sheetIndex);
+            $rows = $sheet->toArray(null, true, true, false);
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet);
+
+            // Skip header row, return data rows
+            return array_slice($rows, 1, $maxRows);
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     public function goToStep($step)

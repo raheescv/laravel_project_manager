@@ -84,57 +84,57 @@
 
                     {{-- Right: How It Works --}}
                     <div class="col-lg-7">
-                        <h6 class="fw-bold text-uppercase small text-muted mb-3"><i class="fa fa-lightbulb-o me-1"></i> How It Works</h6>
+                        <h6 class="fw-bold text-uppercase small text-muted mb-3"><i class="pli-information me-1"></i> How It Works</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-3">
                                     <div class="flex-shrink-0">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary" style="width:32px;height:32px;">
-                                            <i class="fa fa-link"></i>
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary bg-opacity-10 text-primary" style="width:40px;height:40px;">
+                                            <i class="pli-folder fs-5"></i>
                                         </span>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold small">Group by Reference</div>
-                                        <p class="text-muted small mb-0">Rows with the same <strong>Reference Number</strong> are combined into a single voucher entry.</p>
+                                        <div class="fw-bold small mb-1">Group by Reference Number</div>
+                                        <p class="text-muted small mb-0">Multiple rows sharing the same <strong>Reference Number</strong> are automatically grouped and imported as a single journal voucher with multiple line entries.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-3">
                                     <div class="flex-shrink-0">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success" style="width:32px;height:32px;">
-                                            <i class="fa fa-magic"></i>
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-success bg-opacity-10 text-success" style="width:40px;height:40px;">
+                                            <i class="pli-add-user fs-5"></i>
                                         </span>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold small">Auto-Create Accounts</div>
-                                        <p class="text-muted small mb-0">Account heads that don't exist will be <strong>automatically created</strong> with the given type and category.</p>
+                                        <div class="fw-bold small mb-1">Auto-Create Missing Accounts</div>
+                                        <p class="text-muted small mb-0">If an account name from your file doesn't exist in the system, it will be <strong>created automatically</strong> using the Account Type and Category columns from your spreadsheet.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-3">
                                     <div class="flex-shrink-0">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning" style="width:32px;height:32px;">
-                                            <i class="fa fa-balance-scale"></i>
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-warning bg-opacity-10 text-warning" style="width:40px;height:40px;">
+                                            <i class="pli-check fs-5"></i>
                                         </span>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold small">Balance Validation</div>
-                                        <p class="text-muted small mb-0">Each voucher is validated so that <strong>total debits = total credits</strong> before saving.</p>
+                                        <div class="fw-bold small mb-1">Debit & Credit Balance Check</div>
+                                        <p class="text-muted small mb-0">Before saving, each voucher is validated to ensure <strong>Total Debit = Total Credit</strong>. Unbalanced entries are flagged and skipped to maintain data integrity.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-3">
                                     <div class="flex-shrink-0">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-info bg-opacity-10 text-info" style="width:32px;height:32px;">
-                                            <i class="fa fa-cogs"></i>
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-info bg-opacity-10 text-info" style="width:40px;height:40px;">
+                                            <i class="pli-data-settings fs-5"></i>
                                         </span>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold small">Background Processing</div>
-                                        <p class="text-muted small mb-0">Large files are processed in the <strong>background</strong> with real-time progress updates.</p>
+                                        <div class="fw-bold small mb-1">Background Queue Processing</div>
+                                        <p class="text-muted small mb-0">Large files are processed in a <strong>background queue</strong> so you can continue working. A real-time progress bar shows the import status with live updates.</p>
                                     </div>
                                 </div>
                             </div>
