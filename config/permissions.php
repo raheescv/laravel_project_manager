@@ -107,6 +107,7 @@ return [
         'employee',
         'product',
         'profit loss',
+        'profit loss statement',
         'trial balance',
         'balance sheet',
         'stock analysis',

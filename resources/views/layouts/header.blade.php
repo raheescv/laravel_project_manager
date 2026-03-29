@@ -138,6 +138,11 @@
                                                     <i class="fa fa-usd fs-5 me-2"></i>Profit & Loss
                                                 </a>
                                             @endcan
+                                            @can('report.profit loss statement')
+                                                <a href="{{ route('report::profit_loss_statement') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-line-chart fs-5 me-2"></i>Profit & Loss Statement
+                                                </a>
+                                            @endcan
                                             @can('report.trial balance')
                                                 <a href="{{ route('report::trial_balance') }}" class="list-group-item list-group-item-action header-mega-child">
                                                     <i class="fa fa-calculator fs-5 me-2"></i>Trial Balance
