@@ -85,33 +85,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        {{-- Model (Customer/Vendor) --}}
-                        <div class="col-lg col-md-4 col-sm-6 py-3 px-3" style="border-right: 1px solid rgba(0,0,0,.06);">
-                            <div class="d-flex align-items-center gap-3">
-                                @php
-                                    $modelIcon = match($account->model) {
-                                        'Customer' => 'pli-male',
-                                        'Vendor' => 'pli-building',
-                                        default => 'pli-file-edit'
-                                    };
-                                    $modelColor = match($account->model) {
-                                        'Customer' => 'info',
-                                        'Vendor' => 'warning',
-                                        default => 'secondary'
-                                    };
-                                @endphp
-                                <div class="rounded-3 d-flex align-items-center justify-content-center bg-{{ $modelColor }} bg-opacity-10"
-                                    style="width: 44px; height: 44px; min-width: 44px;">
-                                    <i class="{{ $modelIcon }} fs-4 text-{{ $modelColor }}"></i>
-                                </div>
-                                <div>
-                                    <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Model</div>
-                                    <div class="fw-bold" style="font-size: 0.95rem;">{{ $account->model ?: 'General' }}</div>
-                                </div>
-                            </div>
-                        </div>
-
                         {{-- Category Head --}}
                         <div class="col-lg col-md-6 col-sm-6 py-3 px-3">
                             <div class="d-flex align-items-center gap-3">
