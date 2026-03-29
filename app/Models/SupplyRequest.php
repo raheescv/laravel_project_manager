@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SupplyRequest\SupplyRequestStatus;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,7 @@ class SupplyRequest extends Model implements AuditableContracts
         'total',
         'other_charges',
         'grand_total',
+        'payment_mode_id',
         'remarks',
         'status',
         'approved_by',
@@ -40,7 +42,7 @@ class SupplyRequest extends Model implements AuditableContracts
     ];
 
     protected $casts = [
-        'status' => \App\Enums\SupplyRequest\SupplyRequestStatus::class,
+        'status' => SupplyRequestStatus::class,
         'approved_at' => 'datetime',
         'accounted_at' => 'datetime',
         'final_approved_at' => 'datetime',
@@ -49,7 +51,7 @@ class SupplyRequest extends Model implements AuditableContracts
 
     public static function statusOptions(): array
     {
-        return \App\Enums\SupplyRequest\SupplyRequestStatus::values();
+        return SupplyRequestStatus::values();
     }
 
     public static function rules($id = 0, $merge = []): array
@@ -58,16 +60,6 @@ class SupplyRequest extends Model implements AuditableContracts
             'date' => 'required',
             'property_id' => 'required',
         ], $merge);
-    }
-
-    public static function getNextOrderNo(): int
-    {
-        $order_no = (int) self::max('order_no');
-        do {
-            $order_no++;
-        } while (self::where('order_no', $order_no)->exists());
-
-        return $order_no;
     }
 
     public function items(): HasMany
@@ -123,6 +115,11 @@ class SupplyRequest extends Model implements AuditableContracts
     public function completer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+public function paymentMode(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'payment_mode_id');
     }
 
     public function tenant(): BelongsTo

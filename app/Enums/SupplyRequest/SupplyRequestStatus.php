@@ -7,6 +7,7 @@ enum SupplyRequestStatus: string
     case REQUIREMENT = 'requirement';
     case APPROVED = 'approved';
     case REJECTED = 'rejected';
+    case COLLECTED = 'collected';
     case FINAL_APPROVED = 'final_approved';
     case COMPLETED = 'completed';
     case EXPIRED = 'expired';
@@ -17,6 +18,7 @@ enum SupplyRequestStatus: string
             self::REQUIREMENT => 'Requirement',
             self::APPROVED => 'Approved',
             self::REJECTED => 'Rejected',
+            self::COLLECTED => 'Collected',
             self::FINAL_APPROVED => 'Final Approved',
             self::COMPLETED => 'Completed',
             self::EXPIRED => 'Expired',
@@ -29,6 +31,7 @@ enum SupplyRequestStatus: string
             self::REQUIREMENT => 'warning',
             self::APPROVED => 'info',
             self::REJECTED => 'danger',
+            self::COLLECTED => 'dark',
             self::FINAL_APPROVED => 'primary',
             self::COMPLETED => 'success',
             self::EXPIRED => 'secondary',
@@ -41,6 +44,7 @@ enum SupplyRequestStatus: string
             self::REQUIREMENT => 'fa-clock-o',
             self::APPROVED => 'fa-check-circle',
             self::REJECTED => 'fa-times-circle',
+            self::COLLECTED => 'fa-money',
             self::FINAL_APPROVED => 'fa-shield',
             self::COMPLETED => 'fa-flag-checkered',
             self::EXPIRED => 'fa-hourglass-end',

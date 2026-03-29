@@ -30,111 +30,161 @@
              HERO SECTION - Status Banner + Workflow
              ══════════════════════════════════════════════════════════════ --}}
         <div class="card border-0 shadow-sm overflow-hidden mb-3">
-            <div class="card-body p-0">
-                {{-- Status bar --}}
-                <div class="d-flex align-items-center p-3 bg-{{ $statusColor }} bg-opacity-10 border-start border-4 border-{{ $statusColor }}">
-                    <div class="d-flex align-items-center justify-content-center rounded-circle shadow-sm bg-{{ $statusColor }} text-white me-3"
-                        style="width: 44px; height: 44px; min-width: 44px;">
-                        <i class="fa fa-truck"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                            <div>
-                                <h5 class="mb-0 fw-bold text-dark">
-                                    Supply Request
-                                    @if ($isEditing)
-                                        <span class="text-muted fw-normal fs-6">#{{ $supply_request['order_no'] ?? $supply_request['id'] }}</span>
-                                    @endif
-                                </h5>
-                                <span class="badge bg-{{ $statusColor }} rounded-pill px-3 mt-1" style="font-size: 0.72rem;">
-                                    <i class="fa {{ $statusIcon }} me-1"></i>{{ $currentStatus }}
-                                </span>
-                            </div>
-                            <div class="d-flex flex-wrap gap-1">
-                                @if ($table_id)
-                                    <a href="{{ route('supply-request::print', ['id' => $table_id, 'mode' => 'Invoice']) }}" target="_blank"
-                                        class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 rounded-pill px-3">
-                                        <i class="fa fa-file-pdf-o"></i><span class="d-none d-md-inline">Invoice</span>
-                                    </a>
-                                    <a href="{{ route('supply-request::print', ['id' => $table_id, 'mode' => 'Work Order Form']) }}" target="_blank"
-                                        class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 rounded-pill px-3">
-                                        <i class="fa fa-print"></i><span class="d-none d-md-inline">Work Order</span>
-                                    </a>
+            {{-- Header bar --}}
+            <div class="card-body p-3 pb-2">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center justify-content-center rounded-3 shadow-sm bg-{{ $statusColor }} bg-gradient text-white me-3"
+                            style="width: 42px; height: 42px; min-width: 42px;">
+                            <i class="fa fa-truck" style="font-size: 1.1rem;"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-dark">
+                                Supply Request
+                                @if ($isEditing)
+                                    <span class="text-muted fw-normal fs-6">#{{ $supply_request['order_no'] ?? $supply_request['id'] }}</span>
                                 @endif
-                            </div>
+                            </h5>
+                            <span class="badge bg-{{ $statusColor }} bg-gradient rounded-pill px-3 mt-1 shadow-sm" style="font-size: 0.72rem;">
+                                <i class="fa {{ $statusIcon }} me-1"></i>{{ ucfirst($currentStatus) }}
+                            </span>
                         </div>
                     </div>
-                </div>
-
-                {{-- Workflow Steps --}}
-                <div class="px-3 py-2 bg-white border-top">
-                    <div class="d-flex flex-wrap gap-2">
-                        @php
-                            $workflow = [
-                                [
-                                    'label' => 'Created',
-                                    'value' => $supply_request['creator'] ?? '',
-                                    'time' => $supply_request['created_at_formatted'] ?? '',
-                                    'icon' => 'fa-user-plus',
-                                    'color' => 'primary',
-                                ],
-                                [
-                                    'label' => $currentStatus === SupplyRequestStatus::REJECTED->value ? 'Rejected' : 'Approved',
-                                    'value' => $supply_request['approver'] ?? '',
-                                    'time' => $supply_request['approved_at_formatted'] ?? '',
-                                    'icon' => $currentStatus === SupplyRequestStatus::REJECTED->value ? 'fa-times' : 'fa-thumbs-up',
-                                    'color' => $currentStatus === SupplyRequestStatus::REJECTED->value ? 'danger' : 'info',
-                                ],
-                                [
-                                    'label' => 'Accounted',
-                                    'value' => $supply_request['accountant'] ?? '',
-                                    'time' => $supply_request['accounted_at_formatted'] ?? '',
-                                    'icon' => 'fa-calculator',
-                                    'color' => 'warning',
-                                ],
-                                [
-                                    'label' => 'Final',
-                                    'value' => $supply_request['final_approver'] ?? '',
-                                    'time' => $supply_request['final_approved_at_formatted'] ?? '',
-                                    'icon' => 'fa-shield',
-                                    'color' => 'success',
-                                ],
-                                [
-                                    'label' => 'Done',
-                                    'value' => $supply_request['completer'] ?? '',
-                                    'time' => $supply_request['completed_at_formatted'] ?? '',
-                                    'icon' => 'fa-flag-checkered',
-                                    'color' => 'dark',
-                                ],
-                            ];
-                        @endphp
-                        @foreach ($workflow as $i => $step)
-                            <div class="d-flex align-items-center gap-1 {{ $step['value'] ? 'bg-' . $step['color'] . ' bg-opacity-10' : 'bg-light' }} rounded-3 px-2 py-1 border"
-                                style="font-size: 0.72rem;">
-                                <span
-                                    class="d-flex align-items-center justify-content-center rounded-circle bg-{{ $step['value'] ? $step['color'] : 'secondary' }} bg-opacity-{{ $step['value'] ? '25' : '10' }} text-{{ $step['value'] ? $step['color'] : 'muted' }}"
-                                    style="width: 20px; height: 20px; min-width: 20px; font-size: 0.55rem;">
-                                    <i class="fa {{ $step['icon'] }}"></i>
-                                </span>
-                                <div class="d-flex flex-column lh-1">
-                                    <span class="text-muted" style="font-size: 0.62rem;">{{ $step['label'] }}</span>
-                                    <span class="fw-semibold {{ $step['value'] ? 'text-dark' : 'text-muted' }}">{{ $step['value'] ?: '-' }}</span>
-                                    @if ($step['time'])
-                                        <span class="text-muted" style="font-size: 0.58rem;">
-                                            <i class="fa fa-clock-o me-1"></i>{{ $step['time'] }}
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-                            @if (!$loop->last)
-                                <i class="fa fa-chevron-right text-muted d-none d-sm-inline align-self-center"
-                                    style="font-size: 0.55rem; opacity: 0.4;"></i>
-                            @endif
-                        @endforeach
+                    <div class="d-flex flex-wrap gap-1">
+                        @if ($table_id)
+                            <a href="{{ route('supply-request::print', ['id' => $table_id, 'mode' => 'Invoice']) }}" target="_blank"
+                                class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 rounded-pill px-3">
+                                <i class="fa fa-file-pdf-o"></i><span class="d-none d-md-inline">Invoice</span>
+                            </a>
+                            <a href="{{ route('supply-request::print', ['id' => $table_id, 'mode' => 'Work Order Form']) }}" target="_blank"
+                                class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 rounded-pill px-3">
+                                <i class="fa fa-print"></i><span class="d-none d-md-inline">Work Order</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
+
+            {{-- Workflow Stepper --}}
+            @php
+                $workflow = [
+                    [
+                        'label' => 'Created',
+                        'value' => $supply_request['creator'] ?? '',
+                        'time' => $supply_request['created_at_formatted'] ?? '',
+                        'icon' => 'fa-user-plus',
+                        'color' => 'primary',
+                    ],
+                    [
+                        'label' => $currentStatus === SupplyRequestStatus::REJECTED->value ? 'Rejected' : 'Approved',
+                        'value' => $supply_request['approver'] ?? '',
+                        'time' => $supply_request['approved_at_formatted'] ?? '',
+                        'icon' => $currentStatus === SupplyRequestStatus::REJECTED->value ? 'fa-times' : 'fa-thumbs-up',
+                        'color' => $currentStatus === SupplyRequestStatus::REJECTED->value ? 'danger' : 'info',
+                    ],
+                    [
+                        'label' => 'Accounted',
+                        'value' => $supply_request['accountant'] ?? '',
+                        'time' => $supply_request['accounted_at_formatted'] ?? '',
+                        'icon' => 'fa-calculator',
+                        'color' => 'warning',
+                    ],
+                    [
+                        'label' => 'Final Approved',
+                        'value' => $supply_request['final_approver'] ?? '',
+                        'time' => $supply_request['final_approved_at_formatted'] ?? '',
+                        'icon' => 'fa-shield',
+                        'color' => 'success',
+                    ],
+                    [
+                        'label' => 'Completed',
+                        'value' => $supply_request['completer'] ?? '',
+                        'time' => $supply_request['completed_at_formatted'] ?? '',
+                        'icon' => 'fa-flag-checkered',
+                        'color' => 'dark',
+                    ],
+                ];
+                // Find the last completed step index
+                $lastCompletedIdx = -1;
+                foreach ($workflow as $idx => $s) {
+                    if ($s['value']) {
+                        $lastCompletedIdx = $idx;
+                    }
+                }
+            @endphp
+            <div class="border-top bg-white px-3 py-3">
+                <div class="d-flex align-items-start justify-content-between position-relative">
+                    {{-- Connector line --}}
+                    <div class="position-absolute d-none d-md-block" style="top: 18px; left: 36px; right: 36px; height: 2px; z-index: 0;">
+                        <div class="w-100 rounded" style="height: 2px; background: linear-gradient(90deg, #dee2e6 0%, #dee2e6 100%);"></div>
+                        @if ($lastCompletedIdx >= 0)
+                            <div class="rounded position-absolute top-0 start-0"
+                                style="height: 2px; width: {{ ($lastCompletedIdx / (count($workflow) - 1)) * 100 }}%; background: linear-gradient(90deg, #0d6efd, #198754);">
+                            </div>
+                        @endif
+                    </div>
+
+                    @foreach ($workflow as $i => $step)
+                        @php
+                            $isCompleted = !empty($step['value']);
+                            $isCurrent = $i === $lastCompletedIdx;
+                        @endphp
+                        <div class="d-flex flex-column align-items-center text-center position-relative" style="z-index: 1; flex: 1; min-width: 0;">
+                            {{-- Step circle --}}
+                            <div class="d-flex align-items-center justify-content-center rounded-circle shadow-sm mb-2 {{ $isCurrent ? 'ring-pulse' : '' }}"
+                                style="width: 36px; height: 36px; min-width: 36px;
+                                    {{ $isCompleted
+                                        ? 'background: var(--bs-' . $step['color'] . '); color: white;'
+                                        : 'background: #f1f3f5; color: #adb5bd; border: 2px solid #dee2e6;' }}">
+                                @if ($isCompleted)
+                                    <i class="fa fa-check" style="font-size: 0.8rem;"></i>
+                                @else
+                                    <i class="fa {{ $step['icon'] }}" style="font-size: 0.7rem;"></i>
+                                @endif
+                            </div>
+
+                            {{-- Step label --}}
+                            <div class="fw-semibold text-nowrap {{ $isCompleted ? 'text-dark' : 'text-muted' }}" style="font-size: 0.7rem;">
+                                {{ $step['label'] }}
+                            </div>
+
+                            {{-- User & time --}}
+                            @if ($isCompleted)
+                                <div class="fw-bold text-{{ $step['color'] }} text-truncate w-100 px-1" style="font-size: 0.68rem; max-width: 120px;"
+                                    title="{{ $step['value'] }}">
+                                    {{ $step['value'] }}
+                                </div>
+                                @if ($step['time'])
+                                    <div class="text-muted d-none d-lg-block" style="font-size: 0.58rem;">
+                                        {{ $step['time'] }}
+                                    </div>
+                                @endif
+                            @else
+                                <div class="text-muted" style="font-size: 0.65rem;">—</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         </div>
+
+        <style>
+            .ring-pulse {
+                animation: ringPulse 2s ease-in-out infinite;
+            }
+
+            @keyframes ringPulse {
+
+                0%,
+                100% {
+                    box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0.3);
+                }
+
+                50% {
+                    box-shadow: 0 0 0 6px rgba(var(--bs-primary-rgb), 0);
+                }
+            }
+        </style>
 
         {{-- ══════════════════════════════════════════════════════════════
              PROPERTY & DETAILS (Two-section card)
@@ -452,7 +502,7 @@
                         <div class="d-flex align-items-center">
                             <span class="d-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 me-2"
                                 style="width: 30px; height: 30px;">
-                                <i class="fa fa-sticky-note text-warning" style="font-size: 0.85rem;"></i>
+                                <i class="fa fa-comments text-warning" style="font-size: 0.85rem;"></i>
                             </span>
                             <h6 class="mb-0 fw-bold text-dark">Notes</h6>
                             @if (count($notes))
@@ -532,6 +582,40 @@
                             <span class="fw-bold text-dark">Grand Total</span>
                             <span class="fw-bold text-success fs-5">{{ currency($supply_request['grand_total'] ?? 0) }}</span>
                         </div>
+
+                        {{-- Payment Section --}}
+                        @if ($isEditing && $currentStatus === SupplyRequestStatus::APPROVED->value && !($supply_request['completed_by'] ?? null))
+                            <div class="mt-3 pt-3 border-top">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 me-2"
+                                        style="width: 24px; height: 24px;">
+                                        <i class="fa fa-money text-primary" style="font-size: 0.7rem;"></i>
+                                    </span>
+                                    <span class="fw-bold small text-dark">Collect Payment</span>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted small fw-semibold mb-1">
+                                        <i class="fa fa-credit-card me-1"></i> Payment Mode
+                                    </label>
+                                    <select wire:model.live="payment_mode_id" class="form-select form-select-sm">
+                                        <option value="">-- Select Payment Mode --</option>
+                                        @foreach ($paymentMethods as $id => $name)
+                                            <option value="{{ $id }}">{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @can('supply request.payment')
+                                    <button type="button" wire:click="statusChange('{{ SupplyRequestStatus::COLLECTED->value }}')"
+                                        wire:confirm="Collect payment of {{ currency($supply_request['grand_total'] ?? 0) }} and mark as completed? This will reduce inventory and create journal entries."
+                                        class="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-2 shadow-sm mt-2"
+                                        @if(!$payment_mode_id) disabled @endif>
+                                        <i class="fa fa-check-circle"></i>
+                                        <span>Pay</span>
+                                        <span class="badge bg-white text-primary ms-1">{{ currency($supply_request['grand_total'] ?? 0) }}</span>
+                                    </button>
+                                @endcan
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -573,7 +657,8 @@
                                         {{-- File missing from disk --}}
                                         <div class="d-flex align-items-center justify-content-center rounded bg-light mb-1" style="height: 80px;">
                                             <div class="text-center">
-                                                <i class="fa fa-exclamation-triangle text-warning d-block" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                                                <i class="fa fa-exclamation-triangle text-warning d-block"
+                                                    style="font-size: 1.5rem; opacity: 0.5;"></i>
                                                 <small class="text-muted" style="font-size: 0.6rem;">File missing</small>
                                             </div>
                                         </div>
@@ -591,8 +676,8 @@
                                     @elseif ($single['is_image'] ?? false)
                                         <div class="rounded mb-1 overflow-hidden cursor-pointer" style="height: 80px;"
                                             onclick="document.getElementById('lightbox-img').src='{{ $single['path'] }}'; document.getElementById('lightbox-title').textContent='{{ $single['name'] }}'; new bootstrap.Modal(document.getElementById('attachmentLightbox')).show();">
-                                            <img src="{{ $single['path'] }}" class="w-100 h-100 rounded"
-                                                style="object-fit: cover;" alt="{{ $single['name'] }}">
+                                            <img src="{{ $single['path'] }}" class="w-100 h-100 rounded" style="object-fit: cover;"
+                                                alt="{{ $single['name'] }}">
                                         </div>
                                     @else
                                         <a href="{{ $single['path'] }}" target="_blank"
@@ -649,10 +734,12 @@
                         <i class="fa fa-arrow-left"></i><span>Back</span>
                     </a>
 
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
                         {{-- Reject --}}
                         @if ($isEditing)
-                            @if ((!($supply_request['approved_by'] ?? null) && $currentStatus === SupplyRequestStatus::REQUIREMENT->value) || $currentStatus === SupplyRequestStatus::APPROVED->value)
+                            @if (
+                                (!($supply_request['approved_by'] ?? null) && $currentStatus === SupplyRequestStatus::REQUIREMENT->value) ||
+                                    $currentStatus === SupplyRequestStatus::APPROVED->value)
                                 @can('supply request.approve')
                                     <button type="button" wire:click="statusChange('{{ SupplyRequestStatus::REJECTED->value }}')"
                                         class="btn btn-warning btn-sm d-flex align-items-center gap-1 rounded-pill px-3 shadow-sm"
@@ -673,7 +760,7 @@
                                         <i class="fa fa-check"></i><span>Approve</span>
                                     </button>
                                 @endcan
-                            @elseif ($currentStatus === SupplyRequestStatus::APPROVED->value && !($supply_request['final_approved_by'] ?? null))
+                            @elseif ($currentStatus === SupplyRequestStatus::COLLECTED->value && !($supply_request['final_approved_by'] ?? null))
                                 @can('supply request.final approve')
                                     <button type="button" wire:click="statusChange('{{ SupplyRequestStatus::FINAL_APPROVED->value }}')"
                                         class="btn btn-primary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 shadow-sm"
@@ -684,8 +771,8 @@
                             @elseif ($currentStatus === SupplyRequestStatus::FINAL_APPROVED->value && !($supply_request['completed_by'] ?? null))
                                 @can('supply request.complete')
                                     <button type="button" wire:click="statusChange('{{ SupplyRequestStatus::COMPLETED->value }}')"
-                                        class="btn btn-dark btn-sm d-flex align-items-center gap-1 rounded-pill px-3 shadow-sm"
-                                        wire:confirm="Mark as completed?">
+                                        class="btn btn-success btn-sm d-flex align-items-center gap-1 rounded-pill px-3 shadow-sm"
+                                        wire:confirm="Complete this request?">
                                         <i class="fa fa-flag-checkered"></i><span>Complete</span>
                                     </button>
                                 @endcan

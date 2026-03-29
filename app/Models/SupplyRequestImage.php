@@ -34,18 +34,14 @@ class SupplyRequestImage extends Model
     public function storeFile($file, $supplyRequestId): array
     {
         try {
-            $target = 'SupplyRequest/'.$supplyRequestId.'/';
-            $path = storage_path('app/public/'.$target);
-            if (! File::exists($path)) {
-                File::makeDirectory($path, 0755, true);
-            }
+            $target = 'SupplyRequest/'.$supplyRequestId;
             $fileName = time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
-            $file->storeAs('public/'.$target, $fileName);
+            $file->storeAs($target, $fileName, 'public');
 
             return [
                 'success' => true,
                 'fileName' => $fileName,
-                'path' => '/storage/'.$target.$fileName,
+                'path' => '/storage/'.$target.'/'.$fileName,
                 'type' => $file->getMimeType(),
             ];
         } catch (\Exception $e) {

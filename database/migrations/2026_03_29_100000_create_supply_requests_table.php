@@ -5,7 +5,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-
 return new class() extends Migration
 {
     public function up(): void
@@ -22,6 +21,7 @@ return new class() extends Migration
             $table->decimal('total', 16, 2)->default(0);
             $table->decimal('other_charges', 16, 2)->default(0);
             $table->decimal('grand_total', 16, 2)->default(0);
+            $table->foreignId('payment_mode_id')->nullable()->constrained('accounts')->nullOnDelete();
             $table->text('remarks')->nullable();
             $table->enum('status', array_keys(SupplyRequestStatus::values()))->default(SupplyRequestStatus::REQUIREMENT->value);
             $table->unsignedBigInteger('approved_by')->nullable();

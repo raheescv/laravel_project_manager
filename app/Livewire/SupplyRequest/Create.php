@@ -2,15 +2,20 @@
 
 namespace App\Livewire\SupplyRequest;
 
+use App\Actions\SupplyRequest\CreateUpdateAction;
+use App\Actions\SupplyRequest\StatusChangeAction;
+use App\Enums\SupplyRequest\SupplyRequestStatus;
+use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\Property;
 use App\Models\SupplyRequest;
 use App\Models\SupplyRequestImage;
 use App\Models\SupplyRequestItem;
-use App\Models\SupplyRequestNote;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -42,6 +47,10 @@ class Create extends Component
 
     public $preFilledDropDowns = [];
 
+    public $payment_mode_id = '';
+
+    public $paymentMethods = [];
+
     protected $rules = [
         'supply_request.property_id' => 'required',
         'supply_request.date' => 'required',
@@ -57,6 +66,7 @@ class Create extends Component
         $this->table_id = $id;
         $this->type = $type;
         $this->branches = Branch::pluck('name', 'id');
+        $this->paymentMethods = Account::whereIn('id', cache('payment_methods', []))->pluck('name', 'id');
         $this->preFilledDropDowns = ['group' => [], 'building' => [], 'type' => [], 'property' => []];
         $this->initItem();
         $this->items = [];
@@ -75,12 +85,12 @@ class Create extends Component
                 'property_building_id' => '',
                 'property_type_id' => '',
                 'date' => date('Y-m-d'),
-                'order_no' => SupplyRequest::getNextOrderNo(),
+                'order_no' => time(),
                 'contact_person' => '',
                 'total' => 0,
                 'other_charges' => 0,
                 'grand_total' => 0,
-                'status' => \App\Enums\SupplyRequest\SupplyRequestStatus::REQUIREMENT->value,
+                'status' => SupplyRequestStatus::REQUIREMENT->value,
                 'remarks' => '',
                 'creator' => Auth::user()->name,
                 'approver' => '',
@@ -106,6 +116,8 @@ class Create extends Component
         $this->supply_request['final_approved_at_formatted'] = $model->final_approved_at?->format('d M Y, h:i A') ?? '';
         $this->supply_request['completer'] = $model->completer?->name ?? '';
         $this->supply_request['completed_at_formatted'] = $model->completed_at?->format('d M Y, h:i A') ?? '';
+        $this->supply_request['payment_mode_name'] = $model->paymentMode?->name ?? '';
+        $this->payment_mode_id = $model->payment_mode_id ?? '';
 
         // Pre-fill property dropdowns for edit
         if ($model->property) {
@@ -137,7 +149,7 @@ class Create extends Component
         foreach ($model->images as $value) {
             // Check if the file exists on disk
             $relativePath = str_replace('/storage/', '', $value->path);
-            $fileExists = \Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath);
+            $fileExists = Storage::disk('public')->exists($relativePath);
 
             $this->imageList[] = [
                 'id' => $value->id,
@@ -261,7 +273,7 @@ class Create extends Component
             $this->mainCalculator();
             $this->dispatch('success', ['message' => 'Successfully deleted item']);
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
@@ -282,7 +294,7 @@ class Create extends Component
             $this->imageList = array_values($this->imageList);
             $this->dispatch('success', ['message' => 'Successfully deleted image']);
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
@@ -292,10 +304,10 @@ class Create extends Component
     {
         try {
             if (! $this->item['branch_id']) {
-                throw new \Exception('Please select a store');
+                throw new Exception('Please select a store');
             }
             if (! $this->item['product_id']) {
-                throw new \Exception('Please select an asset/product');
+                throw new Exception('Please select an asset/product');
             }
 
             $branch = Branch::find($this->item['branch_id']);
@@ -317,7 +329,7 @@ class Create extends Component
             } else {
                 $this->dispatch('openProductSelectBox');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
     }
@@ -342,99 +354,39 @@ class Create extends Component
         $this->notes = array_values($this->notes);
     }
 
-    public function save(): void
+    public function save()
     {
         $this->validate();
         try {
-            DB::beginTransaction();
-
             if (empty($this->items)) {
-                throw new \Exception('Please add at least one item');
+                throw new Exception('Please add at least one item');
             }
 
-            $data = $this->supply_request;
-            $data['updated_by'] = Auth::id();
-
-            if ($this->table_id) {
-                $model = SupplyRequest::findOrFail($this->table_id);
-                $model->update($data);
-            } else {
-                $data['created_by'] = Auth::id();
-                $data['tenant_id'] = Auth::user()->tenant_id;
-                $data['branch_id'] = session('branch_id', 1);
-                $data['order_no'] = SupplyRequest::getNextOrderNo();
-                $model = SupplyRequest::create($data);
+            DB::beginTransaction();
+            $response = (new CreateUpdateAction())->execute(
+                $this->supply_request,
+                $this->items,
+                $this->images ?? [],
+                $this->notes,
+                Auth::id(),
+                $this->table_id
+            );
+            if (! $response['success']) {
+                throw new Exception($response['message']);
             }
-
-            // Save items
-            foreach ($this->items as $itemData) {
-                if (isset($itemData['id'])) {
-                    $item = SupplyRequestItem::find($itemData['id']);
-                    if ($item) {
-                        $item->update([
-                            'branch_id' => $itemData['branch_id'],
-                            'product_id' => $itemData['product_id'],
-                            'mode' => $itemData['mode'],
-                            'quantity' => $itemData['quantity'],
-                            'unit_price' => $itemData['unit_price'],
-                            'remarks' => $itemData['remarks'] ?? null,
-                        ]);
-                    }
-                } else {
-                    SupplyRequestItem::create([
-                        'supply_request_id' => $model->id,
-                        'branch_id' => $itemData['branch_id'],
-                        'product_id' => $itemData['product_id'],
-                        'mode' => $itemData['mode'],
-                        'quantity' => $itemData['quantity'],
-                        'unit_price' => $itemData['unit_price'],
-                        'remarks' => $itemData['remarks'] ?? null,
-                    ]);
-                }
-            }
-
-            // Save images
-            if ($this->images) {
-                foreach ($this->images as $file) {
-                    $imageModel = new SupplyRequestImage();
-                    $result = $imageModel->storeFile($file, $model->id);
-                    if ($result['success']) {
-                        SupplyRequestImage::create([
-                            'supply_request_id' => $model->id,
-                            'name' => $result['fileName'],
-                            'path' => $result['path'],
-                            'type' => $result['type'],
-                        ]);
-                    }
-                }
-            }
-
-            // Save notes
-            foreach ($this->notes as $noteData) {
-                if (! isset($noteData['id'])) {
-                    SupplyRequestNote::create([
-                        'supply_request_id' => $model->id,
-                        'note' => $noteData['note'],
-                        'created_by' => $noteData['created_by'],
-                    ]);
-                }
-            }
-
-            // Update totals
-            $model->update([
-                'total' => $this->supply_request['total'],
-                'other_charges' => $this->supply_request['other_charges'] ?? 0,
-                'grand_total' => $this->supply_request['grand_total'],
-            ]);
 
             DB::commit();
 
-            $this->table_id = $model->id;
-            $this->mount($this->table_id);
+            if ($response['is_create']) {
+                $this->dispatch('success', ['message' => $response['message']]);
 
-            $link = route('supply-request::edit', $model->id);
-            $this->dispatch('success', ['message' => "<a href='{$link}'>Successfully saved</a>"]);
-        } catch (\Exception $e) {
+                return $this->redirectRoute('supply-request::edit', $response['data']->id);
+            }
+
+            $this->table_id = $response['data']->id;
+            $this->mount($this->table_id);
+            $this->dispatch('success', ['message' => $response['message']]);
+        } catch (Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
@@ -443,33 +395,46 @@ class Create extends Component
     public function statusChange($status): void
     {
         try {
-            DB::beginTransaction();
-            $model = SupplyRequest::findOrFail($this->table_id);
-            $data = ['status' => $status];
-
-            $statusEnum = \App\Enums\SupplyRequest\SupplyRequestStatus::from($status);
-            switch ($statusEnum) {
-                case \App\Enums\SupplyRequest\SupplyRequestStatus::APPROVED:
-                case \App\Enums\SupplyRequest\SupplyRequestStatus::REJECTED:
-                    $data['approved_by'] = Auth::id();
-                    $data['approved_at'] = now();
-                    break;
-                case \App\Enums\SupplyRequest\SupplyRequestStatus::FINAL_APPROVED:
-                    $data['final_approved_by'] = Auth::id();
-                    $data['final_approved_at'] = now();
-                    break;
-                case \App\Enums\SupplyRequest\SupplyRequestStatus::COMPLETED:
-                    $data['completed_by'] = Auth::id();
-                    $data['completed_at'] = now();
-                    break;
+            if ($status === SupplyRequestStatus::COMPLETED->value && ! $this->payment_mode_id) {
+                throw new Exception('Please select a payment mode before completing');
             }
 
-            $model->update($data);
+            DB::beginTransaction();
+            $response = (new StatusChangeAction())->execute($this->table_id, $status, Auth::id(), $this->payment_mode_id ?: null);
+            if (! $response['success']) {
+                throw new Exception($response['message']);
+            }
+
             DB::commit();
 
             $this->mount($this->table_id);
-            $this->dispatch('success', ['message' => 'Status updated successfully']);
-        } catch (\Exception $e) {
+            $this->dispatch('success', ['message' => $response['message']]);
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function collectPayment(): void
+    {
+        try {
+            if (! $this->payment_mode_id) {
+                throw new Exception('Please select a payment mode');
+            }
+
+            DB::beginTransaction();
+
+            $response = (new StatusChangeAction())->execute($this->table_id, SupplyRequestStatus::COMPLETED->value, Auth::id(), $this->payment_mode_id);
+
+            if (! $response['success']) {
+                throw new Exception($response['message']);
+            }
+
+            DB::commit();
+
+            $this->mount($this->table_id);
+            $this->dispatch('success', ['message' => 'Payment collected and marked as completed']);
+        } catch (Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }

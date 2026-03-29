@@ -227,6 +227,7 @@ return [
         'view',
         'edit',
         'delete',
+        'payment',
         'delete item',
         'approve',
         'final approve',
