@@ -16,8 +16,6 @@ class BalanceSheet extends Component
 
     public $end_date;
 
-    public $branches = [];
-
     public $hideCustomers = true;
 
     public $hideVendors = true;
@@ -68,20 +66,17 @@ class BalanceSheet extends Component
 
     public function updatedPeriod($value)
     {
-        switch ($value) {
-            case 'monthly':
-                $this->end_date = Carbon::now()->endOfMonth()->format('Y-m-d');
-                break;
-            case 'quarterly':
-                $this->end_date = Carbon::now()->endOfQuarter()->format('Y-m-d');
-                break;
-            case 'yearly':
-                $this->end_date = Carbon::now()->endOfYear()->format('Y-m-d');
-                break;
-            case 'previous_month':
-                $this->end_date = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
-                break;
+        $endDates = [
+            'monthly' => Carbon::now()->endOfMonth(),
+            'quarterly' => Carbon::now()->endOfQuarter(),
+            'yearly' => Carbon::now()->endOfYear(),
+            'previous_month' => Carbon::now()->subMonth()->endOfMonth(),
+        ];
+
+        if (isset($endDates[$value])) {
+            $this->end_date = $endDates[$value]->format('Y-m-d');
         }
+
         $this->loadBalanceSheet();
     }
 
@@ -410,19 +405,12 @@ class BalanceSheet extends Component
                     if (isset($accountsBySubCategory[$subCategoryId])) {
                         $subData = $accountsBySubCategory[$subCategoryId];
                         $masterTotal += $subData['total'];
-                        // Filter accounts array based on exclusion settings
-                        $filteredAccounts = [];
-                        foreach ($subData['accounts'] as $acc) {
-                            // Accounts are already filtered in the loop above, so just add them
-                            $filteredAccounts[] = $acc;
-                        }
-                        // Show sub-category if it has a total, even if no accounts are visible
                         if (abs($subData['total']) >= 0.01) {
                             $groups[] = [
                                 'id' => $subCategoryId,
                                 'name' => $subCategory->name,
                                 'total' => round($subData['total'], 2),
-                                'accounts' => $filteredAccounts,
+                                'accounts' => $subData['accounts'],
                             ];
                         }
                     }
@@ -559,7 +547,8 @@ class BalanceSheet extends Component
                 return round($credit - $debit, 2);
 
             default:
-                return 0.0;
+                // For untyped accounts, use debit-minus-credit (asset-like)
+                return round($debit - $credit, 2);
         }
     }
 

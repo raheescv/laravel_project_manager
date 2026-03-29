@@ -1,422 +1,259 @@
 <div>
-    <div class="card bg-white/30 backdrop-blur-xl shadow-lg border-0 rounded-3">
-        <div class="card-body">
-            <!-- Filter Section -->
-            <div class="row mb-4 g-4">
-                <div class="col-md-3">
-                    <div class="form-group" wire:ignore>
-                        <label for="branch_id" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
-                            <i class="pli-building me-2 fs-5"></i>Branch
-                        </label>
-                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-branch_id-list')->id('branch_id')->placeholder('Select branch') }}
+    {{-- Loading Bar --}}
+    <div wire:loading.delay class="position-fixed top-0 start-0 w-100" style="z-index: 1060; height: 3px;">
+        <div class="bg-primary h-100 tb-loading-bar"></div>
+    </div>
+
+    {{-- Filters --}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-2 col-md-4">
+                    <label for="branch_id" class="form-label small text-muted mb-1">Branch</label>
+                    <div wire:ignore>
+                        {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-branch_id-list')->id('branch_id')->placeholder('All Branches') }}
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="period" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
-                            <i class="pli-time-clock me-2 fs-5"></i>Period
-                        </label>
-                        <select wire:model.live="period" class="form-select form-select-lg border-0 shadow-sm bg-light/50 hover:bg-light transition-colors" id="period">
-                            <option value="monthly">Current Month</option>
-                            <option value="quarterly">Current Quarter</option>
-                            <option value="yearly">Current Year</option>
-                            <option value="previous_month">Previous Month</option>
-                        </select>
-                    </div>
+                <div class="col-lg-2 col-md-4">
+                    <label for="period" class="form-label small text-muted mb-1">Period</label>
+                    <select wire:model.live="period" class="form-select" id="period">
+                        <option value="monthly">Current Month</option>
+                        <option value="quarterly">Current Quarter</option>
+                        <option value="yearly">Current Year</option>
+                        <option value="previous_month">Previous Month</option>
+                    </select>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="start_date" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
-                            <i class="pli-calendar-4 me-2 fs-5"></i>Start Date
-                        </label>
-                        <input type="date" wire:model.live="start_date" class="form-control form-control-lg border-0 shadow-sm bg-light/50 hover:bg-light transition-colors" id="start_date">
-                    </div>
+                <div class="col-lg-2 col-md-4">
+                    <label for="start_date" class="form-label small text-muted mb-1">From</label>
+                    <input type="date" wire:model.live="start_date" class="form-control" id="start_date">
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="end_date" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
-                            <i class="pli-calendar-4 me-2 fs-5"></i>End Date
-                        </label>
-                        <input type="date" wire:model.live="end_date" class="form-control form-control-lg border-0 shadow-sm bg-light/50 hover:bg-light transition-colors" id="end_date">
+                <div class="col-lg-2 col-md-4">
+                    <label for="end_date" class="form-label small text-muted mb-1">To</label>
+                    <input type="date" wire:model.live="end_date" class="form-control" id="end_date">
+                </div>
+                <div class="col-lg-4 col-md-8">
+                    <label for="selected_account_ids" class="form-label small text-muted mb-1">Filter Accounts <span class="text-muted">(optional)</span></label>
+                    <div wire:ignore>
+                        {{ html()->select('selected_account_ids', [])->multiple()->class('select-account_id-list')->id('selected_account_ids')->attribute('placeholder', 'All accounts') }}
                     </div>
                 </div>
             </div>
-            <div class="row mb-4 g-4">
-                <div class="col-md-12">
-                    <div class="form-group" wire:ignore>
-                        <label for="selected_account_ids" class="form-label fs-6 text-secondary mb-2 d-flex align-items-center">
-                            <i class="pli-file-edit me-2 fs-5"></i>Filter by Accounts (Optional)
-                        </label>
-                        {{ html()->select('selected_account_ids', [])->multiple()->class('select-account_id-list')->id('selected_account_ids')->attribute('placeholder', 'Select accounts to filter (leave empty for all accounts)') }}
-                        <small class="text-muted">Leave empty to show all accounts</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Summary Cards -->
-            <div class="row g-4 mb-5">
-                <div class="col-md-4">
-                    <div class="card h-100 bg-gradient-to-br from-primary/5 to-primary/10 border-0 shadow-lg rounded-3 hover:scale-102 transition-transform">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="text-muted mb-0 d-flex align-items-center">
-                                    <i class="pli-money-bag fs-4 me-2"></i>Total Assets
-                                </h6>
-                                <div class="badge bg-primary/10 text-primary px-3 py-2 rounded-pill">{{ $period }}</div>
-                            </div>
-                            <h3 class="mb-0 fw-bold">{{ number_format($totalAssets, 2) }}</h3>
-                            <div class="text-success-emphasis small mt-2">
-                                <i class="pli-arrow-up me-1"></i>
-                                <span>5.3% increase from last period</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 bg-gradient-to-br from-info/5 to-info/10 border-0 shadow-lg rounded-3 hover:scale-102 transition-transform">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="text-muted mb-0 d-flex align-items-center">
-                                    <i class="pli-financial fs-4 me-2"></i>Total Liabilities
-                                </h6>
-                                <div class="badge bg-info/10 text-info px-3 py-2 rounded-pill">{{ $period }}</div>
-                            </div>
-                            <h3 class="mb-0 fw-bold">{{ number_format($totalLiabilities, 2) }}</h3>
-                            <div class="text-danger-emphasis small mt-2">
-                                <i class="pli-arrow-down me-1"></i>
-                                <span>2.1% decrease from last period</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 bg-gradient-to-br from-success/5 to-success/10 border-0 shadow-lg rounded-3 hover:scale-102 transition-transform">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="text-muted mb-0 d-flex align-items-center">
-                                    <i class="pli-dollar-sign-2 fs-4 me-2"></i>Net Balance
-                                </h6>
-                                <div class="badge bg-success/10 text-success px-3 py-2 rounded-pill">{{ $period }}</div>
-                            </div>
-                            <h3 class="mb-0 fw-bold">{{ number_format($netBalance, 2) }}</h3>
-                            <div class="text-success-emphasis small mt-2">
-                                <i class="pli-arrow-up me-1"></i>
-                                <span>Balanced</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Trial Balance Statement -->
-            <div class="card bg-white/40 backdrop-blur-xl shadow-xl border-0 rounded-3">
-                <div class="card-header bg-gradient-to-r from-primary/5 to-primary/10 border-0 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="card-title mb-0 fw-bold">Trial Balance Statement</h5>
-                            <p class="text-muted small mb-0">
-                                {{ date('F d, Y', strtotime($start_date)) }} - {{ date('F d, Y', strtotime($end_date)) }}
-                            </p>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button wire:click="export" class="btn btn-success border-0 shadow-sm hover:bg-success/80 transition-colors">
-                                <i class="pli-file-excel fs-5 me-2"></i>Export Excel
-                            </button>
-                            <button class="btn btn-light border-0 shadow-sm hover:bg-light/80 transition-colors" onclick="window.print()">
-                                <i class="pli-printer fs-5 me-2"></i>Print
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-0" x-data="trialBalanceTree()">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0">
-                            <thead class="bg-light/50">
-                                <tr>
-                                    <th class="border-0 py-3">Account Name</th>
-                                    <th class="border-0 py-3 text-end">Debit</th>
-                                    <th class="border-0 py-3 text-end">Credit</th>
-                                    <th class="border-0 py-3 text-end pe-4">Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody class="border-top-0">
-                                <!-- Assets Section -->
-                                <tr class="bg-light/30">
-                                    <td colspan="4" class="py-3 fw-bold text-primary" style="padding-left: 1rem;">
-                                        <button @click="toggleSection('assets')" class="btn btn-link p-0 text-decoration-none text-primary fw-bold d-inline-flex align-items-center">
-                                            <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.assets }"
-                                                style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
-                                            <span>Assets</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                @if (!empty($assetsTree))
-                                    @include('livewire.reports.partials.trial-balance-tree', [
-                                        'tree' => $assetsTree,
-                                        'totalDebit' => $totalAssetsDebit,
-                                        'totalCredit' => $totalAssetsCredit,
-                                        'sectionName' => 'assets',
-                                        'showCondition' => 'expandedSections.assets',
-                                        'start_date' => $start_date,
-                                        'end_date' => $end_date,
-                                    ])
-                                @else
-                                    @foreach ($assets ?? [] as $asset)
-                                        <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.assets">
-                                            <td class="py-1" style="padding-left: 2rem;">{{ $asset->name }}</td>
-                                            <td class="text-end py-1">{{ $asset->debit > 0 ? number_format($asset->debit, 2) : '-' }}</td>
-                                            <td class="text-end py-1">{{ $asset->credit > 0 ? number_format($asset->credit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ number_format($asset->balance ?? ($asset->debit - $asset->credit), 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    <tr class="border-top" x-show="expandedSections.assets">
-                                        <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Assets</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalAssetsDebit, 2) }}</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalAssetsCredit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalAssetsDebit - $totalAssetsCredit, 2) }}</td>
-                                    </tr>
-                                @endif
-
-                                <!-- Liability Section -->
-                                <tr class="bg-light/30">
-                                    <td colspan="4" class="py-3 fw-bold text-warning" style="padding-left: 1rem;">
-                                        <button @click="toggleSection('liabilities')" class="btn btn-link p-0 text-decoration-none text-warning fw-bold d-inline-flex align-items-center">
-                                            <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.liabilities }"
-                                                style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
-                                            <span>Liabilities</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                @if (!empty($liabilitiesTree))
-                                    @include('livewire.reports.partials.trial-balance-tree', [
-                                        'tree' => $liabilitiesTree,
-                                        'totalDebit' => $totalLiabilitiesDebit,
-                                        'totalCredit' => $totalLiabilitiesCredit,
-                                        'sectionName' => 'liabilities',
-                                        'showCondition' => 'expandedSections.liabilities',
-                                        'start_date' => $start_date,
-                                        'end_date' => $end_date,
-                                    ])
-                                @else
-                                    @foreach ($liabilities ?? [] as $liability)
-                                        <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.liabilities">
-                                            <td class="py-1" style="padding-left: 2rem;">{{ $liability->name }}</td>
-                                            <td class="text-end py-1">{{ $liability->debit > 0 ? number_format($liability->debit, 2) : '-' }}</td>
-                                            <td class="text-end py-1">{{ $liability->credit > 0 ? number_format($liability->credit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ number_format($liability->balance ?? ($liability->debit - $liability->credit), 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    <tr class="border-top" x-show="expandedSections.liabilities">
-                                        <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Liabilities</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalLiabilitiesDebit, 2) }}</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalLiabilitiesCredit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalLiabilitiesDebit - $totalLiabilitiesCredit, 2) }}</td>
-                                    </tr>
-                                @endif
-
-                                <!-- Equity Section -->
-                                <tr class="bg-light/30">
-                                    <td colspan="4" class="py-3 fw-bold text-success" style="padding-left: 1rem;">
-                                        <button @click="toggleSection('equity')" class="btn btn-link p-0 text-decoration-none text-success fw-bold d-inline-flex align-items-center">
-                                            <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.equity }"
-                                                style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
-                                            <span>Equity</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                @if (!empty($equityTree))
-                                    @include('livewire.reports.partials.trial-balance-tree', [
-                                        'tree' => $equityTree,
-                                        'totalDebit' => $totalEquityDebit,
-                                        'totalCredit' => $totalEquityCredit,
-                                        'sectionName' => 'equity',
-                                        'showCondition' => 'expandedSections.equity',
-                                        'start_date' => $start_date,
-                                        'end_date' => $end_date,
-                                    ])
-                                @else
-                                    @foreach ($equity ?? [] as $equityItem)
-                                        <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.equity">
-                                            <td class="py-1" style="padding-left: 2rem;">{{ $equityItem->name }}</td>
-                                            <td class="text-end py-1">{{ $equityItem->debit > 0 ? number_format($equityItem->debit, 2) : '-' }}</td>
-                                            <td class="text-end py-1">{{ $equityItem->credit > 0 ? number_format($equityItem->credit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ number_format($equityItem->balance ?? ($equityItem->debit - $equityItem->credit), 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    <tr class="border-top" x-show="expandedSections.equity">
-                                        <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Equity</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalEquityDebit, 2) }}</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalEquityCredit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalEquityDebit - $totalEquityCredit, 2) }}</td>
-                                    </tr>
-                                @endif
-
-                                <!-- Income Section -->
-                                <tr class="bg-light/30">
-                                    <td colspan="4" class="py-3 fw-bold text-success" style="padding-left: 1rem;">
-                                        <button @click="toggleSection('income')" class="btn btn-link p-0 text-decoration-none text-success fw-bold d-inline-flex align-items-center">
-                                            <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.income }"
-                                                style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
-                                            <span>Income</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                @if (!empty($incomeTree))
-                                    @include('livewire.reports.partials.trial-balance-tree', [
-                                        'tree' => $incomeTree,
-                                        'totalDebit' => $totalIncomeDebit,
-                                        'totalCredit' => $totalIncomeCredit,
-                                        'sectionName' => 'income',
-                                        'showCondition' => 'expandedSections.income',
-                                        'start_date' => $start_date,
-                                        'end_date' => $end_date,
-                                    ])
-                                @else
-                                    @foreach ($income ?? [] as $incomeItem)
-                                        <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.income">
-                                            <td class="py-1" style="padding-left: 2rem;">{{ $incomeItem->name }}</td>
-                                            <td class="text-end py-1">{{ $incomeItem->debit > 0 ? number_format($incomeItem->debit, 2) : '-' }}</td>
-                                            <td class="text-end py-1">{{ $incomeItem->credit > 0 ? number_format($incomeItem->credit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ number_format($incomeItem->balance ?? ($incomeItem->debit - $incomeItem->credit), 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    <tr class="border-top" x-show="expandedSections.income">
-                                        <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Income</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalIncomeDebit, 2) }}</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalIncomeCredit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalIncomeDebit - $totalIncomeCredit, 2) }}</td>
-                                    </tr>
-                                @endif
-
-                                <!-- Expense Section -->
-                                <tr class="bg-light/30">
-                                    <td colspan="4" class="py-3 fw-bold text-danger" style="padding-left: 1rem;">
-                                        <button @click="toggleSection('expenses')" class="btn btn-link p-0 text-decoration-none text-danger fw-bold d-inline-flex align-items-center">
-                                            <i class="pli-arrow-right me-2" :class="{ 'rotate-90': expandedSections.expenses }"
-                                                style="transition: transform 0.2s; width: 1rem; text-align: center;"></i>
-                                            <span>Expenses</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                @if (!empty($expensesTree))
-                                    @include('livewire.reports.partials.trial-balance-tree', [
-                                        'tree' => $expensesTree,
-                                        'totalDebit' => $totalExpensesDebit,
-                                        'totalCredit' => $totalExpensesCredit,
-                                        'sectionName' => 'expenses',
-                                        'showCondition' => 'expandedSections.expenses',
-                                        'start_date' => $start_date,
-                                        'end_date' => $end_date,
-                                    ])
-                                @else
-                                    @foreach ($expenses ?? [] as $expense)
-                                        <tr class="hover:bg-light/40 transition-colors" x-show="expandedSections.expenses">
-                                            <td class="py-1" style="padding-left: 2rem;">{{ $expense->name }}</td>
-                                            <td class="text-end py-1">{{ $expense->debit > 0 ? number_format($expense->debit, 2) : '-' }}</td>
-                                            <td class="text-end py-1">{{ $expense->credit > 0 ? number_format($expense->credit, 2) : '-' }}</td>
-                                            <td class="text-end pe-4 py-1">{{ number_format($expense->balance ?? ($expense->debit - $expense->credit), 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                    <tr class="border-top" x-show="expandedSections.expenses">
-                                        <td class="py-2 fw-bold" style="padding-left: 1rem;">Total Expenses</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalExpensesDebit, 2) }}</td>
-                                        <td class="text-end py-2 fw-bold">{{ number_format($totalExpensesCredit, 2) }}</td>
-                                        <td class="text-end pe-4 py-2 fw-bold">{{ number_format($totalExpensesDebit - $totalExpensesCredit, 2) }}</td>
-                                    </tr>
-                                @endif
-
-                                <!-- Grand Total -->
-                                <tr class="bg-primary bg-opacity-10 fw-bold">
-                                    <td class="fw-bold" style="padding-left: 1rem;">Grand Total</td>
-                                    <td class="text-end">{{ number_format($totalDebit, 2) }}</td>
-                                    <td class="text-end">{{ number_format($totalCredit, 2) }}</td>
-                                    <td class="text-end pe-4">{{ number_format($totalDebit - $totalCredit, 2) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <script>
-                    function trialBalanceTree() {
-                        return {
-                            expandedSections: {
-                                assets: true,
-                                liabilities: true,
-                                equity: true,
-                                income: true,
-                                expenses: true
-                            },
-                            expandedCategories: {},
-                            expandedGroups: {},
-                            toggleSection(section) {
-                                this.expandedSections[section] = !this.expandedSections[section];
-                            },
-                            toggleCategory(section, categoryId) {
-                                const key = `${section}_${categoryId}`;
-                                this.expandedCategories[key] = !this.expandedCategories[key];
-                            },
-                            toggleGroup(section, groupId) {
-                                const key = `${section}_${groupId}`;
-                                this.expandedGroups[key] = !this.expandedGroups[key];
-                            },
-                            isCategoryExpanded(section, categoryId) {
-                                const key = `${section}_${categoryId}`;
-                                return this.expandedCategories[key] !== false;
-                            },
-                            isGroupExpanded(section, groupId) {
-                                const key = `${section}_${groupId}`;
-                                return this.expandedGroups[key] === true; // Default to collapsed
-                            },
-                            expandAll() {
-                                this.expandedSections.assets = true;
-                                this.expandedSections.liabilities = true;
-                                this.expandedSections.equity = true;
-                                this.expandedSections.income = true;
-                                this.expandedSections.expenses = true;
-                                // Expand all categories and groups
-                                this.expandedCategories = {};
-                                this.expandedGroups = {};
-                            },
-                            collapseAll() {
-                                this.expandedSections.assets = false;
-                                this.expandedSections.liabilities = false;
-                                this.expandedSections.equity = false;
-                                this.expandedSections.income = false;
-                                this.expandedSections.expenses = false;
-                            }
-                        }
-                    }
-                </script>
-            </div>
-
-            @php
-                $difference = round($totalDebit - $totalCredit, 2);
-            @endphp
-            @if (abs($difference) > 0.01)
-                <div class="alert alert-danger shadow-sm border-0 rounded-3">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="pli-warning-triangle display-6 text-danger me-3"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h5 class="alert-heading mb-1">Trial Balance Mismatch</h5>
-                            <p class="mb-0">
-                                The trial balance is not balanced. There is a difference of <strong>{{ number_format(abs($difference), 2) }}</strong>. Please review the entries
-                                for potential errors.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            @endif
         </div>
     </div>
+
+    {{-- Summary Row --}}
+    <div class="row g-3 mb-4">
+        @php
+            $difference = round($totalDebit - $totalCredit, 2);
+            $isBalanced = abs($difference) <= 0.01;
+            $summaryCards = [
+                ['label' => 'Total Debit', 'value' => $totalDebit, 'color' => 'primary', 'icon' => 'pli-arrow-up-2'],
+                ['label' => 'Total Credit', 'value' => $totalCredit, 'color' => 'info', 'icon' => 'pli-arrow-down-2'],
+                ['label' => 'Difference', 'value' => abs($difference), 'color' => $isBalanced ? 'success' : 'danger', 'icon' => $isBalanced ? 'pli-check' : 'pli-warning-triangle'],
+            ];
+        @endphp
+        @foreach ($summaryCards as $card)
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-3 d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 bg-{{ $card['color'] }} bg-opacity-10" style="width: 48px; height: 48px; min-width: 48px;">
+                            <i class="{{ $card['icon'] }} fs-4 text-{{ $card['color'] }}"></i>
+                        </div>
+                        <div>
+                            <div class="small text-muted">{{ $card['label'] }}</div>
+                            <div class="fs-5 fw-bold text-{{ $card['color'] }}">{{ number_format($card['value'], 2) }}</div>
+                        </div>
+                        @if ($loop->last)
+                            <span class="badge bg-{{ $isBalanced ? 'success' : 'danger' }} bg-opacity-10 text-{{ $isBalanced ? 'success' : 'danger' }} ms-auto px-2 py-1">
+                                {{ $isBalanced ? 'Balanced' : 'Unbalanced' }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- Imbalance Alert --}}
+    @if (!$isBalanced)
+        <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4 py-2" role="alert">
+            <i class="pli-warning-triangle fs-4 text-danger me-3"></i>
+            <div>
+                <strong>Trial Balance Mismatch</strong> &mdash; Difference of <strong>{{ number_format(abs($difference), 2) }}</strong>. Please review entries for errors.
+            </div>
+        </div>
+    @endif
+
+    {{-- Trial Balance Table --}}
+    <div class="card border-0 shadow-sm" x-data="trialBalanceTree()">
+        {{-- Table Header --}}
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="mb-0 fw-bold">Trial Balance</h5>
+                    <small class="text-muted">{{ date('M d, Y', strtotime($start_date)) }} &mdash; {{ date('M d, Y', strtotime($end_date)) }}</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button @click="expandAll()" class="btn btn-outline-secondary" title="Expand All">
+                            <i class="pli-arrow-down-2 me-1"></i>Expand
+                        </button>
+                        <button @click="collapseAll()" class="btn btn-outline-secondary" title="Collapse All">
+                            <i class="pli-arrow-up-2 me-1"></i>Collapse
+                        </button>
+                    </div>
+                    <div class="vr mx-1"></div>
+                    <button wire:click="export" class="btn btn-sm btn-success">
+                        <i class="pli-file-excel me-1"></i>Excel
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                        <i class="pli-printer me-1"></i>Print
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Table Body --}}
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0" style="font-size: 0.875rem;">
+                    <thead>
+                        <tr class="bg-light">
+                            <th class="border-0 py-2 ps-3" style="width: 50%;">Account</th>
+                            <th class="border-0 py-2 text-end" style="width: 16.66%;">Debit</th>
+                            <th class="border-0 py-2 text-end" style="width: 16.66%;">Credit</th>
+                            <th class="border-0 py-2 text-end pe-3" style="width: 16.66%;">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $sections = [
+                                ['key' => 'assets', 'label' => 'Assets', 'color' => 'primary', 'tree' => $assetsTree, 'items' => $assets, 'debit' => $totalAssetsDebit, 'credit' => $totalAssetsCredit],
+                                ['key' => 'liabilities', 'label' => 'Liabilities', 'color' => 'warning', 'tree' => $liabilitiesTree, 'items' => $liabilities, 'debit' => $totalLiabilitiesDebit, 'credit' => $totalLiabilitiesCredit],
+                                ['key' => 'equity', 'label' => 'Equity', 'color' => 'success', 'tree' => $equityTree, 'items' => $equity, 'debit' => $totalEquityDebit, 'credit' => $totalEquityCredit],
+                                ['key' => 'income', 'label' => 'Income', 'color' => 'info', 'tree' => $incomeTree, 'items' => $income, 'debit' => $totalIncomeDebit, 'credit' => $totalIncomeCredit],
+                                ['key' => 'expenses', 'label' => 'Expenses', 'color' => 'danger', 'tree' => $expensesTree, 'items' => $expenses, 'debit' => $totalExpensesDebit, 'credit' => $totalExpensesCredit],
+                                ['key' => 'other', 'label' => 'Uncategorized', 'color' => 'secondary', 'tree' => $otherTree, 'items' => $other, 'debit' => $totalOtherDebit, 'credit' => $totalOtherCredit],
+                            ];
+                            // Remove empty sections
+                            $sections = array_filter($sections, fn($s) => !empty($s['tree']) || !empty($s['items']));
+                        @endphp
+
+                        @foreach ($sections as $section)
+                            {{-- Section Header --}}
+                            <tr class="bg-light bg-opacity-50" style="border-left: 3px solid var(--bs-{{ $section['color'] }});">
+                                <td colspan="4" class="py-2 ps-3">
+                                    <button @click="toggleSection('{{ $section['key'] }}')" class="btn btn-link p-0 text-decoration-none fw-bold d-inline-flex align-items-center text-{{ $section['color'] }}">
+                                        <i class="pli-arrow-right me-2" :class="{ 'tb-rotate': expandedSections.{{ $section['key'] }} }" style="transition: transform 0.2s; font-size: 0.75rem;"></i>
+                                        {{ $section['label'] }}
+                                    </button>
+                                </td>
+                            </tr>
+
+                            {{-- Section Content --}}
+                            @if (!empty($section['tree']))
+                                @include('livewire.reports.partials.trial-balance-tree', [
+                                    'tree' => $section['tree'],
+                                    'totalDebit' => $section['debit'],
+                                    'totalCredit' => $section['credit'],
+                                    'sectionName' => $section['key'],
+                                    'sectionColor' => $section['color'],
+                                    'showCondition' => "expandedSections.{$section['key']}",
+                                    'start_date' => $start_date,
+                                    'end_date' => $end_date,
+                                ])
+                            @else
+                                @forelse ($section['items'] ?? [] as $item)
+                                    <tr x-show="expandedSections.{{ $section['key'] }}" x-cloak>
+                                        <td class="py-1 ps-4">
+                                            @if (isset($item->id))
+                                                <a href="{{ route('account::view', $item->id) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" target="_blank" class="text-decoration-none">{{ $item->name }}</a>
+                                            @else
+                                                {{ $item->name }}
+                                            @endif
+                                        </td>
+                                        <td class="text-end py-1 text-nowrap">{{ $item->debit > 0 ? number_format($item->debit, 2) : '-' }}</td>
+                                        <td class="text-end py-1 text-nowrap">{{ $item->credit > 0 ? number_format($item->credit, 2) : '-' }}</td>
+                                        <td class="text-end pe-3 py-1 text-nowrap">{{ number_format($item->balance ?? ($item->debit - $item->credit), 2) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr x-show="expandedSections.{{ $section['key'] }}" x-cloak>
+                                        <td colspan="4" class="text-center text-muted py-2 fst-italic small">No {{ strtolower($section['label']) }} accounts found</td>
+                                    </tr>
+                                @endforelse
+                                @if (!empty($section['items']))
+                                    <tr class="border-top" x-show="expandedSections.{{ $section['key'] }}" x-cloak>
+                                        <td class="py-2 ps-3 fw-bold small">Total {{ $section['label'] }}</td>
+                                        <td class="text-end py-2 fw-bold text-nowrap">{{ number_format($section['debit'], 2) }}</td>
+                                        <td class="text-end py-2 fw-bold text-nowrap">{{ number_format($section['credit'], 2) }}</td>
+                                        <td class="text-end pe-3 py-2 fw-bold text-nowrap">{{ number_format($section['debit'] - $section['credit'], 2) }}</td>
+                                    </tr>
+                                @endif
+                            @endif
+                        @endforeach
+
+                        {{-- Grand Total --}}
+                        <tr class="bg-dark bg-opacity-10 fw-bold" style="border-top: 2px solid #333;">
+                            <td class="py-3 ps-3 fs-6">Grand Total</td>
+                            <td class="text-end py-3 fs-6 text-nowrap">{{ number_format($totalDebit, 2) }}</td>
+                            <td class="text-end py-3 fs-6 text-nowrap">{{ number_format($totalCredit, 2) }}</td>
+                            <td class="text-end pe-3 py-3 fs-6 text-nowrap {{ !$isBalanced ? 'text-danger' : '' }}">{{ number_format($totalDebit - $totalCredit, 2) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
+            function trialBalanceTree() {
+                return {
+                    expandedSections: { assets: true, liabilities: true, equity: true, income: true, expenses: true, other: true },
+                    expandedCategories: {},
+                    expandedGroups: {},
+
+                    toggleSection(section) {
+                        this.expandedSections[section] = !this.expandedSections[section];
+                    },
+                    toggleCategory(section, categoryId) {
+                        const key = section + '_' + categoryId;
+                        this.expandedCategories[key] = !this.expandedCategories[key];
+                    },
+                    toggleGroup(section, groupId) {
+                        const key = section + '_' + groupId;
+                        this.expandedGroups[key] = !this.expandedGroups[key];
+                    },
+                    isCategoryExpanded(section, categoryId) {
+                        const key = section + '_' + categoryId;
+                        return this.expandedCategories[key] !== false;
+                    },
+                    isGroupExpanded(section, groupId) {
+                        const key = section + '_' + groupId;
+                        return this.expandedGroups[key] === true;
+                    },
+                    expandAll() {
+                        this.expandedSections = { assets: true, liabilities: true, equity: true, income: true, expenses: true, other: true };
+                        // Set all categories/groups to expanded
+                        for (let key in this.expandedCategories) this.expandedCategories[key] = true;
+                        for (let key in this.expandedGroups) this.expandedGroups[key] = true;
+                        // Trigger Alpine reactivity
+                        this.expandedCategories = Object.assign({}, this.expandedCategories);
+                        this.expandedGroups = Object.assign({}, this.expandedGroups);
+                    },
+                    collapseAll() {
+                        this.expandedSections = { assets: false, liabilities: false, equity: false, income: false, expenses: false, other: false };
+                        for (let key in this.expandedCategories) this.expandedCategories[key] = false;
+                        for (let key in this.expandedGroups) this.expandedGroups[key] = false;
+                        this.expandedCategories = Object.assign({}, this.expandedCategories);
+                        this.expandedGroups = Object.assign({}, this.expandedGroups);
+                    }
+                }
+            }
+
             $(document).ready(function() {
                 $('#branch_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('branch_id', value);
+                    @this.set('branch_id', $(this).val() || null);
                 });
                 $('#selected_account_ids').on('change', function(e) {
                     @this.set('selected_account_ids', $(this).val() || []);
@@ -424,4 +261,24 @@
             });
         </script>
     @endpush
+
+    <style>
+        .tb-rotate { transform: rotate(90deg); }
+        [x-cloak] { display: none !important; }
+        .tb-loading-bar {
+            animation: tb-loading 1.5s ease-in-out infinite;
+        }
+        @keyframes tb-loading {
+            0% { width: 0; margin-left: 0; }
+            50% { width: 60%; margin-left: 20%; }
+            100% { width: 0; margin-left: 100%; }
+        }
+
+        @media print {
+            .card-header .d-flex .btn { display: none !important; }
+            .card-header .vr { display: none !important; }
+            [x-cloak] { display: table-row !important; }
+            tr[x-show] { display: table-row !important; }
+        }
+    </style>
 </div>
