@@ -177,9 +177,8 @@ class Create extends Component
 
     public function initItem(): void
     {
-        $defaultBranch = Branch::first();
         $this->item = [
-            'branch_id' => $defaultBranch?->id,
+            'branch_id' => session('branch_id'),
             'barcode' => '',
             'product_id' => null,
             'mode' => 'New',

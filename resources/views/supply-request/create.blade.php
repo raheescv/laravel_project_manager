@@ -17,6 +17,7 @@
         </div>
     </div>
     @push('scripts')
+        <x-select.branchSelect />
         <x-select.propertyGroupSelect />
         <x-select.propertyBuildingSelect />
         <x-select.propertyTypeSelect />

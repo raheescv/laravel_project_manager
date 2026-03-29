@@ -297,15 +297,11 @@
                     <div class="border-bottom p-3" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%);">
                         <div class="row g-2 align-items-end">
                             {{-- Row 1: Store + Product (full width) --}}
-                            <div class="col-12 col-sm-3 col-lg-2">
+                            <div class="col-12 col-sm-3 col-lg-2" wire:ignore>
                                 <label class="form-label fw-semibold small mb-1 text-secondary">
                                     <i class="fa fa-home me-1" style="font-size: 0.65rem;"></i> Store
                                 </label>
-                                <select wire:model="item.branch_id" class="form-select form-select-sm">
-                                    @foreach ($branches as $branchId => $branchName)
-                                        <option value="{{ $branchId }}">{{ $branchName }}</option>
-                                    @endforeach
-                                </select>
+                                {{ html()->select('item_branch_id', [session('branch_id') => session('branch_name')])->value($item['branch_id'] ?? '')->class('select-assigned-branch_id-list')->id('item_branch_id')->placeholder('Select Store') }}
                             </div>
                             <div class="col-12 col-sm-9 col-lg-10" style="overflow: visible;">
                                 <label class="form-label fw-semibold small mb-1 text-secondary">
@@ -875,6 +871,9 @@
                             }
                         });
                     }
+                });
+                $('#item_branch_id').on('change', function() {
+                    @this.set('item.branch_id', $(this).val());
                 });
                 $('#supply_product_id').on('change', function() {
                     @this.set('item.product_id', $(this).val());
