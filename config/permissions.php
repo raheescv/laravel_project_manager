@@ -220,4 +220,18 @@ return [
     'local purchase order' => ['create', 'edit', 'view', 'delete', 'decide'],
     'grn' => ['create', 'view', 'edit', 'delete', 'decide'],
     'lpo-purchase' => ['create', 'view', 'edit', 'delete', 'decide'],
+
+    // Supply Request Module
+    'supply request' => [
+        'create',
+        'view',
+        'edit',
+        'delete',
+        'payment',
+        'delete item',
+        'approve',
+        'final approve',
+        'complete',
+        'print',
+    ],
 ];

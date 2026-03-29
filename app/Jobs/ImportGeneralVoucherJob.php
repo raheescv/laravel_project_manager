@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Events\FileImportProgress;
 use App\Imports\GeneralVoucherImport;
+use App\Imports\QuickBooksVoucherImport;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\ImportErrorsNotification;
@@ -27,7 +28,8 @@ class ImportGeneralVoucherJob implements ShouldQueue
         protected string $filePath,
         protected int $branchId,
         protected ?int $tenantId = null,
-        protected array $mappings = []
+        protected array $mappings = [],
+        protected string $importFormat = 'normal'
     ) {}
 
     public function handle(): void
@@ -73,13 +75,22 @@ class ImportGeneralVoucherJob implements ShouldQueue
             throw new Exception("File [{$this->filePath}] does not exist and can therefore not be imported.");
         }
 
-        $collection = Excel::toCollection(new \stdClass(), $file)->first();
-        $totalRows = $collection->filter(function ($row) {
-            return $row->filter()->isNotEmpty();
-        })->count();
+        if ($this->importFormat === 'quickbooks') {
+            // For QuickBooks, read from Sheet1 (index 1) and count non-empty rows
+            $allSheets = Excel::toCollection(new \stdClass(), $file);
+            $sheetData = $allSheets[1] ?? $allSheets[0] ?? collect();
+            $totalRows = $sheetData->filter(fn ($row) => $row->filter()->isNotEmpty())->count();
 
-        $totalRows--;
-        Excel::import(new GeneralVoucherImport($this->userId, $totalRows, $this->branchId, $this->mappings), $file);
+            Excel::import(new QuickBooksVoucherImport($this->userId, $totalRows, $this->branchId, $this->mappings), $file);
+        } else {
+            $collection = Excel::toCollection(new \stdClass(), $file)->first();
+            $totalRows = $collection->filter(function ($row) {
+                return $row->filter()->isNotEmpty();
+            })->count();
+
+            $totalRows--;
+            Excel::import(new GeneralVoucherImport($this->userId, $totalRows, $this->branchId, $this->mappings), $file);
+        }
 
         // Send 100% progress to broadcast completion
         event(new FileImportProgress($this->userId, 'GeneralVoucher', 100));

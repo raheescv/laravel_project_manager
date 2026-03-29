@@ -34,6 +34,8 @@ class Import extends Component
 
     public $importError = '';
 
+    public $importFormat = 'normal'; // normal, quickbooks
+
     public $availableFields = [
         'date' => 'Date (*)',
         'account_name' => 'Account Name (*)',
@@ -76,31 +78,71 @@ class Import extends Component
 
         $this->filePath = $this->file->store('temp-imports', 'public');
 
-        $headings = (new HeadingRowImport())->toArray(Storage::disk('public')->path($this->filePath));
-        $this->headers = $headings[0][0] ?? [];
+        if ($this->importFormat === 'quickbooks') {
+            $this->loadQuickBooksPreview();
+            $this->step = 3; // Skip mapping step for QuickBooks
+        } else {
+            $headings = (new HeadingRowImport())->toArray(Storage::disk('public')->path($this->filePath));
+            $this->headers = $headings[0][0] ?? [];
 
-        $aliases = $this->getHeaderAliases();
+            $aliases = $this->getHeaderAliases();
 
-        foreach ($this->availableFields as $field => $label) {
-            $allowed = $aliases[$field] ?? [$this->normalizeHeader($field)];
-            $normalizedAllowed = array_map(fn ($a) => $this->normalizeHeader($a), $allowed);
-            foreach ($this->headers as $header) {
-                $normalizedHeader = $this->normalizeHeader($header);
-                if (in_array($normalizedHeader, $normalizedAllowed, true)) {
-                    $this->mappings[$field] = $header;
-                    break;
+            foreach ($this->availableFields as $field => $label) {
+                $allowed = $aliases[$field] ?? [$this->normalizeHeader($field)];
+                $normalizedAllowed = array_map(fn ($a) => $this->normalizeHeader($a), $allowed);
+                foreach ($this->headers as $header) {
+                    $normalizedHeader = $this->normalizeHeader($header);
+                    if (in_array($normalizedHeader, $normalizedAllowed, true)) {
+                        $this->mappings[$field] = $header;
+                        break;
+                    }
                 }
             }
-        }
 
-        $this->step = 2;
-        $this->loadPreview();
+            $this->step = 2;
+            $this->loadPreview();
+        }
     }
 
     public function loadPreview()
     {
         $rows = Excel::toArray(new \stdClass(), Storage::disk('public')->path($this->filePath));
         $this->previewData = array_slice($rows[0], 1, 10);
+    }
+
+    public function loadQuickBooksPreview()
+    {
+        $rows = Excel::toArray(new \stdClass(), Storage::disk('public')->path($this->filePath));
+        $sheetData = $rows[1] ?? $rows[0] ?? []; // QuickBooks data is in Sheet1 (index 1)
+
+        // Parse and show only "Latest" transaction rows
+        $preview = [];
+        $count = 0;
+        foreach ($sheetData as $index => $row) {
+            if ($index === 0) {
+                continue; // Skip header
+            }
+            $account = trim($row[17] ?? '');
+            $amount = $row[21] ?? null;
+
+            if (! empty($account) && $amount !== null) {
+                $preview[] = [
+                    'num' => trim($row[3] ?? ''),
+                    'date' => $row[11] ?? '',
+                    'name' => trim($row[13] ?? ''),
+                    'memo' => trim($row[15] ?? ''),
+                    'account' => $account,
+                    'split' => trim($row[19] ?? ''),
+                    'amount' => $amount,
+                ];
+                $count++;
+                if ($count >= 15) {
+                    break;
+                }
+            }
+        }
+        $this->previewData = $preview;
+        $this->headers = ['num', 'date', 'name', 'memo', 'account', 'split', 'amount'];
     }
 
     public function goToStep($step)
@@ -115,22 +157,25 @@ class Import extends Component
 
     public function save()
     {
-        $this->validate([
-            'mappings.account_name' => 'required',
-            'mappings.debit' => 'required',
-            'mappings.credit' => 'required',
-        ], [
-            'mappings.account_name.required' => 'The Account Name field must be mapped.',
-            'mappings.debit.required' => 'The Debit Amount field must be mapped.',
-            'mappings.credit.required' => 'The Credit Amount field must be mapped.',
-        ]);
+        if ($this->importFormat !== 'quickbooks') {
+            $this->validate([
+                'mappings.account_name' => 'required',
+                'mappings.debit' => 'required',
+                'mappings.credit' => 'required',
+            ], [
+                'mappings.account_name.required' => 'The Account Name field must be mapped.',
+                'mappings.debit.required' => 'The Debit Amount field must be mapped.',
+                'mappings.credit.required' => 'The Credit Amount field must be mapped.',
+            ]);
+        }
 
         ImportGeneralVoucherJob::dispatch(
             Auth::id(),
             $this->filePath,
             session('branch_id'),
             session('tenant_id'),
-            $this->mappings
+            $this->mappings,
+            $this->importFormat
         );
 
         $this->jobDispatchedAt = now()->toDateTimeString();
