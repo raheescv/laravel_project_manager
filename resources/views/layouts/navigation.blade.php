@@ -934,7 +934,7 @@
                                         $lpoPurchase = ['lpo-purchases', 'lpo-purchases/create', 'lpo-purchases/*'];
                                     @endphp
                                     <a href="{{ route('lpo-purchase::index') }}" class="nav-link {{ request()->is($lpoPurchase) ? 'active' : '' }}">
-                                        LPO Purchase
+                                        LPO Invoice
                                     </a>
                                 </li>
                                 <li class="nav-item">
