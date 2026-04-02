@@ -106,9 +106,6 @@
                     <button wire:click="export" class="btn btn-sm btn-success">
                         <i class="pli-file-excel me-1"></i>Excel
                     </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
-                        <i class="pli-printer me-1"></i>Print
-                    </button>
                 </div>
             </div>
         </div>

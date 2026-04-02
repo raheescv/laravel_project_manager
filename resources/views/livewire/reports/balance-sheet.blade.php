@@ -41,9 +41,12 @@
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 text-end">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
-                        <i class="pli-printer me-1"></i>Print
-                    </button>
+                    <label class="form-label small text-muted mb-1">&nbsp;</label>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button wire:click="export" class="btn btn-sm btn-success">
+                            <i class="pli-file-excel me-1"></i>Excel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

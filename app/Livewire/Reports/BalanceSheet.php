@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Reports;
 
+use App\Exports\BalanceSheetExport;
 use App\Models\Account;
 use App\Models\AccountCategory;
+use App\Models\Branch;
 use App\Models\JournalEntry;
 use Carbon\Carbon;
 use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BalanceSheet extends Component
 {
@@ -549,6 +552,50 @@ class BalanceSheet extends Component
             default:
                 // For untyped accounts, use debit-minus-credit (asset-like)
                 return round($debit - $credit, 2);
+        }
+    }
+
+    protected function getBranchName(): ?string
+    {
+        if (! $this->branch_id) {
+            return null;
+        }
+
+        return Branch::find($this->branch_id)?->name;
+    }
+
+    public function export()
+    {
+        try {
+            $reportData = [
+                'currentAssets' => $this->currentAssets,
+                'fixedAssets' => $this->fixedAssets,
+                'otherAssets' => $this->otherAssets,
+                'totalCurrentAssets' => $this->totalCurrentAssets,
+                'totalFixedAssets' => $this->totalFixedAssets,
+                'totalOtherAssets' => $this->totalOtherAssets,
+                'totalAssets' => $this->totalAssets,
+                'currentLiabilities' => $this->currentLiabilities,
+                'longTermLiabilities' => $this->longTermLiabilities,
+                'totalCurrentLiabilities' => $this->totalCurrentLiabilities,
+                'totalLongTermLiabilities' => $this->totalLongTermLiabilities,
+                'totalLiabilities' => $this->totalLiabilities,
+                'ownerEquity' => $this->ownerEquity,
+                'retainedEarningAccounts' => $this->retainedEarningAccounts,
+                'totalEquityAccounts' => $this->totalEquityAccounts,
+                'totalRetainedEarnings' => $this->totalRetainedEarnings,
+                'totalEquity' => $this->totalEquity,
+            ];
+
+            $branchName = $this->getBranchName();
+            $fileName = 'Balance_Sheet_'.$this->end_date.'_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+            return Excel::download(
+                new BalanceSheetExport($reportData, $this->end_date, $branchName),
+                $fileName
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => 'Export failed: '.$e->getMessage()]);
         }
     }
 

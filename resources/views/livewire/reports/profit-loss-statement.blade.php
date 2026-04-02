@@ -32,9 +32,6 @@
                     <input type="date" wire:model.live="end_date" class="form-control" id="end_date">
                 </div>
                 <div class="col-lg-4 col-md-8 text-end">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
-                        <i class="pli-printer me-1"></i>Print
-                    </button>
                 </div>
             </div>
         </div>
@@ -102,6 +99,10 @@
                         <button @click="expandAll()" class="btn btn-outline-secondary"><i class="pli-arrow-down-2 me-1"></i>Expand</button>
                         <button @click="collapseAll()" class="btn btn-outline-secondary"><i class="pli-arrow-up-2 me-1"></i>Collapse</button>
                     </div>
+                    <div class="vr mx-1"></div>
+                    <button wire:click="export" class="btn btn-sm btn-success">
+                        <i class="pli-file-excel me-1"></i>Excel
+                    </button>
                 </div>
             </div>
         </div>
@@ -111,14 +112,16 @@
                 <table class="table table-sm align-middle mb-0" style="font-size: 0.875rem;">
                     <thead>
                         <tr class="bg-light">
-                            <th class="border-0 py-2 ps-3" style="width: 60%;">Particulars</th>
-                            <th class="border-0 py-2 text-end pe-3" style="width: 40%;">Amount</th>
+                            <th class="border-0 py-2 ps-3" style="width: 50%;">Particulars</th>
+                            <th class="border-0 py-2 text-end" style="width: 16.66%;">Debit</th>
+                            <th class="border-0 py-2 text-end" style="width: 16.66%;">Credit</th>
+                            <th class="border-0 py-2 text-end pe-3" style="width: 16.66%;">Balance</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{-- INCOME SECTION --}}
                         <tr class="bg-light bg-opacity-50" style="border-left: 3px solid var(--bs-success);">
-                            <td colspan="2" class="py-2 ps-3">
+                            <td colspan="4" class="py-2 ps-3">
                                 <button @click="toggleSection('income')" class="btn btn-link p-0 text-decoration-none fw-bold d-inline-flex align-items-center text-success">
                                     <i class="pli-arrow-right me-2" :class="{ 'is-rotate': sections.income }" style="transition: transform 0.2s; font-size: 0.75rem;"></i>
                                     Income
@@ -134,50 +137,64 @@
                                             <td class="py-1 ps-4">
                                                 <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" target="_blank" class="text-decoration-none">{{ $account['name'] }}</a>
                                             </td>
-                                            <td class="text-end pe-3 py-1 text-nowrap">{{ number_format($account['amount'], 2) }}</td>
+                                            <td class="text-end py-1 text-nowrap">{{ $account['debit'] > 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                            <td class="text-end py-1 text-nowrap">{{ $account['credit'] > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                            <td class="text-end pe-3 py-1 text-nowrap {{ $account['balance'] < 0 ? 'text-danger' : '' }}">{{ number_format($account['balance'], 2) }}</td>
                                         </tr>
                                     @endforeach
                                 @elseif (isset($item['name']))
                                     {{-- Category --}}
-                                    <tr x-show="sections.income" x-cloak>
+                                    @php $itemBalance = $item['balance'] ?? ($item['debit'] - $item['credit']); @endphp
+                                    <tr x-show="sections.income" x-cloak class="{{ $itemBalance < 0 ? 'table-danger bg-opacity-25' : '' }}">
                                         <td class="py-2 ps-4">
                                             <button @click="toggle('cat', {{ $item['id'] }})" class="btn btn-link p-0 text-decoration-none text-dark fw-semibold d-inline-flex align-items-center">
                                                 <i class="pli-arrow-right me-2" :class="{ 'is-rotate': isOpen('cat', {{ $item['id'] }}) }" style="transition: transform 0.2s; font-size: 0.7rem;"></i>
                                                 {{ $item['name'] }}
                                             </button>
                                         </td>
-                                        <td class="text-end pe-3 py-2 fw-semibold text-nowrap">{{ number_format($item['amount'], 2) }}</td>
+                                        <td class="text-end py-2 fw-semibold text-nowrap">{{ $item['debit'] > 0 ? number_format($item['debit'], 2) : '-' }}</td>
+                                        <td class="text-end py-2 fw-semibold text-nowrap">{{ $item['credit'] > 0 ? number_format($item['credit'], 2) : '-' }}</td>
+                                        <td class="text-end pe-3 py-2 fw-semibold text-nowrap {{ $itemBalance < 0 ? 'text-danger' : '' }}">{{ number_format($itemBalance, 2) }}</td>
                                     </tr>
 
                                     {{-- Direct Accounts --}}
                                     @foreach ($item['directAccounts'] ?? [] as $account)
-                                        <tr x-show="sections.income && isOpen('cat', {{ $item['id'] }})" x-cloak>
+                                        @php $acctBal = $account['balance'] ?? ($account['debit'] - $account['credit']); @endphp
+                                        <tr x-show="sections.income && isOpen('cat', {{ $item['id'] }})" x-cloak class="{{ $acctBal < 0 ? 'table-danger bg-opacity-25' : '' }}">
                                             <td class="py-1" style="padding-left: 2.5rem;">
                                                 <span class="text-muted me-1" style="font-size: 0.5rem;">&bull;</span>
                                                 <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" target="_blank" class="text-decoration-none">{{ $account['name'] }}</a>
                                             </td>
-                                            <td class="text-end pe-3 py-1 text-nowrap">{{ number_format($account['amount'], 2) }}</td>
+                                            <td class="text-end py-1 text-nowrap">{{ $account['debit'] > 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                            <td class="text-end py-1 text-nowrap">{{ $account['credit'] > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                            <td class="text-end pe-3 py-1 text-nowrap {{ $acctBal < 0 ? 'text-danger' : '' }}">{{ number_format($acctBal, 2) }}</td>
                                         </tr>
                                     @endforeach
 
                                     {{-- Groups --}}
                                     @foreach ($item['groups'] ?? [] as $group)
-                                        <tr x-show="sections.income && isOpen('cat', {{ $item['id'] }})" x-cloak>
+                                        @php $groupBal = $group['balance'] ?? ($group['debit'] - $group['credit']); @endphp
+                                        <tr x-show="sections.income && isOpen('cat', {{ $item['id'] }})" x-cloak class="{{ $groupBal < 0 ? 'table-danger bg-opacity-25' : '' }}">
                                             <td class="py-1" style="padding-left: 2.5rem;">
                                                 <button @click="toggle('grp', {{ $group['id'] }})" class="btn btn-link p-0 text-decoration-none text-dark d-inline-flex align-items-center" style="font-weight: 500;">
                                                     <i class="pli-arrow-right me-2" :class="{ 'is-rotate': isOpen('grp', {{ $group['id'] }}) }" style="transition: transform 0.2s; font-size: 0.65rem;"></i>
                                                     {{ $group['name'] }}
                                                 </button>
                                             </td>
-                                            <td class="text-end pe-3 py-1 text-nowrap" style="font-weight: 500;">{{ number_format($group['amount'], 2) }}</td>
+                                            <td class="text-end py-1 text-nowrap" style="font-weight: 500;">{{ $group['debit'] > 0 ? number_format($group['debit'], 2) : '-' }}</td>
+                                            <td class="text-end py-1 text-nowrap" style="font-weight: 500;">{{ $group['credit'] > 0 ? number_format($group['credit'], 2) : '-' }}</td>
+                                            <td class="text-end pe-3 py-1 text-nowrap {{ $groupBal < 0 ? 'text-danger' : '' }}" style="font-weight: 500;">{{ number_format($groupBal, 2) }}</td>
                                         </tr>
                                         @foreach ($group['accounts'] ?? [] as $account)
-                                            <tr x-show="sections.income && isOpen('cat', {{ $item['id'] }}) && isOpen('grp', {{ $group['id'] }})" x-cloak>
+                                            @php $acctBal = $account['balance'] ?? ($account['debit'] - $account['credit']); @endphp
+                                            <tr x-show="sections.income && isOpen('cat', {{ $item['id'] }}) && isOpen('grp', {{ $group['id'] }})" x-cloak class="{{ $acctBal < 0 ? 'table-danger bg-opacity-25' : '' }}">
                                                 <td class="py-1" style="padding-left: 4rem;">
                                                     <span class="text-muted me-1" style="font-size: 0.5rem;">&bull;</span>
                                                     <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" target="_blank" class="text-decoration-none">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3 py-1 text-nowrap">{{ number_format($account['amount'], 2) }}</td>
+                                                <td class="text-end py-1 text-nowrap">{{ $account['debit'] > 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                                <td class="text-end py-1 text-nowrap">{{ $account['credit'] > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                                <td class="text-end pe-3 py-1 text-nowrap {{ $acctBal < 0 ? 'text-danger' : '' }}">{{ number_format($acctBal, 2) }}</td>
                                             </tr>
                                         @endforeach
                                     @endforeach
@@ -185,19 +202,22 @@
                             @endforeach
                         @else
                             <tr x-show="sections.income" x-cloak>
-                                <td colspan="2" class="text-center text-muted py-2 fst-italic small">No income accounts found</td>
+                                <td colspan="4" class="text-center text-muted py-2 fst-italic small">No income accounts found</td>
                             </tr>
                         @endif
 
                         {{-- Income Total --}}
-                        <tr class="border-top" x-show="sections.income" x-cloak style="border-left: 3px solid var(--bs-success);">
+                        @php $incomeSectionBalance = $totalIncomeDebit - $totalIncomeCredit; @endphp
+                        <tr class="border-top {{ $incomeSectionBalance < 0 ? '' : '' }}" x-show="sections.income" x-cloak style="border-left: 3px solid var(--bs-success);">
                             <td class="py-2 ps-3 fw-bold small">Total Income</td>
-                            <td class="text-end pe-3 py-2 fw-bold text-nowrap text-success">{{ number_format($totalIncome, 2) }}</td>
+                            <td class="text-end py-2 fw-bold text-nowrap">{{ number_format($totalIncomeDebit, 2) }}</td>
+                            <td class="text-end py-2 fw-bold text-nowrap">{{ number_format($totalIncomeCredit, 2) }}</td>
+                            <td class="text-end pe-3 py-2 fw-bold text-nowrap {{ $incomeSectionBalance < 0 ? 'text-danger' : '' }}">{{ number_format($incomeSectionBalance, 2) }}</td>
                         </tr>
 
                         {{-- EXPENSE SECTION --}}
                         <tr class="bg-light bg-opacity-50" style="border-left: 3px solid var(--bs-danger);">
-                            <td colspan="2" class="py-2 ps-3">
+                            <td colspan="4" class="py-2 ps-3">
                                 <button @click="toggleSection('expense')" class="btn btn-link p-0 text-decoration-none fw-bold d-inline-flex align-items-center text-danger">
                                     <i class="pli-arrow-right me-2" :class="{ 'is-rotate': sections.expense }" style="transition: transform 0.2s; font-size: 0.75rem;"></i>
                                     Expenses
@@ -213,47 +233,61 @@
                                             <td class="py-1 ps-4">
                                                 <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" target="_blank" class="text-decoration-none">{{ $account['name'] }}</a>
                                             </td>
-                                            <td class="text-end pe-3 py-1 text-nowrap">{{ number_format($account['amount'], 2) }}</td>
+                                            <td class="text-end py-1 text-nowrap">{{ $account['debit'] > 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                            <td class="text-end py-1 text-nowrap">{{ $account['credit'] > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                            <td class="text-end pe-3 py-1 text-nowrap {{ $account['balance'] < 0 ? 'text-danger' : '' }}">{{ number_format($account['balance'], 2) }}</td>
                                         </tr>
                                     @endforeach
                                 @elseif (isset($item['name']))
-                                    <tr x-show="sections.expense" x-cloak>
+                                    @php $itemBalance = $item['balance'] ?? ($item['debit'] - $item['credit']); @endphp
+                                    <tr x-show="sections.expense" x-cloak class="{{ $itemBalance < 0 ? 'table-danger bg-opacity-25' : '' }}">
                                         <td class="py-2 ps-4">
                                             <button @click="toggle('cat', {{ $item['id'] }})" class="btn btn-link p-0 text-decoration-none text-dark fw-semibold d-inline-flex align-items-center">
                                                 <i class="pli-arrow-right me-2" :class="{ 'is-rotate': isOpen('cat', {{ $item['id'] }}) }" style="transition: transform 0.2s; font-size: 0.7rem;"></i>
                                                 {{ $item['name'] }}
                                             </button>
                                         </td>
-                                        <td class="text-end pe-3 py-2 fw-semibold text-nowrap">{{ number_format($item['amount'], 2) }}</td>
+                                        <td class="text-end py-2 fw-semibold text-nowrap">{{ $item['debit'] > 0 ? number_format($item['debit'], 2) : '-' }}</td>
+                                        <td class="text-end py-2 fw-semibold text-nowrap">{{ $item['credit'] > 0 ? number_format($item['credit'], 2) : '-' }}</td>
+                                        <td class="text-end pe-3 py-2 fw-semibold text-nowrap {{ $itemBalance < 0 ? 'text-danger' : '' }}">{{ number_format($itemBalance, 2) }}</td>
                                     </tr>
 
                                     @foreach ($item['directAccounts'] ?? [] as $account)
-                                        <tr x-show="sections.expense && isOpen('cat', {{ $item['id'] }})" x-cloak>
+                                        @php $acctBal = $account['balance'] ?? ($account['debit'] - $account['credit']); @endphp
+                                        <tr x-show="sections.expense && isOpen('cat', {{ $item['id'] }})" x-cloak class="{{ $acctBal < 0 ? 'table-danger bg-opacity-25' : '' }}">
                                             <td class="py-1" style="padding-left: 2.5rem;">
                                                 <span class="text-muted me-1" style="font-size: 0.5rem;">&bull;</span>
                                                 <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" target="_blank" class="text-decoration-none">{{ $account['name'] }}</a>
                                             </td>
-                                            <td class="text-end pe-3 py-1 text-nowrap">{{ number_format($account['amount'], 2) }}</td>
+                                            <td class="text-end py-1 text-nowrap">{{ $account['debit'] > 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                            <td class="text-end py-1 text-nowrap">{{ $account['credit'] > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                            <td class="text-end pe-3 py-1 text-nowrap {{ $acctBal < 0 ? 'text-danger' : '' }}">{{ number_format($acctBal, 2) }}</td>
                                         </tr>
                                     @endforeach
 
                                     @foreach ($item['groups'] ?? [] as $group)
-                                        <tr x-show="sections.expense && isOpen('cat', {{ $item['id'] }})" x-cloak>
+                                        @php $groupBal = $group['balance'] ?? ($group['debit'] - $group['credit']); @endphp
+                                        <tr x-show="sections.expense && isOpen('cat', {{ $item['id'] }})" x-cloak class="{{ $groupBal < 0 ? 'table-danger bg-opacity-25' : '' }}">
                                             <td class="py-1" style="padding-left: 2.5rem;">
                                                 <button @click="toggle('grp', {{ $group['id'] }})" class="btn btn-link p-0 text-decoration-none text-dark d-inline-flex align-items-center" style="font-weight: 500;">
                                                     <i class="pli-arrow-right me-2" :class="{ 'is-rotate': isOpen('grp', {{ $group['id'] }}) }" style="transition: transform 0.2s; font-size: 0.65rem;"></i>
                                                     {{ $group['name'] }}
                                                 </button>
                                             </td>
-                                            <td class="text-end pe-3 py-1 text-nowrap" style="font-weight: 500;">{{ number_format($group['amount'], 2) }}</td>
+                                            <td class="text-end py-1 text-nowrap" style="font-weight: 500;">{{ $group['debit'] > 0 ? number_format($group['debit'], 2) : '-' }}</td>
+                                            <td class="text-end py-1 text-nowrap" style="font-weight: 500;">{{ $group['credit'] > 0 ? number_format($group['credit'], 2) : '-' }}</td>
+                                            <td class="text-end pe-3 py-1 text-nowrap {{ $groupBal < 0 ? 'text-danger' : '' }}" style="font-weight: 500;">{{ number_format($groupBal, 2) }}</td>
                                         </tr>
                                         @foreach ($group['accounts'] ?? [] as $account)
-                                            <tr x-show="sections.expense && isOpen('cat', {{ $item['id'] }}) && isOpen('grp', {{ $group['id'] }})" x-cloak>
+                                            @php $acctBal = $account['balance'] ?? ($account['debit'] - $account['credit']); @endphp
+                                            <tr x-show="sections.expense && isOpen('cat', {{ $item['id'] }}) && isOpen('grp', {{ $group['id'] }})" x-cloak class="{{ $acctBal < 0 ? 'table-danger bg-opacity-25' : '' }}">
                                                 <td class="py-1" style="padding-left: 4rem;">
                                                     <span class="text-muted me-1" style="font-size: 0.5rem;">&bull;</span>
                                                     <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" target="_blank" class="text-decoration-none">{{ $account['name'] }}</a>
                                                 </td>
-                                                <td class="text-end pe-3 py-1 text-nowrap">{{ number_format($account['amount'], 2) }}</td>
+                                                <td class="text-end py-1 text-nowrap">{{ $account['debit'] > 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                                <td class="text-end py-1 text-nowrap">{{ $account['credit'] > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                                <td class="text-end pe-3 py-1 text-nowrap {{ $acctBal < 0 ? 'text-danger' : '' }}">{{ number_format($acctBal, 2) }}</td>
                                             </tr>
                                         @endforeach
                                     @endforeach
@@ -261,20 +295,23 @@
                             @endforeach
                         @else
                             <tr x-show="sections.expense" x-cloak>
-                                <td colspan="2" class="text-center text-muted py-2 fst-italic small">No expense accounts found</td>
+                                <td colspan="4" class="text-center text-muted py-2 fst-italic small">No expense accounts found</td>
                             </tr>
                         @endif
 
                         {{-- Expense Total --}}
+                        @php $expenseSectionBalance = $totalExpenseDebit - $totalExpenseCredit; @endphp
                         <tr class="border-top" x-show="sections.expense" x-cloak style="border-left: 3px solid var(--bs-danger);">
                             <td class="py-2 ps-3 fw-bold small">Total Expenses</td>
-                            <td class="text-end pe-3 py-2 fw-bold text-nowrap text-danger">{{ number_format($totalExpense, 2) }}</td>
+                            <td class="text-end py-2 fw-bold text-nowrap">{{ number_format($totalExpenseDebit, 2) }}</td>
+                            <td class="text-end py-2 fw-bold text-nowrap">{{ number_format($totalExpenseCredit, 2) }}</td>
+                            <td class="text-end pe-3 py-2 fw-bold text-nowrap {{ $expenseSectionBalance < 0 ? 'text-danger' : '' }}">{{ number_format($expenseSectionBalance, 2) }}</td>
                         </tr>
 
                         {{-- OTHER / UNCATEGORIZED SECTION --}}
                         @if (!empty($otherTree))
                             <tr class="bg-light bg-opacity-50" style="border-left: 3px solid var(--bs-secondary);">
-                                <td colspan="2" class="py-2 ps-3">
+                                <td colspan="4" class="py-2 ps-3">
                                     <button @click="toggleSection('other')" class="btn btn-link p-0 text-decoration-none fw-bold d-inline-flex align-items-center text-secondary">
                                         <i class="pli-arrow-right me-2" :class="{ 'is-rotate': sections.other }" style="transition: transform 0.2s; font-size: 0.75rem;"></i>
                                         Uncategorized
@@ -283,23 +320,31 @@
                                 </td>
                             </tr>
                             @foreach ($otherTree as $account)
+                                @php $acctBal = $account['balance'] ?? ($account['debit'] - $account['credit']); @endphp
                                 <tr x-show="sections.other" x-cloak>
                                     <td class="py-1 ps-4">
                                         <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" target="_blank" class="text-decoration-none">{{ $account['name'] }}</a>
                                     </td>
-                                    <td class="text-end pe-3 py-1 text-nowrap {{ $account['amount'] > 0 ? 'text-danger' : 'text-success' }}">{{ number_format($account['amount'], 2) }}</td>
+                                    <td class="text-end py-1 text-nowrap">{{ $account['debit'] > 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                    <td class="text-end py-1 text-nowrap">{{ $account['credit'] > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                    <td class="text-end pe-3 py-1 text-nowrap {{ $acctBal < 0 ? 'text-danger' : '' }}">{{ number_format($acctBal, 2) }}</td>
                                 </tr>
                             @endforeach
+                            @php $otherSectionBalance = $totalOtherDebit - $totalOtherCredit; @endphp
                             <tr class="border-top" x-show="sections.other" x-cloak style="border-left: 3px solid var(--bs-secondary);">
                                 <td class="py-2 ps-3 fw-bold small">Total Uncategorized</td>
-                                <td class="text-end pe-3 py-2 fw-bold text-nowrap">{{ number_format($totalOther, 2) }}</td>
+                                <td class="text-end py-2 fw-bold text-nowrap">{{ number_format($totalOtherDebit, 2) }}</td>
+                                <td class="text-end py-2 fw-bold text-nowrap">{{ number_format($totalOtherCredit, 2) }}</td>
+                                <td class="text-end pe-3 py-2 fw-bold text-nowrap {{ $otherSectionBalance < 0 ? 'text-danger' : '' }}">{{ number_format($otherSectionBalance, 2) }}</td>
                             </tr>
                         @endif
 
                         {{-- NET PROFIT/LOSS --}}
                         <tr class="bg-{{ $isProfit ? 'success' : 'danger' }} bg-opacity-10 fw-bold" style="border-top: 2px solid #333;">
                             <td class="py-3 ps-3 fs-6">{{ $isProfit ? 'Net Profit' : 'Net Loss' }}</td>
-                            <td class="text-end pe-3 py-3 fs-6 text-nowrap text-{{ $isProfit ? 'success' : 'danger' }}">{{ number_format(abs($netProfit), 2) }}</td>
+                            <td class="text-end py-3 fs-6 text-nowrap">{{ number_format($totalDebit, 2) }}</td>
+                            <td class="text-end py-3 fs-6 text-nowrap">{{ number_format($totalCredit, 2) }}</td>
+                            <td class="text-end pe-3 py-3 fs-6 text-nowrap text-{{ $isProfit ? 'success' : 'danger' }}">{{ number_format($totalDebit - $totalCredit, 2) }}</td>
                         </tr>
                     </tbody>
                 </table>

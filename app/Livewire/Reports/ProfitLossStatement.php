@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Reports;
 
+use App\Exports\ProfitLossStatementExport;
 use App\Models\AccountCategory;
+use App\Models\Branch;
 use App\Models\JournalEntry;
 use Carbon\Carbon;
 use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProfitLossStatement extends Component
 {
@@ -30,6 +33,24 @@ class ProfitLossStatement extends Component
     public $totalOther = 0;
 
     public $netProfit = 0;
+
+    // Section debit/credit totals
+    public $totalIncomeDebit = 0;
+
+    public $totalIncomeCredit = 0;
+
+    public $totalExpenseDebit = 0;
+
+    public $totalExpenseCredit = 0;
+
+    public $totalOtherDebit = 0;
+
+    public $totalOtherCredit = 0;
+
+    // Grand totals
+    public $totalDebit = 0;
+
+    public $totalCredit = 0;
 
     public function mount()
     {
@@ -94,6 +115,7 @@ class ProfitLossStatement extends Component
 
     /**
      * Build tree for income or expense using the pre-fetched balances collection.
+     * Now includes debit, credit, and balance per account/group/category.
      * No additional DB queries inside this method.
      */
     private function buildTreeFromBalances(string $type, $balances): array
@@ -117,42 +139,68 @@ class ProfitLossStatement extends Component
         $usedIds = [];
 
         foreach ($masters as $master) {
-            $masterTotal = 0;
+            $masterDebit = 0;
+            $masterCredit = 0;
             $directAccounts = [];
             $groups = [];
 
             foreach ($typeBalances as $bal) {
                 if ($bal->account_category_id == $master->id) {
+                    $d = round((float) $bal->total_debit, 2);
+                    $c = round((float) $bal->total_credit, 2);
                     $amt = $this->calcAmt($bal, $type);
-                    if ($amt > 0) {
-                        $masterTotal += $amt;
-                        $directAccounts[] = ['id' => $bal->account_id, 'name' => $bal->account_name, 'amount' => $amt];
+                    if ($d > 0 || $c > 0) {
+                        $masterDebit += $d;
+                        $masterCredit += $c;
+                        $directAccounts[] = [
+                            'id' => $bal->account_id,
+                            'name' => $bal->account_name,
+                            'debit' => $d,
+                            'credit' => $c,
+                            'balance' => round($d - $c, 2),
+                            'amount' => $amt,
+                        ];
                         $usedIds[] = $bal->account_id;
                     }
                 }
             }
 
             foreach ($master->children->sortBy('name') as $child) {
-                $grpTotal = 0;
+                $grpDebit = 0;
+                $grpCredit = 0;
                 $grpAccounts = [];
 
                 foreach ($typeBalances as $bal) {
                     if ($bal->account_category_id == $child->id) {
+                        $d = round((float) $bal->total_debit, 2);
+                        $c = round((float) $bal->total_credit, 2);
                         $amt = $this->calcAmt($bal, $type);
-                        if ($amt > 0) {
-                            $grpTotal += $amt;
-                            $grpAccounts[] = ['id' => $bal->account_id, 'name' => $bal->account_name, 'amount' => $amt];
+                        if ($d > 0 || $c > 0) {
+                            $grpDebit += $d;
+                            $grpCredit += $c;
+                            $grpAccounts[] = [
+                                'id' => $bal->account_id,
+                                'name' => $bal->account_name,
+                                'debit' => $d,
+                                'credit' => $c,
+                                'balance' => round($d - $c, 2),
+                                'amount' => $amt,
+                            ];
                             $usedIds[] = $bal->account_id;
                         }
                     }
                 }
 
                 if (! empty($grpAccounts)) {
-                    $masterTotal += $grpTotal;
+                    $masterDebit += $grpDebit;
+                    $masterCredit += $grpCredit;
                     $groups[] = [
                         'id' => $child->id,
                         'name' => $child->name,
-                        'amount' => round($grpTotal, 2),
+                        'debit' => round($grpDebit, 2),
+                        'credit' => round($grpCredit, 2),
+                        'balance' => round($grpDebit - $grpCredit, 2),
+                        'amount' => round($type === 'income' ? $grpCredit - $grpDebit : $grpDebit - $grpCredit, 2),
                         'accounts' => $grpAccounts,
                     ];
                 }
@@ -162,7 +210,10 @@ class ProfitLossStatement extends Component
                 $tree[] = [
                     'id' => $master->id,
                     'name' => $master->name,
-                    'amount' => round($masterTotal, 2),
+                    'debit' => round($masterDebit, 2),
+                    'credit' => round($masterCredit, 2),
+                    'balance' => round($masterDebit - $masterCredit, 2),
+                    'amount' => round($type === 'income' ? $masterCredit - $masterDebit : $masterDebit - $masterCredit, 2),
                     'groups' => $groups,
                     'directAccounts' => $directAccounts,
                 ];
@@ -173,9 +224,18 @@ class ProfitLossStatement extends Component
         $uncatAccounts = [];
         foreach ($typeBalances as $bal) {
             if (! in_array($bal->account_id, $usedIds)) {
+                $d = round((float) $bal->total_debit, 2);
+                $c = round((float) $bal->total_credit, 2);
                 $amt = $this->calcAmt($bal, $type);
-                if ($amt > 0) {
-                    $uncatAccounts[] = ['id' => $bal->account_id, 'name' => $bal->account_name, 'amount' => $amt];
+                if ($d > 0 || $c > 0) {
+                    $uncatAccounts[] = [
+                        'id' => $bal->account_id,
+                        'name' => $bal->account_name,
+                        'debit' => $d,
+                        'credit' => $c,
+                        'balance' => round($d - $c, 2),
+                        'amount' => $amt,
+                    ];
                 }
             }
         }
@@ -200,8 +260,15 @@ class ProfitLossStatement extends Component
             $d = round((float) $bal->total_debit, 2);
             $c = round((float) $bal->total_credit, 2);
             $net = round($d - $c, 2);
-            if (abs($net) >= 0.01) {
-                $items[] = ['id' => $bal->account_id, 'name' => $bal->account_name, 'amount' => $net];
+            if ($d > 0 || $c > 0) {
+                $items[] = [
+                    'id' => $bal->account_id,
+                    'name' => $bal->account_name,
+                    'debit' => $d,
+                    'credit' => $c,
+                    'balance' => $net,
+                    'amount' => $net,
+                ];
             }
         }
 
@@ -232,6 +299,73 @@ class ProfitLossStatement extends Component
         return round($total, 2);
     }
 
+    private function sumTreeDebitCredit(array $tree): array
+    {
+        $debit = 0;
+        $credit = 0;
+        foreach ($tree as $index => $item) {
+            if ($index === 'uncategorized' && is_array($item)) {
+                foreach ($item as $account) {
+                    $debit += $account['debit'];
+                    $credit += $account['credit'];
+                }
+            } elseif (isset($item['debit'])) {
+                $debit += $item['debit'];
+                $credit += $item['credit'];
+            }
+        }
+
+        return ['debit' => round($debit, 2), 'credit' => round($credit, 2)];
+    }
+
+    protected function getBranchName(): ?string
+    {
+        if (! $this->branch_id) {
+            return null;
+        }
+
+        return Branch::find($this->branch_id)?->name;
+    }
+
+    public function export()
+    {
+        try {
+            // Build the data fresh for export
+            $balances = $this->fetchAllBalances();
+            $incomeTree = $this->buildTreeFromBalances('income', $balances);
+            $expenseTree = $this->buildTreeFromBalances('expense', $balances);
+            $otherTree = $this->buildOtherFromBalances($balances);
+
+            $incomeTotals = $this->sumTreeDebitCredit($incomeTree);
+            $expenseTotals = $this->sumTreeDebitCredit($expenseTree);
+
+            $reportData = [
+                'incomeTree' => $incomeTree,
+                'expenseTree' => $expenseTree,
+                'otherTree' => $otherTree,
+                'totalIncomeDebit' => $incomeTotals['debit'],
+                'totalIncomeCredit' => $incomeTotals['credit'],
+                'totalExpenseDebit' => $expenseTotals['debit'],
+                'totalExpenseCredit' => $expenseTotals['credit'],
+                'totalOtherDebit' => round(collect($otherTree)->sum('debit'), 2),
+                'totalOtherCredit' => round(collect($otherTree)->sum('credit'), 2),
+                'totalDebit' => round($incomeTotals['debit'] + $expenseTotals['debit'] + collect($otherTree)->sum('debit'), 2),
+                'totalCredit' => round($incomeTotals['credit'] + $expenseTotals['credit'] + collect($otherTree)->sum('credit'), 2),
+                'netProfit' => $this->netProfit,
+            ];
+
+            $branchName = $this->getBranchName();
+            $fileName = 'Profit_Loss_Statement_'.$this->start_date.'_to_'.$this->end_date.'_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+            return Excel::download(
+                new ProfitLossStatementExport($reportData, $this->start_date, $this->end_date, $branchName),
+                $fileName
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => 'Export failed: '.$e->getMessage()]);
+        }
+    }
+
     public function render()
     {
         // IMPORTANT: One single DB query fetches all balances, then trees are built in-memory.
@@ -244,6 +378,21 @@ class ProfitLossStatement extends Component
         $this->totalExpense = $this->sumTree($this->expenseTree);
         $this->totalOther = round(collect($this->otherTree)->sum('amount'), 2);
         $this->netProfit = round($this->totalIncome - $this->totalExpense - $this->totalOther, 2);
+
+        // Calculate section debit/credit totals
+        $incomeTotals = $this->sumTreeDebitCredit($this->incomeTree);
+        $this->totalIncomeDebit = $incomeTotals['debit'];
+        $this->totalIncomeCredit = $incomeTotals['credit'];
+
+        $expenseTotals = $this->sumTreeDebitCredit($this->expenseTree);
+        $this->totalExpenseDebit = $expenseTotals['debit'];
+        $this->totalExpenseCredit = $expenseTotals['credit'];
+
+        $this->totalOtherDebit = round(collect($this->otherTree)->sum('debit'), 2);
+        $this->totalOtherCredit = round(collect($this->otherTree)->sum('credit'), 2);
+
+        $this->totalDebit = round($this->totalIncomeDebit + $this->totalExpenseDebit + $this->totalOtherDebit, 2);
+        $this->totalCredit = round($this->totalIncomeCredit + $this->totalExpenseCredit + $this->totalOtherCredit, 2);
 
         return view('livewire.reports.profit-loss-statement');
     }
