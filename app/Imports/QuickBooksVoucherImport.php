@@ -80,15 +80,6 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
             $header = trim($header ?? '');
             $normalized = strtolower($header);
 
-            // Handle duplicate "Type" column: first is transaction type, second is account type
-            if ($normalized === 'type') {
-                $typeCount++;
-                $key = $typeCount === 1 ? 'type' : 'account_type';
-                $this->columnMap[$key] = $index;
-
-                continue;
-            }
-
             $key = match ($normalized) {
                 'trans #', 'trans' => 'trans_no',
                 'date' => 'date',
@@ -96,6 +87,7 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
                 'name' => 'name',
                 'memo' => 'memo',
                 'account' => 'account',
+                'account type' => 'account_type',
                 'account category' => 'account_category',
                 'debit' => 'debit',
                 'credit' => 'credit',
