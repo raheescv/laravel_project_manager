@@ -201,12 +201,12 @@
             @if ($step == 3)
                 @if ($importFormat === 'quickbooks')
                     {{-- QuickBooks Preview --}}
-                    @php $qbHeaders = ['Num', 'Date', 'Name', 'Memo', 'Account', 'Split', 'Amount']; @endphp
+                    @php $qbHeaders = ['Trans #', 'Type', 'Date', 'Num', 'Name', 'Memo', 'Account', 'Acc. Type', 'Category', 'Debit', 'Credit']; @endphp
                     <div class="excel-sheet-wrapper">
                         <div class="excel-formula-bar d-flex align-items-center gap-2 px-2 py-1">
                             <span class="excel-cell-ref px-2 py-1 small fw-bold" style="background:#e8f5e9;border-color:#4caf50;">QB</span>
-                            <span class="text-muted small"><i class="fa fa-book me-1"></i> QuickBooks Preview &middot; {{ count($previewData) }} latest transactions</span>
-                            <span class="ms-auto badge bg-success bg-opacity-25 text-success small">All transaction rows</span>
+                            <span class="text-muted small"><i class="fa fa-book me-1"></i> QuickBooks Preview &middot; {{ count($previewData) }} rows</span>
+                            <span class="ms-auto badge bg-success bg-opacity-25 text-success small">With Account Type & Category</span>
                         </div>
                         <div class="table-responsive excel-grid">
                             <table class="table table-bordered mb-0 excel-table">
@@ -229,15 +229,17 @@
                                     @foreach ($previewData as $rowIndex => $row)
                                         <tr>
                                             <td class="excel-row-num">{{ $rowIndex + 2 }}</td>
-                                            <td class="excel-cell">{{ $row['num'] ?? '' }}</td>
+                                            <td class="excel-cell">{{ $row['trans_no'] ?? '' }}</td>
+                                            <td class="excel-cell">{{ $row['type'] ?? '' }}</td>
                                             <td class="excel-cell">{{ $row['date'] ?? '' }}</td>
+                                            <td class="excel-cell">{{ $row['num'] ?? '' }}</td>
                                             <td class="excel-cell">{{ $row['name'] ?? '' }}</td>
-                                            <td class="excel-cell">{{ $row['memo'] ?? '' }}</td>
-                                            <td class="excel-cell">{{ $row['account'] ?? '' }}</td>
-                                            <td class="excel-cell">{{ $row['split'] ?? '' }}</td>
-                                            <td class="excel-cell {{ ($row['amount'] ?? 0) < 0 ? 'text-danger' : 'text-success' }}">
-                                                {{ number_format($row['amount'] ?? 0, 2) }}
-                                            </td>
+                                            <td class="excel-cell text-truncate" style="max-width: 150px;">{{ $row['memo'] ?? '' }}</td>
+                                            <td class="excel-cell fw-medium">{{ $row['account'] ?? '' }}</td>
+                                            <td class="excel-cell"><span class="badge bg-info bg-opacity-25 text-info">{{ $row['account_type'] ?? '' }}</span></td>
+                                            <td class="excel-cell"><span class="badge bg-secondary bg-opacity-25">{{ $row['account_category'] ?? '' }}</span></td>
+                                            <td class="excel-cell text-success">{{ ($row['debit'] ?? 0) > 0 ? number_format($row['debit'], 2) : '' }}</td>
+                                            <td class="excel-cell text-danger">{{ ($row['credit'] ?? 0) > 0 ? number_format($row['credit'], 2) : '' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

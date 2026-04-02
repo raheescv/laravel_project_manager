@@ -6,6 +6,7 @@ use App\Actions\Journal\GeneralVoucherJournalEntryAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
 use App\Models\Account;
+use App\Models\AccountCategory;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -27,8 +28,7 @@ class QuickBooksVoucherImport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
-            // Index 1 = "Sheet1" (the data sheet, index 0 is "QuickBooks Export Tips" which is empty)
-            1 => new QuickBooksSheetImport($this->userId, $this->totalRows, $this->branchId, $this->mappings),
+            0 => new QuickBooksSheetImport($this->userId, $this->totalRows, $this->branchId, $this->mappings),
         ];
     }
 }
@@ -41,6 +41,8 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
 
     private array $accountCache = [];
 
+    private array $columnMap = [];
+
     public function __construct(
         private int $userId,
         private int $totalRows,
@@ -50,7 +52,9 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
 
     public function collection(Collection $rows)
     {
-        $transactions = $this->parseQuickBooksTransactions($rows);
+        $this->buildColumnMap($rows->first());
+
+        $transactions = $this->parseTransactions($rows);
 
         foreach ($transactions as $transaction) {
             try {
@@ -64,71 +68,107 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
     }
 
     /**
-     * Parse QuickBooks export format into grouped transactions.
-     *
-     * QB structure: columns at odd indices (1,3,5,...) are empty spacers.
-     * Real data columns (0-indexed): 2=Type+Num header, 3=Num, 5=Entered/Modified,
-     * 7=Modified by, 9=State, 11=Date, 13=Name, 15=Memo, 17=Account, 19=Split, 21=Amount
+     * Build column index map from the header row.
+     * Handles the duplicate "Type" header: first = transaction type, second = account type.
      */
-    private function parseQuickBooksTransactions(Collection $rows): array
+    private function buildColumnMap(Collection $headerRow): void
+    {
+        $headers = $headerRow->toArray();
+        $typeCount = 0;
+
+        foreach ($headers as $index => $header) {
+            $header = trim($header ?? '');
+            $normalized = strtolower($header);
+
+            // Handle duplicate "Type" column: first is transaction type, second is account type
+            if ($normalized === 'type') {
+                $typeCount++;
+                $key = $typeCount === 1 ? 'type' : 'account_type';
+                $this->columnMap[$key] = $index;
+
+                continue;
+            }
+
+            $key = match ($normalized) {
+                'trans #', 'trans' => 'trans_no',
+                'date' => 'date',
+                'num' => 'num',
+                'name' => 'name',
+                'memo' => 'memo',
+                'account' => 'account',
+                'account category' => 'account_category',
+                'debit' => 'debit',
+                'credit' => 'credit',
+                default => null,
+            };
+
+            if ($key) {
+                $this->columnMap[$key] = $index;
+            }
+        }
+    }
+
+    private function col(array $row, string $key): mixed
+    {
+        $index = $this->columnMap[$key] ?? null;
+
+        return $index !== null ? ($row[$index] ?? null) : null;
+    }
+
+    private function parseTransactions(Collection $rows): array
     {
         $transactions = [];
         $currentTransaction = null;
+
         foreach ($rows as $index => $row) {
             $rowArray = $row->toArray();
-            // Skip the header row (row 0 contains column names like "Num", "State", etc.)
+
+            // Skip header row
             if ($index === 0) {
                 continue;
             }
 
-            // Skip section headers like "Transactions entered or modified by Admin"
-            $col2 = trim($rowArray[2] ?? '');
-            $col3 = trim($rowArray[3] ?? '');
-            $state = trim($rowArray[9] ?? '');
-            $account = trim($rowArray[17] ?? '');
-            $amount = $rowArray[21] ?? null;
+            $transNo = $this->col($rowArray, 'trans_no');
+            $account = trim($this->col($rowArray, 'account') ?? '');
 
-            // Check if this is a transaction type header (e.g., "Bill 21857", "Payment 00011198")
-            if (! empty($col2) && empty($col3) && empty($state)) {
-                // Skip non-data section headers
-                if (str_starts_with($col2, 'Transactions entered')) {
-                    continue;
-                }
-
-                // Start new transaction group
+            // Start new transaction when Trans # is present
+            if (! empty($transNo) && is_numeric($transNo)) {
                 if ($currentTransaction && ! empty($currentTransaction['entries'])) {
                     $transactions[] = $currentTransaction;
                 }
                 $currentTransaction = [
-                    'type_header' => $col2,
+                    'trans_no' => $transNo,
+                    'type' => trim($this->col($rowArray, 'type') ?? ''),
                     'entries' => [],
                     'rows' => [],
                 ];
+            }
+
+            // Skip total/separator rows
+            if (empty($account)) {
+                if ($currentTransaction) {
+                    $currentTransaction['rows'][] = $rowArray;
+                }
 
                 continue;
             }
 
-            // Skip empty/separator rows
-            if (empty($account) && $amount === null && empty($col3)) {
-                continue;
-            }
-
-            // This is a data row — collect it
-            if (! empty($account) && $amount !== null && $currentTransaction !== null) {
+            if ($currentTransaction !== null) {
                 $currentTransaction['entries'][] = [
-                    'num' => $col3,
-                    'date' => $rowArray[11] ?? null,
-                    'name' => trim($rowArray[13] ?? ''),
-                    'memo' => trim($rowArray[15] ?? ''),
+                    'date' => $this->col($rowArray, 'date'),
+                    'num' => trim($this->col($rowArray, 'num') ?? ''),
+                    'name' => trim($this->col($rowArray, 'name') ?? ''),
+                    'memo' => trim($this->col($rowArray, 'memo') ?? ''),
                     'account' => $account,
-                    'split' => trim($rowArray[19] ?? ''),
-                    'amount' => (float) $amount,
-                    'state' => $state,
+                    'account_type' => trim($this->col($rowArray, 'account_type') ?? ''),
+                    'account_category' => trim($this->col($rowArray, 'account_category') ?? ''),
+                    'debit' => (float) ($this->col($rowArray, 'debit') ?? 0),
+                    'credit' => (float) ($this->col($rowArray, 'credit') ?? 0),
                 ];
                 $currentTransaction['rows'][] = $rowArray;
             }
         }
-        // Don't forget the last transaction
+
         if ($currentTransaction && ! empty($currentTransaction['entries'])) {
             $transactions[] = $currentTransaction;
         }
@@ -144,8 +184,6 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
             return;
         }
 
-        // Build journal entries: each row has Account + Amount
-        // Positive amount = Debit, Negative amount = Credit (QB convention)
         $entries = [];
         $firstEntry = $allEntries->first();
 
@@ -155,33 +193,39 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
                 continue;
             }
 
-            $accountId = $this->resolveOrCreateAccount($accountName);
-            $amount = $entry['amount'];
+            $accountId = $this->resolveOrCreateAccount(
+                $accountName,
+                $entry['account_type'],
+                $entry['account_category']
+            );
 
-            if ($amount == 0) {
+            $debit = $entry['debit'];
+            $credit = $entry['credit'];
+
+            if ($debit == 0 && $credit == 0) {
                 continue;
             }
 
             $entries[] = [
                 'account_id' => $accountId,
-                'debit' => $amount > 0 ? abs($amount) : 0,
-                'credit' => $amount < 0 ? abs($amount) : 0,
+                'debit' => $debit,
+                'credit' => $credit,
                 'description' => $entry['memo'] ?: null,
                 'person_name' => $entry['name'] ?: null,
             ];
         }
+
         if (count($entries) < 2) {
-            return; // Skip incomplete transactions silently
+            return;
         }
 
-        // Validate debit = credit
         $totalDebit = array_sum(array_column($entries, 'debit'));
         $totalCredit = array_sum(array_column($entries, 'credit'));
 
         if (abs($totalDebit - $totalCredit) > 0.01) {
             throw new Exception(
-                'Debit/Credit mismatch for QB transaction "'.$transaction['type_header'].
-                '". Debit: '.$totalDebit.', Credit: '.$totalCredit
+                'Debit/Credit mismatch for transaction #'.$transaction['trans_no'].
+                '. Debit: '.$totalDebit.', Credit: '.$totalCredit
             );
         }
 
@@ -191,7 +235,7 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
             'branch_id' => $this->branchId,
             'date' => $date,
             'source' => 'General Voucher',
-            'description' => $firstEntry['memo'] ?: ('QuickBooks: '.$transaction['type_header']),
+            'description' => $firstEntry['memo'] ?: ('QuickBooks: '.$transaction['type'].' #'.$transaction['trans_no']),
             'reference_number' => $firstEntry['num'] ?: null,
             'person_name' => $firstEntry['name'] ?: null,
             'remarks' => 'QuickBooks Import',
@@ -200,12 +244,11 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
 
         $response = (new GeneralVoucherJournalEntryAction())->execute($this->userId, $data);
         if (! $response['success']) {
-            info($response);
             throw new Exception($response['message']);
         }
     }
 
-    private function resolveOrCreateAccount(string $name): int
+    private function resolveOrCreateAccount(string $name, ?string $accountType = null, ?string $categoryName = null): int
     {
         $cacheKey = strtolower(trim($name));
 
@@ -216,16 +259,43 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
         $account = Account::where('name', $name)->first();
 
         if (! $account) {
+            $categoryId = null;
+            if (! empty($categoryName)) {
+                $categoryId = AccountCategory::selfCreate(trim($categoryName));
+            }
+
             $account = Account::create([
                 'name' => $name,
-                'account_type' => 'Account Head',
-                'account_category_id' => null,
+                'account_type' => self::normalizeAccountType($accountType),
+                'account_category_id' => $categoryId,
             ]);
         }
 
         $this->accountCache[$cacheKey] = $account->id;
 
         return $account->id;
+    }
+
+    public static function normalizeAccountType(?string $type): string
+    {
+        if (empty($type)) {
+            return 'asset';
+        }
+
+        $type = strtolower(trim($type));
+
+        $map = [
+            'asset' => 'asset',
+            'liability' => 'liability',
+            'liabelity' => 'liability',
+            'income' => 'income',
+            'revenue' => 'income',
+            'expense' => 'expense',
+            'expenses' => 'expense',
+            'equity' => 'equity',
+        ];
+
+        return $map[$type] ?? 'asset';
     }
 
     private function parseDate($value): string
@@ -244,14 +314,14 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
     private function handleError($transaction, \Throwable $th): void
     {
         $errorData = [
-            'transaction' => $transaction['type_header'] ?? 'Unknown',
+            'transaction' => 'Trans #'.($transaction['trans_no'] ?? 'Unknown'),
             'message' => $th->getMessage(),
             'file' => $th->getFile(),
             'line' => $th->getLine(),
         ];
 
         $this->errors[] = $errorData;
-        Log::error('QuickBooks Voucher import error', $errorData);
+        Log::error('QuickBooks import error', $errorData);
     }
 
     private function updateProgress(): void
@@ -267,7 +337,6 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
 
     public function chunkSize(): int
     {
-        // Use large chunk to avoid splitting QB transaction groups across chunks
         return 5000;
     }
 

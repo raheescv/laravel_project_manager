@@ -113,26 +113,37 @@ class Import extends Component
     public function loadQuickBooksPreview()
     {
         $filePath = Storage::disk('public')->path($this->filePath);
-        $sheetData = $this->readFirstRows($filePath, 1, 500); // QB uses sheet index 1
+        $rawRows = $this->readFirstRows($filePath, 0, 500, true);
 
-        if (empty($sheetData)) {
-            $sheetData = $this->readFirstRows($filePath, 0, 500);
+        if (empty($rawRows)) {
+            $this->previewData = [];
+
+            return;
         }
 
-        $preview = [];
-        foreach ($sheetData as $row) {
-            $account = trim($row[17] ?? '');
-            $amount = $row[21] ?? null;
+        $headerRow = $rawRows[0] ?? [];
+        $dataRows = array_slice($rawRows, 1);
 
-            if (! empty($account) && $amount !== null) {
+        // Build column map from headers (handles duplicate "Type" column)
+        $columnMap = $this->buildQuickBooksColumnMap($headerRow);
+
+        $preview = [];
+        foreach ($dataRows as $row) {
+            $account = trim($row[$columnMap['account'] ?? -1] ?? '');
+
+            if (! empty($account)) {
                 $preview[] = [
-                    'num' => trim($row[3] ?? ''),
-                    'date' => $row[11] ?? '',
-                    'name' => trim($row[13] ?? ''),
-                    'memo' => trim($row[15] ?? ''),
+                    'trans_no' => trim($row[$columnMap['trans_no'] ?? -1] ?? ''),
+                    'type' => trim($row[$columnMap['type'] ?? -1] ?? ''),
+                    'date' => $row[$columnMap['date'] ?? -1] ?? '',
+                    'num' => trim($row[$columnMap['num'] ?? -1] ?? ''),
+                    'name' => trim($row[$columnMap['name'] ?? -1] ?? ''),
+                    'memo' => trim($row[$columnMap['memo'] ?? -1] ?? ''),
                     'account' => $account,
-                    'split' => trim($row[19] ?? ''),
-                    'amount' => $amount,
+                    'account_type' => trim($row[$columnMap['account_type'] ?? -1] ?? ''),
+                    'account_category' => trim($row[$columnMap['account_category'] ?? -1] ?? ''),
+                    'debit' => (float) ($row[$columnMap['debit'] ?? -1] ?? 0),
+                    'credit' => (float) ($row[$columnMap['credit'] ?? -1] ?? 0),
                 ];
                 if (count($preview) >= 15) {
                     break;
@@ -141,14 +152,50 @@ class Import extends Component
         }
 
         $this->previewData = $preview;
-        $this->headers = ['num', 'date', 'name', 'memo', 'account', 'split', 'amount'];
+        $this->headers = ['trans_no', 'type', 'date', 'num', 'name', 'memo', 'account', 'account_type', 'account_category', 'debit', 'credit'];
+    }
+
+    private function buildQuickBooksColumnMap(array $headerRow): array
+    {
+        $map = [];
+        $typeCount = 0;
+
+        foreach ($headerRow as $index => $header) {
+            $normalized = strtolower(trim($header ?? ''));
+
+            if ($normalized === 'type') {
+                $typeCount++;
+                $map[$typeCount === 1 ? 'type' : 'account_type'] = $index;
+
+                continue;
+            }
+
+            $key = match ($normalized) {
+                'trans #', 'trans' => 'trans_no',
+                'date' => 'date',
+                'num' => 'num',
+                'name' => 'name',
+                'memo' => 'memo',
+                'account' => 'account',
+                'account category' => 'account_category',
+                'debit' => 'debit',
+                'credit' => 'credit',
+                default => null,
+            };
+
+            if ($key) {
+                $map[$key] = $index;
+            }
+        }
+
+        return $map;
     }
 
     /**
      * Read only the first N data rows from a specific sheet using PhpSpreadsheet directly.
      * Avoids loading the entire file into memory.
      */
-    private function readFirstRows(string $filePath, int $sheetIndex = 0, int $maxRows = 10): array
+    private function readFirstRows(string $filePath, int $sheetIndex = 0, int $maxRows = 10, bool $includeHeader = false): array
     {
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
@@ -187,6 +234,10 @@ class Import extends Component
             $rows = $sheet->toArray(null, true, true, false);
             $spreadsheet->disconnectWorksheets();
             unset($spreadsheet);
+
+            if ($includeHeader) {
+                return array_slice($rows, 0, $maxRows + 1);
+            }
 
             // Skip header row, return data rows
             return array_slice($rows, 1, $maxRows);
