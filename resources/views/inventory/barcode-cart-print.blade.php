@@ -1,13 +1,25 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 
 @php
     function convertToUnits($value)
     {
         if (is_numeric($value)) {
+            if ($value == 100) {
+                return $value . '%';
+            }
             return $value . 'px';
         }
         return $value;
+    }
+
+    function alignToFlex($align)
+    {
+        return match ($align ?? 'left') {
+            'right' => 'flex-end',
+            'center' => 'center',
+            default => 'flex-start',
+        };
     }
 
     function getElementStyle($element, $settings)
@@ -16,6 +28,13 @@
         foreach (['top', 'left', 'width', 'height'] as $prop) {
             $style[$prop] = convertToUnits($settings['elements'][$element][$prop] ?? 0);
         }
+
+        $align = $settings[$element]['align'] ?? null;
+        if ($align) {
+            $style['display'] = 'flex';
+            $style['justify-content'] = alignToFlex($align);
+        }
+
         return implode('; ', array_map(fn($key, $value) => "$key: $value", array_keys($style), $style));
     }
 @endphp
@@ -37,7 +56,6 @@
             }
         }
 
-        /* Using system fonts instead of DejaVu Sans */
         .barcode-container {
             position: relative;
             width: {{ $settings['width'] ?? 40 }}mm;
@@ -54,40 +72,32 @@
             overflow: hidden;
             margin: 0;
             padding: 0;
-            opacity: v-bind("element.visible ? 1 : 0");
-            transition: all 0.3s ease;
+        }
+
+        .barcode-element>bdo,
+        .barcode-element>span {
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
         .product-name {
             font-size: {{ $settings['product_name']['font_size'] }}px;
-            text-align: {{ $settings['product_name']['align'] }};
             line-height: 1.1;
             font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 2px;
         }
 
         .product-name-arabic {
             font-size: {{ $settings['product_name_arabic']['font_size'] }}px;
-            text-align: right;
             line-height: 1.1;
             direction: rtl;
             font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
             font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding-right: 2px;
-            unicode-bidi: plaintext;
-            writing-mode: horizontal-tb;
-            text-orientation: mixed;
         }
 
         .company-name {
             font-size: {{ $settings['company_name']['font_size'] }}px;
-            text-align: {{ $settings['company_name']['align'] }};
             font-weight: bold;
             letter-spacing: 0.5px;
         }
@@ -101,18 +111,13 @@
 
         .product-size {
             font-size: {{ $settings['size']['font_size'] }}px;
-            text-align: {{ $settings['size']['align'] }};
             font-weight: bold;
             letter-spacing: 0.5px;
         }
 
-        .barcode-image {
-            text-align: {{ $settings['barcode']['align'] }};
-        }
-
         .barcode-image img {
-            width: {{ $settings['elements']['barcode']['width'] ?? 180 }};
-            height: {{ $settings['elements']['barcode']['height'] ?? 40 }};
+            max-width: 100%;
+            height: auto;
         }
 
         .barcode-value {
@@ -125,7 +130,6 @@
 
         .price {
             font-size: {{ $settings['price']['font_size'] }}px;
-            text-align: {{ $settings['price']['align'] }};
             font-weight: bold;
             letter-spacing: 0.5px;
         }
@@ -137,7 +141,6 @@
 
         .price-arabic {
             font-size: {{ $settings['price_arabic']['font_size'] ?? 14 }}px;
-            text-align: {{ $settings['price_arabic']['align'] ?? 'right' }};
             font-weight: bold;
             direction: rtl;
             font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -147,15 +150,6 @@
         .price-arabic:before {
             content: 'ق ر';
             font-size: 90%;
-        }
-
-        [draggable="true"] {
-            cursor: move;
-        }
-
-        .barcode-element.dragging {
-            opacity: 0.5;
-            z-index: 1000;
         }
 
         .element-handle {
@@ -184,7 +178,9 @@
                 $conversionFactor = 1;
 
                 if ($itemType === 'product_unit') {
-                    $productUnit = \App\Models\ProductUnit::with('product', 'subUnit')->find($item['product_unit_id'] ?? null);
+                    $productUnit = \App\Models\ProductUnit::with('product', 'subUnit')->find(
+                        $item['product_unit_id'] ?? null,
+                    );
                     if ($productUnit) {
                         $product = $productUnit->product;
                         $barcode = $productUnit->barcode;
@@ -203,42 +199,45 @@
                 @for ($i = 1; $i <= $item['quantity']; $i++)
                     <div class="barcode-container">
                         @if ($settings['product_name']['visible'] ?? true)
-                            <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
-                                <bdo dir="ltr">{{ mb_substr($product->name, 0, (int) $settings['product_name']['char_limit']) }}</bdo>
-                                <div class="element-handle top-left"></div>
-                                <div class="element-handle top-right"></div>
+                            <div id="product-name" class="barcode-element product-name"
+                                style="{{ getElementStyle('product_name', $settings) }}">
+                                <bdo
+                                    dir="ltr">{{ mb_substr($product->name, 0, (int) $settings['product_name']['char_limit']) }}</bdo>
                             </div>
                         @endif
 
                         @if ($settings['product_name_arabic']['visible'] ?? true)
-                            <div id="product-name-arabic" class="barcode-element product-name-arabic" draggable="true" style="{{ getElementStyle('product_name_arabic', $settings) }}">
-                                <bdo dir="rtl">{{ mb_substr($product->name_arabic ?? '', 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
-                                <div class="element-handle top-left"></div>
-                                <div class="element-handle top-right"></div>
+                            <div id="product-name-arabic" class="barcode-element product-name-arabic"
+                                style="{{ getElementStyle('product_name_arabic', $settings) }}">
+                                <bdo
+                                    dir="rtl">{{ mb_substr($product->name_arabic ?? '', 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
                             </div>
                         @endif
 
                         @if ($settings['barcode']['visible'] ?? true)
-                            <div class="barcode-element barcode-image" style="{{ getElementStyle('barcode', $settings) }}">
+                            <div class="barcode-element barcode-image"
+                                style="{{ getElementStyle('barcode', $settings) }}">
                                 @php
                                     $barcodeType = $settings['barcode']['type'] ?? 'C128';
                                     $scale = $settings['barcode']['scale'];
                                     $height = $settings['elements']['barcode']['height'] ?? 40;
                                     $showCode = $settings['barcode']['show_value'] ?? true;
                                 @endphp
-                                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode, $barcodeType, $scale, $height, [0, 0, 0], $showCode) }}" alt="{{ $barcode }}">
+                                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode, $barcodeType, $scale, $height, [0, 0, 0], $showCode) }}"
+                                    alt="{{ $barcode }}">
                             </div>
                         @endif
 
                         @if ($settings['size']['visible'] ?? true && !empty($product->size))
                             <div class="barcode-element product-size" style="{{ getElementStyle('size', $settings) }}">
-                                {{ $product->size }}
+                                <span>{{ $product->size }}</span>
                             </div>
                         @endif
 
                         @if ($settings['company_name']['visible'] ?? true)
-                            <div class="barcode-element company-name" style="{{ getElementStyle('company_name', $settings) }}">
-                                {{ $company_name }}
+                            <div class="barcode-element company-name"
+                                style="{{ getElementStyle('company_name', $settings) }}">
+                                <span>{{ $company_name }}</span>
                             </div>
                         @endif
 
@@ -250,13 +249,14 @@
 
                         @if ($settings['price']['visible'] ?? true)
                             <div class="barcode-element price" style="{{ getElementStyle('price', $settings) }}">
-                                {{ number_format($product->mrp * $conversionFactor, 2) }}
+                                <span>{{ number_format($product->mrp * $conversionFactor, 2) }}</span>
                             </div>
                         @endif
 
                         @if ($settings['price_arabic']['visible'] ?? true)
-                            <div class="barcode-element price-arabic" style="{{ getElementStyle('price_arabic', $settings) }}">
-                                {{ arabicNumber($product->mrp * $conversionFactor) }}
+                            <div class="barcode-element price-arabic"
+                                style="{{ getElementStyle('price_arabic', $settings) }}">
+                                <span>{{ arabicNumber($product->mrp * $conversionFactor) }}</span>
                             </div>
                         @endif
                     </div>
