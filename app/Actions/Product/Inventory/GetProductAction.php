@@ -180,6 +180,7 @@ class GetProductAction
             'branches.id as branch_id',
             'branches.name as branch_name',
             'inventories.quantity',
+            'products.thumbnail',
         ]);
 
         if (empty($filters['productBarcode'])) {
@@ -239,6 +240,7 @@ class GetProductAction
                 'branch_id' => $row->branch_id,
                 'branch_name' => $row->branch_name,
                 'quantity' => (int) $row->quantity,
+                'thumbnail' => $row->thumbnail,
             ];
         })->toArray();
 

@@ -73,7 +73,7 @@ class Gallery extends Component
                 throw new \Exception('Please select at least one image to delete.', 1);
             }
             foreach ($this->selected as $id) {
-                $response = (new DeleteImageAction)->execute($id);
+                $response = (new DeleteImageAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }

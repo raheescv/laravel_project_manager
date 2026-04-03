@@ -735,6 +735,9 @@ export default function ProductSearch() {
                                     <table className="table table-hover mb-0 align-middle" style={{ fontSize: '0.85rem' }}>
                                         <thead>
                                             <tr>
+                                                <th className="px-3 py-3 border-bottom" style={{ width: '50px' }}>
+                                                    <i className="fa fa-image text-muted" />
+                                                </th>
                                                 {sortableHeader('products.code', 'SKU', 'barcode', 'text-end')}
                                                 {sortableHeader('products.name', 'Name', 'tag')}
                                                 {sortableHeader('products.size', 'Size', 'arrows-h', 'text-end')}
@@ -752,6 +755,15 @@ export default function ProductSearch() {
                                                     ref={el => { if (el) rowRefs.current[item.barcode] = el; }}
                                                     style={{ transition: 'background-color 0.3s' }}
                                                 >
+                                                    <td>
+                                                        {item.thumbnail ? (
+                                                            <img src={item.thumbnail} alt={item.name} className="rounded" style={{ width: '36px', height: '36px', objectFit: 'cover' }} loading="lazy" />
+                                                        ) : (
+                                                            <span className="d-inline-flex align-items-center justify-content-center rounded bg-light text-muted" style={{ width: '36px', height: '36px' }}>
+                                                                <i className="fa fa-image" />
+                                                            </span>
+                                                        )}
+                                                    </td>
                                                     <td className="text-end">
                                                         <span className="badge bg-light text-primary border" style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{item.code}</span>
                                                     </td>
