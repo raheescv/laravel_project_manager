@@ -28,6 +28,9 @@ class DeleteAction
             $model->items()->update(['deleted_by' => $user_id]);
             $model->items()->delete();
 
+            $model->payments()->update(['deleted_by' => $user_id]);
+            $model->payments()->delete();
+
             $model->update(['deleted_by' => $user_id]);
 
             if (! $model->delete()) {
