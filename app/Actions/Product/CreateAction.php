@@ -60,6 +60,16 @@ class CreateAction
             if ('inventory') {
                 Inventory::selfCreateByProduct($model, $user_id, $quantity = 0);
             }
+            // Handle document file upload
+            if (isset($data['document_file_upload']) && $data['document_file_upload']) {
+                $file = $data['document_file_upload'];
+                $storedPath = $file->store('products/'.$model->id.'/documents', 'public');
+                $model->update([
+                    'document_file' => url('storage/'.$storedPath),
+                    'document_file_name' => $file->getClientOriginalName(),
+                ]);
+            }
+
             if (isset($data['images'])) {
                 foreach ($data['images'] as $file) {
                     $imageData = [

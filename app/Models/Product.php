@@ -58,6 +58,8 @@ class Product extends Model implements AuditableContracts
         'tax',
 
         'description',
+        'document_file',
+        'document_file_name',
         'is_selling',
         'is_favorite',
 

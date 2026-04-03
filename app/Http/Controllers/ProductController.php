@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -35,6 +36,21 @@ class ProductController extends Controller
         $list = (new Product())->getDropDownList($request->all());
 
         return response()->json($list);
+    }
+
+    public function downloadDocument(Product $product)
+    {
+        if (! $product->document_file) {
+            abort(404, 'No document found for this product.');
+        }
+
+        $relativePath = str_replace('/storage/', '', parse_url($product->document_file, PHP_URL_PATH));
+
+        if (! Storage::disk('public')->exists($relativePath)) {
+            abort(404, 'Document file not found.');
+        }
+
+        return Storage::disk('public')->download($relativePath, $product->document_file_name);
     }
 
     public function list(Request $request)

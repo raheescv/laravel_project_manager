@@ -15,6 +15,7 @@ use App\Services\ProductImageAiService;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Spatie\LivewireFilepond\WithFilePond;
 
@@ -49,6 +50,8 @@ class Page extends Component
     public $brands;
 
     public $relatedProducts = [];
+
+    public $document_file;
 
     public $previewImage = null;
 
@@ -156,6 +159,7 @@ class Page extends Component
             'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
             'angles_360.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:10240',
             'degree.*' => 'nullable|integer|min:0|max:359',
+            'document_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar|max:10240',
         ];
 
         return $rules;
@@ -191,6 +195,7 @@ class Page extends Component
             $this->products['images'] = $this->images;
             $this->products['angles_360'] = $this->angles_360;
             $this->products['degree'] = $this->degree;
+            $this->products['document_file_upload'] = $this->document_file;
             if (! $this->table_id) {
                 $selected['mainCategory'] = [
                     'id' => $this->products['main_category_id'],
@@ -231,6 +236,7 @@ class Page extends Component
                 $this->products['sub_category_id'] = $selected['subCategory']['id'];
             }
             $this->dispatch('SelectDropDownValues', $this->products);
+            $this->document_file = null;
             $this->dispatch('filepond-reset-images');
             if ($this->table_id) {
                 $this->loadRelatedProducts();
@@ -310,6 +316,22 @@ class Page extends Component
             }
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->type, $this->table_id);
+        } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function removeDocument()
+    {
+        try {
+            if ($this->product && $this->product->document_file) {
+                $relativePath = str_replace('/storage/', '', parse_url($this->product->document_file, PHP_URL_PATH));
+                Storage::disk('public')->delete($relativePath);
+                $this->product->update(['document_file' => null, 'document_file_name' => null]);
+                $this->products['document_file'] = null;
+                $this->products['document_file_name'] = null;
+                $this->dispatch('success', ['message' => 'Document removed successfully']);
+            }
         } catch (\Exception $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
