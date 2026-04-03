@@ -80,6 +80,7 @@ class Table extends Component
     {
         return [
             'branch' => true,
+            'image' => false,
             'department' => true,
             'main_category' => true,
             'sub_category' => true,
@@ -285,6 +286,7 @@ class Table extends Component
                 'units.name as unit_name',
                 'branch_id',
                 'branches.name as branch_name',
+                'products.thumbnail',
             ]);
     }
 }

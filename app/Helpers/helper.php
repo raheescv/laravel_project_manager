@@ -403,6 +403,13 @@ if (! function_exists('barcodeTypes')) {
         ];
     }
 }
+if (! function_exists('barcodePrefix')) {
+    function barcodePrefix(): string
+    {
+        return cache('barcode_prefix', '') ?? '';
+    }
+}
+
 if (! function_exists('accountTypes')) {
     function accountTypes()
     {

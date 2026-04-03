@@ -109,21 +109,23 @@ class ProductImageFolderMatcher
                 continue;
             }
 
-            /** @var Product|null $product */
-            $product = $productsByCode->get($matchedCode);
+            /** @var Collection|null $products */
+            $products = $productsByCode->get($matchedCode);
 
-            if (! $product) {
+            if (! $products || $products->isEmpty()) {
                 $missingCodes->push($entry['normalized_code']);
                 $detectedCodes->push($entry['normalized_code']);
 
                 continue;
             }
 
-            $matchedProducts->put($product->id, [
-                'id' => $product->id,
-                'code' => $product->code,
-                'name' => $product->name,
-            ]);
+            foreach ($products as $product) {
+                $matchedProducts->put($product->id, [
+                    'id' => $product->id,
+                    'code' => $product->code,
+                    'name' => $product->name,
+                ]);
+            }
 
             $detectedCodes->push($matchedCode);
             $matchedImageFiles++;
@@ -180,33 +182,24 @@ class ProductImageFolderMatcher
                 continue;
             }
 
-            /** @var Product|null $product */
-            $product = $productsByCode->get($matchedCode);
+            /** @var Collection|null $products */
+            $products = $productsByCode->get($matchedCode);
 
-            if (! $product) {
+            if (! $products || $products->isEmpty()) {
                 $missingCodes->push($entry['normalized_code']);
                 $detectedCodes->push($entry['normalized_code']);
 
                 continue;
             }
 
-            $matchedProducts->put($product->id, [
-                'id' => $product->id,
-                'code' => $product->code,
-                'name' => $product->name,
-            ]);
-            $detectedCodes->push($matchedCode);
-
-            $existingImage = $product->images()
-                ->where('method', 'normal')
-                ->where('name', $entry['basename'])
-                ->exists();
-
-            if ($existingImage) {
-                $summary['skipped_duplicates']++;
-
-                continue;
+            foreach ($products as $product) {
+                $matchedProducts->put($product->id, [
+                    'id' => $product->id,
+                    'code' => $product->code,
+                    'name' => $product->name,
+                ]);
             }
+            $detectedCodes->push($matchedCode);
 
             $content = $zip->getFromIndex($entry['index']);
 
@@ -214,24 +207,43 @@ class ProductImageFolderMatcher
                 continue;
             }
 
-            $relativePath = 'products/'.$product->id.'/'.$this->generateStoredFilename($entry['basename'], $entry['extension']);
-            Storage::disk('public')->put($relativePath, $content);
-            $publicPath = url('storage/'.$relativePath);
+            $anyImported = false;
 
-            $product->images()->create([
-                'name' => $entry['basename'],
-                'size' => strlen($content),
-                'type' => $entry['extension'],
-                'method' => 'normal',
-                'path' => $publicPath,
-            ]);
+            foreach ($products as $product) {
+                $existingImage = $product->images()
+                    ->where('method', 'normal')
+                    ->where('name', $entry['basename'])
+                    ->exists();
 
-            if (blank($product->thumbnail)) {
-                $product->update(['thumbnail' => $publicPath]);
+                if ($existingImage) {
+                    $summary['skipped_duplicates']++;
+
+                    continue;
+                }
+
+                $relativePath = 'products/'.$product->id.'/'.$this->generateStoredFilename($entry['basename'], $entry['extension']);
+                Storage::disk('public')->put($relativePath, $content);
+                $publicPath = url('storage/'.$relativePath);
+
+                $product->images()->create([
+                    'name' => $entry['basename'],
+                    'size' => strlen($content),
+                    'type' => $entry['extension'],
+                    'method' => 'normal',
+                    'path' => $publicPath,
+                ]);
+
+                if (blank($product->thumbnail)) {
+                    $product->update(['thumbnail' => $publicPath]);
+                }
+
+                $summary['imported_images']++;
+                $anyImported = true;
             }
 
-            $summary['imported_images']++;
-            $summary['matched_image_files']++;
+            if ($anyImported) {
+                $summary['matched_image_files']++;
+            }
         }
 
         $zip->close();
@@ -299,7 +311,7 @@ class ProductImageFolderMatcher
         $productsByCode = Product::query()
             ->get(['id', 'code', 'name', 'thumbnail'])
             ->filter(fn (Product $product) => $this->normalizeCode((string) $product->code) !== '')
-            ->keyBy(fn (Product $product) => $this->normalizeCode((string) $product->code));
+            ->groupBy(fn (Product $product) => $this->normalizeCode((string) $product->code));
 
         $sortedProductCodes = $productsByCode
             ->keys()

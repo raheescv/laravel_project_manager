@@ -5,9 +5,13 @@
     <form wire:submit="save">
         <div class="card-body p-3">
             <div class="row g-2">
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-4">
                     <label class="form-label fw-medium small mb-1" for="barcode_type">Barcode Type</label>
                     {{ html()->select('barcode_type', barcodeTypes())->value('')->class('form-select form-select-sm')->placeholder('Select Barcode Type')->attribute('wire:model', 'barcode_type') }}
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label fw-medium small mb-1" for="barcode_prefix">Barcode Prefix</label>
+                    {{ html()->text('barcode_prefix')->value($barcode_prefix)->class('form-control form-control-sm')->placeholder('e.g. LS')->attribute('wire:model', 'barcode_prefix')->attribute('maxlength', '10') }}
                 </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label fw-medium small mb-1" for="default_product_type">Default Product Type</label>

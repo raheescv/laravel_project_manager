@@ -163,6 +163,9 @@
                         @if ($inventory_visible_column['branch'] ?? true)
                             <th class="border-bottom py-2"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branches.name" label="Branch" /> </th>
                         @endif
+                        @if ($inventory_visible_column['image'] ?? false)
+                            <th class="border-bottom py-2">Image</th>
+                        @endif
                         @if ($inventory_visible_column['department'] ?? true)
                             <th class="border-bottom py-2"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="departments.name" label="Department" /> </th>
                         @endif
@@ -226,6 +229,17 @@
                                         </span>
                                         <span class="small">{{ $item->branch_name ?? 'N/A' }}</span>
                                     </div>
+                                </td>
+                            @endif
+                            @if ($inventory_visible_column['image'] ?? false)
+                                <td class="py-1">
+                                    @if ($item->thumbnail)
+                                        <img src="{{ $item->thumbnail }}" alt="{{ $item->name }}" class="rounded" style="width: 36px; height: 36px; object-fit: cover;" loading="lazy">
+                                    @else
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded bg-light text-muted" style="width: 36px; height: 36px;">
+                                            <i class="fa fa-image"></i>
+                                        </span>
+                                    @endif
                                 </td>
                             @endif
                             @if ($inventory_visible_column['department'] ?? true)
@@ -328,6 +342,9 @@
                 <tfoot class="table-group-divider bg-light position-sticky bottom-0" style="z-index: 1;">
                     <tr>
                         @if ($inventory_visible_column['branch'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['image'] ?? false)
                             <th></th>
                         @endif
                         @if ($inventory_visible_column['department'] ?? true)

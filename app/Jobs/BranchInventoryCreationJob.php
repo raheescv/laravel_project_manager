@@ -28,11 +28,11 @@ class BranchInventoryCreationJob implements ShouldQueue
                 $data['branch_id'] = $this->branchId;
                 $data['quantity'] = 0;
                 $data['remarks'] = null;
-                $data['barcode'] = $this->product->barcode;
-                if (! isset($data['barcode'])) {
-                    $data['barcode'] = generateBarcode();
+                $data['barcode_number'] = $this->product->barcode_number;
+                if (! isset($data['barcode_number'])) {
+                    $data['barcode_number'] = generateBarcode();
                 }
-                $data['batch'] = $data['barcode'];
+                $data['batch'] = $data['barcode_number'];
                 $data['created_by'] = $data['updated_by'] = $this->userId;
                 $response = (new CreateAction())->execute($data);
                 if (! $response['success']) {

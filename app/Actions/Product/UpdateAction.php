@@ -5,12 +5,14 @@ namespace App\Actions\Product;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Product;
+use Illuminate\Support\Facades\Storage;
 
 class UpdateAction
 {
     public function execute($data, $id, $user_id)
     {
         try {
+            /** @var Product|null $model */
             $model = Product::find($id);
             if (! $model) {
                 throw new \Exception("Product not found with the specified ID: $id.", 1);
@@ -38,14 +40,29 @@ class UpdateAction
                 $data['cost'] = $data['mrp'];
             }
             if ($data['type'] == 'service') {
-                unset($data['barcode']);
+                unset($data['barcode_number']);
             }
             validationHelper(Product::rules($data, $id), $data);
             $data['updated_by'] = $user_id;
             $model->update($data);
 
             if ($data['type'] == 'product') {
-                $model->inventories()->update(['barcode' => $data['barcode']]);
+                $model->inventories()->update(['barcode_number' => $data['barcode_number']]);
+            }
+
+            // Handle document file upload
+            if (isset($data['document_file_upload']) && $data['document_file_upload']) {
+                $file = $data['document_file_upload'];
+                // Delete old document if exists
+                if ($model->document_file) {
+                    $oldPath = str_replace('/storage/', '', parse_url($model->document_file, PHP_URL_PATH));
+                    Storage::disk('public')->delete($oldPath);
+                }
+                $storedPath = $file->store('products/'.$model->id.'/documents', 'public');
+                $model->update([
+                    'document_file' => url('storage/'.$storedPath),
+                    'document_file_name' => $file->getClientOriginalName(),
+                ]);
             }
 
             if (isset($data['images']) && is_array($data['images'])) {

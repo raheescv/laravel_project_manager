@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('import', 'import')->name('import')->can('product.create');
         Route::get('gallery', 'gallery')->name('gallery')->can('product.view');
         Route::get('list', 'get')->name('list');
+        Route::get('{product}/download-document', 'downloadDocument')->name('download-document')->can('product.view');
     });
     Route::name('service::')->prefix('service')->controller(ServiceController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('service.view');

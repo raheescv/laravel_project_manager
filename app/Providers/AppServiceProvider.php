@@ -68,6 +68,9 @@ class AppServiceProvider extends ServiceProvider
             Cache::remember('barcode_type', now()->addYear(), function () {
                 return Configuration::where('key', 'barcode_type')->value('value');
             });
+            Cache::remember('barcode_prefix', now()->addYear(), function () {
+                return Configuration::where('key', 'barcode_prefix')->value('value') ?? '';
+            });
             Cache::remember('payment_methods', now()->addYear(), function () {
                 $list = Configuration::where('key', 'payment_methods')->value('value');
 

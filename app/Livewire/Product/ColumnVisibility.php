@@ -19,6 +19,7 @@ class ColumnVisibility extends Component
     {
         return [
             'id' => true,
+            'image' => false,
             'department' => true,
             'main_category' => true,
             'sub_category' => true,

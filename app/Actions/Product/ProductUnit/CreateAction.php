@@ -9,8 +9,8 @@ class CreateAction
     public function execute($data)
     {
         try {
-            if (! $data['barcode']) {
-                $data['barcode'] = generateBarcode();
+            if (! ($data['barcode_number'] ?? null)) {
+                $data['barcode_number'] = generateBarcode();
             }
             $duplicate = ProductUnit::where('product_id', $data['product_id'])->where('sub_unit_id', $data['sub_unit_id'])->exists();
             if ($duplicate) {

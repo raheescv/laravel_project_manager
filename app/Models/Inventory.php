@@ -25,7 +25,8 @@ class Inventory extends Model implements AuditableContracts
         'employee_id',
         'product_id',
         'quantity',
-        'barcode',
+        'barcode_prefix',
+        'barcode_number',
         'batch',
         'cost',
         'model',
@@ -41,7 +42,7 @@ class Inventory extends Model implements AuditableContracts
             'branch_id' => ['required'],
             'product_id' => ['required'],
             'quantity' => ['required'],
-            'barcode' => ['required'],
+            'barcode_number' => ['required'],
             'batch' => ['required'],
             'cost' => ['required'],
             'created_by' => ['required'],
@@ -52,6 +53,18 @@ class Inventory extends Model implements AuditableContracts
     protected static function booted()
     {
         static::addGlobalScope(new AssignedBranchScope());
+        static::creating(function (Inventory $inventory): void {
+            $prefix = barcodePrefix();
+            if ($prefix && $inventory->barcode_number) {
+                $inventory->barcode_prefix = $prefix;
+            }
+        });
+        static::updating(function (Inventory $inventory): void {
+            $prefix = barcodePrefix();
+            if ($prefix && $inventory->isDirty('barcode_number') && $inventory->barcode_number) {
+                $inventory->barcode_prefix = $prefix;
+            }
+        });
     }
 
     public static function find($id)
@@ -105,11 +118,11 @@ class Inventory extends Model implements AuditableContracts
             $data['remarks'] = null;
             switch ($barcode_type) {
                 case 'product_wise':
-                    $data['barcode'] = $product->barcode;
+                    $data['barcode_number'] = $product->barcode_number;
                     break;
             }
-            if (! isset($data['barcode'])) {
-                $data['barcode'] = generateBarcode();
+            if (! isset($data['barcode_number'])) {
+                $data['barcode_number'] = generateBarcode();
             }
             $data['batch'] = 'General';
             $data['created_by'] = $data['updated_by'] = $userId;

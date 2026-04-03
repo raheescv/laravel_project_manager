@@ -101,7 +101,8 @@ class OverviewReport extends Component
             ->when($this->branchId, fn ($q) => $q->where('sales.branch_id', $this->branchId))
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to))
-            ->where('sales.status', 'completed');
+            ->where('sales.status', 'completed')
+            ->whereNull('sales.deleted_at');
     }
 
     private function getBaseReturnQuery(?string $from, ?string $to): callable
@@ -110,7 +111,8 @@ class OverviewReport extends Component
             ->when($this->branchId, fn ($q) => $q->where('sale_returns.branch_id', $this->branchId))
             ->when($from, fn ($q) => $q->where('sale_returns.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_returns.date', '<=', $to))
-            ->where('sale_returns.status', 'completed');
+            ->where('sale_returns.status', 'completed')
+            ->whereNull('sale_returns.deleted_at');
     }
 
     private function getEmployeesQuery(callable $baseQuery, callable $baseReturnQuery)
@@ -225,6 +227,7 @@ class OverviewReport extends Component
             ->when($this->fromDate, fn ($q) => $q->where('sale_payments.date', '>=', $this->fromDate))
             ->when($this->toDate, fn ($q) => $q->where('sale_payments.date', '<=', $this->toDate))
             ->where('sales.status', 'completed')
+            ->whereNull('sales.deleted_at')
             ->select('accounts.name as payment_method')
             ->selectRaw("'sale' as payment_type")
             ->selectRaw('SUM(sale_payments.amount) as total')
@@ -273,6 +276,7 @@ class OverviewReport extends Component
             ->when($this->fromDate, fn ($q) => $q->where('sale_return_payments.date', '>=', $this->fromDate))
             ->when($this->toDate, fn ($q) => $q->where('sale_return_payments.date', '<=', $this->toDate))
             ->where('sale_returns.status', 'completed')
+            ->whereNull('sale_returns.deleted_at')
             ->select('accounts.name as payment_method')
             ->selectRaw('SUM(sale_return_payments.amount) as total')
             ->selectRaw('COUNT(DISTINCT sale_return_payments.sale_return_id) as transaction_count')

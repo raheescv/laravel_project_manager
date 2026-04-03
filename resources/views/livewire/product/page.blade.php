@@ -213,7 +213,7 @@
                                                 <span class="input-group-text bg-light border-primary-subtle">
                                                     <i class="fa fa-qrcode"></i>
                                                 </span>
-                                                {{ html()->input('barcode')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter a unique barcode here')->attribute('wire:model', 'products.barcode') }}
+                                                {{ html()->input('barcode_number')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter a unique barcode here')->attribute('wire:model', 'products.barcode_number') }}
                                             </div>
                                             <small class="text-muted mt-1 d-block">Enter a unique barcode identifier for this product</small>
                                         </div>
@@ -227,6 +227,41 @@
                                     </label>
                                     {{ html()->textarea('description')->value('')->class('form-control border-secondary-subtle shadow-sm')->rows(3)->placeholder('Enter product description')->id('description')->attribute('wire:model', 'products.description') }}
                                     <small class="text-muted mt-1 d-block">Add details about the product specifications, features, or any other relevant information</small>
+                                </div>
+
+                                <div class="col-12 mt-2">
+                                    <label for="document_file" class="form-label fw-medium">
+                                        <i class="fa fa-paperclip text-primary me-1 small"></i>
+                                        Document File
+                                    </label>
+                                    @if (isset($products['document_file']) && $products['document_file'])
+                                        <div class="d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded border">
+                                            <i class="fa fa-file-o text-primary fs-5"></i>
+                                            <div class="flex-grow-1 text-truncate">
+                                                <span class="fw-medium small">{{ $products['document_file_name'] ?? 'Document' }}</span>
+                                            </div>
+                                            <a href="{{ $products['document_file'] }}" target="_blank" class="btn btn-sm btn-outline-primary" title="View">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+                                            <a href="{{ $products['document_file'] }}" download class="btn btn-sm btn-outline-success" title="Download">
+                                                <i class="fa fa-download"></i>
+                                            </a>
+                                            <button type="button" wire:click="removeDocument" wire:confirm="Are you sure you want to remove this document?" class="btn btn-sm btn-outline-danger" title="Remove">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    @endif
+                                    <input type="file" wire:model="document_file" id="document_file"
+                                        class="form-control form-control-sm border-secondary-subtle shadow-sm"
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar">
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fa fa-info-circle me-1"></i>
+                                        Upload a document file (PDF, Word, Excel, PowerPoint, TXT, CSV, ZIP - Max 10MB)
+                                    </small>
+                                    @error('document_file') <span class="text-danger small">{{ $message }}</span> @enderror
+                                    <div wire:loading wire:target="document_file" class="text-primary small mt-1">
+                                        <i class="fa fa-spinner fa-spin me-1"></i> Uploading...
+                                    </div>
                                 </div>
                             </div>
                         </div>

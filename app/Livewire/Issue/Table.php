@@ -30,7 +30,7 @@ class Table extends Component
 
     public bool $selectAll = false;
 
-    public string $sortField = 'date';
+    public string $sortField = 'id';
 
     public string $sortDirection = 'desc';
 

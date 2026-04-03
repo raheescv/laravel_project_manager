@@ -18,11 +18,11 @@ class View extends Component
             'account:id,name,mobile',
             'sourceIssue:id,date',
             'items' => fn ($q) => $q->with(
-                'product:id,name,code',
+                'product:id,name,code,thumbnail',
                 'inventory:id,product_id,barcode,batch',
                 'sourceIssueItem:id,issue_id,inventory_id,product_id,quantity_in,quantity_out',
                 'sourceIssueItem.issue:id,type,date',
-                'sourceIssueItem.product:id,name,code',
+                'sourceIssueItem.product:id,name,code,thumbnail',
                 'returnedItems:id,issue_id,source_issue_item_id,quantity_in',
                 'returnedItems.issue:id,type,date'
             )->orderBy('id', 'asc'),

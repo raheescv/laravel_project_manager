@@ -62,8 +62,8 @@ class StockUpdateAction
             $data = $fromInventory->toArray();
             $data['branch_id'] = $branchId;
             $data['employee_id'] = null; // Ensure branch inventory (not employee inventory)
-            if (! isset($data['barcode'])) {
-                $data['barcode'] = generateBarcode();
+            if (! isset($data['barcode_number'])) {
+                $data['barcode_number'] = generateBarcode();
             }
             $data['created_by'] = $data['updated_by'] = $userId;
             $response = (new CreateAction())->execute($data);

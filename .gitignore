@@ -28,4 +28,5 @@ template
 .qodo
 dump.rdb
 .cache/*
+/.cache/puppeteer
 /.claude/worktrees
