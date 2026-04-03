@@ -169,6 +169,14 @@
                                 </div>
                             </th>
                         @endif
+                        @if ($product_visible_column['image'] ?? false)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="demo-psi-camera me-2 text-secondary small"></i>
+                                    Image
+                                </div>
+                            </th>
+                        @endif
                         @if ($product_visible_column['department'] ?? true)
                             <th class="border-0">
                                 <div class="d-flex align-items-center">
@@ -278,6 +286,17 @@
                                         </div>
                                         <span class="badge bg-secondary rounded-pill">{{ $item->id }}</span>
                                     </div>
+                                </td>
+                            @endif
+                            @if ($product_visible_column['image'] ?? false)
+                                <td>
+                                    @if ($item->thumbnail)
+                                        <img src="{{ $item->thumbnail }}" alt="{{ $item->name }}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;" loading="lazy">
+                                    @else
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded bg-light text-muted" style="width: 40px; height: 40px;">
+                                            <i class="fa fa-image"></i>
+                                        </span>
+                                    @endif
                                 </td>
                             @endif
                             @if ($product_visible_column['department'] ?? true)
