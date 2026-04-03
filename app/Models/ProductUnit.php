@@ -13,6 +13,18 @@ class ProductUnit extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (ProductUnit $pu): void {
+            $prefix = barcodePrefix();
+            if ($prefix && $pu->barcode_number) {
+                $pu->barcode_prefix = $prefix;
+            }
+        });
+        static::updating(function (ProductUnit $pu): void {
+            $prefix = barcodePrefix();
+            if ($prefix && $pu->isDirty('barcode_number') && $pu->barcode_number) {
+                $pu->barcode_prefix = $prefix;
+            }
+        });
         static::saved(function (ProductUnit $pu): void {
             Cache::increment('product_units_version_'.$pu->product_id);
         });
@@ -26,7 +38,8 @@ class ProductUnit extends Model
         'product_id',
         'sub_unit_id',
         'conversion_factor',
-        'barcode',
+        'barcode_prefix',
+        'barcode_number',
     ];
 
     public static function rules($id = null, $merge = [])
@@ -35,7 +48,7 @@ class ProductUnit extends Model
             'product_id' => ['required'],
             'sub_unit_id' => ['required'],
             'conversion_factor' => ['required'],
-            'barcode' => ['required'],
+            'barcode_number' => ['required'],
         ], $merge);
     }
 

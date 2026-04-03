@@ -79,7 +79,7 @@ class CreateProductUnitsCommand extends Command
                             'product_id' => $product->id,
                             'sub_unit_id' => $unit->id,
                             'conversion_factor' => $unit->code == '30yard' ? '27.5' : '23', // Base unit has conversion factor of 1
-                            'barcode' => null,
+                            'barcode_number' => null,
                             'tenant_id' => $product->tenant_id,
                         ];
 

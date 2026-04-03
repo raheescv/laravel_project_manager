@@ -38,14 +38,14 @@ class UpdateAction
                 $data['cost'] = $data['mrp'];
             }
             if ($data['type'] == 'service') {
-                unset($data['barcode']);
+                unset($data['barcode_number']);
             }
             validationHelper(Product::rules($data, $id), $data);
             $data['updated_by'] = $user_id;
             $model->update($data);
 
             if ($data['type'] == 'product') {
-                $model->inventories()->update(['barcode' => $data['barcode']]);
+                $model->inventories()->update(['barcode_number' => $data['barcode_number']]);
             }
 
             if (isset($data['images']) && is_array($data['images'])) {

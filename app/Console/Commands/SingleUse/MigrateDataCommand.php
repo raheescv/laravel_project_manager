@@ -817,7 +817,7 @@ class MigrateDataCommand extends Command
                 'tax' => $item->tax,
                 'priority' => $item->priority ? $item->priority : 0,
                 'size' => $item->size,
-                'barcode' => $item->barcode,
+                'barcode_number' => $item->barcode,
                 'created_at' => $item->created_at,
                 'updated_at' => $item->updated_at,
             ];

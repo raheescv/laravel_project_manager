@@ -14,6 +14,8 @@ class Configurations extends Component
 {
     public $barcode_type;
 
+    public $barcode_prefix;
+
     public $payment_methods;
 
     public $default_payment_method_id;
@@ -33,6 +35,7 @@ class Configurations extends Component
     public function mount()
     {
         $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value');
+        $this->barcode_prefix = Configuration::where('key', 'barcode_prefix')->value('value');
         $this->payment_methods = Configuration::where('key', 'payment_methods')->value('value');
         $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
         $this->default_product_type = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
@@ -61,6 +64,8 @@ class Configurations extends Component
     {
         Configuration::updateOrCreate(['key' => 'default_payment_method_id'], ['value' => $this->default_payment_method_id]);
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type]);
+        Configuration::updateOrCreate(['key' => 'barcode_prefix'], ['value' => $this->barcode_prefix]);
+        Cache::forget('barcode_prefix');
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => $this->default_product_type]);
         Configuration::updateOrCreate(['key' => 'default_purchase_branch_id'], ['value' => json_encode($this->default_purchase_branch_id)]);

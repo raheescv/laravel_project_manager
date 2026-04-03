@@ -26,7 +26,7 @@ class ProductSeeder extends Seeder
                 'department_id' => ! empty($departmentIds) ? $faker->randomElement($departmentIds) : null,
                 'main_category_id' => ! empty($mainCategoryIds) ? $faker->randomElement($mainCategoryIds) : null,
                 'code' => strtoupper($faker->bothify('??###')),
-                'barcode' => strtoupper($faker->bothify('##??##')),
+                'barcode_number' => strtoupper($faker->bothify('##??##')),
                 'unit_id' => 1,
                 'cost' => rand(99, 999),
                 'mrp' => rand(999, 9999),

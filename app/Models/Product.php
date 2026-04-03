@@ -21,6 +21,18 @@ class Product extends Model implements AuditableContracts
 
     protected static function booted(): void
     {
+        static::creating(function (Product $product): void {
+            $prefix = barcodePrefix();
+            if ($prefix && $product->barcode_number) {
+                $product->barcode_prefix = $prefix;
+            }
+        });
+        static::updating(function (Product $product): void {
+            $prefix = barcodePrefix();
+            if ($prefix && $product->isDirty('barcode_number') && $product->barcode_number) {
+                $product->barcode_prefix = $prefix;
+            }
+        });
         static::saved(function (Product $product): void {
             if (array_key_exists('unit_id', $product->getChanges())) {
                 Cache::increment('product_units_version_'.$product->id);
@@ -54,7 +66,8 @@ class Product extends Model implements AuditableContracts
 
         'time',
 
-        'barcode',
+        'barcode_prefix',
+        'barcode_number',
         'pattern',
         'color',
         'size',
@@ -96,9 +109,9 @@ class Product extends Model implements AuditableContracts
             'main_category_id' => ['required'],
             'cost' => ['required'],
             'mrp' => ['required'],
-            'barcode' => array_merge(
+            'barcode_number' => array_merge(
                 ['required_if:type,product'],
-                ! empty($data['barcode'] ?? null) ? [Rule::unique('products')->where('tenant_id', $tenantId)->where('barcode', $data['barcode'])->whereNull('deleted_at')->ignore($id)] : []
+                ! empty($data['barcode_number'] ?? null) ? [Rule::unique('products')->where('tenant_id', $tenantId)->where('barcode_number', $data['barcode_number'])->whereNull('deleted_at')->ignore($id)] : []
             ),
         ];
 
@@ -344,8 +357,8 @@ class Product extends Model implements AuditableContracts
             $data['code'] = self::generateUniqueCode();
         }
 
-        if (! isset($data['barcode']) || empty($data['barcode'])) {
-            $data['barcode'] = generateBarcode();
+        if (! isset($data['barcode_number']) || empty($data['barcode_number'])) {
+            $data['barcode_number'] = generateBarcode();
         }
 
         $data['cost'] = extractNumericValue($data['cost'] ?? 0);

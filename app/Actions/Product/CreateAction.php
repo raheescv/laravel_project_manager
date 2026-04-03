@@ -41,8 +41,8 @@ class CreateAction
             }
 
             // Only auto-generate barcode for services, products require manual barcode entry
-            if ($data['type'] == 'service' || empty($data['barcode'])) {
-                $data['barcode'] = generateBarcode();
+            if ($data['type'] == 'service' || empty($data['barcode_number'])) {
+                $data['barcode_number'] = generateBarcode();
             }
             if (! isset($data['code']) || empty($data['code'])) {
                 $data['code'] = Product::generateUniqueCode();

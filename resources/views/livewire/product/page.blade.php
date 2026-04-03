@@ -213,7 +213,7 @@
                                                 <span class="input-group-text bg-light border-primary-subtle">
                                                     <i class="fa fa-qrcode"></i>
                                                 </span>
-                                                {{ html()->input('barcode')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter a unique barcode here')->attribute('wire:model', 'products.barcode') }}
+                                                {{ html()->input('barcode_number')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter a unique barcode here')->attribute('wire:model', 'products.barcode_number') }}
                                             </div>
                                             <small class="text-muted mt-1 d-block">Enter a unique barcode identifier for this product</small>
                                         </div>
