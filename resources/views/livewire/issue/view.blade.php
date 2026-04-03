@@ -341,6 +341,11 @@
                                     @endif
                                     <td class="text-muted">#{{ $item->inventory_id ?? '—' }}</td>
                                     <td>
+                                        <div class="d-flex align-items-start gap-2">
+                                            @if ($item->product?->thumbnail)
+                                                <img src="{{ url($item->product->thumbnail) }}" alt="{{ $item->product->name }}" class="rounded border" style="width: 40px; height: 40px; object-fit: cover; flex-shrink: 0;">
+                                            @endif
+                                            <div>
                                         <span class="fw-medium">{{ $item->product?->name ?? '—' }}</span>
                                         <div class="small text-muted mt-1">
                                             @if ($item->product?->code)
@@ -358,6 +363,8 @@
                                                 Source Issue: #{{ $item->sourceIssueItem->issue_id }}
                                             </div>
                                         @endif
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="text-end">{{ $item->quantity_out > 0 ? currency($item->quantity_out) : '—' }}</td>
                                     <td class="text-end">{{ $item->quantity_in > 0 ? currency($item->quantity_in) : '—' }}</td>

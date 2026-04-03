@@ -50,7 +50,7 @@
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="type">
-                                    <i class="demo-psi-calendar-4 me-1"></i> To Date
+                                    <i class="fa fa-tag me-1"></i> Type
                                 </label>
                                 <select wire:model.live="type" class="form-select form-select-sm" id="type">
                                     <option value="">All</option>

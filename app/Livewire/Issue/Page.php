@@ -43,7 +43,7 @@ class Page extends Component
         $this->source_issue_id = (int) request()->query('source_issue_id') ?: null;
 
         if ($this->table_id) {
-            $issue = Issue::with('account', 'sourceIssue:id,date', 'items.product', 'items.inventory.product')->find($this->table_id);
+            $issue = Issue::with('account', 'sourceIssue:id,date', 'items.product:id,name,thumbnail', 'items.inventory.product:id,name,thumbnail')->find($this->table_id);
             if (! $issue) {
                 $this->redirect(route('issue::index'));
 
@@ -71,6 +71,7 @@ class Page extends Component
                     'inventory_id' => $resolvedInventoryId,
                     'product_id' => $inventoryProduct?->id ?? $item->product_id,
                     'name' => $inventoryProduct?->name ?? $item->product?->name,
+                    'thumbnail' => $inventoryProduct?->thumbnail ?? $item->product?->thumbnail,
                     'quantity_in' => (string) $item->quantity_in,
                     'quantity_out' => (string) $item->quantity_out,
                 ];
@@ -118,7 +119,7 @@ class Page extends Component
             return;
         }
 
-        $inventory = Inventory::with('product:id,name')->find((int) $inventoryId);
+        $inventory = Inventory::with('product:id,name,thumbnail')->find((int) $inventoryId);
         if (! $inventory || ! $inventory->product) {
             $this->dispatch('error', ['message' => 'Inventory item not found.']);
 
@@ -134,6 +135,7 @@ class Page extends Component
             'inventory_id' => (int) $inventoryId,
             'product_id' => $inventory->product_id,
             'name' => $inventory->product->name,
+            'thumbnail' => $inventory->product->thumbnail,
             'quantity_in' => (string) ($this->isReturnMode() ? $qty : 0),
             'quantity_out' => (string) ($this->isReturnMode() ? 0 : $qty),
         ];
@@ -152,7 +154,7 @@ class Page extends Component
             return;
         }
 
-        $inventory = Inventory::with('product:id,name')
+        $inventory = Inventory::with('product:id,name,thumbnail')
             ->whereNull('employee_id')
             ->where('branch_id', session('branch_id'))
             ->where('barcode', $barcode)
@@ -291,7 +293,7 @@ class Page extends Component
 
     private function prefillReturnItemsFromSourceIssue(int $sourceIssueId): void
     {
-        $sourceIssue = Issue::with(['account:id,name', 'items' => fn ($q) => $q->orderBy('id'), 'items.product:id,name', 'items.inventory:id,product_id'])
+        $sourceIssue = Issue::with(['account:id,name', 'items' => fn ($q) => $q->orderBy('id'), 'items.product:id,name,thumbnail', 'items.inventory:id,product_id'])
             ->where('type', 'issue')
             ->find($sourceIssueId);
 
@@ -329,6 +331,7 @@ class Page extends Component
                 'inventory_id' => $sourceItem->inventory_id ?: $this->resolveInventoryIdForProduct((int) $sourceItem->product_id),
                 'product_id' => $sourceItem->product_id,
                 'name' => $sourceItem->product?->name,
+                'thumbnail' => $sourceItem->product?->thumbnail,
                 'quantity_in' => (string) $availableQty,
                 'quantity_out' => '0',
             ];

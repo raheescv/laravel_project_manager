@@ -468,7 +468,14 @@
                                                     <td class="text-muted">#{{ $item['source_issue_item_id'] ?? '-' }}</td>
                                                 @endif
                                                 <td class="text-muted">#{{ $item['inventory_id'] ?? '-' }}</td>
-                                                <td class="fw-medium">{{ $item['name'] }}</td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        @if (!empty($item['thumbnail']))
+                                                            <img src="{{ url($item['thumbnail']) }}" alt="{{ $item['name'] }}" class="rounded border" style="width: 36px; height: 36px; object-fit: cover; flex-shrink: 0;">
+                                                        @endif
+                                                        <span class="fw-medium">{{ $item['name'] }}</span>
+                                                    </div>
+                                                </td>
                                                 <td class="text-end">
                                                     @if ($this->isReturnMode())
                                                         <input type="number" step="any" min="0" wire:model.live="items.{{ $item['key'] }}.quantity_in"
