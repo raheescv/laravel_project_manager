@@ -37,6 +37,7 @@ class ProductResource extends JsonResource
             // 'is_selling' => $this->is_selling,
             // 'is_favorite' => $this->is_favorite,
             'time' => $this->time,
+            'document_file' => $this->document_file,
             'created_at' => systemDateTime($this->created_at),
             'updated_at' => systemDateTime($this->updated_at),
 
