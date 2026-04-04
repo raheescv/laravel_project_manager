@@ -242,6 +242,10 @@ class Complaint extends Component
             'tenant_id' => $mc->tenant_id,
             'branch_id' => $mc->branch_id,
             'property_id' => $maintenance->property_id,
+            'property_group_id' => $maintenance->property_group_id,
+            'property_building_id' => $maintenance->property_building_id,
+            'property_type_id' => $maintenance->property_type_id,
+            'order_no' => time(),
             'date' => now()->format('Y-m-d'),
             'type' => 'Add',
             'status' => 'requirement',
@@ -461,10 +465,14 @@ class Complaint extends Component
 
             foreach ($this->images as $file) {
                 $image = new SupplyRequestImage();
+                $result = $image->storeFile($file, $sr->id);
+                if (! ($result['success'] ?? false)) {
+                    throw new Exception($result['message'] ?? 'Failed to upload file.');
+                }
                 $image->supply_request_id = $sr->id;
                 $image->name = $file->getClientOriginalName();
-                $image->type = $file->getClientMimeType();
-                $image->path = $image->storeFile($file, $sr->id);
+                $image->type = $result['type'] ?? $file->getClientMimeType();
+                $image->path = $result['path'];
                 $image->save();
             }
 

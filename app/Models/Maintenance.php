@@ -57,6 +57,11 @@ class Maintenance extends Model implements AuditableContracts
         ];
     }
 
+    public function setSegmentAttribute($value)
+    {
+        $this->attributes['segment'] = $value === '' ? null : $value;
+    }
+
     protected static function booted(): void
     {
         static::saving(function (self $model) {
