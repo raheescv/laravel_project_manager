@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Property\MaintenanceController;
 use App\Http\Controllers\Property\PropertyBuildingController;
 use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyGroupController;
@@ -97,6 +98,15 @@ Route::middleware('auth')->group(function (): void {
         Route::name('tenant::')->prefix('tenant')->controller(TenantDetailController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('tenant detail.view');
             Route::get('list', 'get')->name('list');
+        });
+
+        // Maintenance
+        Route::name('maintenance::')->prefix('maintenance')->controller(MaintenanceController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('maintenance.view');
+            Route::get('create', 'create')->name('create')->can('maintenance.create');
+            Route::get('edit/{id}', 'edit')->name('edit')->can('maintenance.edit');
+            Route::get('assign/{id}', 'assign')->name('assign')->can('maintenance.assign');
+            Route::get('complaint/{id}', 'complaint')->name('complaint')->can('maintenance.view');
         });
     });
 });

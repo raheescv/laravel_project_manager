@@ -13,6 +13,8 @@ use App\Http\Controllers\Settings\CountryController;
 use App\Http\Controllers\Settings\CustomerTypeController;
 use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\DesignationController;
+use App\Http\Controllers\Settings\ComplaintCategoryController;
+use App\Http\Controllers\Settings\ComplaintController;
 use App\Http\Controllers\Settings\DocumentTypeController;
 use App\Http\Controllers\Settings\RackController;
 use App\Http\Controllers\Settings\TailoringCategoryController;
@@ -79,6 +81,14 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('document_type::')->prefix('document-type')->controller(DocumentTypeController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('document type.view');
+            Route::get('list', 'get')->name('list');
+        });
+        Route::name('complaint_category::')->prefix('complaint-category')->controller(ComplaintCategoryController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('complaint category.view');
+            Route::get('list', 'get')->name('list');
+        });
+        Route::name('complaint::')->prefix('complaint')->controller(ComplaintController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('complaint.view');
             Route::get('list', 'get')->name('list');
         });
         Route::name('brand::')->prefix('brand')->controller(BrandController::class)->group(function (): void {

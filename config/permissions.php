@@ -147,6 +147,8 @@ return [
     'property type' => ['create', 'view', 'edit', 'delete'],
     'utility' => ['create', 'view', 'edit', 'delete'],
     'document type' => ['create', 'view', 'edit', 'delete'],
+    'complaint category' => ['create', 'view', 'edit', 'delete'],
+    'complaint' => ['create', 'view', 'edit', 'delete'],
     'tenant detail' => ['create', 'view', 'edit', 'delete'],
 
     // RentOut - Rent Module
@@ -221,6 +223,9 @@ return [
     'local purchase order' => ['create', 'edit', 'view', 'delete', 'decide'],
     'grn' => ['create', 'view', 'edit', 'delete', 'decide'],
     'lpo-purchase' => ['create', 'view', 'edit', 'delete', 'decide'],
+
+    // Maintenance Module
+    'maintenance' => ['create', 'view', 'edit', 'delete', 'export', 'assign', 'complete'],
 
     // Supply Request Module
     'supply request' => [
