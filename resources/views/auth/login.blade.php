@@ -103,7 +103,65 @@
                 Secured by {{ config('app.name', 'Laravel') }}
             </p>
         </div>
+
+        {{-- Session auto-refresh banner --}}
+        <div id="sessionBanner" class="session-refresh-banner" style="display:none;">
+            <div class="session-refresh-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>Session expiring — refreshing in <strong id="loginCountdown">5</strong>s</span>
+            </div>
+        </div>
     </div>
+
+    <style>
+        .session-refresh-banner {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            z-index: 200;
+            opacity: 0;
+            animation: bannerSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .session-refresh-inner {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1.25rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            box-shadow: 0 4px 20px var(--card-shadow);
+            white-space: nowrap;
+        }
+
+        .session-refresh-inner svg {
+            color: #f59e0b;
+            flex-shrink: 0;
+        }
+
+        .session-refresh-inner strong {
+            color: #f59e0b;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        @keyframes bannerSlideUp {
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+
     <script>
         document.getElementById('togglePassword').addEventListener('click', function () {
             const input = document.getElementById('password');
@@ -111,5 +169,46 @@
             input.type = isPassword ? 'text' : 'password';
             this.classList.toggle('active', isPassword);
         });
+
+        // Auto-refresh page before CSRF token expires (session lifetime from Laravel config)
+        (function () {
+            var SESSION_LIFETIME_MS = {{ (int) config('session.lifetime', 120) }} * 60 * 1000;
+            var WARN_BEFORE_MS = 30 * 1000; // show banner 30s before expiry
+            var refreshTimeout = SESSION_LIFETIME_MS - WARN_BEFORE_MS;
+
+            // Also silently refresh CSRF token every 15 min as a safety net
+            setInterval(function () {
+                fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
+                    .then(function () {
+                        var cookie = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+                        if (cookie) {
+                            var token = decodeURIComponent(cookie[1]);
+                            var tokenInput = document.querySelector('input[name="_token"]');
+                            if (tokenInput) tokenInput.value = token;
+                        }
+                    })
+                    .catch(function () {});
+            }, 15 * 60 * 1000);
+
+            // Show banner and countdown before session expires
+            setTimeout(function () {
+                var banner = document.getElementById('sessionBanner');
+                var countdownEl = document.getElementById('loginCountdown');
+                if (!banner || !countdownEl) return;
+
+                banner.style.display = 'block';
+                var seconds = Math.floor(WARN_BEFORE_MS / 1000);
+                countdownEl.textContent = seconds;
+
+                var tick = setInterval(function () {
+                    seconds--;
+                    countdownEl.textContent = seconds;
+                    if (seconds <= 0) {
+                        clearInterval(tick);
+                        window.location.reload();
+                    }
+                }, 1000);
+            }, refreshTimeout);
+        })();
     </script>
 </x-guest-layout>
