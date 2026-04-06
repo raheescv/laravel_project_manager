@@ -49,7 +49,7 @@ class PropertyLead extends Model implements AuditableContracts
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'mobile' => [ 'nullable', 'string', 'regex:/^[0-9+\-\s]{6,20}$/', ],
+            'mobile' => ['nullable', 'string', 'regex:/^[0-9+\-\s]{6,20}$/'],
             'email' => ['nullable', 'email', 'max:255'],
             'type' => ['required', 'in:Sales,Rentout'],
             'source' => ['required', 'string'],

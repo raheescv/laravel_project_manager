@@ -104,12 +104,14 @@ class MigrateMaintenanceDataCommand extends Command
 
         if (! $this->tableExists('complaint_categories')) {
             $this->warn('Source table complaint_categories does not exist. Skipping.');
+
             return;
         }
 
         $records = DB::connection('mysql2')->table('complaint_categories')->get();
         if ($records->isEmpty()) {
             $this->warn('No complaint categories found. Skipping.');
+
             return;
         }
 
@@ -148,12 +150,14 @@ class MigrateMaintenanceDataCommand extends Command
 
         if (! $this->tableExists('complaints')) {
             $this->warn('Source table complaints does not exist. Skipping.');
+
             return;
         }
 
         $records = DB::connection('mysql2')->table('complaints')->get();
         if ($records->isEmpty()) {
             $this->warn('No complaints found. Skipping.');
+
             return;
         }
 
@@ -166,6 +170,7 @@ class MigrateMaintenanceDataCommand extends Command
             $categoryId = $row->complaint_category_id ?? $row->category_id ?? $defaultCategoryId;
             if (! $categoryId) {
                 $bar->advance();
+
                 continue;
             }
 
@@ -202,12 +207,14 @@ class MigrateMaintenanceDataCommand extends Command
 
         if (! $this->tableExists('maintenances')) {
             $this->warn('Source table maintenances does not exist. Skipping.');
+
             return;
         }
 
         $records = DB::connection('mysql2')->table('maintenances')->get();
         if ($records->isEmpty()) {
             $this->warn('No maintenance records found. Skipping.');
+
             return;
         }
 
@@ -220,6 +227,7 @@ class MigrateMaintenanceDataCommand extends Command
             if (! $property) {
                 $skipped++;
                 $bar->advance();
+
                 continue;
             }
 
@@ -271,7 +279,7 @@ class MigrateMaintenanceDataCommand extends Command
 
         $bar->finish();
         $this->newLine();
-        $this->info("Migrated {$records->count()} maintenances." . ($skipped ? " Skipped {$skipped} (missing property)." : ''));
+        $this->info("Migrated {$records->count()} maintenances.".($skipped ? " Skipped {$skipped} (missing property)." : ''));
     }
 
     private function migrateMaintenanceComplaints(): void
@@ -280,12 +288,14 @@ class MigrateMaintenanceDataCommand extends Command
 
         if (! $this->tableExists('maintenance_complaints')) {
             $this->warn('Source table maintenance_complaints does not exist. Skipping.');
+
             return;
         }
 
         $records = DB::connection('mysql2')->table('maintenance_complaints')->get();
         if ($records->isEmpty()) {
             $this->warn('No maintenance_complaints found. Skipping.');
+
             return;
         }
 
@@ -298,6 +308,7 @@ class MigrateMaintenanceDataCommand extends Command
             if (! $maintenance) {
                 $skipped++;
                 $bar->advance();
+
                 continue;
             }
 
@@ -331,7 +342,7 @@ class MigrateMaintenanceDataCommand extends Command
 
         $bar->finish();
         $this->newLine();
-        $this->info("Migrated {$records->count()} maintenance complaints." . ($skipped ? " Skipped {$skipped} (missing parent)." : ''));
+        $this->info("Migrated {$records->count()} maintenance complaints.".($skipped ? " Skipped {$skipped} (missing parent)." : ''));
     }
 
     /**
