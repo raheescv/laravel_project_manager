@@ -1,196 +1,145 @@
 <style>
-    /* Custom styles for customer select */
-    .select-customer_id,
-    .select-customer_id-list {
-        --ts-option-padding: 0.75rem 1rem;
-        --ts-option-bg-hover: #f8fafc;
-        --ts-option-bg-active: #eff6ff;
-        --ts-border-color: #e2e8f0;
-        --ts-focus-color: #3b82f6;
-        --ts-text-color: #1e293b;
-        --ts-text-muted: #64748b;
-    }
-
-    .select-customer_id .ts-wrapper,
-    .select-customer_id-list .ts-wrapper {
-        border-radius: 0.5rem;
-        border: 1px solid var(--ts-border-color);
+    .cust-card {
+        padding: 14px;
+        border-radius: 10px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
         transition: all 0.2s ease;
+        border: 1px solid transparent;
     }
 
-    .select-customer_id .ts-wrapper.focus,
-    .select-customer_id-list .ts-wrapper.focus {
-        border-color: var(--ts-focus-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    .cust-card:hover {
+        background-color: #f1f5f9;
+        transform: translateY(-1px);
+        border-color: #e2e8f0;
     }
 
-    .select-customer_id .ts-dropdown,
-    .select-customer_id-list .ts-dropdown {
-        border-radius: 0.5rem;
-        border: 1px solid var(--ts-border-color);
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        margin-top: 0.5rem;
-    }
-
-    .select-customer_id .ts-dropdown .option,
-    .select-customer_id-list .ts-dropdown .option {
-        padding: var(--ts-option-padding);
-        border-bottom: 1px solid #f1f5f9;
-        transition: all 0.2s ease;
-    }
-
-    .select-customer_id .ts-dropdown .option:last-child,
-    .select-customer_id-list .ts-dropdown .option:last-child {
-        border-bottom: none;
-    }
-
-    .select-customer_id .ts-dropdown .option:hover,
-    .select-customer_id-list .ts-dropdown .option:hover {
-        background-color: var(--ts-option-bg-hover);
-    }
-
-    .select-customer_id .ts-dropdown .option.active,
-    .select-customer_id-list .ts-dropdown .option.active {
-        background-color: var(--ts-option-bg-active);
-    }
-
-    .customer-option {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .customer-name {
-        font-weight: 500;
-        color: var(--ts-text-color);
-    }
-
-    .customer-mobile {
-        font-size: 0.875rem;
-        color: var(--ts-text-muted);
+    .cust-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
-        gap: 0.25rem;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1.1rem;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        color: #1e40af;
     }
 
-    .customer-mobile i {
-        font-size: 0.75rem;
-        color: #94a3b8;
+    .cust-body {
+        flex: 1;
+        min-width: 0;
     }
 
-    .select-customer_id .ts-control,
-    .select-customer_id-list .ts-control {
-        padding: 0.5rem 0.75rem;
-        min-height: 42px;
+    .cust-header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
     }
 
-    .select-customer_id .ts-wrapper .clear-button,
-    .select-customer_id-list .ts-wrapper .clear-button {
+    .cust-name {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 0.95rem;
+        line-height: 1.2;
+    }
+
+    .cust-tags {
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px;
     }
 
-    .select-customer_id .ts-control>input,
-    .select-customer_id-list .ts-control>input {
-        font-size: 0.875rem;
+    .cust-tag {
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        white-space: nowrap;
+        transition: all 0.15s ease;
     }
 
-    .select-customer_id .ts-control.single .ts-control:after,
-    .select-customer_id-list .ts-control.single .ts-control:after {
-        border-color: var(--ts-text-muted) transparent transparent transparent;
+    .cust-card:hover .cust-tag {
+        background-color: #fff;
+        border-color: #cbd5e1;
     }
 
-    .select-customer_id .ts-control.single.dropdown-active .ts-control:after,
-    .select-customer_id-list .ts-control.single.dropdown-active .ts-control:after {
-        border-color: transparent transparent var(--ts-text-muted) transparent;
+    .cust-tag i {
+        margin-right: 3px;
+        font-size: 0.6rem;
+        opacity: 0.6;
     }
 
-    /* Multi-select specific styles */
-    .select-customer_id .ts-control.multi,
-    .select-customer_id-list .ts-control.multi {
-        padding: 0.25rem 0.5rem;
+    .cust-tag strong {
+        color: #334155;
+        font-weight: 600;
     }
 
-    .select-customer_id .ts-control.multi .item,
-    .select-customer_id-list .ts-control.multi .item {
-        background-color: var(--ts-option-bg-active);
-        border-radius: 0.25rem;
-        padding: 0.25rem 0.5rem;
-        margin: 0.125rem;
-    }
-
-    .select-customer_id .ts-control.multi .item.active,
-    .select-customer_id-list .ts-control.multi .item.active {
-        background-color: var(--ts-focus-color);
-        color: white;
+    .cust-tag-email {
+        background-color: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1e40af;
     }
 </style>
 
 <script type="text/javascript">
-    const customerSelectConfig = {
+    function customerOptionRender(item, escape) {
+        var html = `<div class="cust-card">
+            <div class="cust-avatar"><i class="fa fa-user"></i></div>
+            <div class="cust-body">
+                <div class="cust-header">
+                    <span class="cust-name">${escape(item.name || item.text || '')}</span>
+                </div>
+                <div class="cust-tags">`;
+
+        if (item.mobile) html += `<span class="cust-tag"><i class="fa fa-phone"></i> ${escape(item.mobile)}</span>`;
+        if (item.email) html += `<span class="cust-tag cust-tag-email"><i class="fa fa-envelope-o"></i> ${escape(item.email)}</span>`;
+
+        html += `</div>
+            </div>
+        </div>`;
+        return html;
+    }
+
+    function customerItemRender(item, escape) {
+        return `<div>${escape(item.name || item.text || '')}</div>`;
+    }
+
+    const customerBaseConfig = {
         persist: false,
         valueField: 'id',
         nameField: 'name',
         searchField: ['name', 'mobile', 'email', 'id'],
         load: function(query, callback) {
-            var url = "{{ route('account::list') }}";
-            url += '?query=' + encodeURIComponent(query);
-            url += '&model=customer';
-            fetch(url, {
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                    }
-                })
+            var url = "{{ route('account::list') }}?query=" + encodeURIComponent(query) + '&model=customer';
+            fetch(url, { headers: { 'Cache-Control': 'no-cache' } })
                 .then(response => {
                     if (!response.ok) throw new Error('Network response was not ok');
                     return response.json();
                 })
                 .then(json => callback(json.items))
-                .catch(err => {
-                    console.error('Error loading data:', err);
-                    callback();
-                });
+                .catch(err => { console.error('Error loading data:', err); callback(); });
         },
-        onFocus: function() {
-            this.load('');
-        },
-        render: {
-            option: function(item, escape) {
-                return `
-                    <div class="customer-option">
-                        <div class="customer-name">${escape(item.name || item.text || '')}</div>
-                        ${item.mobile ? `
-                            <div class="customer-mobile">
-                                <i class="fa fa-phone"></i>
-                                ${escape(item.mobile)}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            },
-            item: function(item, escape) {
-                return `<div>${escape(item.name || item.text || '')}</div>`;
-            },
-        }
+        onFocus: function() { this.load(''); },
+        render: { option: customerOptionRender, item: customerItemRender },
     };
 
     $('.select-customer_id').each(function() {
         new TomSelect(this, {
-            ...customerSelectConfig,
-            create: function(input, callback) {
-                Livewire.dispatch("Customer-Page-Create-Component", {
-                    'name': input
-                });
+            ...customerBaseConfig,
+            create: function(input) {
+                Livewire.dispatch("Customer-Page-Create-Component", { 'name': input });
             },
         });
     });
-    // Initialize for list select
+
     $('.select-customer_id-list').each(function() {
-        new TomSelect(this, {
-            ...customerSelectConfig,
-            plugins: [],
-        });
+        new TomSelect(this, { ...customerBaseConfig, plugins: [] });
     });
 </script>
