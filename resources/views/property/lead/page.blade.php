@@ -12,7 +12,7 @@
             <div class="d-md-flex align-items-md-center justify-content-md-between">
                 <div>
                     <h1 class="page-title mb-0 mt-2">
-                        <i class="fa fa-user-plus text-primary me-2"></i>{{ $lead_id ? 'Edit Lead' : 'Create New Lead' }}
+                        <i class="fa fa-user-plus text-white me-2"></i>{{ $lead_id ? 'Edit Lead' : 'Create New Lead' }}
                     </h1>
                     <p class="lead mb-0">Capture lead details, schedule meetings and track every interaction.</p>
                 </div>

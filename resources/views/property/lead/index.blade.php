@@ -11,7 +11,7 @@
             <div class="d-md-flex align-items-md-center justify-content-md-between">
                 <div>
                     <h1 class="page-title mb-0 mt-2">
-                        <i class="fa fa-users text-primary me-2"></i>Leads Management
+                        <i class="fa fa-users text-white me-2"></i>Leads Management
                     </h1>
                     <p class="lead mb-0">Track, qualify and convert your property leads.</p>
                 </div>
@@ -22,7 +22,7 @@
                         </a>
                     @endcan
                     @can('property lead.create')
-                        <a href="{{ route('property::lead::create') }}" class="btn btn-primary shadow-sm">
+                        <a href="{{ route('property::lead::create') }}" class="btn btn-info shadow-sm">
                             <i class="fa fa-plus-circle me-1"></i> New Lead
                         </a>
                     @endcan

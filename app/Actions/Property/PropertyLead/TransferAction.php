@@ -12,7 +12,7 @@ class TransferAction
     /**
      * Creates (or finds) a Customer Account for the lead, stores the
      * pre-fill payload in session('lead_booking_data'), and returns the
-     * redirect URL for the Sale or Rentout booking create page.
+     * redirect URL for the Sale or Rent out booking create page.
      */
     public function execute($leadId): array
     {
@@ -29,14 +29,16 @@ class TransferAction
                 throw new \Exception('Lead name is required.', 1);
             }
 
-            // 1) Find or create the customer account
-            $existing = Account::query()
-                ->where('account_type', 'customer')
+            // 1) Find or create the customer account (include soft-deleted to avoid unique constraint violation)
+            $existing = Account::withTrashed()
+                ->where('account_type', 'asset')
                 ->where('name', $lead->name)
                 ->when($lead->mobile, fn ($q) => $q->where('mobile', $lead->mobile))
                 ->first();
-
             if ($existing) {
+                if ($existing->trashed()) {
+                    $existing->restore();
+                }
                 $account = $existing;
             } else {
                 $customerType = CustomerType::query()
@@ -45,7 +47,8 @@ class TransferAction
                     ?? CustomerType::query()->first();
 
                 $accountPayload = [
-                    'account_type' => 'customer',
+                    'account_type' => 'asset',
+                    'model' => 'customer',
                     'customer_type_id' => $customerType?->id,
                     'name' => $lead->name,
                     'mobile' => $lead->mobile,

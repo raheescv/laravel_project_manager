@@ -11,7 +11,7 @@
             <div class="d-md-flex align-items-md-center justify-content-md-between">
                 <div>
                     <h1 class="page-title mb-0 mt-2">
-                        <i class="fa fa-calendar text-primary me-2"></i>Lead Calendar
+                        <i class="fa fa-calendar text-white me-2"></i>Lead Calendar
                     </h1>
                     <p class="lead mb-0">Schedule visits, follow ups and call backs at a glance.</p>
                 </div>
