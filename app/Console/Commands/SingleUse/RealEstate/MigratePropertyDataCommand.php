@@ -2,7 +2,12 @@
 
 namespace App\Console\Commands\SingleUse\RealEstate;
 
+use App\Jobs\BranchProductCreationJob;
 use App\Models\Account;
+use App\Models\Branch;
+use App\Models\Product;
+use App\Models\Property;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,7 +17,7 @@ class MigratePropertyDataCommand extends Command
 {
     protected $signature = 'migrate:property-data {--tenant= : Tenant ID to assign} {--dry-run : Run without inserting data}';
 
-    protected $description = 'Migrate property and rent-out data from accounts (mysql2) to project manager, preserving primary keys';
+    protected $description = 'Migrate property, maintenance, asset, and supply data from accounts (mysql2) to project manager, preserving primary keys';
 
     private int $tenantId;
 
@@ -63,6 +68,52 @@ class MigratePropertyDataCommand extends Command
         'Pending' => 'pending',
     ];
 
+    private array $assetSupplyStatusMap = [
+        'Requirement' => 'requirement',
+        'Approved' => 'approved',
+        'Rejected' => 'rejected',
+        'Collected' => 'collected',
+        'Final Approved' => 'final_approved',
+        'Completed' => 'completed',
+        'Expired' => 'expired',
+    ];
+
+    private array $maintenanceStatusMap = [
+        'pending' => 'pending',
+        'completed' => 'completed',
+        'rejected' => 'cancelled',
+        'cancelled' => 'cancelled',
+    ];
+
+    private array $priorityMap = [
+        'Low' => 'low',
+        'Medium' => 'medium',
+        'High' => 'high',
+        'Critical' => 'critical',
+        'low' => 'low',
+        'medium' => 'medium',
+        'high' => 'high',
+        'critical' => 'critical',
+    ];
+
+    private array $segmentMap = [
+        'PPMC' => 'ppmc',
+        'Corrective' => 'corrective',
+        'Preparation' => 'preparation',
+        'ppmc' => 'ppmc',
+        'corrective' => 'corrective',
+        'preparation' => 'preparation',
+    ];
+
+    private array $maintenanceComplaintStatusMap = [
+        'pending' => 'pending',
+        'assigned' => 'assigned',
+        'completed' => 'completed',
+        'outstanding' => 'outstanding',
+        'paid' => 'completed',
+        'cancelled' => 'cancelled',
+    ];
+
     private array $paymentModeMap = [];
 
     public function handle(): int
@@ -111,6 +162,15 @@ class MigratePropertyDataCommand extends Command
             $this->migrateTenantDetails();
 
             $this->migratePropertyLeads();
+            $this->migratePropertyAssets();
+            $this->migrateSupplyRequests();
+            $this->migrateSupplyRequestItems();
+            $this->migrateSupplyRequestNotes();
+            $this->migrateSupplyRequestImages();
+            $this->migrateComplaintCategories();
+            $this->migrateComplaints();
+            $this->migrateMaintenances();
+            $this->migrateMaintenanceComplaints();
         } catch (\Exception $e) {
             $this->error("Migration failed: {$e->getMessage()}");
             Log::error('Property data migration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -1106,6 +1166,640 @@ class MigratePropertyDataCommand extends Command
         $bar->finish();
         $this->newLine();
         $this->info("Migrated {$migrated} property leads.");
+    }
+
+    private function migratePropertyAssets(): void
+    {
+        $this->info('Migrating property_assets -> products...');
+
+        if (! $this->tableExists('property_assets')) {
+            $this->warn('Source table property_assets does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')
+            ->table('property_assets')
+            ->leftJoin('brands', 'property_assets.brand_id', '=', 'brands.id')
+            ->leftJoin('units', 'property_assets.unit_id', '=', 'units.id')
+            ->leftJoin('asset_groups', 'property_assets.asset_group_id', '=', 'asset_groups.id')
+            ->orderBy('property_assets.id')
+            ->get([
+                'property_assets.*',
+                'brands.name as brand_name',
+                'units.name as unit_name',
+                'asset_groups.name as group_name',
+            ]);
+
+        if ($records->isEmpty()) {
+            $this->warn('No property assets found. Skipping.');
+
+            return;
+        }
+
+        $branches = Branch::all();
+        $bar = $this->output->createProgressBar($records->count());
+        $skipped = 0;
+        $updated = 0;
+        $created = 0;
+
+        foreach ($records as $row) {
+            try {
+                $assetData = [
+                    'tenant_id' => $this->tenantId,
+                    'type' => 'product',
+                    'second_reference_no' => $row->id,
+                    'name' => $row->name,
+                    'name_arabic' => $row->name_arabic ?? null,
+                    'color' => $row->color ?? null,
+                    'part_no' => $row->item_no ?? null,
+                    'barcode_number' => $row->barcode ?? null,
+                    'cost' => $row->cost ?? 0,
+                    'mrp' => $row->price ?? 0,
+                    'location' => $row->location ?? null,
+                    'description' => $row->remarks ?? null,
+                    'thumbnail' => $row->image_path ?? null,
+                    'is_selling' => false,
+                    'unit' => $row->unit_name ?? 'Nos',
+                    'brand_id' => $row->brand_name ?? null,
+                    'department' => 'Asset',
+                    'main_category' => $row->group_name ?? 'General',
+                    'created_at' => $row->created_at ?? now(),
+                    'updated_at' => $row->updated_at ?? now(),
+                ];
+
+                if (! $this->dryRun) {
+                    $data = Product::constructData($assetData, 1);
+                    unset($data['department'], $data['unit'], $data['main_category'], $data['sub_category']);
+
+                    $existing = Product::where('type', 'product')
+                        ->where('second_reference_no', $row->id)
+                        ->first();
+
+                    if ($existing) {
+                        $existing->update($data);
+                        $updated++;
+                    } else {
+                        $data['deleted_at'] = $row->deleted_at ?? null;
+                        $product = Product::create($data);
+
+                        foreach ($branches as $branch) {
+                            BranchProductCreationJob::dispatch($branch->id, $this->tenantId, $product->id);
+                        }
+
+                        $created++;
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->error("Error migrating asset id={$row->id} ({$row->name}): {$e->getMessage()}");
+                Log::error('MigratePropertyData: error on property_asset id='.$row->id, ['error' => $e->getMessage()]);
+                $skipped++;
+            }
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Assets: {$created} created, {$updated} updated.".($skipped ? " {$skipped} failed (check logs)." : ''));
+    }
+
+    private function migrateSupplyRequests(): void
+    {
+        $this->info('Migrating supply requests (property_asset_supplies)...');
+
+        if (! $this->tableExists('property_asset_supplies')) {
+            $this->warn('Source table property_asset_supplies does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('property_asset_supplies')->orderBy('id')->get();
+
+        if ($records->isEmpty()) {
+            $this->warn('No supply requests found. Skipping.');
+
+            return;
+        }
+
+        $bar = $this->output->createProgressBar($records->count());
+        $skipped = 0;
+
+        foreach ($records as $row) {
+            $createdBy = User::where('type', 'user')->where('second_reference_no', $row->created_by)->value('id');
+
+            if (! $createdBy) {
+                $skipped++;
+                $bar->advance();
+
+                continue;
+            }
+
+            $updatedBy = $row->updated_by
+                ? User::where('type', 'user')->where('second_reference_no', $row->updated_by)->value('id')
+                : null;
+
+            $approvedBy = $row->approved_by
+                ? User::where('type', 'user')->where('second_reference_no', $row->approved_by)->value('id')
+                : null;
+
+            $accountedBy = $row->accounted_by
+                ? User::where('type', 'user')->where('second_reference_no', $row->accounted_by)->value('id')
+                : null;
+
+            $finalApprovedBy = $row->final_approved_by
+                ? User::where('type', 'user')->where('second_reference_no', $row->final_approved_by)->value('id')
+                : null;
+
+            $completedBy = $row->completed_by
+                ? User::where('type', 'user')->where('second_reference_no', $row->completed_by)->value('id')
+                : null;
+
+            $paymentModeId = $row->payment_mode_id
+                ? Account::where('second_reference_no', $row->payment_mode_id)->value('id')
+                : null;
+
+            $propertyGroupId = null;
+            $propertyBuildingId = null;
+            $propertyTypeId = null;
+
+            if ($row->property_id) {
+                $property = Property::find($row->property_id);
+                if ($property) {
+                    $propertyGroupId = $property->property_group_id;
+                    $propertyBuildingId = $property->property_building_id;
+                    $propertyTypeId = $property->property_type_id;
+                }
+            }
+
+            $data = [
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'branch_id' => $row->branch_id ?? 1,
+                'date' => $row->date,
+                'order_no' => $row->order_no ?? null,
+                'contact_person' => $row->contact_person ?? null,
+                'property_id' => $row->property_id ?? null,
+                'property_group_id' => $propertyGroupId,
+                'property_building_id' => $propertyBuildingId,
+                'property_type_id' => $propertyTypeId,
+                'type' => $row->type ?? 'Add',
+                'total' => $row->total ?? 0,
+                'other_charges' => $row->other_charges ?? 0,
+                'grand_total' => $row->grand_total ?? 0,
+                'payment_mode_id' => $paymentModeId,
+                'remarks' => $row->remarks ?? null,
+                'status' => $this->assetSupplyStatusMap[$row->status] ?? 'requirement',
+                'approved_by' => $approvedBy,
+                'approved_at' => $approvedBy ? $row->updated_at : null,
+                'accounted_by' => $accountedBy,
+                'accounted_at' => $accountedBy ? $row->updated_at : null,
+                'final_approved_by' => $finalApprovedBy,
+                'final_approved_at' => $finalApprovedBy ? $row->updated_at : null,
+                'completed_by' => $completedBy,
+                'completed_at' => $completedBy ? $row->updated_at : null,
+                'created_by' => $createdBy,
+                'updated_by' => $updatedBy,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+                'deleted_at' => null,
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('supply_requests')->updateOrInsert(['id' => $row->id], $data);
+            }
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$records->count()} supply requests.".($skipped ? " Skipped {$skipped} (missing created_by user)." : ''));
+    }
+
+    private function migrateSupplyRequestItems(): void
+    {
+        $this->info('Migrating supply request items (property_asset_supply_items)...');
+
+        if (! $this->tableExists('property_asset_supply_items')) {
+            $this->warn('Source table property_asset_supply_items does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('property_asset_supply_items')->orderBy('id')->get();
+
+        if ($records->isEmpty()) {
+            $this->warn('No supply request items found. Skipping.');
+
+            return;
+        }
+
+        $bar = $this->output->createProgressBar($records->count());
+        $skipped = 0;
+
+        foreach ($records as $row) {
+            $supplyRequestExists = DB::table('supply_requests')->where('id', $row->property_asset_supply_id)->exists();
+            if (! $supplyRequestExists) {
+                $skipped++;
+                $bar->advance();
+
+                continue;
+            }
+
+            $productId = Product::where('type', 'product')->where('second_reference_no', $row->property_asset_id)->value('id');
+
+            if (! $productId) {
+                Log::warning('MigratePropertyData: product not found for property_asset_id: '.$row->property_asset_id.', skipping item id: '.$row->id);
+                $skipped++;
+                $bar->advance();
+
+                continue;
+            }
+
+            $data = [
+                'id' => $row->id,
+                'supply_request_id' => $row->property_asset_supply_id,
+                'branch_id' => $row->store_id ?? null,
+                'product_id' => $productId,
+                'mode' => $row->mode ?? 'New',
+                'quantity' => $row->quantity ?? 1,
+                'unit_price' => $row->unit_price ?? 0,
+                'remarks' => $row->remarks ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('supply_request_items')->updateOrInsert(['id' => $row->id], $data);
+            }
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$records->count()} supply request items.".($skipped ? " Skipped {$skipped} (missing parent or product)." : ''));
+    }
+
+    private function migrateSupplyRequestNotes(): void
+    {
+        $this->info('Migrating supply request notes (property_asset_supply_notes)...');
+
+        if (! $this->tableExists('property_asset_supply_notes')) {
+            $this->warn('Source table property_asset_supply_notes does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('property_asset_supply_notes')->orderBy('id')->get();
+
+        if ($records->isEmpty()) {
+            $this->warn('No supply request notes found. Skipping.');
+
+            return;
+        }
+
+        $bar = $this->output->createProgressBar($records->count());
+        $skipped = 0;
+
+        foreach ($records as $row) {
+            $supplyRequestExists = DB::table('supply_requests')->where('id', $row->property_asset_supply_id)->exists();
+            if (! $supplyRequestExists) {
+                $skipped++;
+                $bar->advance();
+
+                continue;
+            }
+
+            $createdBy = User::where('type', 'user')->where('second_reference_no', $row->created_by)->value('id');
+
+            $data = [
+                'id' => $row->id,
+                'supply_request_id' => $row->property_asset_supply_id,
+                'note' => $row->note,
+                'created_by' => $createdBy ?? 1,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('supply_request_notes')->updateOrInsert(['id' => $row->id], $data);
+            }
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$records->count()} supply request notes.".($skipped ? " Skipped {$skipped} (missing parent supply request)." : ''));
+    }
+
+    private function migrateSupplyRequestImages(): void
+    {
+        $this->info('Migrating supply request images (property_asset_supply_images)...');
+
+        if (! $this->tableExists('property_asset_supply_images')) {
+            $this->warn('Source table property_asset_supply_images does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('property_asset_supply_images')->orderBy('id')->get();
+
+        if ($records->isEmpty()) {
+            $this->warn('No supply request images found. Skipping.');
+
+            return;
+        }
+
+        $bar = $this->output->createProgressBar($records->count());
+        $skipped = 0;
+
+        foreach ($records as $row) {
+            $supplyRequestId = $row->asset_supply_id;
+            $supplyRequestExists = DB::table('supply_requests')->where('id', $supplyRequestId)->exists();
+
+            if (! $supplyRequestExists) {
+                $skipped++;
+                $bar->advance();
+
+                continue;
+            }
+
+            $data = [
+                'id' => $row->id,
+                'supply_request_id' => $supplyRequestId,
+                'name' => $row->name,
+                'path' => $row->path,
+                'type' => $row->type ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('supply_request_images')->updateOrInsert(['id' => $row->id], $data);
+            }
+
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$records->count()} supply request images.".($skipped ? " Skipped {$skipped} (missing parent supply request)." : ''));
+    }
+
+    private function migrateComplaintCategories(): void
+    {
+        $this->info('Migrating complaint_categories...');
+
+        if (! $this->tableExists('complaint_categories')) {
+            $this->warn('Source table complaint_categories does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('complaint_categories')->get();
+        if ($records->isEmpty()) {
+            $this->warn('No complaint categories found. Skipping.');
+
+            return;
+        }
+
+        $bar = $this->output->createProgressBar($records->count());
+
+        foreach ($records as $row) {
+            $data = [
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'branch_id' => $row->branch_id ?? 1,
+                'name' => $row->name,
+                'arabic_name' => $row->arabic_name ?? null,
+                'description' => $row->description ?? null,
+                'is_active' => true,
+                'created_by' => $row->created_by ?? 1,
+                'updated_by' => $row->updated_by ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+                'deleted_at' => $row->deleted_at ?? null,
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('complaint_categories')->updateOrInsert(['id' => $row->id], $data);
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$records->count()} complaint categories.");
+    }
+
+    private function migrateComplaints(): void
+    {
+        $this->info('Migrating complaints...');
+
+        if (! $this->tableExists('complaints')) {
+            $this->warn('Source table complaints does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('complaints')->get();
+        if ($records->isEmpty()) {
+            $this->warn('No complaints found. Skipping.');
+
+            return;
+        }
+
+        $defaultCategoryId = DB::connection('mysql2')->table('complaint_categories')->value('id');
+
+        $bar = $this->output->createProgressBar($records->count());
+
+        foreach ($records as $row) {
+            $categoryId = $row->complaint_category_id ?? $row->category_id ?? $defaultCategoryId;
+            if (! $categoryId) {
+                $bar->advance();
+
+                continue;
+            }
+
+            $data = [
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'branch_id' => $row->branch_id ?? 1,
+                'complaint_category_id' => $categoryId,
+                'name' => $row->name,
+                'arabic_name' => $row->arabic_name ?? null,
+                'description' => $row->description ?? null,
+                'is_active' => true,
+                'created_by' => $row->created_by ?? 1,
+                'updated_by' => $row->updated_by ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+                'deleted_at' => $row->deleted_at ?? null,
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('complaints')->updateOrInsert(['id' => $row->id], $data);
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$records->count()} complaints.");
+    }
+
+    private function migrateMaintenances(): void
+    {
+        $this->info('Migrating maintenances...');
+
+        if (! $this->tableExists('maintenances')) {
+            $this->warn('Source table maintenances does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('maintenances')->get();
+        if ($records->isEmpty()) {
+            $this->warn('No maintenance records found. Skipping.');
+
+            return;
+        }
+
+        $bar = $this->output->createProgressBar($records->count());
+        $skipped = 0;
+
+        foreach ($records as $row) {
+            $property = DB::table('properties')->where('id', $row->property_id)->first();
+            if (! $property) {
+                $skipped++;
+                $bar->advance();
+
+                continue;
+            }
+
+            $accountId = null;
+            if (! empty($row->customer_id)) {
+                $accountId = Account::where('second_reference_no', $row->customer_id)->value('id');
+            }
+
+            $status = $this->maintenanceStatusMap[$row->status ?? 'pending'] ?? 'pending';
+            $priority = $this->priorityMap[$row->priority ?? 'Low'] ?? 'low';
+            $segment = null;
+            if (! empty($row->segment)) {
+                $segment = $this->segmentMap[$row->segment] ?? strtolower($row->segment);
+            }
+
+            $data = [
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'branch_id' => $row->branch_id ?? 1,
+                'property_id' => $row->property_id,
+                'property_group_id' => $property->property_group_id ?? null,
+                'property_building_id' => $property->property_building_id ?? null,
+                'property_type_id' => $property->property_type_id ?? null,
+                'rent_out_id' => $row->rentout_id ?? null,
+                'account_id' => $accountId,
+                'date' => $row->date ?? null,
+                'time' => $row->time ?? null,
+                'priority' => $priority,
+                'segment' => $segment,
+                'contact_person' => $row->contact_person ?? null,
+                'contact_no' => $row->contact_no ?? null,
+                'remark' => $row->remark ?? null,
+                'company_remark' => $row->company_remark ?? null,
+                'status' => $status,
+                'created_by' => $row->created_by ?? 1,
+                'completed_by' => $row->completed_by ?? null,
+                'completed_at' => $row->completed_at ?? null,
+                'updated_by' => $row->updated_by ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+                'deleted_at' => $row->deleted_at ?? null,
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('maintenances')->updateOrInsert(['id' => $row->id], $data);
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$records->count()} maintenances.".($skipped ? " Skipped {$skipped} (missing property)." : ''));
+    }
+
+    private function migrateMaintenanceComplaints(): void
+    {
+        $this->info('Migrating maintenance_complaints...');
+
+        if (! $this->tableExists('maintenance_complaints')) {
+            $this->warn('Source table maintenance_complaints does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('maintenance_complaints')->get();
+        if ($records->isEmpty()) {
+            $this->warn('No maintenance_complaints found. Skipping.');
+
+            return;
+        }
+
+        $bar = $this->output->createProgressBar($records->count());
+        $skipped = 0;
+
+        foreach ($records as $row) {
+            $maintenance = DB::table('maintenances')->where('id', $row->maintenance_id)->first();
+            if (! $maintenance) {
+                $skipped++;
+                $bar->advance();
+
+                continue;
+            }
+
+            $status = $this->maintenanceComplaintStatusMap[$row->status ?? 'pending'] ?? 'pending';
+
+            $data = [
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'branch_id' => $row->branch_id ?? $maintenance->branch_id ?? 1,
+                'maintenance_id' => $row->maintenance_id,
+                'complaint_id' => $row->complaint_id ?? null,
+                'status' => $status,
+                'technician_id' => $row->technician_id ?? null,
+                'technician_remark' => $row->technician_remark ?? null,
+                'assigned_by' => $row->assigned_by ?? null,
+                'assigned_at' => $row->assigned_at ?? null,
+                'completed_by' => $row->completed_by ?? null,
+                'completed_at' => $row->completed_at ?? null,
+                'created_by' => $row->created_by ?? 1,
+                'updated_by' => $row->updated_by ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+                'deleted_at' => $row->deleted_at ?? null,
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('maintenance_complaints')->updateOrInsert(['id' => $row->id], $data);
+            }
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$records->count()} maintenance complaints.".($skipped ? " Skipped {$skipped} (missing parent)." : ''));
+    }
+
+    private function tableExists(string $table): bool
+    {
+        try {
+            return DB::connection('mysql2')->getSchemaBuilder()->hasTable($table);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     private function normalizeDate(?string $value): ?string
