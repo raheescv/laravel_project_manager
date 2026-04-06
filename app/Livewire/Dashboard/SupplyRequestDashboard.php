@@ -9,14 +9,21 @@ use Livewire\Component;
 class SupplyRequestDashboard extends Component
 {
     public int $requirementCount = 0;
+
     public int $approvedCount = 0;
+
     public int $completedCount = 0;
+
     public int $rejectedCount = 0;
+
     public int $collectedCount = 0;
+
     public int $finalApprovedCount = 0;
+
     public int $totalCount = 0;
 
     public float $totalAmount = 0;
+
     public float $completedAmount = 0;
 
     public array $recentRequests = [];

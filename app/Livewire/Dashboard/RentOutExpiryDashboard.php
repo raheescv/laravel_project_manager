@@ -9,11 +9,15 @@ use Livewire\Component;
 class RentOutExpiryDashboard extends Component
 {
     public array $upcomingEndDates = [];
+
     public array $expiredRentOuts = [];
 
     public int $upcomingCount = 0;
+
     public int $expiredCount = 0;
+
     public int $expiringThisMonth = 0;
+
     public int $expiringNext30Days = 0;
 
     public function mount(): void

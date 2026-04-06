@@ -14,19 +14,29 @@ use Livewire\Component;
 class PropertyMaintenanceDashboard extends Component
 {
     public int $totalMaintenance = 0;
+
     public int $completedMaintenance = 0;
+
     public int $pendingMaintenance = 0;
+
     public int $cancelledMaintenance = 0;
+
     public int $inProgressMaintenance = 0;
 
     public int $outstandingComplaints = 0;
+
     public int $completedComplaints = 0;
+
     public int $assignedComplaints = 0;
 
     public array $priorityBreakdown = [];
+
     public array $segmentBreakdown = [];
+
     public array $technicianWorkload = [];
+
     public array $recentMaintenance = [];
+
     public array $maintenanceByGroup = [];
 
     public string $dateFilter = 'month';

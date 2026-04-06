@@ -13,7 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Throwable;
 
 // Helper to extract 403 permission details from request context
 function extract403Details(string $message, Request $request): array
@@ -151,7 +150,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Handle authentication exceptions
-        $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
+        $exceptions->respond(function (Response $response, \Throwable $exception, Request $request) {
             if ($exception instanceof AuthenticationException) {
                 // Handle API/JSON requests
                 if ($request->expectsJson() || $request->is('api/*')) {

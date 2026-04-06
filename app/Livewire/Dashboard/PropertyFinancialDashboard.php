@@ -5,8 +5,6 @@ namespace App\Livewire\Dashboard;
 use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\ChequeStatus;
 use App\Enums\RentOut\RentOutStatus;
-use App\Enums\RentOut\SecurityStatus;
-use App\Models\RentOut;
 use App\Models\RentOutCheque;
 use App\Models\RentOutPaymentTerm;
 use App\Models\RentOutSecurity;
@@ -15,17 +13,25 @@ use Livewire\Component;
 class PropertyFinancialDashboard extends Component
 {
     public float $collection = 0;
+
     public float $paid = 0;
+
     public float $pending = 0;
+
     public float $overdueAmount = 0;
+
     public int $overdueCount = 0;
 
     public float $clearedCheques = 0;
+
     public float $unclearedCheques = 0;
+
     public int $clearedCount = 0;
+
     public int $unclearedCount = 0;
 
     public float $totalSecurity = 0;
+
     public int $securityCount = 0;
 
     public string $agreementType = 'rental';

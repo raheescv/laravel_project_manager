@@ -11,21 +11,31 @@ use Livewire\Component;
 class PropertyComplaintDashboard extends Component
 {
     public int $totalComplaints = 0;
+
     public int $pendingComplaints = 0;
+
     public int $urgentComplaints = 0;
+
     public int $resolvedComplaints = 0;
+
     public int $overdueCount = 0;
 
     public float $pendingPercentage = 0;
+
     public float $urgentPercentage = 0;
+
     public float $resolvedPercentage = 0;
 
     public float $totalComplaintsChange = 0;
+
     public float $averageResolutionTime = 0;
+
     public float $averageResolutionChange = 0;
 
     public array $complaintsByBuilding = [];
+
     public array $monthlyTrend = [];
+
     public array $resolutionByPriority = [];
 
     public string $dateFilter = 'month';

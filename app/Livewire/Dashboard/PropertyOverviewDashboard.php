@@ -7,19 +7,23 @@ use App\Enums\RentOut\RentOutStatus;
 use App\Models\Property;
 use App\Models\PropertyBuilding;
 use App\Models\PropertyGroup;
-use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
 use Livewire\Component;
 
 class PropertyOverviewDashboard extends Component
 {
     public int $totalProperties = 0;
+
     public int $totalBuildings = 0;
+
     public int $vacantProperties = 0;
+
     public int $occupiedProperties = 0;
 
     public array $groupOccupancyRates = [];
+
     public array $groupIncomeReports = [];
+
     public array $totalIncomeData = [];
 
     public string $incomeFilter = 'month';
