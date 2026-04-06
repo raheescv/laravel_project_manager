@@ -91,6 +91,20 @@
                 </div>
             @endcan
 
+            {{-- Property Leads Dashboard --}}
+            @can('property lead.view')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-primary ps-3">
+                            <i class="fa fa-users me-2"></i>Property Leads Overview
+                        </h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.property-lead-dashboard')
+                    </div>
+                </div>
+            @endcan
+
             {{-- Property Overview Dashboard --}}
             @can('property.dashboard overview')
                 <div class="row mb-4">

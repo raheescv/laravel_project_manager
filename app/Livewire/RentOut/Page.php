@@ -143,6 +143,40 @@ class Page extends Component
                 'payment_terms_extended_en' => '',
                 'payment_terms_extended_ar' => '',
             ];
+
+            // Pre-fill from Property Lead transfer (session data)
+            if ($this->type === 'Booking' && session()->has('lead_booking_data')) {
+                $leadData = session('lead_booking_data');
+                $this->rent_outs['account_id'] = $leadData['account_id'] ?? '';
+                $this->rent_outs['salesman_id'] = $leadData['salesman_id'] ?? '';
+                $this->rent_outs['property_group_id'] = $leadData['property_group_id'] ?? '';
+
+                $this->preFilledDropDowns = [
+                    'account' => [
+                        $leadData['account_id'] ?? '' => $leadData['customer_name'] ?? '',
+                    ],
+                    'group' => [
+                        $leadData['property_group_id'] ?? '' => $leadData['property_group_name'] ?? '',
+                    ],
+                ];
+                if (! empty($leadData['salesman_id'])) {
+                    $this->preFilledDropDowns['salesman'] = [
+                        $leadData['salesman_id'] => $leadData['salesman_name'] ?? '',
+                    ];
+                }
+
+                $this->dispatch('RentOutSelectValues', [
+                    'account_id' => $leadData['account_id'] ?? '',
+                    'customer_name' => $leadData['customer_name'] ?? '',
+                    'property_group_id' => $leadData['property_group_id'] ?? '',
+                    'group_name' => $leadData['property_group_name'] ?? '',
+                    'salesman_id' => $leadData['salesman_id'] ?? '',
+                    'salesman_name' => $leadData['salesman_name'] ?? '',
+                ]);
+
+                // Keep the prefill data for one navigation only
+                session()->forget('lead_booking_data');
+            }
         }
         $this->monthCalculator();
     }

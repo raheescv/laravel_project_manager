@@ -4,6 +4,7 @@ use App\Http\Controllers\Property\MaintenanceController;
 use App\Http\Controllers\Property\PropertyBuildingController;
 use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyGroupController;
+use App\Http\Controllers\Property\PropertyLeadController;
 use App\Http\Controllers\Property\PropertyTypeController;
 use App\Http\Controllers\Property\RentOutController;
 use App\Http\Controllers\Property\RentOutReportController;
@@ -30,6 +31,16 @@ Route::middleware('auth')->group(function (): void {
         Route::name('property::')->prefix('properties')->controller(PropertyController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('property.view');
             Route::get('list', 'get')->name('list');
+        });
+
+        // Property Leads
+        Route::name('lead::')->prefix('lead')->controller(PropertyLeadController::class)->group(function (): void {
+            Route::get('', 'index')->name('list')->can('property lead.view');
+            Route::get('list', 'index')->name('index')->can('property lead.view');
+            Route::get('calendar', 'calendar')->name('calendar')->can('property lead.view');
+            Route::get('calendar/data', 'calendarData')->name('calendar.data')->can('property lead.view');
+            Route::get('create', 'create')->name('create')->can('property lead.create');
+            Route::get('edit/{id}', 'edit')->name('edit')->can('property lead.view');
         });
 
         // Property Types (Settings)

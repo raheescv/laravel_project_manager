@@ -158,6 +158,21 @@ return [
     'complaint' => ['create', 'view', 'edit', 'delete'],
     'tenant detail' => ['create', 'view', 'edit', 'delete'],
 
+    // Property Lead Module
+    'property lead' => [
+        'create',
+        'view',
+        'edit',
+        'delete',
+        'download',
+        'booking transfer',
+        'delete note',
+        'dashboard status count',
+        'dashboard recent activities',
+        'dashboard source pie chart',
+        'dashboard employee bar chart',
+    ],
+
     // RentOut - Rent Module
     'rent out' => [
         'create',
