@@ -48,10 +48,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('cancelled_by')->nullable()->references('id')->on('users');
             $table->unsignedBigInteger('deleted_by')->nullable()->references('id')->on('users');
 
-            $table->index('local_purchase_order_id');
             $table->index('decision_by');
-
-            $table->foreign('local_purchase_order_id')->references('id')->on('local_purchase_orders')->onDelete('restrict');
 
             $table->softDeletes();
             $table->timestamps();
