@@ -30,4 +30,9 @@ class MaintenanceController extends Controller
     {
         return view('property.maintenance.complaint', ['id' => $id]);
     }
+
+    public function technician()
+    {
+        return view('property.maintenance.technician');
+    }
 }

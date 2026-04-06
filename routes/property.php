@@ -117,6 +117,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('create', 'create')->name('create')->can('maintenance.create');
             Route::get('edit/{id}', 'edit')->name('edit')->can('maintenance.edit');
             Route::get('assign/{id}', 'assign')->name('assign')->can('maintenance.assign');
+            Route::get('technician', 'technician')->name('technician')->can('maintenance.technician view');
             Route::get('complaint/{id}', 'complaint')->name('complaint')->can('maintenance.view');
         });
     });

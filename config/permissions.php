@@ -247,7 +247,7 @@ return [
     'lpo-purchase' => ['create', 'view', 'edit', 'delete', 'decide'],
 
     // Maintenance Module
-    'maintenance' => ['create', 'view', 'edit', 'delete', 'export', 'assign', 'complete'],
+    'maintenance' => ['create', 'view', 'edit', 'delete', 'export', 'assign', 'complete', 'technician view'],
 
     // Supply Request Module
     'supply request' => [

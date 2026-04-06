@@ -452,7 +452,8 @@
 
                     {{-- Maintenance --}}
                     @if (auth()->user()->can('maintenance.view') ||
-                            auth()->user()->can('maintenance.create'))
+                            auth()->user()->can('maintenance.create') ||
+                            auth()->user()->can('maintenance.technician view'))
                         <li class="nav-item has-sub">
                             @php
                                 $maintenanceList = [
@@ -469,7 +470,13 @@
                                 @can('maintenance.view')
                                     <li class="nav-item">
                                         <a href="{{ route('property::maintenance::index') }}"
-                                            class="nav-link {{ request()->is(['property/maintenance','property/maintenance/*']) ? 'active' : '' }}">Registration</a>
+                                            class="nav-link {{ request()->is(['property/maintenance','property/maintenance/edit/*','property/maintenance/create']) ? 'active' : '' }}">Registration</a>
+                                    </li>
+                                @endcan
+                                @can('maintenance.technician view')
+                                    <li class="nav-item">
+                                        <a href="{{ route('property::maintenance::technician') }}"
+                                            class="nav-link {{ request()->is('property/maintenance/technician') ? 'active' : '' }}">Technician</a>
                                     </li>
                                 @endcan
                             </ul>
