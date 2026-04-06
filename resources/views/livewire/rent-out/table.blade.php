@@ -10,6 +10,11 @@
                             <i class="demo-psi-add me-2 fs-5"></i>
                             Add New
                         </a>
+                        <a href="{{ route($config->importRoute) }}"
+                            class="btn btn-info d-flex align-items-center shadow-sm text-white">
+                            <i class="fa fa-cloud-upload me-2"></i>
+                            Import
+                        </a>
                     @endcan
                     @can($config->deletePermission)
                         @if (count($selected) > 0)

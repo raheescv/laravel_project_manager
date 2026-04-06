@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function (): void {
         Route::name('property::')->prefix('properties')->controller(PropertyController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('property.view');
             Route::get('list', 'get')->name('list');
+            Route::get('import', 'import')->name('import')->can('property.create');
         });
 
         // Property Leads
@@ -66,6 +67,7 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('booking/create/{id?}', 'bookingPage')->name('booking.create')->can('rent out.create');
                 Route::get('booking/edit/{id}', 'bookingPage')->name('booking.edit')->can('rent out.edit');
                 Route::get('booking/view/{id}', 'bookingView')->name('booking.view')->can('rent out.view');
+                Route::get('import', 'import')->name('import')->can('rent out.create');
             });
 
             Route::controller(RentOutTransactionController::class)->group(function (): void {
@@ -89,6 +91,7 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('booking/create/{id?}', 'bookingPage')->name('booking.create')->can('rent out lease.create');
                 Route::get('booking/edit/{id}', 'bookingPage')->name('booking.edit')->can('rent out lease.create');
                 Route::get('booking/view/{id}', 'bookingView')->name('booking.view')->can('rent out lease.view');
+                Route::get('import', 'import')->name('import')->can('rent out lease.create');
             });
 
             Route::controller(RentOutTransactionController::class)->group(function (): void {

@@ -8,6 +8,10 @@
                             <i class="fa fa-plus-circle me-2"></i>
                             Add New Property
                         </button>
+                        <a href="{{ route('property::property::import') }}" class="btn btn-info d-flex align-items-center shadow-sm text-white">
+                            <i class="fa fa-cloud-upload me-2"></i>
+                            Import
+                        </a>
                     @endcan
                     <div class="btn-group shadow-sm">
                         @can('property.view')

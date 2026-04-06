@@ -61,4 +61,11 @@ class RentOutController extends Controller
 
         return view('property.rent-out.booking-view', compact('config', 'id'));
     }
+
+    public function import(Request $request)
+    {
+        $config = $this->getConfig($request);
+
+        return view('property.rent-out.import', compact('config'));
+    }
 }

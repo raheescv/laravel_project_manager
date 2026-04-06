@@ -188,6 +188,7 @@ return [
         'financial approve',
         'complete',
         'view journal entries',
+        'payment',
     ],
     'rent out booking' => [
         'create',
@@ -205,6 +206,7 @@ return [
     ],
     'rent out security' => ['create', 'view', 'edit', 'delete'],
     'rent out cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
+    'rent out lease cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
     'rent out utility' => ['create', 'view', 'edit', 'delete'],
     'rent out service' => ['create', 'view', 'edit', 'delete'],
     'rent out payment term' => ['create', 'view', 'edit', 'delete'],
@@ -225,6 +227,8 @@ return [
         'financial approve',
         'complete',
         'view journal entries',
+        'payment',
+        'cheque management',
     ],
     'rent out lease booking' => [
         'create',

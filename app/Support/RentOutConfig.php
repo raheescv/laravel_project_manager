@@ -60,6 +60,8 @@ class RentOutConfig
 
     public string $bookingViewRoute;
 
+    public string $importRoute;
+
     // Permissions
     public string $viewPermission;
 
@@ -163,6 +165,7 @@ class RentOutConfig
         $this->bookingCreateRoute = $prefix.'booking.create';
         $this->bookingEditRoute = $prefix.'booking.edit';
         $this->bookingViewRoute = $prefix.'booking.view';
+        $this->importRoute = $prefix.'import';
     }
 
     protected function initPermissions(): void
