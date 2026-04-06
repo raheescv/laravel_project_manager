@@ -1,30 +1,29 @@
 <div>
     {{-- Summary Cards --}}
+    @php
+        $summaryCardsList = [
+            ['label' => 'Total Security Amount', 'value' => $summaryCards['total'], 'color' => 'success', 'icon' => 'pli-shield'],
+            ['label' => 'Overdue Amount', 'value' => $summaryCards['overdue'], 'color' => 'danger', 'icon' => 'pli-alarm-clock'],
+            ['label' => 'Paid Amount', 'value' => $summaryCards['paid'], 'color' => 'info', 'icon' => 'pli-check'],
+        ];
+    @endphp
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card border-0 overflow-hidden">
-                <div class="card-header bg-success text-white py-2 fw-bold text-center">Total Security Amount</div>
-                <div class="card-body text-center border border-success">
-                    <h3 class="mb-0">{{ number_format($summaryCards['total'], 2) }}</h3>
+        @foreach ($summaryCardsList as $card)
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-3 d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 bg-{{ $card['color'] }} bg-opacity-10"
+                             style="width: 48px; height: 48px; min-width: 48px;">
+                            <i class="{{ $card['icon'] }} fs-4 text-{{ $card['color'] }}"></i>
+                        </div>
+                        <div>
+                            <div class="small text-muted">{{ $card['label'] }}</div>
+                            <div class="fs-5 fw-bold text-{{ $card['color'] }}">{{ number_format($card['value'], 2) }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 overflow-hidden">
-                <div class="card-header bg-danger text-white py-2 fw-bold text-center">Overdue Amount</div>
-                <div class="card-body text-center border border-danger">
-                    <h3 class="mb-0 text-danger">{{ number_format($summaryCards['overdue'], 2) }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 overflow-hidden">
-                <div class="card-header bg-primary text-white py-2 fw-bold text-center">Paid Amount</div>
-                <div class="card-body text-center border border-primary">
-                    <h3 class="mb-0 text-primary">{{ number_format($summaryCards['paid'], 2) }}</h3>
-                </div>
-            </div>
-        </div>
+        @endforeach
     </div>
 
     {{-- Main Table Card --}}

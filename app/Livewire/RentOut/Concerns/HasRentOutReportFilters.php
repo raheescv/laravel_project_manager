@@ -117,6 +117,12 @@ trait HasRentOutReportFilters
         $this->selected = $value ? $this->getSelectableIds() : [];
     }
 
+    public function selectAllItems(bool $value = true): void
+    {
+        $this->selectAll = $value;
+        $this->selected = $value ? $this->getSelectableIds() : [];
+    }
+
     public function updated($key, $value): void
     {
         if (! in_array($key, ['selectAll']) && ! str_starts_with($key, 'selected.')) {

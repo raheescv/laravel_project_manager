@@ -96,6 +96,8 @@ Route::middleware('auth')->group(function (): void {
 
             Route::controller(RentOutTransactionController::class)->group(function (): void {
                 Route::get('payments', 'payments')->name('payments')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
+                Route::get('payment-due', 'paymentDue')->name('payment-due')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
+                Route::get('payment-history', 'paymentHistory')->name('payment-history')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
                 Route::get('cheque-management', 'chequeManagement')->name('cheque-management')->defaults('agreement_type', 'lease')->can('rent out lease.cheque management');
             });
         });

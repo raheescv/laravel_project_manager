@@ -5,7 +5,7 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item">{{ ucfirst($breadcrumb) }}</li>
-                    <li class="breadcrumb-item active" aria-current="page">Payments</li>
+                    <li class="breadcrumb-item active" aria-current="page">Payment History</li>
                 </ol>
             </nav>
             <h1 class="page-title mb-0 mt-2">{{ $title }}</h1>
@@ -15,7 +15,7 @@
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('rent-out.payment-table', ['agreementType' => $agreementType])
+                @livewire('rent-out.rent.payment-history-table', ['agreementType' => $agreementType])
             </div>
         </div>
     </div>
