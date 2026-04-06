@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\SingleUse\RealEstate;
 
+use App\Actions\RentOut\BackfillPropertyPaymentJournalEntriesAction;
 use App\Jobs\BranchProductCreationJob;
 use App\Models\Account;
 use App\Models\Branch;
@@ -171,6 +172,7 @@ class MigratePropertyDataCommand extends Command
             $this->migrateComplaints();
             $this->migrateMaintenances();
             $this->migrateMaintenanceComplaints();
+            $this->backfillPropertyPaymentJournalEntries();
         } catch (\Exception $e) {
             $this->error("Migration failed: {$e->getMessage()}");
             Log::error('Property data migration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -184,6 +186,19 @@ class MigratePropertyDataCommand extends Command
         $this->info('Property data migration completed successfully!');
 
         return Command::SUCCESS;
+    }
+
+    private function backfillPropertyPaymentJournalEntries(): void
+    {
+        $this->newLine();
+        $this->line(str_repeat('-', 72));
+        $this->info('Property Payment Journal Backfill');
+        $this->line(str_repeat('-', 72));
+        $this->info('Backfilling property payment journal entries...');
+
+        $result = (new BackfillPropertyPaymentJournalEntriesAction())->execute($this->tenantId, $this->dryRun, $this);
+
+        $this->info("Backfill complete. Rent terms created: {$result['rent_terms_created']}. Utility terms created: {$result['utility_terms_created']}.");
     }
 
     private function buildPaymentModeMap(): void

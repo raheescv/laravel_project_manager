@@ -3,9 +3,12 @@
 namespace App\Actions\RentOut\Payment;
 
 use App\Actions\Journal\CreateAction as JournalCreateAction;
+use App\Enums\RentOut\AgreementType;
+use App\Models\Account;
 use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class StoreTransactionAction
@@ -113,6 +116,7 @@ class StoreTransactionAction
             // Sync journal entries if journal exists
             if ($payment->journal_id) {
                 $amount = max($newCredit, $newDebit);
+                /** @var Journal|null $model */
                 $journal = Journal::find($payment->journal_id);
                 if ($journal) {
                     $journal->entries()->each(function ($entry) use ($amount) {
@@ -146,6 +150,7 @@ class StoreTransactionAction
     {
         try {
             $rentOut = RentOut::findOrFail($data['rent_out_id']);
+            $createdBy = $this->resolveCreatedBy($rentOut, $data);
 
             $payment = RentOutTransaction::create([
                 'tenant_id' => $rentOut->tenant_id,
@@ -170,12 +175,14 @@ class StoreTransactionAction
                 'remark' => $data['remark'] ?? null,
                 'reason' => $data['reason'] ?? null,
                 'voucher_no' => $data['voucher_no'] ?? null,
-                'created_by' => $data['created_by'] ?? $rentOut->created_by,
+                'created_by' => $createdBy,
             ]);
 
             // Create journal entry
             $amount = max($data['credit'] ?? 0, $data['debit'] ?? 0);
             $isPayout = ($data['debit'] ?? 0) > 0;
+
+            $journalMetadata = $this->resolveJournalMetadata($rentOut, $data, $isPayout);
 
             $journalData = [
                 'tenant_id' => $rentOut->tenant_id,
@@ -183,17 +190,18 @@ class StoreTransactionAction
                 'date' => $data['date'],
                 'description' => $data['group'] ?? $data['source'],
                 'remarks' => $data['remark'] ?? '',
-                'source' => 'rent_out',
+                'source' => $journalMetadata['source'],
                 'model' => 'RentOut',
                 'model_id' => $rentOut->id,
-                'created_by' => $data['created_by'] ?? $rentOut->created_by,
+                'created_by' => $createdBy,
                 'entries' => $this->makeEntryPair(
                     $rentOut,
                     (int) $data['account_id'],
                     $amount,
                     $isPayout,
+                    $journalMetadata['counter_account_id'],
                     $data['remark'] ?? '',
-                    $data['created_by'] ?? $rentOut->created_by
+                    $createdBy
                 ),
             ];
 
@@ -232,10 +240,11 @@ class StoreTransactionAction
         int $paymentAccountId,
         float $amount,
         bool $isPayout,
+        ?int $counterAccountId,
         string $remarks,
         int $createdBy
     ): array {
-        $customerId = $rentOut->account_id;
+        $counterAccountId ??= $rentOut->account_id;
         $base = [
             'created_by' => $createdBy,
             'remarks' => $remarks,
@@ -244,37 +253,113 @@ class StoreTransactionAction
         ];
 
         if ($isPayout) {
-            // Money going OUT: Dr Customer, Cr PaymentMethod
+            // Money going OUT: Dr Counter Account, Cr Payment Method
             return [
                 array_merge($base, [
-                    'account_id' => $customerId,
+                    'account_id' => $counterAccountId,
                     'counter_account_id' => $paymentAccountId,
                     'debit' => $amount,
                     'credit' => 0,
                 ]),
                 array_merge($base, [
                     'account_id' => $paymentAccountId,
-                    'counter_account_id' => $customerId,
+                    'counter_account_id' => $counterAccountId,
                     'debit' => 0,
                     'credit' => $amount,
                 ]),
             ];
         }
 
-        // Money coming IN: Dr PaymentMethod, Cr Customer
+        // Money coming IN: Dr PaymentMethod, Cr Counter Account
         return [
             array_merge($base, [
                 'account_id' => $paymentAccountId,
-                'counter_account_id' => $customerId,
+                'counter_account_id' => $counterAccountId,
                 'debit' => $amount,
                 'credit' => 0,
             ]),
             array_merge($base, [
-                'account_id' => $customerId,
+                'account_id' => $counterAccountId,
                 'counter_account_id' => $paymentAccountId,
                 'debit' => 0,
                 'credit' => $amount,
             ]),
         ];
+    }
+
+    protected function resolveJournalMetadata(RentOut $rentOut, array $data, bool $isPayout): array
+    {
+        if ($isPayout) {
+            return [
+                'source' => 'expense',
+                'counter_account_id' => $rentOut->account_id,
+            ];
+        }
+
+        $source = (string) ($data['source'] ?? '');
+
+        if ($source === 'PaymentTerm') {
+            return [
+                'source' => 'income',
+                'counter_account_id' => $this->resolvePropertyIncomeAccountId($rentOut),
+            ];
+        }
+
+        if (in_array($source, ['UtilityTerm', 'Service', 'ServiceCharge'], true)) {
+            return [
+                'source' => 'income',
+                'counter_account_id' => $this->resolveServiceIncomeAccountId($rentOut),
+            ];
+        }
+
+        return [
+            'source' => 'rent_out',
+            'counter_account_id' => $rentOut->account_id,
+        ];
+    }
+
+    protected function resolvePropertyIncomeAccountId(RentOut $rentOut): ?int
+    {
+        if ($rentOut->agreement_type === AgreementType::Lease) {
+            return $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'sale');
+        }
+
+        return $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'rent_income')
+            ?? $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'sale');
+    }
+
+    protected function resolveServiceIncomeAccountId(RentOut $rentOut): ?int
+    {
+        return $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'service_charge')
+            ?? $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'sale');
+    }
+
+    protected function findLockedAccountIdBySlug(int $tenantId, string $slug): ?int
+    {
+        return Account::query()
+            ->where('tenant_id', $tenantId)
+            ->where('slug', $slug)
+            ->where('is_locked', 1)
+            ->value('id');
+    }
+
+    protected function resolveCreatedBy(RentOut $rentOut, array $data): int
+    {
+        $createdBy = $data['created_by'] ?? $rentOut->created_by ?? Auth::id();
+
+        if (is_numeric($createdBy)) {
+            return (int) $createdBy;
+        }
+
+        $tenantUserId = User::query()
+            ->where('tenant_id', $rentOut->tenant_id)
+            ->orderBy('id')
+            ->value('id');
+
+        if ($tenantUserId !== null) {
+            return (int) $tenantUserId;
+        }
+
+        throw new \RuntimeException('Unable to resolve created_by for property payment transaction.');
     }
 }
