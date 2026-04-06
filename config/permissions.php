@@ -141,13 +141,37 @@ return [
     'tailoring job completion' => ['view', 'create', 'edit', 'delete'],
 
     // Property Management
-    'property' => ['create', 'view', 'edit', 'delete', 'export'],
+    'property' => ['create', 'view', 'edit', 'delete', 'export', 'dashboard overview'],
+    'property dashboard' => [
+        'maintenance overview',
+        'complaint overview',
+        'financial overview',
+        'supply request overview',
+        'rent out expiry overview',
+    ],
     'property group' => ['create', 'view', 'edit', 'delete'],
     'property building' => ['create', 'view', 'edit', 'delete'],
     'property type' => ['create', 'view', 'edit', 'delete'],
     'utility' => ['create', 'view', 'edit', 'delete'],
     'document type' => ['create', 'view', 'edit', 'delete'],
+    'complaint category' => ['create', 'view', 'edit', 'delete'],
+    'complaint' => ['create', 'view', 'edit', 'delete'],
     'tenant detail' => ['create', 'view', 'edit', 'delete'],
+
+    // Property Lead Module
+    'property lead' => [
+        'create',
+        'view',
+        'edit',
+        'delete',
+        'download',
+        'booking transfer',
+        'delete note',
+        'dashboard status count',
+        'dashboard recent activities',
+        'dashboard source pie chart',
+        'dashboard employee bar chart',
+    ],
 
     // RentOut - Rent Module
     'rent out' => [
@@ -164,6 +188,7 @@ return [
         'financial approve',
         'complete',
         'view journal entries',
+        'payment',
     ],
     'rent out booking' => [
         'create',
@@ -181,6 +206,7 @@ return [
     ],
     'rent out security' => ['create', 'view', 'edit', 'delete'],
     'rent out cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
+    'rent out lease cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
     'rent out utility' => ['create', 'view', 'edit', 'delete'],
     'rent out service' => ['create', 'view', 'edit', 'delete'],
     'rent out payment term' => ['create', 'view', 'edit', 'delete'],
@@ -201,6 +227,8 @@ return [
         'financial approve',
         'complete',
         'view journal entries',
+        'payment',
+        'cheque management',
     ],
     'rent out lease booking' => [
         'create',
@@ -221,6 +249,9 @@ return [
     'local purchase order' => ['create', 'edit', 'view', 'delete', 'decide'],
     'grn' => ['create', 'view', 'edit', 'delete', 'decide'],
     'lpo-purchase' => ['create', 'view', 'edit', 'delete', 'decide'],
+
+    // Maintenance Module
+    'maintenance' => ['create', 'view', 'edit', 'delete', 'export', 'assign', 'complete', 'technician view'],
 
     // Supply Request Module
     'supply request' => [

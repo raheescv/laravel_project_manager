@@ -27,7 +27,11 @@ class RentOutTransactionController extends Controller
 
     public function paymentDue($agreementType = 'rental')
     {
-        return view('property.rent.payment-due');
+        $title = $agreementType === 'lease' ? 'Sale Payment Due' : 'Rental Payment Due';
+        $subtitle = $agreementType === 'lease' ? 'Manage payment dues for sale agreements' : 'Manage payment dues for rental agreements';
+        $breadcrumb = $agreementType === 'lease' ? 'sale' : 'rental';
+
+        return view('property.rent-out.payment-due', compact('agreementType', 'title', 'subtitle', 'breadcrumb'));
     }
 
     public function chequeManagement($agreementType = 'rental')
@@ -41,6 +45,10 @@ class RentOutTransactionController extends Controller
 
     public function paymentHistory($agreementType = 'rental')
     {
-        return view('property.rent.payment-history');
+        $title = $agreementType === 'lease' ? 'Sale Payment History' : 'Rental Payment History';
+        $subtitle = $agreementType === 'lease' ? 'View payment history for sale agreements' : 'View payment history for rental agreements';
+        $breadcrumb = $agreementType === 'lease' ? 'sale' : 'rental';
+
+        return view('property.rent-out.payment-history', compact('agreementType', 'title', 'subtitle', 'breadcrumb'));
     }
 }

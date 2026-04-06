@@ -117,6 +117,15 @@ class ServiceChargeModal extends Component
                 'name' => 'Service Charge',
                 'amount' => $this->amount,
                 'description' => $this->description,
+                'start_date' => $this->startDate,
+                'end_date' => $this->endDate,
+                'no_of_days' => $this->noOfDays,
+                'no_of_months' => $this->noOfMonths,
+                'unit_size' => $this->unitSize,
+                'per_square_meter_price' => $this->perSqMeterPrice,
+                'per_day_price' => $this->perDayPrice,
+                'reason' => 'Service Charge',
+                'remark' => $this->remark,
                 'created_by' => Auth::id(),
             ]);
 

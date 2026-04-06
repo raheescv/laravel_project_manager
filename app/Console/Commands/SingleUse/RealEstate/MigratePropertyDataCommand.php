@@ -109,6 +109,8 @@ class MigratePropertyDataCommand extends Command
             $this->migrateRentOutDocuments();
 
             $this->migrateTenantDetails();
+
+            $this->migratePropertyLeads();
         } catch (\Exception $e) {
             $this->error("Migration failed: {$e->getMessage()}");
             Log::error('Property data migration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -1022,5 +1024,96 @@ class MigratePropertyDataCommand extends Command
         $bar->finish();
         $this->newLine();
         $this->info("Migrated {$records->count()} tenant details.");
+    }
+
+    private function migratePropertyLeads(): void
+    {
+        $this->info('Migrating property_leads...');
+
+        if (! DB::connection('mysql2')->getSchemaBuilder()->hasTable('property_leads')) {
+            $this->warn('Source property_leads table not found - skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')
+            ->table('property_leads')
+            ->orderBy('id')
+            ->get();
+
+        if ($records->isEmpty()) {
+            $this->warn('No property_leads records to migrate.');
+
+            return;
+        }
+
+        $bar = $this->output->createProgressBar($records->count());
+        $migrated = 0;
+
+        foreach ($records as $row) {
+            $remarks = $row->remarks ?? null;
+            if (is_string($remarks) && $remarks !== '') {
+                $decoded = json_decode($remarks, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $remarks = json_encode($decoded);
+                }
+            } elseif (! is_string($remarks)) {
+                $remarks = null;
+            }
+
+            $meetingDate = $this->normalizeDate($row->meeting_date ?? null);
+            $meetingTime = $row->meeting_time ?? null;
+            if ($meetingTime === '00:00:00') {
+                $meetingTime = null;
+            }
+
+            $data = [
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'branch_id' => $row->branch_id ?? 1,
+                'name' => $row->name ?? '',
+                'mobile' => $row->mobile ?? null,
+                'email' => $row->email ?? null,
+                'company_name' => $row->company_name ?? null,
+                'company_contact_no' => $row->company_contact_no ?? null,
+                'source' => $row->source ?? null,
+                'type' => $row->type ?? 'Sales',
+                'property_group_id' => $row->property_group_id ?? null,
+                'assigned_to' => $row->assigned_to ?? null,
+                'assign_date' => $this->normalizeDate($row->assign_date ?? null),
+                'country_id' => $row->country_id ?? null,
+                'nationality' => $this->normalizeNationality($row->nationality ?? null),
+                'location' => $row->location ?? null,
+                'meeting_date' => $meetingDate,
+                'meeting_time' => $meetingTime,
+                'remarks' => $remarks,
+                'status' => $row->status ?? 'New Lead',
+                'created_by' => $row->assigned_to ?? null,
+                'updated_by' => $row->assigned_to ?? null,
+                'deleted_at' => $row->deleted_at ?? null,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+
+            if (! $this->dryRun) {
+                DB::table('property_leads')->updateOrInsert(['id' => $row->id], $data);
+            }
+
+            $migrated++;
+            $bar->advance();
+        }
+
+        $bar->finish();
+        $this->newLine();
+        $this->info("Migrated {$migrated} property leads.");
+    }
+
+    private function normalizeDate(?string $value): ?string
+    {
+        if (! $value || $value === '0000-00-00' || str_starts_with($value, '0000-00-00')) {
+            return null;
+        }
+
+        return $value;
     }
 }

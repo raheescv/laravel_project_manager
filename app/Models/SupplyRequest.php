@@ -120,7 +120,7 @@ class SupplyRequest extends Model implements AuditableContracts
         return $this->belongsTo(User::class, 'completed_by');
     }
 
-public function paymentMode(): BelongsTo
+    public function paymentMode(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'payment_mode_id');
     }

@@ -3,9 +3,8 @@
         <div class="content__wrap">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="demo-psi-home"></i></a></li>
-                    <li class="breadcrumb-item">Properties</li>
-                    <li class="breadcrumb-item">{{ $breadcrumb }}</li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item">{{ ucfirst($breadcrumb) }}</li>
                     <li class="breadcrumb-item active" aria-current="page">Payments</li>
                 </ol>
             </nav>
@@ -15,7 +14,15 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('rent-out.payment-table', ['agreementType' => $agreementType])
+            <div class="card mb-3">
+                @livewire('rent-out.payment-table', ['agreementType' => $agreementType])
+            </div>
         </div>
     </div>
+    @push('scripts')
+        <x-select.propertyGroupSelect />
+        <x-select.propertyBuildingSelect />
+        <x-select.propertySelect />
+        <x-select.customerSelect />
+    @endpush
 </x-app-layout>

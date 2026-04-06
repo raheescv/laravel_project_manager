@@ -16,6 +16,15 @@ return new class() extends Migration
             $table->string('name');
             $table->decimal('amount', 16, 2)->default(0);
             $table->text('description')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->unsignedInteger('no_of_days')->nullable();
+            $table->unsignedInteger('no_of_months')->nullable();
+            $table->decimal('unit_size', 12, 2)->nullable();
+            $table->decimal('per_square_meter_price', 12, 2)->nullable();
+            $table->decimal('per_day_price', 12, 2)->nullable();
+            $table->string('reason')->nullable();
+            $table->string('remark')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->softDeletes();
             $table->timestamps();

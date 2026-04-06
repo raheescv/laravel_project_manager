@@ -19,4 +19,9 @@ class PropertyController extends Controller
 
         return response()->json($list);
     }
+
+    public function import()
+    {
+        return view('property.property.import');
+    }
 }

@@ -824,6 +824,104 @@ if (! function_exists('https_asset')) {
     }
 }
 
+if (! function_exists('leadSources')) {
+    function leadSources(): array
+    {
+        return [
+            'Social Media' => 'Social Media',
+            'Facebook' => 'Facebook',
+            'Instagram' => 'Instagram',
+            'Snapchat' => 'Snapchat',
+            'YouTube' => 'YouTube',
+            'SMS' => 'SMS',
+            'E-mail Campaign' => 'E-mail Campaign',
+            'Outdoor Marketing' => 'Outdoor Marketing',
+            'Personal' => 'Personal',
+            'Walk-In' => 'Walk-In',
+            'Local Broker' => 'Local Broker',
+            'International Broker' => 'International Broker',
+            'Other' => 'Other',
+        ];
+    }
+}
+
+if (! function_exists('leadStatuses')) {
+    function leadStatuses(): array
+    {
+        return [
+            'New Lead' => 'New Lead',
+            'Follow Up' => 'Follow Up',
+            'Interested' => 'Interested',
+            'Not Interested' => 'Not Interested',
+            'Low Budget' => 'Low Budget',
+            'Visit Scheduled' => 'Visit Scheduled',
+            'Closed Deal' => 'Closed Deal',
+            'Shopping For Info' => 'Shopping For Info',
+            'Call Back' => 'Call Back',
+            'Same Day Call Back' => 'Same Day Call Back',
+            'No Answer' => 'No Answer',
+            'Whatsapp Only' => 'Whatsapp Only',
+            'Dead Lead' => 'Dead Lead',
+            'Rejected' => 'Rejected',
+            'Drop' => 'Drop',
+            'Follow Up For Visit' => 'Follow Up For Visit',
+        ];
+    }
+}
+
+if (! function_exists('leadTypes')) {
+    function leadTypes(): array
+    {
+        return [
+            'Sales' => 'Sales',
+            'Rentout' => 'Rentout',
+        ];
+    }
+}
+
+if (! function_exists('propertyLeadLocations')) {
+    function propertyLeadLocations(): array
+    {
+        return [
+            'Site' => 'Site',
+            'Company Office' => 'Company Office',
+            'Outside Location' => 'Outside Location',
+        ];
+    }
+}
+
+if (! function_exists('leadStatusBadgeClass')) {
+    function leadStatusBadgeClass(?string $status): string
+    {
+        return match ($status) {
+            'New Lead' => 'bg-primary-subtle text-primary',
+            'Follow Up' => 'bg-info-subtle text-info',
+            'Interested' => 'bg-success-subtle text-success',
+            'Not Interested' => 'bg-secondary-subtle text-secondary',
+            'Low Budget' => 'bg-warning-subtle text-warning',
+            'Visit Scheduled' => 'bg-success text-white',
+            'Closed Deal' => 'bg-success text-white',
+            'Shopping For Info' => 'bg-info-subtle text-info',
+            'Call Back' => 'bg-warning text-dark',
+            'Same Day Call Back' => 'bg-warning-subtle text-warning',
+            'No Answer' => 'bg-secondary-subtle text-secondary',
+            'Whatsapp Only' => 'bg-success-subtle text-success',
+            'Dead Lead' => 'bg-danger-subtle text-danger',
+            'Rejected' => 'bg-danger text-white',
+            'Drop' => 'bg-secondary text-white',
+            'Follow Up For Visit' => 'bg-primary text-white',
+            default => 'bg-light text-dark',
+        };
+    }
+}
+
+if (! function_exists('removeSpace')) {
+    function removeSpace(?string $value): string
+    {
+        return str_replace(' ', '', (string) $value);
+    }
+}
+
 if (! function_exists('enumOptions')) {
     /**
      * Convert a backed enum class to a [value => label] array for html()->select().
