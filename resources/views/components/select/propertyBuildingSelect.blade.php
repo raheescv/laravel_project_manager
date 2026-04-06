@@ -3,7 +3,7 @@
         var $el = $(this);
         var groupSelector = $el.data('group-select') || null;
         new TomSelect(this, {
-            plugins: ['clear_button', 'remove_button'],
+            plugins: ['remove_button'],
             persist: false,
             valueField: 'id',
             nameField: 'name',

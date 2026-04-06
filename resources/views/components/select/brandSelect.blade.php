@@ -1,7 +1,7 @@
 <script type="text/javascript">
      $('.select-brand_id-list').each(function() {
         new TomSelect(this, {
-            plugins: ['clear_button', 'remove_button'],
+            plugins: ['remove_button'],
             persist: false,
             valueField: 'id',
             nameField: 'name',

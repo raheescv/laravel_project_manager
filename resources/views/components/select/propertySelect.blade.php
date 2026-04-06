@@ -149,7 +149,7 @@
         var groupSelector = $el.data('group-select') || null;
         var typeSelector = $el.data('type-select') || null;
         new TomSelect(this, {
-            plugins: ['clear_button', 'remove_button'],
+            plugins: ['remove_button'],
             persist: false,
             valueField: 'id',
             nameField: 'name',

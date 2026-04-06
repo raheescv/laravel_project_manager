@@ -190,7 +190,7 @@
     $('.select-customer_id-list').each(function() {
         new TomSelect(this, {
             ...customerSelectConfig,
-            plugins: ['clear_button'],
+            plugins: [],
         });
     });
 </script>

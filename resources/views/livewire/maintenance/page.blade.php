@@ -477,7 +477,7 @@
                 // ── TomSelect for Complaint Category ──
                 var categoryEl = document.getElementById('new_complaint_category_id');
                 var categorySelect = categoryEl ? new TomSelect(categoryEl, {
-                    plugins: ['clear_button'],
+                    plugins: [],
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
@@ -510,7 +510,7 @@
                 // ── TomSelect for Complaint ──
                 var complaintEl = document.getElementById('new_complaint_id');
                 var complaintSelect = complaintEl ? new TomSelect(complaintEl, {
-                    plugins: ['clear_button'],
+                    plugins: [],
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
@@ -542,7 +542,7 @@
                 // ── TomSelect for Technician ──
                 var technicianEl = document.getElementById('new_technician_id');
                 var technicianSelect = technicianEl ? new TomSelect(technicianEl, {
-                    plugins: ['clear_button'],
+                    plugins: [],
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',
@@ -582,7 +582,7 @@
                 var assignModal = new bootstrap.Modal(document.getElementById('assignTechnicianModal'));
                 var assignTechnicianEl = document.getElementById('assign_technician_id');
                 var assignTechnicianSelect = assignTechnicianEl ? new TomSelect(assignTechnicianEl, {
-                    plugins: ['clear_button'],
+                    plugins: [],
                     valueField: 'id',
                     labelField: 'name',
                     searchField: 'name',

@@ -233,7 +233,7 @@
                 // Technician TomSelect
                 if (document.getElementById('filter_technician_id')) {
                     var technicianSelect = new TomSelect('#filter_technician_id', {
-                        plugins: ['clear_button'],
+                        plugins: [],
                         valueField: 'id',
                         labelField: 'name',
                         searchField: 'name',
@@ -255,7 +255,7 @@
                 // Complaint TomSelect
                 if (document.getElementById('filter_complaint_id')) {
                     var complaintSelect = new TomSelect('#filter_complaint_id', {
-                        plugins: ['clear_button'],
+                        plugins: [],
                         valueField: 'id',
                         labelField: 'name',
                         searchField: 'name',

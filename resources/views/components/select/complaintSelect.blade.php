@@ -2,7 +2,7 @@
     $('.select-complaint_id-list').each(function() {
         if (this.tomselect) return;
         new TomSelect(this, {
-            plugins: ['clear_button', 'remove_button'],
+            plugins: ['remove_button'],
             persist: false,
             valueField: 'id',
             nameField: 'name',
@@ -36,7 +36,7 @@
     $('.select-complaint_id').each(function() {
         if (this.tomselect) return;
         new TomSelect(this, {
-            plugins: ['clear_button'],
+            plugins: [],
             persist: false,
             valueField: 'id',
             nameField: 'name',

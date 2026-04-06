@@ -33,7 +33,7 @@
     });
     $('.select-unit_id').each(function() {
         new TomSelect(this, {
-            plugins: ['clear_button', 'remove_button'],
+            plugins: ['remove_button'],
             persist: false,
             valueField: 'id',
             nameField: 'name',
