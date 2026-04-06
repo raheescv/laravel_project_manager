@@ -141,7 +141,14 @@ return [
     'tailoring job completion' => ['view', 'create', 'edit', 'delete'],
 
     // Property Management
-    'property' => ['create', 'view', 'edit', 'delete', 'export'],
+    'property' => ['create', 'view', 'edit', 'delete', 'export', 'dashboard overview'],
+    'property dashboard' => [
+        'maintenance overview',
+        'complaint overview',
+        'financial overview',
+        'supply request overview',
+        'rent out expiry overview',
+    ],
     'property group' => ['create', 'view', 'edit', 'delete'],
     'property building' => ['create', 'view', 'edit', 'delete'],
     'property type' => ['create', 'view', 'edit', 'delete'],
