@@ -131,13 +131,17 @@
                     </label>
                     {{ html()->select('filterBuilding', [])->value('')->class('select-property_building_id-list border-secondary-subtle shadow-sm')->id('payment_filterBuilding')->placeholder('All Buildings')->attribute('wire:model', 'filterBuilding')->attribute('data-group-select', '#payment_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-md-4 col-lg-6" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-home text-primary me-1 small"></i> Property/Unit
                     </label>
                     {{ html()->select('filterProperty', [])->value('')->class('select-property_id-list border-secondary-subtle shadow-sm')->id('payment_filterProperty')->placeholder('All Properties')->attribute('wire:model', 'filterProperty')->attribute('data-building-select', '#payment_filterBuilding')->attribute('data-group-select', '#payment_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+            </div>
+
+            {{-- ═══ Filter Row 2: Dates + Payment Mode ═══ --}}
+            <div class="row g-3 mt-1">
+                <div class="col-md-4 col-lg-4" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-user text-primary me-1 small"></i> Customer
                     </label>
@@ -155,10 +159,6 @@
                         <option value="overdue">Overdue</option>
                     </select>
                 </div>
-            </div>
-
-            {{-- ═══ Filter Row 2: Dates + Payment Mode ═══ --}}
-            <div class="row g-3 mt-1">
                 <div class="col-md-4 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-calendar text-primary me-1 small"></i> From Date
@@ -480,7 +480,7 @@
                                     </div>
                                 </td>
                                 @if ($this->isColumnVisible('date'))
-                                    <td>
+                                    <td class="text-nowrap">
                                         <i class="fa fa-calendar me-1 text-muted opacity-75"></i>
                                         {{ $item->due_date?->format('d-m-Y') }}
                                     </td>
