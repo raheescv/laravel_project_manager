@@ -1,6 +1,6 @@
 <div>
-    <div class="modal-header bg-warning text-dark border-0 py-2 px-3">
-        <h6 class="modal-title fw-bold mb-0">
+    <div class="modal-header bg-primary text-dark border-0 py-2 px-3">
+        <h6 class="modal-title fw-bold mb-0 text-white">
             <i class="fa fa-exchange me-2"></i> Cheque Status Update
         </h6>
         <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
