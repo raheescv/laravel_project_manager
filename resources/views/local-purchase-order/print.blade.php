@@ -1,3 +1,7 @@
+@php
+    use Carbon\Carbon;
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,23 +60,19 @@
 
         /* ── Logo row ─────────────────────────────────────── */
         .logo-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            min-height: 75px;
             border-bottom: 1.5px solid #000;
+            line-height: 0;
         }
 
         .logo-row img {
-            max-height: 65px;
-            max-width: 160px;
+            width: 100%;
+            display: block;
             object-fit: contain;
         }
 
         .logo-placeholder {
             font-size: 18px;
-            font-weight: 900;
+            font-weight: 100%;
             color: #00B050;
         }
 
@@ -334,10 +334,10 @@
     {{-- ── 1. HEADER BAR: REF NO + DATE ──────────────────────── --}}
     <div class="header-bar">
         <div class="ref-no">
-            REF NO:- {{ 'BASB-LPO-' . \Carbon\Carbon::parse($order->date ?? now())->format('m-y') . '-' . str_pad($order->id, 3, '0', STR_PAD_LEFT) }}
+            REF NO:- {{ 'BASB-LPO-' . Carbon::parse($order->date ?? now())->format('m-y') . '-' . str_pad($order->id, 3, '0', STR_PAD_LEFT) }}
         </div>
         <div class="date-area">
-            DATE:- {{ $order->date ? \Carbon\Carbon::parse($order->date)->format('j-M-y') : now()->format('j-M-y') }}
+            DATE:- {{ $order->date ? Carbon::parse($order->date)->format('j-M-y') : now()->format('j-M-y') }}
         </div>
     </div>
 
@@ -346,14 +346,8 @@
         @if($companyLogo)
             <img src="{{ $companyLogo }}" alt="Company Logo">
         @else
-            <div class="logo-placeholder">{{ strtoupper($companyName) }}</div>
+            <div class="logo-placeholder" style="padding: 8px 12px; min-height: 75px; display: flex; align-items: center;">{{ strtoupper($companyName) }}</div>
         @endif
-        <div></div>
-    </div>
-
-    {{-- ── 3. COMPANY NAME BANNER ─────────────────────────────── --}}
-    <div class="company-name-bar">
-        {{ strtoupper($companyName) }}
     </div>
 
     {{-- ── 4. COMPANY INFO + PO LABEL ─────────────────────────── --}}
@@ -437,7 +431,6 @@
             <tr>
                 <th style="width:5%">S/NO</th>
                 <th style="width:38%">ITEM DESCRIPTION</th>
-                <th style="width:10%">SIZE</th>
                 <th style="width:9%">UNIT</th>
                 <th style="width:10%">QUANTITY</th>
                 <th style="width:14%">UNIT RATE (QAR)</th>
@@ -451,7 +444,6 @@
                 <tr>
                     <td class="text-center">{{ $i + 1 }}</td>
                     <td class="text-left" style="font-weight:600;">{{ $item->product?->name ?? '-' }}</td>
-                    <td class="text-center">{{ $item->product?->size ?? '-' }}</td>
                     <td class="text-center">{{ $item->product?->unit?->name ?? '-' }}</td>
                     <td class="text-right">{{ number_format($item->quantity, 0) }}</td>
                     <td class="text-right">{{ number_format($item->rate, 2) }}</td>
@@ -459,7 +451,7 @@
                 </tr>
             @empty
                 <tr class="empty-row">
-                    <td colspan="7" class="text-center" style="color:#aaa; font-style:italic;">No items</td>
+                    <td colspan="6" class="text-center" style="color:#aaa; font-style:italic;">No items</td>
                 </tr>
             @endforelse
 
@@ -472,14 +464,14 @@
 
             {{-- Discount row --}}
             <tr class="discount-row">
-                <td colspan="5" style="border:none;"></td>
+                <td colspan="4" style="border:none;"></td>
                 <td class="text-center" style="font-weight:bold; background:#f9f9f9;">DISCOUNT</td>
                 <td class="text-right">–</td>
             </tr>
 
             {{-- TOTAL row --}}
             <tr class="total-row">
-                <td colspan="5" style="border:none; background:#00B050;"></td>
+                <td colspan="4" style="border:none; background:#00B050;"></td>
                 <td class="text-center" style="letter-spacing:1px;">TOTAL</td>
                 <td class="text-right">
                     QAR {{ number_format($order->total ?? $order->items->sum(fn($i) => $i->quantity * $i->rate), 2) }}

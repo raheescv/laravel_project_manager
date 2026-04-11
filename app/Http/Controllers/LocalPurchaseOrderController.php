@@ -59,10 +59,18 @@ class LocalPurchaseOrderController extends BaseController
             'tenant',
         ]);
 
-        $companyLogo     = cache('logo', asset('assets/img/logo.svg'));
-        $companyName     = Configuration::where('key', 'company_name')->value('value') ?? cache('company_name', config('app.name'));
-        $companyAddress  = Configuration::where('key', 'company_address')->value('value') ?? '';
-        $companyPhone    = Configuration::where('key', 'company_phone')->value('value') ?? '';
+        $companyLogo = null;
+        $lpoImagePath = Configuration::where('key', 'lpo_header_image')->value('value');
+        if ($lpoImagePath) {
+            $fullPath = storage_path('app/public/'.$lpoImagePath);
+            if (file_exists($fullPath)) {
+                $companyLogo = 'data:image/'.pathinfo($fullPath, PATHINFO_EXTENSION).';base64,'.base64_encode(file_get_contents($fullPath));
+            }
+        }
+
+        $companyName = Configuration::where('key', 'company_name')->value('value') ?? cache('company_name', config('app.name'));
+        $companyAddress = Configuration::where('key', 'company_address')->value('value') ?? '';
+        $companyPhone = Configuration::where('key', 'company_phone')->value('value') ?? '';
 
         $html = view('local-purchase-order.print', compact(
             'order',
@@ -81,6 +89,6 @@ class LocalPurchaseOrderController extends BaseController
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="LPO-' . $order->id . '-' . now()->format('Ymd') . '.pdf"');
+            ->header('Content-Disposition', 'inline; filename="LPO-'.$order->id.'-'.now()->format('Ymd').'.pdf"');
     }
 }

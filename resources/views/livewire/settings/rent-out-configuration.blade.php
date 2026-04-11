@@ -130,6 +130,27 @@
             </div>
 
         </div>
+
+            {{-- LPO Image --}}
+            <h6 class="fw-bold text-muted text-uppercase mb-2 pb-1 border-bottom mt-2">
+                <i class="fa fa-file-image-o me-1"></i> LPO Header Image
+            </h6>
+            <p class="text-muted small mb-3">
+                Upload a header image for the Local Purchase Order (LPO) PDF. This replaces the default logo. Max size: 2MB. Allowed: JPG, PNG.
+            </p>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small">LPO Header Image</label>
+                    <input type="file" wire:model="lpo_header_image_file" class="form-control form-control-sm" accept="image/*">
+                    <small class="form-text text-muted">Max 2MB. Replaces existing image on save.</small>
+                    @if ($existing_lpo_header_image)
+                        <div class="mt-2">
+                            <img src="{{ asset('storage/' . $existing_lpo_header_image) }}" class="img-thumbnail" style="max-height: 80px;" alt="LPO Header Image">
+                        </div>
+                    @endif
+                </div>
+            </div>
+
         <div class="card-footer bg-light text-end py-2 px-3">
             <button type="submit" class="btn btn-primary btn-sm px-3">
                 <i class="fa fa-save me-1"></i>Save Changes

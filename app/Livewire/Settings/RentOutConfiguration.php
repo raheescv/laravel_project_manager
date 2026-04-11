@@ -31,6 +31,8 @@ class RentOutConfiguration extends Component
 
     public $rent_out_agreement_images_files = [];
 
+    public $lpo_header_image_file;
+
     // Existing uploaded paths (for preview)
     public $existing_rental_reservation_logo;
 
@@ -43,6 +45,8 @@ class RentOutConfiguration extends Component
     public $existing_rent_out_agreement_footer;
 
     public $existing_rent_out_agreement_images = [];
+
+    public $existing_lpo_header_image;
 
     public $clear_agreement_images = false;
 
@@ -58,6 +62,7 @@ class RentOutConfiguration extends Component
         'lease_residential_logo_file' => 'lease_residential_logo',
         'rental_residential_logo_file' => 'residential_lease_logo',
         'rent_out_agreement_footer_file' => 'rent_out_agreement_logo_footer',
+        'lpo_header_image_file' => 'lpo_header_image',
     ];
 
     public function mount()
@@ -77,6 +82,7 @@ class RentOutConfiguration extends Component
         $this->existing_lease_residential_logo = Configuration::where('key', 'lease_residential_logo')->value('value');
         $this->existing_rental_residential_logo = Configuration::where('key', 'residential_lease_logo')->value('value');
         $this->existing_rent_out_agreement_footer = Configuration::where('key', 'rent_out_agreement_logo_footer')->value('value');
+        $this->existing_lpo_header_image = Configuration::where('key', 'lpo_header_image')->value('value');
 
         $imagesJson = Configuration::where('key', 'rent_out_agreement_images')->value('value');
         $this->existing_rent_out_agreement_images = $imagesJson ? (json_decode($imagesJson, true) ?: []) : [];
@@ -91,6 +97,7 @@ class RentOutConfiguration extends Component
             'rental_residential_logo_file' => 'nullable|image|max:2048',
             'rent_out_agreement_footer_file' => 'nullable|image|max:2048',
             'rent_out_agreement_images_files.*' => 'nullable|image|max:2048',
+            'lpo_header_image_file' => 'nullable|image|max:2048',
         ]);
 
         // Save text config keys
@@ -128,6 +135,7 @@ class RentOutConfiguration extends Component
         $this->existing_lease_residential_logo = Configuration::where('key', 'lease_residential_logo')->value('value');
         $this->existing_rental_residential_logo = Configuration::where('key', 'residential_lease_logo')->value('value');
         $this->existing_rent_out_agreement_footer = Configuration::where('key', 'rent_out_agreement_logo_footer')->value('value');
+        $this->existing_lpo_header_image = Configuration::where('key', 'lpo_header_image')->value('value');
 
         // Reset file inputs
         $this->reset([
@@ -137,6 +145,7 @@ class RentOutConfiguration extends Component
             'rental_residential_logo_file',
             'rent_out_agreement_footer_file',
             'rent_out_agreement_images_files',
+            'lpo_header_image_file',
         ]);
 
         $this->dispatch('success', message: 'Rent Out configuration saved successfully.');

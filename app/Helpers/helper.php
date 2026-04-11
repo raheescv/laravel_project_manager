@@ -1016,40 +1016,39 @@ if (! function_exists('paymentTermLabels')) {
     }
 }
 
-
 if (! function_exists('extract403Details')) {
-// Helper to extract 403 permission details from request context
-function extract403Details(string $message, Request $request): array
-{
-    $user = $request->user();
-    $route = $request->route();
+    // Helper to extract 403 permission details from request context
+    function extract403Details(string $message, Request $request): array
+    {
+        $user = $request->user();
+        $route = $request->route();
 
-    $action = $route?->getActionMethod();
-    $controllerClass = $route?->getControllerClass();
-    $resource = $controllerClass ? class_basename($controllerClass) : null;
-    $resourceName = $resource ? str_replace('Controller', '', $resource) : null;
+        $action = $route?->getActionMethod();
+        $controllerClass = $route?->getControllerClass();
+        $resource = $controllerClass ? class_basename($controllerClass) : null;
+        $resourceName = $resource ? str_replace('Controller', '', $resource) : null;
 
-    // Try to resolve the permission name
-    $permission = null;
-    $isGeneric = in_array($message, ['This action is unauthorized.', ''], true);
+        // Try to resolve the permission name
+        $permission = null;
+        $isGeneric = in_array($message, ['This action is unauthorized.', ''], true);
 
-    if (! $isGeneric && $message) {
-        // abort(403, 'custom message') — use the message directly
-        $permission = $message;
-    } elseif ($resourceName && $action) {
-        // Policy-based — reconstruct from resource + action
-        // Convert PascalCase to snake_case with spaces: LocalPurchaseOrder → local purchase order
-        $readable = strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $resourceName));
-        $permAction = $action;
-        $permission = "{$readable}.{$permAction}";
+        if (! $isGeneric && $message) {
+            // abort(403, 'custom message') — use the message directly
+            $permission = $message;
+        } elseif ($resourceName && $action) {
+            // Policy-based — reconstruct from resource + action
+            // Convert PascalCase to snake_case with spaces: LocalPurchaseOrder → local purchase order
+            $readable = strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $resourceName));
+            $permAction = $action;
+            $permission = "{$readable}.{$permAction}";
+        }
+
+        return [
+            'permission' => $permission,
+            'action' => $action,
+            'resource' => $resourceName,
+            'url' => $request->path(),
+            'user_role' => $user?->getRoleNames()?->implode(', '),
+        ];
     }
-
-    return [
-        'permission' => $permission,
-        'action' => $action,
-        'resource' => $resourceName,
-        'url' => $request->path(),
-        'user_role' => $user?->getRoleNames()?->implode(', '),
-    ];
-}
 }
