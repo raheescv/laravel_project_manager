@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Configuration;
 use App\Models\LocalPurchaseOrder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Spatie\Browsershot\Browsershot;
 
 class LocalPurchaseOrderController extends BaseController
 {
@@ -42,5 +44,43 @@ class LocalPurchaseOrderController extends BaseController
         $this->authorize('decide', $localPurchaseOrder);
 
         return view('local-purchase-order.decision', compact('localPurchaseOrder'));
+    }
+
+    public function print(LocalPurchaseOrder $localPurchaseOrder)
+    {
+        $this->authorize('print', $localPurchaseOrder);
+
+        $order = $localPurchaseOrder->load([
+            'vendor',
+            'items.product.unit',
+            'branch',
+            'creator',
+            'decisionMaker',
+            'tenant',
+        ]);
+
+        $companyLogo     = cache('logo', asset('assets/img/logo.svg'));
+        $companyName     = Configuration::where('key', 'company_name')->value('value') ?? cache('company_name', config('app.name'));
+        $companyAddress  = Configuration::where('key', 'company_address')->value('value') ?? '';
+        $companyPhone    = Configuration::where('key', 'company_phone')->value('value') ?? '';
+
+        $html = view('local-purchase-order.print', compact(
+            'order',
+            'companyLogo',
+            'companyName',
+            'companyAddress',
+            'companyPhone',
+        ))->render();
+
+        $pdf = Browsershot::html($html)
+            ->format('A4')
+            ->margins(10, 10, 10, 10)
+            ->showBackground()
+            ->noSandbox()
+            ->pdf();
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="LPO-' . $order->id . '-' . now()->format('Ymd') . '.pdf"');
     }
 }

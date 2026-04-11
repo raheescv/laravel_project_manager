@@ -18,6 +18,15 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
+            @can('print', $localPurchaseOrder)
+                <div class="mb-3 d-flex justify-content-end">
+                    <a href="{{ route('lpo::print', $localPurchaseOrder->id) }}"
+                       target="_blank"
+                       class="btn btn-success shadow-sm">
+                        <i class="fa fa-print me-2"></i> Print / Save PDF
+                    </a>
+                </div>
+            @endcan
             @livewire('local-purchase-order.view', ['local_purchase_order_id' => $localPurchaseOrder->id])
         </div>
     </div>

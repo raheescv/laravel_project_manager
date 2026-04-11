@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('{localPurchaseOrder}/edit', 'edit')->name('edit');
         Route::get('{localPurchaseOrder}', 'show')->name('view');
         Route::get('{localPurchaseOrder}/decision', 'decision')->name('decision');
+        Route::get('{localPurchaseOrder}/print', 'print')->name('print');
     });
 
     // GRN

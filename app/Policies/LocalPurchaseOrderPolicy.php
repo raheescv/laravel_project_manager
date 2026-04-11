@@ -71,4 +71,14 @@ class LocalPurchaseOrderPolicy
     {
         return $user->can('local purchase order.decide') && $order->status === LocalPurchaseOrderStatus::PENDING;
     }
+
+    /**
+     * Print / export LPO as PDF
+     */
+    public function print(User $user, LocalPurchaseOrder $order): bool
+    {
+        return $user->can('local purchase order.print')
+            || $user->can('local purchase order.view')
+            || $user->can('local purchase order.view own');
+    }
 }

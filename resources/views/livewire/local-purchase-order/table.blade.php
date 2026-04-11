@@ -192,6 +192,13 @@
                                                 </a>
                                             </li>
                                         @endcan
+                                        @can('print', $item)
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('lpo::print', $item->id) }}" target="_blank">
+                                                    <i class="fa fa-print me-2"></i> Print / PDF
+                                                </a>
+                                            </li>
+                                        @endcan
                                         @if (!$item->decision_at)
                                             @can('local purchase order.edit', $item)
                                                 <li>
