@@ -15,7 +15,7 @@
             ];
         @endphp
         <a href="#" class="mininav-toggle nav-link {{ request()->is($issueList) ? 'active' : '' }}">
-            <i class="fa fa-exchange fs-5 me-2"></i>
+            <i class="fa fa-share-square-o fs-5 me-2"></i>
             <span class="nav-label mininav-content ms-1 collapse show">Issue</span>
         </a>
         <ul class="mininav-content nav collapse">

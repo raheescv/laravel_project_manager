@@ -12,7 +12,7 @@
             ];
         @endphp
         <a href="#" class="mininav-toggle nav-link {{ request()->is($salesList) ? 'active' : '' }}">
-            <i class="fa fa-hand-o-right fs-5 me-2"></i>
+            <i class="fa fa-dollar fs-5 me-2"></i>
             <span class="nav-label mininav-content ms-1 collapse show">Sales</span>
         </a>
         <ul class="mininav-content nav collapse">

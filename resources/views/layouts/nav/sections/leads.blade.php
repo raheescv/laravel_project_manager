@@ -7,7 +7,7 @@
             ];
         @endphp
         <a href="#" class="mininav-toggle nav-link {{ request()->is($leadList) ? 'active' : '' }}">
-            <i class="fa fa-users fs-5 me-2"></i>
+            <i class="fa fa-filter fs-5 me-2"></i>
             <span class="nav-label mininav-content ms-1 collapse show">Leads</span>
         </a>
         <ul class="mininav-content nav collapse">

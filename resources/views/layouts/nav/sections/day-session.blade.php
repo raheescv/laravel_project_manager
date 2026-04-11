@@ -4,7 +4,7 @@
             $list = ['sale/day-management', 'sale/day-sessions-report', 'sale/day-session/*'];
         @endphp
         <a href="#" class="mininav-toggle nav-link {{ request()->is($list) ? 'active' : '' }}">
-            <i class="fa fa-shopping-cart fs-5 me-2"></i>
+            <i class="fa fa-sun-o fs-5 me-2"></i>
             <span class="nav-label mininav-content ms-1 collapse show">Day Session</span>
         </a>
         <ul class="mininav-content nav collapse">

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Configuration;
+
 class NavigationService
 {
     /**
@@ -14,7 +16,7 @@ class NavigationService
             [
                 'id' => 'dashboard',
                 'label' => 'Dashboard',
-                'icon' => 'fa fa-dashboard',
+                'icon' => 'fa fa-tachometer',
                 'visible' => true,
                 'children' => [],
             ],
@@ -35,14 +37,14 @@ class NavigationService
             [
                 'id' => 'property-sales',
                 'label' => 'Sales',
-                'icon' => 'fa fa-hand-o-right',
+                'icon' => 'fa fa-dollar',
                 'visible' => true,
                 'children' => ['Sales', 'Booking', 'Payments', 'Service Charge Report', 'Cheque Management'],
             ],
             [
                 'id' => 'leads',
                 'label' => 'Leads',
-                'icon' => 'fa fa-users',
+                'icon' => 'fa fa-filter',
                 'visible' => true,
                 'children' => ['All Leads', 'Lead Calendar'],
             ],
@@ -56,7 +58,7 @@ class NavigationService
             [
                 'id' => 'issue',
                 'label' => 'Issue',
-                'icon' => 'fa fa-exchange',
+                'icon' => 'fa fa-share-square-o',
                 'visible' => true,
                 'children' => ['Create Issue', 'Create Return', 'List', 'Item Wise Report', 'Aging Report'],
             ],
@@ -84,7 +86,7 @@ class NavigationService
             [
                 'id' => 'day-session',
                 'label' => 'Day Session',
-                'icon' => 'fa fa-shopping-cart',
+                'icon' => 'fa fa-sun-o',
                 'visible' => true,
                 'children' => ['Day Management', 'Day Sessions Report'],
             ],
@@ -105,7 +107,7 @@ class NavigationService
             [
                 'id' => 'account',
                 'label' => 'Account',
-                'icon' => 'fa fa-bank',
+                'icon' => 'fa fa-university',
                 'visible' => true,
                 'children' => ['Chart Of Account', 'Expense', 'Income', 'General Voucher', 'Day Book', 'Bank Reconciliation'],
             ],
@@ -119,7 +121,7 @@ class NavigationService
             [
                 'id' => 'purchase-workflow',
                 'label' => 'Purchase Workflow',
-                'icon' => 'fa fa-user',
+                'icon' => 'fa fa-sitemap',
                 'visible' => true,
                 'children' => ['Purchase Requests', 'LPO', 'GRN', 'LPO Invoice', 'Vendors'],
             ],
@@ -147,7 +149,7 @@ class NavigationService
             [
                 'id' => 'flat-trade',
                 'label' => 'FlatTrade',
-                'icon' => 'fa fa-chart-line',
+                'icon' => 'fa fa-line-chart',
                 'visible' => true,
                 'children' => ['Dashboard', 'Trade History', 'Connect Account'],
             ],
@@ -175,8 +177,7 @@ class NavigationService
     public static function getNavigationItems(): array
     {
         $defaults = self::defaultItems();
-
-        $saved = \App\Models\Configuration::where('key', 'nav_order')->value('value');
+        $saved = Configuration::where('key', 'nav_order')->value('value');
         $savedOrder = $saved ? json_decode($saved, true) : [];
 
         if (empty($savedOrder)) {

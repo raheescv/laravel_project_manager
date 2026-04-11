@@ -2,7 +2,7 @@
     <li class="nav-item has-sub">
         <a href="#"
             class="mininav-toggle nav-link {{ request()->is(['account', 'account/expense', 'account/income', 'account/general-voucher', 'account/cheque*', 'account/view/*', 'report/day_book', 'account/bank-reconciliation']) ? 'active' : '' }}">
-            <i class="fa fa-bank fs-5 me-2"></i>
+            <i class="fa fa-university fs-5 me-2"></i>
             <span class="nav-label mininav-content ms-1 collapse show">Account</span>
         </a>
         <ul class="mininav-content nav collapse">
