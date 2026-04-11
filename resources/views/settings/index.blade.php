@@ -82,6 +82,12 @@
                                     </li>
                                 @endif
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
+                                        <i class="fa fa-bars me-2"></i>Navigation Order
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-selected="false"
                                         tabindex="-1">
                                         <i class="demo-pli-speech-bubble-5 me-2"></i>Telegram
@@ -187,6 +193,9 @@
                                 </div>
                                 <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
                                     @livewire('settings.working-day')
+                                </div>
+                                <div id="tabsNavigationOrder" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.navigation-order')
                                 </div>
                                 <div id="tabsTelegram" class="tab-pane" role="tabpanel">
                                     @livewire('settings.telegram')
