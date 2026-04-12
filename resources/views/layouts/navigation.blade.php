@@ -694,7 +694,7 @@
                     @endif
                     @if (auth()->user()->can('log.inventory'))
                         <li class="nav-item has-sub">
-                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory', 'api_log', 'visitor-analytics', 'health']) ? 'active' : '' }}"><i
+                            <a href="#" class="mininav-toggle nav-link {{ request()->is(['log/inventory', 'api_log', 'log/jobs', 'log/failed-jobs', 'visitor-analytics', 'health']) ? 'active' : '' }}"><i
                                     class="fa fa-clipboard fs-5 me-2"></i>
                                 <span class="nav-label mininav-content ms-1 collapse show" style="">Log</span>
                             </a>
@@ -710,6 +710,14 @@
                                         <a href="{{ route('log::inventory') }}" class="nav-link {{ request()->is(['log/inventory']) ? 'active' : '' }}">Inventory</a>
                                     </li>
                                 @endcan
+                                <li class="nav-item">
+                                    <a href="{{ route('log::jobs') }}"
+                                        class="nav-link {{ request()->is(['log/jobs']) ? 'active' : '' }}">Jobs</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('log::failed_jobs') }}"
+                                        class="nav-link {{ request()->is(['log/failed-jobs']) ? 'active' : '' }}">Failed Jobs</a>
+                                </li>
                                 @can('visitor analytics.view')
                                     <li class="nav-item">
                                         <a href="{{ route('visitor-analytics') }}" class="nav-link {{ request()->is(['visitor-analytics']) ? 'active' : '' }}">Visitor Analytics</a>
