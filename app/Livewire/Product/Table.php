@@ -33,6 +33,8 @@ class Table extends Component
 
     public $status = '';
 
+    public $image_status = '';
+
     public $limit = 100;
 
     public $selected = [];
@@ -132,6 +134,7 @@ class Table extends Component
             'is_selling' => $this->is_selling,
             'unit_id' => $this->unit_id,
             'status' => $this->status,
+            'image_status' => $this->image_status,
         ];
         $count = Product::service()->count();
         if ($count > 2000) {
@@ -187,6 +190,13 @@ class Table extends Component
             })
             ->when($this->status ?? '', function ($query, $value) {
                 return $query->where('status', $value);
+            })
+            ->when($this->image_status ?? '', function ($query, $value) {
+                return match ($value) {
+                    'with_image' => $query->whereHas('images'),
+                    'without_image' => $query->whereDoesntHave('images'),
+                    default => $query,
+                };
             })
             ->when($this->is_selling ?? '', function ($query, $value) {
                 return $query->where('is_selling', $value);
