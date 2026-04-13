@@ -43,6 +43,11 @@ class View extends Component
         $this->user->update(['is_whatsapp_enabled' => $this->user->is_whatsapp_enabled ? false : true]);
     }
 
+    public function toggleBrowserNotification()
+    {
+        $this->user->update(['is_browser_notification_enabled' => ! $this->user->is_browser_notification_enabled]);
+    }
+
     public function activeUser()
     {
         $this->user->update(['is_active' => $this->user->is_active ? false : true]);
