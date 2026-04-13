@@ -61,6 +61,12 @@
                                         <i class="fa fa-list-ol me-2"></i>Unique No Counters
                                         </button>
                                     </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsModuleConfiguration" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="fa fa-cubes me-2"></i>Module Configuration
+                                        </button>
+                                    </li>
                                 @endif
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-selected="true"
@@ -134,6 +140,9 @@
                                 @if (auth()->user()->is_super_admin)
                                     <div id="tabsUniqueNoCounters" class="tab-pane" role="tabpanel">
                                         @livewire('settings.unique-no-counter-configuration')
+                                    </div>
+                                    <div id="tabsModuleConfiguration" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.module-configuration')
                                     </div>
                                 @endif
                                 <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">

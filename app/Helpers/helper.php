@@ -1018,7 +1018,7 @@ if (! function_exists('paymentTermLabels')) {
 
 if (! function_exists('extract403Details')) {
     // Helper to extract 403 permission details from request context
-    function extract403Details(string $message, Request $request): array
+    function extract403Details(string $message, \Illuminate\Http\Request $request): array
     {
         $user = $request->user();
         $route = $request->route();

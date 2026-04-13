@@ -111,7 +111,7 @@
                                     </div>
                                 </td>
                                 <td><span class="badge bg-light text-dark border"><i class="fa fa-tag me-1 opacity-50"></i>{{ $item->customerType?->name ?: '-' }}</span></td>
-                                <td>
+                                <td class="text-nowrap">
                                     <a href="{{ route('account::customer::view', $item->id) }}" class="text-decoration-none fw-medium text-primary">
                                         <i class="fa fa-user me-1"></i>{{ $item->name }}
                                     </a>
