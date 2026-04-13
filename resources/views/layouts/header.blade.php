@@ -389,7 +389,7 @@
                                                 </div>
                                                 @can('property.view')
                                                     <a href="{{ route('property::property::index') }}" class="list-group-item list-group-item-action header-mega-child">
-                                                        <i class="fa fa-home fs-5 me-2"></i>Properties
+                                                        <i class="fa fa-home fs-5 me-2"></i>Property/Units
                                                     </a>
                                                 @endcan
                                                 @can('property group.view')

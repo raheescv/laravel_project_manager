@@ -50,6 +50,7 @@ class User extends Authenticatable implements AuditableContracts
         'second_reference_no',
         'telegram_chat_id',
         'is_telegram_enabled',
+        'is_browser_notification_enabled',
     ];
 
     protected $hidden = [

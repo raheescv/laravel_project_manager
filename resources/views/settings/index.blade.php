@@ -93,6 +93,12 @@
                                         <i class="demo-pli-speech-bubble-5 me-2"></i>Telegram
                                     </button>
                                 </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
+                                        <i class="demo-pli-bell me-2"></i>Notifications
+                                    </button>
+                                </li>
                                 @if (false)
                                     @can('whatsapp.integration')
                                         <li class="nav-item" role="presentation">
@@ -199,6 +205,9 @@
                                 </div>
                                 <div id="tabsTelegram" class="tab-pane" role="tabpanel">
                                     @livewire('settings.telegram')
+                                </div>
+                                <div id="tabsNotificationPreferences" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.notification-preferences')
                                 </div>
                                 @can('whatsapp.integration')
                                     <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">

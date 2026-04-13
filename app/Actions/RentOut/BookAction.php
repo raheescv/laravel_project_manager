@@ -5,6 +5,7 @@ namespace App\Actions\RentOut;
 use App\Enums\RentOut\RentOutBookingStatus;
 use App\Enums\RentOut\RentOutStatus;
 use App\Helpers\Facades\RentOutTransactionHelper;
+use App\Jobs\RentOutNotificationJob;
 use App\Models\RentOut;
 
 class BookAction
@@ -36,6 +37,14 @@ class BookAction
                     throw new \Exception($response['message']);
                 }
             }
+
+            RentOutNotificationJob::dispatch(
+                title: 'New RentOut Booking Created',
+                content: 'Booking #'.$rentOut->id.' has been created.',
+                link: route('property::rent::booking.view', $rentOut->id),
+                modelId: $rentOut->id,
+                excludedUserId: $userId,
+            );
 
             $return['success'] = true;
             $return['message'] = 'Successfully Created Booking';

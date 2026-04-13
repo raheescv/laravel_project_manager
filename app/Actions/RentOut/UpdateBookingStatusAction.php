@@ -3,6 +3,7 @@
 namespace App\Actions\RentOut;
 
 use App\Helpers\Facades\RentOutTransactionHelper;
+use App\Jobs\RentOutNotificationJob;
 use App\Models\RentOut;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -54,6 +55,23 @@ class UpdateBookingStatusAction
             }
 
             $model->update($data);
+
+            $statusLabels = [
+                'submitted'          => 'Submitted',
+                'financial approved' => 'Financial Approved',
+                'approved'           => 'Legal Approved',
+                'completed'          => 'Completed',
+            ];
+
+            if (isset($statusLabels[$status])) {
+                RentOutNotificationJob::dispatch(
+                    title: 'RentOut Booking '.$statusLabels[$status],
+                    content: 'Booking #'.$model->id.' status changed to '.$statusLabels[$status].'.',
+                    link: route('property::rent::booking.view', $model->id),
+                    modelId: $model->id,
+                    excludedUserId: Auth::id(),
+                );
+            }
 
             return [
                 'success' => true,
