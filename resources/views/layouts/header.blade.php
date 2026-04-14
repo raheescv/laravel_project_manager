@@ -49,7 +49,7 @@
         <!-- Brand -->
         <div class="header__brand">
             <div class="brand-wrap">
-                <a href="{{ route('dashboard') }}" class="brand-img stretched-link">
+                <a href="{{ route('dashboard') }}" class="brand-img">
                     <img src="{{ cache('logo', asset('assets/img/logo.svg')) }}" alt="Nifty Logo" class="Nifty logo" width="150%" height="150%">
                 </a>
                 <div class="brand-title d-none d-sm-block">{{ config('app.name', 'Astra') }}</div>
@@ -75,10 +75,15 @@
 
             <!-- Content Header - Right Side: -->
             <div class="header__content-end">
-                <i class="fa fa-2x fa-arrows d-none d-md-inline-block" aria-hidden="true" id="btnFullscreen"></i>
+                <button class="header__btn btn btn-icon btn-sm d-none d-md-inline-flex align-items-center justify-content-center"
+                    type="button"
+                    id="btnFullscreen"
+                    aria-label="Toggle fullscreen">
+                    <i class="fa fa-2x fa-arrows" aria-hidden="true"></i>
+                </button>
                 <div class="vr mx-1 d-none d-md-block"></div>
                 <div class="dropdown">
-                    <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
+                    <button class="header__btn btn btn-icon" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
                         <i class="fa fa-bar-chart"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-3 mega-dropdown">
@@ -213,8 +218,8 @@
                 </div>
                 <div class="vr mx-1 d-none d-md-block"></div>
                 <div class="dropdown">
-                    <button class="header__btn btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
-                        <i class="fa fa-th"></i>
+                    <button class="header__btn btn btn-icon" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Megamenu dropdown" aria-expanded="false">
+                        <i class="fa fa-wrench"></i>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-3 mega-dropdown">
                         <div class="row">
@@ -222,7 +227,7 @@
                                 <div class="list-group list-group-borderless">
                                     <div class="list-group-item d-flex align-items-center border-bottom mb-2">
                                         <div class="flex-shrink-0 me-2">
-                                            <i class="fa fa-cog fs-4"></i>
+                                            <i class="fa fa-wrench fs-4"></i>
                                         </div>
                                         <h5 class="flex-grow-1 m-0">Settings</h5>
                                     </div>
