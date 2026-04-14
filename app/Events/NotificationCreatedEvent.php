@@ -32,9 +32,9 @@ class NotificationCreatedEvent implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'title'   => $this->title,
+            'title' => $this->title,
             'content' => $this->content,
-            'link'    => $this->link,
+            'link' => $this->link,
         ];
     }
 }

@@ -24,11 +24,11 @@ class RentOutBookingNotification extends Notification
     public function toDatabase($notifiable): array
     {
         return [
-            'title'    => $this->title,
-            'content'  => $this->content,
-            'link'     => $this->link,
-            'page'     => 'RentOut',
-            'model'    => 'RentOut',
+            'title' => $this->title,
+            'content' => $this->content,
+            'link' => $this->link,
+            'page' => 'RentOut',
+            'model' => 'RentOut',
             'model_id' => $this->modelId,
         ];
     }

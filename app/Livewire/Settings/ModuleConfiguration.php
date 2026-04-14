@@ -25,7 +25,7 @@ class ModuleConfiguration extends Component
             'active_module' => ['required', 'string', 'in:'.implode(',', array_keys(config('modules.systems', [])))],
         ]);
 
-        Configuration::updateOrCreate( ['key' => 'active_module'], ['value' => $this->active_module] );
+        Configuration::updateOrCreate(['key' => 'active_module'], ['value' => $this->active_module]);
 
         $this->dispatch('success', ['message' => 'Module configuration saved. Role permissions will now be filtered accordingly.']);
     }

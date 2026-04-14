@@ -57,10 +57,10 @@ class UpdateBookingStatusAction
             $model->update($data);
 
             $statusLabels = [
-                'submitted'          => 'Submitted',
+                'submitted' => 'Submitted',
                 'financial approved' => 'Financial Approved',
-                'approved'           => 'Legal Approved',
-                'completed'          => 'Completed',
+                'approved' => 'Legal Approved',
+                'completed' => 'Completed',
             ];
 
             if (isset($statusLabels[$status])) {

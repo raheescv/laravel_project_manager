@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class() extends Migration
 {
     /**
-     * Add composite indexes to all Rentout module tables to ensure
+     * Add composite indexes to all Rent out module tables to ensure
      * every filtered/sorted column in Livewire queries hits an index.
      */
     public function up(): void
