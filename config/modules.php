@@ -57,10 +57,12 @@ return [
             'reports_accounting',
         ],
 
-        'Stock Management Module' => [
+        'POS Module' => [
             'core',
             'product_management',
             'inventory_management',
+            'sales',
+            'reports_sales',
             'simple_purchase_management',
             'accounting',
             'hr_management',

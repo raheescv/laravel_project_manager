@@ -32,12 +32,9 @@ class Permissions extends Component
     {
         $this->role_id = $role_id;
         $this->role = Role::find($role_id);
-        $this->assigned = $this->role->permissions()->pluck('id')->toArray();
-        $this->selected = $this->role->permissions()->pluck('id')->toArray();
-        $this->selected = array_flip($this->selected);
-        $this->selected = array_map(function ($value) {
-            return true;
-        }, $this->selected);
+        $assignedIds = $this->role->permissions()->pluck('id')->toArray();
+        $this->assigned = $assignedIds;
+        $this->selected = array_fill_keys($assignedIds, true);
     }
 
     public function moduleSelection()
@@ -69,9 +66,7 @@ class Permissions extends Component
             foreach ($visibleIds as $permissionId) {
                 $this->selected[$permissionId] = true;
             }
-            $this->module = array_keys($this->permissions);
-            $this->module = array_flip($this->module);
-            $this->module = array_map(fn () => true, $this->module);
+            $this->module = array_fill_keys(array_keys($this->permissions), true);
         }
     }
 
@@ -126,26 +121,10 @@ class Permissions extends Component
     {
         $activeModule = Configuration::where('key', 'active_module')->value('value');
 
-        $list = Permission::when($this->search ?? '', function ($query, $value) {
-            $value = trim($value);
-
-            return $query->where('name', 'LIKE', '%'.$value.'%');
+        $list = Permission::when($this->search, function ($query, $value) {
+            $query->where('name', 'LIKE', '%'.trim($value).'%');
         })->when($activeModule, function ($query) use ($activeModule) {
-            $systemModules = config("modules.systems.{$activeModule}", []);
-            $moduleDefs = config('modules.modules', []);
-
-            $allowedGroups = [];
-            $allowedExact = [];
-
-            foreach ($systemModules as $moduleKey) {
-                foreach ($moduleDefs[$moduleKey]['permissions'] ?? [] as $perm) {
-                    if (str_contains($perm, '.')) {
-                        $allowedExact[] = $perm;
-                    } else {
-                        $allowedGroups[] = $perm;
-                    }
-                }
-            }
+            [$allowedGroups, $allowedExact] = $this->resolveAllowedPermissions($activeModule);
 
             $query->where(function ($q) use ($allowedGroups, $allowedExact) {
                 foreach ($allowedGroups as $group) {
@@ -165,5 +144,26 @@ class Permissions extends Component
         $this->moduleSelection();
 
         return view('livewire.settings.role.permissions');
+    }
+
+    private function resolveAllowedPermissions(string $activeModule): array
+    {
+        $systemModules = config("modules.systems.{$activeModule}", []);
+        $moduleDefs = config('modules.modules', []);
+
+        $allowedGroups = [];
+        $allowedExact = [];
+
+        foreach ($systemModules as $moduleKey) {
+            foreach ($moduleDefs[$moduleKey]['permissions'] ?? [] as $perm) {
+                if (str_contains($perm, '.')) {
+                    $allowedExact[] = $perm;
+                } else {
+                    $allowedGroups[] = $perm;
+                }
+            }
+        }
+
+        return [$allowedGroups, $allowedExact];
     }
 }
