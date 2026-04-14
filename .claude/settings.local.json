@@ -38,7 +38,8 @@
       "Bash(find /Users/Shared/sites/personal/main_projects/project_manager/app/Models -name Account*.php -o -name Journal*.php)",
       "Bash(php -l app/Livewire/Reports/ProfitLoss.php)",
       "Bash(php -l resources/views/livewire/reports/profit-loss.blade.php)",
-      "Bash(php -l resources/views/livewire/reports/partials/pl-category-rows.blade.php)"
+      "Bash(php -l resources/views/livewire/reports/partials/pl-category-rows.blade.php)",
+      "Bash(ls -la /Users/Shared/sites/personal/main_projects/project_manager/app/Jobs/Export/ /Users/Shared/sites/personal/main_projects/project_manager/app/Jobs/*/Import*)"
     ]
   },
   "hooks": {

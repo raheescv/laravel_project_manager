@@ -1,3 +1,4 @@
+import './echo'
 import StockCheckShowPage from './components/Inventory/StockCheck/Pages/StockCheckShowPage.vue'
 import { mountVueApp } from './utils/createVueApp.js'
 

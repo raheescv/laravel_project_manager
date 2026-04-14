@@ -2,6 +2,9 @@
     @push('head')
         <meta name="branch-id" content="{{ session('branch_id') }}">
         <meta name="stock-check-id" content="{{ $stockCheck->id }}">
+        <meta name="auth-user-id" content="{{ auth()->id() }}">
+        <meta name="pusher-key" content="{{ config('broadcasting.connections.pusher.key') }}">
+        <meta name="pusher-cluster" content="{{ config('broadcasting.connections.pusher.options.cluster') }}">
     @endpush
     <div class="content__header content__boxed overlapping">
         <div class="content__wrap">

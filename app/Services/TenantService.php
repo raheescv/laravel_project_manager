@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class TenantService
 {
@@ -38,14 +40,21 @@ class TenantService
         }
 
         // Fallback: Try to get tenant ID from cache and load it
-        $tenantId = Cache::get('current_tenant_id');
-        if ($tenantId) {
-            $tenant = Tenant::find($tenantId);
-            if ($tenant) {
-                $this->currentTenant = $tenant;
+        try {
+            $tenantId = Cache::get('current_tenant_id');
+            if ($tenantId) {
+                /** @var Tenant|null $tenant */
+                $tenant = Tenant::find($tenantId);
+                if ($tenant) {
+                    $this->currentTenant = $tenant;
 
-                return $tenant;
+                    return $tenant;
+                }
             }
+        } catch (Throwable $exception) {
+            Log::warning('Unable to read current tenant from cache.', [
+                'message' => $exception->getMessage(),
+            ]);
         }
 
         return null;
@@ -58,8 +67,14 @@ class TenantService
     {
         $this->currentTenant = $tenant;
 
-        // Cache the tenant for the request
-        Cache::put('current_tenant_id', $tenant->id, now()->addMinutes(5));
+        try {
+            Cache::put('current_tenant_id', $tenant->id, now()->addMinutes(5));
+        } catch (Throwable $exception) {
+            Log::warning('Unable to cache current tenant.', [
+                'tenant_id' => $tenant->id,
+                'message' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -67,7 +82,19 @@ class TenantService
      */
     public function getCurrentTenantId(): ?int
     {
-        return $this->currentTenant?->id ?? Cache::get('current_tenant_id');
+        if ($this->currentTenant) {
+            return $this->currentTenant->id;
+        }
+
+        try {
+            return Cache::get('current_tenant_id');
+        } catch (Throwable $exception) {
+            Log::warning('Unable to read current tenant id from cache.', [
+                'message' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**
@@ -76,7 +103,13 @@ class TenantService
     public function clearCurrentTenant(): void
     {
         $this->currentTenant = null;
-        Cache::forget('current_tenant_id');
+        try {
+            Cache::forget('current_tenant_id');
+        } catch (Throwable $exception) {
+            Log::warning('Unable to clear current tenant from cache.', [
+                'message' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /**

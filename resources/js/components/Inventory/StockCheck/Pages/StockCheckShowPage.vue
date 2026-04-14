@@ -17,8 +17,21 @@
 
             <section class="section-card section-table" aria-label="Stock check items">
                 <div class="section-header">
-                    <h2 class="section-title">Items</h2>
-                    <span v-if="pagination.total > 0" class="section-badge">{{ pagination.total }} item{{ pagination.total !== 1 ? 's' : '' }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <h2 class="section-title">Items</h2>
+                        <span v-if="pagination.total > 0" class="section-badge">{{ pagination.total }} item{{ pagination.total !== 1 ? 's' : '' }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        <button class="btn btn-sm btn-outline-success" @click="handleExport" :disabled="exporting">
+                            <i class="bi bi-download me-1"></i>
+                            {{ exporting ? 'Exporting...' : 'Export' }}
+                        </button>
+                        <label class="btn btn-sm btn-outline-primary mb-0" :class="{ disabled: importing }">
+                            <i class="bi bi-upload me-1"></i>
+                            {{ importing ? `Importing... ${importProgress}%` : 'Import' }}
+                            <input type="file" ref="importFileInput" accept=".xlsx,.csv" class="d-none" @change="handleImport" :disabled="importing">
+                        </label>
+                    </div>
                 </div>
                 <StockCheckItemsTable :items="items" :loading="itemsLoading" :filters="filters" :pagination="pagination"
                     @sort="handleSort" @page-change="handlePageChange" @update-quantity="handleUpdateQuantity"
@@ -41,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useToast } from 'vue-toastification'
 import StockCheckHeader from '../Components/StockCheckHeader.vue'
 import StockCheckFilters from '../Components/StockCheckFilters.vue'
@@ -70,6 +83,13 @@ const saving = ref(false)
 const loadingText = ref('Loading...')
 const showStatusConfirmModal = ref(false)
 const statusChangeData = ref(null)
+const exporting = ref(false)
+const importing = ref(false)
+const importFileInput = ref(null)
+const importProgress = ref(0)
+let importChannel = null
+let importChannelName = null
+let importEventName = null
 
 const filters = ref({
     category_id: '',
@@ -301,12 +321,121 @@ const handleSave = async () => {
     }
 }
 
+const handleExport = async () => {
+    if (!stockCheckId.value) return
+    exporting.value = true
+    try {
+        const response = await fetch(`/inventory/stock-check/${stockCheckId.value}/export`, {
+            headers: { 'Accept': 'application/octet-stream' }
+        })
+        if (!response.ok) throw new Error('Export failed')
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `stock-check-${stockCheckId.value}-${new Date().toISOString().slice(0, 10)}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+        toast.success('Export downloaded successfully')
+    } catch (error) {
+        toast.error('Failed to export stock check items')
+        console.error(error)
+    } finally {
+        exporting.value = false
+    }
+}
+
+const handleImport = async (event) => {
+    const file = event.target.files[0]
+    if (!file || !stockCheckId.value) return
+
+    importing.value = true
+    importProgress.value = 0
+    try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+        const response = await fetch(`/inventory/stock-check/${stockCheckId.value}/import`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: formData
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+            toast.info(result.message)
+        } else {
+            toast.error(result.message || 'Import failed')
+            importing.value = false
+        }
+    } catch (error) {
+        toast.error('Failed to import stock check items')
+        console.error(error)
+        importing.value = false
+    } finally {
+        if (importFileInput.value) {
+            importFileInput.value.value = ''
+        }
+    }
+}
+
+const subscribeToPusher = () => {
+    const userId = document.querySelector('meta[name="auth-user-id"]')?.content
+
+    if (!userId || !window.Echo) {
+        return
+    }
+
+    importChannelName = `file-import-channel-${userId}`
+    importEventName = `.file-import-event-${userId}`
+    importChannel = window.Echo.channel(importChannelName)
+
+    importChannel.listen(importEventName, (data) => {
+        if (data.type !== 'StockCheck') return
+
+        importProgress.value = Math.max(0, Math.round(data.progress ?? 0))
+
+        if (data.message && data.progress < 100) {
+            toast.info(data.message)
+        }
+
+        if (data.progress >= 100) {
+            importing.value = false
+            importProgress.value = 0
+            fetchItems()
+            toast.success('Import completed!')
+        }
+    })
+}
+
+const unsubscribeFromPusher = () => {
+    if (window.Echo && importChannelName) {
+        window.Echo.leave(importChannelName)
+    }
+
+    importChannel = null
+    importChannelName = null
+    importEventName = null
+}
+
 onMounted(() => {
     initializeStockCheckId()
     fetchStockCheck()
     fetchItems()
     fetchCategories()
     fetchBrands()
+    subscribeToPusher()
+})
+
+onBeforeUnmount(() => {
+    unsubscribeFromPusher()
 })
 </script>
 

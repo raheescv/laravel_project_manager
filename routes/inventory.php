@@ -56,6 +56,8 @@ Route::middleware('auth')->group(function (): void {
             Route::delete('{id}', [StockCheckController::class, 'delete'])->name('delete');
             Route::post('{id}/scan-barcode', [StockCheckController::class, 'scanBarcode'])->name('scan-barcode');
             Route::get('{id}/items', [StockCheckController::class, 'getItems'])->name('items');
+            Route::get('{id}/export', [StockCheckController::class, 'export'])->name('export');
+            Route::post('{id}/import', [StockCheckController::class, 'import'])->name('import');
         });
     });
 });

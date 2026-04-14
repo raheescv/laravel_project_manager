@@ -8,13 +8,16 @@ use App\Actions\Product\Inventory\StockCheck\Item\GetStockCheckItemsAction;
 use App\Actions\Product\Inventory\StockCheck\Item\ScanBarcodeAction;
 use App\Actions\Product\Inventory\StockCheck\Item\UpdateStockCheckAction;
 use App\Actions\Product\Inventory\StockCheck\UpdateStockCheckMetadataAction;
+use App\Exports\StockCheckItemExport;
 use App\Http\Requests\Inventory\StockCheck\CreateStockCheckRequest;
 use App\Http\Requests\Inventory\StockCheck\UpdateStockCheckRequest;
+use App\Jobs\StockCheck\ImportStockCheckItemJob;
 use App\Models\StockCheck;
 use App\Traits\ApiResponseTrait;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StockCheckController extends Controller
 {
@@ -145,6 +148,41 @@ class StockCheckController extends Controller
             return $this->sendSuccess($response['data'], $response['message']);
         } catch (Exception $e) {
             return $this->sendError($e->getMessage(), []);
+        }
+    }
+
+    public function export($id)
+    {
+        $stockCheck = StockCheck::findOrFail($id);
+        $fileName = 'stock-check-'.$stockCheck->id.'-'.now()->format('Y-m-d').'.xlsx';
+
+        return Excel::download(new StockCheckItemExport($stockCheck->id), $fileName);
+    }
+
+    public function import($id, Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv|max:10240',
+        ]);
+
+        try {
+            $stockCheck = StockCheck::findOrFail($id);
+
+            $filePath = $request->file('file')->store('imports/stock-check', 'public');
+
+            ImportStockCheckItemJob::dispatch(
+                Auth::id(),
+                $filePath,
+                $stockCheck->id,
+                session('tenant_id'),
+            );
+
+            return $this->sendSuccess(
+                [],
+                'Import started. You will be notified when it completes.'
+            );
+        } catch (Exception $e) {
+            return $this->sendError('Import failed: '.$e->getMessage(), []);
         }
     }
 }
