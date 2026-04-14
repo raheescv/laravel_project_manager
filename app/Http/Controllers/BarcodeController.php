@@ -68,19 +68,9 @@ class BarcodeController extends Controller
         $company_logo = cache('logo', asset('assets/img/logo.svg'));
 
         $html = view('inventory.barcode', compact('settings', 'product', 'conversionFactor', 'barcode', 'company_name', 'company_logo'))->render();
-        // Configure Browsershot with optimized settings for faster rendering
-        $pdf = Browsershot::html($html)
+        putenv('HOME=/tmp');
+        $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
-            ->noSandbox()
-            ->setNodeBinary('/usr/local/bin/node')
-            ->setNpmBinary('/usr/local/bin/npm')
-            ->ignoreHttpsErrors()
-            ->disableJavascript()
-            ->blockDomains(['*']) // Block external resource loading
-            ->setOption('args', ['--disable-web-security', '--no-sandbox', '--disable-gpu'])
-            ->margins(0, 0, 0, 0)
-            ->deviceScaleFactor(1)
-            // ->windowSize($settings['height'], $settings['width'])
             ->pdf([
                 'printBackground' => false,
                 'preferCSSPageSize' => true,
@@ -106,20 +96,9 @@ class BarcodeController extends Controller
 
         // Generate HTML using Blade view
         $html = view('inventory.barcode-cart-print', compact('cartItems', 'settings', 'company_name', 'company_logo'))->render();
-
-        // Use the same PDF settings as the existing barcode print method
-        $pdf = Browsershot::html($html)
+        putenv('HOME=/tmp');
+        $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
-            ->noSandbox()
-            ->setNodeBinary('/usr/local/bin/node')
-            ->setNpmBinary('/usr/local/bin/npm')
-            ->ignoreHttpsErrors()
-            ->disableJavascript()
-            ->blockDomains(['*']) // Block external resource loading
-            ->setOption('args', ['--disable-web-security', '--no-sandbox', '--disable-gpu'])
-            ->margins(0, 0, 0, 0)
-            ->deviceScaleFactor(1)
-        // ->windowSize($settings['height'], $settings['width'])
             ->pdf([
                 'printBackground' => false,
                 'preferCSSPageSize' => true,
@@ -241,5 +220,35 @@ class BarcodeController extends Controller
             'PHARMA2T' => 'Pharmacode Two-Track',
             'CODABAR' => 'Codabar',
         ];
+    }
+
+    private function makeBrowsershot(string $html): Browsershot
+    {
+        $detect = fn (string $cmd) => trim((string) shell_exec($cmd)) ?: null;
+
+        $node = config('browsershot.node_binary') ?: $detect('which node');
+        $npm = config('browsershot.npm_binary') ?: $detect('which npm');
+        $chrome = config('browsershot.chrome_path') ?: $detect('which google-chrome || which chromium-browser || which chromium');
+
+        $instance = Browsershot::html($html)
+            ->noSandbox()
+            ->ignoreHttpsErrors()
+            ->disableJavascript()
+            ->blockDomains(['*'])
+            ->setOption('args', ['--disable-web-security', '--no-sandbox', '--disable-gpu'])
+            ->margins(0, 0, 0, 0)
+            ->deviceScaleFactor(1);
+
+        if ($node) {
+            $instance->setNodeBinary($node);
+        }
+        if ($npm) {
+            $instance->setNpmBinary($npm);
+        }
+        if ($chrome) {
+            $instance->setChromePath($chrome);
+        }
+
+        return $instance;
     }
 }
