@@ -2,7 +2,7 @@
     <div class="card-header bg-white p-2">
         <!-- Header Section -->
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
                 <div class="btn-group">
                     @can('inventory.export')
                         <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()">
@@ -21,6 +21,17 @@
                         </a>
                     @endcan
                 </div>
+                @can('inventory.barcode cart')
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-dark" type="button" wire:click="addSelectedToBarcodeCart">
+                            <i class="demo-pli-add-cart me-1"></i>
+                            <span>Add Selected to Barcode Cart</span>
+                            @if (count($selected))
+                                <span class="badge bg-dark ms-1">{{ count($selected) }}</span>
+                            @endif
+                        </button>
+                    </div>
+                @endcan
             </div>
             <div class="d-flex gap-2 align-items-center">
                 <div class="input-group input-group-sm" style="width: 120px;">

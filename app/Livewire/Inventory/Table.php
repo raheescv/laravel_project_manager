@@ -12,6 +12,7 @@ use App\Jobs\Export\ExportInventoryProductWiseJob;
 use App\Models\Configuration;
 use App\Models\Inventory;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -198,7 +199,26 @@ class Table extends Component
 
     public function updated($key, $value)
     {
+        if ($key === 'selectAll' || preg_match('/^selected\..*/', $key)) {
+            return;
+        }
+
         $this->resetPage();
+    }
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selected = $this->buildQuery()
+                ->limit(2000)
+                ->pluck('inventories.id')
+                ->map(fn ($id) => (string) $id)
+                ->all();
+
+            return;
+        }
+
+        $this->selected = [];
     }
 
     public function openResetStockModal()
@@ -237,6 +257,71 @@ class Table extends Component
         } catch (Exception $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+    }
+
+    public function addSelectedToBarcodeCart()
+    {
+        if (empty($this->selected)) {
+            $this->dispatch('error', ['message' => 'Please select at least one inventory item.']);
+
+            return;
+        }
+
+        $inventories = Inventory::query()
+            ->with('product')
+            ->whereNull('employee_id')
+            ->whereIn('id', $this->selected)
+            ->get();
+
+        $addedCount = $this->storeBarcodeCartItems($inventories);
+
+        if ($addedCount === 0) {
+            $this->dispatch('error', ['message' => 'No selected inventory items were added to the barcode cart.']);
+
+            return;
+        }
+
+        $this->dispatch('success', ['message' => "{$addedCount} selected inventory item(s) added to the barcode cart."]);
+    }
+
+    protected function storeBarcodeCartItems(Collection $inventories): int
+    {
+        $cartItems = session('cart_items', []);
+        $addedCount = 0;
+
+        foreach ($inventories as $inventory) {
+            if (! $inventory->product) {
+                continue;
+            }
+
+            $cartKey = 'inventory_'.$inventory->id;
+
+            if (isset($cartItems[$cartKey])) {
+                $cartItems[$cartKey]['quantity']++;
+            } else {
+                $cartItems[$cartKey] = [
+                    'item_type' => 'inventory',
+                    'inventory_id' => $inventory->id,
+                    'product_id' => $inventory->product_id,
+                    'name' => $inventory->product->name,
+                    'barcode' => $inventory->barcode,
+                    'size' => $inventory->product->size,
+                    'mrp' => $inventory->product->mrp,
+                    'quantity' => 1,
+                    'image' => $inventory->product->thumbnail,
+                    'type' => $inventory->product->type,
+                    'available_quantity' => $inventory->quantity,
+                ];
+            }
+
+            $addedCount++;
+        }
+
+        uasort($cartItems, fn (array $first, array $second) => ($first['product_id'] ?? 0) <=> ($second['product_id'] ?? 0));
+
+        session(['cart_items' => $cartItems]);
+
+        return $addedCount;
     }
 
     public function render()
