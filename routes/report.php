@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('sales_overview', 'sales_overview')->name('sales_overview')->can('report.sales overview');
             Route::get('sale_calendar', 'sale_calendar')->name('sale_calendar')->can('report.sale calendar');
             Route::get('profit_loss', 'profit_loss')->name('profit_loss')->can('report.profit loss');
+            Route::get('profit_loss_statement', 'profit_loss_statement')->name('profit_loss_statement')->can('report.profit loss statement');
             Route::get('trial_balance', 'trial_balance')->name('trial_balance')->can('report.trial balance');
             Route::get('balance_sheet', 'balance_sheet')->name('balance_sheet')->can('report.balance sheet');
             Route::get('customer', 'customer')->name('customer')->can('report.customer');

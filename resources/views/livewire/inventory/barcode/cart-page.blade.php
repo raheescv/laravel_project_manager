@@ -1,595 +1,433 @@
 <div>
-    <div class="container-fluid">
-        <!-- Compact Page Header -->
-        <div class="row mb-3">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="mb-0 text-dark">
-                            <i class="fa fa-barcode text-primary me-2"></i>
-                            Barcode Cart
-                        </h4>
-                        <small class="text-muted">Add products and print barcode</small>
+    <div class="card shadow-sm">
+        {{-- ═══════════ CARD HEADER ═══════════ --}}
+        <div class="card-header bg-light py-3">
+
+            {{-- Row 1: Actions + Search --}}
+            <div class="row mt-3">
+                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
+                    <button wire:click="printBarcodes" class="btn btn-primary d-flex align-items-center shadow-sm" {{ empty($cartItems) ? 'disabled' : '' }}>
+                        <i class="fa fa-print me-2"></i>
+                        Print Barcodes
+                        @if(count($cartItems))
+                            <span class="badge bg-white text-primary ms-2">{{ $this->getTotalQuantity() }}</span>
+                        @endif
+                    </button>
+                    <div class="btn-group shadow-sm">
+                        <button wire:click="addAllInventory" class="btn btn-success btn-sm d-flex align-items-center" title="Add All Inventory" data-bs-toggle="tooltip">
+                            <i class="fa fa-cube me-md-1"></i>
+                            <span class="d-none d-md-inline">All Inventory</span>
+                        </button>
+                        <button wire:click="addAllProductUnits" class="btn btn-info btn-sm d-flex align-items-center text-white" title="Add All Product Units" data-bs-toggle="tooltip">
+                            <i class="fa fa-cubes me-md-1"></i>
+                            <span class="d-none d-md-inline">All Units</span>
+                        </button>
+                        <button wire:click="clearCart" class="btn btn-danger btn-sm d-flex align-items-center" {{ empty($cartItems) ? 'disabled' : '' }} title="Clear Cart" data-bs-toggle="tooltip"
+                            wire:confirm="Are you sure you want to clear all cart items?">
+                            <i class="fa fa-trash me-md-1"></i>
+                            <span class="d-none d-md-inline">Clear</span>
+                        </button>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button wire:click="clearCart" class="btn btn-outline-danger btn-sm" {{ empty($cartItems) ? 'disabled' : '' }}>
-                            <i class="fa fa-trash me-1"></i> Clear
-                        </button>
-                        <button wire:click="addAllInventory" class="btn btn-primary btn-sm">
-                            <i class="fa fa-box me-1"></i> Add All Inventory
-                        </button>
-                        <button wire:click="addAllProductUnits" class="btn btn-success btn-sm">
-                            <i class="fa fa-cubes me-1"></i> Add All Product Units
-                        </button>
-                        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#keyboardShortcutsModal">
-                            <i class="fa fa-keyboard me-1"></i> ⌨️
-                        </button>
-                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm shadow-sm d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#keyboardShortcutsModal" title="Keyboard Shortcuts">
+                        <i class="fa fa-keyboard-o"></i>
+                    </button>
                 </div>
-            </div>
-        </div>
 
-        <!-- Livewire Event Messages -->
-        <div class="row">
-            <div class="col-12">
-                <div id="livewire-messages"></div>
-            </div>
-        </div>
-
-        <div class="row">
-            <!-- Product Selection Section -->
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-primary ">
-                        <h5 class="mb-0 text-white">
-                            <i class="fa fa-plus-circle me-2"></i>
-                            Add Products to Cart
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <!-- Product Search -->
-                        <div class="row mb-4">
-                            <div class="col-md-8">
-                                <label class="form-label fw-semibold">
-                                    <i class="fa fa-search me-1 text-primary"></i>Search Products
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fa fa-search text-muted"></i>
-                                    </span>
-                                    <input type="text" wire:model.live.debounce.300ms="searchQuery" class="form-control" placeholder="Search by name, barcode, or code...">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">
-                                    <i class="fa fa-hashtag me-1 text-primary"></i>Quantity
-                                </label>
-                                <input type="number" wire:model="quantity" class="form-control" min="1" value="1">
-                            </div>
+                <div class="col-md-6">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-auto">
+                            <label class="form-label mb-0 text-muted small fw-semibold">Qty:</label>
                         </div>
-
-                        <!-- Unit Filter for Product Units -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">
-                                    <i class="fa fa-filter me-1 text-primary"></i>Unit Filter (for Product Units)
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light">
-                                        <i class="fa fa-cubes text-muted"></i>
-                                    </span>
-                                    <select wire:model="selectedUnitId" class="form-select">
-                                        <option value="">All Units</option>
-                                        @foreach ($this->units as $unit)
-                                            <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
-                                        @endforeach
-                                    </select>
-                                    @if($selectedUnitId)
-                                        <button class="btn btn-outline-secondary" type="button" wire:click="$set('selectedUnitId', '')">
-                                            <i class="fa fa-times"></i> Clear
-                                        </button>
-                                    @endif
-                                </div>
-                                @if($selectedUnitId)
-                                    <small class="text-muted">
-                                        <i class="fa fa-info-circle me-1"></i>
-                                        "Add All Product Units" will only add units matching the selected filter.
-                                    </small>
+                        <div class="col-auto" style="width:65px;">
+                            <input type="number" wire:model="quantity" class="form-control form-control-sm border-secondary-subtle shadow-sm text-center fw-bold" min="1" value="1">
+                        </div>
+                        <div class="col">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-secondary-subtle">
+                                    <i class="fa fa-search"></i>
+                                </span>
+                                <input type="text" wire:model.live.debounce.300ms="searchQuery" placeholder="Search products..." class="form-control form-control-sm border-secondary-subtle shadow-sm" id="searchInput" autocomplete="off">
+                                @if($searchQuery)
+                                    <button class="btn btn-outline-secondary btn-sm" wire:click="$set('searchQuery', '')">
+                                        <i class="fa fa-times"></i>
+                                    </button>
                                 @endif
                             </div>
                         </div>
-
-                        <!-- Barcode Scanner -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">
-                                    <i class="fa fa-barcode me-1 text-primary"></i>Barcode Scanner
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-dark text-white">
-                                        <i class="fa fa-barcode"></i>
-                                    </span>
-                                    <input type="text" wire:model.live="barcodeInput" class="form-control" placeholder="Scan barcode or enter manually..." wire:keydown.enter="handleBarcodeScan()">
-                                    <button class="btn btn-dark" type="button" wire:click="handleBarcodeScan()">
-                                        <i class="fa fa-search"></i> Scan
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Product List -->
-                        @if (!empty($products))
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="text-muted mb-0">
-                                            <i class="fa fa-list me-1"></i>Search Results ({{ count($products) }})
-                                        </h6>
-                                    </div>
-                                    <div class="row g-2">
-                                        @foreach ($products as $product)
-                                            <div class="col-md-4 col-lg-3 col-xl-2">
-                                                <div class="card product-card-pos h-100 border-0 shadow-sm">
-                                                    <div class="card-body p-2 text-center">
-                                                        <div class="product-image mb-2">
-                                                            <img src="{{ $product['thumbnail'] ?? cache('logo') }}" alt="{{ $product['name'] }}" class="rounded"
-                                                                style="width: 50px; height: 50px; object-fit: cover;">
-                                                        </div>
-                                                        <h6 class="mb-1 fw-semibold text-dark" title="{{ $product['name'] }}">
-                                                            {{ $product['name'] }}
-                                                        </h6>
-                                                        <div class="text-muted small mb-2">
-                                                            <div class="badge bg-info badge-sm mb-1">Barcode : {{ $product['barcode'] }}</div>
-                                                            @if (isset($product['size']) && $product['size'])
-                                                                <div class="badge bg-warning badge-sm mb-1">Size : {{ $product['size'] }}</div>
-                                                            @endif
-                                                            @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
-                                                                <div class="badge bg-secondary badge-sm mb-1">Unit : {{ $product['sub_unit_name'] ?? 'N/A' }}</div>
-                                                                <div class="badge bg-primary badge-sm mb-1">Factor : {{ $product['conversion_factor'] ?? 1 }}</div>
-                                                            @endif
-                                                          <div class="badge bg-success badge-sm me-1 mt-1">{{ currency($product['mrp']) }}</div>
-
-                                                        </div>
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
-                                                                <small class="text-muted">
-                                                                    Product Unit
-                                                                </small>
-                                                            @else
-                                                                <small class="text-muted">
-                                                                    Stock: {{ $product['quantity'] }}
-                                                                </small>
-                                                            @endif
-                                                            <button wire:click="selectProduct({{ $product['id'] }}, '{{ $product['item_type'] ?? 'inventory' }}')" class="btn btn-sm btn-primary btn-xs">
-                                                                <i class="fa fa-plus fa-xs"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
                     </div>
                 </div>
             </div>
 
-            <!-- Cart Summary -->
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">
-                            <i class="fa fa-shopping-cart me-2"></i>
-                            Cart ({{ count($cartItems) }})
-                        </h5>
+            <hr class="my-3">
+
+            {{-- Row 2: Barcode Scanner + Unit Filter --}}
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label for="barcodeInput" class="form-label fw-medium">
+                        <i class="fa fa-barcode text-primary me-1 small"></i>
+                        Barcode Scanner
+                        <span class="badge bg-success ms-1" style="font-size:9px;letter-spacing:.5px;">
+                            <span class="bc-scan-dot"></span>
+                            READY
+                        </span>
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-secondary-subtle">
+                            <i class="fa fa-barcode"></i>
+                        </span>
+                        <input type="text" wire:model="barcodeInput" wire:keydown.enter="handleBarcodeScan()" class="form-control form-control-sm border-secondary-subtle shadow-sm" id="barcodeInput" placeholder="Scan barcode or enter manually..." autocomplete="off" autofocus>
+                        <button class="btn btn-dark btn-sm shadow-sm" wire:click="handleBarcodeScan()">
+                            <i class="fa fa-bolt me-1"></i>Add
+                        </button>
                     </div>
-                    <div class="card-body p-0">
-                        @if (empty($cartItems))
-                            <div class="text-center py-4">
-                                <i class="fa fa-shopping-cart fa-2x text-muted mb-2"></i>
-                                <p class="text-muted small">Cart is empty</p>
+                </div>
+                <div class="col-md-4" wire:ignore>
+                    <label for="unitFilterSelect" class="form-label fw-medium">
+                        <i class="fa fa-filter text-primary me-1 small"></i>
+                        Unit Filter
+                    </label>
+                    <select wire:model.live="selectedUnitId" class="form-select form-select-sm border-secondary-subtle shadow-sm" id="unitFilterSelect">
+                        <option value="">All Units</option>
+                        @foreach ($this->units as $unit)
+                            <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {{-- ═══════════ CARD BODY ═══════════ --}}
+        <div class="card-body p-0">
+            <div class="row g-0">
+                {{-- ─── Product Results (Left) ─── --}}
+                <div class="col-lg-8 border-end">
+                    @if (!empty($products))
+                        <div class="px-3 pt-3 pb-2 border-bottom bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small fw-semibold">
+                                    <i class="fa fa-list me-1"></i>Search Results ({{ count($products) }})
+                                </span>
+                                <small class="text-muted">Click to add to cart</small>
                             </div>
-                        @else
-                            <!-- Cart Items -->
-                            <div class="cart-items" style="max-height: 400px; overflow-y: auto;">
-                                @foreach ($cartItems as $cartKey => $item)
-                                    <div class="cart-item-compact border-bottom p-2">
-                                        <div class="d-flex align-items-center">
-                                            <div class="product-image me-2">
-                                                <img src="{{ $item['thumbnail'] ?? cache('logo') }}" alt="{{ $item['name'] }}" class="rounded"
-                                                    style="width: 35px; height: 35px; object-fit: cover;">
+                        </div>
+                        <div class="p-3">
+                            <div class="row g-2">
+                                @foreach ($products as $index => $product)
+                                    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                                        <div class="card h-100 border shadow-sm bc-product-tile" wire:click="selectProduct({{ $product['id'] }}, '{{ $product['item_type'] ?? 'inventory' }}')">
+                                            <div class="bg-light text-center py-2 position-relative border-bottom">
+                                                <img src="{{ $product['thumbnail'] ?? cache('logo') }}" alt="{{ $product['name'] }}" class="rounded" style="width:36px;height:36px;object-fit:cover;">
+                                                @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
+                                                    <span class="badge bg-info text-white position-absolute top-0 end-0 m-1" style="font-size:8px;">UNIT</span>
+                                                @else
+                                                    <span class="badge bg-primary position-absolute top-0 end-0 m-1" style="font-size:8px;">INV</span>
+                                                @endif
                                             </div>
-                                            <div class="flex-grow-1 min-w-0">
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div class="min-w-0 flex-grow-1">
-                                                        <h6 class="mb-0 fw-semibold" title="{{ $item['name'] }}">
-                                                            {{ $item['name'] }}
-                                                        </h6>
-                                                        <div class="text-muted small">
-                                                            <span class="badge bg-secondary badge-sm">Barcode : {{ $item['barcode'] }}</span>
-                                                            @if (isset($item['size']) && $item['size'])
-                                                                <span class="badge bg-warning badge-sm">Size : {{ $item['size'] }}</span>
-                                                            @endif
-                                                            @if (isset($item['item_type']) && $item['item_type'] === 'product_unit')
-                                                                <span class="badge bg-info badge-sm">Unit : {{ $item['sub_unit_name'] ?? 'N/A' }}</span>
-                                                                <span class="badge bg-dark badge-sm">Factor : {{ $item['conversion_factor'] ?? 1 }}</span>
-                                                            @endif
-                                                            <span class="badge bg-primary badge-sm">{{ currency($item['mrp']) }}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-flex align-items-center gap-1">
-                                                        <div class="quantity-controls-compact">
-                                                            <button wire:click="updateQuantity({{ $cartKey }}, {{ $item['quantity'] - 1 }})" class="btn btn-xs btn-outline-secondary">
-                                                                <i class="fa fa-minus fa-xs"></i>
-                                                            </button>
-                                                            <span class="mx-1 fw-bold small">{{ $item['quantity'] }}</span>
-                                                            <button wire:click="updateQuantity({{ $cartKey }}, {{ $item['quantity'] + 1 }})" class="btn btn-xs btn-outline-secondary">
-                                                                <i class="fa fa-plus fa-xs"></i>
-                                                            </button>
-                                                        </div>
-                                                        <button wire:click="removeFromCart({{ $cartKey }})" class="btn btn-xs btn-outline-danger ms-1">
-                                                            <i class="fa fa-times fa-xs"></i>
-                                                        </button>
-                                                    </div>
+                                            <div class="card-body p-2">
+                                                <h6 class="fw-semibold text-dark mb-1 bc-tile-name" title="{{ $product['name'] }}">{{ $product['name'] }}</h6>
+                                                <div class="mb-1">
+                                                    <span class="badge bg-light text-dark border" style="font-size:9px;"><i class="fa fa-barcode me-1 opacity-50"></i>{{ $product['barcode'] }}</span>
+                                                    @if (isset($product['size']) && $product['size'])
+                                                        <span class="badge bg-warning text-dark" style="font-size:9px;">{{ $product['size'] }}</span>
+                                                    @endif
+                                                    @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
+                                                        <span class="badge bg-light text-info border" style="font-size:9px;">{{ $product['sub_unit_name'] ?? 'N/A' }} &times;{{ $product['conversion_factor'] ?? 1 }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                                    <span class="fw-bold text-success small">{{ currency($product['mrp']) }}</span>
+                                                    @if (!isset($product['item_type']) || $product['item_type'] !== 'product_unit')
+                                                        <span class="text-muted" style="font-size:9px;">Stock: {{ $product['quantity'] }}</span>
+                                                    @endif
+                                                    <span class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm" style="width:22px;height:22px;font-size:9px;">
+                                                        <i class="fa fa-plus"></i>
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
-
-                            <!-- Cart Totals -->
-                            <div class="cart-totals border-top p-3 bg-light">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="fw-semibold">Total Items:</span>
-                                    <span class="fw-bold text-primary fs-5">{{ $this->getTotalQuantity() }}</span>
-                                </div>
-                                <!-- Cart Footer Actions -->
-                                <div class="d-flex gap-2">
-                                    <button wire:click="printBarcodes" class="btn btn-primary btn-sm flex-fill" {{ empty($cartItems) ? 'disabled' : '' }}>
-                                        <i class="fa fa-print me-1"></i> Print Barcodes
-                                    </button>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Keyboard Shortcuts Modal -->
-    <div class="modal fade" id="keyboardShortcutsModal" tabindex="-1" aria-labelledby="keyboardShortcutsModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="keyboardShortcutsModalLabel">
-                        <i class="fa fa-keyboard me-2"></i>Keyboard Shortcuts
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Shortcut</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td><kbd>Ctrl/Cmd + P</kbd></td>
-                                            <td>Print Barcodes</td>
-                                        </tr>
-                                        <tr>
-                                            <td><kbd>Ctrl/Cmd + K</kbd></td>
-                                            <td>Focus Search</td>
-                                        </tr>
-                                        <tr>
-                                            <td><kbd>Ctrl/Cmd + B</kbd></td>
-                                            <td>Focus Barcode Input</td>
-                                        </tr>
-                                        <tr>
-                                            <td><kbd>Enter</kbd></td>
-                                            <td>Scan Barcode</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                        </div>
+                    @else
+                        <div class="text-center py-5">
+                            <i class="fa fa-barcode fa-3x text-muted opacity-25 mb-3"></i>
+                            <h6 class="text-muted fw-semibold">Ready to Scan</h6>
+                            <p class="text-muted small mb-3">Scan a barcode or search for products to get started</p>
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                <span class="text-muted small"><kbd class="bg-light text-dark border shadow-sm">Ctrl+B</kbd> Scanner</span>
+                                <span class="text-muted small"><kbd class="bg-light text-dark border shadow-sm">Ctrl+K</kbd> Search</span>
+                                <span class="text-muted small"><kbd class="bg-light text-dark border shadow-sm">Ctrl+P</kbd> Print</span>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                {{-- ─── Cart Panel (Right) ─── --}}
+                <div class="col-lg-4">
+                    <div class="px-3 pt-3 pb-2 border-bottom bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold text-dark small">
+                                <i class="fa fa-shopping-cart me-1 text-primary"></i>Cart Items
+                            </span>
+                            <span class="badge bg-primary rounded-pill shadow-sm">{{ count($cartItems) }}</span>
+                        </div>
+                    </div>
+
+                    @if (empty($cartItems))
+                        <div class="text-center py-5">
+                            <i class="fa fa-shopping-cart fa-2x text-muted opacity-25 mb-2"></i>
+                            <p class="text-muted small mb-0">Cart is empty</p>
+                        </div>
+                    @else
+                        <div class="bc-cart-items-list">
+                            @foreach ($cartItems as $cartKey => $item)
+                                <div class="d-flex align-items-center gap-2 px-3 py-2 border-bottom bc-cart-row" wire:key="cart-{{ $cartKey }}">
+                                    <img src="{{ $item['thumbnail'] ?? $item['image'] ?? cache('logo') }}" alt="{{ $item['name'] }}" class="rounded border" style="width:32px;height:32px;object-fit:cover;flex-shrink:0;">
+                                    <div class="flex-grow-1" style="min-width:0;">
+                                        <div class="fw-medium text-dark text-truncate" style="font-size:12px;" title="{{ $item['name'] }}">{{ $item['name'] }}</div>
+                                        <div class="d-flex gap-1 flex-wrap mt-1">
+                                            <span class="badge bg-light text-dark border" style="font-size:8px;"><i class="fa fa-barcode me-1 opacity-50"></i>{{ $item['barcode'] }}</span>
+                                            @if (isset($item['item_type']) && $item['item_type'] === 'product_unit')
+                                                <span class="badge bg-info text-white" style="font-size:8px;">Unit</span>
+                                            @endif
+                                            <span class="badge bg-success" style="font-size:8px;">{{ currency($item['mrp']) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                        <div class="btn-group btn-group-sm shadow-sm">
+                                            <button wire:click="updateQuantity('{{ $cartKey }}', {{ $item['quantity'] - 1 }})" class="btn btn-outline-secondary px-1 py-0" style="font-size:9px;width:22px;height:22px;">
+                                                <i class="fa fa-minus"></i>
+                                            </button>
+                                            <span class="btn btn-light px-2 py-0 fw-bold border" style="font-size:11px;min-width:28px;height:22px;cursor:default;">{{ $item['quantity'] }}</span>
+                                            <button wire:click="updateQuantity('{{ $cartKey }}', {{ $item['quantity'] + 1 }})" class="btn btn-outline-secondary px-1 py-0" style="font-size:9px;width:22px;height:22px;">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <button wire:click="removeFromCart('{{ $cartKey }}')" class="btn btn-outline-danger btn-sm px-1 py-0 shadow-sm" style="font-size:9px;width:22px;height:22px;" title="Remove">
+                                            <i class="fa fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Cart Footer --}}
+                        <div class="p-3 border-top bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small fw-semibold">Total Labels:</span>
+                                <span class="fw-bold text-primary fs-5">{{ $this->getTotalQuantity() }}</span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- ═══════════ MOBILE FAB ═══════════ --}}
+        <div class="position-fixed bottom-0 end-0 mb-4 me-4 d-md-none" style="z-index:1050;">
+            <button wire:click="printBarcodes" class="btn btn-primary rounded-circle shadow btn-lg" {{ empty($cartItems) ? 'disabled' : '' }}>
+                <i class="fa fa-print"></i>
+            </button>
+        </div>
+    </div>
+
+    {{-- ═══════════ KEYBOARD SHORTCUTS MODAL ═══════════ --}}
+    <div class="modal fade" id="keyboardShortcutsModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold"><i class="fa fa-keyboard-o me-2 text-primary"></i>Keyboard Shortcuts</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="bg-light text-muted">
+                                <tr class="small">
+                                    <th class="fw-semibold py-2">Shortcut</th>
+                                    <th class="fw-semibold py-2">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><kbd class="bg-light text-dark border shadow-sm">Ctrl+B</kbd></td><td class="small text-muted">Focus Scanner</td></tr>
+                                <tr><td><kbd class="bg-light text-dark border shadow-sm">Ctrl+K</kbd></td><td class="small text-muted">Focus Search</td></tr>
+                                <tr><td><kbd class="bg-light text-dark border shadow-sm">Ctrl+P</kbd></td><td class="small text-muted">Print Barcodes</td></tr>
+                                <tr><td><kbd class="bg-light text-dark border shadow-sm">Enter</kbd></td><td class="small text-muted">Scan Barcode</td></tr>
+                                <tr><td><kbd class="bg-light text-dark border shadow-sm">Escape</kbd></td><td class="small text-muted">Clear & Refocus</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- ═══════════ MINIMAL STYLES ═══════════ --}}
     <style>
-        .product-card {
-            transition: all 0.3s ease;
+        /* Scan dot */
+        .bc-scan-dot {
+            width: 5px; height: 5px;
+            background: #fff;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bc-pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes bc-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .4; transform: scale(.6); }
+        }
+
+        /* Product tiles */
+        .bc-product-tile {
             cursor: pointer;
-        }
-
-        .product-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        }
-
-        .cart-item {
-            transition: all 0.2s ease;
-        }
-
-        .cart-item:hover {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 8px;
-            margin: -8px;
-        }
-
-.product-card-pos .badge {
-    margin: 2px 4px;
-}
-
-.badge-sm {
-    margin-right: 4px;
-    margin-bottom: 4px;
-}
-
-
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-        }
-
-        .quantity-controls .btn {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .cart-totals {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-        }
-
-        /* Professional styling improvements */
-        .card {
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-        }
-
-        .btn {
-            transition: all 0.2s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .badge {
-            font-size: 0.75rem;
-        }
-
-        /* Loading states */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        /* Success animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .cart-item {
-            animation: fadeInUp 0.3s ease;
-        }
-
-        /* Compact cart items */
-        .cart-item-compact {
-            transition: all 0.2s ease;
-        }
-
-        .cart-item-compact:hover {
-            background-color: #f8f9fa;
-        }
-
-        .quantity-controls-compact {
-            display: flex;
-            align-items: center;
-        }
-
-        .quantity-controls-compact .btn {
-            width: 24px;
-            height: 24px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-        }
-
-        /* POS-style product cards */
-        .product-card-pos {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .product-card-pos:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        }
-
-        .product-card-pos .card-body {
-            padding: 0.5rem;
-        }
-
-        .product-card-pos h6 {
-            font-size: 0.8rem;
-            line-height: 1.2;
-        }
-
-        .badge-sm {
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
-        }
-
-        /* Responsive improvements */
-        @media (max-width: 768px) {
-            .barcode-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .quantity-controls {
-                flex-direction: column;
-                gap: 5px;
-            }
-
-            .product-card-pos {
-                margin-bottom: 0.5rem;
-            }
-        }
-
-        /* Compact layout improvements */
-        .min-w-0 {
-            min-width: 0;
-        }
-
-        .text-truncate {
+            transition: all .2s ease;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        }
+        .bc-product-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 .25rem .75rem rgba(0,0,0,.12) !important;
+            border-color: #0d6efd !important;
+        }
+        .bc-tile-name {
+            font-size: 11px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        /* Scrollbar styling */
-        .cart-items::-webkit-scrollbar {
-            width: 6px;
+        /* Cart list */
+        .bc-cart-items-list {
+            max-height: 400px;
+            overflow-y: auto;
         }
+        .bc-cart-row { transition: background .15s; }
+        .bc-cart-row:hover { background-color: #f8f9fa; }
 
-        .cart-items::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
+        /* Scrollbar */
+        .bc-cart-items-list::-webkit-scrollbar { width: 4px; }
+        .bc-cart-items-list::-webkit-scrollbar-track { background: transparent; }
+        .bc-cart-items-list::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 2px; }
 
-        .cart-items::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
-        }
-
-        .cart-items::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-
-        /* Livewire message styling */
-        .livewire-message {
+        /* Toast */
+        .bc-toast {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 16px;
+            right: 16px;
             z-index: 9999;
-            max-width: 300px;
-            animation: slideInRight 0.3s ease;
+            max-width: 320px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            animation: bc-slideIn .3s ease, bc-fadeOut .3s ease 2.7s forwards;
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
         }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+        .bc-toast.success { background-color: #198754; }
+        .bc-toast.error { background-color: #dc3545; }
+        @keyframes bc-slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes bc-fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
         }
     </style>
 
     @push('scripts')
         <script>
             document.addEventListener('livewire:init', () => {
-                // Handle Livewire events
-                Livewire.on('success', (event) => {
-                    showMessage(event.message, 'success');
-                });
 
-                Livewire.on('error', (event) => {
-                    showMessage(event.message, 'error');
-                });
-
-                // Function to show messages
-                function showMessage(message, type) {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = `livewire-message alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-                    messageDiv.innerHTML = `
-            <i class="fa fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-
-                    document.body.appendChild(messageDiv);
-
-                    // Auto remove after 3 seconds
-                    setTimeout(() => {
-                        if (messageDiv.parentNode) {
-                            messageDiv.remove();
-                        }
-                    }, 3000);
-
-                    // Handle close button
-                    messageDiv.querySelector('.btn-close').addEventListener('click', () => {
-                        messageDiv.remove();
-                    });
+                // ── Toast Messages ──
+                function showToast(message, type) {
+                    const toast = document.createElement('div');
+                    toast.className = `bc-toast ${type}`;
+                    toast.innerHTML = `<i class="fa fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3200);
                 }
 
-                // Keyboard shortcuts
+                Livewire.on('success', (e) => showToast(e.message, 'success'));
+                Livewire.on('error', (e) => showToast(e.message, 'error'));
+
+                // ── Keyboard Shortcuts ──
                 document.addEventListener('keydown', function(e) {
-                    // Ctrl/Cmd + P to print barcodes
                     if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
                         e.preventDefault();
                         @this.call('printBarcodes');
                     }
-
-                    // Ctrl/Cmd + K to focus on search
                     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                         e.preventDefault();
-                        document.querySelector('input[wire\\:model\\.live\\.debounce\\.300ms="searchQuery"]').focus();
+                        document.getElementById('searchInput')?.focus();
                     }
-
-                    // Ctrl/Cmd + B to focus on barcode input
                     if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
                         e.preventDefault();
-                        document.querySelector('input[wire\\:model="barcodeInput"]').focus();
+                        document.getElementById('barcodeInput')?.focus();
+                    }
+                    if (e.key === 'Escape') {
+                        @this.set('searchQuery', '');
+                        document.getElementById('barcodeInput')?.focus();
                     }
                 });
 
-                // Auto-focus on barcode input when page loads
+                // ── Tooltips ──
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function(el) {
+                    return new bootstrap.Tooltip(el, { boundary: document.body });
+                });
+
+                // ── Auto-focus barcode scanner ──
                 setTimeout(() => {
-                    const barcodeInput = document.querySelector('input[wire\\:model="barcodeInput"]');
-                    if (barcodeInput) {
-                        barcodeInput.focus();
-                    }
-                }, 1000);
+                    document.getElementById('barcodeInput')?.focus();
+                }, 500);
+
+                // ── Re-focus scanner after adding item ──
+                Livewire.on('success', () => {
+                    setTimeout(() => {
+                        document.getElementById('barcodeInput')?.focus();
+                    }, 100);
+                });
+
+                // ── Unit filter change handler ──
+                const unitSelect = document.getElementById('unitFilterSelect');
+                if (unitSelect) {
+                    unitSelect.addEventListener('change', function() {
+                        @this.set('selectedUnitId', this.value);
+                    });
+                }
+
+                // ── Scan detection: fast typing → flash indicator ──
+                let lastKeyTime = 0;
+                let keyBuffer = '';
+                const barcodeInput = document.getElementById('barcodeInput');
+
+                if (barcodeInput) {
+                    barcodeInput.addEventListener('keypress', function(e) {
+                        const now = Date.now();
+                        const timeDiff = now - lastKeyTime;
+                        if (timeDiff > 500) keyBuffer = '';
+                        keyBuffer += e.key;
+                        lastKeyTime = now;
+
+                        if (timeDiff < 50 && keyBuffer.length >= 4) {
+                            const dot = document.querySelector('.bc-scan-dot');
+                            if (dot) {
+                                dot.style.background = '#0d6efd';
+                                dot.style.boxShadow = '0 0 6px #0d6efd';
+                                setTimeout(() => {
+                                    dot.style.background = '#fff';
+                                    dot.style.boxShadow = 'none';
+                                }, 500);
+                            }
+                        }
+                    });
+                }
             });
         </script>
     @endpush

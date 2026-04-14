@@ -6,6 +6,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -40,16 +41,16 @@ class TailoringOrderMeasurement extends Model implements AuditableContracts
     {
         static::creating(function ($item): void {
             if (empty($item->created_by)) {
-                $item->created_by = auth()->id();
+                $item->created_by = Auth::id();
             }
             if (empty($item->updated_by)) {
-                $item->updated_by = auth()->id();
+                $item->updated_by = Auth::id();
             }
         });
 
         static::updating(function ($item): void {
             if (empty($item->updated_by)) {
-                $item->updated_by = auth()->id();
+                $item->updated_by = Auth::id();
             }
         });
     }

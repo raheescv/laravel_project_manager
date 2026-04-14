@@ -111,13 +111,13 @@
                                     </div>
                                 </td>
                                 <td><span class="badge bg-light text-dark border"><i class="fa fa-tag me-1 opacity-50"></i>{{ $item->customerType?->name ?: '-' }}</span></td>
-                                <td>
+                                <td class="text-nowrap">
                                     <a href="{{ route('account::customer::view', $item->id) }}" class="text-decoration-none fw-medium text-primary">
                                         <i class="fa fa-user me-1"></i>{{ $item->name }}
                                     </a>
                                 </td>
-                                <td><i class="fa fa-phone me-1 text-success opacity-75"></i>{{ $item->mobile ?: '-' }}</td>
-                                <td>
+                                <td class="text-nowrap"><i class="fa fa-phone me-1 text-success opacity-75"></i>{{ $item->mobile ?: '-' }}</td>
+                                <td class="text-nowrap">
                                     @if ($item->whatsapp_mobile)
                                         <i class="fa fa-whatsapp me-1 text-success"></i>{{ $item->whatsapp_mobile }}
                                     @else
@@ -131,7 +131,7 @@
                                         -
                                     @endif
                                 </td>
-                                <td>
+                                <td class="text-nowrap">
                                     @if ($item->dob)
                                         <i class="fa fa-calendar me-1 text-muted"></i>{{ systemDate($item->dob) }}
                                     @else

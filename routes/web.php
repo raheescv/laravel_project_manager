@@ -4,13 +4,19 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\FamilyTreeController;
+use App\Http\Controllers\GrnController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageGenComfyController;
+use App\Http\Controllers\LocalPurchaseOrderController;
+use App\Http\Controllers\LpoPurchaseController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhysicalVisitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicScanController;
+use App\Http\Controllers\PurchaseRequestController;
+use App\Http\Controllers\PurchaseVendorController;
+use App\Http\Controllers\SupplyRequestController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorAnalyticsController;
@@ -45,7 +51,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('excel-view', 'excelView')->name('excel-view');
     });
     Route::name('audit::')->prefix('audit')->controller(AuditController::class)->group(function (): void {
-        Route::get('{modal}/{id}', 'index')->name('index');
+        Route::get('{model}/{id}', 'index')->name('index');
     });
     Route::name('backup::')->prefix('backup')->controller(BackupController::class)->group(function (): void {
         Route::get('/', 'index')->name('index')->can('backup.view');
@@ -63,6 +69,65 @@ Route::middleware('auth')->group(function (): void {
     Route::get('visitor-analytics', [VisitorAnalyticsController::class, 'index'])->name('visitor-analytics')->can('visitor analytics.view');
 
     Route::get('health', [HealthController::class, 'index'])->name('health')->can('system health.view');
+
+    // Purchase Request Routes
+    Route::name('purchase-request::')->prefix('purchase-requests')->controller(PurchaseRequestController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{purchaseRequest}/decision', 'decision')->name('decision');
+        Route::get('{purchaseRequest}', 'show')->name('view');
+        Route::get('{purchaseRequest}/edit', 'edit')->name('edit');
+    });
+
+    // LPO
+    Route::name('lpo::')->prefix('local-purchase-orders')->controller(LocalPurchaseOrderController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{localPurchaseOrder}/edit', 'edit')->name('edit');
+        Route::get('{localPurchaseOrder}', 'show')->name('view');
+        Route::get('{localPurchaseOrder}/decision', 'decision')->name('decision');
+        Route::get('{localPurchaseOrder}/print', 'print')->name('print');
+    });
+
+    // GRN
+    Route::name('grn::')->prefix('grns')->controller(GrnController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{grn}/edit', 'edit')->name('edit');
+        Route::get('{grn}', 'show')->name('view');
+        Route::get('{grn}/decision', 'decision')->name('decision');
+    });
+
+    // LPO Purchase
+    Route::name('lpo-purchase::')->prefix('lpo-purchases')->controller(LpoPurchaseController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('create', 'create')->name('create');
+        Route::get('{purchase}/edit', 'edit')->name('edit');
+        Route::get('{purchase}', 'show')->name('view');
+        Route::get('{purchase}/decision', 'decision')->name('decision');
+    });
+
+    // Purchase Vendor
+    Route::name('purchase-vendor::')->prefix('purchase-vendors')->controller(PurchaseVendorController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('{id}', 'show')->name('view');
+    });
+
+    // Supply Request - Add
+    Route::name('supply-request::')->prefix('supply-requests')->controller(SupplyRequestController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->defaults('type', 'Add');
+        Route::get('create', 'create')->name('create')->defaults('type', 'Add');
+        Route::get('{id}/edit', 'edit')->name('edit');
+        Route::get('{id}/print/{mode?}', 'print')->name('print');
+    });
+
+    // Supply Request - Return
+    Route::name('supply-return::')->prefix('supply-returns')->controller(SupplyRequestController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->defaults('type', 'Return');
+        Route::get('create', 'create')->name('create')->defaults('type', 'Return');
+        Route::get('{id}/edit', 'edit')->name('edit');
+        Route::get('{id}/print/{mode?}', 'print')->name('print');
+    });
 });
 
 // Physical Visitor Management Routes

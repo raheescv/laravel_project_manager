@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Reports;
 
+use App\Exports\BalanceSheetExport;
 use App\Models\Account;
 use App\Models\AccountCategory;
+use App\Models\Branch;
 use App\Models\JournalEntry;
 use Carbon\Carbon;
 use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BalanceSheet extends Component
 {
@@ -15,8 +18,6 @@ class BalanceSheet extends Component
     public $period = 'monthly';
 
     public $end_date;
-
-    public $branches = [];
 
     public $hideCustomers = true;
 
@@ -68,20 +69,17 @@ class BalanceSheet extends Component
 
     public function updatedPeriod($value)
     {
-        switch ($value) {
-            case 'monthly':
-                $this->end_date = Carbon::now()->endOfMonth()->format('Y-m-d');
-                break;
-            case 'quarterly':
-                $this->end_date = Carbon::now()->endOfQuarter()->format('Y-m-d');
-                break;
-            case 'yearly':
-                $this->end_date = Carbon::now()->endOfYear()->format('Y-m-d');
-                break;
-            case 'previous_month':
-                $this->end_date = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
-                break;
+        $endDates = [
+            'monthly' => Carbon::now()->endOfMonth(),
+            'quarterly' => Carbon::now()->endOfQuarter(),
+            'yearly' => Carbon::now()->endOfYear(),
+            'previous_month' => Carbon::now()->subMonth()->endOfMonth(),
+        ];
+
+        if (isset($endDates[$value])) {
+            $this->end_date = $endDates[$value]->format('Y-m-d');
         }
+
         $this->loadBalanceSheet();
     }
 
@@ -410,19 +408,12 @@ class BalanceSheet extends Component
                     if (isset($accountsBySubCategory[$subCategoryId])) {
                         $subData = $accountsBySubCategory[$subCategoryId];
                         $masterTotal += $subData['total'];
-                        // Filter accounts array based on exclusion settings
-                        $filteredAccounts = [];
-                        foreach ($subData['accounts'] as $acc) {
-                            // Accounts are already filtered in the loop above, so just add them
-                            $filteredAccounts[] = $acc;
-                        }
-                        // Show sub-category if it has a total, even if no accounts are visible
                         if (abs($subData['total']) >= 0.01) {
                             $groups[] = [
                                 'id' => $subCategoryId,
                                 'name' => $subCategory->name,
                                 'total' => round($subData['total'], 2),
-                                'accounts' => $filteredAccounts,
+                                'accounts' => $subData['accounts'],
                             ];
                         }
                     }
@@ -559,7 +550,52 @@ class BalanceSheet extends Component
                 return round($credit - $debit, 2);
 
             default:
-                return 0.0;
+                // For untyped accounts, use debit-minus-credit (asset-like)
+                return round($debit - $credit, 2);
+        }
+    }
+
+    protected function getBranchName(): ?string
+    {
+        if (! $this->branch_id) {
+            return null;
+        }
+
+        return Branch::find($this->branch_id)?->name;
+    }
+
+    public function export()
+    {
+        try {
+            $reportData = [
+                'currentAssets' => $this->currentAssets,
+                'fixedAssets' => $this->fixedAssets,
+                'otherAssets' => $this->otherAssets,
+                'totalCurrentAssets' => $this->totalCurrentAssets,
+                'totalFixedAssets' => $this->totalFixedAssets,
+                'totalOtherAssets' => $this->totalOtherAssets,
+                'totalAssets' => $this->totalAssets,
+                'currentLiabilities' => $this->currentLiabilities,
+                'longTermLiabilities' => $this->longTermLiabilities,
+                'totalCurrentLiabilities' => $this->totalCurrentLiabilities,
+                'totalLongTermLiabilities' => $this->totalLongTermLiabilities,
+                'totalLiabilities' => $this->totalLiabilities,
+                'ownerEquity' => $this->ownerEquity,
+                'retainedEarningAccounts' => $this->retainedEarningAccounts,
+                'totalEquityAccounts' => $this->totalEquityAccounts,
+                'totalRetainedEarnings' => $this->totalRetainedEarnings,
+                'totalEquity' => $this->totalEquity,
+            ];
+
+            $branchName = $this->getBranchName();
+            $fileName = 'Balance_Sheet_'.$this->end_date.'_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+            return Excel::download(
+                new BalanceSheetExport($reportData, $this->end_date, $branchName),
+                $fileName
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('error', ['message' => 'Export failed: '.$e->getMessage()]);
         }
     }
 

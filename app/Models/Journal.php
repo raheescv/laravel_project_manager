@@ -80,4 +80,9 @@ class Journal extends Model implements AuditableContracts
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function rentOutTransaction()
+    {
+        return $this->hasOne(RentOutTransaction::class, 'journal_id');
+    }
 }

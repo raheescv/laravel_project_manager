@@ -91,6 +91,104 @@
                 </div>
             @endcan
 
+            {{-- Property Leads Dashboard --}}
+            @can('property lead.view')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-primary ps-3">
+                            <i class="fa fa-users me-2"></i>Property Leads Overview
+                        </h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.property-lead-dashboard')
+                    </div>
+                </div>
+            @endcan
+
+            {{-- Property Overview Dashboard --}}
+            @can('property.dashboard overview')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-teal ps-3">
+                            <i class="fa fa-building me-2"></i>Property Overview
+                        </h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.property-overview-dashboard')
+                    </div>
+                </div>
+            @endcan
+
+            {{-- Property Maintenance Dashboard --}}
+            @can('property dashboard.maintenance overview')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-info ps-3">
+                            <i class="fa fa-wrench me-2"></i>Maintenance Overview
+                        </h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.property-maintenance-dashboard')
+                    </div>
+                </div>
+            @endcan
+
+            {{-- Property Complaint Dashboard --}}
+            @can('property dashboard.complaint overview')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-danger ps-3">
+                            <i class="fa fa-exclamation-triangle me-2"></i>Complaint Analytics
+                        </h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.property-complaint-dashboard')
+                    </div>
+                </div>
+            @endcan
+
+            {{-- Property Financial Dashboard --}}
+            @can('property dashboard.financial overview')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-warning ps-3">
+                            <i class="fa fa-dollar me-2"></i>Property Financial Overview
+                        </h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.property-financial-dashboard')
+                    </div>
+                </div>
+            @endcan
+
+            {{-- Supply Request Dashboard --}}
+            @can('property dashboard.supply request overview')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-cyan ps-3">
+                            <i class="fa fa-truck me-2"></i>Supply Request Overview
+                        </h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.supply-request-dashboard')
+                    </div>
+                </div>
+            @endcan
+
+            {{-- Rent Out Expiry Dashboard --}}
+            @can('property dashboard.rent out expiry overview')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-orange ps-3">
+                            <i class="fa fa-calendar me-2"></i>Rent Out Expiry Tracker
+                        </h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.rent-out-expiry-dashboard')
+                    </div>
+                </div>
+            @endcan
+
             <div class="text-center text-muted small py-3">
                 <p class="mb-0">© {{ date('Y') }} {{ config('app.name') }} | Dashboard last updated: {{ date('d M Y, H:i A') }}</p>
             </div>

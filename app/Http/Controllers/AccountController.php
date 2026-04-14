@@ -43,7 +43,7 @@ class AccountController extends Controller
 
     public function view($id)
     {
-        $account = Account::findOrFail($id);
+        $account = Account::with(['accountCategory.parent', 'customerType'])->findOrFail($id);
 
         return view('accounts.view', compact('id', 'account'));
     }

@@ -65,7 +65,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Export Button -->
+
             <!-- Profit & Loss Report - T-Account Format -->
             <div class="table-responsive">
                 <table class="table table-bordered table-sm mb-0" id="profitLossTable" style="font-size: 0.9rem;">
@@ -86,32 +86,31 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Top Section: Gross Profit/Loss Calculation -->
+                        {{-- ========== TRADING ACCOUNT (Gross Profit/Loss) ========== --}}
+
+                        {{-- Row 1: Opening Stock | Net Sale --}}
                         <tr>
-                            <!-- Left: Opening Stock -->
                             <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>OPENING STOCK</strong></td>
                             <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">{{ currency($openingStock) }}</td>
-                            <!-- Right: Net Sale -->
                             <td class="ps-3"><strong>NET SALE</strong></td>
                             <td class="text-end pe-3">{{ currency($netSale) }}</td>
                         </tr>
+
+                        {{-- Row 2: Net Purchase | Closing Stock --}}
                         <tr>
-                            <!-- Left: Net Purchase -->
                             <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>NET PURCHASE</strong></td>
                             <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">{{ currency($netPurchase) }}</td>
-                            <!-- Right: Closing Stock -->
-                            <td class="ps-3">
-                                <strong>CLOSING STOCK</strong>
-                            </td>
+                            <td class="ps-3"><strong>CLOSING STOCK</strong></td>
                             <td class="text-end pe-3" style="background-color: #e3f2fd;">{{ currency($closingStock) }}</td>
                         </tr>
-                        <!-- Direct Expense and Direct Income with hierarchical structure -->
+
+                        {{-- Row 3: Direct Expense | Direct Income --}}
                         @php
                             $directExpenseMaster = collect($directExpenseStructure)->firstWhere('name', 'Direct Expense');
                             $directIncomeMaster = collect($directIncomeStructure)->firstWhere('name', 'Direct Income');
                         @endphp
                         <tr>
-                            <!-- Left: Direct Expense Master -->
+                            {{-- Left: Direct Expense --}}
                             @if ($directExpenseMaster)
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;">
                                     <button type="button" wire:click="toggleGroup({{ $directExpenseMaster['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none fw-bold">
@@ -126,7 +125,8 @@
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>DIRECT EXPENSE</strong></td>
                                 <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #e3f2fd;">{{ currency($directExpense) }}</td>
                             @endif
-                            <!-- Right: Direct Income Master -->
+
+                            {{-- Right: Direct Income --}}
                             @if ($directIncomeMaster)
                                 <td class="ps-3">
                                     <button type="button" wire:click="toggleGroup({{ $directIncomeMaster['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none fw-bold">
@@ -142,140 +142,44 @@
                                 <td class="text-end pe-3" style="background-color: #e3f2fd;">{{ currency($directIncome) }}</td>
                             @endif
                         </tr>
-                        <!-- Show Direct Expense groups and accounts if expanded -->
+
+                        {{-- Expanded Direct Expense details --}}
                         @if ($directExpenseMaster && in_array($directExpenseMaster['id'], $expandedGroups))
-                            @foreach ($directExpenseMaster['groups'] as $group)
-                                @if ($group['total'])
-                                    <tr>
-                                        <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
-                                            <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                            <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none" style="padding-left: 1.5rem !important;">
-                                                <i class="fa fa-{{ in_array($group['id'], $expandedGroups) ? 'minus' : 'plus' }} me-1"></i>
-                                                {{ $group['name'] }}
-                                            </button>
-                                        </td>
-                                        <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #f5f5f5;">
-                                            {{ currency($group['total']) }}
-                                        </td>
-                                        <td></td>
-                                        <td></td>
-                                    </tr>
-                                @endif
-                                @if (in_array($group['id'], $expandedGroups))
-                                    @foreach ($group['accounts'] as $account)
-                                        @if ($account['amount'] > 0)
-                                            <tr>
-                                                <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
-                                                    <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                                    <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
-                                                </td>
-                                                <td class="pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
-                                                    {{ currency($account['amount']) }}
-                                                </td>
-                                                <td></td>
-                                                <td></td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endif
-                            @endforeach
-                            <!-- Show Direct Expense accounts directly under master category -->
-                            @if (!empty($directExpenseMaster['directAccounts']))
-                                @foreach ($directExpenseMaster['directAccounts'] as $account)
-                                    @if ($account['amount'] > 0)
-                                        <tr>
-                                            <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
-                                                <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                                <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 1.5rem !important; display: block;">{{ $account['name'] }}</a>
-                                            </td>
-                                            <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
-                                                {{ currency($account['amount']) }}
-                                            </td>
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            @endif
+                            @include('livewire.reports.partials.pl-category-rows', [
+                                'master' => $directExpenseMaster,
+                                'side' => 'left',
+                            ])
                         @endif
-                        <!-- Show Direct Income groups and accounts if expanded -->
+
+                        {{-- Expanded Direct Income details --}}
                         @if ($directIncomeMaster && in_array($directIncomeMaster['id'], $expandedGroups))
-                            @foreach ($directIncomeMaster['groups'] as $group)
-                                @if ($group['total'])
-                                    <tr>
-                                        <td style="border-right: 2px solid #dee2e6;"></td>
-                                        <td style="border-right: 2px solid #dee2e6;"></td>
-                                        <td class="ps-3" style="position: relative;">
-                                            <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                            <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none" style="padding-left: 1.5rem !important;">
-                                                <i class="fa fa-{{ in_array($group['id'], $expandedGroups) ? 'minus' : 'plus' }} me-1"></i>
-                                                {{ $group['name'] }}
-                                            </button>
-                                        </td>
-                                        <td class="text-end pe-3" style="background-color: #f5f5f5;">
-                                            {{ currency($group['total']) }}
-                                        </td>
-                                    </tr>
-                                @endif
-                                @if (in_array($group['id'], $expandedGroups))
-                                    @foreach ($group['accounts'] as $account)
-                                        @if ($account['amount'] > 0)
-                                            <tr>
-                                                <td style="border-right: 2px solid #dee2e6;"></td>
-                                                <td style="border-right: 2px solid #dee2e6;"></td>
-                                                <td class="ps-3" style="position: relative;">
-                                                    <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25phrem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                                    <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
-                                                </td>
-                                                <td class="pe-3" style="background-color: #ffffff;">
-                                                    {{ currency($account['amount']) }}
-                                                </td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endif
-                            @endforeach
-                            <!-- Show Direct Income accounts directly under master category -->
-                            @if (!empty($directIncomeMaster['directAccounts']))
-                                @foreach ($directIncomeMaster['directAccounts'] as $account)
-                                    @if ($account['amount'] > 0)
-                                        <tr>
-                                            <td style="border-right: 2px solid #dee2e6;"></td>
-                                            <td style="border-right: 2px solid #dee2e6;"></td>
-                                            <td class="ps-3" style="position: relative;">
-                                                <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                                <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 1.5rem !important; display: block;">{{ $account['name'] }}</a>
-                                            </td>
-                                            <td class="text-end pe-3" style="background-color: #ffffff;">
-                                                {{ currency($account['amount']) }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            @endif
+                            @include('livewire.reports.partials.pl-category-rows', [
+                                'master' => $directIncomeMaster,
+                                'side' => 'right',
+                            ])
                         @endif
+
+                        {{-- Gross Profit / Gross Loss --}}
                         <tr>
                             @if ($grossProfit > 0)
-                                <td class="ps-3"><strong class="text-success">GROSS PROFIT C/D</strong></td>
-                                <td class="text-end pe-3 text-success"><strong class="text-success">{{ currency($grossProfit) }}</strong></td>
-                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
-                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
-                            @elseif($grossLoss > 0)
+                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-success">GROSS PROFIT C/D</strong></td>
+                                <td class="text-end pe-3 text-success" style="border-right: 2px solid #dee2e6;"><strong>{{ currency($grossProfit) }}</strong></td>
+                                <td class="ps-3"></td>
+                                <td class="text-end pe-3"></td>
+                            @elseif ($grossLoss > 0)
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
                                 <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
                                 <td class="ps-3"><strong class="text-danger">GROSS LOSS C/D</strong></td>
-                                <td class="text-end pe-3 text-danger"><strong class="text-danger">{{ currency($grossLoss) }}</strong></td>
+                                <td class="text-end pe-3 text-danger"><strong>{{ currency($grossLoss) }}</strong></td>
+                            @else
+                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
+                                <td class="ps-3"></td>
+                                <td class="text-end pe-3"></td>
                             @endif
                         </tr>
-                        <!-- Total Row for Top Section -->
+
+                        {{-- Trading Account Totals --}}
                         <tr class="table-light" style="border-top: 2px solid #dee2e6;">
                             <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>TOTAL</strong></td>
                             <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"><strong>{{ currency($leftTotal1) }}</strong></td>
@@ -283,32 +187,35 @@
                             <td class="text-end pe-3"><strong>{{ currency($rightTotal1) }}</strong></td>
                         </tr>
 
-                        <!-- Bottom Section: Net Profit/Loss Calculation -->
+                        {{-- ========== PROFIT & LOSS ACCOUNT (Net Profit/Loss) ========== --}}
+
+                        {{-- Gross Loss B/D or Gross Profit B/D --}}
                         <tr>
-                            <!-- Left: Gross Loss B/D -->
                             @if ($grossLoss > 0)
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-danger">GROSS LOSS B/D</strong></td>
-                                <td class="text-end pe-3 text-danger" style="border-right: 2px solid #dee2e6;"><strong class="text-danger">{{ currency($grossLoss) }}</strong></td>
-                                <!-- Right: Empty -->
+                                <td class="text-end pe-3 text-danger" style="border-right: 2px solid #dee2e6;"><strong>{{ currency($grossLoss) }}</strong></td>
                                 <td class="ps-3"></td>
                                 <td class="text-end pe-3"></td>
-                            @endif
-                            @if ($grossProfit > 0)
-                                <!-- Right: Empty -->
+                            @elseif ($grossProfit > 0)
+                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
+                                <td class="ps-3"><strong class="text-success">GROSS PROFIT B/D</strong></td>
+                                <td class="text-end pe-3 text-success"><strong>{{ currency($grossProfit) }}</strong></td>
+                            @else
+                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
                                 <td class="ps-3"></td>
                                 <td class="text-end pe-3"></td>
-                                <!-- Left: Gross Profit B/D -->
-                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-success">GROSS PROFIT B/D</strong></td>
-                                <td class="text-end pe-3 text-success" style="border-right: 2px solid #dee2e6;"><strong class="text-success">{{ currency($grossProfit) }}</strong></td>
                             @endif
                         </tr>
-                        <!-- Indirect Expense and Indirect Income with hierarchical structure -->
+
+                        {{-- Indirect Expense | Indirect Income --}}
                         @php
                             $indirectExpenseMaster = collect($directExpenseStructure)->firstWhere('name', 'Indirect Expense');
                             $indirectIncomeMaster = collect($directIncomeStructure)->firstWhere('name', 'Indirect Income');
                         @endphp
                         <tr>
-                            <!-- Left: Indirect Expense Master -->
+                            {{-- Left: Indirect Expense --}}
                             @if ($indirectExpenseMaster)
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;">
                                     <button type="button" wire:click="toggleGroup({{ $indirectExpenseMaster['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none fw-bold">
@@ -323,7 +230,8 @@
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>INDIRECT EXPENSE</strong></td>
                                 <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #e3f2fd;">{{ currency($indirectExpense) }}</td>
                             @endif
-                            <!-- Right: Indirect Income Master -->
+
+                            {{-- Right: Indirect Income --}}
                             @if ($indirectIncomeMaster)
                                 <td class="ps-3">
                                     <button type="button" wire:click="toggleGroup({{ $indirectIncomeMaster['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none fw-bold">
@@ -339,145 +247,44 @@
                                 <td class="text-end pe-3" style="background-color: #e3f2fd;">{{ currency($indirectIncome) }}</td>
                             @endif
                         </tr>
-                        <!-- Show Indirect Expense groups and accounts if expanded -->
+
+                        {{-- Expanded Indirect Expense details --}}
                         @if ($indirectExpenseMaster && in_array($indirectExpenseMaster['id'], $expandedGroups))
-                            @foreach ($indirectExpenseMaster['groups'] as $group)
-                                @if ($group['total'])
-                                    <tr>
-                                        <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
-                                            <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                            <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none" style="padding-left: 1.5rem !important;">
-                                                <i class="fa fa-{{ in_array($group['id'], $expandedGroups) ? 'minus' : 'plus' }} me-1"></i>
-                                                {{ $group['name'] }}
-                                            </button>
-                                        </td>
-                                        <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #f5f5f5;">
-                                            {{ currency($group['total']) }}
-                                        </td>
-                                        <td></td>
-                                        <td></td>
-                                    </tr>
-                                @endif
-                                @if (in_array($group['id'], $expandedGroups))
-                                    @foreach ($group['accounts'] as $account)
-                                        @if ($account['amount'] > 0)
-                                            <tr>
-                                                <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
-                                                    <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                                    <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
-                                                </td>
-                                                <td class="pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
-                                                    {{ currency($account['amount']) }}
-                                                </td>
-                                                <td></td>
-                                                <td></td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endif
-                            @endforeach
-                            <!-- Show Indirect Expense accounts directly under master category -->
-                            @if (!empty($indirectExpenseMaster['directAccounts']))
-                                @foreach ($indirectExpenseMaster['directAccounts'] as $account)
-                                    @if ($account['amount'] > 0)
-                                        <tr>
-                                            <td class="ps-3" style="border-right: 2px solid #dee2e6; position: relative;">
-                                                <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                                <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 1.5rem !important; display: block;">{{ $account['name'] }}</a>
-                                            </td>
-                                            <td class="text-end pe-3" style="border-right: 2px solid #dee2e6; background-color: #ffffff;">
-                                                {{ currency($account['amount']) }}
-                                            </td>
-                                            <td></td>
-                                            <td></td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            @endif
+                            @include('livewire.reports.partials.pl-category-rows', [
+                                'master' => $indirectExpenseMaster,
+                                'side' => 'left',
+                            ])
                         @endif
-                        <!-- Show Indirect Income groups and accounts if expanded -->
+
+                        {{-- Expanded Indirect Income details --}}
                         @if ($indirectIncomeMaster && in_array($indirectIncomeMaster['id'], $expandedGroups))
-                            @foreach ($indirectIncomeMaster['groups'] as $group)
-                                @if ($group['total'])
-                                    <tr>
-                                        <td style="border-right: 2px solid #dee2e6;"></td>
-                                        <td style="border-right: 2px solid #dee2e6;"></td>
-                                        <td class="ps-3" style="position: relative;">
-                                            <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                            <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                            <button type="button" wire:click="toggleGroup({{ $group['id'] }})" class="btn btn-sm btn-link p-0 text-start text-decoration-none" style="padding-left: 1.5rem !important;">
-                                                <i class="fa fa-{{ in_array($group['id'], $expandedGroups) ? 'minus' : 'plus' }} me-1"></i>
-                                                {{ $group['name'] }}
-                                            </button>
-                                        </td>
-                                        <td class="text-end pe-3" style="background-color: #f5f5f5;">
-                                            {{ currency($group['total']) }}
-                                        </td>
-                                    </tr>
-                                @endif
-                                @if (in_array($group['id'], $expandedGroups))
-                                    @foreach ($group['accounts'] as $account)
-                                        @if ($account['amount'] > 0)
-                                            <tr>
-                                                <td style="border-right: 2px solid #dee2e6;"></td>
-                                                <td style="border-right: 2px solid #dee2e6;"></td>
-                                                <td class="ps-3" style="position: relative;">
-                                                    <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                    <span style="position: absolute; left: 2.25rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                                    <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 3rem !important; display: block;">{{ $account['name'] }}</a>
-                                                </td>
-                                                <td class="pe-3" style="background-color: #ffffff;">
-                                                    {{ currency($account['amount']) }}
-                                                </td>
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                @endif
-                            @endforeach
-                            <!-- Show Indirect Income accounts directly under master category -->
-                            @if (!empty($indirectIncomeMaster['directAccounts']))
-                                @foreach ($indirectIncomeMaster['directAccounts'] as $account)
-                                    @if ($account['amount'] > 0)
-                                        <tr>
-                                            <td style="border-right: 2px solid #dee2e6;"></td>
-                                            <td style="border-right: 2px solid #dee2e6;"></td>
-                                            <td class="ps-3" style="position: relative;">
-                                                <span style="position: absolute; left: 0.75rem; top: 0; height: 50%; width: 1px; background-color: #d0d0d0;"></span>
-                                                <span style="position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1px; background-color: #d0d0d0;"></span>
-                                                <a href="{{ route('account::view', $account['id']) }}?from_date={{ $start_date }}&to_date={{ $end_date }}" class="text-decoration-none" style="padding-left: 1.5rem !important; display: block;">{{ $account['name'] }}</a>
-                                            </td>
-                                            <td class="text-end pe-3" style="background-color: #ffffff;">
-                                                {{ currency($account['amount']) }}
-                                            </td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            @endif
+                            @include('livewire.reports.partials.pl-category-rows', [
+                                'master' => $indirectIncomeMaster,
+                                'side' => 'right',
+                            ])
                         @endif
+
+                        {{-- Net Profit / Net Loss --}}
                         <tr>
                             @if ($netProfitAmount > 0)
-                                <!-- Left: Net Profit C/D -->
                                 <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-success">NET PROFIT C/D</strong></td>
-                                <td class="text-end pe-3 text-success" style="border-right: 2px solid #dee2e6;"><strong class="text-success">{{ currency($netProfitAmount) }}</strong></td>
-                                <!-- Right: Empty -->
+                                <td class="text-end pe-3 text-success" style="border-right: 2px solid #dee2e6;"><strong>{{ currency($netProfitAmount) }}</strong></td>
                                 <td class="ps-3"></td>
                                 <td class="text-end pe-3"></td>
-                            @endif
-                            @if ($netLossAmount > 0)
-                                <!-- Right: Empty -->
+                            @elseif ($netLossAmount > 0)
+                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
+                                <td class="ps-3"><strong class="text-danger">NET LOSS C/D</strong></td>
+                                <td class="text-end pe-3 text-danger"><strong>{{ currency($netLossAmount) }}</strong></td>
+                            @else
+                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"></td>
+                                <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"></td>
                                 <td class="ps-3"></td>
                                 <td class="text-end pe-3"></td>
-                                <!-- Left: Net Loss C/D -->
-                                <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong class="text-danger">NET LOSS C/D</strong></td>
-                                <td class="text-end pe-3 text-danger" style="border-right: 2px solid #dee2e6;"><strong class="text-danger">{{ currency($netLossAmount) }}</strong></td>
                             @endif
                         </tr>
-                        <!-- Total Row for Bottom Section -->
+
+                        {{-- P&L Account Totals --}}
                         <tr class="table-light" style="border-top: 2px solid #dee2e6;">
                             <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>TOTAL</strong></td>
                             <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;"><strong>{{ currency($leftTotal2) }}</strong></td>

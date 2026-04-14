@@ -7,6 +7,7 @@ use App\Models\TailoringCategoryModelType;
 use App\Models\TailoringMeasurementOption;
 use App\Models\TailoringOrderItem;
 use App\Models\TailoringOrderMeasurement;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class MeasurementEditModal extends Component
@@ -262,7 +263,7 @@ class MeasurementEditModal extends Component
             [
                 'tailoring_notes' => trim((string) $this->measurementModalNotes) ?: null,
                 'data' => $measurementPayload,
-                'updated_by' => auth()->id(),
+                'updated_by' => Auth::id(),
             ]
         );
 

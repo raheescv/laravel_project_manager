@@ -1,167 +1,183 @@
 <div>
-    <div class="card shadow-sm border-0 rounded-3">
-        <div class="card-header bg-white p-4">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center gap-3">
-                        <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" wire:click="syncPermission">
-                            <i class="fa fa-sync-alt"></i>
-                            <span>Sync Permissions</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="fa fa-search text-muted"></i>
-                        </span>
-                        <input type="text" wire:model.live="search" class="form-control border-start-0 ps-0" placeholder="Search permissions..." autofocus autocomplete="off">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card-body p-4">
-            <form wire:submit="save">
-                <div class="d-flex align-items-center gap-3 mb-4 bg-light p-3 rounded-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fa fa-user-shield fs-4 text-primary"></i>
-                        <h5 class="mb-0">Configuring Permissions for Role:</h5>
-                    </div>
-                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fw-semibold">
-                        {{ $role->name }}
+    @php
+        $selectedCount = 0;
+        $totalCount = 0;
+        $groupedPermissions = [];
+        foreach ($permissions as $module => $moduleActions) {
+            $totalCount += count($moduleActions);
+            $selectedModulePermissions = [];
+            foreach ($moduleActions as $key => $action) {
+                if (!empty($selected[$key] ?? false)) {
+                    $selectedModulePermissions[$key] = $action;
+                    $selectedCount++;
+                }
+            }
+            if (!empty($selectedModulePermissions)) {
+                $groupedPermissions[$module] = $selectedModulePermissions;
+            }
+        }
+    @endphp
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light py-3">
+            <div class="row mt-3">
+                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fs-6">
+                        <i class="fa fa-user-shield me-1"></i> {{ $role->name }}
                     </span>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-2">
+                        <i class="fa fa-check-circle me-1"></i> {{ $selectedCount }} / {{ $totalCount }}
+                    </span>
+                    <button class="btn btn-primary btn-sm d-flex align-items-center shadow-sm" wire:click="syncPermission">
+                        <i class="fa fa-sync-alt me-md-1"></i>
+                        <span class="d-none d-md-inline">Sync</span>
+                    </button>
                 </div>
-
-                <!-- Selected Permissions Display -->
-                <div class="mb-4">
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <i class="fa fa-check-circle text-success"></i>
-                        <h6 class="mb-0">Selected Permissions</h6>
-                    </div>
-                    <div class="bg-light bg-opacity-50 rounded-3 p-3">
-                        <div class="row g-3">
-                            @php
-                                $selectedCount = 0;
-                                $groupedPermissions = [];
-                            @endphp
-                            @foreach ($permissions as $module => $moduleActions)
-                                @php
-                                    $selectedModulePermissions = [];
-                                    foreach ($moduleActions as $key => $action) {
-                                        if (!empty($selected[$key] ?? false)) {
-                                            $selectedModulePermissions[] = $action;
-                                            $selectedCount++;
-                                        }
-                                    }
-                                    if (!empty($selectedModulePermissions)) {
-                                        $groupedPermissions[$module] = $selectedModulePermissions;
-                                    }
-                                @endphp
-                            @endforeach
-
-                            @if ($selectedCount > 0)
-                                @foreach ($groupedPermissions as $module => $selectedActions)
-                                    <div class="col-md-4">
-                                        <div class="card h-100 border-0 shadow-sm">
-                                            <div class="card-header bg-primary bg-opacity-10 py-2">
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <i class="fa fa-folder text-primary"></i>
-                                                    <span class="fw-medium">{{ ucFirst($module) }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="card-body p-2">
-                                                <div class="d-flex flex-wrap gap-1">
-                                                    @foreach ($selectedActions as $action)
-                                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">
-                                                            <i class="fa fa-check-circle me-1"></i>
-                                                            {{ ucFirst($action) }}
-                                                        </span>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            @else
-                                <div class="col-12">
-                                    <div class="text-center text-muted py-4">
-                                        <i class="fa fa-info-circle fs-2 mb-2"></i>
-                                        <p class="mb-0">No permissions selected yet</p>
-                                    </div>
-                                </div>
-                            @endif
+                <div class="col-md-6">
+                    <div class="row g-2 align-items-center justify-content-end">
+                        <div class="col">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-secondary-subtle">
+                                    <i class="fa fa-search"></i>
+                                </span>
+                                <input type="text" wire:model.live="search" autofocus placeholder="Search permissions..."
+                                    class="form-control form-control-sm border-secondary-subtle shadow-sm" autocomplete="off">
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+            <hr class="my-3">
+            {{-- Tabs --}}
+            <ul class="nav nav-tabs mb-0 border-0" id="permissionTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active d-flex align-items-center gap-2 fw-semibold" id="tab-selection" data-bs-toggle="tab"
+                        data-bs-target="#pane-selection" type="button" role="tab" aria-controls="pane-selection" aria-selected="true">
+                        <i class="fa fa-th-list text-primary"></i>
+                        Permission Selection
+                        <span class="badge bg-primary rounded-pill">{{ count($permissions) }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link d-flex align-items-center gap-2 fw-semibold" id="tab-selected" data-bs-toggle="tab"
+                        data-bs-target="#pane-selected" type="button" role="tab" aria-controls="pane-selected" aria-selected="false">
+                        <i class="fa fa-check-circle text-success"></i>
+                        Selected Permissions
+                        <span class="badge bg-success rounded-pill">{{ $selectedCount }}</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
 
-                <div class="table-responsive">
-                    <table class="table table-hover table-sm align-middle border mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="border-bottom py-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="fa fa-cubes text-primary"></i>
-                                        <span class="fw-semibold">Module</span>
-                                    </div>
-                                </th>
-                                <th class="border-bottom py-3" width="100">
-                                    <div class="form-check mb-0">
-                                        {{ html()->checkbox('select_all')->value('')->checked(0)->class('form-check-input')->attribute('wire:model.live', 'select_all')->attribute('wire:click', 'selectAll') }}
-                                        <label class="form-check-label user-select-none" for="select-all">
-                                            <i class="fa fa-check-double text-primary ms-1"></i> All
-                                        </label>
-                                    </div>
-                                </th>
-                                <th class="border-bottom py-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="fa fa-key text-primary"></i>
-                                        <span class="fw-semibold">Permissions</span>
-                                    </div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($permissions as $module => $actions)
-                                <tr>
-                                    <td class="py-3 text-nowrap">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fa fa-folder text-warning"></i>
-                                            <span class="fw-medium">{{ ucFirst($module) }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="py-3">
-                                        <div class="form-check mb-0">
-                                            {{ html()->checkbox('module')->value('')->checked(0)->class('form-check-input')->attribute('wire:model.live', 'module.' . $module)->attribute('wire:click', "moduleSelect('$module')") }}
-                                            <label class="form-check-label" for="select-{{ $module }}">
-                                                <i class="fa fa-check text-success ms-1"></i>
-                                            </label>
-                                        </div>
-                                    </td>
-                                    {{-- action area --}}
-                                    <td class="py-3">
-                                        <div class="d-flex flex-wrap gap-3">
-                                            @foreach ($actions as $key => $action)
-                                                <div class="form-check form-check-inline mb-0">
-                                                    <div class="d-flex align-items-center gap-2 bg-light rounded-pill px-3 py-2">
-                                                        {{ html()->checkbox('selected.' . $key)->value('')->class('form-check-input mt-0')->attribute('wire:model.live', 'selected.' . $key) }}
-                                                        <label class="form-check-label user-select-none small fw-medium" for="selected.{{ $key }}">
-                                                            {{ ucFirst($action) }}
+        <div class="card-body p-0">
+            <form wire:submit="save">
+                <div class="tab-content">
+                    {{-- Tab 1: Permission Selection Table --}}
+                    <div class="tab-pane fade show active" id="pane-selection" role="tabpanel" aria-labelledby="tab-selection">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle border-bottom mb-0 table-sm">
+                                <thead class="bg-light text-muted">
+                                    <tr class="text-capitalize small">
+                                        <th class="fw-semibold py-2 ps-3" style="min-width: 180px;">
+                                            <i class="fa fa-cubes me-1 text-primary opacity-75"></i> Module
+                                        </th>
+                                        <th class="fw-semibold py-2" style="width: 80px;">
+                                            <div class="form-check ms-1 mb-0">
+                                                {{ html()->checkbox('select_all')->value('')->checked(0)->class('form-check-input shadow-sm')->attribute('wire:model.live', 'select_all')->attribute('wire:click', 'selectAll')->id('selectAllPerm') }}
+                                                <label class="form-check-label user-select-none" for="selectAllPerm">All</label>
+                                            </div>
+                                        </th>
+                                        <th class="fw-semibold py-2">
+                                            <i class="fa fa-key me-1 text-primary opacity-75"></i> Permissions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($permissions as $module => $actions)
+                                        <tr>
+                                            <td class="ps-3 text-nowrap">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="d-inline-flex align-items-center justify-content-center rounded-2 bg-primary bg-opacity-10"
+                                                        style="width: 30px; height: 30px;">
+                                                        <i class="fa fa-cube text-primary small"></i>
+                                                    </span>
+                                                    <span class="fw-medium">{{ ucFirst($module) }}</span>
+                                                    <span class="badge bg-light text-muted border small">{{ count($actions) }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="form-check ms-1 mb-0">
+                                                    {{ html()->checkbox('module_' . $module)->value('')->checked(0)->class('form-check-input shadow-sm')->attribute('wire:model.live', 'module.' . $module)->attribute('wire:click', "moduleSelect('$module')")->id('module_' . $module) }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    @foreach ($actions as $key => $action)
+                                                        <label for="perm_{{ $key }}" class="form-check d-inline-flex align-items-center gap-1 mb-0 px-2 py-1 rounded-pill border user-select-none
+                                                            {{ !empty($selected[$key] ?? false) ? 'bg-primary bg-opacity-10 border-primary border-opacity-25' : 'bg-white border-secondary-subtle' }}"
+                                                            style="cursor: pointer; transition: all 0.15s ease;">
+                                                            {{ html()->checkbox('selected.' . $key)->value('')->class('form-check-input shadow-sm mt-0 me-1')->attribute('wire:model.live', 'selected.' . $key)->id('perm_' . $key) }}
+                                                            <span class="form-check-label small fw-medium {{ !empty($selected[$key] ?? false) ? 'text-primary' : '' }}">{{ ucFirst($action) }}</span>
                                                         </label>
+                                                    @endforeach
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Tab 2: Selected Permissions --}}
+                    <div class="tab-pane fade" id="pane-selected" role="tabpanel" aria-labelledby="tab-selected">
+                        @if ($selectedCount > 0)
+                            <div class="p-3">
+                                <div class="row g-3">
+                                    @foreach ($groupedPermissions as $module => $selectedActions)
+                                        <div class="col-xl-3 col-lg-4 col-md-6">
+                                            <div class="card h-100 border shadow-sm">
+                                                <div class="card-header bg-light py-2 px-3">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="d-inline-flex align-items-center justify-content-center rounded-2 bg-primary bg-opacity-10"
+                                                                style="width: 26px; height: 26px;">
+                                                                <i class="fa fa-cube text-primary" style="font-size: 0.75rem;"></i>
+                                                            </span>
+                                                            <span class="fw-semibold small">{{ ucFirst($module) }}</span>
+                                                        </div>
+                                                        <span class="badge bg-primary rounded-pill" style="font-size: 0.7rem;">{{ count($selectedActions) }}</span>
                                                     </div>
                                                 </div>
-                                            @endforeach
+                                                <div class="card-body p-2">
+                                                    <div class="d-flex flex-wrap gap-1">
+                                                        @foreach ($selectedActions as $key => $action)
+                                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-15 rounded-pill px-2 py-1 small fw-medium">
+                                                                <i class="fa fa-check me-1" style="font-size: 0.6rem;"></i>{{ ucFirst($action) }}
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-center text-muted py-5">
+                                <i class="fa fa-shield fa-3x mb-3 opacity-25 d-block"></i>
+                                <h6 class="text-muted">No Permissions Selected</h6>
+                                <p class="small mb-0">Go to <strong>Permission Selection</strong> tab to assign permissions to this role.</p>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-primary px-4 py-2 d-inline-flex align-items-center gap-2">
-                        <i class="fa fa-save fs-5"></i>
-                        <span>Update Permissions</span>
+                {{-- Save Footer --}}
+                <div class="p-3 border-top bg-light text-end">
+                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-sm px-4">
+                        <i class="fa fa-save"></i>
+                        Update Permissions
                     </button>
                 </div>
             </form>

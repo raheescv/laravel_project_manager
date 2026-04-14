@@ -12,8 +12,11 @@ use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Inventory;
 use App\Models\Product;
+use App\Models\Property;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\SupplyRequest;
+use App\Models\SupplyRequestItem;
 use App\Models\User;
 use App\Models\UserHasBranch;
 use Illuminate\Console\Command;
@@ -50,6 +53,7 @@ class MigrateDataCommand extends Command
         $this->purchases();
         $this->appointments();
         $this->stockTransfers();
+        $this->supplyRequests();
 
         $this->info('Data migration completed successfully!');
     }
@@ -963,5 +967,132 @@ class MigrateDataCommand extends Command
             ];
             DB::table('accounts')->insertOrIgnore((array) $customerData);
         }
+    }
+
+    private function supplyRequests()
+    {
+        $this->info('Migrating supply requests...');
+
+        $statusMap = [
+            'Requirement' => 'requirement',
+            'Approved' => 'approved',
+            'Rejected' => 'rejected',
+            'Collected' => 'collected',
+            'Final Approved' => 'final_approved',
+            'Completed' => 'completed',
+            'Expired' => 'expired',
+        ];
+
+        $totalSupplyRequests = DB::connection('mysql2')
+            ->table('property_asset_supplies')
+            ->count();
+
+        $progressBar = $this->output->createProgressBar($totalSupplyRequests);
+        $progressBar->start();
+
+        DB::connection('mysql2')
+            ->table('property_asset_supplies')
+            ->orderBy('id')
+            ->chunk(100, function ($supplyRequests) use ($progressBar, $statusMap): void {
+                foreach ($supplyRequests as $supplyRequest) {
+                    $progressBar->advance();
+                    try {
+                        DB::transaction(function () use ($supplyRequest, $statusMap): void {
+                            $created_by = User::where('type', 'user')->where('second_reference_no', $supplyRequest->created_by)->value('id');
+                            $updated_by = User::where('type', 'user')->where('second_reference_no', $supplyRequest->updated_by)->value('id');
+                            $approved_by = $supplyRequest->approved_by ? User::where('type', 'user')->where('second_reference_no', $supplyRequest->approved_by)->value('id') : null;
+                            $accounted_by = $supplyRequest->accounted_by ? User::where('type', 'user')->where('second_reference_no', $supplyRequest->accounted_by)->value('id') : null;
+                            $final_approved_by = $supplyRequest->final_approved_by ? User::where('type', 'user')->where('second_reference_no', $supplyRequest->final_approved_by)->value('id') : null;
+                            $completed_by = $supplyRequest->completed_by ? User::where('type', 'user')->where('second_reference_no', $supplyRequest->completed_by)->value('id') : null;
+
+                            $payment_mode_id = null;
+                            if ($supplyRequest->payment_mode_id) {
+                                $payment_mode_id = Account::where('second_reference_no', $supplyRequest->payment_mode_id)->value('id');
+                            }
+
+                            $property = null;
+                            $property_group_id = null;
+                            $property_building_id = null;
+                            $property_type_id = null;
+                            if ($supplyRequest->property_id) {
+                                $property = Property::find($supplyRequest->property_id);
+                                if ($property) {
+                                    $property_group_id = $property->property_group_id;
+                                    $property_building_id = $property->property_building_id;
+                                    $property_type_id = $property->property_type_id;
+                                }
+                            }
+
+                            $status = $statusMap[$supplyRequest->status] ?? 'requirement';
+                            $branch_id = $supplyRequest->branch_id ?? 1;
+
+                            $model = SupplyRequest::create([
+                                'tenant_id' => 1,
+                                'branch_id' => $branch_id,
+                                'date' => $supplyRequest->date,
+                                'order_no' => $supplyRequest->order_no,
+                                'contact_person' => $supplyRequest->contact_person,
+                                'property_id' => $supplyRequest->property_id,
+                                'property_group_id' => $property_group_id,
+                                'property_building_id' => $property_building_id,
+                                'property_type_id' => $property_type_id,
+                                'type' => $supplyRequest->type,
+                                'total' => $supplyRequest->total,
+                                'other_charges' => $supplyRequest->other_charges,
+                                'grand_total' => $supplyRequest->grand_total,
+                                'payment_mode_id' => $payment_mode_id,
+                                'remarks' => $supplyRequest->remarks,
+                                'status' => $status,
+                                'approved_by' => $approved_by,
+                                'approved_at' => $approved_by ? $supplyRequest->updated_at : null,
+                                'accounted_by' => $accounted_by,
+                                'accounted_at' => $accounted_by ? $supplyRequest->updated_at : null,
+                                'final_approved_by' => $final_approved_by,
+                                'final_approved_at' => $final_approved_by ? $supplyRequest->updated_at : null,
+                                'completed_by' => $completed_by,
+                                'completed_at' => $completed_by ? $supplyRequest->updated_at : null,
+                                'created_by' => $created_by ?? 1,
+                                'updated_by' => $updated_by,
+                                'created_at' => $supplyRequest->created_at,
+                                'updated_at' => $supplyRequest->updated_at,
+                            ]);
+
+                            // Migrate items
+                            $items = DB::connection('mysql2')
+                                ->table('property_asset_supply_items')
+                                ->where('property_asset_supply_id', $supplyRequest->id)
+                                ->get();
+
+                            foreach ($items as $item) {
+                                $product_id = Product::where('type', 'product')->where('second_reference_no', $item->property_asset_id)->value('id');
+
+                                if (! $product_id) {
+                                    Log::warning('Product not found for property_asset_id: '.$item->property_asset_id.', skipping item.');
+
+                                    continue;
+                                }
+
+                                SupplyRequestItem::create([
+                                    'supply_request_id' => $model->id,
+                                    'branch_id' => $branch_id,
+                                    'product_id' => $product_id,
+                                    'mode' => $item->mode ?? 'New',
+                                    'quantity' => $item->quantity,
+                                    'unit_price' => $item->unit_price,
+                                    'remarks' => $item->remarks,
+                                    'created_at' => $item->created_at,
+                                    'updated_at' => $item->updated_at,
+                                ]);
+                            }
+                        });
+                    } catch (\Exception $e) {
+                        $this->error('Error migrating supply request: '.$e->getMessage());
+                        Log::error('Supply request migration error: '.$e->getMessage());
+                    }
+                }
+            });
+
+        $progressBar->finish();
+        $this->info('Supply requests migration completed.');
     }
 }

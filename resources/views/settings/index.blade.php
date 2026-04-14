@@ -43,6 +43,12 @@
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
+                                        <i class="demo-pli-home me-2"></i>Rent Out Settings
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button" role="tab" aria-selected="false"
                                         tabindex="-1">
                                         <i class="demo-pli-data-storage me-2"></i>Universal UOM
@@ -53,6 +59,12 @@
                                         <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsUniqueNoCounters" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                         <i class="fa fa-list-ol me-2"></i>Unique No Counters
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsModuleConfiguration" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="fa fa-cubes me-2"></i>Module Configuration
                                         </button>
                                     </li>
                                 @endif
@@ -76,9 +88,21 @@
                                     </li>
                                 @endif
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
+                                        <i class="fa fa-bars me-2"></i>Navigation Order
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-selected="false"
                                         tabindex="-1">
                                         <i class="demo-pli-speech-bubble-5 me-2"></i>Telegram
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button" role="tab" aria-selected="false"
+                                        tabindex="-1">
+                                        <i class="demo-pli-bell me-2"></i>Notifications
                                     </button>
                                 </li>
                                 @if (false)
@@ -107,12 +131,18 @@
                                 <div id="tabsTailoringSettings" class="tab-pane" role="tabpanel">
                                     @livewire('settings.tailoring-configuration')
                                 </div>
+                                <div id="tabsRentOutSettings" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.rent-out-configuration')
+                                </div>
                                 <div id="tabsUniversalUom" class="tab-pane" role="tabpanel">
                                     @livewire('settings.universal-uom-configuration')
                                 </div>
                                 @if (auth()->user()->is_super_admin)
                                     <div id="tabsUniqueNoCounters" class="tab-pane" role="tabpanel">
                                         @livewire('settings.unique-no-counter-configuration')
+                                    </div>
+                                    <div id="tabsModuleConfiguration" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.module-configuration')
                                     </div>
                                 @endif
                                 <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
@@ -179,8 +209,14 @@
                                 <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
                                     @livewire('settings.working-day')
                                 </div>
+                                <div id="tabsNavigationOrder" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.navigation-order')
+                                </div>
                                 <div id="tabsTelegram" class="tab-pane" role="tabpanel">
                                     @livewire('settings.telegram')
+                                </div>
+                                <div id="tabsNotificationPreferences" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.notification-preferences')
                                 </div>
                                 @can('whatsapp.integration')
                                     <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">

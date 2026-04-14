@@ -245,11 +245,6 @@ class CartPage extends Component
         $this->dispatch('error', ['message' => 'Barcode not found.']);
     }
 
-    public function updatedBarcodeInput()
-    {
-        $this->handleBarcodeScan();
-    }
-
     public function addToCart($itemId, $suppressMessage = false, $itemType = 'inventory')
     {
         if ($itemType === 'product_unit') {

@@ -27,5 +27,6 @@ template
 /public/node/.wwebjs_auth
 .qodo
 dump.rdb
+.cache/*
 /.cache/puppeteer
 /.claude/worktrees

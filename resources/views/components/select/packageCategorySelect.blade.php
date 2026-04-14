@@ -1,7 +1,7 @@
 <script type="text/javascript">
     $('.select-package_category_id-list').each(function() {
         new TomSelect(this, {
-            plugins: ['clear_button'],
+            plugins: [],
             persist: false,
             valueField: 'id',
             nameField: 'name',

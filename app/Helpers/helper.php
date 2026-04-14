@@ -5,6 +5,7 @@ use App\Services\TenantService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -204,6 +205,107 @@ if (! function_exists('extractNumericValue')) {
         return $default;
     }
 }
+if (! function_exists('convert_number_to_words')) {
+    function convert_number_to_words($number)
+    {
+        $hyphen = '-';
+        $conjunction = ' and ';
+        $separator = ', ';
+        $negative = 'negative ';
+        $decimal = ' point ';
+        $dictionary = [0 => 'zero', 1 => 'one', 2 => 'two', 3 => 'three', 4 => 'four', 5 => 'five', 6 => 'six', 7 => 'seven', 8 => 'eight', 9 => 'nine', 10 => 'ten', 11 => 'eleven', 12 => 'twelve', 13 => 'thirteen', 14 => 'fourteen', 15 => 'fifteen', 16 => 'sixteen', 17 => 'seventeen', 18 => 'eighteen', 19 => 'nineteen', 20 => 'twenty', 30 => 'thirty', 40 => 'forty', 50 => 'fifty', 60 => 'sixty', 70 => 'seventy', 80 => 'eighty', 90 => 'ninety', 100 => 'hundred', 1000 => 'thousand', 1000000 => 'million', 1000000000 => 'billion', 1000000000000 => 'trillion', 1000000000000000 => 'quadrillion', 1000000000000000000 => 'quintillion'];
+
+        if (! is_numeric($number)) {
+            return false;
+        }
+
+        if (($number >= 0 && (int) $number < 0) || (int) $number < 0 - PHP_INT_MAX) {
+            trigger_error('convert_number_to_words only accepts numbers between -'.PHP_INT_MAX.' and '.PHP_INT_MAX, E_USER_WARNING);
+
+            return false;
+        }
+
+        if ($number < 0) {
+            return $negative.convert_number_to_words(abs($number));
+        }
+
+        $string = $fraction = null;
+
+        if (strpos($number, '.') !== false) {
+            [$number, $fraction] = explode('.', $number);
+        }
+
+        switch (true) {
+            case $number < 21:
+                $string = $dictionary[$number];
+                break;
+            case $number < 100:
+                $tens = ((int) ($number / 10)) * 10;
+                $units = $number % 10;
+                $string = $dictionary[$tens];
+                if ($units) {
+                    $string .= $hyphen.$dictionary[$units];
+                }
+                break;
+            case $number < 1000:
+                $hundreds = $number / 100;
+                $remainder = $number % 100;
+                $string = $dictionary[$hundreds].' '.$dictionary[100];
+                if ($remainder) {
+                    $string .= $conjunction.convert_number_to_words($remainder);
+                }
+                break;
+            default:
+                $baseUnit = pow(1000, floor(log($number, 1000)));
+                $numBaseUnits = (int) ($number / $baseUnit);
+                $remainder = $number % $baseUnit;
+                $string = convert_number_to_words($numBaseUnits).' '.$dictionary[$baseUnit];
+                if ($remainder) {
+                    $string .= $remainder < 100 ? $conjunction : $separator;
+                    $string .= convert_number_to_words($remainder);
+                }
+                break;
+        }
+
+        if ($fraction !== null && is_numeric($fraction)) {
+            $string .= $decimal;
+            $words = [];
+            foreach (str_split((string) $fraction) as $number) {
+                $words[] = $dictionary[$number];
+            }
+            $string .= implode(' ', $words);
+        }
+
+        return $string;
+    }
+}
+
+if (! function_exists('ordinal')) {
+    function ordinal($number)
+    {
+        $ends = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
+
+        if ((($number % 100) >= 11) && (($number % 100) <= 13)) {
+            return $number.'th';
+        }
+
+        return $number.$ends[$number % 10];
+    }
+}
+
+if (! function_exists('getPercentage')) {
+    function getPercentage($value, $total, $decimalPlaces = 2, $returnFormatted = false)
+    {
+        if ($total == 0) {
+            return $returnFormatted ? '0%' : 0;
+        }
+
+        $percentage = round(($value / $total) * 100, $decimalPlaces);
+
+        return $returnFormatted ? $percentage.'%' : $percentage;
+    }
+}
+
 if (! function_exists('currency')) {
     function currency($value, $decimal_count = 2)
     {
@@ -488,6 +590,27 @@ if (! function_exists('getNextSaleInvoiceNo')) {
         return $invoice;
     }
 }
+if (! function_exists('generateGrnNo')) {
+    function generateGrnNo()
+    {
+        $branchCode = session('branch_code', 'M');
+        $prefix = 'GRN-';
+
+        if ($branchCode) {
+            $prefix .= $branchCode.'-';
+        }
+        $year = now()->format('y');
+
+        $invoicePrefix = $prefix.$year.'-';
+
+        $number = getNextUniqueNumber('Grn');
+
+        // Generate the invoice number
+        $invoice = $invoicePrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
+
+        return $invoice;
+    }
+}
 if (! function_exists('getNextTailorOrderNo')) {
     function getNextTailorOrderNo()
     {
@@ -699,5 +822,233 @@ if (! function_exists('https_asset')) {
             // Otherwise (local/staging/dev) → keep HTTP
             return str_replace('https://', 'http://', $url);
         }
+    }
+}
+
+if (! function_exists('leadSources')) {
+    function leadSources(): array
+    {
+        return [
+            'Social Media' => 'Social Media',
+            'Facebook' => 'Facebook',
+            'Instagram' => 'Instagram',
+            'Snapchat' => 'Snapchat',
+            'YouTube' => 'YouTube',
+            'SMS' => 'SMS',
+            'E-mail Campaign' => 'E-mail Campaign',
+            'Outdoor Marketing' => 'Outdoor Marketing',
+            'Personal' => 'Personal',
+            'Walk-In' => 'Walk-In',
+            'Local Broker' => 'Local Broker',
+            'International Broker' => 'International Broker',
+            'Other' => 'Other',
+        ];
+    }
+}
+
+if (! function_exists('leadStatuses')) {
+    function leadStatuses(): array
+    {
+        return [
+            'New Lead' => 'New Lead',
+            'Follow Up' => 'Follow Up',
+            'Interested' => 'Interested',
+            'Not Interested' => 'Not Interested',
+            'Low Budget' => 'Low Budget',
+            'Visit Scheduled' => 'Visit Scheduled',
+            'Closed Deal' => 'Closed Deal',
+            'Shopping For Info' => 'Shopping For Info',
+            'Call Back' => 'Call Back',
+            'Same Day Call Back' => 'Same Day Call Back',
+            'No Answer' => 'No Answer',
+            'Whatsapp Only' => 'Whatsapp Only',
+            'Dead Lead' => 'Dead Lead',
+            'Rejected' => 'Rejected',
+            'Drop' => 'Drop',
+            'Follow Up For Visit' => 'Follow Up For Visit',
+        ];
+    }
+}
+
+if (! function_exists('leadTypes')) {
+    function leadTypes(): array
+    {
+        return [
+            'Sales' => 'Sales',
+            'Rentout' => 'Rentout',
+        ];
+    }
+}
+
+if (! function_exists('propertyLeadLocations')) {
+    function propertyLeadLocations(): array
+    {
+        return [
+            'Site' => 'Site',
+            'Company Office' => 'Company Office',
+            'Outside Location' => 'Outside Location',
+        ];
+    }
+}
+
+if (! function_exists('leadStatusBadgeClass')) {
+    function leadStatusBadgeClass(?string $status): string
+    {
+        return match ($status) {
+            'New Lead' => 'bg-primary-subtle text-primary',
+            'Follow Up' => 'bg-info-subtle text-info',
+            'Interested' => 'bg-success-subtle text-success',
+            'Not Interested' => 'bg-secondary-subtle text-secondary',
+            'Low Budget' => 'bg-warning-subtle text-warning',
+            'Visit Scheduled' => 'bg-success text-white',
+            'Closed Deal' => 'bg-success text-white',
+            'Shopping For Info' => 'bg-info-subtle text-info',
+            'Call Back' => 'bg-warning text-dark',
+            'Same Day Call Back' => 'bg-warning-subtle text-warning',
+            'No Answer' => 'bg-secondary-subtle text-secondary',
+            'Whatsapp Only' => 'bg-success-subtle text-success',
+            'Dead Lead' => 'bg-danger-subtle text-danger',
+            'Rejected' => 'bg-danger text-white',
+            'Drop' => 'bg-secondary text-white',
+            'Follow Up For Visit' => 'bg-primary text-white',
+            default => 'bg-light text-dark',
+        };
+    }
+}
+
+if (! function_exists('removeSpace')) {
+    function removeSpace(?string $value): string
+    {
+        return str_replace(' ', '', (string) $value);
+    }
+}
+
+if (! function_exists('enumOptions')) {
+    /**
+     * Convert a backed enum class to a [value => label] array for html()->select().
+     * Expects each case to have a label() method.
+     */
+    function enumOptions(string $enumClass): array
+    {
+        return collect($enumClass::cases())
+            ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
+            ->toArray();
+    }
+}
+
+if (! function_exists('buildingOwnershipOptions')) {
+    function buildingOwnershipOptions(): array
+    {
+        return enumOptions(\App\Enums\Property\BuildingOwnership::class);
+    }
+}
+
+if (! function_exists('propertyStatusOptions')) {
+    function propertyStatusOptions(): array
+    {
+        return enumOptions(\App\Enums\Property\PropertyStatus::class);
+    }
+}
+
+if (! function_exists('rentOutStatusOptions')) {
+    function rentOutStatusOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\RentOutStatus::class);
+    }
+}
+
+if (! function_exists('paymentModeOptions')) {
+    function paymentModeOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\PaymentMode::class);
+    }
+}
+
+if (! function_exists('paymentMethodsOptions')) {
+    function paymentMethodsOptions(): array
+    {
+        return \App\Models\Account::whereIn('id', cache('payment_methods', []))->pluck('name', 'id')->toArray();
+    }
+}
+
+if (! function_exists('agreementTypeOptions')) {
+    function agreementTypeOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\AgreementType::class);
+    }
+}
+
+if (! function_exists('chequeStatusOptions')) {
+    function chequeStatusOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\ChequeStatus::class);
+    }
+}
+
+if (! function_exists('securityStatusOptions')) {
+    function securityStatusOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\SecurityStatus::class);
+    }
+}
+
+if (! function_exists('securityTypeOptions')) {
+    function securityTypeOptions(): array
+    {
+        return enumOptions(\App\Enums\RentOut\SecurityType::class);
+    }
+}
+
+if (! function_exists('paymentTermLabels')) {
+    function paymentTermLabels(): array
+    {
+        return [
+            'rent payment' => 'Rent Payment',
+            'installment' => 'Installment',
+            'down payment' => 'Down Payment',
+            'handover payment' => 'Handover Payment',
+            'balloon payment' => 'Balloon Payment',
+            'booking amount' => 'Booking Amount',
+            'registration' => 'Registration',
+            'maintenance' => 'Maintenance',
+            'other' => 'Other',
+        ];
+    }
+}
+
+if (! function_exists('extract403Details')) {
+    // Helper to extract 403 permission details from request context
+    function extract403Details(string $message, \Illuminate\Http\Request $request): array
+    {
+        $user = $request->user();
+        $route = $request->route();
+
+        $action = $route?->getActionMethod();
+        $controllerClass = $route?->getControllerClass();
+        $resource = $controllerClass ? class_basename($controllerClass) : null;
+        $resourceName = $resource ? str_replace('Controller', '', $resource) : null;
+
+        // Try to resolve the permission name
+        $permission = null;
+        $isGeneric = in_array($message, ['This action is unauthorized.', ''], true);
+
+        if (! $isGeneric && $message) {
+            // abort(403, 'custom message') — use the message directly
+            $permission = $message;
+        } elseif ($resourceName && $action) {
+            // Policy-based — reconstruct from resource + action
+            // Convert PascalCase to snake_case with spaces: LocalPurchaseOrder → local purchase order
+            $readable = strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $resourceName));
+            $permAction = $action;
+            $permission = "{$readable}.{$permAction}";
+        }
+
+        return [
+            'permission' => $permission,
+            'action' => $action,
+            'resource' => $resourceName,
+            'url' => $request->path(),
+            'user_role' => $user?->getRoleNames()?->implode(', '),
+        ];
     }
 }

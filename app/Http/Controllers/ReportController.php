@@ -103,6 +103,11 @@ class ReportController extends Controller
         return view('report.profit_loss');
     }
 
+    public function profit_loss_statement()
+    {
+        return view('report.profit_loss_statement');
+    }
+
     public function stock_analysis()
     {
         return view('report.stock-analysis');

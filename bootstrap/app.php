@@ -4,11 +4,15 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\TrackVisitor;
 use App\Http\Middleware\TrustProxies;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -29,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/api_log.php',
             __DIR__.'/../routes/tenant_route.php',
             __DIR__.'/../routes/tailoring.php',
+            __DIR__.'/../routes/property.php',
         ],
         api: [
             __DIR__.'/../routes/api.php',
@@ -63,7 +68,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Show 419 error page when session expires or CSRF token mismatch
-        $exceptions->render(function (TokenMismatchException $e, \Illuminate\Http\Request $request) {
+        $exceptions->render(function (TokenMismatchException $e, Request $request) {
             // Regenerate session to get a fresh CSRF token
             if ($request->hasSession()) {
                 $request->session()->regenerateToken();
@@ -83,8 +88,34 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->view('errors.419', [], 419);
         });
 
+        // Show 403 error page with denied permission details (AuthorizationException from policies/gates)
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['message' => $e->getMessage()], 403);
+            }
+
+            return response()->view('errors.403', [
+                'details' => extract403Details($e->getMessage(), $request),
+            ], 403);
+        });
+
+        // Show 403 error page with details for abort(403) calls (HttpException)
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if ($e->getStatusCode() !== 403) {
+                return; // Let other HTTP exceptions pass through
+            }
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['message' => $e->getMessage() ?: 'Forbidden'], 403);
+            }
+
+            return response()->view('errors.403', [
+                'details' => extract403Details($e->getMessage(), $request),
+            ], 403);
+        });
+
         // Handle authentication exceptions
-        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $exception, \Illuminate\Http\Request $request) {
+        $exceptions->respond(function (Response $response, \Throwable $exception, Request $request) {
             if ($exception instanceof AuthenticationException) {
                 // Handle API/JSON requests
                 if ($request->expectsJson() || $request->is('api/*')) {

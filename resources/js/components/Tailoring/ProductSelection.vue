@@ -245,7 +245,7 @@ const initializeProductSelect = () => {
         preload: 'focus',
         maxItems: 1,
         dropdownParent: 'body',
-        plugins: ['clear_button'],
+        plugins: [],
         load: (query, callback) => {
             const url = '/tailoring/order/products?search=' + encodeURIComponent(query || '')
             axios.get(url)

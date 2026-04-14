@@ -178,6 +178,19 @@
                                     <label class="form-check-label" for="whatsappSwitch"></label>
                                 </div>
                             </div>
+                            <hr class="my-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <p class="text-muted mb-0">
+                                        <i class="fa fa-desktop me-2"></i>Enable Browser Notification:
+                                        <span class="fw-bold">{{ $user->is_browser_notification_enabled ? 'Yes' : 'No' }}</span>
+                                    </p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    {{ html()->checkbox('is_browser_notification_enabled')->value('')->checked($user->is_browser_notification_enabled)->class('form-check-input h5 m-0 position-relative')->attribute('wire:click', 'toggleBrowserNotification')->id('browserNotifSwitch') }}
+                                    <label class="form-check-label" for="browserNotifSwitch"></label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
