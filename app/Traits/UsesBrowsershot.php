@@ -25,9 +25,12 @@ trait UsesBrowsershot
                 '--disable-gpu',
                 '--disable-dev-shm-usage',
                 '--disable-software-rasterizer',
-                '--disable-crash-reporter',
+                '--disable-breakpad',
+                '--crash-dumps-dir=/tmp',
                 '--no-zygote',
-                '--single-process',
+            ])
+            ->setEnvironmentOptions([
+                'CHROME_CRASHPAD_PIPE_NAME' => '',
             ])
             ->margins(0, 0, 0, 0)
             ->deviceScaleFactor(1);
