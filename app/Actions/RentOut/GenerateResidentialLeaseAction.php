@@ -5,10 +5,12 @@ namespace App\Actions\RentOut;
 use App\Enums\RentOut\AgreementType;
 use App\Models\Configuration;
 use App\Models\RentOut;
-use Spatie\Browsershot\Browsershot;
+use App\Traits\UsesBrowsershot;
 
 class GenerateResidentialLeaseAction
 {
+    use UsesBrowsershot;
+
     public function execute(int $id, string $type = 'normal'): \Illuminate\Http\Response
     {
         $rentOut = RentOut::with([
@@ -24,7 +26,7 @@ class GenerateResidentialLeaseAction
             $html = $this->buildSaleLeaseHtml($rentOut);
         }
 
-        $pdf = Browsershot::html($html)
+        $pdf = $this->makeBrowsershot($html)
             ->format('A4')
             ->margins(15, 15, 15, 15)
             ->showBackground()

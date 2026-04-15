@@ -6,11 +6,13 @@ use App\Models\Configuration;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Support\BarcodeTemplateConfiguration;
+use App\Traits\UsesBrowsershot;
 use Illuminate\Http\Request;
-use Spatie\Browsershot\Browsershot;
 
 class PurchaseController extends Controller
 {
+    use UsesBrowsershot;
+
     public function index()
     {
         return view('purchase.index');
@@ -48,20 +50,8 @@ class PurchaseController extends Controller
         // Generate HTML using Blade view
         $html = view('purchase.barcode-print', compact('purchaseItems', 'settings', 'company_name', 'company_logo'))->render();
 
-        // FIXED Browsershot settings (Windows Compatible)
-        $pdf = Browsershot::html($html)
+        $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
-            ->noSandbox()
-            ->ignoreHttpsErrors()
-            ->disableJavascript()
-            ->blockDomains(['*'])
-            ->setOption('args', [
-                '--disable-web-security',
-                '--no-sandbox',
-                '--disable-gpu',
-            ])
-            ->margins(0, 0, 0, 0)
-            ->deviceScaleFactor(1)
             ->pdf([
                 'printBackground' => true,
                 'preferCSSPageSize' => true,
@@ -86,7 +76,7 @@ class PurchaseController extends Controller
             return $html;
         }
         $html = $html->render();
-        $pdf = Browsershot::html($html)->transparentBackground()->pdf();
+        $pdf = $this->makeBrowsershot($html)->transparentBackground()->pdf();
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')

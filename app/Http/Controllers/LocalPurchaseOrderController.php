@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Configuration;
 use App\Models\LocalPurchaseOrder;
+use App\Traits\UsesBrowsershot;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Routing\Controller as BaseController;
-use Spatie\Browsershot\Browsershot;
 
 class LocalPurchaseOrderController extends BaseController
 {
     use AuthorizesRequests;
+    use UsesBrowsershot;
 
     public function __construct()
     {
@@ -80,11 +81,10 @@ class LocalPurchaseOrderController extends BaseController
             'companyPhone',
         ))->render();
 
-        $pdf = Browsershot::html($html)
+        $pdf = $this->makeBrowsershot($html)
             ->format('A4')
             ->margins(10, 10, 10, 10)
             ->showBackground()
-            ->noSandbox()
             ->pdf();
 
         return response($pdf)

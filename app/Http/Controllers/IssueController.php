@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Issue;
+use App\Traits\UsesBrowsershot;
 use Illuminate\View\View;
-use Spatie\Browsershot\Browsershot;
 
 class IssueController extends Controller
 {
+    use UsesBrowsershot;
+
     public function index(): View
     {
         return view('issue.index');
@@ -42,7 +44,7 @@ class IssueController extends Controller
             return $html;
         }
         $html = $html->render();
-        $pdf = Browsershot::html($html)->transparentBackground()->pdf();
+        $pdf = $this->makeBrowsershot($html)->transparentBackground()->pdf();
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')

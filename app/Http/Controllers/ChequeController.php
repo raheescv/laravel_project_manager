@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Configuration;
+use App\Traits\UsesBrowsershot;
 use Illuminate\Http\Request;
-use Spatie\Browsershot\Browsershot;
 
 class ChequeController extends Controller
 {
+    use UsesBrowsershot;
+
     public function index()
     {
         return view('accounts.cheque.index');
@@ -39,17 +41,8 @@ class ChequeController extends Controller
 
         $html = view('accounts.cheque.print', compact('settings', 'chequeData', 'company_name', 'company_address', 'useTemplate'))->render();
 
-        $pdf = Browsershot::html($html)
+        $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'] ?? 210, $settings['height'] ?? 100)
-            ->noSandbox()
-            ->setNodeBinary('/usr/local/bin/node')
-            ->setNpmBinary('/usr/local/bin/npm')
-            ->ignoreHttpsErrors()
-            ->disableJavascript()
-            ->blockDomains(['*'])
-            ->setOption('args', ['--disable-web-security', '--no-sandbox', '--disable-gpu'])
-            ->margins(0, 0, 0, 0)
-            ->deviceScaleFactor(1)
             ->pdf([
                 'printBackground' => true,
                 'preferCSSPageSize' => true,

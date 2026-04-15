@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\RentOut;
 use App\Models\SupplyRequest;
-use Spatie\Browsershot\Browsershot;
+use App\Traits\UsesBrowsershot;
 
 class SupplyRequestController extends Controller
 {
+    use UsesBrowsershot;
+
     public function index()
     {
         $type = request()->route()->defaults['type'] ?? request('type', 'Add');
@@ -62,7 +64,7 @@ class SupplyRequestController extends Controller
             'mode'
         ))->render();
 
-        $pdf = Browsershot::html($html)
+        $pdf = $this->makeBrowsershot($html)
             ->format('A4')
             ->margins(15, 15, 15, 15)
             ->showBackground()

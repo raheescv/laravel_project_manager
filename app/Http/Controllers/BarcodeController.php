@@ -7,13 +7,15 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Support\BarcodeTemplateConfiguration;
+use App\Traits\UsesBrowsershot;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Spatie\Browsershot\Browsershot;
 
 class BarcodeController extends Controller
 {
+    use UsesBrowsershot;
+
     public function index()
     {
         return view('inventory.cart');
@@ -220,35 +222,5 @@ class BarcodeController extends Controller
             'PHARMA2T' => 'Pharmacode Two-Track',
             'CODABAR' => 'Codabar',
         ];
-    }
-
-    private function makeBrowsershot(string $html): Browsershot
-    {
-        $detect = fn (string $cmd) => trim((string) shell_exec($cmd)) ?: null;
-
-        $node = config('browsershot.node_binary') ?: $detect('which node');
-        $npm = config('browsershot.npm_binary') ?: $detect('which npm');
-        $chrome = config('browsershot.chrome_path') ?: $detect('which google-chrome || which chromium-browser || which chromium');
-
-        $instance = Browsershot::html($html)
-            ->noSandbox()
-            ->ignoreHttpsErrors()
-            ->disableJavascript()
-            ->blockDomains(['*'])
-            ->setOption('args', ['--disable-web-security', '--no-sandbox', '--disable-gpu'])
-            ->margins(0, 0, 0, 0)
-            ->deviceScaleFactor(1);
-
-        if ($node) {
-            $instance->setNodeBinary($node);
-        }
-        if ($npm) {
-            $instance->setNpmBinary($npm);
-        }
-        if ($chrome) {
-            $instance->setChromePath($chrome);
-        }
-
-        return $instance;
     }
 }

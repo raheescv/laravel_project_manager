@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\InventoryTransfer;
-use Spatie\Browsershot\Browsershot;
+use App\Traits\UsesBrowsershot;
 
 class InventoryTransferController extends Controller
 {
+    use UsesBrowsershot;
+
     public function index()
     {
         return view('inventory-transfer.index');
@@ -30,7 +32,7 @@ class InventoryTransferController extends Controller
             return $html;
         }
         $html = $html->render();
-        $pdf = Browsershot::html($html)->transparentBackground()->pdf();
+        $pdf = $this->makeBrowsershot($html)->transparentBackground()->pdf();
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
