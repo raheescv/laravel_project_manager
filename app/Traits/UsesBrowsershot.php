@@ -8,6 +8,10 @@ trait UsesBrowsershot
 {
     private function makeBrowsershot(string $html): Browsershot
     {
+        putenv('HOME=/tmp');
+        putenv('CHROME_CRASHPAD_PIPE_NAME=');
+        putenv('BREAKPAD_DUMP_LOCATION=/tmp');
+
         $detect = fn (string $cmd) => trim((string) shell_exec($cmd)) ?: null;
 
         $node = config('browsershot.node_binary') ?: $detect('which node');
@@ -28,9 +32,7 @@ trait UsesBrowsershot
                 '--disable-breakpad',
                 '--crash-dumps-dir=/tmp',
                 '--no-zygote',
-            ])
-            ->setEnvironmentOptions([
-                'CHROME_CRASHPAD_PIPE_NAME' => '',
+                '--user-data-dir=/tmp/chrome-browsershot',
             ])
             ->margins(0, 0, 0, 0)
             ->deviceScaleFactor(1);
