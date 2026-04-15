@@ -19,7 +19,16 @@ trait UsesBrowsershot
             ->ignoreHttpsErrors()
             ->disableJavascript()
             ->blockDomains(['*'])
-            ->setOption('args', ['--disable-web-security', '--no-sandbox', '--disable-gpu'])
+            ->setOption('args', [
+                '--disable-web-security',
+                '--no-sandbox',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--disable-software-rasterizer',
+                '--disable-crash-reporter',
+                '--no-zygote',
+                '--single-process',
+            ])
             ->margins(0, 0, 0, 0)
             ->deviceScaleFactor(1);
 
