@@ -73,6 +73,8 @@ return [
 
         'Issues Module' => [
             'core',
+            'product_management',
+            'inventory_management',
             'support',
             'accounting',
             'hr_management',
@@ -112,6 +114,7 @@ return [
                 'api_log',
                 'whatsapp',
                 'log',
+                'ticket',
             ],
         ],
 
@@ -277,7 +280,6 @@ return [
             'label' => 'Support & Issues',
             'permissions' => [
                 'issue',
-                'ticket',
             ],
         ],
 
