@@ -181,6 +181,7 @@ class Page extends Component
 
     public function getAccountDetails()
     {
+        /** @var Account|null $account */
         $account = Account::find($this->purchases['account_id']);
         if ($account) {
             $this->account_balance = $account->ledger()->latest('id')->value('balance');
@@ -275,8 +276,7 @@ class Page extends Component
         if (isset($this->items[$key])) {
             $this->items[$key]['quantity'] += $defaultQuantity;
         } else {
-            // Prepend new item so last added appears first
-            $this->items = [$key => $single] + $this->items;
+            $this->items[$key] = $single;
         }
         $this->singleCartCalculator($key);
         $this->mainCalculator();
@@ -337,7 +337,6 @@ class Page extends Component
             }
 
             unset($this->items[$targetKey]);
-            $this->items = array_values($this->items);
             $this->mainCalculator();
             $this->dispatch('item-removed-success', ['message' => 'item removed successfully']);
         } catch (\Throwable $th) {
@@ -480,6 +479,7 @@ class Page extends Component
 
             $table_id = $response['data']['id'];
 
+            $this->table_id = $table_id;
             $this->mount($this->table_id);
             $this->purchases['account_id'] = $account_id;
 
@@ -487,6 +487,7 @@ class Page extends Component
 
             $this->dispatch('ResetSelectBox', ['type' => $type]);
             $this->dispatch('success', ['message' => $response['message']]);
+            $this->dispatch('redirect-to-edit', url: route('purchase::edit', $table_id));
 
             // Redirect to barcode print if enabled in configuration
             $enableBarcodePrint = Configuration::where('key', 'enable_barcode_print_after_submit')->value('value') ?? 'no';
@@ -509,7 +510,7 @@ class Page extends Component
 
     protected function buildItemKey(int $productId, int|string|null $suffix = null): string
     {
-        $baseKey = (string) $productId;
+        $baseKey = 'purchase-item-'.$productId;
 
         if ($suffix !== null) {
             return $baseKey.'-'.$suffix;

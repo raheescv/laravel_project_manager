@@ -100,6 +100,7 @@ const payment = ref({
 const accountBalance = ref(0)
 const accounts = ref([])
 const errors = ref([])
+const redirecting = ref(false)
 
 // Permissions (these should come from backend)
 const canPrintPurchaseNote = ref(false)
@@ -199,6 +200,15 @@ const handleClearErrors = () => {
     errors.value = []
 }
 
+const redirectToEditPage = (purchaseId) => {
+    if (!purchaseId) {
+        return
+    }
+
+    redirecting.value = true
+    window.location.href = `/purchase/edit/${purchaseId}`
+}
+
 // Listen for Livewire events
 const setupEventListeners = () => {
     // Function to process and set validation errors
@@ -292,6 +302,10 @@ const setupEventListeners = () => {
         // Small delay to ensure validation errors have been processed first
         // and to allow redirect-to-print event to fire first if enabled
         setTimeout(() => {
+            if (redirecting.value) {
+                return
+            }
+
             // Only proceed if no validation errors were set
             // This prevents refreshing when validation fails
             if (errors.value && errors.value.length > 0) {
@@ -431,6 +445,13 @@ const setupEventListeners = () => {
                         await new Promise(resolve => setTimeout(resolve, 300))
                         // Only proceed if save was successful (no validation errors were set)
                         if (!errors.value || errors.value.length === 0) {
+                            const savedPurchaseId = get('table_id') || get('purchases')?.id || purchases.value.id
+
+                            if (savedPurchaseId) {
+                                redirectToEditPage(savedPurchaseId)
+                                return
+                            }
+
                             // Check if success event will handle refresh, otherwise refresh here
                             // The success event listener will handle the page refresh
                             // Just clear errors here as backup
@@ -462,6 +483,15 @@ const setupEventListeners = () => {
             if (confirm('Are you sure you want to submit this purchase?')) {
                 try {
                     await call('save', 'completed')
+                    await new Promise(resolve => setTimeout(resolve, 300))
+
+                    if (!errors.value || errors.value.length === 0) {
+                        const savedPurchaseId = get('table_id') || get('purchases')?.id || purchases.value.id
+
+                        if (savedPurchaseId) {
+                            redirectToEditPage(savedPurchaseId)
+                        }
+                    }
                 } catch (error) {
                     console.error('Error submitting purchase:', error)
                 }
@@ -470,11 +500,20 @@ const setupEventListeners = () => {
     })
 
     // Redirect to print (if enabled, this will redirect instead of refreshing)
-    const redirectToPrintListener = on('redirect-to-print', (event) => {
-        const id = event.detail?.id || event.detail
+    const redirectToPrintListener = on('redirect-to-print', (eventData) => {
+        const id = eventData?.id || eventData
         if (id) {
+            redirecting.value = true
             // Redirect to print page instead of refreshing
             window.location.href = `/purchase/barcode-print/${id}`
+        }
+    })
+
+    const redirectToEditListener = on('redirect-to-edit', (eventData) => {
+        const url = eventData?.url || eventData
+        if (url) {
+            redirecting.value = true
+            window.location.href = url
         }
     })
 
