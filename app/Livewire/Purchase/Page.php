@@ -276,7 +276,7 @@ class Page extends Component
         if (isset($this->items[$key])) {
             $this->items[$key]['quantity'] += $defaultQuantity;
         } else {
-            $this->items[$key] = $single;
+            $this->items = [$key => $single] + $this->items;
         }
         $this->singleCartCalculator($key);
         $this->mainCalculator();
