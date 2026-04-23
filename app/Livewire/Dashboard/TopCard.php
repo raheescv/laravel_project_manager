@@ -20,19 +20,19 @@ class TopCard extends Component
 
         $weeklySale = Sale::currentBranch()->last7Days()->sum('grand_total');
         $lastWeekSale = Sale::currentBranch()->whereBetween('date', [now()->subDays(14), now()->subDays(7)])->sum('grand_total');
-        $sale_percentage = $lastWeekSale != 0 ? (($weeklySale - $lastWeekSale) / $lastWeekSale) * 100 : 0;
+        $sale_percentage = $this->calculatePercentageChange($weeklySale, $lastWeekSale);
 
         $weeklyPurchase = Purchase::currentBranch()->last7Days()->sum('grand_total');
         $lastWeekPurchase = Purchase::currentBranch()->whereBetween('date', [now()->subDays(14), now()->subDays(7)])->sum('grand_total');
-        $purchase_percentage = $lastWeekPurchase ? (($weeklyPurchase - $lastWeekPurchase) / $lastWeekPurchase) * 100 : 0;
+        $purchase_percentage = $this->calculatePercentageChange($weeklyPurchase, $lastWeekPurchase);
 
         $weeklyExpense = JournalEntry::expenseList([])->currentBranch()->last7Days()->sum('debit');
         $lastWeekExpense = JournalEntry::expenseList([])->currentBranch()->whereBetween('date', [now()->subDays(14), now()->subDays(7)])->sum('debit');
-        $expense_percentage = $lastWeekExpense ? (($weeklyExpense - $lastWeekExpense) / $lastWeekExpense) * 100 : 0;
+        $expense_percentage = $this->calculatePercentageChange($weeklyExpense, $lastWeekExpense);
 
         $weeklyIncome = JournalEntry::incomeList([])->currentBranch()->last7Days()->sum('credit');
         $lastWeekIncome = JournalEntry::incomeList([])->currentBranch()->whereBetween('date', [now()->subDays(14), now()->subDays(7)])->sum('credit');
-        $income_percentage = $lastWeekIncome ? (($weeklyIncome - $lastWeekIncome) / $lastWeekIncome) * 100 : 0;
+        $income_percentage = $this->calculatePercentageChange($weeklyIncome, $lastWeekIncome);
 
         $stockCost = Inventory::currentBranch()->whereHas('product', function ($query) {
             return $query->where('products.type', 'product');
@@ -49,5 +49,17 @@ class TopCard extends Component
             'weeklyIncome', 'income_percentage',
             'stockCost', 'category', 'product', 'service'
         ));
+    }
+
+    protected function calculatePercentageChange(float|int|string $currentValue, float|int|string $previousValue): float
+    {
+        $currentValue = (float) $currentValue;
+        $previousValue = (float) $previousValue;
+
+        if ($previousValue === 0.0) {
+            return 0.0;
+        }
+
+        return (($currentValue - $previousValue) / $previousValue) * 100;
     }
 }
