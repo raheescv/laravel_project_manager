@@ -14,7 +14,7 @@ class NavigationOrder extends Component
 
     public function mount(): void
     {
-        $this->items = $this->filterItemsByActiveModule(NavigationService::getNavigationItems());
+        $this->items = NavigationService::getNavigationItems();
     }
 
     #[On('nav-order-updated')]
@@ -51,7 +51,9 @@ class NavigationOrder extends Component
 
     public function save(): void
     {
-        $savedItems = collect(NavigationService::getNavigationItems())->keyBy('id');
+        // Use the full unfiltered list so items belonging to other modules
+        // retain their saved visibility/order preferences across module switches.
+        $savedItems = collect(NavigationService::getOrderedItems())->keyBy('id');
         $orderData = [];
         $usedIds = [];
 
@@ -91,67 +93,12 @@ class NavigationOrder extends Component
     {
         Configuration::where('key', 'nav_order')->delete();
         Cache::forget('nav_order');
-        $this->items = $this->filterItemsByActiveModule(NavigationService::defaultItems());
+        $this->items = NavigationService::filterByActiveModule(NavigationService::defaultItems());
         $this->dispatch('success', ['message' => 'Navigation reset to default order']);
     }
 
     public function render()
     {
         return view('livewire.settings.navigation-order');
-    }
-
-    private function filterItemsByActiveModule(array $items): array
-    {
-        $activeModule = Configuration::where('key', 'active_module')->value('value');
-
-        if (! $activeModule) {
-            return $items;
-        }
-
-        $enabledModuleKeys = config("modules.systems.{$activeModule}", []);
-        if (empty($enabledModuleKeys)) {
-            return $items;
-        }
-
-        $navModuleMap = $this->navItemModuleMap();
-
-        return array_values(array_filter($items, function (array $item) use ($enabledModuleKeys, $navModuleMap): bool {
-            $id = $item['id'] ?? null;
-            if (! $id) {
-                return false;
-            }
-
-            $requiredModuleKeys = $navModuleMap[$id] ?? ['core'];
-
-            return ! empty(array_intersect($requiredModuleKeys, $enabledModuleKeys));
-        }));
-    }
-
-    private function navItemModuleMap(): array
-    {
-        return [
-            'dashboard' => ['core'],
-            'inventory' => ['product_management', 'inventory_management'],
-            'rent-out' => ['rent_out'],
-            'property-sales' => ['lease'],
-            'leads' => ['property_management'],
-            'maintenance' => ['maintenance'],
-            'issue' => ['support'],
-            'appointments' => ['saloon'],
-            'tailoring' => ['tailoring'],
-            'sale' => ['sales'],
-            'day-session' => ['sales'],
-            'purchase' => ['simple_purchase_management'],
-            'package' => ['saloon'],
-            'account' => ['accounting'],
-            'employee' => ['hr_management'],
-            'purchase-workflow' => ['advanced_purchase_management'],
-            'asset-supply' => ['maintenance'],
-            'users' => ['core'],
-            'tenants' => ['property_management'],
-            'flat-trade' => ['core'],
-            'tickets' => ['core'],
-            'log' => ['core'],
-        ];
     }
 }

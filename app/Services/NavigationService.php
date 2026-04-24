@@ -171,10 +171,13 @@ class NavigationService
     }
 
     /**
-     * Returns navigation items ordered and filtered by the tenant-wide saved preferences.
+     * Returns the full ordered navigation list (without active-module filtering).
      * New items not in the saved order are appended at the end (visible by default).
+     *
+     * Use this when you need every item regardless of the active module — e.g.
+     * persisting visibility preferences for items belonging to other modules.
      */
-    public static function getNavigationItems(): array
+    public static function getOrderedItems(): array
     {
         $defaults = self::defaultItems();
         $saved = Configuration::where('key', 'nav_order')->value('value');
@@ -184,7 +187,6 @@ class NavigationService
             return $defaults;
         }
 
-        // Build a keyed map for quick lookup
         $defaultsMap = [];
         foreach ($defaults as $item) {
             $defaultsMap[$item['id']] = $item;
@@ -192,7 +194,6 @@ class NavigationService
 
         $result = [];
 
-        // Apply saved order and visibility
         foreach ($savedOrder as $pref) {
             $id = $pref['id'] ?? null;
             if ($id && isset($defaultsMap[$id])) {
@@ -203,11 +204,85 @@ class NavigationService
             }
         }
 
-        // Append any new items not yet in saved config
         foreach ($defaultsMap as $item) {
             $result[] = $item;
         }
 
         return $result;
+    }
+
+    /**
+     * Returns navigation items ordered by saved preferences and filtered by the
+     * currently active system module. This is the single source of truth used
+     * by both the rendered sidebar and the Navigation Order settings screen.
+     */
+    public static function getNavigationItems(): array
+    {
+        return self::filterByActiveModule(self::getOrderedItems());
+    }
+
+    /**
+     * Filters a list of navigation items to only those belonging to the
+     * currently selected "active_module" in system configuration. If no active
+     * module is set, the list is returned unchanged.
+     */
+    public static function filterByActiveModule(array $items): array
+    {
+        $activeModule = Configuration::where('key', 'active_module')->value('value');
+
+        if (! $activeModule) {
+            return $items;
+        }
+
+        $enabledModuleKeys = config("modules.systems.{$activeModule}", []);
+        if (empty($enabledModuleKeys)) {
+            return $items;
+        }
+
+        $navModuleMap = self::navItemModuleMap();
+
+        return array_values(array_filter($items, function (array $item) use ($enabledModuleKeys, $navModuleMap): bool {
+            $id = $item['id'] ?? null;
+            if (! $id) {
+                return false;
+            }
+
+            $requiredModuleKeys = $navModuleMap[$id] ?? ['core'];
+
+            return ! empty(array_intersect($requiredModuleKeys, $enabledModuleKeys));
+        }));
+    }
+
+    /**
+     * Maps each navigation item id to the module keys that enable it.
+     * Items whose required modules don't intersect with the active system's
+     * enabled modules are hidden from the sidebar.
+     */
+    private static function navItemModuleMap(): array
+    {
+        return [
+            'dashboard' => ['core'],
+            'inventory' => ['product_management', 'inventory_management'],
+            'rent-out' => ['rent_out'],
+            'property-sales' => ['lease'],
+            'leads' => ['property_management'],
+            'maintenance' => ['maintenance'],
+            'issue' => ['support'],
+            'appointments' => ['saloon'],
+            'tailoring' => ['tailoring'],
+            'sale' => ['sales'],
+            'day-session' => ['sales'],
+            'purchase' => ['simple_purchase_management'],
+            'package' => ['saloon'],
+            'account' => ['accounting'],
+            'employee' => ['hr_management'],
+            'purchase-workflow' => ['advanced_purchase_management'],
+            'asset-supply' => ['maintenance'],
+            'users' => ['core'],
+            'tenants' => ['property_management'],
+            'flat-trade' => ['core'],
+            'tickets' => ['core'],
+            'log' => ['core'],
+        ];
     }
 }

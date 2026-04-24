@@ -52,6 +52,7 @@ class Table extends Component
     public function mount()
     {
         $this->sale_return_visible_column = json_decode(Configuration::where('key', 'sale_return_visible_column')->value('value'), true);
+        $this->branch_id = session('branch_id');
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
         $this->status = Configuration::where('key', 'default_status')->value('value');
