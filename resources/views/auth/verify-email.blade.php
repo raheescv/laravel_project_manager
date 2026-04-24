@@ -1,31 +1,50 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
-
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
+    {{-- ======================================================
+         LUMINOUS GATEWAY — Verify email
+         ====================================================== --}}
+    <x-luminous-card
+        icon="mail"
+        title="Verify your email"
+        subtitle="Thanks for signing up for <strong>{{ config('app.name', 'Size Run') }}</strong>. Please verify the email we just sent to activate your account."
+        :showTrust="false"
+    >
+        <div class="lux-notice">
+            {{ __("Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.") }}
         </div>
-    @endif
 
-    <div class="mt-4 flex items-center justify-between">
-        <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
-
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
+        @if (session('status') == 'verification-link-sent')
+            <div class="lux-notice lux-notice--success">
+                <strong>{{ __('Link sent.') }}</strong>
+                {{ __('A new verification link has been sent to the email address you provided during registration.') }}
             </div>
-        </form>
+        @endif
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
+        <div class="lux-actions">
+            <form method="POST" action="{{ route('verification.send') }}">
+                @csrf
+                <button type="submit" class="lux-submit" id="submitBtn">
+                    <span class="lux-submit-bg"></span>
+                    <span class="lux-submit-ripple" id="submitRipple"></span>
+                    <span class="lux-submit-content">
+                        <span class="lux-submit-label">{{ __('Resend verification email') }}</span>
+                        <svg class="lux-submit-arrow" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </span>
+                    <span class="lux-submit-spinner" aria-hidden="true"></span>
+                </button>
+            </form>
 
-            <button type="submit" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
-                {{ __('Log Out') }}
-            </button>
-        </form>
-    </div>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="lux-submit lux-submit--ghost">
+                    <span class="lux-submit-bg"></span>
+                    <span class="lux-submit-content">
+                        <span class="lux-submit-label">{{ __('Log out') }}</span>
+                    </span>
+                </button>
+            </form>
+        </div>
+    </x-luminous-card>
 </x-guest-layout>

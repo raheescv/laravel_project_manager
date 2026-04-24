@@ -1159,11 +1159,21 @@
         </svg>
     </button>
 
+    {{-- ======================================================
+         Luminous Gateway — global authentication environment.
+         Shared background layers + styles are applied here so
+         EVERY auth page (login, register, forgot, reset, etc.)
+         inherits the same theme-aware visual experience.
+         ====================================================== --}}
+    @include('auth.partials._luminous-head')
+
     <div id="root" class="root auth-page">
         <div class="content__wrap">
             {{ $slot }}
         </div>
     </div>
+
+    @include('auth.partials._luminous-scripts')
 
     <script src="{{ asset('assets/vendors/popperjs/popper.min.js') }}"></script>
     <script src="{{ asset('assets/vendors/bootstrap/bootstrap.min.js') }}"></script>
