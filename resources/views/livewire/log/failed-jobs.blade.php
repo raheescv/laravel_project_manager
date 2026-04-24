@@ -79,7 +79,7 @@
                                     <div class="small text-muted text-break">{{ \Illuminate\Support\Str::limit($item->exception, 140) }}</div>
                                 </td>
                                 <td>
-                                    <span class="small text-muted">{{ systemDateTime($item->failed_at) }}</span>
+                                    <span class="small text-muted text-nowrap">{{ systemDateTime($item->failed_at) }}</span>
                                 </td>
                             </tr>
                         @empty
