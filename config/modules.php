@@ -115,6 +115,8 @@ return [
                 'whatsapp',
                 'log',
                 'ticket',
+                'report.day book',
+                'report.day book export',
             ],
         ],
 
@@ -299,8 +301,6 @@ return [
                 'report.sale and sales return items',
                 'report.day wise sale',
                 'report.monthly sale',
-                'report.day book',
-                'report.day book export',
             ],
         ],
 

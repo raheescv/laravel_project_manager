@@ -75,7 +75,7 @@
                         <span class="input-group-text bg-white border-secondary-subtle">
                             <i class="fa fa-barcode"></i>
                         </span>
-                        <input type="text" wire:model="barcodeInput" wire:keydown.enter="handleBarcodeScan()" class="form-control form-control-sm border-secondary-subtle shadow-sm" id="barcodeInput" placeholder="Scan barcode or enter manually..." autocomplete="off" autofocus>
+                        <input type="text" wire:model.live="barcodeInput" wire:keydown.enter="handleBarcodeScan()" class="form-control form-control-sm border-secondary-subtle shadow-sm" id="barcodeInput" placeholder="Scan barcode or enter manually..." autocomplete="off" autofocus>
                         <button class="btn btn-dark btn-sm shadow-sm" wire:click="handleBarcodeScan()">
                             <i class="fa fa-bolt me-1"></i>Add
                         </button>

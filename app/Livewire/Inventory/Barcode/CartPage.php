@@ -53,6 +53,15 @@ class CartPage extends Component
         return $cartItems;
     }
 
+    public function updatedBarcodeInput()
+    {
+        if (strlen($this->barcodeInput) >= 2) {
+            $this->loadProducts();
+        } else {
+            $this->products = [];
+        }
+    }
+
     public function updatedSearchQuery()
     {
         if (strlen($this->searchQuery) >= 2) {
@@ -65,7 +74,6 @@ class CartPage extends Component
     public function loadProducts()
     {
         $products = collect();
-
         // Load Inventory items
         $inventories = Inventory::with('product')
             ->whereHas('product', function ($query): void {
@@ -74,6 +82,7 @@ class CartPage extends Component
                     ->orWhere('barcode', 'LIKE', '%'.$this->searchQuery.'%')
                     ->orWhere('code', 'LIKE', '%'.$this->searchQuery.'%');
             })
+            ->where('barcode', $this->barcodeInput)
             ->where('quantity', '>', 0)
             ->limit(10)
             ->get()

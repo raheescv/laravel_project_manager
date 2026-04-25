@@ -56,6 +56,7 @@ class AccountSeeder extends Seeder
         $data[] = ['name' => 'Card', 'slug' => 'card', 'account_type' => 'asset', 'description' => 'Credit and debit card transactions', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $bankGroup->id];
         $data[] = ['name' => 'General Customer', 'slug' => 'general_customer', 'account_type' => 'asset', 'description' => 'Account for walk-in and general customer transactions', 'model' => 'customer', 'second_reference_no' => 2, 'account_category_id' => $accountReceivableGroup->id];
         $data[] = ['name' => 'Inventory', 'slug' => 'inventory', 'account_type' => 'asset', 'description' => 'Value of goods held for sale or production', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $stockGroup->id];
+        $data[] = ['name' => 'GRN Clearing', 'slug' => 'grn_clearing', 'account_type' => 'liability', 'description' => 'Temporary clearing account between GRN receipt and purchase invoice posting', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $currentLiabilityMaster->id];
 
         // Direct Income accounts
         $data[] = ['name' => 'Sale', 'slug' => 'sale', 'account_type' => 'income', 'description' => 'Sales Revenue from business operations', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $salesGroup->id];
