@@ -6,15 +6,38 @@ use App\Actions\Product\Inventory\SaveStockAdjustmentAction;
 use App\Http\Requests\SaveStockAdjustmentRequest;
 use App\Traits\ApiResponseTrait;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class InventoryStockAdjustmentController extends Controller
 {
     use ApiResponseTrait;
 
-    public function index()
+    public function index(Request $request)
     {
-        return view('inventory.stock-adjustment');
+        $selectionToken = (string) $request->query('selection_token', '');
+        $cacheKey = $this->getStockAdjustmentSelectionCacheKey($selectionToken);
+        $selectedInventoryIds = collect(Cache::pull($cacheKey, []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->values()
+            ->all();
+
+        return view('inventory.stock-adjustment', [
+            'selectedInventoryIds' => $selectedInventoryIds,
+        ]);
+    }
+
+    protected function getStockAdjustmentSelectionCacheKey(string $token): string
+    {
+        if ($token === '') {
+            return 'stock-adjustment-selection:invalid';
+        }
+
+        $userId = Auth::id() ?? 'guest';
+
+        return "stock-adjustment-selection:{$userId}:{$token}";
     }
 
     public function save(SaveStockAdjustmentRequest $request, SaveStockAdjustmentAction $action)

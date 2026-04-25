@@ -32,6 +32,17 @@
                         </button>
                     </div>
                 @endcan
+                @can('inventory.stock adjustment')
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" type="button" wire:click="addSelectedToStockAdjustment">
+                            <i class="demo-pli-reload-3 me-1"></i>
+                            <span>Add Selected to Stock Adjustment</span>
+                            @if (count($selected))
+                                <span class="badge bg-primary ms-1">{{ count($selected) }}</span>
+                            @endif
+                        </button>
+                    </div>
+                @endcan
             </div>
             <div class="d-flex gap-2 align-items-center">
                 <div class="input-group input-group-sm" style="width: 120px;">
@@ -130,14 +141,14 @@
                     {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list')->id('brand_id')->placeholder('All Brand') }}
                 </div>
                 <div class="col-12 col-md-3">
-                    <div class="form-group mt-3">
-                        <div class="form-check">
-                            <input type="checkbox" id="non_zero" wire:model.live="non_zero" class="form-check-input">
-                            <label for="non_zero" class="form-check-label small">
-                                <i class="demo-pli-box-with-folders me-1"></i> Show Non-Zero Items Only
-                            </label>
-                        </div>
-                    </div>
+                    <label class="form-label fw-semibold mb-1 small">
+                        <i class="demo-pli-box-with-folders me-1"></i> Stock Quantity Filter
+                    </label>
+                    <select wire:model.live="stock_quantity_filter" class="form-select form-select-sm shadow-sm">
+                        <option value="non_zero">Show Non-Zero Items Only</option>
+                        <option value="zero">Show Zero Items Only</option>
+                        <option value="all">Show All Itmes</option>
+                    </select>
                 </div>
             </div>
             <hr class="my-2">

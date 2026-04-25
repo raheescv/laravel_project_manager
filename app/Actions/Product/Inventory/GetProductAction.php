@@ -42,12 +42,33 @@ class GetProductAction
             'productName' => trim($params['productName'] ?? ''),
             'productCode' => trim($params['productCode'] ?? ''),
             'productBarcode' => trim($params['productBarcode'] ?? ''),
+            'inventory_ids' => $this->normalizeInventoryIds($params['inventory_ids'] ?? null),
             'branch_id' => $this->normalizeBranchIds($params['branch_id'] ?? null),
             'show_non_zero' => (bool) ($params['show_non_zero'] ?? false),
             'show_barcode_sku' => (bool) ($params['show_barcode_sku'] ?? false),
             'sortField' => $params['sortField'] ?? 'products.code',
             'sortDirection' => strtolower($params['sortDirection'] ?? 'desc') === 'asc' ? 'asc' : 'desc',
         ];
+    }
+
+    private function normalizeInventoryIds($inventoryIds): ?array
+    {
+        if (empty($inventoryIds)) {
+            return null;
+        }
+
+        if (! is_array($inventoryIds)) {
+            $inventoryIds = explode(',', (string) $inventoryIds);
+        }
+
+        $normalizedIds = collect($inventoryIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        return empty($normalizedIds) ? null : $normalizedIds;
     }
 
     private function normalizeBranchIds($branchIds): ?array
@@ -73,6 +94,7 @@ class GetProductAction
         $this->applyProductNameFilter($query, $filters);
         $this->applyProductCodeFilter($query, $filters);
         $this->applyBarcodeFilter($query, $filters);
+        $this->applyInventoryIdsFilter($query, $filters);
         $this->applyBranchFilter($query, $filters);
         $this->applyNonZeroFilter($query, $filters);
         $this->applyBarcodeSkuFilter($query, $filters);
@@ -133,6 +155,13 @@ class GetProductAction
     {
         if (! empty($filters['branch_id'])) {
             $query->whereIn('inventories.branch_id', $filters['branch_id']);
+        }
+    }
+
+    private function applyInventoryIdsFilter(Builder $query, array $filters): void
+    {
+        if (! empty($filters['inventory_ids'])) {
+            $query->whereIn('inventories.id', $filters['inventory_ids']);
         }
     }
 

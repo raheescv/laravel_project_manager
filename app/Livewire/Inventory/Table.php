@@ -14,6 +14,9 @@ use App\Models\Inventory;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -32,7 +35,7 @@ class Table extends Component
 
     public $product_id = '';
 
-    public $non_zero = true;
+    public $stock_quantity_filter = 'non_zero';
 
     public $branch_id = '';
 
@@ -152,7 +155,7 @@ class Table extends Component
             'size' => $this->size,
             'barcode' => $this->barcode,
             'code' => $this->code,
-            'non_zero' => $this->non_zero,
+            'stock_quantity_filter' => $this->stock_quantity_filter,
             'search' => $this->search,
             'product_name' => $this->product_name,
             'sortField' => $this->sortField,
@@ -282,6 +285,49 @@ class Table extends Component
         }
 
         $this->dispatch('success', ['message' => "{$addedCount} selected inventory item(s) added to the barcode cart."]);
+    }
+
+    public function addSelectedToStockAdjustment()
+    {
+        if (empty($this->selected)) {
+            $this->dispatch('error', ['message' => 'Please select at least one inventory item.']);
+
+            return;
+        }
+
+        $selectedIds = collect($this->selected)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($selectedIds->isEmpty()) {
+            $this->dispatch('error', ['message' => 'Please select at least one valid inventory item.']);
+
+            return;
+        }
+
+        if (! Route::has('inventory::stock-adjustment')) {
+            $this->dispatch('error', ['message' => 'Stock adjustment route is not available.']);
+
+            return;
+        }
+
+        $cacheToken = (string) Str::uuid();
+        $cacheKey = $this->getStockAdjustmentSelectionCacheKey($cacheToken);
+
+        Cache::put($cacheKey, $selectedIds->all(), now()->addMinutes(10));
+
+        $this->redirect(route('inventory::stock-adjustment', [
+            'selection_token' => $cacheToken,
+        ]));
+    }
+
+    protected function getStockAdjustmentSelectionCacheKey(string $token): string
+    {
+        $userId = Auth::id() ?? 'guest';
+
+        return "stock-adjustment-selection:{$userId}:{$token}";
     }
 
     protected function storeBarcodeCartItems(Collection $inventories): int

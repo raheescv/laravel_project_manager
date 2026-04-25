@@ -48,6 +48,8 @@ const branchId = ref(null)
 onMounted(() => {
     const metaBranchId = document.querySelector('meta[name="branch-id"]')?.content
     branchId.value = metaBranchId ? parseInt(metaBranchId) : (window.branchId || null)
+
+    loadSelectedInventoryItemsFromSession()
 })
 
 // Helper: Get item identifier
@@ -167,6 +169,79 @@ const handleCodeSearch = async (code) => {
     if (!code || code.length < 2) return
 
     await addProductWithLoading( LOADING_TEXTS.DEFAULT, () => fetchInventoryData({ productCode: code }) )
+}
+
+const getSelectedInventoryIdsFromMeta = () => {
+    const metaContent = document.querySelector('meta[name="selected-inventory-ids"]')?.content
+
+    if (!metaContent) {
+        return []
+    }
+
+    try {
+        const parsedIds = JSON.parse(metaContent)
+        if (!Array.isArray(parsedIds)) {
+            return []
+        }
+
+        return parsedIds
+            .map((id) => Number.parseInt(id, 10))
+            .filter((id) => Number.isInteger(id) && id > 0)
+    } catch (error) {
+        console.error('Error parsing selected inventory IDs:', error)
+        return []
+    }
+}
+
+const loadSelectedInventoryItemsFromSession = async () => {
+    const selectedInventoryIds = getSelectedInventoryIdsFromMeta()
+
+    if (selectedInventoryIds.length === 0) {
+        return
+    }
+
+    loading.value = true
+    loadingText.value = LOADING_TEXTS.PRODUCT_DETAILS
+
+    try {
+        const normalizedBranchId = Number(branchId.value)
+        const response = await axios.get('/inventory/product/getProduct', {
+            params: {
+                inventory_ids: selectedInventoryIds.join(','),
+                limit: selectedInventoryIds.length,
+                page: 1,
+                ...(Number.isInteger(normalizedBranchId) && normalizedBranchId > 0 ? { branch_id: normalizedBranchId } : {}),
+            },
+        })
+
+        const products = response.data?.data || []
+        const existingInventoryIds = new Set(selectedItems.value.map(item => item.inventory_id))
+        let addedCount = 0
+
+        products.forEach((inventoryData) => {
+            if (existingInventoryIds.has(inventoryData.inventory_id)) {
+                return
+            }
+
+            const product = transformInventoryToProduct(inventoryData)
+            const newItem = createStockAdjustmentItem(product, inventoryData)
+            selectedItems.value.push(newItem)
+            existingInventoryIds.add(inventoryData.inventory_id)
+            addedCount++
+        })
+
+        if (addedCount > 0) {
+            toast.success(`${addedCount} selected inventory item(s) added to stock adjustment.`)
+        } else {
+            toast.warning('No selected inventory items were available for stock adjustment.')
+        }
+    } catch (error) {
+        console.error('Error loading selected inventory items:', error)
+        toast.error('Error loading selected inventory items')
+    } finally {
+        loading.value = false
+        loadingText.value = LOADING_TEXTS.DEFAULT
+    }
 }
 
 const handleRemoveItem = (itemId) => {

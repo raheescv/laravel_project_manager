@@ -1,6 +1,7 @@
 <x-app-layout>
     @push('head')
         <meta name="branch-id" content="{{ session('branch_id') }}">
+        <meta name="selected-inventory-ids" content='@json($selectedInventoryIds ?? [])'>
     @endpush
     <div class="content__header content__boxed overlapping">
         <div class="content__wrap">

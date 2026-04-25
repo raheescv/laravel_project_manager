@@ -66,8 +66,11 @@ class GetAction
             ->when($filter['unit_id'] ?? '', function ($query, $value) {
                 return $query->where('products.unit_id', $value);
             })
-            ->when($filter['non_zero'] ?? '', function ($query, $value) {
+            ->when(($filter['stock_quantity_filter'] ?? 'non_zero') === 'non_zero', function ($query) {
                 return $query->where('inventories.quantity', '!=', 0);
+            })
+            ->when(($filter['stock_quantity_filter'] ?? 'non_zero') === 'zero', function ($query) {
+                return $query->where('inventories.quantity', '=', 0);
             })
             ->when($filter['branch_id'] ?? '', function ($query, $value) {
                 return $query->whereIn('inventories.branch_id', $value);
