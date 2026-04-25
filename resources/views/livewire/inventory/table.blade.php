@@ -1,48 +1,48 @@
 <div>
     <div class="card-header bg-white p-2">
         <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <div class="btn-group">
                     @can('inventory.export')
-                        <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()">
+                        <button class="btn btn-sm btn-outline-primary" title="Export inventory to Excel" wire:click="export()">
                             <i class="demo-pli-file-excel me-1"></i>
-                            <span>Export</span>
+                            <span>Export Excel</span>
                         </button>
-                        <button class="btn btn-sm btn-outline-info" title="Product Wise Export" wire:click="exportProductWise()">
+                        <button class="btn btn-sm btn-outline-info" title="Export product summary to Excel" wire:click="exportProductWise()">
                             <i class="demo-pli-file-excel me-1"></i>
-                            <span>Product Wise Export</span>
+                            <span>Export by Product</span>
                         </button>
                     @endcan
                     @can('inventory.import')
-                        <a class="btn btn-sm btn-outline-success" title="Import" href="{{ route('product::import') }}">
+                        <a class="btn btn-sm btn-outline-success" title="Import products from file" href="{{ route('product::import') }}">
                             <i class="demo-pli-download-from-cloud me-md-1 fs-5"></i>
                             <span class="d-none d-md-inline">Import</span>
                         </a>
                     @endcan
                 </div>
-                @can('inventory.barcode cart')
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-dark" type="button" wire:click="addSelectedToBarcodeCart">
+                <div class="btn-group">
+                    @can('inventory.barcode cart')
+                        <button class="btn btn-sm btn-outline-dark" type="button" wire:click="addSelectedToBarcodeCart"
+                            title="Add selected items to barcode cart">
                             <i class="demo-pli-add-cart me-1"></i>
-                            <span>Add Selected to Barcode Cart</span>
+                            <span>Add to Barcode Cart</span>
                             @if (count($selected))
                                 <span class="badge bg-dark ms-1">{{ count($selected) }}</span>
                             @endif
                         </button>
-                    </div>
-                @endcan
-                @can('inventory.stock adjustment')
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-primary" type="button" wire:click="addSelectedToStockAdjustment">
+                    @endcan
+                    @can('inventory.stock adjustment')
+                        <button class="btn btn-sm btn-outline-dark" type="button" wire:click="addSelectedToStockAdjustment"
+                            title="Add selected items to stock adjustment">
                             <i class="demo-pli-reload-3 me-1"></i>
-                            <span>Add Selected to Stock Adjustment</span>
+                            <span>Add to Stock Adjustment</span>
                             @if (count($selected))
-                                <span class="badge bg-primary ms-1">{{ count($selected) }}</span>
+                                <span class="badge bg-dark ms-1">{{ count($selected) }}</span>
                             @endif
                         </button>
-                    </div>
-                @endcan
+                    @endcan
+                </div>
             </div>
             <div class="d-flex gap-2 align-items-center">
                 <div class="input-group input-group-sm" style="width: 120px;">
@@ -145,9 +145,9 @@
                         <i class="demo-pli-box-with-folders me-1"></i> Stock Quantity Filter
                     </label>
                     <select wire:model.live="stock_quantity_filter" class="form-select form-select-sm shadow-sm">
-                        <option value="non_zero">Show Non-Zero Items Only</option>
-                        <option value="zero">Show Zero Items Only</option>
-                        <option value="all">Show All Itmes</option>
+                        <option value="non_zero">In Stock Only</option>
+                        <option value="zero">Out of Stock Only</option>
+                        <option value="all">All Items</option>
                     </select>
                 </div>
             </div>

@@ -4,6 +4,7 @@ namespace App\Actions\Product;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Configuration;
 use App\Models\Department;
 use App\Models\Inventory;
 use App\Models\Product;
@@ -56,6 +57,11 @@ class CreateAction
                 $model = $trashedExists;
             } else {
                 $model = Product::create($data);
+            }
+            $isBarcodeSyncEnabled = Configuration::where('key', 'sync_barcode_to_code')->value('value') === 'yes';
+            if ($isBarcodeSyncEnabled && $data['type'] == 'product') {
+                $model->refresh();
+                $model->update(['code' => $model->barcode]);
             }
             if ('inventory') {
                 Inventory::selfCreateByProduct($model, $user_id, $quantity = 0);

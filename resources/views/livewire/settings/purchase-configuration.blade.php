@@ -15,10 +15,14 @@
                     {{ html()->input('number', 'default_quantity')->value('')->class('form-control form-control-sm')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 1)')->attribute('wire:model', 'default_quantity') }}
                     <small class="form-text text-muted">Default quantity when adding a new item to purchase.</small>
                 </div>
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-12">
                     <label class="form-label fw-medium small mb-1" for="purchase_item_row_mode">Same Product Cart Rows</label>
                     {{ html()->select('purchase_item_row_mode', ['merge' => 'Single Row (merge quantity)', 'separate' => 'Multiple Rows (add separately)'])->value('')->class('form-select form-select-sm')->placeholder('Choose how repeated product selection behaves')->attribute('wire:model', 'purchase_item_row_mode') }}
                     <small class="form-text text-muted">Controls whether selecting the same product again merges quantity or adds a separate purchase row.</small>
+                </div>
+                <div class="col-12 col-md-12" wire:ignore>
+                    <label class="form-label fw-medium small mb-1" for="default_purchase_branch_id">Default Purchase Branch</label>
+                    {{ html()->select('default_purchase_branch_id', $branches)->value($default_purchase_branch_id)->class('tomSelect')->id('default_purchase_branch_id')->multiple()->placeholder('Select Default Purchase Branch')->attribute('wire:model', 'default_purchase_branch_id') }}
                 </div>
             </div>
         </div>
@@ -29,4 +33,15 @@
         </div>
     </form>
 </div>
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#default_purchase_branch_id').on('change', function() {
+                const value = $(this).val() || null;
+                @this.set('default_purchase_branch_id', value);
+            });
+        });
+    </script>
+@endpush
 

@@ -33,6 +33,8 @@ class Page extends Component
 
     public $barcode_type;
 
+    public bool $syncBarcodeToCode = false;
+
     public $selectedTab = 'Prices';
 
     public $product;
@@ -63,6 +65,7 @@ class Page extends Component
     public function mount($type = 'product', $table_id = null, $dropdownValues = true)
     {
         $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value');
+        $this->syncBarcodeToCode = Configuration::where('key', 'sync_barcode_to_code')->value('value') === 'yes';
         $this->table_id = $table_id;
         $this->type = $type;
         $this->departments = [];
@@ -189,6 +192,22 @@ class Page extends Component
 
     public function save($edit = false)
     {
+        if (
+            $this->syncBarcodeToCode &&
+            $this->type === 'product' &&
+            ! $this->table_id
+        ) {
+            $barcodeNumber = trim((string) ($this->products['barcode_number'] ?? ''));
+            $upcCode = trim((string) ($this->products['code'] ?? ''));
+
+            if ($barcodeNumber !== '') {
+                $this->products['code'] = $barcodeNumber;
+            } elseif ($upcCode !== '') {
+                $this->products['barcode_number'] = $upcCode;
+                $this->products['code'] = $upcCode;
+            }
+        }
+
         $this->validate();
         try {
             DB::beginTransaction();
@@ -252,6 +271,17 @@ class Page extends Component
         $this->selectedTab = $key;
         if ($key == 'Related' && $this->table_id) {
             $this->loadRelatedProducts();
+        }
+    }
+
+    public function updatedProductsBarcodeNumber($value): void
+    {
+        if (
+            $this->syncBarcodeToCode &&
+            $this->type === 'product' &&
+            ! $this->table_id
+        ) {
+            $this->products['code'] = trim((string) $value);
         }
     }
 

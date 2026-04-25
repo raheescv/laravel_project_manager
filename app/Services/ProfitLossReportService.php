@@ -95,7 +95,7 @@ class ProfitLossReportService
         foreach (self::ACCOUNT_SLUGS as $slug) {
             $ids[$slug] = isset($map[$slug]) ? (int) $map[$slug] : null;
         }
-        
+
         return $ids;
     }
 
@@ -179,7 +179,7 @@ class ProfitLossReportService
             ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
             ->selectRaw('COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0) as net')
             ->first();
-            
+
         return max(0, (float) ($result->net ?? 0));
     }
 

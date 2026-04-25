@@ -18,42 +18,62 @@
                     <div class="row g-0">
                         <div class="col-12 col-md-4 col-lg-3 border-end bg-light p-3 p-md-4">
                             <ul class="nav flex-row flex-md-column nav-pills gap-1 gap-md-2" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="demo-pli-data-settings me-2"></i>Configuration
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="demo-pli-receipt-4 me-2"></i>Sale Settings
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="demo-pli-credit-card-2 me-2"></i>Purchase Settings
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="demo-pli-repair me-2"></i>Tailoring Settings
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="demo-pli-home me-2"></i>Rent Out Settings
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="demo-pli-data-storage me-2"></i>Universal UOM
-                                    </button>
-                                </li>
+                                @can('configuration.settings')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-selected="false"
+                                            tabindex="-1">
+                                            <i class="demo-pli-data-settings me-2"></i>Configuration
+                                        </button>
+                                    </li>
+                                @endcan
+                                @can('product.view')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsProductSettings" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="fa fa-cube me-2"></i>Product Settings
+                                        </button>
+                                    </li>
+                                @endcan
+                                @can('sale.view')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-receipt-4 me-2"></i>Sale Settings
+                                        </button>
+                                    </li>
+                                @endcan
+                                @can('purchase.view')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-credit-card-2 me-2"></i>Purchase Settings
+                                        </button>
+                                    </li>
+                                @endcan
+                                @can('tailoring order.view')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-repair me-2"></i>Tailoring Settings
+                                        </button>
+                                    </li>
+                                @endcan
+                                @can('rent out.view')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-home me-2"></i>Rent Out Settings
+                                        </button>
+                                    </li>
+                                @endcan
+                                @can('configuration.settings')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-data-storage me-2"></i>Universal UOM
+                                        </button>
+                                    </li>
+                                @endcan
                                 @if (auth()->user()->is_super_admin)
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsUniqueNoCounters" type="button" role="tab"
@@ -68,17 +88,20 @@
                                         </button>
                                     </li>
                                 @endif
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab" aria-selected="true"
-                                        tabindex="0">
-                                        <i class="demo-pli-male me-2"></i>Company Profile
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTheme" type="button" role="tab" aria-selected="false" tabindex="-1">
-                                        <i class="demo-psi-gear me-2"></i>Theme
-                                    </button>
-                                </li>
+                                @can('configuration.settings')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab"
+                                            aria-selected="true" tabindex="0">
+                                            <i class="demo-pli-male me-2"></i>Company Profile
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTheme" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="demo-psi-gear me-2"></i>Theme
+                                        </button>
+                                    </li>
+                                @endcan
                                 @if (false)
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab" aria-selected="false"
@@ -87,24 +110,26 @@
                                         </button>
                                     </li>
                                 @endif
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="fa fa-bars me-2"></i>Navigation Order
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="demo-pli-speech-bubble-5 me-2"></i>Telegram
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button" role="tab" aria-selected="false"
-                                        tabindex="-1">
-                                        <i class="demo-pli-bell me-2"></i>Notifications
-                                    </button>
-                                </li>
+                                @can('configuration.settings')
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="fa fa-bars me-2"></i>Navigation Order
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-selected="false"
+                                            tabindex="-1">
+                                            <i class="demo-pli-speech-bubble-5 me-2"></i>Telegram
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link text-start rounded" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-bell me-2"></i>Notifications
+                                        </button>
+                                    </li>
+                                @endcan
                                 @if (false)
                                     @can('whatsapp.integration')
                                         <li class="nav-item" role="presentation">
@@ -119,24 +144,39 @@
                         </div>
                         <div class="col-12 col-md-8 col-lg-9">
                             <div class="tab-content p-2 p-md-3">
-                                <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.configurations')
-                                </div>
-                                <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.sale-configuration')
-                                </div>
-                                <div id="tabsPurchaseSettings" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.purchase-configuration')
-                                </div>
-                                <div id="tabsTailoringSettings" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.tailoring-configuration')
-                                </div>
-                                <div id="tabsRentOutSettings" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.rent-out-configuration')
-                                </div>
-                                <div id="tabsUniversalUom" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.universal-uom-configuration')
-                                </div>
+                                @can('configuration.settings')
+                                    <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.configurations')
+                                    </div>
+                                    <div id="tabsProductSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.product-configuration')
+                                    </div>
+                                @endcan
+                                @can('sale.view')
+                                    <div id="tabsSaleSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.sale-configuration')
+                                    </div>
+                                @endcan
+                                @can('purchase.view')
+                                    <div id="tabsPurchaseSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.purchase-configuration')
+                                    </div>
+                                @endcan
+                                @can('tailoring order.view')
+                                    <div id="tabsTailoringSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.tailoring-configuration')
+                                    </div>
+                                @endcan
+                                @can('rent out.view')
+                                    <div id="tabsRentOutSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.rent-out-configuration')
+                                    </div>
+                                @endcan
+                                @can('configuration.settings')
+                                    <div id="tabsUniversalUom" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.universal-uom-configuration')
+                                    </div>
+                                @endcan
                                 @if (auth()->user()->is_super_admin)
                                     <div id="tabsUniqueNoCounters" class="tab-pane" role="tabpanel">
                                         @livewire('settings.unique-no-counter-configuration')
@@ -145,11 +185,12 @@
                                         @livewire('settings.module-configuration')
                                     </div>
                                 @endif
-                                <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
-                                    @livewire('settings.company-profile')
-                                </div>
-                                <div id="tabsTheme" class="tab-pane" role="tabpanel">
-                                    <div class="card">
+                                @can('configuration.settings')
+                                    <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
+                                        @livewire('settings.company-profile')
+                                    </div>
+                                    <div id="tabsTheme" class="tab-pane" role="tabpanel">
+                                        <div class="card">
                                         <div class="card-header">
                                             <h5 class="card-title mb-0">Theme Settings</h5>
                                         </div>
@@ -204,20 +245,23 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        </div>
                                     </div>
-                                </div>
+                                @endcan
                                 <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
                                     @livewire('settings.working-day')
                                 </div>
-                                <div id="tabsNavigationOrder" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.navigation-order')
-                                </div>
-                                <div id="tabsTelegram" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.telegram')
-                                </div>
-                                <div id="tabsNotificationPreferences" class="tab-pane" role="tabpanel">
-                                    @livewire('settings.notification-preferences')
-                                </div>
+                                @can('configuration.settings')
+                                    <div id="tabsNavigationOrder" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.navigation-order')
+                                    </div>
+                                    <div id="tabsTelegram" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.telegram')
+                                    </div>
+                                    <div id="tabsNotificationPreferences" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.notification-preferences')
+                                    </div>
+                                @endcan
                                 @can('whatsapp.integration')
                                     <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
                                         {{-- @livewire('settings.whatsapp') --}}

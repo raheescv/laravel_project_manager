@@ -28,6 +28,8 @@ class SaleConfiguration extends Component
 
     public $default_customer_enabled;
 
+    public $default_product_type;
+
     public $print_item_label; // 'product' or 'category'
 
     public $print_quantity_label; // 'quantity' or 'weight'
@@ -56,6 +58,7 @@ class SaleConfiguration extends Component
         $this->enable_barcode_in_print = Configuration::where('key', 'enable_barcode_in_print')->value('value');
         $this->sale_type = Configuration::where('key', 'sale_type')->value('value');
         $this->default_customer_enabled = Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes';
+        $this->default_product_type = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
         $this->print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
         $this->print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
         $this->default_quantity = Configuration::where('key', 'default_quantity')->value('value') ?? '0.001';
@@ -78,6 +81,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'enable_barcode_in_print'], ['value' => $this->enable_barcode_in_print]);
         Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => $this->sale_type]);
         Configuration::updateOrCreate(['key' => 'default_customer_enabled'], ['value' => $this->default_customer_enabled]);
+        Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => $this->default_product_type]);
         Configuration::updateOrCreate(['key' => 'print_item_label'], ['value' => $this->print_item_label]);
         Configuration::updateOrCreate(['key' => 'print_quantity_label'], ['value' => $this->print_quantity_label]);
         Configuration::updateOrCreate(['key' => 'default_quantity'], ['value' => $this->default_quantity]);

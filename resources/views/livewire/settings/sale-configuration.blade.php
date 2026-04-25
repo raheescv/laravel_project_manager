@@ -19,6 +19,12 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
+                        <label class="form-label fw-medium" for="default_product_type">Default Product Type</label>
+                        {{ html()->select('default_product_type', ['product' => 'Products', 'service' => 'Services', '' => 'All Types'])->value('')->class('form-select')->placeholder('Select Default Product Type')->attribute('wire:model', 'default_product_type') }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
                         <label class="form-label fw-medium" for="default_status">Default Status</label>
                         {{ html()->select('default_status', saleStatuses())->value('')->class('form-select')->placeholder('Select Default Status')->attribute('wire:model', 'default_status') }}
                     </div>
