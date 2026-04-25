@@ -36,9 +36,10 @@ class Page extends Component
     {
         $this->approvedLpos = LocalPurchaseOrder::approved()
             ->with('branch', 'vendor')
+            ->latest()
             ->get()
             ->mapWithKeys(fn ($lpo) => [
-                $lpo->id => "LPO #{$lpo->id} - {$lpo->vendor?->name} ({$lpo->branch?->name})",
+                $lpo->id => "LPO #{$lpo->id} - {$lpo->vendor?->name}",
             ]);
 
         $this->date = date('Y-m-d');

@@ -35,7 +35,7 @@
 
             <div class="card-body px-4 py-4">
                 <div class="row g-3">
-                    <div class="col-md-4" wire:ignore>
+                    <div class="col-md-5" wire:ignore>
                         <label class="form-label fw-semibold">
                             <i class="fa fa-shopping-cart text-muted me-1"></i> Local Purchase Order
                         </label>
@@ -62,7 +62,7 @@
                         <input type="date" wire:model="date" class="form-control" value="{{ $this->date }}">
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label fw-semibold">
                             <i class="fa fa-barcode text-muted me-1"></i> Invoice No *
                         </label>

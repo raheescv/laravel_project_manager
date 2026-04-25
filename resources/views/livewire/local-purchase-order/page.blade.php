@@ -57,9 +57,7 @@
                 <div class="bg-light rounded-3 p-3">
                     <div class="row g-2 align-items-center">
                         <div class="col">
-                            <select x-ref="addSelect" id="add-product-select">
-                                <option value="">Select Product</option>
-                            </select>
+                            {{ html()->select('product_id', [])->value('')->class('select-product_id-list shadow-none')->id('product_id')->placeholder('Select Product') }}
                         </div>
                         <div class="col-auto" style="width: 110px;">
                             <input type="number" class="form-control" min="1" x-model.number="newQty" placeholder="Qty">
@@ -248,6 +246,7 @@
 
     @push('scripts')
         @include('components.select.vendorSelect')
+        @include('components.select.productSelect')
 
         <script>
             $(document).ready(function() {
@@ -322,8 +321,8 @@
                         this.selected = {};
                         this.selectedPr = null;
 
-                        const modalEl = document.getElementById('PurchaseRequestModal');
-                        bootstrap.Modal.getInstance(modalEl).hide();
+                        // const modalEl = document.getElementById('PurchaseRequestModal');
+                        // bootstrap.Modal.getInstance(modalEl).hide();
                     }
                 }
             }
@@ -335,25 +334,18 @@
                     newProductId: null,
                     newQty: 1,
                     newRate: 0,
-                    tomSelect: null,
 
                     init() {
                         this.$nextTick(() => {
-                            this.tomSelect = new TomSelect(this.$refs.addSelect, {
-                                create: false,
-                                sortField: 'text',
-                                dropdownParent: document.getElementById('app'),
-                                placeholder: 'Select Product',
-                                options: this.getAvailableOptions(),
-                                onChange: (value) => {
-                                    this.newProductId = value;
-                                    if (value) {
-                                        const product = this.productOptions.find(p => String(p.id) === String(value));
-                                        if (product && product.cost) {
-                                            this.newRate = Number(product.cost);
-                                        }
+                            $('#product_id').on('change', (event) => {
+                                const value = event.target.value || null;
+                                this.newProductId = value;
+                                if (value) {
+                                    const product = this.productOptions.find(p => String(p.id) === String(value));
+                                    if (product && product.cost != null) {
+                                        this.newRate = Number(product.cost);
                                     }
-                                },
+                                }
                             });
                         });
 
@@ -373,10 +365,12 @@
                     },
 
                     refreshSelectOptions() {
-                        if (!this.tomSelect) return;
-                        this.tomSelect.clear(true);
-                        this.tomSelect.clearOptions();
-                        this.getAvailableOptions().forEach(opt => this.tomSelect.addOption(opt));
+                        const productSelect = document.querySelector('#product_id');
+                        if (!productSelect?.tomselect) {
+                            return;
+                        }
+                        productSelect.tomselect.clear();
+                        this.newProductId = null;
                     },
 
                     addItem() {
