@@ -8,7 +8,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/js/inventory-opening-balance.js',
+                'resources/js/inventory-stock-adjustment.js',
                 'resources/js/stock-check.js',
                 'resources/js/stock-check-show.js',
                 'resources/js/general-voucher-modal.js',

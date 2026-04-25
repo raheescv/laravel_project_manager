@@ -6,9 +6,9 @@ use App\Actions\Product\Inventory\UpdateAction as InventoryUpdateAction;
 use App\Models\Inventory;
 use Exception;
 
-class SaveOpeningBalanceAction
+class SaveStockAdjustmentAction
 {
-    public function execute(array $items, int $userId, ?string $remarks = null): array
+    public function execute(array $items, int $userId, int $branchId, ?string $remarks = null): array
     {
         $results = [];
 
@@ -16,8 +16,8 @@ class SaveOpeningBalanceAction
             try {
                 $data = [
                     'quantity' => $item['quantity'],
-                    'remarks' => $item['remarks'] ?? ($remarks ?? 'Opening Balance Entry'),
-                    'model' => 'InventoryOpeningBalance',
+                    'remarks' => $item['remarks'] ?? ($remarks ?? 'Stock Adjustment Entry'),
+                    'model' => 'InventoryStockAdjustment',
                     'model_id' => null,
                     'updated_by' => $userId,
                 ];
@@ -25,11 +25,12 @@ class SaveOpeningBalanceAction
                 // Check if inventory exists
                 $existingInventory = Inventory::withoutGlobalScopes()
                     ->where('id', $item['inventory_id'])
+                    ->where('branch_id', $branchId)
                     ->whereNull('employee_id')
                     ->first();
 
                 if (! $existingInventory) {
-                    throw new Exception('Inventory not found');
+                    throw new Exception('Inventory not found for the active branch');
                 }
 
                 // Update existing inventory

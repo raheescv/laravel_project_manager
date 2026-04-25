@@ -3,7 +3,7 @@
 use App\Http\Controllers\AiImageController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\InventoryController;
-use App\Http\Controllers\InventoryOpeningBalanceController;
+use App\Http\Controllers\InventoryStockAdjustmentController;
 use App\Http\Controllers\InventoryTransferController;
 use App\Http\Controllers\StockCheckController;
 use Illuminate\Support\Facades\Route;
@@ -12,8 +12,8 @@ Route::middleware('auth')->group(function (): void {
     Route::name('inventory::')->prefix('inventory')->group(function (): void {
         Route::get('', [InventoryController::class, 'index'])->name('index')->can('inventory.view');
         Route::get('search', [InventoryController::class, 'search'])->name('search')->can('inventory.product search');
-        Route::get('opening-balance', [InventoryOpeningBalanceController::class, 'index'])->name('opening-balance')->can('inventory.opening balance');
-        Route::post('opening-balance/save', [InventoryOpeningBalanceController::class, 'save'])->name('opening-balance.save')->can('inventory.opening balance');
+        Route::get('stock-adjustment', [InventoryStockAdjustmentController::class, 'index'])->name('stock-adjustment')->can('inventory.stock adjustment');
+        Route::post('stock-adjustment/save', [InventoryStockAdjustmentController::class, 'save'])->name('stock-adjustment.save')->can('inventory.stock adjustment');
         Route::name('product::')->prefix('product')->group(function (): void {
             Route::get('view/{id}', [InventoryController::class, 'view'])->name('view')->can('inventory.view');
             Route::get('list', [InventoryController::class, 'get'])->name('list');

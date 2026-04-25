@@ -7,7 +7,7 @@
         @php
             $list = [
                 'inventory',
-                'inventory/opening-balance',
+                'inventory/stock-adjustment',
                 'inventory/product/*',
                 'inventory/search',
                 'inventory/transfer',
@@ -29,7 +29,7 @@
             @can('inventory.view')
                 <li class="nav-item">
                     <a href="{{ route('inventory::index') }}"
-                        class="nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/opening-balance']) ? 'active' : '' }}">List</a>
+                        class="nav-link {{ request()->is(['inventory', 'inventory/product/*', 'inventory/stock-adjustment']) ? 'active' : '' }}">List</a>
                 </li>
             @endcan
             @can('inventory.product search')

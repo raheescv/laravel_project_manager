@@ -8,23 +8,23 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item"><a href="{{ route('inventory::index') }}">Inventory</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Opening Balance</li>
+                    <li class="breadcrumb-item active" aria-current="page">Stock Adjustment</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Opening Balance</h1>
+            <h1 class="page-title mb-0 mt-2">Stock Adjustment</h1>
             <p class="lead">
-                Set opening balance for inventory items
+                Adjust stock quantities for inventory items
             </p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3 p-1">
-                <div id="opening-balance-form"></div>
+                <div id="stock-adjustment-form"></div>
             </div>
         </div>
     </div>
     @push('scripts')
-        @vite('resources/js/inventory-opening-balance.js')
+        @vite('resources/js/inventory-stock-adjustment.js')
     @endpush
 </x-app-layout>

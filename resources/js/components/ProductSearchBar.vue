@@ -90,6 +90,10 @@ import axios from 'axios'
 import BarcodeScanner from './BarcodeScanner.vue'
 
 const props = defineProps({
+    branchId: {
+        type: [String, Number],
+        default: null
+    },
     onProductSelect: {
         type: Function,
         default: null
@@ -124,6 +128,19 @@ const isDropdownLoading = ref(false)
 const nameHighlightedIndex = ref(0)
 const nameSearchTimeout = ref(null)
 
+const getSearchParams = (params = {}) => {
+    const normalizedBranchId = props.branchId !== null ? Number(props.branchId) : null
+
+    if (Number.isInteger(normalizedBranchId) && normalizedBranchId > 0) {
+        return {
+            ...params,
+            branch_id: normalizedBranchId,
+        }
+    }
+
+    return params
+}
+
 const handleProductSelect = (product) => {
     if (product) {
         emit('product-selected', product)
@@ -149,11 +166,11 @@ const loadNameProducts = async (query = '') => {
     isDropdownLoading.value = true
     try {
         const response = await axios.get('/inventory/product/getProduct', {
-            params: {
+            params: getSearchParams({
                 productName: query,
                 limit: 10,
                 page: 1,
-            },
+            }),
         })
 
         const items = response.data.data || []
@@ -233,18 +250,12 @@ const handleCodeSearch = async () => {
 
     try {
         const response = await axios.get('/inventory/product/getProduct', {
-            params: {
+            params: getSearchParams({
                 productCode: code,
                 limit: 1,
                 page: 1,
-            },
+            }),
         })
-
-        const products = response.data.data || []
-        if (products.length > 0) {
-            const product = normalizeProduct(products[0])
-            handleProductSelect(product)
-        }
 
         emit('code-searched', code)
         if (props.onCodeSearch) {
@@ -261,23 +272,21 @@ const handleCodeSearch = async () => {
 
 const handleBarcodeSearch = async () => {
     const barcode = productBarcode.value.trim()
-    if (!barcode) {
+    if (!barcode || barcode.length < 3) {
         return
     }
 
     try {
         const response = await axios.get('/inventory/product/getProduct', {
-            params: {
+            params: getSearchParams({
                 productBarcode: barcode,
                 limit: 1,
                 page: 1,
-            },
+            }),
         })
 
         const products = response.data.data || []
         if (products.length > 0) {
-            const product = normalizeProduct(products[0])
-            handleProductSelect(product)
             beep() // Play beep sound on successful barcode scan
         }
 
@@ -314,7 +323,6 @@ const closeScanner = () => {
 
 const handleScannedBarcode = ({ code, product }) => {
     if (product) {
-        handleProductSelect(product)
         productBarcode.value = code
     }
 

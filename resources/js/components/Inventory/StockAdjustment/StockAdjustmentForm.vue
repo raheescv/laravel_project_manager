@@ -3,7 +3,7 @@
         <div class="card-header bg-primary ">
             <h5 class="mb-0 text-white">
                 <i class="fa fa-save me-2"></i>
-                Save Opening Balance
+                Save Stock Adjustment
             </h5>
         </div>
         <div class="card-body">
@@ -39,7 +39,7 @@
                     <button type="submit" class="btn btn-success btn-lg text-white"
                         :disabled="loading || totalItems === 0">
                         <i class="fa fa-save me-2"></i>
-                        {{ loading ? 'Saving...' : 'Save Opening Balance' }}
+                        {{ loading ? 'Saving...' : 'Save Stock Adjustment' }}
                     </button>
                 </div>
             </form>
@@ -82,13 +82,13 @@ const totalItems = computed(() => {
 
 const totalQuantity = computed(() => {
     return props.items?.reduce((sum, item) => {
-        return sum + (parseFloat(item.opening_quantity) || 0)
+        return sum + (parseFloat(item.adjusted_quantity) || 0)
     }, 0) || 0
 })
 
 const totalValue = computed(() => {
     return props.items?.reduce((sum, item) => {
-        const qty = parseFloat(item.opening_quantity) || 0
+        const qty = parseFloat(item.adjusted_quantity) || 0
         const cost = parseFloat(item.cost || item.product_cost) || 0
         return sum + (qty * cost)
     }, 0) || 0
@@ -109,20 +109,20 @@ const handleSubmit = async () => {
     emit('loading', true)
 
     try {
-        // Prepare data for opening balance
-        const openingBalanceData = props.items.map(item => ({
+        // Prepare data for stock adjustment
+        const stockAdjustmentData = props.items.map(item => ({
             inventory_id: item.inventory_id,
-            quantity: parseFloat(item.opening_quantity) || 0,
-            remarks: remarks.value || 'Opening Balance Entry',
+            quantity: parseFloat(item.adjusted_quantity) || 0,
+            remarks: remarks.value || 'Stock Adjustment Entry',
         }))
 
-        const response = await axios.post('/inventory/opening-balance/save', {
-            items: openingBalanceData,
+        const response = await axios.post('/inventory/stock-adjustment/save', {
+            items: stockAdjustmentData,
             remarks: remarks.value,
         })
 
         if (response.data.success) {
-            const successMsg = response.data.message || 'Opening balance saved successfully'
+            const successMsg = response.data.message || 'Stock adjustment saved successfully'
             if (props.onSuccess) {
                 props.onSuccess(successMsg)
             }
@@ -133,11 +133,11 @@ const handleSubmit = async () => {
                 window.location.reload()
             }, 1500)
         } else {
-            throw new Error(response.data.message || 'Failed to save opening balance')
+            throw new Error(response.data.message || 'Failed to save stock adjustment')
         }
     } catch (error) {
-        console.error('Error saving opening balance:', error)
-        const errorMsg = error.response?.data?.message || error.message || 'Failed to save opening balance'
+        console.error('Error saving stock adjustment:', error)
+        const errorMsg = error.response?.data?.message || error.message || 'Failed to save stock adjustment'
         if (props.onError) {
             props.onError(errorMsg)
         }

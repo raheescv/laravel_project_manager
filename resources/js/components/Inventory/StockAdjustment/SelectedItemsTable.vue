@@ -3,7 +3,7 @@
         <div v-if="!items || items.length === 0" class="card mb-3">
             <div class="card-body text-center text-muted py-5">
                 <i class="fa fa-inbox fa-3x mb-3"></i>
-                <p class="mb-0">No items selected. Search and select products to set opening balance.</p>
+                <p class="mb-0">No items selected. Search and select products to adjust stock.</p>
             </div>
         </div>
 
@@ -15,6 +15,9 @@
                 </h5>
             </div>
             <div class="card-body p-0">
+                <div class="px-3 pt-2 pb-1 text-muted small">
+                    You can edit either <strong>Adjustment Qty</strong> or <strong>Adjusted Qty (Final)</strong>. Both fields stay synchronized.
+                </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
                         <thead class="table-light">
@@ -23,8 +26,9 @@
                                 <th class="border-0">Product Code</th>
                                 <th class="border-0">Product Name</th>
                                 <th class="border-0">Barcode</th>
-                                <th class="border-0 text-end">Current Qty</th>
-                                <th class="border-0 text-end">Opening Qty</th>
+                                <th class="border-0 text-end">Current Stock</th>
+                                <th class="border-0 text-end">Adjustment Qty (+/-)</th>
+                                <th class="border-0 text-end">Adjusted Qty (Final)</th>
                                 <th class="border-0 text-end">MRP</th>
                                 <th class="border-0 text-center">Action</th>
                             </tr>
@@ -37,7 +41,11 @@
                                 <td>
                                     <code class="text-primary">{{ item . code }}</code>
                                 </td>
-                                <td>{{ item . name }}</td>
+                                <td>
+                                    <a :href="getProductViewUrl(item)" class="text-decoration-none fw-semibold link-primary" target="_blank" rel="noopener noreferrer">
+                                        {{ item . name }}
+                                    </a>
+                                </td>
                                 <td>
                                     <code class="text-muted">{{ item . barcode || '-' }}</code>
                                 </td>
@@ -47,8 +55,13 @@
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <input type="number" :ref="el => setQuantityInputRef(el, item.inventory_id)" :value="item.opening_quantity || ''" @input="handleQuantityChange(item, $event)" min="0" step="0.001" placeholder="0"
+                                    <input type="number" :ref="el => setQuantityInputRef(el, item.inventory_id)" :value="item.adjustment_quantity ?? 0" @input="handleAdjustmentChange(item, $event)" step="0.001" placeholder="0"
                                         style="border: none; background: transparent; width: 100%; text-align: right; outline: none; color: blue;" />
+                                </td>
+                                <td class="text-end">
+                                    <input type="number" :value="item.adjusted_quantity ?? 0" @input="handleAdjustedQuantityChange(item, $event)" step="0.001" placeholder="0"
+                                        class="text-primary"
+                                        style="border: none; background: transparent; width: 100%; text-align: right; outline: none; font-weight: 600;" />
                                 </td>
                                 <td class="text-end">
                                     <code class="text-success">{{ item . mrp || '0.00' }}</code>
@@ -77,7 +90,7 @@ import { ref, watch, nextTick } from 'vue'
         }
     })
 
-    const emit = defineEmits(['remove', 'update-quantity'])
+    const emit = defineEmits(['remove', 'update-adjustment', 'update-adjusted-quantity'])
 
     const quantityInputRefs = ref({})
     const previousItemsLength = ref(0)
@@ -88,13 +101,22 @@ import { ref, watch, nextTick } from 'vue'
         }
     }
 
-    const handleQuantityChange = (item, event) => {
-        const quantity = parseFloat(event.target.value) || 0
-        emit('update-quantity', item.inventory_id, quantity)
+    const handleAdjustmentChange = (item, event) => {
+        const adjustmentQuantity = parseFloat(event.target.value)
+        emit('update-adjustment', item.inventory_id, Number.isNaN(adjustmentQuantity) ? 0 : adjustmentQuantity)
+    }
+
+    const handleAdjustedQuantityChange = (item, event) => {
+        const adjustedQuantity = parseFloat(event.target.value)
+        emit('update-adjusted-quantity', item.inventory_id, Number.isNaN(adjustedQuantity) ? 0 : adjustedQuantity)
     }
 
     const handleRemove = (item) => {
         emit('remove', item.inventory_id)
+    }
+
+    const getProductViewUrl = (item) => {
+        return `/inventory/product/view/${item.product_id}`
     }
 
     // Watch for new items and focus on the quantity input

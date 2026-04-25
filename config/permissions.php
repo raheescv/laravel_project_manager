@@ -39,7 +39,7 @@ return [
         'product search',
         'barcode cart',
         'transfer',
-        'opening balance',
+        'stock adjustment',
         'reset stock',
         'stock check',
     ],

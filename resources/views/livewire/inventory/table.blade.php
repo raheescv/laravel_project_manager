@@ -59,10 +59,10 @@
                                 <i class="demo-pli-layout-grid me-2"></i> Column Visibility
                             </a>
                         </li>
-                        @can('inventory.opening balance')
+                        @can('inventory.stock adjustment')
                             <li>
-                                <a class="dropdown-item" href="{{ route('inventory::opening-balance') }}">
-                                    <i class="demo-pli-reload-3 me-2"></i> Opening Balance
+                                <a class="dropdown-item" href="{{ route('inventory::stock-adjustment') }}">
+                                    <i class="demo-pli-reload-3 me-2"></i> Stock Adjustment
                                 </a>
                             </li>
                         @endcan
