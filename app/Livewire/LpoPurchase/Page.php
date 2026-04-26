@@ -58,6 +58,7 @@ class Page extends Component
                 'id' => $item->id,
                 'local_purchase_order_item_id' => null,
                 'product_id' => $item->product_id,
+                'account_id' => $item->account_id,
                 'product_name' => $item->product?->name,
                 'unit_id' => $item->unit_id,
                 'unit_name' => $item->unit?->name,
@@ -105,6 +106,7 @@ class Page extends Component
             ->map(fn ($item) => [
                 'local_purchase_order_item_id' => $item->id,
                 'product_id' => $item->product_id,
+                'account_id' => $item->account_id,
                 'product_name' => $item->product->name,
                 'unit_id' => $item->product->unit_id ?? null,
                 'unit_name' => $item->product->unit?->name ?? '-',

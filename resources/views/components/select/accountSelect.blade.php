@@ -1,39 +1,27 @@
 <script type="text/javascript">
-    $('.select-account_id-list').each(function() {
-        new TomSelect(this, {
+    function initAccountSelectList(el, onChange) {
+        var url = "{{ route('account::list') }}";
+        return new TomSelect(el, {
             persist: false,
             plugins: ['remove_button'],
             valueField: 'id',
-            nameField: 'name',
+            labelField: 'name',
             searchField: ['name', 'id'],
             load: function(query, callback) {
-                var url = "{{ route('account::list') }}";
-                url += '?query=' + encodeURIComponent(query);
-                fetch(url)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(json => {
-                        callback(json.items);
-                    })
-                    .catch(err => {
-                        console.error('Error loading data:', err);
-                        callback();
-                    });
+                fetch(url + '?query=' + encodeURIComponent(query))
+                    .then(r => r.json()).then(j => callback(j.items)).catch(() => callback());
             },
-            onFocus: function() {
-                this.load('');
-            },
+            onFocus: function() { this.load(''); },
+            onChange: onChange || function() {},
             render: {
-                option: function(item, escape) {
-                    return `<div>${escape(item.name || item.text || '')}</div>`;
-                },
-                item: function(item, escape) {
-                    return `<div>${escape(item.name || item.text || '')}</div>`;
-                },
+                option: function(item, escape) { return `<div>${escape(item.name || item.text || '')}</div>`; },
+                item:   function(item, escape) { return `<div>${escape(item.name || item.text || '')}</div>`; },
             },
         });
+    }
+
+    $('.select-account_id-list').each(function() {
+        initAccountSelectList(this);
     });
     $('.select-account_id').each(function(index, el) {
         const account_type = el.getAttribute('account_type') || null;

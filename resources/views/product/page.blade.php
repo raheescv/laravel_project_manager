@@ -36,5 +36,6 @@
         @include('components.select.departmentSelect')
         @include('components.select.brandSelect')
         @include('components.select.categorySelect')
+        @include('components.select.accountSelect')
     @endpush
 </x-app-layout>

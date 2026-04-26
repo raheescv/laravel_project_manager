@@ -15,6 +15,7 @@ class PurchaseItem extends Model implements AuditableContracts
     protected $fillable = [
         'purchase_id',
         'product_id',
+        'account_id',
         'unit_id',
         'batch',
         'unit_price',
@@ -38,6 +39,11 @@ class PurchaseItem extends Model implements AuditableContracts
             'created_by' => ['required'],
             'updated_by' => ['required'],
         ], $merge);
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
     }
 
     public function product()

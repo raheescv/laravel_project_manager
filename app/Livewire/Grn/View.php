@@ -27,6 +27,7 @@ class View extends Component
             'branch',
             'decisionMaker',
             'items.product.brand',
+            'items.account:id,name',
             'items.product.mainCategory',
             'items.product.subCategory',
             'items.product.unit',
@@ -58,7 +59,7 @@ class View extends Component
             }
 
             // Journal entry
-            $this->grn->load(['vendor', 'localPurchaseOrder.vendor']);
+            $this->grn->load(['vendor', 'localPurchaseOrder.vendor', 'items']);
             $journalResponse = (new JournalEntryAction())->execute($this->grn, Auth::id());
             if (! $journalResponse['success']) {
                 throw new Exception('GRN accepted but journal entry failed: '.$journalResponse['message']);

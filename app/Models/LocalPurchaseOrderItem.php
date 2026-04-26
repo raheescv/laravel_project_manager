@@ -16,6 +16,7 @@ class LocalPurchaseOrderItem extends Model
         'product_id',
         'quantity',
         'rate',
+        'account_id',
         // 'total',
     ];
 
@@ -27,5 +28,10 @@ class LocalPurchaseOrderItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
     }
 }

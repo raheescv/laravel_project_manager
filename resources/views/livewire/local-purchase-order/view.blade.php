@@ -186,6 +186,7 @@
                         <tr class="bg-light">
                             <th class="border-0 rounded-start">#</th>
                             <th class="border-0">Product</th>
+                            <th class="border-0">Expense Account</th>
                             <th class="border-0">Code</th>
                             <th class="border-0">Category</th>
                             <th class="border-0">Sub Category</th>
@@ -204,6 +205,9 @@
                                 </td>
                                 <td>
                                     <span class="fw-medium">{{ $item->product->name }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">{{ $item->account?->name ?? '-' }}</span>
                                 </td>
                                 <td>
                                     <span class="text-muted small">{{ $item->product->code ?? '-' }}</span>
@@ -234,7 +238,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="text-center py-4">
+                                <td colspan="11" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="demo-psi-basket-coins fs-1 d-block mb-2 opacity-25"></i>
                                         No products added
@@ -246,7 +250,7 @@
                     @if ($order->items->count())
                         <tfoot>
                             <tr class="bg-light">
-                                <td colspan="7" class="fw-bold border-0 rounded-start">Total</td>
+                                <td colspan="8" class="fw-bold border-0 rounded-start">Total</td>
                                 <td class="fw-bold text-end border-0">{{ $order->items->sum('quantity') }}</td>
                                 <td class="border-0"></td>
                                 <td class="fw-bold text-end border-0 rounded-end">

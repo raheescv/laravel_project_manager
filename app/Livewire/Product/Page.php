@@ -120,9 +120,13 @@ class Page extends Component
                 'images' => [],
                 'angles_360' => [],
                 'degree' => [],
+                'income_account_id' => null,
+                'expense_account_id' => null,
+                'income_account' => [],
+                'expense_account' => [],
             ];
         } else {
-            $this->product = Product::with('department', 'subCategory', 'mainCategory', 'brand', 'images', 'unit', 'units.subUnit', 'prices')->find($this->table_id);
+            $this->product = Product::with('department', 'subCategory', 'mainCategory', 'brand', 'images', 'unit', 'units.subUnit', 'prices', 'incomeAccount', 'expenseAccount')->find($this->table_id);
             if (! $this->product) {
                 return redirect()->route('product::index');
             }
@@ -381,6 +385,7 @@ class Page extends Component
         }
 
         try {
+            /** @var Product|null $product */
             $product = Product::find($this->table_id);
 
             if (! $product) {

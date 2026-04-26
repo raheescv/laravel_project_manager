@@ -30,6 +30,7 @@ class Page extends Component
     {
         $this->approvedLpos = LocalPurchaseOrder::approved()
             ->with('branch', 'vendor')
+            ->latest('id')
             ->get()
             ->mapWithKeys(fn ($lpo) => [
                 $lpo->id => "LPO #{$lpo->id} - {$lpo->vendor?->name} ({$lpo->branch?->name})",
@@ -57,6 +58,7 @@ class Page extends Component
                     'product_name' => $lpoItem->product?->name,
                     'ordered_quantity' => $lpoItem->quantity,
                     'rate' => $lpoItem->rate,
+                    'account_id' => $lpoItem->account_id,
                     'quantity' => $grnItem?->quantity ?? 0,
                 ];
             })->toArray();
@@ -89,6 +91,7 @@ class Page extends Component
                 'product_name' => $item->product->name,
                 'ordered_quantity' => $item->quantity,
                 'rate' => $item->rate,
+                'account_id' => $item->account_id,
                 'quantity' => $item->quantity,
             ])
             ->toArray();

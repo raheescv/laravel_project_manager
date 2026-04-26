@@ -466,6 +466,34 @@
                                 </div>
                             @endif
                             <div class="col-12">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-subtitle mb-3 d-flex align-items-center">
+                                            <span class="badge bg-warning p-2 me-2 text-dark">
+                                                <i class="fa fa-book"></i>
+                                            </span>
+                                            Account Settings
+                                        </h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6" wire:ignore>
+                                                <label for="expense_account_id" class="form-label fw-medium">
+                                                    <i class="fa fa-credit-card text-primary me-1 small"></i>
+                                                    Expense Account
+                                                </label>
+                                                {{ html()->select('expense_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select expense account')->id('expense_account_id') }}
+                                            </div>
+                                            <div class="col-md-6" wire:ignore>
+                                                <label for="income_account_id" class="form-label fw-medium">
+                                                    <i class="fa fa-bank text-success me-1 small"></i>
+                                                    Income Account
+                                                </label>
+                                                {{ html()->select('income_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select income account')->id('income_account_id') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
                                 <div class="card bg-light border-0 rounded-3 mt-2">
                                     <div class="card-body p-3">
                                         <h6 class="card-subtitle mb-3 d-flex align-items-center">
@@ -992,6 +1020,13 @@
                     @this.set('products.brand_id', value);
                     $("#size").select();
                 });
+
+                $('#expense_account_id').on('change', function() {
+                    @this.set('products.expense_account_id', $(this).val() || null);
+                });
+                $('#income_account_id').on('change', function() {
+                    @this.set('products.income_account_id', $(this).val() || null);
+                });
                 $('#main_category_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('products.main_category_id', value);
@@ -1102,6 +1137,32 @@
                         console.warn('Error handling sub_category_id:', error);
                     }
                 }
+                var expenseAccountEl = document.querySelector('#expense_account_id');
+                if (expenseAccountEl && expenseAccountEl.tomselect) {
+                    try {
+                        var ts = expenseAccountEl.tomselect;
+                        if (product['expense_account_id'] && product['expense_account']) {
+                            ts.addOption({ id: product['expense_account']['id'], name: product['expense_account']['name'] });
+                            ts.addItem(product['expense_account_id']);
+                        } else {
+                            ts.clear();
+                        }
+                    } catch (error) { console.warn('Error handling expense_account_id:', error); }
+                }
+
+                var incomeAccountEl = document.querySelector('#income_account_id');
+                if (incomeAccountEl && incomeAccountEl.tomselect) {
+                    try {
+                        var ts = incomeAccountEl.tomselect;
+                        if (product['income_account_id'] && product['income_account']) {
+                            ts.addOption({ id: product['income_account']['id'], name: product['income_account']['name'] });
+                            ts.addItem(product['income_account_id']);
+                        } else {
+                            ts.clear();
+                        }
+                    } catch (error) { console.warn('Error handling income_account_id:', error); }
+                }
+
                 $('#name').select();
             });
 

@@ -19,7 +19,7 @@
         @endif
 
         {{-- Purchase Header Details --}}
-        <div class="mb-4 shadow-sm card border-0 overflow-hidden">
+        <div class="mb-4 shadow-sm card border-0">
             <div class="card-header bg-white border-bottom py-3 px-4">
                 <div class="d-flex align-items-center">
                     <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3"
@@ -39,7 +39,7 @@
                         <label class="form-label fw-semibold">
                             <i class="fa fa-shopping-cart text-muted me-1"></i> Local Purchase Order
                         </label>
-                        {{ html()->select('local_purchase_order_id', $approvedLpos)->value($this->local_purchase_order_id)->class('tomSelect')->id('lpo_id')->placeholder('Select LPO') }}
+                        {{ html()->select('local_purchase_order_id', $approvedLpos)->value($this->local_purchase_order_id)->class('lpo-select')->id('lpo_id')->placeholder('Select LPO') }}
                     </div>
 
                     <div class="col-md-3">
@@ -228,6 +228,15 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
+                new TomSelect('#lpo_id', {
+                    plugins: ['remove_button'],
+                    dropdownParent: 'body',
+                    sortField: [{
+                        field: '$order',
+                        direction: 'asc'
+                    }],
+                });
+
                 $('#lpo_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('local_purchase_order_id', value);
@@ -289,5 +298,10 @@
                 }
             }
         </script>
+        <style>
+            .ts-dropdown {
+                z-index: 2000 !important;
+            }
+        </style>
     @endpush
 </div>

@@ -82,6 +82,9 @@ class Product extends Model implements AuditableContracts
         'reorder_level',
         'plu',
 
+        'income_account_id',
+        'expense_account_id',
+
         'priority',
         'status',
 
@@ -463,6 +466,16 @@ class Product extends Model implements AuditableContracts
         $return['items'] = $self;
 
         return $return;
+    }
+
+    public function incomeAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'income_account_id');
+    }
+
+    public function expenseAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'expense_account_id');
     }
 
     public function prices()

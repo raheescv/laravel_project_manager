@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <div class="mb-4 border-0 shadow-sm card" wire:ignore x-data="lpoProducts(@js($items), @js($this->productOptions))">
+        <div class="mb-4 border-0 shadow-sm card" wire:ignore x-data="lpoProducts(@js($items), @js($this->productOptions), @js($this->accountOptions))">
 
             <div class="card-header bg-white border-bottom px-4 py-3">
                 <div class="d-flex align-items-center justify-content-between mb-3">
@@ -90,6 +90,7 @@
                                 <tr class="bg-light">
                                     <th class="ps-4 text-muted fw-semibold" style="width: 50px;">#</th>
                                     <th class="text-muted fw-semibold">Product</th>
+                                    <th class="text-muted fw-semibold" style="width: 220px;">Expense Account</th>
                                     <th class="text-center text-muted fw-semibold" style="width: 130px;">Qty</th>
                                     <th class="text-center text-muted fw-semibold" style="width: 130px;">Rate</th>
                                     <th class="text-center text-muted fw-semibold" style="width: 130px;">Amount</th>
@@ -101,14 +102,17 @@
                                     <tr>
                                         <td class="ps-4 text-muted" x-text="index + 1"></td>
                                         <td class="fw-medium" x-text="getProductName(row.product_id)"></td>
+                                        <td x-init="initAccountSelect($el.querySelector('select'), row)">
+                                            <select></select>
+                                        </td>
                                         <td class="text-center">
                                             <input type="number"
-                                                class="form-control form-control-sm text-center mx-auto border-0 bg-light rounded-pill"
+                                                class="form-control-sm text-center mx-auto border-0 bg-light"
                                                 style="width: 75px;" min="1" x-model.number="row.quantity" @input="sync()">
                                         </td>
                                         <td class="text-center">
                                             <input type="number"
-                                                class="form-control form-control-sm text-center mx-auto border-0 bg-light rounded-pill"
+                                                class="form-control-sm text-center mx-auto border-0 bg-light"
                                                 style="width: 90px;" min="0" step="0.01" x-model.number="row.rate" @input="sync()">
                                         </td>
                                         <td class="text-center fw-medium" x-text="(Number(row.quantity) * Number(row.rate)).toFixed(2)"></td>
@@ -247,6 +251,7 @@
     @push('scripts')
         @include('components.select.vendorSelect')
         @include('components.select.productSelect')
+        @include('components.select.accountSelect')
 
         <script>
             $(document).ready(function() {
@@ -327,13 +332,24 @@
                 }
             }
 
-            function lpoProducts(initialItems, productOptions) {
+            function lpoProducts(initialItems, productOptions, accountOptions) {
                 return {
                     productOptions: productOptions,
+                    accountOptions: accountOptions,
                     items: Array.isArray(initialItems) && initialItems.length ? [...initialItems] : [],
                     newProductId: null,
                     newQty: 1,
                     newRate: 0,
+                    newAccountId: null,
+
+                    initAccountSelect(el, row) {
+                        const self = this;
+                        const ts = initAccountSelectList(el, v => { row.account_id = v || null; self.sync(); });
+                        if (row.account_id) {
+                            const acc = this.accountOptions.find(a => String(a.id) === String(row.account_id));
+                            if (acc) { ts.addOption(acc); ts.setValue(row.account_id, true); }
+                        }
+                    },
 
                     init() {
                         this.$nextTick(() => {
@@ -342,9 +358,12 @@
                                 this.newProductId = value;
                                 if (value) {
                                     const product = this.productOptions.find(p => String(p.id) === String(value));
-                                    if (product && product.cost != null) {
-                                        this.newRate = Number(product.cost);
+                                    if (product) {
+                                        if (product.cost != null) this.newRate = Number(product.cost);
+                                        this.newAccountId = product.expense_account_id ?? null;
                                     }
+                                } else {
+                                    this.newAccountId = null;
                                 }
                             });
                         });
@@ -385,11 +404,13 @@
                         this.items.push({
                             product_id: this.newProductId,
                             quantity: this.newQty || 1,
-                            rate: this.newRate || 0
+                            rate: this.newRate || 0,
+                            account_id: this.newAccountId,
                         });
                         this.newProductId = null;
                         this.newQty = 1;
                         this.newRate = 0;
+                        this.newAccountId = null;
                         this.refreshSelectOptions();
                         this.sync();
                     },
@@ -413,10 +434,12 @@
                             if (existingIndex !== -1) {
                                 existing[existingIndex].quantity += Number(p.quantity);
                             } else {
+                                const prod = this.productOptions.find(o => String(o.id) === String(p.product_id));
                                 existing.push({
                                     product_id: Number(p.product_id),
                                     quantity: Number(p.quantity),
-                                    rate: Number(p.rate || 0)
+                                    rate: Number(p.rate || 0),
+                                    account_id: prod?.expense_account_id ?? null,
                                 });
                             }
                         });

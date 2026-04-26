@@ -58,6 +58,7 @@ class CreateUpdateAction
                 ];
                 $saveItemData = [
                     'product_id' => $item['product_id'],
+                    'account_id' => $item['account_id'] ?? null,
                     'unit_id' => $item['unit_id'] ?? null,
                     'unit_price' => $unitPrice,
                     'quantity' => $quantity,

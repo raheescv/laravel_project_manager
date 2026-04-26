@@ -39,6 +39,7 @@ class CreateUpdateAction
                     'tenant_id' => session('tenant_id'),
                     'local_purchase_order_item_id' => $item['local_purchase_order_item_id'],
                     'product_id' => $item['product_id'],
+                    'account_id' => $item['account_id'] ?? null,
                     'quantity' => $item['quantity'],
                     'rate' => $item['rate'] ?? 0,
                 ];

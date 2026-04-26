@@ -37,25 +37,56 @@ class JournalEntryAction
                 throw new \Exception('Required account heads are missing: inventory or unbilled_payables.');
             }
 
-            $entries = [];
+            $remarks = 'GRN received from '.$vendor->name;
+            $base = [
+                'created_by' => $this->userId,
+                'remarks' => $remarks,
+                'model' => 'Grn',
+                'model_id' => $grn->id,
+            ];
 
-            // Calculate total value from LPO item rates
-            $totalValue = $grn->items->sum('total');
+            // Group items by their expense account; fall back to inventory for items without one
+            $groups = $grn->items->groupBy(fn ($item) => $item->account_id ?? 'inventory');
 
-            // Inventory Debit / Unbilled Payables Credit
-            if ($totalValue > 0) {
-                $remarks = 'GRN received from '.$vendor->name;
-                $entries[] = $this->makeEntryPair($accounts['inventory'], $accounts['unbilled_payables'], $totalValue, 0, $remarks, 'Grn', $grn->id);
+            $debitEntries = [];
+            $totalValue = 0;
+
+            foreach ($groups as $accountKey => $items) {
+                $groupTotal = $items->sum('total');
+                if ($groupTotal <= 0) {
+                    continue;
+                }
+
+                $debitAccountId = $accountKey === 'inventory'
+                    ? $accounts['inventory']
+                    : (int) $accountKey;
+
+                $debitEntries[] = array_merge($base, [
+                    'account_id' => $debitAccountId,
+                    'counter_account_id' => $accounts['unbilled_payables'],
+                    'debit' => $groupTotal,
+                    'credit' => 0,
+                ]);
+
+                $totalValue += $groupTotal;
             }
 
-            if (empty($entries)) {
+            if (empty($debitEntries) || $totalValue <= 0) {
                 return [
                     'success' => true,
                     'message' => 'No journal entries needed (zero value).',
                 ];
             }
 
-            $data['entries'] = array_merge(...$entries);
+            // Single consolidated Unbilled Payables credit
+            $creditEntry = array_merge($base, [
+                'account_id' => $accounts['unbilled_payables'],
+                'counter_account_id' => $accounts['inventory'],
+                'debit' => 0,
+                'credit' => $totalValue,
+            ]);
+
+            $data['entries'] = array_merge($debitEntries, [$creditEntry]);
 
             $response = (new CreateAction())->execute($data);
             if (! $response['success']) {

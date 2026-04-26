@@ -84,6 +84,7 @@ class Page extends Component
                         'id' => $item['id'],
                         'key' => $key,
                         'product_id' => $item['product_id'],
+                        'account_id' => $item['account_id'] ?? null,
                         'name' => $item['name'],
                         'barcode' => $item->product?->barcode,
                         'unit_id' => $item['unit_id'] ?: $item->product?->unit_id,
@@ -263,6 +264,7 @@ class Page extends Component
         $single = [
             'key' => $key,
             'product_id' => $product->id,
+            'account_id' => $product->expense_account_id ?? null,
             'name' => $product->name,
             'barcode' => $product->barcode,
             'unit_id' => $product->unit_id,

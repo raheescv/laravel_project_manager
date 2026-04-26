@@ -28,24 +28,23 @@ class Page extends Component
 
     public $productOptions = [];
 
+    public $accountOptions = [];
+
     public $approvedPurchaseRequests = [];
 
     public function mount(?int $order_id = null)
     {
         $this->vendors = Account::select('id', 'name')->vendor()->latest()->get();
 
-        $this->productOptions = Product::select('id', 'name', 'cost')->orderBy('name')->get();
-
-        $this->approvedPurchaseRequests = PurchaseRequest::approved()
-            ->with('branch')
-            ->latest()
-            ->get()
-            ->map(fn ($pr) => [
-                'id' => $pr->id,
-                'label' => "PR-{$pr->id} ({$pr->branch->name})",
-            ]);
+        $this->productOptions = Product::select('id', 'name', 'cost', 'expense_account_id')->orderBy('name')->get();
 
         $this->date = date('Y-m-d');
+
+        $idsForAccountLabels = collect($this->productOptions)
+            ->pluck('expense_account_id')
+            ->filter()
+            ->unique()
+            ->values();
 
         if ($order_id) {
             $order = LocalPurchaseOrder::with('items')->findOrFail($order_id);
@@ -57,8 +56,33 @@ class Page extends Component
                 'product_id' => $item->product_id,
                 'quantity' => $item->quantity,
                 'rate' => $item->rate,
+                'account_id' => $item->account_id,
             ])->toArray();
+            $idsForAccountLabels = $idsForAccountLabels->merge(
+                collect($this->items)->pluck('account_id')->filter()
+            )->unique()->values();
         }
+
+        $this->accountOptions = Account::query()
+            ->select('id', 'name')
+            ->where(function ($q) use ($idsForAccountLabels): void {
+                $q->where('account_type', 'expense');
+                if ($idsForAccountLabels->isNotEmpty()) {
+                    $q->orWhereIn('id', $idsForAccountLabels);
+                }
+            })
+            ->orderBy('name')
+            ->get();
+
+        $this->approvedPurchaseRequests = PurchaseRequest::approved()
+            ->with('branch')
+            ->latest()
+            ->get()
+            ->map(fn ($pr) => [
+                'id' => $pr->id,
+                'label' => "PR-{$pr->id} ({$pr->branch->name})",
+            ]);
+
     }
 
     public function getApprovedPurchaseRequestsWithProducts()

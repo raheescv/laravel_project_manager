@@ -229,15 +229,20 @@
                         <tr class="bg-light">
                             <th class="border-0 rounded-start">#</th>
                             <th class="border-0">Product</th>
+                            <th class="border-0">Expense Account</th>
                             <th class="border-0">Code</th>
                             <th class="border-0">Category</th>
                             <th class="border-0">Sub Category</th>
                             <th class="border-0">Brand</th>
                             <th class="border-0">Unit</th>
                             <th class="border-0 text-end rounded-end">Received Qty</th>
+                            <th class="border-0 text-end rounded-end">Rate</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @php 
+                            $totalRate= 0;
+                            @endphp
                         @forelse ($grn->items as $index => $item)
                             <tr>
                                 <td>
@@ -245,6 +250,9 @@
                                 </td>
                                 <td>
                                     <span class="fw-medium">{{ $item->product->name }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary">{{ $item->account?->name ?? '-' }}</span>
                                 </td>
                                 <td>
                                     <span class="text-muted small">{{ $item->product->code ?? '-' }}</span>
@@ -264,10 +272,17 @@
                                 <td class="text-end">
                                     <span class="fw-bold">{{ $item->quantity }}</span>
                                 </td>
+                                <td class="text-end">
+                                    @php
+                                        $rate = $item->quantity * $item->localPurchaseOrderItem?->rate;
+                                        $totalRate += $rate;
+                                    @endphp
+                                    <span class="fw-bold">{{ currency($rate) }}</span>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4">
+                                <td colspan="9" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="demo-psi-basket-coins fs-1 d-block mb-2 opacity-25"></i>
                                         No items received
@@ -279,8 +294,9 @@
                     @if ($grn->items->count())
                         <tfoot>
                             <tr class="bg-light">
-                                <td colspan="7" class="fw-bold border-0 rounded-start">Total</td>
+                                <td colspan="8" class="fw-bold border-0 rounded-start">Total</td>
                                 <td class="fw-bold text-end border-0 rounded-end">{{ $grn->items->sum('quantity') }}</td>
+                                <td class="fw-bold text-end border-0 rounded-end">{{ currency($totalRate) }}</td>
                             </tr>
                         </tfoot>
                     @endif

@@ -30,6 +30,7 @@ class View extends Component
             'items.product.subCategory',
             'items.product.unit',
             'items.unit',
+            'items.account:id,name',
             'journals.entries.account',
             'journals.entries.counterAccount',
         ])->findOrFail($purchase_id);

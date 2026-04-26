@@ -36,6 +36,7 @@ class CreateUpdateAction
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
                     'rate' => $item['rate'],
+                    'account_id' => $item['account_id'] ?? null,
                 ];
 
                 $order->items()->updateOrCreate($findData, $saveData);

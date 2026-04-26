@@ -229,6 +229,7 @@
                         <tr class="bg-light">
                             <th class="border-0 rounded-start">#</th>
                             <th class="border-0">Product</th>
+                            <th class="border-0">Expense Account</th>
                             <th class="border-0">Category</th>
                             <th class="border-0">Brand</th>
                             <th class="border-0">Unit</th>
@@ -254,6 +255,9 @@
                                 <td>
                                     <span class="fw-medium">{{ $item->product->name }}</span>
                                     <br><small class="text-muted">{{ $item->product->code ?? '' }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary">{{ $item->account?->name ?? '-' }}</span>
                                 </td>
                                 <td>
                                     <span class="badge bg-primary bg-opacity-10 text-primary">{{ $item->product->mainCategory?->name ?? '-' }}</span>
@@ -282,7 +286,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="text-center py-4">
+                                <td colspan="11" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="demo-psi-basket-coins fs-1 d-block mb-2 opacity-25"></i>
                                         No items
@@ -294,7 +298,7 @@
                     @if ($purchase->items->count())
                         <tfoot>
                             <tr class="bg-light">
-                                <td colspan="6" class="border-0"></td>
+                                <td colspan="7" class="border-0"></td>
                                 <td colspan="3" class="border-0 text-end text-muted">Gross Amount:</td>
                                 <td class="border-0 text-end fw-medium">{{ number_format($purchase->gross_amount, 2) }}</td>
                             </tr>
@@ -327,7 +331,7 @@
                                 </tr>
                             @endif
                             <tr class="bg-light border-top">
-                                <td colspan="6" class="fw-bold border-0"></td>
+                                <td colspan="7" class="fw-bold border-0"></td>
                                 <td colspan="3" class="fw-bold text-end border-0">Grand Total:</td>
                                 <td class="fw-bold text-end text-success border-0 fs-5">{{ number_format($purchase->grand_total, 2) }}</td>
                             </tr>
@@ -380,7 +384,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($journal->entries->where('account_id', '!=', $purchase->account_id) as $entry)
+                                    @foreach ($journal->entries as $entry)
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">

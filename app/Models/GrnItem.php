@@ -15,6 +15,7 @@ class GrnItem extends Model
         'grn_id',
         'local_purchase_order_item_id',
         'product_id',
+        'account_id',
         'quantity',
         'rate',
         // 'total',
@@ -33,5 +34,10 @@ class GrnItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
     }
 }
