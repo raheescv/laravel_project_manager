@@ -26,6 +26,11 @@ class ProfitLoss extends Component
     /** @var list<int> */
     public array $expandedGroups = [];
 
+    public string $modalSection = '';
+
+    /** @var list<array<string, mixed>> */
+    public array $modalTransactions = [];
+
     public function mount(): void
     {
         $this->applyPeriod($this->period);
@@ -50,6 +55,13 @@ class ProfitLoss extends Component
     public function fetchData(): void
     {
         // Triggers re-render with the current filter values.
+    }
+
+    public function openModal(string $section): void
+    {
+        $this->modalSection = $section;
+        $this->modalTransactions = $this->reportService()->transactionDetails($section);
+        $this->dispatch('open-pl-detail-modal');
     }
 
     public function resetFilters(): void

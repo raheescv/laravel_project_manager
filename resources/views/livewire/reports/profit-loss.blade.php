@@ -90,17 +90,33 @@
 
                         {{-- Row 1: Opening Stock | Net Sale --}}
                         <tr>
-                            <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>OPENING STOCK</strong></td>
+                            <td class="ps-3" style="border-right: 2px solid #dee2e6;">
+                                <button type="button" wire:click="openModal('opening_stock')" class="btn btn-sm btn-link p-0 fw-bold text-dark text-decoration-none">
+                                    <i class="fa fa-search-plus me-1 text-muted" style="font-size:0.75rem;"></i>OPENING STOCK
+                                </button>
+                            </td>
                             <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">{{ currency($openingStock) }}</td>
-                            <td class="ps-3"><strong>NET SALE</strong></td>
+                            <td class="ps-3">
+                                <button type="button" wire:click="openModal('net_sale')" class="btn btn-sm btn-link p-0 fw-bold text-dark text-decoration-none">
+                                    <i class="fa fa-search-plus me-1 text-muted" style="font-size:0.75rem;"></i>NET SALE
+                                </button>
+                            </td>
                             <td class="text-end pe-3">{{ currency($netSale) }}</td>
                         </tr>
 
                         {{-- Row 2: Net Purchase | Closing Stock --}}
                         <tr>
-                            <td class="ps-3" style="border-right: 2px solid #dee2e6;"><strong>NET PURCHASE</strong></td>
+                            <td class="ps-3" style="border-right: 2px solid #dee2e6;">
+                                <button type="button" wire:click="openModal('net_purchase')" class="btn btn-sm btn-link p-0 fw-bold text-dark text-decoration-none">
+                                    <i class="fa fa-search-plus me-1 text-muted" style="font-size:0.75rem;"></i>NET PURCHASE
+                                </button>
+                            </td>
                             <td class="text-end pe-3" style="border-right: 2px solid #dee2e6;">{{ currency($netPurchase) }}</td>
-                            <td class="ps-3"><strong>CLOSING STOCK</strong></td>
+                            <td class="ps-3">
+                                <button type="button" wire:click="openModal('closing_stock')" class="btn btn-sm btn-link p-0 fw-bold text-dark text-decoration-none">
+                                    <i class="fa fa-search-plus me-1 text-muted" style="font-size:0.75rem;"></i>CLOSING STOCK
+                                </button>
+                            </td>
                             <td class="text-end pe-3" style="background-color: #e3f2fd;">{{ currency($closingStock) }}</td>
                         </tr>
 
@@ -297,6 +313,134 @@
         </div>
     </div>
 
+    {{-- Transaction Detail Modal --}}
+    <div class="modal fade" id="plDetailModal" tabindex="-1" aria-labelledby="plDetailModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-bold" id="plDetailModalLabel">
+                        @php
+                            $sectionLabels = [
+                                'net_sale'      => ['label' => 'NET SALE', 'icon' => 'pli-receipt-4', 'color' => 'text-success'],
+                                'net_purchase'  => ['label' => 'NET PURCHASE', 'icon' => 'pli-shopping-basket', 'color' => 'text-primary'],
+                                'opening_stock' => ['label' => 'OPENING STOCK', 'icon' => 'pli-box-open', 'color' => 'text-info'],
+                                'closing_stock' => ['label' => 'CLOSING STOCK', 'icon' => 'pli-box-open', 'color' => 'text-warning'],
+                            ];
+                            $meta = $sectionLabels[$modalSection] ?? ['label' => strtoupper(str_replace('_', ' ', $modalSection)), 'icon' => 'pli-receipt-4', 'color' => ''];
+                        @endphp
+                        <i class="{{ $meta['icon'] }} me-2 {{ $meta['color'] }}"></i>
+                        {{ $meta['label'] }} — Transaction Breakdown
+                        <small class="text-muted fw-normal ms-2">{{ $start_date }} to {{ $end_date }}</small>
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    @if(count($modalTransactions) === 0)
+                        <div class="text-center py-5 text-muted">
+                            <i class="pli-receipt-4" style="font-size: 2.5rem;"></i>
+                            <p class="mt-2 mb-0">No transactions found for this period.</p>
+                        </div>
+                    @else
+                        @php
+                            $totalDebit  = array_sum(array_column($modalTransactions, 'debit'));
+                            $totalCredit = array_sum(array_column($modalTransactions, 'credit'));
+                        @endphp
+
+                        {{-- Summary bar --}}
+                        <div class="d-flex gap-4 px-4 py-2 bg-light border-bottom" style="font-size:0.85rem;">
+                            <span><strong>{{ count($modalTransactions) }}</strong> transactions</span>
+                            @if($totalDebit > 0)
+                                <span>Total Debit: <strong class="text-danger">{{ currency($totalDebit) }}</strong></span>
+                            @endif
+                            @if($totalCredit > 0)
+                                <span>Total Credit: <strong class="text-success">{{ currency($totalCredit) }}</strong></span>
+                            @endif
+                            @if(in_array($modalSection, ['net_sale', 'net_purchase']))
+                                <span>Net: <strong>{{ currency(abs($totalCredit - $totalDebit)) }}</strong></span>
+                            @endif
+                            @if($modalSection === 'opening_stock')
+                                <span>Balance: <strong class="text-info">{{ currency($openingStock) }}</strong></span>
+                            @endif
+                            @if($modalSection === 'closing_stock')
+                                <span>Balance: <strong class="text-warning">{{ currency($closingStock) }}</strong></span>
+                            @endif
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0" style="font-size:0.85rem;">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th class="ps-3">#</th>
+                                        <th>Date</th>
+                                        <th>Reference</th>
+                                        <th>Type</th>
+                                        <th>Account</th>
+                                        <th>Party / Description</th>
+                                        <th class="text-end pe-3">Debit</th>
+                                        <th class="text-end pe-3">Credit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($modalTransactions as $i => $tx)
+                                        <tr>
+                                            <td class="ps-3 text-muted">{{ $i + 1 }}</td>
+                                            <td class="text-nowrap">{{ \Carbon\Carbon::parse($tx['date'])->format('d M Y') }}</td>
+                                            <td>
+                                                @if($tx['reference_number'])
+                                                    <span class="badge bg-light text-dark border">{{ $tx['reference_number'] }}</span>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($tx['type'])
+                                                    <span class="badge
+                                                        @if(in_array($tx['type'], ['Purchase', 'Grn'])) bg-primary
+                                                        @elseif($tx['type'] === 'PurchaseReturn') bg-warning text-dark
+                                                        @elseif($tx['type'] === 'Sale') bg-success
+                                                        @elseif($tx['type'] === 'SaleReturn') bg-danger
+                                                        @else bg-secondary
+                                                        @endif
+                                                    ">{{ $tx['type'] }}</span>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-muted">{{ $tx['account'] ?? '—' }}</td>
+                                            <td style="max-width:220px;" class="text-truncate">
+                                                <span title="{{ $tx['person_name'] }} {{ $tx['description'] }}">
+                                                    {{ $tx['person_name'] ?: ($tx['description'] ?: '—') }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end pe-3 {{ $tx['debit'] > 0 ? 'text-danger' : 'text-muted' }}">
+                                                {{ $tx['debit'] > 0 ? currency($tx['debit']) : '—' }}
+                                            </td>
+                                            <td class="text-end pe-3 {{ $tx['credit'] > 0 ? 'text-success' : 'text-muted' }}">
+                                                {{ $tx['credit'] > 0 ? currency($tx['credit']) : '—' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr style="border-top: 2px solid #dee2e6;">
+                                        <td colspan="6" class="ps-3 text-end">TOTAL</td>
+                                        <td class="text-end pe-3 text-danger">{{ $totalDebit > 0 ? currency($totalDebit) : '—' }}</td>
+                                        <td class="text-end pe-3 text-success">{{ $totalCredit > 0 ? currency($totalCredit) : '—' }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             $(document).ready(function() {
@@ -304,6 +448,14 @@
                     const value = $(this).val() || null;
                     @this.set('branch_id', value);
                 });
+            });
+
+            window.addEventListener('open-pl-detail-modal', () => {
+                const el = document.getElementById('plDetailModal');
+                if (el) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(el);
+                    modal.show();
+                }
             });
         </script>
     @endpush

@@ -54,6 +54,25 @@ class ProfitLossReportService
     ) {}
 
     /**
+     * Return raw journal entry rows for the drill-down modal.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function transactionDetails(string $section): array
+    {
+        $tradingAccountIds = $this->tradingAccountIds();
+        $inventoryId = $tradingAccountIds['inventory'] ?? null;
+
+        return match ($section) {
+            'net_sale' => $this->netSaleTransactions($tradingAccountIds),
+            'net_purchase' => $this->netPurchaseTransactions($inventoryId),
+            'opening_stock' => $this->stockTransactions($inventoryId, '<', $this->startDate),
+            'closing_stock' => $this->stockTransactions($inventoryId, '<=', $this->endDate),
+            default => [],
+        };
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function build(): array
@@ -342,6 +361,98 @@ class ProfitLossReportService
             'directExpense' => $pick($expenseStructure, 'Direct Expense'),
             'indirectExpense' => $pick($expenseStructure, 'Indirect Expense'),
         ];
+    }
+
+    /**
+     * @param  array<string, int|null>  $tradingAccountIds
+     * @return list<array<string, mixed>>
+     */
+    private function netSaleTransactions(array $tradingAccountIds): array
+    {
+        $accountIds = array_values(array_filter([
+            $tradingAccountIds['sale'] ?? null,
+            $tradingAccountIds['sales_returns'] ?? null,
+        ]));
+
+        if (empty($accountIds)) {
+            return [];
+        }
+
+        return JournalEntry::query()
+            ->whereIn('account_id', $accountIds)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
+            ->with('account:id,name')
+            ->orderBy('date', 'desc')
+            ->get()
+            ->map(fn ($e) => [
+                'date' => $e->date,
+                'reference_number' => $e->reference_number,
+                'description' => $e->description ?: $e->remarks ?: $e->journal_remarks,
+                'type' => $e->model,
+                'account' => $e->account?->name,
+                'person_name' => $e->person_name,
+                'debit' => (float) $e->debit,
+                'credit' => (float) $e->credit,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function netPurchaseTransactions(?int $inventoryId): array
+    {
+        if (! $inventoryId) {
+            return [];
+        }
+
+        return JournalEntry::query()
+            ->where('account_id', $inventoryId)
+            ->whereIn('model', self::PURCHASE_INVENTORY_MODELS)
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
+            ->orderBy('date', 'desc')
+            ->get()
+            ->map(fn ($e) => [
+                'date' => $e->date,
+                'reference_number' => $e->reference_number,
+                'description' => $e->description ?: $e->remarks ?: $e->journal_remarks,
+                'type' => $e->model,
+                'account' => 'Inventory',
+                'person_name' => $e->person_name,
+                'debit' => (float) $e->debit,
+                'credit' => (float) $e->credit,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function stockTransactions(?int $inventoryId, string $operator, string $date): array
+    {
+        if (! $inventoryId) {
+            return [];
+        }
+
+        return JournalEntry::query()
+            ->where('account_id', $inventoryId)
+            ->where('date', $operator, $date)
+            ->when($this->branchId, fn ($q) => $q->where('branch_id', $this->branchId))
+            ->orderBy('date', 'desc')
+            ->get()
+            ->map(fn ($e) => [
+                'date' => $e->date,
+                'reference_number' => $e->reference_number,
+                'description' => $e->description ?: $e->remarks ?: $e->journal_remarks,
+                'type' => $e->model,
+                'account' => 'Inventory',
+                'person_name' => $e->person_name,
+                'debit' => (float) $e->debit,
+                'credit' => (float) $e->credit,
+            ])
+            ->toArray();
     }
 
     /**
