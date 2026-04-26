@@ -739,6 +739,13 @@
                                                                 <label for="plu" class="form-label">PLU</label>
                                                                 {{ html()->input('plu')->value('')->class('form-control')->placeholder('Enter plu')->attribute('wire:model', 'products.plu') }}
                                                             </div>
+                                                            <div class="col-md-4">
+                                                                @if (!isset($table_id))
+                                                                    <label for="opening_stock" class="form-label">Opening Stock (Optional)</label>
+                                                                    {{ html()->number('opening_stock')->value('')->attribute('step', 'any')->class('form-control number')->placeholder('Enter opening stock')->attribute('wire:model', 'products.opening_stock') }}
+                                                                    <small class="text-muted">Applied once when creating this product.</small>
+                                                                @endif
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 @endif

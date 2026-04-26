@@ -64,12 +64,14 @@ class CreateAction
                 $model->update(['code' => $model->barcode]);
             }
             if ('inventory') {
-                Inventory::selfCreateByProduct($model, $user_id, $quantity = 0);
+                $openingStock = max(0, (float) ($data['opening_stock'] ?? 0));
+                Inventory::selfCreateByProduct($model, $user_id, $openingStock);
             }
             // Handle document file upload
             if (isset($data['document_file_upload']) && $data['document_file_upload']) {
                 $file = $data['document_file_upload'];
                 $storedPath = $file->store('products/'.$model->id.'/documents', 'public');
+                $model->refresh();
                 $model->update([
                     'document_file' => url('storage/'.$storedPath),
                     'document_file_name' => $file->getClientOriginalName(),

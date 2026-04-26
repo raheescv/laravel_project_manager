@@ -108,6 +108,7 @@ class Page extends Component
                 'location' => '',
                 'reorder_level' => '',
                 'plu' => '',
+                'opening_stock' => null,
                 'unit_id' => 1,
                 'main_category_id' => null,
                 'sub_category_id' => null,
@@ -164,6 +165,10 @@ class Page extends Component
             'degree.*' => 'nullable|integer|min:0|max:359',
             'document_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar|max:10240',
         ];
+
+        if (! $this->table_id) {
+            $rules['products.opening_stock'] = ['nullable', 'numeric', 'min:0'];
+        }
 
         return $rules;
     }

@@ -30,6 +30,7 @@ class CreateAction
                     'employee_id' => $employeeId,
                 ], $data);
             }
+            $model->refresh();
             event(new InventoryActionOccurred('create', $model));
 
             $return['success'] = true;
