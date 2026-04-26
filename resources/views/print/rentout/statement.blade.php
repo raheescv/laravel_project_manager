@@ -1,293 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8">
+    <title>Rentout Statement</title>
     <style>
-        .data-table th {
-            font-size: 14px;
-            page-break-after: always;
-            background: #1b7bbc;
-            text-align: right;
-            border: 0;
-            color: #fff;
-            padding: 5px 10px;
-        }
+        * { box-sizing: border-box; }
 
-        .data-table td {
-            font-size: 13px;
-            padding: 4px 10px;
-            color: #333;
-        }
-
-        .data-table tr:nth-child(odd) td {
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 10px;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
             background: #fff;
         }
 
-        .data-table tr:nth-child(even) td {
-            background: #d9f0fb;
+        .hdr-table { width: 100%; border-collapse: collapse; background: #1e3a5f; padding: 10px 18px; }
+        .hdr-table td { padding: 10px 18px; vertical-align: middle; }
+        .hdr-table td.logo-td { width: 110px; text-align: right; padding: 6px 18px; }
+        .logo-wrap { background: #fff; padding: 4px; text-align: center; display: inline-block; }
+        .logo-wrap img { max-width: 90px; max-height: 44px; display: block; }
+        .co-name { font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 3px; }
+        .co-meta  { font-size: 8.5px; color: #8db4d8; line-height: 1.6; }
+
+        .title-table { width: 100%; border-collapse: collapse; background: #2563a8; }
+        .title-table td { padding: 6px 18px; vertical-align: middle; }
+        .title-table td.title-right { text-align: right; width: 45%; font-size: 8.5px; color: #b8d4f0; line-height: 1.7; white-space: nowrap; }
+        .title-table td.title-right strong { color: #fff; }
+        .doc-name { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+
+        .info-table { width: 100%; border-collapse: collapse; margin: 10px 0 8px; }
+        .info-table td { vertical-align: top; padding: 0; }
+        .info-table td.info-pad { padding: 0 18px; }
+        .info-table td.info-gap { width: 8px; }
+
+        .box { border: 1px solid #c8d8e8; padding: 8px 10px; background: #f7fbff; }
+        .box-heading {
+            font-size: 7.5px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.2px; color: #2563a8;
+            border-bottom: 1px solid #d0e4f4; padding-bottom: 4px; margin-bottom: 6px;
         }
 
-        .header-container {
-            padding: 10px 0;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
-            overflow: hidden;
-        }
+        .vrow-table { width: 100%; border-collapse: collapse; }
+        .vrow-table td { padding: 2px 0; font-size: 9px; vertical-align: top; }
+        .vrow-table td.vk { color: #666; width: 40%; }
+        .vrow-table td.vv { font-weight: 700; color: #1a1a1a; }
 
-        .header-container::after {
-            content: "";
-            display: table;
-            clear: both;
+        .sum-grid { width: 100%; border-collapse: collapse; }
+        .sum-grid td {
+            width: 50%; padding: 5px 8px; font-size: 9px;
+            border: 1px solid #deeaf4; vertical-align: top; background: #fff;
         }
+        .sum-grid tr:first-child td { border-top: none; }
+        .sum-grid td:first-child { border-left: none; }
+        .sum-grid td:last-child  { border-right: none; }
+        .sum-grid .sg-lbl { font-size: 7.8px; color: #666; margin-bottom: 1px; }
+        .sum-grid .sg-val { font-size: 10.5px; font-weight: 700; }
+        .sg-val.dr { color: #c0392b; }
+        .sg-val.cr { color: #1a7a3c; }
+        .sg-val.nl { color: #1a1a1a; }
+        .sg-closing td { background: #edf4fb !important; border-top: 1.5px solid #b8d0e8 !important; }
 
-        .company-info {
-            float: left;
-            width: 55%;
-            padding-right: 10px;
-            box-sizing: border-box;
+        .stmt-wrap { padding: 0 18px 14px; }
+        .stmt { width: 100%; border-collapse: collapse; }
+        .stmt thead th {
+            background: #1e3a5f; color: #fff; font-size: 9px; font-weight: 600;
+            padding: 5px 6px; text-align: left; border: 1px solid #2d5480; white-space: nowrap;
         }
-
-        .company-info h2 {
-            font-size: 1.6em;
-            font-weight: 600;
-            color: #2c3e50;
-            margin: 0 0 6px 0;
-            letter-spacing: 0.5px;
+        .stmt thead th.r { text-align: right; }
+        .stmt tbody td {
+            padding: 4px 6px; border: 1px solid #dce8f0;
+            font-size: 9px; vertical-align: top; color: #1a1a1a;
         }
-
-        .company-info .contact-details {
-            font-size: 11px;
-            color: #555;
-            line-height: 1.8;
+        .stmt tbody tr.even td { background: #f4f8fc; }
+        .stmt tfoot td {
+            padding: 5px 6px; border: 1px solid #c0d4e8;
+            font-size: 9.5px; font-weight: 700;
         }
+        .stmt tfoot tr.ft1 td { background: #e8f0f8; }
+        .stmt tfoot tr.ft2 td { background: #d4e4f4; }
 
-        .company-info .contact-details a {
-            color: #0087C3;
-            text-decoration: none;
-        }
+        .r { text-align: right; }
+        .c { text-align: center; }
+        .dr { color: #c0392b; font-weight: 700; }
+        .cr { color: #1a7a3c; font-weight: 700; }
+        .muted { color: #bbb; }
 
-        .logo-container {
-            float: right;
-            width: 200px;
-            min-height: 80px;
-            background: linear-gradient(135deg, rgba(0, 135, 195, 0.03) 0%, rgba(0, 174, 239, 0.03) 100%);
-            border-radius: 12px;
-            padding: 5px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .logo-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 1px solid rgba(0, 135, 195, 0.1);
-            border-radius: 12px;
-            pointer-events: none;
-        }
-
-        .logo-container img {
-            max-width: 180px;
-            max-height: 80px;
-            height: auto;
-            width: auto;
-            position: relative;
-            z-index: 1;
-            display: block;
-            margin: 5px auto;
-        }
-
-        #details {
-            margin-bottom: 8px !important;
-        }
-
-        table {
-            margin-bottom: 3px !important;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
+        .page-footer {
+            border-top: 1px solid #dce8f0; padding: 5px 18px;
+            text-align: center; font-size: 7.5px; color: #aaa;
         }
     </style>
 </head>
 @php
-    $total_paid = $payments->sum('credit');
+    $totalPaid = $payments->sum('credit');
+    $totalDebit = $payments->sum('debit');
+    $balance = $totalDebit - $totalPaid;
     $isRental = $rentOut->agreement_type?->value === 'rental';
 @endphp
+<body>
+    <table class="hdr-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <div class="co-name">{{ $companyName }}</div>
+                <div class="co-meta">
+                    @if ($companyAddress){{ $companyAddress }}@endif
+                    @if ($companyPhone) &bull; Tel: {{ $companyPhone }}@endif
+                    @if ($companyEmail) &bull; {{ $companyEmail }}@endif
+                </div>
+            </td>
+            <td class="logo-td">
+                @if ($companyLogo)
+                    <div class="logo-wrap"><img src="{{ $companyLogo }}" alt="Logo"></div>
+                @endif
+            </td>
+        </tr>
+    </table>
 
-<body style="page-break-after: initial;">
-    <div class="wrapper">
-        <header class="header-container clearfix">
-            <div class="company-info">
-                <h2 class="name">{{ $companyName }}</h2>
-                <div class="contact-details">
-                    @if($companyPhone)<strong>Phone:</strong> {{ $companyPhone }}<br>@endif
-                    @if($companyAddress){{ $companyAddress }}<br>@endif
-                    @if($companyEmail)<a href="mailto:{{ $companyEmail }}">{{ $companyEmail }}</a>@endif
+    <table class="title-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <td><div class="doc-name">Rentout Statement</div></td>
+            <td class="title-right">
+                <strong>{{ $rentOut->customer?->name ?? '-' }}</strong><br>
+                Ref: {{ $rentOut->reference_no }}
+                @if ($fromDate && $toDate)
+                    &bull; Period: {{ systemDate($fromDate) }} &ndash; {{ systemDate($toDate) }}
+                @endif
+            </td>
+        </tr>
+    </table>
+
+    <table class="info-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="info-pad" style="width:1px; padding-right:4px;"></td>
+            <td style="width:52%;">
+                <div class="box">
+                    <div class="box-heading">Agreement Details</div>
+                    <table class="vrow-table" cellpadding="0" cellspacing="0">
+                        <tr><td class="vk">Agreement Type</td><td class="vv">{{ $isRental ? 'Rental' : 'Sales' }}</td></tr>
+                        <tr><td class="vk">Group</td><td class="vv">{{ $rentOut->group?->name ?: '-' }}</td></tr>
+                        <tr><td class="vk">Building</td><td class="vv">{{ $rentOut->building?->name ?: '-' }}</td></tr>
+                        <tr><td class="vk">Type</td><td class="vv">{{ $rentOut->type?->name ?: '-' }}</td></tr>
+                        <tr><td class="vk">Property/Unit</td><td class="vv">{{ $rentOut->property?->number ?: '-' }}</td></tr>
+                        <tr><td class="vk">Frequency</td><td class="vv">{{ $rentOut->payment_frequency ?: '-' }}</td></tr>
+                        <tr><td class="vk">Start Date</td><td class="vv">{{ systemDate($rentOut->start_date) }}</td></tr>
+                        <tr><td class="vk">End Date</td><td class="vv">{{ systemDate($rentOut->end_date) }}</td></tr>
+                        @if ($rentOut->vacate_date)
+                            <tr><td class="vk">Vacate Date</td><td class="vv">{{ systemDate($rentOut->vacate_date) }}</td></tr>
+                        @endif
+                    </table>
                 </div>
-            </div>
-            @if($companyLogo)
-                <div class="logo-container">
-                    <img src="{{ $companyLogo }}" alt="Company Logo">
+            </td>
+            <td class="info-gap"></td>
+            <td style="width:46%;">
+                <div class="box">
+                    <div class="box-heading">Balance Summary</div>
+                    <table class="sum-grid" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td>
+                                <div class="sg-lbl">Rate</div>
+                                <div class="sg-val nl">{{ currency($rentOut->rent) }}</div>
+                            </td>
+                            <td>
+                                <div class="sg-lbl">Total Debit</div>
+                                <div class="sg-val dr">{{ currency($totalDebit) }}</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="sg-lbl">Total Paid</div>
+                                <div class="sg-val cr">{{ currency($totalPaid) }}</div>
+                            </td>
+                            <td>
+                                <div class="sg-lbl">Entries</div>
+                                <div class="sg-val nl">{{ $payments->count() }}</div>
+                            </td>
+                        </tr>
+                        <tr class="sg-closing">
+                            <td colspan="2">
+                                <div class="sg-lbl">Remaining To Be Paid</div>
+                                <div class="sg-val nl">{{ currency($balance) }}</div>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
-            @endif
-        </header>
-        <table width="100%" style="page-break-after: initial;">
-            <tr>
-                <td style="font-family: 'Arial', sans-serif; text-align: center; background: #eee; font-size: 16px; padding: 10px 0 10px; color: #3c3d4e;">
-                    Statement for <b>{{ $rentOut->reference_no }}</b>
-                </td>
-            </tr>
-            <tr>
-                <td style="font-family: 'Arial', sans-serif; text-align: center; background: #eee; font-size: 16px; padding: 10px 0 10px; color: #3c3d4e;">
-                    <b>{{ $rentOut->customer?->name }}</b>
-                </td>
-            </tr>
-            @if(isset($fromDate) && isset($toDate) && $fromDate && $toDate)
-                <tr>
-                    <td style="font-family: 'Arial', sans-serif; text-align: center; background: #f8f9fa; font-size: 14px; padding: 8px 0 8px; color: #495057; border-top: 1px solid #dee2e6;">
-                        <b>Period: {{ systemDate($fromDate) }} to {{ systemDate($toDate) }}</b>
-                    </td>
-                </tr>
-            @endif
-            <tr style="page-break-after: auto;">
-                <td style="color: #3c3c3d; padding: 0 0 20px;">
-                    <div style="border-radius: 3px; background: #fdfdfd; padding: 0; border-bottom: 1px solid #eee;">
-                        <table width="100%" style="margin: 10px 0;">
-                            <tr>
-                                <td width="55%" valign="top" style="font-family: 'Arial', sans-serif; text-align: left; font-size: 14px;">
-                                    <table width="100%">
-                                        <tr>
-                                            <td width="35%"><b>Agreement Type</b></td>
-                                            <td width="65%">
-                                                <b>:
-                                                    @if(!$isRental)
-                                                        Sales
-                                                    @else
-                                                        Rental
-                                                    @endif
-                                                </b>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td width="35%" valign="top"><b>Group</b></td>
-                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->group?->name }}</b></td>
-                                        </tr>
-                                        <tr>
-                                            <td width="35%" valign="top"><b>Building</b></td>
-                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->building?->name }}</b></td>
-                                        </tr>
-                                        <tr>
-                                            <td width="35%" valign="top"><b>Type</b></td>
-                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->type?->name }}</b></td>
-                                        </tr>
-                                        <tr>
-                                            <td width="35%" valign="top"><b>Property/Unit</b></td>
-                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->property?->number }}</b></td>
-                                        </tr>
-                                        <tr>
-                                            <td width="35%" valign="top"><b>Payout Frequency</b></td>
-                                            <td width="65%" style="text-transform: uppercase;"><b>: {{ $rentOut->payment_frequency }}</b></td>
-                                        </tr>
-                                    </table>
-                                </td>
-                                <td width="45%" valign="top" style="font-family: 'Arial', sans-serif; text-align: center; font-size: 14px;">
-                                    <table width="100%">
-                                        <tr>
-                                            <td width="60%">Agreement Begins</td>
-                                            <td width="40%" style="text-align: right;">{{ systemDate($rentOut->start_date) }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td width="60%">Agreement Ends</td>
-                                            <td width="40%" style="text-align: right;">{{ systemDate($rentOut->end_date) }}</td>
-                                        </tr>
-                                        @if($rentOut->vacate_date)
-                                            <tr>
-                                                <td width="60%">Vacate Date</td>
-                                                <td width="40%" style="text-align: right;">{{ systemDate($rentOut->vacate_date) }}</td>
-                                            </tr>
-                                        @endif
-                                        <tr>
-                                            @if(!$isRental)
-                                                <td width="60%">Unit Sale Price</td>
-                                            @else
-                                                <td width="60%">Rent</td>
-                                            @endif
-                                            <td width="40%" style="text-align: right;">{{ currency($rentOut->rent) }}</td>
-                                        </tr>
-                                        @php
-                                            $totalAmountToPay = $rentOut->paymentTerms->sum('amount');
-                                            $balance = $totalAmountToPay - $total_paid;
-                                        @endphp
-                                        @if($isRental)
-                                            <tr>
-                                                <td width="60%">Total Amount To Pay</td>
-                                                <td width="40%" style="text-align: right;">{{ currency($totalAmountToPay) }}</td>
-                                            </tr>
-                                        @endif
-                                        <tr>
-                                            <td width="60%">Total Paid</td>
-                                            <td width="40%" style="text-align: right;">{{ currency($total_paid) }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td width="60%">Remaining To Be Paid</td>
-                                            <td width="40%" style="text-align: right;">{{ currency($balance) }}</td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </div>
-    <div style="border-radius: 3px; padding: 0; overflow: hidden; border: 1px solid #eee; page-break-after: auto;">
-        <table class="data-table" border="0" cellpadding="0" cellspacing="0" width="100%"
-            style="font-family: 'Arial', sans-serif; text-align: right; font-size: 14px; page-break-after: inherit;">
+            </td>
+            <td class="info-pad" style="width:1px; padding-left:4px;"></td>
+        </tr>
+    </table>
+
+    <div class="stmt-wrap">
+        <table class="stmt" cellpadding="0" cellspacing="0">
             <thead>
                 <tr>
-                    <th width="20%" style="text-align: left;">Date</th>
-                    <th width="25%" style="text-align: left;">Payment Mode</th>
-                    <th width="20%" style="text-align: right;">Debit</th>
-                    <th width="20%" style="text-align: right;">Credit</th>
-                    <th width="15%" style="text-align: left;">Remarks</th>
+                    <th style="width:15%;">Date</th>
+                    <th style="width:25%;">Payment Mode</th>
+                    <th class="r" style="width:12%;">Debit</th>
+                    <th class="r" style="width:12%;">Credit</th>
+                    <th style="width:36%;">Remarks</th>
                 </tr>
             </thead>
             <tbody>
-                <tr></tr>
-                @foreach($payments as $single)
-                    <tr>
-                        <td width="20%" style="text-align: left">{{ systemDate($single['date']) }}</td>
-                        <td width="25%" style="text-align: left">
-                            {{ $single['payment_mode'] }}
-                            @if(!empty($single['cheque_no']))
+                @forelse ($payments as $index => $single)
+                    <tr class="{{ $index % 2 === 1 ? 'even' : '' }}">
+                        <td>{{ systemDate($single['date']) }}</td>
+                        <td>
+                            {{ $single['payment_mode'] ?: '-' }}
+                            @if (!empty($single['cheque_no']))
                                 : {{ $single['cheque_no'] }}
                             @endif
                         </td>
-                        <td width="20%">{{ currency($single['debit']) }}</td>
-                        <td width="20%">{{ currency($single['credit']) }}</td>
-                        <td width="15%" style="text-align: left; font-style: italic;">{{ $single['remark'] ?? '' }}</td>
+                        <td class="r">
+                            @if (($single['debit'] ?? 0) > 0)
+                                <span class="dr">{{ currency($single['debit']) }}</span>
+                            @else
+                                <span class="muted">—</span>
+                            @endif
+                        </td>
+                        <td class="r">
+                            @if (($single['credit'] ?? 0) > 0)
+                                <span class="cr">{{ currency($single['credit']) }}</span>
+                            @else
+                                <span class="muted">—</span>
+                            @endif
+                        </td>
+                        <td>{{ $single['remark'] ?: '—' }}</td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="5" class="c muted" style="padding:10px 0;">No entries found for this period.</td>
+                    </tr>
+                @endforelse
             </tbody>
             <tfoot>
-                <tr>
-                    <th colspan="2">Total</th>
-                    <th>{{ currency($payments->sum('debit')) }}</th>
-                    <th>{{ currency($payments->sum('credit')) }}</th>
-                    <th></th>
+                <tr class="ft1">
+                    <td colspan="2" class="r">Total</td>
+                    <td class="r dr">{{ currency($totalDebit) }}</td>
+                    <td class="r cr">{{ currency($totalPaid) }}</td>
+                    <td></td>
+                </tr>
+                <tr class="ft2">
+                    <td colspan="4" class="r">Remaining To Be Paid</td>
+                    <td class="r">{{ currency($balance) }}</td>
                 </tr>
             </tfoot>
         </table>
     </div>
-</body>
 
+    <div class="page-footer">
+        Computer generated document &bull; {{ now()->format('d/m/Y h:i A') }}
+    </div>
+</body>
 </html>
