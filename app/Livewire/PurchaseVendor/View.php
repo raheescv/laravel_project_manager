@@ -2,10 +2,10 @@
 
 namespace App\Livewire\PurchaseVendor;
 
+use App\Actions\PurchaseVendor\BuildStatementDataAction;
 use App\Models\Account;
 use App\Models\Grn;
 use App\Models\LocalPurchaseOrder;
-use App\Models\Models\Views\Ledger;
 use App\Models\Purchase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -47,7 +47,8 @@ class View extends Component
 
     public function render()
     {
-        $this->vendor = Account::vendor()->find($this->vendor_id)?->toArray();
+        $vendorModel = Account::vendor()->find($this->vendor_id);
+        $this->vendor = $vendorModel?->toArray();
 
         $total_purchases = DB::table('purchases')
             ->where('account_id', $this->vendor_id)
@@ -55,13 +56,19 @@ class View extends Component
             ->selectRaw('SUM(grand_total) AS grand_total, SUM(paid) AS paid, SUM(balance) AS balance')
             ->first();
 
-        $statements = Ledger::where('account_id', $this->vendor_id)
-            ->when($this->statement_from_date, fn ($q, $v) => $q->whereDate('date', '>=', $v))
-            ->when($this->statement_to_date, fn ($q, $v) => $q->whereDate('date', '<=', $v))
-            ->orderBy('date', 'desc')
-            ->orderBy('id', 'desc')
-            ->limit($this->statement_limit)
-            ->get();
+        $statementData = app(BuildStatementDataAction::class)->execute(
+            $vendorModel,
+            $this->statement_from_date,
+            $this->statement_to_date,
+            $this->statement_limit,
+        );
+        $statementSummary = $statementData['summary'];
+        $statementRows = $statementData['rows'];
+        $statementSummary['statement_pdf_url'] = route('print::purchase_vendor::statement', [
+            'id' => $this->vendor_id,
+            'fromDate' => $this->statement_from_date,
+            'toDate' => $this->statement_to_date,
+        ]);
 
         $purchases = Purchase::where('account_id', $this->vendor_id)
             ->when($this->purchase_from_date, fn ($q, $v) => $q->whereDate('date', '>=', $v))
@@ -90,8 +97,9 @@ class View extends Component
             ->get(['id', 'date', 'invoice_no', 'local_purchase_order_id', 'total', 'other_discount', 'grand_total', 'paid', 'balance', 'status']);
 
         return view('livewire.purchase-vendor.view', [
+            'statementSummary' => $statementSummary,
+            'statementRows' => $statementRows,
             'total_purchases' => $total_purchases,
-            'statements' => $statements,
             'purchases' => $purchases,
             'lpos' => $lpos,
             'grns' => $grns,

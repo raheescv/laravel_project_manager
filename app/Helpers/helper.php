@@ -280,6 +280,99 @@ if (! function_exists('convert_number_to_words')) {
     }
 }
 
+
+if (! function_exists('convertCurrencyToWords')) {
+    function convertCurrencyToWords($amount)
+    {
+        $ones = [
+            0 => 'ZERO',
+            1 => 'ONE',
+            2 => 'TWO',
+            3 => 'THREE',
+            4 => 'FOUR',
+            5 => 'FIVE',
+            6 => 'SIX',
+            7 => 'SEVEN',
+            8 => 'EIGHT',
+            9 => 'NINE',
+            10 => 'TEN',
+            11 => 'ELEVEN',
+            12 => 'TWELVE',
+            13 => 'THIRTEEN',
+            14 => 'FOURTEEN',
+            15 => 'FIFTEEN',
+            16 => 'SIXTEEN',
+            17 => 'SEVENTEEN',
+            18 => 'EIGHTEEN',
+            19 => 'NINETEEN',
+        ];
+
+        $tens = [
+            2 => 'TWENTY',
+            3 => 'THIRTY',
+            4 => 'FORTY',
+            5 => 'FIFTY',
+            6 => 'SIXTY',
+            7 => 'SEVENTY',
+            8 => 'EIGHTY',
+            9 => 'NINETY',
+        ];
+
+        $currency = intval($amount);
+        $cents = intval(($amount - $currency) * 100);
+
+        $words = '';
+
+        if ($currency > 0) {
+            if ($currency >= 1000000) {
+                $millions = intval($currency / 1000000);
+                $words .= convertCurrencyToWords($millions).' MILLION ';
+                $currency -= $millions * 1000000;
+            }
+            if ($currency >= 1000) {
+                $thousands = intval($currency / 1000);
+                $words .= convertCurrencyToWords($thousands).' THOUSAND ';
+                $currency -= $thousands * 1000;
+            }
+            if ($currency >= 100) {
+                $hundreds = intval($currency / 100);
+                $words .= $ones[$hundreds].' HUNDRED ';
+                $currency -= $hundreds * 100;
+            }
+            if ($currency > 0) {
+                if ($currency < 20) {
+                    $words .= $ones[$currency];
+                } else {
+                    $tensDigit = intval($currency / 10);
+                    $onesDigit = $currency % 10;
+                    $words .= $tens[$tensDigit];
+                    if ($onesDigit > 0) {
+                        $words .= ' '.$ones[$onesDigit];
+                    }
+                }
+            }
+        } else {
+            $words .= 'ZERO RIYAL';
+        }
+
+        if ($cents > 0) {
+            if ($cents < 20) {
+                $words .= ' AND '.$ones[$cents];
+            } else {
+                $tensDigit = intval($cents / 10);
+                $onesDigit = $cents % 10;
+                $words .= ' AND '.$tens[$tensDigit];
+                if ($onesDigit > 0) {
+                    $words .= ' '.$ones[$onesDigit];
+                }
+            }
+            $words .= ' DIRHAM';
+        }
+
+        return $words;
+    }
+}
+
 if (! function_exists('ordinal')) {
     function ordinal($number)
     {

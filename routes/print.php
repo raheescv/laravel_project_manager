@@ -19,6 +19,10 @@ Route::middleware('auth')->group(function (): void {
             Route::get('payment-receipt/{id}', 'rentOutPaymentReceipt')->name('payment-receipt');
             Route::get('payment-voucher/{id}', 'rentOutPaymentVoucher')->name('payment-voucher');
         });
+        Route::name('purchase_vendor::')->prefix('purchase-vendor')->group(function (): void {
+            Route::get('statement/{id}/{fromDate?}/{toDate?}', 'purchaseVendorStatement')->name('statement');
+            Route::get('payment-voucher/{vendorId}/{journalId}', 'purchaseVendorPaymentVoucher')->name('payment-voucher');
+        });
         Route::name('sale_return::')->prefix('sale-return')->group(function (): void {
             Route::get('payment-receipt', 'saleReturnPaymentReceipt')->name('payment-receipt');
         });

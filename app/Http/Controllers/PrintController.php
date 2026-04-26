@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\PurchaseVendor\BuildStatementDataAction;
 use App\Actions\RentOut\GenerateReservationFormAction;
 use App\Actions\RentOut\GenerateResidentialLeaseAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Models\Account;
 use App\Models\Configuration;
+use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PrintController extends Controller
 {
@@ -216,6 +219,79 @@ class PrintController extends Controller
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->stream("voucher_{$payment->id}.pdf");
+    }
+
+    public function purchaseVendorStatement(int $id, ?string $fromDate = null, ?string $toDate = null)
+    {
+        $vendor = Account::vendor()->findOrFail($id);
+        $fromDate ??= now()->subMonths(3)->format('Y-m-d');
+        $toDate ??= now()->format('Y-m-d');
+
+        $statementData = app(BuildStatementDataAction::class)->execute($vendor, $fromDate, $toDate);
+        $summary = $statementData['summary'];
+        $statementRows = collect($statementData['rows'])->map(function (array $row) use ($vendor) {
+            $row['payment_voucher_url'] = ! empty($row['can_view_payment_voucher'])
+                ? route('print::purchase_vendor::payment-voucher', ['vendorId' => $vendor->id, 'journalId' => $row['journal_id']])
+                : null;
+
+            return (object) $row;
+        });
+
+        $pdf = Pdf::loadView('print.purchase-vendor.statement', array_merge(
+            compact(
+                'vendor',
+                'statementRows',
+                'fromDate',
+                'toDate',
+            ),
+            $this->getCompanyInfo(),
+            [
+                'openingDebit' => $summary['opening_debit'],
+                'openingCredit' => $summary['opening_credit'],
+                'openingBalanceLabel' => $summary['opening_balance_label'],
+                'periodDebit' => $summary['period_debit'],
+                'periodCredit' => $summary['period_credit'],
+                'totalDebit' => $summary['total_debit'],
+                'totalCredit' => $summary['total_credit'],
+                'closingBalanceLabel' => $summary['closing_balance_label'],
+            ],
+        ));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream(sprintf(
+            'vendor-statement-%s-%s-to-%s.pdf',
+            Str::slug($vendor->name ?: 'vendor'),
+            $fromDate,
+            $toDate,
+        ));
+    }
+
+    public function purchaseVendorPaymentVoucher(int $vendorId, int $journalId)
+    {
+        $vendor = Account::vendor()->findOrFail($vendorId);
+        $journal = Journal::query()
+            ->with(['entries.account', 'createdBy'])
+            ->findOrFail($journalId);
+
+        $hasPurchasePaymentEntry = $journal->entries->contains(function ($entry) use ($vendor): bool {
+            return (int) $entry->account_id === (int) $vendor->id
+                && $entry->model === 'PurchasePayment'
+                && (float) $entry->debit > 0;
+        });
+
+        abort_unless($hasPurchasePaymentEntry, 404);
+
+        $pdf = Pdf::loadView('print.purchase-vendor.voucher', array_merge(
+            compact('journal', 'vendor'),
+            $this->getCompanyInfo()
+        ));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream(sprintf(
+            'payment-voucher-%s-%s.pdf',
+            Str::slug($vendor->name ?: 'vendor'),
+            $journal->reference_number ?: $journal->id,
+        ));
     }
 
     public function reservationForm($id)
