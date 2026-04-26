@@ -156,7 +156,7 @@ return [
     'document type' => ['create', 'view', 'edit', 'delete'],
     'complaint category' => ['create', 'view', 'edit', 'delete'],
     'complaint' => ['create', 'view', 'edit', 'delete'],
-    'tenant detail' => ['create', 'view', 'edit', 'delete'],
+    // 'tenant detail' => ['create', 'view', 'edit', 'delete'],
 
     // Property Lead Module
     'property lead' => [
