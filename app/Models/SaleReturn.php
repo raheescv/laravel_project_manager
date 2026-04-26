@@ -52,6 +52,15 @@ class SaleReturn extends Model implements AuditableContracts
     protected static function booted()
     {
         static::addGlobalScope(new AssignedBranchScope());
+
+        static::creating(function ($saleReturn): void {
+            if ($saleReturn->branch_id) {
+                $openSession = SaleDaySession::getOpenSessionForBranch($saleReturn->branch_id);
+                if ($openSession) {
+                    $saleReturn->date = $openSession->opened_at->format('Y-m-d');
+                }
+            }
+        });
     }
 
     public function scopeDraft($query)

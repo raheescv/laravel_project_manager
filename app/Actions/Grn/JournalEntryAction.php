@@ -33,8 +33,8 @@ class JournalEntryAction
 
             $accounts = Cache::get('accounts_slug_id_map', []);
 
-            if (empty($accounts['inventory']) || empty($accounts['grn_clearing'])) {
-                throw new \Exception('Required account heads are missing: inventory or grn_clearing.');
+            if (empty($accounts['inventory']) || empty($accounts['unbilled_payables'])) {
+                throw new \Exception('Required account heads are missing: inventory or unbilled_payables.');
             }
 
             $entries = [];
@@ -42,10 +42,10 @@ class JournalEntryAction
             // Calculate total value from LPO item rates
             $totalValue = $grn->items->sum('total');
 
-            // Inventory Debit / GRN Clearing Credit
+            // Inventory Debit / Unbilled Payables Credit
             if ($totalValue > 0) {
                 $remarks = 'GRN received from '.$vendor->name;
-                $entries[] = $this->makeEntryPair($accounts['inventory'], $accounts['grn_clearing'], $totalValue, 0, $remarks, 'Grn', $grn->id);
+                $entries[] = $this->makeEntryPair($accounts['inventory'], $accounts['unbilled_payables'], $totalValue, 0, $remarks, 'Grn', $grn->id);
             }
 
             if (empty($entries)) {
