@@ -28,18 +28,23 @@ class JournalEntryAction
 
             $accounts = Cache::get('accounts_slug_id_map', []);
 
-            if (empty($accounts['unbilled_payables']) || empty($accounts['tax_amount']) || empty($accounts['discount']) || empty($accounts['freight'])) {
+            if (empty($accounts['tax_amount']) || empty($accounts['discount']) || empty($accounts['freight'])) {
                 throw new \Exception('Required account heads are missing for purchase journal posting.');
             }
 
             $entries = [];
 
-            // Invoice Entry (settles Unbilled Payables to vendor)
+            $purchaseAccountId = $purchase->local_purchase_order_id ? ($accounts['unbilled_payables'] ?? null) : ($accounts['inventory'] ?? null);
+            if (! $purchaseAccountId) {
+                throw new \Exception('Required account heads are missing for purchase journal posting.');
+            }
+
+            // Purchase Entry
             if ($purchase->gross_amount > 0) {
                 $remarks = 'Purchase from '.$purchase->account->name;
                 $debit = $purchase->gross_amount;
                 $credit = 0;
-                $entries[] = $this->makeEntryPair($accounts['unbilled_payables'], $purchase->account_id, $debit, $credit, $remarks, 'Purchase', $purchase->id);
+                $entries[] = $this->makeEntryPair($purchaseAccountId, $purchase->account_id, $debit, $credit, $remarks, 'Purchase', $purchase->id);
             }
 
             // Tax Entry
