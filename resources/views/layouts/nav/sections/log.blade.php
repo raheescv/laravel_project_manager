@@ -1,7 +1,7 @@
 @if (auth()->user()->can('log.inventory'))
     <li class="nav-item has-sub">
         <a href="#"
-            class="mininav-toggle nav-link {{ request()->is(['log/inventory','log/jobs', 'log/failed-jobs', 'api_log', 'visitor-analytics', 'health']) ? 'active' : '' }}">
+            class="mininav-toggle nav-link {{ request()->is(['log/inventory', 'log/jobs', 'log/failed-jobs', 'api_log', 'visitor-analytics', 'health', 'log-viewer', 'log-viewer/*']) ? 'active' : '' }}">
             <i class="fa fa-clipboard fs-5 me-2"></i>
             <span class="nav-label mininav-content ms-1 collapse show">Log</span>
         </a>
@@ -37,6 +37,12 @@
                 <li class="nav-item">
                     <a href="{{ route('health') }}"
                         class="nav-link {{ request()->is(['health']) ? 'active' : '' }}">System Health</a>
+                </li>
+            @endcan
+            @can('log.log viewer')
+                <li class="nav-item">
+                    <a href="{{ url('/log-viewer') }}"
+                        class="nav-link {{ request()->is(['log-viewer', 'log-viewer/*']) ? 'active' : '' }}">Log Viewer</a>
                 </li>
             @endcan
         </ul>

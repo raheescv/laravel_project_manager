@@ -11,6 +11,7 @@ use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,7 @@ use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 use Laravel\Ai\Ai;
 use Laravel\Ai\Gateway\Prism\PrismGateway;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -100,6 +102,10 @@ class AppServiceProvider extends ServiceProvider
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);
         // });
+
+        LogViewer::auth(function (Request $request): bool {
+            return $request->user()?->can('log.log viewer') ?? false;
+        });
 
         $this->registerFixedAiProvider();
     }

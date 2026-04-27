@@ -26,6 +26,7 @@
         "maatwebsite/excel": "^3.1",
         "milon/barcode": "^12.1",
         "nativephp/mobile": "^3.0",
+        "opcodesio/log-viewer": "^3.24",
         "openai-php/laravel": "^0.11.0",
         "owen-it/laravel-auditing": "^14.0",
         "peckphp/peck": "^0.1.2",
