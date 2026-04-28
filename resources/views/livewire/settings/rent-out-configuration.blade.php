@@ -19,7 +19,8 @@
                         <i class="fa fa-print me-1"></i> Bond Paper / Letterhead Mode
                     </h6>
                     <p class="text-muted small mb-3">
-                        When enabled, logos and footer images are hidden during PDF generation but their space is preserved (blank area). Use this when printing on pre-printed bond paper / letterhead stationery.
+                        When enabled, logos and footer images are hidden during PDF generation but their space is preserved (blank area). Use this
+                        when printing on pre-printed bond paper / letterhead stationery.
                     </p>
                     <div class="row g-2">
                         <div class="col-md-4">
@@ -31,12 +32,14 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-medium small">Header Logo Height (Px)</label>
-                            <input type="number" wire:model="reservation_logo_height" class="form-control form-control-sm" min="0" placeholder="80">
+                            <input type="number" wire:model="reservation_logo_height" class="form-control form-control-sm" min="0"
+                                placeholder="80">
                             <small class="form-text text-muted">Reserved blank space height for header area when bond paper mode is on.</small>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-medium small">Footer Image Height (Px)</label>
-                            <input type="number" wire:model="reservation_footer_height" class="form-control form-control-sm" min="0" placeholder="30">
+                            <input type="number" wire:model="reservation_footer_height" class="form-control form-control-sm" min="0"
+                                placeholder="30">
                             <small class="form-text text-muted">Reserved blank space height for footer area when bond paper mode is on.</small>
                         </div>
                     </div>
@@ -52,7 +55,8 @@
                     <small class="form-text text-muted">Max 2MB, max 800×400px.</small>
                     @if ($existing_rental_reservation_logo)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $existing_rental_reservation_logo) }}" class="img-thumbnail" style="max-height: 60px;" alt="Current logo">
+                            <img src="{{ asset('storage/' . $existing_rental_reservation_logo) }}" class="img-thumbnail" style="max-height: 60px;"
+                                alt="Current logo">
                         </div>
                     @endif
                 </div>
@@ -64,7 +68,8 @@
                     <small class="form-text text-muted">Max 2MB, max 800×400px.</small>
                     @if ($existing_lease_reservation_logo)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $existing_lease_reservation_logo) }}" class="img-thumbnail" style="max-height: 60px;" alt="Current logo">
+                            <img src="{{ asset('storage/' . $existing_lease_reservation_logo) }}" class="img-thumbnail" style="max-height: 60px;"
+                                alt="Current logo">
                         </div>
                     @endif
                 </div>
@@ -76,7 +81,8 @@
                     <small class="form-text text-muted">Max 2MB, max 800×400px.</small>
                     @if ($existing_lease_residential_logo)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $existing_lease_residential_logo) }}" class="img-thumbnail" style="max-height: 60px;" alt="Current logo">
+                            <img src="{{ asset('storage/' . $existing_lease_residential_logo) }}" class="img-thumbnail" style="max-height: 60px;"
+                                alt="Current logo">
                         </div>
                     @endif
                 </div>
@@ -88,7 +94,8 @@
                     <small class="form-text text-muted">Max 2MB, max 800×400px.</small>
                     @if ($existing_rental_residential_logo)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $existing_rental_residential_logo) }}" class="img-thumbnail" style="max-height: 60px;" alt="Current logo">
+                            <img src="{{ asset('storage/' . $existing_rental_residential_logo) }}" class="img-thumbnail" style="max-height: 60px;"
+                                alt="Current logo">
                         </div>
                     @endif
                 </div>
@@ -100,7 +107,8 @@
                     <small class="form-text text-muted">Max 2MB, max 800×400px.</small>
                     @if ($existing_rent_out_agreement_footer)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $existing_rent_out_agreement_footer) }}" class="img-thumbnail" style="max-height: 60px;" alt="Current footer">
+                            <img src="{{ asset('storage/' . $existing_rent_out_agreement_footer) }}" class="img-thumbnail" style="max-height: 60px;"
+                                alt="Current footer">
                         </div>
                     @endif
                 </div>
@@ -129,7 +137,6 @@
                 </div>
             </div>
 
-        </div>
 
             {{-- LPO Image --}}
             <h6 class="fw-bold text-muted text-uppercase mb-2 pb-1 border-bottom mt-2">
@@ -145,11 +152,13 @@
                     <small class="form-text text-muted">Max 2MB. Replaces existing image on save.</small>
                     @if ($existing_lpo_header_image)
                         <div class="mt-2">
-                            <img src="{{ asset('storage/' . $existing_lpo_header_image) }}" class="img-thumbnail" style="max-height: 80px;" alt="LPO Header Image">
+                            <img src="{{ asset('storage/' . $existing_lpo_header_image) }}" class="img-thumbnail" style="max-height: 80px;"
+                                alt="LPO Header Image">
                         </div>
                     @endif
                 </div>
             </div>
+        </div>
 
         <div class="card-footer bg-light text-end py-2 px-3">
             <button type="submit" class="btn btn-primary btn-sm px-3">
