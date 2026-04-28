@@ -62,6 +62,75 @@
         .item-icon {
             width: 10%
         }
+
+        @media (max-width: 991.98px) {
+            html,
+            body {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            .root {
+                grid-template-columns: 1fr;
+                min-width: 0;
+            }
+
+            .content {
+                grid-column: 1 / -1;
+                min-width: 0;
+                max-width: 100vw;
+                overflow-x: hidden;
+            }
+
+            .content__boxed,
+            .content__wrap {
+                min-width: 0;
+                max-width: 100%;
+            }
+
+            .content__wrap {
+                padding-inline: 0.75rem;
+            }
+
+            .row > [class*="col"],
+            .card,
+            .card-body {
+                min-width: 0;
+            }
+
+            .table-responsive,
+            .table-responsive-md,
+            .table-responsive-lg,
+            .table-responsive-xl,
+            .table-responsive-xxl {
+                max-width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .content__wrap {
+                padding-inline: 0.5rem;
+            }
+
+            .content__wrap > .bg-primary:first-child {
+                border-radius: 0.75rem !important;
+                margin-bottom: 1rem !important;
+                padding: 1rem !important;
+            }
+
+            .content__wrap > .bg-primary:first-child h1 {
+                font-size: clamp(1.45rem, 9vw, 2rem);
+                line-height: 1.15;
+                overflow-wrap: anywhere;
+            }
+
+            .content__wrap > .bg-primary:first-child .lead {
+                font-size: 0.95rem;
+                line-height: 1.35;
+            }
+        }
     </style>
     {{-- <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script> --}}
     @stack('styles')

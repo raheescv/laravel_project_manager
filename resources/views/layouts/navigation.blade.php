@@ -790,27 +790,96 @@
 
         /* ============================ RESPONSIVE ============================= */
         @media (max-width: 991.98px) {
+            .root.mn--max,
+            .root.mn--min {
+                --nf-mainnav-max-width: min(88vw, 21rem);
+            }
+
+            .luminous-nav.mainnav {
+                width: var(--nf-mainnav-max-width);
+                max-width: 100vw;
+                box-shadow: 0 1.25rem 3rem rgba(15, 23, 42, 0.28);
+            }
+
+            .root.mn--max:not(.mn--show) .luminous-nav.mainnav,
+            .root.mn--min:not(.mn--show) .luminous-nav.mainnav {
+                transform: translateX(calc(-100% - 1px)) !important;
+            }
+
+            .luminous-nav .mainnav__inner {
+                height: 100dvh;
+                max-height: 100dvh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .luminous-nav .mainnav__top-content {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 1rem !important;
+            }
+
+            .luminous-nav .mainnav__bottom-content {
+                flex: 0 0 auto;
+                padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+            }
+
             .luminous-nav .mainnav__widget { margin: 0.75rem 0.75rem 0.85rem !important; }
-            .luminous-nav .mainnav__menu   { padding: 0 0.45rem; }
+            .luminous-nav .mainnav__menu   { padding: 0 0.55rem; }
+
+            .luminous-nav .mainnav__menu > .nav-item > .nav-link,
+            .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle {
+                min-height: 44px;
+                padding: 0.55rem 0.65rem !important;
+                font-size: 0.86rem;
+            }
+
+            .luminous-nav .mainnav__menu > .nav-item > .nav-link > .fa,
+            .luminous-nav .mainnav__menu > .nav-item > .nav-link > i.fa,
+            .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle > .fa {
+                width: 28px;
+                height: 28px;
+                font-size: 0.8rem !important;
+            }
+
+            .luminous-nav .mininav-content.nav {
+                margin-left: 0.45rem !important;
+            }
+
+            .luminous-nav .mininav-content .nav-item > .nav-link {
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                padding: 0.5rem 0.6rem !important;
+                font-size: 0.82rem;
+            }
         }
 
-        @media (max-width: 575px) {
+        @media (max-width: 575.98px) {
+            .root.mn--max,
+            .root.mn--min {
+                --nf-mainnav-max-width: min(92vw, 20rem);
+            }
+
             .luminous-nav .mainnav__menu > .nav-item > .nav-link {
-                padding: 0.28rem 0.45rem !important;
-                font-size: 0.74rem;
+                padding: 0.55rem 0.6rem !important;
+                font-size: 0.84rem;
             }
             .luminous-nav .mainnav__menu > .nav-item > .nav-link > .fa {
-                width: 20px;
-                height: 20px;
+                width: 27px;
+                height: 27px;
                 margin-right: 0.4rem !important;
-                font-size: 0.64rem !important;
+                font-size: 0.76rem !important;
             }
             .luminous-nav .mainnav__avatar {
                 width: 36px !important;
                 height: 36px !important;
             }
             .luminous-nav .mininav-content .nav-item > .nav-link {
-                font-size: 0.7rem;
+                font-size: 0.8rem;
             }
         }
 

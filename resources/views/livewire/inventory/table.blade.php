@@ -1,9 +1,85 @@
-<div>
+<div class="inventory-table-component">
+    <style>
+        .inventory-table-controls {
+            min-width: 0;
+        }
+
+        .inventory-limit-control {
+            width: 120px;
+        }
+
+        .inventory-search-control {
+            width: 250px;
+        }
+
+        @media (max-width: 767.98px) {
+            .inventory-table-component {
+                min-width: 0;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            .inventory-toolbar {
+                align-items: stretch !important;
+            }
+
+            .inventory-primary-actions,
+            .inventory-secondary-actions,
+            .inventory-table-controls {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .inventory-action-group {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                width: 100%;
+            }
+
+            .inventory-action-group > .btn {
+                width: 100%;
+                min-width: 0;
+                white-space: normal;
+            }
+
+            .inventory-table-controls {
+                display: grid !important;
+                grid-template-columns: minmax(7rem, 0.75fr) minmax(0, 1.25fr) auto;
+                gap: 0.5rem !important;
+            }
+
+            .inventory-limit-control,
+            .inventory-search-control {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .inventory-search-control .form-control {
+                min-width: 0;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .inventory-action-group,
+            .inventory-table-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .inventory-action-group + .inventory-action-group {
+                margin-top: 0.5rem;
+            }
+
+            .inventory-table-controls .dropdown,
+            .inventory-table-controls .dropdown > .btn {
+                width: 100%;
+            }
+        }
+    </style>
     <div class="card-header bg-white p-2">
         <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <div class="btn-group">
+        <div class="inventory-toolbar d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <div class="inventory-primary-actions d-flex align-items-center gap-2 flex-wrap">
+                <div class="btn-group inventory-action-group">
                     @can('inventory.export')
                         <button class="btn btn-sm btn-outline-primary" title="Export inventory to Excel" wire:click="export()">
                             <i class="demo-pli-file-excel me-1"></i>
@@ -21,7 +97,7 @@
                         </a>
                     @endcan
                 </div>
-                <div class="btn-group">
+                <div class="btn-group inventory-action-group">
                     @can('inventory.barcode cart')
                         <button class="btn btn-sm btn-outline-dark" type="button" wire:click="addSelectedToBarcodeCart"
                             title="Add selected items to barcode cart">
@@ -44,8 +120,8 @@
                     @endcan
                 </div>
             </div>
-            <div class="d-flex gap-2 align-items-center">
-                <div class="input-group input-group-sm" style="width: 120px;">
+            <div class="inventory-table-controls d-flex gap-2 align-items-center">
+                <div class="input-group input-group-sm inventory-limit-control">
                     <select wire:model.live="limit" class="form-select border-start-0">
                         <option value="10">10 rows</option>
                         <option value="100">100 rows</option>
@@ -54,7 +130,7 @@
                         <option value="1500">1500 rows</option>
                     </select>
                 </div>
-                <div class="input-group input-group-sm" style="width: 250px;">
+                <div class="input-group input-group-sm inventory-search-control">
                     <span class="input-group-text bg-light border-end-0">
                         <i class="demo-pli-magnifi-glass"></i>
                     </span>
