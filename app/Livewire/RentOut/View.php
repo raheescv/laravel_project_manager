@@ -21,6 +21,11 @@ class View extends Component
     {
         $this->agreementType = $agreementType;
         $this->loadRentOut($id);
+        if (! $this->rentOut) {
+            session()->flash('error', 'Record not found');
+
+            return redirect()->route($this->config->indexRoute);
+        }
         $this->vacateDate = $this->rentOut->vacate_date?->format('Y-m-d') ?? '';
     }
 

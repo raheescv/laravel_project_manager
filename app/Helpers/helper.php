@@ -280,7 +280,6 @@ if (! function_exists('convert_number_to_words')) {
     }
 }
 
-
 if (! function_exists('convertCurrencyToWords')) {
     function convertCurrencyToWords($amount)
     {

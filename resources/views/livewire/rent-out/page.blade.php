@@ -475,6 +475,12 @@
                     };
                 }
 
+                // Reload property list when "Vacant Only" toggles
+                $('#vacant_only').on('change', function() {
+                    clearAndReload('property_id');
+                    @this.set('rent_outs.property_id', '');
+                });
+
                 // Customer select
                 $('#account_id').on('change', function() {
                     @this.set('rent_outs.account_id', $(this).val());

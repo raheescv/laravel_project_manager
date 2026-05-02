@@ -10,6 +10,7 @@
             $rentOutList = [
                 'property/rent',
                 'property/rent/*',
+                'property/rent/edit/*',
                 'property/rent/booking/view/*',
                 'property/tenant',
                 'property/report/customer-property',
@@ -38,7 +39,7 @@
             @can('rent out.view')
                 <li class="nav-item">
                     <a href="{{ route('property::rent::index') }}"
-                        class="nav-link {{ request()->is(['property/rent', 'property/rent/view/*']) ? 'active' : '' }}">Rentouts</a>
+                        class="nav-link {{ request()->is(['property/rent', 'property/rent/view/*', 'property/rent/edit/*']) ? 'active' : '' }}">Rentouts</a>
                 </li>
             @endcan
             @can('rent out.payment')

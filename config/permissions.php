@@ -128,7 +128,7 @@ return [
         'tailoring non delivery',
         'tailoring order item tailor',
     ],
-    'log' => ['inventory','log viewer'],
+    'log' => ['inventory', 'log viewer'],
     'day close' => ['sync amount'],
     'api_log' => ['view', 'moq settings'],
     'backup' => ['create', 'view', 'download'],
