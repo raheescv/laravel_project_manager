@@ -67,6 +67,8 @@ class Table extends Component
 
     public $resetReason = '';
 
+    public $image_status = '';
+
     protected $listeners = [
         'Inventory-Refresh-Component' => '$refresh',
     ];
@@ -156,6 +158,7 @@ class Table extends Component
             'barcode' => $this->barcode,
             'code' => $this->code,
             'stock_quantity_filter' => $this->stock_quantity_filter,
+            'image_status' => $this->image_status,
             'search' => $this->search,
             'product_name' => $this->product_name,
             'sortField' => $this->sortField,

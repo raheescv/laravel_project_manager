@@ -28,6 +28,10 @@ class OutOfStockSales
 
     public static function unavailableForSaleSelection(Inventory $inventory, float $requiredQuantity = 0): bool
     {
+        if (! self::hiddenFromSaleSelection()) {
+            return false;
+        }
+
         return (float) $inventory->quantity <= 0 || (float) $inventory->quantity < $requiredQuantity;
     }
 }

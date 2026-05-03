@@ -3,6 +3,7 @@
 namespace App\Actions\Product\Inventory;
 
 use App\Models\Inventory;
+use Illuminate\Database\Query\Builder;
 
 class GetAction
 {
@@ -59,6 +60,21 @@ class GetAction
             })
             ->when($filter['barcode'] ?? '', function ($query, $value) {
                 return $query->where('inventories.barcode', $value);
+            })
+            ->when($filter['image_status'] ?? '', function ($query, $value) {
+                return match ($value) {
+                    'with_image' => $query->whereExists(function (Builder $query): void {
+                        $query->selectRaw('1')
+                            ->from('product_images')
+                            ->whereColumn('product_images.product_id', 'products.id');
+                    }),
+                    'without_image' => $query->whereNotExists(function (Builder $query): void {
+                        $query->selectRaw('1')
+                            ->from('product_images')
+                            ->whereColumn('product_images.product_id', 'products.id');
+                    }),
+                    default => $query,
+                };
             })
             ->when($filter['sub_category_id'] ?? '', function ($query, $value) {
                 return $query->where('products.sub_category_id', $value);
