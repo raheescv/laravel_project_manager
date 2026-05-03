@@ -47,4 +47,20 @@ class ProductController extends Controller
             return $this->sendServerError('Failed to retrieve product: '.$e->getMessage());
         }
     }
+
+    /**
+     * Display the specified product.
+     */
+    public function get(GetProductAction $action, GetProductRequest $request): JsonResponse
+    {
+        try {
+            $result = $action->execute($request);
+
+            return $this->sendSuccess($result, 'Product retrieved successfully');
+        } catch (ValidationException $e) {
+            return $this->sendValidationError($e->errors(), 'Validation failed');
+        } catch (\Exception $e) {
+            return $this->sendServerError('Failed to retrieve product: '.$e->getMessage());
+        }
+    }
 }

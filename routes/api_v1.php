@@ -25,6 +25,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index'])->name('api.v1.products.index');
         Route::get('/single/', [ProductController::class, 'show'])->name('api.v1.products.show');
+        Route::get('/{id}', [ProductController::class, 'get'])->name('api.v1.products.show-by-id');
     });
 
     // Category routes

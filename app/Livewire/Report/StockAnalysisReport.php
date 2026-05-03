@@ -281,7 +281,13 @@ class StockAnalysisReport extends Component
             return;
         }
 
-        $codes = collect($rows)->pluck('code')->filter()->unique()->values()->all();
+        // Paginators must be unwrapped to their underlying item collection;
+        // collect($paginator) returns the meta array, not the items.
+        $items = $rows instanceof \Illuminate\Contracts\Pagination\Paginator
+            ? $rows->getCollection()
+            : collect($rows);
+
+        $codes = $items->pluck('code')->filter()->unique()->values()->all();
         if (empty($codes)) {
             return;
         }
@@ -300,7 +306,7 @@ class StockAnalysisReport extends Component
             $this->group_by_code = $original;
         }
 
-        foreach ($rows as $row) {
+        foreach ($items as $row) {
             $row->children = $details->get($row->code, collect());
         }
     }
