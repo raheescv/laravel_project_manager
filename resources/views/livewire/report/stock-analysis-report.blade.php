@@ -1,17 +1,37 @@
 <div class="card shadow-sm">
+    <!-- Report Type Switcher (sticky top) -->
+    <div class="report-type-bar position-sticky top-0 bg-white border-bottom shadow-sm py-3 px-3 mb-3" style="z-index: 1020;">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted text-uppercase fw-bold small me-2"><i class="fa fa-layer-group me-1"></i>Report Type</span>
+                <div class="btn-group shadow-sm" role="group" aria-label="Report Type">
+                    <button type="button"
+                        wire:click="$set('report_type', 'top_moving')"
+                        class="btn {{ $report_type === 'top_moving' ? 'btn-danger' : 'btn-outline-danger' }} px-4 fw-bold">
+                        <i class="fa fa-fire me-1"></i> Top Moving
+                    </button>
+                    <button type="button"
+                        wire:click="$set('report_type', 'non_moving')"
+                        x-on:click="window.stockAnalysisReport?.destroyChart?.()"
+                        class="btn {{ $report_type === 'non_moving' ? 'btn-warning' : 'btn-outline-warning' }} px-4 fw-bold">
+                        <i class="fa fa-box me-1"></i> Non-Moving
+                    </button>
+                </div>
+            </div>
+            <div class="form-check form-switch fs-6">
+                <input class="form-check-input" type="checkbox" role="switch" id="groupByCodeSwitch" wire:model.live="group_by_code">
+                <label class="form-check-label fw-bold" for="groupByCodeSwitch">
+                    <i class="fa fa-object-group me-1 text-primary"></i>Group by Code
+                </label>
+            </div>
+        </div>
+    </div>
     <div class="card-body">
         <!-- Filters -->
         <div class="row mb-4">
             <div class="col-12 mb-3">
                 <h6 class="text-muted text-uppercase"><i class="fa fa-filter me-2"></i>Filters</h6>
                 <hr class="mt-2">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold">Report Type</label>
-                <select wire:model.live="report_type" class="form-select shadow-sm" x-on:change="window.stockAnalysisReport?.destroyChart?.()">
-                    <option value="non_moving">📦 Non-Moving Items</option>
-                    <option value="top_moving">🔥 Top Moving Products</option>
-                </select>
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-bold">Branch</label>
@@ -82,7 +102,7 @@
         <!-- Chart Section for Top Moving Products -->
         @if ($report_type === 'top_moving' && $chartData)
             <div class="row mb-4"
-                wire:key="stock-analysis-chart-{{ $report_type }}-{{ $branch_id ?: 'all' }}-{{ md5($product_search) }}-{{ $main_category_id ?: 'all' }}-{{ $sub_category_id ?: 'all' }}-{{ $brand_id ?: 'all' }}-{{ $from_date }}-{{ $to_date }}-{{ $limit }}">
+                wire:key="stock-analysis-chart-{{ $report_type }}-{{ $branch_id ?: 'all' }}-{{ md5($product_search) }}-{{ $main_category_id ?: 'all' }}-{{ $sub_category_id ?: 'all' }}-{{ $brand_id ?: 'all' }}-{{ $from_date }}-{{ $to_date }}-{{ $limit }}-{{ $group_by_code ? 'g' : 'ng' }}">
                 <div class="col-12 mb-3">
                     <h6 class="text-muted text-uppercase"><i class="fa fa-chart-pie me-2"></i>Distribution Chart</h6>
                     <hr class="mt-2">
@@ -108,12 +128,16 @@
             <table class="table table-hover table-sm table-striped align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th class="border-0">Product Name</th>
+                        @unless ($group_by_code)
+                            <th class="border-0">Product Name</th>
+                        @endunless
                         <th class="border-0">Code</th>
                         <th class="border-0">Main Category</th>
                         <th class="border-0">Brand</th>
                         <th class="border-0">Size</th>
-                        <th class="border-0">Branch</th>
+                        @unless ($group_by_code)
+                            <th class="border-0">Branch</th>
+                        @endunless
                         @if ($report_type === 'non_moving')
                             <th class="text-end">Current Stock</th>
                             <th class="text-end">Stock Value</th>
@@ -129,17 +153,21 @@
                 <tbody>
                     @foreach ($products as $product)
                         <tr>
-                            <td> <a href="{{ route('inventory::product::view', $product->id) }}">{{ $product->name }}</a> </td>
+                            @unless ($group_by_code)
+                                <td> <a href="{{ route('inventory::product::view', $product->id) }}">{{ $product->name }}</a> </td>
+                            @endunless
                             <td>{{ $product->code }}</td>
                             <td>{{ $product->main_category_name ?? $product->mainCategory?->name }}</td>
                             <td>{{ $product->brand_name ?? $product->brand?->name }}</td>
                             <td>{{ $product->size }}</td>
-                            <td>
-                                {{ $product->branch_name }}
-                                @if ($product->branch_code ?? null)
-                                    <span class="text-muted">({{ $product->branch_code }})</span>
-                                @endif
-                            </td>
+                            @unless ($group_by_code)
+                                <td>
+                                    {{ $product->branch_name }}
+                                    @if ($product->branch_code ?? null)
+                                        <span class="text-muted">({{ $product->branch_code }})</span>
+                                    @endif
+                                </td>
+                            @endunless
                             @if ($report_type === 'non_moving')
                                 <td class="text-end fw-bold">{{ number_format($product->quantity) }}</td>
                                 <td class="text-end">

@@ -35,6 +35,8 @@ class StockAnalysisReport extends Component
 
     public $limit = 10; // Number of top moving products to show
 
+    public $group_by_code = false; // Group result rows / chart slices by product code
+
     protected $paginationTheme = 'bootstrap';
 
     public function mount(): void
@@ -46,7 +48,7 @@ class StockAnalysisReport extends Component
     public function updated($key, $value): void
     {
         $this->resetPage();
-        if (in_array($key, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type', 'product_search', 'main_category_id', 'sub_category_id', 'brand_id'])) {
+        if (in_array($key, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type', 'product_search', 'main_category_id', 'sub_category_id', 'brand_id', 'group_by_code'])) {
             if ($this->report_type === 'top_moving') {
                 $this->dispatch('stock-analysis-chart-updated', chartData: $this->getChartData());
             } else {
@@ -96,6 +98,28 @@ class StockAnalysisReport extends Component
                 ->orWhere('last_movements.last_movement', '<=', now()->subDays(intval($this->days_threshold)));
         });
 
+        if ($this->group_by_code) {
+            return $query
+                ->groupBy('products.code')
+                ->select(
+                    DB::raw('MIN(products.id) as id'),
+                    DB::raw('MIN(products.name) as name'),
+                    'products.code',
+                    DB::raw('MIN(products.main_category_id) as main_category_id'),
+                    DB::raw('MIN(products.sub_category_id) as sub_category_id'),
+                    DB::raw('MIN(products.brand_id) as brand_id'),
+                    DB::raw('MIN(products.size) as size'),
+                    DB::raw('MIN(main_categories.name) as main_category_name'),
+                    DB::raw('MIN(sub_categories.name) as sub_category_name'),
+                    DB::raw('MIN(brands.name) as brand_name'),
+                    DB::raw('SUM(inventories.quantity) as quantity'),
+                    DB::raw('AVG(inventories.cost) as cost'),
+                    DB::raw('MAX(last_movements.last_movement) as last_movement'),
+                    DB::raw('SUM(inventories.quantity * inventories.cost) as stock_value')
+                )
+                ->orderBy('last_movement', 'asc');
+        }
+
         return $query->select(
             'products.id',
             'products.name',
@@ -133,6 +157,26 @@ class StockAnalysisReport extends Component
 
         $this->applyProductSearch($query);
         $this->applyProductDropdownFilters($query);
+
+        if ($this->group_by_code) {
+            return $query
+                ->groupBy('products.code')
+                ->select(
+                    DB::raw('MIN(products.id) as id'),
+                    DB::raw('MIN(products.name) as name'),
+                    'products.code',
+                    DB::raw('MIN(products.main_category_id) as main_category_id'),
+                    DB::raw('MIN(products.sub_category_id) as sub_category_id'),
+                    DB::raw('MIN(products.size) as size'),
+                    DB::raw('MIN(products.brand_id) as brand_id'),
+                    DB::raw('MIN(main_categories.name) as main_category_name'),
+                    DB::raw('MIN(sub_categories.name) as sub_category_name'),
+                    DB::raw('MIN(brands.name) as brand_name'),
+                    DB::raw('SUM(quantity_out) as total_quantity_out'),
+                    DB::raw('SUM(quantity_in) as total_quantity_in')
+                )
+                ->orderBy('total_quantity_out', 'desc');
+        }
 
         return $query
             ->groupBy(
@@ -207,6 +251,9 @@ class StockAnalysisReport extends Component
 
         return [
             'labels' => $data->map(function ($product): string {
+                if ($this->group_by_code) {
+                    return (string) ($product->code ?: $product->name);
+                }
                 $branchCode = $product->branch_code ?: $product->branch_name;
 
                 return $branchCode ? "{$product->name} ({$branchCode})" : $product->name;
