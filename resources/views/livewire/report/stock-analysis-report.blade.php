@@ -42,28 +42,28 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
                 <label class="form-label fw-bold">Product Search</label>
                 <div class="input-group shadow-sm">
                     <span class="input-group-text"><i class="fa fa-search"></i></span>
                     <input type="search" wire:model.live.debounce.400ms="product_search" class="form-control" placeholder="Size, SKU, barcode, name">
                 </div>
             </div>
+            <div class="col-md-3" wire:ignore>
+                <label class="form-label fw-bold">Category</label>
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text"><i class="fa fa-tags"></i></span>
+                    {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent')->id('main_category_id')->attribute('style', 'width:80%')->placeholder('All Categories') }}
+                </div>
+            </div>
+            <div class="col-md-3" wire:ignore>
+                <label class="form-label fw-bold">Brand</label>
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text"><i class="fa fa-copyright"></i></span>
+                    {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list')->id('brand_id')->attribute('style', 'width:80%')->placeholder('All Brands') }}
+                </div>
+            </div>
             <div class="row mb-4 p-2">
-                <div class="col-md-3" wire:ignore>
-                    <label class="form-label fw-bold">Category</label>
-                    <div class="input-group shadow-sm">
-                        <span class="input-group-text"><i class="fa fa-tags"></i></span>
-                        {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent')->id('main_category_id')->attribute('style', 'width:80%')->placeholder('All Categories') }}
-                    </div>
-                </div>
-                <div class="col-md-3" wire:ignore>
-                    <label class="form-label fw-bold">Brand</label>
-                    <div class="input-group shadow-sm">
-                        <span class="input-group-text"><i class="fa fa-copyright"></i></span>
-                        {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list')->id('brand_id')->attribute('style', 'width:80%')->placeholder('All Brands') }}
-                    </div>
-                </div>
                 @if ($report_type === 'top_moving')
                     <div class="col-md-2">
                         <label class="form-label fw-bold">From Date</label>
