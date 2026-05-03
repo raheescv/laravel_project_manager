@@ -4,6 +4,7 @@ namespace App\Actions\Sale\Pos;
 
 use App\Models\Inventory;
 use App\Models\ProductUnit;
+use App\Support\Sale\OutOfStockSales;
 use Illuminate\Support\Facades\Log;
 
 class GetProductByBarcodeAction
@@ -59,6 +60,10 @@ class GetProductByBarcodeAction
                     'data' => null,
                     'status' => 404,
                 ];
+            }
+
+            if (OutOfStockSales::unavailableForSaleSelection($inventory)) {
+                throw new \Exception('Product is out of stock.');
             }
 
             $saleType = $saleType ?? 'normal';

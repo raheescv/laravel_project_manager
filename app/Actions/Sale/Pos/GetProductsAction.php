@@ -3,6 +3,7 @@
 namespace App\Actions\Sale\Pos;
 
 use App\Models\Inventory;
+use App\Support\Sale\OutOfStockSales;
 use Illuminate\Support\Facades\Log;
 
 class GetProductsAction
@@ -21,6 +22,7 @@ class GetProductsAction
                 ->where('inventories.branch_id', $branchId)
                 ->where('products.is_selling', true)
                 ->where('categories.sale_visibility_flag', true)
+                // ->when(OutOfStockSales::hiddenFromSaleSelection(), fn ($q) => $q->where('inventories.quantity', '>', 0))
                 ->when(! empty($filters['type']), fn ($q) => $q->where('products.type', $filters['type']))
                 ->when(! empty($filters['category_id']) && $filters['category_id'] !== 'favorite', fn ($q) => $q->where('products.main_category_id', $filters['category_id']))
                 ->when(isset($filters['category_id']) && $filters['category_id'] === 'favorite', fn ($q) => $q->where('products.is_favorite', true))

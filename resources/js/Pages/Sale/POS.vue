@@ -738,6 +738,19 @@ export default {
             loadProducts()
         }, 300)
 
+        const getServerErrorMessage = (error, fallbackMessage) => {
+            const data = error?.response?.data
+
+            if (data?.errors) {
+                const validationErrors = Object.values(data.errors).flat()
+                if (validationErrors.length) {
+                    return validationErrors.join('\n')
+                }
+            }
+
+            return data?.message || data?.error || fallbackMessage
+        }
+
         const createTempCartRowKey = () => `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
         const buildCartItemKey = (item) => {
@@ -765,10 +778,10 @@ export default {
                     await addProductToCart(response.data)
                     barcodeKey.value = ''
                 } else {
-                    toast.error('Product not found')
+                    toast.error(response.data?.message || response.data?.error || 'Product not found')
                 }
             } catch (error) {
-                toast.error('Failed to find product')
+                toast.error(getServerErrorMessage(error, 'Failed to find product'))
             }
         }, 300)
 

@@ -18,6 +18,11 @@
                     {{ html()->select('sync_barcode_to_code', ['yes' => 'Yes', 'no' => 'No'])->value($sync_barcode_to_code)->class('form-select form-select-sm')->placeholder('Select Option')->attribute('wire:model', 'sync_barcode_to_code') }}
                     <small class="form-text text-muted">When enabled, Barcode value will be used for both Barcode and UPC/EAN/ISBN/SKU while creating products.</small>
                 </div>
+                <div class="col-12 col-md-12">
+                    <label class="form-label fw-medium small mb-1" for="hide_out_of_stock_sale_items">Hide Out Of Stock Items In Sale/POS</label>
+                    {{ html()->select('hide_out_of_stock_sale_items', ['yes' => 'Yes', 'no' => 'No'])->value($hide_out_of_stock_sale_items)->class('form-select form-select-sm')->placeholder('Select Option')->attribute('wire:model', 'hide_out_of_stock_sale_items') }}
+                    <small class="form-text text-muted">When enabled, out of stock products will not show in sale/POS product lists and cannot be selected by barcode.</small>
+                </div>
             </div>
         </div>
         <div class="card-footer bg-light text-end py-2 px-3">

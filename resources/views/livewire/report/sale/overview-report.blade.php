@@ -555,8 +555,8 @@
     </div>
 
     <!-- Tailoring Order Item Performance -->
-    @if (auth()->user()->can('tailoring order.view'))
         <div class="row g-4 mt-4">
+            @if (auth()->user()->can('tailoring order.view'))
             <div class="col-md-4">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-transparent py-3">
@@ -601,6 +601,7 @@
                     </div>
                 </div>
             </div>
+            @endif
             <div class="col-md-8">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-transparent py-3">
@@ -665,7 +666,6 @@
                 </div>
             </div>
         </div>
-    @endif
 
 
     @push('scripts')

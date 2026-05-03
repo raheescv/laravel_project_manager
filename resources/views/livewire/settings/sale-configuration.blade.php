@@ -110,6 +110,13 @@
                         <small class="form-text text-muted">Controls whether clicking the same product card adds quantity to the existing cart row or creates a new row.</small>
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label fw-medium" for="prevent_out_of_stock_sales">Prevent Out Of Stock Sales</label>
+                        {{ html()->select('prevent_out_of_stock_sales', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Block sale completion when stock is not enough?')->attribute('wire:model', 'prevent_out_of_stock_sales') }}
+                        <small class="form-text text-muted">When enabled, completed sales cannot reduce inventory below zero.</small>
+                    </div>
+                </div>
                 <div class="col-12">
                     <div class="form-group">
                         <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>

@@ -3,6 +3,7 @@
 namespace App\Livewire\Sale;
 
 use App\Models\Inventory;
+use App\Support\Sale\OutOfStockSales;
 use Livewire\Component;
 
 class ProductList extends Component
@@ -42,6 +43,7 @@ class ProductList extends Component
             ->where('inventories.branch_id', session('branch_id'))
             ->where('products.is_selling', true)
             ->where('categories.sale_visibility_flag', true)
+            ->when(OutOfStockSales::hiddenFromSaleSelection(), fn ($query) => $query->where('inventories.quantity', '>', 0))
             ->orderBy('products.name')
             ->select(
                 'inventories.id',
