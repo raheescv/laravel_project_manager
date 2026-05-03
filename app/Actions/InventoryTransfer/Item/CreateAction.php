@@ -18,6 +18,9 @@ class CreateAction
             }
 
             validationHelper(InventoryTransferItem::rules(), $data);
+            if ($data['current_stock'] < $data['quantity']) {
+                throw new \Exception($data['name'].': Current stock is less than the quantity to transfer.', 1);
+            }
             $model = InventoryTransferItem::create($data);
 
             $return['success'] = true;

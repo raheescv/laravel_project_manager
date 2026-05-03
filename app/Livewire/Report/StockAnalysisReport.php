@@ -275,6 +275,36 @@ class StockAnalysisReport extends Component
         return max(5, min(20, (int) $this->limit));
     }
 
+    protected function attachChildren($rows): void
+    {
+        if (! $this->group_by_code) {
+            return;
+        }
+
+        $codes = collect($rows)->pluck('code')->filter()->unique()->values()->all();
+        if (empty($codes)) {
+            return;
+        }
+
+        $original = $this->group_by_code;
+        $this->group_by_code = false;
+
+        try {
+            $details = ($this->report_type === 'top_moving'
+                ? $this->getTopMovingProducts()
+                : $this->getNonMovingProducts())
+                ->whereIn('products.code', $codes)
+                ->get()
+                ->groupBy('code');
+        } finally {
+            $this->group_by_code = $original;
+        }
+
+        foreach ($rows as $row) {
+            $row->children = $details->get($row->code, collect());
+        }
+    }
+
     public function render()
     {
         $branches = Branch::orderBy('name')->pluck('name', 'id');
@@ -282,6 +312,8 @@ class StockAnalysisReport extends Component
         $products = $this->report_type === 'non_moving'
             ? $this->getNonMovingProducts()->paginate(10)
             : $this->getTopMovingProducts()->limit($this->topMovingLimit())->get();
+
+        $this->attachChildren($products);
 
         $chartData = $this->report_type === 'top_moving' ? $this->getChartData() : null;
 

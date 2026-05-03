@@ -146,6 +146,17 @@
                         {{ html()->select('image_status', ['with_image' => 'With Image', 'without_image' => 'Without Image'])->value('')->class('form-select shadow-sm border-secondary-subtle')->placeholder('All Products')->id('image_status')->attribute('wire:model.live', 'image_status') }}
                     </div>
                 </div>
+                <div class="col-lg-4 col-md-6" wire:ignore>
+                    <div>
+                        <label for="image_status" class="form-label small fw-medium text-capitalize">
+                            <i class="demo-psi-cube me-1 text-muted"></i>
+                            Size
+                        </label>
+                        <input type="text" id="size" wire:model.live="size" placeholder="Search size..." class="form-control border-secondary-subtle shadow-sm" autocomplete="off"
+                        aria-label="Search size">
+                    </div>
+                </div>
+
 
                 <div class="col-lg-4 col-md-6">
                     <div>

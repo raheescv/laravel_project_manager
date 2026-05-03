@@ -5,14 +5,11 @@
             <div class="d-flex align-items-center gap-2">
                 <span class="text-muted text-uppercase fw-bold small me-2"><i class="fa fa-layer-group me-1"></i>Report Type</span>
                 <div class="btn-group shadow-sm" role="group" aria-label="Report Type">
-                    <button type="button"
-                        wire:click="$set('report_type', 'top_moving')"
+                    <button type="button" wire:click="$set('report_type', 'top_moving')"
                         class="btn {{ $report_type === 'top_moving' ? 'btn-danger' : 'btn-outline-danger' }} px-4 fw-bold">
                         <i class="fa fa-fire me-1"></i> Top Moving
                     </button>
-                    <button type="button"
-                        wire:click="$set('report_type', 'non_moving')"
-                        x-on:click="window.stockAnalysisReport?.destroyChart?.()"
+                    <button type="button" wire:click="$set('report_type', 'non_moving')" x-on:click="window.stockAnalysisReport?.destroyChart?.()"
                         class="btn {{ $report_type === 'non_moving' ? 'btn-warning' : 'btn-outline-warning' }} px-4 fw-bold">
                         <i class="fa fa-box me-1"></i> Non-Moving
                     </button>
@@ -128,13 +125,18 @@
             <table class="table table-hover table-sm table-striped align-middle">
                 <thead class="table-light">
                     <tr>
+                        @if ($group_by_code)
+                            <th class="border-0" style="width: 40px;"></th>
+                        @endif
                         @unless ($group_by_code)
                             <th class="border-0">Product Name</th>
                         @endunless
                         <th class="border-0">Code</th>
                         <th class="border-0">Main Category</th>
                         <th class="border-0">Brand</th>
-                        <th class="border-0">Size</th>
+                        @unless ($group_by_code)
+                            <th class="border-0">Size</th>
+                        @endunless
                         @unless ($group_by_code)
                             <th class="border-0">Branch</th>
                         @endunless
@@ -152,14 +154,27 @@
                 </thead>
                 <tbody>
                     @foreach ($products as $product)
+                        @php($childRowId = 'children-' . $loop->index)
                         <tr>
+                            @if ($group_by_code)
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary py-0 px-2" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#{{ $childRowId }}"
+                                        aria-expanded="false" aria-controls="{{ $childRowId }}"
+                                        x-data x-on:click="$el.querySelector('i').classList.toggle('fa-chevron-down'); $el.querySelector('i').classList.toggle('fa-chevron-up');">
+                                        <i class="fa fa-chevron-down"></i>
+                                    </button>
+                                </td>
+                            @endif
                             @unless ($group_by_code)
                                 <td> <a href="{{ route('inventory::product::view', $product->id) }}">{{ $product->name }}</a> </td>
                             @endunless
                             <td>{{ $product->code }}</td>
                             <td>{{ $product->main_category_name ?? $product->mainCategory?->name }}</td>
                             <td>{{ $product->brand_name ?? $product->brand?->name }}</td>
-                            <td>{{ $product->size }}</td>
+                            @unless ($group_by_code)
+                                <td>{{ $product->size }}</td>
+                            @endunless
                             @unless ($group_by_code)
                                 <td>
                                     {{ $product->branch_name }}
@@ -205,6 +220,78 @@
                                 </td>
                             @endif
                         </tr>
+                        @if ($group_by_code && isset($product->children) && count($product->children))
+                            <tr class="bg-light">
+                                <td colspan="20" class="p-0 border-0">
+                                    <div class="collapse" id="{{ $childRowId }}">
+                                        <div class="p-3">
+                                            <h6 class="text-muted mb-2"><i class="fa fa-list me-1"></i>Detailed Breakdown for <span class="badge bg-primary">{{ $product->code }}</span></h6>
+                                            <table class="table table-sm table-bordered mb-0 bg-white">
+                                                <thead class="table-secondary">
+                                                    <tr>
+                                                        <th>Product Name</th>
+                                                        <th>Size</th>
+                                                        <th>Branch</th>
+                                                        @if ($report_type === 'non_moving')
+                                                            <th class="text-end">Current Stock</th>
+                                                            <th class="text-end">Stock Value</th>
+                                                            <th>Last Movement</th>
+                                                            <th class="text-end">Days Idle</th>
+                                                        @else
+                                                            <th class="text-end">Total Out</th>
+                                                            <th class="text-end">Total In</th>
+                                                            <th class="text-end">Net</th>
+                                                        @endif
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($product->children as $child)
+                                                        <tr>
+                                                            <td><a href="{{ route('inventory::product::view', $child->id) }}">{{ $child->name }}</a></td>
+                                                            <td>{{ $child->size }}</td>
+                                                            <td>
+                                                                {{ $child->branch_name }}
+                                                                @if ($child->branch_code ?? null)
+                                                                    <span class="text-muted">({{ $child->branch_code }})</span>
+                                                                @endif
+                                                            </td>
+                                                            @if ($report_type === 'non_moving')
+                                                                <td class="text-end fw-bold">{{ number_format($child->quantity) }}</td>
+                                                                <td class="text-end"><span class="text-success fw-bold">{{ number_format($child->stock_value, 2) }}</span></td>
+                                                                <td>
+                                                                    @if ($child->last_movement)
+                                                                        <span class="badge bg-info">{{ systemDate($child->last_movement) }}</span>
+                                                                    @else
+                                                                        <span class="badge bg-warning">Never</span>
+                                                                    @endif
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    @if ($child->last_movement)
+                                                                        <span class="badge {{ Carbon\Carbon::parse($child->last_movement)->diffInDays(now()) > $days_threshold ? 'bg-danger' : 'bg-success' }}">
+                                                                            {{ round(Carbon\Carbon::parse($child->last_movement)->diffInDays(now())) }} days
+                                                                        </span>
+                                                                    @else
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    @endif
+                                                                </td>
+                                                            @else
+                                                                <td class="text-end"><span class="text-primary fw-bold">{{ number_format($child->total_quantity_out) }}</span></td>
+                                                                <td class="text-end"><span class="text-info fw-bold">{{ number_format($child->total_quantity_in) }}</span></td>
+                                                                <td class="text-end">
+                                                                    <span class="badge {{ $child->total_quantity_out - $child->total_quantity_in > 0 ? 'bg-success' : 'bg-danger' }}">
+                                                                        {{ number_format($child->total_quantity_out - $child->total_quantity_in, 2) }}
+                                                                    </span>
+                                                                </td>
+                                                            @endif
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endif
                     @endforeach
                 </tbody>
             </table>

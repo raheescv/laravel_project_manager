@@ -35,6 +35,8 @@ class Table extends Component
 
     public $image_status = '';
 
+    public $size = '';
+
     public $limit = 100;
 
     public $selected = [];
@@ -169,7 +171,6 @@ class Table extends Component
                         ->orWhere('code', 'like', "%{$value}%")
                         ->orWhere('cost', 'like', "%{$value}%")
                         ->orWhere('barcode', 'like', "%{$value}%")
-                        ->orWhere('size', 'like', "%{$value}%")
                         ->orWhere('mrp', 'like', "%{$value}%");
                 });
             })
@@ -187,6 +188,9 @@ class Table extends Component
             })
             ->when($this->unit_id ?? '', function ($query, $value) {
                 return $query->where('unit_id', $value);
+            })
+            ->when($this->size ?? '', function ($query, $value) {
+                return $query->where('size', $value);
             })
             ->when($this->status ?? '', function ($query, $value) {
                 return $query->where('status', $value);

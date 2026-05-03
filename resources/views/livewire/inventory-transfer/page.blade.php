@@ -108,8 +108,7 @@
                     </div>
                     <div class="row">
                         <div class="d-flex justify-content-end gap-2 my-4 d-print-none">
-
-                            @if ($inventory_transfers['status'] == 'completed')
+                            @if ($inventory_transfers['status'] == 'completed' && isset($inventory_transfers['id']))
                                 <a target="_blank" href="{{ route('inventory::transfer::print', $inventory_transfers['id']) }}" class="btn btn-info btn-icon flex-fill">
                                     <i class="demo-pli-printer fs-4"></i>
                                 </a>
