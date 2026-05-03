@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Inventory;
 use App\Models\InventoryLog;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -28,23 +29,25 @@ class StockAnalysisReport extends Component
 
     protected $paginationTheme = 'bootstrap';
 
-    public function mount()
+    public function mount(): void
     {
         $this->from_date = date('Y-m-d', strtotime('-30 days'));
         $this->to_date = date('Y-m-d');
     }
 
-    public function updated($key, $value)
+    public function updated($key, $value): void
     {
         $this->resetPage();
         if (in_array($key, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type'])) {
             if ($this->report_type === 'top_moving') {
-                $this->dispatch('updateChart', $this->getChartData());
+                $this->dispatch('stock-analysis-chart-updated', chartData: $this->getChartData());
+            } else {
+                $this->dispatch('stock-analysis-chart-cleared');
             }
         }
     }
 
-    protected function getNonMovingProducts()
+    protected function getNonMovingProducts(): Builder
     {
         $query = Inventory::query()
             ->join('products', 'inventories.product_id', '=', 'products.id')
@@ -82,11 +85,11 @@ class StockAnalysisReport extends Component
         )->orderBy('last_movements.last_movement', 'asc');
     }
 
-    protected function getTopMovingProducts()
+    protected function getTopMovingProducts(): Builder
     {
         return InventoryLog::query()
             ->join('products', 'inventory_logs.product_id', '=', 'products.id')
-            ->join('branches', 'inventory_logs.branch_id', '=', 'branches.id')
+            ->leftJoin('branches', 'inventory_logs.branch_id', '=', 'branches.id')
             ->whereBetween('inventory_logs.created_at', [
                 Carbon::parse($this->from_date)->startOfDay(),
                 Carbon::parse($this->to_date)->endOfDay(),
@@ -95,30 +98,30 @@ class StockAnalysisReport extends Component
                 return $q->where('inventory_logs.branch_id', $this->branch_id);
             })
             ->where('products.type', 'product')
-            ->limit(10)
-            ->groupBy('products.id', 'products.name', 'products.code', 'branches.name')
+            ->groupBy('products.id', 'products.name', 'products.code')
             ->select(
                 'products.id',
                 'products.name',
                 'products.code',
-                'branches.name as branch_name',
+                DB::raw('MIN(branches.name) as branch_name'),
+                DB::raw('COUNT(DISTINCT inventory_logs.branch_id) as branch_count'),
                 DB::raw('SUM(quantity_out) as total_quantity_out'),
                 DB::raw('SUM(quantity_in) as total_quantity_in')
             )
             ->orderBy('total_quantity_out', 'desc');
     }
 
-    public function getChartData()
+    public function getChartData(): array
     {
         $data = $this->getTopMovingProducts()
-            ->limit(10)
+            ->limit($this->topMovingLimit())
             ->get();
 
         return [
             'labels' => $data->pluck('name')->toArray(),
             'datasets' => [
                 [
-                    'data' => $data->pluck('total_quantity_out')->toArray(),
+                    'data' => $data->pluck('total_quantity_out')->map(fn ($quantity): float => (float) $quantity)->toArray(),
                     'backgroundColor' => [
                         '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                         '#FF9F40', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
@@ -128,13 +131,18 @@ class StockAnalysisReport extends Component
         ];
     }
 
+    protected function topMovingLimit(): int
+    {
+        return max(5, min(20, (int) $this->limit));
+    }
+
     public function render()
     {
         $branches = Branch::orderBy('name')->pluck('name', 'id');
 
         $products = $this->report_type === 'non_moving'
             ? $this->getNonMovingProducts()->paginate(10)
-            : $this->getTopMovingProducts()->limit($this->limit)->get();
+            : $this->getTopMovingProducts()->limit($this->topMovingLimit())->get();
 
         $chartData = $this->report_type === 'top_moving' ? $this->getChartData() : null;
 

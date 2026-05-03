@@ -8,7 +8,7 @@
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-bold">Report Type</label>
-                <select wire:model.live="report_type" class="form-select shadow-sm">
+                <select wire:model.live="report_type" class="form-select shadow-sm" x-on:change="window.stockAnalysisReport?.destroyChart?.()">
                     <option value="non_moving">📦 Non-Moving Items</option>
                     <option value="top_moving">🔥 Top Moving Products</option>
                 </select>
@@ -58,15 +58,15 @@
 
         <!-- Chart Section for Top Moving Products -->
         @if ($report_type === 'top_moving' && $chartData)
-            <div class="row mb-4">
+            <div class="row mb-4" wire:key="stock-analysis-chart-{{ $report_type }}-{{ $branch_id ?: 'all' }}-{{ $from_date }}-{{ $to_date }}-{{ $limit }}">
                 <div class="col-12 mb-3">
                     <h6 class="text-muted text-uppercase"><i class="fa fa-chart-pie me-2"></i>Distribution Chart</h6>
                     <hr class="mt-2">
                 </div>
                 <div class="col-md-8 mx-auto">
                     <div class="card shadow-sm border-0 bg-light">
-                        <div class="card-body p-4" wire:ignore>
-                            <canvas id="productChart" style="height: 400px;"></canvas>
+                        <div class="card-body p-4">
+                            <canvas id="productChart" data-chart='@json($chartData)' style="height: 400px;"></canvas>
                         </div>
                     </div>
                 </div>
@@ -104,7 +104,13 @@
                         <tr>
                             <td>{{ $product->code }}</td>
                             <td> <a href="{{ route('inventory::product::view', $product->id) }}">{{ $product->name }}</a> </td>
-                            <td>{{ $product->branch_name }}</td>
+                            <td>
+                                @if (($product->branch_count ?? 1) > 1)
+                                    Multiple Branches
+                                @else
+                                    {{ $product->branch_name }}
+                                @endif
+                            </td>
                             @if ($report_type === 'non_moving')
                                 <td class="text-end fw-bold">{{ number_format($product->quantity) }}</td>
                                 <td class="text-end">
@@ -153,123 +159,198 @@
     </div>
     @push('scripts')
         <script>
-            Chart.register(ChartDataLabels);
+            (function() {
+                if (window.Chart && window.ChartDataLabels) {
+                    Chart.register(ChartDataLabels);
+                }
 
-            let chart = null;
-            const chartConfig = {
-                type: 'pie',
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 500
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                padding: 20,
-                                generateLabels: function(chart) {
-                                    const data = chart.data;
-                                    if (!data.datasets[0].data) return [];
-                                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    return data.labels.map((label, i) => {
-                                        const value = data.datasets[0].data[i];
-                                        const percentage = ((value / total) * 100).toFixed(1);
-                                        return {
-                                            text: `${label} (${percentage}%)`,
-                                            fillStyle: data.datasets[0].backgroundColor[i],
-                                            hidden: isNaN(value),
-                                            lineCap: 'round',
-                                            lineDash: [],
-                                            lineDashOffset: 0,
-                                            lineJoin: 'round',
-                                            lineWidth: 1,
-                                            strokeStyle: '#fff',
-                                            pointStyle: 'circle',
-                                            rotation: 0
-                                        };
-                                    });
+                window.stockAnalysisReport = window.stockAnalysisReport || {
+                    chart: null,
+                    listenersRegistered: false,
+                    hookRegistered: false
+                };
+
+                const chartConfig = {
+                    type: 'pie',
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 500
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    padding: 20,
+                                    generateLabels: function(chart) {
+                                        const data = chart.data;
+                                        if (!data.datasets[0].data) return [];
+                                        const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                        return data.labels.map((label, i) => {
+                                            const value = data.datasets[0].data[i];
+                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                            return {
+                                                text: `${label} (${percentage}%)`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                hidden: isNaN(value),
+                                                lineCap: 'round',
+                                                lineDash: [],
+                                                lineDashOffset: 0,
+                                                lineJoin: 'round',
+                                                lineWidth: 1,
+                                                strokeStyle: '#fff',
+                                                pointStyle: 'circle',
+                                                rotation: 0
+                                            };
+                                        });
+                                    }
                                 }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Top 10 Moving Products Distribution',
-                            font: {
-                                size: 16,
-                                weight: 'bold'
                             },
-                            padding: {
-                                top: 10,
-                                bottom: 30
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const label = context.label;
+                            title: {
+                                display: true,
+                                text: 'Top Moving Products Distribution',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                },
+                                padding: {
+                                    top: 10,
+                                    bottom: 30
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.raw;
+                                        const label = context.label;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return `${label}: ${value.toLocaleString()} (${percentage}%)`;
+                                    }
+                                }
+                            },
+                            datalabels: {
+                                color: '#fff',
+                                textShadow: '0 0 3px #000',
+                                font: {
+                                    weight: 'bold',
+                                    size: 14
+                                },
+                                formatter: function(value, context) {
+                                    if (!value) return '';
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `${label}: ${value.toLocaleString()} (${percentage}%)`;
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return percentage > 5 ? `${percentage}%` : '';
                                 }
-                            }
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            textShadow: '0 0 3px #000',
-                            font: {
-                                weight: 'bold',
-                                size: 14
-                            },
-                            formatter: function(value, context) {
-                                if (!value) return '';
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return percentage > 5 ? `${percentage}%` : '';
                             }
                         }
+                    },
+                    plugins: window.ChartDataLabels ? [ChartDataLabels] : []
+                };
+
+                function destroyChart() {
+                    const canvas = document.getElementById('productChart');
+                    const attachedChart = canvas && window.Chart ? Chart.getChart(canvas) : null;
+
+                    if (attachedChart) {
+                        attachedChart.destroy();
                     }
-                },
-                plugins: [ChartDataLabels]
-            };
 
-            function updateChart(newData) {
-                if (!newData || !newData.datasets || !newData.datasets[0].data) return;
+                    if (window.stockAnalysisReport.chart && window.stockAnalysisReport.chart !== attachedChart) {
+                        window.stockAnalysisReport.chart.destroy();
+                    }
 
-                const canvas = document.getElementById('productChart');
-                if (!canvas) return;
+                    window.stockAnalysisReport.chart = null;
+                }
 
-                if (!chart) {
-                    chart = new Chart(canvas.getContext('2d'), {
-                        ...chartConfig,
-                        data: newData
+                function normalizeChartData(payload) {
+                    return payload?.chartData || payload?.[0]?.chartData || payload?.[0] || payload;
+                }
+
+                function getCanvasChartData() {
+                    const canvas = document.getElementById('productChart');
+                    if (!canvas?.dataset.chart) return null;
+
+                    try {
+                        return JSON.parse(canvas.dataset.chart);
+                    } catch (error) {
+                        return null;
+                    }
+                }
+
+                function updateChart(payload) {
+                    const newData = normalizeChartData(payload) || getCanvasChartData();
+                    if (!newData || !newData.datasets || !newData.datasets[0].data) return;
+                    if (!window.Chart) return;
+
+                    const canvas = document.getElementById('productChart');
+                    if (!canvas) {
+                        destroyChart();
+                        return;
+                    }
+
+                    if (
+                        !window.stockAnalysisReport.chart ||
+                        window.stockAnalysisReport.chart.canvas !== canvas
+                    ) {
+                        destroyChart();
+                        Chart.getChart(canvas)?.destroy();
+                        window.stockAnalysisReport.chart = new Chart(canvas.getContext('2d'), {
+                            ...chartConfig,
+                            data: newData
+                        });
+
+                        return;
+                    }
+
+                    window.stockAnalysisReport.chart.data = newData;
+                    window.stockAnalysisReport.chart.update('none');
+                }
+
+                function initChartIfNeeded() {
+                    window.requestAnimationFrame(function() {
+                        updateChart();
                     });
-                } else {
-                    // Update existing chart data
-                    chart.data = newData;
-                    chart.update('none'); // Update without animation for smoother transitions
                 }
-            }
 
-            function initChartIfNeeded() {
-                const chartData = @js($chartData);
-                if (chartData) {
-                    updateChart(chartData);
+                function registerListeners() {
+                    if (window.stockAnalysisReport.listenersRegistered || !window.Livewire) return;
+
+                    window.stockAnalysisReport.listenersRegistered = true;
+                    Livewire.on('stock-analysis-chart-updated', updateChart);
+                    Livewire.on('stock-analysis-chart-cleared', destroyChart);
                 }
-            }
 
-            // Initialize chart
-            document.addEventListener("DOMContentLoaded", initChartIfNeeded);
-            document.addEventListener("livewire:initialized", initChartIfNeeded);
+                function registerLivewireHook() {
+                    if (window.stockAnalysisReport.hookRegistered || !window.Livewire) return;
 
-            // Handle Livewire updates
-            Livewire.on('updateChart', (data) => {
-                if (data && data[0]) {
-                    updateChart(data[0]);
+                    window.stockAnalysisReport.hookRegistered = true;
+                    Livewire.hook('morph.updated', function() {
+                        initChartIfNeeded();
+                    });
+                    Livewire.hook('morph.removed', function() {
+                        if (!document.getElementById('productChart')) {
+                            destroyChart();
+                        }
+                    });
                 }
-            });
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    registerListeners();
+                    registerLivewireHook();
+                    initChartIfNeeded();
+                });
+                document.addEventListener('livewire:initialized', function() {
+                    registerListeners();
+                    registerLivewireHook();
+                    initChartIfNeeded();
+                });
+
+                registerListeners();
+                registerLivewireHook();
+                window.stockAnalysisReport.destroyChart = destroyChart;
+            })();
         </script>
     @endpush
 </div>
