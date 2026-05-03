@@ -107,7 +107,9 @@
                 <div class="col-md-8 mx-auto">
                     <div class="card shadow-sm border-0 bg-light">
                         <div class="card-body p-4">
-                            <canvas id="productChart" data-chart='@json($chartData)' style="height: 400px;"></canvas>
+                            <div class="stock-analysis-chart-frame">
+                                <canvas id="productChart" data-chart='@json($chartData)'></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -146,9 +148,9 @@
                             <th>Last Movement</th>
                             <th class="text-end">Days Without Movement</th>
                         @else
-                            <th class="text-end">Total Out</th>
-                            <th class="text-end">Total In</th>
-                            <th class="text-end">Net Movement</th>
+                            <th class="text-end">Sale Count</th>
+                            <th class="text-end">Sales Return Count</th>
+                            <th class="text-end">Net Sales Count</th>
                         @endif
                     </tr>
                 </thead>
@@ -207,15 +209,21 @@
                                 </td>
                             @else
                                 <td class="text-end">
-                                    <span class="text-primary fw-bold">{{ number_format($product->total_quantity_out) }}</span>
+                                    <button type="button" class="btn btn-link p-0 text-primary fw-bold text-decoration-none"
+                                        wire:click='openMovementHistory("sale", {{ $group_by_code ? 'null' : (int) $product->id }}, @json($product->code), {{ $group_by_code ? 'null' : ($product->branch_id ?? 'null') }})'>
+                                        {{ number_format($product->sale_count, 2) }}
+                                    </button>
                                 </td>
                                 <td class="text-end">
-                                    <span class="text-info fw-bold">{{ number_format($product->total_quantity_in) }}</span>
+                                    <button type="button" class="btn btn-link p-0 text-info fw-bold text-decoration-none"
+                                        wire:click='openMovementHistory("sale_return", {{ $group_by_code ? 'null' : (int) $product->id }}, @json($product->code), {{ $group_by_code ? 'null' : ($product->branch_id ?? 'null') }})'>
+                                        {{ number_format($product->sale_return_count, 2) }}
+                                    </button>
                                 </td>
                                 <td class="text-end">
                                     <span
-                                        class="badge fs-6 {{ $product->total_quantity_out - $product->total_quantity_in > 0 ? 'bg-success' : 'bg-danger' }}">
-                                        {{ number_format($product->total_quantity_out - $product->total_quantity_in, 2) }}
+                                        class="badge fs-6 {{ $product->sale_count - $product->sale_return_count > 0 ? 'bg-success' : 'bg-danger' }}">
+                                        {{ number_format($product->sale_count - $product->sale_return_count, 2) }}
                                     </span>
                                 </td>
                             @endif
@@ -238,8 +246,8 @@
                                                             <th>Last Movement</th>
                                                             <th class="text-end">Days Idle</th>
                                                         @else
-                                                            <th class="text-end">Total Out</th>
-                                                            <th class="text-end">Total In</th>
+                                                            <th class="text-end">Sale Count</th>
+                                                            <th class="text-end">Sales Return Count</th>
                                                             <th class="text-end">Net</th>
                                                         @endif
                                                     </tr>
@@ -275,11 +283,21 @@
                                                                     @endif
                                                                 </td>
                                                             @else
-                                                                <td class="text-end"><span class="text-primary fw-bold">{{ number_format($child->total_quantity_out) }}</span></td>
-                                                                <td class="text-end"><span class="text-info fw-bold">{{ number_format($child->total_quantity_in) }}</span></td>
                                                                 <td class="text-end">
-                                                                    <span class="badge {{ $child->total_quantity_out - $child->total_quantity_in > 0 ? 'bg-success' : 'bg-danger' }}">
-                                                                        {{ number_format($child->total_quantity_out - $child->total_quantity_in, 2) }}
+                                                                    <button type="button" class="btn btn-link p-0 text-primary fw-bold text-decoration-none"
+                                                                        wire:click='openMovementHistory("sale", {{ (int) $child->id }}, @json($child->code), {{ $child->branch_id ?? 'null' }})'>
+                                                                        {{ number_format($child->sale_count, 2) }}
+                                                                    </button>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <button type="button" class="btn btn-link p-0 text-info fw-bold text-decoration-none"
+                                                                        wire:click='openMovementHistory("sale_return", {{ (int) $child->id }}, @json($child->code), {{ $child->branch_id ?? 'null' }})'>
+                                                                        {{ number_format($child->sale_return_count, 2) }}
+                                                                    </button>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <span class="badge {{ $child->sale_count - $child->sale_return_count > 0 ? 'bg-success' : 'bg-danger' }}">
+                                                                        {{ number_format($child->sale_count - $child->sale_return_count, 2) }}
                                                                     </span>
                                                                 </td>
                                                             @endif
@@ -303,7 +321,83 @@
             </div>
         @endif
     </div>
+
+    <div class="modal fade" id="stockAnalysisHistoryModal" tabindex="-1" aria-labelledby="stockAnalysisHistoryModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stockAnalysisHistoryModalLabel">
+                        <i class="fa fa-history me-2"></i>{{ $historyModalTitle ?: 'Count History' }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>{{ $historyModalType === 'sale_return' ? 'Return Ref' : 'Invoice' }}</th>
+                                    <th>Product</th>
+                                    <th>Code</th>
+                                    <th>Size</th>
+                                    <th>Branch</th>
+                                    <th>Unit</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th class="text-end">Base Unit Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($historyRows as $row)
+                                    <tr>
+                                        <td>{{ systemDate($row->date) }}</td>
+                                        <td>{{ $row->document_no ?: '-' }}</td>
+                                        <td><a href="{{ route('inventory::product::view', $row->product_id) }}">{{ $row->product_name }}</a></td>
+                                        <td>{{ $row->code }}</td>
+                                        <td>{{ $row->size }}</td>
+                                        <td>
+                                            {{ $row->branch_name }}
+                                            @if ($row->branch_code ?? null)
+                                                <span class="text-muted">({{ $row->branch_code }})</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $row->unit_name }}</td>
+                                        <td class="text-end">{{ number_format($row->quantity, 3) }}</td>
+                                        <td class="text-end fw-bold">{{ number_format($row->base_unit_quantity, 2) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">No history found for this count.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
+        <style>
+            .stock-analysis-chart-frame {
+                position: relative;
+                width: 100%;
+                height: 400px;
+                max-height: 400px;
+                overflow: hidden;
+            }
+
+            .stock-analysis-chart-frame canvas {
+                display: block;
+                width: 100% !important;
+                height: 100% !important;
+                max-height: 400px !important;
+            }
+        </style>
         <script>
             (function() {
                 if (window.Chart && window.ChartDataLabels) {
@@ -466,6 +560,12 @@
                     window.stockAnalysisReport.listenersRegistered = true;
                     Livewire.on('stock-analysis-chart-updated', updateChart);
                     Livewire.on('stock-analysis-chart-cleared', destroyChart);
+                    Livewire.on('stock-analysis-history-modal', function() {
+                        const modal = document.getElementById('stockAnalysisHistoryModal');
+                        if (modal && window.bootstrap) {
+                            bootstrap.Modal.getOrCreateInstance(modal).show();
+                        }
+                    });
                 }
 
                 function registerLivewireHook() {
