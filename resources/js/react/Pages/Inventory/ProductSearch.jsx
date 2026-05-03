@@ -8,6 +8,7 @@ export default function ProductSearch() {
     // Filters
     const [productName, setProductName] = useState('');
     const [productCode, setProductCode] = useState('');
+    const [productSize, setProductSize] = useState('');
     const [productBarcode, setProductBarcode] = useState('');
     const [branchIds, setBranchIds] = useState([]);
     const [showNonZeroOnly, setShowNonZeroOnly] = useState(true);
@@ -130,7 +131,7 @@ export default function ProductSearch() {
             fetchProducts(1);
         }, 250);
         return () => clearTimeout(debounceRef.current);
-    }, [productName, productCode, productBarcode, branchIds, showNonZeroOnly, showBarcodeCodes, limit]);
+    }, [productName, productCode, productSize, productBarcode, branchIds, showNonZeroOnly, showBarcodeCodes, limit]);
 
     useEffect(() => {
         if (highlightedSKU && rowRefs.current[highlightedSKU]) {
@@ -145,6 +146,7 @@ export default function ProductSearch() {
             const params = {
                 productName,
                 productCode,
+                productSize,
                 ...(productBarcode ? { productBarcode } : {}),
                 branch_id: branchIds.map(b => b.value).join(','),
                 show_non_zero: showNonZeroOnly ? 1 : 0,
@@ -174,6 +176,7 @@ export default function ProductSearch() {
     function clearFilters() {
         setProductName('');
         setProductCode('');
+        setProductSize('');
         setProductBarcode('');
         setBranchIds([]);
         setShowNonZeroOnly(false);
@@ -372,6 +375,7 @@ export default function ProductSearch() {
     const sortOptions = [
         { field: 'products.code', label: 'SKU' },
         { field: 'products.name', label: 'Name' },
+        { field: 'products.size', label: 'Size' },
         { field: 'products.mrp', label: 'Price' },
         { field: 'inventories.quantity', label: 'Quantity' },
         { field: 'branches.name', label: 'Branch' },
@@ -434,8 +438,8 @@ export default function ProductSearch() {
         );
     }
 
-    const hasActiveFilters = productName || productCode || productBarcode || branchIds.length > 0 || showBarcodeCodes;
-    const activeFilterCount = [productName, productCode, productBarcode, branchIds.length > 0, showBarcodeCodes].filter(Boolean).length;
+    const hasActiveFilters = productName || productCode || productSize || productBarcode || branchIds.length > 0 || showBarcodeCodes;
+    const activeFilterCount = [productName, productCode, productSize, productBarcode, branchIds.length > 0, showBarcodeCodes].filter(Boolean).length;
 
     // Label style shared across filter inputs
     const labelStyle = { fontSize: '0.72rem', fontWeight: 600, color: '#6c757d', textTransform: 'uppercase', letterSpacing: '0.3px' };
@@ -594,7 +598,7 @@ export default function ProductSearch() {
                         <div className="card-body py-2 py-md-3">
                             <div className="row g-2 g-md-3 align-items-end">
                                 {/* Product Name - hidden on mobile (already in quick search) */}
-                                <div className="col-12 col-sm-6 col-lg-3 d-none d-md-block">
+                                <div className="col-12 col-sm-6 col-lg-2 d-none d-md-block">
                                     <label className="form-label mb-1" style={labelStyle}>
                                         <i className="fa fa-tag me-1" />Product Name
                                     </label>
@@ -623,6 +627,18 @@ export default function ProductSearch() {
 
                                 <div className="col-6 col-lg-2">
                                     <label className="form-label mb-1" style={labelStyle}>
+                                        <i className="fa fa-arrows-h me-1" />Size
+                                    </label>
+                                    <input
+                                        className="form-control form-control-sm"
+                                        value={productSize}
+                                        onChange={(e) => { setProductSize(e.target.value); setProductBarcode(''); }}
+                                        placeholder="Size..."
+                                    />
+                                </div>
+
+                                <div className="col-6 col-lg-2">
+                                    <label className="form-label mb-1" style={labelStyle}>
                                         <i className="fa fa-barcode me-1" />Barcode
                                     </label>
                                     <input
@@ -634,7 +650,7 @@ export default function ProductSearch() {
                                     />
                                 </div>
 
-                                <div className="col-12 col-sm-6 col-lg-3">
+                                <div className="col-12 col-sm-6 col-lg-2">
                                     <label className="form-label mb-1" style={labelStyle}>
                                         <i className="fa fa-building me-1" />Branch
                                     </label>
@@ -659,13 +675,13 @@ export default function ProductSearch() {
                                     <div className="form-check form-switch mb-0">
                                         <input className="form-check-input" type="checkbox" checked={showNonZeroOnly} onChange={(e) => setShowNonZeroOnly(e.target.checked)} id="showNonZeroOnly" />
                                         <label className="form-check-label" htmlFor="showNonZeroOnly" style={{ fontSize: '0.78rem' }}>
-                                            In stock
+                                            &nbsp; In stock
                                         </label>
                                     </div>
                                     <div className="form-check form-switch mb-0">
                                         <input className="form-check-input" type="checkbox" checked={showBarcodeCodes} onChange={(e) => setShowBarcodeCodes(e.target.checked)} id="showBarcodeCodes" />
                                         <label className="form-check-label" htmlFor="showBarcodeCodes" style={{ fontSize: '0.78rem' }}>
-                                            Barcode SKU
+                                            &nbsp; Barcode SKU
                                         </label>
                                     </div>
                                 </div>

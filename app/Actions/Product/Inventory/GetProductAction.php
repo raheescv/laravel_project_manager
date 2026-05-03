@@ -41,6 +41,7 @@ class GetProductAction
             'page' => (int) ($params['page'] ?? 1),
             'productName' => trim($params['productName'] ?? ''),
             'productCode' => trim($params['productCode'] ?? ''),
+            'productSize' => trim($params['productSize'] ?? ''),
             'productBarcode' => trim($params['productBarcode'] ?? ''),
             'inventory_ids' => $this->normalizeInventoryIds($params['inventory_ids'] ?? null),
             'branch_id' => $this->normalizeBranchIds($params['branch_id'] ?? null),
@@ -93,6 +94,7 @@ class GetProductAction
 
         $this->applyProductNameFilter($query, $filters);
         $this->applyProductCodeFilter($query, $filters);
+        $this->applyProductSizeFilter($query, $filters);
         $this->applyBarcodeFilter($query, $filters);
         $this->applyInventoryIdsFilter($query, $filters);
         $this->applyBranchFilter($query, $filters);
@@ -117,6 +119,13 @@ class GetProductAction
     {
         if (! empty($filters['productCode'])) {
             $query->where('products.code', $filters['productCode']);
+        }
+    }
+
+    private function applyProductSizeFilter(Builder $query, array $filters): void
+    {
+        if (! empty($filters['productSize'])) {
+            $query->where('products.size', 'like', "%{$filters['productSize']}%");
         }
     }
 
@@ -236,6 +245,10 @@ class GetProductAction
 
         if (! empty($filters['productCode'])) {
             $quantityQuery->where('products.code', 'like', "%{$filters['productCode']}%");
+        }
+
+        if (! empty($filters['productSize'])) {
+            $quantityQuery->where('products.size', 'like', "%{$filters['productSize']}%");
         }
 
         if (! empty($filters['branch_id'])) {
