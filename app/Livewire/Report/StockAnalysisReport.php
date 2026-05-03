@@ -21,6 +21,14 @@ class StockAnalysisReport extends Component
 
     public $branch_id;
 
+    public $product_search = '';
+
+    public $main_category_id = '';
+
+    public $sub_category_id = '';
+
+    public $brand_id = '';
+
     public $report_type = 'top_moving'; // non_moving, top_moving
 
     public $days_threshold = 30; // Number of days to consider for non-moving items
@@ -38,7 +46,7 @@ class StockAnalysisReport extends Component
     public function updated($key, $value): void
     {
         $this->resetPage();
-        if (in_array($key, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type'])) {
+        if (in_array($key, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type', 'product_search', 'main_category_id', 'sub_category_id', 'brand_id'])) {
             if ($this->report_type === 'top_moving') {
                 $this->dispatch('stock-analysis-chart-updated', chartData: $this->getChartData());
             } else {
@@ -47,10 +55,23 @@ class StockAnalysisReport extends Component
         }
     }
 
+    /**
+     * Join main category, sub category, and brand for any query that already joins `products`.
+     */
+    protected function applyProductTaxonomyJoins(Builder $query): Builder
+    {
+        return $query
+            ->leftJoin('categories as main_categories', 'products.main_category_id', '=', 'main_categories.id')
+            ->leftJoin('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
+            ->leftJoin('brands', 'products.brand_id', '=', 'brands.id');
+    }
+
     protected function getNonMovingProducts(): Builder
     {
         $query = Inventory::query()
-            ->join('products', 'inventories.product_id', '=', 'products.id')
+            ->join('products', 'inventories.product_id', '=', 'products.id');
+        $this->applyProductTaxonomyJoins($query);
+        $query
             ->leftJoin('branches', 'inventories.branch_id', '=', 'branches.id')
             ->leftJoin(DB::raw('(
                 SELECT product_id, branch_id, MAX(created_at) as last_movement
@@ -67,7 +88,9 @@ class StockAnalysisReport extends Component
                 return $q->where('inventories.branch_id', $this->branch_id);
             });
 
-        // If last movement is null or older than threshold days
+        $this->applyProductSearch($query);
+        $this->applyProductDropdownFilters($query);
+
         $query->where(function ($q): void {
             $q->whereNull('last_movements.last_movement')
                 ->orWhere('last_movements.last_movement', '<=', now()->subDays(intval($this->days_threshold)));
@@ -77,6 +100,13 @@ class StockAnalysisReport extends Component
             'products.id',
             'products.name',
             'products.code',
+            'products.main_category_id',
+            'products.sub_category_id',
+            'products.brand_id',
+            'products.size',
+            'main_categories.name as main_category_name',
+            'sub_categories.name as sub_category_name',
+            'brands.name as brand_name',
             'inventories.quantity',
             'inventories.cost',
             'branches.name as branch_name',
@@ -87,8 +117,10 @@ class StockAnalysisReport extends Component
 
     protected function getTopMovingProducts(): Builder
     {
-        return InventoryLog::query()
-            ->join('products', 'inventory_logs.product_id', '=', 'products.id')
+        $query = InventoryLog::query()
+            ->join('products', 'inventory_logs.product_id', '=', 'products.id');
+        $this->applyProductTaxonomyJoins($query);
+        $query
             ->leftJoin('branches', 'inventory_logs.branch_id', '=', 'branches.id')
             ->whereBetween('inventory_logs.created_at', [
                 Carbon::parse($this->from_date)->startOfDay(),
@@ -97,18 +129,74 @@ class StockAnalysisReport extends Component
             ->when($this->branch_id, function ($q) {
                 return $q->where('inventory_logs.branch_id', $this->branch_id);
             })
-            ->where('products.type', 'product')
-            ->groupBy('products.id', 'products.name', 'products.code')
+            ->where('products.type', 'product');
+
+        $this->applyProductSearch($query);
+        $this->applyProductDropdownFilters($query);
+
+        return $query
+            ->groupBy(
+                'products.id',
+                'products.name',
+                'products.code',
+                'products.main_category_id',
+                'products.sub_category_id',
+                'products.size',
+                'products.brand_id',
+                'inventory_logs.branch_id',
+                'branches.name',
+                'branches.code',
+                'main_categories.name',
+                'sub_categories.name',
+                'brands.name',
+            )
             ->select(
                 'products.id',
                 'products.name',
                 'products.code',
-                DB::raw('MIN(branches.name) as branch_name'),
-                DB::raw('COUNT(DISTINCT inventory_logs.branch_id) as branch_count'),
+                'products.main_category_id',
+                'products.sub_category_id',
+                'products.size',
+                'products.brand_id',
+                'inventory_logs.branch_id',
+                'branches.name as branch_name',
+                'branches.code as branch_code',
+                'main_categories.name as main_category_name',
+                'sub_categories.name as sub_category_name',
+                'brands.name as brand_name',
                 DB::raw('SUM(quantity_out) as total_quantity_out'),
                 DB::raw('SUM(quantity_in) as total_quantity_in')
             )
             ->orderBy('total_quantity_out', 'desc');
+    }
+
+    protected function applyProductSearch(Builder $query): Builder
+    {
+        $search = trim((string) $this->product_search);
+
+        return $query->when($search !== '', function (Builder $query) use ($search): void {
+            $query->where(function (Builder $query) use ($search): void {
+                $query->where('products.name', 'like', "%{$search}%")
+                    ->orWhere('products.code', 'like', "%{$search}%")
+                    ->orWhere('products.barcode', 'like', "%{$search}%")
+                    ->orWhere('products.barcode_number', 'like', "%{$search}%")
+                    ->orWhere('products.size', 'like', "%{$search}%");
+            });
+        });
+    }
+
+    protected function applyProductDropdownFilters(Builder $query): Builder
+    {
+        return $query
+            ->when($this->main_category_id, function (Builder $query): void {
+                $query->where('products.main_category_id', $this->main_category_id);
+            })
+            ->when($this->sub_category_id, function (Builder $query): void {
+                $query->where('products.sub_category_id', $this->sub_category_id);
+            })
+            ->when($this->brand_id, function (Builder $query): void {
+                $query->where('products.brand_id', $this->brand_id);
+            });
     }
 
     public function getChartData(): array
@@ -118,7 +206,11 @@ class StockAnalysisReport extends Component
             ->get();
 
         return [
-            'labels' => $data->pluck('name')->toArray(),
+            'labels' => $data->map(function ($product): string {
+                $branchCode = $product->branch_code ?: $product->branch_name;
+
+                return $branchCode ? "{$product->name} ({$branchCode})" : $product->name;
+            })->toArray(),
             'datasets' => [
                 [
                     'data' => $data->pluck('total_quantity_out')->map(fn ($quantity): float => (float) $quantity)->toArray(),

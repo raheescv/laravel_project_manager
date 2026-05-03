@@ -126,7 +126,7 @@
                                                 </label>
                                                 <div class="input-group mb-3">
                                                     <div wire:ignore class="parent-container w-100">
-                                                        {{ html()->select('account_id', $accounts)->value($sale_returns['account_id'])->class('select-customer_id form-select')->id('account_id')->placeholder('Select Customer') }}
+                                                        {{ html()->select('account_id', $accounts)->value($sale_returns['account_id'])->class('select-customer_id')->id('account_id')->placeholder('Select Customer') }}
                                                     </div>
                                                 </div>
                                             </div>
@@ -140,7 +140,7 @@
                                                 </label>
                                                 <div class="input-group mb-3">
                                                     <div wire:ignore class="parent-container w-100">
-                                                        {{ html()->select('sale_id', [])->value($sale_id)->class('select-customer_sales-list form-select')->id('sale_id')->placeholder('Select Invoice') }}
+                                                        {{ html()->select('sale_id', $salesList)->value($sale_id)->class('select-customer_sales-list')->id('sale_id')->placeholder('Select Invoice') }}
                                                     </div>
                                                 </div>
                                             </div>

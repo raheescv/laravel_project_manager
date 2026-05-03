@@ -9,8 +9,10 @@ use App\Actions\SaleReturn\UpdateAction;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Inventory;
+use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
+use App\Models\SaleReturnItem;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +38,8 @@ class Page extends Component
 
     public $sale_id;
 
+    public $salesList = [];
+
     public $items = [];
 
     public $payment = [];
@@ -52,8 +56,17 @@ class Page extends Component
 
     public $default_payment_method_id = 1;
 
-    public function mount($table_id = null)
+    public function mount($table_id = null, $sale_id = null, $sale_item_ids = null)
     {
+        // Allow shortcut from Sale view page: ?sale_id=...&sale_item_ids=1,2,3
+        $sale_id = $sale_id ?? request()->query('sale_id');
+        $sale_item_ids = $this->normalizeSaleItemIds($sale_item_ids ?? request()->query('sale_item_ids'));
+
+        $this->salesList = [];
+        if ($sale_id) {
+            $this->salesList = Sale::where('id', $sale_id)->pluck('invoice_no', 'id')->toArray();
+        }
+
         $this->table_id = $table_id;
         $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
         $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
@@ -74,11 +87,16 @@ class Page extends Component
             $this->accounts = Account::where('id', $this->sale_returns['account_id'])->pluck('name', 'id')->toArray();
             $this->items = $this->sale_return->items->mapWithKeys(function ($item) {
                 $key = $item['inventory_id'];
+                $maxReturnQuantity = $this->maxReturnQuantityForSaleItem(
+                    $item['sale_item_id'] ?? null,
+                    $item['id'] ?? null
+                );
 
                 return [
                     $key => [
                         'id' => $item['id'],
                         'key' => $key,
+                        'sale_item_id' => $item['sale_item_id'],
                         'inventory_id' => $item['inventory_id'],
                         'product_id' => $item['product_id'],
                         'name' => $item['name'],
@@ -92,6 +110,7 @@ class Page extends Component
                         'effective_total' => $item['effective_total'],
                         'unit_id' => $item['unit_id'],
                         'conversion_factor' => $item['conversion_factor'],
+                        'max_return_quantity' => $maxReturnQuantity,
                         'created_by' => $item['created_by'],
                     ],
                 ];
@@ -129,8 +148,118 @@ class Page extends Component
                 'balance' => 0,
                 'status' => 'draft',
             ];
+            // Prefill from a Sale view shortcut: ?sale_id=X (all items) or &sale_item_ids=1,2,3 (selected only)
+            if ($sale_id) {
+                $query = SaleItem::with('sale:id,account_id')->where('sale_id', $sale_id);
+                if ($sale_item_ids) {
+                    $query->whereIn('id', $sale_item_ids);
+                }
+                $saleItems = $query->get();
+                if ($saleItems->isNotEmpty()) {
+                    $accountId = $saleItems->first()->sale?->account_id;
+                    if ($accountId) {
+                        $this->sale_returns['account_id'] = $accountId;
+                        $this->accounts = Account::where('id', $accountId)->pluck('name', 'id')->toArray();
+                    }
+                    $this->sale_id = (int) $sale_id;
+                    foreach ($saleItems as $saleItem) {
+                        $inventory = Inventory::find($saleItem->inventory_id);
+                        if (! $inventory) {
+                            continue;
+                        }
+                        $remainingQuantity = $this->maxReturnQuantityForSaleItem($saleItem->id);
+                        if ($remainingQuantity <= 0) {
+                            continue;
+                        }
+                        $this->addToCart($inventory, $saleItem, $remainingQuantity);
+                    }
+                    $this->mainCalculator();
+                    if (in_array($this->payment_method_name, ['cash', 'card'])) {
+                        $this->selectPaymentMethod($this->payment_method_name);
+                    }
+                }
+            }
         }
         $this->dispatch('SelectDropDownValues', $this->sale_returns);
+    }
+
+    protected function normalizeSaleItemIds(array|string|null $saleItemIds): array
+    {
+        if (! $saleItemIds) {
+            return [];
+        }
+
+        $ids = is_array($saleItemIds) ? $saleItemIds : explode(',', $saleItemIds);
+
+        return collect($ids)
+            ->map(fn ($id): int => (int) trim((string) $id))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    protected function maxReturnQuantityForSaleItem(?int $saleItemId, ?int $exceptSaleReturnItemId = null): ?float
+    {
+        if (! $saleItemId) {
+            return null;
+        }
+
+        $saleItem = SaleItem::find($saleItemId);
+        if (! $saleItem) {
+            return 0;
+        }
+
+        $returnedQuantity = SaleReturnItem::query()
+            ->where('sale_item_id', $saleItemId)
+            ->whereHas('saleReturn', fn ($query): mixed => $query->where('status', '!=', 'cancelled'))
+            ->when($exceptSaleReturnItemId, fn ($query): mixed => $query->where('id', '!=', $exceptSaleReturnItemId))
+            ->sum('quantity');
+
+        return max(0, round((float) $saleItem->quantity - (float) $returnedQuantity, 3));
+    }
+
+    protected function enforceReturnQuantityLimit(int|string $key): void
+    {
+        if (! isset($this->items[$key])) {
+            return;
+        }
+
+        $maxReturnQuantity = $this->items[$key]['max_return_quantity'] ?? null;
+        if ($maxReturnQuantity === null) {
+            return;
+        }
+
+        if ((float) $this->items[$key]['quantity'] > (float) $maxReturnQuantity) {
+            $this->items[$key]['quantity'] = (float) $maxReturnQuantity;
+            $this->dispatch('error', ['message' => 'Return quantity cannot be more than the remaining sold quantity.']);
+        }
+    }
+
+    protected function validateReturnQuantityLimits(): void
+    {
+        foreach ($this->items as $item) {
+            $saleItemId = $item['sale_item_id'] ?? null;
+            if (! $saleItemId) {
+                continue;
+            }
+
+            $maxReturnQuantity = $this->maxReturnQuantityForSaleItem($saleItemId, $item['id'] ?? null);
+            if ((float) $item['quantity'] > (float) $maxReturnQuantity) {
+                throw new Exception($item['name'].' return quantity cannot be more than '.$maxReturnQuantity.'.', 1);
+            }
+        }
+    }
+
+    protected function persistableItems(): array
+    {
+        return collect($this->items)
+            ->map(function (array $item): array {
+                unset($item['max_return_quantity']);
+
+                return $item;
+            })
+            ->all();
     }
 
     public function updated($key, $value)
@@ -140,6 +269,9 @@ class Page extends Component
             $index = $indexes[1] ?? null;
             if (! is_numeric($value)) {
                 $this->items[$index][$indexes[2]] = 0;
+            }
+            if (($indexes[2] ?? null) === 'quantity') {
+                $this->enforceReturnQuantityLimit($index);
             }
             $this->cartCalculator($index);
             $this->mainCalculator();
@@ -170,6 +302,12 @@ class Page extends Component
     public function modifyQuantity($key, $action)
     {
         if ($action == 'plus') {
+            $maxReturnQuantity = $this->items[$key]['max_return_quantity'] ?? null;
+            if ($maxReturnQuantity !== null && (float) $this->items[$key]['quantity'] >= (float) $maxReturnQuantity) {
+                $this->dispatch('error', ['message' => 'Return quantity cannot be more than the remaining sold quantity.']);
+
+                return false;
+            }
             $this->items[$key]['quantity'] += 1;
         } else {
             if ($this->items[$key]['quantity'] > 1) {
@@ -178,6 +316,7 @@ class Page extends Component
                 $this->dispatch('error', ['message' => "Can't remove quantity any further"]);
             }
         }
+        $this->enforceReturnQuantityLimit($key);
         $this->singleCartCalculator($key);
         $this->mainCalculator();
     }
@@ -227,7 +366,6 @@ class Page extends Component
         $this->sale_returns['grand_total'] = $this->sale_returns['total'];
         $this->sale_returns['grand_total'] -= $this->sale_returns['other_discount'];
         $this->sale_returns['grand_total'] = round($this->sale_returns['grand_total'], 2);
-
         $this->sale_returns['paid'] = round($payments->sum('amount'), 2);
         $this->sale_returns['balance'] = round($this->sale_returns['grand_total'] - $this->sale_returns['paid'], 2);
         $this->payment['amount'] = round($this->sale_returns['balance'], 2);
@@ -237,16 +375,19 @@ class Page extends Component
     {
         $inventory = Inventory::find($inventory_id);
         $saleItem = SaleItem::find($sale_item_id);
-        $this->addToCart($inventory, $saleItem);
+        if (! $this->addToCart($inventory, $saleItem)) {
+            return false;
+        }
         $this->cartCalculator($inventory_id);
         if (in_array($this->payment_method_name, ['cash', 'card'])) {
             $this->selectPaymentMethod($this->payment_method_name);
         }
     }
 
-    public function addToCart($inventory, $saleItem)
+    public function addToCart($inventory, $saleItem, ?float $quantity = null)
     {
         $inventory_id = $inventory->id;
+        $maxReturnQuantity = $this->maxReturnQuantityForSaleItem($saleItem?->id);
         $single = [
             'key' => $inventory_id,
             'sale_item_id' => null,
@@ -261,22 +402,43 @@ class Page extends Component
             'unit_id' => $inventory->product->unit_id,
             'unit_name' => $inventory->product->unit->name ?? '',
             'conversion_factor' => 1,
+            'max_return_quantity' => $maxReturnQuantity,
         ];
         if ($saleItem) {
+            if ($maxReturnQuantity <= 0) {
+                $this->dispatch('error', ['message' => 'This sale item has already been fully returned.']);
+
+                return false;
+            }
+
             $single['sale_item_id'] = $saleItem->id;
             $single['unit_price'] = $saleItem->unit_price;
             $single['discount'] = $saleItem->discount;
             $single['tax'] = $saleItem->tax;
+            $single['unit_id'] = $saleItem->unit_id;
+            $single['unit_name'] = $saleItem->unit?->name ?? $single['unit_name'];
+            $single['conversion_factor'] = $saleItem->conversion_factor;
         }
 
         if (isset($this->items[$inventory_id])) {
+            if ($maxReturnQuantity !== null && (float) $this->items[$inventory_id]['quantity'] >= (float) $maxReturnQuantity) {
+                $this->dispatch('error', ['message' => 'Return quantity cannot be more than the remaining sold quantity.']);
+
+                return false;
+            }
             $this->items[$inventory_id]['quantity'] += 1;
         } else {
             $this->items[$inventory_id] = $single;
         }
+        if ($quantity !== null) {
+            $this->items[$inventory_id]['quantity'] = min($quantity, $maxReturnQuantity ?? $quantity);
+        }
+        $this->enforceReturnQuantityLimit($inventory_id);
         $this->singleCartCalculator($inventory_id);
         $this->mainCalculator();
         // $this->dispatch('success', ['message' => 'item added successfully']);
+
+        return true;
     }
 
     public function removeSyncItemFromViewItem($index)
@@ -467,8 +629,9 @@ class Page extends Component
             if (! count($this->items)) {
                 throw new Exception('Please add any item', 1);
             }
+            $this->validateReturnQuantityLimits();
             $this->sale_returns['status'] = $type;
-            $this->sale_returns['items'] = $this->items;
+            $this->sale_returns['items'] = $this->persistableItems();
             $this->sale_returns['payments'] = $this->payments;
             if ($this->sale_returns['balance'] < 0) {
                 throw new Exception('Please check the payment', 1);

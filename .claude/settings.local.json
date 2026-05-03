@@ -39,7 +39,8 @@
       "Bash(php -l app/Livewire/Reports/ProfitLoss.php)",
       "Bash(php -l resources/views/livewire/reports/profit-loss.blade.php)",
       "Bash(php -l resources/views/livewire/reports/partials/pl-category-rows.blade.php)",
-      "Bash(ls -la /Users/Shared/sites/personal/main_projects/project_manager/app/Jobs/Export/ /Users/Shared/sites/personal/main_projects/project_manager/app/Jobs/*/Import*)"
+      "Bash(ls -la /Users/Shared/sites/personal/main_projects/project_manager/app/Jobs/Export/ /Users/Shared/sites/personal/main_projects/project_manager/app/Jobs/*/Import*)",
+      "Bash(grep -n \"sale_id\\\\|public \\\\$\\\\|getProducts\\\\|listeners\\\\|preFilled\" app/Livewire/SaleReturn/Page.php)"
     ]
   },
   "hooks": {

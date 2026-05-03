@@ -22,43 +22,67 @@
                     @endforeach
                 </select>
             </div>
-            @if ($report_type === 'top_moving')
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">From Date</label>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Product Search</label>
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text"><i class="fa fa-search"></i></span>
+                    <input type="search" wire:model.live.debounce.400ms="product_search" class="form-control" placeholder="Size, SKU, barcode, name">
+                </div>
+            </div>
+            <div class="row mb-4 p-2">
+                <div class="col-md-3" wire:ignore>
+                    <label class="form-label fw-bold">Category</label>
                     <div class="input-group shadow-sm">
-                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
-                        <input type="date" wire:model.live="from_date" class="form-control">
+                        <span class="input-group-text"><i class="fa fa-tags"></i></span>
+                        {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent')->id('main_category_id')->attribute('style', 'width:80%')->placeholder('All Categories') }}
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">To Date</label>
+                <div class="col-md-3" wire:ignore>
+                    <label class="form-label fw-bold">Brand</label>
                     <div class="input-group shadow-sm">
-                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
-                        <input type="date" wire:model.live="to_date" class="form-control">
+                        <span class="input-group-text"><i class="fa fa-copyright"></i></span>
+                        {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list')->id('brand_id')->attribute('style', 'width:80%')->placeholder('All Brands') }}
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Top Items</label>
-                    <div class="input-group shadow-sm">
-                        <span class="input-group-text"><i class="fa fa-list-ol"></i></span>
-                        <input type="number" wire:model.live="limit" class="form-control" min="5" max="20">
+                @if ($report_type === 'top_moving')
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">From Date</label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                            <input type="date" wire:model.live="from_date" class="form-control">
+                        </div>
                     </div>
-                </div>
-            @else
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Non-Moving Days Threshold</label>
-                    <div class="input-group shadow-sm">
-                        <span class="input-group-text"><i class="fa fa-clock"></i></span>
-                        <input type="number" wire:model.live="days_threshold" class="form-control" min="1">
-                        <span class="input-group-text bg-light">Days</span>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">To Date</label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                            <input type="date" wire:model.live="to_date" class="form-control">
+                        </div>
                     </div>
-                </div>
-            @endif
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Top Items</label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text"><i class="fa fa-list-ol"></i></span>
+                            <input type="number" wire:model.live="limit" class="form-control" min="5" max="20">
+                        </div>
+                    </div>
+                @else
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Non-Moving Days Threshold</label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text"><i class="fa fa-clock"></i></span>
+                            <input type="number" wire:model.live="days_threshold" class="form-control" min="1">
+                            <span class="input-group-text bg-light">Days</span>
+                        </div>
+                    </div>
+                @endif
+            </div>
         </div>
 
         <!-- Chart Section for Top Moving Products -->
         @if ($report_type === 'top_moving' && $chartData)
-            <div class="row mb-4" wire:key="stock-analysis-chart-{{ $report_type }}-{{ $branch_id ?: 'all' }}-{{ $from_date }}-{{ $to_date }}-{{ $limit }}">
+            <div class="row mb-4"
+                wire:key="stock-analysis-chart-{{ $report_type }}-{{ $branch_id ?: 'all' }}-{{ md5($product_search) }}-{{ $main_category_id ?: 'all' }}-{{ $sub_category_id ?: 'all' }}-{{ $brand_id ?: 'all' }}-{{ $from_date }}-{{ $to_date }}-{{ $limit }}">
                 <div class="col-12 mb-3">
                     <h6 class="text-muted text-uppercase"><i class="fa fa-chart-pie me-2"></i>Distribution Chart</h6>
                     <hr class="mt-2">
@@ -84,8 +108,11 @@
             <table class="table table-hover table-sm table-striped align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th class="border-0">Code</th>
                         <th class="border-0">Product Name</th>
+                        <th class="border-0">Code</th>
+                        <th class="border-0">Main Category</th>
+                        <th class="border-0">Brand</th>
+                        <th class="border-0">Size</th>
                         <th class="border-0">Branch</th>
                         @if ($report_type === 'non_moving')
                             <th class="text-end">Current Stock</th>
@@ -102,13 +129,15 @@
                 <tbody>
                     @foreach ($products as $product)
                         <tr>
-                            <td>{{ $product->code }}</td>
                             <td> <a href="{{ route('inventory::product::view', $product->id) }}">{{ $product->name }}</a> </td>
+                            <td>{{ $product->code }}</td>
+                            <td>{{ $product->main_category_name ?? $product->mainCategory?->name }}</td>
+                            <td>{{ $product->brand_name ?? $product->brand?->name }}</td>
+                            <td>{{ $product->size }}</td>
                             <td>
-                                @if (($product->branch_count ?? 1) > 1)
-                                    Multiple Branches
-                                @else
-                                    {{ $product->branch_name }}
+                                {{ $product->branch_name }}
+                                @if ($product->branch_code ?? null)
+                                    <span class="text-muted">({{ $product->branch_code }})</span>
                                 @endif
                             </td>
                             @if ($report_type === 'non_moving')
@@ -125,7 +154,8 @@
                                 </td>
                                 <td class="text-end">
                                     @if ($product->last_movement)
-                                        <span class="badge {{ Carbon\Carbon::parse($product->last_movement)->diffInDays(now()) > $days_threshold ? 'bg-danger' : 'bg-success' }}">
+                                        <span
+                                            class="badge {{ Carbon\Carbon::parse($product->last_movement)->diffInDays(now()) > $days_threshold ? 'bg-danger' : 'bg-success' }}">
                                             {{ round(Carbon\Carbon::parse($product->last_movement)->diffInDays(now())) }} days
                                         </span>
                                     @else
@@ -140,7 +170,8 @@
                                     <span class="text-info fw-bold">{{ number_format($product->total_quantity_in) }}</span>
                                 </td>
                                 <td class="text-end">
-                                    <span class="badge fs-6 {{ $product->total_quantity_out - $product->total_quantity_in > 0 ? 'bg-success' : 'bg-danger' }}">
+                                    <span
+                                        class="badge fs-6 {{ $product->total_quantity_out - $product->total_quantity_in > 0 ? 'bg-success' : 'bg-danger' }}">
                                         {{ number_format($product->total_quantity_out - $product->total_quantity_in, 2) }}
                                     </span>
                                 </td>
@@ -351,6 +382,32 @@
                 registerLivewireHook();
                 window.stockAnalysisReport.destroyChart = destroyChart;
             })();
+        </script>
+        <script>
+            $(document).ready(function() {
+                $('#main_category_id').on('change', function() {
+                    const value = $(this).val() || null;
+                    @this.set('main_category_id', value);
+
+                    const subCategory = document.querySelector('#sub_category_id')?.tomselect;
+                    if (subCategory) {
+                        subCategory.clear();
+                        subCategory.clearOptions();
+                    }
+
+                    @this.set('sub_category_id', null);
+                });
+
+                $('#sub_category_id').on('change', function() {
+                    const value = $(this).val() || null;
+                    @this.set('sub_category_id', value);
+                });
+
+                $('#brand_id').on('change', function() {
+                    const value = $(this).val() || null;
+                    @this.set('brand_id', value);
+                });
+            });
         </script>
     @endpush
 </div>
