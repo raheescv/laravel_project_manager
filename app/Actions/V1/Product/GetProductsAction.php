@@ -95,7 +95,7 @@ class GetProductsAction
             })
             // Size filter
             ->when($filters['size'] ?? null, function ($q, $value) {
-                return $q->where('size', 'like', "%{$value}%");
+                return $q->where('size', $value);
             })
             // Color filter
             ->when($filters['color'] ?? null, function ($q, $value) {
@@ -116,7 +116,6 @@ class GetProductsAction
                         ->orWhere('barcode', 'like', "%{$value}%")
                         ->orWhere('description', 'like', "%{$value}%")
                         ->orWhere('color', 'like', "%{$value}%")
-                        ->orWhere('size', 'like', "%{$value}%")
                         ->orWhere('model', 'like', "%{$value}%");
                 });
             });
