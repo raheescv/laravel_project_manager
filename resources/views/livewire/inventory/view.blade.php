@@ -193,6 +193,131 @@
         </div>
     @endif
 
+    @if ($product->type == 'asset')
+        <div class="card border-0 shadow-sm rounded-3 mb-3">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    @if ($product->thumbnail)
+                        <img src="{{ url($product->thumbnail) }}" alt="{{ $product->name }}" class="rounded-3 pv-thumb-click" role="button"
+                             data-bs-toggle="modal" data-bs-target="#imagePreviewModal" data-img="{{ url($product->thumbnail) }}"
+                             style="width:80px; height:80px; object-fit:cover; cursor:pointer;" title="Click to enlarge">
+                    @else
+                        <div class="rounded-3 bg-light d-flex align-items-center justify-content-center" style="width:80px; height:80px;">
+                            <i class="fa fa-building-o fa-2x text-muted opacity-25"></i>
+                        </div>
+                    @endif
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1 fw-bold">{{ $product->name }}</h5>
+                        @if ($product->name_arabic)
+                            <p class="mb-0 text-muted small" dir="rtl">{{ $product->name_arabic }}</p>
+                        @endif
+                        <div class="d-flex gap-2 mt-1 flex-wrap">
+                            <span class="badge rounded-pill {{ $product->status == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
+                                <i class="fa fa-circle me-1" style="font-size:.35rem; vertical-align:middle;"></i>{{ ucfirst($product->status) }}
+                            </span>
+                            @if ($product->item_no)
+                                <span class="badge bg-light text-dark border"><i class="fa fa-hashtag me-1"></i>{{ $product->item_no }}</span>
+                            @endif
+                            @if ($product->document_file)
+                                <a href="{{ url($product->document_file) }}" target="_blank" class="badge bg-info-subtle text-info border-0 text-decoration-none" title="View {{ $product->document_file_name }}">
+                                    <i class="fa fa-eye me-1"></i>{{ $product->document_file_name ?: 'Document' }}
+                                </a>
+                                <a href="{{ route('product::download-document', $product->id) }}" class="badge bg-primary-subtle text-primary border-0 text-decoration-none" title="Download {{ $product->document_file_name }}">
+                                    <i class="fa fa-download me-1"></i>Download
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="d-flex gap-4 text-center">
+                        <div>
+                            <small class="text-secondary d-block">Purchase Cost</small>
+                            <span class="fw-bold fs-5 text-dark">{{ currency($product->cost) }}</span>
+                        </div>
+                        <div>
+                            <small class="text-secondary d-block">{{ $product->type === 'asset' ? 'Resale / Disposal Value' : 'Selling Price' }}</small>
+                            <span class="fw-bold fs-5 text-primary">{{ currency($product->mrp) }}</span>
+                        </div>
+                        <div>
+                            <small class="text-secondary d-block">Depreciation</small>
+                            <span class="fw-bold fs-5 text-success">{{ currency($product->depreciation_amount) }}</span>
+                        </div>
+                        <div>
+                            <small class="text-secondary d-block">Unit</small>
+                            <span class="fw-bold fs-5 text-primary">{{ $product->unit?->name ?? 'Nos' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bg-transparent">
+                    <div class="position-relative">
+                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <img id="imagePreviewImg" src="" alt="Preview" class="w-100 rounded-4" style="max-height:80vh; object-fit:contain; background:#000;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            @php
+                $fixedAssetAmountLabel = ($product->depreciation_method === 'declining_balance')
+                    ? (($product->duration_period === 'days') ? 'First Day Depreciation' : 'First Month Depreciation')
+                    : (($product->duration_period === 'days') ? 'Daily Depreciation' : 'Monthly Depreciation');
+                $fixedAssetSections = [
+                    ['title' => 'Asset Details', 'icon' => 'fa-building-o', 'bg' => 'bg-primary bg-opacity-10', 'fg' => 'text-primary', 'items' => [
+                        ['Asset Group', $product->mainCategory?->name],
+                        ['Sub Category', $product->subCategory?->name],
+                        ['Department', $product->department?->name],
+                        ['Brand', $product->brand?->name],
+                        ['Unit', $product->unit?->name],
+                    ]],
+                    ['title' => 'Attributes', 'icon' => 'fa-tags', 'bg' => 'bg-warning bg-opacity-10', 'fg' => 'text-warning', 'items' => [
+                        ['Item No', $product->item_no],
+                        ['Color', $product->color],
+                        ['Supplier Name', $product->supplier_name],
+                        ['Location', $product->location],
+                        ['Purchase Date', $product->purchase_date ? systemDate($product->purchase_date) : null],
+                    ]],
+                    ['title' => 'Depreciation Settings', 'icon' => 'fa-line-chart', 'bg' => 'bg-success bg-opacity-10', 'fg' => 'text-success', 'items' => [
+                        ['Duration', $product->duration],
+                        ['Duration Period', $product->duration_period ? ucwords(str_replace('_', ' ', $product->duration_period)) : null],
+                        ['Method', $product->depreciation_method ? ucwords(str_replace('_', ' ', $product->depreciation_method)) : null],
+                        ['Declining Factor', $product->declining_factor],
+                        ['Prorata Date', $product->prorata_date ? systemDate($product->prorata_date) : null],
+                        [$fixedAssetAmountLabel, currency($product->depreciation_amount), true],
+                        ['Remarks', $product->remarks],
+                    ]],
+                ];
+            @endphp
+
+            @foreach ($fixedAssetSections as $section)
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-3 h-100">
+                        <div class="card-header bg-transparent border-bottom py-3 px-3">
+                            <h6 class="pv-section-title text-uppercase text-secondary mb-0 d-flex align-items-center gap-2">
+                                <span class="pv-icon rounded d-inline-flex align-items-center justify-content-center {{ $section['bg'] }}">
+                                    <i class="fa {{ $section['icon'] }} {{ $section['fg'] }}"></i>
+                                </span>
+                                {{ $section['title'] }}
+                            </h6>
+                        </div>
+                        <div class="card-body px-3 py-2">
+                            @foreach ($section['items'] as $item)
+                                <div class="d-flex justify-content-between align-items-center py-2 {{ !$loop->last ? 'border-bottom pv-divider' : '' }}">
+                                    <span class="pv-label">{{ $item[0] }}</span>
+                                    <span class="pv-value {{ ($item[2] ?? false) ? 'text-price' : '' }} text-capitalize text-end">{{ $item[1] ?: '—' }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     {{-- Inventory Table --}}
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-header bg-transparent border-bottom py-3 px-3">
@@ -438,7 +563,7 @@
                     @if (!$product->thumbnail && count($product->images) == 0)
                         <div class="col-12 text-center py-5">
                             <i class="fa fa-image fa-3x text-muted opacity-25 d-block mb-2"></i>
-                            <small class="text-muted">No images available</small>
+                            <small class="text-muted">{{ $product->type === 'asset' ? 'No asset photos available' : 'No images available' }}</small>
                         </div>
                     @endif
                 </div>

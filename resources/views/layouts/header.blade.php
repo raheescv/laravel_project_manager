@@ -249,6 +249,11 @@
                                                         <i class="fa fa-wrench fs-5 me-2"></i>Service
                                                     </a>
                                                 @endcan
+                                                @can('asset.view')
+                                                    <a href="{{ route('asset::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                        <i class="fa fa-building-o fs-5 me-2"></i>Assets
+                                                    </a>
+                                                @endcan
                                                 @can('combo offer.view')
                                                     <a href="{{ route('combo_offer::index') }}" class="list-group-item list-group-item-action header-mega-child">
                                                         <i class="fa fa-gift fs-5 me-2"></i>Combo Offer

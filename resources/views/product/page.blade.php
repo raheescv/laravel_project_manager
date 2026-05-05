@@ -6,6 +6,8 @@
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     @if ($type == 'product')
                         <li class="breadcrumb-item"><a href="{{ route('product::index') }}">Product</a></li>
+                    @elseif ($type == 'asset')
+                        <li class="breadcrumb-item"><a href="{{ route('asset::index') }}">Assets</a></li>
                     @else
                         <li class="breadcrumb-item"><a href="{{ route('service::index') }}">Service</a></li>
                     @endif

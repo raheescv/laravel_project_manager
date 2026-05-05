@@ -17,7 +17,7 @@ class GetAction
             ->join('categories as main_categories', 'products.main_category_id', '=', 'main_categories.id')
             ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
             ->leftJoin('categories as sub_categories', 'products.sub_category_id', '=', 'sub_categories.id')
-            ->where('products.type', 'product')
+            ->whereIn('products.type', ['product', 'asset'])
             ->when($filter['search'] ?? '', function ($query, $value) {
                 $value = trim($value);
 

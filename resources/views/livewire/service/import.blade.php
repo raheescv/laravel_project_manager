@@ -1,11 +1,14 @@
 <div class="container-fluid py-4">
+    @php($entityLabel = $entityLabel ?? 'Service')
+    @php($progressType = $progressType ?? 'Service')
+    @php($redirectRoute = $redirectRoute ?? route('service::index'))
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
                 <div class="card-header bg-gradient-primary py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <h4 class="card-title text-white mb-0">
-                            <i class="fa fa-file-import me-2"></i>Service Import
+                            <i class="fa fa-file-import me-2"></i>{{ $entityLabel }} Import
                         </h4>
                         <button type="button" class="btn btn-light btn-sm shadow-sm" wire:click="sample">
                             <i class="fa fa-download me-2"></i>Download Template
@@ -114,8 +117,7 @@
                                                 <i class="fa fa-info-circle fs-1 text-info"></i>
                                             </div>
                                             <h4 class="fw-bold">Why Mapping?</h4>
-                                            <p class="text-muted">We need to know which column in your file corresponds to which product attribute. We've matched some automatically based on header
-                                                names.</p>
+                                            <p class="text-muted">We need to know which column in your file corresponds to which {{ strtolower($entityLabel) }} field. We have matched some automatically based on the header names.</p>
                                             <hr>
                                             <div class="d-grid gap-2">
                                                 <button class="btn btn-primary btn-lg" wire:click="goToStep(3)">
@@ -188,7 +190,7 @@
                                     <div class="spinner-grow text-success" role="status" style="width: 5rem; height: 5rem;"></div>
                                 </div>
                                 <h1 class="fw-bold">Import in Progress</h1>
-                                <p class="text-muted mb-4 fs-5">We are processing your products in the background. You can leave this page or wait here.</p>
+                                <p class="text-muted mb-4 fs-5">We are processing your {{ strtolower($entityLabel) }} records in the background. You can leave this page safely and come back later.</p>
 
                                 <div class="progress mx-auto shadow-sm" style="height: 30px; max-width: 700px; border-radius: 15px;">
                                     <div class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" id="progress-bar" role="progressbar" style="width: 0%"
@@ -196,8 +198,8 @@
                                 </div>
 
                                 <div class="mt-5">
-                                    <a href="{{ route('product::index') }}" class="btn btn-outline-primary px-5 btn-lg">
-                                        Go to Product List
+                                    <a href="{{ $redirectRoute }}" class="btn btn-outline-primary px-5 btn-lg">
+                                        Go to {{ $entityLabel }} List
                                     </a>
                                 </div>
                             </div>
@@ -312,7 +314,7 @@
             });
             const channel = pusher.subscribe('file-import-channel-{{ auth()->id() }}');
             channel.bind('file-import-event-{{ auth()->id() }}', function(data) {
-                if (data.type === 'Product') {
+                if (data.type === @js($progressType)) {
                     const progressBar = document.getElementById('progress-bar');
                     if (progressBar) {
                         progressBar.style.width = `${data.progress}%`;
@@ -322,7 +324,7 @@
                         if (data.progress >= 100) {
                             setTimeout(() => {
                                 alert('Import completed successfully!');
-                                window.location.href = "{{ route('product::index') }}";
+                                window.location.href = @js($redirectRoute);
                             }, 1000);
                         }
                     }

@@ -19,6 +19,7 @@ return [
     'role' => ['create', 'view', 'edit', 'delete', 'permissions'],
     'branch' => ['create', 'view', 'edit', 'delete'],
     'product' => ['create', 'view', 'edit', 'delete', 'import', 'export', 'ai image generation'],
+    'asset' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'service' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'combo offer' => ['create', 'view', 'edit', 'delete'],
     'package category' => ['create', 'view', 'edit', 'delete'],

@@ -146,6 +146,9 @@ class Import extends Component
             'units' => Unit::pluck('name', 'id'),
             'departments' => Department::pluck('name', 'id'),
             'categories' => Category::whereNull('parent_id')->pluck('name', 'id'),
+            'entityLabel' => 'Service',
+            'progressType' => 'Service',
+            'redirectRoute' => route('service::index'),
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Product;
 
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Product;
@@ -18,18 +19,23 @@ class UpdateAction
                 throw new \Exception("Product not found with the specified ID: $id.", 1);
             }
 
-            if (str_contains($data['department_id'], 'add ')) {
+            if (isset($data['department_id']) && is_string($data['department_id']) && str_contains($data['department_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['department_id']);
                 $data['department_id'] = Department::selfCreate($name);
             }
 
-            if (str_contains($data['main_category_id'], 'add ')) {
+            if (isset($data['brand_id']) && is_string($data['brand_id']) && str_contains($data['brand_id'], 'add ')) {
+                $name = str_replace('add ', '', $data['brand_id']);
+                $data['brand_id'] = Brand::selfCreate($name);
+            }
+
+            if (isset($data['main_category_id']) && is_string($data['main_category_id']) && str_contains($data['main_category_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['main_category_id']);
                 $departmentData['name'] = $name;
                 $data['main_category_id'] = Category::selfCreate($departmentData);
             }
 
-            if (str_contains($data['sub_category_id'], 'add ')) {
+            if (isset($data['sub_category_id']) && is_string($data['sub_category_id']) && str_contains($data['sub_category_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['sub_category_id']);
                 $departmentData['parent_id'] = $data['main_category_id'];
                 $departmentData['name'] = $name;
@@ -39,14 +45,14 @@ class UpdateAction
             if ($data['type'] == 'service') {
                 $data['cost'] = $data['mrp'];
             }
-            if ($data['type'] == 'service') {
+            if ($data['type'] !== 'product') {
                 unset($data['barcode_number']);
             }
             validationHelper(Product::rules($data, $id), $data);
             $data['updated_by'] = $user_id;
             $model->update($data);
 
-            if ($data['type'] == 'product') {
+            if ($data['type'] == 'product' && isset($data['barcode_number'])) {
                 $model->inventories()->update(['barcode_number' => $data['barcode_number']]);
             }
 
@@ -99,7 +105,7 @@ class UpdateAction
             }
 
             $return['success'] = true;
-            $return['message'] = 'Successfully Update Product';
+            $return['message'] = 'Successfully Updated '.str($model->type)->replace('_', ' ')->title();
             $return['data'] = $model;
         } catch (\Throwable $th) {
             $return['success'] = false;

@@ -7,17 +7,19 @@
             border-radius: 8px;
             position: relative;
         }
+
         .image-gallery-item:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
+
         .image-gallery-item .overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -25,9 +27,11 @@
             transition: opacity 0.3s ease;
             z-index: 1;
         }
+
         .image-gallery-item:hover .overlay {
             opacity: 1;
         }
+
         .image-gallery-item .btn-actions {
             position: absolute;
             top: 10px;
@@ -36,19 +40,32 @@
             display: flex;
             gap: 5px;
         }
+
         .image-gallery-item .badge-main {
             position: absolute;
             top: 10px;
             left: 10px;
             z-index: 2;
         }
+
         .ratio-1x1 {
             aspect-ratio: 1 / 1;
         }
+
         .object-fit-cover {
             object-fit: cover;
         }
     </style>
+
+    @php
+        $isProduct = $type === 'product';
+        $isService = $type === 'service';
+        $isFixedAsset = $type === 'asset';
+        $entityTitle = $isFixedAsset ? 'Asset' : ucFirst($type);
+        $entityNameLabel = $isService ? 'Service Name' : ($isFixedAsset ? 'Asset Name' : 'Product Name');
+        $categoryLabel = $isFixedAsset ? 'Asset Group' : 'Main Category';
+        $imageLabel = $isFixedAsset ? 'Asset Images' : 'Product Images';
+    @endphp
 
     <form wire:submit="save">
         <div class="row mb-2">
@@ -59,10 +76,10 @@
                             <div>
                                 <h5 class="card-title fw-bold mb-3">
                                     <i class="fa fa-tag fs-5 me-2 text-primary"></i>
-                                    {{ ucFirst($type) }} Details
+                                    {{ $entityTitle }} Details
                                 </h5>
                             </div>
-                            @if ($type == 'product')
+                            @if ($isProduct)
                                 <div>
                                     <div class="form-check form-switch">
                                         {{ html()->checkbox('is_selling')->value('')->class('form-check-input')->checked($products['is_selling'])->attribute('wire:model', 'products.is_selling') }}
@@ -79,25 +96,25 @@
                                 <div class="col-md-4">
                                     <label for="code" class="form-label fw-medium">
                                         <i class="fa fa-code text-primary me-1 small"></i>
-                                        UPC/EAN/ISBN/SKU
+                                        {{ $isFixedAsset ? 'Asset Code / Tag' : 'UPC/EAN/ISBN/SKU' }}
                                     </label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-primary-subtle">
                                             <i class="fa fa-barcode"></i>
                                         </span>
-                                        {{ html()->input('code')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter your code')->attribute('wire:model', 'products.code') }}
+                                        {{ html()->input('code')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder($isFixedAsset ? 'Enter asset code or tag number' : 'Enter your code')->attribute('wire:model', 'products.code') }}
                                     </div>
                                 </div>
                                 <div class="col-md-8">
                                     <label for="name" class="form-label fw-medium">
                                         <i class="fa fa-tag text-primary me-1 small"></i>
-                                        Product Name <span class="text-danger">*</span>
+                                        {{ $entityNameLabel }} <span class="text-danger">*</span>
                                     </label>
                                     <div class="input-group mb-3">
                                         <span class="input-group-text bg-light border-primary-subtle">
                                             <i class="fa fa-pencil"></i>
                                         </span>
-                                        {{ html()->input('name')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter product name')->id('name')->autofocus()->attribute('wire:model', 'products.name') }}
+                                        {{ html()->input('name')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter ' . strtolower($entityNameLabel))->id('name')->autofocus()->attribute('wire:model', 'products.name') }}
                                     </div>
                                 </div>
                             </div>
@@ -135,9 +152,9 @@
                                 <div class="col-md-4" wire:ignore>
                                     <label for="main_category_id" class="form-label fw-medium">
                                         <i class="fa fa-folder text-primary me-1 small"></i>
-                                        Main Category <span class="text-danger">*</span>
+                                        {{ $categoryLabel }} <span class="text-danger">*</span>
                                     </label>
-                                    {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent border-primary-subtle shadow-sm')->placeholder('Select Main Category')->id('main_category_id') }}
+                                    {{ html()->select('main_category_id', [])->value('')->class('select-category_id-parent border-primary-subtle shadow-sm')->placeholder('Select ' . $categoryLabel)->id('main_category_id') }}
                                 </div>
 
                                 <div class="col-md-4" wire:ignore>
@@ -148,14 +165,14 @@
                                     {{ html()->select('sub_category_id', [])->value('')->class('select-category_id border-secondary-subtle shadow-sm')->placeholder('Select Sub Category')->id('sub_category_id') }}
                                 </div>
 
-                                <div class="col-md-4" wire:ignore @if ($type == 'service') hidden @endif>
+                                <div class="col-md-4" wire:ignore @if ($isService) hidden @endif>
                                     <label for="unit_id" class="form-label fw-medium">
                                         <i class="fa fa-cube text-primary me-1 small"></i>
-                                        Base Unit <span class="text-danger">*</span>
+                                        {{ $isFixedAsset ? 'Unit' : 'Base Unit' }} <span class="text-danger">*</span>
                                     </label>
                                     {{ html()->select('unit_id', $units)->value('')->class('tomSelect border-primary-subtle shadow-sm')->placeholder('Select your unit')->id('unit_id')->attribute('wire:model', 'products.unit_id') }}
                                 </div>
-                                @if ($type == 'product')
+                                @if ($isProduct || $isFixedAsset)
                                     <div class="col-md-4" wire:ignore>
                                         <label for="unit_id" class="form-label fw-medium">
                                             <i class="fa fa-cube text-primary me-1 small"></i>
@@ -163,6 +180,8 @@
                                         </label>
                                         {{ html()->select('brand_id', $brands)->value('')->class('select-brand_id border-secondary-subtle shadow-sm')->placeholder('Select Brand')->id('brand_id') }}
                                     </div>
+                                @endif
+                                @if ($isProduct)
                                     <div class="col-md-4">
                                         <label for="unit_id" class="form-label fw-medium">
                                             <i class="fa fa-cube text-primary me-1 small"></i>
@@ -171,7 +190,7 @@
                                         {{ html()->input('size')->value('')->class('form-control')->placeholder('Enter your size')->attribute('wire:model', 'products.size')->id('size') }}
                                     </div>
                                 @endif
-                                @if ($type == 'product')
+                                @if ($isProduct)
                                     <div class="col-12">
                                         <div class="row g-3">
                                             <div class="col-md-6">
@@ -202,7 +221,7 @@
                                     </div>
                                 @endif
 
-                                @if ($type == 'product')
+                                @if ($isProduct)
                                     @if ($barcode_type == 'product_wise')
                                         <div class="col-12">
                                             <label for="barcode" class="form-label fw-medium">
@@ -225,14 +244,16 @@
                                         <i class="fa fa-file-text-o text-primary me-1 small"></i>
                                         Description
                                     </label>
-                                    {{ html()->textarea('description')->value('')->class('form-control border-secondary-subtle shadow-sm')->rows(3)->placeholder('Enter product description')->id('description')->attribute('wire:model', 'products.description') }}
-                                    <small class="text-muted mt-1 d-block">Add details about the product specifications, features, or any other relevant information</small>
+                                    {{ html()->textarea('description')->value('')->class('form-control border-secondary-subtle shadow-sm')->rows(3)->placeholder($isFixedAsset ? 'Enter asset description, usage notes, or identification details' : 'Enter product description')->id('description')->attribute('wire:model', 'products.description') }}
+                                    <small class="text-muted mt-1 d-block">
+                                        {{ $isFixedAsset ? 'Add any useful asset notes such as model details, condition, assignment context, or maintenance remarks.' : 'Add details about the product specifications, features, or any other relevant information.' }}
+                                    </small>
                                 </div>
 
                                 <div class="col-12 mt-2">
                                     <label for="document_file" class="form-label fw-medium">
                                         <i class="fa fa-paperclip text-primary me-1 small"></i>
-                                        Document File
+                                        {{ $isFixedAsset ? 'Asset Document' : 'Document File' }}
                                     </label>
                                     @if (isset($products['document_file']) && $products['document_file'])
                                         <div class="d-flex align-items-center gap-2 mb-2 p-2 bg-light rounded border">
@@ -240,13 +261,17 @@
                                             <div class="flex-grow-1 text-truncate">
                                                 <span class="fw-medium small">{{ $products['document_file_name'] ?? 'Document' }}</span>
                                             </div>
-                                            <a href="{{ $products['document_file'] }}" target="_blank" class="btn btn-sm btn-outline-primary" title="View">
+                                            <a href="{{ $products['document_file'] }}" target="_blank" class="btn btn-sm btn-outline-primary"
+                                                title="View">
                                                 <i class="fa fa-eye"></i>
                                             </a>
-                                            <a href="{{ $products['document_file'] }}" download class="btn btn-sm btn-outline-success" title="Download">
+                                            <a href="{{ $products['document_file'] }}" download class="btn btn-sm btn-outline-success"
+                                                title="Download">
                                                 <i class="fa fa-download"></i>
                                             </a>
-                                            <button type="button" wire:click="removeDocument" wire:confirm="Are you sure you want to remove this document?" class="btn btn-sm btn-outline-danger" title="Remove">
+                                            <button type="button" wire:click="removeDocument"
+                                                wire:confirm="Are you sure you want to remove this document?" class="btn btn-sm btn-outline-danger"
+                                                title="Remove">
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </div>
@@ -256,9 +281,11 @@
                                         accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar">
                                     <small class="text-muted mt-1 d-block">
                                         <i class="fa fa-info-circle me-1"></i>
-                                        Upload a document file (PDF, Word, Excel, PowerPoint, TXT, CSV, ZIP - Max 10MB)
+                                        Upload {{ $isFixedAsset ? 'an asset document' : 'a document file' }} (PDF, Word, Excel, PowerPoint, TXT, CSV, ZIP - Max 10MB)
                                     </small>
-                                    @error('document_file') <span class="text-danger small">{{ $message }}</span> @enderror
+                                    @error('document_file')
+                                        <span class="text-danger small">{{ $message }}</span>
+                                    @enderror
                                     <div wire:loading wire:target="document_file" class="text-primary small mt-1">
                                         <i class="fa fa-spinner fa-spin me-1"></i> Uploading...
                                     </div>
@@ -288,13 +315,15 @@
                                         <button type="submit" class="btn btn-sm btn-success d-flex align-items-center gap-2 shadow-sm">
                                             <i class="fa fa-plus fs-5"></i> Save & Create New
                                         </button>
-                                        <button type="button" wire:click="save(1)" class="btn btn-sm btn-primary d-flex align-items-center gap-2 shadow-sm">
+                                        <button type="button" wire:click="save(1)"
+                                            class="btn btn-sm btn-primary d-flex align-items-center gap-2 shadow-sm">
                                             <i class="fa fa-save fs-5"></i> Save & Edit
                                         </button>
                                     @else
-                                        @if ($type == 'product')
+                                        @if ($isProduct)
                                             @can('product.create')
-                                                <a class="btn btn-sm btn-info text-white d-flex align-items-center gap-2 shadow-sm" href="{{ route('product::create') }}">
+                                                <a class="btn btn-sm btn-info text-white d-flex align-items-center gap-2 shadow-sm"
+                                                    href="{{ route('product::create') }}">
                                                     <i class="fa fa-file-o fs-5"></i> Create New
                                                 </a>
                                             @endcan
@@ -303,9 +332,22 @@
                                                     <i class="fa fa-save fs-5"></i> Save Changes
                                                 </button>
                                             @endcan
+                                        @elseif ($isFixedAsset)
+                                            @can('asset.create')
+                                                <a class="btn btn-sm btn-info text-white d-flex align-items-center gap-2 shadow-sm"
+                                                    href="{{ route('asset::create') }}">
+                                                    <i class="fa fa-file-o fs-5"></i> Create New
+                                                </a>
+                                            @endcan
+                                            @can('asset.edit')
+                                                <button type="submit" class="btn btn-sm btn-success d-flex align-items-center gap-2 shadow-sm">
+                                                    <i class="fa fa-save fs-5"></i> Save Changes
+                                                </button>
+                                            @endcan
                                         @else
                                             @can('service.create')
-                                                <a class="btn btn-sm btn-info text-white d-flex align-items-center gap-2 shadow-sm" href="{{ route('service::create') }}">
+                                                <a class="btn btn-sm btn-info text-white d-flex align-items-center gap-2 shadow-sm"
+                                                    href="{{ route('service::create') }}">
                                                     <i class="fa fa-file-o fs-5"></i> Create New
                                                 </a>
                                             @endcan
@@ -323,7 +365,8 @@
 
                     <div class="card-body p-4">
                         @if (count($this->getErrorBag()->toArray()))
-                            <div class="alert alert-danger d-flex align-items-center" role="alert" @if (!$this->getErrorBag()->count()) hidden @endif>
+                            <div class="alert alert-danger d-flex align-items-center" role="alert"
+                                @if (!$this->getErrorBag()->count()) hidden @endif>
                                 <i class="fa fa-exclamation-circle fs-5 me-2"></i>
                                 <div>
                                     <ol class="list-unstyled mb-0 ps-0">
@@ -335,7 +378,7 @@
                             </div>
                         @endif
                         <div class="row g-4">
-                            @if ($type == 'product')
+                            @if ($isProduct)
                                 <div class="col-md-6">
                                     <div class="card h-100 bg-light border-0 rounded-3">
                                         <div class="card-body p-3">
@@ -414,7 +457,7 @@
                                     </div>
                                 </div>
                             @endif
-                            @if ($type == 'service')
+                            @if ($isService)
                                 <div class="col-md-6">
                                     <div class="card h-100 bg-light border-0 rounded-3">
                                         <div class="card-body p-3">
@@ -465,6 +508,52 @@
                                     </div>
                                 </div>
                             @endif
+                            @if ($isFixedAsset)
+                                <div class="col-md-12">
+                                    <div class="card h-100 bg-light border-0 rounded-3">
+                                        <div class="card-body p-3">
+                                            <h6 class="card-subtitle mb-3 d-flex align-items-center">
+                                                <span class="badge bg-primary p-2 me-2">
+                                                    <i class="fa fa-building-o"></i>
+                                                </span>
+                                                Asset Pricing
+                                            </h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+
+                                                    <div class="mb-3">
+                                                        <label for="cost" class="form-label fw-medium">
+                                                            <i class="fa fa-file-text-o text-primary me-1 small"></i>
+                                                            Purchase Cost <span class="text-danger">*</span>
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-white border-primary-subtle">
+                                                                <i class="fa fa-dollar"></i>
+                                                            </span>
+                                                            {{ html()->number('cost')->value('')->attribute('step', 'any')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter purchase cost')->attribute('wire:model.live', 'products.cost') }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="mrp" class="form-label fw-medium">
+                                                            <i class="fa fa-tag text-primary me-1 small"></i>
+                                                            Selling Price
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-white border-primary-subtle">
+                                                                <i class="fa fa-dollar"></i>
+                                                            </span>
+                                                            {{ html()->number('mrp')->value('')->attribute('step', 'any')->class('form-control border-primary-subtle shadow-sm')->placeholder('Optional resale or disposal value')->attribute('wire:model', 'products.mrp') }}
+                                                        </div>
+                                                        <small class="text-muted mt-1 d-block">Optional. Use this if the asset may later be sold, transferred, or disposed with a known value.</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                             <div class="col-12">
                                 <div class="card bg-light border-0 rounded-3">
                                     <div class="card-body p-3">
@@ -500,13 +589,14 @@
                                             <span class="badge bg-secondary p-2 me-2">
                                                 <i class="fa fa-camera"></i>
                                             </span>
-                                            Product Images
+                                            {{ $imageLabel }}
                                         </h6>
                                         <div class="mb-2">
-                                            <x-filepond::upload wire:model="images" multiple max-files="5" class="border border-dashed rounded-3" />
+                                            <x-filepond::upload wire:model="images" multiple max-files="5"
+                                                class="border border-dashed rounded-3" />
                                             <div class="text-muted small text-center mt-2">
                                                 <i class="fa fa-info-circle me-1"></i>
-                                                Upload up to 5 product images (JPG, PNG or GIF)
+                                                Upload up to 5 {{ strtolower($isFixedAsset ? 'asset' : 'product') }} images (JPG, PNG or GIF)
                                             </div>
                                         </div>
                                         @if (isset($table_id) && auth()->user()->can('product.ai image generation'))
@@ -527,65 +617,71 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12">
-                                <div class="card bg-light border-0 rounded-3 mt-2">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-subtitle mb-3 d-flex align-items-center">
-                                            <span class="badge bg-primary p-2 me-2">
-                                                <i class="fa fa-globe"></i>
-                                            </span>
-                                            360° Product View
-                                        </h6>
-                                        <div class="mb-2">
-                                            <x-filepond::upload wire:model="angles_360" multiple max-files="36" class="border border-dashed rounded-3" />
-                                            <div class="text-muted small text-center mt-2">
-                                                <i class="fa fa-info-circle me-1"></i>
-                                                Upload multiple images for 360° view (up to 36 images, JPG, PNG, GIF, BMP, WEBP, SVG - Max 10MB each)
-                                            </div>
-                                        </div>
-
-                                        @if (count($angles_360) > 0)
-                                            <div class="mt-3">
-                                                <h6 class="mb-2">Image Angles:</h6>
-                                                <div class="row">
-                                                    @foreach ($angles_360 as $index => $image)
-                                                        <div class="col-md-4 mb-2">
-                                                            <div class="input-group input-group-sm">
-                                                                <span class="input-group-text">Image {{ $index + 1 }}</span>
-                                                                <input type="number" wire:model="degree.{{ $index }}" class="form-control" placeholder="Angle (0-359)" min="0"
-                                                                    max="359">
-                                                                <span class="input-group-text">°</span>
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
+                            @if (!$isFixedAsset)
+                                <div class="col-12">
+                                    <div class="card bg-light border-0 rounded-3 mt-2">
+                                        <div class="card-body p-3">
+                                            <h6 class="card-subtitle mb-3 d-flex align-items-center">
+                                                <span class="badge bg-primary p-2 me-2">
+                                                    <i class="fa fa-globe"></i>
+                                                </span>
+                                                360° Product View
+                                            </h6>
+                                            <div class="mb-2">
+                                                <x-filepond::upload wire:model="angles_360" multiple max-files="36"
+                                                    class="border border-dashed rounded-3" />
+                                                <div class="text-muted small text-center mt-2">
+                                                    <i class="fa fa-info-circle me-1"></i>
+                                                    Upload multiple images for 360° view (up to 36 images, JPG, PNG, GIF, BMP, WEBP, SVG - Max 10MB
+                                                    each)
                                                 </div>
                                             </div>
-                                        @endif
 
-                                        @if ($product && $product->angleImages()->count() > 0)
-                                            <div class="mt-3">
-                                                <div class="alert alert-info">
-                                                    <h6 class="mb-2">
-                                                        <i class="fa fa-check-circle me-2"></i>
-                                                        Current 360° Images ({{ $product->angleImages()->count() }})
-                                                    </h6>
+                                            @if (count($angles_360) > 0)
+                                                <div class="mt-3">
+                                                    <h6 class="mb-2">Image Angles:</h6>
                                                     <div class="row">
-                                                        @foreach ($product->angleImages()->orderedByAngle()->get() as $image)
-                                                            <div class="col-md-2 mb-2">
-                                                                <div class="text-center">
-                                                                    <img src="{{ $image->path }}" alt="{{ $image->alt_text ?? '360° Image' }}" class="img-thumbnail"
-                                                                        style="width: 60px; height: 60px; object-fit: cover;">
-                                                                    <div class="small text-muted">{{ $image->degree }}°</div>
+                                                        @foreach ($angles_360 as $index => $image)
+                                                            <div class="col-md-4 mb-2">
+                                                                <div class="input-group input-group-sm">
+                                                                    <span class="input-group-text">Image {{ $index + 1 }}</span>
+                                                                    <input type="number" wire:model="degree.{{ $index }}"
+                                                                        class="form-control" placeholder="Angle (0-359)" min="0"
+                                                                        max="359">
+                                                                    <span class="input-group-text">°</span>
                                                                 </div>
                                                             </div>
                                                         @endforeach
                                                     </div>
                                                 </div>
-                                            </div>
-                                        @endif
+                                            @endif
+
+                                            @if ($product && $product->angleImages()->count() > 0)
+                                                <div class="mt-3">
+                                                    <div class="alert alert-info">
+                                                        <h6 class="mb-2">
+                                                            <i class="fa fa-check-circle me-2"></i>
+                                                            Current 360° Images ({{ $product->angleImages()->count() }})
+                                                        </h6>
+                                                        <div class="row">
+                                                            @foreach ($product->angleImages()->orderedByAngle()->get() as $image)
+                                                                <div class="col-md-2 mb-2">
+                                                                    <div class="text-center">
+                                                                        <img src="{{ $image->path }}"
+                                                                            alt="{{ $image->alt_text ?? '360° Image' }}" class="img-thumbnail"
+                                                                            style="width: 60px; height: 60px; object-fit: cover;">
+                                                                        <div class="small text-muted">{{ $image->degree }}°</div>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -597,10 +693,10 @@
                     <div class="accordion" id="_dm-openAccordion">
                         <div class="accordion-item border-0">
                             <div class="accordion-header bg-light rounded-top" id="_dm-openAccHeadingTwo">
-                                <button class="accordion-button fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#_dm-openAccCollapseTwo" aria-expanded="false"
-                                    aria-controls="_dm-openAccCollapseTwo">
+                                <button class="accordion-button fw-bold text-primary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#_dm-openAccCollapseTwo" aria-expanded="false" aria-controls="_dm-openAccCollapseTwo">
                                     <i class="fa fa-edit fs-5 me-2"></i>
-                                    Additional Product Details
+                                    Additional {{ $entityTitle }} Details
                                 </button>
                             </div>
                             <div id="_dm-openAccCollapseTwo" class="accordion-collapse collapse show" aria-labelledby="_dm-openAccHeadingTwo">
@@ -608,30 +704,48 @@
                                     <div class="col-12">
                                         <div class="tab-base">
                                             <ul class="nav nav-tabs nav-tabs-bordered mb-3" role="tablist">
-                                                @if (isset($table_id))
+                                                @if (isset($table_id) && !$isFixedAsset)
                                                     <li class="nav-item" role="presentation">
-                                                        <button class="nav-link @if ($selectedTab == 'Prices') active show @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
-                                                            wire:click="tabSelect('Prices')" data-bs-target="#tabPrices" type="button" role="tab" aria-controls="profile"
-                                                            aria-selected="false" tabindex="-1">
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'Prices') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('Prices')" data-bs-target="#tabPrices"
+                                                            type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                            tabindex="-1">
                                                             <i class="fa fa-money text-success"></i>
                                                             Prices
                                                         </button>
                                                     </li>
                                                 @endif
-                                                @if ($type == 'product')
+                                                @if ($isProduct || $isFixedAsset)
                                                     <li class="nav-item" role="presentation">
-                                                        <button class="nav-link @if ($selectedTab == 'Attributes') active @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
-                                                            wire:click="tabSelect('Attributes')" data-bs-target="#tabAttributes" type="button" role="tab" aria-controls="home"
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'Attributes') active @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('Attributes')"
+                                                            data-bs-target="#tabAttributes" type="button" role="tab" aria-controls="home"
                                                             aria-selected="true">
                                                             <i class="fa fa-table text-primary"></i>
                                                             Attributes
                                                         </button>
                                                     </li>
                                                 @endif
+                                                @if ($isFixedAsset)
+                                                    <li class="nav-item" role="presentation">
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'Depreciation') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('Depreciation')"
+                                                            data-bs-target="#tabDepreciation" type="button" role="tab"
+                                                            aria-controls="profile" aria-selected="false" tabindex="-1">
+                                                            <i class="fa fa-line-chart text-success"></i>
+                                                            Depreciation Settings
+                                                        </button>
+                                                    </li>
+                                                @endif
                                                 @if ($type == 'product')
                                                     <li class="nav-item" role="presentation">
-                                                        <button class="nav-link @if ($selectedTab == 'Stock') active show @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
-                                                            wire:click="tabSelect('Stock')" data-bs-target="#tabStock" type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'Stock') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('Stock')" data-bs-target="#tabStock"
+                                                            type="button" role="tab" aria-controls="profile" aria-selected="false"
                                                             tabindex="-1">
                                                             <i class="fa fa-archive text-warning"></i>
                                                             Stock Details
@@ -641,8 +755,10 @@
                                                 @if ($type == 'product')
                                                     @if (isset($table_id))
                                                         <li class="nav-item" role="presentation">
-                                                            <button class="nav-link @if ($selectedTab == 'Uom') active show @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
-                                                                wire:click="tabSelect('Uom')" data-bs-target="#tabUom" type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                            <button
+                                                                class="nav-link @if ($selectedTab == 'Uom') active show @endif d-flex align-items-center gap-2"
+                                                                data-bs-toggle="tab" wire:click="tabSelect('Uom')" data-bs-target="#tabUom"
+                                                                type="button" role="tab" aria-controls="profile" aria-selected="false"
                                                                 tabindex="-1">
                                                                 <i class="fa fa-cubes text-info"></i>
                                                                 Unit of Measures
@@ -651,18 +767,22 @@
                                                     @endif
                                                 @endif
                                                 <li class="nav-item" role="presentation">
-                                                    <button class="nav-link @if ($selectedTab == 'Images') active show @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
-                                                        wire:click="tabSelect('Images')" data-bs-target="#tabImages" type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                    <button
+                                                        class="nav-link @if ($selectedTab == 'Images') active show @endif d-flex align-items-center gap-2"
+                                                        data-bs-toggle="tab" wire:click="tabSelect('Images')" data-bs-target="#tabImages"
+                                                        type="button" role="tab" aria-controls="profile" aria-selected="false"
                                                         tabindex="-1">
                                                         <i class="fa fa-picture-o text-danger"></i>
-                                                        Images
+                                                            {{ $isFixedAsset ? 'Asset Photos' : 'Images' }}
                                                     </button>
                                                 </li>
                                                 @if (isset($table_id) && $type == 'product')
                                                     <li class="nav-item" role="presentation">
-                                                        <button class="nav-link @if ($selectedTab == 'Related') active show @endif d-flex align-items-center gap-2" data-bs-toggle="tab"
-                                                            wire:click="tabSelect('Related')" data-bs-target="#tabRelated" type="button" role="tab" aria-controls="profile"
-                                                            aria-selected="false" tabindex="-1">
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'Related') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('Related')" data-bs-target="#tabRelated"
+                                                            type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                            tabindex="-1">
                                                             <i class="fa fa-link text-info"></i>
                                                             Related Products
                                                         </button>
@@ -671,12 +791,14 @@
                                             </ul>
                                             <div class="tab-content">
                                                 @if (isset($table_id))
-                                                    <div id="tabPrices" class="tab-pane fade @if ($selectedTab == 'Prices') active show @endif" role="tabpanel">
+                                                    <div id="tabPrices" class="tab-pane fade @if ($selectedTab == 'Prices') active show @endif"
+                                                        role="tabpanel">
                                                         <div class="row g-2">
                                                             <h5 class="card-title ">Prices </h5>
                                                             <div class="col-md-1">
                                                                 <div class="d-flex flex-wrap justify-content-center">
-                                                                    <button type="button" id="ProductPriceAdd" class="btn btn-primary hstack gap-2 align-self-center">
+                                                                    <button type="button" id="ProductPriceAdd"
+                                                                        class="btn btn-primary hstack gap-2 align-self-center">
                                                                         <i class="fa fa-plus fs-5"></i>
                                                                         <span class="vr"></span>
                                                                         Add
@@ -707,8 +829,10 @@
                                                                                     <td class="text-end">{{ currency($item['amount']) }}</td>
                                                                                     <td>{{ ucFirst($item['status']) }}</td>
                                                                                     <td>
-                                                                                        <i table_id="{{ $item['id'] }}" class="fa fa-pencil fs-5 me-2 pointer product_price_edit"></i>
-                                                                                        <i wire:confirm="Are You sure?" wire:click="priceDelete({{ $item['id'] }})"
+                                                                                        <i table_id="{{ $item['id'] }}"
+                                                                                            class="fa fa-pencil fs-5 me-2 pointer product_price_edit"></i>
+                                                                                        <i wire:confirm="Are You sure?"
+                                                                                            wire:click="priceDelete({{ $item['id'] }})"
                                                                                             class="fa fa-trash fs-5 me-2 pointer delete"></i>
                                                                                     </td>
                                                                                 </tr>
@@ -720,8 +844,10 @@
                                                         </div>
                                                     </div>
                                                 @endif
-                                                @if ($type == 'product')
-                                                    <div id="tabAttributes" class="tab-pane fade @if ($selectedTab == 'Attributes') active show @endif" role="tabpanel">
+                                                @if ($isProduct)
+                                                    <div id="tabAttributes"
+                                                        class="tab-pane fade @if ($selectedTab == 'Attributes') active show @endif"
+                                                        role="tabpanel">
                                                         <div class="row g-3 ">
                                                             <h5 class="card-title ">Attributes</h5>
                                                             <div class="col-md-4">
@@ -743,8 +869,87 @@
                                                         </div>
                                                     </div>
                                                 @endif
+                                                @if ($isFixedAsset)
+                                                    <div id="tabAttributes"
+                                                        class="tab-pane fade @if ($selectedTab == 'Attributes') active show @endif"
+                                                        role="tabpanel">
+                                                        <div class="row g-3">
+                                                            <h5 class="card-title">Attributes</h5>
+                                                            <div class="col-md-4">
+                                                                <label for="item_no" class="form-label">Item No</label>
+                                                                {{ html()->input('item_no')->value('')->class('form-control')->placeholder('Enter item number')->attribute('wire:model', 'products.item_no') }}
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="color" class="form-label">Color</label>
+                                                                {{ html()->input('color')->value('')->class('form-control')->placeholder('Enter color')->attribute('wire:model', 'products.color') }}
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="supplier_name" class="form-label">Supplier Name</label>
+                                                                {{ html()->input('supplier_name')->value('')->class('form-control')->placeholder('Enter supplier name')->attribute('wire:model', 'products.supplier_name') }}
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="location" class="form-label">Location</label>
+                                                                {{ html()->input('location')->value('')->class('form-control')->placeholder('Enter location')->attribute('wire:model', 'products.location') }}
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="purchase_date" class="form-label">Purchase Date</label>
+                                                                {{ html()->date('purchase_date')->value('')->class('form-control')->attribute('wire:model', 'products.purchase_date') }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                                @if ($isFixedAsset)
+                                                    <div id="tabDepreciation"
+                                                        class="tab-pane fade @if ($selectedTab == 'Depreciation') active show @endif"
+                                                        role="tabpanel">
+                                                        @php($depreciationPreview = $this->depreciationPreview)
+                                                        <div class="row g-3">
+                                                            <h5 class="card-title">Depreciation Settings</h5>
+                                                            <div class="col-md-4">
+                                                                <label for="duration" class="form-label">Duration</label>
+                                                                {{ html()->number('duration')->value('')->attribute('step', 'any')->class('form-control')->placeholder('Enter duration')->attribute('wire:model.live', 'products.duration') }}
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="duration_period" class="form-label">Duration Period</label>
+                                                                {{ html()->select('duration_period', ['days' => 'Days', 'months' => 'Months', 'years' => 'Years'])->value('')->class('form-select')->attribute('wire:model.live', 'products.duration_period') }}
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="depreciation_method" class="form-label">Method</label>
+                                                                {{ html()->select('depreciation_method', ['straight_line' => 'Straight Line', 'declining_balance' => 'Declining Balance'])->value('')->class('form-select')->attribute('wire:model.live', 'products.depreciation_method') }}
+                                                            </div>
+                                                            @if (($products['depreciation_method'] ?? 'straight_line') === 'declining_balance')
+                                                                <div class="col-md-4">
+                                                                    <label for="declining_factor" class="form-label">Declining Factor</label>
+                                                                    {{ html()->number('declining_factor')->value('')->attribute('step', 'any')->class('form-control')->placeholder('2.00')->attribute('wire:model.live', 'products.declining_factor') }}
+                                                                    <small class="text-muted mt-1 d-block">2.00 means double declining balance.</small>
+                                                                </div>
+                                                            @endif
+                                                            <div class="col-md-4">
+                                                                <label for="prorata_date" class="form-label">Prorata Date</label>
+                                                                {{ html()->date('prorata_date')->value('')->class('form-control')->attribute('wire:model', 'products.prorata_date') }}
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="depreciation_amount" class="form-label">{{ $depreciationPreview['amount_label'] }}</label>
+                                                                {{ html()->number('depreciation_amount')->value('')->attribute('step', 'any')->class('form-control bg-light')->attribute('wire:model', 'products.depreciation_amount')->attribute('readonly', true) }}
+                                                                <small class="text-muted mt-1 d-block">{{ $depreciationPreview['detail'] ?? 'Auto-calculated from purchase cost, duration, and method.' }}</small>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="alert alert-light border mb-0">
+                                                                    <div class="fw-semibold text-dark">{{ $depreciationPreview['title'] }}</div>
+                                                                    @if ($depreciationPreview['formula'])
+                                                                        <div class="small text-primary mt-1">{{ $depreciationPreview['formula'] }}</div>
+                                                                    @endif
+                                                                    @if ($depreciationPreview['detail'])
+                                                                        <div class="small text-muted mt-1">{{ $depreciationPreview['detail'] }}</div>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                                 @if ($type == 'product')
-                                                    <div id="tabStock" class="tab-pane fade @if ($selectedTab == 'Stock') active show @endif" role="tabpanel">
+                                                    <div id="tabStock" class="tab-pane fade @if ($selectedTab == 'Stock') active show @endif"
+                                                        role="tabpanel">
                                                         <div class="row g-3 ">
                                                             <h5 class="card-title ">Stock details</h5>
                                                             <div class="col-md-4">
@@ -779,12 +984,15 @@
                                                 @endif
                                                 @if ($type == 'product')
                                                     @if (isset($table_id))
-                                                        <div id="tabUom" class="tab-pane fade @if ($selectedTab == 'Uom') active show @endif" role="tabpanel">
+                                                        <div id="tabUom"
+                                                            class="tab-pane fade @if ($selectedTab == 'Uom') active show @endif"
+                                                            role="tabpanel">
                                                             <div class="row g-2">
                                                                 <h5 class="card-title ">Unit of Measures </h5>
                                                                 <div class="col-md-1">
                                                                     <div class="mt-4 d-flex flex-wrap justify-content-center">
-                                                                        <button type="button" id="ProductUnitAdd" class="btn btn-primary hstack gap-2 align-self-center">
+                                                                        <button type="button" id="ProductUnitAdd"
+                                                                            class="btn btn-primary hstack gap-2 align-self-center">
                                                                             <i class="fa fa-plus fs-5"></i>
                                                                             <span class="vr"></span>
                                                                             Add
@@ -798,7 +1006,8 @@
                                                                         <table class="table table-striped">
                                                                             <thead>
                                                                                 <tr>
-                                                                                    <th>Convert To (1 ({{ $products['unit']['name'] }}) base unit = ? Sub unit)</th>
+                                                                                    <th>Convert To (1 ({{ $products['unit']['name'] }}) base unit = ?
+                                                                                        Sub unit)</th>
                                                                                     <th class="text-end">Conversion Factor</th>
                                                                                     <th class="text-end">Buying Price</th>
                                                                                     <th class="text-end">Selling Price</th>
@@ -811,12 +1020,18 @@
                                                                                     <tr>
                                                                                         <td>{{ $item['sub_unit']['name'] }}</td>
                                                                                         <td class="text-end">{{ $item['conversion_factor'] }}</td>
-                                                                                        <td class="text-end">{{ currency($products['cost'] * $item['conversion_factor']) }}</td>
-                                                                                        <td class="text-end">{{ currency($products['mrp'] * $item['conversion_factor']) }}</td>
+                                                                                        <td class="text-end">
+                                                                                            {{ currency($products['cost'] * $item['conversion_factor']) }}
+                                                                                        </td>
+                                                                                        <td class="text-end">
+                                                                                            {{ currency($products['mrp'] * $item['conversion_factor']) }}
+                                                                                        </td>
                                                                                         <td>{{ $item['barcode'] }}</td>
                                                                                         <td>
-                                                                                            <i table_id="{{ $item['id'] }}" class="fa fa-pencil fs-5 me-2 pointer product_unit_edit"></i>
-                                                                                            <i wire:confirm="Are You sure?" wire:click="unitDelete({{ $item['id'] }})"
+                                                                                            <i table_id="{{ $item['id'] }}"
+                                                                                                class="fa fa-pencil fs-5 me-2 pointer product_unit_edit"></i>
+                                                                                            <i wire:confirm="Are You sure?"
+                                                                                                wire:click="unitDelete({{ $item['id'] }})"
                                                                                                 class="fa fa-trash fs-5 me-2 pointer delete"></i>
                                                                                         </td>
                                                                                     </tr>
@@ -829,7 +1044,8 @@
                                                         </div>
                                                     @endif
                                                 @endif
-                                                <div id="tabImages" class="tab-pane fade @if ($selectedTab == 'Images') active show @endif" role="tabpanel">
+                                                <div id="tabImages" class="tab-pane fade @if ($selectedTab == 'Images') active show @endif"
+                                                    role="tabpanel">
                                                     <div class="p-3">
                                                         <div class="row g-3">
                                                             @foreach ($products['images'] as $index => $item)
@@ -842,30 +1058,28 @@
                                                                                 </span>
                                                                             </div>
                                                                         @endif
-                                                                        
+
                                                                         <div class="btn-actions">
                                                                             @if (($products['thumbnail'] ?? null) != $item['path'])
-                                                                                <button type="button" 
+                                                                                <button type="button"
                                                                                     wire:click="defaultImage('{{ $item['path'] }}')"
-                                                                                    class="btn btn-sm btn-light border shadow-sm text-warning" 
+                                                                                    class="btn btn-sm btn-light border shadow-sm text-warning"
                                                                                     title="Set as Default">
                                                                                     <i class="fa fa-star"></i>
                                                                                 </button>
                                                                             @endif
-                                                                            <button type="button" 
-                                                                                wire:click="deleteImage('{{ $item['id'] }}')"
+                                                                            <button type="button" wire:click="deleteImage('{{ $item['id'] }}')"
                                                                                 wire:confirm="Are you sure you want to delete this image?"
-                                                                                class="btn btn-sm btn-light border shadow-sm text-danger" 
+                                                                                class="btn btn-sm btn-light border shadow-sm text-danger"
                                                                                 title="Delete Image">
                                                                                 <i class="fa fa-trash"></i>
                                                                             </button>
                                                                         </div>
 
-                                                                        <div class="ratio ratio-1x1 bg-light rounded" wire:click="setPreview('{{ $item['path'] }}')">
-                                                                            <img class="object-fit-cover w-100 h-100 rounded" 
-                                                                                src="{{ $item['path'] }}" 
-                                                                                alt="Product Image" 
-                                                                                loading="lazy">
+                                                                        <div class="ratio ratio-1x1 bg-light rounded"
+                                                                            wire:click="setPreview('{{ $item['path'] }}')">
+                                                                            <img class="object-fit-cover w-100 h-100 rounded"
+                                                                                src="{{ $item['path'] }}" alt="{{ $isFixedAsset ? 'Asset Photo' : 'Product Image' }}" loading="lazy">
                                                                             <div class="overlay rounded">
                                                                                 <i class="fa fa-search-plus text-white fs-3"></i>
                                                                                 <span class="text-white ms-2 fw-medium">Preview</span>
@@ -875,19 +1089,22 @@
                                                                 </div>
                                                             @endforeach
                                                         </div>
-                                                        
-                                                        @if(empty($products['images']))
+
+                                                        @if (empty($products['images']))
                                                             <div class="text-center py-5">
                                                                 <i class="fa fa-image fs-1 text-muted opacity-25 mb-3"></i>
-                                                                <p class="text-muted">No images found for this product.</p>
+                                                                <p class="text-muted">No {{ strtolower($isFixedAsset ? 'asset photos' : 'images') }} found yet.</p>
                                                             </div>
                                                         @endif
                                                     </div>
                                                 </div>
                                                 @if (isset($table_id) && $type == 'product')
-                                                    <div id="tabRelated" class="tab-pane fade @if ($selectedTab == 'Related') active show @endif" role="tabpanel">
+                                                    <div id="tabRelated"
+                                                        class="tab-pane fade @if ($selectedTab == 'Related') active show @endif"
+                                                        role="tabpanel">
                                                         <div class="row g-2">
-                                                            <h5 class="card-title">Related Products (Same Code: <code>{{ $products['code'] ?? '-' }}</code>)</h5>
+                                                            <h5 class="card-title">Related Products (Same Code:
+                                                                <code>{{ $products['code'] ?? '-' }}</code>)</h5>
                                                         </div>
                                                         @if (count($relatedProducts) > 0)
                                                             <div class="card mb-3">
@@ -912,7 +1129,8 @@
                                                                                 @foreach ($relatedProducts as $item)
                                                                                     <tr>
                                                                                         <td>
-                                                                                            <span class="badge bg-secondary rounded-pill">{{ $item['id'] }}</span>
+                                                                                            <span
+                                                                                                class="badge bg-secondary rounded-pill">{{ $item['id'] }}</span>
                                                                                         </td>
                                                                                         <td>
                                                                                             <a href="{{ route('product::edit', $item['id']) }}"
@@ -921,10 +1139,12 @@
                                                                                             </a>
                                                                                         </td>
                                                                                         <td>
-                                                                                            <span class="fw-medium text-primary">{{ $item['department']['name'] ?? '-' }}</span>
+                                                                                            <span
+                                                                                                class="fw-medium text-primary">{{ $item['department']['name'] ?? '-' }}</span>
                                                                                         </td>
                                                                                         <td>
-                                                                                            <span class="text-secondary">{{ $item['main_category']['name'] ?? '-' }}</span>
+                                                                                            <span
+                                                                                                class="text-secondary">{{ $item['main_category']['name'] ?? '-' }}</span>
                                                                                         </td>
                                                                                         <td>
                                                                                             @if (isset($item['brand']['name']))
@@ -935,20 +1155,24 @@
                                                                                             @endif
                                                                                         </td>
                                                                                         <td>
-                                                                                            <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item['size'] ?? '-' }}</span>
+                                                                                            <span
+                                                                                                class="badge bg-light text-dark border border-secondary-subtle">{{ $item['size'] ?? '-' }}</span>
                                                                                         </td>
                                                                                         <td>
                                                                                             @if (isset($item['barcode']) && $item['barcode'])
-                                                                                                <code class="bg-light rounded px-2 py-1 small">{{ $item['barcode'] }}</code>
+                                                                                                <code
+                                                                                                    class="bg-light rounded px-2 py-1 small">{{ $item['barcode'] }}</code>
                                                                                             @else
                                                                                                 <span class="text-muted">-</span>
                                                                                             @endif
                                                                                         </td>
                                                                                         <td class="text-end fw-semibold">
-                                                                                            <span class="text-success">{{ currency($item['cost'] ?? 0) }}</span>
+                                                                                            <span
+                                                                                                class="text-success">{{ currency($item['cost'] ?? 0) }}</span>
                                                                                         </td>
                                                                                         <td class="text-end fw-bold">
-                                                                                            <span class="text-dark">{{ currency($item['mrp'] ?? 0) }}</span>
+                                                                                            <span
+                                                                                                class="text-dark">{{ currency($item['mrp'] ?? 0) }}</span>
                                                                                         </td>
                                                                                         <td>
                                                                                             <span
@@ -981,7 +1205,7 @@
         </div>
     </form>
 
-    @if($previewImage)
+    @if ($previewImage)
         <div class="modal fade show d-block" style="background: rgba(0,0,0,0.85); z-index: 9999;" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
                 <div class="modal-content bg-transparent border-0 shadow-none">
@@ -991,11 +1215,8 @@
                         </button>
                     </div>
                     <div class="modal-body p-0 text-center" wire:click="closePreview">
-                        <img src="{{ $previewImage }}" 
-                            class="img-fluid rounded shadow-lg mx-auto d-block" 
-                            style="max-height: 92vh; width: auto; transition: transform 0.3s;" 
-                            alt="Preview"
-                            onclick="event.stopPropagation()">
+                        <img src="{{ $previewImage }}" class="img-fluid rounded shadow-lg mx-auto d-block"
+                            style="max-height: 92vh; width: auto; transition: transform 0.3s;" alt="Preview" onclick="event.stopPropagation()">
                     </div>
                 </div>
             </div>
@@ -1142,12 +1363,17 @@
                     try {
                         var ts = expenseAccountEl.tomselect;
                         if (product['expense_account_id'] && product['expense_account']) {
-                            ts.addOption({ id: product['expense_account']['id'], name: product['expense_account']['name'] });
+                            ts.addOption({
+                                id: product['expense_account']['id'],
+                                name: product['expense_account']['name']
+                            });
                             ts.addItem(product['expense_account_id']);
                         } else {
                             ts.clear();
                         }
-                    } catch (error) { console.warn('Error handling expense_account_id:', error); }
+                    } catch (error) {
+                        console.warn('Error handling expense_account_id:', error);
+                    }
                 }
 
                 var incomeAccountEl = document.querySelector('#income_account_id');
@@ -1155,12 +1381,17 @@
                     try {
                         var ts = incomeAccountEl.tomselect;
                         if (product['income_account_id'] && product['income_account']) {
-                            ts.addOption({ id: product['income_account']['id'], name: product['income_account']['name'] });
+                            ts.addOption({
+                                id: product['income_account']['id'],
+                                name: product['income_account']['name']
+                            });
                             ts.addItem(product['income_account_id']);
                         } else {
                             ts.clear();
                         }
-                    } catch (error) { console.warn('Error handling income_account_id:', error); }
+                    } catch (error) {
+                        console.warn('Error handling income_account_id:', error);
+                    }
                 }
 
                 $('#name').select();

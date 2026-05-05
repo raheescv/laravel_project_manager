@@ -14,23 +14,23 @@ class CreateAction
     public function execute($data, $user_id)
     {
         try {
-            if (str_contains($data['department_id'], 'add ')) {
+            if (isset($data['department_id']) && is_string($data['department_id']) && str_contains($data['department_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['department_id']);
                 $data['department_id'] = Department::selfCreate($name);
             }
 
-            if (str_contains($data['brand_id'], 'add ')) {
+            if (isset($data['brand_id']) && is_string($data['brand_id']) && str_contains($data['brand_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['brand_id']);
                 $data['brand_id'] = Brand::selfCreate($name);
             }
 
-            if (str_contains($data['main_category_id'], 'add ')) {
+            if (isset($data['main_category_id']) && is_string($data['main_category_id']) && str_contains($data['main_category_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['main_category_id']);
                 $departmentData['name'] = $name;
                 $data['main_category_id'] = Category::selfCreate($departmentData);
             }
 
-            if (str_contains($data['sub_category_id'], 'add ')) {
+            if (isset($data['sub_category_id']) && is_string($data['sub_category_id']) && str_contains($data['sub_category_id'], 'add ')) {
                 $name = str_replace('add ', '', $data['sub_category_id']);
                 $departmentData['parent_id'] = $data['main_category_id'];
                 $departmentData['name'] = $name;
@@ -41,8 +41,10 @@ class CreateAction
                 $data['cost'] = $data['mrp'];
             }
 
-            // Only auto-generate barcode for services, products require manual barcode entry
-            if ($data['type'] == 'service' || empty($data['barcode_number'])) {
+            if ($data['type'] == 'service') {
+                $data['barcode_number'] = generateBarcode();
+            }
+            if ($data['type'] == 'product' && empty($data['barcode_number'])) {
                 $data['barcode_number'] = generateBarcode();
             }
             if (! isset($data['code']) || empty($data['code'])) {
@@ -59,11 +61,11 @@ class CreateAction
                 $model = Product::create($data);
             }
             $isBarcodeSyncEnabled = Configuration::where('key', 'sync_barcode_to_code')->value('value') === 'yes';
-            if ($isBarcodeSyncEnabled && $data['type'] == 'product') {
+            if ($isBarcodeSyncEnabled && $data['type'] !== 'service') {
                 $model->refresh();
                 $model->update(['code' => $model->barcode]);
             }
-            if ('inventory') {
+            if ($data['type'] !== 'service') {
                 $openingStock = max(0, (float) ($data['opening_stock'] ?? 0));
                 Inventory::selfCreateByProduct($model, $user_id, $openingStock);
             }
@@ -109,7 +111,7 @@ class CreateAction
                 }
             }
             $return['success'] = true;
-            $return['message'] = 'Successfully Created Product';
+            $return['message'] = 'Successfully Created '.str($model->type)->replace('_', ' ')->title();
             $return['data'] = $model;
         } catch (\Throwable $th) {
             $return['success'] = false;

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ComboOfferController;
+use App\Http\Controllers\FixedAssetController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
@@ -114,6 +115,13 @@ Route::middleware('auth')->group(function (): void {
         Route::get('create', 'page')->name('create')->can('service.create');
         Route::get('edit/{id}', 'page')->name('edit')->can('service.edit');
         Route::get('import', 'import')->name('import')->can('service.create');
+        Route::get('list', 'get')->name('list');
+    });
+    Route::name('asset::')->prefix('asset')->controller(FixedAssetController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->can('asset.view');
+        Route::get('create', 'page')->name('create')->can('asset.create');
+        Route::get('edit/{id}', 'page')->name('edit')->can('asset.edit');
+        Route::get('import', 'import')->name('import')->can('asset.import');
         Route::get('list', 'get')->name('list');
     });
     Route::name('combo_offer::')->prefix('combo_offer')->controller(ComboOfferController::class)->group(function (): void {

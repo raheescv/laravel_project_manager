@@ -229,6 +229,7 @@ return [
         'property_management' => [
             'label' => 'Property Management',
             'permissions' => [
+                'asset',
                 'property',
                 'property dashboard',
                 'property group',

@@ -68,6 +68,7 @@ class Page extends Component
         $this->syncBarcodeToCode = Configuration::where('key', 'sync_barcode_to_code')->value('value') === 'yes';
         $this->table_id = $table_id;
         $this->type = $type;
+        $this->selectedTab = $this->type === 'asset' ? 'Attributes' : 'Prices';
         $this->departments = [];
         $this->brands = [];
         if (! $this->table_id) {
@@ -103,6 +104,16 @@ class Page extends Component
                 'model' => '',
                 'brand_id' => null,
                 'part_no' => '',
+                'item_no' => '',
+                'supplier_name' => '',
+                'purchase_date' => null,
+                'duration' => null,
+                'duration_period' => 'years',
+                'depreciation_method' => 'straight_line',
+                'declining_factor' => 2.0,
+                'depreciation_amount' => 0,
+                'prorata_date' => null,
+                'remarks' => '',
                 'min_stock' => 0,
                 'max_stock' => 0,
                 'location' => '',
@@ -128,11 +139,15 @@ class Page extends Component
         } else {
             $this->product = Product::with('department', 'subCategory', 'mainCategory', 'brand', 'images', 'unit', 'units.subUnit', 'prices', 'incomeAccount', 'expenseAccount')->find($this->table_id);
             if (! $this->product) {
-                return redirect()->route('product::index');
+                return redirect()->route($this->type === 'asset' ? 'asset::index' : ($this->type === 'service' ? 'service::index' : 'product::index'));
             }
             $this->products = $this->product->toArray();
             $this->type = $this->product->type;
+            $this->selectedTab = $this->type === 'asset' ? 'Attributes' : 'Prices';
             $this->loadRelatedProducts();
+        }
+        if ($this->type === 'asset') {
+            $this->recalculateDepreciation();
         }
         if ($dropdownValues) {
             $this->dispatch('SelectDropDownValues', $this->products);
@@ -158,17 +173,31 @@ class Page extends Component
         $rules = [
             'products.name' => ['required'],
             // 'products.code' => ['required'],
-            'products.unit_id' => ['required'],
             'products.department_id' => ['required'],
             'products.main_category_id' => ['required'],
             'products.cost' => ['required'],
-            'products.mrp' => ['required'],
             // 'products.barcode' => ['required_if:products.type,product'],
             'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
             'angles_360.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:10240',
             'degree.*' => 'nullable|integer|min:0|max:359',
             'document_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar|max:10240',
         ];
+
+        if ($this->type !== 'service') {
+            $rules['products.unit_id'] = ['required'];
+        }
+
+        if ($this->type !== 'asset') {
+            $rules['products.mrp'] = ['required'];
+        } else {
+            $rules['products.mrp'] = ['nullable'];
+            $rules['products.purchase_date'] = ['nullable', 'date'];
+            $rules['products.duration'] = ['nullable', 'numeric', 'min:0'];
+            $rules['products.duration_period'] = ['nullable', 'in:days,months,years'];
+            $rules['products.depreciation_method'] = ['nullable', 'in:straight_line,declining_balance'];
+            $rules['products.declining_factor'] = ['nullable', 'numeric', 'min:0.01'];
+            $rules['products.prorata_date'] = ['nullable', 'date'];
+        }
 
         if (! $this->table_id) {
             $rules['products.opening_stock'] = ['nullable', 'numeric', 'min:0'];
@@ -187,6 +216,7 @@ class Page extends Component
         'products.department_id' => 'The department  field is required.',
         'products.main_category_id' => 'The main category field is required.',
         'products.sub_category_id' => 'The sub category field is required.',
+        'products.brand_id' => 'The brand field is required.',
         'products.cost' => 'The cost field is required.',
         'products.mrp' => 'The mrp field is required.',
         // 'products.barcode.required_if' => 'The barcode field is required when type is product.',
@@ -253,6 +283,8 @@ class Page extends Component
             if ($edit) {
                 if ($this->type == 'product') {
                     return redirect()->route('product::edit', $response['data']['id']);
+                } elseif ($this->type == 'asset') {
+                    return redirect()->route('asset::edit', $response['data']['id']);
                 } else {
                     return redirect()->route('service::edit', $response['data']['id']);
                 }
@@ -292,6 +324,101 @@ class Page extends Component
         ) {
             $this->products['code'] = trim((string) $value);
         }
+    }
+
+    public function updatedProducts($value, $key): void
+    {
+        if (
+            $this->type === 'asset' &&
+            in_array($key, ['cost', 'duration', 'duration_period', 'depreciation_method', 'declining_factor'], true)
+        ) {
+            $this->recalculateDepreciation();
+        }
+    }
+
+    protected function recalculateDepreciation(): void
+    {
+        if ($this->type !== 'asset') {
+            return;
+        }
+
+        $cost = (float) ($this->products['cost'] ?? 0);
+        $duration = (float) ($this->products['duration'] ?? 0);
+        $period = $this->products['duration_period'] ?? 'years';
+        $method = $this->products['depreciation_method'] ?? 'straight_line';
+        $factor = (float) ($this->products['declining_factor'] ?? 2.0);
+
+        if ($cost <= 0 || $duration <= 0) {
+            $this->products['depreciation_amount'] = 0;
+
+            return;
+        }
+
+        $totalPeriods = $this->getDepreciationTotalPeriods($duration, $period);
+        $amount = 0;
+
+        if ($method === 'declining_balance') {
+            $rate = $factor / max($totalPeriods, 1);
+            $amount = $cost * $rate;
+        } else {
+            $amount = $cost / max($totalPeriods, 1);
+        }
+
+        $this->products['depreciation_amount'] = round(max($amount, 0), 2);
+    }
+
+    protected function getDepreciationTotalPeriods(float $duration, string $period): float
+    {
+        return match ($period) {
+            'days' => max($duration, 1),
+            'months' => max($duration, 1),
+            default => max($duration * 12, 1),
+        };
+    }
+
+    public function getDepreciationPreviewProperty(): array
+    {
+        $cost = (float) ($this->products['cost'] ?? 0);
+        $duration = (float) ($this->products['duration'] ?? 0);
+        $period = $this->products['duration_period'] ?? 'years';
+        $method = $this->products['depreciation_method'] ?? 'straight_line';
+        $factor = (float) ($this->products['declining_factor'] ?? 2.0);
+        $amount = (float) ($this->products['depreciation_amount'] ?? 0);
+
+        $periodLabel = match ($period) {
+            'days' => 'day',
+            default => 'month',
+        };
+        $amountLabel = $period === 'days' ? 'Daily Depreciation' : 'Monthly Depreciation';
+
+        if ($cost <= 0 || $duration <= 0) {
+            return [
+                'title' => 'Enter purchase cost and duration to calculate depreciation.',
+                'formula' => null,
+                'detail' => null,
+                'amount_label' => $amountLabel,
+            ];
+        }
+
+        $totalPeriods = $this->getDepreciationTotalPeriods($duration, $period);
+
+        if ($method === 'declining_balance') {
+            $rate = $factor / max($totalPeriods, 1);
+
+            return [
+                'title' => 'First '.$periodLabel.' depreciation using declining balance.',
+                'formula' => currency($cost).' x ('.number_format($factor, 2).' / '.number_format($totalPeriods, 2).') = '.currency($amount),
+                'detail' => 'Declining balance changes each period, so this field shows the first '.$periodLabel.' amount.',
+                'amount_label' => 'First '.ucfirst($periodLabel).' Depreciation',
+            ];
+        }
+
+        return [
+            'title' => 'Straight line depreciation spread evenly across '.number_format($totalPeriods, 2).' '.$periodLabel.($totalPeriods == 1 ? '' : 's').'.',
+            'formula' => currency($cost).' / '.number_format($totalPeriods, 2).' = '.currency($amount),
+            'detail' => 'This gives a constant '.strtolower($amountLabel).' amount for the full asset life.',
+            'amount_label' => $amountLabel,
+        ];
     }
 
     public function deleteImage($id)

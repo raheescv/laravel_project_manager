@@ -75,6 +75,15 @@ class Product extends Model implements AuditableContracts
         'size',
         'model',
         'part_no',
+        'item_no',
+        'supplier_name',
+        'purchase_date',
+        'duration',
+        'duration_period',
+        'depreciation_method',
+        'declining_factor',
+        'depreciation_amount',
+        'prorata_date',
 
         'min_stock',
         'max_stock',
@@ -96,29 +105,38 @@ class Product extends Model implements AuditableContracts
     public static function rules($data, $id = 0, $merge = [])
     {
         $tenantId = self::getCurrentTenantId();
+        $type = $data['type'] ?? 'product';
 
         $rules = [
             'name' => [
                 'required',
                 'max:100',
-                Rule::unique('products')->where('tenant_id', $tenantId)->where('type', $data['type'])->whereNull('deleted_at')->ignore($id),
+                Rule::unique('products')->where('tenant_id', $tenantId)->where('type', $type)->whereNull('deleted_at')->ignore($id),
             ],
-            'type' => ['required', 'max:100'],
-            'code' => [
-                'required',
-                'max:50',
-                // Rule::unique('products')->whereNull('deleted_at')->ignore($id),
-            ],
-            'unit_id' => ['required'],
+            'type' => ['required', Rule::in(['product', 'service', 'asset'])],
+            'code' => ['required', 'max:50'],
             'department_id' => ['required'],
             'main_category_id' => ['required'],
-            'cost' => ['required'],
-            'mrp' => ['required'],
+            'cost' => ['required', 'numeric'],
+            'mrp' => ['required', 'numeric'],
             'barcode_number' => array_merge(
-                ['required_if:type,product'],
+                ['nullable', 'required_if:type,product'],
                 ! empty($data['barcode_number'] ?? null) ? [Rule::unique('products')->where('tenant_id', $tenantId)->where('barcode_number', $data['barcode_number'])->whereNull('deleted_at')->ignore($id)] : []
             ),
+            'purchase_date' => ['nullable', 'date'],
+            'duration' => ['nullable', 'numeric', 'min:0'],
+            'duration_period' => ['nullable', Rule::in(['days', 'months', 'years'])],
+            'depreciation_method' => ['nullable', Rule::in(['straight_line', 'declining_balance'])],
+            'declining_factor' => ['nullable', 'numeric', 'min:0'],
+            'depreciation_amount' => ['nullable', 'numeric', 'min:0'],
+            'prorata_date' => ['nullable', 'date'],
         ];
+
+        if ($type === 'service') {
+            $rules['unit_id'] = ['nullable'];
+        } else {
+            $rules['unit_id'] = ['required'];
+        }
 
         return array_merge($rules, $merge);
     }
@@ -136,6 +154,11 @@ class Product extends Model implements AuditableContracts
     public function scopeProduct($query)
     {
         return $query->where('type', 'product');
+    }
+
+    public function scopeAsset($query)
+    {
+        return $query->where('type', 'asset');
     }
 
     public function scopeActive($query)
@@ -358,6 +381,8 @@ class Product extends Model implements AuditableContracts
 
     public static function constructData($data, $user_id)
     {
+        $data['type'] = $data['type'] ?? 'product';
+
         if (! isset($data['code']) || empty($data['code'])) {
             $data['code'] = self::generateUniqueCode();
         }
@@ -366,14 +391,19 @@ class Product extends Model implements AuditableContracts
             $data['barcode_number'] = generateBarcode();
         }
 
+        if (! empty($data['barcode']) && empty($data['barcode_number'])) {
+            $data['barcode_number'] = $data['barcode'];
+        }
+
         $data['cost'] = extractNumericValue($data['cost'] ?? 0);
         $data['mrp'] = extractNumericValue($data['mrp'] ?? 0);
-        $value['is_favorite'] = $value['is_favorite'] ?? true;
-        $data['is_favorite'] = in_array($value['is_favorite'], ['Yes', true]) ? true : false;
+        $data['declining_factor'] = extractNumericValue($data['declining_factor'] ?? 2.0);
+        $data['depreciation_amount'] = extractNumericValue($data['depreciation_amount'] ?? 0);
+        $data['is_favorite'] = $data['is_favorite'] ?? true;
+        $data['is_favorite'] = in_array($data['is_favorite'], ['Yes', true, 1, '1'], true);
         $data['is_selling'] = $data['is_selling'] ?? true;
         $data['is_selling'] = in_array($data['is_selling'], ['Yes', true], true);
         $data['unit'] = $data['unit'] ?? 'Nos';
-        $data['type'] = $data['type'] ?? 'product';
         $unit = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']]);
         $data['unit_id'] = $unit->id;
         $brand_id = null;
@@ -408,6 +438,9 @@ class Product extends Model implements AuditableContracts
 
         $data['created_by'] = $user_id;
         $data['updated_by'] = $user_id;
+        $data['duration_period'] = $data['duration_period'] ?? 'years';
+        $data['depreciation_method'] = $data['depreciation_method'] ?? 'straight_line';
+        $data['declining_factor'] = $data['declining_factor'] ?: 2.0;
 
         return $data;
     }

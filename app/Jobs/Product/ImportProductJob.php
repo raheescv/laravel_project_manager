@@ -18,13 +18,22 @@ class ImportProductJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(protected $user_id, protected $filePath, protected $branchId = null, protected $tenantId = null, protected $mappings = []) {}
+    public function __construct(
+        protected $user_id,
+        protected $filePath,
+        protected $branchId = null,
+        protected $tenantId = null,
+        protected $mappings = [],
+        protected $defaultType = 'product',
+        protected $moduleLabel = 'Product'
+    ) {}
 
     public function handle()
     {
         // Set tenant context so BelongsToTenant, TenantScope
         $tenantService = app(TenantService::class);
         if ($this->tenantId) {
+            /** @var Tenant|null $tenant */
             $tenant = Tenant::find($this->tenantId);
             if ($tenant) {
                 $tenantService->setCurrentTenant($tenant);
@@ -74,7 +83,7 @@ class ImportProductJob implements ShouldQueue
         })->count();
 
         $totalRows--;
-        Excel::import(new ProductImport($this->user_id, $totalRows, $this->branchId, $this->mappings), $file);
+        Excel::import(new ProductImport($this->user_id, $totalRows, $this->branchId, $this->mappings, $this->defaultType, $this->moduleLabel), $file);
 
         // Clean up the file after import
         if (file_exists($file)) {

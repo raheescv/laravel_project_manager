@@ -22,6 +22,10 @@ class Import extends Component
 {
     use WithFileUploads;
 
+    public string $entityLabel = 'Product';
+
+    public string $entityPluralLabel = 'Products';
+
     public $file;
 
     public $step = 1;

@@ -26,7 +26,14 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private array $trashedProducts = [];
 
-    public function __construct(private int $userId, private int $totalRows, private int $branchId, private array $mappings = []) {}
+    public function __construct(
+        private int $userId,
+        private int $totalRows,
+        private int $branchId,
+        private array $mappings = [],
+        private string $defaultType = 'product',
+        private string $moduleLabel = 'Product'
+    ) {}
 
     public function collection(Collection $rows)
     {
@@ -61,9 +68,9 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             return;
         }
 
-        $this->existingProducts = Product::whereIn('name', $productNames)->pluck('id', 'name')->toArray();
+        $this->existingProducts = Product::where('type', $this->defaultType)->whereIn('name', $productNames)->pluck('id', 'name')->toArray();
 
-        $this->trashedProducts = Product::onlyTrashed()->whereIn('name', $productNames)->pluck('id', 'name')->toArray();
+        $this->trashedProducts = Product::onlyTrashed()->where('type', $this->defaultType)->whereIn('name', $productNames)->pluck('id', 'name')->toArray();
     }
 
     private function processProductRow($value): void
@@ -81,6 +88,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
         }
 
         $data = Product::constructData($productRow, $this->userId);
+        $data['type'] = $this->defaultType;
 
         $productName = $data['name'];
         $quantity = $productRow['stock'] ?? $value['stock'] ?? 0;
@@ -92,15 +100,19 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             if (isset($this->existingProducts[$productName])) {
                 return;
             }
-            validationHelper(Product::rules($data), $data, 'Product');
+            validationHelper(Product::rules($data), $data, $this->moduleLabel);
             $model = $this->createOrRestoreProduct($data, $productName);
-            Inventory::selfCreateByProduct($model, $this->userId, $quantity, $this->branchId);
-        } else {
-            $model = Product::find($data['id']);
-            if (! $model) {
-                throw new Exception('Product not found with the specified ID: '.$data['id']);
+            if ($this->defaultType !== 'service') {
+                Inventory::selfCreateByProduct($model, $this->userId, $quantity, $this->branchId);
             }
-            validationHelper(Product::rules($data, $data['id']), $data, 'Product');
+        } else {
+            $modelId = $data['id'] ?? $this->existingProducts[$productName] ?? null;
+            $model = Product::find($modelId);
+            if (! $model) {
+                throw new Exception($this->moduleLabel.' not found for update: '.$productName);
+            }
+            $data['id'] = $model->id;
+            validationHelper(Product::rules($data, $data['id']), $data, $this->moduleLabel);
 
             $productResponse = (new ProductUpdateAction())->execute($data, $data['id'], $this->userId);
             if (! $productResponse['success']) {
@@ -108,7 +120,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             }
 
             $inventory = Inventory::where('branch_id', $this->branchId)->where('product_id', $model->id)->first();
-            if ($inventory) {
+            if ($inventory && $this->defaultType !== 'service') {
                 $inventoryData = $inventory->toArray();
                 $inventoryData['quantity'] = $quantity;
                 $inventoryData['remarks'] = 'Bulk Update';
@@ -145,13 +157,13 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
         $this->errors[] = $errorData;
 
-        Log::error('Product import error', $errorData);
+        Log::error($this->moduleLabel.' import error', $errorData);
     }
 
     private function updateProgress(): void
     {
         $progress = ($this->processedRows / $this->totalRows) * 100;
-        event(new FileImportProgress($this->userId, 'Product', $progress));
+        event(new FileImportProgress($this->userId, $this->moduleLabel, $progress));
     }
 
     public function batchSize(): int
@@ -167,7 +179,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
     public function __destruct()
     {
         if (! empty($this->errors)) {
-            event(new FileImportCompleted($this->userId, 'Product', $this->errors));
+            event(new FileImportCompleted($this->userId, $this->moduleLabel, $this->errors));
         }
     }
 }
