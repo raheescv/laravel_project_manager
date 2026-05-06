@@ -452,8 +452,8 @@
             <div class="card-body px-3 py-3">
                 @if ($assetSchedules->count())
                     <div class="table-responsive">
-                        <table class="table table-pv align-middle mb-0">
-                            <thead>
+                        <table class="table table-pv table-hover table-sm align-middle mb-0">
+                            <thead class="bg-light position-sticky top-0">
                                 <tr>
                                     <th>Period</th>
                                     <th>Date</th>
