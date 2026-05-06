@@ -397,11 +397,7 @@ class Page extends Component
 
     protected function getDepreciationTotalPeriods(float $duration, string $period): float
     {
-        return match ($period) {
-            'days' => max($duration, 1),
-            'months' => max($duration, 1),
-            default => max($duration * 12, 1),
-        };
+        return max($duration, 1);
     }
 
     public function getDepreciationPreviewProperty(): array
@@ -415,9 +411,14 @@ class Page extends Component
 
         $periodLabel = match ($period) {
             'days' => 'day',
-            default => 'month',
+            'months' => 'month',
+            default => 'year',
         };
-        $amountLabel = $period === 'days' ? 'Daily Depreciation' : 'Monthly Depreciation';
+        $amountLabel = match ($period) {
+            'days' => 'Daily Depreciation',
+            'months' => 'Monthly Depreciation',
+            default => 'Yearly Depreciation',
+        };
 
         if ($cost <= 0 || $duration <= 0) {
             return [

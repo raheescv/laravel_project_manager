@@ -25,7 +25,7 @@ class GenerateDepreciationScheduleAction
             }
 
             $totalPeriods = $this->getTotalPeriods($asset);
-            $periodType = ($asset->duration_period === 'days') ? 'daily' : 'monthly';
+            $periodType = $this->resolvePeriodType($asset->duration_period);
             $startDate = Carbon::parse($asset->prorata_date ?: $asset->purchase_date)->startOfDay();
 
             $postedSchedules = AssetDepreciationSchedule::where('product_id', $asset->id)
@@ -91,10 +91,15 @@ class GenerateDepreciationScheduleAction
     {
         $duration = (float) ($asset->duration ?? 0);
 
-        return match ($asset->duration_period) {
-            'days' => max((int) ceil($duration), 1),
-            'months' => max((int) ceil($duration), 1),
-            default => max((int) ceil($duration * 12), 1),
+        return max((int) ceil($duration), 1);
+    }
+
+    protected function resolvePeriodType(?string $durationPeriod): string
+    {
+        return match ($durationPeriod) {
+            'days' => 'daily',
+            'years' => 'yearly',
+            default => 'monthly',
         };
     }
 
@@ -105,7 +110,7 @@ class GenerateDepreciationScheduleAction
         return match ($durationPeriod) {
             'days' => $startDate->copy()->addDays($offset),
             'months' => $startDate->copy()->addMonthsNoOverflow($offset),
-            default => $startDate->copy()->addMonthsNoOverflow($offset),
+            default => $startDate->copy()->addYearsNoOverflow($offset),
         };
     }
 
