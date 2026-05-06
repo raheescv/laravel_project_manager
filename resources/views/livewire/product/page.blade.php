@@ -96,7 +96,7 @@
                                 <div class="col-md-4">
                                     <label for="code" class="form-label fw-medium">
                                         <i class="fa fa-code text-primary me-1 small"></i>
-                                        {{ $isFixedAsset ? 'Asset Code / Tag' : 'Code / UPC / EAN / ISBN / SKU' }}
+                                        {{ $isFixedAsset ? 'Asset Code / Tag' : 'Code/UPC/EAN/ISBN/SKU' }}
                                     </label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-primary-subtle">
