@@ -27,6 +27,16 @@
                     </div>
                 </div>
             @endif
+            @can('asset.dashboard overview')
+                <div class="row mb-4">
+                    <div class="col-12 mb-3">
+                        <h5 class="mb-3 text-secondary fw-semibold border-start border-4 border-warning ps-3">Asset Overview</h5>
+                    </div>
+                    <div class="col-xl-12">
+                        @livewire('dashboard.asset-overview')
+                    </div>
+                </div>
+            @endcan
             @can('appointment.dashboard')
                 <div class="row mb-4">
                     <div class="col-12 mb-3">

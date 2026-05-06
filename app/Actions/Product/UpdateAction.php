@@ -2,6 +2,7 @@
 
 namespace App\Actions\Product;
 
+use App\Actions\Asset\GenerateDepreciationScheduleAction;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Department;
@@ -54,6 +55,13 @@ class UpdateAction
 
             if ($data['type'] == 'product' && isset($data['barcode_number'])) {
                 $model->inventories()->update(['barcode_number' => $data['barcode_number']]);
+            }
+
+            if ($data['type'] === 'asset') {
+                $scheduleResponse = (new GenerateDepreciationScheduleAction())->execute($model->fresh(), $user_id);
+                if (! $scheduleResponse['success']) {
+                    throw new \Exception($scheduleResponse['message']);
+                }
             }
 
             // Handle document file upload

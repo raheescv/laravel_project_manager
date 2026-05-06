@@ -2,6 +2,7 @@
 
 namespace App\Actions\Product;
 
+use App\Actions\Asset\GenerateDepreciationScheduleAction;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Configuration;
@@ -68,6 +69,12 @@ class CreateAction
             if ($data['type'] !== 'service') {
                 $openingStock = max(0, (float) ($data['opening_stock'] ?? 0));
                 Inventory::selfCreateByProduct($model, $user_id, $openingStock);
+            }
+            if ($data['type'] === 'asset') {
+                $scheduleResponse = (new GenerateDepreciationScheduleAction())->execute($model->fresh(), $user_id);
+                if (! $scheduleResponse['success']) {
+                    throw new \Exception($scheduleResponse['message']);
+                }
             }
             // Handle document file upload
             if (isset($data['document_file_upload']) && $data['document_file_upload']) {

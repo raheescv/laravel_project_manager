@@ -133,11 +133,31 @@ class Page extends Component
                 'degree' => [],
                 'income_account_id' => null,
                 'expense_account_id' => null,
+                'asset_account_id' => null,
+                'accumulated_depreciation_account_id' => null,
+                'depreciation_expense_account_id' => null,
                 'income_account' => [],
                 'expense_account' => [],
+                'asset_account' => [],
+                'accumulated_depreciation_account' => [],
+                'depreciation_expense_account' => [],
             ];
         } else {
-            $this->product = Product::with('department', 'subCategory', 'mainCategory', 'brand', 'images', 'unit', 'units.subUnit', 'prices', 'incomeAccount', 'expenseAccount')->find($this->table_id);
+            $this->product = Product::with(
+                'department',
+                'subCategory',
+                'mainCategory',
+                'brand',
+                'images',
+                'unit',
+                'units.subUnit',
+                'prices',
+                'incomeAccount',
+                'expenseAccount',
+                'assetAccount',
+                'accumulatedDepreciationAccount',
+                'depreciationExpenseAccount'
+            )->find($this->table_id);
             if (! $this->product) {
                 return redirect()->route($this->type === 'asset' ? 'asset::index' : ($this->type === 'service' ? 'service::index' : 'product::index'));
             }
@@ -191,12 +211,15 @@ class Page extends Component
             $rules['products.mrp'] = ['required'];
         } else {
             $rules['products.mrp'] = ['nullable'];
-            $rules['products.purchase_date'] = ['nullable', 'date'];
-            $rules['products.duration'] = ['nullable', 'numeric', 'min:0'];
-            $rules['products.duration_period'] = ['nullable', 'in:days,months,years'];
-            $rules['products.depreciation_method'] = ['nullable', 'in:straight_line,declining_balance'];
+            $rules['products.purchase_date'] = ['required', 'date'];
+            $rules['products.duration'] = ['required', 'numeric', 'min:0.01'];
+            $rules['products.duration_period'] = ['required', 'in:days,months,years'];
+            $rules['products.depreciation_method'] = ['required', 'in:straight_line,declining_balance'];
             $rules['products.declining_factor'] = ['nullable', 'numeric', 'min:0.01'];
             $rules['products.prorata_date'] = ['nullable', 'date'];
+            $rules['products.asset_account_id'] = ['required'];
+            $rules['products.accumulated_depreciation_account_id'] = ['required'];
+            $rules['products.depreciation_expense_account_id'] = ['required'];
         }
 
         if (! $this->table_id) {
@@ -210,8 +233,7 @@ class Page extends Component
         'products.name.required' => 'The name field is required',
         'products.name.unique' => 'The name is already Registered',
         'products.name.max' => 'The name field must not be greater than 20 characters.',
-        // 'products.code.required' => 'The code field is required',
-        // 'products.code.max' => 'The code field must not be greater than 20 characters.',
+        'products.code.required' => 'The code field is required',
         'products.unit_id' => 'The unit field is required.',
         'products.department_id' => 'The department  field is required.',
         'products.main_category_id' => 'The main category field is required.',
@@ -219,6 +241,13 @@ class Page extends Component
         'products.brand_id' => 'The brand field is required.',
         'products.cost' => 'The cost field is required.',
         'products.mrp' => 'The mrp field is required.',
+        'products.purchase_date.required' => 'The purchase date field is required for assets.',
+        'products.duration.required' => 'The depreciation duration is required for assets.',
+        'products.duration_period.required' => 'Please choose the depreciation period for the asset.',
+        'products.depreciation_method.required' => 'Please choose a depreciation method for the asset.',
+        'products.asset_account_id.required' => 'Please select the asset account.',
+        'products.accumulated_depreciation_account_id.required' => 'Please select the accumulated depreciation account.',
+        'products.depreciation_expense_account_id.required' => 'Please select the depreciation expense account.',
         // 'products.barcode.required_if' => 'The barcode field is required when type is product.',
         'images.mimetypes' => 'The images field must be a file of type: image.',
         'images.*.max' => 'The images field must not be greater than 3100 KB',

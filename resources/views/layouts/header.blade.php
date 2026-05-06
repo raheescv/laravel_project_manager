@@ -49,9 +49,6 @@
         <!-- Brand -->
         <div class="header__brand">
             <div class="brand-wrap">
-                <a href="{{ route('dashboard') }}" class="brand-img">
-                    <img src="{{ cache('logo', asset('assets/img/logo.svg')) }}" alt="Nifty Logo" class="Nifty logo" width="150%" height="150%">
-                </a>
                 <div class="brand-title d-none d-sm-block">{{ config('app.name', 'Astra') }}</div>
             </div>
         </div>

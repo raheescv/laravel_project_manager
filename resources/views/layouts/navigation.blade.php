@@ -103,7 +103,7 @@
             pointer-events: none;
         }
 
-        /* subtle ambient glow in the background (node orb feel) */
+        /* subtle ambient glow in the background */
         .luminous-nav::after {
             content: '';
             position: absolute;
@@ -145,123 +145,226 @@
         }
         .luminous-nav .scrollable-content::-webkit-scrollbar-thumb:hover { background: var(--ln-scrollbar-hover); }
 
-        /* ============================ PROFILE CARD ============================ */
+        /* ============================ BRAND CARD ============================ */
         .luminous-nav .mainnav__widget {
-            margin: 0.5rem 0.55rem 0.65rem !important;
-            padding: 0.6rem 0.55rem 0.5rem !important;
+            margin: 0.55rem 0.65rem 0.7rem !important;
+            padding: 0.8rem 0.65rem !important;
             background: var(--ln-surface);
             border: 1px solid var(--ln-border);
             border-radius: 12px;
-            backdrop-filter: blur(16px) saturate(160%);
-            -webkit-backdrop-filter: blur(16px) saturate(160%);
+            backdrop-filter: blur(10px) saturate(140%);
+            -webkit-backdrop-filter: blur(10px) saturate(140%);
             position: relative;
             overflow: hidden;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
         .luminous-nav .mainnav__widget::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            padding: 1px;
-            border-radius: 12px;
-            background: linear-gradient(135deg,
-                rgba(99, 102, 241, 0.25),
-                transparent 40%,
-                rgba(236, 72, 153, 0.18));
-            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-            -webkit-mask-composite: xor;
-                    mask-composite: exclude;
-            pointer-events: none;
-            opacity: 0.7;
+            content: none;
         }
 
         .luminous-nav .mainnav__widget:hover {
             border-color: var(--ln-border-strong);
-            box-shadow: 0 10px 30px -12px rgba(99, 102, 241, 0.35);
+            box-shadow: 0 10px 24px -18px rgba(15, 23, 42, 0.42);
         }
 
-        .luminous-nav .mainnav__avatar {
-            width: 38px !important;
-            height: 38px !important;
-            border-radius: 50% !important;
+        .luminous-nav .mainnav__brand {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            padding: 0 0 0.55rem;
+            position: relative;
+            z-index: 1;
+        }
+        .luminous-nav .mainnav__brand:hover { color: inherit; text-decoration: none; }
+
+        .luminous-nav .mainnav__brand-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 15px;
             padding: 2px;
-            background: linear-gradient(135deg, var(--ln-cyan), var(--ln-primary), var(--ln-pink));
-            box-shadow: 0 5px 14px -6px rgba(99, 102, 241, 0.55);
+            margin: 0 auto;
+            background: linear-gradient(135deg, #38bdf8, #6366f1, #d946ef);
+            box-shadow: 0 8px 18px -14px rgba(79, 70, 229, 0.8);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
-            animation: ln-avatar-float 6s ease-in-out infinite;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .luminous-nav .mininav-toggle {
-            position: relative;
+        .luminous-nav .mainnav__brand-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #ffffff;
+            border-radius: 13px;
+            padding: 7px;
+            display: block;
         }
 
-        /* online node indicator on avatar */
-        .luminous-nav .mainnav__widget .mininav-toggle::after {
+        [data-bs-theme="dark"] .luminous-nav .mainnav__brand-circle img {
+            background: #f8fafc;
+        }
+
+        .luminous-nav .mainnav__brand:hover .mainnav__brand-circle {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px -14px rgba(79, 70, 229, 0.8);
+        }
+
+        .luminous-nav .mainnav__brand-name {
+            display: block;
+            text-align: center;
+            margin-top: 0.45rem;
+            font-size: 0.98rem;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: 0;
+            color: var(--ln-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .luminous-nav .mainnav__brand-tag {
+            display: block;
+            text-align: center;
+            margin-top: 0.1rem;
+            font-size: 0.64rem;
+            font-weight: 600;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            color: var(--ln-text-dim);
+        }
+
+        .luminous-nav .mainnav__brand + .mininav-content::before {
             content: '';
-            position: absolute;
-            right: calc(50% - 18px);
-            top: calc(50% - 11px);
-            width: 8px;
-            height: 8px;
+            display: block;
+            height: 1px;
+            margin: 0.15rem 0 0.55rem;
+            background: linear-gradient(90deg, transparent, var(--ln-divider) 30%, var(--ln-divider) 70%, transparent);
+        }
+
+        .luminous-nav .mininav-toggle { position: relative; }
+
+        .luminous-nav .mainnav__user-toggle {
+            color: var(--ln-text) !important;
+            background: transparent !important;
+            border: 0 !important;
+            border-radius: 9px;
+            padding: 0.35rem 0.35rem !important;
+            transition: background 0.2s, border-color 0.2s;
+            text-align: center;
+            width: 100%;
+        }
+
+        .luminous-nav .mainnav__user-toggle:hover {
+            background: var(--ln-hover-bg) !important;
+        }
+
+        .luminous-nav .mainnav__user-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-width: 0;
+        }
+
+        .luminous-nav .mainnav__user-status {
+            flex-shrink: 0;
+            width: 9px;
+            height: 9px;
             border-radius: 50%;
             background: #10b981;
-            border: 2px solid var(--ln-surface);
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+            box-shadow:
+                0 0 0 3px rgba(16, 185, 129, 0.12),
+                0 0 0 0 rgba(16, 185, 129, 0.55);
             animation: ln-pulse-dot 2.2s ease-out infinite;
         }
 
         @keyframes ln-pulse-dot {
             0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
-            70%  { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            70%  { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
             100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
-        @keyframes ln-avatar-float {
-            0%, 100% { transform: translateY(0); }
-            50%      { transform: translateY(-3px); }
+        .luminous-nav .mainnav__user-info {
+            flex: 0 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+            text-align: center;
         }
 
-        .luminous-nav .mainnav-widget-toggle {
-            color: var(--ln-text) !important;
-            background: transparent !important;
-            border-radius: 12px;
-            transition: background 0.2s;
-        }
-
-        .luminous-nav .mainnav-widget-toggle:hover {
-            background: var(--ln-hover-bg) !important;
-        }
-
-        .luminous-nav .mainnav-widget-toggle h5 {
+        .luminous-nav .mainnav__user-name {
+            font-size: 0.88rem;
+            font-weight: 700;
             color: var(--ln-text);
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            font-size: 0.8rem;
-            margin-top: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .luminous-nav .mainnav-widget-toggle small {
-            color: var(--ln-text-muted) !important;
-            font-size: 0.62rem;
-            font-weight: 500;
-            letter-spacing: 0.05em;
+        .luminous-nav .mainnav__user-role {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0;
             text-transform: uppercase;
+            color: var(--ln-text-muted);
+            margin-top: 1px;
         }
 
-        .luminous-nav .mainnav-widget-toggle p small {
-            text-transform: none;
-            letter-spacing: 0.01em;
-            color: var(--ln-text-dim) !important;
+        .luminous-nav .mainnav__user-caret {
+            flex-shrink: 0;
+            font-size: 0.65rem;
+            color: var(--ln-text-dim);
+            transition: transform 0.25s ease;
         }
 
-        /* inline profile/settings sublinks */
+        .luminous-nav .mainnav__user-toggle[aria-expanded="true"] .mainnav__user-caret {
+            transform: rotate(180deg);
+            color: var(--ln-primary);
+        }
+
+        .luminous-nav .mainnav__user-branch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+            width: fit-content;
+            margin: 0.45rem auto 0;
+            padding: 0.18rem 0.55rem;
+            border: 1px solid var(--ln-border);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            font-size: 0.62rem;
+            font-weight: 600;
+            color: var(--ln-text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .luminous-nav .mainnav__user-branch i {
+            margin-right: 0.25rem;
+            opacity: 0.7;
+        }
+
+        /* inline profile/settings sublinks — compact, clearly indented */
+        .luminous-nav #usernav {
+            margin-top: 0.25rem;
+            padding-top: 0.25rem;
+            border-top: 1px dashed var(--ln-divider);
+        }
+
         .luminous-nav #usernav .nav-link {
-            padding: 0.55rem 0.75rem !important;
-            margin-top: 0.35rem;
-            border-radius: 10px;
+            padding: 0.4rem 0.6rem !important;
+            margin: 0.1rem 0 !important;
+            border-radius: 8px;
             color: var(--ln-text-muted) !important;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
             display: flex;
             align-items: center;
@@ -275,7 +378,15 @@
             transform: translateX(2px);
         }
 
-        .luminous-nav #usernav .nav-link i { margin: 0 !important; }
+        .luminous-nav #usernav .nav-link i {
+            margin: 0 !important;
+            width: 18px;
+            text-align: center;
+            color: var(--ln-text-dim);
+            font-size: 0.85rem;
+        }
+
+        .luminous-nav #usernav .nav-link:hover i { color: var(--ln-primary); }
 
         /* ============================ MENU ITEMS ============================= */
         .luminous-nav .mainnav__menu {
@@ -298,7 +409,7 @@
             color: var(--ln-text) !important;
             font-size: 0.7rem;
             font-weight: 500;
-            letter-spacing: -0.005em;
+            letter-spacing: 0;
             position: relative;
             border: 1px solid transparent;
             background: transparent;
@@ -647,7 +758,7 @@
             }
 
             /* popover mini profile card — same opaque treatment for its inner buttons */
-            .mn--min .luminous-nav .mainnav__widget .mininav-content .mainnav-widget-toggle {
+            .mn--min .luminous-nav .mainnav__widget .mininav-content .mainnav__user-toggle {
                 color: var(--ln-text) !important;
             }
 
@@ -731,6 +842,40 @@
         }
 
         /* ============================ COLLAPSED (mn--min) ============================= */
+        @media (min-width: 992px) {
+            .mn--min .luminous-nav.mainnav {
+                width: var(--nf-mainnav-min-width);
+                max-width: var(--nf-mainnav-min-width);
+            }
+
+            .mn--min .luminous-nav .mainnav__top-content,
+            .mn--min .luminous-nav .mainnav__bottom-content {
+                padding-inline: 0 !important;
+            }
+
+            .mn--min .luminous-nav .mainnav__menu {
+                width: 100%;
+                padding-inline: 0.45rem !important;
+            }
+
+            .mn--min .luminous-nav .mainnav__menu > .nav-item,
+            .mn--min .luminous-nav .mainnav__menu > .nav-item > .nav-link {
+                width: 100%;
+            }
+
+            .mn--min .luminous-nav .mainnav__menu > .nav-item > .nav-link {
+                min-height: 42px;
+            }
+
+            .mn--min.tm--expanded-hd .content__header {
+                border-bottom-left-radius: 0 !important;
+            }
+
+            .mn--min.tm--expanded-hd .content__header::before {
+                display: none !important;
+            }
+        }
+
         /* when the sidebar collapses to the icon-rail, the icon CHIP is the only
            visual element — strip the nav-link's own pill/border/accent so we don't
            get a doubled background around the chip. */
@@ -766,13 +911,43 @@
         }
 
         :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__widget {
-            padding: 0.5rem 0.25rem !important;
-            margin: 0.5rem 0.25rem !important;
+            padding: 0 !important;
+            margin: 0.55rem 0.45rem 0.75rem !important;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none !important;
         }
 
-        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__widget .mininav-toggle::after {
-            right: calc(50% - 10px);
-            top: calc(50% - 15px);
+        /* collapsed rail — show only the logo chip; hide app name/tagline + divider */
+        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand {
+            display: flex;
+            justify-content: center;
+            padding: 0;
+            width: 100%;
+        }
+
+        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            padding: 2px;
+            animation: none;
+            box-shadow: 0 7px 16px -13px rgba(79, 70, 229, 0.8);
+        }
+
+        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand-circle img {
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand-name,
+        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand-tag {
+            display: none !important;
+        }
+
+        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand + .mininav-content::before {
+            display: none;
         }
 
         /* same cleanup for the bottom logout rail item */
@@ -792,7 +967,7 @@
         @media (max-width: 991.98px) {
             .root.mn--max,
             .root.mn--min {
-                --nf-mainnav-max-width: min(88vw, 21rem);
+                --nf-mainnav-max-width: min(78vw, 18rem);
             }
 
             .luminous-nav.mainnav {
@@ -827,8 +1002,27 @@
                 padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
             }
 
-            .luminous-nav .mainnav__widget { margin: 0.75rem 0.75rem 0.85rem !important; }
+            .luminous-nav .mainnav__widget {
+                margin: 0.75rem 0.65rem 0.75rem !important;
+                padding: 0.75rem 0.55rem !important;
+            }
             .luminous-nav .mainnav__menu   { padding: 0 0.55rem; }
+
+            /* mobile — bigger logo and tap-friendly profile controls */
+            .luminous-nav .mainnav__brand-circle {
+                width: 54px;
+                height: 54px;
+                border-radius: 15px;
+                padding: 2px;
+            }
+            .luminous-nav .mainnav__brand-circle img {
+                border-radius: 13px;
+                padding: 7px;
+            }
+            .luminous-nav .mainnav__brand-name { font-size: 1rem; }
+            .luminous-nav .mainnav__user-name  { font-size: 0.92rem; }
+            .luminous-nav .mainnav__user-role  { font-size: 0.66rem; }
+            .luminous-nav .mainnav__user-toggle { padding: 0.4rem 0.25rem !important; }
 
             .luminous-nav .mainnav__menu > .nav-item > .nav-link,
             .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle {
@@ -861,7 +1055,7 @@
         @media (max-width: 575.98px) {
             .root.mn--max,
             .root.mn--min {
-                --nf-mainnav-max-width: min(92vw, 20rem);
+                --nf-mainnav-max-width: min(82vw, 17rem);
             }
 
             .luminous-nav .mainnav__menu > .nav-item > .nav-link {
@@ -874,10 +1068,13 @@
                 margin-right: 0.4rem !important;
                 font-size: 0.76rem !important;
             }
-            .luminous-nav .mainnav__avatar {
-                width: 36px !important;
-                height: 36px !important;
+            .luminous-nav .mainnav__brand-circle {
+                width: 50px;
+                height: 50px;
+                border-radius: 14px;
+                padding: 2px;
             }
+            .luminous-nav .mainnav__brand-name { font-size: 0.96rem; }
             .luminous-nav .mininav-content .nav-item > .nav-link {
                 font-size: 0.8rem;
             }
@@ -897,20 +1094,34 @@
     <div class="mainnav__inner">
         <div class="pb-5 mainnav__top-content scrollable-content">
             <div id="_dm-mainnavProfile" class="mainnav__widget hv-outline-parent">
-                <div class="py-2 text-center mininav-toggle">
-                    <img class="mainnav__avatar img-md rounded-circle hv-oc" src="{{ secure_asset('assets/img/profile-photos/1.png') }}"
-                        alt="Profile Picture">
-                </div>
+                <a href="{{ route('dashboard') }}" class="mainnav__brand mininav-toggle hv-oc"
+                    aria-label="{{ config('app.name', 'Astra') }} — go to dashboard">
+                    <span class="mainnav__brand-circle">
+                        <img src="{{ cache('logo', asset('assets/img/logo.svg')) }}"
+                            alt="{{ config('app.name', 'Astra') }} logo">
+                    </span>
+                    <span class="mainnav__brand-name">{{ config('app.name', 'Astra') }}</span>
+                    <span class="mainnav__brand-tag">Workspace</span>
+                </a>
+
                 <div class="mininav-content collapse d-mn-max">
                     <span data-popper-arrow class="arrow"></span>
                     <div class="d-grid">
-                        <button class="p-2 border-0 mainnav-widget-toggle d-block btn" data-bs-toggle="collapse" data-bs-target="#usernav"
-                            aria-expanded="false" aria-controls="usernav">
-                            <span class="dropdown-toggle d-flex justify-content-center align-items-center">
-                                <h5 class="mb-0 me-3">{{ auth()->user()->name }}</h5>
+                        <button class="mainnav__user-toggle btn border-0" data-bs-toggle="collapse"
+                            data-bs-target="#usernav" aria-expanded="false" aria-controls="usernav">
+                            <span class="mainnav__user-row">
+                                <span class="mainnav__user-status" aria-hidden="true"></span>
+                                <span class="mainnav__user-info">
+                                    <span class="mainnav__user-name">{{ auth()->user()->name }}</span>
+                                    <span class="mainnav__user-role">{{ getUserRoles(auth()->user()) }}</span>
+                                </span>
+                                <i class="fa fa-angle-down mainnav__user-caret" aria-hidden="true"></i>
                             </span>
-                            <small class="text-body-secondary">{{ getUserRoles(auth()->user()) }}</small>
-                            <p class="mb-0 mt-1"><small class="text-body-secondary">{{ auth()->user()->branch?->name }}</small></p>
+                            @if (auth()->user()->branch?->name)
+                                <p class="mainnav__user-branch">
+                                    <i class="fa fa-code-fork"></i>{{ auth()->user()->branch->name }}
+                                </p>
+                            @endif
                         </button>
                         <div id="usernav" class="nav flex-column collapse">
                             <a href="{{ route('profile.edit') }}" class="nav-link">

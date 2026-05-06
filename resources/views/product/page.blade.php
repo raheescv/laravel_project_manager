@@ -14,10 +14,23 @@
                     <li class="breadcrumb-item active" aria-current="page">Page</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">{{ ucFirst($type) }}</h1>
-            <p class="lead">
-                A {{ $type }} Form
-            </p>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2">
+                <div>
+                    <h1 class="page-title mb-0">{{ ucFirst($type) }}</h1>
+                    <p class="lead mb-0">A {{ $type }} Form</p>
+                </div>
+                @if ($id)
+                    @can('inventory.view')
+                        <a href="{{ route('inventory::product::view', $id) }}"
+                           class="btn btn-outline-primary btn-sm d-inline-flex align-items-center"
+                           target="_blank"
+                           rel="noopener">
+                            <i class="fa fa-eye me-2"></i>
+                            <span>View Product</span>
+                        </a>
+                    @endcan
+                @endif
+            </div>
         </div>
     </div>
     <div class="content__boxed">

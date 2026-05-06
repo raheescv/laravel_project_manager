@@ -46,6 +46,9 @@
                             <span class="badge rounded-pill {{ $product->status == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
                                 <i class="fa fa-circle me-1" style="font-size:.35rem; vertical-align:middle;"></i>{{ ucfirst($product->status) }}
                             </span>
+                            @if ($product->code)
+                                <span class="badge bg-light text-dark border"><i class="fa fa-code me-1"></i>{{ $product->code }}</span>
+                            @endif
                             @if ($product->barcode)
                                 <span class="badge bg-light text-dark border"><i class="fa fa-barcode me-1"></i>{{ $product->barcode }}</span>
                             @endif
@@ -99,6 +102,7 @@
             @php
                 $sections = [
                     ['title' => 'Basic Info', 'icon' => 'fa-info-circle', 'bg' => 'bg-primary bg-opacity-10', 'fg' => 'text-primary', 'items' => [
+                        ['Code', $product->code],
                         ['Department', $product->department?->name],
                         ['Main Category', $product->mainCategory?->name],
                         ['Sub Category', $product->subCategory?->name],
@@ -153,6 +157,7 @@
             @php
                 $serviceSections = [
                     ['title' => 'Service Details', 'icon' => 'fa-concierge-bell', 'bg' => 'bg-primary bg-opacity-10', 'fg' => 'text-primary', 'items' => [
+                        ['Code', $product->code],
                         ['Service', $product->name . ($product->name_arabic ? ' / ' . $product->name_arabic : '')],
                         ['Department', $product->department?->name],
                         ['Main Category', $product->mainCategory?->name],
@@ -194,6 +199,18 @@
     @endif
 
     @if ($product->type == 'asset')
+        @php
+            $assetSchedules = $product->depreciationSchedules->sortBy('period_no')->values();
+            $postedSchedules = $assetSchedules->where('status', 'posted')->values();
+            $pendingSchedules = $assetSchedules->where('status', 'pending')->values();
+            $latestPostedSchedule = $postedSchedules->last();
+            $nextPendingSchedule = $pendingSchedules->first();
+            $accumulatedDepreciation = (float) ($latestPostedSchedule?->accumulated_depreciation ?? 0);
+            $bookValue = (float) ($latestPostedSchedule?->closing_book_value ?? $product->cost);
+            $purchaseAge = $product->purchase_date ? \Carbon\Carbon::parse($product->purchase_date)->diffForHumans(null, true) : null;
+            $postedCount = $postedSchedules->count();
+            $pendingCount = $pendingSchedules->count();
+        @endphp
         <div class="card border-0 shadow-sm rounded-3 mb-3">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center gap-3 flex-wrap">
@@ -215,6 +232,9 @@
                             <span class="badge rounded-pill {{ $product->status == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
                                 <i class="fa fa-circle me-1" style="font-size:.35rem; vertical-align:middle;"></i>{{ ucfirst($product->status) }}
                             </span>
+                            @if ($product->code)
+                                <span class="badge bg-light text-dark border"><i class="fa fa-code me-1"></i>{{ $product->code }}</span>
+                            @endif
                             @if ($product->item_no)
                                 <span class="badge bg-light text-dark border"><i class="fa fa-hashtag me-1"></i>{{ $product->item_no }}</span>
                             @endif
@@ -268,6 +288,7 @@
                     : (($product->duration_period === 'days') ? 'Daily Depreciation' : 'Monthly Depreciation');
                 $fixedAssetSections = [
                     ['title' => 'Asset Details', 'icon' => 'fa-building-o', 'bg' => 'bg-primary bg-opacity-10', 'fg' => 'text-primary', 'items' => [
+                        ['Code', $product->code],
                         ['Asset Group', $product->mainCategory?->name],
                         ['Sub Category', $product->subCategory?->name],
                         ['Department', $product->department?->name],
@@ -293,7 +314,7 @@
                 ];
             @endphp
 
-            @foreach ($fixedAssetSections as $section)
+        @foreach ($fixedAssetSections as $section)
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm rounded-3 h-100">
                         <div class="card-header bg-transparent border-bottom py-3 px-3">
@@ -315,6 +336,155 @@
                     </div>
                 </div>
             @endforeach
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <div class="card-body">
+                        <div class="pv-label mb-2">Book Value</div>
+                        <div class="fw-bold fs-4 text-primary">{{ currency($bookValue) }}</div>
+                        <div class="small text-muted mt-2">Current cost less posted accumulated depreciation.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <div class="card-body">
+                        <div class="pv-label mb-2">Accumulated Depreciation</div>
+                        <div class="fw-bold fs-4 text-success">{{ currency($accumulatedDepreciation) }}</div>
+                        <div class="small text-muted mt-2">Based on the latest posted depreciation period.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <div class="card-body">
+                        <div class="pv-label mb-2">Purchase Age</div>
+                        <div class="fw-bold fs-4 text-dark">{{ $purchaseAge ?: '—' }}</div>
+                        <div class="small text-muted mt-2">{{ $product->purchase_date ? 'Purchased on ' . systemDate($product->purchase_date) : 'Purchase date not set' }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <div class="card-body">
+                        <div class="pv-label mb-2">Next Depreciation Date</div>
+                        <div class="fw-bold fs-4 text-warning">{{ $nextPendingSchedule?->schedule_date ? systemDate($nextPendingSchedule->schedule_date) : '—' }}</div>
+                        <div class="small text-muted mt-2">{{ $nextPendingSchedule ? 'Next pending period is ready for posting.' : 'No pending depreciation period.' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-5">
+                <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <div class="card-header bg-transparent border-bottom py-3 px-3">
+                        <h6 class="pv-section-title text-uppercase text-secondary mb-0 d-flex align-items-center gap-2">
+                            <span class="pv-icon rounded d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-10">
+                                <i class="fa fa-book text-warning"></i>
+                            </span>
+                            Accounting Mapping
+                        </h6>
+                    </div>
+                    <div class="card-body px-3 py-2">
+                        @foreach ([['Asset Account', $product->assetAccount?->name], ['Accumulated Depreciation', $product->accumulatedDepreciationAccount?->name], ['Depreciation Expense', $product->depreciationExpenseAccount?->name]] as $item)
+                            <div class="d-flex justify-content-between align-items-center py-2 {{ !$loop->last ? 'border-bottom pv-divider' : '' }}">
+                                <span class="pv-label">{{ $item[0] }}</span>
+                                <span class="pv-value text-end">{{ $item[1] ?: '—' }}</span>
+                            </div>
+                        @endforeach
+                        <div class="alert alert-light border mt-3 mb-0">
+                            <div class="small text-muted">These mappings are used when depreciation journals are posted automatically.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <div class="card-header bg-transparent border-bottom py-3 px-3">
+                        <h6 class="pv-section-title text-uppercase text-secondary mb-0 d-flex align-items-center gap-2">
+                            <span class="pv-icon rounded d-inline-flex align-items-center justify-content-center bg-info bg-opacity-10">
+                                <i class="fa fa-history text-info"></i>
+                            </span>
+                            Asset Timeline
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-success-subtle text-success">{{ $postedCount }} posted</span>
+                            <span class="badge bg-warning-subtle text-warning">{{ $pendingCount }} pending</span>
+                            <span class="badge bg-light text-dark border">{{ $assetSchedules->count() }} total periods</span>
+                        </div>
+                        @if ($assetSchedules->count())
+                            <div class="small">
+                                @foreach ($assetSchedules->sortByDesc('period_no')->take(6) as $schedule)
+                                    <div class="d-flex justify-content-between align-items-start py-2 {{ !$loop->last ? 'border-bottom pv-divider' : '' }}">
+                                        <div>
+                                            <div class="fw-semibold text-dark">Period {{ $schedule->period_no }} on {{ systemDate($schedule->schedule_date) }}</div>
+                                            <div class="text-muted">Opening {{ currency($schedule->opening_book_value) }} to closing {{ currency($schedule->closing_book_value) }}</div>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-semibold text-primary">{{ currency($schedule->depreciation_amount) }}</div>
+                                            <span class="badge {{ $schedule->status === 'posted' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning' }}">{{ ucfirst($schedule->status) }}</span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-muted small">No depreciation schedule has been generated yet. Save the asset with purchase details and depreciation settings to create one.</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-header bg-transparent border-bottom py-3 px-3">
+                <h6 class="pv-section-title text-uppercase text-secondary mb-0 d-flex align-items-center gap-2">
+                    <span class="pv-icon rounded d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10">
+                        <i class="fa fa-line-chart text-success"></i>
+                    </span>
+                    Depreciation Schedule
+                </h6>
+            </div>
+            <div class="card-body px-3 py-3">
+                @if ($assetSchedules->count())
+                    <div class="table-responsive">
+                        <table class="table table-pv align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Date</th>
+                                    <th class="text-end">Opening</th>
+                                    <th class="text-end">Depreciation</th>
+                                    <th class="text-end">Accumulated</th>
+                                    <th class="text-end">Closing</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($assetSchedules as $schedule)
+                                    <tr>
+                                        <td>{{ $schedule->period_no }}</td>
+                                        <td>{{ systemDate($schedule->schedule_date) }}</td>
+                                        <td class="text-end">{{ currency($schedule->opening_book_value) }}</td>
+                                        <td class="text-end">{{ currency($schedule->depreciation_amount) }}</td>
+                                        <td class="text-end">{{ currency($schedule->accumulated_depreciation) }}</td>
+                                        <td class="text-end">{{ currency($schedule->closing_book_value) }}</td>
+                                        <td>
+                                            <span class="badge {{ $schedule->status === 'posted' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning' }}">{{ ucfirst($schedule->status) }}</span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-muted small">No depreciation periods available yet.</div>
+                @endif
+            </div>
         </div>
     @endif
 

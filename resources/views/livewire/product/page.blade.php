@@ -96,14 +96,17 @@
                                 <div class="col-md-4">
                                     <label for="code" class="form-label fw-medium">
                                         <i class="fa fa-code text-primary me-1 small"></i>
-                                        {{ $isFixedAsset ? 'Asset Code / Tag' : 'UPC/EAN/ISBN/SKU' }}
+                                        {{ $isFixedAsset ? 'Asset Code / Tag' : 'Code / UPC / EAN / ISBN / SKU' }}
                                     </label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-primary-subtle">
                                             <i class="fa fa-barcode"></i>
                                         </span>
-                                        {{ html()->input('code')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder($isFixedAsset ? 'Enter asset code or tag number' : 'Enter your code')->attribute('wire:model', 'products.code') }}
+                                        {{ html()->input('code')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder($isFixedAsset ? 'Enter asset code or tag number' : 'Enter product or service code')->attribute('wire:model', 'products.code') }}
                                     </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        {{ $isFixedAsset ? 'Use the internal asset number, tag, or identification code.' : 'Use your internal item code, SKU, barcode-linked code, or another unique reference.' }}
+                                    </small>
                                 </div>
                                 <div class="col-md-8">
                                     <label for="name" class="form-label fw-medium">
@@ -563,22 +566,24 @@
                                             </span>
                                             Account Settings
                                         </h6>
-                                        <div class="row g-3">
-                                            <div class="col-md-6" wire:ignore>
-                                                <label for="expense_account_id" class="form-label fw-medium">
-                                                    <i class="fa fa-credit-card text-primary me-1 small"></i>
-                                                    Expense Account
-                                                </label>
-                                                {{ html()->select('expense_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select expense account')->id('expense_account_id') }}
+                                        @if (!$isFixedAsset)
+                                            <div class="row g-3">
+                                                <div class="col-md-6" wire:ignore>
+                                                    <label for="expense_account_id" class="form-label fw-medium">
+                                                        <i class="fa fa-credit-card text-primary me-1 small"></i>
+                                                        Expense Account
+                                                    </label>
+                                                    {{ html()->select('expense_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select expense account')->id('expense_account_id') }}
+                                                </div>
+                                                <div class="col-md-6" wire:ignore>
+                                                    <label for="income_account_id" class="form-label fw-medium">
+                                                        <i class="fa fa-bank text-success me-1 small"></i>
+                                                        Income Account
+                                                    </label>
+                                                    {{ html()->select('income_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select income account')->id('income_account_id') }}
+                                                </div>
                                             </div>
-                                            <div class="col-md-6" wire:ignore>
-                                                <label for="income_account_id" class="form-label fw-medium">
-                                                    <i class="fa fa-bank text-success me-1 small"></i>
-                                                    Income Account
-                                                </label>
-                                                {{ html()->select('income_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select income account')->id('income_account_id') }}
-                                            </div>
-                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -724,7 +729,7 @@
                                                             data-bs-target="#tabAttributes" type="button" role="tab" aria-controls="home"
                                                             aria-selected="true">
                                                             <i class="fa fa-table text-primary"></i>
-                                                            Attributes
+                                                            {{ $isFixedAsset ? 'Asset Info' : 'Attributes' }}
                                                         </button>
                                                     </li>
                                                 @endif
@@ -737,6 +742,16 @@
                                                             aria-controls="profile" aria-selected="false" tabindex="-1">
                                                             <i class="fa fa-line-chart text-success"></i>
                                                             Depreciation Settings
+                                                        </button>
+                                                    </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'Accounting') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('Accounting')"
+                                                            data-bs-target="#tabAccounting" type="button" role="tab"
+                                                            aria-controls="profile" aria-selected="false" tabindex="-1">
+                                                            <i class="fa fa-book text-warning"></i>
+                                                            Accounting
                                                         </button>
                                                     </li>
                                                 @endif
@@ -874,26 +889,41 @@
                                                         class="tab-pane fade @if ($selectedTab == 'Attributes') active show @endif"
                                                         role="tabpanel">
                                                         <div class="row g-3">
-                                                            <h5 class="card-title">Attributes</h5>
+                                                            <div class="col-12">
+                                                                <div class="alert alert-light border">
+                                                                    <div class="fw-semibold text-dark">Asset Info</div>
+                                                                    <div class="small text-muted">Keep these identification and purchase details complete so the asset register, import flow, and future audit history stay easy to follow.</div>
+                                                                </div>
+                                                            </div>
                                                             <div class="col-md-4">
-                                                                <label for="item_no" class="form-label">Item No</label>
+                                                                <label for="item_no" class="form-label fw-medium">Item No</label>
                                                                 {{ html()->input('item_no')->value('')->class('form-control')->placeholder('Enter item number')->attribute('wire:model', 'products.item_no') }}
+                                                                <small class="text-muted mt-1 d-block">Use the manufacturer item number, plate number, or internal reference if available.</small>
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="color" class="form-label">Color</label>
+                                                                <label for="color" class="form-label fw-medium">Color</label>
                                                                 {{ html()->input('color')->value('')->class('form-control')->placeholder('Enter color')->attribute('wire:model', 'products.color') }}
+                                                                <small class="text-muted mt-1 d-block">Helpful for quickly identifying vehicles, equipment, furniture, or devices.</small>
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="supplier_name" class="form-label">Supplier Name</label>
+                                                                <label for="supplier_name" class="form-label fw-medium">Supplier Name</label>
                                                                 {{ html()->input('supplier_name')->value('')->class('form-control')->placeholder('Enter supplier name')->attribute('wire:model', 'products.supplier_name') }}
+                                                                <small class="text-muted mt-1 d-block">Enter the vendor or supplier the asset was purchased from.</small>
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="location" class="form-label">Location</label>
+                                                                <label for="location" class="form-label fw-medium">Location</label>
                                                                 {{ html()->input('location')->value('')->class('form-control')->placeholder('Enter location')->attribute('wire:model', 'products.location') }}
+                                                                <small class="text-muted mt-1 d-block">Example: Head Office, Site A, Warehouse Rack 2, Room 304.</small>
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="purchase_date" class="form-label">Purchase Date</label>
+                                                                <label for="purchase_date" class="form-label fw-medium">Purchase Date <span class="text-danger">*</span></label>
                                                                 {{ html()->date('purchase_date')->value('')->class('form-control')->attribute('wire:model', 'products.purchase_date') }}
+                                                                <small class="text-muted mt-1 d-block">This starts the asset timeline and is used for depreciation scheduling.</small>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="remarks" class="form-label fw-medium">Remarks</label>
+                                                                {{ html()->input('remarks')->value('')->class('form-control')->placeholder('Enter short remarks')->attribute('wire:model', 'products.remarks') }}
+                                                                <small class="text-muted mt-1 d-block">Add a short note such as condition, usage, or tag assignment details.</small>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -904,32 +934,41 @@
                                                         role="tabpanel">
                                                         @php($depreciationPreview = $this->depreciationPreview)
                                                         <div class="row g-3">
-                                                            <h5 class="card-title">Depreciation Settings</h5>
+                                                            <div class="col-12">
+                                                                <div class="alert alert-light border">
+                                                                    <div class="fw-semibold text-dark">Depreciation Settings</div>
+                                                                    <div class="small text-muted">The amount below is auto-calculated from purchase cost, useful life, and depreciation method. Saving the asset will regenerate the future depreciation schedule.</div>
+                                                                </div>
+                                                            </div>
                                                             <div class="col-md-4">
-                                                                <label for="duration" class="form-label">Duration</label>
+                                                                <label for="duration" class="form-label fw-medium">Duration <span class="text-danger">*</span></label>
                                                                 {{ html()->number('duration')->value('')->attribute('step', 'any')->class('form-control')->placeholder('Enter duration')->attribute('wire:model.live', 'products.duration') }}
+                                                                <small class="text-muted mt-1 d-block">Enter how long the asset should be depreciated for.</small>
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="duration_period" class="form-label">Duration Period</label>
+                                                                <label for="duration_period" class="form-label fw-medium">Duration Period <span class="text-danger">*</span></label>
                                                                 {{ html()->select('duration_period', ['days' => 'Days', 'months' => 'Months', 'years' => 'Years'])->value('')->class('form-select')->attribute('wire:model.live', 'products.duration_period') }}
+                                                                <small class="text-muted mt-1 d-block">Choose whether the duration is counted in days, months, or years.</small>
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="depreciation_method" class="form-label">Method</label>
+                                                                <label for="depreciation_method" class="form-label fw-medium">Method <span class="text-danger">*</span></label>
                                                                 {{ html()->select('depreciation_method', ['straight_line' => 'Straight Line', 'declining_balance' => 'Declining Balance'])->value('')->class('form-select')->attribute('wire:model.live', 'products.depreciation_method') }}
+                                                                <small class="text-muted mt-1 d-block">Straight line gives a fixed amount. Declining balance starts higher and reduces over time.</small>
                                                             </div>
                                                             @if (($products['depreciation_method'] ?? 'straight_line') === 'declining_balance')
                                                                 <div class="col-md-4">
-                                                                    <label for="declining_factor" class="form-label">Declining Factor</label>
+                                                                    <label for="declining_factor" class="form-label fw-medium">Declining Factor</label>
                                                                     {{ html()->number('declining_factor')->value('')->attribute('step', 'any')->class('form-control')->placeholder('2.00')->attribute('wire:model.live', 'products.declining_factor') }}
                                                                     <small class="text-muted mt-1 d-block">2.00 means double declining balance.</small>
                                                                 </div>
                                                             @endif
                                                             <div class="col-md-4">
-                                                                <label for="prorata_date" class="form-label">Prorata Date</label>
+                                                                <label for="prorata_date" class="form-label fw-medium">Prorata Date</label>
                                                                 {{ html()->date('prorata_date')->value('')->class('form-control')->attribute('wire:model', 'products.prorata_date') }}
+                                                                <small class="text-muted mt-1 d-block">Optional. Use this when depreciation should start from a date different from the purchase date.</small>
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <label for="depreciation_amount" class="form-label">{{ $depreciationPreview['amount_label'] }}</label>
+                                                                <label for="depreciation_amount" class="form-label fw-medium">{{ $depreciationPreview['amount_label'] }}</label>
                                                                 {{ html()->number('depreciation_amount')->value('')->attribute('step', 'any')->class('form-control bg-light')->attribute('wire:model', 'products.depreciation_amount')->attribute('readonly', true) }}
                                                                 <small class="text-muted mt-1 d-block">{{ $depreciationPreview['detail'] ?? 'Auto-calculated from purchase cost, duration, and method.' }}</small>
                                                             </div>
@@ -942,6 +981,41 @@
                                                                     @if ($depreciationPreview['detail'])
                                                                         <div class="small text-muted mt-1">{{ $depreciationPreview['detail'] }}</div>
                                                                     @endif
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                                @if ($isFixedAsset)
+                                                    <div id="tabAccounting"
+                                                        class="tab-pane fade @if ($selectedTab == 'Accounting') active show @endif"
+                                                        role="tabpanel">
+                                                        <div class="row g-3">
+                                                            <div class="col-12">
+                                                                <div class="alert alert-light border">
+                                                                    <div class="fw-semibold text-dark">Accounting Mapping</div>
+                                                                    <div class="small text-muted">These accounts are required so asset capitalization and periodic depreciation can post to the correct general ledger accounts automatically.</div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4" wire:ignore>
+                                                                <label for="asset_account_id" class="form-label fw-medium">Asset Account <span class="text-danger">*</span></label>
+                                                                {{ html()->select('asset_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select fixed asset account')->id('asset_account_id') }}
+                                                                <small class="text-muted mt-1 d-block">This is the balance sheet account that holds the capitalized asset cost.</small>
+                                                            </div>
+                                                            <div class="col-md-4" wire:ignore>
+                                                                <label for="accumulated_depreciation_account_id" class="form-label fw-medium">Accumulated Depreciation Account <span class="text-danger">*</span></label>
+                                                                {{ html()->select('accumulated_depreciation_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select accumulated depreciation account')->id('accumulated_depreciation_account_id') }}
+                                                                <small class="text-muted mt-1 d-block">This contra asset account stores the total depreciation posted over the asset life.</small>
+                                                            </div>
+                                                            <div class="col-md-4" wire:ignore>
+                                                                <label for="depreciation_expense_account_id" class="form-label fw-medium">Depreciation Expense Account <span class="text-danger">*</span></label>
+                                                                {{ html()->select('depreciation_expense_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select depreciation expense account')->id('depreciation_expense_account_id') }}
+                                                                <small class="text-muted mt-1 d-block">Each posted depreciation entry will debit this expense account.</small>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="alert alert-warning mb-0">
+                                                                    <div class="fw-semibold">Important</div>
+                                                                    <div class="small mb-0">If any of these mappings are missing, automatic depreciation posting cannot complete safely.</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1248,6 +1322,15 @@
                 $('#income_account_id').on('change', function() {
                     @this.set('products.income_account_id', $(this).val() || null);
                 });
+                $('#asset_account_id').on('change', function() {
+                    @this.set('products.asset_account_id', $(this).val() || null);
+                });
+                $('#accumulated_depreciation_account_id').on('change', function() {
+                    @this.set('products.accumulated_depreciation_account_id', $(this).val() || null);
+                });
+                $('#depreciation_expense_account_id').on('change', function() {
+                    @this.set('products.depreciation_expense_account_id', $(this).val() || null);
+                });
                 $('#main_category_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('products.main_category_id', value);
@@ -1391,6 +1474,59 @@
                         }
                     } catch (error) {
                         console.warn('Error handling income_account_id:', error);
+                    }
+                }
+                var assetAccountEl = document.querySelector('#asset_account_id');
+                if (assetAccountEl && assetAccountEl.tomselect) {
+                    try {
+                        var ts = assetAccountEl.tomselect;
+                        if (product['asset_account_id'] && product['asset_account']) {
+                            ts.addOption({
+                                id: product['asset_account']['id'],
+                                name: product['asset_account']['name']
+                            });
+                            ts.addItem(product['asset_account_id']);
+                        } else {
+                            ts.clear();
+                        }
+                    } catch (error) {
+                        console.warn('Error handling asset_account_id:', error);
+                    }
+                }
+
+                var accumulatedDepreciationEl = document.querySelector('#accumulated_depreciation_account_id');
+                if (accumulatedDepreciationEl && accumulatedDepreciationEl.tomselect) {
+                    try {
+                        var ts = accumulatedDepreciationEl.tomselect;
+                        if (product['accumulated_depreciation_account_id'] && product['accumulated_depreciation_account']) {
+                            ts.addOption({
+                                id: product['accumulated_depreciation_account']['id'],
+                                name: product['accumulated_depreciation_account']['name']
+                            });
+                            ts.addItem(product['accumulated_depreciation_account_id']);
+                        } else {
+                            ts.clear();
+                        }
+                    } catch (error) {
+                        console.warn('Error handling accumulated_depreciation_account_id:', error);
+                    }
+                }
+
+                var depreciationExpenseEl = document.querySelector('#depreciation_expense_account_id');
+                if (depreciationExpenseEl && depreciationExpenseEl.tomselect) {
+                    try {
+                        var ts = depreciationExpenseEl.tomselect;
+                        if (product['depreciation_expense_account_id'] && product['depreciation_expense_account']) {
+                            ts.addOption({
+                                id: product['depreciation_expense_account']['id'],
+                                name: product['depreciation_expense_account']['name']
+                            });
+                            ts.addItem(product['depreciation_expense_account_id']);
+                        } else {
+                            ts.clear();
+                        }
+                    } catch (error) {
+                        console.warn('Error handling depreciation_expense_account_id:', error);
                     }
                 }
 

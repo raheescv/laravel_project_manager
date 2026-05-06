@@ -93,6 +93,9 @@ class Product extends Model implements AuditableContracts
 
         'income_account_id',
         'expense_account_id',
+        'asset_account_id',
+        'accumulated_depreciation_account_id',
+        'depreciation_expense_account_id',
 
         'priority',
         'status',
@@ -100,6 +103,8 @@ class Product extends Model implements AuditableContracts
         'created_by',
         'updated_by',
         'second_reference_no',
+        'disposed_at',
+        'disposed_value',
     ];
 
     public static function rules($data, $id = 0, $merge = [])
@@ -118,7 +123,7 @@ class Product extends Model implements AuditableContracts
             'department_id' => ['required'],
             'main_category_id' => ['required'],
             'cost' => ['required', 'numeric'],
-            'mrp' => ['required', 'numeric'],
+            'mrp' => ['nullable', 'numeric'],
             'barcode_number' => array_merge(
                 ['nullable', 'required_if:type,product'],
                 ! empty($data['barcode_number'] ?? null) ? [Rule::unique('products')->where('tenant_id', $tenantId)->where('barcode_number', $data['barcode_number'])->whereNull('deleted_at')->ignore($id)] : []
@@ -127,7 +132,7 @@ class Product extends Model implements AuditableContracts
             'duration' => ['nullable', 'numeric', 'min:0'],
             'duration_period' => ['nullable', Rule::in(['days', 'months', 'years'])],
             'depreciation_method' => ['nullable', Rule::in(['straight_line', 'declining_balance'])],
-            'declining_factor' => ['nullable', 'numeric', 'min:0'],
+            'declining_factor' => ['nullable', 'numeric', 'min:0.01'],
             'depreciation_amount' => ['nullable', 'numeric', 'min:0'],
             'prorata_date' => ['nullable', 'date'],
         ];
@@ -136,6 +141,18 @@ class Product extends Model implements AuditableContracts
             $rules['unit_id'] = ['nullable'];
         } else {
             $rules['unit_id'] = ['required'];
+        }
+
+        if ($type === 'asset') {
+            $rules['purchase_date'] = ['required', 'date'];
+            $rules['duration'] = ['required', 'numeric', 'min:0.01'];
+            $rules['duration_period'] = ['required', Rule::in(['days', 'months', 'years'])];
+            $rules['depreciation_method'] = ['required', Rule::in(['straight_line', 'declining_balance'])];
+            $rules['asset_account_id'] = ['required'];
+            $rules['accumulated_depreciation_account_id'] = ['required'];
+            $rules['depreciation_expense_account_id'] = ['required'];
+        } elseif ($type !== 'service') {
+            $rules['mrp'] = ['required', 'numeric'];
         }
 
         return array_merge($rules, $merge);
@@ -441,6 +458,9 @@ class Product extends Model implements AuditableContracts
         $data['duration_period'] = $data['duration_period'] ?? 'years';
         $data['depreciation_method'] = $data['depreciation_method'] ?? 'straight_line';
         $data['declining_factor'] = $data['declining_factor'] ?: 2.0;
+        $data['asset_account_id'] = $data['asset_account_id'] ?? null;
+        $data['accumulated_depreciation_account_id'] = $data['accumulated_depreciation_account_id'] ?? null;
+        $data['depreciation_expense_account_id'] = $data['depreciation_expense_account_id'] ?? null;
 
         return $data;
     }
@@ -509,6 +529,26 @@ class Product extends Model implements AuditableContracts
     public function expenseAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'expense_account_id');
+    }
+
+    public function assetAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'asset_account_id');
+    }
+
+    public function accumulatedDepreciationAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'accumulated_depreciation_account_id');
+    }
+
+    public function depreciationExpenseAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'depreciation_expense_account_id');
+    }
+
+    public function depreciationSchedules()
+    {
+        return $this->hasMany(AssetDepreciationSchedule::class, 'product_id');
     }
 
     public function prices()

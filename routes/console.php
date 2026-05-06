@@ -26,6 +26,7 @@ Schedule::command('sale-day-sessions:close-daily')
     });
 
 Schedule::command('send:daily-sale-summary')->dailyAt('00:10');
+Schedule::command('assets:post-depreciation')->dailyAt('00:15')->withoutOverlapping();
 
 // Optimized unified trading commands
 // Schedule::command('trade:unified --action=buy')->everyFiveMinutes()->between('05:10', '09:55');

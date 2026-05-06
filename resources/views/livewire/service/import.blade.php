@@ -2,6 +2,8 @@
     @php($entityLabel = $entityLabel ?? 'Service')
     @php($progressType = $progressType ?? 'Service')
     @php($redirectRoute = $redirectRoute ?? route('service::index'))
+    @php($fieldMeta = $fieldMeta ?? [])
+    @php($previewErrors = $previewErrors ?? [])
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
@@ -94,6 +96,12 @@
                                                             <td>
                                                                 <div class="fw-medium text-dark">{{ $label }}</div>
                                                                 <small class="text-muted">{{ $field }}</small>
+                                                                @if (isset($fieldMeta[$field]))
+                                                                    <div class="small text-secondary mt-1">{{ $fieldMeta[$field]['instruction'] ?? '' }}</div>
+                                                                    @if (!empty($fieldMeta[$field]['sample']))
+                                                                        <div class="small text-primary mt-1">Sample: {{ $fieldMeta[$field]['sample'] }}</div>
+                                                                    @endif
+                                                                @endif
                                                             </td>
                                                             <td>
                                                                 <select wire:model="mappings.{{ $field }}" class="form-select border-primary-subtle shadow-sm">
@@ -127,6 +135,18 @@
                                                     Back to Upload
                                                 </button>
                                             </div>
+                                            @if (!empty($fieldMeta))
+                                                <hr>
+                                                <div class="text-start">
+                                                    <div class="fw-semibold small text-uppercase text-muted mb-2">Useful Asset Fields</div>
+                                                    @foreach (array_slice($fieldMeta, 0, 6, true) as $metaField => $meta)
+                                                        <div class="small mb-2">
+                                                            <span class="fw-semibold">{{ $availableFields[$metaField] ?? $metaField }}</span>
+                                                            <div class="text-muted">{{ $meta['instruction'] ?? '' }}</div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -172,11 +192,58 @@
                                         </div>
                                     </div>
 
+                                    <div class="card border shadow-none mb-4">
+                                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0 fw-bold"><i class="fa fa-shield me-2 text-warning"></i>Validation Preview</h5>
+                                            @if (count($previewErrors))
+                                                <span class="badge bg-danger px-3 py-2">{{ count($previewErrors) }} issue(s) found</span>
+                                            @else
+                                                <span class="badge bg-success px-3 py-2">No preview issues found</span>
+                                            @endif
+                                        </div>
+                                        <div class="card-body">
+                                            @if (count($previewErrors))
+                                                <div class="alert alert-danger">
+                                                    Fix these rows before starting the import. The preview checks the mapped asset fields so you can catch common problems early.
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm align-middle">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>Row</th>
+                                                                <th>Asset</th>
+                                                                <th>Issue</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (array_slice($previewErrors, 0, 10) as $error)
+                                                                <tr>
+                                                                    <td>{{ $error['row_number'] ?? '-' }}</td>
+                                                                    <td>{{ $error['name'] ?? '-' }}</td>
+                                                                    <td>{{ $error['message'] ?? 'Validation error' }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="d-flex justify-content-end">
+                                                    <button class="btn btn-outline-danger btn-sm" wire:click="downloadPreviewErrors">
+                                                        <i class="fa fa-download me-2"></i>Download Error Report
+                                                    </button>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-success mb-0">
+                                                    Your mapped rows passed the preview checks. You can start the background import safely.
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+
                                     <div class="d-flex justify-content-center gap-3">
                                         <button class="btn btn-secondary btn-lg px-5" wire:click="goToStep(2)">
                                             <i class="fa fa-arrow-left me-2"></i> Back to Mapping
                                         </button>
-                                        <button class="btn btn-success btn-lg px-5 shadow-sm" wire:click="save">
+                                        <button class="btn btn-success btn-lg px-5 shadow-sm" wire:click="save" @disabled(count($previewErrors))>
                                             <i class="fa fa-check-circle me-2"></i> Start Import Now
                                         </button>
                                     </div>

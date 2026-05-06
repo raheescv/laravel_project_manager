@@ -125,6 +125,7 @@ return [
             'label' => 'Product Management',
             'permissions' => [
                 'product',
+                'asset',
                 'category',
                 'brand',
                 'unit',

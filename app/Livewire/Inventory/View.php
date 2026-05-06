@@ -44,7 +44,19 @@ class View extends Component
     {
         $this->product_id = $product_id;
         $this->branch_id = session('branch_id');
-        $this->product = Product::with('brand', 'images', 'units.subUnit', 'department', 'mainCategory', 'subCategory', 'unit')->find($this->product_id);
+        $this->product = Product::with(
+            'brand',
+            'images',
+            'units.subUnit',
+            'department',
+            'mainCategory',
+            'subCategory',
+            'unit',
+            'assetAccount',
+            'accumulatedDepreciationAccount',
+            'depreciationExpenseAccount',
+            'depreciationSchedules.journal'
+        )->find($this->product_id);
     }
 
     public function sortBy($field)
