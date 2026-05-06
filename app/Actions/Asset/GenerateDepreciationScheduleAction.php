@@ -19,7 +19,7 @@ class GenerateDepreciationScheduleAction
             $cost = (float) ($asset->cost ?? 0);
             $duration = (float) ($asset->duration ?? 0);
             if ($cost <= 0 || $duration <= 0 || empty($asset->purchase_date)) {
-                AssetDepreciationSchedule::where('product_id', $asset->id)->where('status', '!=', 'posted')->delete();
+                AssetDepreciationSchedule::where('product_id', $asset->id)->where('status', '!=', 'posted')->forceDelete();
 
                 return ['success' => true, 'message' => 'Skipped schedule generation until asset purchase details are complete.'];
             }
@@ -40,7 +40,7 @@ class GenerateDepreciationScheduleAction
             DB::transaction(function () use ($asset, $userId, $totalPeriods, $periodType, $startDate, $postedCount, &$openingBookValue, &$accumulatedDepreciation): void {
                 AssetDepreciationSchedule::where('product_id', $asset->id)
                     ->where('status', '!=', 'posted')
-                    ->delete();
+                    ->forceDelete();
 
                 $rows = [];
                 for ($periodNo = $postedCount + 1; $periodNo <= $totalPeriods; $periodNo++) {
