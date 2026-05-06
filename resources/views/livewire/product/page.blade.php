@@ -936,12 +936,6 @@
                                                                 <small class="text-muted mt-1 d-block">This starts the asset timeline and is used for
                                                                     depreciation scheduling.</small>
                                                             </div>
-                                                            <div class="col-md-4">
-                                                                <label for="remarks" class="form-label fw-medium">Remarks</label>
-                                                                {{ html()->input('remarks')->value('')->class('form-control')->placeholder('Enter short remarks')->attribute('wire:model', 'products.remarks') }}
-                                                                <small class="text-muted mt-1 d-block">Add a short note such as condition, usage, or
-                                                                    tag assignment details.</small>
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 @endif

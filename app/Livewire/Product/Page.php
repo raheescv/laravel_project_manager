@@ -113,7 +113,6 @@ class Page extends Component
                 'declining_factor' => 2.0,
                 'depreciation_amount' => 0,
                 'prorata_date' => null,
-                'remarks' => '',
                 'min_stock' => 0,
                 'max_stock' => 0,
                 'location' => '',
