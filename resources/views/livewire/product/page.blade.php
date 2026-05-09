@@ -1009,6 +1009,61 @@
                                                                     @endif
                                                                 </div>
                                                             </div>
+                                                            @php($depreciationTimeline = $this->depreciationTimeline)
+                                                            @if (count($depreciationTimeline))
+                                                                <div class="col-12">
+                                                                    <div class="card border shadow-sm">
+                                                                        <div
+                                                                            class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                                            <div>
+                                                                                <div class="fw-semibold text-dark">Depreciation Timeline Preview</div>
+                                                                                <div class="small text-muted">Projected schedule based on the current
+                                                                                    settings. Saving the asset will regenerate the actual schedule.</div>
+                                                                            </div>
+                                                                            <span
+                                                                                class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ count($depreciationTimeline) }}
+                                                                                periods</span>
+                                                                        </div>
+                                                                        <div class="table-responsive" style="max-height: 320px;">
+                                                                            <table class="table table-sm table-striped mb-0 align-middle">
+                                                                                <thead class="table-light sticky-top">
+                                                                                    <tr>
+                                                                                        <th class="text-center">#</th>
+                                                                                        <th>Date</th>
+                                                                                        <th class="text-end">Opening</th>
+                                                                                        <th class="text-end">Depreciation</th>
+                                                                                        <th class="text-end">Accumulated</th>
+                                                                                        <th class="text-end">Closing</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    @foreach ($depreciationTimeline as $row)
+                                                                                        <tr>
+                                                                                            <td class="text-center">{{ $row['period_no'] }}</td>
+                                                                                            <td>{{ systemDate($row['schedule_date']) }}</td>
+                                                                                            <td class="text-end">{{ currency($row['opening_book_value']) }}
+                                                                                            </td>
+                                                                                            <td class="text-end text-success">
+                                                                                                {{ currency($row['depreciation_amount']) }}</td>
+                                                                                            <td class="text-end">
+                                                                                                {{ currency($row['accumulated_depreciation']) }}</td>
+                                                                                            <td class="text-end fw-semibold">
+                                                                                                {{ currency($row['closing_book_value']) }}</td>
+                                                                                        </tr>
+                                                                                    @endforeach
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @else
+                                                                <div class="col-12">
+                                                                    <div class="alert alert-warning small mb-0">
+                                                                        Enter purchase cost, duration, and purchase/prorata date to preview the
+                                                                        depreciation timeline.
+                                                                    </div>
+                                                                </div>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 @endif

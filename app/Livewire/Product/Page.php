@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Product;
 
+use App\Actions\Asset\GenerateDepreciationScheduleAction;
 use App\Actions\Product\CreateAction;
 use App\Actions\Product\DeleteImageAction;
 use App\Actions\Product\ProductPrice\DeleteAction as PriceDeleteAction;
@@ -12,6 +13,7 @@ use App\Models\Department;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Services\ProductImageAiService;
+use Carbon\Carbon;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -448,6 +450,18 @@ class Page extends Component
             'detail' => 'This gives a constant '.strtolower($amountLabel).' amount for the full asset life.',
             'amount_label' => $amountLabel,
         ];
+    }
+
+    public function getDepreciationTimelineProperty(): array
+    {
+        return GenerateDepreciationScheduleAction::buildSchedule([
+            'cost' => $this->products['cost'] ?? 0,
+            'duration' => $this->products['duration'] ?? 0,
+            'duration_period' => $this->products['duration_period'] ?? 'years',
+            'depreciation_method' => $this->products['depreciation_method'] ?? 'straight_line',
+            'declining_factor' => $this->products['declining_factor'] ?? 2.0,
+            'start_date' => $this->products['prorata_date'] ?? ($this->products['purchase_date'] ?? null),
+        ]);
     }
 
     public function deleteImage($id)
