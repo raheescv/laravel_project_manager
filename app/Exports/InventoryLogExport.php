@@ -57,9 +57,11 @@ class InventoryLogExport implements FromQuery, WithHeadings, WithMapping
             'Product',
             'barcode',
             'batch',
+            'cost',
             'In',
             'out',
             'balance',
+            'total',
             'remarks',
             'User',
         ];
@@ -82,9 +84,11 @@ class InventoryLogExport implements FromQuery, WithHeadings, WithMapping
             $row->product?->name,
             $row->barcode,
             $row->batch,
+            $row->cost,
             $row->quantity_in,
             $row->quantity_out,
             $row->balance,
+            $row->balance * $row->cost,
             $row->remarks,
             $row->user_name,
         ];

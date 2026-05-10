@@ -3,6 +3,7 @@
 namespace App\Livewire\Log;
 
 use App\Exports\InventoryLogExport;
+use App\Exports\InventoryLogProductWiseExport;
 use App\Jobs\Export\ExportInventoryLogJob;
 use App\Models\Configuration;
 use App\Models\InventoryLog;
@@ -121,6 +122,20 @@ class Inventory extends Component
 
             return Excel::download(new InventoryLogExport($filter), $exportFileName);
         }
+    }
+
+    public function exportProductWise()
+    {
+        $filter = [
+            'to_date' => $this->to_date,
+            'branch_id' => $this->branch_id,
+            'product_id' => $this->product_id,
+            'search' => $this->search,
+        ];
+
+        $exportFileName = 'InventoryLogProductWise-'.now()->timestamp.'.xlsx';
+
+        return Excel::download(new InventoryLogProductWiseExport($filter), $exportFileName);
     }
 
     public function sortBy($field)

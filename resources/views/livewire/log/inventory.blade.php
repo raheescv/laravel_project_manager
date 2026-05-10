@@ -6,6 +6,9 @@
                     <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()">
                         <i class="demo-pli-file-excel me-1"></i> Export
                     </button>
+                    <button class="btn btn-sm btn-outline-primary" title="Export product wise as of the end date" wire:click="exportProductWise()">
+                        <i class="demo-pli-file-excel me-1"></i> Product Wise
+                    </button>
                 </div>
             </div>
             <div class="col-md-8">
