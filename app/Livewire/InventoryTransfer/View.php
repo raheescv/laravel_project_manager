@@ -30,7 +30,14 @@ class View extends Component
     public function mount($table_id)
     {
         $this->table_id = $table_id;
-        $this->model = InventoryTransfer::with('fromBranch:id,name', 'toBranch:id,name', 'items.product:id,name')->find($this->table_id);
+        $this->model = InventoryTransfer::with(
+            'fromBranch:id,name',
+            'toBranch:id,name',
+            'items.product:id,name',
+            'items.inventory',
+            'journals.entries.account',
+            'journals.entries.branch'
+        )->find($this->table_id);
         if (! $this->model) {
             return redirect()->route('inventory::transfer::index');
         }

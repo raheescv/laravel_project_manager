@@ -33,6 +33,11 @@ class CreateAction
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }
+
+                $response = (new JournalEntryAction())->execute($model, $userId);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
             }
 
             $return['success'] = true;

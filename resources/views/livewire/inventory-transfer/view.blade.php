@@ -172,6 +172,61 @@
             </div>
         @endif
 
+        <!-- Journal Entries Section -->
+        @if ($model->journals->count())
+            <div class="journal-entries-section mb-5">
+                <div class="section-header mb-4">
+                    <h4 class="d-flex align-items-center">
+                        <i class="fa fa-book me-2"></i>
+                        Journal Entries
+                    </h4>
+                </div>
+
+                @foreach ($model->journals as $journal)
+                    <div class="table-container mb-3">
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                            <div>
+                                <span class="fw-semibold">{{ $journal->description }}</span>
+                                @if ($journal->reference_number)
+                                    <span class="badge bg-light text-muted ms-2">Ref: {{ $journal->reference_number }}</span>
+                                @endif
+                            </div>
+                            <span class="text-muted small">{{ systemDate($journal->date) }}</span>
+                        </div>
+                        <table class="table table-striped modern-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Branch</th>
+                                    <th>Account</th>
+                                    <th>Remarks</th>
+                                    <th class="text-end">Debit</th>
+                                    <th class="text-end">Credit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($journal->entries as $entry)
+                                    <tr>
+                                        <td>{{ $entry->branch?->name ?? '-' }}</td>
+                                        <td>{{ $entry->account?->name ?? '-' }}</td>
+                                        <td>{{ $entry->remarks ?? '-' }}</td>
+                                        <td class="text-end">{{ $entry->debit > 0 ? currency($entry->debit) : '-' }}</td>
+                                        <td class="text-end">{{ $entry->credit > 0 ? currency($entry->credit) : '-' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Total</td>
+                                    <td class="text-end fw-bold">{{ currency($journal->entries->sum('debit')) }}</td>
+                                    <td class="text-end fw-bold">{{ currency($journal->entries->sum('credit')) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
         <!-- Inventory Logs Section -->
         <div class="inventory-logs-section">
             <div class="section-header mb-4">

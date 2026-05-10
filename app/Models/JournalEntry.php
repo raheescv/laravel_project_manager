@@ -88,6 +88,11 @@ class JournalEntry extends Model implements AuditableContracts
         return $this->belongsTo(Account::class);
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     public function purchase()
     {
         return $this->belongsTo(Purchase::class, 'model_id');

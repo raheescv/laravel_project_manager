@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -58,6 +59,11 @@ class InventoryTransfer extends Model implements AuditableContracts
     public function items()
     {
         return $this->hasMany(InventoryTransferItem::class);
+    }
+
+    public function journals(): HasMany
+    {
+        return $this->hasMany(Journal::class, 'model_id')->where('model', 'InventoryTransfer');
     }
 
     public function createdBy()
