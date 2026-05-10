@@ -127,6 +127,12 @@
                         @if ($inventory_log_visible_column['balance'] ?? true)
                             <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="Balance" /> </th>
                         @endif
+                        @if ($inventory_log_visible_column['cost'] ?? true)
+                            <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="inventory_logs.cost" label="Cost" /> </th>
+                        @endif
+                        @if ($inventory_log_visible_column['total_cost'] ?? true)
+                            <th class="text-end">Total Cost</th>
+                        @endif
                         @if ($inventory_log_visible_column['remarks'] ?? true)
                             <th width="30%"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="remarks" label="Remarks" /> </th>
                         @endif
@@ -170,6 +176,12 @@
                             @endif
                             @if ($inventory_log_visible_column['balance'] ?? true)
                                 <td class="text-end">{{ $item->balance }}</td>
+                            @endif
+                            @if ($inventory_log_visible_column['cost'] ?? true)
+                                <td class="text-end">{{ currency($item->cost) }}</td>
+                            @endif
+                            @if ($inventory_log_visible_column['total_cost'] ?? true)
+                                <td class="text-end">{{ currency((float) $item->balance * (float) $item->cost) }}</td>
                             @endif
                             @if ($inventory_log_visible_column['remarks'] ?? true)
                                 <td>

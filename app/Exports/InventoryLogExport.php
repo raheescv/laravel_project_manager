@@ -26,6 +26,7 @@ class InventoryLogExport implements FromQuery, WithHeadings, WithMapping
                         ->orWhere('quantity_in', 'like', "%{$value}%")
                         ->orWhere('quantity_out', 'like', "%{$value}%")
                         ->orWhere('balance', 'like', "%{$value}%")
+                        ->orWhere('cost', 'like', "%{$value}%")
                         ->orWhere('user_name', 'like', "%{$value}%");
                 });
             })

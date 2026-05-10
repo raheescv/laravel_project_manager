@@ -50,6 +50,8 @@ class Inventory extends Component
             'quantity_in' => true,
             'quantity_out' => true,
             'balance' => true,
+            'cost' => true,
+            'total_cost' => true,
             'remarks' => true,
             'user' => true,
         ];
@@ -72,6 +74,8 @@ class Inventory extends Component
             'quantity_in' => 'In',
             'quantity_out' => 'Out',
             'balance' => 'Balance',
+            'cost' => 'Cost',
+            'total_cost' => 'Total Cost',
             'remarks' => 'Remarks',
             'user' => 'User',
         ];
@@ -89,6 +93,7 @@ class Inventory extends Component
                         ->orWhere('quantity_in', 'like', "%{$value}%")
                         ->orWhere('quantity_out', 'like', "%{$value}%")
                         ->orWhere('balance', 'like', "%{$value}%")
+                        ->orWhere('cost', 'like', "%{$value}%")
                         ->orWhere('user_name', 'like', "%{$value}%");
                 });
             })
@@ -184,6 +189,7 @@ class Inventory extends Component
                         ->orWhere('quantity_in', 'like', "%{$value}%")
                         ->orWhere('quantity_out', 'like', "%{$value}%")
                         ->orWhere('balance', 'like', "%{$value}%")
+                        ->orWhere('inventory_logs.cost', 'like', "%{$value}%")
                         ->orWhere('user_name', 'like', "%{$value}%");
                 });
             })
@@ -208,6 +214,7 @@ class Inventory extends Component
                 'inventory_logs.quantity_in',
                 'inventory_logs.quantity_out',
                 'inventory_logs.balance',
+                'inventory_logs.cost',
                 'inventory_logs.remarks',
                 'inventory_logs.user_name',
                 'inventory_logs.model',
