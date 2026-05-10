@@ -13,7 +13,6 @@ use App\Models\Department;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Services\ProductImageAiService;
-use Carbon\Carbon;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
