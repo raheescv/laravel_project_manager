@@ -157,9 +157,15 @@
                                 </div>
                             </td>
                             <td class="text-nowrap">
-                                <a href="{{ route('purchase::edit', $item->id) }}" class="text-primary fw-semibold text-decoration-none">
-                                    {{ $item->invoice_no }}
-                                </a>
+                                @if ($item->status == 'completed')
+                                    <a href="{{ route('purchase::view', $item->id) }}" class="text-primary fw-semibold text-decoration-none">
+                                        {{ $item->invoice_no }}
+                                    </a>
+                                @else
+                                    <a href="{{ route('purchase::edit', $item->id) }}" class="text-primary fw-semibold text-decoration-none">
+                                        {{ $item->invoice_no }}
+                                    </a>
+                                @endif
                             </td>
                             @if ($purchase_visible_column['branch_id'])
                                 <td>

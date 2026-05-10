@@ -55,7 +55,8 @@ class View extends Component
             'assetAccount',
             'accumulatedDepreciationAccount',
             'depreciationExpenseAccount',
-            'depreciationSchedules.journal'
+            'depreciationSchedules.journal',
+            'audits.user:id,name',
         )->find($this->product_id);
     }
 

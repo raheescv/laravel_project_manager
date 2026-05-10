@@ -639,11 +639,12 @@
         </div>
     </div>
 
-    {{-- Tabs: Log & Images --}}
+    {{-- Tabs: Log, Audit & Images --}}
     <div class="card border-0 shadow-sm rounded-3 mb-4">
         <div class="card-header bg-transparent border-bottom pb-0 px-3">
             <ul class="nav nav-pv" role="tablist">
                 <li class="nav-item"><button class="nav-link @if ($selectedTab == 'log') active @endif" wire:click="tabSelect('log')" type="button"><i class="fa fa-history me-1"></i>Log</button></li>
+                <li class="nav-item"><button class="nav-link @if ($selectedTab == 'audit') active @endif" wire:click="tabSelect('audit')" type="button"><i class="fa fa-search me-1"></i>Audit</button></li>
                 <li class="nav-item"><button class="nav-link @if ($selectedTab == 'image') active @endif" wire:click="tabSelect('image')" type="button"><i class="fa fa-image me-1"></i>Images</button></li>
             </ul>
         </div>
@@ -707,6 +708,96 @@
                     </table>
                 </div>
                 <div class="mt-3">{{ $logs->links() }}</div>
+            </div>
+
+            {{-- Audit Tab --}}
+            <div class="@if ($selectedTab != 'audit') d-none @endif">
+                @php
+                    $auditColumns = $product->audits
+                        ->flatMap(fn ($audit) => array_unique(array_merge(array_keys($audit->old_values ?? []), array_keys($audit->new_values ?? []))))
+                        ->unique()
+                        ->values();
+
+                    $formatAuditValue = function ($value): string {
+                        if (is_bool($value)) {
+                            return $value ? 'Yes' : 'No';
+                        }
+
+                        if (is_array($value)) {
+                            return json_encode($value);
+                        }
+
+                        if ($value === null || $value === '') {
+                            return '-';
+                        }
+
+                        return (string) $value;
+                    };
+                @endphp
+
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                    <div>
+                        <h6 class="mb-1 fw-bold"><i class="fa fa-search text-primary me-1"></i>Product Audit</h6>
+                        <small class="text-muted">Review old and new product values for each audited change.</small>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                        {{ $product->audits->count() }} {{ \Illuminate\Support\Str::plural('entry', $product->audits->count()) }}
+                    </span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm table-pv align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-nowrap">Date Time</th>
+                                <th>User</th>
+                                <th>Event</th>
+                                @foreach ($auditColumns as $column)
+                                    <th class="text-nowrap">{{ \Illuminate\Support\Str::title(str_replace('_', ' ', $column)) }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($product->audits()->orderBy('created_at', 'desc')->get() as $audit)
+                                <tr>
+                                    <td class="text-nowrap">{{ systemDateTime($audit->created_at) }}</td>
+                                    <td>{{ $audit->user?->name ?? '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary text-capitalize">{{ $audit->event }}</span>
+                                    </td>
+                                    @foreach ($auditColumns as $column)
+                                        @php
+                                            $hasOldValue = array_key_exists($column, $audit->old_values ?? []);
+                                            $hasNewValue = array_key_exists($column, $audit->new_values ?? []);
+                                            $oldValue = $audit->old_values[$column] ?? null;
+                                            $newValue = $audit->new_values[$column] ?? null;
+                                        @endphp
+                                        <td class="text-nowrap">
+                                            @if ($hasOldValue && $hasNewValue && $oldValue !== $newValue)
+                                                <span class="text-danger">{{ $formatAuditValue($oldValue) }}</span>
+                                                <i class="fa fa-arrow-right text-muted mx-1"></i>
+                                                <span class="text-success">{{ $formatAuditValue($newValue) }}</span>
+                                            @elseif ($hasNewValue)
+                                                <span class="text-success">{{ $formatAuditValue($newValue) }}</span>
+                                            @elseif ($hasOldValue)
+                                                <span class="text-muted">{{ $formatAuditValue($oldValue) }}</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ $auditColumns->count() + 3 }}" class="text-center text-muted py-5">
+                                        <i class="fa fa-search fa-3x text-muted opacity-25 d-block mb-2"></i>
+                                        No product audit entries found.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {{-- Images Tab --}}

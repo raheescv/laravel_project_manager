@@ -65,7 +65,7 @@ class PurchaseController extends Controller
 
     public function view($id)
     {
-        return view('purchase.page', compact('id'));
+        return view('purchase.view', compact('id'));
     }
 
     public function print($id)
