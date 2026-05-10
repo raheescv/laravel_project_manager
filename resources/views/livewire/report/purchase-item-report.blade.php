@@ -122,7 +122,9 @@
                                 <td>{{ systemDate($item->date) }}</td>
                             @endif
                             @if ($purchase_item_report_visible_column['invoice_no'] ?? true)
-                                <td>{{ $item->invoice_no }}</td>
+                                <td>
+                                    <a href="{{ route('purchase::view', $item->purchase_id) }}" target="_blank">{{ $item->invoice_no }}</a>
+                                </td>
                             @endif
                             @if ($purchase_item_report_visible_column['product_name'] ?? true)
                                 <td>{{ $item->product?->name }}</td>
