@@ -694,21 +694,21 @@
                                                     </div>
                                                     <div class="col-12 col-md-6 col-xl-4">
                                                         <div class="theme-action-card">
-                                                            <div class="icon-pill success"><i class="demo-psi-synchronize"></i></div>
+                                                            <div class="icon-pill success"><i class="demo-psi-refresh"></i></div>
                                                             <h6>Sync with Server</h6>
                                                             <p>Synchronize theme settings between your browser and the server.</p>
                                                             <button class="btn btn-outline-success btn-sm w-100" id="syncThemeSettings">
-                                                                <i class="demo-psi-synchronize me-1"></i> Sync Settings
+                                                                <i class="demo-psi-refresh me-1"></i> Sync Settings
                                                             </button>
                                                         </div>
                                                     </div>
                                                     <div class="col-12 col-md-6 col-xl-4">
                                                         <div class="theme-action-card">
-                                                            <div class="icon-pill danger"><i class="demo-psi-reset"></i></div>
+                                                            <div class="icon-pill danger"><i class="demo-psi-back"></i></div>
                                                             <h6>Reset to Defaults</h6>
                                                             <p>Reset all theme settings to their default values.</p>
                                                             <button class="btn btn-outline-danger btn-sm w-100" id="resetThemeSettings">
-                                                                <i class="demo-psi-reset me-1"></i> Reset Settings
+                                                                <i class="demo-psi-back me-1"></i> Reset Settings
                                                             </button>
                                                         </div>
                                                     </div>
