@@ -65,6 +65,15 @@ return [
         'template_name' => env('META_WHATSAPP_TEMPLATE_NAME', 'invoice_slip'),
         'base_url' => env('META_WHATSAPP_BASE_URL', 'https://wa-api.cloud/api/v1'),
     ],
+    'whatsapp' => [
+        'driver' => env('WHATSAPP_DRIVER', 'meta'),
+    ],
+    'core_connecta' => [
+        'url' => env('CORE_CONNECTA_URL', 'http://localhost:3000'),
+        'api_key' => env('CORE_CONNECTA_API_KEY', ''),
+        'session_id' => env('CORE_CONNECTA_SESSION_ID', ''),
+        'session_name' => env('CORE_CONNECTA_SESSION_NAME', 'Project Manager'),
+    ],
     'pusher' => [
         'pusher_app_key' => env('PUSHER_APP_KEY'),
         'pusher_app_cluster' => env('PUSHER_APP_CLUSTER'),

@@ -151,6 +151,14 @@ class WhatsappHelper
         }
     }
 
+    public function send(array $data): array
+    {
+        return $this->sendMessage(
+            (string) ($data['number'] ?? $data['to'] ?? ''),
+            (string) ($data['message'] ?? ''),
+        );
+    }
+
     /**
      * Send a template message with components (header, body, footer)
      *

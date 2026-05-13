@@ -606,7 +606,7 @@
                                         </button>
                                     </li>
                                 @endcan
-                                @if (false)
+                                @if (true)
                                     @can('whatsapp.integration')
                                         <li class="nav-item" role="presentation">
                                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button" role="tab" aria-selected="false"
@@ -752,7 +752,7 @@
                                 @endcan
                                 @can('whatsapp.integration')
                                     <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
-                                        {{-- @livewire('settings.whatsapp') --}}
+                                        @livewire('settings.whatsapp')
                                     </div>
                                 @endcan
                             </div>
