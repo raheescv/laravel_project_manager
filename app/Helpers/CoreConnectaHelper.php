@@ -93,15 +93,41 @@ class CoreConnectaHelper
         ]);
     }
 
+    public function sendImage(string $to, string $imageUrl, ?string $caption = null): array
+    {
+        $sessionId = $this->outboundSessionId(null);
+        if (! $sessionId) {
+            return [
+                'success' => false,
+                'message' => 'No connected Core Connecta session found. Open Settings > WhatsApp and connect a session first.',
+            ];
+        }
+
+        $digitsTo = $this->digitsOnlyPhone($to);
+        if ($digitsTo === '') {
+            return [
+                'success' => false,
+                'message' => 'A valid recipient phone number is required (include country code, digits only or + prefix).',
+            ];
+        }
+
+        $payload = [
+            'session_id' => $sessionId,
+            'to' => $digitsTo,
+            'media_url' => $imageUrl,
+            'media_type' => 'image',
+        ];
+
+        if ($caption !== null && $caption !== '') {
+            $payload['message'] = $caption;
+        }
+
+        return $this->request('post', 'api/messages/send', $payload);
+    }
+
     public function sendTemplateWithImage(string $to, string $templateName, string $imageUrl, string $languageCode = 'en', ?string $footerText = null): array
     {
-        $message = trim(implode("\n", array_filter([
-            str_replace('_', ' ', $templateName),
-            $imageUrl,
-            $footerText,
-        ])));
-
-        return $this->sendMessage($to, $message);
+        return $this->sendImage($to, $imageUrl, $footerText);
     }
 
     public function checkStatus(): array

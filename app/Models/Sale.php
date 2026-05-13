@@ -293,9 +293,7 @@ class Sale extends Model implements AuditableContracts
 
             $image_url = asset("invoices/{$sale->invoice_no}.png");
 
-            $templateName = config('services.meta_whatsapp.template_name');
-
-            $response = WhatsappHelper::sendTemplateWithImage(to: $number, templateName: $templateName, imageUrl: $image_url);
+            $response = WhatsappHelper::sendImage(to: $number, imageUrl: $image_url);
             if (! $response['success']) {
                 throw new Exception($response['message']);
             }

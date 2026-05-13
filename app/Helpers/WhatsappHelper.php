@@ -301,6 +301,62 @@ class WhatsappHelper
     }
 
     /**
+     * Send an image message
+     *
+     * @throws Exception
+     */
+    public function sendImage(string $to, string $imageUrl, ?string $caption = null): array
+    {
+        try {
+            $to = $this->formatPhoneNumber($to);
+            if (empty($to)) {
+                throw new Exception('Invalid phone number format');
+            }
+
+            if (empty($this->accessToken)) {
+                throw new Exception('WhatsApp Access Token is not configured');
+            }
+
+            $url = "{$this->baseUrl}/messages";
+
+            $image = ['link' => $imageUrl];
+            if ($caption !== null && $caption !== '') {
+                $image['caption'] = $caption;
+            }
+
+            $payload = [
+                'to' => $to,
+                'type' => 'image',
+                'image' => $image,
+            ];
+
+            $response = $this->http->post($url, $payload);
+
+            if (! $response->successful()) {
+                $errorData = $response->json();
+                $errorMessage = $errorData['error']['message'] ?? ($errorData['message'] ?? 'Unknown error occurred');
+                throw new Exception("WhatsApp API request failed: {$errorMessage}", $response->status());
+            }
+
+            $data = $response->json();
+
+            return [
+                'success' => true,
+                'message' => 'Image sent successfully',
+                'message_id' => $data['id'] ?? null,
+                'data' => $data,
+            ];
+        } catch (Exception $e) {
+            Log::error('Error sending WhatsApp image', [
+                'to' => $to ?? null,
+                'message' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
      * Send a template message with image header
      *
      * @param  string  $to  Recipient phone number
