@@ -95,7 +95,28 @@ class CoreConnectaHelper
 
     public function sendImage(string $to, string $imageUrl, ?string $caption = null): array
     {
-        return $this->sendMessage($to, $imageUrl);
+        $sessionId = $this->outboundSessionId(null);
+        if (! $sessionId) {
+            return [
+                'success' => false,
+                'message' => 'No connected Core Connecta session found. Open Settings > WhatsApp and connect a session first.',
+            ];
+        }
+
+        $digitsTo = $this->digitsOnlyPhone($to);
+        if ($digitsTo === '') {
+            return [
+                'success' => false,
+                'message' => 'A valid recipient phone number is required (include country code, digits only or + prefix).',
+            ];
+        }
+
+        return $this->request('post', 'api/messages/send', [
+            'session_id' => $sessionId,
+            'to' => $digitsTo,
+            'image_url' => $imageUrl,
+            'caption' => $caption ?? '',
+        ]);
     }
 
     public function sendTemplateWithImage(string $to, string $templateName, string $imageUrl, string $languageCode = 'en', ?string $footerText = null): array
