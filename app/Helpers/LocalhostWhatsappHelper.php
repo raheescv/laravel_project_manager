@@ -114,20 +114,16 @@ class LocalhostWhatsappHelper
 
     public function sendMessage(string $to, string $message, array $options = []): array
     {
-        return $this->makeRequest('post', 'send-message', ['to' => $to, 'message' => $message]);
+        return (new CoreConnectaHelper())->sendMessage($to, $message, $options);
     }
 
     public function sendImage(string $to, string $imageUrl, ?string $caption = null): array
     {
-        return $this->makeRequest('post', 'send-image', array_filter([
-            'to' => $to,
-            'media_url' => $imageUrl,
-            'caption' => $caption,
-        ]));
+        return (new CoreConnectaHelper())->sendImage($to, $imageUrl, $caption);
     }
 
     public function sendTemplateWithImage(string $to, string $templateName, string $imageUrl, string $languageCode = 'en', ?string $footerText = null): array
     {
-        return $this->sendImage($to, $imageUrl, $footerText);
+        return (new CoreConnectaHelper())->sendImage($to, $imageUrl, $footerText);
     }
 }
