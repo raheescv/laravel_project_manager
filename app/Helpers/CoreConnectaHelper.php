@@ -114,13 +114,10 @@ class CoreConnectaHelper
         $payload = [
             'session_id' => $sessionId,
             'to' => $digitsTo,
+            'message' => $caption ?? '',
             'media_url' => $imageUrl,
             'media_type' => 'image',
         ];
-
-        if ($caption !== null && $caption !== '') {
-            $payload['message'] = $caption;
-        }
 
         return $this->request('post', 'api/messages/send', $payload);
     }
