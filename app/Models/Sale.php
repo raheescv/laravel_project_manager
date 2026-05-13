@@ -293,7 +293,7 @@ class Sale extends Model implements AuditableContracts
 
             $image_url = asset("invoices/{$sale->invoice_no}.png");
 
-            $response = WhatsappHelper::sendImage(to: $number, imageUrl: $image_url);
+            $response = WhatsappHelper::sendImage(to: $number, imageUrl: $image_url, caption: $sale->invoice_no);
             if (! $response['success']) {
                 throw new Exception($response['message']);
             }
