@@ -2,6 +2,7 @@
 
 namespace App\Livewire\SaleReturn;
 
+use App\Models\InventoryLog;
 use App\Models\SaleReturn;
 use Livewire\Component;
 
@@ -17,6 +18,8 @@ class View extends Component
 
     public $sale_returns = [];
 
+    public $inventory_logs = [];
+
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
@@ -26,6 +29,11 @@ class View extends Component
                 return redirect()->route('sale_return::index');
             }
             $this->sale_returns = $this->sale_return->toArray();
+            $this->inventory_logs = InventoryLog::with('product:id,name')
+                ->where('model', 'SaleReturn')
+                ->where('model_id', $this->table_id)
+                ->orderBy('id', 'asc')
+                ->get();
             $item_ids = [];
             $this->items = $this->sale_return->items
                 ->mapWithKeys(function ($item) use (&$item_ids) {
