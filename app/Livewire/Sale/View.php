@@ -5,6 +5,7 @@ namespace App\Livewire\Sale;
 use App\Actions\Sale\UpdateAction;
 use App\Models\Sale;
 use App\Models\SaleReturnItem;
+use App\Models\InventoryLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -22,6 +23,8 @@ class View extends Component
     public $sale;
 
     public $sales = [];
+
+    public $inventory_logs = [];
 
     public function mount($table_id = null)
     {
@@ -63,6 +66,11 @@ class View extends Component
             })->toArray();
             $this->sale_return_items = SaleReturnItem::with('saleReturn:id,other_discount,total', 'product:id,name', 'unit:id,name')->whereIn('sale_item_id', $item_ids)->get();
             $this->payments = $this->sale->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
+            $this->inventory_logs = InventoryLog::with('product:id,name')
+                ->where('model', 'Sale')
+                ->where('model_id', $this->table_id)
+                ->orderBy('id', 'asc')
+                ->get();
         }
     }
 

@@ -555,6 +555,14 @@
                             </button>
                         </li>
                     @endcan
+                    @if (count($inventory_logs))
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link px-3" data-bs-toggle="tab" data-bs-target="#tab-inventory-log" type="button" role="tab">
+                                <i class="demo-psi-box me-1"></i>Inventory Log
+                                <span class="badge bg-secondary ms-1">{{ count($inventory_logs) }}</span>
+                            </button>
+                        </li>
+                    @endif
                 </ul>
 
                 <div class="tab-content">
@@ -702,6 +710,59 @@
                             </div>
                         </div>
                     </div>
+
+                    @if (count($inventory_logs))
+                        <div id="tab-inventory-log" class="tab-pane fade" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-striped align-middle table-sm mb-0">
+                                    <thead>
+                                        <tr class="bg-primary text-white">
+                                            <th class="text-white">#</th>
+                                            <th class="text-white">Date</th>
+                                            <th class="text-white">Product</th>
+                                            <th class="text-white">Barcode</th>
+                                            <th class="text-white">Batch</th>
+                                            <th class="text-white text-end">In</th>
+                                            <th class="text-white text-end">Out</th>
+                                            <th class="text-white text-end">Balance</th>
+                                            <th class="text-white text-end">Cost</th>
+                                            <th class="text-white">Remarks</th>
+                                            <th class="text-white">User</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($inventory_logs as $log)
+                                            <tr>
+                                                <td>{{ $log->id }}</td>
+                                                <td class="text-nowrap">{{ systemDateTime($log->created_at) }}</td>
+                                                <td>
+                                                    <a href="{{ route('inventory::product::view', $log->product_id) }}" class="text-primary">
+                                                        {{ $log->product?->name }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ $log->barcode }}</td>
+                                                <td>{{ $log->batch }}</td>
+                                                <td class="text-end text-success">{{ $log->quantity_in > 0 ? $log->quantity_in : '-' }}</td>
+                                                <td class="text-end text-danger">{{ $log->quantity_out > 0 ? $log->quantity_out : '-' }}</td>
+                                                <td class="text-end fw-semibold">{{ $log->balance }}</td>
+                                                <td class="text-end">{{ currency($log->cost) }}</td>
+                                                <td>{{ $log->remarks }}</td>
+                                                <td>{{ $log->user_name }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="bg-light fw-bold">
+                                        <tr>
+                                            <th colspan="5" class="text-end">Total</th>
+                                            <th class="text-end text-success">{{ $inventory_logs->sum('quantity_in') }}</th>
+                                            <th class="text-end text-danger">{{ $inventory_logs->sum('quantity_out') }}</th>
+                                            <th colspan="4"></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
