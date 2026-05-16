@@ -46,11 +46,15 @@
         @endcomponent
         @component('components.product.prices-modal', ['product_id' => $id])
         @endcomponent
+        @include('components.product.raw-material-modal')
     @endif
     @push('scripts')
         @include('components.select.departmentSelect')
         @include('components.select.brandSelect')
         @include('components.select.categorySelect')
         @include('components.select.accountSelect')
+        @if ($id)
+            @include('components.select.productSelect')
+        @endif
     @endpush
 </x-app-layout>

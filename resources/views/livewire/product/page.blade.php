@@ -810,6 +810,15 @@
                                                             Related Products
                                                         </button>
                                                     </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'RawMaterials') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('RawMaterials')" data-bs-target="#tabRawMaterials"
+                                                            type="button" role="tab" aria-selected="false" tabindex="-1">
+                                                            <i class="fa fa-cubes text-warning"></i>
+                                                            Raw Materials
+                                                        </button>
+                                                    </li>
                                                 @endif
                                             </ul>
                                             <div class="tab-content">
@@ -1361,6 +1370,13 @@
                                                                 No related products found with the same code.
                                                             </div>
                                                         @endif
+                                                    </div>
+                                                @endif
+                                                @if (isset($table_id) && $type == 'product')
+                                                    <div id="tabRawMaterials"
+                                                        class="tab-pane fade @if ($selectedTab == 'RawMaterials') active show @endif"
+                                                        role="tabpanel">
+                                                        @livewire('product.raw-materials', ['product_id' => $table_id], key('raw-materials-' . $table_id))
                                                     </div>
                                                 @endif
                                             </div>
