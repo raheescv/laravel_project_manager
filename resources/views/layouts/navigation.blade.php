@@ -238,155 +238,7 @@
             color: var(--ln-text-dim);
         }
 
-        .luminous-nav .mainnav__brand + .mininav-content::before {
-            content: '';
-            display: block;
-            height: 1px;
-            margin: 0.15rem 0 0.55rem;
-            background: linear-gradient(90deg, transparent, var(--ln-divider) 30%, var(--ln-divider) 70%, transparent);
-        }
-
         .luminous-nav .mininav-toggle { position: relative; }
-
-        .luminous-nav .mainnav__user-toggle {
-            color: var(--ln-text) !important;
-            background: transparent !important;
-            border: 0 !important;
-            border-radius: 9px;
-            padding: 0.35rem 0.35rem !important;
-            transition: background 0.2s, border-color 0.2s;
-            text-align: center;
-            width: 100%;
-        }
-
-        .luminous-nav .mainnav__user-toggle:hover {
-            background: var(--ln-hover-bg) !important;
-        }
-
-        .luminous-nav .mainnav__user-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            min-width: 0;
-        }
-
-        .luminous-nav .mainnav__user-status {
-            flex-shrink: 0;
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            background: #10b981;
-            box-shadow:
-                0 0 0 3px rgba(16, 185, 129, 0.12),
-                0 0 0 0 rgba(16, 185, 129, 0.55);
-            animation: ln-pulse-dot 2.2s ease-out infinite;
-        }
-
-        @keyframes ln-pulse-dot {
-            0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
-            70%  { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-
-        .luminous-nav .mainnav__user-info {
-            flex: 0 1 auto;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            line-height: 1.15;
-            text-align: center;
-        }
-
-        .luminous-nav .mainnav__user-name {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: var(--ln-text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .luminous-nav .mainnav__user-role {
-            font-size: 0.6rem;
-            font-weight: 700;
-            letter-spacing: 0;
-            text-transform: uppercase;
-            color: var(--ln-text-muted);
-            margin-top: 1px;
-        }
-
-        .luminous-nav .mainnav__user-caret {
-            flex-shrink: 0;
-            font-size: 0.65rem;
-            color: var(--ln-text-dim);
-            transition: transform 0.25s ease;
-        }
-
-        .luminous-nav .mainnav__user-toggle[aria-expanded="true"] .mainnav__user-caret {
-            transform: rotate(180deg);
-            color: var(--ln-primary);
-        }
-
-        .luminous-nav .mainnav__user-branch {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            max-width: 100%;
-            width: fit-content;
-            margin: 0.45rem auto 0;
-            padding: 0.18rem 0.55rem;
-            border: 1px solid var(--ln-border);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.04);
-            font-size: 0.62rem;
-            font-weight: 600;
-            color: var(--ln-text-dim);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .luminous-nav .mainnav__user-branch i {
-            margin-right: 0.25rem;
-            opacity: 0.7;
-        }
-
-        /* inline profile/settings sublinks — compact, clearly indented */
-        .luminous-nav #usernav {
-            margin-top: 0.25rem;
-            padding-top: 0.25rem;
-            border-top: 1px dashed var(--ln-divider);
-        }
-
-        .luminous-nav #usernav .nav-link {
-            padding: 0.4rem 0.6rem !important;
-            margin: 0.1rem 0 !important;
-            border-radius: 8px;
-            color: var(--ln-text-muted) !important;
-            font-size: 0.8rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.55rem;
-            transition: background 0.2s, color 0.2s, transform 0.2s;
-        }
-
-        .luminous-nav #usernav .nav-link:hover {
-            background: var(--ln-hover-bg);
-            color: var(--ln-text) !important;
-            transform: translateX(2px);
-        }
-
-        .luminous-nav #usernav .nav-link i {
-            margin: 0 !important;
-            width: 18px;
-            text-align: center;
-            color: var(--ln-text-dim);
-            font-size: 0.85rem;
-        }
-
-        .luminous-nav #usernav .nav-link:hover i { color: var(--ln-primary); }
 
         /* ============================ MENU ITEMS ============================= */
         .luminous-nav .mainnav__menu {
@@ -757,14 +609,6 @@
                 box-shadow: 0 4px 14px -4px rgba(99, 102, 241, 0.5);
             }
 
-            /* popover mini profile card — same opaque treatment for its inner buttons */
-            .mn--min .luminous-nav .mainnav__widget .mininav-content .mainnav__user-toggle {
-                color: var(--ln-text) !important;
-            }
-
-            .mn--min .luminous-nav .mainnav__widget .mininav-content #usernav .nav-link {
-                color: var(--ln-text) !important;
-            }
         }
 
         /* prevent the ambient background glow from leaking outside the sidebar
@@ -946,10 +790,6 @@
             display: none !important;
         }
 
-        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand + .mininav-content::before {
-            display: none;
-        }
-
         /* same cleanup for the bottom logout rail item */
         :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle,
         :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle:hover {
@@ -1008,7 +848,7 @@
             }
             .luminous-nav .mainnav__menu   { padding: 0 0.55rem; }
 
-            /* mobile — bigger logo and tap-friendly profile controls */
+            /* mobile — bigger logo */
             .luminous-nav .mainnav__brand-circle {
                 width: 54px;
                 height: 54px;
@@ -1020,9 +860,6 @@
                 padding: 7px;
             }
             .luminous-nav .mainnav__brand-name { font-size: 1rem; }
-            .luminous-nav .mainnav__user-name  { font-size: 0.92rem; }
-            .luminous-nav .mainnav__user-role  { font-size: 0.66rem; }
-            .luminous-nav .mainnav__user-toggle { padding: 0.4rem 0.25rem !important; }
 
             .luminous-nav .mainnav__menu > .nav-item > .nav-link,
             .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle {
@@ -1103,38 +940,6 @@
                     <span class="mainnav__brand-name">{{ config('app.name', 'Astra') }}</span>
                     <span class="mainnav__brand-tag">Workspace</span>
                 </a>
-
-                <div class="mininav-content collapse d-mn-max">
-                    <span data-popper-arrow class="arrow"></span>
-                    <div class="d-grid">
-                        <button class="mainnav__user-toggle btn border-0" data-bs-toggle="collapse"
-                            data-bs-target="#usernav" aria-expanded="false" aria-controls="usernav">
-                            <span class="mainnav__user-row">
-                                <span class="mainnav__user-status" aria-hidden="true"></span>
-                                <span class="mainnav__user-info">
-                                    <span class="mainnav__user-name">{{ auth()->user()->name }}</span>
-                                    <span class="mainnav__user-role">{{ getUserRoles(auth()->user()) }}</span>
-                                </span>
-                                <i class="fa fa-angle-down mainnav__user-caret" aria-hidden="true"></i>
-                            </span>
-                            @if (auth()->user()->branch?->name)
-                                <p class="mainnav__user-branch">
-                                    <i class="fa fa-code-fork"></i>{{ auth()->user()->branch->name }}
-                                </p>
-                            @endif
-                        </button>
-                        <div id="usernav" class="nav flex-column collapse">
-                            <a href="{{ route('profile.edit') }}" class="nav-link">
-                                <i class="fa fa-user fs-6"></i>
-                                <span>Profile</span>
-                            </a>
-                            <a href="{{ route('settings::index') }}" class="nav-link">
-                                <i class="fa fa-cog fs-6"></i>
-                                <span>Settings</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {{-- Dynamic navigation: ordered and filtered by user preferences --}}
