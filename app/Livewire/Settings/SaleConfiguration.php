@@ -48,6 +48,8 @@ class SaleConfiguration extends Component
 
     public $prevent_out_of_stock_sales;
 
+    public $enable_company_name_in_print;
+
     public function mount()
     {
         $this->default_status = Configuration::where('key', 'default_status')->value('value');
@@ -70,6 +72,7 @@ class SaleConfiguration extends Component
         $this->auto_close_day_sessions_enabled = Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') ?? 'no';
         $this->sale_item_row_mode = Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge';
         $this->prevent_out_of_stock_sales = Configuration::where('key', 'prevent_out_of_stock_sales')->value('value') ?? 'yes';
+        $this->enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
     }
 
     public function save()
@@ -94,6 +97,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'auto_close_day_sessions_enabled'], ['value' => $this->auto_close_day_sessions_enabled]);
         Configuration::updateOrCreate(['key' => 'sale_item_row_mode'], ['value' => $this->sale_item_row_mode]);
         Configuration::updateOrCreate(['key' => 'prevent_out_of_stock_sales'], ['value' => $this->prevent_out_of_stock_sales]);
+        Configuration::updateOrCreate(['key' => 'enable_company_name_in_print'], ['value' => $this->enable_company_name_in_print]);
         $this->dispatch('success', ['message' => 'Updated Successfully']);
         Artisan::call('optimize:clear');
     }

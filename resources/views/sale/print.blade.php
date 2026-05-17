@@ -335,6 +335,11 @@
             @if ($enable_logo_in_print == 'yes')
                 <img src="{{ cache('logo') }}" alt="Logo" style="width: 70%; max-width: 80px; margin-bottom: 3px;">
             @endif
+            @if ($enable_company_name_in_print == 'yes')
+                <h3>
+                    {{ $company_name }}
+                </h3>
+            @endif
             <h3>
                 {{ $sale->branch?->location }}
             </h3>

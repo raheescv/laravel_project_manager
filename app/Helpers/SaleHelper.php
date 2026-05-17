@@ -23,6 +23,7 @@ class SaleHelper
         $checkDigit = $this->checkDigitFunction($barcode_string);
         $barcode_string .= $checkDigit;
 
+        $company_name = Configuration::where('key', 'company_name')->value('value') ?? '';
         $thermal_printer_style = Configuration::where('key', 'thermal_printer_style')->value('value') ?? 'with_arabic';
         $gst_no = Configuration::where('key', 'gst_no')->value('value') ?? null;
         $thermal_printer_footer_english = Configuration::where('key', 'thermal_printer_footer_english')->value('value');
@@ -33,6 +34,7 @@ class SaleHelper
         $enable_barcode_in_print = Configuration::where('key', 'enable_barcode_in_print')->value('value') ?? 'yes';
         $print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
         $print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
+        $enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
         $barcodeSettings = BarcodeTemplateConfiguration::resolveSettings()['settings'];
         $barcodeType = $barcodeSettings['barcode']['type'] ?? 'C128';
         $payments = $sale->payments()->with('paymentMethod:id,name,alias_name')->get(['amount', 'payment_method_id'])->toArray();
@@ -40,6 +42,7 @@ class SaleHelper
             'payments',
             'sale',
             'gst_no',
+            'company_name',
             'thermal_printer_style',
             'thermal_printer_footer_english',
             'thermal_printer_footer_arabic',
@@ -49,6 +52,7 @@ class SaleHelper
             'enable_barcode_in_print',
             'print_item_label',
             'print_quantity_label',
+            'enable_company_name_in_print',
             'barcode_string',
             'barcodeType',
         );
