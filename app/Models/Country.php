@@ -19,6 +19,8 @@ class Country extends Model
         'name',
         'code',
         'phone_code',
+        'currency_code',
+        'currency_symbol',
         'status',
     ];
 

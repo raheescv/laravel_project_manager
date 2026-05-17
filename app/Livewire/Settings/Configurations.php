@@ -45,8 +45,16 @@ class Configurations extends Component
     {
         Configuration::updateOrCreate(['key' => 'default_payment_method_id'], ['value' => $this->default_payment_method_id]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
+        $country = Country::find($this->country_id);
+        if ($country) {
+            Configuration::updateOrCreate(['key' => 'currency_code'], ['value' => $country->currency_code]);
+            Configuration::updateOrCreate(['key' => 'currency_symbol'], ['value' => $country->currency_symbol]);
+        }
         Configuration::updateOrCreate(['key' => 'country_id'], ['value' => $this->country_id]);
         Cache::forget('payment_methods');
+        Cache::forget('country_id');
+        Cache::forget('currency_code');
+        Cache::forget('currency_symbol');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }
 

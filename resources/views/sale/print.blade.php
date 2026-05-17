@@ -408,7 +408,8 @@
                     <td colspan="2" class="text-center">
                         @if (isset($payments))
                             @foreach ($payments as $payment)
-                                <span class="payment-badge">{{ $payment['payment_method']['alias_name'] ?? $payment['payment_method']['name'] }} : {{ currency($payment['amount']) }}</span>
+                                <span class="payment-badge">{{ $payment['payment_method']['alias_name'] ?? $payment['payment_method']['name'] }} :
+                                    {{ currency($payment['amount']) }}</span>
                             @endforeach
                         @endif
                     </td>
@@ -446,7 +447,8 @@
                     <td class="text-left">
                         @if (isset($payments))
                             @foreach ($payments as $payment)
-                                <span class="payment-badge">{{ $payment['payment_method']['alias_name'] ?? $payment['payment_method']['name'] }} : {{ currency($payment['amount']) }}</span>
+                                <span class="payment-badge">{{ $payment['payment_method']['alias_name'] ?? $payment['payment_method']['name'] }} :
+                                    {{ currency($payment['amount']) }}</span>
                             @endforeach
                         @endif
                     </td>
@@ -460,7 +462,8 @@
                     <tr>
                         <th>#</th>
                         <th class="text-right"> Price <br> {{ __('lang.price', [], 'ar') }} </th>
-                        <th class="text-right"> {{ $print_quantity_label == 'quantity' ? 'Qty' : 'Weight' }} <br> {{ __('lang.quantity', [], 'ar') }} </th>
+                        <th class="text-right"> {{ $print_quantity_label == 'quantity' ? 'Qty' : 'Weight' }} <br>
+                            {{ __('lang.quantity', [], 'ar') }} </th>
                         <th class="text-right"> Amount <br> {{ __('lang.amount', [], 'ar') }} </th>
                     </tr>
                 @endif
@@ -508,7 +511,7 @@
                         <td colspan="4" class="text-left">
                             <div class="item-name">
                                 @if ($print_item_label == 'product')
-                                     {{ $item->product->name }}
+                                    {{ $item->product->name }}
                                 @else
                                     {{ $item->product->code }}) {{ $item->product->mainCategory->name }}
                                 @endif
@@ -570,10 +573,10 @@
             @endif
             @if ($enable_discount_in_print == 'yes')
                 <tr>
-                    <td class="text-left" width="39%"><b>Net Value</b></td>
+                    <td class="text-left" width="39%"><b>Net Value ({{ cache('currency_code', '') }})</b></td>
                     <td class="text-right"><b>{{ currency($sale->total) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td width="39%" class="text-right"> <b>{{ __('lang.net_value', [], 'ar') }}</b> </td>
+                        <td width="39%" class="text-right"> <b>{{ __('lang.net_value', [], 'ar') }} ({{ cache('currency_symbol', '') }})</b> </td>
                     @endif
                 </tr>
                 @if ($sale->other_discount + $sale->item_discount != 0)
@@ -582,10 +585,11 @@
                         $discount_percentage = $sale->total > 0 ? round(($total_discount / $sale->total) * 100, 2) : 0;
                     @endphp
                     <tr>
-                        <td class="text-left" width="39%"><b>Discount</b></td>
+                        <td class="text-left" width="39%"><b>Discount ({{ cache('currency_code', '') }})</b></td>
                         <td class="text-right"><b>{{ currency($total_discount) }} ({{ $discount_percentage }}%)</b></td>
                         @if ($thermal_printer_style == 'with_arabic')
-                            <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
+                            <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }} ({{ cache('currency_symbol', '') }})</b>
+                            </td>
                         @endif
                     </tr>
                 @endif
@@ -595,52 +599,54 @@
                         $discount_percentage = $sale->total > 0 ? round(($sale->other_discount / $sale->total) * 100, 2) : 0;
                     @endphp
                     <tr>
-                        <td class="text-left" width="39%"><b>Discount</b></td>
+                        <td class="text-left" width="39%"><b>Discount ({{ cache('currency_code', '') }})</b></td>
                         <td class="text-right"><b>{{ currency($sale->other_discount) }} ({{ $discount_percentage }}%)</b></td>
                         @if ($thermal_printer_style == 'with_arabic')
-                            <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }}</b> </td>
+                            <td width="39%" class="text-right"> <b>{{ __('lang.discount', [], 'ar') }} ({{ cache('currency_symbol', '') }})</b>
+                            </td>
                         @endif
                     </tr>
                 @endif
             @endif
             @if ($sale->tax_amount != 0)
                 <tr>
-                    <td class="text-left" width="39%"><b>Tax</b></td>
+                    <td class="text-left" width="39%"><b>Tax ({{ cache('currency_code', '') }})</b></td>
                     <td class="text-right"><b>{{ currency($sale->tax_amount) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td width="39%" class="text-right"> <b>{{ __('lang.tax', [], 'ar') }}</b> </td>
+                        <td width="39%" class="text-right"> <b>{{ __('lang.tax', [], 'ar') }} ({{ cache('currency_symbol', '') }})</b> </td>
                     @endif
                 </tr>
             @endif
             @if ($sale->round_off != 0)
                 <tr>
-                    <td class="text-left" width="39%"><b>Round Off</b></td>
+                    <td class="text-left" width="39%"><b>Round Off ({{ cache('currency_code', '') }})</b></td>
                     <td class="text-right"><b>{{ currency($sale->round_off) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td width="39%" class="text-right"> <b>{{ __('lang.round_off', [], 'ar') }}</b> </td>
+                        <td width="39%" class="text-right"> <b>{{ __('lang.round_off', [], 'ar') }} ({{ cache('currency_symbol', '') }})</b>
+                        </td>
                     @endif
                 </tr>
             @endif
             <tr>
-                <td class="text-left" width="39%"><b>Total</b></td>
+                <td class="text-left" width="39%"><b>Total ({{ cache('currency_code') }})</b></td>
                 <td class="text-right"><b>{{ currency($sale->grand_total) }}</b></td>
                 @if ($thermal_printer_style == 'with_arabic')
-                    <td width="39%" class="text-right"> <b>{{ __('lang.total', [], 'ar') }}</b> </td>
+                    <td width="39%" class="text-right"> <b>{{ __('lang.total', [], 'ar') }} ({{ cache('currency_symbol', '') }})</b> </td>
                 @endif
             </tr>
             <tr>
-                <td class="text-left" width="39%"><b>Paid</b></td>
+                <td class="text-left" width="39%"><b>Paid ({{ cache('currency_code') }})</b></td>
                 <td class="text-right"><b>{{ currency($sale->paid) }}</b></td>
                 @if ($thermal_printer_style == 'with_arabic')
-                    <td width="39%" class="text-right"> <b>{{ __('lang.paid', [], 'ar') }}</b> </td>
+                    <td width="39%" class="text-right"> <b>{{ __('lang.paid', [], 'ar') }} ({{ cache('currency_symbol', '') }})</b> </td>
                 @endif
             </tr>
             @if ($sale->balance)
                 <tr>
-                    <td class="text-left" width="39%"><b>Balance</b></td>
+                    <td class="text-left" width="39%"><b>Balance ({{ cache('currency_code') }})</b></td>
                     <td class="text-right"><b>{{ currency($sale->balance) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
-                        <td width="39%" class="text-right"> <b>{{ __('lang.balance', [], 'ar') }}</b> </td>
+                        <td width="39%" class="text-right"> <b>{{ __('lang.balance', [], 'ar') }} ({{ cache('currency_symbol', '') }})</b> </td>
                     @endif
                 </tr>
             @endif
@@ -652,7 +658,8 @@
                     <p> <b>{{ $barcode_string }}</b> </p>
                 </div>
                 <div class="qrcode">
-                    <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(url('/') . '/invoice/' . $sale->id, 'QRCODE', 2, 2) }}" alt="QR Code" />
+                    <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(url('/') . '/invoice/' . $sale->id, 'QRCODE', 2, 2) }}"
+                        alt="QR Code" />
                 </div>
             </div>
         @endif
