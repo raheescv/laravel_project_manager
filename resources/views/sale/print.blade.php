@@ -540,7 +540,12 @@
                             @endphp
                             <td class="text-right"> <b>{{ currency($unit_price) }}</b> </td>
                         @endif
-                        <td class="text-right"> <b>{{ round($item->quantity, 3) }}</b> </td>
+                        <td class="text-right">
+                            <b>{{ round($item->quantity, 3) }}</b>
+                            @if ($item->unit?->name)
+                                <span style="font-size: 9px;">{{ $item->unit->name }}</span>
+                            @endif
+                        </td>
                         @if ($enable_discount_in_print == 'yes')
                             <td class="text-right"> <b>{{ currency($item->total) }}</b> </td>
                         @else
