@@ -97,20 +97,28 @@ class DeleteAction
     {
         switch ($model->model) {
             case 'Sale':
-                event(new SaleUpdatedEvent('payment', $model->sale));
-                event(new SaleUpdatedEvent('discount', $model->sale));
+                if ($model->sale) {
+                    event(new SaleUpdatedEvent('payment', $model->sale));
+                    event(new SaleUpdatedEvent('discount', $model->sale));
+                }
                 break;
             case 'SaleReturn':
-                event(new SaleReturnUpdatedEvent('payment', $model->saleReturn));
-                event(new SaleReturnUpdatedEvent('discount', $model->saleReturn));
+                if ($model->saleReturn) {
+                    event(new SaleReturnUpdatedEvent('payment', $model->saleReturn));
+                    event(new SaleReturnUpdatedEvent('discount', $model->saleReturn));
+                }
                 break;
             case 'Purchase':
-                event(new PurchaseUpdatedEvent('payment', $model->purchase));
-                event(new PurchaseUpdatedEvent('discount', $model->purchase));
+                if ($model->purchase) {
+                    event(new PurchaseUpdatedEvent('payment', $model->purchase));
+                    event(new PurchaseUpdatedEvent('discount', $model->purchase));
+                }
                 break;
             case 'PurchaseReturn':
-                event(new PurchaseReturnUpdatedEvent('payment', $model->purchaseReturn));
-                event(new PurchaseReturnUpdatedEvent('discount', $model->purchaseReturn));
+                if ($model->purchaseReturn) {
+                    event(new PurchaseReturnUpdatedEvent('payment', $model->purchaseReturn));
+                    event(new PurchaseReturnUpdatedEvent('discount', $model->purchaseReturn));
+                }
                 break;
         }
     }

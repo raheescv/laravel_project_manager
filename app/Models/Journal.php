@@ -66,6 +66,11 @@ class Journal extends Model implements AuditableContracts
         return $this->belongsTo(SaleReturn::class, 'model_id');
     }
 
+    public function purchaseReturn()
+    {
+        return $this->belongsTo(PurchaseReturn::class, 'model_id');
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
