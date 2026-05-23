@@ -4,18 +4,40 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\V1\Sale\CreateAction;
 use App\Actions\V1\Sale\GetAction;
+use App\Actions\V1\Sale\ListAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\Sale\IndexRequest;
 use App\Http\Requests\V1\Sale\StoreRequest;
 use App\Http\Resources\V1\Sale\SaleResource;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 #[Group('Mobile - Sales')]
 class SaleController extends Controller
 {
     use ApiResponseTrait;
+
+    /**
+     * List sales.
+     *
+     * Returns a paginated list of sales for the authenticated user's assigned branches,
+     * with optional filters (search, status, date range, customer, payment method).
+     */
+    public function index(ListAction $action, IndexRequest $request): JsonResponse
+    {
+        try {
+            $result = $action->execute($request);
+
+            return $this->sendSuccess($result, 'Sales retrieved successfully');
+        } catch (ValidationException $e) {
+            return $this->sendValidationError($e->errors(), 'Validation failed');
+        } catch (\Exception $e) {
+            return $this->sendServerError('Failed to retrieve sales: '.$e->getMessage());
+        }
+    }
 
     /**
      * View sale.

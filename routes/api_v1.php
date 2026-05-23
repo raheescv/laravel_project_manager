@@ -72,6 +72,7 @@ Route::prefix('v1')->group(function () {
 
             // Bill routes
             Route::prefix('sale')->group(function () {
+                Route::get('/', [SaleController::class, 'index'])->name('api.v1.sale.index');
                 Route::post('/', [SaleController::class, 'store'])->name('api.v1.sale.store');
                 Route::get('/{sale}', [SaleController::class, 'show'])->whereNumber('sale')->name('api.v1.sale.show');
             });
