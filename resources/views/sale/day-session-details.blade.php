@@ -285,7 +285,7 @@
                         <div class="card-header bg-white py-3">
                             <h5 class="mb-0 d-flex align-items-center">
                                 <i class="fa fa-list me-2" style="color: #4a6fa5;"></i>
-                                Session Sales Details (Including Tailoring Module)
+                                Session Sales Details
                             </h5>
                         </div>
                         <div class="card-body p-0">

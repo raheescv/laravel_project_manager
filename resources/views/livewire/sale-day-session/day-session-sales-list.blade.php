@@ -46,7 +46,7 @@
                     <div class="col-12">
                         <h6 class="mb-3 text-muted d-flex align-items-center">
                             <i class="fa fa-credit-card me-2"></i>
-                            Sale + Tailoring Payment Summary
+                            Sale + @if (auth()->user()->can('tailoring order.view')) Tailoring @endif Payment Summary
                             <span class="badge bg-light text-dark ms-2">{{ count($paymentSummary) }} Methods</span>
                         </h6>
                     </div>
