@@ -14,6 +14,7 @@ class ApiLog extends Model
         'tenant_id',
         'endpoint',
         'method',
+        'service_name',
         'request',
         'response',
         'status',

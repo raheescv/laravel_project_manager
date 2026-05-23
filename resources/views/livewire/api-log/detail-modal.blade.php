@@ -37,6 +37,17 @@
                                         </div>
 
                                         <div class="col-6">
+                                            <label class="form-label fw-semibold text-muted small">Service Name</label>
+                                            <div class="p-2 bg-light rounded border">
+                                                @if ($apiLog->service_name)
+                                                    <span class="badge bg-primary text-white">{{ $apiLog->service_name }}</span>
+                                                @else
+                                                    <span class="text-muted">N/A</span>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6">
                                             <label class="form-label fw-semibold text-muted small">Username</label>
                                             <div class="p-2 bg-light rounded border">
                                                 {{ $apiLog->username ?? 'N/A' }}

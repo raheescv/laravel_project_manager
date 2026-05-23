@@ -7,6 +7,7 @@ use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Http\Requests\V1\Sale\StoreRequest;
 use App\Models\Account;
 use App\Models\AccountCategory;
+use App\Models\ApiLog;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Sale;
@@ -21,76 +22,127 @@ class CreateAction
     private const DUPLICATE_WINDOW_MINUTES = 2;
 
     /**
-     * Create a completed sale (bill) from the final sale data sent by the mobile app.
+     * Create a completed sale from the final sale data sent by the mobile app.
      *
      * Persistence is delegated to the existing App\Actions\Sale\CreateAction so that
      * stock movements and journal postings run exactly as they do for the web POS.
      */
     public function execute(StoreRequest $request): Sale
     {
-        $user = $request->user();
-        $branchId = $user->default_branch_id;
+        $apiLog = $this->startApiLog($request);
 
-        if (! $branchId) {
-            throw new RuntimeException('Your account is not assigned to a branch.');
-        }
+        try {
+            $user = $request->user();
+            $branchId = $user->default_branch_id;
 
-        $customer = $this->resolveCustomer(
-            $request->validated('customerName'),
-            $request->validated('phoneNumber'),
-        );
-        $paymentAccount = $this->resolvePaymentMethod($request->validated('paymentMethod'));
-        $items = $this->buildItems($request->validated('items'), $branchId, (int) $user->id);
-
-        $this->guardAgainstDuplicate(
-            $branchId,
-            (int) $customer->id,
-            (int) $user->id,
-            $items,
-            (float) $request->validated('totalPayment'),
-        );
-
-        $data = [
-            'status' => 'completed',
-            'branch_id' => $branchId,
-            'account_id' => $customer->id,
-            'customer_name' => $customer->name,
-            'customer_mobile' => $customer->mobile,
-            'sale_type' => 'normal',
-            'date' => today()->toDateString(),
-            'gross_amount' => 0,
-            'item_discount' => 0,
-            'tax_amount' => 0,
-            'other_discount' => (float) ($request->validated('discount') ?? 0),
-            'freight' => 0,
-            'round_off' => 0,
-            'paid' => 0,
-            'items' => $items,
-            'payments' => [[
-                'payment_method_id' => $paymentAccount->id,
-                'amount' => (float) $request->validated('totalPayment'),
-            ]],
-            'comboOffers' => [],
-        ];
-
-        $sale = DB::transaction(function () use ($data, $user) {
-            $response = (new SaleCreateAction())->execute($data, (int) $user->id);
-
-            if (! $response['success']) {
-                throw new RuntimeException($response['message']);
+            if (! $branchId) {
+                throw new RuntimeException('Your account is not assigned to a branch.');
             }
 
-            return $response['data'];
-        });
+            $customer = $this->resolveCustomer($request->validated('customerName'), $request->validated('phoneNumber'));
+            $paymentAccount = $this->resolvePaymentMethod($request->validated('paymentMethod'));
+            $items = $this->buildItems($request->validated('items'), $branchId, (int) $user->id);
+            $totalPayment = (float) $request->validated('totalPayment');
 
-        return $sale->load([
-            'items.product:id,name,type',
-            'items.employee:id,name',
-            'payments.paymentMethod:id,name',
-            'account:id,name,mobile',
-            'createdUser:id,name',
-            'branch',
-        ]);
+            $this->guardAgainstDuplicate($branchId, (int) $customer->id, (int) $user->id, $items, $totalPayment);
+
+            $data = [
+                'status' => 'completed',
+                'branch_id' => $branchId,
+                'account_id' => $customer->id,
+                'customer_name' => $customer->name,
+                'customer_mobile' => $customer->mobile,
+                'sale_type' => 'normal',
+                'date' => today()->toDateString(),
+                'gross_amount' => 0,
+                'item_discount' => 0,
+                'tax_amount' => 0,
+                'other_discount' => (float) ($request->validated('discount') ?? 0),
+                'freight' => 0,
+                'round_off' => 0,
+                'payment_method_ids' => (string) $paymentAccount->id,
+                'payment_method_name' => $paymentAccount->name,
+                'paid' => $totalPayment,
+                'items' => $items,
+                'payments' => [
+                    [
+                        'payment_method_id' => $paymentAccount->id,
+                        'amount' => $totalPayment,
+                    ],
+                ],
+                'comboOffers' => [],
+            ];
+
+            $sale = DB::transaction(function () use ($data, $user) {
+                $response = new SaleCreateAction()->execute($data, (int) $user->id);
+
+                if (! $response['success']) {
+                    throw new RuntimeException($response['message']);
+                }
+
+                return $response['data'];
+            })->load([
+                'items.product:id,name,type',
+                'items.employee:id,name',
+                'payments.paymentMethod:id,name',
+                'account:id,name,mobile',
+                'createdUser:id,name',
+                'branch',
+            ]);
+
+            $this->completeApiLog($apiLog, 'success', [
+                'sale_id' => $sale->id,
+                'invoice_no' => $sale->invoice_no,
+            ]);
+
+            return $sale;
+        } catch (\Throwable $e) {
+            $this->completeApiLog($apiLog, 'failed', null, $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Persist an api_logs row at request entry so every Sale API call is auditable.
+     */
+    private function startApiLog(StoreRequest $request): ?ApiLog
+    {
+        try {
+            return ApiLog::create([
+                'endpoint' => $request->path(),
+                'method' => $request->method(),
+                'service_name' => 'Sale Create',
+                'request' => json_encode($request->all()),
+                'status' => 'pending',
+                'user_id' => $request->user()?->id,
+                'user_name' => $request->user()?->name,
+            ]);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Finalize the api_logs row with the outcome of the request.
+     *
+     * @param  array<string, mixed>|null  $response
+     */
+    private function completeApiLog(?ApiLog $apiLog, string $status, ?array $response = null, ?string $description = null): void
+    {
+        if (! $apiLog) {
+            return;
+        }
+
+        try {
+            $data = [
+                'status' => $status,
+                'response' => $response ? json_encode($response) : null,
+                'description' => $description,
+            ];
+            $apiLog->update($data);
+        } catch (\Throwable $e) {
+            // Logging must never mask the real outcome of the request.
+        }
     }
 
     /**
@@ -102,19 +154,26 @@ class CreateAction
      */
     private function buildItems(array $lines, int $branchId, int $userId): array
     {
+        $productIds = array_unique(array_map(fn ($line) => (int) $line['productId'], $lines));
+
+        $products = Product::query()->whereIn('id', $productIds)->get()->keyBy('id');
+        $inventories = Inventory::query()
+            ->whereIn('product_id', $productIds)
+            ->where('branch_id', $branchId)
+            ->get()
+            ->keyBy('product_id');
+
         $items = [];
 
         foreach ($lines as $line) {
-            $product = Product::query()->product()->find($line['productId']);
+            $productId = (int) $line['productId'];
+            $product = $products->get($productId);
 
             if (! $product) {
-                throw new RuntimeException("Product #{$line['productId']} is not a valid sellable product.");
+                throw new RuntimeException("Product #{$productId} is not a valid sellable product.");
             }
 
-            $inventory = Inventory::query()
-                ->where('product_id', $product->id)
-                ->where('branch_id', $branchId)
-                ->first();
+            $inventory = $inventories->get($productId);
 
             if (! $inventory) {
                 throw new RuntimeException("Product '{$product->name}' is not available at your branch.");
@@ -161,15 +220,19 @@ class CreateAction
                 continue;
             }
 
-            $existing = $sale->items->map(fn ($item) => [
-                'product_id' => $item->product_id,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'discount' => $item->discount ?? 0,
-            ])->all();
+            $existing = $sale->items
+                ->map(
+                    fn ($item) => [
+                        'product_id' => $item->product_id,
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'discount' => $item->discount ?? 0,
+                    ],
+                )
+                ->all();
 
             if ($this->itemsSignature($existing) === $signature) {
-                throw new RuntimeException('This sale was already saved a moment ago. Please refresh before trying again.');
+                throw new RuntimeException("This sale was already saved a moment ago (matches sale #{$sale->id}). Please refresh before trying again.");
             }
         }
     }
@@ -181,12 +244,15 @@ class CreateAction
      */
     private function itemsSignature(array $items): string
     {
-        $rows = array_map(fn ($item) => [
-            'product_id' => (int) $item['product_id'],
-            'quantity' => (float) $item['quantity'],
-            'unit_price' => (float) $item['unit_price'],
-            'discount' => (float) ($item['discount'] ?? 0),
-        ], $items);
+        $rows = array_map(
+            fn ($item) => [
+                'product_id' => (int) $item['product_id'],
+                'quantity' => (float) $item['quantity'],
+                'unit_price' => (float) $item['unit_price'],
+                'discount' => (float) ($item['discount'] ?? 0),
+            ],
+            $items,
+        );
 
         usort($rows, fn ($a, $b) => $a['product_id'] <=> $b['product_id']);
 
@@ -206,7 +272,7 @@ class CreateAction
             }
         }
 
-        $response = (new AccountCreateAction())->execute([
+        $response = new AccountCreateAction()->execute([
             'account_type' => 'asset',
             'account_category_id' => AccountCategory::firstOrCreate(['name' => 'Account Receivable'])->id,
             'name' => $name,

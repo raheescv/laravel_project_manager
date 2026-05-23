@@ -102,7 +102,7 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="method" label="Method" />
                             </th>
                             <th class="border-0">
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="request" label="Request" />
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="service_name" label="Service Name" />
                             </th>
                             <th class="border-0">
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="response" label="Response" />
@@ -138,7 +138,13 @@
                                     <code class="bg-light rounded px-2 py-1 small text-break">{{ Str::limit($item->endpoint, 50) }}</code>
                                 </td>
                                 <td> <span class="badge bg-info text-white">{{ $item->method }}</span> </td>
-                                <td> <span class="badge bg-info text-white">{{ $item->request }}</span> </td>
+                                <td>
+                                    @if ($item->service_name)
+                                        <span class="badge bg-primary text-white">{{ $item->service_name }}</span>
+                                    @else
+                                        <span class="text-muted small">-</span>
+                                    @endif
+                                </td>
                                 <td> <span class="badge bg-info text-white">{{ $item->response }}</span> </td>
                                 <td>
                                     @if ($item->status === 'success')

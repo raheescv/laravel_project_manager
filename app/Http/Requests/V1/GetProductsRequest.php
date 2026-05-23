@@ -38,6 +38,7 @@ class GetProductsRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
             'in_stock_only' => ['nullable', 'boolean'],
+            'type' => ['nullable', 'string', 'in:product,service'],
         ];
     }
 
@@ -56,6 +57,7 @@ class GetProductsRequest extends FormRequest
             'sort_by.in' => 'The sort by field must be one of: name, price, mrp, cost.',
             'sort_direction.in' => 'The sort direction must be either asc or desc.',
             'per_page.max' => 'The per page value cannot exceed 100.',
+            'type.in' => 'The product type must be either product or service.',
         ];
     }
 

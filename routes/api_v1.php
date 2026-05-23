@@ -70,11 +70,6 @@ Route::prefix('v1')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.logout');
 
-            // Product routes (reuse the existing V1 ProductController)
-            Route::prefix('products')->group(function () {
-                Route::get('/', [ProductController::class, 'mobileIndex'])->name('api.v1.products.index');
-                Route::get('/{product}', [ProductController::class, 'mobileShow'])->whereNumber('product')->name('api.v1.products.show');
-            });
             // Bill routes
             Route::prefix('sale')->group(function () {
                 Route::post('/', [SaleController::class, 'store'])->name('api.v1.sale.store');

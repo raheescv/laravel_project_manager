@@ -74,6 +74,9 @@ class GetProductsAction
             ->when($filters['main_category_id'] ?? null, function ($q, $value) {
                 return $q->where('main_category_id', $value);
             })
+            ->when($filters['type'] ?? null, function ($q, $value) {
+                return $q->where('type', $value);
+            })
             ->when($filters['sub_category_id'] ?? null, function ($q, $value) {
                 return $q->where('sub_category_id', $value);
             })

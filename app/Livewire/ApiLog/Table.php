@@ -76,6 +76,7 @@ class Table extends Component
                     $value = trim($value);
                     $q->where('endpoint', 'like', "%{$value}%")
                         ->orWhere('method', 'like', "%{$value}%")
+                        ->orWhere('service_name', 'like', "%{$value}%")
                         ->orWhere('status', 'like', "%{$value}%")
                         ->orWhere('username', 'like', "%{$value}%")
                         ->orWhere('user_name', 'like', "%{$value}%")
