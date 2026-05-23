@@ -1,9 +1,6 @@
 <div>
     @php
         $statusClass = $purchase->status === 'completed' ? 'bg-success' : ($purchase->status === 'cancelled' ? 'bg-danger' : 'bg-warning');
-        $purchaseAuditColumns = $purchase->audits->pluck('new_values')->filter()->map(fn ($item) => array_keys($item))->flatten()->unique()->values()->all();
-        $itemAuditColumns = $purchase->items->flatMap->audits->pluck('new_values')->filter()->map(fn ($item) => array_keys($item))->flatten()->unique()->values()->all();
-        $paymentAuditColumns = $purchase->payments->flatMap->audits->pluck('new_values')->filter()->map(fn ($item) => array_keys($item))->flatten()->unique()->values()->all();
         $productCostAudits = $purchase->items
             ->pluck('product')
             ->filter()
@@ -387,15 +384,15 @@
 
                         <div class="tab-content">
                             <div id="purchase-audit" class="tab-pane fade show active" role="tabpanel">
-                                <x-purchase.audit-table :audits="$purchase->audits" :columns="$purchaseAuditColumns" />
+                                <x-audit.table :audits="$purchase->audits" emptyMessage="No purchase audit entries found." />
                             </div>
 
                             <div id="purchase-items-audit" class="tab-pane fade" role="tabpanel">
-                                <x-purchase.audit-table :audits="$purchase->items->flatMap->audits" :columns="$itemAuditColumns" />
+                                <x-audit.table :audits="$purchase->items->flatMap->audits" emptyMessage="No purchase item audit entries found." />
                             </div>
 
                             <div id="purchase-payments-audit" class="tab-pane fade" role="tabpanel">
-                                <x-purchase.audit-table :audits="$purchase->payments->flatMap->audits" :columns="$paymentAuditColumns" />
+                                <x-audit.table :audits="$purchase->payments->flatMap->audits" emptyMessage="No purchase payment audit entries found." />
                             </div>
 
                             <div id="product-cost-audit" class="tab-pane fade" role="tabpanel">

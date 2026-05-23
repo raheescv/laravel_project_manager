@@ -553,224 +553,23 @@
 
                                     <div class="tab-content">
                                         <div id="audit-order" class="tab-pane fade show active" role="tabpanel">
-                                            @php $orderAudits = $order->audits ?? collect(); @endphp
-                                            @if ($orderAudits->isNotEmpty())
-                                                @php
-                                                    $orderColumns = $orderAudits
-                                                        ->pluck('new_values')
-                                                        ->filter()
-                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
-                                                        ->flatten()
-                                                        ->unique()
-                                                        ->values()
-                                                        ->all();
-                                                @endphp
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-bordered align-middle mb-0">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                <th><i class="fa fa-user me-1"></i>User</th>
-                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
-                                                                @foreach ($orderColumns as $key)
-                                                                    <th class="text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
-                                                                @endforeach
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach ($orderAudits as $audit)
-                                                                <tr>
-                                                                    <td class="text-nowrap">{{ $audit->created_at }}</td>
-                                                                    <td>{{ $audit->user?->name }}</td>
-                                                                    <td>{{ $audit->event }}</td>
-                                                                    @foreach ($orderColumns as $key)
-                                                                        <td class="text-end text-nowrap">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                    @endforeach
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            @else
-                                                <div class="alert alert-secondary mb-0">No audit history for this order.</div>
-                                            @endif
+                                            <x-audit.table :audits="$order->audits ?? collect()" emptyMessage="No audit history for this order." />
                                         </div>
 
                                         <div id="audit-order-items" class="tab-pane fade" role="tabpanel">
-                                            @php $itemAudits = collect($order->items ?? [])->flatMap->audits; @endphp
-                                            @if ($itemAudits->isNotEmpty())
-                                                @php
-                                                    $itemColumns = $itemAudits
-                                                        ->pluck('new_values')
-                                                        ->filter()
-                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
-                                                        ->flatten()
-                                                        ->unique()
-                                                        ->values()
-                                                        ->all();
-                                                @endphp
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-bordered align-middle mb-0">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                <th><i class="fa fa-user me-1"></i>User</th>
-                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
-                                                                @foreach ($itemColumns as $key)
-                                                                    <th class="text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
-                                                                @endforeach
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach ($itemAudits as $audit)
-                                                                <tr>
-                                                                    <td class="text-nowrap">{{ $audit->created_at }}</td>
-                                                                    <td>{{ $audit->user?->name }}</td>
-                                                                    <td>{{ $audit->event }}</td>
-                                                                    @foreach ($itemColumns as $key)
-                                                                        <td class="text-end text-nowrap">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                    @endforeach
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            @else
-                                                <div class="alert alert-secondary mb-0">No audit history for order items.</div>
-                                            @endif
+                                            <x-audit.table :audits="collect($order->items ?? [])->flatMap->audits" emptyMessage="No audit history for order items." />
                                         </div>
+
                                         <div id="audit-tailor-assignments" class="tab-pane fade" role="tabpanel">
-                                            @php
-                                                $assignmentAudits = collect($order->items ?? [])->flatMap->tailorAssignments->flatMap->audits;
-                                            @endphp
-                                            @if ($assignmentAudits->isNotEmpty())
-                                                @php
-                                                    $assignmentColumns = $assignmentAudits
-                                                        ->pluck('new_values')
-                                                        ->filter()
-                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
-                                                        ->flatten()
-                                                        ->unique()
-                                                        ->values()
-                                                        ->all();
-                                                @endphp
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-bordered align-middle mb-0">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                <th><i class="fa fa-user me-1"></i>User</th>
-                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
-                                                                @foreach ($assignmentColumns as $key)
-                                                                    <th class="text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
-                                                                @endforeach
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach ($assignmentAudits as $audit)
-                                                                <tr>
-                                                                    <td class="text-nowrap">{{ $audit->created_at }}</td>
-                                                                    <td>{{ $audit->user?->name }}</td>
-                                                                    <td>{{ $audit->event }}</td>
-                                                                    @foreach ($assignmentColumns as $key)
-                                                                        <td class="text-end text-nowrap">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                    @endforeach
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            @else
-                                                <div class="alert alert-secondary mb-0">No audit history for tailor assignments.</div>
-                                            @endif
+                                            <x-audit.table :audits="collect($order->items ?? [])->flatMap->tailorAssignments->flatMap->audits" emptyMessage="No audit history for tailor assignments." />
                                         </div>
 
                                         <div id="audit-order-measurement" class="tab-pane fade" role="tabpanel">
-                                            @php $measurementAudits = collect($order->measurements ?? [])->flatMap->audits; @endphp
-                                            @if ($measurementAudits->isNotEmpty())
-                                                @php
-                                                    $measurementColumns = $measurementAudits
-                                                        ->pluck('new_values')
-                                                        ->filter()
-                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
-                                                        ->flatten()
-                                                        ->unique()
-                                                        ->values()
-                                                        ->all();
-                                                @endphp
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-bordered align-middle mb-0">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                <th><i class="fa fa-user me-1"></i>User</th>
-                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
-                                                                @foreach ($measurementColumns as $key)
-                                                                    <th class="text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
-                                                                @endforeach
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach ($measurementAudits as $audit)
-                                                                <tr>
-                                                                    <td class="text-nowrap">{{ $audit->created_at }}</td>
-                                                                    <td>{{ $audit->user?->name }}</td>
-                                                                    <td>{{ $audit->event }}</td>
-                                                                    @foreach ($measurementColumns as $key)
-                                                                        <td class="text-end text-nowrap">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                    @endforeach
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            @else
-                                                <div class="alert alert-secondary mb-0">No audit history for order measurements.</div>
-                                            @endif
+                                            <x-audit.table :audits="collect($order->measurements ?? [])->flatMap->audits" emptyMessage="No audit history for order measurements." />
                                         </div>
 
                                         <div id="audit-payments" class="tab-pane fade" role="tabpanel">
-                                            @php $paymentAudits = collect($order->payments ?? [])->flatMap->audits; @endphp
-                                            @if ($paymentAudits->isNotEmpty())
-                                                @php
-                                                    $paymentColumns = $paymentAudits
-                                                        ->pluck('new_values')
-                                                        ->filter()
-                                                        ->map(fn($item) => is_array($item) ? array_keys($item) : [])
-                                                        ->flatten()
-                                                        ->unique()
-                                                        ->values()
-                                                        ->all();
-                                                @endphp
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-bordered align-middle mb-0">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th><i class="fa fa-clock-o me-1"></i>Date Time</th>
-                                                                <th><i class="fa fa-user me-1"></i>User</th>
-                                                                <th><i class="fa fa-bolt me-1"></i>Event</th>
-                                                                @foreach ($paymentColumns as $key)
-                                                                    <th class="text-end">{{ Str::title(str_replace('_', ' ', $key)) }}</th>
-                                                                @endforeach
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach ($paymentAudits as $audit)
-                                                                <tr>
-                                                                    <td class="text-nowrap">{{ $audit->created_at }}</td>
-                                                                    <td>{{ $audit->user?->name }}</td>
-                                                                    <td>{{ $audit->event }}</td>
-                                                                    @foreach ($paymentColumns as $key)
-                                                                        <td class="text-end text-nowrap">{{ $audit->new_values[$key] ?? '' }}</td>
-                                                                    @endforeach
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            @else
-                                                <div class="alert alert-secondary mb-0">No audit history for payments.</div>
-                                            @endif
+                                            <x-audit.table :audits="collect($order->payments ?? [])->flatMap->audits" emptyMessage="No audit history for payments." />
                                         </div>
                                     </div>
                                 </div>

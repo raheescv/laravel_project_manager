@@ -234,6 +234,27 @@
             @php
                 $auditHideColumns = ['id','tenant_id','branch_id','remarks','deleted_at','meeting_datetime','created_by','updated_by','created_at','updated_at'];
                 $displayAuditColumns = array_values(array_diff($auditColumns, $auditHideColumns));
+
+                $renderLeadAuditValue = function ($col, $val) {
+                    if ($val === null || $val === '') {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    switch ($col) {
+                        case 'country_id':
+                            return e(optional(\App\Models\Country::find($val))->name ?? '-');
+                        case 'assigned_to':
+                            return e(optional(\App\Models\User::find($val))->name ?? '-');
+                        case 'property_group_id':
+                            return e(optional(\App\Models\PropertyGroup::find($val))->name ?? '-');
+                        case 'status':
+                            return '<span class="badge ' . e(leadStatusBadgeClass($val)) . '">' . e($val) . '</span>';
+                        case 'type':
+                            $cls = $val === 'Sales' ? 'bg-primary-subtle text-primary' : 'bg-info-subtle text-info';
+                            return '<span class="badge ' . $cls . '">' . e($val) . '</span>';
+                        default:
+                            return e($val);
+                    }
+                };
             @endphp
             <div class="card shadow-sm border-0 mb-3 lead-audit-card">
                 <div class="card-header lead-audit-header d-flex align-items-center justify-content-between">
@@ -241,72 +262,69 @@
                         <i class="fa fa-history me-2"></i>Audit Report
                         <span class="badge bg-white text-dark ms-2">{{ count($audits) }} {{ \Illuminate\Support\Str::plural('record', count($audits)) }}</span>
                     </h5>
-                    <span class="small text-white-50 d-none d-md-inline">
-                        <i class="fa fa-info-circle me-1"></i>Scroll horizontally to view all fields
-                    </span>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle border-bottom mb-0 lead-audit-table">
-                            <thead>
-                                <tr>
-                                    <th class="fw-semibold text-uppercase text-muted">#</th>
-                                    <th class="fw-semibold text-uppercase text-muted text-nowrap"><i class="fa fa-calendar me-1"></i>Date &amp; Time</th>
-                                    <th class="fw-semibold text-uppercase text-muted text-nowrap"><i class="fa fa-user me-1"></i>User</th>
-                                    @foreach($displayAuditColumns as $col)
-                                        <th class="fw-semibold text-uppercase text-muted text-nowrap">{{ ucwords(str_replace('_', ' ', $col)) }}</th>
-                                    @endforeach
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($audits as $key => $audit)
-                                    @php
-                                        $values = ($audit['new_values'] ?? []) + ($audit['old_values'] ?? []);
-                                    @endphp
+                <div class="card-body p-2">
+                    <div class="audit-pivot-list">
+                        <div class="audit-pivot-scroll">
+                            <table class="table table-bordered table-sm align-middle mb-0 audit-pivot-table">
+                                <thead>
                                     <tr>
-                                        <td class="text-muted">{{ $key + 1 }}</td>
-                                        <td class="text-nowrap">
-                                            <i class="fa fa-clock-o text-muted me-1"></i>{{ \Carbon\Carbon::parse($audit['created_at'])->format('Y-m-d H:i:s') }}
-                                        </td>
-                                        <td class="text-nowrap">
-                                            @if(! empty($audit['user']['name']))
-                                                <span class="avatar-sm bg-primary-subtle text-primary me-1">{{ strtoupper(substr($audit['user']['name'], 0, 1)) }}</span><span class="fw-semibold">{{ $audit['user']['name'] }}</span>
-                                            @else
-                                                <span class="text-muted">System</span>
-                                            @endif
-                                        </td>
-                                        @foreach($displayAuditColumns as $col)
-                                            @php $val = $values[$col] ?? null; @endphp
-                                            <td class="text-nowrap">
-                                                @switch($col)
-                                                    @case('country_id')
-                                                        {{ $val ? optional(\App\Models\Country::find($val))->name : '' }}
-                                                        @break
-                                                    @case('assigned_to')
-                                                        {{ $val ? optional(\App\Models\User::find($val))->name : '' }}
-                                                        @break
-                                                    @case('property_group_id')
-                                                        {{ $val ? optional(\App\Models\PropertyGroup::find($val))->name : '' }}
-                                                        @break
-                                                    @case('status')
-                                                        @if($val)
-                                                            <span class="badge {{ leadStatusBadgeClass($val) }}">{{ $val }}</span>
-                                                        @endif
-                                                        @break
-                                                    @case('type')
-                                                        @if($val)
-                                                            <span class="badge {{ $val === 'Sales' ? 'bg-primary-subtle text-primary' : 'bg-info-subtle text-info' }}">{{ $val }}</span>
-                                                        @endif
-                                                        @break
-                                                    @default
-                                                        {{ $val }}
-                                                @endswitch
-                                            </td>
+                                        <th class="audit-pivot-field-col audit-pivot-sticky">Field</th>
+                                        @foreach($audits as $key => $audit)
+                                            @php
+                                                $userName = $audit['user']['name'] ?? null;
+                                                $userInitial = $userName ? strtoupper(substr($userName, 0, 1)) : 'S';
+                                            @endphp
+                                            <th class="audit-pivot-change-col">
+                                                <div class="d-flex flex-column gap-1">
+                                                    <span class="audit-entry-index badge bg-light text-dark border align-self-start">#{{ $key + 1 }}</span>
+                                                    <span class="text-nowrap small fw-normal"><i class="fa fa-clock-o me-1 text-primary"></i>{{ \Carbon\Carbon::parse($audit['created_at'])->format('Y-m-d H:i:s') }}</span>
+                                                    <span class="text-nowrap small fw-normal">
+                                                        <span class="audit-user-avatar bg-primary-subtle text-primary me-1">{{ $userInitial }}</span>
+                                                        <span class="fw-semibold">{{ $userName ?: 'System' }}</span>
+                                                    </span>
+                                                </div>
+                                            </th>
                                         @endforeach
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @forelse($displayAuditColumns as $col)
+                                        <tr>
+                                            <th class="audit-pivot-field-col audit-pivot-sticky text-muted">{{ ucwords(str_replace('_', ' ', $col)) }}</th>
+                                            @foreach($audits as $audit)
+                                                @php
+                                                    $newVals = $audit['new_values'] ?? [];
+                                                    $oldVals = $audit['old_values'] ?? [];
+                                                    $hasOld = array_key_exists($col, $oldVals);
+                                                    $hasNew = array_key_exists($col, $newVals);
+                                                    $oldVal = $oldVals[$col] ?? null;
+                                                    $newVal = $newVals[$col] ?? null;
+                                                    $changed = $hasOld && $hasNew && $oldVal !== $newVal;
+                                                @endphp
+                                                <td class="audit-pivot-change-col">
+                                                    @if ($changed)
+                                                        <span class="text-danger text-decoration-line-through">{!! $renderLeadAuditValue($col, $oldVal) !!}</span>
+                                                        <i class="fa fa-arrow-right text-muted mx-1"></i>
+                                                        <span class="text-success fw-semibold">{!! $renderLeadAuditValue($col, $newVal) !!}</span>
+                                                    @elseif ($hasNew)
+                                                        <span class="text-success">{!! $renderLeadAuditValue($col, $newVal) !!}</span>
+                                                    @elseif ($hasOld)
+                                                        <span class="text-danger">{!! $renderLeadAuditValue($col, $oldVal) !!}</span>
+                                                    @else
+                                                        <span class="text-muted">-</span>
+                                                    @endif
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="{{ count($audits) + 1 }}" class="text-center text-muted small py-3">No field changes recorded.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -331,44 +349,63 @@
             }
             .lead-audit-header h5 { font-size: .9rem; }
             .lead-audit-header .badge { font-size: .68rem; padding: .22em .48em; }
-            .lead-audit-table {
-                font-size: .74rem;
-                margin-bottom: 0 !important;
+
+            /* === Pivot audit table (shared with x-audit.table component) === */
+            .audit-pivot-list .audit-pivot-scroll {
+                overflow-x: auto;
+                overflow-y: visible;
+                position: relative;
+                max-width: 100%;
             }
-            .lead-audit-table thead th {
-                background: #f8f9fb;
-                border-top: 1px solid #e9ecef;
-                border-bottom: 1px solid #e9ecef;
-                padding: .35rem .55rem !important;
+            .audit-pivot-list .audit-pivot-table {
+                font-size: 0.82rem;
+                border-collapse: separate;
+                border-spacing: 0;
+                margin-bottom: 0;
+                width: auto;
+                min-width: 100%;
+            }
+            .audit-pivot-list .audit-pivot-table thead th {
+                background: #f4f6fa;
+                vertical-align: top;
+                font-weight: 600;
+                color: #2d3a4b;
+                padding: 0.5rem 0.6rem;
+                border-bottom: 2px solid #dee2e6;
                 white-space: nowrap;
-                letter-spacing: .2px;
-                font-size: .64rem;
-                line-height: 1.1;
             }
-            .lead-audit-table tbody td {
-                padding: .3rem .55rem !important;
-                border-bottom: 1px solid #f1f3f5;
+            .audit-pivot-list .audit-pivot-table tbody th {
+                background: #fafbfc;
+                font-weight: 600;
+                color: #6c757d;
+                padding: 0.4rem 0.6rem;
+                white-space: nowrap;
+                text-transform: capitalize;
+            }
+            .audit-pivot-list .audit-pivot-table tbody td {
+                padding: 0.4rem 0.6rem;
                 vertical-align: middle;
-                line-height: 1.2;
+                word-break: break-word;
             }
-            .lead-audit-table tbody tr:hover { background: #fafbff; }
-            .lead-audit-table .avatar-sm {
-                width: 22px; height: 22px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 50%;
-                font-weight: 600;
-                font-size: .65rem;
+            .audit-pivot-list .audit-pivot-sticky {
+                position: sticky; left: 0; z-index: 2;
+                box-shadow: 1px 0 0 #dee2e6;
             }
-            .lead-audit-table .badge {
-                font-size: .62rem;
-                padding: .22em .45em;
-                font-weight: 600;
+            .audit-pivot-list thead .audit-pivot-sticky { z-index: 4; background: #f4f6fa !important; }
+            .audit-pivot-list tbody .audit-pivot-sticky { background: #fafbfc !important; }
+            .audit-pivot-list .audit-pivot-field-col { min-width: 160px; max-width: 220px; }
+            .audit-pivot-list .audit-pivot-change-col { min-width: 180px; }
+            .audit-pivot-list .audit-user-avatar {
+                width: 20px; height: 20px;
+                display: inline-flex; align-items: center; justify-content: center;
+                border-radius: 50%; font-weight: 600; font-size: 0.65rem;
             }
-            .lead-audit-table .fa { font-size: .72rem; }
-            /* Override Bootstrap table-sm default */
-            .lead-audit-table.table-sm > :not(caption) > * > * { padding: .3rem .55rem !important; }
+            .audit-pivot-list .audit-entry-index { font-size: 0.7rem; padding: 0.2em 0.5em; }
+            @media (max-width: 575.98px) {
+                .audit-pivot-list .audit-pivot-table { font-size: 0.76rem; }
+                .audit-pivot-list .audit-pivot-field-col { min-width: 130px; max-width: 160px; }
+                .audit-pivot-list .audit-pivot-change-col { min-width: 150px; }
+            }
             /* TomSelect look inside lead form */
             .lead-ts-status + .ts-wrapper .ts-control,
             .lead-ts-country + .ts-wrapper .ts-control,
