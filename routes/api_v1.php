@@ -70,6 +70,7 @@ Route::prefix('v1')->group(function () {
         // Authenticated routes (admin + employee)
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.logout');
+            Route::post('change-pin', [AuthController::class, 'changePin'])->name('api.v1.change-pin');
 
             // Bill routes
             Route::prefix('sale')->group(function () {

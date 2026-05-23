@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\V1\Auth\ChangePinAction;
 use App\Actions\V1\Auth\LoginAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\Auth\ChangePinRequest;
 use App\Http\Requests\V1\Auth\LoginRequest;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
@@ -44,5 +46,23 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return $this->sendSuccess(null, 'Successfully logged out');
+    }
+
+    /**
+     * Change Employee PIN.
+     *
+     * Verifies the authenticated employee's current PIN and updates it to a new one.
+     */
+    public function changePin(ChangePinAction $action, ChangePinRequest $request): JsonResponse
+    {
+        try {
+            $action->execute($request);
+
+            return $this->sendSuccess(null, 'PIN changed successfully');
+        } catch (AuthenticationException $e) {
+            return $this->sendUnauthorizedError($e->getMessage());
+        } catch (\Exception $e) {
+            return $this->sendServerError('Change PIN failed: '.$e->getMessage());
+        }
     }
 }
