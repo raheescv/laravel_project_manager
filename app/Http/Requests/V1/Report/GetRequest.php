@@ -25,6 +25,7 @@ class GetRequest extends FormRequest
             'type' => ['required', 'string', 'in:billwise,employeewise'],
             'startDate' => ['nullable', 'date'],
             'endDate' => ['nullable', 'date', 'after_or_equal:startDate'],
+            'employee_id' => ['nullable', 'integer', 'exists:users,id'],
         ];
     }
 
@@ -37,6 +38,7 @@ class GetRequest extends FormRequest
     {
         return [
             'type.in' => 'The report type must be either billwise or employeewise.',
+            'employee_id.exists' => 'The selected employee does not exist.',
         ];
     }
 }

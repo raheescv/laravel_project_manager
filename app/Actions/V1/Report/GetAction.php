@@ -16,16 +16,20 @@ class GetAction
         $type = $request->validated('type');
         $startDate = $request->validated('startDate');
         $endDate = $request->validated('endDate');
+        $employeeId = $request->validated('employee_id');
 
         $rows = $type === 'employeewise'
-            ? $this->employeeWise($startDate, $endDate)
-            : $this->billWise($startDate, $endDate);
+            ? $this->employeeWise($startDate, $endDate, $employeeId)
+            : $this->billWise($startDate, $endDate, $employeeId);
 
         return [
             'type' => $type,
             'period' => [
                 'start_date' => $startDate,
                 'end_date' => $endDate,
+            ],
+            'filters' => [
+                'employee_id' => $employeeId ? (string) $employeeId : null,
             ],
             'rows' => $rows,
         ];
@@ -34,13 +38,14 @@ class GetAction
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function billWise(?string $startDate, ?string $endDate): array
+    private function billWise(?string $startDate, ?string $endDate, ?int $employeeId): array
     {
         return Sale::query()
             ->completed()
             ->with('account:id,name')
             ->when($startDate, fn ($q, $value) => $q->whereDate('date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->whereDate('date', '<=', $value))
+            ->when($employeeId, fn ($q, $value) => $q->whereHas('items', fn ($i) => $i->where('employee_id', $value)))
             ->orderByDesc('date')
             ->orderByDesc('id')
             ->limit(200)
@@ -61,7 +66,7 @@ class GetAction
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function employeeWise(?string $startDate, ?string $endDate): array
+    private function employeeWise(?string $startDate, ?string $endDate, ?int $employeeId): array
     {
         return SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
@@ -69,6 +74,7 @@ class GetAction
             ->where('sales.status', 'completed')
             ->when($startDate, fn ($q, $value) => $q->whereDate('sales.date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->whereDate('sales.date', '<=', $value))
+            ->when($employeeId, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('revenue')
             ->selectRaw('users.id, users.name')
