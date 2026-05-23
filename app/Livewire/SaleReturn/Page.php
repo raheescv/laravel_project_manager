@@ -517,9 +517,12 @@ class Page extends Component
         }
         $account = Account::firstWhere('name', $method);
         if (! $account) {
-            $this->dispatch('error', ['message' => 'The selected method has not been assigned to an account head']);
+            $account = Account::firstWhere('alias_name', $method);
+            if (! $account) {
+                $this->dispatch('error', ['message' => 'The selected method has not been assigned to an account head']);
 
-            return false;
+                return false;
+            }
         }
         $this->payment['payment_method_id'] = $account->id;
 
