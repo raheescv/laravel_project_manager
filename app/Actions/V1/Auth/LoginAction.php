@@ -33,7 +33,7 @@ class LoginAction
 
         $user = $matched->first();
 
-        $token = $user->createToken("mobile", ['mobile'])->plainTextToken;
+        $token = $user->createToken('mobile', ['mobile'])->plainTextToken;
 
         return [
             'token' => $token,

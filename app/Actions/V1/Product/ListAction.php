@@ -3,8 +3,8 @@
 namespace App\Actions\V1\Product;
 
 use App\Http\Requests\V1\Product\SearchRequest;
-use App\Http\Resources\V1\Product\ProductResource;
-use App\Models\Product;
+use App\Http\Resources\V1\InventoryResource;
+use App\Models\Inventory;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ListAction
@@ -15,27 +15,32 @@ class ListAction
     public function execute(SearchRequest $request): array
     {
         $branchId = $request->user()?->default_branch_id;
-        $search = $request->validated('searchKey');
+        $searchKey = $request->validated('searchKey');
+        $barcode = $request->validated('barcode');
+        $type = $request->validated('type');
 
-        $products = Product::query()
-            ->product()
-            ->where('is_selling', true)
-            ->with(['unit:id,name', 'mainCategory:id,name', 'brand:id,name'])
-            ->withSum(['inventories' => fn ($query) => $query->where('branch_id', $branchId)], 'quantity')
-            ->when($search, function ($query, $value) {
+        $list = Inventory::query()
+            ->join('products', 'inventories.product_id', '=', 'products.id')
+            ->where('inventories.branch_id', $branchId)
+            ->where('products.is_selling', true)
+            ->when($searchKey, function ($query, $value) {
                 $value = trim($value);
-                $query->where(function ($sub) use ($value) {
-                    $sub->where('name', 'like', "%{$value}%")
-                        ->orWhere('code', 'like', "%{$value}%")
-                        ->orWhere('barcode_number', 'like', "%{$value}%");
-                });
+                $query->where('products.name', 'like', "%{$value}%")->orWhere('products.code', 'like', "%{$value}%");
             })
-            ->orderBy('name')
+            ->when($barcode, function ($query, $value) {
+                $query->where('inventories.barcode', $value);
+            })
+            ->when($type, function ($query, $value) {
+                $query->where('products.type', $value);
+            })
+            ->select('inventories.*', 'products.name', 'products.code', 'products.type', 'products.thumbnail', 'products.mrp')
+            ->orderBy('products.name')
             ->paginate($request->perPage());
 
+
         return [
-            'data' => ProductResource::collection($products->items()),
-            'pagination' => $this->pagination($products),
+            'data' => InventoryResource::collection($list),
+            'pagination' => $this->pagination($list),
         ];
     }
 

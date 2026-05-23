@@ -23,6 +23,8 @@ class SearchRequest extends FormRequest
     {
         return [
             'searchKey' => ['nullable', 'string', 'max:100'],
+            'barcode' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'string', 'in:product,service'],
             'page' => ['nullable', 'integer', 'min:1'],
             'perPage' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
@@ -34,5 +36,17 @@ class SearchRequest extends FormRequest
     public function perPage(): int
     {
         return (int) ($this->validated('perPage') ?? 20);
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'type.in' => 'The product type must be either product or service.',
+        ];
     }
 }
