@@ -81,6 +81,15 @@
                 </div>
             </div>
 
+            {{-- Trading platform summary (kill switch, today's KPIs, recent runs/alerts/risk).
+                 Lives inside the existing FlatTrade dashboard so operators have one place
+                 to watch the bot. Drill-downs are linked at the top of the panel. --}}
+            <div class="row mb-4">
+                <div class="col-12">
+                    @livewire('trading.dashboard')
+                </div>
+            </div>
+
             <!-- Quick Actions -->
             <div class="row mb-4">
                 <div class="col-12">

@@ -28,13 +28,43 @@ Schedule::command('sale-day-sessions:close-daily')
 Schedule::command('send:daily-sale-summary')->dailyAt('00:10');
 Schedule::command('assets:post-depreciation')->dailyAt('00:15')->withoutOverlapping();
 
-// Optimized unified trading commands
+// ============================================================================
+// Trading platform schedule
+// ----------------------------------------------------------------------------
+// Toggle TRADING_SCHEDULE_ENABLED=true in .env to flip these on. All entries
+// run sequentially with withoutOverlapping() so a slow tick can never collide
+// with the next one. Times follow the server clock — config('trading.timezone')
+// is informational only here.
+// ----------------------------------------------------------------------------
+if (config('trading.schedule.enabled')) {
+    [$buyFrom, $buyTo] = config('trading.schedule.buy_between');
+    [$sellFrom, $sellTo] = config('trading.schedule.sell_between');
+    [$quickFrom, $quickTo] = config('trading.schedule.quick_between');
+
+    // Optimized unified trading commands
+    Schedule::command('trade:unified --action=buy')
+        ->everyFiveMinutes()->between($buyFrom, $buyTo)->withoutOverlapping();
+    Schedule::command('trade:unified --action=sell')
+        ->everyFiveMinutes()->between($sellFrom, $sellTo)->withoutOverlapping();
+    Schedule::command('trade:unified --action=sell --sell-all')
+        ->dailyAt(config('trading.schedule.forced_flatten_at'))->withoutOverlapping();
+
+    // Quick trading: Buy best stock and sell losing positions every 2 minutes
+    Schedule::command('trade:quick')
+        ->everyTwoMinutes()->between($quickFrom, $quickTo)->weekdays()->withoutOverlapping();
+
+    // Force sell all stocks after the quick-trading window (Mon–Fri)
+    Schedule::command('trade:quick --sell-all')
+        ->dailyAt(config('trading.schedule.quick_flatten_at'))->weekdays()->withoutOverlapping();
+
+    // Daily AI post-mortem after the trading day ends
+    Schedule::command('trade:analyse')
+        ->dailyAt(config('trading.schedule.analyse_at'))->weekdays();
+}
+
+// Legacy reference — keep commented as documentation of the original cadence.
 // Schedule::command('trade:unified --action=buy')->everyFiveMinutes()->between('05:10', '09:55');
 // Schedule::command('trade:unified --action=sell')->everyFiveMinutes()->between('05:20', '09:55');
 // Schedule::command('trade:unified --action=sell --sell-all')->dailyAt('09:55');
-
-// Quick trading: Buy best stock and sell losing positions every 5 minutes
 // Schedule::command('trade:quick')->everyTwoMinutes()->between('04:30', '09:30')->weekdays();
-
-// Force sell all stocks after 09:50 (Monday to Friday only)
 // Schedule::command('trade:quick --sell-all')->dailyAt('09:31')->weekdays();

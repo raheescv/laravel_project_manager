@@ -24,6 +24,40 @@
                         class="nav-link {{ request()->is(['flat_trade/connect']) ? 'active' : '' }}">Connect Account</a>
                 </li>
             @endcan
+
+            {{-- Trading platform extension --}}
+            @can('flat_trade.view')
+                <li class="nav-item">
+                    <a href="{{ route('flat_trade::risk') }}"
+                        class="nav-link {{ request()->is(['flat_trade/risk']) ? 'active' : '' }}">
+                        <i class="fa fa-shield me-1"></i> Risk &amp; Live Ops
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('flat_trade::strategies') }}"
+                        class="nav-link {{ request()->is(['flat_trade/strategies']) ? 'active' : '' }}">
+                        <i class="fa fa-magic me-1"></i> Strategies
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('flat_trade::alerts') }}"
+                        class="nav-link {{ request()->is(['flat_trade/alerts']) ? 'active' : '' }}">
+                        <i class="fa fa-bell-o me-1"></i> Alert Rules
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('flat_trade::backtest') }}"
+                        class="nav-link {{ request()->is(['flat_trade/backtest']) ? 'active' : '' }}">
+                        <i class="fa fa-flask me-1"></i> Backtest
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('flat_trade::ai_analyst') }}"
+                        class="nav-link {{ request()->is(['flat_trade/ai-analyst']) ? 'active' : '' }}">
+                        <i class="fa fa-comments-o me-1"></i> AI Analyst
+                    </a>
+                </li>
+            @endcan
         </ul>
     </li>
 @endif

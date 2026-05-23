@@ -36,8 +36,20 @@ class UnifiedTradingCommand extends Command
         $action = $this->option('action');
         $dryRun = $this->option('dry-run');
 
+        $recorder = app(CommandRunRecorder::class);
+        $run = $recorder->start('trade:unified', $action.($this->option('sell-all') ? ':sell-all' : ''));
+
         $this->info("🚀 Starting Unified Trading Command - Action: {$action}");
         $this->displayConfig();
+
+        // Buys are blocked when the kill switch is engaged.
+        // Sells (and --sell-all) are always allowed so positions can be flattened.
+        if ($action === 'buy' && KillSwitchRule::isEngaged()) {
+            $this->warn('🛑 Kill switch engaged — skipping buy cycle.');
+            $recorder->finish($run, 'skipped', ['reason' => 'kill_switch']);
+
+            return;
+        }
 
         try {
             if ($action === 'buy') {
@@ -46,12 +58,15 @@ class UnifiedTradingCommand extends Command
                 $this->handleSellAction();
             } else {
                 $this->error("Invalid action: {$action}. Use 'buy' or 'sell'");
+                $recorder->finish($run, 'error', [], "Invalid action: {$action}");
 
                 return;
             }
+            $recorder->finish($run, 'success');
         } catch (\Exception $e) {
             $this->error('❌ Command failed: '.$e->getMessage());
             Log::error('Unified Trading Command failed', ['error' => $e->getMessage()]);
+            $recorder->finish($run, 'error', [], $e->getMessage());
         }
     }
 

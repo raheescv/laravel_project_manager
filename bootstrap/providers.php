@@ -10,6 +10,7 @@ return [
     App\Providers\OpenAIServiceProvider::class,
     App\Providers\SaleProvider::class,
     App\Providers\TelegramServiceProvider::class,
+    App\Providers\TradingServiceProvider::class,
     App\Providers\WhatsappProvider::class,
     Maatwebsite\Excel\ExcelServiceProvider::class,
     Milon\Barcode\BarcodeServiceProvider::class,

@@ -82,5 +82,21 @@ Route::name('flat_trade::')->prefix('flat_trade')->group(function (): void {
             Route::get('/positions', [Nifty50TradingController::class, 'getUserPositions'])->name('positions')->can('flat_trade.view');
             Route::post('/execute-sell-orders', [Nifty50TradingController::class, 'executeSellOrders'])->name('execute_sell_orders')->can('flat_trade.trade');
         });
+
+        // -----------------------------------------------------------------
+        // Trading platform extension — risk, strategies, alerts, backtest, AI
+        // Lives under the FlatTrade section so it shares auth, permissions,
+        // and nav with the rest of the trading UI.
+        // -----------------------------------------------------------------
+        Route::get('/risk', \App\Livewire\Trading\Dashboard::class)
+            ->name('risk')->can('flat_trade.view');
+        Route::get('/strategies', \App\Livewire\Trading\StrategyManager::class)
+            ->name('strategies')->can('flat_trade.view');
+        Route::get('/alerts', \App\Livewire\Trading\AlertRules::class)
+            ->name('alerts')->can('flat_trade.view');
+        Route::get('/backtest', \App\Livewire\Trading\BacktestRunner::class)
+            ->name('backtest')->can('flat_trade.view');
+        Route::get('/ai-analyst', \App\Livewire\Trading\AiChat::class)
+            ->name('ai_analyst')->can('flat_trade.view');
     });
 });

@@ -65,6 +65,15 @@ class QuickTradingCommand extends Command
         $sellAll = $this->option('sell-all');
         $dryRun = $this->option('dry-run');
 
+        $recorder = app(CommandRunRecorder::class);
+        $run = $recorder->start('trade:quick', $sellAll ? 'sell-all' : 'cycle');
+
+        // Kill switch only blocks the BUY phase; sell phase always runs.
+        $killSwitchActive = KillSwitchRule::isEngaged();
+        if ($killSwitchActive && ! $sellAll) {
+            $this->warn('🛑 Kill switch engaged — buying phase will be skipped.');
+        }
+
         $this->info('🚀 Starting Enhanced Quick Trading Command');
         $this->info('Configuration:');
         $this->info("- Loss threshold: {$lossThreshold}%");
@@ -88,9 +97,11 @@ class QuickTradingCommand extends Command
             // Step 2: Intelligent position analysis and selling with advanced profit logic
             $this->handleAdvancedProfitSelling($lossThreshold, $profitThreshold, $maxProfitTarget, $minProfitKeep, $triggerProfit, $strategy, $marketAware, $autoTrigger, $sellAll, $dryRun);
 
-            // Step 3: Advanced stock selection and buying (skip if sell-all mode)
-            if (! $sellAll) {
+            // Step 3: Advanced stock selection and buying (skip if sell-all mode or kill switch)
+            if (! $sellAll && ! $killSwitchActive) {
                 $this->handleAdvancedBuying($maxStocks, $quantity, $strategy, $marketAware, $dryRun);
+            } elseif ($killSwitchActive) {
+                $this->info("\n🛑 Kill switch active: Skipping buying phase");
             } else {
                 $this->info("\n🔄 Sell-all mode: Skipping buying phase");
             }
@@ -98,9 +109,11 @@ class QuickTradingCommand extends Command
             // Step 4: Generate performance insights
             $this->generateTradingInsights();
 
+            $recorder->finish($run, 'success');
         } catch (\Exception $e) {
             $this->error('❌ Command failed: '.$e->getMessage());
             Log::error('Enhanced Quick Trading Command failed', ['error' => $e->getMessage()]);
+            $recorder->finish($run, 'error', [], $e->getMessage());
         }
     }
 
