@@ -32,8 +32,8 @@ class LoginAction
         }
 
         $user = $matched->first();
-
-        $token = $user->createToken('mobile', ['mobile'])->plainTextToken;
+        $guard = $user->is_admin ? 'admin' : 'mobile';
+        $token = $user->createToken($guard, [$guard])->plainTextToken;
 
         return [
             'token' => $token,
