@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ColorController;
+use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DayController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -75,6 +76,11 @@ Route::prefix('v1')->group(function () {
                 Route::get('/', [SaleController::class, 'index'])->name('api.v1.sale.index');
                 Route::post('/', [SaleController::class, 'store'])->name('api.v1.sale.store');
                 Route::get('/{sale}', [SaleController::class, 'show'])->whereNumber('sale')->name('api.v1.sale.show');
+            });
+
+            // Customer routes
+            Route::prefix('customers')->group(function () {
+                Route::get('/', [CustomerController::class, 'index'])->name('api.v1.customers.index');
             });
 
             // Admin routes
