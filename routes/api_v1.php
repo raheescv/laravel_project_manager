@@ -64,28 +64,28 @@ Route::prefix('v1')->group(function () {
     Route::middleware(IdentifyTenant::class)->group(function () {
 
         // Auth routes (public)
-        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('api.v1login');
+        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('api.v1.login');
 
         // Authenticated routes (admin + employee)
         Route::middleware('auth:sanctum')->group(function () {
-            Route::post('logout', [AuthController::class, 'logout'])->name('api.v1logout');
+            Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.logout');
 
             // Product routes (reuse the existing V1 ProductController)
             Route::prefix('products')->group(function () {
-                Route::get('/', [ProductController::class, 'mobileIndex'])->name('api.v1products.index');
-                Route::get('/{product}', [ProductController::class, 'mobileShow'])->whereNumber('product')->name('api.v1products.show');
+                Route::get('/', [ProductController::class, 'mobileIndex'])->name('api.v1.products.index');
+                Route::get('/{product}', [ProductController::class, 'mobileShow'])->whereNumber('product')->name('api.v1.products.show');
             });
             // Bill routes
             Route::prefix('sale')->group(function () {
-                Route::post('/', [SaleController::class, 'store'])->name('api.v1sale.store');
-                Route::get('/{sale}', [SaleController::class, 'show'])->whereNumber('sale')->name('api.v1sale.show');
+                Route::post('/', [SaleController::class, 'store'])->name('api.v1.sale.store');
+                Route::get('/{sale}', [SaleController::class, 'show'])->whereNumber('sale')->name('api.v1.sale.show');
             });
 
             // Admin routes
             Route::prefix('admin')->middleware(EnsureMobileAdmin::class)->group(function () {
-                Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.v1admin.dashboard');
-                Route::get('/reports', [ReportController::class, 'index'])->name('api.v1admin.reports');
-                Route::get('/day-status', [DayController::class, 'status'])->name('api.v1admin.day-status');
+                Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.v1.admin.dashboard');
+                Route::get('/reports', [ReportController::class, 'index'])->name('api.v1.admin.reports');
+                Route::get('/day-status', [DayController::class, 'status'])->name('api.v1.admin.day-status');
             });
         });
     });
