@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ColorController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
-use App\Http\Controllers\Api\V1\DayController;
+use App\Http\Controllers\Api\V1\DaySessionController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\SizeController;
 use App\Http\Middleware\EnsureMobileAdmin;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -87,7 +88,7 @@ Route::prefix('v1')->group(function () {
             Route::prefix('admin')->middleware(EnsureMobileAdmin::class)->group(function () {
                 Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.v1.admin.dashboard');
                 Route::get('/reports', [ReportController::class, 'index'])->name('api.v1.admin.reports');
-                Route::get('/day-status', [DayController::class, 'status'])->name('api.v1.admin.day-status');
+                Route::post('/day-status', [DaySessionController::class, 'toggle'])->name('api.v1.admin.day-status');
             });
         });
     });

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\V1\Day;
+namespace App\Http\Resources\V1\DaySession;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
