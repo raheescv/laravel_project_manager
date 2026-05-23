@@ -33,6 +33,8 @@ class DailySalesInsightsReport extends Component
 
     public $sortDirection = 'desc';
 
+    public $chart_period = 'daily';
+
     protected $paginationTheme = 'bootstrap';
 
     public function mount()
@@ -40,6 +42,13 @@ class DailySalesInsightsReport extends Component
         $this->from_date = date('Y-m-01');
         $this->to_date = date('Y-m-d');
         $this->branch_id = session('branch_id');
+    }
+
+    public function setPeriod($period)
+    {
+        if (in_array($period, ['daily', 'weekly', 'monthly'], true)) {
+            $this->chart_period = $period;
+        }
     }
 
     public function export()
@@ -94,31 +103,42 @@ class DailySalesInsightsReport extends Component
 
     public function prepareSalesChartData($summaryCollection)
     {
-        // Generate complete date range between from_date and to_date
         $from = $this->from_date ? Carbon::parse($this->from_date) : Carbon::now()->startOfMonth();
         $to = $this->to_date ? Carbon::parse($this->to_date) : Carbon::now();
 
-        $allDates = collect();
-        $currentDate = $from->copy();
-
-        while ($currentDate->lte($to)) {
-            $allDates->push($currentDate->format('Y-m-d'));
-            $currentDate->addDay();
+        if ($this->chart_period === 'weekly') {
+            $cursor = $from->copy()->startOfWeek();
+        } elseif ($this->chart_period === 'monthly') {
+            $cursor = $from->copy()->startOfMonth();
+        } else {
+            $cursor = $from->copy();
         }
 
-        // Group by branch to create series
+        $allBuckets = collect();
+
+        while ($cursor->lte($to)) {
+            $allBuckets->push($cursor->format('Y-m-d'));
+
+            if ($this->chart_period === 'weekly') {
+                $cursor->addWeek();
+            } elseif ($this->chart_period === 'monthly') {
+                $cursor->addMonth();
+            } else {
+                $cursor->addDay();
+            }
+        }
+
         $chartData = $summaryCollection
             ->groupBy('branch_name')
-            ->map(function ($branchData, $branchName) use ($allDates) {
-                // Create a complete dataset for each branch with all dates
-                $dataPoints = $allDates->map(function ($date) use ($branchData) {
-                    // Find the matching record for this date/branch
-                    $record = $branchData->first(function ($item) use ($date) {
-                        return $item['date'] === $date;
+            ->map(function ($branchData, $branchName) use ($allBuckets) {
+                $dataPoints = $allBuckets->map(function ($bucketDate) use ($branchData) {
+                    $record = $branchData->first(function ($item) use ($bucketDate) {
+                        return $item['date'] === $bucketDate;
                     });
 
                     return [
-                        'x' => strtotime($date) * 1000, // Convert to JS timestamp
+                        'x' => strtotime($bucketDate) * 1000,
+                        'label' => $this->periodLabel($bucketDate),
                         'y' => $record ? floatval($record['total_sales']) : 0,
                         'net_sales' => $record ? floatval($record['net_sales']) : 0,
                         'sales_discount' => $record ? floatval($record['sales_discount']) : 0,
@@ -134,16 +154,16 @@ class DailySalesInsightsReport extends Component
                 ];
             })->values();
 
-        // If no branch data exists, create a default series with all dates showing zero values
         if ($chartData->isEmpty()) {
             $chartData = collect([
                 [
                     'type' => 'column',
                     'showInLegend' => true,
                     'name' => 'No Data',
-                    'dataPoints' => $allDates->map(function ($date) {
+                    'dataPoints' => $allBuckets->map(function ($bucketDate) {
                         return [
-                            'x' => strtotime($date) * 1000,
+                            'x' => strtotime($bucketDate) * 1000,
+                            'label' => $this->periodLabel($bucketDate),
                             'y' => 0,
                             'net_sales' => 0,
                             'sales_discount' => 0,
@@ -154,7 +174,7 @@ class DailySalesInsightsReport extends Component
             ]);
         }
 
-        $this->dispatch('updateChart', $chartData->toArray());
+        $this->dispatch('updateChart', $chartData->toArray(), $this->chart_period);
     }
 
     public function render()
@@ -255,9 +275,11 @@ class DailySalesInsightsReport extends Component
             ->groupBy('date', 'branch_id', 'branch')
             ->get();
 
-        $invoicePaidByDayBranch = $invoicePayments
-            ->mapWithKeys(fn ($payment) => [$this->summaryKey($payment->date, $payment->branch_id) => (float) $payment->amount])
-            ->toArray();
+        $invoicePaidByPeriodBranch = [];
+        foreach ($invoicePayments as $payment) {
+            $key = $this->summaryKey($payment->date, $payment->branch_id);
+            $invoicePaidByPeriodBranch[$key] = ($invoicePaidByPeriodBranch[$key] ?? 0) + (float) $payment->amount;
+        }
 
         $saleInvoicePaymentsByMethodQuery = SalePayment::query()
             ->join('sales', 'sales.id', '=', 'sale_id')
@@ -406,24 +428,36 @@ class DailySalesInsightsReport extends Component
 
         foreach ($sales as $sale) {
             $key = $this->summaryKey($sale->date, $sale->branch_id);
-            $paid = (float) ($invoicePaidByDayBranch[$key] ?? 0);
-            $credit = max((float) $sale->total_sales - $paid, 0);
+            $bucketDate = $this->periodBucket($sale->date);
 
-            $summary[$key] = array_merge([
-                'date' => $sale->date,
-                'branch_name' => $sale->branch,
-                'net_sales' => (float) $sale->net_sales,
-                'no_of_invoices' => (int) $sale->no_of_invoices,
-                'sales_discount' => (float) $sale->sales_discount,
-                'total_sales' => (float) $sale->total_sales,
-                'credit' => $credit,
-                'paid' => $paid,
-            ], $emptyPaymentColumns);
+            if (! isset($summary[$key])) {
+                $summary[$key] = array_merge([
+                    'date' => $bucketDate,
+                    'period_label' => $this->periodLabel($bucketDate),
+                    'branch_name' => $sale->branch,
+                    'net_sales' => 0,
+                    'no_of_invoices' => 0,
+                    'sales_discount' => 0,
+                    'total_sales' => 0,
+                    'credit' => 0,
+                    'paid' => 0,
+                ], $emptyPaymentColumns);
+            }
+
+            $summary[$key]['net_sales'] += (float) $sale->net_sales;
+            $summary[$key]['no_of_invoices'] += (int) $sale->no_of_invoices;
+            $summary[$key]['sales_discount'] += (float) $sale->sales_discount;
+            $summary[$key]['total_sales'] += (float) $sale->total_sales;
         }
 
-        $this->mergePaymentCollectionIntoSummary($summary, $payments, 'total', $invoicePaidByDayBranch, $emptyPaymentColumns);
-        $this->mergePaymentCollectionIntoSummary($summary, $invoicePaymentsByMethod, 'invoice', $invoicePaidByDayBranch, $emptyPaymentColumns);
-        $this->mergePaymentCollectionIntoSummary($summary, $duePayments, 'due', $invoicePaidByDayBranch, $emptyPaymentColumns);
+        $this->mergePaymentCollectionIntoSummary($summary, $payments, 'total', $emptyPaymentColumns);
+        $this->mergePaymentCollectionIntoSummary($summary, $invoicePaymentsByMethod, 'invoice', $emptyPaymentColumns);
+        $this->mergePaymentCollectionIntoSummary($summary, $duePayments, 'due', $emptyPaymentColumns);
+
+        foreach ($summary as $key => $row) {
+            $summary[$key]['paid'] = (float) ($invoicePaidByPeriodBranch[$key] ?? 0);
+            $summary[$key]['credit'] = max($summary[$key]['total_sales'] - $summary[$key]['paid'], 0);
+        }
 
         $sortedSummary = $this->sortSummaryData($summary);
         $summaryCollection = collect($sortedSummary);
@@ -521,7 +555,7 @@ class DailySalesInsightsReport extends Component
         return $empty;
     }
 
-    private function mergePaymentCollectionIntoSummary(array &$summary, $payments, string $type, array $invoicePaidByDayBranch, array $emptyPaymentColumns): void
+    private function mergePaymentCollectionIntoSummary(array &$summary, $payments, string $type, array $emptyPaymentColumns): void
     {
         foreach ($payments as $payment) {
             $key = $this->summaryKey($payment->date, $payment->branch_id);
@@ -530,9 +564,8 @@ class DailySalesInsightsReport extends Component
 
             if (! isset($summary[$key])) {
                 $summary[$key] = $this->buildEmptySummaryRow(
-                    (string) $payment->date,
+                    $this->periodBucket((string) $payment->date),
                     (string) $payment->branch,
-                    (float) ($invoicePaidByDayBranch[$key] ?? 0),
                     $emptyPaymentColumns
                 );
             }
@@ -545,22 +578,58 @@ class DailySalesInsightsReport extends Component
         }
     }
 
-    private function buildEmptySummaryRow(string $date, string $branchName, float $paid, array $emptyPaymentColumns): array
+    private function buildEmptySummaryRow(string $bucketDate, string $branchName, array $emptyPaymentColumns): array
     {
         return array_merge([
-            'date' => $date,
+            'date' => $bucketDate,
+            'period_label' => $this->periodLabel($bucketDate),
             'branch_name' => $branchName,
             'net_sales' => 0,
             'no_of_invoices' => 0,
             'sales_discount' => 0,
             'total_sales' => 0,
             'credit' => 0,
-            'paid' => $paid,
+            'paid' => 0,
         ], $emptyPaymentColumns);
     }
 
     private function summaryKey(string $date, int $branchId): string
     {
-        return "{$date}_{$branchId}";
+        $bucketDate = $this->periodBucket($date);
+
+        return "{$bucketDate}_{$branchId}";
+    }
+
+    private function periodBucket(string $date): string
+    {
+        $carbon = Carbon::parse($date);
+
+        if ($this->chart_period === 'weekly') {
+            return $carbon->copy()->startOfWeek()->format('Y-m-d');
+        }
+
+        if ($this->chart_period === 'monthly') {
+            return $carbon->copy()->startOfMonth()->format('Y-m-d');
+        }
+
+        return $carbon->format('Y-m-d');
+    }
+
+    private function periodLabel(string $bucketDate): string
+    {
+        $carbon = Carbon::parse($bucketDate);
+
+        if ($this->chart_period === 'weekly') {
+            $start = $carbon->copy()->startOfWeek();
+            $end = $start->copy()->endOfWeek();
+
+            return $start->format('M d').' - '.$end->format('M d, Y');
+        }
+
+        if ($this->chart_period === 'monthly') {
+            return $carbon->format('F Y');
+        }
+
+        return $carbon->format('Y-m-d');
     }
 }

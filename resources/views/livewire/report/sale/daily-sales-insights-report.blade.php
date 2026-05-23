@@ -120,10 +120,21 @@
 
     <div class="card shadow-sm dsi-card">
         <div class="card-header bg-white py-3">
-            <div class="d-flex align-items-center mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-4">
                 <div>
-                    <h5 class="mb-0">Daily Sales Insights</h5>
-                    <small class="text-muted">Track daily Sales performance and trends</small>
+                    <h5 class="mb-0">Sales Insights</h5>
+                    <small class="text-muted">Track Sales performance and trends by Day, Week, or Month</small>
+                </div>
+                <div class="btn-group" role="group" aria-label="Chart Period">
+                    <button type="button" wire:click="setPeriod('daily')" class="btn btn-sm {{ $chart_period === 'daily' ? 'btn-primary' : 'btn-outline-primary' }}">
+                        <i class="fa fa-calendar me-1"></i> Daily
+                    </button>
+                    <button type="button" wire:click="setPeriod('weekly')" class="btn btn-sm {{ $chart_period === 'weekly' ? 'btn-primary' : 'btn-outline-primary' }}">
+                        <i class="fa fa-calendar-o me-1"></i> Weekly
+                    </button>
+                    <button type="button" wire:click="setPeriod('monthly')" class="btn btn-sm {{ $chart_period === 'monthly' ? 'btn-primary' : 'btn-outline-primary' }}">
+                        <i class="fa fa-th-large me-1"></i> Monthly
+                    </button>
                 </div>
             </div>
 
@@ -217,7 +228,7 @@
                     <thead class="bg-light text-nowrap">
                         <tr class="text-capitalize">
                             <th class="border-bottom px-3 py-3 dsi-main-head" rowspan="2">
-                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" />
+                                <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="{{ ['daily' => 'Date', 'weekly' => 'Week', 'monthly' => 'Month'][$chart_period] ?? 'Date' }}" />
                             </th>
                             <th class="border-bottom px-3 py-3 dsi-main-head" rowspan="2">
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branches.name" label="Branch" />
@@ -259,7 +270,7 @@
                         @foreach ($data as $item)
                             <tr>
                                 <td class="px-3 py-2">
-                                    <span class="text-dark text-nowrap">{{ systemDate($item['date']) }}</span>
+                                    <span class="text-dark text-nowrap">{{ $chart_period === 'daily' ? systemDate($item['date']) : $item['period_label'] }}</span>
                                 </td>
                                 <td class="px-3 py-2">
                                     <span class="text-primary text-nowrap">{{ $item['branch_name'] }}</span>
@@ -335,6 +346,7 @@
                 }
 
                 const chartSeriesData = event.detail[0];
+                const chartPeriod = event.detail[1] || 'daily';
                 if (!Array.isArray(chartSeriesData) || !chartSeriesData.length) {
                     console.warn('No chart data available');
                     return;
@@ -385,12 +397,30 @@
                     )
                 )];
 
-                const labels = allDates.map(timestamp =>
-                    new Date(timestamp).toLocaleDateString('en-US', {
+                const labels = allDates.map(timestamp => {
+                    const date = new Date(timestamp);
+                    if (chartPeriod === 'monthly') {
+                        return date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            year: 'numeric'
+                        });
+                    }
+                    if (chartPeriod === 'weekly') {
+                        const end = new Date(timestamp);
+                        end.setDate(end.getDate() + 6);
+                        return date.toLocaleDateString('en-US', {
+                            day: '2-digit',
+                            month: 'short'
+                        }) + ' - ' + end.toLocaleDateString('en-US', {
+                            day: '2-digit',
+                            month: 'short'
+                        });
+                    }
+                    return date.toLocaleDateString('en-US', {
                         day: '2-digit',
                         month: 'short'
-                    })
-                )
+                    });
+                });
                 salesChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
