@@ -16,9 +16,9 @@ class AuthUserResource extends JsonResource
     public function toArray(Request $request): array
     {
         $default_branch_id = $this->default_branch_id ? (string) $this->default_branch_id : null;
-        
+
         $openingSession = SaleDaySession::getOpenSessionForBranch($default_branch_id);
-        $date = $openingSession ? $openingSession->opened_at->format('Y-m-d') : now()->format('Y-m-d');;
+        $date = $openingSession ? $openingSession->opened_at->format('Y-m-d') : now()->format('Y-m-d');
 
         return [
             'id' => (string) $this->id,

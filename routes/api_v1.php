@@ -16,7 +16,6 @@ use App\Http\Middleware\EnsureMobileAdmin;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Support\Facades\Route;
 
-
 /*
 |--------------------------------------------------------------------------
 | API V1 Routes
