@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Ai\Providers\FixedOpenAiProvider;
 use App\Models\Branch;
 use App\Models\Configuration;
-use App\Models\Country;
 use App\Notifications\DatabaseChannel;
 use App\Services\TenantService;
 use Dedoc\Scramble\Scramble;
@@ -104,7 +103,7 @@ class AppServiceProvider extends ServiceProvider
             });
             Cache::remember('currency_symbol', now()->addYear(), function () {
                 return Configuration::where('key', 'currency_symbol')->value('value');
-            }); 
+            });
         }
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);

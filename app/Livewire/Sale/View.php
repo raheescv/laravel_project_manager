@@ -3,9 +3,9 @@
 namespace App\Livewire\Sale;
 
 use App\Actions\Sale\UpdateAction;
+use App\Models\InventoryLog;
 use App\Models\Sale;
 use App\Models\SaleReturnItem;
-use App\Models\InventoryLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
