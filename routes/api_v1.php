@@ -61,7 +61,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Mobile routes (PIN-authenticated staff / POS app)
-    Route::prefix('mobile')->middleware(IdentifyTenant::class)->group(function () {
+    Route::middleware(IdentifyTenant::class)->group(function () {
 
         // Auth routes (public)
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('api.v1.mobile.login');
