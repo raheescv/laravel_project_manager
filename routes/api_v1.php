@@ -1,11 +1,18 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ColorController;
+use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\DayController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SizeController;
+use App\Http\Middleware\EnsureMobileAdmin;
+use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,5 +58,35 @@ Route::prefix('v1')->group(function () {
     // Branch routes
     Route::prefix('branches')->group(function () {
         Route::get('/', [BranchController::class, 'index'])->name('api.v1.branches.index');
+    });
+
+    // Mobile routes (PIN-authenticated staff / POS app)
+    Route::prefix('mobile')->middleware(IdentifyTenant::class)->group(function () {
+
+        // Auth routes (public)
+        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('api.v1.mobile.login');
+
+        // Authenticated routes (admin + employee)
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.mobile.logout');
+
+            // Product routes (reuse the existing V1 ProductController)
+            Route::prefix('products')->group(function () {
+                Route::get('/', [ProductController::class, 'mobileIndex'])->name('api.v1.mobile.products.index');
+                Route::get('/{product}', [ProductController::class, 'mobileShow'])->whereNumber('product')->name('api.v1.mobile.products.show');
+            });
+            // Bill routes
+            Route::prefix('sale')->group(function () {
+                Route::post('/', [SaleController::class, 'store'])->name('api.v1.mobile.sale.store');
+                Route::get('/{sale}', [SaleController::class, 'show'])->whereNumber('sale')->name('api.v1.mobile.sale.show');
+            });
+
+            // Admin routes
+            Route::prefix('admin')->middleware(EnsureMobileAdmin::class)->group(function () {
+                Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.v1.mobile.admin.dashboard');
+                Route::get('/reports', [ReportController::class, 'index'])->name('api.v1.mobile.admin.reports');
+                Route::get('/day-status', [DayController::class, 'status'])->name('api.v1.mobile.admin.day-status');
+            });
+        });
     });
 });
