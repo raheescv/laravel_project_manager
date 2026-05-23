@@ -11,7 +11,7 @@ class GetAction
      *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function execute(int $billId): Sale
+    public function execute(int $saleId): Sale
     {
         return Sale::query()
             ->with([
@@ -22,6 +22,6 @@ class GetAction
                 'createdUser:id,name',
                 'branch',
             ])
-            ->findOrFail($billId);
+            ->findOrFail($saleId);
     }
 }

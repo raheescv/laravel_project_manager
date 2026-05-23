@@ -6,7 +6,9 @@
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">API Logs</h1>
+            <h1 class="page-title mb-0 mt-2">
+                <i class="fa fa-exchange me-2 text-primary"></i>API Logs
+            </h1>
             <p class="lead">
                 Monitor and manage API calls to external services
             </p>
