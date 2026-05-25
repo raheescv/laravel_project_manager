@@ -11,7 +11,7 @@ return [
     |
     */
 
-    'base_url' => env('FLAT_TRADE_BASE_URL', 'https://piconnect.flattrade.in/PiConnectTP'),
+    'base_url' => env('FLAT_TRADE_BASE_URL', 'https://piconnect.flattrade.in/PiConnectAPI'),
     'auth_api_url' => env('FLAT_TRADE_AUTH_API_URL', 'https://authapi.flattrade.in'),
     'api_key' => env('FLAT_TRADE_API_KEY', ''),
     'api_secret' => env('FLAT_TRADE_API_SECRET', ''),

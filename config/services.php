@@ -46,7 +46,7 @@ return [
         'url' => env('ID_SCANNER_URL', 'http://localhost:5000'),
     ],
     'flat_trade' => [
-        'base_url' => env('FLAT_TRADE_BASE_URL', 'https://piconnect.flattrade.in/PiConnectTP'),
+        'base_url' => env('FLAT_TRADE_BASE_URL', 'https://piconnect.flattrade.in/PiConnectAPI'),
         'auth_url' => env('FLAT_TRADE_AUTH_URL', 'https://auth.flattrade.in'),
         'auth_api_url' => env('FLAT_TRADE_AUTH_API_URL', 'https://authapi.flattrade.in'),
         'api_key' => env('FLAT_TRADE_API_KEY', ''),

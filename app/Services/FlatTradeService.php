@@ -30,7 +30,7 @@ class FlatTradeService
 
     public function __construct()
     {
-        $this->baseUrl = config('services.flat_trade.base_url', 'https://piconnect.flattrade.in/PiConnectTP');
+        $this->baseUrl = config('services.flat_trade.base_url', 'https://piconnect.flattrade.in/PiConnectAPI');
         $this->authApiUrl = config('services.flat_trade.auth_api_url', 'https://authapi.flattrade.in');
         $this->apiKey = config('services.flat_trade.api_key');
         $this->apiSecret = config('services.flat_trade.api_secret');
