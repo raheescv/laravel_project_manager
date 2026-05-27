@@ -10,10 +10,9 @@ use App\Trading\Support\Indicators;
 /**
  * Composite momentum scorer.
  *
- * Mirrors the spirit of the existing UnifiedTradingStrategyService — picks
- * stocks with strong short-term momentum, positive trend, and acceptable
- * volatility — but is pure (no DB writes, no broker calls) so it can run
- * identically in live and backtest contexts.
+ * Picks stocks with strong short-term momentum, positive trend, and
+ * acceptable volatility. Pure — no DB writes, no broker calls — so it can
+ * run identically in live and backtest contexts.
  */
 class MomentumScoreStrategy implements Strategy
 {

@@ -74,7 +74,7 @@ class CreateAction
             ];
 
             $sale = DB::transaction(function () use ($data, $user) {
-                $response = new SaleCreateAction()->execute($data, (int) $user->id);
+                $response = (new SaleCreateAction())->execute($data, (int) $user->id);
 
                 if (! $response['success']) {
                     throw new RuntimeException($response['message']);
@@ -272,7 +272,7 @@ class CreateAction
             }
         }
 
-        $response = new AccountCreateAction()->execute([
+        $response = (new AccountCreateAction())->execute([
             'account_type' => 'asset',
             'account_category_id' => AccountCategory::firstOrCreate(['name' => 'Account Receivable'])->id,
             'name' => $name,
