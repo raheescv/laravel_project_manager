@@ -107,16 +107,19 @@ class FlatTradeBrokerAdapter implements BrokerContract
             ? 1 + ($slippageBps / 10000)
             : 1 - ($slippageBps / 10000);
 
-        return $this->snapToTick($base * $factor, $request->side);
+        $tick = $this->tickSize($request->symbol);
+        $fallbackTick = $base >= 1000 ? 0.10 : 0.05;
+        $tick = $tick > 0 ? $tick : $fallbackTick;
+
+        return $this->snapToTick($base * $factor, $request->side, $tick);
     }
 
     /**
-     * NSE rejects limit prices that aren't a multiple of the scrip's tick size
-     * (₹0.05 for virtually all equities). Buys ceil to the next tick so they
-     * stay marketable-above-LTP; sells floor to the previous tick so they stay
-     * marketable-below-LTP.
+     * NSE rejects limit prices that aren't a multiple of the scrip's tick size.
+     * Buys ceil to the next tick so they stay marketable-above-LTP; sells
+     * floor to the previous tick so they stay marketable-below-LTP.
      */
-    private function snapToTick(float $price, string $side, float $tick = 0.05): float
+    private function snapToTick(float $price, string $side, float $tick): float
     {
         if ($tick <= 0) {
             return round($price, 2);
@@ -305,31 +308,64 @@ class FlatTradeBrokerAdapter implements BrokerContract
 
     private function resolveToken(string $symbol): ?string
     {
+        return $this->resolveScrip($symbol)['token'] ?? null;
+    }
+
+    /**
+     * Cache the full searchScrip hit per symbol so token + tick + lot size
+     * are all available without three round trips. Tick size varies by scrip
+     * (most NSE equities are ₹0.05, but several heavyweights like HINDUNILVR
+     * are ₹0.10) and the exchange rejects non-tick-aligned limit prices.
+     *
+     * @return array{token:string, tick:float}|null
+     */
+    private function resolveScrip(string $symbol): ?array
+    {
         $clean = strtoupper(trim($symbol));
         if ($clean === '') {
             return null;
         }
 
-        return Cache::remember("trading:flat_trade:token:{$clean}", 86400, function () use ($clean) {
+        $cached = Cache::remember("trading:flat_trade:scrip:{$clean}", 86400, function () use ($clean) {
             try {
                 $stext = str_ends_with($clean, '-EQ') ? $clean : ($clean.'-EQ');
                 $res = $this->service->searchScrip($stext, 'NSE');
                 $matches = $res['values'] ?? [];
+                $exact = null;
                 foreach ($matches as $m) {
                     if (! is_array($m)) {
                         continue;
                     }
                     $tsym = strtoupper($m['tsym'] ?? '');
                     if ($tsym === $clean || $tsym === $clean.'-EQ') {
-                        return (string) ($m['token'] ?? '');
+                        $exact = $m;
+                        break;
                     }
                 }
+                $hit = $exact ?? ($matches[0] ?? null);
+                if (! is_array($hit)) {
+                    return;
+                }
 
-                return $matches[0]['token'] ?? null;
+                return [
+                    'token' => (string) ($hit['token'] ?? ''),
+                    'tick' => (float) ($hit['ti'] ?? 0),
+                ];
             } catch (\Throwable) {
                 return;
             }
         });
+
+        return is_array($cached) ? $cached : null;
+    }
+
+    private function tickSize(string $symbol): float
+    {
+        $tick = $this->resolveScrip($symbol)['tick'] ?? 0;
+
+        // FlatTrade omits 'ti' on some scrips; fall back to ₹0.10 for stocks
+        // priced ≥ ₹1000 (where 0.10 is the NSE default) and ₹0.05 otherwise.
+        return $tick > 0 ? $tick : 0.05;
     }
 
     private function intervalMinutes(string $interval): int
