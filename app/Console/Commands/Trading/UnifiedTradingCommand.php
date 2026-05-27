@@ -109,33 +109,60 @@ class UnifiedTradingCommand extends Command
 
     private function renderSummary(string $action, array $summary): void
     {
-        if (($summary['status'] ?? null) !== 'ok') {
-            $this->line('result: '.json_encode($summary));
+        $status = $summary['status'] ?? 'unknown';
+        if ($status !== 'ok') {
+            $this->warn("status={$status}".(isset($summary['reason']) ? "  reason={$summary['reason']}" : ''));
 
             return;
         }
 
-        $key = match ($action) {
+        if (isset($summary['regime'])) {
+            $this->line('regime: '.$summary['regime']);
+        }
+        if (isset($summary['equity'])) {
+            $this->line('equity: ₹'.number_format((float) $summary['equity'], 2));
+        }
+
+        $placedKey = match ($action) {
             'buy' => 'placed',
             'sell' => 'exited',
             'squareoff' => 'flattened',
             default => null,
         };
+        $placed = $placedKey && isset($summary[$placedKey]) ? $summary[$placedKey] : [];
 
-        $rows = $key && isset($summary[$key]) ? $summary[$key] : [];
-        if (empty($rows)) {
-            $this->line("{$action}: nothing to do");
-
-            return;
+        if (! empty($placed)) {
+            $this->line("\n{$placedKey}:");
+            $this->table(
+                ['symbol', 'qty', 'entry/exit', 'extra'],
+                collect($placed)->map(fn ($r) => [
+                    $r['symbol'] ?? '?',
+                    $r['quantity'] ?? 0,
+                    isset($r['entry']) ? '₹'.number_format($r['entry'], 2) : '—',
+                    $r['kind'] ?? ($r['mode'] ?? (isset($r['rr']) ? 'rr='.$r['rr'] : 'live')),
+                ])->all()
+            );
+        } else {
+            $this->line("{$action}: 0 orders");
         }
 
-        $this->table(
-            ['symbol', 'qty', 'kind/mode'],
-            collect($rows)->map(fn ($r) => [
-                $r['symbol'] ?? '?',
-                $r['quantity'] ?? 0,
-                $r['kind'] ?? ($r['mode'] ?? 'live'),
-            ])->all()
-        );
+        $skipped = $summary['skipped'] ?? [];
+        if (! empty($skipped)) {
+            $reasons = collect($skipped)
+                ->countBy('reason')
+                ->sortDesc()
+                ->map(fn ($n, $r) => "{$r}={$n}")
+                ->implode('  ');
+            $this->line("\nskipped ({$reasons})");
+
+            $sample = collect($skipped)->take(10)->map(fn ($s) => [
+                $s['symbol'] ?? '?',
+                $s['reason'] ?? '?',
+                collect($s)->except(['symbol', 'reason'])
+                    ->map(fn ($v, $k) => is_scalar($v) ? "{$k}={$v}" : "{$k}=…")
+                    ->implode(' '),
+            ])->all();
+            $this->table(['symbol', 'reason', 'detail'], $sample);
+        }
     }
 }
