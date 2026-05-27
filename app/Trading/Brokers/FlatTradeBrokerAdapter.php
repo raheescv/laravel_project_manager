@@ -8,6 +8,7 @@ use App\Trading\DataObjects\Bar;
 use App\Trading\DataObjects\OrderRequest;
 use App\Trading\DataObjects\OrderResult;
 use App\Trading\DataObjects\PositionSnapshot;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
