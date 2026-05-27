@@ -12,14 +12,9 @@
                     <small class="text-muted">Enable, toggle paper mode, set capital weight</small>
                 </div>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{{ route('flat_trade::risk') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa fa-arrow-left me-1"></i> Back to Live Ops
-                </a>
-                <button wire:click="bootstrap" class="btn btn-sm btn-primary">
-                    <i class="fa fa-plus-circle me-1"></i> Sync registered strategies
-                </button>
-            </div>
+            <button wire:click="bootstrap" class="btn btn-sm btn-primary">
+                <i class="fa fa-plus-circle me-1"></i> Sync registered strategies
+            </button>
         </div>
     </div>
 

@@ -2,27 +2,33 @@
 
 namespace App\Livewire\Trading;
 
-use App\Models\TradingAlert;
 use App\Models\TradingCircuitState;
-use App\Models\TradingCommandRun;
-use App\Models\TradingPaperOrder;
 use App\Models\TradingRiskEvent;
-use App\Models\TradingStrategyRun;
 use App\Trading\Brokers\BrokerManager;
 use App\Trading\Risk\Rules\KillSwitchRule;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class Dashboard extends Component
 {
     public bool $killSwitch = false;
 
+    public ?array $killSwitchMeta = null;
+
     public array $positions = [];
 
-    public array $today = [];
+    public array $circuit = [];
+
+    public array $exposure = [];
+
+    public array $thresholds = [];
+
+    public array $severityCounts = [];
+
+    public ?string $severityFilter = null;
 
     public function mount(): void
     {
-        $this->killSwitch = KillSwitchRule::isEngaged();
         $this->refresh();
     }
 
@@ -31,13 +37,21 @@ class Dashboard extends Component
         if ($this->killSwitch) {
             KillSwitchRule::disengage();
         } else {
-            KillSwitchRule::engage('toggled from dashboard');
+            KillSwitchRule::engage('toggled from risk dashboard');
         }
-        $this->killSwitch = KillSwitchRule::isEngaged();
+        $this->refresh();
+    }
+
+    public function setSeverityFilter(?string $severity): void
+    {
+        $this->severityFilter = $severity ?: null;
     }
 
     public function refresh(): void
     {
+        $this->killSwitch = KillSwitchRule::isEngaged();
+        $this->killSwitchMeta = $this->killSwitch ? (Cache::get(KillSwitchRule::CACHE_KEY) ?: null) : null;
+
         try {
             $broker = app(BrokerManager::class)->broker();
             $this->positions = collect($broker->positions())->map->toArray()->all();
@@ -46,31 +60,79 @@ class Dashboard extends Component
         }
 
         $today = now()->toDateString();
-        // Store only scalars — Livewire serializes public arrays between
-        // requests and Eloquent models inside arrays are fragile.
-        $circuit = TradingCircuitState::query()->where('trading_day', $today)->first();
-        $this->today = [
-            'runs' => TradingCommandRun::query()->whereDate('started_at', $today)->count(),
-            'placed' => TradingStrategyRun::query()->whereDate('ran_at', $today)->where('outcome', 'placed')->count(),
-            'rejected' => TradingStrategyRun::query()->whereDate('ran_at', $today)->where('outcome', 'rejected')->count(),
-            'risk_events' => TradingRiskEvent::query()->whereDate('occurred_at', $today)->count(),
-            'paper_open' => TradingPaperOrder::query()->where('status', 'OPEN')->count(),
-            'circuit_tripped' => (bool) ($circuit?->breaker_tripped),
-            'circuit_reason' => $circuit?->trip_reason,
-            'circuit_tripped_at' => $circuit?->tripped_at?->format('H:i'),
+        $state = TradingCircuitState::query()->where('trading_day', $today)->first();
+        $this->circuit = [
+            'tripped' => (bool) ($state?->breaker_tripped),
+            'reason' => $state?->trip_reason,
+            'tripped_at' => $state?->tripped_at?->format('H:i:s'),
+            'realized_pnl' => (float) ($state?->realized_pnl ?? 0),
+            'unrealized_pnl' => (float) ($state?->unrealized_pnl ?? 0),
+            'trades_count' => (int) ($state?->trades_count ?? 0),
         ];
+
+        $this->exposure = $this->computeExposure();
+        $this->thresholds = $this->loadThresholds();
+        $this->severityCounts = $this->countEventsBySeverity($today);
     }
 
     public function render()
     {
-        $recentRuns = TradingCommandRun::query()->latest('started_at')->limit(15)->get();
-        $recentAlerts = TradingAlert::query()->latest()->limit(10)->get();
-        $recentRisk = TradingRiskEvent::query()->latest('occurred_at')->limit(10)->get();
+        $query = TradingRiskEvent::query()->latest('occurred_at');
+        if ($this->severityFilter) {
+            $query->where('severity', $this->severityFilter);
+        }
+        $riskEvents = $query->limit(25)->get();
 
         return view('livewire.trading.dashboard', [
-            'recentRuns' => $recentRuns,
-            'recentAlerts' => $recentAlerts,
-            'recentRisk' => $recentRisk,
+            'riskEvents' => $riskEvents,
         ]);
+    }
+
+    private function computeExposure(): array
+    {
+        $totalNotional = 0.0;
+        $maxNotional = 0.0;
+        $unrealized = 0.0;
+        foreach ($this->positions as $p) {
+            $notional = (float) ($p['ltp'] ?? 0) * (int) ($p['quantity'] ?? 0);
+            $totalNotional += $notional;
+            $maxNotional = max($maxNotional, $notional);
+            $unrealized += (float) ($p['pnl_absolute'] ?? 0);
+        }
+
+        return [
+            'total_notional' => $totalNotional,
+            'max_notional' => $maxNotional,
+            'positions_count' => count($this->positions),
+            'unrealized_pnl' => $unrealized,
+        ];
+    }
+
+    private function loadThresholds(): array
+    {
+        return [
+            'max_position_size' => (float) config('trading.risk.max_position_size', 50000),
+            'max_concurrent_positions' => (int) config('trading.risk.max_concurrent_positions', 10),
+            'max_daily_loss' => (float) config('trading.risk.max_daily_loss', 5000),
+            'cooldown_minutes' => (int) config('trading.risk.cooldown_minutes', 15),
+        ];
+    }
+
+    private function countEventsBySeverity(string $day): array
+    {
+        $rows = TradingRiskEvent::query()
+            ->whereDate('occurred_at', $day)
+            ->selectRaw('severity, COUNT(*) as c')
+            ->groupBy('severity')
+            ->pluck('c', 'severity')
+            ->all();
+
+        return [
+            'total' => array_sum($rows),
+            'breaker' => (int) ($rows['breaker'] ?? 0),
+            'blocked' => (int) ($rows['blocked'] ?? 0),
+            'warning' => (int) ($rows['warning'] ?? 0),
+            'info' => (int) ($rows['info'] ?? 0),
+        ];
     }
 }

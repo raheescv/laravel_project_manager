@@ -12,9 +12,6 @@
                     <small class="text-muted">Route trading events to database, Telegram or log</small>
                 </div>
             </div>
-            <a href="{{ route('flat_trade::risk') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="fa fa-arrow-left me-1"></i> Back to Live Ops
-            </a>
         </div>
     </div>
 

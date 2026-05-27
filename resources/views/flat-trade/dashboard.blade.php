@@ -24,125 +24,114 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-4">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Connection Status Alert -->
+            {{-- Connection status banner --}}
             @if(!$account_connected)
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <i class="fa fa-exclamation-triangle me-2"></i>
-                    <strong>Account Not Connected!</strong> Please connect your FlatTrade account to access trading features.
-                    <a href="{{ route('flat_trade::connect') }}" class="alert-link">Connect Now</a>
+                <div class="alert alert-warning d-flex align-items-center shadow-sm border-0" role="alert">
+                    <i class="fa fa-exclamation-triangle fs-4 me-3"></i>
+                    <div class="flex-grow-1">
+                        <strong>Account not connected.</strong>
+                        Please connect your FlatTrade account to access trading features.
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
-            <!-- Account Status Card -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">
-                                <i class="fa fa-chart-line me-2 text-primary"></i>
-                                Account Status
-                            </h5>
-                            <span class="badge bg-{{ $account_connected ? 'success' : 'danger' }}">
-                                {{ $account_status }}
-                            </span>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="text-center">
-                                        <h4 class="text-primary mb-1" id="account-balance">{{ number_format($account_balance, 2) }}</h4>
-                                        <small class="text-muted">Available Balance</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="text-center">
-                                        <h4 class="text-info mb-1" id="total-holdings">0.00</h4>
-                                        <small class="text-muted">Total Holdings</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="text-center">
-                                        <h4 class="text-success mb-1" id="day-pnl">0.00</h4>
-                                        <small class="text-muted">Day P&L</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="text-center">
-                                        <h4 class="text-warning mb-1" id="total-pnl">0.00</h4>
-                                        <small class="text-muted">Total P&L</small>
+            {{-- Account status card --}}
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">
+                        <i class="fa fa-line-chart text-primary me-2"></i> Account status
+                    </h6>
+                    <span class="badge bg-{{ $account_connected ? 'success' : 'danger' }} bg-opacity-10 text-{{ $account_connected ? 'success' : 'danger' }} text-uppercase">
+                        <i class="fa fa-{{ $account_connected ? 'check-circle' : 'times-circle' }} me-1"></i>
+                        {{ $account_status }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        @php
+                            $stats = [
+                                ['label' => 'Available balance', 'id' => 'account-balance', 'value' => number_format($account_balance, 2), 'icon' => 'fa-money', 'color' => 'primary'],
+                                ['label' => 'Total holdings', 'id' => 'total-holdings', 'value' => '0.00', 'icon' => 'fa-briefcase', 'color' => 'info'],
+                                ['label' => 'Day P&L', 'id' => 'day-pnl', 'value' => '0.00', 'icon' => 'fa-line-chart', 'color' => 'success'],
+                                ['label' => 'Total P&L', 'id' => 'total-pnl', 'value' => '0.00', 'icon' => 'fa-area-chart', 'color' => 'warning'],
+                            ];
+                        @endphp
+                        @foreach ($stats as $s)
+                            <div class="col-6 col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="rounded-circle bg-{{ $s['color'] }} bg-opacity-10 text-{{ $s['color'] }} d-inline-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                                          style="width:46px;height:46px;">
+                                        <i class="fa {{ $s['icon'] }} fs-5"></i>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <div class="small text-muted text-truncate">{{ $s['label'] }}</div>
+                                        <div class="h5 mb-0 fw-bold text-truncate" id="{{ $s['id'] }}">{{ $s['value'] }}</div>
                                     </div>
                                 </div>
                             </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- Risk Operations Center — kill switch, circuit breaker, rule
+                 thresholds, exposure, and risk events. Strategies / alerts /
+                 backtest / AI live under their own pages in the nav. --}}
+            @livewire('trading.dashboard')
+
+            {{-- Quick actions --}}
+            <div class="card border-0 shadow-sm mb-3 mt-3">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fa fa-bolt text-warning me-2"></i> Quick actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-success w-100 d-flex align-items-center justify-content-center"
+                                    data-bs-toggle="modal" data-bs-target="#buyOrderModal">
+                                <i class="fa fa-arrow-up me-2"></i> Buy order
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-danger w-100 d-flex align-items-center justify-content-center"
+                                    data-bs-toggle="modal" data-bs-target="#sellOrderModal">
+                                <i class="fa fa-arrow-down me-2"></i> Sell order
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-info w-100 d-flex align-items-center justify-content-center"
+                                    data-bs-toggle="modal" data-bs-target="#bracketOrderModal">
+                                <i class="fa fa-sitemap me-2"></i> Bracket order
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button type="button" class="btn btn-warning w-100 d-flex align-items-center justify-content-center"
+                                    data-bs-toggle="modal" data-bs-target="#tradeCycleModal">
+                                <i class="fa fa-refresh me-2"></i> Trade cycle
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Trading platform summary (kill switch, today's KPIs, recent runs/alerts/risk).
-                 Lives inside the existing FlatTrade dashboard so operators have one place
-                 to watch the bot. Drill-downs are linked at the top of the panel. --}}
-            <div class="row mb-4">
-                <div class="col-12">
-                    @livewire('trading.dashboard')
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="fa fa-bolt me-2 text-warning"></i>
-                                Quick Actions
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#buyOrderModal">
-                                        <i class="fa fa-arrow-up me-2"></i>Buy Order
-                                    </button>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#sellOrderModal">
-                                        <i class="fa fa-arrow-down me-2"></i>Sell Order
-                                    </button>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <button type="button" class="btn btn-info w-100" data-bs-toggle="modal" data-bs-target="#bracketOrderModal">
-                                        <i class="fa fa-brackets me-2"></i>Bracket Order
-                                    </button>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#tradeCycleModal">
-                                        <i class="fa fa-sync me-2"></i>Trade Cycle
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Market Data and Holdings -->
-            <div class="row">
-                <!-- Market Data -->
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="fa fa-chart-bar me-2 text-info"></i>
-                                Market Data
-                            </h5>
+            {{-- Market data & holdings --}}
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fa fa-bar-chart text-info me-2"></i> Market data
+                            </h6>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="symbol-search" class="form-label">Search Symbol</label>
-                                <div class="input-group">
+                                <label for="symbol-search" class="form-label small text-muted">Search symbol</label>
+                                <div class="input-group input-group-sm">
                                     <input type="text" class="form-control" id="symbol-search" placeholder="Enter symbol (e.g., RELIANCE, TCS)">
                                     <button class="btn btn-outline-primary" type="button" onclick="getMarketData()">
                                         <i class="fa fa-search"></i>
@@ -150,37 +139,35 @@
                                 </div>
                             </div>
                             <div id="market-data-container">
-                                <div class="text-center text-muted">
-                                    <i class="fa fa-chart-line fa-3x mb-3"></i>
-                                    <p>Search for a symbol to view market data</p>
+                                <div class="text-center text-muted py-4">
+                                    <i class="fa fa-line-chart fs-1 d-block mb-2 opacity-50"></i>
+                                    <small>Search for a symbol to view market data</small>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Holdings -->
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="fa fa-briefcase me-2 text-success"></i>
-                                Holdings
-                            </h5>
+                <div class="col-12 col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fa fa-briefcase text-success me-2"></i> Holdings
+                            </h6>
                         </div>
                         <div class="card-body">
                             <div id="holdings-container">
                                 @if($account_connected)
-                                    <div class="text-center">
-                                        <div class="spinner-border text-primary" role="status">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
-                                        <p class="mt-2 text-muted">Loading holdings...</p>
+                                        <p class="mt-2 mb-0 text-muted small">Loading holdings...</p>
                                     </div>
                                 @else
-                                    <div class="text-center text-muted">
-                                        <i class="fa fa-briefcase fa-3x mb-3"></i>
-                                        <p>Connect your account to view holdings</p>
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fa fa-briefcase fs-1 d-block mb-2 opacity-50"></i>
+                                        <small>Connect your account to view holdings</small>
                                     </div>
                                 @endif
                             </div>
@@ -189,41 +176,33 @@
                 </div>
             </div>
 
-            <!-- Recent Orders -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="fa fa-list me-2 text-secondary"></i>
-                                Recent Orders
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div id="orders-container">
-                                @if($account_connected)
-                                    <div class="text-center">
-                                        <div class="spinner-border text-primary" role="status">
-                                            <span class="visually-hidden">Loading...</span>
-                                        </div>
-                                        <p class="mt-2 text-muted">Loading orders...</p>
-                                    </div>
-                                @else
-                                    <div class="text-center text-muted">
-                                        <i class="fa fa-list fa-3x mb-3"></i>
-                                        <p>Connect your account to view recent orders</p>
-                                    </div>
-                                @endif
+            {{-- Recent orders --}}
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fa fa-list-ul text-secondary me-2"></i> Recent orders
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="orders-container">
+                        @if($account_connected)
+                            <div class="text-center py-4">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2 mb-0 text-muted small">Loading orders...</p>
                             </div>
-                        </div>
+                        @else
+                            <div class="text-center text-muted py-4">
+                                <i class="fa fa-list-ul fs-1 d-block mb-2 opacity-50"></i>
+                                <small>Connect your account to view recent orders</small>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
-            <div class="row mb-4">
-                <div class="col-xl-12 mb-4">
-                    @livewire('dashboard.market-info')
-                </div>
-            </div>
+
+            @livewire('dashboard.market-info')
         </div>
     </div>
 
@@ -327,7 +306,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="bracketOrderModalLabel">
-                        <i class="fa fa-brackets text-info me-2"></i>Place Bracket Order
+                        <i class="fa fa-sitemap text-info me-2"></i>Place Bracket Order
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -364,7 +343,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-info">
-                            <i class="fa fa-brackets me-1"></i>Place Bracket Order
+                            <i class="fa fa-sitemap me-1"></i>Place Bracket Order
                         </button>
                     </div>
                 </form>
@@ -377,7 +356,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="tradeCycleModalLabel">
-                        <i class="fa fa-sync text-warning me-2"></i>Execute Trade Cycle
+                        <i class="fa fa-refresh text-warning me-2"></i>Execute Trade Cycle
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -407,7 +386,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-warning">
-                            <i class="fa fa-sync me-1"></i>Execute Trade Cycle
+                            <i class="fa fa-refresh me-1"></i>Execute Trade Cycle
                         </button>
                     </div>
                 </form>

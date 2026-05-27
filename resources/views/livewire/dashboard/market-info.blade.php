@@ -1,28 +1,25 @@
-<div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
-    <div class="card-header bg-gradient bg-info text-white border-0">
-        <div class="d-flex justify-content-between align-items-center">
+<div class="card border-0 shadow-sm h-100">
+    <div class="card-header bg-info text-white border-0">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h6 class="mb-0 fw-semibold">
-                <i class="demo-pli-chart-line me-2"></i>
+                <i class="fa fa-line-chart me-2"></i>
                 Market Information
             </h6>
-            <div class="d-flex gap-2">
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button"
-                            class="btn {{ $exchange === 'NSE' ? 'btn-light' : 'btn-outline-light' }} btn-sm"
-                            wire:click="changeExchange('NSE')">
-                        NSE
-                    </button>
-                    <button type="button"
-                            class="btn {{ $exchange === 'BSE' ? 'btn-light' : 'btn-outline-light' }} btn-sm"
-                            wire:click="changeExchange('BSE')">
-                        BSE
-                    </button>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Exchange">
+                    @foreach (['NSE', 'BSE'] as $ex)
+                        <button type="button"
+                                wire:click="changeExchange('{{ $ex }}')"
+                                class="btn btn-sm fw-semibold {{ $exchange === $ex ? 'bg-white text-info' : 'btn-outline-light' }}">
+                            {{ $ex }}
+                        </button>
+                    @endforeach
                 </div>
                 <button type="button"
-                        class="btn btn-outline-light btn-sm"
+                        class="btn btn-sm btn-outline-light"
                         wire:click="refreshMarketData"
                         @if($loading) disabled @endif>
-                    <i class="demo-pli-reload {{ $loading ? 'fa-spin' : '' }}"></i>
+                    <i class="fa fa-refresh {{ $loading ? 'fa-spin' : '' }}"></i>
                 </button>
             </div>
         </div>
@@ -37,26 +34,26 @@
                 <span class="ms-2 text-muted">Loading market data...</span>
             </div>
         @elseif($error)
-            <div class="alert alert-danger m-3" role="alert">
-                <i class="demo-pli-warning-2 me-2"></i>
-                {{ $error }}
+            <div class="alert alert-danger d-flex align-items-center m-3 mb-0" role="alert">
+                <i class="fa fa-exclamation-triangle me-2"></i>
+                <span class="flex-grow-1">{{ $error }}</span>
                 <button type="button" class="btn btn-sm btn-outline-danger ms-2" wire:click="refreshMarketData">
-                    Retry
+                    <i class="fa fa-refresh me-1"></i> Retry
                 </button>
             </div>
         @else
             <div class="row g-0">
-                <!-- Market Indices -->
+                {{-- Market indices --}}
                 <div class="col-md-6 border-end">
                     <div class="p-3">
                         <h6 class="text-secondary fw-semibold mb-3">
-                            <i class="demo-pli-chart-line me-1"></i>
+                            <i class="fa fa-line-chart me-1"></i>
                             Market Indices
                         </h6>
                         @if(empty($indices))
                             <div class="text-center text-muted py-3">
-                                <i class="demo-pli-information display-6"></i>
-                                <p class="mb-0">No indices data available</p>
+                                <i class="fa fa-info-circle fs-1 opacity-50"></i>
+                                <p class="mb-0 small">No indices data available</p>
                             </div>
                         @else
                             <div class="list-group list-group-flush">
@@ -82,12 +79,11 @@
                     </div>
                 </div>
 
-                <!-- Top Gainers/Losers -->
+                {{-- Top gainers / losers --}}
                 <div class="col-md-6">
                     <div class="p-3">
-                        <!-- Top Gainers -->
                         <h6 class="text-success fw-semibold mb-3">
-                            <i class="demo-pli-arrow-up me-1"></i>
+                            <i class="fa fa-arrow-up me-1"></i>
                             Top Gainers
                         </h6>
                         @if(empty($topGainers))
@@ -116,9 +112,8 @@
                             </div>
                         @endif
 
-                        <!-- Top Losers -->
                         <h6 class="text-danger fw-semibold mb-3">
-                            <i class="demo-pli-arrow-down me-1"></i>
+                            <i class="fa fa-arrow-down me-1"></i>
                             Top Losers
                         </h6>
                         @if(empty($topLosers))
@@ -150,11 +145,11 @@
                 </div>
             </div>
 
-            <!-- Top Volume -->
+            {{-- Top volume --}}
             <div class="border-top">
                 <div class="p-3">
                     <h6 class="text-primary fw-semibold mb-3">
-                        <i class="demo-pli-chart-bar me-1"></i>
+                        <i class="fa fa-bar-chart me-1"></i>
                         Top Volume
                     </h6>
                     @if(empty($topVolume))
@@ -188,7 +183,7 @@
 
     <div class="card-footer bg-light border-0 text-center">
         <small class="text-muted">
-            <i class="demo-pli-clock me-1"></i>
+            <i class="fa fa-clock-o me-1"></i>
             Last updated: {{ now()->format('H:i A') }}
             <span class="ms-2">Auto-refresh: {{ $refreshInterval / 1000 }}s</span>
         </small>
@@ -196,7 +191,6 @@
 </div>
 
 <script>
-    // Auto-refresh functionality
     document.addEventListener('livewire:load', function () {
         setInterval(function() {
             @this.call('refreshMarketData');

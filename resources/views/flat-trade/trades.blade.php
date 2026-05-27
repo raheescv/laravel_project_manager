@@ -4,14 +4,9 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('FlatTrade - Trade History') }}
             </h2>
-            <div class="d-flex gap-2">
-                <a href="{{ route('flat_trade::dashboard') }}" class="btn btn-outline-primary btn-sm">
-                    <i class="fa fa-arrow-left me-1"></i> Back to Dashboard
-                </a>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshTrades()">
-                    <i class="fa fa-refresh me-1"></i> Refresh
-                </button>
-            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshTrades()">
+                <i class="fa fa-refresh me-1"></i> Refresh
+            </button>
         </div>
     </x-slot>
 
@@ -257,9 +252,6 @@
                         <i class="fa fa-history fa-3x mb-3"></i>
                         <h5>No Trade History Available</h5>
                         <p>Trade history will be displayed here once you start trading through the FlatTrade integration.</p>
-                        <a href="{{ route('flat_trade::dashboard') }}" class="btn btn-primary">
-                            <i class="fa fa-arrow-right me-1"></i> Go to Dashboard
-                        </a>
                     </div>
                 `);
                 updateSummaryStats([]);

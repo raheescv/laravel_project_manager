@@ -12,9 +12,6 @@
                     <small class="text-muted">Ask anything about today's trades, decisions or rejections</small>
                 </div>
             </div>
-            <a href="{{ route('flat_trade::risk') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="fa fa-arrow-left me-1"></i> Back to Live Ops
-            </a>
         </div>
     </div>
 

@@ -24,15 +24,7 @@
                         class="nav-link {{ request()->is(['flat_trade/connect']) ? 'active' : '' }}">Connect Account</a>
                 </li>
             @endcan
-
-            {{-- Trading platform extension --}}
             @can('flat_trade.view')
-                <li class="nav-item">
-                    <a href="{{ route('flat_trade::risk') }}"
-                        class="nav-link {{ request()->is(['flat_trade/risk']) ? 'active' : '' }}">
-                        <i class="fa fa-shield me-1"></i> Risk &amp; Live Ops
-                    </a>
-                </li>
                 <li class="nav-item">
                     <a href="{{ route('flat_trade::strategies') }}"
                         class="nav-link {{ request()->is(['flat_trade/strategies']) ? 'active' : '' }}">
