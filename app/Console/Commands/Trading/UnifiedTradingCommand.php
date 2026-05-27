@@ -122,6 +122,10 @@ class UnifiedTradingCommand extends Command
         if (isset($summary['equity'])) {
             $this->line('equity: ₹'.number_format((float) $summary['equity'], 2));
         }
+        if (isset($summary['max_concurrent'])) {
+            $held = $summary['held_at_start'] ?? 0;
+            $this->line("slots: held={$held} max_concurrent={$summary['max_concurrent']}");
+        }
 
         $placedKey = match ($action) {
             'buy' => 'placed',

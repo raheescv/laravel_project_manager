@@ -894,6 +894,19 @@ class FlatTradeService
     }
 
     /**
+     * Fetch the full position book for the account. Norenapi's PositionBook
+     * endpoint only needs uid+actid — the wider filtered version below was
+     * misused for years; prefer this one for "show me all my positions".
+     */
+    public function getPositionBookAll(): array
+    {
+        return $this->makePiConnectRequest('PositionBook', [
+            'uid' => $this->clientId,
+            'actid' => $this->clientId,
+        ]);
+    }
+
+    /**
      * Get Position Book
      */
     public function getPositionBook(string $exchange = 'NSE', string $symbol = 'INFY-EQ', int $quantity = 10, string $product = 'C', string $previousProduct = 'I', string $transactionType = 'B', string $positionType = 'DAY'): array

@@ -17,7 +17,10 @@ final class RegimeFilter
 {
     public function __construct(
         private readonly BrokerManager $brokers,
-        private readonly string $indexSymbol = 'NIFTY',
+        // NIFTYBEES is the Nifty 50 ETF — tracks the index 1:1 and trades as
+        // a regular NSE equity, so it flows through the same TPSeries path
+        // as everything else without needing index-segment plumbing.
+        private readonly string $indexSymbol = 'NIFTYBEES',
         private readonly int $emaPeriod = 20,
         private readonly string $interval = '1d',
     ) {}

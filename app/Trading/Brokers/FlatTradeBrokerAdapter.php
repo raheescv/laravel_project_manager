@@ -80,6 +80,13 @@ class FlatTradeBrokerAdapter implements BrokerContract
         return str_ends_with($s, '-EQ') ? $s : $s.'-EQ';
     }
 
+    private function stripEqSuffix(string $symbol): string
+    {
+        $s = strtoupper(trim($symbol));
+
+        return str_ends_with($s, '-EQ') ? substr($s, 0, -3) : $s;
+    }
+
     /**
      * Compute a limit price that behaves like a market order — buys get a
      * small premium, sells a small discount — so the order fills against
@@ -100,7 +107,24 @@ class FlatTradeBrokerAdapter implements BrokerContract
             ? 1 + ($slippageBps / 10000)
             : 1 - ($slippageBps / 10000);
 
-        return round($base * $factor, 2);
+        return $this->snapToTick($base * $factor, $request->side);
+    }
+
+    /**
+     * NSE rejects limit prices that aren't a multiple of the scrip's tick size
+     * (₹0.05 for virtually all equities). Buys ceil to the next tick so they
+     * stay marketable-above-LTP; sells floor to the previous tick so they stay
+     * marketable-below-LTP.
+     */
+    private function snapToTick(float $price, string $side, float $tick = 0.05): float
+    {
+        if ($tick <= 0) {
+            return round($price, 2);
+        }
+        $ticks = $price / $tick;
+        $snapped = $side === OrderRequest::SIDE_BUY ? ceil($ticks) : floor($ticks);
+
+        return round($snapped * $tick, 2);
     }
 
     private function fetchLtp(string $symbol, string $exchange): ?float
@@ -136,20 +160,26 @@ class FlatTradeBrokerAdapter implements BrokerContract
     public function positions(): array
     {
         try {
-            $raw = method_exists($this->service, 'getPositions')
-                ? $this->service->getPositions()
+            $raw = method_exists($this->service, 'getPositionBookAll')
+                ? $this->service->getPositionBookAll()
                 : [];
-            $rows = $raw['values'] ?? $raw['positions'] ?? $raw ?? [];
+
+            // FlatTrade returns either a top-level array of positions or an
+            // error envelope. The error case has no positions to read.
+            if (is_array($raw) && (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg']))) {
+                return [];
+            }
+            $rows = is_array($raw) ? ($raw['values'] ?? (array_is_list($raw) ? $raw : [])) : [];
 
             return collect($rows)->map(fn ($p) => new PositionSnapshot(
-                symbol: $p['tsym'] ?? $p['symbol'] ?? '',
-                quantity: (int) ($p['netqty'] ?? $p['qty'] ?? 0),
-                avgPrice: (float) ($p['netavgprc'] ?? $p['avg_price'] ?? 0),
+                symbol: $this->stripEqSuffix($p['tsym'] ?? $p['symbol'] ?? ''),
+                quantity: (int) ($p['netqty'] ?? $p['daybuyqty'] ?? 0) - (int) ($p['daysellqty'] ?? 0),
+                avgPrice: (float) ($p['netavgprc'] ?? $p['daybuyavgprc'] ?? 0),
                 ltp: (float) ($p['lp'] ?? $p['ltp'] ?? 0),
                 exchange: $p['exch'] ?? 'NSE',
                 product: $p['prd'] ?? 'C',
                 raw: $p,
-            ))->filter(fn ($s) => $s->quantity !== 0)->values()->all();
+            ))->filter(fn ($s) => $s->quantity !== 0 && $s->symbol !== '')->values()->all();
         } catch (\Throwable $e) {
             Log::warning('FlatTrade positions read failed', ['err' => $e->getMessage()]);
 

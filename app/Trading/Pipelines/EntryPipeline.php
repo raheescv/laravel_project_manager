@@ -191,6 +191,8 @@ final class EntryPipeline
             'status' => 'ok',
             'regime' => $regimeCheck['reason'] ?? null,
             'equity' => $equity,
+            'max_concurrent' => $maxConcurrent,
+            'held_at_start' => count($heldSymbols) - count($placed),
             'placed' => $placed,
             'skipped' => $skipped,
         ];
