@@ -16,6 +16,13 @@ return [
         'max_concurrent_positions' => env('TRADING_MAX_CONCURRENT', 10),
         'max_daily_loss' => env('TRADING_MAX_DAILY_LOSS', 5000),
         'cooldown_minutes' => env('TRADING_COOLDOWN_MINUTES', 15),
+
+        // Symbol RegimeFilter uses to gauge the broad-market trend before
+        // letting fresh longs through. Must be a scrip the active broker can
+        // serve bars for (FlatTrade prefers NSE-listed equities/ETFs). Common
+        // options: NIFTYBEES (Nifty 50 ETF), SETFNIF50 (SBI Nifty 50 ETF),
+        // or a Nifty 50 constituent like RELIANCE as a proxy.
+        'regime_symbol' => env('TRADING_REGIME_SYMBOL', 'NIFTYBEES'),
     ],
 
     'schedule' => [

@@ -15,15 +15,21 @@ use App\Trading\Support\Indicators;
  */
 final class RegimeFilter
 {
+    private readonly string $indexSymbol;
+
     public function __construct(
         private readonly BrokerManager $brokers,
-        // NIFTYBEES is the Nifty 50 ETF — tracks the index 1:1 and trades as
-        // a regular NSE equity, so it flows through the same TPSeries path
-        // as everything else without needing index-segment plumbing.
-        private readonly string $indexSymbol = 'NIFTYBEES',
+        ?string $indexSymbol = null,
         private readonly int $emaPeriod = 20,
         private readonly string $interval = '1d',
-    ) {}
+    ) {
+        // NIFTYBEES (Nifty 50 ETF) tracks the index 1:1 and trades as a
+        // regular NSE equity, so it flows through the same TPSeries path
+        // as everything else. Override via TRADING_REGIME_SYMBOL when the
+        // configured broker doesn't carry that scrip.
+        $this->indexSymbol = $indexSymbol
+            ?: (string) config('trading.risk.regime_symbol', 'NIFTYBEES');
+    }
 
     public function allowsLongEntries(): array
     {

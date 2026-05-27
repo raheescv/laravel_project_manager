@@ -326,37 +326,51 @@ class FlatTradeBrokerAdapter implements BrokerContract
             return null;
         }
 
+        // Cache::remember treats null as a miss and re-runs the callback —
+        // we MUST return a sentinel array on failure so a missing scrip
+        // doesn't hammer searchScrip on every tick.
         $cached = Cache::remember("trading:flat_trade:scrip:{$clean}", 86400, function () use ($clean) {
-            try {
-                $stext = str_ends_with($clean, '-EQ') ? $clean : ($clean.'-EQ');
-                $res = $this->service->searchScrip($stext, 'NSE');
-                $matches = $res['values'] ?? [];
-                $exact = null;
-                foreach ($matches as $m) {
-                    if (! is_array($m)) {
-                        continue;
-                    }
-                    $tsym = strtoupper($m['tsym'] ?? '');
-                    if ($tsym === $clean || $tsym === $clean.'-EQ') {
-                        $exact = $m;
-                        break;
-                    }
+            $base = str_ends_with($clean, '-EQ') ? substr($clean, 0, -3) : $clean;
+            // Try the -EQ suffix first (covers Nifty 50 equities) then the
+            // raw symbol (covers ETFs/indices that FlatTrade lists without
+            // the suffix, e.g. some Nifty index funds).
+            foreach ([$base.'-EQ', $base] as $stext) {
+                $hit = $this->searchScripBestMatch($stext, $clean, $base);
+                if ($hit) {
+                    return [
+                        'token' => (string) ($hit['token'] ?? ''),
+                        'tick' => (float) ($hit['ti'] ?? 0),
+                        'found' => true,
+                    ];
                 }
-                $hit = $exact ?? ($matches[0] ?? null);
-                if (! is_array($hit)) {
-                    return;
-                }
-
-                return [
-                    'token' => (string) ($hit['token'] ?? ''),
-                    'tick' => (float) ($hit['ti'] ?? 0),
-                ];
-            } catch (\Throwable) {
-                return;
             }
+
+            return ['token' => '', 'tick' => 0.0, 'found' => false];
         });
 
         return is_array($cached) ? $cached : null;
+    }
+
+    private function searchScripBestMatch(string $stext, string $clean, string $base): ?array
+    {
+        try {
+            $res = $this->service->searchScrip($stext, 'NSE');
+            $matches = $res['values'] ?? [];
+            $needles = [$clean, $base, $base.'-EQ'];
+            foreach ($matches as $m) {
+                if (! is_array($m)) {
+                    continue;
+                }
+                $tsym = strtoupper($m['tsym'] ?? '');
+                if (in_array($tsym, $needles, true)) {
+                    return $m;
+                }
+            }
+
+            return $matches[0] ?? null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function tickSize(string $symbol): float
