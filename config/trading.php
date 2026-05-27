@@ -20,13 +20,14 @@ return [
 
     'schedule' => [
         // Toggle to flip the live trade:* schedule on without touching code.
+        // Times use APP_TIMEZONE (Asia/Kolkata) — NSE cash session 09:30–15:30 IST.
         'enabled' => (bool) env('TRADING_SCHEDULE_ENABLED', false),
-        'buy_between' => ['05:10', '09:55'],
-        'sell_between' => ['05:20', '09:55'],
-        'forced_flatten_at' => '09:55',
-        'quick_between' => ['04:30', '09:30'],
-        'quick_flatten_at' => '09:31',
-        'analyse_at' => '10:30',
+        'buy_between' => ['09:30', '15:30'],
+        'sell_between' => ['09:40', '15:30'],
+        'forced_flatten_at' => '15:30',
+        'quick_between' => ['09:30', '15:00'],
+        'quick_flatten_at' => '15:01',
+        'analyse_at' => '16:00',
     ],
 
     'alerts' => [

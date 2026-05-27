@@ -33,8 +33,7 @@ Schedule::command('assets:post-depreciation')->dailyAt('00:15')->withoutOverlapp
 // ----------------------------------------------------------------------------
 // Toggle TRADING_SCHEDULE_ENABLED=true in .env to flip these on. All entries
 // run sequentially with withoutOverlapping() so a slow tick can never collide
-// with the next one. Times follow the server clock — config('trading.timezone')
-// is informational only here.
+// with the next one. Window times use config('app.timezone') (see trading.schedule).
 // ----------------------------------------------------------------------------
 if (config('trading.schedule.enabled')) {
     [$buyFrom, $buyTo] = config('trading.schedule.buy_between');
