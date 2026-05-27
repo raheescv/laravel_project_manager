@@ -87,7 +87,11 @@ final class EntryPipeline
             try {
                 $bars = $broker->historicalBars($symbol, $barInterval, $lookback);
                 if (empty($bars)) {
-                    $skipped[] = ['symbol' => $symbol, 'reason' => 'no_bars'];
+                    $skipped[] = [
+                        'symbol' => $symbol,
+                        'reason' => 'no_bars',
+                        'why' => FlatTradeBrokerAdapter::lastBarsError($symbol) ?? 'unknown',
+                    ];
 
                     continue;
                 }

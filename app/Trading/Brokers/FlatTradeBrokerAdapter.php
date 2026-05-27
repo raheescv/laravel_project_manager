@@ -144,7 +144,7 @@ class FlatTradeBrokerAdapter implements BrokerContract
         try {
             $token = $this->resolveToken($symbol);
             if (! $token) {
-                Log::info('FlatTrade no token resolved', ['symbol' => $symbol]);
+                $this->recordBarsError($symbol, 'no_token');
 
                 return [];
             }
@@ -157,8 +157,18 @@ class FlatTradeBrokerAdapter implements BrokerContract
             $startTime = $endTime - ($minutes * 60 * max($lookback, 1) * 2);
 
             $raw = $this->service->getTimePriceSeries('NSE', $token, $startTime, $endTime, $minutes);
+
+            if (is_array($raw) && (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg']))) {
+                $err = trim(($raw['emsg'] ?? 'TPSeries Not_Ok').'');
+                $this->recordBarsError($symbol, 'api_error: '.$err);
+
+                return [];
+            }
+
             $rows = is_array($raw) ? ($raw['values'] ?? $raw) : [];
-            if (! is_array($rows)) {
+            if (! is_array($rows) || empty($rows)) {
+                $this->recordBarsError($symbol, 'empty_response');
+
                 return [];
             }
 
@@ -178,12 +188,27 @@ class FlatTradeBrokerAdapter implements BrokerContract
                 ->values()
                 ->all();
 
+            if (empty($bars)) {
+                $this->recordBarsError($symbol, 'parsed_empty');
+            }
+
             return array_slice($bars, -$lookback);
         } catch (\Throwable $e) {
+            $this->recordBarsError($symbol, 'exception: '.$e->getMessage());
             Log::warning('FlatTrade historicalBars failed', ['symbol' => $symbol, 'err' => $e->getMessage()]);
 
             return [];
         }
+    }
+
+    public static function lastBarsError(string $symbol): ?string
+    {
+        return Cache::get('trading:flat_trade:bars_error:'.strtoupper($symbol));
+    }
+
+    private function recordBarsError(string $symbol, string $reason): void
+    {
+        Cache::put('trading:flat_trade:bars_error:'.strtoupper($symbol), $reason, 120);
     }
 
     private function resolveToken(string $symbol): ?string

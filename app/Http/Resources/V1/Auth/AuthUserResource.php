@@ -18,6 +18,10 @@ class AuthUserResource extends JsonResource
         $default_branch_id = $this->default_branch_id ? (string) $this->default_branch_id : null;
 
         $openingSession = SaleDaySession::getOpenSessionForBranch($default_branch_id);
+        $lastClosedSession = SaleDaySession::where('branch_id', $default_branch_id)
+            ->where('status', 'closed')
+            ->orderBy('closed_at', 'desc')
+            ->first();
         $date = $openingSession ? $openingSession->opened_at->format('Y-m-d') : now()->format('Y-m-d');
 
         return [
@@ -31,6 +35,9 @@ class AuthUserResource extends JsonResource
             'designation' => $this->designation?->name,
             'branch_id' => $default_branch_id,
             'sale_day_session_date' => $date,
+            'sale_day_session_status' => $openingSession ? 'open' : 'closed',
+            'sale_day_session_opened_at' => $openingSession?->opened_at?->format('Y-m-d H:i:s'),
+            'last_closed_session_at' => $lastClosedSession?->closed_at?->format('Y-m-d H:i:s'),
         ];
     }
 }
