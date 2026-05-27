@@ -25,6 +25,7 @@ class QuickTradingCommand extends Command
                             {--strategy=momentum_score : strategy code from StrategyRegistry}
                             {--universe=nifty50 : nifty50 | active | custom:SYM1,SYM2}
                             {--risk-per-trade=0.005 : Fractional account risk per trade (tighter than unified)}
+                            {--funds-buffer=0.05 : Fractional cash headroom kept for fees/STT/slippage}
                             {--max-concurrent=1 : Cap on concurrent positions}
                             {--max-position-size=25000 : Notional cap per order}
                             {--squareoff-at=15:20 : HH:MM time exit}
@@ -90,6 +91,7 @@ class QuickTradingCommand extends Command
         app()->instance(PositionSizer::class, new PositionSizer(
             riskPerTrade: (float) $this->option('risk-per-trade'),
             maxNotional: (float) $this->option('max-position-size'),
+            fundsBuffer: (float) $this->option('funds-buffer'),
         ));
 
         return app(EntryPipeline::class)->run($strategy, $symbols, $this->pipelineOptions($mode) + [

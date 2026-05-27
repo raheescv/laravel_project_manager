@@ -17,6 +17,11 @@ final class PositionSizer
     public function __construct(
         private readonly float $riskPerTrade = 0.01,
         private readonly float $maxNotional = 50_000.0,
+        // FlatTrade (and most Indian brokers) reserve more than the raw
+        // notional — brokerage, STT, exchange transaction charges, GST, and
+        // stamp duty all eat into available margin. Leaving 5% as headroom
+        // prevents "Margin Shortfall" rejections at the broker boundary.
+        private readonly float $fundsBuffer = 0.05,
     ) {}
 
     /**
@@ -32,7 +37,8 @@ final class PositionSizer
         $riskAmount = $equity * $this->riskPerTrade;
         $rawQty = (int) floor($riskAmount / $stopDistance);
 
-        $byFunds = (int) floor($availableFunds / $entry);
+        $usableFunds = $availableFunds * (1 - $this->fundsBuffer);
+        $byFunds = (int) floor($usableFunds / $entry);
         $byCap = (int) floor($this->maxNotional / $entry);
 
         $qty = max(0, min($rawQty, $byFunds, $byCap));
