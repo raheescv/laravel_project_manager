@@ -32,27 +32,23 @@ class FlatTradeBrokerAdapter implements BrokerContract
             $exchange = $request->exchange ?: 'NSE';
             $tradingSymbol = $this->tradingSymbol($request->symbol);
 
-            if (strtoupper($request->type) === OrderRequest::TYPE_LIMIT) {
-                if (! $request->price || $request->price <= 0) {
-                    return OrderResult::failure('LIMIT order requires a price', [], $this->code());
-                }
-                $raw = $this->service->placeLimitOrder(
-                    $exchange,
-                    $tradingSymbol,
-                    $request->quantity,
-                    (float) $request->price,
-                    $direction,
-                    $request->product,
-                );
-            } else {
-                $raw = $this->service->placeMarketOrder(
-                    $exchange,
-                    $tradingSymbol,
-                    $request->quantity,
-                    $direction,
-                    $request->product,
-                );
+            // FlatTrade's API blocks pure MKT orders ("ALGO_CHK: MKT Order
+            // type not allowed for API order"). Convert every request to a
+            // marketable LIMIT — a few bps past LTP — so fills behave like
+            // market orders while the broker accepts the call.
+            $limitPrice = $this->marketableLimitPrice($request);
+            if (! $limitPrice) {
+                return OrderResult::failure('Cannot determine limit price (no LTP/price)', [], $this->code());
             }
+
+            $raw = $this->service->placeLimitOrder(
+                $exchange,
+                $tradingSymbol,
+                $request->quantity,
+                $limitPrice,
+                $direction,
+                $request->product,
+            );
 
             if (is_array($raw) && (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg']))) {
                 $err = trim(($raw['emsg'] ?? 'PlaceOrder Not_Ok'));
@@ -82,6 +78,44 @@ class FlatTradeBrokerAdapter implements BrokerContract
         $s = strtoupper(trim($symbol));
 
         return str_ends_with($s, '-EQ') ? $s : $s.'-EQ';
+    }
+
+    /**
+     * Compute a limit price that behaves like a market order — buys get a
+     * small premium, sells a small discount — so the order fills against
+     * the book immediately under normal conditions but stays inside
+     * FlatTrade's API rules.
+     */
+    private function marketableLimitPrice(OrderRequest $request, float $slippageBps = 20.0): ?float
+    {
+        $base = $request->price && $request->price > 0
+            ? (float) $request->price
+            : $this->fetchLtp($request->symbol, $request->exchange ?: 'NSE');
+
+        if (! $base || $base <= 0) {
+            return null;
+        }
+
+        $factor = $request->side === OrderRequest::SIDE_BUY
+            ? 1 + ($slippageBps / 10000)
+            : 1 - ($slippageBps / 10000);
+
+        return round($base * $factor, 2);
+    }
+
+    private function fetchLtp(string $symbol, string $exchange): ?float
+    {
+        try {
+            $token = $this->resolveToken($symbol);
+            if (! $token) {
+                return null;
+            }
+            $q = $this->service->getQuotes($token, $exchange);
+
+            return (float) ($q['lp'] ?? $q['ltp'] ?? 0) ?: null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function cancelOrder(string $orderId): bool
