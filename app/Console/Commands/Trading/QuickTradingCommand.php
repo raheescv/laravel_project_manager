@@ -50,9 +50,9 @@ class QuickTradingCommand extends Command
 
         try {
             if ($sellAll) {
-                $summary = $squareoff->run($this->options($mode));
+                $summary = $squareoff->run($this->pipelineOptions($mode));
             } else {
-                $exitResult = $exit->run($this->options($mode));
+                $exitResult = $exit->run($this->pipelineOptions($mode));
                 $entryResult = KillSwitchRule::isEngaged()
                     ? ['status' => 'skipped_kill_switch', 'placed' => []]
                     : $this->runEntry($registry, $universe, $mode);
@@ -92,13 +92,13 @@ class QuickTradingCommand extends Command
             maxNotional: (float) $this->option('max-position-size'),
         ));
 
-        return app(EntryPipeline::class)->run($strategy, $symbols, $this->options($mode) + [
+        return app(EntryPipeline::class)->run($strategy, $symbols, $this->pipelineOptions($mode) + [
             'parameters' => $registry->parametersFor($code),
             'strategy_code' => $code,
         ]);
     }
 
-    private function options(string $mode): array
+    private function pipelineOptions(string $mode): array
     {
         return [
             'mode' => $mode,

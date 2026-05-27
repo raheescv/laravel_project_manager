@@ -52,8 +52,8 @@ class UnifiedTradingCommand extends Command
         try {
             $summary = match ($action) {
                 'buy' => $this->runEntry($entry, $registry, $universe, $mode),
-                'sell' => $exit->run($this->options($mode)),
-                'squareoff' => $squareoff->run($this->options($mode)),
+                'sell' => $exit->run($this->pipelineOptions($mode)),
+                'squareoff' => $squareoff->run($this->pipelineOptions($mode)),
                 default => throw new \InvalidArgumentException("unknown --action={$action}"),
             };
 
@@ -90,13 +90,13 @@ class UnifiedTradingCommand extends Command
 
         $entry = app(EntryPipeline::class);
 
-        return $entry->run($strategy, $symbols, $this->options($mode) + [
+        return $entry->run($strategy, $symbols, $this->pipelineOptions($mode) + [
             'parameters' => $registry->parametersFor($code),
             'strategy_code' => $code,
         ]);
     }
 
-    private function options(string $mode): array
+    private function pipelineOptions(string $mode): array
     {
         return [
             'mode' => $mode,
