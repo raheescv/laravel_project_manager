@@ -142,25 +142,93 @@ class FlatTradeBrokerAdapter implements BrokerContract
     public function historicalBars(string $symbol, string $interval, int $lookback): array
     {
         try {
-            if (! method_exists($this->service, 'getHistoricalData')) {
+            $token = $this->resolveToken($symbol);
+            if (! $token) {
+                Log::info('FlatTrade no token resolved', ['symbol' => $symbol]);
+
                 return [];
             }
-            $raw = $this->service->getHistoricalData($symbol, $interval, $lookback);
-            $rows = $raw['values'] ?? $raw ?? [];
 
-            return collect($rows)->map(fn ($r) => new Bar(
-                symbol: $symbol,
-                timestamp: (int) ($r['time'] ?? $r['ts'] ?? strtotime($r['date'] ?? 'now')),
-                open: (float) ($r['into'] ?? $r['open'] ?? 0),
-                high: (float) ($r['inth'] ?? $r['high'] ?? 0),
-                low: (float) ($r['intl'] ?? $r['low'] ?? 0),
-                close: (float) ($r['intc'] ?? $r['close'] ?? 0),
-                volume: (int) ($r['intv'] ?? $r['volume'] ?? 0),
-                interval: $interval,
-            ))->all();
-        } catch (\Throwable) {
+            $minutes = $this->intervalMinutes($interval);
+            $endTime = time();
+            // Pad heavily — TPSeries returns one bar per minutes interval and
+            // intraday session is short; lookback × interval is the minimum,
+            // 2× covers weekends/holidays.
+            $startTime = $endTime - ($minutes * 60 * max($lookback, 1) * 2);
+
+            $raw = $this->service->getTimePriceSeries('NSE', $token, $startTime, $endTime, $minutes);
+            $rows = is_array($raw) ? ($raw['values'] ?? $raw) : [];
+            if (! is_array($rows)) {
+                return [];
+            }
+
+            $bars = collect($rows)
+                ->filter(fn ($r) => is_array($r))
+                ->map(fn ($r) => new Bar(
+                    symbol: $symbol,
+                    timestamp: (int) ($r['time'] ?? $r['ssboe'] ?? strtotime($r['stat'] ?? 'now')),
+                    open: (float) ($r['into'] ?? $r['open'] ?? 0),
+                    high: (float) ($r['inth'] ?? $r['high'] ?? 0),
+                    low: (float) ($r['intl'] ?? $r['low'] ?? 0),
+                    close: (float) ($r['intc'] ?? $r['close'] ?? 0),
+                    volume: (int) ($r['intv'] ?? $r['v'] ?? 0),
+                    interval: $interval,
+                ))
+                ->sortBy(fn (Bar $b) => $b->timestamp)
+                ->values()
+                ->all();
+
+            return array_slice($bars, -$lookback);
+        } catch (\Throwable $e) {
+            Log::warning('FlatTrade historicalBars failed', ['symbol' => $symbol, 'err' => $e->getMessage()]);
+
             return [];
         }
+    }
+
+    private function resolveToken(string $symbol): ?string
+    {
+        $clean = strtoupper(trim($symbol));
+        if ($clean === '') {
+            return null;
+        }
+
+        return Cache::remember("trading:flat_trade:token:{$clean}", 86400, function () use ($clean) {
+            try {
+                $stext = str_ends_with($clean, '-EQ') ? $clean : ($clean.'-EQ');
+                $res = $this->service->searchScrip($stext, 'NSE');
+                $matches = $res['values'] ?? [];
+                foreach ($matches as $m) {
+                    if (! is_array($m)) {
+                        continue;
+                    }
+                    $tsym = strtoupper($m['tsym'] ?? '');
+                    if ($tsym === $clean || $tsym === $clean.'-EQ') {
+                        return (string) ($m['token'] ?? '');
+                    }
+                }
+
+                return $matches[0]['token'] ?? null;
+            } catch (\Throwable) {
+                return;
+            }
+        });
+    }
+
+    private function intervalMinutes(string $interval): int
+    {
+        $interval = strtolower(trim($interval));
+        if (str_ends_with($interval, 'm')) {
+            return max(1, (int) substr($interval, 0, -1));
+        }
+        if (str_ends_with($interval, 'h')) {
+            return max(1, (int) substr($interval, 0, -1)) * 60;
+        }
+        if ($interval === '1d' || $interval === 'd') {
+            return 1440;
+        }
+
+        return max(1, (int) $interval);
     }
 
     public function availableFunds(): float

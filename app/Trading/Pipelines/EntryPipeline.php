@@ -21,7 +21,8 @@ use Illuminate\Support\Facades\Cache;
  *
  * RiskGate runs inside TradeExecutor — no rule is bypassed. Every per-symbol
  * decision takes a short Cache::lock so a cron re-run can't double-fire on
- * the same tick.
+ * the same tick. Every drop reason is surfaced in the `skipped` summary so
+ * an empty `placed` is debuggable instead of mysterious.
  */
 final class EntryPipeline
 {
@@ -40,10 +41,11 @@ final class EntryPipeline
         $maxConcurrent = (int) ($options['max_concurrent'] ?? 3);
         $barInterval = $options['bar_interval'] ?? '5m';
         $lookback = (int) ($options['lookback_bars'] ?? 120);
+        $minRR = (float) ($options['min_rr'] ?? 1.5);
 
         $regimeCheck = $this->regime->allowsLongEntries();
         if (! $regimeCheck['ok']) {
-            return ['status' => 'skipped_regime', 'reason' => $regimeCheck['reason'], 'placed' => []];
+            return ['status' => 'skipped_regime', 'reason' => $regimeCheck['reason'], 'placed' => [], 'skipped' => []];
         }
 
         $broker = $this->brokers->broker();
@@ -53,31 +55,40 @@ final class EntryPipeline
         );
 
         if (count($heldSymbols) >= $maxConcurrent) {
-            return ['status' => 'skipped_cap', 'reason' => 'max concurrent reached', 'placed' => []];
+            return ['status' => 'skipped_cap', 'reason' => 'max concurrent reached', 'placed' => [], 'skipped' => []];
         }
 
         $equity = $broker->availableFunds();
         $availableFunds = $equity;
         $placed = [];
+        $skipped = [];
         $slotsLeft = $maxConcurrent - count($heldSymbols);
 
         foreach ($symbols as $symbol) {
             $symbol = strtoupper($symbol);
             if ($slotsLeft <= 0) {
-                break;
+                $skipped[] = ['symbol' => $symbol, 'reason' => 'slots_exhausted'];
+
+                continue;
             }
             if (in_array($symbol, $heldSymbols, true)) {
+                $skipped[] = ['symbol' => $symbol, 'reason' => 'already_held'];
+
                 continue;
             }
 
             $lock = Cache::lock("trade:tick:{$symbol}", 30);
             if (! $lock->get()) {
+                $skipped[] = ['symbol' => $symbol, 'reason' => 'locked_by_another_tick'];
+
                 continue;
             }
 
             try {
                 $bars = $broker->historicalBars($symbol, $barInterval, $lookback);
                 if (empty($bars)) {
+                    $skipped[] = ['symbol' => $symbol, 'reason' => 'no_bars'];
+
                     continue;
                 }
 
@@ -86,6 +97,13 @@ final class EntryPipeline
                 ]);
 
                 if ($signal->action !== Signal::ACTION_BUY) {
+                    $skipped[] = [
+                        'symbol' => $symbol,
+                        'reason' => 'no_buy_signal',
+                        'action' => $signal->action,
+                        'score' => round($signal->score, 3),
+                    ];
+
                     continue;
                 }
 
@@ -93,15 +111,28 @@ final class EntryPipeline
                 $stop = $signal->stopLoss ?? 0.0;
                 $target = $signal->target ?? 0.0;
                 if ($entry <= 0 || $stop <= 0 || $stop >= $entry) {
+                    $skipped[] = ['symbol' => $symbol, 'reason' => 'invalid_levels', 'entry' => $entry, 'stop' => $stop];
+
+                    continue;
+                }
+
+                $rr = ($target - $entry) / max(0.0001, $entry - $stop);
+                if ($rr < $minRR) {
+                    $skipped[] = ['symbol' => $symbol, 'reason' => 'rr_below_min', 'rr' => round($rr, 2), 'min_rr' => $minRR];
+
                     continue;
                 }
 
                 $sized = $this->sizer->size($equity, $entry, $stop, $availableFunds);
                 if ($sized['quantity'] <= 0) {
-                    continue;
-                }
+                    $skipped[] = [
+                        'symbol' => $symbol,
+                        'reason' => 'zero_qty',
+                        'equity' => $equity,
+                        'available' => $availableFunds,
+                        'stop_distance' => $sized['stop_distance'],
+                    ];
 
-                if (($entry / max(0.0001, $stop) - 1) > 0 && ($target - $entry) / max(0.0001, $entry - $stop) < 1.5) {
                     continue;
                 }
 
@@ -122,24 +153,42 @@ final class EntryPipeline
                     'open_positions_count' => count($heldSymbols),
                 ], paper: $mode !== 'live');
 
-                if ($result->success) {
-                    $this->exits->recordEntry($symbol, $entry, $stop, $target);
-                    $availableFunds -= $sized['notional'];
-                    $heldSymbols[] = $symbol;
-                    $slotsLeft--;
+                if (! $result->success) {
+                    $skipped[] = ['symbol' => $symbol, 'reason' => 'execute_failed', 'error' => $result->error];
 
-                    if ($mode === 'live') {
-                        $verdict = $this->reconciler->reconcile($request, $result);
-                        $placed[] = compact('symbol') + ['quantity' => $sized['quantity'], 'reconciliation' => $verdict];
-                    } else {
-                        $placed[] = ['symbol' => $symbol, 'quantity' => $sized['quantity'], 'mode' => $mode];
-                    }
+                    continue;
                 }
+
+                $this->exits->recordEntry($symbol, $entry, $stop, $target);
+                $availableFunds -= $sized['notional'];
+                $heldSymbols[] = $symbol;
+                $slotsLeft--;
+
+                $placedRow = [
+                    'symbol' => $symbol,
+                    'quantity' => $sized['quantity'],
+                    'entry' => $entry,
+                    'stop' => $stop,
+                    'target' => $target,
+                    'rr' => round($rr, 2),
+                ];
+                if ($mode === 'live') {
+                    $placedRow['reconciliation'] = $this->reconciler->reconcile($request, $result);
+                } else {
+                    $placedRow['mode'] = $mode;
+                }
+                $placed[] = $placedRow;
             } finally {
                 $lock->release();
             }
         }
 
-        return ['status' => 'ok', 'placed' => $placed];
+        return [
+            'status' => 'ok',
+            'regime' => $regimeCheck['reason'] ?? null,
+            'equity' => $equity,
+            'placed' => $placed,
+            'skipped' => $skipped,
+        ];
     }
 }
