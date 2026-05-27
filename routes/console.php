@@ -41,30 +41,23 @@ if (config('trading.schedule.enabled')) {
     [$sellFrom, $sellTo] = config('trading.schedule.sell_between');
     [$quickFrom, $quickTo] = config('trading.schedule.quick_between');
 
-    // Optimized unified trading commands
-    Schedule::command('trade:unified --action=buy')
+    // Unified pipeline — entry / exit / hard squareoff
+    Schedule::command('trade:unified --action=buy --mode=live')
         ->everyFiveMinutes()->between($buyFrom, $buyTo)->withoutOverlapping();
-    Schedule::command('trade:unified --action=sell')
+    Schedule::command('trade:unified --action=sell --mode=live')
         ->everyFiveMinutes()->between($sellFrom, $sellTo)->withoutOverlapping();
-    Schedule::command('trade:unified --action=sell --sell-all')
+    Schedule::command('trade:unified --action=squareoff --mode=live')
         ->dailyAt(config('trading.schedule.forced_flatten_at'))->withoutOverlapping();
 
-    // Quick trading: Buy best stock and sell losing positions every 2 minutes
-    Schedule::command('trade:quick')
+    // Quick cycle — exit-first then single best entry, every 2 minutes
+    Schedule::command('trade:quick --mode=live')
         ->everyTwoMinutes()->between($quickFrom, $quickTo)->weekdays()->withoutOverlapping();
 
-    // Force sell all stocks after the quick-trading window (Mon–Fri)
-    Schedule::command('trade:quick --sell-all')
+    // Force flatten after the quick-trading window (Mon–Fri)
+    Schedule::command('trade:quick --mode=live --sell-all')
         ->dailyAt(config('trading.schedule.quick_flatten_at'))->weekdays()->withoutOverlapping();
 
     // Daily AI post-mortem after the trading day ends
     Schedule::command('trade:analyse')
         ->dailyAt(config('trading.schedule.analyse_at'))->weekdays();
 }
-
-// Legacy reference — keep commented as documentation of the original cadence.
-// Schedule::command('trade:unified --action=buy')->everyFiveMinutes()->between('05:10', '09:55');
-// Schedule::command('trade:unified --action=sell')->everyFiveMinutes()->between('05:20', '09:55');
-// Schedule::command('trade:unified --action=sell --sell-all')->dailyAt('09:55');
-// Schedule::command('trade:quick')->everyTwoMinutes()->between('04:30', '09:30')->weekdays();
-// Schedule::command('trade:quick --sell-all')->dailyAt('09:31')->weekdays();

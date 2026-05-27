@@ -80,6 +80,34 @@ final class Indicators
         return (($values[$n - 1] - $prev) / $prev) * 100;
     }
 
+    /**
+     * Average True Range (Wilder smoothing). Returns ATR in price units —
+     * not percent. Caller divides by price when a relative measure is needed.
+     */
+    public static function atr(array $highs, array $lows, array $closes, int $period = 14): float
+    {
+        $n = min(count($highs), count($lows), count($closes));
+        if ($n < $period + 1) {
+            return 0.0;
+        }
+
+        $tr = [];
+        for ($i = 1; $i < $n; $i++) {
+            $tr[] = max(
+                $highs[$i] - $lows[$i],
+                abs($highs[$i] - $closes[$i - 1]),
+                abs($lows[$i] - $closes[$i - 1]),
+            );
+        }
+
+        $atr = array_sum(array_slice($tr, 0, $period)) / $period;
+        for ($i = $period; $i < count($tr); $i++) {
+            $atr = (($atr * ($period - 1)) + $tr[$i]) / $period;
+        }
+
+        return $atr;
+    }
+
     public static function maxDrawdown(array $equity): float
     {
         $peak = $equity[0] ?? 0.0;
