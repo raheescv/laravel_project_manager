@@ -29,16 +29,36 @@ class FlatTradeBrokerAdapter implements BrokerContract
     {
         try {
             $direction = $request->side === OrderRequest::SIDE_BUY ? 'B' : 'S';
-            $orderType = strtolower($request->type) === 'limit' ? 'limit' : 'market';
+            $exchange = $request->exchange ?: 'NSE';
+            $tradingSymbol = $this->tradingSymbol($request->symbol);
 
-            // The existing service signature: placeOrder($symbol, $qty, $type, $product, $direction)
-            $raw = $this->service->placeOrder(
-                $request->symbol,
-                $request->quantity,
-                $orderType,
-                $request->product,
-                $direction,
-            );
+            if (strtoupper($request->type) === OrderRequest::TYPE_LIMIT) {
+                if (! $request->price || $request->price <= 0) {
+                    return OrderResult::failure('LIMIT order requires a price', [], $this->code());
+                }
+                $raw = $this->service->placeLimitOrder(
+                    $exchange,
+                    $tradingSymbol,
+                    $request->quantity,
+                    (float) $request->price,
+                    $direction,
+                    $request->product,
+                );
+            } else {
+                $raw = $this->service->placeMarketOrder(
+                    $exchange,
+                    $tradingSymbol,
+                    $request->quantity,
+                    $direction,
+                    $request->product,
+                );
+            }
+
+            if (is_array($raw) && (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg']))) {
+                $err = trim(($raw['emsg'] ?? 'PlaceOrder Not_Ok'));
+
+                return OrderResult::failure('FlatTrade rejected: '.$err, $raw, $this->code());
+            }
 
             $orderId = $raw['norenordno'] ?? $raw['order_id'] ?? null;
             if (! $orderId) {
@@ -55,6 +75,13 @@ class FlatTradeBrokerAdapter implements BrokerContract
 
             return OrderResult::failure($e->getMessage(), [], $this->code());
         }
+    }
+
+    private function tradingSymbol(string $symbol): string
+    {
+        $s = strtoupper(trim($symbol));
+
+        return str_ends_with($s, '-EQ') ? $s : $s.'-EQ';
     }
 
     public function cancelOrder(string $orderId): bool
