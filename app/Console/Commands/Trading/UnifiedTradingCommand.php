@@ -3,6 +3,8 @@
 namespace App\Console\Commands\Trading;
 
 use App\Services\OptimizedTradingService;
+use App\Trading\Risk\Rules\KillSwitchRule;
+use App\Trading\Services\CommandRunRecorder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 

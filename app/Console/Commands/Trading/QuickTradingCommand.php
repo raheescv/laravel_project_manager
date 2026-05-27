@@ -6,6 +6,8 @@ use App\Services\FlatTradeService;
 use App\Services\OptimizedTradingService;
 use App\Services\PerformanceTrackingService;
 use App\Services\UnifiedTradingStrategyService;
+use App\Trading\Risk\Rules\KillSwitchRule;
+use App\Trading\Services\CommandRunRecorder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
