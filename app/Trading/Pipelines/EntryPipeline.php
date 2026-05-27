@@ -90,7 +90,7 @@ final class EntryPipeline
                     $skipped[] = [
                         'symbol' => $symbol,
                         'reason' => 'no_bars',
-                        'why' => FlatTradeBrokerAdapter::lastBarsError($symbol) ?? 'unknown',
+                        'why' => \App\Trading\Brokers\FlatTradeBrokerAdapter::lastBarsError($symbol) ?? 'unknown',
                     ];
 
                     continue;
