@@ -18,8 +18,8 @@ class DaySessionController extends Controller
      * Toggle day open/close status.
      *
      * Opens a new day session if the branch is currently closed, or closes
-     * the open session if one exists. Requires openDate when opening and
-     * closingDate when closing, validated against the session's opened_at.
+     * the open session if one exists. Requires a `date` field — when closing
+     * it must be on or after the session's opened_at.
      */
     public function toggle(ToggleStatusAction $action, ToggleRequest $request): JsonResponse
     {

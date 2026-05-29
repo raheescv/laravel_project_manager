@@ -21,11 +21,13 @@ class ToggleStatusAction
             throw new \Exception('No default branch assigned to this user.');
         }
 
+        $date = $request->validated('date');
+
         if ($request->isClosing()) {
-            $session = $this->closeSession($request);
+            $session = $this->closeSession($request, $date);
             $message = 'Day closed successfully';
         } else {
-            $session = $this->openSession($branchId, $request->validated('openDate'));
+            $session = $this->openSession($branchId, $date);
             $message = 'Day opened successfully';
         }
 
@@ -38,10 +40,10 @@ class ToggleStatusAction
         ];
     }
 
-    protected function closeSession(ToggleRequest $request): SaleDaySession
+    protected function closeSession(ToggleRequest $request, string $date): SaleDaySession
     {
         $session = $request->openSession();
-        $session->closed_at = $request->validated('closingDate');
+        $session->closed_at = $date;
         $session->closed_by = Auth::id();
         $session->status = 'closed';
         $session->save();
@@ -49,10 +51,10 @@ class ToggleStatusAction
         return $session;
     }
 
-    protected function openSession(int $branchId, string $openDate): SaleDaySession
+    protected function openSession(int $branchId, string $date): SaleDaySession
     {
         $existingForDate = SaleDaySession::where('branch_id', $branchId)
-            ->whereDate('opened_at', $openDate)
+            ->whereDate('opened_at', $date)
             ->first();
 
         if ($existingForDate) {
@@ -68,7 +70,7 @@ class ToggleStatusAction
         return SaleDaySession::create([
             'branch_id' => $branchId,
             'opened_by' => Auth::id(),
-            'opened_at' => $openDate,
+            'opened_at' => $date,
             'status' => 'open',
         ]);
     }

@@ -22,21 +22,17 @@ class ToggleRequest extends FormRequest
      */
     public function rules(): array
     {
+        $rules = ['required', 'date', 'before_or_equal:today'];
+
         if ($this->isClosing()) {
-            $openSession = $this->openSession();
-            $rules = ['required', 'date', 'before_or_equal:today'];
-
-            if ($openSession?->opened_at) {
-                $rules[] = 'after_or_equal:'.$openSession->opened_at->toDateString();
+            $openedAt = $this->openSession()?->opened_at;
+            if ($openedAt) {
+                $rules[] = 'after_or_equal:'.$openedAt->toDateString();
             }
-
-            return [
-                'closingDate' => $rules,
-            ];
         }
 
         return [
-            'openDate' => ['required', 'date', 'before_or_equal:today'],
+            'date' => $rules,
         ];
     }
 
@@ -50,11 +46,10 @@ class ToggleRequest extends FormRequest
         $openedDate = $this->openSession()?->opened_at?->toDateString();
 
         return [
-            'closingDate.after_or_equal' => $openedDate
-                ? 'The closing date must be on or after '.$openedDate.'.'
-                : 'The closing date must be on or after the opening date.',
-            'closingDate.before_or_equal' => 'The closing date cannot be in the future.',
-            'openDate.before_or_equal' => 'The opening date cannot be in the future.',
+            'date.after_or_equal' => $openedDate
+                ? 'The date must be on or after '.$openedDate.'.'
+                : 'The date must be on or after the opening date.',
+            'date.before_or_equal' => 'The date cannot be in the future.',
         ];
     }
 
