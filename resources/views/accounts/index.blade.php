@@ -9,9 +9,9 @@
                 </ol>
             </nav>
             <h1 class="page-title mb-0 mt-2">
-                <i class="fa fa-book text-primary me-2"></i>Chart of Accounts
+                <i class="fa fa-book me-2" style="opacity: .85;"></i>Chart of Accounts
             </h1>
-            <p class="lead text-muted mb-0">Manage all account heads, categories, and ledgers in one place.</p>
+            <p class="lead mb-0" style="opacity: .85;">Manage all account heads, categories, and ledgers in one place.</p>
         </div>
     </div>
     <div class="content__boxed">

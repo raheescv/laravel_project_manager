@@ -173,7 +173,7 @@
                             @endunless
                             <td>{{ $product->code }}</td>
                             <td>{{ $product->main_category_name ?? $product->mainCategory?->name }}</td>
-                            <td>{{ $product->branch_name }}</td>
+                            <td>{{ $product->brand_name }}</td>
                             @unless ($group_by_code)
                                 <td>{{ $product->size }}</td>
                             @endunless
