@@ -3,6 +3,7 @@
 namespace App\Livewire\Product;
 
 use App\Exports\Templates\ProductImportTemplate;
+use App\Imports\LimitedRowImport;
 use App\Jobs\Product\ImportProductImagesFromDropboxJob;
 use App\Jobs\Product\ImportProductJob;
 use App\Models\Category;
@@ -157,10 +158,11 @@ class Import extends Component
         $this->loadPreview();
     }
 
-    public function loadPreview()
+    public function loadPreview(): void
     {
-        $rows = Excel::toArray(new \stdClass(), Storage::disk('public')->path($this->filePath));
-        $this->previewData = array_slice($rows[0], 1, 10); // Skip header and get 10 rows
+        $this->previewData = (new LimitedRowImport(10))->toArray(
+            Storage::disk('public')->path($this->filePath)
+        );
     }
 
     public function goToStep($step)
