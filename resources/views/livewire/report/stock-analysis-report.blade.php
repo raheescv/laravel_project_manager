@@ -9,18 +9,42 @@
                         class="btn {{ $report_type === 'top_moving' ? 'btn-danger' : 'btn-outline-danger' }} px-4 fw-bold">
                         <i class="fa fa-fire me-1"></i> Top Moving
                     </button>
+                    <button type="button" wire:click="$set('report_type', 'top_moving_category')"
+                        class="btn {{ $report_type === 'top_moving_category' ? 'btn-success' : 'btn-outline-success' }} px-4 fw-bold">
+                        <i class="fa fa-tags me-1"></i> Top Moving Categories
+                    </button>
+                    <button type="button" wire:click="$set('report_type', 'top_moving_brand')"
+                        class="btn {{ $report_type === 'top_moving_brand' ? 'btn-info' : 'btn-outline-info' }} px-4 fw-bold">
+                        <i class="fa fa-copyright me-1"></i> Top Moving Brands
+                    </button>
                     <button type="button" wire:click="$set('report_type', 'non_moving')" x-on:click="window.stockAnalysisReport?.destroyChart?.()"
                         class="btn {{ $report_type === 'non_moving' ? 'btn-warning' : 'btn-outline-warning' }} px-4 fw-bold">
                         <i class="fa fa-box me-1"></i> Non-Moving
                     </button>
                 </div>
             </div>
-            <div class="form-check form-switch fs-6">
-                <input class="form-check-input" type="checkbox" role="switch" id="groupByCodeSwitch" wire:model.live="group_by_code">
-                <label class="form-check-label fw-bold" for="groupByCodeSwitch">
-                    <i class="fa fa-object-group me-1 text-primary"></i>Group by Code
-                </label>
-            </div>
+            @if (in_array($report_type, ['top_moving_category', 'top_moving_brand']))
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted fw-bold small"><i class="fa fa-sort me-1"></i>Sort By</span>
+                    <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Sort By">
+                        <button type="button" wire:click="$set('category_sort_by', 'quantity')"
+                            class="btn {{ $category_sort_by === 'quantity' ? 'btn-primary' : 'btn-outline-primary' }} fw-bold">
+                            <i class="fa fa-cubes me-1"></i> Quantity
+                        </button>
+                        <button type="button" wire:click="$set('category_sort_by', 'value')"
+                            class="btn {{ $category_sort_by === 'value' ? 'btn-primary' : 'btn-outline-primary' }} fw-bold">
+                            <i class="fa fa-money me-1"></i> Sale Value
+                        </button>
+                    </div>
+                </div>
+            @else
+                <div class="form-check form-switch fs-6">
+                    <input class="form-check-input" type="checkbox" role="switch" id="groupByCodeSwitch" wire:model.live="group_by_code">
+                    <label class="form-check-label fw-bold" for="groupByCodeSwitch">
+                        <i class="fa fa-object-group me-1 text-primary"></i>Group by Code
+                    </label>
+                </div>
+            @endif
         </div>
     </div>
     <div class="card-body">
@@ -61,7 +85,7 @@
                 </div>
             </div>
             <div class="row mb-4 p-2">
-                @if ($report_type === 'top_moving')
+                @if (in_array($report_type, ['top_moving', 'top_moving_category', 'top_moving_brand']))
                     <div class="col-md-2">
                         <label class="form-label fw-bold">From Date</label>
                         <div class="input-group shadow-sm">
@@ -77,10 +101,15 @@
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label fw-bold">Top Items</label>
+                        <label class="form-label fw-bold">
+                            @if ($report_type === 'top_moving_category') Top Categories
+                            @elseif ($report_type === 'top_moving_brand') Top Brands
+                            @else Top Items
+                            @endif
+                        </label>
                         <div class="input-group shadow-sm">
                             <span class="input-group-text"><i class="fa fa-list-ol"></i></span>
-                            <input type="number" wire:model.live="limit" class="form-control" min="5" max="20">
+                            <input type="number" wire:model.live="limit" class="form-control" min="5" max="50">
                         </div>
                     </div>
                 @else
@@ -96,12 +125,12 @@
             </div>
         </div>
 
-        <!-- Chart Section for Top Moving Products -->
-        @if ($report_type === 'top_moving' && $chartData)
+        <!-- Chart Section for Top Moving Products / Categories / Brands -->
+        @if (in_array($report_type, ['top_moving', 'top_moving_category', 'top_moving_brand']) && $chartData)
             <div class="row mb-4"
-                wire:key="stock-analysis-chart-{{ $report_type }}-{{ $branch_id ?: 'all' }}-{{ md5($product_search) }}-{{ $main_category_id ?: 'all' }}-{{ $sub_category_id ?: 'all' }}-{{ $brand_id ?: 'all' }}-{{ $from_date }}-{{ $to_date }}-{{ $limit }}-{{ $group_by_code ? 'g' : 'ng' }}">
+                wire:key="stock-analysis-chart-{{ $report_type }}-{{ $branch_id ?: 'all' }}-{{ md5($product_search) }}-{{ $main_category_id ?: 'all' }}-{{ $sub_category_id ?: 'all' }}-{{ $brand_id ?: 'all' }}-{{ $from_date }}-{{ $to_date }}-{{ $limit }}-{{ $group_by_code ? 'g' : 'ng' }}-{{ $category_sort_by }}">
                 <div class="col-12 mb-3">
-                    <h6 class="text-muted text-uppercase"><i class="fa fa-chart-pie me-2"></i>Distribution Chart</h6>
+                    <h6 class="text-muted text-uppercase"><i class="fa fa-pie-chart me-2"></i>Distribution Chart</h6>
                     <hr class="mt-2">
                 </div>
                 <div class="col-md-8 mx-auto">
@@ -123,6 +152,107 @@
                 <hr class="mt-2">
             </div>
         </div>
+
+        @if (in_array($report_type, ['top_moving_category', 'top_moving_brand']))
+            @php
+                $totalNetQty = $groups->sum('net_quantity');
+                $totalNetValue = $groups->sum('net_value');
+                $shareDenominator = $category_sort_by === 'value' ? $totalNetValue : $totalNetQty;
+                $groupFallback = $report_type === 'top_moving_brand' ? 'Unbranded' : 'Uncategorized';
+                $groupIcon = $report_type === 'top_moving_brand' ? 'fa-copyright text-info' : 'fa-tag text-success';
+            @endphp
+            <div class="table-responsive">
+                <table class="table table-hover table-sm table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 text-center" style="width: 60px;">Rank</th>
+                            <th class="border-0">{{ $grouping_label }}</th>
+                            <th class="border-0 text-end">Qty Sold</th>
+                            <th class="border-0 text-end">Qty Returned</th>
+                            <th class="border-0 text-end">Net Qty</th>
+                            <th class="border-0 text-end">Sale Value</th>
+                            <th class="border-0 text-end">Return Value</th>
+                            <th class="border-0 text-end">Net Value</th>
+                            <th class="border-0 text-end">Products</th>
+                            <th class="border-0" style="min-width: 180px;">% Share ({{ $category_sort_by === 'value' ? 'Value' : 'Qty' }})</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($groups as $idx => $row)
+                            @php
+                                $rowValue = $category_sort_by === 'value' ? (float) $row->net_value : (float) $row->net_quantity;
+                                $share = $shareDenominator > 0 ? ($rowValue / $shareDenominator) * 100 : 0;
+                            @endphp
+                            <tr>
+                                <td class="text-center">
+                                    @if ($idx === 0)
+                                        <span class="badge bg-warning text-dark fs-6"><i class="fa fa-trophy"></i> 1</span>
+                                    @elseif ($idx === 1)
+                                        <span class="badge bg-secondary fs-6">2</span>
+                                    @elseif ($idx === 2)
+                                        <span class="badge bg-info fs-6">3</span>
+                                    @else
+                                        <span class="badge bg-light text-dark">{{ $idx + 1 }}</span>
+                                    @endif
+                                </td>
+                                <td class="fw-bold">
+                                    <i class="fa {{ $groupIcon }} me-1"></i>
+                                    {{ $row->group_name ?: $groupFallback }}
+                                </td>
+                                <td class="text-end">{{ number_format($row->sale_count, 2) }}</td>
+                                <td class="text-end text-danger">{{ number_format($row->sale_return_count, 2) }}</td>
+                                <td class="text-end">
+                                    <span class="badge fs-6 {{ $row->net_quantity > 0 ? 'bg-success' : 'bg-danger' }}">
+                                        {{ number_format($row->net_quantity, 2) }}
+                                    </span>
+                                </td>
+                                <td class="text-end">{{ number_format($row->sale_value, 2) }}</td>
+                                <td class="text-end text-danger">{{ number_format($row->sale_return_value, 2) }}</td>
+                                <td class="text-end">
+                                    <span class="text-success fw-bold">{{ number_format($row->net_value, 2) }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">{{ number_format($row->products_count) }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1" style="height: 12px; min-width: 100px;">
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                style="width: {{ min(100, max(0, $share)) }}%;"
+                                                aria-valuenow="{{ $share }}" aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <small class="fw-bold text-muted" style="min-width: 50px;">{{ number_format($share, 1) }}%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    <i class="fa fa-inbox fa-2x mb-2 d-block"></i>
+                                    No {{ strtolower($grouping_label) }} movement found for the selected filters.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    @if ($groups->isNotEmpty())
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="2" class="text-end">Totals:</td>
+                                <td class="text-end">{{ number_format($groups->sum('sale_count'), 2) }}</td>
+                                <td class="text-end text-danger">{{ number_format($groups->sum('sale_return_count'), 2) }}</td>
+                                <td class="text-end">{{ number_format($totalNetQty, 2) }}</td>
+                                <td class="text-end">{{ number_format($groups->sum('sale_value'), 2) }}</td>
+                                <td class="text-end text-danger">{{ number_format($groups->sum('sale_return_value'), 2) }}</td>
+                                <td class="text-end text-success">{{ number_format($totalNetValue, 2) }}</td>
+                                <td class="text-end">{{ number_format($groups->sum('products_count')) }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    @endif
+                </table>
+            </div>
+        @else
         <div class="table-responsive">
             <table class="table table-hover table-sm table-striped align-middle">
                 <thead class="table-light">
@@ -314,6 +444,7 @@
                 </tbody>
             </table>
         </div>
+        @endif
 
         @if ($report_type === 'non_moving')
             <div class="mt-4 d-flex justify-content-center">
@@ -530,6 +661,8 @@
                         return;
                     }
 
+                    const dynamicTitle = newData.title || 'Top Moving Products Distribution';
+
                     if (
                         !window.stockAnalysisReport.chart ||
                         window.stockAnalysisReport.chart.canvas !== canvas
@@ -538,13 +671,26 @@
                         Chart.getChart(canvas)?.destroy();
                         window.stockAnalysisReport.chart = new Chart(canvas.getContext('2d'), {
                             ...chartConfig,
-                            data: newData
+                            data: newData,
+                            options: {
+                                ...chartConfig.options,
+                                plugins: {
+                                    ...chartConfig.options.plugins,
+                                    title: {
+                                        ...chartConfig.options.plugins.title,
+                                        text: dynamicTitle
+                                    }
+                                }
+                            }
                         });
 
                         return;
                     }
 
                     window.stockAnalysisReport.chart.data = newData;
+                    if (window.stockAnalysisReport.chart.options?.plugins?.title) {
+                        window.stockAnalysisReport.chart.options.plugins.title.text = dynamicTitle;
+                    }
                     window.stockAnalysisReport.chart.update('none');
                 }
 

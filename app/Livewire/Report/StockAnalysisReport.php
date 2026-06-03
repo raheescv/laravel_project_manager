@@ -31,13 +31,15 @@ class StockAnalysisReport extends Component
 
     public $brand_id = '';
 
-    public $report_type = 'top_moving'; // non_moving, top_moving
+    public $report_type = 'top_moving'; // non_moving, top_moving, top_moving_category, top_moving_brand
 
     public $days_threshold = 30; // Number of days to consider for non-moving items
 
     public $limit = 10; // Number of top moving products to show
 
     public $group_by_code = false; // Group result rows / chart slices by product code
+
+    public $category_sort_by = 'quantity'; // quantity | value
 
     public string $historyModalTitle = '';
 
@@ -56,8 +58,8 @@ class StockAnalysisReport extends Component
     public function updated($key, $value): void
     {
         $this->resetPage();
-        if (in_array($key, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type', 'product_search', 'main_category_id', 'sub_category_id', 'brand_id', 'group_by_code'])) {
-            if ($this->report_type === 'top_moving') {
+        if (in_array($key, ['from_date', 'to_date', 'branch_id', 'limit', 'report_type', 'product_search', 'main_category_id', 'sub_category_id', 'brand_id', 'group_by_code', 'category_sort_by'])) {
+            if (in_array($this->report_type, ['top_moving', 'top_moving_category', 'top_moving_brand'], true)) {
                 $this->dispatch('stock-analysis-chart-updated', chartData: $this->getChartData());
             } else {
                 $this->dispatch('stock-analysis-chart-cleared');
@@ -284,6 +286,73 @@ class StockAnalysisReport extends Component
         ])->orderBy('sale_count', 'desc');
     }
 
+    /**
+     * @param  'category'|'brand'  $grouping
+     */
+    protected function getTopMovingGrouping(string $grouping): QueryBuilder
+    {
+        $config = [
+            'category' => [
+                'column' => 'products.main_category_id',
+                'name_source' => 'main_categories.name',
+                'alias' => 'stock_analysis_category_movements',
+            ],
+            'brand' => [
+                'column' => 'products.brand_id',
+                'name_source' => 'brands.name',
+                'alias' => 'stock_analysis_brand_movements',
+            ],
+        ][$grouping];
+
+        $groupColumn = $config['column'];
+
+        $saleItems = $this->baseSaleItemsQuery()
+            ->select(
+                DB::raw("{$groupColumn} as group_id"),
+                DB::raw("MIN({$config['name_source']}) as group_name"),
+                DB::raw('SUM(sale_items.base_unit_quantity) as sale_count'),
+                DB::raw('0 as sale_return_count'),
+                DB::raw('SUM(sale_items.total) as sale_value'),
+                DB::raw('0 as sale_return_value'),
+                DB::raw('COUNT(DISTINCT products.id) as sale_products_count'),
+                DB::raw('0 as sale_return_products_count')
+            )
+            ->whereNotNull($groupColumn)
+            ->groupBy($groupColumn);
+
+        $saleReturnItems = $this->baseSaleReturnItemsQuery()
+            ->select(
+                DB::raw("{$groupColumn} as group_id"),
+                DB::raw("MIN({$config['name_source']}) as group_name"),
+                DB::raw('0 as sale_count'),
+                DB::raw('SUM(sale_return_items.base_unit_quantity) as sale_return_count'),
+                DB::raw('0 as sale_value'),
+                DB::raw('SUM(sale_return_items.total) as sale_return_value'),
+                DB::raw('0 as sale_products_count'),
+                DB::raw('COUNT(DISTINCT products.id) as sale_return_products_count')
+            )
+            ->whereNotNull($groupColumn)
+            ->groupBy($groupColumn);
+
+        $sortColumn = $this->category_sort_by === 'value' ? 'net_value' : 'net_quantity';
+
+        return DB::query()
+            ->fromSub($saleItems->unionAll($saleReturnItems), $config['alias'])
+            ->select(
+                'group_id',
+                DB::raw('MIN(group_name) as group_name'),
+                DB::raw('SUM(sale_count) as sale_count'),
+                DB::raw('SUM(sale_return_count) as sale_return_count'),
+                DB::raw('SUM(sale_count) - SUM(sale_return_count) as net_quantity'),
+                DB::raw('SUM(sale_value) as sale_value'),
+                DB::raw('SUM(sale_return_value) as sale_return_value'),
+                DB::raw('SUM(sale_value) - SUM(sale_return_value) as net_value'),
+                DB::raw('GREATEST(SUM(sale_products_count), SUM(sale_return_products_count)) as products_count')
+            )
+            ->groupBy('group_id')
+            ->orderByDesc($sortColumn);
+    }
+
     protected function aggregateTopMovingUnion(Builder $unionQuery, array $groupColumns): QueryBuilder
     {
         $query = DB::query()
@@ -393,11 +462,19 @@ class StockAnalysisReport extends Component
 
     public function getChartData(): array
     {
+        if ($this->report_type === 'top_moving_category') {
+            return $this->getGroupingChartData('category');
+        }
+        if ($this->report_type === 'top_moving_brand') {
+            return $this->getGroupingChartData('brand');
+        }
+
         $data = $this->getTopMovingProducts()
             ->limit($this->topMovingLimit())
             ->get();
 
         return [
+            'title' => 'Top Moving Products Distribution',
             'labels' => $data->map(function ($product): string {
                 if ($this->group_by_code) {
                     return (string) ($product->code ?: $product->name);
@@ -418,9 +495,38 @@ class StockAnalysisReport extends Component
         ];
     }
 
+    /**
+     * @param  'category'|'brand'  $grouping
+     */
+    protected function getGroupingChartData(string $grouping): array
+    {
+        $data = $this->getTopMovingGrouping($grouping)
+            ->limit($this->topMovingLimit())
+            ->get();
+
+        $valueKey = $this->category_sort_by === 'value' ? 'net_value' : 'net_quantity';
+        $label = $grouping === 'brand' ? 'Brands' : 'Categories';
+        $fallback = $grouping === 'brand' ? 'Unbranded' : 'Uncategorized';
+
+        return [
+            'title' => "Top Moving {$label} Distribution (".($this->category_sort_by === 'value' ? 'Sale Value' : 'Net Quantity').')',
+            'labels' => $data->map(fn ($row): string => (string) ($row->group_name ?: $fallback))->toArray(),
+            'datasets' => [
+                [
+                    'data' => $data->pluck($valueKey)->map(fn ($v): float => (float) $v)->toArray(),
+                    'backgroundColor' => [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                        '#FF9F40', '#C9CBCF', '#7CB342', '#EC407A', '#5C6BC0',
+                        '#26A69A', '#FFA726', '#AB47BC', '#42A5F5', '#66BB6A',
+                    ],
+                ],
+            ],
+        ];
+    }
+
     protected function topMovingLimit(): int
     {
-        return max(5, min(20, (int) $this->limit));
+        return max(5, min(50, (int) $this->limit));
     }
 
     protected function attachChildren($rows): void
@@ -541,14 +647,34 @@ class StockAnalysisReport extends Component
     {
         $branches = Branch::orderBy('name')->pluck('name', 'id');
 
-        $products = $this->report_type === 'non_moving'
-            ? $this->getNonMovingProducts()->paginate(10)
-            : $this->getTopMovingProducts()->limit($this->topMovingLimit())->get();
+        $groups = collect();
+        $grouping_label = '';
+        $grouping_label_plural = '';
+
+        if ($this->report_type === 'non_moving') {
+            $products = $this->getNonMovingProducts()->paginate(10);
+        } elseif ($this->report_type === 'top_moving_category') {
+            $products = collect();
+            $groups = $this->getTopMovingGrouping('category')->limit($this->topMovingLimit())->get();
+            $grouping_label = 'Category';
+            $grouping_label_plural = 'Categories';
+        } elseif ($this->report_type === 'top_moving_brand') {
+            $products = collect();
+            $groups = $this->getTopMovingGrouping('brand')->limit($this->topMovingLimit())->get();
+            $grouping_label = 'Brand';
+            $grouping_label_plural = 'Brands';
+        } else {
+            $products = $this->getTopMovingProducts()->limit($this->topMovingLimit())->get();
+        }
 
         $this->attachChildren($products);
 
-        $chartData = $this->report_type === 'top_moving' ? $this->getChartData() : null;
+        $chartData = in_array($this->report_type, ['top_moving', 'top_moving_category', 'top_moving_brand'], true)
+            ? $this->getChartData()
+            : null;
 
-        return view('livewire.report.stock-analysis-report', compact('products', 'branches', 'chartData'));
+        return view('livewire.report.stock-analysis-report', compact(
+            'products', 'branches', 'chartData', 'groups', 'grouping_label', 'grouping_label_plural'
+        ));
     }
 }
