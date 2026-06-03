@@ -79,7 +79,13 @@ class Category extends Model
 
     public static function selfCreate($data)
     {
+        static $cache = [];
         $name = $data['name'];
+        $key = (self::getCurrentTenantId() ?? 0).'|'.($data['parent_id'] ?? '').'|'.$name;
+        if (isset($cache[$key])) {
+            return $cache[$key];
+        }
+
         $existing = Category::firstWhere('name', $name);
         if (! $existing) {
             $response = (new CreateAction())->execute($data);
@@ -87,9 +93,9 @@ class Category extends Model
                 throw new \Exception($response['message']);
             }
 
-            return $response['data']['id'];
-        } else {
-            return $existing['id'];
+            return $cache[$key] = $response['data']['id'];
         }
+
+        return $cache[$key] = $existing['id'];
     }
 }

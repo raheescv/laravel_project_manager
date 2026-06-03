@@ -130,8 +130,8 @@ class Inventory extends Model implements AuditableContracts
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
-            BranchProductCreationJob::dispatch(null, $userId, $product->id);
         }
+        BranchProductCreationJob::dispatch(null, $userId, $product->id);
     }
 
     public function getDropDownList($request)

@@ -404,7 +404,7 @@
                     <i class="fa {{ $duplicateStrategy === 'update' ? 'fa-refresh' : 'fa-forward' }} me-2 fs-5"></i>
                     <span>
                         Duplicate strategy: <strong>{{ ucfirst($duplicateStrategy) }}</strong>.
-                        Existing products matched by <em>ID &rarr; Code &rarr; Name + Main Category</em> will be {{ $duplicateStrategy === 'update' ? 'updated with the new values' : 'skipped' }}.
+                        Existing products matched by <em>ID &rarr; Name</em> will be {{ $duplicateStrategy === 'update' ? 'updated with the new values' : 'skipped' }}.
                     </span>
                 </div>
 

@@ -421,8 +421,12 @@ class Product extends Model implements AuditableContracts
         $data['is_selling'] = $data['is_selling'] ?? true;
         $data['is_selling'] = in_array($data['is_selling'], ['Yes', true], true);
         $data['unit'] = $data['unit'] ?? 'Nos';
-        $unit = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']]);
-        $data['unit_id'] = $unit->id;
+        static $unitCache = [];
+        $unitKey = (self::getCurrentTenantId() ?? 0).'|'.$data['unit'];
+        if (! isset($unitCache[$unitKey])) {
+            $unitCache[$unitKey] = Unit::firstOrCreate(['name' => $data['unit']], ['code' => $data['unit']])->id;
+        }
+        $data['unit_id'] = $unitCache[$unitKey];
         $brand_id = null;
         if (isset($data['brand_id'])) {
             $brand_id = Brand::selfCreate($data['brand_id']);

@@ -53,8 +53,8 @@ class UpdateAction
             $data['updated_by'] = $user_id;
             $model->update($data);
 
-            if ($data['type'] == 'product' && isset($data['barcode_number'])) {
-                $model->inventories()->update(['barcode_number' => $data['barcode_number']]);
+            if ($data['type'] == 'product' && $model->wasChanged('barcode_number')) {
+                $model->inventories()->update(['barcode_number' => $model->barcode_number]);
             }
 
             if ($data['type'] === 'asset') {

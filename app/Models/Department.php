@@ -48,6 +48,12 @@ class Department extends Model
 
     public static function selfCreate($name)
     {
+        static $cache = [];
+        $key = (self::getCurrentTenantId() ?? 0).'|'.$name;
+        if (isset($cache[$key])) {
+            return $cache[$key];
+        }
+
         $existing = Department::firstWhere('name', $name);
         if (! $existing) {
             $response = (new CreateAction())->execute(['name' => $name]);
@@ -55,9 +61,9 @@ class Department extends Model
                 throw new \Exception($response['message']);
             }
 
-            return $response['data']['id'];
-        } else {
-            return $existing['id'];
+            return $cache[$key] = $response['data']['id'];
         }
+
+        return $cache[$key] = $existing['id'];
     }
 }

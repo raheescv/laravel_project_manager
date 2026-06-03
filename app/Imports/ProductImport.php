@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Actions\Product\Inventory\UpdateAction;
+use App\Actions\Product\Inventory\UpdateAction as InventoryUpdateAction;
 use App\Actions\Product\UpdateAction as ProductUpdateAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
@@ -22,13 +22,17 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private array $errors = [];
 
+    /** @var array<int, Product> */
     private array $existingById = [];
 
-    private array $existingByCode = [];
+    /** @var array<string, Product> */
+    private array $existingByName = [];
 
-    private array $existingByNameCategory = [];
+    /** @var array<string, int> */
+    private array $trashedByName = [];
 
-    private array $trashedByNameCategory = [];
+    /** @var array<int, Inventory> */
+    private array $inventoryByProductId = [];
 
     public function __construct(
         private int $userId,
@@ -43,80 +47,88 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     public function collection(Collection $rows)
     {
-        $this->preloadExistingProducts($rows);
+        $nameColumn = $this->mappings['name'] ?? 'name';
+        $filteredRows = $rows->filter(
+            fn ($row) => $row->filter()->isNotEmpty() && ! empty($row[$nameColumn])
+        );
 
-        $filteredRows = $rows->filter(function ($row) {
-            $nameColumn = $this->mappings['name'] ?? 'name';
-
-            return $row->filter()->isNotEmpty() && ! empty($row[$nameColumn]);
-        });
-
-        $processedInBatch = 0;
+        $this->preloadExistingProducts($filteredRows);
 
         foreach ($filteredRows as $value) {
             try {
-                $processedInBatch++;
                 $this->processProductRow($value);
             } catch (\Throwable $th) {
                 $this->handleError($value, $th);
             }
         }
-        $this->processedRows += $processedInBatch;
+
+        $this->processedRows += $filteredRows->count();
         $this->updateProgress();
     }
 
     private function preloadExistingProducts(Collection $rows): void
     {
         $idColumn = $this->mappings['id'] ?? null;
-        $codeColumn = $this->mappings['code'] ?? null;
         $nameColumn = $this->mappings['name'] ?? 'name';
 
-        $ids = $idColumn ? $rows->pluck($idColumn)->filter()->unique()->toArray() : [];
-        $codes = $codeColumn ? $rows->pluck($codeColumn)->filter()->unique()->toArray() : [];
-        $names = $rows->pluck($nameColumn)->filter()->unique()->toArray();
+        $ids = $idColumn
+            ? $rows->pluck($idColumn)->filter()->map(fn ($v) => (int) $v)->unique()->values()->all()
+            : [];
+        $names = $rows->pluck($nameColumn)->filter()->unique()->values()->all();
 
-        if (! empty($ids)) {
-            $this->existingById = Product::where('type', $this->defaultType)
-                ->whereIn('id', $ids)
-                ->pluck('id', 'id')
-                ->toArray();
+        if (empty($ids) && empty($names)) {
+            return;
         }
 
-        if (! empty($codes)) {
-            $this->existingByCode = Product::where('type', $this->defaultType)
-                ->whereIn('code', $codes)
-                ->pluck('id', 'code')
-                ->toArray();
+        $activeRows = Product::where('type', $this->defaultType)
+            ->where(function ($q) use ($ids, $names) {
+                if (! empty($ids)) {
+                    $q->whereIn('id', $ids);
+                }
+                if (! empty($names)) {
+                    $q->orWhereIn('name', $names);
+                }
+            })
+            ->get(['id', 'name', 'barcode_number']);
+
+        foreach ($activeRows as $row) {
+            $this->existingById[$row->id] = $row;
+            $this->existingByName[$this->nameKey($row->name)] = $row;
         }
 
         if (! empty($names)) {
-            $nameCategoryRows = Product::where('type', $this->defaultType)
-                ->whereIn('name', $names)
-                ->get(['id', 'name', 'main_category_id']);
-
-            foreach ($nameCategoryRows as $row) {
-                $key = $this->nameCategoryKey($row->name, $row->main_category_id);
-                $this->existingByNameCategory[$key] = $row->id;
-            }
-
             $trashedRows = Product::onlyTrashed()
                 ->where('type', $this->defaultType)
                 ->whereIn('name', $names)
-                ->get(['id', 'name', 'main_category_id']);
+                ->get(['id', 'name']);
 
             foreach ($trashedRows as $row) {
-                $key = $this->nameCategoryKey($row->name, $row->main_category_id);
-                $this->trashedByNameCategory[$key] = $row->id;
+                $this->trashedByName[$this->nameKey($row->name)] = $row->id;
             }
         }
+
+        if ($this->duplicateStrategy !== 'update' || $this->defaultType === 'service') {
+            return;
+        }
+
+        $matchedIds = array_keys($this->existingById);
+        if (empty($matchedIds)) {
+            return;
+        }
+
+        $this->inventoryByProductId = Inventory::where('branch_id', $this->branchId)
+            ->whereIn('product_id', $matchedIds)
+            ->get()
+            ->keyBy('product_id')
+            ->all();
     }
 
-    private function nameCategoryKey(?string $name, ?int $categoryId): string
+    private function nameKey(?string $name): string
     {
-        return strtolower(trim((string) $name)).'|'.($categoryId ?? '');
+        return strtolower(trim((string) $name));
     }
 
-    private function findExistingProductId(array $productRow, array $data): ?int
+    private function findExistingProduct(array $productRow, array $data): ?Product
     {
         $idValue = $productRow['id'] ?? null;
         if ($idValue !== null && $idValue !== '') {
@@ -126,14 +138,9 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             }
         }
 
-        $codeValue = $productRow['code'] ?? null;
-        if ($codeValue !== null && $codeValue !== '' && isset($this->existingByCode[$codeValue])) {
-            return $this->existingByCode[$codeValue];
-        }
-
-        $key = $this->nameCategoryKey($data['name'] ?? null, $data['main_category_id'] ?? null);
-        if (isset($this->existingByNameCategory[$key])) {
-            return $this->existingByNameCategory[$key];
+        $nameKey = $this->nameKey($data['name'] ?? null);
+        if ($nameKey !== '' && isset($this->existingByName[$nameKey])) {
+            return $this->existingByName[$nameKey];
         }
 
         return null;
@@ -148,7 +155,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             }
         }
 
-        $productRow['name'] = trim($productRow['name']);
+        $productRow['name'] = trim($productRow['name'] ?? '');
         if (empty($productRow['name'])) {
             return;
         }
@@ -156,61 +163,77 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
         $data = Product::constructData($productRow, $this->userId);
         $data['type'] = $this->defaultType;
 
-        $productName = $data['name'];
         $quantity = $productRow['stock'] ?? $value['stock'] ?? 0;
 
-        $existingId = $this->findExistingProductId($productRow, $data);
+        $existing = $this->findExistingProduct($productRow, $data);
 
-        if ($existingId) {
+        if ($existing) {
             if ($this->duplicateStrategy === 'skip') {
                 return;
             }
 
-            $model = Product::find($existingId);
-            if (! $model) {
-                throw new Exception($this->moduleLabel.' not found for update: '.$productName);
-            }
-            $data['id'] = $model->id;
-            validationHelper(Product::rules($data, $data['id']), $data, $this->moduleLabel);
-
-            $productResponse = (new ProductUpdateAction())->execute($data, $data['id'], $this->userId);
-            if (! $productResponse['success']) {
-                throw new Exception($productResponse['message'], 1);
-            }
-
-            $inventory = Inventory::where('branch_id', $this->branchId)->where('product_id', $model->id)->first();
-            if ($inventory && $this->defaultType !== 'service') {
-                $inventoryData = $inventory->toArray();
-                $inventoryData['quantity'] = $quantity;
-                $inventoryData['remarks'] = 'Bulk Update';
-
-                $inventoryResponse = (new UpdateAction())->execute($inventoryData, $inventory->id);
-                if (! $inventoryResponse['success']) {
-                    throw new Exception($inventoryResponse['message'], 1);
-                }
-            }
+            $this->updateExistingProduct($existing, $data, $productRow, $quantity);
 
             return;
         }
 
         validationHelper(Product::rules($data), $data, $this->moduleLabel);
         $model = $this->createOrRestoreProduct($data);
+
         if ($this->defaultType !== 'service') {
             Inventory::selfCreateByProduct($model, $this->userId, $quantity, $this->branchId);
         }
     }
 
+    private function updateExistingProduct(Product $existing, array $data, array $productRow, $quantity): void
+    {
+        $data['id'] = $existing->id;
+
+        // Keep the existing barcode on update unless the import row supplies a new one.
+        if (empty($productRow['barcode'] ?? null)) {
+            $data['barcode_number'] = $existing->barcode_number;
+        }
+
+        $productResponse = (new ProductUpdateAction())->execute($data, $existing->id, $this->userId);
+        if (! $productResponse['success']) {
+            throw new Exception($productResponse['message'], 1);
+        }
+
+        if ($this->defaultType === 'service') {
+            return;
+        }
+
+        $inventory = $this->inventoryByProductId[$existing->id] ?? null;
+        if (! $inventory) {
+            return;
+        }
+
+        // Stock unchanged: skip the no-op write that would only re-stamp 'Bulk Update' and recalc cost.
+        if ($quantity == 0 || (float) $quantity === (float) $inventory->quantity) {
+            return;
+        }
+
+        $inventoryData = $inventory->toArray();
+        $inventoryData['quantity'] = $quantity;
+        $inventoryData['remarks'] = 'Bulk Update';
+
+        $inventoryResponse = (new InventoryUpdateAction())->execute($inventoryData, $inventory->id);
+        if (! $inventoryResponse['success']) {
+            throw new Exception($inventoryResponse['message'], 1);
+        }
+    }
+
     private function createOrRestoreProduct(array $data): Product
     {
-        $key = $this->nameCategoryKey($data['name'] ?? null, $data['main_category_id'] ?? null);
+        $nameKey = $this->nameKey($data['name'] ?? null);
 
-        if (isset($this->trashedByNameCategory[$key])) {
-            $trashedProduct = Product::withTrashed()->find($this->trashedByNameCategory[$key]);
-            if ($trashedProduct) {
-                $trashedProduct->restore();
-                $trashedProduct->update($data);
+        if ($nameKey !== '' && isset($this->trashedByName[$nameKey])) {
+            $trashed = Product::withTrashed()->find($this->trashedByName[$nameKey]);
+            if ($trashed) {
+                $trashed->restore();
+                $trashed->update($data);
 
-                return $trashedProduct;
+                return $trashed;
             }
         }
 

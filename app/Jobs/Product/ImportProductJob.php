@@ -3,6 +3,7 @@
 namespace App\Jobs\Product;
 
 use App\Imports\ProductImport;
+use App\Imports\RowCountImport;
 use App\Models\Tenant;
 use App\Services\TenantService;
 use Exception;
@@ -17,6 +18,12 @@ use Maatwebsite\Excel\Facades\Excel;
 class ImportProductJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    // Never auto-retry: a retry could re-import a partially-processed file and create duplicates.
+    public $tries = 1;
+
+    // Allow long imports; keep below the queue retry_after (DB_QUEUE_RETRY_AFTER) so a running job isn't re-picked.
+    public $timeout = 3600;
 
     public function __construct(
         protected $user_id,
@@ -77,13 +84,10 @@ class ImportProductJob implements ShouldQueue
         if (! $file || ! file_exists($file)) {
             throw new Exception("File [{$this->filePath}] does not exist and can therefore not be imported.");
         }
+        $rowCounter = new RowCountImport();
+        Excel::import($rowCounter, $file);
+        $totalRows = max($rowCounter->getCount(), 1);
 
-        $collection = Excel::toCollection(new \stdClass(), $file)->first();
-        $totalRows = $collection->filter(function ($row) {
-            return $row->filter()->isNotEmpty();
-        })->count();
-
-        $totalRows--;
         Excel::import(new ProductImport(
             $this->user_id,
             $totalRows,

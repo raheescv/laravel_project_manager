@@ -15,13 +15,23 @@ class FailedJobs extends Component
 
     public string $queue = '';
 
+    public $from_date;
+
+    public $to_date;
+
     public int $limit = 25;
 
-    public string $sortField = 'id';
+    public string $sortField = 'failed_at';
 
     public string $sortDirection = 'desc';
 
     protected string $paginationTheme = 'bootstrap';
+
+    public function mount(): void
+    {
+        $this->from_date = date('Y-m-01');
+        $this->to_date = date('Y-m-d');
+    }
 
     public function updated(string $key, mixed $value): void
     {
@@ -90,6 +100,12 @@ class FailedJobs extends Component
             })
             ->when($this->queue !== '', function ($query): void {
                 $query->where('queue', $this->queue);
+            })
+            ->when($this->from_date ?? '', function ($query, $value): void {
+                $query->where('failed_at', '>=', date('Y-m-d 00:00:00', strtotime($value)));
+            })
+            ->when($this->to_date ?? '', function ($query, $value): void {
+                $query->where('failed_at', '<=', date('Y-m-d 23:59:59', strtotime($value)));
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->limit);

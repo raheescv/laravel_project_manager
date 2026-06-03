@@ -2,7 +2,7 @@
     <div class="card shadow-sm">
         <div class="card-header bg-light py-3">
             <div class="row g-3 align-items-end">
-                <div class="col-lg-7">
+                <div class="col-lg-4">
                     <label class="form-label small fw-semibold text-muted">Search</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-white border-secondary-subtle">
@@ -12,7 +12,15 @@
                             placeholder="Search by job, queue, UUID, exception, or ID">
                     </div>
                 </div>
-                <div class="col-lg-3">
+                <div class="col-lg-2">
+                    <label class="form-label small fw-semibold text-muted">From Date</label>
+                    <input type="date" wire:model.live="from_date" class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                </div>
+                <div class="col-lg-2">
+                    <label class="form-label small fw-semibold text-muted">To Date</label>
+                    <input type="date" wire:model.live="to_date" class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                </div>
+                <div class="col-lg-2">
                     <label class="form-label small fw-semibold text-muted">Queue</label>
                     <select wire:model.live="queue" class="form-select form-select-sm border-secondary-subtle shadow-sm">
                         <option value="">All Queues</option>
