@@ -3,7 +3,6 @@
 namespace App\Livewire\Product;
 
 use App\Exports\Templates\ProductImportTemplate;
-use App\Imports\ProductImport;
 use App\Jobs\Product\ImportProductImagesFromDropboxJob;
 use App\Jobs\Product\ImportProductJob;
 use App\Models\Category;
@@ -48,8 +47,11 @@ class Import extends Component
 
     public bool $dropboxImportQueued = false;
 
+    public $duplicateStrategy = 'skip'; // skip | update
+
     // Available fields for mapping
     public $availableFields = [
+        'id' => 'Product ID (primary match)',
         'name' => 'Product Name English(*)',
         'name_arabic' => 'Product Name Arabic (*)',
         'code' => 'Product Code (SKU)',
@@ -78,7 +80,6 @@ class Import extends Component
         'location' => 'Location',
         'reorder_level' => 'Reorder Level',
         'plu' => 'PLU',
-        'upload_type' => 'Upload Type (new/update)',
     ];
 
     /**
@@ -88,6 +89,7 @@ class Import extends Component
     private function getHeaderAliases(): array
     {
         return [
+            'id' => ['id', 'product_id', 'productid', 'product id'],
             'name' => ['name', 'productname', 'productnameenglish', 'product name', 'product name english'],
             'name_arabic' => ['name_arabic', 'namearabic', 'arabicname', 'productnamearabic', 'product name arabic', 'arabic name', 'name arabic'],
             'code' => ['code', 'sku', 'productcode', 'product code'],
@@ -115,7 +117,6 @@ class Import extends Component
             'location' => ['location'],
             'reorder_level' => ['reorder_level', 'reorderlevel', 'reorder level'],
             'plu' => ['plu'],
-            'upload_type' => ['upload_type', 'uploadtype', 'upload type'],
             'status' => ['status', 'active', 'inactive'],
         ];
     }
@@ -189,19 +190,16 @@ class Import extends Component
             'mappings.name.required' => 'The Product Name field must be mapped.',
         ]);
 
-        // In a real "Advanced" import, we'd pass mappings to the job.
-        // For now, if the user didn't change anything and used the template,
-        // the existing ProductImport might work if it uses HeadingRow.
-        // However, to be TRULY advanced, we should probably modify ProductImport
-        // or pass the mapping to the job.
-
-        // Since I want to fulfill the "Advanced" request, I'll update the Job/Import class
-        // to handle custom mappings if I can, or at least ensure the current one works.
-
-        // For this demo, let's assume we use the mappings.
-        $totalRows = count(Excel::toArray(new \stdClass(), Storage::disk('public')->path($this->filePath))[0]) - 1;
-
-        ImportProductJob::dispatch(Auth::id(), $this->filePath, session('branch_id'), session('tenant_id'), $this->mappings);
+        ImportProductJob::dispatch(
+            Auth::id(),
+            $this->filePath,
+            session('branch_id'),
+            session('tenant_id'),
+            $this->mappings,
+            'product',
+            'Product',
+            $this->duplicateStrategy
+        );
 
         $this->dispatch('success', ['message' => 'Import started in background']);
         $this->step = 4;

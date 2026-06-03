@@ -25,7 +25,8 @@ class ImportProductJob implements ShouldQueue
         protected $tenantId = null,
         protected $mappings = [],
         protected $defaultType = 'product',
-        protected $moduleLabel = 'Product'
+        protected $moduleLabel = 'Product',
+        protected string $duplicateStrategy = 'skip'
     ) {}
 
     public function handle()
@@ -83,7 +84,16 @@ class ImportProductJob implements ShouldQueue
         })->count();
 
         $totalRows--;
-        Excel::import(new ProductImport($this->user_id, $totalRows, $this->branchId, $this->mappings, $this->defaultType, $this->moduleLabel), $file);
+        Excel::import(new ProductImport(
+            $this->user_id,
+            $totalRows,
+            $this->branchId,
+            $this->mappings,
+            $this->defaultType,
+            $this->moduleLabel,
+            $this->tenantId,
+            $this->duplicateStrategy
+        ), $file);
 
         // Clean up the file after import
         if (file_exists($file)) {
