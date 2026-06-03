@@ -8,8 +8,10 @@
                     <li class="breadcrumb-item active" aria-current="page">Chart of Accounts</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">Chart of Accounts</h1>
-            <p class="lead">Manage all account heads, categories, and ledgers</p>
+            <h1 class="page-title mb-0 mt-2">
+                <i class="fa fa-book text-primary me-2"></i>Chart of Accounts
+            </h1>
+            <p class="lead text-muted mb-0">Manage all account heads, categories, and ledgers in one place.</p>
         </div>
     </div>
     <div class="content__boxed">

@@ -51,6 +51,8 @@ class Table extends Component
         'alias_name' => true,
         'description' => true,
         'model' => true,
+        'created_at' => false,
+        'updated_at' => false,
     ];
 
     protected $paginationTheme = 'bootstrap';
@@ -79,6 +81,8 @@ class Table extends Component
             'alias_name' => true,
             'description' => true,
             'model' => true,
+            'created_at' => false,
+            'updated_at' => false,
         ];
     }
 
@@ -375,6 +379,8 @@ class Table extends Component
             'alias_name' => 'Alias Name',
             'description' => 'Description',
             'model' => 'Model',
+            'created_at' => 'Created',
+            'updated_at' => 'Updated',
         ];
 
         return view('livewire.account.table', [

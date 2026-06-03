@@ -15,6 +15,11 @@ class AccountController extends Controller
         return view('accounts.index');
     }
 
+    public function import()
+    {
+        return view('accounts.import');
+    }
+
     public function customer($id = null)
     {
         if ($id) {
