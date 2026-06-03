@@ -70,7 +70,10 @@
             }
         @endphp
         <div class="audit-pivot-list">
-            <div class="audit-pivot-scroll">
+            <div class="audit-pivot-scroll"
+                 x-data="{ scrolled: false }"
+                 x-init="$el.addEventListener('scroll', () => scrolled = $el.scrollLeft > 0)"
+                 :class="scrolled ? 'is-scrolled' : ''">
                 <table class="audit-pivot-table mb-0">
                     <thead>
                         <tr>
@@ -265,54 +268,195 @@
         <style>
             [x-cloak] { display: none !important; }
 
-            /* Pivot table styles (preserved) */
+            /* Pivot Table — modern design */
+            .audit-component .audit-pivot-list {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                overflow: hidden;
+            }
             .audit-component .audit-pivot-scroll {
                 overflow-x: auto;
                 overflow-y: visible;
                 position: relative;
                 max-width: 100%;
+                scrollbar-width: thin;
+                scrollbar-color: #cbd5e1 transparent;
             }
+            .audit-component .audit-pivot-scroll::-webkit-scrollbar { height: 8px; }
+            .audit-component .audit-pivot-scroll::-webkit-scrollbar-track { background: transparent; }
+            .audit-component .audit-pivot-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+            .audit-component .audit-pivot-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
             .audit-component .audit-pivot-table {
                 font-size: 0.82rem;
                 border-collapse: separate;
                 border-spacing: 0;
-                margin-bottom: 0;
-                width: auto;
+                width: 100%;
                 min-width: 100%;
+                color: #0f172a;
             }
+
+            /* Header cells */
             .audit-component .audit-pivot-table thead th {
-                background: #f4f6fa;
+                background: #f8fafc;
                 vertical-align: top;
-                font-weight: 600;
-                color: #2d3a4b;
-                padding: 0.5rem 0.6rem;
-                border-bottom: 2px solid #dee2e6;
+                padding: 12px;
+                border-bottom: 1px solid #e2e8f0;
                 white-space: nowrap;
+                font-weight: 600;
             }
+            .audit-component .audit-pivot-field-header {
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #64748b;
+                padding: 6px 4px;
+            }
+            .audit-component .audit-col-card {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                padding: 4px;
+                min-width: 200px;
+            }
+            .audit-component .audit-col-card-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+            }
+            .audit-component .audit-col-index {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 28px;
+                height: 22px;
+                padding: 0 6px;
+                border-radius: 6px;
+                background: #f1f5f9;
+                color: #475569;
+                font-size: 0.7rem;
+                font-weight: 700;
+                letter-spacing: 0.3px;
+            }
+            .audit-component .audit-col-card-user {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.78rem;
+            }
+            .audit-component .audit-col-username {
+                font-weight: 600;
+                color: #1e293b;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 140px;
+            }
+            .audit-component .audit-col-card-time {
+                font-size: 0.72rem;
+                color: #64748b;
+                font-weight: 500;
+            }
+            .audit-component .audit-col-card-footer {
+                padding-top: 4px;
+                border-top: 1px dashed #e2e8f0;
+            }
+            .audit-component .audit-col-change-pill {
+                display: inline-flex;
+                align-items: center;
+                font-size: 0.7rem;
+                font-weight: 600;
+                padding: 2px 8px;
+                border-radius: 10px;
+                background: #eef2ff;
+                color: #4338ca;
+            }
+
+            /* Event accent (top border per column) */
+            .audit-component .audit-col-event-success { box-shadow: inset 0 3px 0 #10b981; }
+            .audit-component .audit-col-event-primary { box-shadow: inset 0 3px 0 #3b82f6; }
+            .audit-component .audit-col-event-danger { box-shadow: inset 0 3px 0 #ef4444; }
+            .audit-component .audit-col-event-info { box-shadow: inset 0 3px 0 #06b6d4; }
+            .audit-component .audit-col-event-secondary { box-shadow: inset 0 3px 0 #64748b; }
+
+            /* Field column (rows) */
             .audit-component .audit-pivot-table tbody th {
                 background: #fafbfc;
                 font-weight: 600;
-                color: #6c757d;
-                padding: 0.4rem 0.6rem;
+                color: #334155;
+                padding: 10px 14px;
                 white-space: nowrap;
-                text-transform: capitalize;
+                vertical-align: middle;
+                border-bottom: 1px solid #f1f5f9;
             }
+            .audit-component .audit-pivot-field-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 0.82rem;
+            }
+            .audit-component .audit-field-bullet {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #94a3b8;
+                flex-shrink: 0;
+            }
+
+            /* Body cells */
             .audit-component .audit-pivot-table tbody td {
-                padding: 0.4rem 0.6rem;
+                padding: 10px 12px;
                 vertical-align: middle;
                 word-break: break-word;
+                border-bottom: 1px solid #f1f5f9;
+                background: #fff;
+                transition: background-color .12s ease;
             }
+            .audit-component .audit-pivot-row:hover tbody th,
+            .audit-component .audit-pivot-row:hover td { background: #f8fafc; }
+            .audit-component .audit-pivot-row:last-child th,
+            .audit-component .audit-pivot-row:last-child td { border-bottom: 0; }
+            .audit-component .audit-cell-changed { background: #fefce8; }
+            .audit-component .audit-pivot-row:hover .audit-cell-changed { background: #fef9c3; }
+            .audit-component .audit-cell-empty { background: #fafbfc; }
+            .audit-component .audit-cell-dash { color: #cbd5e1; font-weight: 600; }
+            .audit-component .audit-cell-diff {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+            .audit-component .audit-cell-arrow {
+                color: #94a3b8;
+                font-size: 0.85rem;
+            }
+
+            /* Sticky first column */
             .audit-component .audit-pivot-sticky {
                 position: sticky;
                 left: 0;
                 z-index: 2;
-                box-shadow: 1px 0 0 #dee2e6;
             }
-            .audit-component thead .audit-pivot-sticky { z-index: 4; background: #f4f6fa !important; }
+            .audit-component .audit-pivot-sticky::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: -8px;
+                width: 8px;
+                height: 100%;
+                pointer-events: none;
+                background: linear-gradient(to right, rgba(15,23,42,0.06), transparent);
+                opacity: 0;
+                transition: opacity .15s ease;
+            }
+            .audit-component .audit-pivot-scroll.is-scrolled .audit-pivot-sticky::after { opacity: 1; }
+            .audit-component thead .audit-pivot-sticky { z-index: 4; background: #f8fafc !important; }
             .audit-component tbody .audit-pivot-sticky { background: #fafbfc !important; }
-            .audit-component .audit-pivot-field-col { min-width: 160px; max-width: 220px; }
-            .audit-component .audit-pivot-change-col { min-width: 180px; }
-            .audit-component .audit-entry-index { font-size: 0.7rem; padding: 0.2em 0.5em; }
+            .audit-component .audit-pivot-row:hover tbody.audit-pivot-sticky,
+            .audit-component .audit-pivot-row:hover .audit-pivot-sticky { background: #f1f5f9 !important; }
+            .audit-component .audit-pivot-field-col { min-width: 200px; max-width: 260px; }
+            .audit-component .audit-pivot-change-col { min-width: 220px; }
 
             /* Shared avatar */
             .audit-user-avatar {
@@ -432,8 +576,10 @@
 
             @media (max-width: 575.98px) {
                 .audit-component .audit-pivot-table { font-size: 0.76rem; }
-                .audit-component .audit-pivot-field-col { min-width: 130px; max-width: 160px; }
-                .audit-component .audit-pivot-change-col { min-width: 150px; }
+                .audit-component .audit-pivot-field-col { min-width: 150px; max-width: 180px; }
+                .audit-component .audit-pivot-change-col { min-width: 180px; }
+                .audit-component .audit-col-card { min-width: 170px; }
+                .audit-component .audit-col-username { max-width: 100px; }
                 .audit-timeline { padding-left: 30px; }
                 .audit-timeline::before { left: 13px; }
                 .audit-timeline-dot { left: -30px; width: 28px; height: 28px; font-size: 0.8rem; }
