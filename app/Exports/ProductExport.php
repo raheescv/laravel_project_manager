@@ -114,7 +114,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             $row->color,
             $row->size,
             $row->model,
-            $row->brand,
+            $row->brand?->name,
             $row->part_no,
             $row->min_stock,
             $row->max_stock,
