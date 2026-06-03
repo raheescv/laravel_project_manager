@@ -1,85 +1,78 @@
 <div>
-    <div class="card shadow-sm">
-        <div class="card-header bg-light py-3">
-            <div class="row mt-3">
-                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
-                    <a href="{{ route('account::index') }}" class="btn btn-primary d-flex align-items-center shadow-sm">
-                        <i class="fa fa-arrow-left me-2 fs-5"></i>
-                        Back to Accounts
-                    </a>
-                    <div class="btn-group shadow-sm">
-                        <button class="btn btn-success btn-sm d-flex align-items-center" wire:click="sample">
-                            <i class="fa fa-download me-md-1 fs-5"></i>
-                            <span class="d-none d-md-inline">Download Template</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-end gap-2 flex-wrap">
-                        @foreach (['Upload File', 'Map Columns', 'Preview', 'Importing'] as $i => $label)
-                            @php $num = $i + 1; @endphp
-                            <div class="step-item {{ $step == $num ? 'active' : '' }} {{ $step > $num ? 'completed' : '' }}">
-                                <div class="d-flex align-items-center gap-1">
-                                    <div class="step-icon">{{ $num }}</div>
-                                    <span class="d-none d-lg-inline small fw-semibold">{{ $label }}</span>
-                                </div>
-                            </div>
-                            @if ($i < 3)
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-chevron-right text-muted" style="font-size: .6rem;"></i>
-                                </div>
+    <div class="card shadow-sm border-0 import-wizard">
+        {{-- ══════════════ HEADER + STEPPER ══════════════ --}}
+        <div class="card-header bg-body-tertiary border-bottom py-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <a href="{{ route('account::index') }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center shadow-sm">
+                    <i class="fa fa-arrow-left me-2"></i> Back to Accounts
+                </a>
+                <button class="btn btn-success btn-sm d-inline-flex align-items-center shadow-sm" wire:click="sample">
+                    <i class="fa fa-download me-2"></i>
+                    <span class="d-none d-sm-inline">Download Template</span>
+                    <span class="d-sm-none">Template</span>
+                </button>
+            </div>
+
+            <div class="import-stepper d-flex align-items-center justify-content-between">
+                @foreach (['Upload File', 'Map Columns', 'Preview', 'Importing'] as $i => $label)
+                    @php $num = $i + 1; @endphp
+                    <div class="step-item text-center {{ $step == $num ? 'active' : '' }} {{ $step > $num ? 'completed' : '' }}">
+                        <div class="step-icon mx-auto">
+                            @if ($step > $num)
+                                <i class="fa fa-check"></i>
+                            @else
+                                {{ $num }}
                             @endif
-                        @endforeach
+                        </div>
+                        <span class="step-label d-none d-md-block small mt-1">{{ $label }}</span>
                     </div>
-                </div>
+                    @if ($i < 3)
+                        <div class="step-line flex-fill {{ $step > $num ? 'filled' : '' }}"></div>
+                    @endif
+                @endforeach
             </div>
         </div>
 
-        <div class="card-body">
+        <div class="card-body p-3 p-md-4">
             {{-- ══════════════ STEP 1: Upload ══════════════ --}}
             @if ($step == 1)
-                <div class="row py-4">
-                    {{-- Left: Upload Zone --}}
-                    <div class="col-lg-5 mb-4 mb-lg-0">
-                        <div class="mb-3">
-                            <label class="fw-semibold small text-uppercase text-muted mb-2 d-block">
-                                <i class="fa fa-cogs me-1"></i> On Duplicate Account
+                <div class="row g-4 align-items-stretch">
+                    {{-- Left: strategy + upload --}}
+                    <div class="col-lg-5">
+                        <label class="fw-semibold small text-uppercase text-muted mb-2 d-block">
+                            <i class="fa fa-cogs me-1"></i> On Duplicate Account
+                        </label>
+                        <div class="d-flex gap-2 mb-2">
+                            <label class="dup-card flex-fill text-center p-3 rounded-3 border {{ $duplicateStrategy === 'skip' ? 'is-skip' : '' }}">
+                                <input type="radio" wire:model.live="duplicateStrategy" value="skip" class="d-none">
+                                <i class="fa fa-forward d-block mb-1" style="font-size:1.5rem;"></i>
+                                <span class="fw-semibold small d-block">Skip</span>
+                                <span class="text-muted" style="font-size:10px;">Keep existing record</span>
                             </label>
-                            <div class="d-flex gap-2">
-                                <label class="format-card flex-fill text-center p-3 rounded-3 border cursor-pointer {{ $duplicateStrategy === 'skip' ? 'border-primary bg-primary bg-opacity-10' : '' }}"
-                                    style="cursor:pointer;">
-                                    <input type="radio" wire:model.live="duplicateStrategy" value="skip" class="d-none">
-                                    <i class="fa fa-forward d-block mb-1 {{ $duplicateStrategy === 'skip' ? 'text-primary' : 'text-muted' }}" style="font-size:1.5rem;"></i>
-                                    <span class="fw-semibold small {{ $duplicateStrategy === 'skip' ? 'text-primary' : '' }}">Skip</span>
-                                    <div class="text-muted" style="font-size:10px;">Keep existing record</div>
-                                </label>
-                                <label class="format-card flex-fill text-center p-3 rounded-3 border cursor-pointer {{ $duplicateStrategy === 'update' ? 'border-success bg-success bg-opacity-10' : '' }}"
-                                    style="cursor:pointer;">
-                                    <input type="radio" wire:model.live="duplicateStrategy" value="update" class="d-none">
-                                    <i class="fa fa-refresh d-block mb-1 {{ $duplicateStrategy === 'update' ? 'text-success' : 'text-muted' }}" style="font-size:1.5rem;"></i>
-                                    <span class="fw-semibold small {{ $duplicateStrategy === 'update' ? 'text-success' : '' }}">Update</span>
-                                    <div class="text-muted" style="font-size:10px;">Overwrite with new values</div>
-                                </label>
-                            </div>
+                            <label class="dup-card flex-fill text-center p-3 rounded-3 border {{ $duplicateStrategy === 'update' ? 'is-update' : '' }}">
+                                <input type="radio" wire:model.live="duplicateStrategy" value="update" class="d-none">
+                                <i class="fa fa-refresh d-block mb-1" style="font-size:1.5rem;"></i>
+                                <span class="fw-semibold small d-block">Update</span>
+                                <span class="text-muted" style="font-size:10px;">Overwrite with new values</span>
+                            </label>
+                        </div>
+                        <div class="text-muted mb-3" style="font-size: 11px;">
+                            <i class="fa fa-info-circle me-1"></i>
+                            Matched by <strong>Type + Name + Mobile</strong>.
                         </div>
 
-                        <div class="upload-zone text-center d-flex flex-column justify-content-center" style="min-height:160px;">
+                        <div class="upload-zone text-center d-flex flex-column justify-content-center">
                             <input type="file" wire:model="file" class="upload-input" accept=".xlsx,.xls,.csv">
-                            <div wire:loading.remove wire:target="file">
-                                <div class="py-4 px-3">
-                                    <i class="fa fa-cloud-upload text-primary mb-2" style="font-size: 2.5rem;"></i>
-                                    <p class="fw-semibold mb-1">Drop your file here, or <span class="text-primary">browse</span></p>
-                                    <span class="text-muted small">XLSX, XLS, CSV &middot; Max 10 MB</span>
-                                </div>
+                            <div wire:loading.remove wire:target="file" class="p-4">
+                                <i class="fa fa-cloud-upload text-primary d-block mb-2" style="font-size: 2.75rem;"></i>
+                                <p class="fw-semibold mb-1">Drop your file here, or <span class="text-primary">browse</span></p>
+                                <span class="text-muted small">XLSX, XLS, CSV &middot; Max 10 MB</span>
                             </div>
-                            <div wire:loading wire:target="file">
-                                <div class="py-4 px-3">
-                                    <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
-                                    <p class="fw-semibold mb-0">Uploading...</p>
-                                </div>
+                            <div wire:loading wire:target="file" class="p-4">
+                                <div class="spinner-border text-primary mb-2" role="status"></div>
+                                <p class="fw-semibold mb-0">Uploading...</p>
                             </div>
                         </div>
-
                         @error('file')
                             <div class="alert alert-danger mt-2 mb-0 small">
                                 <i class="fa fa-exclamation-triangle me-1"></i> {{ $message }}
@@ -87,59 +80,43 @@
                         @enderror
                     </div>
 
-                    {{-- Right: How It Works --}}
+                    {{-- Right: how it works --}}
                     <div class="col-lg-7">
                         <h6 class="fw-bold text-uppercase small text-muted mb-3"><i class="fa fa-info-circle me-1"></i> How It Works</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <div class="d-flex gap-3">
-                                    <div class="flex-shrink-0">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary bg-opacity-10 text-primary" style="width:40px;height:40px;">
-                                            <i class="fa fa-list-alt fs-5"></i>
-                                        </span>
-                                    </div>
+                                <div class="hiw-card d-flex gap-3 h-100">
+                                    <span class="hiw-icon text-primary bg-primary bg-opacity-10"><i class="fa fa-list-alt"></i></span>
                                     <div>
                                         <div class="fw-bold small mb-1">Smart Column Mapping</div>
-                                        <p class="text-muted small mb-0">Common header names like <strong>"Ledger"</strong>, <strong>"Party Name"</strong>, <strong>"Group"</strong> are auto-mapped. You can review and adjust before importing.</p>
+                                        <p class="text-muted small mb-0">Headers like <strong>Ledger</strong>, <strong>Party Name</strong>, <strong>Group</strong> are auto-matched. Review &amp; adjust next.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex gap-3">
-                                    <div class="flex-shrink-0">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-success bg-opacity-10 text-success" style="width:40px;height:40px;">
-                                            <i class="fa fa-sitemap fs-5"></i>
-                                        </span>
-                                    </div>
+                                <div class="hiw-card d-flex gap-3 h-100">
+                                    <span class="hiw-icon text-success bg-success bg-opacity-10"><i class="fa fa-sitemap"></i></span>
                                     <div>
                                         <div class="fw-bold small mb-1">Auto-Create Categories</div>
-                                        <p class="text-muted small mb-0">Account categories and customer types referenced by name are <strong>created automatically</strong> if they don't already exist.</p>
+                                        <p class="text-muted small mb-0">Account categories &amp; customer types referenced by name are <strong>created automatically</strong>.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex gap-3">
-                                    <div class="flex-shrink-0">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-warning bg-opacity-10 text-warning" style="width:40px;height:40px;">
-                                            <i class="fa fa-shield fs-5"></i>
-                                        </span>
-                                    </div>
+                                <div class="hiw-card d-flex gap-3 h-100">
+                                    <span class="hiw-icon text-warning bg-warning bg-opacity-10"><i class="fa fa-shield"></i></span>
                                     <div>
                                         <div class="fw-bold small mb-1">Duplicate-Safe</div>
-                                        <p class="text-muted small mb-0">Existing accounts (matched by <strong>type + name + mobile</strong>) are skipped or updated based on your selection.</p>
+                                        <p class="text-muted small mb-0">Existing accounts (matched by <strong>type + name + mobile</strong>) are skipped or updated per your choice.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex gap-3">
-                                    <div class="flex-shrink-0">
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-info bg-opacity-10 text-info" style="width:40px;height:40px;">
-                                            <i class="fa fa-tasks fs-5"></i>
-                                        </span>
-                                    </div>
+                                <div class="hiw-card d-flex gap-3 h-100">
+                                    <span class="hiw-icon text-info bg-info bg-opacity-10"><i class="fa fa-tasks"></i></span>
                                     <div>
-                                        <div class="fw-bold small mb-1">Background Queue Processing</div>
-                                        <p class="text-muted small mb-0">Large files run in a <strong>background queue</strong>. A live progress bar shows the status — you can leave this page safely.</p>
+                                        <div class="fw-bold small mb-1">Background Processing</div>
+                                        <p class="text-muted small mb-0">Large files run in a <strong>background queue</strong> with a live progress bar — leave this page safely.</p>
                                     </div>
                                 </div>
                             </div>
@@ -150,25 +127,32 @@
 
             {{-- ══════════════ STEP 2: Map Columns ══════════════ --}}
             @if ($step == 2)
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
+                @php $mappedCount = collect($mappings)->filter()->count(); @endphp
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="table-responsive border rounded-3">
+                            <table class="table table-hover align-middle mb-0 map-table">
                                 <thead class="table-light text-uppercase small fw-bold">
                                     <tr>
-                                        <th style="width: 40%">Database Field</th>
+                                        <th style="width: 46%">Database Field</th>
                                         <th>Excel Column</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($availableFields as $field => $label)
-                                        <tr>
+                                        @php $isMapped = !empty($mappings[$field] ?? ''); @endphp
+                                        <tr class="{{ $isMapped ? 'row-mapped' : '' }}">
                                             <td>
-                                                <div class="fw-medium">{{ $label }}</div>
-                                                <small class="text-muted">{{ $field }}</small>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="fa {{ $isMapped ? 'fa-check-circle text-success' : 'fa-circle-o text-muted' }}"></i>
+                                                    <div>
+                                                        <div class="fw-medium">{{ $label }}</div>
+                                                        <small class="text-muted">{{ $field }}</small>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td>
-                                                <select wire:model="mappings.{{ $field }}" class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                                                <select wire:model.live="mappings.{{ $field }}" class="form-select form-select-sm shadow-sm {{ $isMapped ? 'border-success' : 'border-secondary-subtle' }}">
                                                     <option value="">-- Do Not Import --</option>
                                                     @foreach ($headers as $header)
                                                         <option value="{{ $header }}">{{ $header }}</option>
@@ -181,13 +165,15 @@
                             </table>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card bg-light border-0 sticky-top" style="top: 20px;">
+                    <div class="col-lg-4">
+                        <div class="card bg-body-tertiary border-0 sticky-top" style="top: 20px;">
                             <div class="card-body p-3 text-center">
-                                <i class="fa fa-info-circle fs-3 text-info mb-2"></i>
-                                <h5 class="fw-bold">Column Mapping</h5>
-                                <p class="text-muted small">Match your spreadsheet columns to account fields. Fields marked <strong>(*)</strong> are required.</p>
-                                <hr>
+                                <i class="fa fa-random fs-3 text-info mb-2"></i>
+                                <h5 class="fw-bold mb-1">Column Mapping</h5>
+                                <p class="text-muted small mb-2">Match your spreadsheet columns to account fields. Fields marked <strong>(*)</strong> are required.</p>
+                                <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle mb-3">
+                                    {{ $mappedCount }} of {{ count($availableFields) }} fields mapped
+                                </span>
                                 @error('mappings.name')
                                     <div class="alert alert-danger small text-start py-2">
                                         <i class="fa fa-exclamation-triangle me-1"></i> {{ $message }}
@@ -262,10 +248,12 @@
                     </div>
                 </div>
 
-                <div class="alert alert-info mt-3 mb-0 small">
-                    <i class="fa fa-info-circle me-1"></i>
-                    Duplicate strategy: <strong>{{ ucfirst($duplicateStrategy) }}</strong>.
-                    Existing accounts matched by <em>type + name + mobile</em> will be {{ $duplicateStrategy === 'update' ? 'updated with the new values' : 'skipped' }}.
+                <div class="alert {{ $duplicateStrategy === 'update' ? 'alert-success' : 'alert-info' }} mt-3 mb-0 small d-flex align-items-center">
+                    <i class="fa {{ $duplicateStrategy === 'update' ? 'fa-refresh' : 'fa-forward' }} me-2 fs-5"></i>
+                    <span>
+                        Duplicate strategy: <strong>{{ ucfirst($duplicateStrategy) }}</strong>.
+                        Existing accounts matched by <em>type + name + mobile</em> will be {{ $duplicateStrategy === 'update' ? 'updated with the new values' : 'skipped' }}.
+                    </span>
                 </div>
 
                 <div class="d-flex justify-content-center gap-2 mt-3">
@@ -338,17 +326,112 @@
 
 @push('styles')
     <style>
+        /* ── Stepper ── */
+        .import-stepper {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .step-item {
+            flex: 0 0 auto;
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            line-height: 28px;
+            border-radius: 50%;
+            border: 2px solid var(--bs-border-color, #dee2e6);
+            background: var(--bs-body-bg, #fff);
+            color: var(--bs-secondary-color, #6c757d);
+            font-weight: bold;
+            font-size: .85rem;
+            text-align: center;
+            transition: all .3s ease;
+        }
+
+        .step-label {
+            color: var(--bs-secondary-color, #6c757d);
+            font-weight: 600;
+        }
+
+        .step-item.active .step-icon {
+            border-color: var(--bs-primary);
+            background: var(--bs-primary);
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), .15);
+        }
+
+        .step-item.active .step-label {
+            color: var(--bs-primary);
+        }
+
+        .step-item.completed .step-icon {
+            border-color: var(--bs-success);
+            background: var(--bs-success);
+            color: #fff;
+        }
+
+        .step-line {
+            height: 2px;
+            background: var(--bs-border-color, #dee2e6);
+            margin: 0 .5rem;
+            margin-bottom: 1.25rem;
+            transition: background .3s ease;
+        }
+
+        .step-line.filled {
+            background: var(--bs-success);
+        }
+
+        @media (max-width: 767.98px) {
+            .step-line { margin-bottom: 0; }
+        }
+
+        /* ── Duplicate strategy cards ── */
+        .dup-card {
+            cursor: pointer;
+            transition: all .2s ease;
+            background: var(--bs-body-bg);
+        }
+
+        .dup-card:hover {
+            border-color: var(--bs-primary);
+            transform: translateY(-1px);
+        }
+
+        .dup-card i,
+        .dup-card span { color: var(--bs-secondary-color, #6c757d); }
+
+        .dup-card.is-skip {
+            border-color: var(--bs-primary) !important;
+            background: rgba(var(--bs-primary-rgb), .1);
+        }
+
+        .dup-card.is-skip i,
+        .dup-card.is-skip .fw-semibold { color: var(--bs-primary) !important; }
+
+        .dup-card.is-update {
+            border-color: var(--bs-success) !important;
+            background: rgba(var(--bs-success-rgb), .1);
+        }
+
+        .dup-card.is-update i,
+        .dup-card.is-update .fw-semibold { color: var(--bs-success) !important; }
+
+        /* ── Upload zone ── */
         .upload-zone {
             border: 2px dashed var(--bs-border-color, #dee2e6);
-            border-radius: 12px;
+            border-radius: 14px;
             position: relative;
             background: var(--bs-tertiary-bg, #f8f9fa);
-            transition: border-color .2s;
-            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            min-height: 180px;
         }
 
         .upload-zone:hover {
             border-color: var(--bs-primary);
+            background: var(--bs-body-bg, #fff);
         }
 
         .upload-input {
@@ -362,32 +445,37 @@
             font-size: 0;
         }
 
-        .step-icon {
-            width: 28px;
-            height: 28px;
-            line-height: 26px;
-            border-radius: 50%;
-            border: 2px solid var(--bs-border-color, #dee2e6);
-            background: var(--bs-body-bg, #fff);
-            color: var(--bs-secondary-color, #6c757d);
-            font-weight: bold;
-            font-size: .8rem;
-            text-align: center;
-            transition: all 0.3s ease;
+        /* ── How it works ── */
+        .hiw-card {
+            padding: 1rem;
+            border: 1px solid var(--bs-border-color-translucent);
+            border-radius: 12px;
+            background: var(--bs-body-bg);
+            transition: box-shadow .2s, transform .2s;
         }
 
-        .step-item.active .step-icon {
-            border-color: var(--bs-primary);
-            background: var(--bs-primary);
-            color: #fff;
+        .hiw-card:hover {
+            box-shadow: 0 .4rem 1rem rgba(0, 0, 0, .06);
+            transform: translateY(-2px);
         }
 
-        .step-item.completed .step-icon {
-            border-color: var(--bs-success);
-            background: var(--bs-success);
-            color: #fff;
+        .hiw-icon {
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
         }
 
+        /* ── Mapping table ── */
+        .map-table .row-mapped {
+            background: rgba(var(--bs-success-rgb), .04);
+        }
+
+        /* ── Excel-style preview grid ── */
         .excel-sheet-wrapper {
             border: 1px solid #b4b4b4;
             border-radius: 4px;
@@ -424,9 +512,7 @@
             border-color: var(--bs-border-color);
         }
 
-        .excel-grid {
-            margin: 0;
-        }
+        .excel-grid { margin: 0; }
 
         .excel-table {
             font-family: 'Segoe UI', Calibri, Arial, sans-serif;
@@ -534,9 +620,7 @@
             border-color: var(--bs-border-color);
         }
 
-        .excel-tab.active {
-            font-weight: 600;
-        }
+        .excel-tab.active { font-weight: 600; }
 
         .excel-tab-add {
             color: #777;
