@@ -404,12 +404,12 @@ class Product extends Model implements AuditableContracts
             $data['code'] = self::generateUniqueCode();
         }
 
-        if (! isset($data['barcode_number']) || empty($data['barcode_number'])) {
-            $data['barcode_number'] = generateBarcode();
+        if (empty($data['barcode_number']) && ! empty($data['barcode'])) {
+            $data['barcode_number'] = $data['barcode'];
         }
 
-        if (! empty($data['barcode']) && empty($data['barcode_number'])) {
-            $data['barcode_number'] = $data['barcode'];
+        if (empty($data['barcode_number'])) {
+            $data['barcode_number'] = generateBarcode();
         }
 
         $data['cost'] = extractNumericValue($data['cost'] ?? 0);
