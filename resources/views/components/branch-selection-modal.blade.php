@@ -1,6 +1,6 @@
-<div id="branch_selection_modal" class="modal fade" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+<div id="branch_selection_modal" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 560px;">
+        <div class="modal-content" style="border: 0; border-radius: 18px; overflow: hidden;">
             @livewire('general.branch-selection')
         </div>
     </div>

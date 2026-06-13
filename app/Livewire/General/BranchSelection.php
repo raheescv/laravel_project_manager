@@ -19,10 +19,18 @@ class BranchSelection extends Component
         $this->current_url = url()->current();
     }
 
-    public function save()
+    public function select($branch_id)
     {
-        Session::put('branch_id', $this->branch_id);
-        $branch = Branch::find($this->branch_id);
+        // Click-and-go: only allow switching to a branch assigned to the user.
+        $allowed = Auth::user()->branches()->pluck('branch_id')->contains((int) $branch_id);
+        if (! $allowed) {
+            return;
+        }
+
+        $this->branch_id = $branch_id;
+
+        Session::put('branch_id', $branch_id);
+        $branch = Branch::find($branch_id);
         if ($branch) {
             Session::put('branch_code', $branch->code);
             Session::put('branch_name', $branch->name);

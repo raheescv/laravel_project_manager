@@ -39,7 +39,7 @@
                         <span class="fw-semibold small">Active: {{ $active_module }}</span>
                     </div>
                     <div class="d-flex flex-wrap gap-1">
-                        @foreach ($systems[$active_module] as $moduleKey)
+                        @foreach ($systems[$active_module]??[] as $moduleKey)
                             <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1 small">
                                 {{ str_replace('_', ' ', $moduleKey) }}
                             </span>

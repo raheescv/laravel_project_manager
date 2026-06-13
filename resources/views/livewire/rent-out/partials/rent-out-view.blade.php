@@ -1,9 +1,17 @@
 {{--
-    Agreement View Partial (Non-booking)
+    Agreement View Partial (Non-booking) — "Premium Hero" design.
     Variables required from parent:
       - $rentOut, $indexRoute, $indexLabel, $editPermission, $editRoute, $config
+
+    The whole page is wrapped in .rvx so the premium design system
+    (resources/views/components/rent-out/view/premium.blade.php) styles both
+    these panels AND every management tab rendered inside it. All colour is
+    derived from the active settings theme (--bs-primary / --bs-* tokens), so
+    it tracks the chosen colour scheme and dark mode automatically.
 --}}
 @php
+    use App\Enums\RentOut\RentOutStatus;
+
     $isRental = $rentOut->agreement_type?->value === 'rental';
     $title = $isRental ? 'Rental Agreement' : 'Sale Agreement';
 
@@ -19,543 +27,328 @@
     $daysRemaining = round(now()->diffInDays($rentOut->end_date, false));
     $net = max($totalRent - $totalDiscount, 0);
     $paidPercent = $net > 0 ? min(round(($totalPaid / $net) * 100), 100) : 0;
+    $grandPending = $totalPending + ($isRental ? $utilitiesPending : 0);
+
+    $activeStatus = !in_array($rentOut->status, [RentOutStatus::Vacated, RentOutStatus::Cancelled]);
+    $statusColor = $rentOut->status?->color() ?? 'secondary';
+    $overdue = $daysRemaining <= 0;
+
+    $custName = trim($rentOut->customer?->name ?? '');
+    $initials = collect(explode(' ', $custName))->filter()->take(2)->map(fn ($w) => mb_substr($w, 0, 1))->implode('');
+    $initials = mb_strtoupper($initials !== '' ? $initials : '—');
 @endphp
 
-<style>
-    .rv-card { transition: transform .15s ease, box-shadow .15s ease; border-radius: .5rem !important; overflow: hidden; }
-    .rv-card:hover { transform: translateY(-1px); box-shadow: 0 .35rem .9rem rgba(var(--bs-body-color-rgb), .08) !important; }
-    .rv-row { transition: background-color .15s ease; }
-    .rv-row:hover { background-color: var(--bs-tertiary-bg); }
-    .rv-lbl { color: var(--bs-secondary-color); font-size: .72rem; font-weight: 500; }
-    .rv-val { color: var(--bs-emphasis-color); font-size: .76rem; font-weight: 600; }
-    .rv-hdr { padding: .4rem .65rem !important; background-color: var(--bs-body-bg); }
-    .rv-hdr-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .rv-hdr-title { font-size: .78rem; font-weight: 600; color: var(--bs-emphasis-color); }
-    .rv-header-card {
-        background-color: var(--bs-body-bg);
-        border: 1px solid var(--bs-border-color-translucent);
-        border-left: 4px solid rgba(var(--bs-primary-rgb), 1);
-    }
-    .rv-header-card .rv-title { color: var(--bs-emphasis-color); }
-    .rv-header-card .rv-title-no { color: rgba(var(--bs-primary-rgb), 1); }
-    .rv-header-card .rv-sub { color: var(--bs-secondary-color); }
-    .rv-header-card .breadcrumb-item,
-    .rv-header-card .breadcrumb-item a { color: var(--bs-secondary-color) !important; text-decoration: none; }
-    .rv-header-card .breadcrumb-item.active { color: rgba(var(--bs-primary-rgb), 1) !important; font-weight: 600; }
-    .rv-progress { height: 6px; background-color: rgba(var(--bs-primary-rgb), .12); border-radius: 10px; }
-    .rv-progress .progress-bar { background-color: rgba(var(--bs-primary-rgb), 1); border-radius: 10px; }
-    .rv-stat-card { border-radius: .5rem; border: 1px solid var(--bs-border-color-translucent); }
-    .rv-stat-card .rv-stat-icon { width: 36px; height: 36px; border-radius: .5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .rv-fin-cell { border: 1px solid var(--bs-border-color-translucent); border-radius: .375rem; }
-    .rv-table th { background-color: var(--bs-primary); color: #fff; font-weight: 600; font-size: .7rem; }
-    .rv-table td, .rv-table th { padding: .35rem .5rem !important; }
-    .rv-modal-header { background: linear-gradient(135deg, rgba(var(--bs-primary-rgb),1), rgba(var(--bs-primary-rgb),.78)); }
-</style>
+<x-rent-out.view.premium />
 
-{{-- HEADER --}}
-<div class="rv-header-card rounded-3 px-3 py-2 mb-2 shadow-sm">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-        <div class="flex-grow-1 min-w-0">
-            <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
-                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle text-uppercase fw-semibold" style="font-size:.62rem; letter-spacing:.05em;">
-                    {{ $isRental ? 'Rental' : 'Sale' }}
-                </span>
-                @if ($rentOut->status)
-                    <span class="badge bg-{{ $rentOut->status->color() }}-subtle text-{{ $rentOut->status->color() }}-emphasis border border-{{ $rentOut->status->color() }}-subtle px-2 py-1" style="font-size:.62rem;">
-                        {{ $rentOut->status->label() }}@if($rentOut->booking_status) | {{ $rentOut->booking_status?->label() }}@endif
-                    </span>
-                @endif
-            </div>
-            <h5 class="mb-0 fw-bold text-truncate rv-title" style="font-size:1.05rem; letter-spacing:-.02em;">
-                {{ $title }}
-                <span class="fw-semibold rv-title-no">#{{ $rentOut->agreement_no }}</span>
-            </h5>
-            <nav aria-label="breadcrumb" class="mt-1">
-                <ol class="breadcrumb mb-0" style="font-size:.7rem;">
-                    <li class="breadcrumb-item"><a href="{{ route($indexRoute) }}"><i class="fa fa-home"></i></a></li>
-                    <li class="breadcrumb-item"><a href="{{ route($indexRoute) }}">{{ $indexLabel }}</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ $rentOut->agreement_no }}</li>
-                </ol>
-            </nav>
-        </div>
+<div class="rvx">
 
-        <div class="d-flex flex-wrap align-items-center gap-1">
-            <button type="button" class="btn btn-sm btn-outline-primary fw-medium px-2 py-1" style="font-size:.72rem;"
-                data-bs-toggle="modal" data-bs-target="#SOAStatementModal">
-                <i class="fa fa-print me-1"></i>SOA
-            </button>
-            @if ($isRental)
-                <button type="button" class="btn btn-sm btn-outline-primary fw-medium px-2 py-1" style="font-size:.72rem;"
-                    data-bs-toggle="modal" data-bs-target="#SOAUtilitiesModal">
-                    <i class="fa fa-bolt me-1"></i>Utilities
-                </button>
-            @endif
-            @if (!in_array($rentOut->status, [\App\Enums\RentOut\RentOutStatus::Vacated, \App\Enums\RentOut\RentOutStatus::Cancelled]))
-                <button type="button" class="btn btn-sm btn-outline-warning fw-medium px-2 py-1" style="font-size:.72rem;" wire:click="openVacateModal">
-                    <i class="fa fa-sign-out me-1"></i>Vacate
-                </button>
-            @endif
-            @can($editPermission)
-                <a href="{{ route($editRoute, $rentOut->id) }}" class="btn btn-sm btn-primary fw-medium px-2 py-1" style="font-size:.72rem;">
-                    <i class="fa fa-pencil me-1"></i>Edit
-                </a>
-            @endcan
-        </div>
-    </div>
+    {{-- ════════════════════════════  HERO  ════════════════════════════ --}}
+    <header class="hero">
+        <span class="hero-glow a"></span><span class="hero-glow b"></span>
 
-    {{-- Progress Bar --}}
-    <div class="mt-2">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-            <small class="rv-sub fw-medium" style="font-size:.7rem;"><i class="fa fa-pie-chart me-1 text-primary"></i>Payment Progress</small>
-            <small class="text-primary fw-bold" style="font-size:.7rem;">{{ $paidPercent }}%</small>
-        </div>
-        <div class="progress rv-progress" role="progressbar" aria-valuenow="{{ $paidPercent }}" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-bar" style="width: {{ $paidPercent }}%;"></div>
-        </div>
-    </div>
-</div>
+        <nav class="crumb mb-3" aria-label="breadcrumb">
+            <a href="{{ route($indexRoute) }}"><i class="fa fa-home"></i> Home</a>
+            <span class="sep">›</span>
+            <a href="{{ route($indexRoute) }}">{{ $indexLabel }}</a>
+            <span class="sep">›</span>
+            <span class="here">{{ $rentOut->agreement_no }}</span>
+        </nav>
 
-{{-- STAT PILLS --}}
-@php
-    $daysBg = $daysRemaining > 0 ? 'bg-info' : 'bg-danger';
-    $stats = [
-        ['label' => 'Days ' . ($daysRemaining > 0 ? 'Remaining' : 'Overdue'), 'value' => abs($daysRemaining), 'sub' => $daysRemaining > 0 ? 'days left' : 'expired', 'bgClass' => $daysBg, 'icon' => 'fa-calendar'],
-        ['label' => 'Paid Instalments', 'value' => $paidMonths, 'sub' => 'of ' . $totalMonths . ' total', 'bgClass' => 'bg-purple', 'icon' => 'fa-check-square-o'],
-        ['label' => 'Collected', 'value' => number_format($totalPaid, 2), 'sub' => 'received', 'bgClass' => 'bg-success', 'icon' => 'fa-check-circle'],
-        ['label' => 'Outstanding', 'value' => number_format($totalPending, 2), 'sub' => 'balance due', 'bgClass' => 'bg-danger', 'icon' => 'fa-clock-o'],
-    ];
-@endphp
-<div class="row g-2 mb-2">
-    @foreach ($stats as $stat)
-        <div class="col-6 col-md-3">
-            <div class="card {{ $stat['bgClass'] }} text-white hv-grow border-0 shadow-sm h-100 position-relative overflow-hidden">
-                <i class="fa {{ $stat['icon'] }} position-absolute"
-                    style="font-size:6rem; right:-1rem; bottom:-1.25rem; color:rgba(255,255,255,.14);"></i>
-                <div class="card-body p-3 position-relative">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center"
-                                style="width:48px;height:48px;">
-                                <i class="fa {{ $stat['icon'] }} fs-4 text-white"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3 min-w-0">
-                            <p class="text-white text-opacity-75 text-uppercase fw-semibold mb-1"
-                                style="font-size:.62rem; letter-spacing:.06em;">{{ $stat['label'] }}</p>
-                            <h5 class="h3 mb-0 fw-bold text-white text-truncate" style="line-height:1.1;">
-                                {{ $stat['value'] }}
-                            </h5>
-                            <small class="text-white text-opacity-75" style="font-size:.68rem;">{{ $stat['sub'] }}</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endforeach
-</div>
-
-{{-- 3-COLUMN INFO CARDS --}}
-<div class="row g-2 mb-2">
-
-    {{-- Property & Customer --}}
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100 rv-card border-start border-primary border-3">
-            <div class="card-header rv-hdr border-bottom">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="rv-hdr-icon bg-primary-subtle">
-                        <i class="fa fa-building text-primary-emphasis" style="font-size:.72rem;"></i>
-                    </div>
-                    <span class="rv-hdr-title">Property & Customer</span>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                @php
-                    $propRows = [
-                        'Reference No' => ['val' => $rentOut->agreement_no, 'highlight' => true],
-                        'Group' => ['val' => $rentOut->group?->name],
-                        'Building' => ['val' => $rentOut->building?->name],
-                        'Unit Type' => ['val' => $rentOut->type?->name],
-                        'Unit / Property' => ['val' => $rentOut->property?->number],
-                        'Customer' => ['val' => $rentOut->customer?->name],
-                    ];
-                @endphp
-                @foreach ($propRows as $label => $info)
-                    <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-bottom">
-                        <span class="rv-lbl">{{ $label }}</span>
-                        <span class="rv-val text-end text-truncate ms-2 {{ !empty($info['highlight']) ? 'text-primary' : '' }}">{{ $info['val'] ?? '—' }}</span>
-                    </div>
-                @endforeach
-
-                <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-bottom">
-                    <span class="rv-lbl">Vacate Date</span>
-                    <span class="rv-val text-end">
-                        @if ($rentOut->vacate_date)
-                            <span class="{{ $rentOut->vacate_date > now() ? 'text-warning-emphasis' : 'text-secondary' }}">
-                                {{ $rentOut->vacate_date->format('d M Y') }}
-                            </span>
-                            @if ($rentOut->vacate_date > now() && !in_array($rentOut->status, [\App\Enums\RentOut\RentOutStatus::Vacated, \App\Enums\RentOut\RentOutStatus::Cancelled]))
-                                <button type="button" class="btn btn-sm btn-link p-0 ms-1" wire:click="openVacateModal" title="Edit">
-                                    <i class="fa fa-pencil text-primary" style="font-size:.65rem;"></i>
-                                </button>
-                            @endif
-                        @else
-                            @if (!in_array($rentOut->status, [\App\Enums\RentOut\RentOutStatus::Vacated, \App\Enums\RentOut\RentOutStatus::Cancelled]))
-                                <button type="button" class="btn btn-sm btn-outline-warning py-0 px-1" wire:click="openVacateModal" style="font-size:.66rem;">
-                                    <i class="fa fa-calendar-plus-o me-1"></i>Set
-                                </button>
-                            @else
-                                —
-                            @endif
-                        @endif
-                    </span>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row">
-                    <span class="rv-lbl">Status</span>
-                    <span class="rv-val">
-                        @if ($rentOut->status)
-                            <span class="badge bg-{{ $rentOut->status->color() }}" style="font-size:.65rem;">{{ $rentOut->status->label() }}</span>
-                        @endif
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Agreement Details --}}
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100 rv-card border-start border-info border-3">
-            <div class="card-header rv-hdr border-bottom">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="rv-hdr-icon bg-info-subtle">
-                        <i class="fa fa-file-text-o text-info-emphasis" style="font-size:.72rem;"></i>
-                    </div>
-                    <span class="rv-hdr-title">{{ $title }} Details</span>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-bottom">
-                    <span class="rv-lbl">Start Date</span>
-                    <span class="rv-val">{{ $rentOut->start_date?->format('d M Y') ?? '—' }}</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-start px-2 py-1 rv-row border-bottom">
-                    <span class="rv-lbl">End Date</span>
-                    <span class="rv-val text-end">
-                        {{ $rentOut->end_date?->format('d M Y') ?? '—' }}
-                        @if ($rentOut->end_date)
-                            <br><small class="{{ $daysRemaining > 0 ? 'text-success' : 'text-danger' }}" style="font-size:.65rem;">
-                                {{ $daysRemaining > 0 ? $daysRemaining . 'd left' : abs($daysRemaining) . 'd ago' }}
-                            </small>
-                        @endif
-                    </span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-bottom">
-                    <span class="rv-lbl">{{ $isRental ? 'Booking Type' : 'Agreement Type' }}</span>
-                    <span class="rv-val">{{ $isRental ? $rentOut->booking_type : $rentOut->agreement_type?->label() }}</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-bottom">
-                    <span class="rv-lbl">Salesman</span>
-                    <span class="rv-val">{{ $rentOut->salesman?->name ?? '—' }}</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-bottom">
-                    <span class="rv-lbl">Duration</span>
-                    <span class="badge bg-secondary" style="font-size:.65rem;">{{ $rentOut->totalStay() }} months</span>
-                </div>
-                @if ($isRental)
-                    <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-bottom">
-                        <span class="rv-lbl">Free Months</span>
-                        <span class="badge bg-info text-white" style="font-size:.65rem;">{{ $rentOut->free_month ?? 0 }}</span>
-                    </div>
-                @endif
-                <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-bottom">
-                    <span class="rv-lbl">{{ $isRental ? 'Monthly Rent' : 'Sale Price' }}</span>
-                    <span class="rv-val text-success-emphasis">{{ number_format($rentOut->rent, 2) }}</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row">
-                    <span class="rv-lbl">Security Amount</span>
-                    <span class="rv-val text-info-emphasis">{{ number_format($securityTotal, 2) }}</span>
-                </div>
-
-                {{-- Financial Summary --}}
-                <div class="border-top px-2 py-2 bg-body-tertiary">
-                    <div class="rv-lbl mb-1"><i class="fa fa-bar-chart me-1"></i>Financial Summary</div>
-                    <div class="row g-1 text-center">
-                        <div class="col-4">
-                            <div class="rv-fin-cell bg-info-subtle py-1 px-1">
-                                <div class="text-secondary" style="font-size:.6rem;">Total</div>
-                                <div class="fw-bold text-info-emphasis" style="font-size:.72rem;">{{ number_format($totalRent, 2) }}</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="rv-fin-cell bg-warning-subtle py-1 px-1">
-                                <div class="text-secondary" style="font-size:.6rem;">Discount</div>
-                                <div class="fw-bold text-warning-emphasis" style="font-size:.72rem;">{{ number_format($totalDiscount, 2) }}</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="rv-fin-cell bg-success-subtle py-1 px-1">
-                                <div class="text-secondary" style="font-size:.6rem;">Paid</div>
-                                <div class="fw-bold text-success-emphasis" style="font-size:.72rem;">{{ number_format($totalPaid, 2) }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Collection & Payment --}}
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100 rv-card border-start border-success border-3">
-            <div class="card-header rv-hdr border-bottom">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="rv-hdr-icon bg-success-subtle">
-                        <i class="fa fa-money text-success-emphasis" style="font-size:.72rem;"></i>
-                    </div>
-                    <span class="rv-hdr-title">Collection Info</span>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                @php
-                    $collRows = [
-                        'Frequency' => $rentOut->payment_frequency,
-                        'Starting Day' => $rentOut->collection_starting_day,
-                        'Payment Mode' => $rentOut->collection_payment_mode?->label(),
-                    ];
-                @endphp
-                @foreach ($collRows as $label => $value)
-                    <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row {{ !$loop->last ? 'border-bottom' : '' }}">
-                        <span class="rv-lbl">{{ $label }}</span>
-                        <span class="rv-val text-end">{{ $value ?? '—' }}</span>
-                    </div>
-                @endforeach
-                @if ($rentOut->collection_payment_mode?->value === 'cheque')
-                    <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-top">
-                        <span class="rv-lbl">Bank Name</span>
-                        <span class="rv-val text-end">{{ $rentOut->collection_bank_name ?? '—' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center px-2 py-1 rv-row border-top">
-                        <span class="rv-lbl">Cheque Start No.</span>
-                        <span class="rv-val text-end">{{ $rentOut->collection_cheque_no ?? '—' }}</span>
-                    </div>
-                @endif
-
-                {{-- Payment Breakdown --}}
-                <div class="border-top px-2 py-2 bg-body-tertiary">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="rv-lbl"><i class="fa fa-list me-1"></i>Breakdown</span>
-                        <span class="badge rounded-pill bg-primary" style="font-size:.6rem;">{{ $paidMonths }}/{{ $totalMonths }} paid</span>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm rv-table mb-0 align-middle">
-                            <thead>
-                                <tr>
-                                    <th class="border-0">Type</th>
-                                    <th class="border-0 text-end">Paid</th>
-                                    <th class="border-0 text-end">Pending</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="fw-semibold"><i class="fa fa-{{ $isRental ? 'home' : 'tag' }} me-1 text-secondary"></i>{{ $isRental ? 'Rent' : 'Sale' }}</td>
-                                    <td class="text-end fw-bold text-success-emphasis">{{ number_format($totalPaid, 2) }}</td>
-                                    <td class="text-end fw-bold text-danger-emphasis">{{ number_format($totalPending, 2) }}</td>
-                                </tr>
-                                @if ($isRental)
-                                    <tr>
-                                        <td class="fw-semibold"><i class="fa fa-bolt me-1 text-secondary"></i>Utilities</td>
-                                        <td class="text-end fw-bold text-success-emphasis">{{ number_format($utilitiesPaid, 2) }}</td>
-                                        <td class="text-end fw-bold text-danger-emphasis">{{ number_format($utilitiesPending, 2) }}</td>
-                                    </tr>
-                                @endif
-                                @if ($rentOut->management_fee > 0)
-                                    <tr>
-                                        <td class="fw-semibold"><i class="fa fa-briefcase me-1 text-secondary"></i>Mgmt Fee</td>
-                                        <td class="text-end fw-bold text-success-emphasis">{{ number_format($rentOut->management_fee, 2) }}</td>
-                                        <td class="text-end fw-bold">—</td>
-                                    </tr>
-                                @endif
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- REMARKS --}}
-@if (trim($rentOut->remark ?? ''))
-    <div class="card border-0 shadow-sm mb-2 rv-card border-start border-warning border-3">
-        <div class="card-body px-2 py-1">
-            <div class="d-flex align-items-center gap-2">
-                <div class="rv-hdr-icon flex-shrink-0 bg-warning-subtle">
-                    <i class="fa fa-comment-o text-warning-emphasis" style="font-size:.65rem;"></i>
-                </div>
-                <p class="text-secondary mb-0" style="font-size:.76rem;">{{ $rentOut->remark }}</p>
-            </div>
-        </div>
-    </div>
-@endif
-
-{{-- MANAGEMENT TABS --}}
-@include('livewire.rent-out.partials.management-tabs')
-
-{{-- SOA Statement Modal --}}
-<div class="modal fade" id="SOAStatementModal" tabindex="-1" aria-labelledby="SOAStatementModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
-            <div class="modal-header rv-modal-header border-0 py-2 px-3">
-                <h6 class="modal-title text-white fw-bold mb-0" style="font-size:.85rem;" id="SOAStatementModalLabel">
-                    <i class="fa fa-calendar me-1"></i>SOA Statement
-                </h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="SOAStatementForm">
-                <div class="modal-body px-3 py-2">
-                    <div class="alert alert-info py-1 px-2 mb-2" style="font-size:.75rem;">
-                        <i class="fa fa-info-circle me-1"></i>Select the date range for the SOA Statement.
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <label for="statement_from_date" class="form-label mb-1 rv-lbl">From Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control form-control-sm" id="statement_from_date" value="{{ date('Y-m-01') }}" required style="font-size:.78rem;">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="statement_to_date" class="form-label mb-1 rv-lbl">To Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control form-control-sm" id="statement_to_date" value="{{ date('Y-m-d') }}" required style="font-size:.78rem;">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 px-3 py-2">
-                    <button type="button" class="btn btn-sm btn-light fw-medium px-2 py-1" data-bs-dismiss="modal" style="font-size:.75rem;">
-                        <i class="fa fa-times me-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-sm btn-primary fw-medium px-2 py-1" style="font-size:.75rem;">
-                        <i class="fa fa-print me-1"></i>Generate
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@if ($isRental)
-    {{-- SOA Utilities Modal --}}
-    <div class="modal fade" id="SOAUtilitiesModal" tabindex="-1" aria-labelledby="SOAUtilitiesModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
-                <div class="modal-header rv-modal-header border-0 py-2 px-3">
-                    <h6 class="modal-title text-white fw-bold mb-0" style="font-size:.85rem;" id="SOAUtilitiesModalLabel">
-                        <i class="fa fa-bolt me-1"></i>SOA Utilities
-                    </h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="SOAUtilitiesForm">
-                    <div class="modal-body px-3 py-2">
-                        <div class="alert alert-info py-1 px-2 mb-2" style="font-size:.75rem;">
-                            <i class="fa fa-info-circle me-1"></i>Select the date range for the Utilities SOA.
-                        </div>
-                        <div class="row g-2">
-                            <div class="col-md-6">
-                                <label for="utility_from_date" class="form-label mb-1 rv-lbl">From Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control form-control-sm" id="utility_from_date" value="{{ date('Y-m-01') }}" required style="font-size:.78rem;">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="utility_to_date" class="form-label mb-1 rv-lbl">To Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control form-control-sm" id="utility_to_date" value="{{ date('Y-m-d') }}" required style="font-size:.78rem;">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 px-3 py-2">
-                        <button type="button" class="btn btn-sm btn-light fw-medium px-2 py-1" data-bs-dismiss="modal" style="font-size:.75rem;">
-                            <i class="fa fa-times me-1"></i>Cancel
-                        </button>
-                        <button type="submit" class="btn btn-sm btn-primary fw-medium px-2 py-1" style="font-size:.75rem;">
-                            <i class="fa fa-print me-1"></i>Generate
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-@endif
-
-{{-- VACATE MODAL --}}
-@if ($showVacateModal)
-    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.45);">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
-                <div class="modal-header rv-modal-header border-0 py-2 px-3">
-                    <h6 class="modal-title text-white fw-bold mb-0" style="font-size:.85rem;">
-                        <i class="fa fa-sign-out me-1"></i>Vacate
-                    </h6>
-                    <button type="button" class="btn-close btn-close-white" wire:click="$set('showVacateModal', false)"></button>
-                </div>
-                <div class="modal-body px-3 py-2">
-                    <div class="mb-2">
-                        <label for="vacateDate" class="form-label mb-1 rv-lbl fw-semibold">Vacate Date <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control form-control-sm @error('vacateDate') is-invalid @enderror"
-                            id="vacateDate" wire:model="vacateDate"
-                            min="{{ $rentOut->start_date->format('Y-m-d') }}"
-                            max="{{ $rentOut->end_date->format('Y-m-d') }}"
-                            style="font-size:.78rem;">
-                        @error('vacateDate')
-                            <div class="invalid-feedback" style="font-size:.7rem;">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    @if ($rentOut->start_date && $rentOut->end_date)
-                        <small class="text-secondary" style="font-size:.68rem;">
-                            <i class="fa fa-info-circle me-1"></i>
-                            {{ $rentOut->start_date->format('d M Y') }} — {{ $rentOut->end_date->format('d M Y') }}
-                        </small>
+        <div class="row g-4 align-items-end">
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                    <span class="pill pill-rental"><i class="fa fa-building-o"></i> {{ $isRental ? 'Rental' : 'Sale' }}</span>
+                    @if ($rentOut->status)
+                        <span class="pill pill-status" style="color: var(--bs-{{ $statusColor }}-text-emphasis);">
+                            <span class="dot" style="background: var(--bs-{{ $statusColor }});"></span>
+                            {{ $rentOut->status->label() }}@if ($rentOut->booking_status) · {{ $rentOut->booking_status?->label() }} @endif
+                        </span>
                     @endif
                 </div>
-                <div class="modal-footer border-0 px-3 py-2">
-                    <button type="button" class="btn btn-sm btn-light fw-medium px-2 py-1" wire:click="$set('showVacateModal', false)" style="font-size:.75rem;">
-                        <i class="fa fa-times me-1"></i>Close
-                    </button>
-                    <button type="button" class="btn btn-sm btn-success fw-medium px-2 py-1" wire:click="saveVacate"
-                        onclick="return confirm('Are you sure you want to set/update the vacate date?')"
-                        style="font-size:.75rem;">
-                        <i class="fa fa-check me-1"></i>Save
-                    </button>
+                <h1 class="hero-title">{{ $title }} <span class="hash">#{{ $rentOut->agreement_no }}</span></h1>
+                <div class="hero-meta mt-2">
+                    @if ($custName)<i class="fa fa-user-o me-1"></i> {{ $custName }}@endif
+                    @if ($rentOut->building?->name)
+                        <span class="mx-2" style="opacity:.4">•</span>
+                        <i class="fa fa-map-marker me-1"></i> {{ $rentOut->building?->name }}@if ($rentOut->property?->number) · Unit {{ $rentOut->property?->number }} @endif
+                    @endif
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="hero-actions d-flex flex-wrap gap-2 justify-content-lg-end mb-3">
+                    <button type="button" class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#SOAStatementModal"><i class="fa fa-print"></i> SOA</button>
+                    @if ($isRental)
+                        <button type="button" class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#SOAUtilitiesModal"><i class="fa fa-bolt"></i> Utilities</button>
+                    @endif
+                    @if ($activeStatus)
+                        <button type="button" class="btn btn-glass-warn" wire:click="openVacateModal"><i class="fa fa-sign-out"></i> Vacate</button>
+                    @endif
+                    @can($editPermission)
+                        <a href="{{ route($editRoute, $rentOut->id) }}" class="btn btn-on-hero"><i class="fa fa-pencil"></i> Edit</a>
+                    @endcan
+                </div>
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="hero-prog-label"><i class="fa fa-credit-card me-1"></i> Payment Progress</span>
+                        <span class="hero-prog-val">{{ $paidPercent }}%</span>
+                    </div>
+                    <div class="hero-track"><div class="hero-fill {{ $paidPercent > 0 ? '' : 'empty' }}" data-fill="{{ $paidPercent }}"></div></div>
+                    <div class="hero-prog-label mt-1" style="font-size:11px;">
+                        {{ $paidMonths }} of {{ $totalMonths }} instalments collected · {{ number_format($totalPending, 2) }} outstanding
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-@endif
+    </header>
 
+    {{-- ════════════════════════════  GLASS KPI CARDS  ════════════════════════════ --}}
+    <section class="kpi-row" aria-label="Key metrics">
+        <div class="row g-3">
+            <x-rent-out.view.kpi :tone="$overdue ? 'danger' : 'info'" icon="fa-calendar"
+                :label="$overdue ? 'Days Overdue' : 'Days Remaining'" :value="abs($daysRemaining)"
+                :sub="$overdue ? 'past end date' : 'days left on tenancy'">
+                <x-slot:badge>
+                    <span class="chip {{ $overdue ? 'chip-danger' : 'chip-info' }}">{{ $overdue ? 'overdue' : 'live' }}</span>
+                </x-slot>
+            </x-rent-out.view.kpi>
+
+            <x-rent-out.view.kpi tone="purple" icon="fa-check-square-o" label="Paid Instalments"
+                :value="$paidMonths" :sub="'of ' . $totalMonths . ' total'">
+                <x-slot:badge><span class="chip chip-soft">{{ $paidMonths }} / {{ $totalMonths }}</span></x-slot>
+            </x-rent-out.view.kpi>
+
+            <x-rent-out.view.kpi tone="success" icon="fa-check-circle-o" label="Collected"
+                :value="number_format($totalPaid, 2)" sub="received to date">
+                <x-slot:badge><span class="chip chip-success"><i class="fa fa-arrow-up"></i> {{ $paidPercent }}%</span></x-slot>
+            </x-rent-out.view.kpi>
+
+            <x-rent-out.view.kpi tone="danger" icon="fa-clock-o" label="Outstanding"
+                :value="number_format($totalPending, 2)" sub="balance due">
+                <x-slot:badge><span class="chip chip-danger">due</span></x-slot>
+            </x-rent-out.view.kpi>
+        </div>
+    </section>
+
+    {{-- ════════════════════════════  INFO GRID  ════════════════════════════ --}}
+    <section class="row g-3 mt-1">
+
+        {{-- Property & Customer --}}
+        <div class="col-lg-4">
+            <x-rent-out.view.panel icon="fa-building" title="Property & Customer" sub="Unit and tenant details">
+                <div class="cust mb-3">
+                    <span class="avatar">{{ $initials }}</span>
+                    <div class="min-w-0">
+                        <div class="nm text-truncate">{{ $custName !== '' ? $custName : '—' }}</div>
+                        <div class="sub"><i class="fa fa-user-o me-1"></i> Tenant of record</div>
+                    </div>
+                </div>
+                <div class="dl">
+                    <x-rent-out.view.field icon="fa-hashtag" label="Reference No" :value="$rentOut->agreement_no" />
+                    <x-rent-out.view.field icon="fa-th-large" label="Group" :value="$rentOut->group?->name" />
+                    <x-rent-out.view.field icon="fa-building" label="Building" :value="$rentOut->building?->name" />
+                    <x-rent-out.view.field icon="fa-cubes" label="Unit Type" :value="$rentOut->type?->name" />
+                    <x-rent-out.view.field icon="fa-home" label="Unit / Property">
+                        @if ($rentOut->property?->number)<span class="chip chip-info">{{ $rentOut->property?->number }}</span>@else — @endif
+                    </x-rent-out.view.field>
+                    <x-rent-out.view.field icon="fa-sign-out" label="Vacate Date">
+                        @if ($rentOut->vacate_date)
+                            <span class="{{ $rentOut->vacate_date > now() ? 'text-warning' : '' }}">{{ $rentOut->vacate_date->format('d M Y') }}</span>
+                            @if ($rentOut->vacate_date > now() && $activeStatus)
+                                <button type="button" class="btn-mini" wire:click="openVacateModal"><i class="fa fa-pencil"></i></button>
+                            @endif
+                        @elseif ($activeStatus)
+                            <span class="muted">Not set</span><button type="button" class="btn-mini" wire:click="openVacateModal"><i class="fa fa-plus"></i> Set</button>
+                        @else
+                            <span class="muted">—</span>
+                        @endif
+                    </x-rent-out.view.field>
+                    <x-rent-out.view.field icon="fa-circle-o" label="Status">
+                        <span class="chip chip-{{ $statusColor === 'success' ? 'success' : ($statusColor === 'danger' ? 'danger' : ($statusColor === 'warning' ? 'warning' : 'soft')) }}">
+                            {{ $rentOut->status?->label() }}
+                        </span>
+                    </x-rent-out.view.field>
+                </div>
+            </x-rent-out.view.panel>
+        </div>
+
+        {{-- Agreement Details --}}
+        <div class="col-lg-4">
+            <x-rent-out.view.panel icon="fa-file-text-o" :title="$title" sub="Term & financial structure">
+                <div class="rent-hero mb-3">
+                    <div>
+                        <div class="section-eyebrow mb-1">{{ $isRental ? 'Monthly Rent' : 'Sale Price' }}</div>
+                        <div class="amount">{{ number_format($rentOut->rent, 2) }}</div>
+                    </div>
+                    <div class="text-end">
+                        <span class="chip chip-soft mb-1"><i class="fa fa-clock-o"></i> {{ $isRental ? ($rentOut->booking_type ?: 'Term') : $rentOut->agreement_type?->label() }}</span>
+                        <div class="per">{{ $rentOut->totalStay() }} months{{ $isRental ? ' · ' . ($rentOut->free_month ?? 0) . ' free' : '' }}</div>
+                    </div>
+                </div>
+
+                <div class="dl">
+                    <x-rent-out.view.field icon="fa-calendar-o" label="Start Date" :value="$rentOut->start_date?->format('d M Y')" />
+                    <x-rent-out.view.field icon="fa-calendar-check-o" label="End Date">
+                        {{ $rentOut->end_date?->format('d M Y') ?? '—' }}
+                        @if ($rentOut->end_date)
+                            <span class="chip {{ $overdue ? 'chip-danger' : 'chip-info' }} ms-1">{{ $overdue ? abs($daysRemaining) . 'd ago' : $daysRemaining . 'd left' }}</span>
+                        @endif
+                    </x-rent-out.view.field>
+                    <x-rent-out.view.field icon="fa-tag" label="{{ $isRental ? 'Booking Type' : 'Agreement Type' }}" :value="$isRental ? $rentOut->booking_type : $rentOut->agreement_type?->label()" />
+                    <x-rent-out.view.field icon="fa-user" label="Salesman" :value="$rentOut->salesman?->name" />
+                    <x-rent-out.view.field icon="fa-hourglass-half" label="Duration" :value="$rentOut->totalStay() . ' months'" />
+                    @if ($isRental)
+                        <x-rent-out.view.field icon="fa-gift" label="Free Months" :value="(string) ($rentOut->free_month ?? 0)" />
+                    @endif
+                    <x-rent-out.view.field icon="fa-lock" label="Security Amount" :value="number_format($securityTotal, 2)" />
+                </div>
+
+                <div class="fin-grid mt-3">
+                    <x-rent-out.view.fin label="Total" tone="total" :value="number_format($totalRent, 2)" />
+                    <x-rent-out.view.fin label="Discount" :value="number_format($totalDiscount, 2)" />
+                    <x-rent-out.view.fin label="Paid" tone="paid" :value="number_format($totalPaid, 2)" />
+                </div>
+            </x-rent-out.view.panel>
+        </div>
+
+        {{-- Collection Info --}}
+        <div class="col-lg-4">
+            <x-rent-out.view.panel icon="fa-money" title="Collection Info" sub="Schedule & breakdown">
+                <x-slot:tools><span class="chip chip-soft">{{ $paidMonths }} / {{ $totalMonths }} paid</span></x-slot>
+
+                <div class="d-flex gap-2 mb-3 flex-wrap">
+                    <x-rent-out.view.fin label="Frequency" fill value-size="14px">
+                        <i class="fa fa-repeat me-1" style="color:var(--brand-600)"></i>{{ $rentOut->payment_frequency ?: '—' }}
+                    </x-rent-out.view.fin>
+                    <x-rent-out.view.fin label="Start Day" fill value-size="14px" :value="(string) ($rentOut->collection_starting_day ?? '—')" />
+                    <x-rent-out.view.fin label="Mode" fill value-size="14px">
+                        <i class="fa fa-money me-1" style="color:var(--success)"></i>{{ $rentOut->collection_payment_mode?->label() ?: '—' }}
+                    </x-rent-out.view.fin>
+                </div>
+
+                @if ($rentOut->collection_payment_mode?->value === 'cheque')
+                    <div class="d-flex gap-2 mb-3 flex-wrap">
+                        <x-rent-out.view.fin label="Bank" fill value-size="13px" :value="$rentOut->collection_bank_name ?: '—'" />
+                        <x-rent-out.view.fin label="Cheque Start No." fill value-size="13px" :value="$rentOut->collection_cheque_no ?: '—'" />
+                    </div>
+                @endif
+
+                <div class="section-eyebrow mb-2">Breakdown</div>
+                <table class="mini-table">
+                    <thead>
+                        <tr><th>Component</th><th class="text-end">Paid</th><th class="text-end">Pending</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="ico-cell"><span class="b" style="background:var(--info-bg);color:var(--info)"><i class="fa fa-home"></i></span> {{ $isRental ? 'Rent' : 'Sale' }}</span></td>
+                            <td class="text-end t-paid">{{ number_format($totalPaid, 2) }}</td>
+                            <td class="text-end t-pend">{{ number_format($totalPending, 2) }}</td>
+                        </tr>
+                        @if ($isRental)
+                            <tr>
+                                <td><span class="ico-cell"><span class="b" style="background:var(--warning-bg);color:var(--warning)"><i class="fa fa-bolt"></i></span> Utilities</span></td>
+                                <td class="text-end t-paid">{{ number_format($utilitiesPaid, 2) }}</td>
+                                <td class="text-end t-pend">{{ number_format($utilitiesPending, 2) }}</td>
+                            </tr>
+                        @endif
+                        @if ($rentOut->management_fee > 0)
+                            <tr>
+                                <td><span class="ico-cell"><span class="b" style="background:var(--purple-bg);color:var(--purple)"><i class="fa fa-briefcase"></i></span> Mgmt Fee</span></td>
+                                <td class="text-end t-paid">{{ number_format($rentOut->management_fee, 2) }}</td>
+                                <td class="text-end">—</td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+
+                @if ($grandPending > 0)
+                    <div class="alert-pending mt-3"><i class="fa fa-exclamation-triangle me-1"></i> {{ number_format($grandPending, 2) }} total pending{{ $isRental ? ' across rent & utilities' : '' }}</div>
+                @endif
+            </x-rent-out.view.panel>
+        </div>
+    </section>
+
+    {{-- REMARKS --}}
+    @if (trim($rentOut->remark ?? ''))
+        <section class="mt-3">
+            <div class="panel panel-pad d-flex align-items-start gap-3">
+                <span class="ph-ic" style="background:var(--warning-bg); color:var(--warning);"><i class="fa fa-comment-o"></i></span>
+                <div>
+                    <div class="section-eyebrow mb-1" style="color:var(--warning);">Remarks</div>
+                    <div style="font-size:13px; color:var(--text-2);">{{ $rentOut->remark }}</div>
+                </div>
+            </div>
+        </section>
+    @endif
+
+    {{-- ════════════════════════════  MANAGEMENT TABS  ════════════════════════════ --}}
+    <section class="mt-4">
+        @include('livewire.rent-out.partials.management-tabs')
+    </section>
+
+    {{-- ════════════════════════════  MODALS  ════════════════════════════ --}}
+    <x-rent-out.view.soa-modal id="SOAStatementModal" formId="SOAStatementForm" title="SOA Statement" icon="fa-calendar"
+        :route="route('print::rentout::statement', $rentOut->id)" hint="Select the date range for the SOA Statement." />
+
+    @if ($isRental)
+        <x-rent-out.view.soa-modal id="SOAUtilitiesModal" formId="SOAUtilitiesForm" title="SOA Utilities" icon="fa-bolt"
+            :route="route('print::rentout::utilities-statement', $rentOut->id)" hint="Select the date range for the Utilities SOA." />
+    @endif
+
+    {{-- VACATE MODAL --}}
+    @if ($showVacateModal)
+        <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.45);">
+            <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content shadow-lg">
+                    <div class="modal-header rv-modal-header border-0 py-2 px-3">
+                        <h6 class="modal-title text-white fw-bold mb-0 rv-modal-title"><i class="fa fa-sign-out me-1"></i> Vacate</h6>
+                        <button type="button" class="btn-close btn-close-white" wire:click="$set('showVacateModal', false)"></button>
+                    </div>
+                    <div class="modal-body px-3 py-3">
+                        <div class="mb-2">
+                            <label for="vacateDate" class="form-label">Vacate Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-sm @error('vacateDate') is-invalid @enderror"
+                                id="vacateDate" wire:model="vacateDate"
+                                min="{{ $rentOut->start_date->format('Y-m-d') }}" max="{{ $rentOut->end_date->format('Y-m-d') }}">
+                            @error('vacateDate')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        @if ($rentOut->start_date && $rentOut->end_date)
+                            <small class="text-muted"><i class="fa fa-info-circle me-1"></i>{{ $rentOut->start_date->format('d M Y') }} — {{ $rentOut->end_date->format('d M Y') }}</small>
+                        @endif
+                    </div>
+                    <div class="modal-footer border-0 px-3 py-2">
+                        <button type="button" class="btn btn-sm btn-light" wire:click="$set('showVacateModal', false)"><i class="fa fa-times me-1"></i> Close</button>
+                        <button type="button" class="btn btn-sm btn-success" wire:click="saveVacate"
+                            onclick="return confirm('Are you sure you want to set/update the vacate date?')"><i class="fa fa-check me-1"></i> Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+</div>
+
+{{-- Shared SOA form handler + hero progress animation --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var statementForm = document.getElementById('SOAStatementForm');
-        if (statementForm) {
-            statementForm.addEventListener('submit', function(e) {
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.rv-soa-form').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
                 e.preventDefault();
-                var fromDate = document.getElementById('statement_from_date').value;
-                var toDate = document.getElementById('statement_to_date').value;
-                if (!fromDate || !toDate) { alert('Please select both dates.'); return; }
-                if (fromDate > toDate) { alert('From date cannot be after to date.'); return; }
-                var url = "{{ route('print::rentout::statement', $rentOut->id) }}" + '/' + fromDate + '/' + toDate;
-                window.open(url, '_blank');
-                var modal = bootstrap.Modal.getInstance(document.getElementById('SOAStatementModal'));
+                var from = form.querySelector('.rv-soa-from').value;
+                var to = form.querySelector('.rv-soa-to').value;
+                if (!from || !to) { alert('Please select both dates.'); return; }
+                if (from > to) { alert('From date cannot be after to date.'); return; }
+                window.open(form.dataset.soaRoute + '/' + from + '/' + to, '_blank');
+                var modalEl = document.getElementById(form.dataset.soaModal);
+                var modal = modalEl ? bootstrap.Modal.getInstance(modalEl) : null;
                 if (modal) modal.hide();
             });
-        }
+        });
 
-        var utilitiesForm = document.getElementById('SOAUtilitiesForm');
-        if (utilitiesForm) {
-            utilitiesForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var fromDate = document.getElementById('utility_from_date').value;
-                var toDate = document.getElementById('utility_to_date').value;
-                if (!fromDate || !toDate) { alert('Please select both dates.'); return; }
-                if (fromDate > toDate) { alert('From date cannot be after to date.'); return; }
-                var url = "{{ route('print::rentout::utilities-statement', $rentOut->id) }}" + '/' + fromDate + '/' + toDate;
-                window.open(url, '_blank');
-                var modal = bootstrap.Modal.getInstance(document.getElementById('SOAUtilitiesModal'));
-                if (modal) modal.hide();
+        window.requestAnimationFrame(function () {
+            document.querySelectorAll('.rvx .hero-fill').forEach(function (fill) {
+                var pct = parseFloat(fill.getAttribute('data-fill')) || 0;
+                if (pct > 0) { fill.classList.remove('empty'); fill.style.width = pct + '%'; }
             });
-        }
+        });
     });
 </script>

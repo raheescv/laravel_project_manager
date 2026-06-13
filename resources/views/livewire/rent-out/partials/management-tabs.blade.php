@@ -7,10 +7,10 @@
     .mgmt-tab-btn.active { background-color: var(--bs-primary); color: #fff !important; box-shadow: 0 2px 6px rgba(var(--bs-primary-rgb), .25); }
     .mgmt-tab-btn:not(.active):hover { background-color: var(--bs-primary-bg-subtle); color: var(--bs-primary-emphasis) !important; }
 </style>
-<div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden" x-data="{ activeTab: 'PaymentTab' }">
-    <div class="card-header border-bottom bg-body py-2 px-2">
+<div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden rvx-mgmt-card" x-data="{ activeTab: 'PaymentTab' }">
+    <div class="card-header border-bottom bg-body py-2 px-2 rvx-mgmt-head">
         <div class="d-flex align-items-center gap-2">
-            <div class="bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center" style="width:26px;height:26px;">
+            <div class="bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center rvx-mgmt-head-ic" style="width:26px;height:26px;">
                 <i class="fa fa-folder-open text-primary-emphasis" style="font-size:.72rem;"></i>
             </div>
             <span class="fw-semibold text-emphasis" style="font-size:.78rem;">Management Sections</span>
@@ -18,7 +18,7 @@
     </div>
     <div class="card-body p-0">
         {{-- Tab Navigation --}}
-        <div class="border-bottom bg-body-tertiary">
+        <div class="border-bottom bg-body-tertiary rvx-mgmt-tabbar">
             <div class="d-flex flex-wrap gap-1 px-2 py-2" role="tablist">
                 @php
                     $tabs = [
@@ -58,7 +58,7 @@
         </div>
 
         {{-- Tab Content --}}
-        <div class="p-2">
+        <div class="p-2 rvx-mgmt-content">
             <div x-show="activeTab === 'PaymentTab'" x-transition:enter.duration.150ms>
                 @livewire('rent-out.tabs.payment-tab', ['rentOutId' => $rentOut->id], key('payment-tab-' . $rentOut->id))
             </div>
