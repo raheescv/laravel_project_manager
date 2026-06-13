@@ -1,5 +1,5 @@
 <div class="modal" id="GeneralVoucherModal" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content" id="GeneralVoucherModalContent">
             <!-- Vue component will be mounted here -->
         </div>

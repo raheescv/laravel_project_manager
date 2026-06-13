@@ -593,17 +593,23 @@ onUnmounted(() => {
 /* Dropdown container */
 .account-select-dropdown {
     background: white;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e4e8ee;
+    border-radius: 10px;
+    box-shadow: 0 16px 38px -16px rgba(16, 24, 40, .28), 0 7px 16px -10px rgba(16, 24, 40, .16);
     overflow: hidden;
-    margin-top: 2px;
+    margin-top: 4px;
+    padding: 5px;
+}
+
+[data-bs-theme="dark"] .account-select-dropdown {
+    background: #2e353d;
+    border-color: #3a424c;
 }
 
 
 /* Options list */
 .account-select-list {
-    max-height: 200px;
+    max-height: 232px;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -635,24 +641,34 @@ onUnmounted(() => {
 
 /* Option items */
 .account-select-item {
-    padding: 10px 12px;
+    padding: 8px 11px;
+    margin-bottom: 1px;
     cursor: pointer;
-    font-size: 13px;
-    color: #111827;
-    border-bottom: 1px solid #e5e7eb;
-    background: white;
+    font-size: 12.5px;
+    color: #1f2937;
+    border-radius: 7px;
+    background: transparent;
+    transition: background .12s ease, color .12s ease;
+}
+
+[data-bs-theme="dark"] .account-select-item {
+    color: #e8ebef;
 }
 
 .account-select-item:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .account-select-item:hover {
-    background: #f3f4f6;
+    background: #f1f5f9;
+}
+
+[data-bs-theme="dark"] .account-select-item:hover {
+    background: #353d46;
 }
 
 .account-select-item-active {
-    background: #3b82f6 !important;
-    color: white !important;
+    background: var(--bs-primary, #2563eb) !important;
+    color: #fff !important;
 }
 </style>
