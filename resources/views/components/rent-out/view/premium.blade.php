@@ -173,6 +173,7 @@
 
         /* Financial mini cells */
         .rvx .fin-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .rvx .fin-grid-2{ grid-template-columns:repeat(2,1fr); }
         .rvx .fin{ background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-md); padding:9px 11px; text-align:left; }
         .rvx .fin .lab{ font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3); }
         .rvx .fin .val{ font-size:14.5px; font-weight:800; letter-spacing:-0.02em; color:var(--text); }

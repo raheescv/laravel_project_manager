@@ -203,10 +203,9 @@
                     <x-rent-out.view.field icon="fa-lock" label="Security Amount" :value="number_format($securityTotal, 2)" />
                 </div>
 
-                <div class="fin-grid mt-3">
+                <div class="fin-grid fin-grid-2 mt-3">
                     <x-rent-out.view.fin label="Total" tone="total" :value="number_format($totalRent, 2)" />
                     <x-rent-out.view.fin label="Discount" :value="number_format($totalDiscount, 2)" />
-                    <x-rent-out.view.fin label="Paid" tone="paid" :value="number_format($totalPaid, 2)" />
                 </div>
             </x-rent-out.view.panel>
         </div>
