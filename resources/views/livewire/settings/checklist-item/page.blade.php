@@ -82,7 +82,7 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <div class="col-md-12">
+                <div class="col-md-6"> <br> <br>
                     <div class="form-check form-switch">
                         <input type="checkbox" class="form-check-input" id="is_active" wire:model="formData.is_active">
                         <label class="form-check-label" for="is_active">Active</label>

@@ -4,7 +4,6 @@ namespace App\Livewire\Settings\ChecklistItem;
 
 use App\Actions\Settings\ChecklistItem\DeleteAction;
 use App\Models\Checklist;
-use App\Models\PropertyType;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -136,12 +135,9 @@ class Table extends Component
             ->orderBy('category')
             ->pluck('category');
 
-        $propertyTypes = PropertyType::orderBy('name')->get(['id', 'name']);
-
         return view('livewire.settings.checklist-item.table', [
             'data' => $data,
             'categories' => $categories,
-            'propertyTypes' => $propertyTypes,
         ]);
     }
 }

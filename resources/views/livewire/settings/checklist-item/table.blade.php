@@ -41,21 +41,20 @@
 
                 {{-- Filters --}}
                 <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <select class="form-select form-select-sm border-secondary-subtle shadow-sm flex-grow-1"
-                        style="min-width:130px; max-width:220px;" wire:model.live="filterCategory">
-                        <option value="">All Categories</option>
-                        @foreach ($categories as $category)
-                            <option value="{{ $category }}">{{ $category }}</option>
-                        @endforeach
-                    </select>
-                    <select class="form-select form-select-sm border-secondary-subtle shadow-sm flex-grow-1"
-                        style="min-width:130px; max-width:220px;" wire:model.live="filterPropertyType">
-                        <option value="">All Property Types</option>
-                        <option value="none">— Universal (no type) —</option>
-                        @foreach ($propertyTypes as $pt)
-                            <option value="{{ $pt->id }}">{{ $pt->name }}</option>
-                        @endforeach
-                    </select>
+                    <div wire:ignore class="flex-grow-1" style="min-width:140px; max-width:220px;">
+                        <select class="tomSelect" id="filterCategoryTom">
+                            <option value="">All Categories</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category }}" @selected($filterCategory === $category)>{{ $category }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div wire:ignore class="flex-grow-1" style="min-width:140px; max-width:220px;">
+                        <select class="select-property_type_id" id="filterPropertyTypeTom">
+                            <option value="">All Property Types</option>
+                            <option value="none" @selected($filterPropertyType === 'none')>— Universal (no type) —</option>
+                        </select>
+                    </div>
                     <div class="d-flex align-items-center gap-1">
                         <label class="form-label mb-0 text-muted small fw-semibold">Show:</label>
                         <select wire:model.live="limit" class="form-select form-select-sm border-secondary-subtle shadow-sm" style="width:auto;">
@@ -156,7 +155,7 @@
                                     <div class="btn-group btn-group-sm" role="group">
                                         @can('rent out checklist item.edit')
                                             <button table_id="{{ $item->id }}" class="btn btn-light btn-sm edit" title="Edit" data-bs-toggle="tooltip">
-                                                <i class="fa fa-eye"></i>
+                                                <i class="fa fa-edit"></i>
                                             </button>
                                         @endcan
                                     </div>
@@ -210,7 +209,7 @@
                         @else
                             <span class="cl-mthumb cl-mthumb-empty"><i class="fa fa-picture-o"></i></span>
                         @endif
-                        <div class="flex-grow-1 min-w-0">
+                        <div class="flex-grow-1" style="min-width:0;">
                             <div class="cl-mname">{{ $item->name }}</div>
                             <div class="cl-mbadges">
                                 @if ($item->propertyType)
@@ -252,6 +251,7 @@
         </div>
 
         @push('scripts')
+            @include('components.select.propertyTypeSelect')
             <script>
                 $(document).ready(function() {
                     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -269,6 +269,15 @@
                     });
                     window.addEventListener('RefreshChecklistItemTable', event => {
                         Livewire.dispatch("ChecklistItem-Refresh-Component");
+                    });
+
+                    // The two filter dropdowns are TomSelect inside wire:ignore, so bridge
+                    // their change events back into Livewire (keeps live filtering working).
+                    $(document).on('change', '#filterCategoryTom', function () {
+                        @this.set('filterCategory', this.value);
+                    });
+                    $(document).on('change', '#filterPropertyTypeTom', function () {
+                        @this.set('filterPropertyType', this.value);
                     });
                 });
             </script>

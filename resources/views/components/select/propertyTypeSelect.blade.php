@@ -1,5 +1,8 @@
 <script type="text/javascript">
     $('.select-property_type_id-list').each(function() {
+        if (this.tomselect) {
+            return;
+        }
         new TomSelect(this, {
             plugins: ['remove_button'],
             persist: false,
@@ -33,6 +36,9 @@
         });
     });
     $('.select-property_type_id').each(function() {
+        if (this.tomselect) {
+            return;
+        }
         new TomSelect(this, {
             persist: false,
             valueField: 'id',
