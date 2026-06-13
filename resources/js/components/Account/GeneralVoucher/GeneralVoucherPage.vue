@@ -1249,30 +1249,30 @@ const closeModal = () => {
 .gvx-balance {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-top: 16px;
+    gap: 10px;
+    margin-top: 12px;
 }
 
 .gvx-bal-cell {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
-    padding: 13px 15px;
+    padding: 9px 12px;
     box-shadow: var(--shadow-sm);
 }
 
 .gvx-bal-cell .bc-ic {
-    width: 38px;
-    height: 38px;
+    width: 30px;
+    height: 30px;
     flex: 0 0 auto;
-    border-radius: 10px;
+    border-radius: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
+    font-size: 13px;
     background: var(--surface-3);
     color: var(--text-2);
 }
@@ -1288,7 +1288,7 @@ const closeModal = () => {
 }
 
 .bc-lab {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 700;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -1296,7 +1296,7 @@ const closeModal = () => {
 }
 
 .bc-val {
-    font-size: 18px;
+    font-size: 14.5px;
     font-weight: 800;
     letter-spacing: -.02em;
     color: var(--text);
@@ -1343,8 +1343,8 @@ const closeModal = () => {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 10px;
-    padding: 15px 22px;
+    gap: 9px;
+    padding: 11px 16px;
     background: var(--surface);
     border-top: 1px solid var(--border);
 }
@@ -1352,11 +1352,11 @@ const closeModal = () => {
 .gvx-btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
+    gap: 7px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 7px 15px;
+    border-radius: 8px;
     cursor: pointer;
     border: 1px solid transparent;
     transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .1s ease;
@@ -1397,10 +1397,10 @@ const closeModal = () => {
 
 /* AccountSelect input — premium reskin within .gvx */
 .gvx .account-select-input {
-    padding: 7px 10px !important;
-    font-size: 12.5px !important;
+    padding: 5px 9px !important;
+    font-size: 11.5px !important;
     border: 1px solid var(--border) !important;
-    border-radius: 7px !important;
+    border-radius: 6px !important;
     background: var(--surface) !important;
     color: var(--text) !important;
 }

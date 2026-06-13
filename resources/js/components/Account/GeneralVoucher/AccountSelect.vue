@@ -576,10 +576,10 @@ onUnmounted(() => {
 /* Main input field */
 .account-select-input {
     width: 100%;
-    padding: 6px 30px 6px 10px;
-    font-size: 13px;
+    padding: 5px 28px 5px 9px;
+    font-size: 11.5px;
     border: 1px solid #d1d5db;
-    border-radius: 4px;
+    border-radius: 6px;
     background: white;
     outline: none;
     cursor: pointer;
@@ -641,12 +641,12 @@ onUnmounted(() => {
 
 /* Option items */
 .account-select-item {
-    padding: 8px 11px;
+    padding: 6px 10px;
     margin-bottom: 1px;
     cursor: pointer;
-    font-size: 12.5px;
+    font-size: 11.5px;
     color: #1f2937;
-    border-radius: 7px;
+    border-radius: 6px;
     background: transparent;
     transition: background .12s ease, color .12s ease;
 }
