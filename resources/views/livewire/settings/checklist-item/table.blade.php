@@ -1,40 +1,20 @@
 <div>
-    <style>
-        /* Mobile / tablet card list (shown < lg) */
-        .cl-mlist { padding: .75rem; }
-        .cl-mcat { display: flex; align-items: center; gap: .5rem; padding: .45rem .7rem; background: #eef2f8;
-            border-left: 3px solid var(--bs-primary, #0d6efd); border-radius: 8px; margin: .85rem 0 .55rem;
-            font-weight: 700; font-size: .72rem; letter-spacing: .4px; text-transform: uppercase; color: #3a4250; }
-        .cl-mcat:first-child { margin-top: 0; }
-        .cl-mcard { display: flex; align-items: flex-start; gap: .65rem; padding: .7rem .75rem; background: #fff;
-            border: 1px solid #eceef1; border-radius: 10px; margin-bottom: .55rem; transition: box-shadow .12s, border-color .12s; }
-        .cl-mcard.is-sel { border-color: var(--bs-primary, #0d6efd); box-shadow: inset 3px 0 0 var(--bs-primary, #0d6efd); }
-        .cl-mthumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1px solid #e3e6ea; flex: 0 0 auto; }
-        .cl-mthumb-empty { display: inline-flex; align-items: center; justify-content: center; background: #f6f8fb; color: #cbd1d8; font-size: 18px; }
-        .cl-mname { font-weight: 600; color: #26303a; font-size: .92rem; line-height: 1.25; word-break: break-word; }
-        .cl-mmeta { font-size: .7rem; color: #8a929b; margin-top: .2rem; }
-        .cl-mbadges { margin-top: .3rem; display: flex; flex-wrap: wrap; gap: .25rem; }
-        @media (max-width: 575.98px) {
-            .cl-toolbar-actions .btn-label { display: none; }
-        }
-    </style>
-
     <div class="card shadow-sm">
         {{-- ===== Toolbar ===== --}}
         <div class="card-header bg-light py-3">
             <div class="d-flex flex-column flex-lg-row gap-3 justify-content-between align-items-stretch align-items-lg-center">
                 {{-- Actions --}}
-                <div class="d-flex gap-2 align-items-center cl-toolbar-actions">
+                <div class="d-flex gap-2 align-items-center">
                     @can('rent out checklist item.create')
                         <button class="btn btn-primary btn-sm d-inline-flex align-items-center shadow-sm" id="ChecklistItemAdd">
-                            <i class="fa fa-plus-circle me-md-2"></i><span class="btn-label">Add New Item</span>
+                            <i class="fa fa-plus-circle me-2"></i>Add New Item
                         </button>
                     @endcan
                     @can('rent out checklist item.delete')
                         <button class="btn btn-danger btn-sm d-inline-flex align-items-center shadow-sm" title="Delete Selected"
                             data-bs-toggle="tooltip" wire:click="delete()"
                             wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="fa fa-trash me-md-1"></i><span class="btn-label">Delete</span>
+                            <i class="fa fa-trash me-md-1"></i><span class="d-none d-sm-inline">Delete</span>
                         </button>
                     @endcan
                 </div>
@@ -73,8 +53,7 @@
         </div>
 
         <div class="card-body p-0">
-            {{-- ===== Desktop table (≥ lg) ===== --}}
-            <div class="table-responsive d-none d-lg-block">
+            <div class="table-responsive">
                 <table class="table table-hover align-middle border-bottom mb-0 table-sm">
                     <thead class="bg-light text-muted">
                         <tr class="text-capitalize small">
@@ -172,79 +151,12 @@
                     </tbody>
                 </table>
             </div>
-
-            {{-- ===== Mobile / tablet card list (< lg) ===== --}}
-            <div class="cl-mlist d-lg-none">
-                {{-- Bulk select bar --}}
-                @if (count($data))
-                    <div class="d-flex align-items-center justify-content-between mb-2 px-1">
-                        <div class="form-check mb-0">
-                            <input type="checkbox" wire:model.live="selectAll" class="form-check-input shadow-sm" id="selectAllMobile">
-                            <label class="form-check-label small text-muted" for="selectAllMobile">Select all</label>
-                        </div>
-                        @if (count($selected))
-                            <span class="badge bg-primary-subtle text-primary-emphasis">{{ count($selected) }} selected</span>
-                        @endif
-                    </div>
-                @endif
-
-                @php $renderedCategoryM = '__start__'; @endphp
-                @forelse ($data as $item)
-                    @php
-                        $itemCategoryM = $item->category ?: 'Uncategorized';
-                        $isSel = in_array((string) $item->id, array_map('strval', (array) $selected), true);
-                    @endphp
-                    @if ($itemCategoryM !== $renderedCategoryM)
-                        <div class="cl-mcat"><i class="fa fa-folder-open-o text-primary opacity-75"></i>{{ $itemCategoryM }}</div>
-                        @php $renderedCategoryM = $itemCategoryM; @endphp
-                    @endif
-                    <div class="cl-mcard {{ $isSel ? 'is-sel' : '' }}">
-                        <div class="form-check mt-1">
-                            <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" class="form-check-input shadow-sm" id="mcheckbox{{ $item->id }}" />
-                        </div>
-                        @if ($item->image_path)
-                            <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}"
-                                class="cl-mthumb zoomable" data-img="{{ asset('storage/' . $item->image_path) }}"
-                                style="cursor:zoom-in;" title="Click to enlarge">
-                        @else
-                            <span class="cl-mthumb cl-mthumb-empty"><i class="fa fa-picture-o"></i></span>
-                        @endif
-                        <div class="flex-grow-1" style="min-width:0;">
-                            <div class="cl-mname">{{ $item->name }}</div>
-                            <div class="cl-mbadges">
-                                @if ($item->propertyType)
-                                    <span class="badge bg-primary-subtle text-primary-emphasis">{{ $item->propertyType->name }}</span>
-                                @else
-                                    <span class="badge bg-light text-muted border">All types</span>
-                                @endif
-                                @if ($item->is_active)
-                                    <span class="badge bg-success-subtle text-success-emphasis">Active</span>
-                                @else
-                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Inactive</span>
-                                @endif
-                            </div>
-                            <div class="cl-mmeta">#{{ $item->id }} &middot; Sort {{ $item->sort_order }}</div>
-                        </div>
-                        @can('rent out checklist item.edit')
-                            <button table_id="{{ $item->id }}" class="btn btn-light btn-sm edit flex-shrink-0" title="Edit">
-                                <i class="fa fa-eye"></i>
-                            </button>
-                        @endcan
-                    </div>
-                @empty
-                    <div class="text-center py-5 text-muted">
-                        <i class="fa fa-check-square-o fa-3x mb-3 d-block opacity-25"></i>
-                        No checklist items found matching your search.
-                    </div>
-                @endforelse
-            </div>
-
             <div class="p-3 border-top">
                 {{ $data->links() }}
             </div>
         </div>
 
-        <div class="position-fixed bottom-0 end-0 mb-4 me-4 d-lg-none">
+        <div class="position-fixed bottom-0 end-0 mb-4 me-4 d-md-none">
             <button id="ChecklistItemAddMobile" class="btn btn-primary rounded-circle shadow btn-lg">
                 <i class="fa fa-plus"></i>
             </button>
