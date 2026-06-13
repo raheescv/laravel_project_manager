@@ -13,7 +13,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('tenant_id');
             $table->string('category')->nullable();
             $table->string('name');
-            $table->foreignId('property_type_id')->nullable()->after('name')->constrained('property_types')->nullOnDelete();
+            $table->foreignId('property_type_id')->nullable()->constrained('property_types')->nullOnDelete();
             $table->string('image_path')->nullable();
             $table->unsignedInteger('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
