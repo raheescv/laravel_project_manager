@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $this->call(BranchSeeder::class);
         $this->call(UnitSeeder::class);
         $this->call(CountrySeeder::class);
+        $this->call(RentOutChecklistItemSeeder::class);
 
         // UserSeeder should only run if users table is empty
         if (DB::table('users')->count() === 0) {

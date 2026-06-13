@@ -6,6 +6,7 @@ use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyGroupController;
 use App\Http\Controllers\Property\PropertyLeadController;
 use App\Http\Controllers\Property\PropertyTypeController;
+use App\Http\Controllers\Property\RentOutChecklistController;
 use App\Http\Controllers\Property\RentOutController;
 use App\Http\Controllers\Property\RentOutReportController;
 use App\Http\Controllers\Property\RentOutTransactionController;
@@ -100,6 +101,11 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('payment-history', 'paymentHistory')->name('payment-history')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
                 Route::get('cheque-management', 'chequeManagement')->name('cheque-management')->defaults('agreement_type', 'lease')->can('rent out lease.cheque management');
             });
+        });
+
+        // RentOut - Move-In / Move-Out Checklist (handover print + sign)
+        Route::name('rent_out::checklist::')->prefix('rent-out/checklist')->controller(RentOutChecklistController::class)->group(function (): void {
+            Route::get('print/{id}', 'print')->name('print')->can('rent out checklist.print');
         });
 
         // Reports

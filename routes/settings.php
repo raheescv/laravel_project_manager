@@ -84,6 +84,10 @@ Route::middleware('auth')->group(function (): void {
             Route::get('', 'index')->name('index')->can('document type.view');
             Route::get('list', 'get')->name('list');
         });
+        Route::name('checklist_item::')->prefix('checklist-item')->controller(\App\Http\Controllers\Settings\ChecklistItemController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('rent out checklist item.view');
+            Route::get('list', 'get')->name('list');
+        });
         Route::name('complaint_category::')->prefix('complaint-category')->controller(ComplaintCategoryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('complaint category.view');
             Route::get('list', 'get')->name('list');

@@ -23,6 +23,53 @@ class PrintController extends Controller
         return SaleHelper::saleInvoice($id);
     }
 
+    public function rentOutChecklist($id)
+    {
+        $rentOut = RentOut::with([
+            'account',
+            'group',
+            'building',
+            'property',
+            'type',
+            'checklistLines.item',
+            'checklistSignatures',
+            'facilityCoordinator',
+            'leasingCoordinator',
+        ])->findOrFail($id);
+
+        // Resolve the company logo to a LOCAL file path — dompdf renders file paths reliably
+        // (it drops data-URIs and can't always fetch remote URLs). cache('logo') can be stale,
+        // so try the current Configuration value and a few likely locations, then a bundled fallback.
+        $companyLogo = null;
+        $candidates = [];
+        $logoValue = Configuration::where('key', 'logo')->value('value');
+        if ($logoValue) {
+            $logoValue = ltrim($logoValue, '/');
+            $candidates[] = public_path('storage/'.$logoValue);
+            $candidates[] = public_path($logoValue);
+            $candidates[] = \Illuminate\Support\Facades\Storage::disk('public')->path($logoValue);
+        }
+        $cacheUrl = cache('logo');
+        if ($cacheUrl) {
+            $cachePath = parse_url((string) $cacheUrl, PHP_URL_PATH);
+            if ($cachePath) {
+                $candidates[] = public_path(ltrim($cachePath, '/'));
+            }
+        }
+        $candidates[] = public_path('assets/img/logo.svg');
+        foreach ($candidates as $candidate) {
+            if ($candidate && is_file($candidate)) {
+                $companyLogo = $candidate;
+                break;
+            }
+        }
+
+        $pdf = Pdf::loadView('print.rentout.checklist', compact('rentOut', 'companyLogo'));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream('move_in_out_checklist.pdf');
+    }
+
     public function daySessionReport($id)
     {
         return SaleHelper::daySessionReport($id);

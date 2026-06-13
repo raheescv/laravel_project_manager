@@ -42,6 +42,7 @@
                         ['key' => 'TransactionTab', 'icon' => 'fa-exchange', 'label' => 'Transactions'],
                         ['key' => 'MaintenanceTab', 'icon' => 'fa-wrench', 'label' => 'Maintenance'],
                         ['key' => 'DocumentsTab', 'icon' => 'fa-file-o', 'label' => 'Documents'],
+                        ['key' => 'ChecklistTab', 'icon' => 'fa-list-alt', 'label' => 'Checklist'],
                     ]);
                 @endphp
 
@@ -109,9 +110,15 @@
             <div x-show="activeTab === 'DocumentsTab'" x-transition:enter.duration.150ms>
                 @livewire('rent-out.tabs.documents-tab', ['rentOutId' => $rentOut->id], key('documents-tab-' . $rentOut->id))
             </div>
+
+            <div x-show="activeTab === 'ChecklistTab'" x-transition:enter.duration.150ms>
+                @livewire('rent-out.tabs.checklist-tab', ['rentOutId' => $rentOut->id], key('checklist-tab-' . $rentOut->id))
+            </div>
         </div>
     </div>
 </div>
 
 <x-rent-out.pay-selected-modal :rentOutId="$rentOut->id" />
 <x-rent-out.utility-pay-selected-modal :rentOutId="$rentOut->id" />
+<x-rent-out.checklist-add-items-modal />
+<x-image-preview-modal />

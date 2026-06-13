@@ -18,4 +18,8 @@
             </div>
         </div>
     @endif
+    @push('scripts')
+        <x-select.checklistItemSelect />
+        <x-select.employeeSelect />
+    @endpush
 </div>

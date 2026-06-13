@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('residential-lease/{id}/{type?}', 'residentialLease')->name('residential-lease');
             Route::get('payment-receipt/{id}', 'rentOutPaymentReceipt')->name('payment-receipt');
             Route::get('payment-voucher/{id}', 'rentOutPaymentVoucher')->name('payment-voucher');
+            Route::get('checklist/{id}', 'rentOutChecklist')->name('checklist')->can('rent out checklist.print');
         });
         Route::name('purchase_vendor::')->prefix('purchase-vendor')->group(function (): void {
             Route::get('statement/{id}/{fromDate?}/{toDate?}', 'purchaseVendorStatement')->name('statement');

@@ -54,6 +54,12 @@ class RentOut extends Model implements AuditableContracts
         'include_electricity_water',
         'include_ac',
         'include_wifi',
+        'actual_move_in_date',
+        'actual_move_out_date',
+        'facility_coordinator_id',
+        'leasing_coordinator_id',
+        'move_in_remarks',
+        'move_out_remarks',
         'remark',
         'cancellation_policy_ar',
         'cancellation_policy_en',
@@ -88,6 +94,8 @@ class RentOut extends Model implements AuditableContracts
         'start_date' => 'date',
         'end_date' => 'date',
         'vacate_date' => 'date',
+        'actual_move_in_date' => 'date',
+        'actual_move_out_date' => 'date',
         'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
         'financial_approved_at' => 'datetime',
@@ -294,6 +302,26 @@ class RentOut extends Model implements AuditableContracts
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    public function checklistLines(): HasMany
+    {
+        return $this->hasMany(RentOutChecklistLine::class, 'rent_out_id')->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function checklistSignatures(): HasMany
+    {
+        return $this->hasMany(RentOutChecklistSignature::class, 'rent_out_id');
+    }
+
+    public function facilityCoordinator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'facility_coordinator_id');
+    }
+
+    public function leasingCoordinator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'leasing_coordinator_id');
+    }
+
     // Helper Methods
     public function getAgreementNoAttribute(): string
     {
@@ -317,6 +345,21 @@ class RentOut extends Model implements AuditableContracts
         }
 
         return "BAS/S/{$yearCode} - {$id}";
+    }
+
+    public function checklistSignatureFor($phase, $role): ?RentOutChecklistSignature
+    {
+        $phase = $phase instanceof \App\Enums\RentOut\ChecklistPhase ? $phase->value : $phase;
+        $role = $role instanceof \App\Enums\RentOut\ChecklistSignatoryRole ? $role->value : $role;
+
+        return $this->checklistSignatures->first(function ($s) use ($phase, $role) {
+            return $s->phase?->value === $phase && $s->role?->value === $role;
+        });
+    }
+
+    public function checklistDamageTotal(): float
+    {
+        return (float) $this->checklistLines->sum('damage_cost');
     }
 
     public function daysUntil($date): int
