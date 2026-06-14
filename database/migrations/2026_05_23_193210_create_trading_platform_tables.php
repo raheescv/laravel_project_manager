@@ -16,7 +16,7 @@ return new class() extends Migration
     {
         Schema::create('trading_brokers', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique(); // flat_trade, fyers, kite, paper
+            $table->string('code')->unique(); // flat_trade, kite, paper
             $table->string('label');
             $table->boolean('is_active')->default(true);
             $table->boolean('is_default')->default(false);

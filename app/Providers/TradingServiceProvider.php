@@ -3,14 +3,12 @@
 namespace App\Providers;
 
 use App\Services\FlatTradeService;
-use App\Services\FyersService;
 use App\Trading\Alerts\AlertDispatcher;
 use App\Trading\Alerts\Channels\DatabaseChannel;
 use App\Trading\Alerts\Channels\LogChannel;
 use App\Trading\Alerts\Channels\TelegramChannel;
 use App\Trading\Brokers\BrokerManager;
 use App\Trading\Brokers\FlatTradeBrokerAdapter;
-use App\Trading\Brokers\FyersBrokerAdapter;
 use App\Trading\Brokers\KiteBrokerAdapter;
 use App\Trading\Brokers\PaperBroker;
 use App\Trading\Risk\RiskGate;
@@ -45,14 +43,6 @@ class TradingServiceProvider extends ServiceProvider
                 }
             } catch (\Throwable) {
                 // ignore — FlatTrade may not be configured
-            }
-
-            try {
-                if (class_exists(FyersService::class)) {
-                    $manager->register(new FyersBrokerAdapter($app->make(FyersService::class)));
-                }
-            } catch (\Throwable) {
-                // ignore — Fyers may not be configured
             }
 
             $manager->register(new KiteBrokerAdapter());
