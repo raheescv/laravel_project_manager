@@ -492,7 +492,7 @@ class Product extends Model implements AuditableContracts
             });
         });
         $self = $self->limit(10);
-        $self = $self->select(['name', 'barcode', 'code', 'size', 'mrp', 'cost', 'id', 'type']);
+        $self = $self->select(['name', 'barcode', 'code', 'size', 'color', 'mrp', 'cost', 'id', 'type', 'thumbnail']);
         $self = $self->when($request['invoice_id'] ?? '', function ($query, $value) {
             return $query->addSelect(['purchase_item_id' => function ($subquery) use ($value): void {
                 $subquery->select('id')->from('purchase_items')

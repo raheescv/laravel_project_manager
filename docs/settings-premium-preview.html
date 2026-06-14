@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Settings — Premium Direction Previews</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        /* ============================================================
+           SETTINGS — premium direction previews (NOT production)
+           4 directions for the settings chrome (hero + tab rail + card).
+           Pick one; the chosen one gets ported into settings/index.blade.php
+           ============================================================ */
+        * { box-sizing: border-box; }
+
+        .host {
+            --p: #4f46e5;
+            --p-rgb: 79, 70, 229;
+            --p-700: color-mix(in srgb, #4f46e5, #000 28%);
+            --p-400: color-mix(in srgb, #4f46e5, #fff 22%);
+            --h1: color-mix(in srgb, var(--p), #000 40%);
+            --h2: color-mix(in srgb, var(--p), #000 4%);
+            --h3: color-mix(in srgb, var(--p), #fff 8%);
+            --bg: #eef1f5;
+            --surface: #ffffff;
+            --surface2: #f5f7fa;
+            --surface3: #eceff4;
+            --border: #e4e8ee;
+            --text: #1f2937;
+            --text2: #5b6573;
+            --text3: #8a94a3;
+            margin: 0;
+            min-height: 100vh;
+            padding: 22px clamp(12px, 4vw, 40px) 60px;
+            font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            background: radial-gradient(120% 120% at 0 0, #e9edf6, #eef1f7);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .host[data-bs-theme="dark"] {
+            --h1: color-mix(in srgb, var(--p), #000 60%);
+            --h2: color-mix(in srgb, var(--p), #000 44%);
+            --h3: color-mix(in srgb, var(--p), #000 26%);
+            --p: #818cf8;
+            --p-rgb: 129, 140, 248;
+            --p-700: color-mix(in srgb, #818cf8, #000 24%);
+            --p-400: color-mix(in srgb, #818cf8, #fff 16%);
+            --bg: #0f1115;
+            --surface: #1c2128;
+            --surface2: #232a32;
+            --surface3: #2b333c;
+            --border: #2d343d;
+            --text: #e6e9ee;
+            --text2: #a6b0bd;
+            --text3: #7c8693;
+            background: radial-gradient(120% 120% at 0 0, #0b0d12, #07080c);
+        }
+
+        /* ===== harness ===== */
+        .bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; max-width: 1100px; margin: 0 auto 6px; }
+        .bar h1 { font-size: 1.15rem; font-weight: 800; margin: 0; letter-spacing: -.02em; }
+        .bar .pick { font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--p); border: 1px solid color-mix(in srgb, var(--p), transparent 65%); padding: .15rem .5rem; border-radius: 6px; margin-left: .5rem; vertical-align: middle; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 3px; gap: 2px; }
+        .seg button { border: 0; background: transparent; color: var(--text2); font: inherit; font-size: .8rem; font-weight: 700; padding: .42rem .8rem; border-radius: 8px; cursor: pointer; transition: all .15s; }
+        .seg button:hover { color: var(--text); }
+        .seg button.on { background: linear-gradient(120deg, var(--p), var(--p-700)); color: #fff; box-shadow: 0 6px 14px -7px rgba(var(--p-rgb), .7); }
+        .toggle { border: 1px solid var(--border); background: var(--surface); color: inherit; font: inherit; font-size: .8rem; font-weight: 700; padding: .42rem .9rem; border-radius: 10px; cursor: pointer; }
+        .desc { max-width: 1100px; margin: 0 auto 14px; color: var(--text2); font-size: .85rem; }
+        .desc b { color: var(--text); }
+        .frame { max-width: 1100px; margin: 0 auto; border-radius: 18px; box-shadow: 0 30px 60px -28px rgba(15, 23, 42, .5); overflow: hidden; }
+        .host[data-bs-theme="dark"] .frame { box-shadow: 0 30px 60px -25px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .04); }
+
+        /* ============================================================
+           SHARED STAGE STRUCTURE
+           ============================================================ */
+        .stage { background: var(--bg); }
+        .stage .pad { padding: 18px; }
+
+        .pv-hero { position: relative; isolation: isolate; overflow: hidden; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; color: #fff; }
+        .pv-glow { position: absolute; z-index: -1; border-radius: 50%; filter: blur(36px); pointer-events: none; }
+        .pv-glow.a { width: 230px; height: 230px; top: -110px; right: 6%; background: rgba(255, 255, 255, .28); opacity: .5; }
+        .pv-glow.b { width: 170px; height: 170px; bottom: -100px; left: -20px; background: var(--p-400); opacity: .4; }
+        .pv-crumb { font-size: .72rem; opacity: .85; margin-bottom: .4rem; }
+        .pv-hero-row { display: flex; align-items: center; gap: 1rem; }
+        .pv-hero-ic { width: 52px; height: 52px; flex: 0 0 auto; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .28); }
+        .pv-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: .82; }
+        .pv-title { font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; margin: .05rem 0 0; line-height: 1.1; }
+        .pv-sub { font-size: .82rem; opacity: .85; margin: .12rem 0 0; }
+
+        .pv-shell { display: flex; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px -2px rgba(16, 24, 40, .1); }
+        .pv-tabs { width: 232px; flex: 0 0 auto; padding: 12px; background: var(--surface2); border-right: 1px solid var(--border); }
+        .pv-tabs-head { font-size: .65rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); padding: .25rem .5rem .55rem; }
+        .pv-tab { display: flex; align-items: center; gap: .6rem; width: 100%; border: 0; background: transparent; color: var(--text); font: inherit; font-size: .84rem; font-weight: 600; text-align: left; padding: .5rem .6rem; border-radius: 10px; cursor: pointer; margin-bottom: 2px; transition: all .15s; }
+        .pv-tab i { width: 1.9rem; height: 1.9rem; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; font-size: .92rem; background: var(--surface3); color: var(--text2); transition: all .15s; }
+        .pv-tab:hover { background: color-mix(in srgb, var(--p), transparent 92%); color: var(--p); }
+        .pv-tab:hover i { background: color-mix(in srgb, var(--p), transparent 86%); color: var(--p); }
+        .pv-tab.on { background: linear-gradient(120deg, var(--p), var(--p-700)); color: #fff; box-shadow: 0 8px 18px -8px rgba(var(--p-rgb), .6); }
+        .pv-tab.on i { background: rgba(255, 255, 255, .22); color: #fff; }
+
+        .pv-content { flex: 1; min-width: 0; padding: 16px; }
+        .pv-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px -2px rgba(16, 24, 40, .1); }
+        .pv-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: .85rem 1rem; border-bottom: 1px solid var(--border); background: linear-gradient(110deg, color-mix(in srgb, var(--p), transparent 93%), transparent 62%); }
+        .pv-card-title { font-weight: 800; font-size: 1rem; letter-spacing: -.01em; }
+        .pv-card-sub { font-size: .76rem; color: var(--text3); margin-top: 1px; }
+        .pv-badge { font-size: .68rem; font-weight: 700; color: var(--p); background: color-mix(in srgb, var(--p), transparent 88%); border: 1px solid color-mix(in srgb, var(--p), transparent 72%); padding: .25rem .55rem; border-radius: 999px; white-space: nowrap; }
+        .pv-card-body { padding: 1rem; }
+        .pv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .pv-field.full { grid-column: 1 / -1; }
+        .pv-label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text3); margin-bottom: 5px; }
+        .pv-input { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); padding: .5rem .65rem; font-size: .85rem; outline: none; transition: border-color .15s, box-shadow .15s; }
+        .pv-input:focus { border-color: var(--p-400); box-shadow: 0 0 0 3px rgba(var(--p-rgb), .16); }
+        .pv-switch { display: inline-flex; align-items: center; gap: .55rem; margin-top: 12px; font-size: .82rem; color: var(--text2); }
+        .pv-switch .sw { width: 38px; height: 22px; border-radius: 999px; background: var(--p); position: relative; }
+        .pv-switch .sw::after { content: ""; position: absolute; top: 3px; left: 19px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+        .pv-card-foot { display: flex; align-items: center; justify-content: flex-end; gap: 9px; padding: .8rem 1rem; border-top: 1px solid var(--border); background: var(--surface2); }
+        .pv-btn { font: inherit; font-size: .82rem; font-weight: 700; padding: .5rem .95rem; border-radius: 9px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); }
+        .pv-btn.primary { border: 0; color: #fff; background: linear-gradient(120deg, var(--p), var(--p-700)); box-shadow: 0 8px 18px -8px rgba(var(--p-rgb), .6); }
+
+        /* ============================================================
+           DIRECTION A — AURORA  (the version already applied)
+           ============================================================ */
+        .dir-aurora .pv-hero {
+            background:
+                radial-gradient(120% 160% at 12% -10%, rgba(255, 255, 255, .20), transparent 50%),
+                radial-gradient(90% 140% at 100% 0%, var(--h3), transparent 55%),
+                linear-gradient(118deg, var(--h1) 0%, var(--h2) 60%, var(--h3) 130%);
+            box-shadow: 0 18px 42px -18px rgba(var(--p-rgb), .55);
+        }
+        .dir-aurora .pv-hero::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .5; background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .10) 1px, transparent 0); background-size: 22px 22px; -webkit-mask-image: linear-gradient(180deg, #000, transparent 80%); mask-image: linear-gradient(180deg, #000, transparent 80%); }
+
+        /* ============================================================
+           DIRECTION B — GLASS  (frosted, airy, ink text)
+           ============================================================ */
+        .dir-glass .pv-hero {
+            color: var(--text);
+            border: 1px solid color-mix(in srgb, var(--p), transparent 78%);
+            background:
+                radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--p), transparent 80%), transparent 60%),
+                linear-gradient(135deg, color-mix(in srgb, var(--p), transparent 86%), color-mix(in srgb, var(--p), transparent 96%));
+            backdrop-filter: blur(8px);
+            box-shadow: 0 12px 34px -18px rgba(var(--p-rgb), .4);
+        }
+        .dir-glass .pv-glow.a { background: color-mix(in srgb, var(--p), transparent 45%); opacity: .35; }
+        .dir-glass .pv-hero-ic { background: color-mix(in srgb, var(--p), transparent 84%); border: 1px solid color-mix(in srgb, var(--p), transparent 70%); color: var(--p); }
+        .dir-glass .pv-eyebrow { color: var(--p); opacity: 1; }
+        .dir-glass .pv-sub, .dir-glass .pv-crumb { color: var(--text2); opacity: 1; }
+        .dir-glass .pv-shell { background: color-mix(in srgb, var(--surface), transparent 18%); backdrop-filter: blur(6px); }
+        .dir-glass .pv-tabs { background: color-mix(in srgb, var(--surface2), transparent 30%); }
+        .dir-glass .pv-tab.on { background: color-mix(in srgb, var(--p), transparent 86%); color: var(--p); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--p), transparent 70%); }
+        .dir-glass .pv-tab.on i { background: color-mix(in srgb, var(--p), transparent 78%); color: var(--p); }
+        .dir-glass .pv-card { background: color-mix(in srgb, var(--surface), transparent 12%); }
+        .dir-glass .pv-card-body { padding: 1.25rem; }
+        .dir-glass .pv-grid { gap: 16px; }
+        .dir-glass .pv-btn.primary { background: var(--p); }
+
+        /* ============================================================
+           DIRECTION C — MINIMAL  (editorial, accent bar, no gradient)
+           ============================================================ */
+        .dir-minimal .pv-hero { color: var(--text); background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--p); border-radius: 12px; padding: 16px 20px; box-shadow: none; }
+        .dir-minimal .pv-glow { display: none; }
+        .dir-minimal .pv-hero-ic { display: none; }
+        .dir-minimal .pv-hero-row { gap: 0; }
+        .dir-minimal .pv-eyebrow { color: var(--p); opacity: 1; }
+        .dir-minimal .pv-title { font-size: 1.55rem; }
+        .dir-minimal .pv-sub, .dir-minimal .pv-crumb { color: var(--text3); opacity: 1; }
+        .dir-minimal .pv-shell { box-shadow: none; }
+        .dir-minimal .pv-tabs { background: var(--surface); }
+        .dir-minimal .pv-tab { border-radius: 0; border-left: 2px solid transparent; padding-left: .7rem; }
+        .dir-minimal .pv-tab i { background: transparent; border-radius: 0; width: 1.3rem; color: var(--text3); }
+        .dir-minimal .pv-tab:hover { background: transparent; color: var(--p); }
+        .dir-minimal .pv-tab:hover i { background: transparent; color: var(--p); }
+        .dir-minimal .pv-tab.on { background: transparent; color: var(--p); border-left-color: var(--p); box-shadow: none; font-weight: 800; }
+        .dir-minimal .pv-tab.on i { background: transparent; color: var(--p); }
+        .dir-minimal .pv-card { box-shadow: none; border-radius: 10px; }
+        .dir-minimal .pv-card-head { background: transparent; }
+        .dir-minimal .pv-btn.primary { background: var(--p); box-shadow: none; border-radius: 8px; }
+
+        /* ============================================================
+           DIRECTION D — BOLD RAIL  (dark category rail, high contrast)
+           ============================================================ */
+        .dir-rail .pv-hero { border-radius: 12px; padding: 14px 18px; background: linear-gradient(118deg, var(--h1), var(--h2)); box-shadow: 0 14px 32px -18px rgba(var(--p-rgb), .5); }
+        .dir-rail .pv-hero-ic { width: 44px; height: 44px; font-size: 1.25rem; }
+        .dir-rail .pv-title { font-size: 1.25rem; }
+        .dir-rail .pv-tabs { background: linear-gradient(180deg, #1b2230, #11151c); border-right: 1px solid #232c3a; }
+        .dir-rail .pv-tabs-head { color: #8a97ab; }
+        .dir-rail .pv-tab { color: #cdd5e1; }
+        .dir-rail .pv-tab i { background: rgba(255, 255, 255, .07); color: #9fb0c6; }
+        .dir-rail .pv-tab:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+        .dir-rail .pv-tab:hover i { background: rgba(var(--p-rgb), .35); color: #fff; }
+        .dir-rail .pv-tab.on { background: linear-gradient(120deg, var(--p), var(--p-700)); color: #fff; }
+        .dir-rail .pv-tab.on i { background: rgba(255, 255, 255, .25); color: #fff; }
+        .dir-rail .pv-card { border-top: 3px solid var(--p); }
+
+        @media (max-width: 720px) {
+            .pv-shell { flex-direction: column; }
+            .pv-tabs { width: 100%; border-right: 0; border-bottom: 1px solid var(--border); display: flex; gap: 6px; overflow-x: auto; }
+            .dir-rail .pv-tabs { border-bottom: 1px solid #232c3a; }
+            .pv-tabs-head { display: none; }
+            .pv-tab { width: auto; flex: 0 0 auto; white-space: nowrap; margin: 0; }
+            .pv-tab span { display: none; }
+            .pv-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body class="host" data-bs-theme="light" id="host">
+    <div class="bar">
+        <h1>Settings — premium directions <span class="pick">choose one</span></h1>
+        <div class="controls">
+            <div class="seg" id="seg">
+                <button data-dir="aurora" class="on">Aurora</button>
+                <button data-dir="glass">Glass</button>
+                <button data-dir="minimal">Minimal</button>
+                <button data-dir="rail">Bold Rail</button>
+            </div>
+            <button class="toggle" id="themeBtn"><i class="fa fa-adjust"></i>&nbsp; Light / Dark</button>
+        </div>
+    </div>
+    <p class="desc" id="desc"></p>
+
+    <div class="frame">
+        <div class="stage dir-aurora" id="stage">
+            <div class="pad">
+                <!-- HERO -->
+                <div class="pv-hero">
+                    <span class="pv-glow a"></span>
+                    <span class="pv-glow b"></span>
+                    <div class="pv-crumb">Home &nbsp;/&nbsp; Settings</div>
+                    <div class="pv-hero-row">
+                        <span class="pv-hero-ic"><i class="fa fa-cog"></i></span>
+                        <div>
+                            <div class="pv-eyebrow">Workspace &middot; Control Center</div>
+                            <div class="pv-title">Settings</div>
+                            <div class="pv-sub">Manage configuration, company profile, and integrations from one place.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHELL -->
+                <div class="pv-shell">
+                    <div class="pv-tabs">
+                        <div class="pv-tabs-head">Categories</div>
+                        <button class="pv-tab"><i class="fa fa-sliders"></i><span>Configuration</span></button>
+                        <button class="pv-tab"><i class="fa fa-cube"></i><span>Product Settings</span></button>
+                        <button class="pv-tab"><i class="fa fa-shopping-cart"></i><span>Sale Settings</span></button>
+                        <button class="pv-tab"><i class="fa fa-home"></i><span>Rent Out Settings</span></button>
+                        <button class="pv-tab on"><i class="fa fa-user"></i><span>Company Profile</span></button>
+                        <button class="pv-tab"><i class="fa fa-cog"></i><span>Theme</span></button>
+                        <button class="pv-tab"><i class="fa fa-bell"></i><span>Notifications</span></button>
+                    </div>
+                    <div class="pv-content">
+                        <div class="pv-card">
+                            <div class="pv-card-head">
+                                <div>
+                                    <div class="pv-card-title">Company Profile</div>
+                                    <div class="pv-card-sub">Business identity used across documents</div>
+                                </div>
+                                <span class="pv-badge"><i class="fa fa-building-o"></i>&nbsp; Profile</span>
+                            </div>
+                            <div class="pv-card-body">
+                                <div class="pv-grid">
+                                    <div class="pv-field"><label class="pv-label">Company Name</label><input class="pv-input" value="Techno Astra Solutions LLC"></div>
+                                    <div class="pv-field"><label class="pv-label">Email</label><input class="pv-input" value="info@technoastra.com"></div>
+                                    <div class="pv-field"><label class="pv-label">Phone</label><input class="pv-input" value="+971 4 123 4567"></div>
+                                    <div class="pv-field"><label class="pv-label">VAT / TRN</label><input class="pv-input" value="100123456700003"></div>
+                                    <div class="pv-field full"><label class="pv-label">Address</label><input class="pv-input" value="Office 1204, Business Bay Tower, Dubai, UAE"></div>
+                                </div>
+                                <div class="pv-switch"><span class="sw"></span> Show company logo on printed documents</div>
+                            </div>
+                            <div class="pv-card-foot">
+                                <button class="pv-btn">Cancel</button>
+                                <button class="pv-btn primary"><i class="fa fa-check"></i>&nbsp; Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var DESCRIPTIONS = {
+            aurora: "<b>Aurora</b> — the version already applied. Rich multi-stop brand gradient hero with glow orbs + dot texture + glass icon tile; tab rail with icon tiles and a gradient active pill; brand-tinted card headers.",
+            glass: "<b>Glass</b> — frosted &amp; airy. Translucent hero with ink (dark) text and a soft tinted icon tile, blurred panels, generous spacing; the active tab is a soft brand-tint chip rather than a solid pill. Lighter, calmer feel.",
+            minimal: "<b>Minimal</b> — editorial &amp; understated. No gradient; a clean surface header with a colored accent bar, big bold title and lots of whitespace; tabs are a quiet left-border list (no filled pills). Content-first, Linear/Stripe-style.",
+            rail: "<b>Bold Rail</b> — high contrast. A dark category rail (works in both themes) against a light content area, a slim brand hero, and a brand top-accent on cards. Most app-like and striking."
+        };
+        var host = document.getElementById('host');
+        var stage = document.getElementById('stage');
+        var desc = document.getElementById('desc');
+        function setDir(d) {
+            stage.className = 'stage dir-' + d;
+            desc.innerHTML = DESCRIPTIONS[d];
+            document.querySelectorAll('#seg button').forEach(function (b) { b.classList.toggle('on', b.dataset.dir === d); });
+        }
+        document.querySelectorAll('#seg button').forEach(function (b) {
+            b.addEventListener('click', function () { setDir(b.dataset.dir); });
+        });
+        document.getElementById('themeBtn').addEventListener('click', function () {
+            host.setAttribute('data-bs-theme', host.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
+        });
+        setDir('aurora');
+    </script>
+</body>
+
+</html>

@@ -151,7 +151,7 @@
                     var option = `
                         <div class="dropdown-item">
                             <div class="item-icon">
-                                <img src="${escape(item.thumbnail || '{{ cache('logo') }}')}" class="item-image" alt="${escape(item.name)}">
+                                <img src="${escape(item.thumbnail || '{{ cache('logo') }}')}" class="item-image" alt="${escape(item.name)}" onerror="this.onerror=null; this.src='{{ cache('logo') }}';">
                             </div>
                             <div class="item-content">
                                 <div class="item-name">${escape(item.name)}</div>`;

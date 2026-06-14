@@ -7,7 +7,20 @@
             --settings-accent-border: rgba(var(--bs-primary-rgb), 0.2);
             --settings-shadow: 0 6px 24px -10px rgba(var(--bs-emphasis-color-rgb), 0.18);
             --settings-shadow-sm: 0 2px 8px -2px rgba(var(--bs-emphasis-color-rgb), 0.1);
+            --s-brand: var(--bs-primary);
+            --s-brand-rgb: var(--bs-primary-rgb);
+            --s-brand-400: color-mix(in srgb, var(--bs-primary), #fff 22%);
+            --s-brand-700: color-mix(in srgb, var(--bs-primary), #000 28%);
+            --s-hero-1: color-mix(in srgb, var(--bs-primary), #000 40%);
+            --s-hero-2: color-mix(in srgb, var(--bs-primary), #000 4%);
+            --s-hero-3: color-mix(in srgb, var(--bs-primary), #fff 8%);
             min-width: 0;
+        }
+
+        [data-bs-theme="dark"] .settings-page {
+            --s-hero-1: color-mix(in srgb, var(--bs-primary), #000 60%);
+            --s-hero-2: color-mix(in srgb, var(--bs-primary), #000 44%);
+            --s-hero-3: color-mix(in srgb, var(--bs-primary), #000 26%);
         }
 
         .settings-page .content__wrap {
@@ -17,23 +30,86 @@
         /* === HERO HEADER === */
         .settings-hero {
             position: relative;
+            isolation: isolate;
             border-radius: var(--settings-radius);
-            padding: 1.1rem 1.25rem;
-            background: var(--bs-primary);
-            color: var(--bs-white, #fff);
+            padding: 1.25rem 1.45rem;
+            color: var(--bs-body-color);
             overflow: hidden;
-            box-shadow: var(--settings-shadow);
             margin-bottom: 1rem;
+            border: 1px solid color-mix(in srgb, var(--s-brand), transparent 78%);
+            background:
+                radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--s-brand), transparent 80%), transparent 60%),
+                linear-gradient(135deg, color-mix(in srgb, var(--s-brand), transparent 86%), color-mix(in srgb, var(--s-brand), transparent 96%));
+            backdrop-filter: blur(8px);
+            box-shadow: 0 12px 34px -18px rgba(var(--s-brand-rgb), 0.40);
         }
 
-        .settings-hero::before {
+        .settings-hero::after {
             content: "";
             position: absolute;
-            inset: -40% -10% auto auto;
-            width: 60%;
-            height: 200%;
-            background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15), transparent 60%);
+            inset: 0;
+            z-index: -1;
+            opacity: 0.6;
+            background-image: radial-gradient(circle at 1px 1px, rgba(var(--s-brand-rgb), 0.06) 1px, transparent 0);
+            background-size: 22px 22px;
+            -webkit-mask-image: linear-gradient(180deg, #000, transparent 80%);
+            mask-image: linear-gradient(180deg, #000, transparent 80%);
+        }
+
+        .settings-hero-glow {
+            position: absolute;
+            z-index: -1;
+            border-radius: 50%;
+            filter: blur(36px);
             pointer-events: none;
+        }
+
+        .settings-hero-glow.a {
+            width: 240px;
+            height: 240px;
+            top: -110px;
+            right: 6%;
+            background: color-mix(in srgb, var(--s-brand), transparent 45%);
+            opacity: 0.35;
+        }
+
+        .settings-hero-glow.b {
+            width: 180px;
+            height: 180px;
+            bottom: -100px;
+            left: -20px;
+            background: var(--s-brand-400);
+            opacity: 0.4;
+        }
+
+        .settings-hero-inner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .settings-hero-ic {
+            width: 54px;
+            height: 54px;
+            flex: 0 0 auto;
+            border-radius: 15px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: var(--s-brand);
+            background: color-mix(in srgb, var(--s-brand), transparent 84%);
+            border: 1px solid color-mix(in srgb, var(--s-brand), transparent 70%);
+            backdrop-filter: blur(6px);
+        }
+
+        .settings-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--s-brand);
+            margin-bottom: 0.1rem;
         }
 
         .settings-hero .breadcrumb {
@@ -45,11 +121,11 @@
         .settings-hero .breadcrumb a,
         .settings-hero .breadcrumb-item.active,
         .settings-hero .breadcrumb-item + .breadcrumb-item::before {
-            color: rgba(255, 255, 255, 0.85) !important;
+            color: var(--bs-secondary-color) !important;
         }
 
         .settings-hero .breadcrumb a:hover {
-            color: #fff !important;
+            color: var(--s-brand) !important;
         }
 
         .settings-hero h1 {
@@ -63,7 +139,7 @@
         .settings-hero p {
             margin: 0.15rem 0 0;
             font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.85);
+            color: var(--bs-secondary-color);
             max-width: 56ch;
         }
 
@@ -124,50 +200,62 @@
             border-radius: var(--settings-radius-sm);
             color: var(--bs-body-color);
             font-size: 0.85rem;
-            font-weight: 500;
+            font-weight: 600;
             background: transparent;
             border: 0;
-            transition: background-color 0.15s ease, color 0.15s ease;
+            transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
         }
 
-        .settings-tabs .nav-link > i,
-        .settings-tabs .nav-link > i::before {
+        .settings-tabs .nav-link > i {
             flex: 0 0 auto;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            width: 1.9rem;
+            height: 1.9rem;
+            border-radius: 9px;
+            font-size: 0.95rem;
             line-height: 1;
+            background: var(--bs-tertiary-bg);
+            color: var(--bs-secondary-color);
+            box-shadow: inset 0 0 0 1px rgba(var(--bs-emphasis-color-rgb), 0.05);
+            transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .settings-tabs .nav-link > i::before {
             margin: 0 !important;
             padding: 0 !important;
             background: transparent !important;
-            background-color: transparent !important;
             border: 0 !important;
-            border-radius: 0 !important;
             box-shadow: none !important;
-            color: var(--bs-secondary-color);
-            width: auto;
-            height: auto;
-            min-width: 1rem;
-            transition: color 0.15s ease;
+            line-height: 1;
         }
 
         .settings-tabs .nav-link:hover {
             background: var(--settings-accent-soft);
-            color: var(--bs-primary);
+            color: var(--s-brand);
         }
 
         .settings-tabs .nav-link:hover > i {
-            color: var(--bs-primary) !important;
+            background: rgba(var(--s-brand-rgb), 0.14);
+            color: var(--s-brand) !important;
+            box-shadow: none;
         }
 
         .settings-tabs .nav-link.active {
-            background: var(--bs-primary);
-            color: var(--bs-white, #fff);
+            background: color-mix(in srgb, var(--s-brand), transparent 86%);
+            color: var(--s-brand);
+            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--s-brand), transparent 70%);
         }
 
         .settings-tabs .nav-link.active > i {
-            color: #fff !important;
+            background: color-mix(in srgb, var(--s-brand), transparent 78%);
+            color: var(--s-brand) !important;
+            box-shadow: none;
+        }
+
+        .settings-tabs .nav-link.active:hover {
+            color: var(--s-brand);
         }
 
         /* === CONTENT COLUMN === */
@@ -190,11 +278,13 @@
         .settings-content-column .card {
             border-radius: var(--settings-radius-sm);
             border-color: var(--bs-border-color);
+            box-shadow: var(--settings-shadow-sm);
+            overflow: hidden;
         }
 
         .settings-content-column .card-header {
-            padding: 0.75rem 1rem;
-            background: transparent;
+            padding: 0.9rem 1.1rem;
+            background: linear-gradient(110deg, rgba(var(--s-brand-rgb), 0.045), transparent 60%);
             border-bottom: 1px solid var(--bs-border-color);
         }
 
@@ -206,6 +296,32 @@
             padding: 0.75rem 1rem;
             background: var(--bs-tertiary-bg);
             border-top: 1px solid var(--bs-border-color);
+        }
+
+        /* === PREMIUM FORM CONTROLS (settings-wide) === */
+        .settings-content-column .form-control:focus,
+        .settings-content-column .form-select:focus,
+        .settings-content-column .ts-wrapper.focus .ts-control {
+            border-color: var(--s-brand-400);
+            box-shadow: 0 0 0 0.2rem rgba(var(--s-brand-rgb), 0.16);
+        }
+
+        .settings-content-column .form-switch .form-check-input:checked {
+            background-color: var(--s-brand);
+            border-color: var(--s-brand);
+        }
+
+        /* === PREMIUM PRIMARY BUTTONS (settings-wide) === */
+        .settings-content-column .btn-primary {
+            border: none;
+            background: var(--s-brand);
+            box-shadow: 0 6px 16px -8px rgba(var(--s-brand-rgb), 0.5);
+        }
+
+        .settings-content-column .btn-primary:hover,
+        .settings-content-column .btn-primary:focus {
+            background: var(--s-brand-700);
+            box-shadow: 0 8px 18px -8px rgba(var(--s-brand-rgb), 0.6);
         }
 
         .settings-content-column input,
@@ -236,8 +352,8 @@
 
         .theme-action-card:hover {
             border-color: var(--settings-accent-border);
-            transform: translateY(-2px);
-            box-shadow: var(--settings-shadow-sm);
+            transform: translateY(-3px);
+            box-shadow: 0 14px 30px -14px rgba(var(--s-brand-rgb), 0.45);
         }
 
         .theme-action-card .icon-pill {
@@ -338,6 +454,17 @@
                 border-radius: 12px;
             }
 
+            .settings-hero-inner {
+                gap: 0.75rem;
+            }
+
+            .settings-hero-ic {
+                width: 42px;
+                height: 42px;
+                font-size: 1.25rem;
+                border-radius: 12px;
+            }
+
             .settings-hero h1 {
                 font-size: 1.15rem;
             }
@@ -395,8 +522,8 @@
             }
 
             .settings-tabs .nav-link i {
-                width: 1.1rem;
-                height: 1.1rem;
+                width: 1.65rem;
+                height: 1.65rem;
                 font-size: 0.85rem;
             }
 
@@ -479,14 +606,22 @@
         <div class="content__boxed">
             <div class="content__wrap">
                 <div class="settings-hero">
+                    <span class="settings-hero-glow a"></span>
+                    <span class="settings-hero-glow b"></span>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                             <li class="breadcrumb-item active" aria-current="page">Settings</li>
                         </ol>
                     </nav>
-                    <h1><i class="demo-psi-gear me-2"></i>Settings</h1>
-                    <p>Manage configuration, company profile, and integrations from one place.</p>
+                    <div class="settings-hero-inner">
+                        <span class="settings-hero-ic"><i class="demo-psi-gear"></i></span>
+                        <div>
+                            <div class="settings-eyebrow">Workspace &middot; Control Center</div>
+                            <h1>Settings</h1>
+                            <p>Manage configuration, company profile, and integrations from one place.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="settings-shell">
@@ -752,7 +887,7 @@
                                 @endcan
                                 @can('whatsapp.integration')
                                     <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
-                                        @livewire('settings.whatsapp')
+                                         @livewire('settings.whatsapp')
                                     </div>
                                 @endcan
                             </div>

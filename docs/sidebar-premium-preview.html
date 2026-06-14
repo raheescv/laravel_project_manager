@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sidebar — Refined Indigo (implemented)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+    /* ===== production CSS (verbatim from navigation.blade.php) ===== */
+    .luminous-nav {
+        --ln-primary: #4f46e5; --ln-secondary: #7c3aed;
+        --ln-bg: #ffffff; --ln-surface: #f7f8fc; --ln-border: #eceef5;
+        --ln-border-strong: #e2e5ef; --ln-divider: #eef0f6;
+        --ln-text: #334155; --ln-text-strong: #0f172a; --ln-text-muted: #64748b; --ln-text-dim: #94a3b8;
+        --ln-chip-bg: #f1f3f9; --ln-chip-border: #eceef5; --ln-chip-color: #64748b;
+        --ln-hover-bg: #f4f4fd;
+        --ln-active-bg: linear-gradient(135deg, rgba(99,102,241,.10), rgba(124,58,237,.06));
+        --ln-active-color: #4f46e5; --ln-accent-bar: linear-gradient(180deg,#6366f1,#7c3aed);
+        --ln-sub-line: #ececf6; --ln-sub-dot: #cbd2e0; --ln-sub-dot-ring: #ffffff;
+        --ln-danger: #ef4444; --ln-danger-bg: rgba(239,68,68,.10);
+    }
+    [data-bs-theme="dark"] .luminous-nav {
+        --ln-primary: #818cf8; --ln-secondary: #a78bfa;
+        --ln-bg: linear-gradient(180deg,#0d0d1f 0%,#0a0a18 100%); --ln-surface: rgba(255,255,255,.04);
+        --ln-border: rgba(255,255,255,.07); --ln-border-strong: rgba(255,255,255,.12); --ln-divider: rgba(255,255,255,.06);
+        --ln-text: #cbd5e1; --ln-text-strong: #e2e8f0; --ln-text-muted: #94a3b8; --ln-text-dim: #64748b;
+        --ln-chip-bg: rgba(255,255,255,.05); --ln-chip-border: rgba(255,255,255,.08); --ln-chip-color: #94a3b8;
+        --ln-hover-bg: rgba(129,140,248,.12);
+        --ln-active-bg: rgba(129,140,248,.14); --ln-active-color: #c7d2fe; --ln-accent-bar: linear-gradient(180deg,#818cf8,#a78bfa);
+        --ln-sub-line: rgba(255,255,255,.09); --ln-sub-dot: #475569; --ln-sub-dot-ring: #0c0c1a;
+        --ln-danger: #f87171; --ln-danger-bg: rgba(248,113,113,.12);
+    }
+    .luminous-nav.mainnav { background: var(--ln-bg); border-right: 1px solid var(--ln-border); position: relative; font-family: 'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+    .luminous-nav .mainnav__widget { margin: .5rem .55rem; padding: .45rem .5rem; background: var(--ln-surface); border: 1px solid var(--ln-border); border-radius: 12px; transition: border-color .2s, box-shadow .2s; }
+    .luminous-nav .mainnav__widget:hover { border-color: var(--ln-border-strong); box-shadow: 0 8px 20px -16px rgba(15,23,42,.4); }
+    .luminous-nav .mainnav__brand { display: flex; align-items: center; gap: .55rem; text-decoration: none; color: inherit; }
+    .luminous-nav .mainnav__brand-circle { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 10px; padding: 2px; background: linear-gradient(135deg,#38bdf8,#6366f1,#a855f7); box-shadow: 0 6px 14px -8px rgba(79,70,229,.8); display: inline-flex; align-items: center; justify-content: center; color:#fff; font-weight:800; font-size:.8rem; transition: transform .2s, box-shadow .2s; }
+    .luminous-nav .mainnav__brand:hover .mainnav__brand-circle { transform: translateY(-1px); }
+    .luminous-nav .mainnav__brand-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+    .luminous-nav .mainnav__brand-name { font-size: .84rem; font-weight: 800; letter-spacing: -.01em; color: var(--ln-text-strong); }
+    .luminous-nav .mainnav__brand-tag { margin-top: .08rem; font-size: .58rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ln-text-dim); }
+
+    .luminous-nav .mainnav__menu { padding: 0 .45rem; gap: .05rem; display: flex; flex-direction: column; list-style: none; margin: 0; }
+    .luminous-nav .mainnav__menu > .nav-item { position: relative; list-style: none; }
+    .luminous-nav .mainnav__menu > .nav-item > .nav-link { display: flex; align-items: center; gap: .5rem; padding: .32rem .45rem; margin: .06rem 0; border-radius: 9px; color: var(--ln-text); font-size: .78rem; font-weight: 600; position: relative; min-width: 0; text-decoration: none; cursor: pointer; transition: background .18s, color .18s; }
+    .luminous-nav .mainnav__menu > .nav-item > .nav-link > .nav-label { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .luminous-nav .mainnav__menu > .nav-item > .nav-link.active::before { content:''; position: absolute; left: -.42rem; top: 24%; bottom: 24%; width: 3px; border-radius: 0 3px 3px 0; background: var(--ln-accent-bar); }
+    .luminous-nav .mainnav__menu > .nav-item > .nav-link:hover { background: var(--ln-hover-bg); color: var(--ln-active-color); }
+    .luminous-nav .mainnav__menu > .nav-item > .nav-link.active { background: var(--ln-active-bg); color: var(--ln-active-color); }
+
+    .luminous-nav .has-sub > .mininav-toggle::after { content:''; margin-left: .35rem; width: .42em; height: .42em; flex-shrink: 0; border-style: solid; border-color: var(--ln-text-dim); border-width: .11em .11em 0 0; transform: rotate(45deg); opacity: .6; transition: transform .25s, border-color .2s, opacity .2s; }
+    .luminous-nav .has-sub.open > .mininav-toggle::after { transform: rotate(135deg); border-color: var(--ln-primary); opacity: 1; }
+    .luminous-nav .has-sub > .mininav-toggle:hover::after { border-color: var(--ln-primary); opacity: 1; }
+
+    .luminous-nav .mainnav__menu > .nav-item > .nav-link > .fa { width: 24px; height: 24px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--ln-chip-bg); border: 1px solid var(--ln-chip-border); border-radius: 7px; color: var(--ln-chip-color); font-size: .72rem; line-height: 1; transition: background .18s, border-color .18s, color .18s, box-shadow .18s; }
+    .luminous-nav .mainnav__menu > .nav-item > .nav-link:hover > .fa { color: var(--ln-primary); }
+    .luminous-nav .mainnav__menu > .nav-item > .nav-link.active > .fa { background: linear-gradient(135deg,var(--ln-primary),var(--ln-secondary)); color: #fff; border-color: transparent; box-shadow: 0 5px 12px -5px rgba(99,102,241,.6); }
+
+    .luminous-nav .mininav-content.nav { margin: .1rem 0 .25rem 1.4rem; padding: .1rem 0 .1rem .65rem; position: relative; border-left: 1.5px solid var(--ln-sub-line); list-style: none; display: flex; flex-direction: column; }
+    .luminous-nav .mininav-content .nav-item { position: relative; list-style: none; }
+    .luminous-nav .mininav-content .nav-item > .nav-link { display: block; padding: .26rem .5rem; margin: .02rem 0; border-radius: 7px; color: var(--ln-text-muted); font-size: .745rem; font-weight: 600; position: relative; text-decoration: none; cursor: pointer; transition: background .18s, color .18s; }
+    .luminous-nav .mininav-content .nav-item > .nav-link::before { content:''; position: absolute; left: -.73rem; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--ln-sub-dot); border: 1.5px solid var(--ln-sub-dot-ring); transition: background .18s, box-shadow .18s; }
+    .luminous-nav .mininav-content .nav-item > .nav-link:hover { background: var(--ln-hover-bg); color: var(--ln-active-color); }
+    .luminous-nav .mininav-content .nav-item > .nav-link:hover::before { background: var(--ln-primary); }
+    .luminous-nav .mininav-content .nav-item > .nav-link.active { color: var(--ln-active-color); font-weight: 800; }
+    .luminous-nav .mininav-content .nav-item > .nav-link.active::before { background: var(--ln-primary); box-shadow: 0 0 0 3px var(--ln-active-bg); }
+
+    .luminous-nav .mainnav__bottom-content { border-top: 1px solid var(--ln-divider); padding: .5rem .45rem .6rem; }
+    .luminous-nav .mainnav__bottom-content .nav-link { display: flex; align-items: center; gap: .5rem; padding: .32rem .45rem; border-radius: 9px; color: var(--ln-text); font-size: .78rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: background .18s, color .18s; }
+    .luminous-nav .mainnav__bottom-content .nav-link:hover { background: var(--ln-danger-bg); color: var(--ln-danger); }
+    .luminous-nav .mainnav__bottom-content .nav-link > .fa { width: 24px; height: 24px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--ln-chip-bg); border: 1px solid var(--ln-chip-border); border-radius: 7px; color: var(--ln-danger); font-size: .72rem; transition: background .18s, border-color .18s, color .18s; }
+    .luminous-nav .mainnav__bottom-content .nav-link:hover > .fa { background: linear-gradient(135deg,var(--ln-danger),#ec4899); border-color: transparent; color: #fff; }
+
+    /* ===== preview harness (not part of production) ===== */
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter',-apple-system,BlinkMacSystemFont,sans-serif; min-height: 100vh; transition: background .3s; }
+    .host { padding: 1.6rem 2rem 3rem; min-height: 100vh; }
+    .host[data-bs-theme="light"] { background: radial-gradient(120% 120% at 0 0, #e9edf6, #eef1f7); }
+    .host[data-bs-theme="dark"]  { background: radial-gradient(120% 120% at 0 0, #0b0b18, #07070f); color: #e2e8f0; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.3rem; }
+    .bar h1 { font-size: 1.05rem; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+    .bar p  { font-size: .8rem; margin: .2rem 0 0; opacity: .65; }
+    .toggle { border: 1px solid rgba(120,120,150,.35); background: transparent; color: inherit; font: inherit; font-size: .8rem; font-weight: 700; padding: .5rem .9rem; border-radius: 10px; cursor: pointer; }
+    .frame { width: 250px; height: 640px; border-radius: 18px; overflow: hidden; box-shadow: 0 30px 60px -30px rgba(15,23,42,.45), 0 0 0 1px rgba(15,23,42,.06); }
+    .host[data-bs-theme="dark"] .frame { box-shadow: 0 30px 60px -25px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.05); }
+    .mainnav { height: 100%; display: flex; flex-direction: column; }
+    .mainnav__top-content { flex: 1 1 auto; padding-top: .2rem; }
+</style>
+</head>
+<body>
+<div class="host" data-bs-theme="light" id="host">
+    <div class="bar">
+        <div>
+            <h1>Sidebar — Refined Indigo &nbsp;<span style="font-size:.7rem;font-weight:700;color:#16a34a;border:1px solid rgba(22,163,74,.3);padding:.15rem .45rem;border-radius:6px;">implemented</span></h1>
+            <p>This is the exact production CSS now in navigation.blade.php. Click a parent row to expand; toggle dark mode.</p>
+        </div>
+        <button class="toggle" onclick="var h=document.getElementById('host');h.setAttribute('data-bs-theme', h.getAttribute('data-bs-theme')==='dark'?'light':'dark')"><i class="fa fa-moon-o"></i>&nbsp; Light / dark</button>
+    </div>
+
+    <div class="frame">
+        <nav class="mainnav luminous-nav">
+            <div class="mainnav__top-content">
+                <div class="mainnav__widget">
+                    <a class="mainnav__brand">
+                        <span class="mainnav__brand-circle">SR</span>
+                        <span class="mainnav__brand-text">
+                            <span class="mainnav__brand-name">Size Run</span>
+                            <span class="mainnav__brand-tag">Workspace</span>
+                        </span>
+                    </a>
+                </div>
+                <ul class="mainnav__menu nav">
+                    <li class="nav-item"><a class="nav-link"><i class="fa fa-tachometer"></i><span class="nav-label">Dashboard</span></a></li>
+                    <li class="nav-item has-sub"><a class="nav-link mininav-toggle"><i class="fa fa-cubes"></i><span class="nav-label">Inventory</span></a></li>
+                    <li class="nav-item has-sub"><a class="nav-link mininav-toggle"><i class="fa fa-home"></i><span class="nav-label">Rent Out</span></a></li>
+                    <li class="nav-item has-sub open">
+                        <a class="nav-link mininav-toggle active"><i class="fa fa-usd"></i><span class="nav-label">Sales</span></a>
+                        <ul class="mininav-content nav">
+                            <li class="nav-item"><a class="nav-link">Sales</a></li>
+                            <li class="nav-item"><a class="nav-link active">Booking</a></li>
+                            <li class="nav-item"><a class="nav-link">Payments</a></li>
+                            <li class="nav-item"><a class="nav-link">Service Charge Report</a></li>
+                            <li class="nav-item"><a class="nav-link">Cheque Management</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item has-sub"><a class="nav-link mininav-toggle"><i class="fa fa-shopping-cart"></i><span class="nav-label">Purchase</span></a></li>
+                    <li class="nav-item has-sub"><a class="nav-link mininav-toggle"><i class="fa fa-university"></i><span class="nav-label">Account</span></a></li>
+                    <li class="nav-item has-sub"><a class="nav-link mininav-toggle"><i class="fa fa-users"></i><span class="nav-label">Employee</span></a></li>
+                    <li class="nav-item has-sub"><a class="nav-link mininav-toggle"><i class="fa fa-user"></i><span class="nav-label">Users</span></a></li>
+                    <li class="nav-item"><a class="nav-link"><i class="fa fa-building"></i><span class="nav-label">Tenants</span></a></li>
+                    <li class="nav-item has-sub"><a class="nav-link mininav-toggle"><i class="fa fa-files-o"></i><span class="nav-label">Log</span></a></li>
+                </ul>
+            </div>
+            <div class="mainnav__bottom-content">
+                <a class="nav-link"><i class="fa fa-sign-out"></i><span class="nav-label">Logout</span></a>
+            </div>
+        </nav>
+    </div>
+</div>
+<script>
+    document.querySelectorAll('.has-sub > .mininav-toggle').forEach(function (t) {
+        t.addEventListener('click', function () { t.parentElement.classList.toggle('open'); });
+    });
+</script>
+</body>
+</html>

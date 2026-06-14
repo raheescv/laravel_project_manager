@@ -90,7 +90,7 @@ class AppServiceProvider extends ServiceProvider
             Cache::remember('logo', now()->addYear(), function () {
                 $logo = Configuration::where('key', 'logo')->value('value');
 
-                return asset($logo);
+                return $logo ? asset($logo) : asset('assets/img/logo.svg');
             });
             Cache::remember('mobile', now()->addYear(), function () {
                 return Configuration::where('key', 'mobile')->value('value');
