@@ -83,6 +83,7 @@ class CustomPayment extends Component
 
     public function removePayment($index)
     {
+        // TODO(C7): review save authz — payment-line removal inside the POS create/edit flow; no precise catalog permission for sale payment deletion
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {

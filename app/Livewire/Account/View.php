@@ -159,6 +159,7 @@ class View extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('account.export'), 403);
         try {
             $fileName = $this->generateExportFileName();
 

@@ -186,6 +186,7 @@ class Page extends Component
 
     public function save(): void
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'issue.edit' : 'issue.create'), 403);
         $this->validate([
             'issues.account_id' => ['required', 'exists:accounts,id'],
             'issues.date' => ['required', 'date'],

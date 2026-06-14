@@ -67,6 +67,7 @@ class DocumentsTab extends Component
 
     public function deleteDocument($id)
     {
+        // TODO(C7): unmapped (candidate: 'rent out document.delete') — no 'rent out document' resource in config/permissions.php
         try {
             DB::beginTransaction();
             $response = (new DeleteAction())->execute($id);
@@ -84,6 +85,7 @@ class DocumentsTab extends Component
 
     public function deleteSelected()
     {
+        // TODO(C7): unmapped (candidate: 'rent out document.delete') — no 'rent out document' resource in config/permissions.php
         if (empty($this->selectedDocs)) {
             $this->dispatch('error', message: 'Please select at least one document to delete.');
 

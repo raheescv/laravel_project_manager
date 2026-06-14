@@ -108,6 +108,7 @@ class Page extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->order_id ? 'local purchase order.edit' : 'local purchase order.create'), 403);
         try {
             DB::beginTransaction();
             $data = [

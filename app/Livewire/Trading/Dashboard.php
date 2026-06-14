@@ -34,6 +34,7 @@ class Dashboard extends Component
 
     public function toggleKillSwitch(): void
     {
+        // TODO(C7): unmapped (candidate: 'flat_trade.trade') — no trading permission in config/permissions.php; kill-switch is a privileged trading control.
         if ($this->killSwitch) {
             KillSwitchRule::disengage();
         } else {

@@ -262,6 +262,7 @@ class Create extends Component
 
     public function deleteItem($key): void
     {
+        abort_unless(auth()->user()?->can('supply request.delete item'), 403);
         try {
             DB::beginTransaction();
             if (isset($this->items[$key]['id'])) {
@@ -280,6 +281,7 @@ class Create extends Component
 
     public function deleteImage($key): void
     {
+        // TODO(C7): unmapped (candidate: 'supply request.delete item') — no 'supply request.delete image' in catalog
         try {
             DB::beginTransaction();
             if (isset($this->imageList[$key]['id'])) {
@@ -355,6 +357,7 @@ class Create extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'supply request.edit' : 'supply request.create'), 403);
         $this->validate();
         try {
             if (empty($this->items)) {
@@ -395,6 +398,13 @@ class Create extends Component
 
     public function statusChange($status): void
     {
+        abort_unless(auth()->user()?->can(match ($status) {
+            SupplyRequestStatus::APPROVED->value => 'supply request.approve',
+            SupplyRequestStatus::REJECTED->value => 'supply request.approve',
+            SupplyRequestStatus::FINAL_APPROVED->value => 'supply request.final approve',
+            SupplyRequestStatus::COMPLETED->value => 'supply request.complete',
+            default => 'supply request.edit',
+        }), 403);
         try {
             if ($status === SupplyRequestStatus::COMPLETED->value && ! $this->payment_mode_id) {
                 throw new Exception('Please select a payment mode before completing');

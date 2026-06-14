@@ -55,6 +55,7 @@ class BookingView extends Component
 
     public function saveManagementFee()
     {
+        abort_unless(auth()->user()?->can($this->config->bookingEditPermission), 403);
         try {
             $this->rentOut->update([
                 'management_fee' => $this->management_fee,
@@ -72,6 +73,14 @@ class BookingView extends Component
 
     public function statusChange($status)
     {
+        $permission = match ($status) {
+            'financial approved' => $this->config->bookingFinancialApprovePermission,
+            'approved' => $this->config->bookingApprovePermission,
+            'completed' => $this->config->bookingCompletePermission,
+            'submitted' => $this->config->bookingSubmittedPermission,
+            default => null,
+        };
+        abort_unless($permission !== null && auth()->user()?->can($permission), 403);
         try {
             DB::beginTransaction();
             $response = (new UpdateBookingStatusAction())->execute($this->rentOut->id, $status);
@@ -99,6 +108,7 @@ class BookingView extends Component
 
     public function cancelBooking()
     {
+        abort_unless(auth()->user()?->can($this->config->bookingCancelPermission), 403);
         try {
             $this->rentOut->update(['status' => RentOutStatus::Cancelled->value]);
             $this->loadRentOut();
@@ -110,6 +120,7 @@ class BookingView extends Component
 
     public function confirm()
     {
+        abort_unless(auth()->user()?->can($this->config->bookingConfirmPermission), 403);
         // For rental bookings, check for overlapping agreements
         if ($this->rentOut->agreement_type !== AgreementType::Lease) {
             $overlaps = RentOut::getOverlapping(
@@ -140,6 +151,7 @@ class BookingView extends Component
     #[On('proceedWithBooking')]
     public function confirmBooking()
     {
+        abort_unless(auth()->user()?->can($this->config->bookingConfirmPermission), 403);
         try {
             DB::beginTransaction();
             $this->showOverlapModal = false;

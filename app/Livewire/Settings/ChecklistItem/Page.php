@@ -97,6 +97,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'rent out checklist item.edit' : 'rent out checklist item.create'), 403);
         $this->validate();
         try {
             // Handle the master image upload, replacing any previous one.

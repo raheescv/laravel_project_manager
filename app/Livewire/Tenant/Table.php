@@ -83,6 +83,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(Auth::user()?->is_super_admin, 403, 'Unauthorized access. Only super admin users can perform this action.');
         try {
             if (! count($this->selected)) {
                 throw new \Exception('Please select any item to delete.', 1);

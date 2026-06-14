@@ -188,6 +188,7 @@ class BankReconciliationReport extends Component
 
     public function updateDeliveredDate(): void
     {
+        abort_unless(auth()->user()?->can('account.edit'), 403);
         if (! $this->validateBulkUpdate()) {
             return;
         }
@@ -205,6 +206,7 @@ class BankReconciliationReport extends Component
 
     public function updateRowDate(int $id): void
     {
+        abort_unless(auth()->user()?->can('account.edit'), 403);
         if (! isset($this->rowDates[$id]) || empty($this->rowDates[$id])) {
             $this->dispatch('error', ['message' => 'Please select a delivered date for this row.']);
 
@@ -274,6 +276,7 @@ class BankReconciliationReport extends Component
 
     public function updateMultipleRows(): void
     {
+        abort_unless(auth()->user()?->can('account.edit'), 403);
         $updates = $this->getValidRowDates();
 
         if (empty($updates)) {
@@ -287,6 +290,7 @@ class BankReconciliationReport extends Component
 
     public function updateSingleDeliveredDate(int $id, string $date): void
     {
+        abort_unless(auth()->user()?->can('account.edit'), 403);
         if (empty($date)) {
             $this->dispatch('error', ['message' => 'Please select a delivered date.']);
 

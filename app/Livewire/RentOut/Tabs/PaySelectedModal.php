@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Enums\RentOut\AgreementType;
 use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
@@ -81,11 +82,13 @@ class PaySelectedModal extends Component
 
     public function submit()
     {
+        $rentOut = RentOut::find($this->rentOutId);
+        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
+
         $this->saving = true;
 
         try {
             DB::beginTransaction();
-            $rentOut = RentOut::find($this->rentOutId);
             foreach ($this->cashTerms as $cashTerm) {
                 $term = RentOutPaymentTerm::find($cashTerm['id']);
                 if ($term && $cashTerm['amount'] > 0) {

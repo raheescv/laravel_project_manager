@@ -86,6 +86,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('property.export'), 403);
         $count = $this->query()->count();
         if ($count === 0) {
             $this->dispatch('error', ['message' => 'No data to export.']);
@@ -109,6 +110,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('property.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {

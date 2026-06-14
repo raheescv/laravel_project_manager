@@ -40,6 +40,7 @@ class SinglePaymentTermModal extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->editingTermId ? 'rent out payment term.edit' : 'rent out payment term.create'), 403);
         $this->validate([
             'form.due_date' => 'required|date',
             'form.amount' => 'required|numeric|min:0.01',

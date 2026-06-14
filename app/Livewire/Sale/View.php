@@ -76,6 +76,7 @@ class View extends Component
 
     public function save($type = 'completed')
     {
+        abort_unless(auth()->user()?->can('sale.edit'), 403);
         try {
             $oldStatus = $this->sales['status'];
             DB::beginTransaction();

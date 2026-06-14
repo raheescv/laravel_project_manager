@@ -160,6 +160,7 @@ class PaymentTable extends Component
 
     public function download()
     {
+        // TODO(C7): unmapped (candidate: 'rent out payment term.export') — 'rent out payment term' has no export action in config/permissions.php
         $filters = [
             'agreementType' => $this->agreementType,
             'filterGroup' => $this->filterGroup,

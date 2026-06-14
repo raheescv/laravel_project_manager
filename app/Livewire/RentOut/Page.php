@@ -239,6 +239,7 @@ class Page extends Component
 
     public function cancel()
     {
+        abort_unless(auth()->user()?->can($this->type === 'Booking' ? $this->config->bookingCancelPermission : ($this->agreementType === 'lease' ? 'rent out lease.cancel' : 'rent out.cancel')), 403);
         try {
             DB::beginTransaction();
             $this->rentOut->update(['status' => RentOutStatus::Cancelled->value]);
@@ -253,6 +254,7 @@ class Page extends Component
 
     public function confirm()
     {
+        abort_unless(auth()->user()?->can($this->config->bookingConfirmPermission), 403);
         try {
             DB::beginTransaction();
             $response = (new ConfirmBookingAction())->execute($this->table_id, Auth::id());
@@ -273,6 +275,12 @@ class Page extends Component
 
     public function save()
     {
+        if ($this->type === 'Booking') {
+            $permission = $this->table_id ? $this->config->bookingEditPermission : $this->config->bookingCreatePermission;
+        } else {
+            $permission = $this->table_id ? $this->config->editPermission : $this->config->createPermission;
+        }
+        abort_unless(auth()->user()?->can($permission), 403);
         try {
             DB::beginTransaction();
             if ($this->type === 'Booking') {

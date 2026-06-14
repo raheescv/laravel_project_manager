@@ -109,6 +109,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        // TODO(C7): review save authz — inline quick-add via vendorSelect TomSelect (Vendor-Page-Create-Component) is embedded in many unrelated forms (purchase, vouchers, etc.); gating with vendor.create would break legitimate quick-create. Edit path (table_id) is reachable from the standalone vendor screen.
         $this->validate();
         try {
             if (! $this->table_id) {

@@ -258,6 +258,7 @@ class Import extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('general voucher.create'), 403);
         if ($this->importFormat !== 'quickbooks') {
             $this->validate([
                 'mappings.account_name' => 'required',

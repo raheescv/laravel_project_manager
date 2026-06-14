@@ -24,6 +24,7 @@ class Import extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('category.import'), 403);
         $this->validate([
             'file' => 'required|file|mimes:csv,xlsx|max:10240',
         ]);

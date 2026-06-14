@@ -153,6 +153,7 @@ class Import extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->agreementType === 'lease' ? 'rent out lease.create' : 'rent out.create'), 403);
         $this->validate([
             'mappings.property_id' => 'required',
             'mappings.account_id' => 'required',

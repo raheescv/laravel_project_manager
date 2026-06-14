@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Cheque\UpdateStatusAction;
+use App\Enums\RentOut\AgreementType;
 use App\Models\RentOutCheque;
 use App\Models\RentOutPaymentTerm;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,13 @@ class ChequeTermSelectorModal extends Component
 
     public function confirmTermPayment(): void
     {
+        $firstId = $this->pendingCheques[0]['id'] ?? null;
+        $firstCheque = $firstId ? RentOutCheque::with('rentOut')->find($firstId) : null;
+        $prefix = $firstCheque?->rentOut?->agreement_type === AgreementType::Lease
+            ? 'rent out lease cheque'
+            : 'rent out cheque';
+        abort_unless(auth()->user()?->can($prefix.'.update status'), 403);
+
         if (! $this->selectedTermId || empty($this->pendingCheques)) {
             $this->dispatch('error', ['message' => 'Please select a payment term.']);
 

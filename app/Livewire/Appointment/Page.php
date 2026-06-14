@@ -137,6 +137,7 @@ class Page extends Component
 
     public function removeItem($key)
     {
+        // TODO(C7): review save authz — service-line removal inside the appointment create/edit flow; no precise catalog permission (candidate: 'appointment.edit')
         try {
             $id = $this->items[$key]['id'] ?? '';
             if ($id) {
@@ -170,6 +171,7 @@ class Page extends Component
 
     public function checkout()
     {
+        abort_unless(auth()->user()?->can('appointment.checkout'), 403);
         try {
             DB::beginTransaction();
 
@@ -191,6 +193,7 @@ class Page extends Component
 
     public function updateStatus($status)
     {
+        abort_unless(auth()->user()?->can('appointment.edit'), 403);
         try {
             if (! $this->table_id) {
                 throw new Exception('Appointment ID is required', 1);
@@ -223,6 +226,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'appointment.edit' : 'appointment.create'), 403);
         $this->validate();
         try {
             DB::beginTransaction();

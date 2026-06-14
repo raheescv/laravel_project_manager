@@ -63,6 +63,7 @@ class Table extends Component
 
     public function delete(): void
     {
+        abort_unless(auth()->user()?->can('property lead.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -124,6 +125,7 @@ class Table extends Component
 
     public function export()
     {
+        // TODO(C7): unmapped (candidate: 'property lead.download') — no 'property lead.export' in catalog; bulk Excel export of leads
         $payload = [
             'status' => $this->filterStatus,
             'source' => $this->filterSource,

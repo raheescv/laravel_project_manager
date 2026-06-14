@@ -20,6 +20,7 @@ class Sign extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('purchase.edit'), 403);
         // Validate signature
         $this->validate([
             'signature' => 'required|string',

@@ -109,6 +109,7 @@ class ComboOffer extends Component
 
     public function remove($index)
     {
+        // TODO(C7): review save authz — combo-offer removal inside the POS create/edit flow; no precise catalog permission (candidate: 'sale.combo offer')
         try {
             DB::beginTransaction();
             if (! isset($this->selectedComboOffers[$index])) {

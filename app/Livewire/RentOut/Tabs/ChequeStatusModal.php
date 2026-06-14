@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Cheque\UpdateStatusAction;
+use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\ChequeStatus;
 use App\Models\RentOutCheque;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,16 @@ class ChequeStatusModal extends Component
 
     public function updateChequeStatus(): void
     {
+        // Cheques are scoped per agreement type by the calling table; derive the permission
+        // from the selected cheques (defaults to the base 'rent out cheque' namespace).
+        $firstCheque = ! empty($this->selected)
+            ? RentOutCheque::with('rentOut')->find($this->selected[0])
+            : null;
+        $prefix = $firstCheque?->rentOut?->agreement_type === AgreementType::Lease
+            ? 'rent out lease cheque'
+            : 'rent out cheque';
+        abort_unless(auth()->user()?->can($prefix.'.update status'), 403);
+
         $this->validate([
             'statusChangeStatus' => 'required',
         ]);

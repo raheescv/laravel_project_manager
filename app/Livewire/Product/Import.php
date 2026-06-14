@@ -186,6 +186,7 @@ class Import extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('product.import'), 403);
         $this->validate([
             'mappings.name' => 'required',
         ], [
@@ -254,6 +255,7 @@ class Import extends Component
 
     public function importDropboxFolderImages(): void
     {
+        abort_unless(auth()->user()?->can('product.import'), 403);
         $this->stepOneTab = 'images';
 
         $this->validate([

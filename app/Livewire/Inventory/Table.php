@@ -106,6 +106,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('inventory.export'), 403);
         try {
             $filters = $this->getFilters();
             // Get filtered count for better decision making
@@ -125,6 +126,7 @@ class Table extends Component
 
     public function exportProductWise()
     {
+        abort_unless(auth()->user()?->can('inventory.export'), 403);
         try {
             $filters = $this->getFilters();
 
@@ -241,6 +243,7 @@ class Table extends Component
 
     public function resetStock()
     {
+        abort_unless(auth()->user()?->can('inventory.reset stock'), 403);
         try {
             $this->validate([
                 'resetReason' => 'required|string|min:3|max:100',

@@ -42,6 +42,7 @@ class View extends Component
 
     public function saveVacate()
     {
+        abort_unless(auth()->user()?->can($this->agreementType === 'lease' ? 'rent out lease.vacate' : 'rent out.vacate'), 403);
         $result = (new VacateAction())->execute($this->rentOut->id, $this->vacateDate ?: null);
 
         if ($result['success']) {

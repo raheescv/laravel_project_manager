@@ -19,6 +19,8 @@ class Sign extends Component
 
     public function save()
     {
+        // TODO(C7): signature/finalize on existing transfer; gated by edit (candidate: 'inventory transfer.edit completed')
+        abort_unless(auth()->user()?->can('inventory transfer.edit'), 403);
         // Validate signature
         $this->validate([
             'signature' => 'required|string',

@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\ExtendAction;
+use App\Enums\RentOut\AgreementType;
 use App\Models\RentOut;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -39,6 +40,8 @@ class ExtendModal extends Component
 
     public function save()
     {
+        $authRentOut = RentOut::find($this->form['rent_out_id']);
+        abort_unless(auth()->user()?->can($authRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.extend' : 'rent out.extend'), 403);
         $this->validate([
             'form.start_date' => 'required|date',
             'form.end_date' => 'required|date|after_or_equal:form.start_date',

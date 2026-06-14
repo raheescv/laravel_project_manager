@@ -24,6 +24,7 @@ class NotesTab extends Component
 
     public function addNote()
     {
+        abort_unless(auth()->user()?->can('rent out note.create'), 403);
         if (trim($this->newNote) === '') {
             return;
         }
@@ -48,6 +49,7 @@ class NotesTab extends Component
 
     public function deleteNote($id)
     {
+        abort_unless(auth()->user()?->can('rent out note.delete'), 403);
         try {
             $rentOut = RentOut::find($this->rentOutId);
             DB::beginTransaction();

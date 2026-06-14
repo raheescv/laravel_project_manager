@@ -36,6 +36,7 @@ class Table extends Component
 
     public function delete($id)
     {
+        abort_unless(auth()->user()?->can('account note.delete'), 403);
         $model = AccountNote::find($id);
         if ($model) {
             $model->delete();

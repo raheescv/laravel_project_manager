@@ -129,6 +129,7 @@ class MultiplePaymentTermModal extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('rent out payment term.create'), 403);
         if (empty($this->previewList)) {
             return;
         }

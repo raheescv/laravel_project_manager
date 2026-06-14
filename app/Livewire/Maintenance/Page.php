@@ -311,6 +311,7 @@ class Page extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->maintenance_id ? 'maintenance.edit' : 'maintenance.create'), 403);
         try {
             DB::beginTransaction();
             $this->formData['created_by'] = auth()->id();

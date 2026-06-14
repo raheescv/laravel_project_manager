@@ -40,6 +40,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('customer.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -68,6 +69,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('customer.export'), 403);
         $count = Account::count();
         $filters = [
             'account_type' => 'asset',

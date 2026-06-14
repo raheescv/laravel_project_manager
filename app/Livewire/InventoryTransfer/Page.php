@@ -163,6 +163,8 @@ class Page extends Component
         try {
             $id = $this->items[$index]['id'] ?? '';
             if ($id) {
+                // TODO(C7): sub-record (persisted transfer line item) delete during edit; no exact sub-permission, gated by edit
+                abort_unless(auth()->user()?->can('inventory transfer.edit'), 403);
                 $response = (new ItemDeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new Exception($response['message'], 1);
@@ -192,6 +194,7 @@ class Page extends Component
 
     public function save($status = 'completed')
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'inventory transfer.edit' : 'inventory transfer.create'), 403);
         $this->validate();
         try {
             DB::beginTransaction();

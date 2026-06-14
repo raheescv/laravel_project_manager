@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Enums\RentOut\AgreementType;
 use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\RentOut;
 use App\Models\RentOutUtilityTerm;
@@ -77,6 +78,8 @@ class UtilityPaySelectedModal extends Component
 
     public function submit()
     {
+        $authRentOut = RentOut::find($this->rentOutId);
+        abort_unless(auth()->user()?->can($authRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
         $this->saving = true;
 
         try {

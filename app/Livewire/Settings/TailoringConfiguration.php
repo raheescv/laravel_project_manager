@@ -16,6 +16,7 @@ class TailoringConfiguration extends Component
 
     public function save()
     {
+        // TODO(C7): review save authz — writes app Configuration; tab gated by 'tailoring order.view' in settings/index.blade. Candidate: 'configuration.settings' or 'tailoring order.edit' (ambiguous, not gated to avoid deny-all).
         Configuration::updateOrCreate(['key' => 'tailoring_redirection_page'], ['value' => $this->redirection_page]);
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }

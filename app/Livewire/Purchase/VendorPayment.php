@@ -199,6 +199,7 @@ class VendorPayment extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('purchase.payments'), 403);
         $this->validate();
         try {
             DB::beginTransaction();

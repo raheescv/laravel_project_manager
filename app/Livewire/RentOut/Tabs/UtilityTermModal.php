@@ -86,6 +86,8 @@ class UtilityTermModal extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->editingId ? 'rent out utility.edit' : 'rent out utility.create'), 403);
+
         // If editing a single term
         if ($this->editingId) {
             return $this->saveSingle();

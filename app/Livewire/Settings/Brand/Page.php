@@ -75,6 +75,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'brand.edit' : 'brand.create'), 403);
         $this->validate();
         try {
             // Handle image upload

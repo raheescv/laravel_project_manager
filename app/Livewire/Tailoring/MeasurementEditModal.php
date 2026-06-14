@@ -224,6 +224,7 @@ class MeasurementEditModal extends Component
 
     public function saveMeasurementModal(): void
     {
+        abort_unless(auth()->user()?->can('tailoring order.edit'), 403);
         if (! $this->measurementModalItemId) {
             $this->dispatch('error', ['message' => 'No item selected']);
 

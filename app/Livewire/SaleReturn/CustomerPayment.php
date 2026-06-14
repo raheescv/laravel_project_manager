@@ -200,6 +200,7 @@ class CustomerPayment extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('sales return.payments'), 403);
         $this->validate();
         try {
             DB::beginTransaction();

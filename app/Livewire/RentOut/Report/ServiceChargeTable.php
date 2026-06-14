@@ -118,6 +118,7 @@ class ServiceChargeTable extends Component
 
     public function download()
     {
+        abort_unless(auth()->user()?->can('rent out lease.export'), 403);
         $filters = [
             'filterGroup' => $this->filterGroup,
             'filterBuilding' => $this->filterBuilding,

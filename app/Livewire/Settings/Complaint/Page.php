@@ -69,6 +69,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'complaint.edit' : 'complaint.create'), 403);
         $this->validate();
         try {
             if (! $this->table_id) {

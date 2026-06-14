@@ -44,6 +44,7 @@ class Table extends Component
 
     public function delete(): void
     {
+        abort_unless(auth()->user()?->can('issue.delete'), 403);
         try {
             DB::beginTransaction();
             if (empty($this->selected)) {

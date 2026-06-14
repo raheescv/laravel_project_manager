@@ -127,6 +127,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        // TODO(C7): review save authz — inline quick-add via customerSelect TomSelect (Customer-Page-Create-Component) is embedded in many unrelated forms (POS, sale-return, etc.); gating with customer.create would break legitimate quick-create. Edit path (table_id) is reachable from the standalone customer screen.
         $this->validate();
         try {
             if (! $this->table_id) {

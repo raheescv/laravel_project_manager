@@ -36,6 +36,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('income.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -75,6 +76,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('income.export'), 403);
         $count = $this->dataFunction()->count();
         if ($count > 2000) {
             ExportIncomeJob::dispatch(Auth::user());

@@ -66,6 +66,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('sale.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -106,6 +107,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('sale.export'), 403);
         $filters = [
             'branch_id' => $this->branch_id,
             'customer_id' => $this->customer_id,

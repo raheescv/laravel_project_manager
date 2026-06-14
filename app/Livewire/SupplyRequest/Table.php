@@ -127,6 +127,7 @@ class Table extends Component
 
     public function delete(): void
     {
+        abort_unless(auth()->user()?->can('supply request.delete'), 403);
         try {
             DB::beginTransaction();
             if (empty($this->selected)) {

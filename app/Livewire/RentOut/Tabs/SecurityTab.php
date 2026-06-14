@@ -66,6 +66,7 @@ class SecurityTab extends Component
 
     public function deleteSecurity($id)
     {
+        abort_unless(auth()->user()?->can('rent out security.delete'), 403);
         try {
             DB::beginTransaction();
             $response = (new DeleteAction())->execute($id);

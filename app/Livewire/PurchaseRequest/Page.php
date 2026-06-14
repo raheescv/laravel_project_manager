@@ -39,6 +39,7 @@ class Page extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can(isset($this->purchase_request->id) ? 'purchase request.edit' : 'purchase request.create'), 403);
         try {
             DB::beginTransaction();
             $response = (new CreateUpdateAction())->execute($this->products, Auth::id(), $this->purchase_request->id ?? null);

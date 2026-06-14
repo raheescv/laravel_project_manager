@@ -24,6 +24,7 @@ class View extends Component
 
     public function approve()
     {
+        abort_unless(auth()->user()?->can('local purchase order.decide'), 403);
         $this->order->update([
             'status' => LocalPurchaseOrderStatus::APPROVED,
             'decision_by' => auth()->id(),
@@ -38,6 +39,7 @@ class View extends Component
 
     public function reject()
     {
+        abort_unless(auth()->user()?->can('local purchase order.decide'), 403);
         $this->validate([
             'remarks' => 'required|string|min:3',
         ]);

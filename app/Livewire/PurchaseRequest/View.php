@@ -24,6 +24,7 @@ class View extends Component
 
     public function approve()
     {
+        abort_unless(auth()->user()?->can('purchase request.decide'), 403);
         $data = [
             'status' => PurchaseRequestStatus::APPROVED,
             'decision_by' => Auth::id(),
@@ -39,6 +40,7 @@ class View extends Component
 
     public function reject()
     {
+        abort_unless(auth()->user()?->can('purchase request.decide'), 403);
         $this->validate(['remarks' => 'required|string|min:3']);
 
         $this->purchase_request->update([
@@ -55,6 +57,7 @@ class View extends Component
 
     public function completed()
     {
+        abort_unless(auth()->user()?->can('purchase request.decide'), 403);
         $this->purchase_request->update(['status' => PurchaseRequestStatus::COMPLETED]);
 
         $this->dispatch('success', ['message' => 'Completed successfully']);

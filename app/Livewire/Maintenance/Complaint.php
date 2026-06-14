@@ -377,6 +377,7 @@ class Complaint extends Component
 
     public function deleteItem($key): void
     {
+        abort_unless(auth()->user()?->can('supply request.delete item'), 403);
         try {
             DB::beginTransaction();
             if (isset($this->items[$key]['id'])) {
@@ -400,6 +401,7 @@ class Complaint extends Component
 
     public function deleteImage($key): void
     {
+        // TODO(C7): unmapped (candidate: 'supply request.delete item')
         try {
             DB::beginTransaction();
             if (isset($this->imageList[$key]['id'])) {
@@ -446,6 +448,7 @@ class Complaint extends Component
 
     public function deleteNote($key): void
     {
+        // TODO(C7): unmapped (candidate: 'supply request.delete item')
         try {
             if (isset($this->notes[$key]['id'])) {
                 SupplyRequestNote::destroy($this->notes[$key]['id']);
@@ -497,6 +500,7 @@ class Complaint extends Component
 
     public function save($status = 'pending')
     {
+        // TODO(C7): review save authz (dual-purpose: saves technician remark when pending, completes complaint when $status==='completed' → 'maintenance.complete'; gating whole method would block legitimate remark saves)
         try {
             if ($status === 'completed' && empty(trim($this->technician_remark))) {
                 $this->addError('technician_remark', 'The technician remark is required to complete.');

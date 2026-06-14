@@ -28,42 +28,40 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->group(function () {
-
-    // Product routes
-    Route::prefix('products')->group(function () {
-        Route::get('/', [ProductController::class, 'index'])->name('api.v1.products.index');
-        Route::get('/single/', [ProductController::class, 'show'])->name('api.v1.products.show');
-        Route::get('/{id}', [ProductController::class, 'get'])->name('api.v1.products.show-by-id');
-    });
-
-    // Category routes
-    Route::prefix('categories')->group(function () {
-        Route::get('/', [CategoryController::class, 'index'])->name('api.v1.categories.index');
-    });
-
-    // Brand routes
-    Route::prefix('brands')->group(function () {
-        Route::get('/', [BrandController::class, 'index'])->name('api.v1.brands.index');
-    });
-
-    // Size routes
-    Route::prefix('sizes')->group(function () {
-        Route::get('/', [SizeController::class, 'index'])->name('api.v1.sizes.index');
-    });
-
-    // Color routes
-    Route::prefix('colors')->group(function () {
-        Route::get('/', [ColorController::class, 'index'])->name('api.v1.colors.index');
-    });
-
-    // Branch routes
-    Route::prefix('branches')->group(function () {
-        Route::get('/', [BranchController::class, 'index'])->name('api.v1.branches.index');
-    });
-
     // Mobile routes (PIN-authenticated staff / POS app)
     Route::middleware(IdentifyTenant::class)->group(function () {
+        
+        // Product routes
+        Route::prefix('products')->group(function () {
+            Route::get('/', [ProductController::class, 'index'])->name('api.v1.products.index');
+            Route::get('/single/', [ProductController::class, 'show'])->name('api.v1.products.show');
+            Route::get('/{id}', [ProductController::class, 'get'])->name('api.v1.products.show-by-id');
+        });
 
+        // Category routes
+        Route::prefix('categories')->group(function () {
+            Route::get('/', [CategoryController::class, 'index'])->name('api.v1.categories.index');
+        });
+
+        // Brand routes
+        Route::prefix('brands')->group(function () {
+            Route::get('/', [BrandController::class, 'index'])->name('api.v1.brands.index');
+        });
+
+        // Size routes
+        Route::prefix('sizes')->group(function () {
+            Route::get('/', [SizeController::class, 'index'])->name('api.v1.sizes.index');
+        });
+
+        // Color routes
+        Route::prefix('colors')->group(function () {
+            Route::get('/', [ColorController::class, 'index'])->name('api.v1.colors.index');
+        });
+
+        // Branch routes
+        Route::prefix('branches')->group(function () {
+            Route::get('/', [BranchController::class, 'index'])->name('api.v1.branches.index');
+        });
         // Auth routes (public)
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('api.v1.login');
 

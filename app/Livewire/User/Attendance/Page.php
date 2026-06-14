@@ -91,6 +91,7 @@ class Page extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('employee attendance.modify'), 403);
         try {
             DB::beginTransaction();
             $action = new AttendanceAction();

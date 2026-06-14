@@ -2,7 +2,9 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Enums\RentOut\AgreementType;
 use App\Helpers\Facades\RentOutTransactionHelper;
+use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -56,6 +58,8 @@ class PayoutModal extends Component
 
     public function save()
     {
+        $rentOut = RentOut::find($this->rentOutId);
+        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
         $this->validate([
             'form.date' => 'required|date',
             'form.amount' => 'required|numeric|min:0.01',

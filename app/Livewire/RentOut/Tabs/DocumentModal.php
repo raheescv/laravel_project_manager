@@ -35,6 +35,7 @@ class DocumentModal extends Component
 
     public function save()
     {
+        // TODO(C7): review save authz — uploads a rent-out document; no 'rent out document' resource in config/permissions.php (candidate: 'rent out document.create')
         $this->validate([
             'file' => 'required|file|max:10240',
             'documentTypeId' => 'required|exists:document_types,id',

@@ -111,6 +111,7 @@ class Units extends Component
 
     public function save($close = false)
     {
+        // TODO(C7): review save authz — nested product-unit quick-add/edit modal sub-component
         $this->validate();
         try {
             if (! $this->table_id) {

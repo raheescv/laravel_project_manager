@@ -101,6 +101,7 @@ class UtilitiesTab extends Component
 
     public function deleteUtilityTerm($id)
     {
+        abort_unless(auth()->user()?->can('rent out utility.delete'), 403);
         try {
             DB::beginTransaction();
             $response = (new TermDeleteAction())->execute($id);
@@ -118,6 +119,7 @@ class UtilitiesTab extends Component
 
     public function deleteSelected()
     {
+        abort_unless(auth()->user()?->can('rent out utility.delete'), 403);
         if (empty($this->selectedTerms)) {
             $this->dispatch('error', message: 'Please select at least one row to delete.');
 

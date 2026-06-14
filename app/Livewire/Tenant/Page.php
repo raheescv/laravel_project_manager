@@ -96,6 +96,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->is_super_admin, 403);
         $this->validate();
         try {
             if (! $this->table_id) {

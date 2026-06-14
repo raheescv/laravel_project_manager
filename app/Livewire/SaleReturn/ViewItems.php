@@ -64,6 +64,7 @@ class ViewItems extends Component
 
     public function removeItem($index)
     {
+        // TODO(C7): review save authz — line-item removal inside the sale-return create/edit flow; no precise catalog permission (candidate: 'sales return.edit')
         try {
             $id = $this->items[$index]['id'] ?? '';
             if ($id) {

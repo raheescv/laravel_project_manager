@@ -40,27 +40,32 @@ class View extends Component
 
     public function enabledWhatsapp()
     {
+        abort_unless(auth()->user()?->can('user.edit'), 403);
         $this->user->update(['is_whatsapp_enabled' => $this->user->is_whatsapp_enabled ? false : true]);
     }
 
     public function toggleBrowserNotification()
     {
+        abort_unless(auth()->user()?->can('user.edit'), 403);
         $this->user->update(['is_browser_notification_enabled' => ! $this->user->is_browser_notification_enabled]);
     }
 
     public function activeUser()
     {
+        abort_unless(auth()->user()?->can('user.edit'), 403);
         $this->user->update(['is_active' => $this->user->is_active ? false : true]);
     }
 
     public function saveRoles()
     {
+        abort_unless(auth()->user()?->can('user.edit'), 403);
         $this->user->syncRoles($this->role_names);
         $this->dispatch('success', ['message' => 'Successfully Updated Roles']);
     }
 
     public function saveBranches()
     {
+        abort_unless(auth()->user()?->can('user.edit'), 403);
         try {
             DB::beginTransaction();
             $action = new BranchAction();
@@ -80,6 +85,7 @@ class View extends Component
 
     public function impersonate()
     {
+        // TODO(C7): unmapped (candidate: 'user.edit') — no impersonate permission in config/permissions.php; account-takeover action needs a dedicated permission.
         try {
             $targetUser = User::find($this->table_id);
 

@@ -273,6 +273,7 @@ class ChecklistTab extends Component
 
     public function save(): void
     {
+        abort_unless(auth()->user()?->can('rent out checklist.edit'), 403);
         $header = [
             'actual_move_in_date' => $this->actualMoveInDate,
             'actual_move_out_date' => $this->actualMoveOutDate,

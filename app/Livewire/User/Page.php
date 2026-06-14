@@ -87,19 +87,20 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'user.edit' : 'user.create'), 403);
         $this->validate();
         try {
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->users);
                 if ($response['success'] && ! empty($this->selectedRoles)) {
                     $user = User::find($response['data']['id']);
-                    $user->syncRoles($this->selectedRoles);
+                    $user->syncRoles($this->assignableRoles());
                 }
             } else {
                 $response = (new UpdateAction())->execute($this->users, $this->table_id);
                 if ($response['success']) {
                     $user = User::find($this->table_id);
-                    $user->syncRoles($this->selectedRoles);
+                    $user->syncRoles($this->assignableRoles());
                 }
             }
             if (! $response['success']) {
@@ -116,6 +117,21 @@ class Page extends Component
         } catch (\Throwable $e) {
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Only return roles the current user is permitted to assign.
+     * The Super Admin role can be granted only by a super admin —
+     * this blocks privilege escalation via the role selector.
+     */
+    private function assignableRoles(): array
+    {
+        $roles = array_filter((array) $this->selectedRoles);
+        if (! auth()->user()?->is_super_admin) {
+            $roles = array_filter($roles, fn ($role) => $role !== 'Super Admin');
+        }
+
+        return array_values($roles);
     }
 
     public function render()

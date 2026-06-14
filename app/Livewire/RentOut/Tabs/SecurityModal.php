@@ -49,6 +49,7 @@ class SecurityModal extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->editingId ? 'rent out security.edit' : 'rent out security.create'), 403);
         $rules = [
             'form.amount' => 'required|numeric|min:0.01',
             'form.payment_mode' => 'required',

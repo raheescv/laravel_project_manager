@@ -71,6 +71,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        // TODO(C7): unmapped (candidate: 'tenant detail.edit' / 'tenant detail.create') — 'tenant detail' is commented out in config/permissions.php; no verbatim catalog entry
         $this->validate();
         try {
             if (! $this->table_id) {

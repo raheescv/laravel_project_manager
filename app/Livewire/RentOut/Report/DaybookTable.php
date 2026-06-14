@@ -120,6 +120,7 @@ class DaybookTable extends Component
 
     public function download()
     {
+        abort_unless(auth()->user()?->can('rent out.export'), 403);
         $filters = [
             'filterGroup' => $this->filterGroup,
             'filterBuilding' => $this->filterBuilding,

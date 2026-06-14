@@ -90,6 +90,7 @@ class RentOutConfiguration extends Component
 
     public function save()
     {
+        // TODO(C7): review save authz — writes app Configuration; tab gated by 'rent out.view' in settings/index.blade. Candidate: 'configuration.settings' or 'rent out.edit' (ambiguous, not gated to avoid deny-all).
         $this->validate([
             'rental_reservation_logo_file' => 'nullable|image|max:2048',
             'lease_reservation_logo_file' => 'nullable|image|max:2048',

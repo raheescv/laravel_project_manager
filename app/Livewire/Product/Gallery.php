@@ -67,6 +67,8 @@ class Gallery extends Component
 
     public function deleteSelected()
     {
+        // TODO(C7): bulk product-image delete on standalone gallery; mapped to product.delete (candidate: 'product.edit')
+        abort_unless(auth()->user()?->can('product.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {

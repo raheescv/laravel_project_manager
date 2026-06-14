@@ -4,6 +4,7 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Cheque\DeleteAction;
 use App\Actions\RentOut\Cheque\UpdateStatusAction;
+use App\Enums\RentOut\AgreementType;
 use App\Models\RentOut;
 use App\Models\RentOutCheque;
 use App\Models\RentOutPaymentTerm;
@@ -109,8 +110,17 @@ class ChequesTab extends Component
         );
     }
 
+    protected function chequePermission(string $action): string
+    {
+        $rentOut = RentOut::find($this->rentOutId);
+        $prefix = $rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease cheque' : 'rent out cheque';
+
+        return $prefix.'.'.$action;
+    }
+
     public function updateStatus($id, $status)
     {
+        abort_unless(auth()->user()?->can($this->chequePermission('update status')), 403);
         try {
             DB::beginTransaction();
             $response = (new UpdateStatusAction())->execute($id, $status);
@@ -140,6 +150,7 @@ class ChequesTab extends Component
 
     public function confirmTermPayment()
     {
+        abort_unless(auth()->user()?->can($this->chequePermission('update status')), 403);
         if (! $this->selectedTermId || ! $this->pendingChequeId) {
             $this->dispatch('error', message: 'Please select a payment term.');
 
@@ -201,6 +212,7 @@ class ChequesTab extends Component
 
     public function deleteSelected()
     {
+        abort_unless(auth()->user()?->can($this->chequePermission('delete')), 403);
         if (empty($this->selectedCheques)) {
             $this->dispatch('error', message: 'No cheques selected.');
 

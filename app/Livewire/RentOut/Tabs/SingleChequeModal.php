@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Cheque\CreateAction;
+use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\ChequeStatus;
 use App\Models\RentOut;
 use App\Models\RentOutCheque;
@@ -45,6 +46,9 @@ class SingleChequeModal extends Component
 
     public function save()
     {
+        $rentOut = RentOut::find($this->form['rent_out_id']);
+        $prefix = $rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease cheque' : 'rent out cheque';
+        abort_unless(auth()->user()?->can($prefix.'.'.($this->editingId ? 'edit' : 'create')), 403);
         $this->validate([
             'form.cheque_no' => 'required|string',
             'form.amount' => 'required|numeric|min:0.01',

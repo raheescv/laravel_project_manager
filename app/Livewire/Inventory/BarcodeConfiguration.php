@@ -134,6 +134,7 @@ class BarcodeConfiguration extends Component
 
     public function updateElementPosition($elementId, $position)
     {
+        abort_unless(auth()->user()?->can('configuration.barcode'), 403);
         if (! isset($this->barcode['elements'][$elementId])) {
             $this->barcode['elements'][$elementId] = [];
         }
@@ -149,6 +150,7 @@ class BarcodeConfiguration extends Component
 
     public function updateElementSize($elementId, $size)
     {
+        abort_unless(auth()->user()?->can('configuration.barcode'), 403);
         if (! isset($this->barcode['elements'][$elementId])) {
             $this->barcode['elements'][$elementId] = [];
         }
@@ -163,6 +165,7 @@ class BarcodeConfiguration extends Component
 
     public function updateElementVisibility($elementId, $isVisible)
     {
+        abort_unless(auth()->user()?->can('configuration.barcode'), 403);
         $element = str_replace('-', '_', $elementId);
         if (isset($this->barcode[$element])) {
             $this->barcode[$element]['visible'] = $isVisible;
@@ -172,6 +175,7 @@ class BarcodeConfiguration extends Component
 
     public function updateElementStyle($elementId, $style)
     {
+        abort_unless(auth()->user()?->can('configuration.barcode'), 403);
         $element = str_replace('-', '_', $elementId);
         if (isset($this->barcode[$element])) {
             $allowedStyles = ['font_size', 'align'];
@@ -201,11 +205,13 @@ class BarcodeConfiguration extends Component
 
     public function save($showMessage = true)
     {
+        abort_unless(auth()->user()?->can('configuration.barcode'), 403);
         $this->persistConfiguration($showMessage);
     }
 
     public function resetToDefaults()
     {
+        abort_unless(auth()->user()?->can('configuration.barcode'), 403);
         $this->barcode = BarcodeTemplateConfiguration::defaultSettings();
         $this->save(false);
         $this->dispatch('success', ['message' => 'Settings reset to default successfully']);

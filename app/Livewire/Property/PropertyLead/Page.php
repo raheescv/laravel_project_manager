@@ -132,6 +132,7 @@ class Page extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->lead_id ? 'property lead.edit' : 'property lead.create'), 403);
         $this->validate();
 
         try {
@@ -168,6 +169,7 @@ class Page extends Component
 
     public function transfer()
     {
+        abort_unless(auth()->user()?->can('property lead.booking transfer'), 403);
         try {
             if (! $this->lead_id) {
                 throw new \Exception('Please save the lead before transferring.', 1);

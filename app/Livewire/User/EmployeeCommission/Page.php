@@ -91,6 +91,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'employee commission.edit' : 'employee commission.create'), 403);
         $this->validate();
 
         // Additional custom validation for unique combination

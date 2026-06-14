@@ -71,6 +71,7 @@ class SecurityTable extends Component
 
     public function download()
     {
+        // TODO(C7): unmapped (candidate: 'rent out security.export') — 'rent out security' has no export action in config/permissions.php
         $filters = [
             'filterGroup' => $this->filterGroup,
             'filterBuilding' => $this->filterBuilding,

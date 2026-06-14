@@ -72,6 +72,7 @@ class Page extends Component
 
     public function save($status = 'pending')
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'account note.edit' : 'account note.create'), 403);
         $this->validate();
         try {
             $this->notes['status'] = $status;

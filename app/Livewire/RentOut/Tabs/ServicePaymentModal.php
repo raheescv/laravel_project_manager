@@ -2,8 +2,10 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Enums\RentOut\AgreementType;
 use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Models\Account;
+use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -38,6 +40,8 @@ class ServicePaymentModal extends Component
 
     public function payLater()
     {
+        $rentOut = RentOut::find($this->rentOutId);
+        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
         $this->validate([
             'form.date' => 'required|date',
             'form.amount' => 'required|numeric|min:0.01',
@@ -70,6 +74,8 @@ class ServicePaymentModal extends Component
 
     public function payNow()
     {
+        $rentOut = RentOut::find($this->rentOutId);
+        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
         $this->validate([
             'form.date' => 'required|date',
             'form.amount' => 'required|numeric|min:0.01',

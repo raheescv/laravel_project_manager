@@ -449,6 +449,7 @@ class Page extends Component
 
     public function removeItem($index)
     {
+        // TODO(C7): review save authz — line-item removal inside the sale-return create/edit flow; no precise catalog permission (candidate: 'sales return.edit')
         try {
             $id = $this->items[$index]['id'] ?? '';
             if ($id) {
@@ -467,6 +468,7 @@ class Page extends Component
 
     public function deleteAllItems()
     {
+        // TODO(C7): review save authz — bulk line-item removal inside the sale-return create/edit flow; no precise catalog permission (candidate: 'sales return.edit')
         try {
             foreach ($this->items as $value) {
                 $id = $value['id'] ?? '';
@@ -577,6 +579,7 @@ class Page extends Component
 
     public function removePayment($index)
     {
+        // TODO(C7): review save authz — payment-line removal inside the sale-return create/edit flow; no precise catalog permission for sale-return payment deletion
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {
@@ -625,6 +628,7 @@ class Page extends Component
 
     public function save($type = 'completed')
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'sales return.edit' : 'sales return.create'), 403);
         $this->validate();
         try {
             $oldStatus = $this->sale_returns['status'];

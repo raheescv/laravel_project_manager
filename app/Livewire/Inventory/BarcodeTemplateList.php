@@ -49,6 +49,7 @@ class BarcodeTemplateList extends Component
 
     public function createTemplate(): void
     {
+        abort_unless(auth()->user()?->can('configuration.barcode'), 403);
         $name = trim($this->newTemplateName);
         if ($name === '') {
             $this->dispatch('error', ['message' => 'Template name is required']);
@@ -83,6 +84,7 @@ class BarcodeTemplateList extends Component
 
     public function deleteTemplate(string $templateKey): void
     {
+        abort_unless(auth()->user()?->can('configuration.barcode'), 403);
         if (! isset($this->templates[$templateKey])) {
             return;
         }

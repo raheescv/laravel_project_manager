@@ -101,6 +101,7 @@ class ServiceChargeModal extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('rent out service.create'), 403);
         $this->validate();
 
         try {

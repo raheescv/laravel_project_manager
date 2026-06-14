@@ -80,6 +80,7 @@ class ChequeManagementTable extends Component
 
     public function download()
     {
+        // TODO(C7): unmapped (candidate: 'rent out cheque.export') — 'rent out cheque'/'rent out lease cheque' have no export action in config/permissions.php
         $filters = [
             'agreementType' => $this->agreementType,
             'filterGroup' => $this->filterGroup,

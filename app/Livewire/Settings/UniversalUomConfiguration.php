@@ -34,6 +34,7 @@ class UniversalUomConfiguration extends Component
 
     public function addConversion(): void
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         $this->validate([
             'base_unit_id' => ['required', 'exists:units,id'],
             'sub_unit_id' => ['required', 'exists:units,id', 'different:base_unit_id'],
@@ -63,6 +64,7 @@ class UniversalUomConfiguration extends Component
 
     public function removeConversion(int $id): void
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         $row = UniversalUnitConversion::find($id);
         if ($row) {
             $row->delete();

@@ -148,6 +148,7 @@ class BookingTable extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can($this->config->bookingDeletePermission), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -192,6 +193,7 @@ class BookingTable extends Component
 
     public function download()
     {
+        abort_unless(auth()->user()?->can($this->agreementType === 'lease' ? 'rent out lease.export' : 'rent out.export'), 403);
         $filters = [
             'agreementType' => $this->agreementType,
             'filterGroup' => $this->filterGroup,

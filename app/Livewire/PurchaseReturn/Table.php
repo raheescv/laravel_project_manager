@@ -59,6 +59,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('purchase return.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -103,6 +104,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('purchase return.export'), 403);
         $count = $this->query()->count();
         if ($count > 2000) {
             ExportPurchaseReturnJob::dispatch(Auth::id());

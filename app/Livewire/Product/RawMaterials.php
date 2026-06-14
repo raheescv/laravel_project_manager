@@ -42,6 +42,8 @@ class RawMaterials extends Component
 
     public function delete(int $id): void
     {
+        // TODO(C7): sub-record (product raw material) delete during edit; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can('product.edit'), 403);
         try {
             ProductRawMaterial::findOrFail($id)->delete();
             $this->loadRawMaterials();

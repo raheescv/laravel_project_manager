@@ -45,6 +45,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('employee.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -97,6 +98,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('employee.export'), 403);
         $filters = $this->getFilters();
 
         $count = $this->getBaseQuery()->count();

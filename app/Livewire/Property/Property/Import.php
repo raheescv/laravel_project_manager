@@ -138,6 +138,7 @@ class Import extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('property.create'), 403);
         $this->validate([
             'mappings.number' => 'required',
             'mappings.property_building_id' => 'required',

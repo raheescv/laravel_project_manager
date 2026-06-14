@@ -328,6 +328,7 @@ class Page extends Component
 
     public function removeItem($index)
     {
+        abort_unless(auth()->user()?->can('purchase return.edit'), 403);
         try {
             $id = $this->items[$index]['id'] ?? '';
             if ($id) {
@@ -346,6 +347,7 @@ class Page extends Component
 
     public function removePayment($index)
     {
+        abort_unless(auth()->user()?->can('purchase return.edit'), 403);
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {
@@ -424,6 +426,7 @@ class Page extends Component
 
     public function save($type = 'completed')
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'purchase return.edit' : 'purchase return.create'), 403);
         $this->validate();
         try {
             $account_id = $this->purchase_returns['account_id'];

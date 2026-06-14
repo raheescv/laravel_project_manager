@@ -38,11 +38,13 @@ class Configurations extends Component
 
     public function dbView()
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         Artisan::call('db:seed --class=View');
     }
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         Configuration::updateOrCreate(['key' => 'default_payment_method_id'], ['value' => $this->default_payment_method_id]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         $country = Country::find($this->country_id);

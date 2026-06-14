@@ -77,6 +77,7 @@ class ServicesTab extends Component
 
     public function deleteSelected()
     {
+        abort_unless(auth()->user()?->can('rent out service.delete'), 403);
         if (empty($this->selectedPayments)) {
             $this->dispatch('error', message: 'No payments selected.');
 

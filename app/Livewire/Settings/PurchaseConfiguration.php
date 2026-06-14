@@ -31,6 +31,7 @@ class PurchaseConfiguration extends Component
 
     public function save()
     {
+        // TODO(C7): review save authz — writes app Configuration; tab gated by 'purchase.view' in settings/index.blade. Candidate: 'configuration.settings' or 'purchase.edit' (ambiguous, not gated to avoid deny-all).
         Configuration::updateOrCreate(['key' => 'enable_barcode_print_after_submit'], ['value' => $this->enable_barcode_print_after_submit]);
         Configuration::updateOrCreate(['key' => 'purchase_default_quantity'], ['value' => $this->default_quantity]);
         Configuration::updateOrCreate(['key' => 'purchase_item_row_mode'], ['value' => $this->purchase_item_row_mode]);

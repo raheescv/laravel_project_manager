@@ -83,6 +83,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('product.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -127,6 +128,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('product.export'), 403);
         $filter = [
             'type' => 'product',
             'department_id' => $this->department_id,

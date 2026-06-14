@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Cheque\CreateAction;
+use App\Enums\RentOut\AgreementType;
 use App\Models\RentOut;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -154,6 +155,9 @@ class MultipleChequeModal extends Component
 
     public function save()
     {
+        $authRentOut = RentOut::find($this->rentOutId);
+        $prefix = $authRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease cheque' : 'rent out cheque';
+        abort_unless(auth()->user()?->can($prefix.'.create'), 403);
         if (empty($this->previewList)) {
             return;
         }

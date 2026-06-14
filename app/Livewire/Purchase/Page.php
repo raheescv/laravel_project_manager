@@ -310,6 +310,7 @@ class Page extends Component
 
     public function removeItem($index)
     {
+        abort_unless(auth()->user()?->can('purchase.edit'), 403);
         $this->skipRender();
 
         try {
@@ -348,6 +349,7 @@ class Page extends Component
 
     public function removePayment($index)
     {
+        abort_unless(auth()->user()?->can('purchase.edit'), 403);
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {
@@ -440,6 +442,7 @@ class Page extends Component
 
     public function save($type = 'completed')
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'purchase.edit' : 'purchase.create'), 403);
         try {
             $this->validate();
         } catch (ValidationException $e) {

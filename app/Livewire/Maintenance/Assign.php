@@ -54,6 +54,7 @@ class Assign extends Component
 
     public function assignTechnician($index)
     {
+        abort_unless(auth()->user()?->can('maintenance.assign'), 403);
         try {
             $complaint = $this->complaintData[$index];
             if (empty($complaint['technician_id'])) {
@@ -76,6 +77,7 @@ class Assign extends Component
 
     public function completeComplaint($index)
     {
+        abort_unless(auth()->user()?->can('maintenance.complete'), 403);
         try {
             $complaint = $this->complaintData[$index];
             $response = (new CompleteAction())->execute(
@@ -95,6 +97,7 @@ class Assign extends Component
 
     public function completeMaintenance()
     {
+        abort_unless(auth()->user()?->can('maintenance.complete'), 403);
         try {
             $response = (new MaintenanceCompleteAction())->execute($this->maintenance_id, auth()->id());
             if (! $response['success']) {

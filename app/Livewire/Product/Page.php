@@ -258,8 +258,21 @@ class Page extends Component
         'degree.*.max' => 'The angle must not be greater than 359 degrees.',
     ];
 
+    /**
+     * Resolve the permission group for the current entity type (product/asset/service).
+     */
+    protected function permissionGroup(): string
+    {
+        return match ($this->type) {
+            'asset' => 'asset',
+            'service' => 'service',
+            default => 'product',
+        };
+    }
+
     public function save($edit = false)
     {
+        abort_unless(auth()->user()?->can($this->permissionGroup().'.'.($this->table_id ? 'edit' : 'create')), 403);
         if (
             $this->syncBarcodeToCode &&
             $this->type === 'product' &&
@@ -465,6 +478,8 @@ class Page extends Component
 
     public function deleteImage($id)
     {
+        // TODO(C7): sub-record (product image) delete during edit; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can($this->permissionGroup().'.edit'), 403);
         try {
             DB::beginTransaction();
             $response = (new DeleteImageAction())->execute($id);
@@ -482,6 +497,8 @@ class Page extends Component
 
     public function defaultImage($path)
     {
+        // TODO(C7): mutates product thumbnail during edit; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can($this->permissionGroup().'.edit'), 403);
         try {
             $this->product->update(['thumbnail' => $path]);
             $this->products['thumbnail'] = $path;
@@ -503,6 +520,8 @@ class Page extends Component
 
     public function unitDelete($id)
     {
+        // TODO(C7): sub-record (product unit) delete during edit; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can($this->permissionGroup().'.edit'), 403);
         try {
             $response = (new UnitDeleteAction())->execute($id);
             if (! $response['success']) {
@@ -517,6 +536,8 @@ class Page extends Component
 
     public function priceDelete($id)
     {
+        // TODO(C7): sub-record (product price) delete during edit; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can($this->permissionGroup().'.edit'), 403);
         try {
             $response = (new PriceDeleteAction())->execute($id);
             if (! $response['success']) {
@@ -531,6 +552,8 @@ class Page extends Component
 
     public function removeDocument()
     {
+        // TODO(C7): sub-record (product document) delete during edit; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can($this->permissionGroup().'.edit'), 403);
         try {
             if ($this->product && $this->product->document_file) {
                 $relativePath = str_replace('/storage/', '', parse_url($this->product->document_file, PHP_URL_PATH));
@@ -547,6 +570,7 @@ class Page extends Component
 
     public function downloadImageWithAi()
     {
+        abort_unless(auth()->user()?->can('product.ai image generation'), 403);
         if (! $this->table_id) {
             $this->dispatch('error', ['message' => 'Please save the product before downloading an AI image.']);
 

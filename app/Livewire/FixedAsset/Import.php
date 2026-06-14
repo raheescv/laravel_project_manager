@@ -156,6 +156,7 @@ class Import extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('asset.import'), 403);
         $this->validate([
             'mappings.name' => 'required',
         ], [

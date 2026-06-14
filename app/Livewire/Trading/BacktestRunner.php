@@ -19,6 +19,7 @@ class BacktestRunner extends Component
 
     public function run(StrategyRegistry $registry): void
     {
+        // TODO(C7): unmapped (candidate: 'flat_trade.view') — no trading permission in config/permissions.php; backtest run is gated by 'flat_trade.view' at the route.
         $strategy = $registry->get($this->strategyCode);
         if (! $strategy) {
             $this->message = "Unknown strategy: {$this->strategyCode}";

@@ -70,6 +70,7 @@ class RawMaterialForm extends Component
 
     public function save(bool $close = true): void
     {
+        // TODO(C7): review save authz — nested product raw-material quick-add/edit modal sub-component
         $this->validate();
 
         try {

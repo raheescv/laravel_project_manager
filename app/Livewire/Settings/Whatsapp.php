@@ -87,6 +87,7 @@ class Whatsapp extends Component
 
     public function saveIntegration(): void
     {
+        abort_unless(auth()->user()?->can('whatsapp.integration'), 403);
         $this->validate([
             'driver' => 'required|in:meta,localhost,core_connecta,personal_gateway',
             'gatewayUrl' => [
@@ -159,6 +160,7 @@ class Whatsapp extends Component
 
     public function getWhatsappQr(): void
     {
+        abort_unless(auth()->user()?->can('whatsapp.integration'), 403);
         if ($this->driver === 'meta') {
             $this->dispatch('error', ['message' => 'QR pairing is only available for Core Connecta and the legacy localhost driver.']);
 
@@ -180,6 +182,7 @@ class Whatsapp extends Component
 
     public function disconnect(): void
     {
+        abort_unless(auth()->user()?->can('whatsapp.integration'), 403);
         if ($this->driver === 'meta') {
             $this->dispatch('error', ['message' => 'Meta WhatsApp sessions are managed in Meta Business Manager.']);
 
@@ -200,6 +203,7 @@ class Whatsapp extends Component
 
     public function sendSampleSms(): void
     {
+        abort_unless(auth()->user()?->can('whatsapp.integration'), 403);
         $this->validate([
             'number' => 'required|string|max:32',
             'message' => 'required|string|max:1000',

@@ -40,6 +40,7 @@ class View extends Component
 
     public function accept()
     {
+        abort_unless(auth()->user()?->can('lpo-purchase.decide'), 403);
         try {
             DB::beginTransaction();
 
@@ -59,6 +60,7 @@ class View extends Component
 
     public function reject()
     {
+        abort_unless(auth()->user()?->can('lpo-purchase.decide'), 403);
         $this->validate([
             'remarks' => 'required|string|min:3',
         ]);

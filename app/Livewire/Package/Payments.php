@@ -72,6 +72,7 @@ class Payments extends Component
 
     public function save()
     {
+        // TODO(C7): review save authz — nested package-payment quick-add/edit modal within package management
         $this->validate([
             'payment.amount' => 'required|numeric|min:0.01',
             'payment.payment_method_id' => 'required|exists:accounts,id',
@@ -102,6 +103,8 @@ class Payments extends Component
 
     public function delete($id)
     {
+        // TODO(C7): sub-record (package payment) delete during package management; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can('package.edit'), 403);
         try {
             DB::beginTransaction();
             $response = (new DeleteAction())->execute($id);

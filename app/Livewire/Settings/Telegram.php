@@ -34,6 +34,7 @@ class Telegram extends Component
 
     public function saveCredentials(): void
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         $this->validate([
             'botToken' => 'nullable|string|max:255',
             'botUsername' => 'nullable|string|max:64',
@@ -57,6 +58,7 @@ class Telegram extends Component
      */
     public function runSetup(): void
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         $this->commandOutput = null;
         $this->commandExitCode = Artisan::call('telegram:setup');
         $this->commandOutput = trim(Artisan::output());
@@ -73,6 +75,7 @@ class Telegram extends Component
      */
     public function sendTestMessage(TelegramHelper $telegram): void
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         $this->validate([
             'testMobile' => 'required|string|max:32',
             'testMessage' => 'required|string|max:4096',
@@ -98,6 +101,7 @@ class Telegram extends Component
      */
     public function runWebhookInfo(): void
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         $this->commandOutput = null;
         $this->commandExitCode = Artisan::call('telegram:webhook-info');
         $this->commandOutput = trim(Artisan::output());

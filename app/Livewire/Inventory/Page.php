@@ -58,6 +58,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->can('inventory.edit'), 403);
         $this->validate();
         try {
             $response = (new UpdateAction())->execute($this->inventories, $this->table_id);

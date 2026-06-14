@@ -86,6 +86,7 @@ class View extends Component
 
     public function save(string $type = 'completed'): void
     {
+        abort_unless(auth()->user()?->can('purchase.edit'), 403);
         $oldStatus = $this->purchases['status'] ?? $this->purchase->status;
 
         try {

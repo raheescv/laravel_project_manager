@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Enums\RentOut\AgreementType;
 use App\Models\RentOut;
 use App\Models\RentOutExtend;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,9 @@ class ExtendTab extends Component
 
     public function deleteExtend($id)
     {
+        // No dedicated extend-delete permission in config/permissions.php; gate with the agreement 'extend' capability.
+        $rentOut = RentOut::find($this->rentOutId);
+        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.extend' : 'rent out.extend'), 403);
         try {
             DB::beginTransaction();
             $extend = RentOutExtend::find($id);

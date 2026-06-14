@@ -79,6 +79,7 @@ class Items extends Component
 
     public function save()
     {
+        // TODO(C7): review save authz — nested package-term (item) quick-add/edit modal within package management
         $this->validate([
             'item.date' => 'required|date',
             'item.rescheduled_date' => 'nullable|date',
@@ -107,6 +108,8 @@ class Items extends Component
 
     public function delete($id)
     {
+        // TODO(C7): sub-record (package term) delete during package management; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can('package.edit'), 403);
         try {
             $response = (new DeleteAction())->execute($id);
             if (! $response['success']) {
@@ -122,6 +125,8 @@ class Items extends Component
 
     public function markAsVisited($id)
     {
+        // TODO(C7): state change on package term; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can('package.edit'), 403);
         try {
             $item = PackageItem::find($id);
             if (! $item) {
@@ -166,6 +171,8 @@ class Items extends Component
 
     public function deleteSelected()
     {
+        // TODO(C7): bulk sub-record (package term) delete during package management; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can('package.edit'), 403);
         if (empty($this->selectedItems)) {
             $this->dispatch('error', ['message' => 'Please select at least one item to delete.']);
 
@@ -344,6 +351,8 @@ class Items extends Component
 
     public function generateAndSave()
     {
+        // TODO(C7): bulk-creates package terms during package management; no exact sub-permission, gated by edit
+        abort_unless(auth()->user()?->can('package.edit'), 403);
         $this->validate([
             'generateForm.from_date' => 'required|date',
             'generateForm.number_of_terms' => 'required|integer|min:1',

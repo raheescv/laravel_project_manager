@@ -107,6 +107,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('tailoring order.delete'), 403);
         if (empty($this->selected)) {
             $this->dispatch('error', ['message' => 'No orders selected.']);
 

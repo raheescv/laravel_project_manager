@@ -77,6 +77,7 @@ class SaleConfiguration extends Component
 
     public function save()
     {
+        // TODO(C7): review save authz — writes app Configuration; tab gated by 'sale.view' in settings/index.blade. Candidate: 'configuration.settings' or 'sale.edit' (ambiguous, not gated to avoid deny-all).
         Configuration::updateOrCreate(['key' => 'default_status'], ['value' => $this->default_status]);
         Configuration::updateOrCreate(['key' => 'thermal_printer_style'], ['value' => $this->thermal_printer_style]);
         Configuration::updateOrCreate(['key' => 'thermal_printer_footer_english'], ['value' => $this->thermal_printer_footer_english]);

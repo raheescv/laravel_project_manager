@@ -40,6 +40,7 @@ class ChangeSession extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('sale.change day session'), 403);
         try {
             if (! $this->selectedSessionId) {
                 throw new Exception('Please select a day session.');

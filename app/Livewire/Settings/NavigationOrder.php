@@ -51,6 +51,7 @@ class NavigationOrder extends Component
 
     public function save(): void
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         // Use the full unfiltered list so items belonging to other modules
         // retain their saved visibility/order preferences across module switches.
         $savedItems = collect(NavigationService::getOrderedItems())->keyBy('id');
@@ -91,6 +92,7 @@ class NavigationOrder extends Component
 
     public function resetToDefault(): void
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         Configuration::where('key', 'nav_order')->delete();
         Cache::forget('nav_order');
         $this->items = NavigationService::filterByActiveModule(NavigationService::defaultItems());

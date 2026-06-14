@@ -46,6 +46,7 @@ class OrderTailorActionModal extends Component
 
     public function updateTailorAssignmentStatus($assignmentId, $status): void
     {
+        abort_unless(auth()->user()?->can('tailoring job completion.edit'), 403);
         $status = strtolower(trim((string) $status));
         $assignment = TailoringOrderItemTailor::with('tailoringOrderItem.order')->find($assignmentId);
 
@@ -98,6 +99,7 @@ class OrderTailorActionModal extends Component
 
     public function bulkUpdateTailorAssignmentStatus($status): void
     {
+        abort_unless(auth()->user()?->can('tailoring job completion.edit'), 403);
         $allowedStatuses = array_keys($this->tailorStatusOptions);
         if (! in_array($status, $allowedStatuses, true)) {
             $this->dispatch('error', ['message' => 'Invalid tailor status selected for bulk update']);

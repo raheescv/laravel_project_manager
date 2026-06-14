@@ -32,6 +32,7 @@ class Table extends Component
 
     public function delete()
     {
+        // TODO(C7): unmapped (candidate: 'tenant detail.delete') — 'tenant detail' is commented out in config/permissions.php; no verbatim catalog entry
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {

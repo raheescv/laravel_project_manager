@@ -60,6 +60,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('sales return.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -122,6 +123,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('sales return.export'), 403);
         $count = SaleReturn::query()
             ->when($this->branch_id ?? '', function ($query, $value) {
                 return $query->where('branch_id', $value);

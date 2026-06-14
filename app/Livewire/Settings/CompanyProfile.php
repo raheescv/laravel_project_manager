@@ -48,6 +48,7 @@ class CompanyProfile extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         $this->validate();
         try {
             if ($this->logo) {

@@ -108,6 +108,7 @@ class ViewItems extends Component
 
     public function removeItem($index)
     {
+        // TODO(C7): review save authz — line-item removal inside the POS create/edit flow; no precise catalog permission (candidate: 'sale.delete item after completed')
         try {
             if (isset($this->items[$index]['id'])) {
                 $response = (new DeleteAction())->execute($this->items[$index]['id']);

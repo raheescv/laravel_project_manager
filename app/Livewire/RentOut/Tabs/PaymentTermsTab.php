@@ -132,6 +132,7 @@ class PaymentTermsTab extends Component
 
     public function deletePaymentTerm($id)
     {
+        abort_unless(auth()->user()?->can('rent out payment term.delete'), 403);
         try {
             DB::beginTransaction();
             $response = (new DeleteAction())->execute($id);
@@ -149,6 +150,7 @@ class PaymentTermsTab extends Component
 
     public function deleteSelectedTerms($ids)
     {
+        abort_unless(auth()->user()?->can('rent out payment term.delete'), 403);
         try {
             DB::beginTransaction();
             foreach ($ids as $id) {

@@ -26,6 +26,7 @@ class ProductConfiguration extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type ?? '']);
         Configuration::updateOrCreate(['key' => 'barcode_prefix'], ['value' => $this->barcode_prefix ?? '']);
         Configuration::updateOrCreate(['key' => 'sync_barcode_to_code'], ['value' => $this->sync_barcode_to_code ?? 'no']);

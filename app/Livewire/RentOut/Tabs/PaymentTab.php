@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Enums\RentOut\AgreementType;
 use App\Models\Journal;
 use App\Models\RentOutTransaction;
 use Livewire\Attributes\On;
@@ -70,6 +71,9 @@ class PaymentTab extends Component
 
     public function deleteSelected()
     {
+        // No dedicated payment-delete permission in config/permissions.php; gate destructive payment removal with the agreement 'payment' capability.
+        $rentOut = \App\Models\RentOut::find($this->rentOutId);
+        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
         if (empty($this->selectedIds)) {
             return;
         }
@@ -93,6 +97,9 @@ class PaymentTab extends Component
 
     public function deletePayment($id)
     {
+        // No dedicated payment-delete permission in config/permissions.php; gate destructive payment removal with the agreement 'payment' capability.
+        $rentOut = \App\Models\RentOut::find($this->rentOutId);
+        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
         $payment = RentOutTransaction::where('id', $id)
             ->where('rent_out_id', $this->rentOutId)
             ->first();

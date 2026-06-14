@@ -97,6 +97,7 @@ class Page extends Component
 
     public function save($close = false)
     {
+        abort_unless(auth()->user()?->can($this->table_id ? 'property.edit' : 'property.create'), 403);
         $this->validate();
         try {
             $data = $this->formData;

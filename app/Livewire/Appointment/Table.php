@@ -49,6 +49,7 @@ class Table extends Component
 
     public function delete()
     {
+        abort_unless(auth()->user()?->can('appointment.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -89,6 +90,7 @@ class Table extends Component
 
     public function export()
     {
+        abort_unless(auth()->user()?->can('appointment.export'), 403);
         $count = $this->getBaseQuery()->count();
         if ($count > 2000) {
             ExportSaleJob::dispatch(Auth::user());

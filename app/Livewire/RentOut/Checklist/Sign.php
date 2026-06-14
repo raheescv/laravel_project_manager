@@ -31,6 +31,7 @@ class Sign extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('rent out checklist.edit'), 403);
         $this->validate([
             'signature' => 'required|string',
         ]);

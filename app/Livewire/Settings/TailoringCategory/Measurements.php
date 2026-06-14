@@ -107,6 +107,7 @@ class Measurements extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->editingMeasurement ? 'tailoring category.edit' : 'tailoring category.create'), 403);
         $this->validate([
             'field_key' => 'required',
             'label' => 'required',
@@ -141,6 +142,7 @@ class Measurements extends Component
 
     public function delete($id)
     {
+        abort_unless(auth()->user()?->can('tailoring category.delete'), 403);
         TailoringCategoryMeasurement::find($id)->delete();
         $this->loadMeasurements();
         $this->dispatch('success', ['message' => 'Measurement deleted successfully']);

@@ -99,6 +99,7 @@ class Page extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->grn_id ? 'grn.edit' : 'grn.create'), 403);
         try {
             DB::beginTransaction();
             $data = [

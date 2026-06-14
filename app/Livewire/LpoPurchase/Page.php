@@ -121,6 +121,7 @@ class Page extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can($this->purchase_id ? 'lpo-purchase.edit' : 'lpo-purchase.create'), 403);
         try {
             DB::beginTransaction();
             $data = [
