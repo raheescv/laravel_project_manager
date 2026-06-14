@@ -8,11 +8,13 @@ use App\Http\Controllers\Api\V1\ColorController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DaySessionController;
+use App\Http\Controllers\Api\V1\EmployeeController;
+use App\Http\Controllers\Api\V1\PaymentMethodController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SizeController;
-use App\Http\Middleware\EnsureMobileAdmin;
+use App\Http\Middleware\EnsureMobilePermission;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Support\Facades\Route;
 
@@ -28,9 +30,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->group(function () {
-    // Mobile routes (PIN-authenticated staff / POS app)
-    Route::middleware(IdentifyTenant::class)->group(function () {
-        
+
+    // Public catalog API — intentionally open (no login), but a tenant MUST resolve.
+    // ":required" makes IdentifyTenant abort when no tenant is identified, so these
+    // endpoints can never fall through to the un-scoped "all tenants" query.
+    Route::middleware(IdentifyTenant::class.':required')->group(function () {
+
         // Product routes
         Route::prefix('products')->group(function () {
             Route::get('/', [ProductController::class, 'index'])->name('api.v1.products.index');
@@ -62,7 +67,12 @@ Route::prefix('v1')->group(function () {
         Route::prefix('branches')->group(function () {
             Route::get('/', [BranchController::class, 'index'])->name('api.v1.branches.index');
         });
-        // Auth routes (public)
+    });
+
+    // Mobile routes (PIN-authenticated staff / POS app)
+    Route::middleware(IdentifyTenant::class)->group(function () {
+
+        // Auth routes (public) — one endpoint handles PIN and username/password.
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('api.v1.login');
 
         // Authenticated routes (admin + employee)
@@ -82,11 +92,24 @@ Route::prefix('v1')->group(function () {
                 Route::get('/', [CustomerController::class, 'index'])->name('api.v1.customers.index');
             });
 
-            // Admin routes
-            Route::prefix('admin')->middleware(EnsureMobileAdmin::class)->group(function () {
-                Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.v1.admin.dashboard');
-                Route::get('/reports', [ReportController::class, 'index'])->name('api.v1.admin.reports');
-                Route::post('/day-status', [DaySessionController::class, 'toggle'])->name('api.v1.admin.day-status');
+            // Employees (stylists) — for assigning a stylist to a sale / line.
+            Route::get('employees', [EmployeeController::class, 'index'])->name('api.v1.employees.index');
+
+            // Payment methods (for the custom-payment selector)
+            Route::get('payment-methods', [PaymentMethodController::class, 'index'])->name('api.v1.payment-methods.index');
+
+            // Admin routes — access is permission-driven (Spatie), not the is_admin
+            // flag, so any staff role granted the permission can reach them.
+            Route::prefix('admin')->group(function () {
+                Route::get('/dashboard', [DashboardController::class, 'index'])
+                    ->middleware(EnsureMobilePermission::class.':report.sales overview')
+                    ->name('api.v1.admin.dashboard');
+                Route::get('/reports', [ReportController::class, 'index'])
+                    ->middleware(EnsureMobilePermission::class.':report.sales overview')
+                    ->name('api.v1.admin.reports');
+                Route::post('/day-status', [DaySessionController::class, 'toggle'])
+                    ->middleware(EnsureMobilePermission::class.':day session.create')
+                    ->name('api.v1.admin.day-status');
             });
         });
     });

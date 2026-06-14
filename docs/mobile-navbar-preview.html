@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Invo · Bottom Nav — Premium Glass Directions</title>
+<style>
+  :root {
+    --canvas:#F6F1E8; --ink:#16312A; --sub:#5D7269; --card:#FFFFFF;
+    --primary:#15806C; --primaryDark:#0E5648; --accent:#C9A24B; --accent2:#E4C878;
+    --nav:#0E5648; --navHi:#1A6B58; --hair:#F0ECE1;
+  }
+  body.dark {
+    --canvas:#11201F; --ink:#F3F1EA; --sub:#A9C2BA; --card:#15302A;
+    --primary:#1F8F86; --primaryDark:#0C3B3A; --accent:#5FE6C4; --accent2:#9CF1DC;
+    --nav:#0A1B17; --navHi:#10312B; --hair:#1d3a33;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Manrope,sans-serif;
+    background:#2a2622; color:#fff; min-height:100vh; padding:28px 16px 56px;
+    display:flex; flex-direction:column; align-items:center; gap:22px;
+    transition:background .3s;
+  }
+  body.dark { background:#070d0c; }
+  h1 { font-family:"Marcellus","Times New Roman",serif; font-weight:400; font-size:26px; letter-spacing:.3px; }
+  .muted { color:#b9b3a8; font-size:13px; }
+  body.dark .muted { color:#8aa39b; }
+
+  .controls { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; align-items:center; }
+  .seg { display:flex; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); border-radius:14px; padding:4px; gap:3px; }
+  .seg button {
+    border:0; background:transparent; color:#cfc8bc; font:inherit; font-size:13px; font-weight:600;
+    padding:8px 14px; border-radius:11px; cursor:pointer; transition:.2s; letter-spacing:.2px;
+  }
+  .seg button.on { background:linear-gradient(135deg,#D9B25E,#C9A24B); color:#3a2c10; box-shadow:0 6px 16px -8px rgba(201,162,75,.9); }
+  .toggle { display:flex; align-items:center; gap:9px; font-size:13px; color:#cfc8bc; }
+  .switch { width:46px; height:26px; border-radius:20px; background:rgba(255,255,255,.18); position:relative; cursor:pointer; transition:.25s; }
+  .switch::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:.25s; box-shadow:0 2px 5px rgba(0,0,0,.4); }
+  body.dark .switch { background:#1F8F86; }
+  body.dark .switch::after { transform:translateX(20px); }
+
+  .phone {
+    width:380px; max-width:94vw; height:720px; border-radius:46px; background:var(--canvas);
+    position:relative; overflow:hidden; box-shadow:0 40px 90px -30px rgba(0,0,0,.7), 0 0 0 9px #1c1a17, 0 0 0 10px #34302a;
+    transition:background .3s;
+  }
+  .status { position:absolute; top:0; left:0; right:0; height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 30px; font-size:13px; font-weight:600; color:var(--ink); opacity:.85; z-index:5; }
+  .notch { position:absolute; top:11px; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#1c1a17; border-radius:16px; z-index:6; }
+
+  .scr-head { padding:64px 22px 14px; }
+  .scr-head .hi { font-family:"Marcellus",serif; font-size:25px; color:var(--ink); }
+  .scr-head .sub { color:var(--sub); font-size:13px; margin-top:3px; font-weight:500; }
+
+  .list { padding:6px 18px; display:flex; flex-direction:column; gap:11px; }
+  .row { display:flex; align-items:center; gap:13px; background:var(--card); border-radius:18px; padding:15px 16px; box-shadow:0 10px 22px -18px rgba(11,40,33,.5); }
+  .row .ic { width:42px; height:42px; border-radius:13px; background:color-mix(in srgb, var(--primary) 14%, transparent); display:flex; align-items:center; justify-content:center; color:var(--primary); }
+  .row .tx b { display:block; color:var(--ink); font-size:14.5px; font-weight:600; }
+  .row .tx span { color:var(--sub); font-size:12px; }
+  .row .chev { margin-left:auto; color:var(--sub); opacity:.5; }
+
+  svg { display:block; }
+
+  /* ---------- FAB ---------- */
+  .fab {
+    position:absolute; right:18px; bottom:118px; z-index:20;
+    display:flex; align-items:center; gap:9px; padding:14px 20px; border-radius:20px;
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    color:var(--primaryDark); font-weight:800; font-size:14.5px; letter-spacing:.2px;
+    box-shadow:0 16px 30px -12px color-mix(in srgb,var(--accent) 75%, transparent), inset 0 1px 0 rgba(255,255,255,.45);
+  }
+
+  /* ---------- NAV base ---------- */
+  .navwrap { position:absolute; left:0; right:0; bottom:0; padding:0 16px 26px; z-index:18; }
+  .nav {
+    position:relative; height:70px; border-radius:28px; display:flex; align-items:stretch;
+    padding:9px 10px; isolation:isolate;
+  }
+  .glass {
+    background:linear-gradient(180deg, color-mix(in srgb,var(--navHi) 82%, transparent), color-mix(in srgb,var(--nav) 88%, transparent));
+    -webkit-backdrop-filter:blur(20px) saturate(140%); backdrop-filter:blur(20px) saturate(140%);
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 22px 44px -18px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -10px 24px -16px rgba(0,0,0,.5);
+  }
+  .tab { flex:1; position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; color:rgba(255,255,255,.55); transition:.28s; }
+  .tab .lbl { font-size:9.5px; font-weight:700; letter-spacing:.4px; transition:.28s; }
+  .tab.act { color:var(--accent); }
+
+  /* A — Liquid glass capsule that slides */
+  .nav.A .pill {
+    position:absolute; top:9px; bottom:9px; z-index:1; border-radius:20px;
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    box-shadow:0 10px 22px -8px color-mix(in srgb,var(--accent) 85%, transparent), inset 0 1px 0 rgba(255,255,255,.5);
+    transition:transform .42s cubic-bezier(.34,1.4,.5,1), width .42s cubic-bezier(.34,1.4,.5,1);
+  }
+  .nav.A .tab.act { color:var(--primaryDark); }
+  .nav.A .tab.act .lbl { font-weight:800; }
+
+  /* B — Gold dot indicator above icon */
+  .nav.B .pill { display:none; }
+  .nav.B .tab::before { content:""; position:absolute; top:5px; width:6px; height:6px; border-radius:50%; background:transparent; transition:.28s; }
+  .nav.B .tab.act::before { background:var(--accent); box-shadow:0 0 12px 2px color-mix(in srgb,var(--accent) 80%, transparent); }
+  .nav.B .tab.act { transform:translateY(-2px); }
+
+  /* C — Aurora underline that slides + glow */
+  .nav.C .pill {
+    position:absolute; bottom:11px; z-index:1; height:4px; border-radius:4px;
+    background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),var(--accent),transparent);
+    box-shadow:0 0 16px 3px color-mix(in srgb,var(--accent) 70%, transparent);
+    transition:transform .42s cubic-bezier(.34,1.3,.5,1), width .42s cubic-bezier(.34,1.3,.5,1);
+  }
+  .nav.C .tab.act { transform:translateY(-3px); }
+  .nav.C .tab.act .ico { filter:drop-shadow(0 6px 12px color-mix(in srgb,var(--accent) 60%, transparent)); }
+
+  /* D — Frosted gold "gem" tile that scales up */
+  .nav.D .pill {
+    position:absolute; top:8px; bottom:8px; z-index:1; border-radius:19px;
+    background:color-mix(in srgb,var(--accent) 22%, transparent);
+    border:1px solid color-mix(in srgb,var(--accent) 55%, transparent);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 8px 20px -10px color-mix(in srgb,var(--accent) 70%, transparent);
+    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+    transition:transform .42s cubic-bezier(.34,1.4,.5,1), width .42s cubic-bezier(.34,1.4,.5,1);
+  }
+  .nav.D .tab.act .ico { transform:scale(1.08); }
+
+  .ico { transition:.28s; }
+  .name { font-size:12px; color:#b9b3a8; letter-spacing:.3px; }
+  body.dark .name { color:#8aa39b; }
+  .dirname { font-size:15px; color:#fff; font-weight:600; min-width:150px; text-align:center; }
+</style>
+</head>
+<body>
+  <h1>Invo · floating nav</h1>
+  <div class="muted">premium glass directions — tap a tab to feel the motion</div>
+
+  <div class="controls">
+    <div class="seg" id="dirs">
+      <button data-d="A" class="on">A · Liquid</button>
+      <button data-d="B">B · Halo dot</button>
+      <button data-d="C">C · Aurora</button>
+      <button data-d="D">D · Gold gem</button>
+    </div>
+    <label class="toggle">Light<span class="switch" id="tg"></span>Dark</label>
+  </div>
+  <div class="dirname" id="dirname">A · Liquid glass dock</div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="status"><span>9:41</span><span>Invo</span></div>
+
+    <div class="scr-head">
+      <div class="hi">Good evening</div>
+      <div class="sub">Downtown · Day open</div>
+    </div>
+    <div class="list" id="list"></div>
+
+    <div class="fab">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      New Sale
+    </div>
+
+    <div class="navwrap">
+      <div class="nav glass A" id="nav">
+        <span class="pill" id="pill"></span>
+      </div>
+    </div>
+  </div>
+
+<script>
+const tabs = [
+  { name:'Home',     icon:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>' },
+  { name:'Sales',    icon:'<path d="M6 2h9l3 3v17l-2.2-1.4L13.5 22 11 20.6 8.5 22 6 20.6V2z"/><path d="M9 8h6M9 12h6"/>' },
+  { name:'Reports',  icon:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>' },
+  { name:'Settings', icon:'<circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.12-1.3l2-1.6-2-3.4-2.3 1a7 7 0 0 0-2.3-1.3L13.6 2h-3.2L10 5.1a7 7 0 0 0-2.3 1.3l-2.3-1-2 3.4 2 1.6A7 7 0 0 0 5 12a7 7 0 0 0 .12 1.3l-2 1.6 2 3.4 2.3-1a7 7 0 0 0 2.3 1.3L10.4 22h3.2l.4-3.1a7 7 0 0 0 2.3-1.3l2.3 1 2-3.4-2-1.6A7 7 0 0 0 19 12z"/>' }
+];
+const dirNames = { A:'A · Liquid glass dock', B:'B · Halo dot', C:'C · Aurora underline', D:'D · Gold gem tile' };
+const listData = [
+  ['Receipt & invoice','Customisable templates','M6 2h12v20l-3-2-3 2-3-2-3 2V2z'],
+  ['Staff & permissions','6 active members','M16 11a4 4 0 1 0-8 0 M3 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2'],
+  ['Service catalogue','42 services','M4 6h16M4 12h16M4 18h10'],
+  ['Payment methods','Cash · Card · UPI','M3 7h18v10H3z M3 11h18']
+];
+
+const nav = document.getElementById('nav');
+const pill = document.getElementById('pill');
+let active = 0, dir = 'A';
+
+function svg(p){ return '<svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>'; }
+
+function buildList(){
+  document.getElementById('list').innerHTML = listData.map(d=>`
+    <div class="row">
+      <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d[2]}"/></svg></div>
+      <div class="tx"><b>${d[0]}</b><span>${d[1]}</span></div>
+      <div class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
+    </div>`).join('');
+}
+
+function buildTabs(){
+  nav.querySelectorAll('.tab').forEach(t=>t.remove());
+  tabs.forEach((t,i)=>{
+    const el = document.createElement('div');
+    el.className = 'tab'+(i===active?' act':'');
+    el.innerHTML = svg(t.icon)+'<span class="lbl">'+t.name+'</span>';
+    el.onclick = ()=>{ active=i; sync(); };
+    nav.appendChild(el);
+  });
+}
+
+function placePill(){
+  const tabsEls = nav.querySelectorAll('.tab');
+  const el = tabsEls[active]; if(!el) return;
+  const navRect = nav.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  const left = r.left - navRect.left;
+  if(dir==='C'){
+    const w = 26;
+    pill.style.width = w+'px';
+    pill.style.transform = `translateX(${left + r.width/2 - w/2}px)`;
+  } else {
+    const inset = 4;
+    pill.style.width = (r.width - inset*2)+'px';
+    pill.style.transform = `translateX(${left + inset}px)`;
+  }
+}
+
+function sync(){
+  nav.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('act', i===active));
+  placePill();
+}
+
+document.getElementById('dirs').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  dir = b.dataset.d;
+  document.querySelectorAll('#dirs button').forEach(x=>x.classList.toggle('on', x===b));
+  nav.className = 'nav glass '+dir;
+  document.getElementById('dirname').textContent = dirNames[dir];
+  requestAnimationFrame(placePill);
+});
+
+document.getElementById('tg').parentElement.addEventListener('click', ()=>{
+  document.body.classList.toggle('dark');
+  requestAnimationFrame(placePill);
+});
+
+buildList(); buildTabs(); requestAnimationFrame(placePill);
+window.addEventListener('resize', placePill);
+</script>
+</body>
+</html>

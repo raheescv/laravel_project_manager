@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:radial-gradient(1100px 600px at 85% -12%, #cfe6dd 0%, transparent 58%), linear-gradient(160deg,#f4f0e7,#e7efe9); font-family:'Manrope',system-ui,sans-serif; color:#16312a; padding:46px 34px 80px;">
+
+  <div style="max-width:1240px; margin:0 auto 30px;">
+    <div style="font-size:12px; font-weight:800; letter-spacing:.24em; text-transform:uppercase; color:#0f7a66;">Astra Salon &middot; Admin &amp; Reports</div>
+    <div style="font-family:'Marcellus',serif; font-size:32px; margin-top:9px; letter-spacing:-.01em;">The owner's view</div>
+    <div style="font-size:14px; color:#5d7269; margin-top:7px; max-width:700px; line-height:1.5;">A calm bento dashboard, premium reports (revenue trend, category &amp; stylist breakdowns, cumulative tables), and Settings with switchable colour presets &mdash; all in the emerald, cream and gold system.</div>
+  </div>
+
+  <div style="max-width:1240px; margin:0 auto; display:flex; gap:30px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+
+    <!-- ============ DASHBOARD ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">01 &middot; DASHBOARD</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 18px; border-radius:0 0 28px 28px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 20px 0;">
+              <div><div style="font-size:10px; font-weight:700; letter-spacing:.18em; color:#e0c074;">WELCOME BACK</div><div style="font-family:'Marcellus',serif; font-size:23px; color:#fff; margin-top:2px;">Dashboard</div></div>
+              <div style="width:40px; height:40px; border-radius:50%; padding:2px; background:linear-gradient(150deg,#e6c879,#c9a24b);"><div style="width:100%; height:100%; border-radius:50%; background:#0e5347; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Marcellus',serif; font-size:16px;">A</div></div>
+            </div>
+            <div style="display:flex; gap:7px; padding:14px 20px 0;">
+              <span style="padding:7px 13px; border-radius:18px; background:rgba(255,255,255,.16); color:#fff; font-size:11.5px; font-weight:700;">This week</span>
+              <span style="padding:7px 13px; border-radius:18px; background:rgba(255,255,255,.07); color:rgba(255,255,255,.7); font-size:11.5px; font-weight:600;">Month</span>
+              <span style="padding:7px 13px; border-radius:18px; background:rgba(255,255,255,.07); color:rgba(255,255,255,.7); font-size:11.5px; font-weight:600;">All branches</span>
+            </div>
+          </div>
+
+          <div style="padding:14px 16px 0; display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+              <div style="background:#fff; border-radius:16px; padding:13px 14px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+                <div style="display:flex; align-items:center; justify-content:space-between;"><span style="width:30px; height:30px; border-radius:9px; background:#e6f0ec; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa {{ k.icon }}"></i></span><span style="font-size:11px; font-weight:800; color:#1f9d63;"><i class="fa fa-arrow-up" style="font-size:9px;"></i> {{ k.delta }}</span></div>
+                <div style="font-family:'Marcellus',serif; font-size:22px; margin-top:10px;">{{ k.value }}</div>
+                <div style="font-size:10.5px; color:#a8b3ab; font-weight:600;">{{ k.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin:13px 16px 0; padding:14px 15px; background:#fff; border-radius:18px; box-shadow:0 9px 22px -15px rgba(11,40,33,.5);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;"><div style="font-size:12.5px; font-weight:700;">Revenue trend</div><span style="font-size:11px; font-weight:800; color:#1f9d63;">+18.2%</span></div>
+            <svg viewBox="0 0 300 80" preserveAspectRatio="none" style="width:100%; height:80px;">
+              <defs><linearGradient id="rev" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#15806c" stop-opacity="0.4"></stop><stop offset="100%" stop-color="#15806c" stop-opacity="0"></stop></linearGradient></defs>
+              <path d="M0,62 C30,55 55,38 85,42 C115,46 135,22 165,24 C200,26 220,13 250,11 C275,10 290,7 300,6 L300,80 L0,80 Z" fill="url(#rev)"></path>
+              <path d="M0,62 C30,55 55,38 85,42 C115,46 135,22 165,24 C200,26 220,13 250,11 C275,10 290,7 300,6" fill="none" stroke="#0e5648" stroke-width="2.5" stroke-linecap="round"></path>
+              <circle cx="250" cy="11" r="4" fill="#c9a24b" stroke="#fff" stroke-width="2"></circle>
+            </svg>
+          </div>
+
+          <div style="margin:13px 16px 0; padding:14px 15px; background:#fff; border-radius:18px; box-shadow:0 9px 22px -15px rgba(11,40,33,.5);">
+            <div style="font-size:12.5px; font-weight:700; margin-bottom:11px;">Top stylists</div>
+            <div style="display:flex; flex-direction:column; gap:11px;">
+              <sc-for list="{{ top }}" as="t" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="width:30px; height:30px; border-radius:50%; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">{{ t.init }}</span>
+                  <div style="flex:1; min-width:0;"><div style="font-size:12px; font-weight:700;">{{ t.name }}</div><div style="height:5px; border-radius:3px; background:#eef0ea; margin-top:5px; overflow:hidden;"><div style="height:100%; width:{{ t.pct }}; border-radius:3px; background:linear-gradient(90deg,#15806c,#c9a24b);"></div></div></div>
+                  <span style="font-family:'Marcellus',serif; font-size:14px; color:#0e5648;">{{ t.rev }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- bottom nav -->
+          <div style="position:absolute; left:16px; right:16px; bottom:15px; display:flex; align-items:center; justify-content:space-around; padding:11px 10px; background:#0b342d; border-radius:22px; box-shadow:0 18px 36px -14px rgba(11,40,33,.6);">
+            <span style="display:flex; flex-direction:column; align-items:center; gap:3px; color:#e0c074; font-size:16px;"><i class="fa fa-th-large"></i><span style="font-size:8.5px; font-weight:700;">Home</span></span>
+            <span style="display:flex; flex-direction:column; align-items:center; gap:3px; color:rgba(255,255,255,.55); font-size:16px;"><i class="fa fa-list-alt"></i><span style="font-size:8.5px; font-weight:600;">Sales</span></span>
+            <span style="display:flex; flex-direction:column; align-items:center; gap:3px; color:rgba(255,255,255,.55); font-size:16px;"><i class="fa fa-bar-chart"></i><span style="font-size:8.5px; font-weight:600;">Reports</span></span>
+            <span style="display:flex; flex-direction:column; align-items:center; gap:3px; color:rgba(255,255,255,.55); font-size:16px;"><i class="fa fa-cog"></i><span style="font-size:8.5px; font-weight:600;">Settings</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SALES REPORT ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">02 &middot; SALES REPORT</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 16px; border-radius:0 0 26px 26px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 18px 0;">
+              <div style="display:flex; align-items:center; gap:11px;"><div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-angle-left"></i></div><div style="font-family:'Marcellus',serif; font-size:20px; color:#fff;">Sales Report</div></div>
+              <div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#e0c074; font-size:14px;"><i class="fa fa-download"></i></div>
+            </div>
+          </div>
+
+          <div style="padding:13px 16px 0; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+            <div style="background:#fff; border-radius:13px; padding:10px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-family:'Marcellus',serif; font-size:16px;">$8.4k</div><div style="font-size:9px; color:#a8b3ab; font-weight:700;">GROSS</div></div>
+            <div style="background:#fff; border-radius:13px; padding:10px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-family:'Marcellus',serif; font-size:16px; color:#bf953f;">$612</div><div style="font-size:9px; color:#a8b3ab; font-weight:700;">DISCOUNTS</div></div>
+            <div style="background:#fff; border-radius:13px; padding:10px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-family:'Marcellus',serif; font-size:16px; color:#0e5648;">$7.8k</div><div style="font-size:9px; color:#a8b3ab; font-weight:700;">NET</div></div>
+          </div>
+
+          <div style="margin:12px 16px 0; padding:14px 15px; background:#fff; border-radius:18px; box-shadow:0 9px 22px -15px rgba(11,40,33,.5); display:flex; align-items:center; gap:14px;">
+            <div style="position:relative; width:104px; height:104px; flex-shrink:0;">
+              <svg viewBox="0 0 120 120" style="width:104px; height:104px; transform:rotate(-90deg);">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#eef0ea" stroke-width="14"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#15806c" stroke-width="14" stroke-linecap="round" stroke-dasharray="130.7 196" stroke-dashoffset="0"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#c9a24b" stroke-width="14" stroke-linecap="round" stroke-dasharray="98 228.7" stroke-dashoffset="-130.7"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#5f8c72" stroke-width="14" stroke-linecap="round" stroke-dasharray="58.8 267.9" stroke-dashoffset="-228.7"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#2a8a86" stroke-width="14" stroke-linecap="round" stroke-dasharray="39.2 287.5" stroke-dashoffset="-287.5"></circle>
+              </svg>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;"><span style="font-family:'Marcellus',serif; font-size:17px;">$8.4k</span><span style="font-size:8.5px; color:#a8b3ab; font-weight:700;">BY CATEGORY</span></div>
+            </div>
+            <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; align-items:center; gap:7px; font-size:11px; font-weight:600;"><span style="width:9px; height:9px; border-radius:3px; background:#15806c;"></span>Hair<span style="margin-left:auto; font-weight:800;">40%</span></div>
+              <div style="display:flex; align-items:center; gap:7px; font-size:11px; font-weight:600;"><span style="width:9px; height:9px; border-radius:3px; background:#c9a24b;"></span>Color<span style="margin-left:auto; font-weight:800;">30%</span></div>
+              <div style="display:flex; align-items:center; gap:7px; font-size:11px; font-weight:600;"><span style="width:9px; height:9px; border-radius:3px; background:#5f8c72;"></span>Spa<span style="margin-left:auto; font-weight:800;">18%</span></div>
+              <div style="display:flex; align-items:center; gap:7px; font-size:11px; font-weight:600;"><span style="width:9px; height:9px; border-radius:3px; background:#2a8a86;"></span>Nails<span style="margin-left:auto; font-weight:800;">12%</span></div>
+            </div>
+          </div>
+
+          <div style="margin:12px 16px 0; padding:14px 15px 12px; background:#fff; border-radius:18px; box-shadow:0 9px 22px -15px rgba(11,40,33,.5);">
+            <div style="font-size:11px; font-weight:700; letter-spacing:.04em; color:#7c8c84; text-transform:uppercase; padding-bottom:9px; border-bottom:1px solid #f0ece1; display:grid; grid-template-columns:1.6fr 1fr 1fr; ">
+              <span>Stylist</span><span style="text-align:right;">Sales</span><span style="text-align:right;">Revenue</span>
+            </div>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+              <div style="display:grid; grid-template-columns:1.6fr 1fr 1fr; padding:9px 0; font-size:12px; align-items:center; border-bottom:1px solid #f5f1e8;">
+                <span style="display:flex; align-items:center; gap:8px; font-weight:600;"><span style="width:22px; height:22px; border-radius:50%; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:700;">{{ r.init }}</span>{{ r.name }}</span>
+                <span style="text-align:right; color:#7c8c84;">{{ r.sales }}</span>
+                <span style="text-align:right; font-weight:800;">{{ r.rev }}</span>
+              </div>
+            </sc-for>
+            <div style="display:grid; grid-template-columns:1.6fr 1fr 1fr; padding:10px 0 0; font-size:12.5px; align-items:center;">
+              <span style="font-weight:800;">Grand total</span><span style="text-align:right; font-weight:800;">312</span><span style="text-align:right; font-family:'Marcellus',serif; font-size:15px; color:#0e5648;">$8,420</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS + COLOR PRESETS ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">03 &middot; SETTINGS &middot; THEME PRESETS</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 16px; border-radius:0 0 26px 26px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:8px 18px 0;"><div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-angle-left"></i></div><div style="font-family:'Marcellus',serif; font-size:21px; color:#fff;">Settings</div></div>
+          </div>
+
+          <div style="padding:14px 16px 0;">
+            <div style="display:flex; align-items:center; gap:9px; margin-bottom:11px;"><span style="width:26px; height:26px; border-radius:8px; background:#e6f0ec; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-paint-brush"></i></span><div><div style="font-size:12.5px; font-weight:800;">Colour preset</div><div style="font-size:10px; color:#a8b3ab; font-weight:600;">Re-skins the whole app instantly</div></div></div>
+
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <sc-for list="{{ presets }}" as="p" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; gap:12px; padding:11px 12px; background:#fff; border-radius:15px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5); border:1.5px solid {{ p.ring }};">
+                  <div style="display:flex; flex-shrink:0;">
+                    <span style="width:24px; height:24px; border-radius:50%; background:{{ p.c0 }}; border:2px solid #fff;"></span>
+                    <span style="width:24px; height:24px; border-radius:50%; background:{{ p.c1 }}; border:2px solid #fff; margin-left:-9px;"></span>
+                    <span style="width:24px; height:24px; border-radius:50%; background:{{ p.c2 }}; border:2px solid #fff; margin-left:-9px;"></span>
+                    <span style="width:24px; height:24px; border-radius:50%; background:{{ p.c3 }}; border:2px solid #fff; margin-left:-9px;"></span>
+                  </div>
+                  <span style="flex:1; font-size:13px; font-weight:700;">{{ p.name }}</span>
+                  <span style="{{ p.checkStyle }}"><i class="fa fa-check"></i></span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="margin-top:16px; display:flex; flex-direction:column; gap:1px; background:#eee9dd; border-radius:15px; overflow:hidden; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+              <div style="display:flex; align-items:center; gap:11px; padding:13px 14px; background:#fff;"><span style="width:28px; height:28px; border-radius:8px; background:#eef5f1; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-building-o"></i></span><span style="flex:1; font-size:12.5px; font-weight:700;">Branch &amp; tax settings</span><i class="fa fa-angle-right" style="color:#c2cbc4;"></i></div>
+              <div style="display:flex; align-items:center; gap:11px; padding:13px 14px; background:#fff;"><span style="width:28px; height:28px; border-radius:8px; background:#eef5f1; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-file-text-o"></i></span><span style="flex:1; font-size:12.5px; font-weight:700;">Receipt &amp; invoice</span><i class="fa fa-angle-right" style="color:#c2cbc4;"></i></div>
+              <div style="display:flex; align-items:center; gap:11px; padding:13px 14px; background:#fff;"><span style="width:28px; height:28px; border-radius:8px; background:#eef5f1; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-users"></i></span><span style="flex:1; font-size:12.5px; font-weight:700;">Staff &amp; permissions</span><i class="fa fa-angle-right" style="color:#c2cbc4;"></i></div>
+            </div>
+
+            <div style="margin-top:11px; display:flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:14px; background:#fff; box-shadow:0 8px 20px -15px rgba(11,40,33,.5); color:#d4546a; font-size:12.5px; font-weight:700;"><i class="fa fa-sign-out"></i> Log out</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ PROFILE ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">04 &middot; PROFILE</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="position:relative; background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 26px; border-radius:0 0 30px 30px; overflow:hidden;">
+            <div style="position:absolute; width:200px; height:200px; right:-60px; top:-60px; border-radius:50%; background:radial-gradient(circle, rgba(224,192,116,.35), transparent 70%);"></div>
+            <div style="position:relative; display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="position:relative; display:flex; align-items:center; justify-content:space-between; padding:8px 18px 0;"><div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-angle-left"></i></div><div style="font-family:'Marcellus',serif; font-size:18px; color:#fff;">My Profile</div><div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#e0c074; font-size:13px;"><i class="fa fa-pencil"></i></div></div>
+            <div style="position:relative; display:flex; flex-direction:column; align-items:center; margin-top:14px;">
+              <div style="width:78px; height:78px; border-radius:50%; padding:2.5px; background:linear-gradient(150deg,#e6c879,#c9a24b);"><div style="width:100%; height:100%; border-radius:50%; background:#0e5347; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Marcellus',serif; font-size:32px;">M</div></div>
+              <div style="font-family:'Marcellus',serif; font-size:23px; color:#fff; margin-top:11px;">Maya Chen</div>
+              <div style="display:flex; align-items:center; gap:7px; margin-top:5px;"><span style="font-size:11.5px; font-weight:600; color:rgba(255,255,255,.8);">Senior Stylist</span><span style="width:3px; height:3px; border-radius:50%; background:rgba(255,255,255,.5);"></span><span style="display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#7be0a8;"><span style="width:6px; height:6px; border-radius:50%; background:#7be0a8;"></span>Active</span></div>
+            </div>
+          </div>
+
+          <div style="padding:14px 16px 0; display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px;">
+            <div style="background:#fff; border-radius:14px; padding:11px 10px; text-align:center; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-family:'Marcellus',serif; font-size:16px;">$480</div><div style="font-size:9px; color:#a8b3ab; font-weight:700; margin-top:1px;">TODAY</div></div>
+            <div style="background:#fff; border-radius:14px; padding:11px 10px; text-align:center; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-family:'Marcellus',serif; font-size:16px;">$2,540</div><div style="font-size:9px; color:#a8b3ab; font-weight:700; margin-top:1px;">THIS MONTH</div></div>
+            <div style="background:#fff; border-radius:14px; padding:11px 10px; text-align:center; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-family:'Marcellus',serif; font-size:16px;">312</div><div style="font-size:9px; color:#a8b3ab; font-weight:700; margin-top:1px;">SERVICES</div></div>
+          </div>
+
+          <div style="margin:13px 16px 0; background:#fff; border-radius:16px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5); overflow:hidden;">
+            <div style="padding:11px 14px 7px; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#0f7a66;">Personal</div>
+            <div style="display:flex; align-items:center; gap:11px; padding:9px 14px; border-top:1px solid #f5f1e8;"><i class="fa fa-phone" style="color:#a8b3ab; width:16px; text-align:center;"></i><span style="flex:1; font-size:12.5px; font-weight:600;">+1 (415) 555&middot;0142</span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:9px 14px; border-top:1px solid #f5f1e8;"><i class="fa fa-envelope-o" style="color:#a8b3ab; width:16px; text-align:center;"></i><span style="flex:1; font-size:12.5px; font-weight:600;">maya@astrasalon<span>.</span>co</span></div>
+            <div style="padding:11px 14px 7px; font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#0f7a66; border-top:1px solid #f5f1e8;">Work</div>
+            <div style="display:flex; align-items:center; gap:11px; padding:9px 14px; border-top:1px solid #f5f1e8;"><i class="fa fa-id-card-o" style="color:#a8b3ab; width:16px; text-align:center;"></i><span style="flex:1; font-size:12.5px; font-weight:600;">Employee ID</span><span style="font-size:12px; font-weight:700; color:#7c8c84;">EMP-014</span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:9px 14px; border-top:1px solid #f5f1e8;"><i class="fa fa-map-marker" style="color:#a8b3ab; width:16px; text-align:center;"></i><span style="flex:1; font-size:12.5px; font-weight:600;">Branch</span><span style="font-size:12px; font-weight:700; color:#7c8c84;">Downtown</span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:9px 14px; border-top:1px solid #f5f1e8;"><i class="fa fa-calendar-o" style="color:#a8b3ab; width:16px; text-align:center;"></i><span style="flex:1; font-size:12.5px; font-weight:600;">Joined</span><span style="font-size:12px; font-weight:700; color:#7c8c84;">Mar 2023</span></div>
+          </div>
+
+          <div style="margin:11px 16px 0; display:flex; align-items:center; gap:11px; padding:13px 14px; background:#fff; border-radius:15px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><span style="width:30px; height:30px; border-radius:9px; background:#eef5f1; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-lock"></i></span><span style="flex:1; font-size:12.5px; font-weight:700;">Password &amp; security</span><i class="fa fa-angle-right" style="color:#c2cbc4;"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CHANGE PASSWORD ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">05 &middot; PASSWORD &amp; SECURITY</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 16px; border-radius:0 0 26px 26px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:8px 18px 0;"><div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-angle-left"></i></div><div style="font-family:'Marcellus',serif; font-size:20px; color:#fff;">Change Password</div></div>
+          </div>
+
+          <div style="padding:16px 18px 0;">
+            <div style="display:flex; align-items:center; gap:11px; padding:12px 13px; background:#eef5f1; border-radius:13px; border:1px solid #d8e7df;"><i class="fa fa-shield" style="color:#15806c; font-size:14px;"></i><span style="font-size:11px; font-weight:600; color:#3f5249; line-height:1.35;">Use at least 8 characters with a number &amp; a symbol.</span></div>
+
+            <div style="margin-top:16px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab;">Current password</div>
+            <div style="margin-top:7px; display:flex; align-items:center; gap:10px; padding:13px 14px; background:#fff; border-radius:14px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><i class="fa fa-lock" style="color:#a8b3ab;"></i><span style="flex:1; font-size:15px; letter-spacing:3px; color:#16312a;">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span><i class="fa fa-eye-slash" style="color:#bf953f;"></i></div>
+
+            <div style="margin-top:14px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab;">New password</div>
+            <div style="margin-top:7px; display:flex; align-items:center; gap:10px; padding:13px 14px; background:#fff; border-radius:14px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><i class="fa fa-lock" style="color:#a8b3ab;"></i><span style="flex:1; font-size:13px; font-weight:600; color:#16312a;">Astra&bull;2026!</span><i class="fa fa-eye" style="color:#bf953f;"></i></div>
+            <div style="display:flex; align-items:center; gap:7px; margin-top:9px;"><span style="flex:1; height:5px; border-radius:3px; background:#1f9d63;"></span><span style="flex:1; height:5px; border-radius:3px; background:#1f9d63;"></span><span style="flex:1; height:5px; border-radius:3px; background:#1f9d63;"></span><span style="flex:1; height:5px; border-radius:3px; background:#e6e0d2;"></span><span style="font-size:10px; font-weight:800; color:#1f9d63;">Strong</span></div>
+
+            <div style="margin-top:14px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab;">Confirm new password</div>
+            <div style="margin-top:7px; display:flex; align-items:center; gap:10px; padding:13px 14px; background:#fff; border-radius:14px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><i class="fa fa-lock" style="color:#a8b3ab;"></i><span style="flex:1; font-size:13px; font-weight:600; color:#16312a;">Astra&bull;2026!</span><i class="fa fa-check-circle" style="color:#1f9d63;"></i></div>
+
+            <div style="margin-top:16px; display:flex; align-items:center; gap:11px; padding:13px 14px; background:#fff; border-radius:14px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><span style="width:30px; height:30px; border-radius:9px; background:#fbf3df; color:#bf953f; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-th"></i></span><div style="flex:1;"><div style="font-size:12.5px; font-weight:700;">Reset MPIN instead</div><div style="font-size:10px; color:#a8b3ab; font-weight:600;">Set a new 4-digit login PIN</div></div><i class="fa fa-angle-right" style="color:#c2cbc4;"></i></div>
+          </div>
+
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; display:flex; gap:11px;">
+            <div style="padding:15px 22px; border-radius:15px; background:#fff; box-shadow:0 8px 18px -12px rgba(11,40,33,.4); color:#16312a; font-size:13.5px; font-weight:700;">Cancel</div>
+            <div style="flex:1; padding:15px; border-radius:15px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; font-size:14px; font-weight:800; text-align:center; box-shadow:0 12px 24px -10px rgba(14,86,72,.55);">Update password</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ EDIT PROFILE ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">06 &middot; EDIT PROFILE</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 16px; border-radius:0 0 26px 26px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 18px 0;"><div style="display:flex; align-items:center; gap:11px;"><div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-times"></i></div><div style="font-family:'Marcellus',serif; font-size:20px; color:#fff;">Edit Profile</div></div><span style="font-size:12.5px; font-weight:800; color:#e0c074;">Save</span></div>
+          </div>
+
+          <!-- avatar with change photo -->
+          <div style="display:flex; justify-content:center; margin-top:16px;">
+            <div style="position:relative; width:78px; height:78px;">
+              <div style="width:78px; height:78px; border-radius:50%; padding:2.5px; background:linear-gradient(150deg,#e6c879,#c9a24b);"><div style="width:100%; height:100%; border-radius:50%; background:#0e5347; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Marcellus',serif; font-size:32px;">M</div></div>
+              <div style="position:absolute; right:-2px; bottom:-2px; width:28px; height:28px; border-radius:50%; background:#15806c; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; border:3px solid #f6f1e8;"><i class="fa fa-camera"></i></div>
+            </div>
+          </div>
+
+          <div style="padding:16px 18px 0; display:flex; flex-direction:column; gap:11px;">
+            <div style="background:#fff; border-radius:13px; padding:9px 13px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#a8b3ab;">Full name</div><div style="font-size:13.5px; font-weight:700; margin-top:2px;">Maya Chen</div></div>
+            <div style="display:flex; gap:11px;">
+              <div style="flex:1; background:#fff; border-radius:13px; padding:9px 13px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#a8b3ab;">Phone</div><div style="font-size:12.5px; font-weight:700; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">+1 415&middot;555&middot;0142</div></div>
+            </div>
+            <div style="background:#fff; border-radius:13px; padding:9px 13px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#a8b3ab;">Email</div><div style="font-size:13.5px; font-weight:700; margin-top:2px;">maya@astrasalon<span>.</span>co</div></div>
+            <div style="background:#fff; border-radius:13px; padding:9px 13px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#a8b3ab;">Address</div><div style="font-size:13.5px; font-weight:700; margin-top:2px;">24 Market St, San Francisco</div></div>
+            <div style="display:flex; gap:11px;">
+              <div style="flex:1; background:#fff; border-radius:13px; padding:9px 13px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#a8b3ab;">Role</div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;"><span style="font-size:12.5px; font-weight:700;">Senior Stylist</span><i class="fa fa-angle-down" style="color:#bf953f; font-size:11px;"></i></div></div>
+              <div style="flex:1; background:#fff; border-radius:13px; padding:9px 13px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><div style="font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#a8b3ab;">Branch</div><div style="display:flex; align-items:center; justify-content:space-between; margin-top:2px;"><span style="font-size:12.5px; font-weight:700;">Downtown</span><i class="fa fa-angle-down" style="color:#bf953f; font-size:11px;"></i></div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:11px; padding:12px 14px; background:#fff; border-radius:13px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);"><span style="width:30px; height:30px; border-radius:9px; background:#eef5f1; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-check-circle-o"></i></span><div style="flex:1;"><div style="font-size:12.5px; font-weight:700;">Active employee</div><div style="font-size:10px; color:#a8b3ab; font-weight:600;">Can log in &amp; take tickets</div></div><span style="width:42px; height:24px; border-radius:14px; background:#15806c; position:relative;"><span style="position:absolute; top:2px; right:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.2);"></span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  renderVals() {
+    const kpis = [
+      { label: 'Revenue', value: '$8,420', delta: '18%', icon: 'fa-line-chart' },
+      { label: 'Sales', value: '312', delta: '12%', icon: 'fa-shopping-bag' },
+      { label: 'Avg Ticket', value: '$27', delta: '4%', icon: 'fa-tags' },
+      { label: 'Tips', value: '$640', delta: '9%', icon: 'fa-star' },
+    ];
+    const top = [
+      { name: 'Maya Chen', init: 'M', rev: '$2,540', pct: '92%' },
+      { name: 'Liam Ortiz', init: 'L', rev: '$2,110', pct: '76%' },
+      { name: 'Sara Kim', init: 'S', rev: '$1,980', pct: '71%' },
+    ];
+    const rows = [
+      { name: 'Maya Chen', init: 'M', sales: '94', rev: '$2,540' },
+      { name: 'Liam Ortiz', init: 'L', sales: '78', rev: '$2,110' },
+      { name: 'Sara Kim', init: 'S', sales: '71', rev: '$1,980' },
+      { name: 'Noah Patel', init: 'N', sales: '69', rev: '$1,790' },
+    ];
+    const presetDefs = [
+      { name: 'Emerald & Gold', colors: ['#0e5648', '#15806c', '#c9a24b', '#f1e9da'], active: true },
+      { name: 'Slate Blue', colors: ['#3a45b8', '#5560d6', '#9aa3ef', '#eceef8'], active: false },
+      { name: 'Plum & Rose', colors: ['#5b2a4e', '#b04f74', '#d9b25e', '#f3e7ec'], active: false },
+      { name: 'Copper Sand', colors: ['#8a5226', '#c98a4b', '#3a2c22', '#f1e7d8'], active: false },
+      { name: 'Midnight Teal', colors: ['#0c3b3a', '#1f8f86', '#5fe6c4', '#11201f'], active: false },
+    ];
+    const presets = presetDefs.map(p => ({
+      name: p.name,
+      c0: p.colors[0], c1: p.colors[1], c2: p.colors[2], c3: p.colors[3],
+      ring: p.active ? '#15806c' : 'transparent',
+      checkStyle: p.active
+        ? 'width:24px;height:24px;border-radius:50%;background:linear-gradient(150deg,#15806c,#0e5648);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;'
+        : 'width:24px;height:24px;border-radius:50%;border:1.5px solid #e2dcc9;color:transparent;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;',
+    }));
+    return { kpis, top, rows, presets };
+  }
+}
+</script>
+</body>
+</html>

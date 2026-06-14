@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:radial-gradient(1100px 600px at 85% -12%, #cfe6dd 0%, transparent 58%), linear-gradient(160deg,#f4f0e7,#e7efe9); font-family:'Manrope',system-ui,sans-serif; color:#16312a; padding:46px 34px 80px;">
+
+  <div style="max-width:1240px; margin:0 auto 30px;">
+    <div style="font-size:12px; font-weight:800; letter-spacing:.24em; text-transform:uppercase; color:#0f7a66;">Astra Salon &middot; Staff Checkout Flow</div>
+    <div style="font-family:'Marcellus',serif; font-size:32px; margin-top:9px; letter-spacing:-.01em;">Ring up a sale in seconds</div>
+    <div style="font-size:14px; color:#5d7269; margin-top:7px; max-width:680px; line-height:1.5;">Search services by name, code or barcode &middot; browse by category &middot; tap to add &middot; assign the stylist &middot; edit qty inline, or open a line to adjust unit price, discount &amp; tax.</div>
+  </div>
+
+  <div style="max-width:1240px; margin:0 auto; display:flex; gap:30px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+
+    <!-- ============ NEW SALE ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">01 &middot; NEW SALE</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+
+          <!-- emerald header -->
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 18px; border-radius:0 0 28px 28px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 20px 0;">
+              <div style="font-family:'Marcellus',serif; font-size:23px; color:#fff;">New Sale</div>
+              <div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-times"></i></div>
+            </div>
+            <div style="display:flex; gap:9px; padding:14px 20px 0;">
+              <div style="flex:1; display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:13px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.18);"><span style="width:26px; height:26px; border-radius:8px; background:rgba(255,255,255,.16); color:#e0c074; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-user-o"></i></span><div style="flex:1; min-width:0;"><div style="font-size:9px; color:rgba(255,255,255,.6); font-weight:700; letter-spacing:.06em;">CLIENT</div><div style="font-size:12px; font-weight:700; color:#fff;">Walk-in</div></div><i class="fa fa-angle-down" style="color:rgba(255,255,255,.7); font-size:11px;"></i></div>
+              <div style="flex:1; display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:13px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.18);"><span style="width:26px; height:26px; border-radius:50%; padding:1.5px; background:linear-gradient(150deg,#e6c879,#c9a24b);"><span style="width:100%; height:100%; border-radius:50%; background:#0e5347; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:700;">M</span></span><div style="flex:1; min-width:0;"><div style="font-size:9px; color:rgba(255,255,255,.6); font-weight:700; letter-spacing:.06em;">STYLIST</div><div style="font-size:12px; font-weight:700; color:#fff;">Maya</div></div><i class="fa fa-angle-down" style="color:rgba(255,255,255,.7); font-size:11px;"></i></div>
+            </div>
+          </div>
+
+          <!-- search + barcode -->
+          <div style="padding:14px 18px 0; display:flex; gap:9px;">
+            <div style="flex:1; display:flex; align-items:center; gap:9px; padding:12px 14px; background:#fff; border-radius:14px; box-shadow:0 8px 20px -14px rgba(11,40,33,.5);"><i class="fa fa-search" style="color:#9fb0a8;"></i><span style="font-size:12.5px; font-weight:500; color:#9fb0a8;">Search name or code</span></div>
+            <div style="width:46px; height:46px; border-radius:14px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 10px 20px -9px rgba(14,86,72,.55);"><i class="fa fa-barcode"></i></div>
+          </div>
+
+          <!-- category filter -->
+          <div style="padding:13px 18px 0; display:flex; gap:8px; overflow:hidden;">
+            <span style="display:flex; align-items:center; gap:6px; padding:8px 15px; border-radius:20px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; font-size:12px; font-weight:700; white-space:nowrap; box-shadow:0 7px 15px -8px rgba(14,86,72,.5);"><i class="fa fa-th-large" style="font-size:10px;"></i> All</span>
+            <span style="padding:8px 15px; border-radius:20px; background:#fff; box-shadow:0 5px 13px -10px rgba(11,40,33,.5); color:#3f5249; font-size:12px; font-weight:700; white-space:nowrap;">Hair</span>
+            <span style="padding:8px 15px; border-radius:20px; background:#fff; box-shadow:0 5px 13px -10px rgba(11,40,33,.5); color:#3f5249; font-size:12px; font-weight:700; white-space:nowrap;">Color</span>
+            <span style="padding:8px 15px; border-radius:20px; background:#fff; box-shadow:0 5px 13px -10px rgba(11,40,33,.5); color:#3f5249; font-size:12px; font-weight:700; white-space:nowrap;">Spa</span>
+            <span style="padding:8px 15px; border-radius:20px; background:#fff; box-shadow:0 5px 13px -10px rgba(11,40,33,.5); color:#3f5249; font-size:12px; font-weight:700; white-space:nowrap;">Nails</span>
+          </div>
+
+          <!-- catalog by category -->
+          <div style="padding:14px 18px 0;">
+            <sc-for list="{{ catalog }}" as="g" hint-placeholder-count="3">
+              <div style="margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:9px; margin-bottom:9px;"><span style="font-size:10.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#0f7a66;">{{ g.cat }}</span><span style="flex:1; height:1px; background:#e1ddd0;"></span><span style="font-size:10.5px; font-weight:600; color:#a8b3ab;">{{ g.count }}</span></div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                  <sc-for list="{{ g.items }}" as="s" hint-placeholder-count="3">
+                    <div style="display:flex; align-items:center; gap:11px; padding:10px 11px; background:#fff; border-radius:15px; box-shadow:0 7px 18px -14px rgba(11,40,33,.5);">
+                      <div style="width:38px; height:38px; border-radius:11px; background:#e6f0ec; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;"><i class="fa {{ s.icon }}"></i></div>
+                      <div style="flex:1; min-width:0;"><div style="font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ s.name }}</div><div style="font-size:10.5px; color:#a8b3ab; font-weight:600; margin-top:1px;">{{ s.code }} &middot; {{ s.dur }}</div></div>
+                      <span style="font-family:'Marcellus',serif; font-size:15px; flex-shrink:0;">{{ s.price }}</span>
+                      <span style="width:30px; height:30px; border-radius:10px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; box-shadow:0 6px 13px -6px rgba(14,86,72,.5);"><i class="fa fa-plus"></i></span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- cart bar -->
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; background:linear-gradient(150deg,#124e43,#0b342d); border-radius:22px; padding:13px 15px; display:flex; align-items:center; gap:12px; box-shadow:0 20px 40px -16px rgba(11,40,33,.7); border:1px solid rgba(201,162,75,.28);">
+            <div style="position:relative; width:42px; height:42px; border-radius:13px; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; color:#e0c074; font-size:17px;"><i class="fa fa-shopping-bag"></i><span style="position:absolute; top:-6px; right:-6px; min-width:19px; height:19px; padding:0 4px; border-radius:10px; background:linear-gradient(150deg,#e6c879,#c9a24b); color:#0b342d; font-size:10.5px; font-weight:800; display:flex; align-items:center; justify-content:center; border:2px solid #0b342d;">2</span></div>
+            <div style="flex:1;"><div style="font-size:10.5px; font-weight:600; color:rgba(255,255,255,.7);">2 services &middot; Total</div><div style="font-family:'Marcellus',serif; font-size:21px; color:#fff; line-height:1.1;">$217.35</div></div>
+            <div style="padding:12px 18px; border-radius:14px; background:linear-gradient(150deg,#e6c879,#c9a24b); color:#0b342d; font-size:13.5px; font-weight:800; display:flex; align-items:center; gap:7px; box-shadow:0 11px 22px -10px rgba(201,162,75,.55);">View Cart <i class="fa fa-arrow-right"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CART ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">02 &middot; CART &amp; LINE EDIT</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 16px; border-radius:0 0 26px 26px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:8px 18px 0;">
+              <div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-angle-left"></i></div>
+              <div style="flex:1;"><div style="font-family:'Marcellus',serif; font-size:21px; color:#fff; line-height:1;">Cart</div><div style="font-size:10.5px; color:rgba(255,255,255,.7); font-weight:600; margin-top:3px;">Ticket #1042 &middot; Walk-in &middot; Maya</div></div>
+            </div>
+          </div>
+
+          <div style="padding:14px 16px 0; display:flex; flex-direction:column; gap:11px;">
+            <sc-for list="{{ cart }}" as="c" hint-placeholder-count="2">
+              <div style="background:#fff; border-radius:18px; padding:13px 13px 11px; box-shadow:0 9px 22px -15px rgba(11,40,33,.5);">
+                <div style="display:flex; align-items:flex-start; gap:11px;">
+                  <div style="width:38px; height:38px; border-radius:11px; background:#e6f0ec; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;"><i class="fa {{ c.icon }}"></i></div>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-family:'Marcellus',serif; font-size:15px; line-height:1.1;">{{ c.name }}</div>
+                    <div style="display:flex; align-items:center; gap:6px; margin-top:5px;"><span style="width:16px; height:16px; border-radius:50%; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700;">{{ c.empInitial }}</span><span style="font-size:10.5px; font-weight:600; color:#7c8c84;">{{ c.emp }}</span><span style="{{ c.tagStyle }}">{{ c.tag }}</span></div>
+                  </div>
+                  <div style="text-align:right; flex-shrink:0;"><div style="font-family:'Marcellus',serif; font-size:16px; color:#bf953f;">{{ c.line }}</div><div style="font-size:9.5px; color:#a8b3ab; font-weight:600;">{{ c.unit }} / unit</div></div>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px; padding-top:11px; border-top:1px solid #f0ece1;">
+                  <div style="display:flex; align-items:center; gap:9px;">
+                    <span style="width:26px; height:26px; border-radius:8px; background:#f3efe6; color:#16312a; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-minus"></i></span>
+                    <span style="font-size:13px; font-weight:800; width:14px; text-align:center;">{{ c.qty }}</span>
+                    <span style="width:26px; height:26px; border-radius:8px; background:#15806c; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-plus"></i></span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:7px; padding:7px 14px; border-radius:11px; border:1.5px solid #e2dcc9; color:#bf953f; font-size:12px; font-weight:700;"><i class="fa fa-pencil"></i> Edit details</div>
+                </div>
+              </div>
+            </sc-for>
+
+            <div style="display:flex; align-items:center; gap:10px; padding:12px 13px; background:#fff; border-radius:15px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><span style="width:30px; height:30px; border-radius:9px; background:#fbf3df; color:#bf953f; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-tag"></i></span><span style="flex:1; font-size:12.5px; font-weight:700;">Order discount</span><span style="font-size:12.5px; font-weight:800; color:#bf953f;">&minus;$18.00</span><i class="fa fa-angle-right" style="color:#c2cbc4;"></i></div>
+          </div>
+
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; background:#fff; border-radius:22px; padding:14px 15px 13px; box-shadow:0 18px 40px -16px rgba(11,40,33,.4);">
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#7c8c84; font-weight:600; margin-bottom:6px;"><span>Subtotal</span><span>$225.00</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#bf953f; font-weight:700; margin-bottom:6px;"><span>Discount</span><span>&minus;$18.00</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#7c8c84; font-weight:600; padding-bottom:10px; border-bottom:1px solid #f0ece1;"><span>Tax (5%)</span><span>$10.35</span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;">
+              <div><div style="font-size:10.5px; font-weight:600; color:#a8b3ab;">Total</div><div style="font-family:'Marcellus',serif; font-size:23px; line-height:1;">$217.35</div></div>
+              <div style="padding:14px 22px; border-radius:14px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px; box-shadow:0 12px 24px -10px rgba(14,86,72,.55);">Charge <i class="fa fa-arrow-right"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ EDIT SHEET ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">03 &middot; EDIT LINE ITEM</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+
+          <!-- dim cart behind -->
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:8px 18px 0;"><div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-angle-left"></i></div><div style="font-family:'Marcellus',serif; font-size:21px; color:#fff;">Cart</div></div>
+          </div>
+          <div style="position:absolute; inset:0; background:rgba(8,24,20,.55);"></div>
+
+          <!-- bottom sheet -->
+          <div style="position:absolute; left:0; right:0; bottom:0; height:506px; background:#f6f1e8; border-radius:30px 30px 0 0; padding:14px 20px 18px; box-shadow:0 -20px 50px -20px rgba(11,33,28,.5);">
+            <div style="width:42px; height:5px; border-radius:3px; background:#dcd6c7; margin:0 auto 14px;"></div>
+            <div style="display:flex; align-items:flex-start; justify-content:space-between;">
+              <div><div style="font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#0f7a66;">Edit service</div><div style="font-family:'Marcellus',serif; font-size:23px; margin-top:3px;">Balayage</div><div style="font-size:11px; color:#a8b3ab; font-weight:600;">BL-10 &middot; Color</div></div>
+              <div style="width:34px; height:34px; border-radius:11px; background:#fff; box-shadow:0 6px 14px -9px rgba(11,40,33,.5); display:flex; align-items:center; justify-content:center; font-size:14px; color:#16312a;"><i class="fa fa-times"></i></div>
+            </div>
+
+            <!-- stylist -->
+            <div style="margin-top:15px; display:flex; align-items:center; gap:11px; padding:11px 13px; background:#fff; border-radius:15px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+              <span style="width:34px; height:34px; border-radius:50%; padding:1.5px; background:linear-gradient(150deg,#e6c879,#c9a24b);"><span style="width:100%; height:100%; border-radius:50%; background:#0e5347; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700;">L</span></span>
+              <div style="flex:1;"><div style="font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab;">Stylist</div><div style="font-size:13.5px; font-weight:700;">Liam Ortiz</div></div>
+              <span style="font-size:12px; font-weight:700; color:#bf953f;">Change</span>
+            </div>
+
+            <!-- fields grid -->
+            <div style="margin-top:11px; display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+              <div style="padding:11px 13px; background:#fff; border-radius:15px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+                <div style="font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab;">Unit price</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;"><span style="font-family:'Marcellus',serif; font-size:19px;">$180.00</span><i class="fa fa-pencil" style="color:#bf953f; font-size:12px;"></i></div>
+              </div>
+              <div style="padding:11px 13px; background:#fff; border-radius:15px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+                <div style="font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab;">Tax</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;"><span style="font-family:'Marcellus',serif; font-size:19px;">5%</span><i class="fa fa-pencil" style="color:#bf953f; font-size:12px;"></i></div>
+              </div>
+              <div style="padding:11px 13px; background:#fff; border-radius:15px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+                <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab;">Discount</span><span style="display:flex; gap:3px; background:#f3efe6; border-radius:7px; padding:2px;"><span style="font-size:9px; font-weight:800; color:#0b342d; background:#fff; border-radius:5px; padding:2px 6px;">%</span><span style="font-size:9px; font-weight:700; color:#a8b3ab; padding:2px 6px;">$</span></span></div>
+                <div style="font-family:'Marcellus',serif; font-size:19px; margin-top:6px; color:#bf953f;">10%</div>
+              </div>
+              <div style="padding:11px 13px; background:#fff; border-radius:15px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+                <div style="font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab;">Quantity</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
+                  <span style="width:26px; height:26px; border-radius:8px; background:#f3efe6; color:#16312a; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-minus"></i></span>
+                  <span style="font-family:'Marcellus',serif; font-size:18px;">1</span>
+                  <span style="width:26px; height:26px; border-radius:8px; background:#15806c; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-plus"></i></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- line total -->
+            <div style="margin-top:13px; display:flex; align-items:center; justify-content:space-between; padding:13px 15px; border-radius:15px; background:#eef5f1; border:1px solid #d8e7df;">
+              <div><div style="font-size:10px; font-weight:700; color:#7c8c84; letter-spacing:.04em;">LINE TOTAL</div><div style="font-size:9.5px; color:#a8b3ab; font-weight:600;">$180 &minus; 10% + 5% tax</div></div>
+              <div style="font-family:'Marcellus',serif; font-size:24px; color:#0e5648;">$170.10</div>
+            </div>
+
+            <div style="display:flex; gap:11px; margin-top:13px;">
+              <div style="padding:14px 20px; border-radius:14px; background:#fff; box-shadow:0 8px 18px -12px rgba(11,40,33,.4); color:#16312a; font-size:13.5px; font-weight:700;">Cancel</div>
+              <div style="flex:1; padding:14px; border-radius:14px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; font-size:14px; font-weight:800; text-align:center; box-shadow:0 12px 24px -10px rgba(14,86,72,.55);">Save changes</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ LOGIN ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">00 &middot; LOGIN</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:linear-gradient(168deg,#15705f 0%,#0c4a40 55%,#0a3a32 100%); color:#fff;">
+          <div style="position:absolute; width:260px; height:260px; right:-80px; top:-70px; border-radius:50%; background:radial-gradient(circle, rgba(224,192,116,.4), transparent 70%);"></div>
+          <div style="position:absolute; right:-20px; bottom:30px; font-family:'Marcellus',serif; font-size:220px; line-height:1; color:rgba(255,255,255,.05);">A</div>
+          <div style="position:relative; display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+          <div style="position:relative; padding:14px 24px; display:flex; flex-direction:column; align-items:center; height:calc(100% - 30px);">
+            <div style="position:relative; width:72px; height:72px; margin-top:8px; display:flex; align-items:center; justify-content:center;">
+              <div style="position:absolute; inset:0; border-radius:50%; border:1px solid rgba(224,192,116,.6);"></div>
+              <div style="position:absolute; inset:7px; border-radius:50%; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center;"><span style="font-family:'Marcellus',serif; font-size:30px; color:#e0c074;">A</span></div>
+            </div>
+            <div style="font-size:11px; font-weight:700; letter-spacing:.32em; color:#e0c074; margin-top:13px;">ASTRA SALON</div>
+            <div style="font-family:'Marcellus',serif; font-size:29px; margin-top:13px;">Welcome back</div>
+            <div style="font-size:12.5px; color:rgba(255,255,255,.72); margin-top:4px; font-weight:500;">Enter your MPIN to continue</div>
+
+            <div style="width:100%; margin-top:15px; display:flex; align-items:center; gap:11px; padding:12px 14px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16);"><i class="fa fa-map-marker" style="color:#e0c074;"></i><span style="font-size:12.5px; font-weight:700; flex:1;">Downtown Flagship</span><i class="fa fa-angle-down" style="color:rgba(255,255,255,.6);"></i></div>
+
+            <div style="display:flex; gap:14px; margin-top:18px;">
+              <div style="width:13px; height:13px; border-radius:50%; background:#e0c074;"></div>
+              <div style="width:13px; height:13px; border-radius:50%; background:#e0c074;"></div>
+              <div style="width:13px; height:13px; border-radius:50%; background:rgba(255,255,255,.18);"></div>
+              <div style="width:13px; height:13px; border-radius:50%; background:rgba(255,255,255,.18);"></div>
+            </div>
+
+            <div style="width:100%; margin-top:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:9px;">
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">1</div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">2</div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">3</div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">4</div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">5</div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">6</div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">7</div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">8</div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">9</div>
+              <div style="height:50px;"></div>
+              <div style="height:50px; border-radius:14px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'Marcellus',serif;">0</div>
+              <div style="height:50px; display:flex; align-items:center; justify-content:center; font-size:18px; color:rgba(255,255,255,.6);"><i class="fa fa-long-arrow-left"></i></div>
+            </div>
+
+            <div style="width:100%; display:flex; gap:10px; margin-top:14px; align-items:center;">
+              <div style="flex:1; display:flex; padding:4px; border-radius:30px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14);">
+                <span style="flex:1; text-align:center; padding:9px; border-radius:30px; background:linear-gradient(150deg,#e6c879,#c9a24b); color:#0b342d; font-size:12px; font-weight:800;">MPIN</span>
+                <span style="flex:1; text-align:center; padding:9px; font-size:12px; font-weight:700; color:rgba(255,255,255,.7);">Password</span>
+              </div>
+              <div style="width:48px; height:48px; border-radius:50%; background:linear-gradient(150deg,#e6c879,#c9a24b); color:#0b342d; display:flex; align-items:center; justify-content:center; font-size:19px;"><i class="fa fa-hand-paper-o"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ REVIEW & PAY ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">04 &middot; REVIEW &amp; PAY</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 16px; border-radius:0 0 26px 26px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:8px 18px 0;"><div style="width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;"><i class="fa fa-angle-left"></i></div><div style="font-family:'Marcellus',serif; font-size:21px; color:#fff;">Review &amp; Pay</div></div>
+          </div>
+          <div style="margin:13px 16px 0; background:#fff; border-radius:18px; box-shadow:0 9px 22px -15px rgba(11,40,33,.5); padding:14px;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding-bottom:11px; border-bottom:1px dashed #e8e2d3;">
+              <div style="font-family:'Marcellus',serif; font-size:14px; letter-spacing:.06em;">ASTRA SALON</div>
+              <div style="font-size:10px; color:#a8b3ab; font-weight:600;">Downtown Flagship &middot; with Maya</div>
+            </div>
+            <div style="padding:11px 0 4px; display:flex; flex-direction:column; gap:9px;">
+              <sc-for list="{{ cart }}" as="c" hint-placeholder-count="2">
+                <div style="display:flex; align-items:center; justify-content:space-between;"><div style="display:flex; align-items:center; gap:8px; min-width:0;"><span style="font-size:10.5px; font-weight:800; color:#0e5648; background:#e6f0ec; border-radius:6px; padding:1px 6px;">{{ c.qty }}&times;</span><span style="font-size:12px; font-weight:600;">{{ c.name }}</span></div><span style="font-size:12px; font-weight:800;">{{ c.line }}</span></div>
+              </sc-for>
+            </div>
+            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e8e2d3; display:flex; flex-direction:column; gap:5px;">
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:#7c8c84; font-weight:600;"><span>Subtotal</span><span>$225.00</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:#bf953f; font-weight:700;"><span>Discount</span><span>&minus;$18.00</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:#7c8c84; font-weight:600;"><span>Tax (5%)</span><span>$10.35</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:#7c8c84; font-weight:600;"><span>Tip (15%)</span><span>$31.05</span></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px;"><span style="font-size:12.5px; font-weight:800;">Total</span><span style="font-family:'Marcellus',serif; font-size:19px;">$248.40</span></div>
+            </div>
+          </div>
+          <div style="padding:12px 16px 0;">
+            <div style="font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab; margin-bottom:7px;">Add a tip</div>
+            <div style="display:flex; gap:7px;">
+              <span style="flex:1; text-align:center; padding:9px 0; border-radius:11px; background:#fff; box-shadow:0 5px 12px -9px rgba(11,40,33,.5); font-size:11.5px; font-weight:700; color:#7c8c84;">None</span>
+              <span style="flex:1; text-align:center; padding:9px 0; border-radius:11px; background:#fff; box-shadow:0 5px 12px -9px rgba(11,40,33,.5); font-size:11.5px; font-weight:700; color:#7c8c84;">10%</span>
+              <span style="flex:1; text-align:center; padding:9px 0; border-radius:11px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; font-size:11.5px; font-weight:800; box-shadow:0 8px 16px -8px rgba(14,86,72,.5);">15%</span>
+              <span style="flex:1; text-align:center; padding:9px 0; border-radius:11px; background:#fff; box-shadow:0 5px 12px -9px rgba(11,40,33,.5); font-size:11.5px; font-weight:700; color:#7c8c84;">20%</span>
+            </div>
+          </div>
+          <div style="padding:13px 16px 0;">
+            <div style="font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a8b3ab; margin-bottom:7px;">Payment</div>
+            <div style="display:flex; gap:9px;">
+              <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; border-radius:13px; background:#1c3a32; color:#fff; font-size:12px; font-weight:700;"><i class="fa fa-credit-card" style="color:#e0c074;"></i> Card</div>
+              <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; border-radius:13px; background:#fff; box-shadow:0 5px 13px -9px rgba(11,40,33,.5); color:#7c8c84; font-size:12px; font-weight:700;"><i class="fa fa-money"></i> Cash</div>
+            </div>
+          </div>
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; padding:15px; border-radius:16px; background:linear-gradient(150deg,#e6c879,#c9a24b); color:#0b342d; font-size:14.5px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:9px; box-shadow:0 16px 30px -12px rgba(201,162,75,.6);">Charge $248.40</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ INVOICE / RECEIPT ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">05 &middot; INVOICE</span>
+      <div style="width:332px; padding:10px; border-radius:48px; background:#0b211c; box-shadow:0 34px 64px -26px rgba(11,33,28,.6);">
+        <div style="position:relative; width:312px; height:718px; border-radius:38px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px 2px; font-size:12px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+          <div style="padding:12px 20px 0; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;"><div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Marcellus',serif; font-size:19px;">A</div><div><div style="font-family:'Marcellus',serif; font-size:16px; line-height:1;">Astra Salon</div><div style="font-size:9.5px; color:#a8b3ab; font-weight:600;">Downtown Flagship</div></div></div>
+            <div style="display:flex; align-items:center; gap:6px; padding:6px 11px; border-radius:20px; background:#e4f6ec; color:#1f9d63; font-size:11px; font-weight:800;"><i class="fa fa-check-circle"></i> PAID</div>
+          </div>
+          <div style="margin:14px 16px 0; padding:12px 14px; background:#fff; border-radius:14px; box-shadow:0 7px 18px -14px rgba(11,40,33,.5); display:flex; justify-content:space-between;">
+            <div><div style="font-size:9.5px; color:#a8b3ab; font-weight:700; letter-spacing:.05em;">INVOICE</div><div style="font-size:13px; font-weight:800; margin-top:2px;">#1042</div></div>
+            <div style="text-align:center;"><div style="font-size:9.5px; color:#a8b3ab; font-weight:700; letter-spacing:.05em;">DATE</div><div style="font-size:12px; font-weight:700; margin-top:3px;">14 Jun 2026</div></div>
+            <div style="text-align:right;"><div style="font-size:9.5px; color:#a8b3ab; font-weight:700; letter-spacing:.05em;">STYLIST</div><div style="font-size:12px; font-weight:700; margin-top:3px;">Maya</div></div>
+          </div>
+          <div style="padding:14px 20px 0; display:flex; flex-direction:column; gap:10px;">
+            <sc-for list="{{ cart }}" as="c" hint-placeholder-count="2">
+              <div style="display:flex; align-items:center; justify-content:space-between;"><div style="min-width:0;"><div style="font-size:12.5px; font-weight:700;">{{ c.name }}</div><div style="font-size:10px; color:#a8b3ab; font-weight:600;">{{ c.qty }} &times; {{ c.unit }} &middot; {{ c.emp }}</div></div><span style="font-size:12.5px; font-weight:800;">{{ c.line }}</span></div>
+            </sc-for>
+          </div>
+          <div style="margin:13px 20px 0; padding-top:12px; border-top:1px dashed #e8e2d3; display:flex; flex-direction:column; gap:5px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#7c8c84; font-weight:600;"><span>Subtotal</span><span>$225.00</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#bf953f; font-weight:700;"><span>Discount</span><span>&minus;$18.00</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#7c8c84; font-weight:600;"><span>Tax (5%)</span><span>$10.35</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#7c8c84; font-weight:600;"><span>Tip (15%)</span><span>$31.05</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding:9px 12px; background:#eef5f1; border-radius:11px;"><span style="font-size:12.5px; font-weight:800;">Total Paid</span><span style="font-family:'Marcellus',serif; font-size:18px; color:#0e5648;">$248.40</span></div>
+            <div style="display:flex; align-items:center; gap:7px; font-size:10.5px; color:#a8b3ab; font-weight:600; margin-top:3px;"><i class="fa fa-credit-card"></i> Paid by Visa &middot;&middot;&middot;&middot; 4242</div>
+          </div>
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; display:flex; gap:9px;">
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:12px; border-radius:13px; background:#fff; box-shadow:0 6px 15px -9px rgba(11,40,33,.5); color:#16312a; font-size:12px; font-weight:700;"><i class="fa fa-print"></i> Print</div>
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:12px; border-radius:13px; background:#fff; box-shadow:0 6px 15px -9px rgba(11,40,33,.5); color:#16312a; font-size:12px; font-weight:700;"><i class="fa fa-share-alt"></i> Share</div>
+            <div style="flex:1.1; display:flex; align-items:center; justify-content:center; gap:7px; padding:12px; border-radius:13px; background:linear-gradient(150deg,#15806c,#0e5648); color:#fff; font-size:12px; font-weight:800; box-shadow:0 11px 22px -9px rgba(14,86,72,.5);">New Sale</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  renderVals() {
+    const catalog = [
+      { cat: 'Hair', count: '3 services', items: [
+        { name: 'Signature Cut', code: 'SC-01', dur: '45 min', price: '$45', icon: 'fa-scissors' },
+        { name: 'Skin Fade', code: 'SF-02', dur: '40 min', price: '$35', icon: 'fa-scissors' },
+        { name: 'Blow Dry & Style', code: 'BD-03', dur: '30 min', price: '$30', icon: 'fa-magic' },
+      ]},
+      { cat: 'Color', count: '2 services', items: [
+        { name: 'Balayage', code: 'BL-10', dur: '2 hr', price: '$180', icon: 'fa-paint-brush' },
+        { name: 'Root Touch-up', code: 'RT-11', dur: '60 min', price: '$70', icon: 'fa-paint-brush' },
+      ]},
+      { cat: 'Spa', count: '2 services', items: [
+        { name: 'Spa Ritual', code: 'SP-20', dur: '60 min', price: '$90', icon: 'fa-leaf' },
+        { name: 'Head Massage', code: 'HM-21', dur: '30 min', price: '$40', icon: 'fa-hand-paper-o' },
+      ]},
+    ];
+    const tag = (t) => `font-size:9px; font-weight:800; color:#bf953f; background:#fbf3df; padding:2px 7px; border-radius:10px; margin-left:2px;`;
+    const cart = [
+      { name: 'Signature Cut', emp: 'Maya', empInitial: 'M', unit: '$45.00', qty: 1, line: '$45.00', tag: '', tagStyle: 'display:none;', icon: 'fa-scissors' },
+      { name: 'Balayage', emp: 'Liam', empInitial: 'L', unit: '$180.00', qty: 1, line: '$162.00', tag: '10% off', tagStyle: tag(), icon: 'fa-paint-brush' },
+    ];
+    return { catalog, cart };
+  }
+}
+</script>
+</body>
+</html>

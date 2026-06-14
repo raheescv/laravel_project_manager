@@ -8,6 +8,7 @@ use App\Http\Requests\V1\Report\GetRequest;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 #[Group('Mobile - Admin')]
 class ReportController extends Controller
@@ -25,7 +26,14 @@ class ReportController extends Controller
             $result = $action->execute($request);
 
             return $this->sendSuccess($result, 'Report generated successfully');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // Catch \Throwable (not just \Exception) so TypeErrors/Errors are logged
+            // too; sendServerError otherwise swallows the real cause with no trace.
+            Log::error('API v1 report failed', [
+                'type' => $request->input('type'),
+                'exception' => $e,
+            ]);
+
             return $this->sendServerError('Failed to generate report: '.$e->getMessage());
         }
     }

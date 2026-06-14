@@ -19,9 +19,11 @@ class AuthController extends Controller
     use ApiResponseTrait;
 
     /**
-     * Login with a PIN.
+     * Login.
      *
-     * Authenticates an admin or employee by PIN and returns a Sanctum bearer token.
+     * Authenticates an admin or employee and returns a Sanctum bearer token.
+     * Accepts either a PIN (`method=pin`, the default) or username + password
+     * (`method=password`). Method is inferred when omitted.
      */
     public function login(LoginAction $action, LoginRequest $request): JsonResponse
     {

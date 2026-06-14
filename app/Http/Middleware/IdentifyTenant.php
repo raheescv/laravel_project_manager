@@ -18,12 +18,17 @@ class IdentifyTenant
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $mode = null): Response
     {
         // Extract subdomain from host
         $subdomain = $this->extractSubdomain($request->getHost());
 
         if (! $subdomain) {
+            // Routes flagged with the "required" mode (e.g. the public catalog API)
+            // must never run without a resolved tenant: TenantScope would otherwise
+            // apply no filter and the request would read across ALL tenants.
+            abort_if($mode === 'required', 404, 'Tenant could not be identified.');
+
             // No subdomain, allow access (for main domain or localhost)
             // You can customize this behavior
             return $next($request);
@@ -53,6 +58,13 @@ class IdentifyTenant
         $host = $this->removePort($host);
 
         if ($subdomain = $this->extractFromLocalhost($host)) {
+            return $subdomain;
+        }
+
+        // Device/LAN access hits the machine by its raw IP (e.g. 192.168.x.x),
+        // where there is no subdomain to parse. Fall back to the explicit
+        // ?tenant= / X-Tenant-Subdomain hint the mobile app already sends.
+        if ($subdomain = $this->extractFromIp($host)) {
             return $subdomain;
         }
 
@@ -89,6 +101,19 @@ class IdentifyTenant
         }
 
         return null;
+    }
+
+    /**
+     * Resolve the tenant from the request hint when the host is a bare IP
+     * address (LAN / device access), where no subdomain can be parsed.
+     */
+    protected function extractFromIp(string $host): ?string
+    {
+        if (! filter_var($host, FILTER_VALIDATE_IP)) {
+            return null;
+        }
+
+        return request()->query('tenant') ?? request()->header('X-Tenant-Subdomain');
     }
 
     /**

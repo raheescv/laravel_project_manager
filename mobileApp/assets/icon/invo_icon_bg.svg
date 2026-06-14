@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Android adaptive BACKGROUND: the warm-dark charcoal tile only (no glyph),
+       full-bleed (the OS applies the mask). Matches App Icon Standalone (i). -->
+  <defs>
+    <linearGradient id="tile" x1="0.158" y1="-0.092" x2="0.842" y2="1.092">
+      <stop offset="0" stop-color="#242427"/>
+      <stop offset="0.40" stop-color="#161617"/>
+      <stop offset="0.72" stop-color="#0c0c0d"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="topSheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="0.10" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="botShade" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.78"/>
+      <stop offset="0.18" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="vig" cx="512" cy="430" r="799" gradientUnits="userSpaceOnUse">
+      <stop offset="0.36" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.5"/>
+    </radialGradient>
+    <radialGradient id="topGold" cx="512" cy="-348" r="758" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e09e" stop-opacity="0.20"/>
+      <stop offset="0.70" stop-color="#f8e09e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="botGold" cx="512" cy="1352" r="635" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c9a24b" stop-opacity="0.18"/>
+      <stop offset="0.72" stop-color="#c9a24b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#tile)"/>
+  <rect width="1024" height="1024" fill="url(#topSheen)"/>
+  <rect width="1024" height="1024" fill="url(#botShade)"/>
+  <rect width="1024" height="1024" fill="url(#vig)"/>
+  <rect width="1024" height="1024" fill="url(#topGold)"/>
+  <rect width="1024" height="1024" fill="url(#botGold)"/>
+</svg>

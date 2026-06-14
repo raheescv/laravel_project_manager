@@ -1,0 +1,67 @@
+name: invo
+description: "Invo — premium salon POS & admin (mobile + tablet)."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State
+  provider: ^6.1.2
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+
+  # Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.3
+
+  # Biometric auth (Touch ID / Face ID / fingerprint)
+  local_auth: ^2.3.0
+
+  # Camera barcode / QR scanning (iOS / Android / macOS)
+  mobile_scanner: ^6.0.10
+
+  # UI
+  google_fonts: ^6.2.1
+  intl: ^0.20.1
+
+  # Receipt printing + share sheet (generates a PDF; iOS / Android / macOS / web)
+  printing: ^5.13.4
+  pdf: ^3.11.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+
+# Invo launcher icon — gold "i" logomark on a warm-dark tile.
+# Regenerate with: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/invo_icon.png"
+  android: true
+  min_sdk_android: 21
+  adaptive_icon_background: "assets/icon/invo_icon_bg.png"
+  adaptive_icon_foreground: "assets/icon/invo_icon_fg.png"
+  ios: true
+  remove_alpha_ios: true
+  macos:
+    generate: true
+    image_path: "assets/icon/invo_icon.png"
+  web:
+    generate: true
+    image_path: "assets/icon/invo_icon.png"
+    background_color: "#121212"
+    theme_color: "#C9A24B"

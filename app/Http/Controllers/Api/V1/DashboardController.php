@@ -8,6 +8,7 @@ use App\Http\Requests\V1\Dashboard\IndexRequest;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 #[Group('Mobile - Admin')]
@@ -28,7 +29,10 @@ class DashboardController extends Controller
             return $this->sendSuccess($action->execute($request), 'Dashboard retrieved successfully');
         } catch (ValidationException $e) {
             return $this->sendValidationError($e->errors(), 'Validation failed');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            // Log the real cause; sendServerError otherwise hides it from the logs.
+            Log::error('API v1 dashboard failed', ['exception' => $e]);
+
             return $this->sendServerError('Failed to retrieve dashboard: '.$e->getMessage());
         }
     }

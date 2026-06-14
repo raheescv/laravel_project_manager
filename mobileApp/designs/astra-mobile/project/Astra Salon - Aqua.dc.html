@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  /* THEME-TOKENS */
+  :root{
+    --bg:#eaf0f1; --screen:#f5f9f9; --card:#ffffff;
+    --ink:#16282d; --ink2:#54676d; --muted:#93a4a9; --line:#e7eded;
+    --accent:#0e97a3; --accent2:#0b818c; --tint:#e1f2f3;
+    --sh:rgba(18,42,48,.14); --glow:rgba(14,151,163,.45); --r:20px; --rs:14px;
+    --name:"Aqua Calm";
+  }
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:var(--bg); font-family:'Manrope',system-ui,sans-serif; color:var(--ink); padding:40px 34px 80px;">
+
+  <!-- PAGE-HEADER -->
+  <div style="max-width:1640px; margin:0 auto 30px;">
+    <div style="font-size:12px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--accent);">Astra Salon &middot; Direction 01</div>
+    <div style="font-size:31px; font-weight:800; letter-spacing:-.025em; margin-top:9px;">Aqua Calm</div>
+    <div style="font-size:14px; color:var(--ink2); margin-top:6px; max-width:680px; line-height:1.5;">A cool teal palette &mdash; fresh, neutral and easy on the eyes for long front-desk shifts. The full ticket flow: new sale, cart, edit, preview and invoice.</div>
+  </div>
+
+  <!-- SCREENS ROW -->
+  <div style="max-width:1640px; margin:0 auto; display:flex; gap:26px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+
+    <!-- ============ 01 NEW SALE ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:11px;">
+      <span style="font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.05em;">01 &middot; NEW SALE</span>
+      <div style="width:284px; padding:9px; border-radius:42px; background:var(--ink); box-shadow:0 24px 44px -20px var(--sh);">
+        <div style="position:relative; width:266px; height:582px; border-radius:34px; overflow:hidden; background:var(--screen); color:var(--ink);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+          <div style="padding:12px 18px 0; display:flex; align-items:center; justify-content:space-between;">
+            <div><div style="font-size:20px; font-weight:800; letter-spacing:-.02em; line-height:1; white-space:nowrap;">New Sale</div><div style="font-size:11px; font-weight:600; color:var(--muted); margin-top:4px;">Walk-in client</div></div>
+            <div style="display:flex; align-items:center; gap:7px; padding:5px 10px 5px 5px; background:var(--card); border-radius:22px; box-shadow:0 5px 13px -8px var(--sh);"><span style="width:26px; height:26px; border-radius:50%; background:linear-gradient(150deg,var(--accent),var(--accent2)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:800;">M</span><span style="font-size:11px; font-weight:700;">Maya</span><i class="fa fa-angle-down" style="color:var(--muted); font-size:10px;"></i></div>
+          </div>
+          <div style="padding:12px 18px 0; display:flex; gap:9px;">
+            <div style="flex:1; display:flex; align-items:center; gap:9px; padding:11px 13px; background:var(--card); border-radius:var(--rs); box-shadow:0 6px 15px -10px var(--sh);"><i class="fa fa-search" style="color:var(--muted);"></i><span style="font-size:12px; font-weight:500; color:var(--muted);">Search services</span></div>
+            <div style="width:43px; height:43px; border-radius:var(--rs); background:var(--card); box-shadow:0 6px 15px -10px var(--sh); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:16px;"><i class="fa fa-sliders"></i></div>
+          </div>
+          <div style="padding:12px 18px 0; display:flex; gap:7px; overflow:hidden;">
+            <span style="padding:8px 14px; border-radius:18px; background:linear-gradient(150deg,var(--accent),var(--accent2)); color:#fff; font-size:11.5px; font-weight:700; white-space:nowrap; box-shadow:0 6px 14px -7px var(--glow);">All</span>
+            <span style="padding:8px 14px; border-radius:18px; background:var(--card); box-shadow:0 5px 12px -9px var(--sh); color:var(--ink2); font-size:11.5px; font-weight:700; white-space:nowrap;">Hair</span>
+            <span style="padding:8px 14px; border-radius:18px; background:var(--card); box-shadow:0 5px 12px -9px var(--sh); color:var(--ink2); font-size:11.5px; font-weight:700; white-space:nowrap;">Spa</span>
+            <span style="padding:8px 14px; border-radius:18px; background:var(--card); box-shadow:0 5px 12px -9px var(--sh); color:var(--ink2); font-size:11.5px; font-weight:700; white-space:nowrap;">Nails</span>
+          </div>
+          <div style="padding:12px 18px 0; display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ services }}" as="s" hint-placeholder-count="5">
+              <div style="display:flex; align-items:center; gap:11px; padding:10px 11px; background:var(--card); border-radius:15px; box-shadow:0 6px 16px -12px var(--sh);">
+                <div style="width:38px; height:38px; border-radius:11px; background:var(--tint); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;"><i class="fa {{ s.icon }}"></i></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ s.name }}</div><div style="font-size:10.5px; color:var(--muted); font-weight:600; margin-top:1px;"><i class="fa fa-clock-o" style="font-size:9px;"></i> {{ s.dur }}</div></div>
+                <span style="font-size:13px; font-weight:800; flex-shrink:0;">{{ s.price }}</span>
+                <span style="width:27px; height:27px; border-radius:9px; background:var(--tint); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;"><i class="fa fa-plus"></i></span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; background:var(--card); border-radius:18px; padding:11px 14px; display:flex; align-items:center; gap:11px; box-shadow:0 16px 34px -16px var(--sh);">
+            <div style="flex:1;"><div style="font-size:10.5px; font-weight:600; color:var(--muted);">3 services added</div><div style="font-size:18px; font-weight:800; line-height:1.1;">$145.00</div></div>
+            <div style="padding:11px 17px; border-radius:13px; background:linear-gradient(150deg,var(--accent),var(--accent2)); color:#fff; font-size:13px; font-weight:800; display:flex; align-items:center; gap:7px; box-shadow:0 11px 22px -9px var(--glow);">View Cart <i class="fa fa-arrow-right"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 02 SALE / CART ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:11px;">
+      <span style="font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.05em;">02 &middot; CART</span>
+      <div style="width:284px; padding:9px; border-radius:42px; background:var(--ink); box-shadow:0 24px 44px -20px var(--sh);">
+        <div style="position:relative; width:266px; height:582px; border-radius:34px; overflow:hidden; background:var(--screen); color:var(--ink);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+          <div style="padding:10px 18px 0; display:flex; align-items:center; gap:11px;">
+            <div style="width:34px; height:34px; border-radius:11px; background:var(--card); box-shadow:0 5px 12px -8px var(--sh); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--ink);"><i class="fa fa-angle-left"></i></div>
+            <div style="flex:1;"><div style="font-size:18px; font-weight:800; letter-spacing:-.02em; line-height:1;">Cart</div><div style="font-size:10.5px; font-weight:600; color:var(--muted); margin-top:3px;">Ticket #1042 &middot; with Maya</div></div>
+            <span style="font-size:11px; font-weight:700; color:var(--accent);">Clear</span>
+          </div>
+          <div style="padding:12px 16px 0; display:flex; flex-direction:column; gap:9px;">
+            <sc-for list="{{ cart }}" as="c" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:10px; padding:10px 11px; background:var(--card); border-radius:15px; box-shadow:0 6px 16px -12px var(--sh);">
+                <div style="width:36px; height:36px; border-radius:10px; background:var(--tint); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;"><i class="fa {{ c.icon }}"></i></div>
+                <div style="flex:1; min-width:0;"><div style="font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.name }}</div><div style="font-size:10px; color:var(--muted); font-weight:600; margin-top:1px;">{{ c.meta }}</div></div>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+                  <span style="font-size:12.5px; font-weight:800;">{{ c.line }}</span>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="width:20px; height:20px; border-radius:6px; background:var(--screen); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink2);"><i class="fa fa-minus"></i></span>
+                    <span style="font-size:11.5px; font-weight:800; width:12px; text-align:center;">{{ c.qty }}</span>
+                    <span style="width:20px; height:20px; border-radius:6px; background:var(--tint); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11px;"><i class="fa fa-plus"></i></span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; background:var(--card); border-radius:20px; padding:14px 15px 13px; box-shadow:0 16px 36px -16px var(--sh);">
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink2); font-weight:600; margin-bottom:6px;"><span>Subtotal</span><span>$145.00</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--accent); font-weight:700; margin-bottom:6px;"><span>Discount</span><span>&minus;$15.00</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink2); font-weight:600; padding-bottom:10px; border-bottom:1px solid var(--line);"><span>Tax (5%)</span><span>$6.50</span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:11px;">
+              <div><div style="font-size:10.5px; font-weight:600; color:var(--muted);">Total</div><div style="font-size:21px; font-weight:800; letter-spacing:-.02em; line-height:1;">$136.50</div></div>
+              <div style="padding:13px 20px; border-radius:13px; background:linear-gradient(150deg,var(--accent),var(--accent2)); color:#fff; font-size:13.5px; font-weight:800; display:flex; align-items:center; gap:7px; box-shadow:0 12px 22px -9px var(--glow);">Charge <i class="fa fa-arrow-right"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 03 EDIT ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:11px;">
+      <span style="font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.05em;">03 &middot; EDIT</span>
+      <div style="width:284px; padding:9px; border-radius:42px; background:var(--ink); box-shadow:0 24px 44px -20px var(--sh);">
+        <div style="position:relative; width:266px; height:582px; border-radius:34px; overflow:hidden; background:var(--screen); color:var(--ink);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+          <div style="padding:10px 18px 0; display:flex; align-items:center; gap:11px;">
+            <div style="width:34px; height:34px; border-radius:11px; background:var(--card); box-shadow:0 5px 12px -8px var(--sh); display:flex; align-items:center; justify-content:center; font-size:14px;"><i class="fa fa-angle-left"></i></div>
+            <div style="flex:1;"><div style="font-size:18px; font-weight:800; letter-spacing:-.02em; line-height:1;">Edit Ticket</div></div>
+          </div>
+          <div style="padding:11px 16px 0;">
+            <div style="display:flex; align-items:center; gap:9px; padding:9px 12px; background:var(--tint); border-radius:12px;"><i class="fa fa-pencil" style="color:var(--accent); font-size:12px;"></i><span style="font-size:11px; font-weight:700; color:var(--accent2);">Editing Invoice #1042</span></div>
+          </div>
+          <div style="padding:11px 16px 0; display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ cart }}" as="c" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; background:var(--card); border-radius:13px; box-shadow:0 6px 16px -12px var(--sh);">
+                <div style="flex:1; min-width:0;"><div style="font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.name }}</div><div style="font-size:10px; color:var(--muted); font-weight:600;">{{ c.unit }} each</div></div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="width:22px; height:22px; border-radius:7px; background:var(--screen); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink2);"><i class="fa fa-minus"></i></span>
+                  <span style="font-size:12px; font-weight:800; width:12px; text-align:center;">{{ c.qty }}</span>
+                  <span style="width:22px; height:22px; border-radius:7px; background:var(--tint); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11px;"><i class="fa fa-plus"></i></span>
+                </div>
+                <span style="width:24px; height:24px; border-radius:7px; background:#fbecec; color:#d4546a; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0;"><i class="fa fa-trash-o"></i></span>
+              </div>
+            </sc-for>
+            <div style="display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; border-radius:13px; border:1.5px dashed var(--line); color:var(--accent); font-size:12px; font-weight:700;"><i class="fa fa-plus"></i> Add service</div>
+            <div style="display:flex; align-items:center; gap:9px; padding:11px 12px; background:var(--card); border-radius:13px; box-shadow:0 6px 16px -12px var(--sh);"><i class="fa fa-tag" style="color:var(--muted); font-size:12px;"></i><span style="flex:1; font-size:12px; font-weight:600; color:var(--ink2);">Discount</span><span style="font-size:12.5px; font-weight:800; color:var(--accent);">&minus;$15.00</span></div>
+          </div>
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; background:var(--card); border-radius:18px; padding:12px 15px; display:flex; align-items:center; gap:11px; box-shadow:0 16px 34px -16px var(--sh);">
+            <div style="flex:1;"><div style="font-size:10px; font-weight:600; color:var(--muted); text-decoration:line-through;">$151.00</div><div style="font-size:19px; font-weight:800; line-height:1.05;">$136.50</div></div>
+            <div style="padding:12px 22px; border-radius:13px; background:linear-gradient(150deg,var(--accent),var(--accent2)); color:#fff; font-size:13.5px; font-weight:800; display:flex; align-items:center; gap:7px; box-shadow:0 12px 22px -9px var(--glow);">Save</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 04 PREVIEW ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:11px;">
+      <span style="font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.05em;">04 &middot; PREVIEW</span>
+      <div style="width:284px; padding:9px; border-radius:42px; background:var(--ink); box-shadow:0 24px 44px -20px var(--sh);">
+        <div style="position:relative; width:266px; height:582px; border-radius:34px; overflow:hidden; background:var(--screen); color:var(--ink);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+          <div style="padding:10px 18px 0; display:flex; align-items:center; gap:11px;">
+            <div style="width:34px; height:34px; border-radius:11px; background:var(--card); box-shadow:0 5px 12px -8px var(--sh); display:flex; align-items:center; justify-content:center; font-size:14px;"><i class="fa fa-angle-left"></i></div>
+            <div style="flex:1;"><div style="font-size:18px; font-weight:800; letter-spacing:-.02em; line-height:1;">Review &amp; Pay</div></div>
+          </div>
+          <div style="margin:12px 16px 0; background:var(--card); border-radius:18px; box-shadow:0 8px 20px -12px var(--sh); padding:15px 15px 13px;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding-bottom:12px; border-bottom:1px dashed var(--line);">
+              <div style="width:36px; height:36px; border-radius:50%; background:var(--tint); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:15px;"><i class="fa fa-scissors"></i></div>
+              <div style="font-size:13px; font-weight:800; letter-spacing:.02em;">ASTRA SALON</div>
+              <div style="font-size:10px; color:var(--muted); font-weight:600;">Downtown Flagship &middot; with Maya</div>
+            </div>
+            <div style="padding:11px 0 4px; display:flex; flex-direction:column; gap:9px;">
+              <sc-for list="{{ cart }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <div style="display:flex; align-items:center; gap:8px; min-width:0;"><span style="font-size:11px; font-weight:800; color:var(--accent); background:var(--tint); border-radius:6px; padding:1px 6px;">{{ c.qty }}&times;</span><span style="font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.name }}</span></div>
+                  <span style="font-size:12px; font-weight:800;">{{ c.line }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:11px; padding-top:11px; border-top:1px dashed var(--line); display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--ink2); font-weight:600;"><span>Subtotal</span><span>$145.00</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--accent); font-weight:700;"><span>Discount</span><span>&minus;$15.00</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--ink2); font-weight:600;"><span>Tax (5%)</span><span>$6.50</span></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px;"><span style="font-size:12.5px; font-weight:800;">Total</span><span style="font-size:18px; font-weight:800;">$136.50</span></div>
+            </div>
+          </div>
+          <div style="padding:13px 16px 0;">
+            <div style="font-size:10.5px; font-weight:700; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Payment method</div>
+            <div style="display:flex; gap:9px;">
+              <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; border-radius:13px; background:linear-gradient(150deg,var(--accent),var(--accent2)); color:#fff; font-size:12px; font-weight:700; box-shadow:0 9px 18px -8px var(--glow);"><i class="fa fa-credit-card"></i> Card</div>
+              <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; border-radius:13px; background:var(--card); box-shadow:0 5px 13px -9px var(--sh); color:var(--ink2); font-size:12px; font-weight:700;"><i class="fa fa-money"></i> Cash</div>
+            </div>
+          </div>
+          <div style="position:absolute; left:14px; right:14px; bottom:15px;">
+            <div style="padding:14px; border-radius:15px; background:linear-gradient(150deg,var(--accent),var(--accent2)); color:#fff; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:9px; box-shadow:0 14px 26px -10px var(--glow);">Confirm &amp; Charge $136.50</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 05 INVOICE ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:11px;">
+      <span style="font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.05em;">05 &middot; INVOICE</span>
+      <div style="width:284px; padding:9px; border-radius:42px; background:var(--ink); box-shadow:0 24px 44px -20px var(--sh);">
+        <div style="position:relative; width:266px; height:582px; border-radius:34px; overflow:hidden; background:var(--screen); color:var(--ink);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+          <div style="padding:12px 18px 0; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;"><div style="width:38px; height:38px; border-radius:11px; background:var(--tint); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:16px;"><i class="fa fa-scissors"></i></div><div><div style="font-size:14px; font-weight:800; letter-spacing:.02em;">ASTRA</div><div style="font-size:9.5px; color:var(--muted); font-weight:600;">Salon &amp; Spa</div></div></div>
+            <div style="display:flex; align-items:center; gap:6px; padding:6px 11px; border-radius:20px; background:#e4f6ec; color:#1f9d63; font-size:11px; font-weight:800;"><i class="fa fa-check-circle"></i> PAID</div>
+          </div>
+          <div style="margin:13px 16px 0; padding:12px 14px; background:var(--card); border-radius:14px; box-shadow:0 6px 16px -12px var(--sh); display:flex; justify-content:space-between;">
+            <div><div style="font-size:10px; color:var(--muted); font-weight:700; letter-spacing:.05em;">INVOICE</div><div style="font-size:13px; font-weight:800; margin-top:2px;">#1042</div></div>
+            <div style="text-align:right;"><div style="font-size:10px; color:var(--muted); font-weight:700; letter-spacing:.05em;">DATE</div><div style="font-size:12px; font-weight:700; margin-top:3px;">14 Jun 2026</div></div>
+            <div style="text-align:right;"><div style="font-size:10px; color:var(--muted); font-weight:700; letter-spacing:.05em;">STYLIST</div><div style="font-size:12px; font-weight:700; margin-top:3px;">Maya</div></div>
+          </div>
+          <div style="padding:13px 20px 0; display:flex; flex-direction:column; gap:10px;">
+            <sc-for list="{{ cart }}" as="c" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="min-width:0;"><div style="font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.name }}</div><div style="font-size:10px; color:var(--muted); font-weight:600;">{{ c.qty }} &times; {{ c.unit }}</div></div>
+                <span style="font-size:12.5px; font-weight:800;">{{ c.line }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin:13px 20px 0; padding-top:12px; border-top:1px dashed var(--line); display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--ink2); font-weight:600;"><span>Subtotal</span><span>$145.00</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--accent); font-weight:700;"><span>Discount</span><span>&minus;$15.00</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--ink2); font-weight:600;"><span>Tax (5%)</span><span>$6.50</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding:9px 12px; background:var(--tint); border-radius:11px;"><span style="font-size:12.5px; font-weight:800;">Total Paid</span><span style="font-size:17px; font-weight:800; color:var(--accent2);">$136.50</span></div>
+            <div style="display:flex; align-items:center; gap:7px; font-size:10.5px; color:var(--muted); font-weight:600; margin-top:3px;"><i class="fa fa-credit-card"></i> Paid by Visa &middot;&middot;&middot;&middot; 4242</div>
+          </div>
+          <div style="position:absolute; left:14px; right:14px; bottom:15px; display:flex; gap:9px;">
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:12px; border-radius:13px; background:var(--card); box-shadow:0 6px 15px -9px var(--sh); color:var(--ink); font-size:12px; font-weight:700;"><i class="fa fa-print"></i> Print</div>
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:12px; border-radius:13px; background:var(--card); box-shadow:0 6px 15px -9px var(--sh); color:var(--ink); font-size:12px; font-weight:700;"><i class="fa fa-share-alt"></i> Share</div>
+            <div style="flex:1.1; display:flex; align-items:center; justify-content:center; gap:7px; padding:12px; border-radius:13px; background:linear-gradient(150deg,var(--accent),var(--accent2)); color:#fff; font-size:12px; font-weight:800; box-shadow:0 11px 22px -9px var(--glow);">New Sale</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1640,&quot;height&quot;:760}}">
+class Component extends DCLogic {
+  renderVals() {
+    const services = [
+      { name: 'Classic Haircut', dur: '45 min', price: '$30', icon: 'fa-scissors' },
+      { name: 'Styling & Finish', dur: '20 min', price: '$20', icon: 'fa-magic' },
+      { name: 'Hair Color', dur: '90 min', price: '$75', icon: 'fa-paint-brush' },
+      { name: 'Head Massage', dur: '30 min', price: '$40', icon: 'fa-hand-paper-o' },
+      { name: 'Manicure', dur: '40 min', price: '$25', icon: 'fa-diamond' },
+      { name: 'Hair Spa', dur: '60 min', price: '$60', icon: 'fa-tint' },
+    ];
+    const cart = [
+      { name: 'Classic Haircut', meta: 'with Maya · 45 min', unit: '$30', qty: 1, line: '$30.00', icon: 'fa-scissors' },
+      { name: 'Hair Color', meta: 'with Liam · 90 min', unit: '$75', qty: 1, line: '$75.00', icon: 'fa-paint-brush' },
+      { name: 'Hair Spa', meta: 'with Maya · 60 min', unit: '$40', qty: 1, line: '$40.00', icon: 'fa-tint' },
+    ];
+    return { services, cart };
+  }
+}
+</script>
+</body>
+</html>

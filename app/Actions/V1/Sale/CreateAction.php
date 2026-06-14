@@ -40,11 +40,15 @@ class CreateAction
             }
 
             $customer = $this->resolveCustomer($request->validated('customerName'), $request->validated('phoneNumber'));
-            $paymentAccount = $this->resolvePaymentMethod($request->validated('paymentMethod'));
             $items = $this->buildItems($request->validated('items'), $branchId, (int) $user->id);
             $totalPayment = (float) $request->validated('totalPayment');
+            $payment = $this->resolvePayments(
+                $request->validated('paymentMethod'),
+                $request->validated('payments') ?? [],
+                $totalPayment,
+            );
 
-            $this->guardAgainstDuplicate($branchId, (int) $customer->id, (int) $user->id, $items, $totalPayment);
+            $this->guardAgainstDuplicate($branchId, (int) $customer->id, (int) $user->id, $items, $payment['paid']);
 
             $data = [
                 'status' => 'completed',
@@ -60,16 +64,11 @@ class CreateAction
                 'other_discount' => (float) ($request->validated('discount') ?? 0),
                 'freight' => 0,
                 'round_off' => 0,
-                'payment_method_ids' => (string) $paymentAccount->id,
-                'payment_method_name' => $paymentAccount->name,
-                'paid' => $totalPayment,
+                'payment_method_ids' => $payment['ids'],
+                'payment_method_name' => $payment['names'],
+                'paid' => $payment['paid'],
                 'items' => $items,
-                'payments' => [
-                    [
-                        'payment_method_id' => $paymentAccount->id,
-                        'amount' => $totalPayment,
-                    ],
-                ],
+                'payments' => $payment['payments'],
                 'comboOffers' => [],
             ];
 
@@ -89,6 +88,10 @@ class CreateAction
                 'createdUser:id,name',
                 'branch',
             ]);
+
+            if ($request->boolean('sendToWhatsapp')) {
+                $this->dispatchWhatsapp((int) $sale->id);
+            }
 
             $this->completeApiLog($apiLog, 'success', [
                 'sale_id' => $sale->id,
@@ -287,23 +290,111 @@ class CreateAction
         return $response['data'];
     }
 
-    private function resolvePaymentMethod(string $method): Account
+    /**
+     * Resolve the payment breakdown for the sale, mirroring the web POS contract:
+     *   - "credit" → no payment is recorded (paid = 0).
+     *   - "custom" → the caller supplies one or more {payment_method_id, amount} rows.
+     *   - any other value → treated as a method NAME, paid in full to that one account.
+     *
+     * @param  array<int, array<string, mixed>>  $customPayments
+     * @return array{payments: array<int, array{payment_method_id: int, amount: float}>, paid: float, ids: string, names: string}
+     */
+    private function resolvePayments(string $method, array $customPayments, float $totalPayment): array
     {
-        $methodIds = cache('payment_methods', []);
+        $method = trim($method);
 
-        if (empty($methodIds)) {
+        if (strcasecmp($method, 'credit') === 0) {
+            return ['payments' => [], 'paid' => 0.0, 'ids' => '', 'names' => 'Credit'];
+        }
+
+        $configured = $this->configuredPaymentMethods();
+
+        if ($configured->isEmpty()) {
             throw new RuntimeException('No payment methods are configured for this business.');
         }
 
-        $account = Account::query()
-            ->whereIn('id', $methodIds)
-            ->where('name', 'like', '%'.trim($method).'%')
-            ->first();
+        if (strcasecmp($method, 'custom') === 0) {
+            return $this->buildCustomPayments($customPayments, $configured);
+        }
+
+        $account = $configured->first(fn (Account $a) => stripos($a->name, $method) !== false);
 
         if (! $account) {
             throw new RuntimeException("Payment method '{$method}' was not found among the configured payment methods.");
         }
 
-        return $account;
+        return [
+            'payments' => [['payment_method_id' => (int) $account->id, 'amount' => $totalPayment]],
+            'paid' => $totalPayment,
+            'ids' => (string) $account->id,
+            'names' => $account->name,
+        ];
+    }
+
+    /**
+     * Map the caller-supplied custom payment rows onto configured accounts.
+     *
+     * @param  array<int, array<string, mixed>>  $customPayments
+     * @param  \Illuminate\Support\Collection<int, Account>  $configured
+     * @return array{payments: array<int, array{payment_method_id: int, amount: float}>, paid: float, ids: string, names: string}
+     */
+    private function buildCustomPayments(array $customPayments, $configured): array
+    {
+        if (empty($customPayments)) {
+            throw new RuntimeException('At least one payment is required for a custom payment.');
+        }
+
+        $byId = $configured->keyBy('id');
+        $payments = [];
+        $ids = [];
+        $names = [];
+        $paid = 0.0;
+
+        foreach ($customPayments as $row) {
+            $id = (int) ($row['payment_method_id'] ?? 0);
+            $amount = (float) ($row['amount'] ?? 0);
+            $account = $byId->get($id);
+
+            if (! $account) {
+                throw new RuntimeException("Payment method #{$id} is not a configured payment method.");
+            }
+
+            $payments[] = ['payment_method_id' => $id, 'amount' => $amount];
+            $ids[] = $id;
+            $names[] = $account->name;
+            $paid += $amount;
+        }
+
+        return [
+            'payments' => $payments,
+            'paid' => $paid,
+            'ids' => implode(',', $ids),
+            'names' => implode(', ', $names),
+        ];
+    }
+
+    /**
+     * The payment-method accounts configured for the business.
+     *
+     * @return \Illuminate\Support\Collection<int, Account>
+     */
+    private function configuredPaymentMethods()
+    {
+        return Account::query()
+            ->whereIn('id', cache('payment_methods', []))
+            ->get(['id', 'name']);
+    }
+
+    /**
+     * Send the sale receipt over WhatsApp. Best-effort — a failure here must never
+     * fail the sale, which is already committed by the time this runs.
+     */
+    private function dispatchWhatsapp(int $saleId): void
+    {
+        try {
+            Sale::sendToWhatsapp($saleId);
+        } catch (\Throwable $e) {
+            // Receipt delivery is non-critical; the sale itself succeeded.
+        }
     }
 }

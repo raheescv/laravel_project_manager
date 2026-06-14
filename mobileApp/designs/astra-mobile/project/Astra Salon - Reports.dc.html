@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:radial-gradient(1100px 600px at 85% -12%, #cfe6dd 0%, transparent 58%), linear-gradient(160deg,#f4f0e7,#e7efe9); font-family:'Manrope',system-ui,sans-serif; color:#16312a; padding:46px 34px 80px;">
+
+  <div style="max-width:1640px; margin:0 auto 30px;">
+    <div style="font-size:12px; font-weight:800; letter-spacing:.24em; text-transform:uppercase; color:#0f7a66;">Astra Salon &middot; Reports Suite</div>
+    <div style="font-family:'Marcellus',serif; font-size:32px; margin-top:9px; letter-spacing:-.01em;">Every angle on the day's sales</div>
+    <div style="font-size:14px; color:#5d7269; margin-top:7px; max-width:720px; line-height:1.5;">Sales overview plus drill-downs by service, invoice, day and payment method &mdash; KPI cards, charts and cumulative tables, each exportable.</div>
+  </div>
+
+  <div style="max-width:1640px; margin:0 auto; display:flex; gap:26px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+
+    <!-- ============ OVERVIEW ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">01 &middot; SALES OVERVIEW</span>
+      <div style="width:300px; padding:10px; border-radius:46px; background:#0b211c; box-shadow:0 30px 58px -24px rgba(11,33,28,.6);">
+        <div style="position:relative; width:280px; height:712px; border-radius:36px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 16px; border-radius:0 0 26px 26px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 18px 0;">
+              <div style="font-family:'Marcellus',serif; font-size:21px; color:#fff;">Sales Overview</div>
+              <div style="width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,.14); color:#e0c074; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-download"></i></div>
+            </div>
+            <div style="display:flex; gap:7px; padding:12px 18px 0;">
+              <span style="padding:6px 12px; border-radius:16px; background:rgba(255,255,255,.16); color:#fff; font-size:11px; font-weight:700;">Today</span>
+              <span style="padding:6px 12px; border-radius:16px; background:rgba(255,255,255,.07); color:rgba(255,255,255,.7); font-size:11px; font-weight:600;">Week</span>
+              <span style="padding:6px 12px; border-radius:16px; background:rgba(255,255,255,.07); color:rgba(255,255,255,.7); font-size:11px; font-weight:600;">Month</span>
+            </div>
+          </div>
+          <div style="padding:13px 15px 0; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div style="background:#fff; border-radius:15px; padding:12px 13px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><div style="font-size:10px; color:#a8b3ab; font-weight:700;">GROSS SALES</div><div style="font-family:'Marcellus',serif; font-size:21px; margin-top:4px;">$8,420</div><div style="font-size:10px; font-weight:800; color:#1f9d63;"><i class="fa fa-arrow-up" style="font-size:8px;"></i> 18%</div></div>
+            <div style="background:#fff; border-radius:15px; padding:12px 13px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><div style="font-size:10px; color:#a8b3ab; font-weight:700;">NET REVENUE</div><div style="font-family:'Marcellus',serif; font-size:21px; margin-top:4px; color:#0e5648;">$7,808</div><div style="font-size:10px; font-weight:800; color:#1f9d63;"><i class="fa fa-arrow-up" style="font-size:8px;"></i> 15%</div></div>
+            <div style="background:#fff; border-radius:15px; padding:12px 13px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><div style="font-size:10px; color:#a8b3ab; font-weight:700;">INVOICES</div><div style="font-family:'Marcellus',serif; font-size:21px; margin-top:4px;">312</div></div>
+            <div style="background:#fff; border-radius:15px; padding:12px 13px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><div style="font-size:10px; color:#a8b3ab; font-weight:700;">AVG TICKET</div><div style="font-family:'Marcellus',serif; font-size:21px; margin-top:4px;">$27</div></div>
+          </div>
+          <div style="margin:12px 15px 0; padding:13px 14px; background:#fff; border-radius:16px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;"><span style="font-size:12px; font-weight:700;">Today vs last week</span><span style="font-size:10.5px; font-weight:800; color:#1f9d63;">+18.2%</span></div>
+            <svg viewBox="0 0 270 64" preserveAspectRatio="none" style="width:100%; height:64px;">
+              <defs><linearGradient id="ov" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#15806c" stop-opacity="0.38"></stop><stop offset="100%" stop-color="#15806c" stop-opacity="0"></stop></linearGradient></defs>
+              <path d="M0,50 C26,45 48,30 74,33 C100,36 118,18 148,19 C180,20 198,11 222,9 C246,8 258,6 270,5 L270,64 L0,64 Z" fill="url(#ov)"></path>
+              <path d="M0,50 C26,45 48,30 74,33 C100,36 118,18 148,19 C180,20 198,11 222,9 C246,8 258,6 270,5" fill="none" stroke="#0e5648" stroke-width="2.5"></path>
+            </svg>
+          </div>
+          <div style="margin:12px 15px 0; background:#fff; border-radius:16px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5); overflow:hidden;">
+            <div style="padding:10px 14px 6px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#0f7a66;">Detailed reports</div>
+            <sc-for list="{{ reportLinks }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; gap:11px; padding:11px 14px; border-top:1px solid #f5f1e8;"><span style="width:28px; height:28px; border-radius:8px; background:#eef5f1; color:#15806c; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa {{ r.icon }}"></i></span><span style="flex:1; font-size:12.5px; font-weight:700;">{{ r.name }}</span><span style="font-size:11.5px; font-weight:700; color:#bf953f;">{{ r.val }}</span><i class="fa fa-angle-right" style="color:#c2cbc4;"></i></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ BY SERVICE (PRODUCT-WISE) ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">02 &middot; BY SERVICE</span>
+      <div style="width:300px; padding:10px; border-radius:46px; background:#0b211c; box-shadow:0 30px 58px -24px rgba(11,33,28,.6);">
+        <div style="position:relative; width:280px; height:712px; border-radius:36px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 15px; border-radius:0 0 24px 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 16px 0;"><div style="width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-angle-left"></i></div><div style="flex:1;"><div style="font-family:'Marcellus',serif; font-size:19px; color:#fff; line-height:1;">By Service</div><div style="font-size:10px; color:rgba(255,255,255,.7); font-weight:600; margin-top:2px;">Product-wise sales</div></div><div style="font-size:10.5px; font-weight:700; color:#e0c074;">Revenue <i class="fa fa-sort-down"></i></div></div>
+          </div>
+          <div style="padding:13px 16px 0; display:flex; flex-direction:column; gap:11px;">
+            <sc-for list="{{ services }}" as="s" hint-placeholder-count="5">
+              <div style="background:#fff; border-radius:14px; padding:11px 13px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);">
+                <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:12.5px; font-weight:700;">{{ s.name }}</span><span style="font-family:'Marcellus',serif; font-size:15px; color:#0e5648;">{{ s.rev }}</span></div>
+                <div style="height:6px; border-radius:3px; background:#eef0ea; margin-top:8px; overflow:hidden;"><div style="height:100%; width:{{ s.pct }}; border-radius:3px; background:linear-gradient(90deg,#15806c,#c9a24b);"></div></div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;"><span style="font-size:10.5px; color:#a8b3ab; font-weight:600;">{{ s.qty }} sold &middot; {{ s.code }}</span><span style="font-size:10.5px; color:#a8b3ab; font-weight:600;">{{ s.share }} of sales</span></div>
+              </div>
+            </sc-for>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:#1c3a32; border-radius:14px; color:#fff;"><span style="font-size:12px; font-weight:700;">Grand total</span><span style="display:flex; align-items:baseline; gap:9px;"><span style="font-size:11px; color:rgba(255,255,255,.7); font-weight:600;">242 sold</span><span style="font-family:'Marcellus',serif; font-size:17px; color:#e0c074;">$14,840</span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ BY INVOICE ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">03 &middot; BY INVOICE</span>
+      <div style="width:300px; padding:10px; border-radius:46px; background:#0b211c; box-shadow:0 30px 58px -24px rgba(11,33,28,.6);">
+        <div style="position:relative; width:280px; height:712px; border-radius:36px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 15px; border-radius:0 0 24px 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 16px 0;"><div style="width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-angle-left"></i></div><div style="flex:1;"><div style="font-family:'Marcellus',serif; font-size:19px; color:#fff; line-height:1;">By Invoice</div><div style="font-size:10px; color:rgba(255,255,255,.7); font-weight:600; margin-top:2px;">312 invoices today</div></div><div style="width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,.14); color:#e0c074; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-search"></i></div></div>
+            <div style="display:flex; gap:6px; padding:12px 16px 0;">
+              <span style="padding:6px 12px; border-radius:16px; background:rgba(255,255,255,.16); color:#fff; font-size:10.5px; font-weight:700;">All</span>
+              <span style="padding:6px 12px; border-radius:16px; background:rgba(255,255,255,.07); color:rgba(255,255,255,.7); font-size:10.5px; font-weight:600;">Paid</span>
+              <span style="padding:6px 12px; border-radius:16px; background:rgba(255,255,255,.07); color:rgba(255,255,255,.7); font-size:10.5px; font-weight:600;">Refund</span>
+              <span style="padding:6px 12px; border-radius:16px; background:rgba(255,255,255,.07); color:rgba(255,255,255,.7); font-size:10.5px; font-weight:600;">Held</span>
+            </div>
+          </div>
+          <div style="padding:13px 16px 0; display:flex; flex-direction:column; gap:9px;">
+            <sc-for list="{{ invoices }}" as="i" hint-placeholder-count="5">
+              <div style="display:flex; align-items:center; gap:11px; padding:11px 13px; background:#fff; border-radius:14px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);">
+                <div style="flex:1; min-width:0;"><div style="display:flex; align-items:center; gap:7px;"><span style="font-size:12.5px; font-weight:800;">{{ i.no }}</span><span style="{{ i.pillStyle }}">{{ i.status }}</span></div><div style="font-size:10.5px; color:#a8b3ab; font-weight:600; margin-top:2px;">{{ i.who }} &middot; {{ i.date }}</div></div>
+                <span style="font-family:'Marcellus',serif; font-size:15px;">{{ i.amt }}</span>
+              </div>
+            </sc-for>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:#fff; border-radius:14px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);"><div><div style="font-size:10px; color:#a8b3ab; font-weight:700;">SHOWING 5 OF 312</div><div style="font-size:11px; font-weight:700; color:#7c8c84;">Running total</div></div><span style="font-family:'Marcellus',serif; font-size:18px; color:#0e5648;">$620.40</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ BY DAY ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">04 &middot; BY DAY</span>
+      <div style="width:300px; padding:10px; border-radius:46px; background:#0b211c; box-shadow:0 30px 58px -24px rgba(11,33,28,.6);">
+        <div style="position:relative; width:280px; height:712px; border-radius:36px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 15px; border-radius:0 0 24px 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 16px 0;"><div style="width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-angle-left"></i></div><div style="flex:1;"><div style="font-family:'Marcellus',serif; font-size:19px; color:#fff; line-height:1;">By Day</div><div style="font-size:10px; color:rgba(255,255,255,.7); font-weight:600; margin-top:2px;">This week &middot; Mon&ndash;Sun</div></div><div style="width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,.14); color:#e0c074; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-download"></i></div></div>
+          </div>
+          <div style="margin:13px 16px 0; padding:14px 14px 12px; background:#fff; border-radius:16px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5);">
+            <div style="font-size:11.5px; font-weight:700; margin-bottom:12px;">Gross sales by day</div>
+            <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:6px; height:104px;">
+              <sc-for list="{{ days }}" as="d" hint-placeholder-count="7">
+                <div style="flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;">
+                  <div style="width:100%; border-radius:6px 6px 3px 3px; background:{{ d.fill }}; height:{{ d.h }};"></div>
+                  <span style="font-size:9px; color:#a8b3ab; font-weight:700;">{{ d.d }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="margin:12px 16px 0; background:#fff; border-radius:16px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5); overflow:hidden;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1.2fr; padding:9px 14px; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#7c8c84; background:#faf7f0;"><span>Day</span><span style="text-align:right;">Invoices</span><span style="text-align:right;">Gross</span></div>
+            <sc-for list="{{ days }}" as="d" hint-placeholder-count="7">
+              <div style="display:grid; grid-template-columns:1fr 1fr 1.2fr; padding:8px 14px; font-size:11.5px; align-items:center; border-top:1px solid #f5f1e8;"><span style="font-weight:700;">{{ d.full }}</span><span style="text-align:right; color:#7c8c84;">{{ d.inv }}</span><span style="text-align:right; font-weight:800;">{{ d.gross }}</span></div>
+            </sc-for>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1.2fr; padding:10px 14px; font-size:12px; align-items:center; border-top:1.5px solid #ece6d8;"><span style="font-weight:800;">Total</span><span style="text-align:right; font-weight:800;">312</span><span style="text-align:right; font-family:'Marcellus',serif; font-size:15px; color:#0e5648;">$8,420</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ BY PAYMENT METHOD ============ -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <span style="font-size:11.5px; font-weight:700; color:#8a9a92; letter-spacing:.05em;">05 &middot; BY PAYMENT</span>
+      <div style="width:300px; padding:10px; border-radius:46px; background:#0b211c; box-shadow:0 30px 58px -24px rgba(11,33,28,.6);">
+        <div style="position:relative; width:280px; height:712px; border-radius:36px; overflow:hidden; background:#f6f1e8; color:#16312a;">
+          <div style="background:linear-gradient(150deg,#15705f,#0c4a40); padding:0 0 15px; border-radius:0 0 24px 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px 2px; font-size:11.5px; font-weight:700; color:#fff;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 16px 0;"><div style="width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-angle-left"></i></div><div style="flex:1;"><div style="font-family:'Marcellus',serif; font-size:19px; color:#fff; line-height:1;">By Payment</div><div style="font-size:10px; color:rgba(255,255,255,.7); font-weight:600; margin-top:2px;">Method breakdown</div></div><div style="width:32px; height:32px; border-radius:10px; background:rgba(255,255,255,.14); color:#e0c074; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-download"></i></div></div>
+          </div>
+          <div style="margin:14px 16px 0; padding:16px 14px; background:#fff; border-radius:16px; box-shadow:0 8px 20px -15px rgba(11,40,33,.5); display:flex; flex-direction:column; align-items:center;">
+            <div style="position:relative; width:128px; height:128px;">
+              <svg viewBox="0 0 120 120" style="width:128px; height:128px; transform:rotate(-90deg);">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#eef0ea" stroke-width="15"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#15806c" stroke-width="15" stroke-linecap="round" stroke-dasharray="150.3 176.4" stroke-dashoffset="0"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#c9a24b" stroke-width="15" stroke-linecap="round" stroke-dasharray="91.5 235.2" stroke-dashoffset="-150.3"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#5f8c72" stroke-width="15" stroke-linecap="round" stroke-dasharray="58.8 267.9" stroke-dashoffset="-241.8"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#2a8a86" stroke-width="15" stroke-linecap="round" stroke-dasharray="26.1 300.6" stroke-dashoffset="-300.6"></circle>
+              </svg>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;"><span style="font-family:'Marcellus',serif; font-size:19px;">$8,420</span><span style="font-size:9px; color:#a8b3ab; font-weight:700;">COLLECTED</span></div>
+            </div>
+          </div>
+          <div style="margin:12px 16px 0; display:flex; flex-direction:column; gap:9px;">
+            <sc-for list="{{ payments }}" as="p" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; gap:11px; padding:11px 13px; background:#fff; border-radius:14px; box-shadow:0 7px 18px -15px rgba(11,40,33,.5);">
+                <span style="width:10px; height:10px; border-radius:3px; background:{{ p.color }}; flex-shrink:0;"></span>
+                <span style="flex:1; font-size:12.5px; font-weight:700;">{{ p.name }}</span>
+                <span style="font-size:11px; color:#a8b3ab; font-weight:700;">{{ p.pct }}</span>
+                <span style="font-family:'Marcellus',serif; font-size:15px; width:62px; text-align:right;">{{ p.amt }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1640,&quot;height&quot;:830}}">
+class Component extends DCLogic {
+  renderVals() {
+    const reportLinks = [
+      { name: 'By Service', val: '5 top', icon: 'fa-scissors' },
+      { name: 'By Invoice', val: '312', icon: 'fa-file-text-o' },
+      { name: 'By Day', val: '7 days', icon: 'fa-calendar-o' },
+      { name: 'By Payment Method', val: '4 types', icon: 'fa-credit-card' },
+    ];
+    const services = [
+      { name: 'Signature Cut', code: 'SC-01', qty: 96, rev: '$4,320', pct: '100%', share: '29%' },
+      { name: 'Balayage', code: 'BL-10', qty: 22, rev: '$3,960', pct: '92%', share: '27%' },
+      { name: 'Gloss Treatment', code: 'GL-12', qty: 40, rev: '$2,600', pct: '60%', share: '18%' },
+      { name: 'Spa Ritual', code: 'SP-20', qty: 24, rev: '$2,160', pct: '50%', share: '15%' },
+      { name: 'Blow Dry & Style', code: 'BD-03', qty: 60, rev: '$1,800', pct: '42%', share: '12%' },
+    ];
+    const pill = (bg, c) => `font-size:9px; font-weight:800; color:${c}; background:${bg}; padding:2px 7px; border-radius:10px;`;
+    const statusMap = {
+      Paid: pill('#e4f6ec', '#1f9d63'),
+      Refund: pill('#fbe9ec', '#d4546a'),
+      Held: pill('#fbf3df', '#bf953f'),
+    };
+    const invoiceDefs = [
+      { no: '#1042', who: 'Walk-in', date: 'Today 2:30', amt: '$248.40', status: 'Paid' },
+      { no: '#1041', who: 'A. Rivera', date: 'Today 1:10', amt: '$92.00', status: 'Paid' },
+      { no: '#1040', who: 'Walk-in', date: 'Today 12:05', amt: '$45.00', status: 'Refund' },
+      { no: '#1039', who: 'J. Kim', date: 'Today 11:20', amt: '$160.00', status: 'Held' },
+      { no: '#1038', who: 'Walk-in', date: 'Today 10:40', amt: '$75.00', status: 'Paid' },
+    ];
+    const invoices = invoiceDefs.map(i => ({ ...i, pillStyle: statusMap[i.status] }));
+    const dayDefs = [
+      { d: 'Mon', full: 'Monday', inv: 38, gross: '$1,120', h: '52%', peak: false },
+      { d: 'Tue', full: 'Tuesday', inv: 44, gross: '$1,420', h: '66%', peak: false },
+      { d: 'Wed', full: 'Wednesday', inv: 31, gross: '$960', h: '44%', peak: false },
+      { d: 'Thu', full: 'Thursday', inv: 52, gross: '$1,840', h: '88%', peak: true },
+      { d: 'Fri', full: 'Friday', inv: 46, gross: '$1,360', h: '64%', peak: false },
+      { d: 'Sat', full: 'Saturday', inv: 58, gross: '$1,980', h: '96%', peak: true },
+      { d: 'Sun', full: 'Sunday', inv: 43, gross: '$1,240', h: '58%', peak: false },
+    ];
+    const days = dayDefs.map(d => ({ ...d, fill: d.peak ? 'linear-gradient(180deg,#15806c,#c9a24b)' : 'linear-gradient(180deg,#3a9b86,#7fc0ae)' }));
+    const payments = [
+      { name: 'Card', pct: '46%', amt: '$3,873', color: '#15806c' },
+      { name: 'Cash', pct: '28%', amt: '$2,358', color: '#c9a24b' },
+      { name: 'UPI', pct: '18%', amt: '$1,516', color: '#5f8c72' },
+      { name: 'Split / Other', pct: '8%', amt: '$673', color: '#2a8a86' },
+    ];
+    return { reportLinks, services, invoices, days, payments };
+  }
+}
+</script>
+</body>
+</html>

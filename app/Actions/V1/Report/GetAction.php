@@ -77,14 +77,17 @@ class GetAction
             ->when($employeeId, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('revenue')
-            ->selectRaw('users.id, users.name')
+            // Alias to "staff_name": selecting it as "name"/"employee_name" would be
+            // shadowed by SaleItem's getNameAttribute()/getEmployeeNameAttribute()
+            // accessors (both return a relation that isn't loaded here -> null).
+            ->selectRaw('users.id, users.name as staff_name')
             ->selectRaw('COUNT(DISTINCT sale_items.sale_id) as bills_count')
             ->selectRaw('COUNT(sale_items.id) as items_count')
             ->selectRaw('COALESCE(SUM(sale_items.unit_price * sale_items.quantity), 0) as revenue')
             ->get()
             ->map(fn ($row) => [
                 'employee_id' => (string) $row->id,
-                'employee_name' => $row->name,
+                'employee_name' => $row->staff_name,
                 'bills_count' => (int) $row->bills_count,
                 'items_count' => (int) $row->items_count,
                 'revenue' => round((float) $row->revenue, 2),

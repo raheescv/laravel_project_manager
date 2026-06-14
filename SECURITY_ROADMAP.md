@@ -91,8 +91,9 @@
 - **Location:** `routes/api_v1.php`
 - **Issue:** `products`, `products/{id}`, `categories`, `brands`, `sizes`, `colors`, `branches` are registered **outside** both `IdentifyTenant` and `auth:sanctum`. With no tenant resolved, `TenantScope` adds no filter → returns all tenants' catalog, inventory, and branch names/phones/locations to anonymous callers.
 - **Impact:** Anonymous cross-tenant data disclosure + enumeration.
-- **Fix:** Move these route groups inside the `IdentifyTenant` + `auth:sanctum` group.
-- **Resolution:** `routes/api_v1.php` restructured — the entire `v1` group is now wrapped in `IdentifyTenant`, and every catalog endpoint (`products`, `categories`, `brands`, `sizes`, `colors`, `branches`) plus the sale/customer routes sit inside `auth:sanctum`. Only `login` stays public (tenant-scoped + `throttle:10,1`). Verified with `php artisan route:list -v`: `api/v1/products` now lists `IdentifyTenant` + `Authenticate:sanctum`.
+- **Fix / decision:** The catalog is intentionally **public** (no login), but tenant resolution is now **mandatory** so it can never read across tenants.
+- **Resolution:** Added a `required` mode to `IdentifyTenant::handle()` — `abort(404)` when no tenant resolves; the default (no-arg) behavior is unchanged, so the `web` group on the apex domain and the login/authenticated API routes are unaffected. The 6 public catalog route groups (`products`, `categories`, `brands`, `sizes`, `colors`, `branches`) now run under `IdentifyTenant:required` — open to anyone, but only ever for one resolved tenant; the un-scoped "all tenants" fall-through is closed. Verified via `route:list -v` (each catalog route lists `IdentifyTenant:required`); `php -l` + Pint clean.
+- **Residual (by design / follow-up):** the catalog is still readable per-tenant without auth and exposes per-branch **stock levels** + branch **mobile/location** — acceptable for a public catalog, but consider trimming those fields from `ProductResource`/`BranchController` if they needn't be public. Also: the authenticated `sale`/`customers` routes rely on the same subdomain for scoping — if ever called tenant-less they'd be un-scoped too; consider `IdentifyTenant:required` there as well (separate from this public-catalog fix).
 
 ### C4 — Unauthenticated WhatsApp Node sidecar → file exfiltration + message sending
 - **Status:** ☐

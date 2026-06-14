@@ -31,8 +31,15 @@ class StoreRequest extends FormRequest
             'items.*.unitPrice' => ['nullable', 'numeric', 'min:0'],
             'items.*.discount' => ['nullable', 'numeric', 'min:0'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            // The payment "mode": a method name (e.g. "Cash"), "credit" (no payment),
+            // or "custom" (one or more methods supplied in `payments`).
             'paymentMethod' => ['required', 'string', 'max:50'],
             'totalPayment' => ['required', 'numeric', 'min:0'],
+            // Custom payment breakdown — required when paymentMethod is "custom".
+            'payments' => ['nullable', 'array', 'required_if:paymentMethod,custom'],
+            'payments.*.payment_method_id' => ['required_with:payments', 'integer'],
+            'payments.*.amount' => ['required_with:payments', 'numeric', 'min:0'],
+            'sendToWhatsapp' => ['nullable', 'boolean'],
         ];
     }
 
@@ -46,6 +53,7 @@ class StoreRequest extends FormRequest
         return [
             'items.required' => 'At least one sale item is required.',
             'items.min' => 'At least one sale item is required.',
+            'payments.required_if' => 'At least one payment is required for a custom payment.',
         ];
     }
 }

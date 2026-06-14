@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Serif+Display&family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  @keyframes floatUp { from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:translateY(0)} }
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:#e7e8ec; font-family:'Manrope',system-ui,sans-serif; color:#1a1b22; padding:40px 34px 90px;">
+
+  <!-- page header -->
+  <div style="max-width:1320px; margin:0 auto 34px;">
+    <div style="font-size:12px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:#8a8b95;">Astra POS &middot; Visual Exploration</div>
+    <div style="font-size:30px; font-weight:800; letter-spacing:-.02em; margin-top:8px;">Three premium directions</div>
+    <div style="font-size:14.5px; color:#5b5c66; margin-top:7px; max-width:620px; line-height:1.5;">Each shows the same two screens &mdash; Login and Sale &mdash; so you can compare the aesthetic, not the layout. Pick one and I'll build it out across every screen and state.</div>
+  </div>
+
+  <div style="max-width:1320px; margin:0 auto; display:flex; flex-direction:column; gap:30px;">
+
+    <!-- ============================================================ -->
+    <!-- DIRECTION 01 — MONO EDITORIAL -->
+    <!-- ============================================================ -->
+    <div style="border-radius:30px; padding:38px 40px; background:#efe9da; border:1px solid #e2dac6; overflow:hidden;">
+      <div style="display:flex; gap:42px; align-items:flex-start; flex-wrap:wrap;">
+
+        <!-- spec -->
+        <div style="width:300px; flex-shrink:0; color:#16130b; font-family:'Space Grotesk',sans-serif;">
+          <div style="display:flex; align-items:baseline; gap:12px;">
+            <span style="font-size:60px; font-weight:700; line-height:.8; letter-spacing:-.04em;">01</span>
+            <span style="font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; border:2px solid #16130b; padding:4px 9px;">Editorial</span>
+          </div>
+          <div style="font-size:32px; font-weight:700; letter-spacing:-.03em; margin-top:20px; line-height:1;">Mono<br>Editorial</div>
+          <div style="font-size:14px; line-height:1.55; color:#46412f; margin-top:16px; font-family:'Manrope',sans-serif; font-weight:500;">Confident, type-led and unapologetically bold. Bone paper, ink black, one acid-lime signal colour, hard offset shadows and crisp 2px rules. Feels like premium streetwear retail.</div>
+
+          <div style="margin-top:24px; display:flex; gap:9px;">
+            <div style="width:38px; height:38px; background:#efe9da; border:2px solid #16130b;"></div>
+            <div style="width:38px; height:38px; background:#16130b;"></div>
+            <div style="width:38px; height:38px; background:#ccf03a;"></div>
+            <div style="width:38px; height:38px; background:#fbf9f3; border:2px solid #16130b;"></div>
+          </div>
+          <div style="margin-top:18px; font-family:'Manrope',sans-serif; font-size:12.5px; color:#46412f; font-weight:600;">
+            <div><b style="font-weight:800;">Type</b> &nbsp;Space Grotesk</div>
+            <div style="margin-top:5px;"><b style="font-weight:800;">Geometry</b> &nbsp;Sharp &middot; 2px rules &middot; hard shadow</div>
+          </div>
+        </div>
+
+        <!-- phones -->
+        <div style="display:flex; gap:28px; flex:1; min-width:0; justify-content:center; flex-wrap:wrap;">
+
+          <!-- A: LOGIN -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <span style="font-size:12px; font-weight:700; color:#6a6450; font-family:'Space Grotesk',sans-serif; letter-spacing:.04em;">LOGIN</span>
+            <div style="width:298px; padding:10px; border-radius:42px; background:#16130b; box-shadow:10px 12px 0 rgba(22,19,11,.16);">
+              <div style="position:relative; width:278px; height:600px; border-radius:33px; overflow:hidden; background:#efe9da; font-family:'Space Grotesk',sans-serif; color:#16130b;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 20px 4px; font-size:12px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+                <div style="padding:20px; display:flex; flex-direction:column; height:calc(100% - 33px);">
+                  <div style="width:50px; height:50px; background:#16130b; display:flex; align-items:center; justify-content:center;"><i class="fa fa-bolt" style="color:#ccf03a; font-size:24px;"></i></div>
+                  <div style="font-size:34px; font-weight:700; letter-spacing:-.03em; line-height:.98; margin-top:20px; text-transform:uppercase;">Welcome<br>back</div>
+                  <div style="font-size:12.5px; font-weight:600; color:#6a6450; margin-top:10px; font-family:'Manrope',sans-serif;">Enter your 4-digit MPIN</div>
+
+                  <div style="margin-top:16px; display:flex; align-items:center; gap:10px; padding:11px 13px; background:#fbf9f3; border:2px solid #16130b;">
+                    <i class="fa fa-map-marker"></i><span style="font-size:12.5px; font-weight:700; flex:1;">Downtown Flagship</span><i class="fa fa-angle-down"></i>
+                  </div>
+
+                  <div style="display:flex; gap:12px; margin-top:20px;">
+                    <div style="width:16px; height:16px; background:#16130b;"></div>
+                    <div style="width:16px; height:16px; background:#16130b;"></div>
+                    <div style="width:16px; height:16px; background:#ccf03a; border:2px solid #16130b;"></div>
+                    <div style="width:16px; height:16px; background:#fbf9f3; border:2px solid #16130b;"></div>
+                  </div>
+
+                  <div style="margin-top:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">1</div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">2</div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">3</div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">4</div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">5</div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">6</div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">7</div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">8</div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">9</div>
+                    <div style="height:46px;"></div>
+                    <div style="height:46px; background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600;">0</div>
+                    <div style="height:46px; background:#ccf03a; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b; display:flex; align-items:center; justify-content:center; font-size:17px;"><i class="fa fa-long-arrow-left"></i></div>
+                  </div>
+
+                  <div style="display:flex; gap:9px; margin-top:14px; align-items:center;">
+                    <div style="flex:1; display:flex; border:2px solid #16130b;">
+                      <span style="flex:1; text-align:center; padding:8px; background:#16130b; color:#ccf03a; font-size:12px; font-weight:700;">MPIN</span>
+                      <span style="flex:1; text-align:center; padding:8px; font-size:12px; font-weight:700;">PASSWORD</span>
+                    </div>
+                    <div style="width:42px; height:38px; background:#ccf03a; border:2px solid #16130b; display:flex; align-items:center; justify-content:center; font-size:18px;"><i class="fa fa-hand-paper-o"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- A: SALE -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <span style="font-size:12px; font-weight:700; color:#6a6450; font-family:'Space Grotesk',sans-serif; letter-spacing:.04em;">SALE</span>
+            <div style="width:298px; padding:10px; border-radius:42px; background:#16130b; box-shadow:10px 12px 0 rgba(22,19,11,.16);">
+              <div style="position:relative; width:278px; height:600px; border-radius:33px; overflow:hidden; background:#efe9da; font-family:'Space Grotesk',sans-serif; color:#16130b;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 20px 4px; font-size:12px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:6px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+                <div style="padding:14px 18px 0; display:flex; align-items:center; justify-content:space-between;">
+                  <div><div style="font-size:24px; font-weight:700; letter-spacing:-.02em; text-transform:uppercase; line-height:1;">New Sale</div><div style="font-size:11px; font-weight:700; color:#6a6450; margin-top:4px; font-family:'Manrope',sans-serif;">Walk-in customer</div></div>
+                  <div style="width:38px; height:38px; background:#16130b; color:#ccf03a; display:flex; align-items:center; justify-content:center; font-size:15px;"><i class="fa fa-user-plus"></i></div>
+                </div>
+                <div style="padding:13px 18px 0; display:flex; gap:8px;">
+                  <div style="flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; background:#fbf9f3; border:2px solid #16130b;"><i class="fa fa-search"></i><span style="font-size:12.5px; font-weight:600; color:#6a6450; font-family:'Manrope',sans-serif;">Search products</span></div>
+                  <div style="width:42px; height:40px; background:#ccf03a; border:2px solid #16130b; display:flex; align-items:center; justify-content:center; font-size:17px;"><i class="fa fa-qrcode"></i></div>
+                </div>
+                <div style="padding:12px 18px 0; display:flex; gap:7px; overflow:hidden;">
+                  <span style="padding:7px 13px; background:#16130b; color:#ccf03a; font-size:12px; font-weight:700; white-space:nowrap;">ALL</span>
+                  <span style="padding:7px 13px; background:#fbf9f3; border:2px solid #16130b; font-size:12px; font-weight:700; white-space:nowrap;">COFFEE</span>
+                  <span style="padding:7px 13px; background:#fbf9f3; border:2px solid #16130b; font-size:12px; font-weight:700; white-space:nowrap;">BAKERY</span>
+                </div>
+                <div style="padding:12px 18px 0; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                  <sc-for list="{{ products }}" as="p" hint-placeholder-count="4">
+                    <div style="background:#fbf9f3; border:2px solid #16130b; box-shadow:3px 3px 0 #16130b;">
+                      <div style="height:54px; background:linear-gradient(135deg,{{ p.a }},{{ p.b }}); border-bottom:2px solid #16130b; display:flex; align-items:center; justify-content:center;"><i class="fa {{ p.icon }}" style="color:#fff; font-size:21px;"></i></div>
+                      <div style="padding:8px 9px;">
+                        <div style="font-size:12px; font-weight:700;">{{ p.name }}</div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
+                          <span style="font-size:15px; font-weight:700;">{{ p.price }}</span>
+                          <span style="width:24px; height:24px; background:#ccf03a; border:2px solid #16130b; display:flex; align-items:center; justify-content:center; font-size:12px;"><i class="fa fa-plus"></i></span>
+                        </div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="position:absolute; left:14px; right:14px; bottom:16px; background:#16130b; color:#efe9da; padding:13px 15px; display:flex; align-items:center; gap:12px;">
+                  <div style="position:relative; width:38px; height:38px; background:#ccf03a; display:flex; align-items:center; justify-content:center; color:#16130b; font-size:16px;"><i class="fa fa-shopping-bag"></i></div>
+                  <div style="flex:1;"><div style="font-size:10px; font-weight:700; color:#9a957f; font-family:'Manrope',sans-serif;">3 ITEMS</div><div style="font-size:19px; font-weight:700;">$24.50</div></div>
+                  <div style="padding:11px 18px; background:#ccf03a; color:#16130b; font-size:13px; font-weight:700; display:flex; align-items:center; gap:7px;">PAY <i class="fa fa-long-arrow-right"></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DIRECTION 02 — WARM BOUTIQUE -->
+    <!-- ============================================================ -->
+    <div style="border-radius:30px; padding:38px 40px; background:linear-gradient(135deg,#fcf8f1,#f5ebdb); border:1px solid #ece0cd; overflow:hidden;">
+      <div style="display:flex; gap:42px; align-items:flex-start; flex-wrap:wrap;">
+
+        <!-- spec -->
+        <div style="width:300px; flex-shrink:0; color:#3b2d22;">
+          <div style="display:flex; align-items:baseline; gap:12px;">
+            <span style="font-size:60px; font-weight:400; line-height:.8; letter-spacing:-.02em; font-family:'DM Serif Display',serif;">02</span>
+            <span style="font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#c2613b; border:1px solid #d8b59a; border-radius:20px; padding:5px 11px;">Boutique</span>
+          </div>
+          <div style="font-size:34px; font-family:'DM Serif Display',serif; margin-top:20px; line-height:1.02;">Warm<br>Boutique</div>
+          <div style="font-size:14px; line-height:1.6; color:#7a6a5a; margin-top:16px; font-weight:500;">Soft artisanal luxury. Cream and warm white surfaces, terracotta and sage accents, elegant serif numerals and generous rounded geometry with gentle shadows. Feels like a high-end caf&eacute; or boutique.</div>
+
+          <div style="margin-top:24px; display:flex; gap:9px;">
+            <div style="width:38px; height:38px; border-radius:12px; background:#fcf8f1; border:1px solid #e2d5c2;"></div>
+            <div style="width:38px; height:38px; border-radius:12px; background:#c2613b;"></div>
+            <div style="width:38px; height:38px; border-radius:12px; background:#7e8b57;"></div>
+            <div style="width:38px; height:38px; border-radius:12px; background:#3b2d22;"></div>
+          </div>
+          <div style="margin-top:18px; font-size:12.5px; color:#7a6a5a; font-weight:600;">
+            <div><b style="font-weight:800; color:#3b2d22;">Type</b> &nbsp;DM Serif Display + Manrope</div>
+            <div style="margin-top:5px;"><b style="font-weight:800; color:#3b2d22;">Geometry</b> &nbsp;Soft &middot; rounded &middot; airy</div>
+          </div>
+        </div>
+
+        <!-- phones -->
+        <div style="display:flex; gap:28px; flex:1; min-width:0; justify-content:center; flex-wrap:wrap;">
+
+          <!-- B: LOGIN -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <span style="font-size:12px; font-weight:700; color:#a8917c; letter-spacing:.08em;">LOGIN</span>
+            <div style="width:298px; padding:11px; border-radius:48px; background:#e7dcc9; box-shadow:0 26px 50px -16px rgba(59,45,34,.4);">
+              <div style="position:relative; width:276px; height:600px; border-radius:38px; overflow:hidden; background:linear-gradient(170deg,#fdfaf4,#f6ecdc); color:#3b2d22;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 22px 4px; font-size:12px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:7px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+                <div style="padding:18px 22px; display:flex; flex-direction:column; align-items:center; height:calc(100% - 34px);">
+                  <div style="width:58px; height:58px; border-radius:50%; background:#c2613b; display:flex; align-items:center; justify-content:center; box-shadow:0 12px 26px -8px rgba(194,97,59,.6); margin-top:8px;"><i class="fa fa-coffee" style="color:#fff; font-size:24px;"></i></div>
+                  <div style="font-size:30px; font-family:'DM Serif Display',serif; margin-top:14px;">Welcome back</div>
+                  <div style="font-size:12.5px; font-weight:600; color:#a8917c; margin-top:3px;">Enter your MPIN to continue</div>
+
+                  <div style="width:100%; margin-top:16px; display:flex; align-items:center; gap:10px; padding:12px 14px; background:#fff; border-radius:16px; box-shadow:0 6px 16px -8px rgba(59,45,34,.25);">
+                    <i class="fa fa-map-marker" style="color:#c2613b;"></i><span style="font-size:12.5px; font-weight:700; flex:1;">Downtown Flagship</span><i class="fa fa-angle-down" style="color:#a8917c;"></i>
+                  </div>
+
+                  <div style="display:flex; gap:13px; margin-top:22px;">
+                    <div style="width:13px; height:13px; border-radius:50%; background:#c2613b;"></div>
+                    <div style="width:13px; height:13px; border-radius:50%; background:#c2613b;"></div>
+                    <div style="width:13px; height:13px; border-radius:50%; background:#fff; border:2px solid #e0cdb8;"></div>
+                    <div style="width:13px; height:13px; border-radius:50%; background:#fff; border:2px solid #e0cdb8;"></div>
+                  </div>
+
+                  <div style="width:100%; margin-top:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">1</div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">2</div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">3</div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">4</div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">5</div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">6</div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">7</div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">8</div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">9</div>
+                    <div style="height:48px;"></div>
+                    <div style="height:48px; background:#fff; border-radius:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:22px; font-family:'DM Serif Display',serif;">0</div>
+                    <div style="height:48px; background:#f0e3d2; border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:17px; color:#a8917c;"><i class="fa fa-long-arrow-left"></i></div>
+                  </div>
+
+                  <div style="width:100%; display:flex; gap:10px; margin-top:14px; align-items:center;">
+                    <div style="flex:1; display:flex; padding:4px; background:#f0e3d2; border-radius:30px;">
+                      <span style="flex:1; text-align:center; padding:8px; border-radius:30px; background:#c2613b; color:#fff; font-size:12px; font-weight:700;">MPIN</span>
+                      <span style="flex:1; text-align:center; padding:8px; font-size:12px; font-weight:700; color:#a8917c;">Password</span>
+                    </div>
+                    <div style="width:46px; height:46px; border-radius:50%; background:#fff; box-shadow:0 5px 13px -7px rgba(59,45,34,.3); display:flex; align-items:center; justify-content:center; font-size:18px; color:#c2613b;"><i class="fa fa-hand-paper-o"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- B: SALE -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <span style="font-size:12px; font-weight:700; color:#a8917c; letter-spacing:.08em;">SALE</span>
+            <div style="width:298px; padding:11px; border-radius:48px; background:#e7dcc9; box-shadow:0 26px 50px -16px rgba(59,45,34,.4);">
+              <div style="position:relative; width:276px; height:600px; border-radius:38px; overflow:hidden; background:linear-gradient(170deg,#fdfaf4,#f6ecdc); color:#3b2d22;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 22px 4px; font-size:12px; font-weight:700;"><span>9:41</span><span style="display:flex; gap:7px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+                <div style="padding:12px 20px 0; display:flex; align-items:center; justify-content:space-between;">
+                  <div><div style="font-size:26px; font-family:'DM Serif Display',serif; line-height:1;">New Sale</div><div style="font-size:11.5px; font-weight:600; color:#a8917c; margin-top:3px;">Walk-in customer</div></div>
+                  <div style="width:40px; height:40px; border-radius:50%; background:#fff; color:#c2613b; display:flex; align-items:center; justify-content:center; font-size:15px; box-shadow:0 5px 13px -7px rgba(59,45,34,.3);"><i class="fa fa-user-plus"></i></div>
+                </div>
+                <div style="padding:14px 20px 0; display:flex; gap:9px;">
+                  <div style="flex:1; display:flex; align-items:center; gap:9px; padding:11px 14px; background:#fff; border-radius:16px; box-shadow:0 5px 14px -8px rgba(59,45,34,.25);"><i class="fa fa-search" style="color:#a8917c;"></i><span style="font-size:12.5px; font-weight:600; color:#a8917c;">Search products</span></div>
+                  <div style="width:44px; height:44px; border-radius:14px; background:#c2613b; color:#fff; display:flex; align-items:center; justify-content:center; font-size:17px; box-shadow:0 8px 18px -8px rgba(194,97,59,.6);"><i class="fa fa-qrcode"></i></div>
+                </div>
+                <div style="padding:13px 20px 0; display:flex; gap:8px; overflow:hidden;">
+                  <span style="padding:8px 15px; border-radius:20px; background:#c2613b; color:#fff; font-size:12px; font-weight:700; white-space:nowrap;">All</span>
+                  <span style="padding:8px 15px; border-radius:20px; background:#fff; font-size:12px; font-weight:700; white-space:nowrap; box-shadow:0 4px 11px -7px rgba(59,45,34,.3);">Coffee</span>
+                  <span style="padding:8px 15px; border-radius:20px; background:#fff; font-size:12px; font-weight:700; white-space:nowrap; box-shadow:0 4px 11px -7px rgba(59,45,34,.3);">Bakery</span>
+                </div>
+                <div style="padding:13px 20px 0; display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+                  <sc-for list="{{ products }}" as="p" hint-placeholder-count="4">
+                    <div style="background:#fff; border-radius:18px; box-shadow:0 7px 18px -10px rgba(59,45,34,.35); overflow:hidden;">
+                      <div style="height:56px; background:linear-gradient(135deg,{{ p.a }},{{ p.b }}); display:flex; align-items:center; justify-content:center;"><i class="fa {{ p.icon }}" style="color:#fff; font-size:22px;"></i></div>
+                      <div style="padding:9px 11px 11px;">
+                        <div style="font-size:12px; font-weight:700;">{{ p.name }}</div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
+                          <span style="font-size:16px; font-family:'DM Serif Display',serif; color:#c2613b;">{{ p.price }}</span>
+                          <span style="width:26px; height:26px; border-radius:50%; background:#c2613b; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-plus"></i></span>
+                        </div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="position:absolute; left:16px; right:16px; bottom:18px; background:#fff; border-radius:22px; padding:13px 16px; display:flex; align-items:center; gap:13px; box-shadow:0 16px 36px -12px rgba(59,45,34,.4);">
+                  <div style="position:relative; width:42px; height:42px; border-radius:14px; background:#c2613b; display:flex; align-items:center; justify-content:center; color:#fff; font-size:17px;"><i class="fa fa-shopping-bag"></i></div>
+                  <div style="flex:1;"><div style="font-size:11px; font-weight:600; color:#a8917c;">3 items</div><div style="font-size:21px; font-family:'DM Serif Display',serif; line-height:1.1;">$24.50</div></div>
+                  <div style="padding:12px 20px; border-radius:15px; background:#c2613b; color:#fff; font-size:13.5px; font-weight:700; display:flex; align-items:center; gap:7px;">Pay <i class="fa fa-arrow-right"></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DIRECTION 03 — MIDNIGHT GOLD -->
+    <!-- ============================================================ -->
+    <div style="border-radius:30px; padding:38px 40px; background:radial-gradient(130% 110% at 50% 0%, #1b1712 0%, #0c0b09 70%); border:1px solid #2a2417; overflow:hidden;">
+      <div style="display:flex; gap:42px; align-items:flex-start; flex-wrap:wrap;">
+
+        <!-- spec -->
+        <div style="width:300px; flex-shrink:0; color:#f3ecdd;">
+          <div style="display:flex; align-items:baseline; gap:12px;">
+            <span style="font-size:60px; font-weight:600; line-height:.8; letter-spacing:.01em; font-family:'Cormorant Garamond',serif; color:#d9b86a;">03</span>
+            <span style="font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:#d9b86a; border:1px solid rgba(217,184,106,.4); border-radius:20px; padding:5px 11px;">Luxe</span>
+          </div>
+          <div style="font-size:36px; font-family:'Cormorant Garamond',serif; font-weight:600; margin-top:18px; line-height:1.02;">Midnight Gold</div>
+          <div style="font-size:14px; line-height:1.6; color:#a89b84; margin-top:14px; font-weight:500;">Dark jewelry-box luxury. Near-black warm charcoal, champagne-gold accents, refined serif display numerals and hairline detailing with restrained, generous spacing. Premium and low-glare for night shifts.</div>
+
+          <div style="margin-top:24px; display:flex; gap:9px;">
+            <div style="width:38px; height:38px; border-radius:11px; background:#18150f; border:1px solid #2a2417;"></div>
+            <div style="width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,#ecd9a6,#cba85c);"></div>
+            <div style="width:38px; height:38px; border-radius:11px; background:#f3ecdd;"></div>
+            <div style="width:38px; height:38px; border-radius:11px; background:#0c0b09; border:1px solid #2a2417;"></div>
+          </div>
+          <div style="margin-top:18px; font-size:12.5px; color:#a89b84; font-weight:600;">
+            <div><b style="font-weight:800; color:#f3ecdd;">Type</b> &nbsp;Cormorant Garamond + Manrope</div>
+            <div style="margin-top:5px;"><b style="font-weight:800; color:#f3ecdd;">Geometry</b> &nbsp;Hairline &middot; elegant &middot; calm</div>
+          </div>
+        </div>
+
+        <!-- phones -->
+        <div style="display:flex; gap:28px; flex:1; min-width:0; justify-content:center; flex-wrap:wrap;">
+
+          <!-- C: LOGIN -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <span style="font-size:12px; font-weight:700; color:#7d7461; letter-spacing:.08em;">LOGIN</span>
+            <div style="width:298px; padding:11px; border-radius:48px; background:#050505; box-shadow:0 26px 60px -18px rgba(0,0,0,.8), 0 0 0 1px rgba(217,184,106,.12);">
+              <div style="position:relative; width:276px; height:600px; border-radius:38px; overflow:hidden; background:radial-gradient(130% 80% at 50% -8%, #211c12 0%, #0d0b08 60%); color:#f3ecdd;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 22px 4px; font-size:12px; font-weight:700; color:#cfc6b2;"><span>9:41</span><span style="display:flex; gap:7px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+                <div style="padding:18px 22px; display:flex; flex-direction:column; align-items:center; height:calc(100% - 34px);">
+                  <div style="width:56px; height:56px; border-radius:50%; border:1.5px solid rgba(217,184,106,.55); display:flex; align-items:center; justify-content:center; margin-top:8px;"><i class="fa fa-bolt" style="color:#d9b86a; font-size:23px;"></i></div>
+                  <div style="font-size:34px; font-family:'Cormorant Garamond',serif; font-weight:600; margin-top:12px;">Welcome back</div>
+                  <div style="font-size:12px; font-weight:600; color:#8c8270; margin-top:2px; letter-spacing:.02em;">Enter your MPIN to continue</div>
+
+                  <div style="width:100%; margin-top:16px; display:flex; align-items:center; gap:10px; padding:12px 14px; background:#16130d; border:1px solid rgba(217,184,106,.22); border-radius:14px;">
+                    <i class="fa fa-map-marker" style="color:#d9b86a;"></i><span style="font-size:12.5px; font-weight:700; flex:1;">Downtown Flagship</span><i class="fa fa-angle-down" style="color:#8c8270;"></i>
+                  </div>
+
+                  <div style="display:flex; gap:14px; margin-top:24px;">
+                    <div style="width:12px; height:12px; border-radius:50%; background:#d9b86a; box-shadow:0 0 10px 1px rgba(217,184,106,.6);"></div>
+                    <div style="width:12px; height:12px; border-radius:50%; background:#d9b86a; box-shadow:0 0 10px 1px rgba(217,184,106,.6);"></div>
+                    <div style="width:12px; height:12px; border-radius:50%; border:1.5px solid rgba(217,184,106,.4);"></div>
+                    <div style="width:12px; height:12px; border-radius:50%; border:1.5px solid rgba(217,184,106,.4);"></div>
+                  </div>
+
+                  <div style="width:100%; margin-top:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">1</div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">2</div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">3</div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">4</div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">5</div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">6</div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">7</div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">8</div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">9</div>
+                    <div style="height:48px;"></div>
+                    <div style="height:48px; background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:23px; font-family:'Cormorant Garamond',serif; font-weight:600; color:#e9dcc0;">0</div>
+                    <div style="height:48px; background:#100e09; border:1px solid rgba(217,184,106,.12); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:17px; color:#8c8270;"><i class="fa fa-long-arrow-left"></i></div>
+                  </div>
+
+                  <div style="width:100%; display:flex; gap:10px; margin-top:14px; align-items:center;">
+                    <div style="flex:1; display:flex; padding:4px; border:1px solid rgba(217,184,106,.25); border-radius:30px;">
+                      <span style="flex:1; text-align:center; padding:8px; border-radius:30px; background:linear-gradient(135deg,#ecd9a6,#cba85c); color:#231d10; font-size:12px; font-weight:800;">MPIN</span>
+                      <span style="flex:1; text-align:center; padding:8px; font-size:12px; font-weight:700; color:#8c8270;">Password</span>
+                    </div>
+                    <div style="width:46px; height:46px; border-radius:50%; border:1px solid rgba(217,184,106,.4); display:flex; align-items:center; justify-content:center; font-size:18px; color:#d9b86a;"><i class="fa fa-hand-paper-o"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- C: SALE -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <span style="font-size:12px; font-weight:700; color:#7d7461; letter-spacing:.08em;">SALE</span>
+            <div style="width:298px; padding:11px; border-radius:48px; background:#050505; box-shadow:0 26px 60px -18px rgba(0,0,0,.8), 0 0 0 1px rgba(217,184,106,.12);">
+              <div style="position:relative; width:276px; height:600px; border-radius:38px; overflow:hidden; background:radial-gradient(130% 80% at 50% -8%, #211c12 0%, #0d0b08 60%); color:#f3ecdd;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 22px 4px; font-size:12px; font-weight:700; color:#cfc6b2;"><span>9:41</span><span style="display:flex; gap:7px;"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i></span></div>
+                <div style="padding:12px 20px 0; display:flex; align-items:center; justify-content:space-between;">
+                  <div><div style="font-size:28px; font-family:'Cormorant Garamond',serif; font-weight:600; line-height:1;">New Sale</div><div style="font-size:11.5px; font-weight:600; color:#8c8270; margin-top:3px;">Walk-in customer</div></div>
+                  <div style="width:40px; height:40px; border-radius:50%; border:1px solid rgba(217,184,106,.35); color:#d9b86a; display:flex; align-items:center; justify-content:center; font-size:15px;"><i class="fa fa-user-plus"></i></div>
+                </div>
+                <div style="padding:14px 20px 0; display:flex; gap:9px;">
+                  <div style="flex:1; display:flex; align-items:center; gap:9px; padding:11px 14px; background:#16130d; border:1px solid rgba(217,184,106,.22); border-radius:14px;"><i class="fa fa-search" style="color:#d9b86a;"></i><span style="font-size:12.5px; font-weight:600; color:#8c8270;">Search products</span></div>
+                  <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,#ecd9a6,#cba85c); color:#231d10; display:flex; align-items:center; justify-content:center; font-size:17px;"><i class="fa fa-qrcode"></i></div>
+                </div>
+                <div style="padding:13px 20px 0; display:flex; gap:8px; overflow:hidden;">
+                  <span style="padding:8px 15px; border-radius:20px; background:linear-gradient(135deg,#ecd9a6,#cba85c); color:#231d10; font-size:12px; font-weight:800; white-space:nowrap;">All</span>
+                  <span style="padding:8px 15px; border-radius:20px; border:1px solid rgba(217,184,106,.25); color:#cfc6b2; font-size:12px; font-weight:700; white-space:nowrap;">Coffee</span>
+                  <span style="padding:8px 15px; border-radius:20px; border:1px solid rgba(217,184,106,.25); color:#cfc6b2; font-size:12px; font-weight:700; white-space:nowrap;">Bakery</span>
+                </div>
+                <div style="padding:13px 20px 0; display:grid; grid-template-columns:1fr 1fr; gap:11px;">
+                  <sc-for list="{{ products }}" as="p" hint-placeholder-count="4">
+                    <div style="background:#16130d; border:1px solid rgba(217,184,106,.2); border-radius:18px; overflow:hidden;">
+                      <div style="height:56px; background:linear-gradient(135deg,{{ p.a }},{{ p.b }}); display:flex; align-items:center; justify-content:center;"><i class="fa {{ p.icon }}" style="color:#fff; font-size:22px;"></i></div>
+                      <div style="padding:9px 11px 11px;">
+                        <div style="font-size:12px; font-weight:700;">{{ p.name }}</div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
+                          <span style="font-size:17px; font-family:'Cormorant Garamond',serif; font-weight:700; color:#d9b86a;">{{ p.price }}</span>
+                          <span style="width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,#ecd9a6,#cba85c); color:#231d10; display:flex; align-items:center; justify-content:center; font-size:13px;"><i class="fa fa-plus"></i></span>
+                        </div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="position:absolute; left:16px; right:16px; bottom:18px; background:#16130d; border:1px solid rgba(217,184,106,.3); border-radius:22px; padding:13px 16px; display:flex; align-items:center; gap:13px; box-shadow:0 16px 36px -12px rgba(0,0,0,.7);">
+                  <div style="position:relative; width:42px; height:42px; border-radius:14px; background:linear-gradient(135deg,#ecd9a6,#cba85c); display:flex; align-items:center; justify-content:center; color:#231d10; font-size:17px;"><i class="fa fa-shopping-bag"></i></div>
+                  <div style="flex:1;"><div style="font-size:11px; font-weight:600; color:#8c8270;">3 items</div><div style="font-size:22px; font-family:'Cormorant Garamond',serif; font-weight:700; color:#f3ecdd; line-height:1.1;">$24.50</div></div>
+                  <div style="padding:12px 20px; border-radius:15px; background:linear-gradient(135deg,#ecd9a6,#cba85c); color:#231d10; font-size:13.5px; font-weight:800; display:flex; align-items:center; gap:7px;">Pay <i class="fa fa-arrow-right"></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1388,&quot;height&quot;:2400}}">
+class Component extends DCLogic {
+  renderVals() {
+    const products = [
+      { name: 'Flat White', price: '$4.50', icon: 'fa-coffee', a: '#a9744f', b: '#caa078' },
+      { name: 'Croissant', price: '$3.25', icon: 'fa-cutlery', a: '#d09a3e', b: '#ecc777' },
+      { name: 'Matcha Latte', price: '$5.00', icon: 'fa-leaf', a: '#5a9f72', b: '#8fc7a0' },
+      { name: 'Cold Brew', price: '$4.75', icon: 'fa-tint', a: '#5d6f9c', b: '#8fa0c8' },
+    ];
+    return { products };
+  }
+}
+</script>
+</body>
+</html>

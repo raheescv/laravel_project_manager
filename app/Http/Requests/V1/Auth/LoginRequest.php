@@ -6,12 +6,26 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Resolve which login method this request uses.
+     *
+     * Defaults to "pin". If an explicit `method` isn't given, it is inferred as
+     * "password" when a username/password is present, otherwise "pin".
+     */
+    public function resolvedMethod(): string
+    {
+        $method = $this->input('method');
+
+        if (in_array($method, ['pin', 'password'], true)) {
+            return $method;
+        }
+
+        return ($this->filled('username') || $this->filled('password')) ? 'password' : 'pin';
     }
 
     /**
@@ -21,7 +35,16 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
+        if ($this->resolvedMethod() === 'password') {
+            return [
+                'method' => ['nullable', 'string', 'in:pin,password'],
+                'username' => ['required', 'string', 'max:100'],
+                'password' => ['required', 'string', 'max:100'],
+            ];
+        }
+
         return [
+            'method' => ['nullable', 'string', 'in:pin,password'],
             'pin' => ['required', 'string', 'max:6'],
         ];
     }
@@ -31,6 +54,8 @@ class LoginRequest extends FormRequest
         return [
             'pin.required' => 'The PIN is required.',
             'pin.max' => 'The PIN must be less than 6 digits.',
+            'username.required' => 'The username (email, code or mobile) is required.',
+            'password.required' => 'The password is required.',
         ];
     }
 }
