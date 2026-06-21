@@ -79,6 +79,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.logout');
             Route::post('change-pin', [AuthController::class, 'changePin'])->name('api.v1.change-pin');
+            Route::post('change-password', [AuthController::class, 'changePassword'])->name('api.v1.change-password');
 
             // Bill routes
             Route::prefix('sale')->group(function () {

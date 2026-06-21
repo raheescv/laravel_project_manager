@@ -27,6 +27,7 @@ class SaleResource extends JsonResource
             ],
             'items' => $this->items->map(fn ($item) => [
                 'name' => $item->product?->name,
+                'name_arabic' => $item->product?->name_arabic,
                 'type' => $item->product?->type,
                 'employee' => $item->employee?->name,
                 'quantity' => (float) $item->quantity,

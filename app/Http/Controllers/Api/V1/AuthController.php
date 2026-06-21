@@ -67,4 +67,22 @@ class AuthController extends Controller
             return $this->sendServerError('Change PIN failed: '.$e->getMessage());
         }
     }
+
+    /**
+     * Change Password.
+     *
+     * Verifies the authenticated user's current password and updates it to a new one.
+     */
+    public function changePassword(ChangePasswordAction $action, ChangePasswordRequest $request): JsonResponse
+    {
+        try {
+            $action->execute($request);
+
+            return $this->sendSuccess(null, 'Password changed successfully');
+        } catch (AuthenticationException $e) {
+            return $this->sendUnauthorizedError($e->getMessage());
+        } catch (\Exception $e) {
+            return $this->sendServerError('Change password failed: '.$e->getMessage());
+        }
+    }
 }
