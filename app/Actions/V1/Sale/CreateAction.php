@@ -266,13 +266,16 @@ class CreateAction
     {
         $name = trim($name);
         $mobile = $mobile ? trim($mobile) : null;
-
+        
+        $existing = Account::customer();
+        $existing = $existing->where('name', $name);
         if ($mobile) {
-            $existing = Account::customer()->where('mobile', $mobile)->first();
+            $existing = $existing->where('mobile', $mobile);
+        }
+        $existing = $existing->first();
 
-            if ($existing) {
-                return $existing;
-            }
+        if ($existing) {
+            return $existing;
         }
 
         $response = (new AccountCreateAction())->execute([
