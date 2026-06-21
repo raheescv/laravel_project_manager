@@ -20,8 +20,17 @@ class Money {
         () => NumberFormat.compactCurrency(symbol: symbol, decimalDigits: decimals == 0 ? 0 : 1),
       );
 
+  // Plain grouped number with no currency symbol — for tight cells (e.g. the
+  // Sales / Returns / Net columns on the overview payment-method tiles).
+  static final Map<int, NumberFormat> _plainCache = {};
+  static NumberFormat _plain(int dec) =>
+      _plainCache.putIfAbsent(dec, () => NumberFormat.decimalPatternDigits(decimalDigits: dec));
+
   static String of(num? v) => _full.format(v ?? 0);
   static String compact(num? v) => _compact.format(v ?? 0);
+
+  /// Grouped number without the currency symbol, e.g. `15,626.00`.
+  static String plain(num? v, {int? decimals}) => _plain(decimals ?? Money.decimals).format(v ?? 0);
 }
 
 class Dates {

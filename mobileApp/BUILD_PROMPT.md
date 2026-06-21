@@ -298,7 +298,7 @@ mine_only(bool)`.
 | Method | Path | Query / body | Returns |
 |---|---|---|---|
 | GET | `/admin/dashboard` | `from_date, to_date, branch_id` (default today/all) | dashboard blocks |
-| GET | `/admin/reports` | `type(billwise|employeewise)` req, `startDate, endDate, employee_id` | report rows |
+| GET | `/admin/reports` | `type(billwise|employeewise|itemwise)` req, `startDate, endDate, employee_id` | report rows |
 | POST | `/admin/day-status` | `{ "date": "YYYY-MM-DD" }` (+ closing rules) | toggled session |
 
 `/admin/dashboard` →
@@ -356,8 +356,8 @@ open one). Returns `{ message, status, session }`. Drive the button label from
 4. **Sales history** — `/sale` list with filters + `mine_only` toggle; tap → detail.
 5. **Admin dashboard** (Admin) — the three blocks above as cards/sections; branch
    + date-range filter; day open/close button (`/admin/day-status`).
-6. **Reports** (Reports) — segmented bill-wise / employee-wise; date range +
-   employee filter; tabular/cards; totals.
+6. **Reports** (Reports) — segmented item-wise / employee-wise; date range +
+   employee filter; tabular/cards; totals. (The invoice list lives on the Sales tab.)
 7. **Settings** — **theme preset picker** (Sage/Slate/Aqua/Premium/Signature,
    light/dark), change PIN, base URL/tenant, logout.
 

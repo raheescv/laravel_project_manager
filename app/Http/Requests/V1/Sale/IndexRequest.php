@@ -27,6 +27,7 @@ class IndexRequest extends FormRequest
             'sale_type' => ['nullable', 'string', 'max:50'],
             'customer_id' => ['nullable', 'integer', 'exists:accounts,id'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
+            'payment_method_id' => ['nullable', 'integer', 'exists:accounts,id'],
             'from_date' => ['nullable', 'date'],
             'to_date' => ['nullable', 'date', 'after_or_equal:from_date'],
             'sort_by' => ['nullable', 'string', 'in:date,invoice_no,paid,gross_amount,id'],

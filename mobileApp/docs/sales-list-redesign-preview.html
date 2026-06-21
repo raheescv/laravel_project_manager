@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invo · Sales List — Redesign Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================ THEME (matches lib/theme/palette.dart) */
+:root{
+  --primary:#15806C; --primary-dark:#0E5648; --accent:#C9A24B;
+  --canvas:#F6F1E8; --card:#ffffff; --card-2:#ffffff;
+  --ink:#16312A; --t2:#5D7269; --muted:#A8B3AB;
+  --hair:#F0ECE1; --tint:#E6F0EC; --gold:#BF953F;
+  --success:#1F9D63; --success-tint:#E4F6EC;
+  --danger:#D4546A; --danger-tint:#FBE9EC; --warn-tint:#FBF3DF; --warn:#B7892B;
+  --hero-1:#0E5648; --hero-2:#15806C;
+  --glass:rgba(255,255,255,.8); --glass-brd:rgba(255,255,255,.6);
+  --shadow:0 22px 52px -28px rgba(14,86,72,.5);
+  --serif:'Marcellus',serif; --ui:'Manrope',sans-serif;
+}
+body[data-skin="signature"]{
+  --primary:#15806C;--primary-dark:#0E5648;--accent:#C9A24B;--gold:#BF953F;
+  --canvas:#F6F1E8;--card:#fff;--card-2:#fff;--ink:#16312A;--t2:#5D7269;--muted:#A8B3AB;
+  --hair:#F0ECE1;--tint:#E6F0EC;--hero-1:#0E5648;--hero-2:#15806C;--glass:rgba(255,255,255,.82);
+}
+body[data-skin="glass"]{
+  --primary:#4F46E5;--primary-dark:#3730A3;--accent:#38BDF8;--gold:#6E78D6;
+  --canvas:#EEF1F7;--card:#fff;--card-2:#fff;--ink:#13183A;--t2:#46507E;--muted:#7F88B3;
+  --hair:rgba(19,24,58,.08);--tint:rgba(79,70,229,.10);--hero-1:#3730A3;--hero-2:#4F46E5;--glass:rgba(255,255,255,.66);
+}
+body[data-skin="clean"]{
+  --primary:#4F46E5;--primary-dark:#3B35B0;--accent:#7C3AED;--gold:#7C3AED;
+  --canvas:#F4F5FB;--card:#fff;--card-2:#FBFBFE;--ink:#161A2B;--t2:#4A4F63;--muted:#8A8FA3;
+  --hair:#E7E9F2;--tint:rgba(79,70,229,.10);--hero-1:#3B35B0;--hero-2:#7C3AED;--glass:#fff;
+}
+body[data-skin="editorial"]{
+  --primary:#B5862F;--primary-dark:#8a6420;--accent:#C8A24A;--gold:#C8A24A;
+  --canvas:#FBF8F1;--card:#FFFDF7;--card-2:#FFFDF7;--ink:#1C1A14;--t2:#54503F;--muted:#928C79;
+  --hair:#E6DFCE;--tint:rgba(200,162,74,.12);--hero-1:#1F1C13;--hero-2:#0C0B08;--glass:rgba(255,253,247,.86);
+}
+/* dark */
+body[data-mode="dark"]{
+  --canvas:#0c1f1a;--card:#15302a;--card-2:#173a32;--ink:#f3f1ea;--t2:#a9c2ba;--muted:#7c9189;
+  --hair:rgba(255,255,255,.1);--tint:rgba(21,128,108,.22);--glass:rgba(21,48,42,.62);--glass-brd:rgba(255,255,255,.12);
+  --shadow:0 22px 52px -26px rgba(0,0,0,.7);
+}
+body[data-mode="dark"][data-skin="glass"]{--canvas:#0c1124;--card:#161b34;--card-2:#1a2040;--ink:#eef1ff;--t2:#aab2da;--muted:#737cab;--tint:rgba(124,139,255,.18);--gold:#9aa6ef;}
+body[data-mode="dark"][data-skin="clean"]{--canvas:#0d1020;--card:#181d33;--card-2:#1b2138;--ink:#eef0fb;--t2:#aeb3cc;--muted:#7c819b;--hair:rgba(255,255,255,.08);}
+body[data-mode="dark"][data-skin="editorial"]{--canvas:#0c0b08;--card:#15140f;--card-2:#1b1912;--ink:#f1ece0;--t2:#b7b09c;--muted:#857e6c;--hair:#2a271d;--tint:rgba(200,162,74,.16);--glass:rgba(21,20,15,.7);}
+
+/* ============================================================ SHELL */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--ui);
+  background:
+    radial-gradient(900px 600px at 12% -8%, rgba(21,128,108,.16), transparent 60%),
+    radial-gradient(800px 600px at 110% 10%, rgba(201,162,75,.12), transparent 55%),
+    #0c130f;
+  color:#fff;display:flex;flex-direction:column;align-items:center;min-height:100%;padding:26px 16px 70px;
+}
+.head{width:100%;max-width:980px;text-align:center;margin-bottom:16px}
+.head h1{font-family:var(--serif);font-weight:400;font-size:25px;letter-spacing:.3px;margin:0 0 4px;color:#fff}
+.head p{margin:0;color:#9fb3ac;font-size:13px;font-weight:500}
+.bar{
+  position:sticky;top:10px;z-index:30;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;
+  background:rgba(14,22,18,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:10px 12px;margin-bottom:24px;box-shadow:0 20px 50px -24px rgba(0,0,0,.6);
+}
+.grp{display:flex;align-items:center;gap:6px;padding:4px;background:rgba(255,255,255,.05);border-radius:11px}
+.grp .lab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#86a098;font-weight:700;padding:0 6px}
+.bar button{font-family:var(--ui);font-size:12px;font-weight:700;color:#cfe0da;cursor:pointer;background:transparent;border:1px solid transparent;border-radius:9px;padding:7px 12px;transition:.18s;white-space:nowrap}
+.bar button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.bar button.on{background:linear-gradient(180deg,#1fa085,#137963);color:#fff;box-shadow:0 6px 18px -6px rgba(21,128,108,.8)}
+.bar .sw{width:34px;padding:7px 0}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;vertical-align:-1px}
+.caption{max-width:392px;margin:-10px auto 22px;color:#9fb3ac;font-size:12px;line-height:1.5;text-align:center}
+
+/* ============================================================ PHONE */
+.stage{display:flex;justify-content:center;width:100%}
+.phone{position:relative;width:390px;height:844px;border-radius:46px;padding:11px;background:linear-gradient(160deg,#26302c,#121614);box-shadow:0 50px 120px -40px rgba(0,0,0,.85),0 0 0 2px rgba(255,255,255,.04) inset}
+.screen{position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background:var(--canvas);color:var(--ink);display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#0c0d12;border-radius:0 0 18px 18px;z-index:60}
+.scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{width:0}
+.dir{display:none;flex-direction:column;height:100%}
+body[data-dir="a"] .dir-a{display:flex}
+body[data-dir="b"] .dir-b{display:flex}
+body[data-dir="c"] .dir-c{display:flex}
+svg{display:block}
+.ic{width:16px;height:16px;display:inline-block;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* shared */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:800;letter-spacing:.05em;padding:3px 8px;border-radius:999px}
+.pill.done{background:var(--success-tint);color:var(--success)}
+.pill.draft{background:var(--warn-tint);color:var(--warn)}
+.pill.void{background:var(--danger-tint);color:var(--danger)}
+.amt{font-family:var(--serif)}
+.iconbtn{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);color:#fff;flex:none}
+.fab{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);width:58px;height:58px;border-radius:19px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 84%,#fff),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 18px 34px -10px color-mix(in srgb,var(--accent) 70%,transparent);z-index:40}
+body[data-mode="dark"] .fab{color:var(--primary-dark)}
+
+/* hero shared */
+.hero{background:linear-gradient(135deg,var(--hero-1),var(--hero-2));color:#fff;position:relative;overflow:hidden}
+body[data-skin="editorial"] .hero{background:linear-gradient(135deg,#1f1c13,#0c0b08)}
+.hero::after{content:"";position:absolute;right:-40px;top:-50px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 30%,transparent),transparent 70%)}
+.hero .top{display:flex;align-items:flex-start;gap:12px;position:relative;z-index:2}
+.hero .eyebrow{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:color-mix(in srgb,var(--accent) 90%,#fff);font-weight:800}
+.hero h2{font-family:var(--serif);font-weight:400;font-size:23px;margin:3px 0 0;color:#fff}
+.hero .sub{font-size:11px;font-weight:600;color:rgba(255,255,255,.78);margin-top:3px}
+
+/* status chips */
+.chips{display:flex;gap:7px;overflow:auto}
+.chips::-webkit-scrollbar{height:0}
+.chip{flex:none;font-size:11px;font-weight:700;padding:6px 13px;border-radius:16px;white-space:nowrap;cursor:pointer}
+.hero .chip{color:rgba(255,255,255,.72);background:rgba(255,255,255,.08)}
+.hero .chip.on{color:#fff;background:rgba(255,255,255,.2);font-weight:800}
+
+/* sale card (shared list row) */
+.list{padding:14px 16px 120px;display:flex;flex-direction:column;gap:9px}
+.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);border:1px solid transparent;padding:13px;display:flex;align-items:center;gap:12px}
+body[data-skin="glass"] .card,body[data-skin="editorial"] .card{border-color:var(--hair)}
+.card .lead{width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--primary);display:flex;align-items:center;justify-content:center;flex:none}
+.card .mid{flex:1;min-width:0}
+.card .inv{font-size:12.5px;font-weight:800;color:var(--ink)}
+.card .meta{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .val{font-family:var(--serif);font-size:15px;color:var(--ink);white-space:nowrap}
+.card .right{display:flex;align-items:center;gap:8px;flex:none}
+
+/* date range pill (shared) */
+.daterow{display:flex;align-items:center;gap:7px}
+.datepill{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;padding:7px 12px;border-radius:14px;cursor:pointer}
+.hero .datepill{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.18)}
+
+/* ============================================================ A · SMART FILTER RAIL */
+.dir-a .hero{padding:16px 18px 14px}
+.dir-a .filterbar{position:sticky;top:0;z-index:10;background:var(--canvas);padding:12px 16px 10px;border-bottom:1px solid var(--hair)}
+.dir-a .rail{display:flex;align-items:center;gap:8px;overflow:auto}
+.dir-a .rail::-webkit-scrollbar{height:0}
+.dir-a .rail .datepill{flex:none;background:var(--card);color:var(--ink);border:1px solid var(--hair);box-shadow:var(--shadow)}
+.dir-a .rail .datepill .ic{color:var(--primary)}
+.dir-a .seg{flex:none;display:flex;background:var(--tint);border-radius:13px;padding:3px}
+.dir-a .seg span{font-size:11px;font-weight:700;color:var(--t2);padding:6px 11px;border-radius:10px;white-space:nowrap}
+.dir-a .seg span.on{background:var(--card);color:var(--primary);font-weight:800;box-shadow:0 4px 10px -4px rgba(0,0,0,.18)}
+.dir-a .summ{display:flex;align-items:center;justify-content:space-between;padding:11px 18px 2px}
+.dir-a .summ .l{font-size:11px;font-weight:700;color:var(--muted)}
+.dir-a .summ .r{font-size:12px;font-weight:800;color:var(--ink)}
+.dir-a .summ .r b{color:var(--gold);font-family:var(--serif);font-weight:400;font-size:14px}
+
+/* ============================================================ B · SUMMARY + DAY GROUPS */
+.dir-b .hero{padding:16px 18px 16px}
+.dir-b .datecard{margin:14px 16px 0;background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:13px;border:1px solid transparent}
+body[data-skin="glass"] .dir-b .datecard,body[data-skin="editorial"] .dir-b .datecard{border-color:var(--hair)}
+.dir-b .datehead{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.dir-b .datehead .ico{width:38px;height:38px;border-radius:11px;background:var(--tint);color:var(--gold);display:flex;align-items:center;justify-content:center;flex:none}
+.dir-b .datehead .k{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.dir-b .datehead .v{font-family:var(--serif);font-size:16px;color:var(--ink);margin-top:1px}
+.dir-b .presets{display:flex;gap:6px}
+.dir-b .presets span{flex:1;text-align:center;font-size:11px;font-weight:800;padding:8px 0;border-radius:10px;background:var(--tint);color:var(--t2)}
+.dir-b .presets span.on{background:linear-gradient(135deg,var(--hero-2),var(--hero-1));color:#fff;box-shadow:0 8px 16px -8px var(--primary)}
+.dir-b .kpis{display:flex;gap:10px;margin:12px 16px 0}
+.dir-b .kpi{flex:1;background:var(--card);border-radius:15px;box-shadow:var(--shadow);padding:12px;border:1px solid transparent}
+body[data-skin="glass"] .dir-b .kpi,body[data-skin="editorial"] .dir-b .kpi{border-color:var(--hair)}
+.dir-b .kpi .k{font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.dir-b .kpi .v{font-family:var(--serif);font-size:18px;color:var(--ink);margin-top:5px}
+.dir-b .kpi.gold .v{color:var(--gold)}
+.dir-b .chiprow{display:flex;gap:7px;padding:14px 16px 4px;overflow:auto}
+.dir-b .chiprow::-webkit-scrollbar{height:0}
+.dir-b .chiprow .chip{flex:none;font-size:11px;font-weight:700;padding:7px 13px;border-radius:16px;background:var(--card);color:var(--t2);box-shadow:var(--shadow);border:1px solid var(--hair)}
+.dir-b .chiprow .chip.on{background:var(--primary);color:#fff;border-color:transparent}
+.dir-b .chiprow .chip.flt{background:var(--tint);color:var(--primary);border-color:transparent}
+.dir-b .daygrp{padding:6px 18px 0}
+.dir-b .daydiv{display:flex;align-items:center;justify-content:space-between;padding:14px 2px 8px}
+.dir-b .daydiv .d{font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--ink)}
+.dir-b .daydiv .s{font-size:10.5px;font-weight:700;color:var(--muted)}
+.dir-b .daydiv .s b{color:var(--gold);font-family:var(--serif);font-weight:400}
+.dir-b .rowflat{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--hair)}
+.dir-b .rowflat:last-child{border-bottom:0}
+.dir-b .rowflat .dotmark{width:9px;height:9px;border-radius:50%;flex:none}
+.dir-b .rowflat .mid{flex:1;min-width:0}
+.dir-b .rowflat .inv{font-size:12.5px;font-weight:800;color:var(--ink)}
+.dir-b .rowflat .meta{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:2px}
+.dir-b .rowflat .val{font-family:var(--serif);font-size:14.5px;color:var(--ink)}
+
+/* ============================================================ C · BENTO CONTROL CARD */
+.dir-c .hero{padding:16px 18px 14px}
+.dir-c .bento{margin:14px 16px 0;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:14px;border:1px solid transparent;display:flex;flex-direction:column;gap:12px}
+body[data-skin="glass"] .dir-c .bento,body[data-skin="editorial"] .dir-c .bento{border-color:var(--hair)}
+.dir-c .frow{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.dir-c .flabel{font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:6px}
+.dir-c .datebox{display:flex;align-items:center;gap:10px;background:var(--tint);border-radius:13px;padding:11px 13px}
+.dir-c .datebox .ic{color:var(--primary)}
+.dir-c .datebox .v{font-family:var(--serif);font-size:15px;color:var(--ink)}
+.dir-c .datebox .chev{margin-left:auto;color:var(--muted)}
+.dir-c .seg{display:flex;background:var(--tint);border-radius:13px;padding:3px}
+.dir-c .seg span{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--t2);padding:8px 0;border-radius:10px}
+.dir-c .seg span.on{background:var(--card);color:var(--primary);font-weight:800;box-shadow:0 4px 10px -4px rgba(0,0,0,.18)}
+.dir-c .duo{display:flex;gap:10px}
+.dir-c .selbox{flex:1;display:flex;align-items:center;gap:8px;background:var(--tint);border-radius:12px;padding:10px 12px;font-size:12px;font-weight:700;color:var(--ink)}
+.dir-c .selbox .ic{color:var(--primary)}
+.dir-c .selbox .chev{margin-left:auto;color:var(--muted)}
+.dir-c .resline{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 2px}
+.dir-c .resline .l{font-size:11.5px;font-weight:700;color:var(--muted)}
+.dir-c .resline .r{font-family:var(--serif);font-size:16px;color:var(--gold)}
+.dir-c .card .lead{background:var(--tint)}
+.dir-c .methodbadge{font-size:8.5px;font-weight:800;letter-spacing:.04em;color:var(--t2);background:var(--tint);padding:2px 7px;border-radius:6px}
+</style>
+</head>
+<body data-dir="b" data-mode="light" data-skin="signature">
+
+<div class="head">
+  <h1>Sales List · Redesign</h1>
+  <p>Three directions for the rebuilt Sales screen — each adds a date filter. Pick one and I’ll build it in Flutter.</p>
+</div>
+
+<div class="bar">
+  <div class="grp"><span class="lab">Direction</span>
+    <button data-set="dir" data-val="a">A · Smart rail</button>
+    <button data-set="dir" data-val="b" class="on">B · Summary + days</button>
+    <button data-set="dir" data-val="c">C · Bento card</button>
+  </div>
+  <div class="grp"><span class="lab">Theme</span>
+    <button data-set="mode" data-val="light" class="on">Light</button>
+    <button data-set="mode" data-val="dark">Dark</button>
+  </div>
+  <div class="grp"><span class="lab">Skin</span>
+    <button data-set="skin" data-val="signature" class="on"><span class="dot" style="background:#15806C"></span></button>
+    <button data-set="skin" data-val="glass"><span class="dot" style="background:#4F46E5"></span></button>
+    <button data-set="skin" data-val="clean"><span class="dot" style="background:#7C3AED"></span></button>
+    <button data-set="skin" data-val="editorial"><span class="dot" style="background:#1C1A14"></span></button>
+  </div>
+</div>
+
+<div class="caption" id="cap"></div>
+
+<div class="stage">
+<div class="phone"><div class="notch"></div><div class="screen">
+
+<!-- ============================ A · SMART FILTER RAIL ============================ -->
+<div class="dir dir-a">
+  <div class="hero">
+    <div class="top">
+      <div style="flex:1">
+        <div class="eyebrow">Invoices</div>
+        <h2>Sales</h2>
+        <div class="sub">142 invoices · This week</div>
+      </div>
+      <div class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M10 18h4"/></svg></div>
+      <div class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg></div>
+    </div>
+  </div>
+  <div class="filterbar">
+    <div class="rail">
+      <div class="datepill"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> This week <svg class="ic" style="width:13px" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="seg"><span class="on">All</span><span>Done</span><span>Draft</span><span>Void</span></div>
+    </div>
+  </div>
+  <div class="summ"><div class="l">Showing 142 invoices</div><div class="r">Total <b>QAR 48,250.00</b></div></div>
+  <div class="scroll">
+    <div class="list" id="listA"></div>
+  </div>
+  <div class="fab"><svg class="ic" style="width:26px;height:26px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+</div>
+
+<!-- ============================ B · SUMMARY + DAY GROUPS ============================ -->
+<div class="dir dir-b">
+  <div class="hero">
+    <div class="top">
+      <div style="flex:1">
+        <div class="eyebrow">Invoices</div>
+        <h2>Sales</h2>
+        <div class="sub">This week · 142 invoices</div>
+      </div>
+      <div class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M10 18h4"/></svg></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="datecard">
+      <div class="datehead">
+        <div class="ico"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+        <div style="flex:1"><div class="k">Date range</div><div class="v">15 – 21 Jun 2026</div></div>
+        <div class="iconbtn" style="background:var(--tint);color:var(--primary);border-color:transparent"><svg class="ic" viewBox="0 0 24 24"><path d="M16 3v4M8 3v4M4 8h16M9 14l2 2 4-4"/></svg></div>
+      </div>
+      <div class="presets"><span>Today</span><span class="on">7 Days</span><span>30 Days</span><span>Month</span></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Total Sales</div><div class="v">QAR 48,250</div></div>
+      <div class="kpi"><div class="k">Invoices</div><div class="v">142</div></div>
+      <div class="kpi gold"><div class="k">Avg Ticket</div><div class="v">QAR 340</div></div>
+    </div>
+    <div class="chiprow">
+      <div class="chip flt"><svg class="ic" style="width:13px" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg> Filters</div>
+      <div class="chip on">All</div><div class="chip">Completed</div><div class="chip">Draft</div><div class="chip">Cancelled</div>
+    </div>
+    <div class="daygrp" id="daysB"></div>
+  </div>
+  <div class="fab"><svg class="ic" style="width:26px;height:26px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+</div>
+
+<!-- ============================ C · BENTO CONTROL CARD ============================ -->
+<div class="dir dir-c">
+  <div class="hero">
+    <div class="top">
+      <div style="flex:1">
+        <div class="eyebrow">Invoices</div>
+        <h2>Sales</h2>
+        <div class="sub">142 invoices found</div>
+      </div>
+      <div class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="scroll">
+    <div class="bento">
+      <div>
+        <div class="flabel">Date range</div>
+        <div class="datebox">
+          <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+          <div class="v">15 – 21 Jun 2026</div>
+          <svg class="ic chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+      <div>
+        <div class="flabel">Status</div>
+        <div class="seg"><span class="on">All</span><span>Completed</span><span>Draft</span><span>Cancelled</span></div>
+      </div>
+      <div class="duo">
+        <div style="flex:1">
+          <div class="flabel">Payment</div>
+          <div class="selbox"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg> All methods <svg class="ic chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+        </div>
+        <div style="flex:1">
+          <div class="flabel">Sort</div>
+          <div class="selbox"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M10 18h4"/></svg> Newest <svg class="ic chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+        </div>
+      </div>
+    </div>
+    <div class="resline"><div class="l">142 invoices</div><div class="r">QAR 48,250.00</div></div>
+    <div class="list" id="listC"></div>
+  </div>
+  <div class="fab"><svg class="ic" style="width:26px;height:26px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+</div>
+
+</div></div>
+</div>
+
+<script>
+const SALES = [
+  {inv:'INV-100542', who:'Walk-in',   time:'2:14 PM',  method:'Cash',        amt:'1,240.00', st:'done',  day:'Today'},
+  {inv:'INV-100541', who:'Aisha K.',  time:'1:02 PM',  method:'Card',        amt:'380.50',   st:'done',  day:'Today'},
+  {inv:'INV-100540', who:'Walk-in',   time:'11:30 AM', method:'Cash',        amt:'95.00',    st:'draft', day:'Today'},
+  {inv:'INV-100539', who:'Dennis R.', time:'6:48 PM',  method:'Card · Cash', amt:'2,510.00', st:'done',  day:'Yesterday'},
+  {inv:'INV-100538', who:'Walk-in',   time:'5:20 PM',  method:'Card',        amt:'60.00',    st:'void',  day:'Yesterday'},
+  {inv:'INV-100537', who:'Mariam S.', time:'3:05 PM',  method:'Cash',        amt:'815.00',   st:'done',  day:'Yesterday'},
+  {inv:'INV-100536', who:'Walk-in',   time:'19 Jun',   method:'Card',        amt:'430.00',   st:'done',  day:'19 Jun'},
+  {inv:'INV-100535', who:'Omar F.',   time:'19 Jun',   method:'Cash',        amt:'1,090.00', st:'done',  day:'19 Jun'},
+];
+const stLabel={done:'COMPLETED',draft:'DRAFT',void:'CANCELLED'};
+const stDot={done:'var(--success)',draft:'var(--warn)',void:'var(--danger)'};
+
+function tag(s){return `<span class="pill ${s}">${stLabel[s]}</span>`}
+function bag(){return `<svg class="ic" viewBox="0 0 24 24"><path d="M6 2l1.5 4M18 2l-1.5 4M3 6h18l-1.5 13a2 2 0 0 1-2 1.7H6.5a2 2 0 0 1-2-1.7Z"/><path d="M9 11a3 3 0 0 0 6 0"/></svg>`}
+function chev(){return `<svg class="ic" style="width:15px;color:var(--muted)" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`}
+
+// A + C cards
+function card(s){
+  return `<div class="card">
+    <div class="lead">${bag()}</div>
+    <div class="mid">
+      <div style="display:flex;align-items:center;gap:7px"><span class="inv">${s.inv}</span>${tag(s.st)}</div>
+      <div class="meta">${s.who} · ${s.time} · ${s.method}</div>
+    </div>
+    <div class="right"><span class="val">QAR ${s.amt}</span>${chev()}</div>
+  </div>`;
+}
+function cardC(s){
+  return `<div class="card">
+    <div class="lead">${bag()}</div>
+    <div class="mid">
+      <div style="display:flex;align-items:center;gap:7px"><span class="inv">${s.inv}</span>${tag(s.st)}</div>
+      <div class="meta" style="margin-top:4px;display:flex;gap:6px;align-items:center"><span>${s.who} · ${s.time}</span><span class="methodbadge">${s.method}</span></div>
+    </div>
+    <div class="right"><span class="val">QAR ${s.amt}</span></div>
+  </div>`;
+}
+document.getElementById('listA').innerHTML = SALES.map(card).join('');
+document.getElementById('listC').innerHTML = SALES.map(cardC).join('');
+
+// B grouped by day
+const dayTotals={'Today':'1,715.50','Yesterday':'3,385.00','19 Jun':'1,520.00'};
+function rowflat(s){
+  return `<div class="rowflat">
+    <span class="dotmark" style="background:${stDot[s.st]}"></span>
+    <div class="mid"><div class="inv">${s.inv}</div><div class="meta">${s.who} · ${s.time} · ${s.method}</div></div>
+    <span class="val">QAR ${s.amt}</span>
+  </div>`;
+}
+const byDay={};
+SALES.forEach(s=>{(byDay[s.day]=byDay[s.day]||[]).push(s)});
+document.getElementById('daysB').innerHTML = Object.keys(byDay).map(day=>`
+  <div class="daydiv"><div class="d">${day}</div><div class="s">${byDay[day].length} invoices · <b>QAR ${dayTotals[day]||''}</b></div></div>
+  ${byDay[day].map(rowflat).join('')}
+`).join('') + '<div style="height:120px"></div>';
+
+// captions
+const CAPS={
+  a:"A · Smart rail — one compact filter row: a date-range pill + status segments inline under the header. Payment & sort tuck into the filter sheet (top-right). Cleanest & most space-efficient.",
+  b:"B · Summary + day groups — a date-range card (Today/7D/30D/Month, like Reports) with live KPIs, then invoices grouped under day dividers with per-day subtotals. Richest, most consistent with the Reports screen.",
+  c:"C · Bento control card — every filter (date, status, payment, sort) lives in one tidy card at the top, then a clean result list. Most explicit & discoverable."
+};
+const cap=document.getElementById('cap');
+const b=document.body;
+function paint(){cap.textContent=CAPS[b.dataset.dir]}
+document.querySelectorAll('.bar button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const k=btn.dataset.set, v=btn.dataset.val;
+    b.dataset[k]=v;
+    btn.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    btn.classList.add('on');
+    paint();
+  });
+});
+paint();
+</script>
+</body>
+</html>

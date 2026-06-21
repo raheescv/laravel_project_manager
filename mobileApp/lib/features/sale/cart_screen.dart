@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -19,7 +20,12 @@ class CartScreen extends StatelessWidget {
         child: Column(
           children: [
             EmeraldHeader(
-              leading: HeaderIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
+              leading: HeaderIconButton(
+                  icon: Icons.chevron_left,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    context.pop();
+                  }),
               title: 'Cart',
               subtitle: '${cart.customerName} · ${cart.stylistName.isEmpty ? 'Me' : cart.stylistName}',
             ),
@@ -29,7 +35,14 @@ class CartScreen extends StatelessWidget {
                       icon: Icons.shopping_bag_outlined,
                       title: 'Your ticket is empty',
                       message: 'Add services from the New Sale screen.',
-                      action: AstraButton(label: 'Add services', icon: Icons.add, expand: false, onTap: () => context.pop()),
+                      action: AstraButton(
+                          label: 'Add services',
+                          icon: Icons.add,
+                          expand: false,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            context.pop();
+                          }),
                     )
                   : MaxWidthBox(
                       maxWidth: 640,

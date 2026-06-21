@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -25,10 +26,12 @@ class NewSaleScreen extends StatefulWidget {
 
 class _NewSaleScreenState extends State<NewSaleScreen> {
   final _searchCtl = TextEditingController();
+  final _scrollCtl = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollCtl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final cat = context.read<CatalogController>();
       cat.loadIfNeeded();
@@ -38,19 +41,35 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       if (user != null && cart.stylistName.isEmpty) {
         cart.setStylist(int.tryParse(user.id), user.name);
       }
+      // Prompt for the client up front so the ticket starts with who's in the
+      // chair. Only on a fresh ticket (still the default Walk-in, no items).
+      if (cart.customerName == 'Walk-in' && cart.isEmpty) {
+        _pickClient();
+      }
     });
   }
 
   @override
   void dispose() {
     _searchCtl.dispose();
+    _scrollCtl.dispose();
     super.dispose();
+  }
+
+  /// Infinite scroll: pull the next page in once the user nears the bottom.
+  void _onScroll() {
+    if (!_scrollCtl.hasClients) return;
+    final pos = _scrollCtl.position;
+    if (pos.pixels >= pos.maxScrollExtent - 600) {
+      context.read<CatalogController>().loadMore();
+    }
   }
 
   /// Close / cancel the ticket: confirm if there are items, then leave the
   /// screen — pop back if New Sale was pushed, otherwise fall back to the Home
   /// shell (dashboard) so the screen is never a dead-end.
   Future<void> _close() async {
+    HapticFeedback.selectionClick();
     final cart = context.read<CartController>();
     if (!cart.isEmpty) {
       final discard = await showDialog<bool>(
@@ -184,10 +203,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Widget _body(CatalogController cat) {
-    if (cat.loading) {
+    // Full-screen states only apply before anything has loaded; once products
+    // exist we keep them on screen while a search/filter reloads in place.
+    if (cat.loading && cat.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (cat.error != null) {
+    if (cat.error != null && cat.isEmpty) {
       return EmptyState(
         icon: Icons.wifi_off,
         title: 'Couldn’t load services',
@@ -195,26 +216,94 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: cat.load),
       );
     }
-    final grouped = cat.grouped;
+    final tablet = context.isTablet;
     return RefreshIndicator(
       onRefresh: cat.load,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
-        children: [
-          _searchRow(cat),
-          const SizedBox(height: 13),
-          _categoryChips(cat),
-          const SizedBox(height: 14),
-          if (grouped.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 60),
-              child: EmptyState(icon: Icons.search_off, title: 'No services found', message: 'Try another search or category.'),
+      child: CustomScrollView(
+        controller: _scrollCtl,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              child: Column(
+                children: [
+                  _searchRow(cat),
+                  const SizedBox(height: 13),
+                  _categoryChips(cat),
+                ],
+              ),
+            ),
+          ),
+          if (cat.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 60),
+                child: EmptyState(
+                    icon: Icons.search_off,
+                    title: 'No services found',
+                    message: 'Try another search or category.'),
+              ),
             )
+          else if (tablet)
+            _gridSliver(cat)
           else
-            for (final entry in grouped.entries) _categoryGroup(entry.key, entry.value),
+            _listSliver(cat),
+          SliverToBoxAdapter(child: _footer(cat)),
         ],
       ),
     );
+  }
+
+  /// Phone: single-column paginated list.
+  Widget _listSliver(CatalogController cat) => SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, i) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _serviceRow(cat.products[i]),
+            ),
+            childCount: cat.products.length,
+          ),
+        ),
+      );
+
+  /// Tablet/desktop: multi-column paginated grid (lazily built). Column count
+  /// tracks the available width (≈340px per tile) so each card stays roomy.
+  Widget _gridSliver(CatalogController cat) => SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverLayoutBuilder(
+          builder: (context, constraints) {
+            final cols = (constraints.crossAxisExtent / 340).floor().clamp(2, 5);
+            return SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cols,
+                mainAxisExtent: 74,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, i) => _serviceRow(cat.products[i]),
+                childCount: cat.products.length,
+              ),
+            );
+          },
+        ),
+      );
+
+  /// Bottom of the list: a spinner while the next page loads, otherwise just
+  /// breathing room so the floating cart bar never covers the last row.
+  Widget _footer(CatalogController cat) {
+    if (cat.loadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 22),
+        child: Center(
+          child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4)),
+        ),
+      );
+    }
+    return const SizedBox(height: 120);
   }
 
   Widget _searchRow(CatalogController cat) {
@@ -246,7 +335,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
         const SizedBox(width: 9),
         GestureDetector(
-          onTap: () => _scanBarcode(cat),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            _scanBarcode(cat);
+          },
           child: Container(
             width: 46,
             height: 46,
@@ -272,54 +364,22 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             label: 'All',
             icon: Icons.grid_view,
             active: cat.selectedCategoryId == null,
-            onTap: () => cat.selectCategory(null),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              cat.selectCategory(null);
+            },
           ),
           for (final c in cat.categories) ...[
             const SizedBox(width: 8),
             AstraChip(
               label: c.name,
               active: cat.selectedCategoryId == c.id,
-              onTap: () => cat.selectCategory(c.id),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                cat.selectCategory(c.id);
+              },
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _categoryGroup(String name, List<Product> items) {
-    final p = context.astra;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              SectionLabel(name),
-              const SizedBox(width: 9),
-              Expanded(child: Container(height: 1, color: p.hairline)),
-              const SizedBox(width: 9),
-              Text('${items.length}', style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-            ],
-          ),
-          const SizedBox(height: 9),
-          // Tablet/desktop: flow items into a multi-column grid. Phone: single column.
-          if (context.isTablet)
-            LayoutBuilder(
-              builder: (context, c) {
-                const gap = 12.0;
-                final cols = (c.maxWidth / 340).floor().clamp(2, 5);
-                final tileWidth = (c.maxWidth - (cols - 1) * gap) / cols;
-                return Wrap(
-                  spacing: gap,
-                  runSpacing: gap,
-                  children: [for (final s in items) SizedBox(width: tileWidth, child: _serviceRow(s))],
-                );
-              },
-            )
-          else
-            for (final s in items) ...[_serviceRow(s), const SizedBox(height: 8)],
         ],
       ),
     );
@@ -331,7 +391,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return AstraCard(
       radius: 15,
       padding: const EdgeInsets.all(11),
-      onTap: () => cart.add(s),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        cart.add(s);
+      },
       child: Row(
         children: [
           ProductThumb(url: s.thumbnail, fallbackIcon: iconForName('${s.categoryName} ${s.name}')),
@@ -371,7 +434,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   Widget _cartBar(CartController cart) {
     final p = context.astra;
     return GestureDetector(
-      onTap: () => context.push('/cart'),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        context.push('/cart');
+      },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
@@ -451,7 +517,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   Widget _selector(IconData icon, String label, String value, VoidCallback? onTap) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: onTap == null
+          ? null
+          : () {
+              HapticFeedback.selectionClick();
+              onTap();
+            },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
@@ -500,7 +571,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   Future<void> _pickClient() async {
     final cart = context.read<CartController>();
     final nameCtl = TextEditingController(text: cart.customerName == 'Walk-in' ? '' : cart.customerName);
-    final mobileCtl = TextEditingController(text: cart.customerMobile);
+    final mobileCtl = TextEditingController(text: cart.customerMobile.isEmpty ? '1' : cart.customerMobile);
     final p = context.astra;
     await showModalBottomSheet(
       context: context,
@@ -527,6 +598,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 label: 'Set client',
                 icon: Icons.check,
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   cart.setClient(nameCtl.text.trim(), mobileCtl.text.trim());
                   Navigator.pop(ctx);
                 },
@@ -570,6 +642,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     if (product == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No product for "$code"')));
     } else {
+      HapticFeedback.lightImpact();
       context.read<CartController>().add(product);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added ${product.name}')));
     }

@@ -237,7 +237,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
               child: Text('PAYMENT METHOD',
                   style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
             ),
-            _whatsappToggle(cart),
+            // _whatsappToggle(cart),
           ],
         ),
         const SizedBox(height: 8),

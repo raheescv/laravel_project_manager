@@ -119,25 +119,38 @@ class _HomeShellState extends State<HomeShell> {
         borderRadius: BorderRadius.circular(26),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 36, offset: const Offset(0, 14))],
       ),
-      child: Column(
-        children: [
-          const SizedBox(height: 4),
-          const InvoLogomark(height: 38),
-          const SizedBox(height: 24),
-          for (var i = 0; i < _tabs.length; i++) _railItem(p, i),
-          const Spacer(),
-          GestureDetector(
-            onTap: () => context.push('/sale'),
-            child: Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(gradient: p.accentGradient, shape: BoxShape.circle),
-              child: Icon(Icons.add, color: p.primaryDark, size: 24),
+      // In landscape on a phone the width still trips `isTablet`, but the height
+      // collapses — so the rail must scroll when short and still push "New" to
+      // the bottom when there's room. minHeight + IntrinsicHeight keeps the
+      // Spacer working inside the scroll view.
+      child: LayoutBuilder(
+        builder: (context, c) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: c.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  const SizedBox(height: 4),
+                  const InvoLogomark(height: 38),
+                  const SizedBox(height: 24),
+                  for (var i = 0; i < _tabs.length; i++) _railItem(p, i),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => context.push('/sale'),
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(gradient: p.accentGradient, shape: BoxShape.circle),
+                      child: Icon(Icons.add, color: p.primaryDark, size: 24),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('New', style: ui(size: 9, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.7))),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text('New', style: ui(size: 9, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.7))),
-        ],
+        ),
       ),
     );
   }

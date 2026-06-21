@@ -1,5 +1,6 @@
 import '../models/models.dart';
 import 'api_client.dart';
+import 'formatters.dart';
 
 /// Typed wrappers over the Laravel `api/v1` endpoints (see mobileApp/BUILD_PROMPT.md).
 class ApiService {
@@ -118,14 +119,38 @@ class ApiService {
     return Sale.fromJson(Map<String, dynamic>.from(data));
   }
 
-  Future<List<Map<String, dynamic>>> sales({String? status, bool mineOnly = false}) async {
+  Future<SalesPage> sales({
+    String? status,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy = 'date', // date | invoice_no | paid | gross_amount | id
+    String sortDirection = 'desc', // asc | desc
+    bool mineOnly = false,
+    int page = 1,
+    int perPage = 30,
+  }) async {
     final data = await client.get('/sale', query: {
       if (status != null) 'status': status,
+      if (paymentMethodId != null) 'payment_method_id': paymentMethodId,
+      if (fromDate != null) 'from_date': fromDate,
+      if (toDate != null) 'to_date': toDate,
+      'sort_by': sortBy,
+      'sort_direction': sortDirection,
       'mine_only': mineOnly,
-      'per_page': 30,
+      'page': page,
+      'per_page': perPage,
     });
     final list = (data is Map ? data['data'] : data) as List? ?? const [];
-    return list.map((e) => Map<String, dynamic>.from(e)).toList();
+    final summary = (data is Map ? data['summary'] : null) as Map? ?? const {};
+    final pag = (data is Map ? data['pagination'] : null) as Map? ?? const {};
+    return SalesPage(
+      rows: list.map((e) => Map<String, dynamic>.from(e)).toList(),
+      total: asNum(summary['invoices'] ?? pag['total'] ?? list.length).toInt(),
+      totalPaid: asNum(summary['total_paid']).toDouble(),
+      currentPage: asNum(pag['current_page'] ?? 1).toInt(),
+      lastPage: asNum(pag['last_page'] ?? 1).toInt(),
+    );
   }
 
   Future<Sale> saleById(String id) async {
@@ -142,14 +167,20 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> report({
-    required String type, // billwise | employeewise
+    required String type, // billwise | employeewise | itemwise
     String? startDate,
     String? endDate,
+    int? page,
+    int? perPage,
+    String? sort, // itemwise ranking: amount | quantity
   }) async {
     final data = await client.get('/admin/reports', query: {
       'type': type,
       if (startDate != null) 'startDate': startDate,
       if (endDate != null) 'endDate': endDate,
+      if (page != null) 'page': page,
+      if (perPage != null) 'per_page': perPage,
+      if (sort != null) 'sort': sort,
     });
     return Map<String, dynamic>.from(data);
   }

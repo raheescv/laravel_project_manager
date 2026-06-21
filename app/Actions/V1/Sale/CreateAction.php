@@ -266,7 +266,7 @@ class CreateAction
     {
         $name = trim($name);
         $mobile = $mobile ? trim($mobile) : null;
-        
+
         $existing = Account::customer();
         $existing = $existing->where('name', $name);
         if ($mobile) {

@@ -84,11 +84,20 @@ Widget cartLineCard(BuildContext context, CartLine line) {
             children: [
               QtyStepper(
                 qty: line.qty.toStringAsFixed(line.qty % 1 == 0 ? 0 : 2),
-                onMinus: () => cart.changeQty(line, -1),
-                onPlus: () => cart.changeQty(line, 1),
+                onMinus: () {
+                  HapticFeedback.selectionClick();
+                  cart.changeQty(line, -1);
+                },
+                onPlus: () {
+                  HapticFeedback.selectionClick();
+                  cart.changeQty(line, 1);
+                },
               ),
               GestureDetector(
-                onTap: () => showEditLineSheet(context, line),
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  showEditLineSheet(context, line);
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
@@ -193,10 +202,20 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
     );
   }
 
+  /// Switch the discount type. Changing %/$ resets the value to 0 (and clears
+  /// the field) so a flat amount isn't silently reinterpreted as a percentage.
+  void _setType(bool percent) {
+    if (percent == widget.cart.orderDiscountIsPercent) return;
+    HapticFeedback.selectionClick();
+    widget.cart.setOrderDiscountIsPercent(percent);
+    widget.cart.setOrderDiscount(0);
+    _ctl.clear();
+  }
+
   Widget _toggle(String label, bool active) {
     final p = context.astra;
     return GestureDetector(
-      onTap: () => widget.cart.setOrderDiscountIsPercent(label == '%'),
+      onTap: () => _setType(label == '%'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         decoration: BoxDecoration(color: active ? p.card : Colors.transparent, borderRadius: BorderRadius.circular(5)),
@@ -240,7 +259,15 @@ Widget cartSummaryCard(BuildContext context, CartController cart, {required Void
                 ],
               ),
             ),
-            AstraButton(label: 'Charge', icon: Icons.arrow_forward, expand: false, onTap: onCharge),
+            AstraButton(
+              label: 'Charge',
+              icon: Icons.arrow_forward,
+              expand: false,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onCharge();
+              },
+            ),
           ],
         ),
       ],

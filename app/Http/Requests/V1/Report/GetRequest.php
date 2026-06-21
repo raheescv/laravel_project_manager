@@ -22,10 +22,14 @@ class GetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', 'string', 'in:billwise,employeewise'],
+            'type' => ['required', 'string', 'in:billwise,employeewise,itemwise,overview'],
             'startDate' => ['nullable', 'date'],
             'endDate' => ['nullable', 'date', 'after_or_equal:startDate'],
+            'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
             'employee_id' => ['nullable', 'integer', 'exists:users,id'],
+            'sort' => ['nullable', 'string', 'in:amount,quantity'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 
@@ -37,7 +41,7 @@ class GetRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'type.in' => 'The report type must be either billwise or employeewise.',
+            'type.in' => 'The report type must be billwise, employeewise, itemwise or overview.',
             'employee_id.exists' => 'The selected employee does not exist.',
         ];
     }

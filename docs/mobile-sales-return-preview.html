@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile · Sales Return module — preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra theme tokens — mirrors lib/theme/palette.dart.
+   Driven by [data-preset] + [data-theme] on #stage so the
+   whole gallery re-skins exactly like the live app.
+   ============================================================ */
+#stage{
+  /* status colours (constant across presets) */
+  --success:#1F9D63; --success-tint:#E4F6EC;
+  --danger:#D4546A;  --danger-tint:#FBE9EC;
+  --warn-tint:#FBF3DF; --warn-ink:#9A6A00;
+  --card-border:transparent; --card-blur:0px;
+  --hero-ink:#ffffff;
+}
+
+/* ---- Emerald & Gold (signature · the requested look) — LIGHT ---- */
+#stage[data-preset="emerald"]{
+  --primary:#15806C; --primary-dark:#0E5648; --accent:#C9A24B;
+  --canvas:#F6F1E8; --card:#FFFFFF; --card-solid:#FFFFFF;
+  --ink:#16312A; --text2:#5D7269; --muted:#A8B3AB;
+  --hairline:#F0ECE1; --tint:#E6F0EC; --gold:#BF953F;
+  --bg-glow:#CFE6DD;
+  --hero:linear-gradient(135deg,#15806C,#0E5648);
+  --shadow:0 9px 22px -15px rgba(11,40,33,.18);
+  --shadow-sm:0 7px 18px -14px rgba(11,40,33,.16);
+}
+#stage[data-preset="emerald"][data-theme="dark"]{
+  --canvas:#0C1E1A; --card:#15302A; --card-solid:#15302A;
+  --ink:#F3F1EA; --text2:#A9C2BA; --muted:#7C9189;
+  --hairline:rgba(255,255,255,.10); --tint:rgba(21,128,108,.20); --gold:#C9A24B;
+  --bg-glow:rgba(21,128,108,.28);
+  --shadow:0 12px 26px -14px rgba(0,0,0,.55);
+  --shadow-sm:0 9px 20px -14px rgba(0,0,0,.5);
+}
+
+/* ---- Aurora Glass — LIGHT ---- */
+#stage[data-preset="aurora"]{
+  --primary:#4F46E5; --primary-dark:#3730A3; --accent:#38BDF8;
+  --canvas:#EEF1F7; --card:rgba(255,255,255,.62); --card-solid:#FFFFFF;
+  --ink:#13183A; --text2:#46507E; --muted:#7F88B3;
+  --hairline:rgba(255,255,255,.65); --tint:rgba(79,70,229,.12); --gold:#38BDF8;
+  --bg-glow:rgba(99,102,241,.18); --card-border:rgba(255,255,255,.70); --card-blur:14px;
+  --hero:linear-gradient(135deg,#4F46E5,#3730A3);
+  --shadow:0 18px 30px -18px rgba(58,70,160,.34);
+  --shadow-sm:0 12px 22px -16px rgba(58,70,160,.30);
+}
+#stage[data-preset="aurora"][data-theme="dark"]{
+  --primary:#6366F1; --primary-dark:#4338CA; --accent:#38BDF8;
+  --canvas:#0B1020; --card:rgba(255,255,255,.06); --card-solid:#141A2E;
+  --ink:#E6E9F5; --text2:#9AA3CF; --muted:#6F78A8;
+  --hairline:rgba(255,255,255,.12); --tint:rgba(99,102,241,.24); --gold:#38BDF8;
+  --bg-glow:rgba(99,102,241,.28); --card-border:rgba(255,255,255,.10);
+  --shadow:0 20px 34px -16px rgba(0,0,0,.6);
+  --shadow-sm:0 12px 24px -14px rgba(0,0,0,.5);
+}
+
+/* ---- Luminous Indigo — LIGHT ---- */
+#stage[data-preset="luminous"]{
+  --primary:#4F46E5; --primary-dark:#3B35B0; --accent:#7C3AED;
+  --canvas:#F4F5FB; --card:#FFFFFF; --card-solid:#FFFFFF;
+  --ink:#161A2B; --text2:#4A4F63; --muted:#8A8FA3;
+  --hairline:#E7E9F2; --tint:rgba(79,70,229,.12); --gold:#7C3AED;
+  --bg-glow:rgba(79,70,229,.09);
+  --hero:linear-gradient(135deg,#4F46E5,#3B35B0);
+  --shadow:0 10px 24px -16px rgba(38,48,107,.22);
+  --shadow-sm:0 8px 18px -14px rgba(38,48,107,.18);
+}
+#stage[data-preset="luminous"][data-theme="dark"]{
+  --primary:#6366F1; --primary-dark:#4F46E5; --accent:#A78BFA;
+  --canvas:#0E0F1A; --card:#16182A; --card-solid:#16182A;
+  --ink:#E7E9F5; --text2:#A6ABC4; --muted:#71768F;
+  --hairline:rgba(255,255,255,.08); --tint:rgba(99,102,241,.24); --gold:#A78BFA;
+  --bg-glow:rgba(99,102,241,.22);
+  --shadow:0 18px 30px -16px rgba(0,0,0,.6);
+  --shadow-sm:0 12px 22px -14px rgba(0,0,0,.5);
+}
+
+/* ---- Editorial Noir — LIGHT (warm paper · gold · dark hero) ---- */
+#stage[data-preset="editorial"]{
+  --primary:#B5862F; --primary-dark:#8A6A22; --accent:#C8A24A;
+  --canvas:#F3EFE6; --card:#FBF8F1; --card-solid:#FBF8F1;
+  --ink:#1C1A14; --text2:#54503F; --muted:#928C79;
+  --hairline:#E6DFCE; --tint:rgba(181,134,47,.12); --gold:#C8A24A;
+  --bg-glow:rgba(200,162,74,.16); --card-border:rgba(200,162,74,.30);
+  --hero:linear-gradient(135deg,#1F1C13,#0C0B08); --hero-ink:#C8A24A;
+  --shadow:0 18px 30px -18px rgba(0,0,0,.30);
+  --shadow-sm:0 12px 22px -16px rgba(0,0,0,.26);
+}
+#stage[data-preset="editorial"][data-theme="dark"]{
+  --primary:#C8A24A; --primary-dark:#B5862F; --accent:#C8A24A;
+  --canvas:#0C0B08; --card:#15140F; --card-solid:#15140F;
+  --ink:#F1ECE0; --text2:#B7B09C; --muted:#857E6C;
+  --hairline:#2A271D; --tint:rgba(200,162,74,.22); --gold:#C8A24A;
+  --bg-glow:rgba(200,162,74,.14); --card-border:rgba(200,162,74,.16);
+  --hero:linear-gradient(135deg,#1F1C13,#0C0B08); --hero-ink:#C8A24A;
+  --shadow:0 20px 34px -16px rgba(0,0,0,.7);
+  --shadow-sm:0 12px 24px -14px rgba(0,0,0,.6);
+}
+
+/* ============================================================
+   Preview harness
+   ============================================================ */
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Manrope',-apple-system,BlinkMacSystemFont,sans-serif;}
+#stage{min-height:100vh;padding:22px 26px 64px;transition:background .25s;}
+#stage[data-theme="light"]{background:radial-gradient(130% 120% at 0% 0%,#ece7da,#f3eee3);color:#2a2a2a;}
+#stage[data-theme="dark"]{background:radial-gradient(130% 120% at 0% 0%,#10130f,#070806);color:#e7e3d8;}
+
+.bar{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:8px;}
+.bar h1{font-family:'Marcellus',serif;font-size:1.5rem;margin:0;letter-spacing:.2px;}
+.bar .lead{font-size:.82rem;margin:.35rem 0 0;opacity:.7;max-width:640px;line-height:1.5;}
+.controls{display:flex;gap:18px;flex-wrap:wrap;align-items:center;}
+.ctl-group{display:flex;flex-direction:column;gap:6px;}
+.ctl-group .cap{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.5;}
+.segbtns{display:flex;background:rgba(130,130,130,.14);border-radius:11px;padding:3px;gap:2px;}
+.segbtns button{border:0;background:transparent;color:inherit;font:inherit;font-size:.74rem;font-weight:700;
+  padding:.42rem .7rem;border-radius:8px;cursor:pointer;opacity:.62;transition:.18s;white-space:nowrap;}
+.segbtns button.on{background:var(--card-solid,#fff);opacity:1;box-shadow:0 4px 12px -6px rgba(0,0,0,.4);color:#15806c;}
+#stage[data-theme="dark"] .segbtns button.on{color:#e7e3d8;background:rgba(255,255,255,.12);}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0 26px;font-size:.74rem;opacity:.72;}
+.legend b{font-weight:800;}
+
+/* device frame */
+.gallery{display:flex;gap:34px 30px;flex-wrap:wrap;align-items:flex-start;}
+.unit{width:340px;}
+.unit .label{font-size:.72rem;font-weight:800;letter-spacing:.05em;margin:0 0 4px 4px;text-transform:uppercase;opacity:.85;}
+.unit .desc{font-size:.7rem;opacity:.6;margin:0 0 12px 4px;line-height:1.45;}
+.device{width:340px;height:724px;border-radius:46px;padding:10px;position:relative;
+  background:linear-gradient(160deg,#2a2a2a,#0d0d0d);
+  box-shadow:0 40px 70px -34px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);}
+#stage[data-theme="light"] .device{box-shadow:0 40px 70px -36px rgba(40,30,15,.45),0 0 0 1px rgba(0,0,0,.05);}
+.screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;
+  display:flex;flex-direction:column;background:radial-gradient(120% 75% at 82% -8%,var(--bg-glow),transparent 60%),var(--canvas);}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{width:0;}
+.pad{padding:13px 14px 22px;}
+
+/* status bar */
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:9px 20px 0;color:#fff;font-size:11px;font-weight:700;z-index:2;}
+.statusbar .ico{display:flex;gap:6px;font-size:10px;opacity:.9;}
+[data-hero-light] .statusbar{color:var(--hero-ink);}
+
+/* hero header (EmeraldHeader) */
+.hdr{background:var(--hero);border-radius:0 0 26px 26px;padding:2px 16px 16px;color:#fff;}
+.hdr.big{border-radius:0 0 30px 30px;}
+.hdr-row{display:flex;align-items:center;gap:11px;padding-top:6px;}
+.hdr-row.tight{padding-top:2px;}
+.hdr h1{font-family:'Marcellus',serif;font-weight:400;font-size:22px;margin:0;color:#fff;flex:1;}
+.hdr .sub{font-size:11px;font-weight:600;color:rgba(255,255,255,.78);margin-top:3px;}
+.hbtn{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.20);color:#fff;font-size:14px;flex:0 0 auto;}
+.hbtn.gold{color:var(--accent);}
+.hsels{display:flex;gap:9px;margin-top:14px;}
+.hsel{flex:1;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18);border-radius:13px;padding:8px 11px;display:flex;align-items:center;gap:9px;}
+.hsel .hi{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:11px;flex:0 0 auto;}
+.hsel .lab{font-size:9px;font-weight:700;letter-spacing:.04em;color:rgba(255,255,255,.7);text-transform:uppercase;}
+.hsel .val{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hsel .chev{margin-left:auto;color:rgba(255,255,255,.7);font-size:12px;}
+
+/* editorial hero text tweaks */
+#stage[data-preset="editorial"] .hdr h1,
+#stage[data-preset="editorial"] .hsel .val{color:var(--hero-ink);}
+#stage[data-preset="editorial"] .hbtn{color:var(--hero-ink);}
+
+/* card */
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border:1px solid var(--card-border);
+  padding:14px;backdrop-filter:blur(var(--card-blur));-webkit-backdrop-filter:blur(var(--card-blur));}
+.card.r20{border-radius:20px;}
+.card.r14{border-radius:14px;}
+.card.tight{padding:12px;}
+.card.pad-sm{padding:10px 14px;}
+
+.chip{width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;}
+.chip.sm{width:30px;height:30px;border-radius:9px;font-size:12px;}
+.chip.lg{width:46px;height:46px;border-radius:14px;font-size:18px;}
+
+.flabel{font-size:8.5px;font-weight:800;letter-spacing:.11em;color:var(--muted);text-transform:uppercase;margin:0 0 6px 2px;}
+.selbox{background:var(--tint);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:8px;}
+.selbox .si{color:var(--primary);font-size:13px;}
+.selbox .sv{flex:1;font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.selbox .sc{color:var(--muted);font-size:12px;}
+.datebox{background:var(--tint);border-radius:13px;padding:12px 13px;display:flex;align-items:center;gap:10px;}
+.datebox .di{color:var(--primary);font-size:15px;}
+.datebox .dv{flex:1;font-family:'Marcellus',serif;font-size:15px;color:var(--ink);}
+.datebox .dc{color:var(--muted);font-size:14px;}
+
+.seg{background:var(--tint);border-radius:13px;padding:3px;display:flex;}
+.seg .opt{flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:10.5px;font-weight:700;color:var(--text2);}
+.seg .opt.active{background:var(--card-solid);color:var(--primary);font-weight:800;box-shadow:var(--shadow-sm);}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.resultline{display:flex;justify-content:space-between;align-items:center;padding:16px 4px 8px;}
+.resultline .cnt{font-size:11.5px;font-weight:700;color:var(--muted);}
+.resultline .sum{font-family:'Marcellus',serif;font-size:17px;color:var(--gold);}
+
+/* list row */
+.row{display:flex;align-items:center;gap:11px;}
+.row .body{flex:1;min-width:0;}
+.row .ttl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;row-gap:4px;min-width:0;}
+.row .inv{font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap;flex:0 0 auto;}
+.row .meta{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row .amt{font-family:'Marcellus',serif;font-size:13px;color:var(--ink);white-space:nowrap;flex:0 0 auto;}
+.row .amt.refund{color:var(--danger);}
+.tag{padding:2px 6px;border-radius:6px;background:var(--tint);color:var(--text2);font-size:8.5px;font-weight:800;letter-spacing:.03em;}
+
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:20px;font-size:8.5px;font-weight:800;flex:0 0 auto;letter-spacing:.02em;}
+.pill.green{background:var(--success-tint);color:var(--success);}
+.pill.gold{background:var(--warn-tint);color:var(--gold);}
+.pill.rose{background:var(--danger-tint);color:var(--danger);}
+
+.stack>*+*{margin-top:9px;}
+.stack14>*+*{margin-top:14px;}
+
+/* steppers */
+.stepper{display:flex;align-items:center;gap:12px;}
+.stepper .sbtn{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.stepper .minus{background:var(--tint);color:var(--ink);}
+.stepper .plus{background:var(--primary);color:#fff;}
+.stepper .qv{font-size:14px;font-weight:800;color:var(--ink);min-width:14px;text-align:center;}
+.stepper .sbtn.dis{opacity:.4;}
+
+/* return line card */
+.rline .top{display:flex;align-items:flex-start;gap:11px;}
+.rline .nm{font-family:'Marcellus',serif;font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rline .sold{font-size:10px;font-weight:700;color:var(--text2);margin-top:4px;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.rline .pr{text-align:right;flex:0 0 auto;}
+.rline .pr .t{font-family:'Marcellus',serif;font-size:16px;color:var(--gold);}
+.rline .pr .u{font-size:9.5px;font-weight:600;color:var(--muted);margin-top:2px;}
+.rline .div{height:1px;background:var(--hairline);margin:11px 0;}
+.rline.off{opacity:.5;}
+.cap-tag{padding:2px 7px;border-radius:9px;background:var(--tint);color:var(--text2);font-size:8.5px;font-weight:800;}
+
+/* buttons */
+.btn{border:0;width:100%;padding:15px;border-radius:15px;font-size:14.5px;font-weight:800;cursor:default;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn.gold{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,#fff),var(--accent));color:var(--primary-dark);box-shadow:0 14px 24px -10px color-mix(in srgb,var(--accent) 55%,transparent);}
+.btn.primary{background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 95%,#fff),var(--primary-dark));color:#fff;box-shadow:0 14px 24px -10px color-mix(in srgb,var(--primary) 55%,transparent);}
+.btn.sm{width:auto;padding:12px 14px;font-size:12px;border-radius:13px;}
+.actionbtn{flex:1;background:var(--card);border:1px solid var(--card-border);box-shadow:var(--shadow-sm);border-radius:13px;padding:12px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:700;color:var(--ink);}
+
+/* bottom dock */
+.dock{position:absolute;left:0;right:0;bottom:0;padding:12px 14px 16px;}
+.scroll.has-dock{padding-bottom:96px;}
+
+/* floating cart/refund bar */
+.fbar{background:linear-gradient(135deg,color-mix(in srgb,var(--primary-dark) 78%,transparent),color-mix(in srgb,#000 22%,var(--primary-dark)));
+  border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:22px;padding:12px 14px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 22px 34px -16px rgba(0,0,0,.5);backdrop-filter:blur(14px);}
+.fbar .fb-ico{position:relative;width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:16px;flex:0 0 auto;}
+.fbar .fb-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,#fff),var(--accent));color:var(--primary-dark);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+.fbar .fb-mid{flex:1;min-width:0;}
+.fbar .fb-mid .t{font-size:10.5px;font-weight:600;color:rgba(255,255,255,.72);white-space:nowrap;}
+.fbar .fb-mid .v{font-family:'Marcellus',serif;font-size:20px;color:#fff;line-height:1.1;white-space:nowrap;}
+.fbar .fb-cta{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,#fff),var(--accent));color:var(--primary-dark);border-radius:14px;padding:11px 14px;font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto;}
+
+/* receipt */
+.receipt-head{text-align:center;}
+.receipt-head .brand{font-size:11px;font-weight:700;letter-spacing:.32em;color:var(--ink);}
+.receipt-head .who{font-size:10px;font-weight:600;color:var(--muted);margin-top:3px;}
+.logomark{width:30px;height:30px;border-radius:9px;margin:0 auto 6px;background:var(--hero);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Marcellus',serif;font-size:13px;}
+.dashed{height:1px;background:repeating-linear-gradient(90deg,var(--hairline) 0 3px,transparent 3px 7px);margin:12px 0;}
+.rrow{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:6px;}
+.rrow .l{font-weight:600;color:var(--text2);}
+.rrow .r{font-weight:700;color:var(--ink);}
+.rrow.disc .l,.rrow.disc .r{color:var(--gold);}
+.rrow.total .l{font-size:12.5px;font-weight:800;color:var(--ink);}
+.rrow.total .r{font-family:'Marcellus',serif;font-size:19px;color:var(--ink);}
+.litem{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.litem .q{padding:1px 6px;border-radius:6px;background:var(--tint);color:var(--primary-dark);font-size:10.5px;font-weight:800;}
+.litem .n{flex:1;font-size:12px;font-weight:600;color:var(--ink);}
+.litem .p{font-size:12px;font-weight:800;color:var(--ink);}
+
+/* pay methods grid */
+.methods{display:flex;gap:8px;}
+.method{flex:1;height:64px;border-radius:13px;background:var(--card);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative;border:1px solid var(--card-border);}
+.method i{font-size:17px;color:var(--text2);}
+.method span{font-size:10.5px;font-weight:800;color:var(--text2);}
+.method.on{background:var(--primary-dark);box-shadow:none;border-color:transparent;}
+.method.on i{color:var(--accent);}
+.method.on span{color:#fff;}
+.method .ck{position:absolute;top:4px;right:5px;color:var(--accent);font-size:12px;}
+
+.sumcard .sr{display:flex;justify-content:space-between;align-items:center;font-size:12px;}
+.sumcard .sr .l{font-weight:600;color:var(--text2);}
+.sumcard .sr .r{font-weight:800;color:var(--ink);}
+.sumcard .hr{height:1px;background:var(--hairline);margin:11px 0;}
+.sumcard .sr.accent .l{color:var(--primary);} .sumcard .sr.accent .r{color:var(--primary);}
+
+.statuscard{border-radius:16px;padding:14px;text-align:center;background:var(--success-tint);border:1px solid color-mix(in srgb,var(--success) 35%,transparent);}
+.statuscard .dot{width:30px;height:30px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;margin:0 auto 7px;}
+.statuscard .h{font-size:13px;font-weight:800;color:var(--success);}
+.statuscard .d{font-size:11px;font-weight:600;color:color-mix(in srgb,var(--success) 85%,transparent);margin-top:3px;}
+
+/* receipt hero (return confirmation) */
+.herocard{background:var(--hero);border-radius:24px;padding:20px 22px 22px;color:#fff;position:relative;overflow:hidden;box-shadow:0 30px 40px -22px color-mix(in srgb,var(--primary) 45%,transparent);}
+.herocard .blob{position:absolute;right:-36px;top:-42px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.10);}
+.herocard .k{font-size:10.5px;font-weight:700;letter-spacing:.13em;color:rgba(255,255,255,.82);position:relative;}
+.herocard .amt{font-family:'Marcellus',serif;font-size:40px;color:var(--hero-ink);margin:7px 0 6px;position:relative;line-height:1;}
+.herocard .ref{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.82);position:relative;}
+#stage[data-preset="editorial"] .herocard .k,#stage[data-preset="editorial"] .herocard .ref{color:rgba(241,236,224,.8);}
+
+/* timeline */
+.timeline{display:flex;align-items:center;padding:4px 4px 0;}
+.tstep{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.tdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.tdot.done{background:var(--success);color:#fff;box-shadow:0 4px 12px -4px color-mix(in srgb,var(--success) 60%,transparent);}
+.tdot.todo{background:var(--card);border:2px solid var(--hairline);color:var(--muted);font-size:7px;}
+.tstep .tl{font-size:9.5px;font-weight:700;color:var(--text2);}
+.tstep .tl.todo{color:var(--muted);}
+.tseg{flex:1;height:2.5px;border-radius:2px;margin:0 2px 22px;}
+.tseg.done{background:var(--success);} .tseg.todo{background:var(--hairline);}
+
+/* receipt invoice header */
+.ihdr{display:flex;align-items:center;gap:11px;padding:4px 4px 8px;}
+.ihbtn{width:36px;height:36px;border-radius:11px;background:var(--card);box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:14px;border:1px solid var(--card-border);}
+.ihdr .brand{font-family:'Marcellus',serif;font-size:16px;color:var(--ink);}
+.ihdr .loc{font-size:9.5px;font-weight:600;color:var(--muted);}
+
+.section{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin:0 0 8px 2px;}
+#stage[data-preset="editorial"] .section{color:var(--gold);}
+
+.note{display:flex;align-items:center;gap:10px;background:var(--tint);border-radius:13px;padding:10px 12px;font-size:11px;font-weight:600;color:var(--text2);}
+.note i{color:var(--primary);}
+
+.fieldbox{background:var(--card);border-radius:13px;box-shadow:var(--shadow-sm);padding:12px 13px;display:flex;align-items:center;gap:9px;border:1px solid var(--card-border);}
+.fieldbox i{color:var(--muted);font-size:14px;}
+.fieldbox .ph{font-size:12.5px;font-weight:500;color:var(--muted);}
+
+.payitem{display:flex;align-items:center;gap:12px;padding:11px 0;}
+.payitem .body{flex:1;}
+.payitem .t{font-size:13px;font-weight:700;color:var(--ink);}
+.payitem .s{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:2px;}
+.payitem .a{font-size:13.5px;font-weight:800;color:var(--ink);}
+.payitem+.payitem{border-top:1px solid var(--hairline);}
+</style>
+</head>
+<body>
+<div id="stage" data-preset="emerald" data-theme="light">
+
+  <div class="bar">
+    <div>
+      <h1>Mobile · Sales Return module</h1>
+      <p class="lead">Proposed screens for the new <b>Sales Return</b> flow, built to match the existing Sales module 1:1 — the Bento control card, the gradient hero headers, glass cards, the gold CTA and the receipt layout. A return is always created <b>against a paid invoice</b>. Flip the preset and light/dark to confirm parity across every Astra theme.</p>
+    </div>
+    <div class="controls">
+      <div class="ctl-group">
+        <span class="cap">Theme preset</span>
+        <div class="segbtns" id="presets">
+          <button data-preset="emerald" class="on">Emerald &amp; Gold</button>
+          <button data-preset="aurora">Aurora Glass</button>
+          <button data-preset="luminous">Luminous</button>
+          <button data-preset="editorial">Editorial Noir</button>
+        </div>
+      </div>
+      <div class="ctl-group">
+        <span class="cap">Mode</span>
+        <div class="segbtns" id="themes">
+          <button data-theme="light" class="on">Light</button>
+          <button data-theme="dark">Dark</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>1 · List</b> reuse Sales' Bento control card</span>
+    <span><b>2 · Pick invoice</b> search a paid invoice</span>
+    <span><b>3 · Build return</b> qty steppers capped at sold</span>
+    <span><b>4 · Review &amp; refund</b> refund-method split</span>
+    <span><b>5 · Receipt</b> refund confirmation</span>
+  </div>
+
+  <div class="gallery">
+
+    <!-- ============ 1 · RETURNS LIST ============ -->
+    <div class="unit">
+      <p class="label">1 · Sales Returns list</p>
+      <p class="desc">SalesReturnListScreen — same Bento control card as Sales (date presets/custom, status segments, payment + sort sheets) and a result-total line.</p>
+      <div class="device"><div class="screen" data-hero-light>
+        <div class="hdr">
+          <div class="statusbar"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+          <div class="hdr-row tight">
+            <div style="flex:1"><h1>Sales Returns</h1><div class="sub">12 returns found</div></div>
+          </div>
+        </div>
+        <div class="scroll"><div class="pad">
+          <!-- bento -->
+          <div class="card r20">
+            <p class="flabel">Date range</p>
+            <div class="datebox"><i class="fa fa-calendar di"></i><span class="dv">Last 30 days</span><i class="fa fa-angle-down dc"></i></div>
+            <p class="flabel" style="margin-top:13px;">Status</p>
+            <div class="seg">
+              <div class="opt active">All</div><div class="opt">Completed</div><div class="opt">Draft</div><div class="opt">Cancelled</div>
+            </div>
+            <div class="grid2" style="margin-top:13px;">
+              <div><p class="flabel">Payment</p><div class="selbox"><i class="fa fa-credit-card si"></i><span class="sv">All methods</span><i class="fa fa-angle-down sc"></i></div></div>
+              <div><p class="flabel">Sort</p><div class="selbox"><i class="fa fa-sort si"></i><span class="sv">Newest first</span><i class="fa fa-angle-down sc"></i></div></div>
+            </div>
+          </div>
+          <div class="resultline"><span class="cnt">12 returns</span><span class="sum">− QAR 4,180.00</span></div>
+          <!-- rows -->
+          <div class="stack">
+            <div class="card r14 tight"><div class="row">
+              <div class="chip"><i class="fa fa-undo"></i></div>
+              <div class="body">
+                <div class="ttl"><span class="inv">RET-0007</span><span class="pill green">COMPLETED</span></div>
+                <div class="meta">Aisha · 18 Jun 2026 · Cash</div>
+              </div>
+              <span class="amt refund">− QAR 320.00</span>
+            </div></div>
+            <div class="card r14 tight"><div class="row">
+              <div class="chip"><i class="fa fa-undo"></i></div>
+              <div class="body">
+                <div class="ttl"><span class="inv">RET-0006</span><span class="pill gold">DRAFT</span></div>
+                <div class="meta">Walk-in · 17 Jun 2026 · Card</div>
+              </div>
+              <span class="amt refund">− QAR 78.00</span>
+            </div></div>
+            <div class="card r14 tight"><div class="row">
+              <div class="chip"><i class="fa fa-undo"></i></div>
+              <div class="body">
+                <div class="ttl"><span class="inv">RET-0005</span><span class="pill green">COMPLETED</span></div>
+                <div class="meta">M. Khan · 15 Jun 2026 · Cash</div>
+              </div>
+              <span class="amt refund">− QAR 540.00</span>
+            </div></div>
+            <div class="card r14 tight"><div class="row">
+              <div class="chip"><i class="fa fa-undo"></i></div>
+              <div class="body">
+                <div class="ttl"><span class="inv">RET-0004</span><span class="pill rose">CANCELLED</span></div>
+                <div class="meta">Walk-in · 14 Jun 2026 · Custom</div>
+              </div>
+              <span class="amt refund">− QAR 132.00</span>
+            </div></div>
+          </div>
+        </div></div>
+      </div></div>
+    </div>
+
+    <!-- ============ 2 · PICK INVOICE ============ -->
+    <div class="unit">
+      <p class="label">2 · Pick invoice</p>
+      <p class="desc">ReturnPickInvoiceScreen — search and select the paid invoice to return against (only completed sales are returnable).</p>
+      <div class="device"><div class="screen" data-hero-light>
+        <div class="hdr">
+          <div class="statusbar"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+          <div class="hdr-row">
+            <div class="hbtn"><i class="fa fa-chevron-left"></i></div>
+            <div style="flex:1"><h1>Return against</h1><div class="sub">Select a paid invoice</div></div>
+          </div>
+        </div>
+        <div class="scroll"><div class="pad">
+          <div class="fieldbox" style="margin-bottom:14px;"><i class="fa fa-search"></i><span class="ph">Search invoice no, customer, mobile</span></div>
+          <div class="seg" style="margin-bottom:16px;">
+            <div class="opt active">Last 30 days</div><div class="opt">This month</div><div class="opt">All time</div>
+          </div>
+          <div class="stack">
+            <div class="card r14 tight"><div class="row">
+              <div class="chip"><i class="fa fa-shopping-bag"></i></div>
+              <div class="body">
+                <div class="ttl"><span class="inv">INV-1042</span><span class="pill green">PAID</span></div>
+                <div class="meta">Aisha · 17 Jun 2026 · 3 items</div>
+              </div>
+              <span class="amt">QAR 540.00</span>
+              <i class="fa fa-angle-right" style="color:var(--muted);margin-left:8px;"></i>
+            </div></div>
+            <div class="card r14 tight"><div class="row">
+              <div class="chip"><i class="fa fa-shopping-bag"></i></div>
+              <div class="body">
+                <div class="ttl"><span class="inv">INV-1039</span><span class="pill green">PAID</span></div>
+                <div class="meta">Walk-in · 16 Jun 2026 · 1 item</div>
+              </div>
+              <span class="amt">QAR 120.00</span>
+              <i class="fa fa-angle-right" style="color:var(--muted);margin-left:8px;"></i>
+            </div></div>
+            <div class="card r14 tight"><div class="row">
+              <div class="chip"><i class="fa fa-shopping-bag"></i></div>
+              <div class="body">
+                <div class="ttl"><span class="inv">INV-1035</span><span class="pill green">PAID</span></div>
+                <div class="meta">M. Khan · 15 Jun 2026 · 5 items</div>
+              </div>
+              <span class="amt">QAR 940.00</span>
+              <i class="fa fa-angle-right" style="color:var(--muted);margin-left:8px;"></i>
+            </div></div>
+            <div class="card r14 tight"><div class="row">
+              <div class="chip"><i class="fa fa-shopping-bag"></i></div>
+              <div class="body">
+                <div class="ttl"><span class="inv">INV-1031</span><span class="pill gold">PARTIAL</span></div>
+                <div class="meta">Sara · 14 Jun 2026 · 2 items</div>
+              </div>
+              <span class="amt">QAR 260.00</span>
+              <i class="fa fa-angle-right" style="color:var(--muted);margin-left:8px;"></i>
+            </div></div>
+          </div>
+        </div></div>
+      </div></div>
+    </div>
+
+    <!-- ============ 3 · BUILD RETURN ============ -->
+    <div class="unit">
+      <p class="label">3 · Build the return</p>
+      <p class="desc">NewSaleReturnScreen — invoice lines with qty steppers capped at the sold quantity; lines at 0 are excluded. A floating bar shows the live refund.</p>
+      <div class="device"><div class="screen" data-hero-light>
+        <div class="hdr">
+          <div class="statusbar"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+          <div class="hdr-row tight">
+            <div class="hbtn"><i class="fa fa-chevron-left"></i></div>
+            <h1>New Return</h1>
+            <div class="hbtn"><i class="fa fa-times"></i></div>
+          </div>
+          <div class="hsels">
+            <div class="hsel"><div class="hi"><i class="fa fa-file-text-o"></i></div><div style="min-width:0"><div class="lab">Invoice</div><div class="val">INV-1042</div></div></div>
+            <div class="hsel"><div class="hi"><i class="fa fa-user-o"></i></div><div style="min-width:0"><div class="lab">Client</div><div class="val">Aisha</div></div></div>
+          </div>
+        </div>
+        <div class="scroll has-dock"><div class="pad">
+          <div class="note" style="margin-bottom:14px;"><i class="fa fa-info-circle"></i><span>Returning against INV-1042 · 17 Jun 2026</span></div>
+
+          <div class="card" style="margin-bottom:11px;">
+            <div class="rline">
+              <div class="top">
+                <div class="chip lg"><i class="fa fa-scissors"></i></div>
+                <div style="flex:1;min-width:0">
+                  <div class="nm">Hair Color</div>
+                  <div class="sold"><span class="cap-tag">SOLD 3</span></div>
+                </div>
+                <div class="pr"><div class="t">− QAR 180.00</div><div class="u">QAR 90.00 / unit</div></div>
+              </div>
+              <div class="div"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div class="stepper"><div class="sbtn minus"><i class="fa fa-minus"></i></div><span class="qv">2</span><div class="sbtn plus"><i class="fa fa-plus"></i></div></div>
+                <span style="font-size:10.5px;font-weight:700;color:var(--muted);">of 3 sold</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:11px;">
+            <div class="rline">
+              <div class="top">
+                <div class="chip lg"><i class="fa fa-shopping-bag"></i></div>
+                <div style="flex:1;min-width:0">
+                  <div class="nm">Shampoo 250ml</div>
+                  <div class="sold"><span class="cap-tag">SOLD 1</span></div>
+                </div>
+                <div class="pr"><div class="t">− QAR 18.00</div><div class="u">QAR 18.00 / unit</div></div>
+              </div>
+              <div class="div"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div class="stepper"><div class="sbtn minus"><i class="fa fa-minus"></i></div><span class="qv">1</span><div class="sbtn plus dis"><i class="fa fa-plus"></i></div></div>
+                <span style="font-size:10.5px;font-weight:700;color:var(--muted);">of 1 sold</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card off" style="margin-bottom:11px;">
+            <div class="rline">
+              <div class="top">
+                <div class="chip lg"><i class="fa fa-scissors"></i></div>
+                <div style="flex:1;min-width:0">
+                  <div class="nm">Blow Dry</div>
+                  <div class="sold"><span class="cap-tag">SOLD 2</span></div>
+                </div>
+                <div class="pr"><div class="t" style="color:var(--muted)">—</div><div class="u">QAR 60.00 / unit</div></div>
+              </div>
+              <div class="div"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div class="stepper"><div class="sbtn minus dis"><i class="fa fa-minus"></i></div><span class="qv">0</span><div class="sbtn plus"><i class="fa fa-plus"></i></div></div>
+                <span style="font-size:10.5px;font-weight:700;color:var(--muted);">of 2 sold</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="fieldbox"><i class="fa fa-comment-o"></i><span class="ph">Reason for return (optional)</span></div>
+        </div></div>
+        <div class="dock">
+          <div class="fbar">
+            <div class="fb-ico"><i class="fa fa-undo"></i><span class="fb-badge">3</span></div>
+            <div class="fb-mid"><div class="t">3 items · Refund</div><div class="v">QAR 198.00</div></div>
+            <div class="fb-cta">Review<i class="fa fa-arrow-right"></i></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ============ 4 · REVIEW & REFUND ============ -->
+    <div class="unit">
+      <p class="label">4 · Review &amp; refund</p>
+      <p class="desc">ReturnReviewScreen — mirrors Review&amp;Pay: returned-items receipt, refund-method selector (Cash / Card / Credit / Custom split), live balance, confirm.</p>
+      <div class="device"><div class="screen" data-hero-light>
+        <div class="hdr">
+          <div class="statusbar"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+          <div class="hdr-row">
+            <div class="hbtn"><i class="fa fa-chevron-left"></i></div>
+            <h1>Review &amp; Refund</h1>
+          </div>
+        </div>
+        <div class="scroll has-dock"><div class="pad stack14">
+          <div class="card">
+            <div class="receipt-head">
+              <div class="logomark">I</div>
+              <div class="brand">INVO</div>
+              <div class="who">Aisha · against INV-1042</div>
+            </div>
+            <div class="dashed"></div>
+            <div class="litem"><span class="q">2×</span><span class="n">Hair Color</span><span class="p">QAR 180.00</span></div>
+            <div class="litem"><span class="q">1×</span><span class="n">Shampoo 250ml</span><span class="p">QAR 18.00</span></div>
+            <div class="dashed"></div>
+            <div class="rrow"><span class="l">Subtotal</span><span class="r">QAR 198.00</span></div>
+            <div class="rrow"><span class="l">Tax</span><span class="r">QAR 0.00</span></div>
+            <div class="rrow total" style="margin-top:4px;"><span class="l">Refund total</span><span class="r">QAR 198.00</span></div>
+          </div>
+
+          <div>
+            <p class="flabel" style="margin-bottom:8px;">Refund via</p>
+            <div class="methods">
+              <div class="method on"><i class="fa fa-money"></i><span>Cash</span><i class="fa fa-check-circle ck"></i></div>
+              <div class="method"><i class="fa fa-credit-card"></i><span>Card</span></div>
+              <div class="method"><i class="fa fa-file-text-o"></i><span>Credit</span></div>
+              <div class="method"><i class="fa fa-sliders"></i><span>Custom</span></div>
+            </div>
+          </div>
+
+          <div class="card sumcard pad-sm">
+            <div class="sr accent"><span class="l">Refund Total</span><span class="r">QAR 198.00</span></div>
+            <div class="hr"></div>
+            <div class="sr"><span class="l">Refunding</span><span class="r">QAR 198.00</span></div>
+            <div class="hr"></div>
+            <div class="sr"><span class="l" style="color:var(--success);font-weight:800;"><i class="fa fa-check-circle"></i> Balance</span><span class="r" style="color:var(--success);">QAR 0.00</span></div>
+          </div>
+
+          <div class="statuscard">
+            <div class="dot"><i class="fa fa-check"></i></div>
+            <div class="h">Ready to Refund</div>
+            <div class="d">The full amount will be returned to the customer</div>
+          </div>
+        </div></div>
+        <div class="dock"><button class="btn gold">Refund QAR 198.00</button></div>
+      </div></div>
+    </div>
+
+    <!-- ============ 5 · RECEIPT ============ -->
+    <div class="unit">
+      <p class="label">5 · Return receipt</p>
+      <p class="desc">ReturnReceiptScreen — mirrors the invoice view: refund hero, Created → Refunded → Receipt timeline, returned items, summary and refund-payment card.</p>
+      <div class="device"><div class="screen">
+        <div class="statusbar" style="color:var(--ink)"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+        <div class="scroll"><div class="pad">
+          <div class="ihdr">
+            <div class="ihbtn"><i class="fa fa-chevron-left"></i></div>
+            <div class="logomark" style="margin:0;width:32px;height:32px;">I</div>
+            <div style="flex:1;margin-left:4px;"><div class="brand">Invo</div><div class="loc">Salon POS</div></div>
+            <span class="pill green">REFUNDED</span>
+          </div>
+
+          <div class="herocard">
+            <div class="blob"></div>
+            <div class="k">TOTAL REFUNDED</div>
+            <div class="amt">QAR 198.00</div>
+            <div class="ref">Return RET-0008 · against INV-1042 · 18 Jun 2026</div>
+          </div>
+
+          <div class="timeline" style="margin:14px 0;">
+            <div class="tstep"><div class="tdot done"><i class="fa fa-check"></i></div><div class="tl">Created</div></div>
+            <div class="tseg done"></div>
+            <div class="tstep"><div class="tdot done"><i class="fa fa-check"></i></div><div class="tl">Refunded</div></div>
+            <div class="tseg done"></div>
+            <div class="tstep"><div class="tdot done"><i class="fa fa-check"></i></div><div class="tl">Receipt</div></div>
+          </div>
+
+          <div class="card pad-sm" style="margin-bottom:12px;"><div class="row">
+            <div class="chip"><i class="fa fa-user-o"></i></div>
+            <div class="body"><div style="font-size:9.5px;font-weight:700;color:var(--muted);">Refunded to</div><div style="font-size:13.5px;font-weight:700;color:var(--ink);margin-top:2px;">Aisha</div></div>
+            <span style="font-size:11.5px;font-weight:600;color:var(--text2);">+974 5xxx</span>
+          </div></div>
+
+          <div class="card pad-sm" style="margin-bottom:12px;">
+            <div class="payitem"><div class="chip"><i class="fa fa-scissors"></i></div><div class="body"><div class="t">Hair Color</div><div class="s">2 × QAR 90.00 · Aisha</div></div><span class="a">QAR 180.00</span></div>
+            <div class="payitem"><div class="chip"><i class="fa fa-shopping-bag"></i></div><div class="body"><div class="t">Shampoo 250ml</div><div class="s">1 × QAR 18.00</div></div><span class="a">QAR 18.00</span></div>
+          </div>
+
+          <div class="card" style="margin-bottom:12px;">
+            <div class="rrow"><span class="l">Subtotal</span><span class="r">QAR 198.00</span></div>
+            <div class="rrow"><span class="l">Tax</span><span class="r">QAR 0.00</span></div>
+            <div class="dashed"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+              <span style="font-size:13px;font-weight:800;color:var(--ink);">Total Refunded</span>
+              <span style="font-family:'Marcellus',serif;font-size:22px;color:var(--primary-dark);">QAR 198.00</span>
+            </div>
+          </div>
+
+          <div class="card pad-sm" style="margin-bottom:14px;">
+            <div class="payitem"><div class="chip"><i class="fa fa-money"></i></div><div class="body"><div class="t">Cash</div><div class="s">Refund issued</div></div><span class="a">QAR 198.00</span></div>
+          </div>
+
+          <div style="display:flex;gap:9px;">
+            <div class="actionbtn"><i class="fa fa-print"></i> Print</div>
+            <div class="actionbtn"><i class="fa fa-share-alt"></i> Share</div>
+            <button class="btn primary sm" style="flex:2;">New Return</button>
+          </div>
+        </div></div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  function wire(id, attr){
+    document.querySelectorAll('#'+id+' button').forEach(b=>{
+      b.addEventListener('click',()=>{
+        document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+        b.classList.add('on');
+        stage.setAttribute(attr, b.getAttribute(attr));
+      });
+    });
+  }
+  wire('presets','data-preset');
+  wire('themes','data-theme');
+</script>
+</body>
+</html>

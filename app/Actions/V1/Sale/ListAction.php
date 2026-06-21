@@ -38,10 +38,22 @@ class ListAction
             $query->orderBy('id', 'desc');
         }
 
+        // Totals across the whole filtered set (not just the current page), so the
+        // app can show an accurate "N invoices · total" result line.
+        $summary = Sale::query()
+            ->filter($filters)
+            ->when(! empty($filters['mine_only']) && $user, fn ($q) => $q->where('created_by', $user->id))
+            ->selectRaw('COUNT(*) as invoices, COALESCE(SUM(paid), 0) as total_paid')
+            ->first();
+
         $sales = $query->paginate($filters['per_page']);
 
         return [
             'data' => SaleListResource::collection($sales->items()),
+            'summary' => [
+                'invoices' => (int) $summary->invoices,
+                'total_paid' => round((float) $summary->total_paid, 2),
+            ],
             'pagination' => [
                 'current_page' => $sales->currentPage(),
                 'last_page' => $sales->lastPage(),

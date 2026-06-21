@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
+import '../../models/models.dart';
 import '../../state/admin_controller.dart';
+import '../../theme/palette.dart';
 import '../../theme/theme.dart';
 import '../../widgets/astra_widgets.dart';
 import '../../widgets/charts.dart';
@@ -15,12 +17,32 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
+  final _scrollCtl = ScrollController();
+
   @override
   void initState() {
     super.initState();
+    _scrollCtl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AdminController>().loadReports();
+      context.read<AdminController>()
+        ..loadReports()
+        ..loadOverview();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollCtl.dispose();
+    super.dispose();
+  }
+
+  /// Infinite scroll: pull the next page of the breakdown once near the bottom.
+  void _onScroll() {
+    if (!_scrollCtl.hasClients) return;
+    final pos = _scrollCtl.position;
+    if (pos.pixels >= pos.maxScrollExtent - 500) {
+      context.read<AdminController>().loadMoreReport();
+    }
   }
 
   @override
@@ -41,17 +63,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
               child: MaxWidthBox(
                 maxWidth: 820,
                 child: ListView(
+                  controller: _scrollCtl,
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 110),
                   children: [
-                    _dateFilter(admin),
-                    const SizedBox(height: 13),
-                    _overview(admin),
-                    const SizedBox(height: 13),
-                    _byDay(admin),
-                    const SizedBox(height: 14),
-                    _segments(admin),
-                    const SizedBox(height: 13),
-                    _breakdown(admin),
+                    // One gap between every section keeps spacing uniform & DRY;
+                    // null sections (e.g. the trend on a single-day range) drop out
+                    // entirely so they don't leave an empty gap.
+                    for (final section in <Widget?>[
+                      _dateFilter(admin),
+                      _salesPerformance(admin),
+                      _paymentOverview(admin),
+                      _byDay(admin),
+                      _breakdownCard(admin),
+                    ])
+                      if (section != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: section),
                   ],
                 ),
               ),
@@ -169,138 +194,503 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (picked != null) admin.setCustomRange(picked.start, picked.end);
   }
 
-  /// Short badge for the active range, shown on each KPI card.
-  String _rangeBadge(AdminController admin) {
-    switch (admin.rangePreset) {
-      case 'today':
-        return 'TODAY';
-      case '7d':
-        return '7D';
-      case '30d':
-        return '30D';
-      case 'month':
-        return 'MONTH';
-      default:
-        return 'CUSTOM';
-    }
-  }
+  // ---- Sales Overview dashboard (type=overview) ------------------------------
+  // Status colours kept local so the card reads the same across all skins.
+  static const _good = Color(0xFF1F9D63);
+  static const _warn = Color(0xFFD9890C);
+  static const _bad = Color(0xFFD4546A);
 
-  // ---- Overview KPIs (range-aware) ----
+  /// Sales Performance card — success rate, per-method Sales/Returns/Net,
+  /// and the six gradient financial tiles.
+  Widget _salesPerformance(AdminController admin) {
+    final p = context.astra;
+    final ov = admin.overview;
+    if (ov == null) return _overviewPlaceholder(admin, 'Sales Performance', Icons.insights_rounded);
+    final s = ov.summary;
 
-  Widget _overview(AdminController admin) {
-    final gross = admin.rangeGross;
-    final inv = admin.rangeInvoices;
-    final hasData = !admin.reportLoading || inv > 0;
-    String money(double v) => hasData ? Money.of(v) : '—';
-
-    // Best day, derived from the per-day trend (real data — no fabricated deltas).
-    var peak = 0.0;
-    var peakLabel = '';
-    for (var i = 0; i < admin.reportTrendPoints.length; i++) {
-      if (admin.reportTrendPoints[i] > peak) {
-        peak = admin.reportTrendPoints[i];
-        peakLabel = admin.reportTrendLabels.length > i ? admin.reportTrendLabels[i] : '';
-      }
-    }
-
-    final cards = <Widget>[
-      _kpiCard(admin,
-          icon: Icons.payments_rounded,
-          label: 'GROSS SALES',
-          value: money(gross),
-          caption: hasData ? '$inv invoice${inv == 1 ? '' : 's'}' : '—'),
-      _kpiCard(admin,
-          icon: Icons.receipt_long_rounded,
-          label: 'INVOICES',
-          value: hasData ? '$inv' : '—',
-          caption: 'in range'),
-      _kpiCard(admin,
-          icon: Icons.sell_rounded,
-          label: 'AVG TICKET',
-          value: inv > 0 ? Money.of(gross / inv) : '—',
-          caption: 'per invoice'),
-      _kpiCard(admin,
-          icon: Icons.trending_up_rounded,
-          label: 'BEST DAY',
-          value: peak > 0 ? Money.compact(peak) : '—',
-          caption: peak > 0 ? _dayLabel(peakLabel, admin.reportTrendPoints.length) : '—',
-          gold: true),
-    ];
-    return GridView.count(
-      crossAxisCount: context.isTablet ? 4 : 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: context.isTablet ? 1.6 : 1.45,
-      children: cards,
+    return AstraCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _cardHeader(Icons.insights_rounded, 'Sales Performance',
+              trailing: _pill('Disc ${Money.compact(s.discount)}', p.tint, p.textSecondary)),
+          const SizedBox(height: 12),
+          _miniStatsRow(s),
+          const SizedBox(height: 12),
+          Container(height: 1, color: p.hairline),
+          const SizedBox(height: 12),
+          _rateBar('Sales Success Rate', s.successRate, [p.primary, p.accent]),
+          const SizedBox(height: 10),
+          for (final m in ov.payments.methods) ...[
+            _methodCard(m),
+            const SizedBox(height: 8),
+          ],
+          const SizedBox(height: 2),
+          _finTiles(s),
+        ],
+      ),
     );
   }
 
-  Widget _kpiCard(
-    AdminController admin, {
-    required IconData icon,
-    required String label,
-    required String value,
-    required String caption,
-    bool gold = false,
-  }) {
+  Widget _methodCard(PaymentMethodStat m) {
     final p = context.astra;
-    return AstraCard(
-      radius: 16,
-      padding: const EdgeInsets.all(12),
+    final color = _methodColor(m.method, p);
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: p.isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: p.hairline),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 30,
-                height: 30,
+                width: 32,
+                height: 32,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: gold ? p.accent.withValues(alpha: 0.16) : p.tint,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(icon, size: 15, color: gold ? p.goldText : p.primary),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                child: Icon(_methodIcon(m.method), size: 17, color: color),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(20)),
-                child: Text(_rangeBadge(admin),
-                    style: ui(size: 8.5, weight: FontWeight.w800, color: p.textSecondary, letterSpacing: 0.6)),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(m.method, style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
+                    Text('${m.transactions} transactions',
+                        style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+                  ],
+                ),
               ),
             ],
           ),
-          const Spacer(),
-          Text(label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-          const SizedBox(height: 3),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(value, style: serif(size: 20, color: p.ink)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _methodCell('Sales', m.sales, _good),
+              const SizedBox(width: 7),
+              _methodCell('Returns', m.returns, _warn),
+              const SizedBox(width: 7),
+              _methodCell('Net', m.net, m.net < 0 ? _bad : p.primary),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(caption,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted)),
         ],
       ),
     );
   }
 
+  Widget _methodCell(String label, double value, Color color) {
+    final p = context.astra;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(9)),
+        child: Column(
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(Money.plain(value), style: ui(size: 12.5, weight: FontWeight.w800, color: color)),
+            ),
+            const SizedBox(height: 2),
+            Text(label.toUpperCase(),
+                style: ui(size: 8.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.4)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _finTiles(OverviewSummary s) {
+    final p = context.astra;
+    final tiles = <Widget>[
+      _finTile(Icons.payments_rounded, 'Gross Sales', s.grossSales, [p.primary, p.primaryDark]),
+      _finTile(Icons.sell_rounded, 'Discounts', s.discount, const [Color(0xFFF59E0B), Color(0xFFD97706)]),
+      _finTile(Icons.account_balance_wallet_rounded, 'Net Sales', s.netSales, const [Color(0xFF22C55E), Color(0xFF15803D)]),
+      _finTile(Icons.inventory_2_rounded, 'Total Item', s.totalItem, const [Color(0xFF64748B), Color(0xFF334155)]),
+      _finTile(Icons.shopping_cart_rounded, 'Products', s.productSale, const [Color(0xFF06B6D4), Color(0xFF0E7490)]),
+      _finTile(Icons.star_rounded, 'Services', s.serviceSale, const [Color(0xFF8B5CF6), Color(0xFF6D28D9)]),
+    ];
+    return GridView.count(
+      crossAxisCount: context.isTablet ? 3 : 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 9,
+      crossAxisSpacing: 9,
+      childAspectRatio: context.isTablet ? 3.3 : 2.7,
+      children: tiles,
+    );
+  }
+
+  /// Compact horizontal money tile — icon beside label/value, no stranded
+  /// whitespace (the old vertical spaceBetween left a big empty middle).
+  Widget _finTile(IconData icon, String label, double value, List<Color> gradient) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: gradient),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: gradient.last.withValues(alpha: 0.28), blurRadius: 12, offset: const Offset(0, 6))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(9)),
+            child: Icon(icon, size: 16, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 9, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.92), letterSpacing: 0.4)),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(Money.compact(value), style: serif(size: 17, color: Colors.white)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Payment Overview card — sales/returns payments, net, collection rate,
+  /// the methods list and a payment-method donut.
+  Widget _paymentOverview(AdminController admin) {
+    final p = context.astra;
+    final ov = admin.overview;
+    if (ov == null) return _overviewPlaceholder(admin, 'Payment Overview', Icons.account_balance_wallet_rounded);
+    final pay = ov.payments;
+    final net = pay.netPayment;
+
+    final listMethods = pay.methods.where((m) => m.method.toLowerCase() != 'credit' && m.sales > 0).take(4).toList();
+    final slices = <DonutSlice>[];
+    for (var i = 0; i < pay.chart.length; i++) {
+      if (pay.chart[i].value <= 0) continue;
+      slices.add(DonutSlice(pay.chart[i].value, _sliceColor(i, p), pay.chart[i].label));
+    }
+    final chartTotal = slices.fold<double>(0, (a, s) => a + s.value);
+
+    return AstraCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _cardHeader(Icons.account_balance_wallet_rounded, 'Payment Overview'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _payTile('Sales Payments', pay.salesTotal, '${pay.salesTransactions} transactions', _good),
+              const SizedBox(width: 10),
+              _payTile('Returns Payments', pay.returnsTotal, '${pay.returnsTransactions} returns', _warn),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Column(
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(Money.of(net), style: serif(size: 30, color: net < 0 ? _bad : _good)),
+                ),
+                const SizedBox(height: 3),
+                Text('Net Payments', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textSecondary)),
+                Text('${pay.totalTransactions} total transactions',
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 13),
+          _rateBar('Collection Rate', ov.summary.collectionRate, const [_good, Color(0xFF3FC07E)]),
+          if (listMethods.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            SectionLabel('Payment Methods'),
+            const SizedBox(height: 8),
+            for (final m in listMethods) ...[
+              _payMethodRow(m),
+              const SizedBox(height: 7),
+            ],
+          ],
+          if (slices.isNotEmpty) ...[
+            Container(height: 1, color: p.hairline, margin: const EdgeInsets.symmetric(vertical: 14)),
+            Row(
+              children: [
+                DonutChart(
+                  slices: slices,
+                  centerTop: Money.compact(chartTotal),
+                  centerBottom: 'PAID',
+                  size: 116,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    children: [
+                      for (final sl in slices) _legendRow(sl),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _payTile(String label, double value, String caption, Color color) {
+    final p = context.astra;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14)),
+        child: Column(
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(Money.of(value), style: serif(size: 18, color: color)),
+            ),
+            const SizedBox(height: 3),
+            Text(label, style: ui(size: 10, weight: FontWeight.w600, color: p.textSecondary)),
+            Text(caption, style: ui(size: 9.5, weight: FontWeight.w700, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _payMethodRow(PaymentMethodStat m) {
+    final p = context.astra;
+    final color = _methodColor(m.method, p);
+    return Container(
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color: p.isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: p.hairline),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+            child: Icon(_methodIcon(m.method), size: 15, color: color),
+          ),
+          const SizedBox(width: 9),
+          Expanded(child: Text(m.method, style: ui(size: 12, weight: FontWeight.w700, color: p.ink))),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(Money.plain(m.sales), style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
+              Text('${m.salesTransactions} txns', style: ui(size: 9, weight: FontWeight.w600, color: p.textMuted)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendRow(DonutSlice sl) {
+    final p = context.astra;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 11,
+            height: 11,
+            decoration: BoxDecoration(color: sl.color, borderRadius: BorderRadius.circular(4)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(sl.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ui(size: 11.5, weight: FontWeight.w700, color: p.textSecondary)),
+          ),
+          Text(Money.compact(sl.value), style: ui(size: 11.5, weight: FontWeight.w800, color: p.ink)),
+        ],
+      ),
+    );
+  }
+
+  // ---- Shared overview helpers ----
+
+  Widget _overviewPlaceholder(AdminController admin, String title, IconData icon) {
+    final p = context.astra;
+    Widget body;
+    if (admin.overviewError != null) {
+      body = Row(
+        children: [
+          Icon(Icons.wifi_off_rounded, size: 18, color: p.textMuted),
+          const SizedBox(width: 8),
+          Expanded(child: Text(admin.overviewError!, style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary))),
+        ],
+      );
+    } else {
+      body = const SizedBox(
+        height: 90,
+        child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.4))),
+      );
+    }
+    return AstraCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _cardHeader(icon, title),
+          const SizedBox(height: 14),
+          body,
+        ],
+      ),
+    );
+  }
+
+  /// Shared card header: tinted icon chip + title + optional trailing widget.
+  Widget _cardHeader(IconData icon, String title, {Widget? trailing}) {
+    final p = context.astra;
+    return Row(
+      children: [
+        IconChip(icon: icon, size: 30, radius: 9),
+        const SizedBox(width: 10),
+        Expanded(child: Text(title, style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
+        if (trailing != null) trailing,
+      ],
+    );
+  }
+
+  /// Compact 3-up stat strip (Invoices · Avg Ticket · Returns) — lives inside the
+  /// Sales Performance card header area, not a separate card, to save space.
+  Widget _miniStatsRow(OverviewSummary s) {
+    final p = context.astra;
+    final inv = s.noOfSales;
+    final avg = inv > 0 ? s.netSales / inv : 0.0;
+    Widget div() => Container(width: 1, height: 26, color: p.hairline);
+    return Row(
+      children: [
+        _miniStat(Icons.receipt_long_rounded, 'Invoices', '$inv'),
+        div(),
+        _miniStat(Icons.sell_rounded, 'Avg Ticket', inv > 0 ? Money.compact(avg) : '—'),
+        div(),
+        _miniStat(Icons.assignment_return_rounded, 'Returns', '${s.noOfSalesReturns}'),
+      ],
+    );
+  }
+
+  Widget _miniStat(IconData icon, String label, String value) {
+    final p = context.astra;
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 16, color: p.primary),
+          const SizedBox(height: 5),
+          FittedBox(fit: BoxFit.scaleDown, child: Text(value, style: serif(size: 16, color: p.ink))),
+          const SizedBox(height: 2),
+          Text(label.toUpperCase(),
+              style: ui(size: 8.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
+        ],
+      ),
+    );
+  }
+
+  Widget _rateBar(String label, double pct, List<Color> colors) {
+    final p = context.astra;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: ui(size: 12, weight: FontWeight.w700, color: p.textSecondary)),
+            Text('${pct.toStringAsFixed(1)}%', style: ui(size: 12, weight: FontWeight.w800, color: colors.first)),
+          ],
+        ),
+        const SizedBox(height: 7),
+        Container(
+          height: 9,
+          decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(999)),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: (pct / 100).clamp(0.0, 1.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: colors),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _pill(String text, Color bg, Color fg) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+        child: Text(text, style: ui(size: 9.5, weight: FontWeight.w800, color: fg, letterSpacing: 0.3)),
+      );
+
+  Color _sliceColor(int i, AstraPalette p) {
+    final palette = [p.primary, _good, _warn, p.accent, p.primaryDark];
+    return palette[i % palette.length];
+  }
+
+  IconData _methodIcon(String name) {
+    switch (name.toLowerCase()) {
+      case 'cash':
+        return Icons.payments_rounded;
+      case 'card':
+        return Icons.credit_card_rounded;
+      case 'bank':
+        return Icons.account_balance_rounded;
+      case 'credit':
+        return Icons.account_balance_wallet_rounded;
+      case 'mobile money':
+      case 'mobile':
+        return Icons.smartphone_rounded;
+      default:
+        return Icons.credit_card_rounded;
+    }
+  }
+
+  Color _methodColor(String name, AstraPalette p) {
+    switch (name.toLowerCase()) {
+      case 'cash':
+        return _good;
+      case 'card':
+        return p.primary;
+      case 'bank':
+        return _warn;
+      case 'credit':
+        return p.accent;
+      default:
+        return p.primary;
+    }
+  }
+
   // ---- Per-day trend ----
 
-  Widget _byDay(AdminController admin) {
+  Widget? _byDay(AdminController admin) {
     final p = context.astra;
     final pts = admin.reportTrendPoints;
     final labels = admin.reportTrendLabels;
-    if (pts.length < 2) return const SizedBox.shrink();
+    if (pts.length < 2) return null;
     final maxV = pts.reduce((a, b) => a > b ? a : b);
     final data = [
       for (var i = 0; i < pts.length; i++)
@@ -310,27 +700,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(9)),
-                child: Icon(Icons.bar_chart_rounded, size: 16, color: p.primary),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text('Gross sales by day', style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(color: p.accent.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(20)),
-                child: Text('Peak ${Money.compact(maxV)}',
-                    style: ui(size: 10, weight: FontWeight.w800, color: p.goldText)),
-              ),
-            ],
-          ),
+          _cardHeader(Icons.bar_chart_rounded, 'Gross sales by day',
+              trailing: _pill('Peak ${Money.compact(maxV)}', p.accent.withValues(alpha: 0.16), p.goldText)),
           const SizedBox(height: 14),
           BarChart(data: data),
         ],
@@ -348,9 +719,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return '${d.day}/${d.month}';
   }
 
-  // ---- Breakdown mode toggle ----
+  // ---- By Item / By Stylist breakdown (toggle + metric + ranked table) -------
 
-  Widget _segments(AdminController admin) {
+  /// One card: the By Item / By Stylist segmented control, the Amount/Qty metric
+  /// row (items only), then the ranked, paginated table — was three stacked
+  /// blocks, now a single cohesive card.
+  Widget _breakdownCard(AdminController admin) {
+    return AstraCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _segmentToggle(admin),
+          if (admin.reportType == 'itemwise') ...[
+            const SizedBox(height: 10),
+            _itemMetricRow(admin),
+          ],
+          const SizedBox(height: 14),
+          _breakdownBody(admin),
+        ],
+      ),
+    );
+  }
+
+  Widget _segmentToggle(AdminController admin) {
     final p = context.astra;
     Widget seg(String label, String type, IconData icon) {
       final active = admin.reportType == type;
@@ -358,11 +749,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: GestureDetector(
           onTap: () => admin.loadReports(type: type),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 9),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               gradient: active ? p.primaryGradient : null,
-              borderRadius: BorderRadius.circular(11),
+              borderRadius: BorderRadius.circular(10),
               boxShadow: active ? context.astraTheme.floatShadow(p.primary) : null,
             ),
             child: Row(
@@ -381,61 +772,136 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: p.card, borderRadius: BorderRadius.circular(14), boxShadow: context.astraTheme.softShadow),
+      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(13)),
       child: Row(children: [
-        seg('By Invoice', 'billwise', Icons.receipt_long_rounded),
+        seg('By Item', 'itemwise', Icons.inventory_2_rounded),
         seg('By Stylist', 'employeewise', Icons.people_alt_rounded),
       ]),
     );
   }
 
-  // ---- Ranked breakdown table (share-of-total bars + top highlight) ----
-
-  Widget _breakdown(AdminController admin) {
+  Widget _itemMetricRow(AdminController admin) {
     final p = context.astra;
-    if (admin.reportLoading) {
-      return const AstraCard(
-        child: SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
-      );
-    }
-    if (admin.reportError != null) {
-      return EmptyState(icon: Icons.wifi_off, title: 'Report unavailable', message: admin.reportError);
-    }
-    if (admin.reportRows.isEmpty) {
-      return EmptyState(icon: Icons.bar_chart, title: 'No data for this period');
-    }
-
-    final isBill = admin.reportType == 'billwise';
-    final rowIcon = isBill ? Icons.receipt_long_rounded : Icons.person_rounded;
-    final maxAmount = admin.reportRows.fold<double>(0, (a, r) => r.amount > a ? r.amount : a);
-
-    return AstraCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SectionLabel(
-            isBill ? 'Invoice breakdown' : 'Stylist breakdown',
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(20)),
-              child: Text('${admin.reportRows.length} rows',
-                  style: ui(size: 9.5, weight: FontWeight.w800, color: p.textSecondary, letterSpacing: 0.4)),
+    Widget chip(String label, String id, IconData icon) {
+      final active = admin.itemMetric == id;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => admin.setItemMetric(id),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: active ? p.accentGradient : null,
+              color: active ? null : p.tint,
+              borderRadius: BorderRadius.circular(10),
             ),
-          ),
-          const SizedBox(height: 10),
-          for (final r in admin.reportRows) _reportRow(admin, r, rowIcon, maxAmount),
-          Container(height: 1.5, color: p.hairline, margin: const EdgeInsets.fromLTRB(2, 8, 2, 10)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Grand total', style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-                Text(Money.of(admin.reportTotal), style: serif(size: 17, color: p.primaryDark)),
+                Icon(icon, size: 13, color: active ? p.primaryDark : p.textSecondary),
+                const SizedBox(width: 6),
+                Text(label,
+                    style: ui(size: 11, weight: FontWeight.w800, color: active ? p.primaryDark : p.textSecondary)),
               ],
             ),
           ),
-        ],
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Text('RANK BY',
+            style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
+        const SizedBox(width: 10),
+        chip('Amount', 'amount', Icons.payments_rounded),
+        const SizedBox(width: 7),
+        chip('Qty', 'qty', Icons.numbers_rounded),
+      ],
+    );
+  }
+
+  /// Ranked breakdown body (share-of-total bars + top highlight). Lives inside
+  /// the breakdown card so the toggle stays visible across loading/empty states.
+  Widget _breakdownBody(AdminController admin) {
+    final p = context.astra;
+    if (admin.reportLoading) {
+      return const SizedBox(height: 220, child: Center(child: CircularProgressIndicator()));
+    }
+    // Bounded height lets EmptyState centre itself (under the ListView's
+    // unbounded constraints it would otherwise top-align).
+    if (admin.reportError != null) {
+      return SizedBox(
+        height: 260,
+        child: EmptyState(icon: Icons.wifi_off, title: 'Report unavailable', message: admin.reportError),
+      );
+    }
+    if (admin.reportRows.isEmpty) {
+      return const SizedBox(
+        height: 260,
+        child: EmptyState(icon: Icons.bar_chart, title: 'No data for this period'),
+      );
+    }
+
+    final isItem = admin.reportType == 'itemwise';
+    final rowIcon = isItem ? Icons.inventory_2_rounded : Icons.person_rounded;
+    final maxAmount = admin.reportRows.fold<double>(0, (a, r) => r.amount > a ? r.amount : a);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionLabel(
+          isItem ? 'Item breakdown' : 'Stylist breakdown',
+          trailing: _pill('${admin.reportRowCount} ${isItem ? 'items' : 'stylists'}', p.tint, p.textSecondary),
+        ),
+        const SizedBox(height: 10),
+        for (final r in admin.reportRows) _reportRow(admin, r, rowIcon, maxAmount),
+        // Infinite-scroll footer: a spinner while the next page streams in, plus
+        // a tap-to-load fallback (in case the scroll trigger is missed). Shown
+        // only while more pages remain; new pages arrive via [_onScroll].
+        if (admin.reportHasMore) _loadMoreFooter(admin),
+        Container(height: 1.5, color: p.hairline, margin: const EdgeInsets.fromLTRB(2, 8, 2, 10)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(isItem && admin.itemMetric == 'qty' ? 'Total qty' : 'Grand total',
+                  style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
+              Text(admin.reportTotalText, style: serif(size: 17, color: p.primaryDark)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Footer under the loaded rows while more pages remain: a spinner during a
+  /// fetch, otherwise a tap-to-load cue showing how many of the total are on
+  /// screen. Scrolling near the bottom auto-loads the next page via [_onScroll].
+  Widget _loadMoreFooter(AdminController admin) {
+    final p = context.astra;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: admin.reportLoadingMore
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(strokeWidth: 2.2, color: p.primary)),
+                  const SizedBox(width: 9),
+                  Text('Loading more…', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
+                ],
+              )
+            : GestureDetector(
+                onTap: admin.loadMoreReport,
+                behavior: HitTestBehavior.opaque,
+                child: Text('Showing ${admin.reportRows.length} of ${admin.reportRowCount} · tap to load more',
+                    style: ui(size: 11, weight: FontWeight.w700, color: p.primary)),
+              ),
       ),
     );
   }
