@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/api_client.dart';
+import '../../core/api_service.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
+import '../../state/return_draft_controller.dart';
 import '../../theme/palette.dart';
 import '../../theme/theme.dart';
 import '../../widgets/astra_widgets.dart';
@@ -17,8 +21,21 @@ class ReturnReceiptScreen extends StatelessWidget {
   const ReturnReceiptScreen({super.key, required this.saleReturn});
   final SaleReturn saleReturn;
 
-  bool get _done => saleReturn.status.toLowerCase() == 'completed';
   double get _refunded => saleReturn.paid;
+  // Outstanding refund still owed to the customer. Uses the return's own balance
+  // column (grand_total − paid); recomputes locally for older payloads.
+  double get _balance {
+    final col = saleReturn.balance;
+    return col != 0 ? col : saleReturn.grandTotal - saleReturn.paid;
+  }
+
+  // Fully settled only when nothing is left to refund — a "completed" return can
+  // still owe a balance, so status alone must not mark it refunded.
+  bool get _fullyRefunded => saleReturn.grandTotal > 0 && _balance <= 0.5;
+
+  // Editable when not cancelled and the source sale is known (so its returnable
+  // lines can be re-fetched to seed the edit).
+  bool get _editable => saleReturn.status.toLowerCase() != 'cancelled' && saleReturn.saleId.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -53,13 +70,22 @@ class ReturnReceiptScreen extends StatelessWidget {
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
-                    child: Row(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(child: _action(context, Icons.assignment_return_outlined, 'New Return', () => context.go('/sale-return/pick'))),
-                        const SizedBox(width: 9),
-                        Expanded(
-                          flex: 2,
-                          child: AstraButton(label: 'Done', onTap: () => context.go('/sales-returns')),
+                        if (_editable) ...[
+                          _editReturnButton(context, p),
+                          const SizedBox(height: 9),
+                        ],
+                        Row(
+                          children: [
+                            Expanded(child: _action(context, Icons.assignment_return_outlined, 'New Return', () => context.go('/sale-return/pick'))),
+                            const SizedBox(width: 9),
+                            Expanded(
+                              flex: 2,
+                              child: AstraButton(label: 'Done', onTap: () => context.go('/sales-returns')),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -117,10 +143,13 @@ class ReturnReceiptScreen extends StatelessWidget {
   }
 
   (String, Color, Color, IconData) _statusBadge(AstraPalette p) {
-    if (_done) {
+    if (_fullyRefunded) {
       return ('REFUNDED', p.successTint, AstraPalette.success, Icons.check_circle);
     }
-    return ('DRAFT', p.warnTint, p.warnText, Icons.timelapse);
+    if (saleReturn.paid > 0) {
+      return ('PARTIAL', p.warnTint, p.warnText, Icons.timelapse);
+    }
+    return ('PENDING', p.dangerTint, AstraPalette.danger, Icons.error_outline);
   }
 
   // ---- Total hero ----------------------------------------------------------
@@ -168,13 +197,13 @@ class ReturnReceiptScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_done ? 'TOTAL REFUNDED' : 'REFUND TOTAL',
+                  Text(_fullyRefunded ? 'TOTAL REFUNDED' : 'REFUND DUE',
                       style: ui(size: 10.5, weight: FontWeight.w700, color: faint, letterSpacing: 1.4)),
                   const SizedBox(height: 7),
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Text(Money.of(_done ? _refunded : saleReturn.grandTotal),
+                    child: Text(Money.of(_fullyRefunded ? _refunded : _balance),
                         maxLines: 1, style: serif(size: 40, color: amountColor)),
                   ),
                   const SizedBox(height: 6),
@@ -271,24 +300,31 @@ class ReturnReceiptScreen extends StatelessWidget {
               child: DottedDivider(color: p.hairline),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('Total Refunded', style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: Text(Money.of(_refunded),
-                        maxLines: 1, style: serif(size: 22, color: p.primaryDark)),
-                  ),
-                ),
-              ],
-            ),
+            // Refunded vs balance, driven by the return's own paid/balance columns.
+            if (_balance > 0.5) ...[
+              _sumRow(p, 'Refunded', Money.of(_refunded), p.textSecondary),
+              const SizedBox(height: 4),
+              _totalRow(p, 'Refund Due', _balance, p.warnText),
+            ] else
+              _totalRow(p, 'Total Refunded', _refunded, p.primaryDark),
           ],
         ),
+      );
+
+  Widget _totalRow(AstraPalette p, String label, double amount, Color color) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(label, style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+          const SizedBox(width: 12),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(Money.of(amount), maxLines: 1, style: serif(size: 22, color: color)),
+            ),
+          ),
+        ],
       );
 
   Widget _sumRow(AstraPalette p, String label, String value, Color color) => Padding(
@@ -313,7 +349,7 @@ class ReturnReceiptScreen extends StatelessWidget {
         if (i != saleReturn.payments.length - 1) rows.add(Container(height: 1, color: p.hairline));
       }
     } else {
-      rows.add(_payRow(p, _done ? 'Refunded' : 'Pending', Money.of(saleReturn.paid)));
+      rows.add(_payRow(p, _fullyRefunded ? 'Refunded' : 'Pending', Money.of(saleReturn.paid)));
     }
     return AstraCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -372,6 +408,58 @@ class ReturnReceiptScreen extends StatelessWidget {
             Icon(icon, size: 15, color: p.ink),
             const SizedBox(width: 7),
             Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12, weight: FontWeight.w700, color: p.ink))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---- Edit shortcut -------------------------------------------------------
+
+  /// Re-open this return for editing: re-fetch the source sale's returnable lines,
+  /// overlay this return's quantities, and open the return flow in edit mode.
+  Future<void> _edit(BuildContext context) async {
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    try {
+      final returnable = await context.read<ApiService>().returnableSale(saleReturn.saleId);
+      if (!context.mounted) return;
+      Navigator.pop(context); // close the loader
+      context.read<ReturnDraftController>().seedForEdit(returnable, saleReturn);
+      context.push('/sale-return');
+    } on ApiException catch (e) {
+      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) _toast(context, e.message);
+    } catch (_) {
+      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) _toast(context, 'Could not open this return for editing.');
+    }
+  }
+
+  void _toast(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Widget _editReturnButton(BuildContext context, AstraPalette p) {
+    final t = context.astraTheme;
+    return GestureDetector(
+      onTap: () => _edit(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: p.primary.withValues(alpha: 0.5), width: 1.5),
+          boxShadow: t.softShadow,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.edit_outlined, size: 16, color: p.primary),
+            const SizedBox(width: 9),
+            Flexible(child: Text('Edit this return', maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
           ],
         ),
       ),

@@ -332,6 +332,11 @@ class SaleLine {
     required this.unitPrice,
     required this.discount,
     required this.total,
+    this.itemId,
+    this.productId,
+    this.employeeId,
+    this.code = '',
+    this.tax = 0,
   });
   final String name;
   final String nameArabic;
@@ -341,6 +346,13 @@ class SaleLine {
   final double unitPrice;
   final double discount;
   final double total;
+  // Edit round-trip ids — present on the view/show payload so the line can be
+  // re-sent on an update instead of being treated as a brand-new product.
+  final int? itemId;
+  final int? productId;
+  final int? employeeId;
+  final String code;
+  final double tax;
 
   factory SaleLine.fromJson(Map<String, dynamic> j) => SaleLine(
         name: asStr(j['name']),
@@ -351,15 +363,26 @@ class SaleLine {
         unitPrice: asNum(j['unit_price']).toDouble(),
         discount: asNum(j['discount']).toDouble(),
         total: asNum(j['total']).toDouble(),
+        itemId: j['id'] == null ? null : asNum(j['id']).toInt(),
+        productId: j['product_id'] == null ? null : asNum(j['product_id']).toInt(),
+        employeeId: j['employee_id'] == null ? null : asNum(j['employee_id']).toInt(),
+        code: asStr(j['code']),
+        tax: asNum(j['tax']).toDouble(),
       );
 }
 
 class SalePayment {
-  SalePayment({required this.method, required this.amount});
+  SalePayment({required this.method, required this.amount, this.paymentId, this.paymentMethodId});
   final String method;
   final double amount;
-  factory SalePayment.fromJson(Map<String, dynamic> j) =>
-      SalePayment(method: asStr(j['method']), amount: asNum(j['amount']).toDouble());
+  final int? paymentId;
+  final int? paymentMethodId;
+  factory SalePayment.fromJson(Map<String, dynamic> j) => SalePayment(
+        method: asStr(j['method']),
+        amount: asNum(j['amount']).toDouble(),
+        paymentId: j['id'] == null ? null : asNum(j['id']).toInt(),
+        paymentMethodId: j['payment_method_id'] == null ? null : asNum(j['payment_method_id']).toInt(),
+      );
 }
 
 class Sale {
@@ -377,7 +400,9 @@ class Sale {
     required this.itemDiscount,
     required this.otherDiscount,
     required this.taxAmount,
+    required this.grandTotal,
     required this.paid,
+    required this.balance,
     required this.createdBy,
   });
 
@@ -394,7 +419,11 @@ class Sale {
   final double itemDiscount;
   final double otherDiscount;
   final double taxAmount;
+  // Net payable on the ticket (gross − discounts + tax + freight ± round-off).
+  final double grandTotal;
   final double paid;
+  // Outstanding amount straight from the sale's `balance` column (grand_total − paid).
+  final double balance;
   final String createdBy;
 
   double get discount => itemDiscount + otherDiscount;
@@ -420,7 +449,9 @@ class Sale {
       itemDiscount: asNum(summary['item_discount']).toDouble(),
       otherDiscount: asNum(summary['other_discount']).toDouble(),
       taxAmount: asNum(summary['tax_amount']).toDouble(),
+      grandTotal: asNum(summary['grand_total']).toDouble(),
       paid: asNum(summary['paid']).toDouble(),
+      balance: asNum(summary['balance']).toDouble(),
       createdBy: asStr(j['created_by']),
     );
   }
@@ -439,6 +470,11 @@ class SaleReturnLine {
     required this.unitPrice,
     required this.discount,
     required this.total,
+    this.itemId,
+    this.saleItemId,
+    this.productId,
+    this.employeeId,
+    this.tax = 0,
   });
   final String name;
   final String nameArabic;
@@ -448,6 +484,13 @@ class SaleReturnLine {
   final double unitPrice;
   final double discount;
   final double total;
+  // Edit round-trip ids — itemId is the sale_return_item id; saleItemId is the
+  // source sale line the return is capped against.
+  final int? itemId;
+  final int? saleItemId;
+  final int? productId;
+  final int? employeeId;
+  final double tax;
 
   factory SaleReturnLine.fromJson(Map<String, dynamic> j) => SaleReturnLine(
         name: asStr(j['name']),
@@ -458,16 +501,27 @@ class SaleReturnLine {
         unitPrice: asNum(j['unit_price']).toDouble(),
         discount: asNum(j['discount']).toDouble(),
         total: asNum(j['total']).toDouble(),
+        itemId: j['id'] == null ? null : asNum(j['id']).toInt(),
+        saleItemId: j['sale_item_id'] == null ? null : asNum(j['sale_item_id']).toInt(),
+        productId: j['product_id'] == null ? null : asNum(j['product_id']).toInt(),
+        employeeId: j['employee_id'] == null ? null : asNum(j['employee_id']).toInt(),
+        tax: asNum(j['tax']).toDouble(),
       );
 }
 
 /// A refund payment on a saved sale return — mirrors [SalePayment].
 class SaleReturnPayment {
-  SaleReturnPayment({required this.method, required this.amount});
+  SaleReturnPayment({required this.method, required this.amount, this.paymentId, this.paymentMethodId});
   final String method;
   final double amount;
-  factory SaleReturnPayment.fromJson(Map<String, dynamic> j) =>
-      SaleReturnPayment(method: asStr(j['method']), amount: asNum(j['amount']).toDouble());
+  final int? paymentId;
+  final int? paymentMethodId;
+  factory SaleReturnPayment.fromJson(Map<String, dynamic> j) => SaleReturnPayment(
+        method: asStr(j['method']),
+        amount: asNum(j['amount']).toDouble(),
+        paymentId: j['id'] == null ? null : asNum(j['id']).toInt(),
+        paymentMethodId: j['payment_method_id'] == null ? null : asNum(j['payment_method_id']).toInt(),
+      );
 }
 
 /// A saved sale return (SaleReturnResource). Mirrors [Sale]; sale returns have
@@ -490,11 +544,18 @@ class SaleReturn {
     required this.total,
     required this.grandTotal,
     required this.paid,
+    required this.balance,
     required this.createdBy,
+    this.saleId = '',
+    this.accountId,
   });
 
   final String id;
   final String referenceNo;
+  // The source sale this return was raised against, and the customer account —
+  // both needed to re-seed the return draft when editing.
+  final String saleId;
+  final int? accountId;
   final String date;
   final String status;
   final String branch;
@@ -509,6 +570,8 @@ class SaleReturn {
   final double total;
   final double grandTotal;
   final double paid;
+  // Outstanding refund still owed to the customer (grand_total − paid).
+  final double balance;
   final String createdBy;
 
   double get discount => itemDiscount + otherDiscount;
@@ -519,6 +582,8 @@ class SaleReturn {
     return SaleReturn(
       id: asStr(j['id']),
       referenceNo: asStr(j['reference_no']),
+      saleId: asStr(j['sale_id']),
+      accountId: j['account_id'] == null ? null : asNum(j['account_id']).toInt(),
       date: asStr(j['date']),
       status: asStr(j['status']),
       branch: asStr(j['branch']),
@@ -537,6 +602,7 @@ class SaleReturn {
       total: asNum(summary['total']).toDouble(),
       grandTotal: asNum(summary['grand_total']).toDouble(),
       paid: asNum(summary['paid']).toDouble(),
+      balance: asNum(summary['balance']).toDouble(),
       createdBy: asStr(j['created_by']),
     );
   }

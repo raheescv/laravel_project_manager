@@ -108,7 +108,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               leading: HeaderIconButton(icon: Icons.chevron_left, onTap: _close),
               titleWidget: Row(
                 children: [
-                  Expanded(child: Text('New Sale', style: serif(size: 23, color: Colors.white))),
+                  Expanded(child: Text(cart.isEditing ? 'Edit Sale' : 'New Sale', style: serif(size: 23, color: Colors.white))),
                   HeaderIconButton(icon: Icons.close, onTap: _close),
                 ],
               ),

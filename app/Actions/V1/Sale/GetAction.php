@@ -15,7 +15,7 @@ class GetAction
     {
         return Sale::query()
             ->with([
-                'items.product:id,name,type',
+                'items.product:id,name,code,name_arabic,type',
                 'items.employee:id,name',
                 'payments.paymentMethod:id,name',
                 'account:id,name,mobile',

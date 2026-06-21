@@ -18,9 +18,13 @@ class CartLine {
     this.employeeId,
     this.employeeName = '',
     this.thumbnail = '',
+    this.saleItemId,
   });
 
   final int productId;
+  // The existing sale_item id when this line came from a sale being edited;
+  // null for a line added fresh. Sent back so the server patches in place.
+  final int? saleItemId;
   final String name;
   final String code;
   final String type;
@@ -86,6 +90,11 @@ class CartController extends ChangeNotifier {
   String customerMobile = '';
   int? stylistId;
   String stylistName = '';
+
+  /// The id of the sale being edited, or null for a brand-new ticket. When set,
+  /// the Review screen saves via `updateSale` instead of `createSale`.
+  String? editingSaleId;
+  bool get isEditing => editingSaleId != null;
 
   double orderDiscount = 0; // raw value: a flat amount, or a percentage when orderDiscountIsPercent
   bool orderDiscountIsPercent = false;
@@ -243,7 +252,85 @@ class CartController extends ChangeNotifier {
     payMode = PayMode.cash;
     customPayments = [];
     sendToWhatsapp = false;
+    editingSaleId = null;
     notifyListeners();
+  }
+
+  /// Load an existing [sale] into the ticket so it can be edited. Each line keeps
+  /// its sale_item id (so the update patches in place), the order discount and
+  /// the payment selection are restored, and [editingSaleId] flags edit mode.
+  void seedFromSale(Sale sale) {
+    _lines
+      ..clear()
+      ..addAll(
+        sale.lines.where((l) => l.productId != null).map(
+              (l) => CartLine(
+                productId: l.productId!,
+                saleItemId: l.itemId,
+                name: l.name,
+                code: l.code,
+                type: l.type,
+                unitPrice: l.unitPrice,
+                qty: l.quantity,
+                discountValue: l.discount,
+                discountIsPercent: false,
+                taxPercent: l.tax,
+                employeeId: l.employeeId,
+                employeeName: l.employee,
+              ),
+            ),
+      );
+
+    editingSaleId = sale.id;
+    customerName = sale.customerName.trim().isEmpty ? 'Walk-in' : sale.customerName;
+    customerMobile = sale.customerMobile;
+    // Ticket stylist follows the first line so the header reads sensibly; per-line
+    // employees are preserved above.
+    final firstWithEmployee = _lines.where((l) => l.employeeId != null).firstOrNull;
+    stylistId = firstWithEmployee?.employeeId;
+    stylistName = firstWithEmployee?.employeeName ?? '';
+    orderDiscount = sale.otherDiscount;
+    orderDiscountIsPercent = false;
+    tipPercent = 0;
+    sendToWhatsapp = false;
+    _seedPayments(sale.payments, sale.paid);
+    notifyListeners();
+  }
+
+  /// Restore the payment selection from a saved sale's payments. A single
+  /// Cash/Card payment maps to that mode; anything else (a split, or a named
+  /// account) becomes a Custom breakdown so no information is lost on save.
+  void _seedPayments(List<SalePayment> payments, double paid) {
+    if (payments.isEmpty) {
+      payMode = paid > 0 ? PayMode.cash : PayMode.credit;
+      customPayments = [];
+      return;
+    }
+    if (payments.length == 1 && payments.first.paymentMethodId == null) {
+      final name = payments.first.method.toLowerCase();
+      if (name.contains('cash')) {
+        payMode = PayMode.cash;
+        customPayments = [];
+        return;
+      }
+      if (name.contains('card')) {
+        payMode = PayMode.card;
+        customPayments = [];
+        return;
+      }
+    }
+    final rows = payments
+        .where((p) => p.paymentMethodId != null)
+        .map((p) => CustomPayment(methodId: p.paymentMethodId!, methodName: p.method, amount: p.amount))
+        .toList();
+    if (rows.isEmpty) {
+      // No resolvable method ids — fall back to a plain cash settlement.
+      payMode = paid > 0 ? PayMode.cash : PayMode.credit;
+      customPayments = [];
+      return;
+    }
+    payMode = PayMode.custom;
+    customPayments = rows;
   }
 
   /// Build the POST /sale payload (matches Sale StoreRequest exactly).
@@ -252,6 +339,7 @@ class CartController extends ChangeNotifier {
         if (customerMobile.isNotEmpty) 'phoneNumber': customerMobile,
         'items': _lines
             .map((l) => {
+                  if (l.saleItemId != null) 'id': l.saleItemId,
                   'productId': l.productId,
                   if (l.employeeId != null) 'employeeId': l.employeeId,
                   'quantity': l.qty,

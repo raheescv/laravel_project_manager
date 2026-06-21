@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\V1\Sale\CreateAction;
 use App\Actions\V1\Sale\GetAction;
 use App\Actions\V1\Sale\ListAction;
+use App\Actions\V1\Sale\UpdateAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\Sale\IndexRequest;
 use App\Http\Requests\V1\Sale\StoreRequest;
+use App\Http\Requests\V1\Sale\UpdateRequest;
 use App\Http\Resources\V1\Sale\SaleResource;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
@@ -70,6 +72,26 @@ class SaleController extends Controller
             return $this->sendSuccess(new SaleResource($sale), 'Sale saved successfully', 201);
         } catch (\Exception $e) {
             return $this->sendError('Failed to save sale: '.$e->getMessage(), [], 422);
+        }
+    }
+
+    /**
+     * Update sale.
+     *
+     * Reconciles an existing sale against the data sent by the app — updating,
+     * adding and removing lines and payments — and (for a completed sale) re-runs
+     * the stock and journal postings.
+     */
+    public function update(UpdateAction $action, UpdateRequest $request, int $sale): JsonResponse
+    {
+        try {
+            $updated = $action->execute($request, $sale);
+
+            return $this->sendSuccess(new SaleResource($updated), 'Sale updated successfully');
+        } catch (ModelNotFoundException) {
+            return $this->sendNotFoundError('Sale not found.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to update sale: '.$e->getMessage(), [], 422);
         }
     }
 }

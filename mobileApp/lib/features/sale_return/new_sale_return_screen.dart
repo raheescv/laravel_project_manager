@@ -79,7 +79,7 @@ class NewSaleReturnScreen extends StatelessWidget {
               ),
               titleWidget: Row(
                 children: [
-                  Expanded(child: Text('New Return', style: serif(size: 23, color: Colors.white))),
+                  Expanded(child: Text(draft.isEditing ? 'Edit Return' : 'New Return', style: serif(size: 23, color: Colors.white))),
                   HeaderIconButton(icon: Icons.close, onTap: () => _close(context)),
                 ],
               ),

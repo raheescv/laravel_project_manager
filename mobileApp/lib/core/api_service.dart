@@ -160,6 +160,14 @@ class ApiService {
     return Sale.fromJson(Map<String, dynamic>.from(data));
   }
 
+  /// Update an existing sale. The payload mirrors [createSale] but each line may
+  /// carry an `id` (its sale_item id) so the server patches the existing row
+  /// instead of adding a duplicate; lines whose id is dropped are removed.
+  Future<Sale> updateSale(String id, Map<String, dynamic> payload) async {
+    final data = await client.put('/sale/$id', body: payload);
+    return Sale.fromJson(Map<String, dynamic>.from(data));
+  }
+
   // ---- Sale Returns ----
   Future<SaleReturn> createSaleReturn(Map<String, dynamic> payload) async {
     final data = await client.post('/sale-return', body: payload);
@@ -202,6 +210,14 @@ class ApiService {
 
   Future<SaleReturn> saleReturnById(String id) async {
     final data = await client.get('/sale-return/$id');
+    return SaleReturn.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  /// Update an existing sale return. The payload mirrors [createSaleReturn] but
+  /// each line may carry an `id` (its sale_return_item id) so the server patches
+  /// the existing row; lines whose id is dropped are removed.
+  Future<SaleReturn> updateSaleReturn(String id, Map<String, dynamic> payload) async {
+    final data = await client.put('/sale-return/$id', body: payload);
     return SaleReturn.fromJson(Map<String, dynamic>.from(data));
   }
 

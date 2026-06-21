@@ -44,15 +44,20 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   Future<void> _charge() async {
     final cart = context.read<CartController>();
     final service = context.read<ApiService>();
+    final editingId = cart.editingSaleId;
     setState(() => _busy = true);
     try {
-      final sale = await service.createSale(cart.toPayload());
+      final sale = editingId == null
+          ? await service.createSale(cart.toPayload())
+          : await service.updateSale(editingId, cart.toPayload());
       cart.clear();
       if (mounted) context.pushReplacement('/invoice', extra: sale);
     } on ApiException catch (e) {
       _error(e.message);
     } catch (e) {
-      _error('Could not save the sale. Please try again.');
+      _error(editingId == null
+          ? 'Could not save the sale. Please try again.'
+          : 'Could not update the sale. Please try again.');
     }
     if (mounted) setState(() => _busy = false);
   }
@@ -126,7 +131,11 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
             child: AstraButton(
-              label: settled ? 'Charge ${Money.of(cart.total)}' : 'Submit Anyway',
+              label: cart.isEditing
+                  ? 'Update ${Money.of(cart.total)}'
+                  : settled
+                      ? 'Charge ${Money.of(cart.total)}'
+                      : 'Submit Anyway',
               gold: true,
               busy: _busy,
               onTap: cart.isEmpty ? null : _charge,

@@ -45,15 +45,20 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
   Future<void> _refund() async {
     final draft = context.read<ReturnDraftController>();
     final service = context.read<ApiService>();
+    final editingId = draft.editingReturnId;
     setState(() => _busy = true);
     try {
-      final saleReturn = await service.createSaleReturn(draft.toPayload());
+      final saleReturn = editingId.isEmpty
+          ? await service.createSaleReturn(draft.toPayload())
+          : await service.updateSaleReturn(editingId, draft.toPayload());
       draft.clear();
       if (mounted) context.pushReplacement('/return-receipt', extra: saleReturn);
     } on ApiException catch (e) {
       _error(e.message);
     } catch (e) {
-      _error('Could not save the return. Please try again.');
+      _error(editingId.isEmpty
+          ? 'Could not save the return. Please try again.'
+          : 'Could not update the return. Please try again.');
     }
     if (mounted) setState(() => _busy = false);
   }
@@ -128,7 +133,11 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
             child: AstraButton(
-              label: settled ? 'Refund ${Money.of(draft.total)}' : 'Confirm Anyway',
+              label: draft.isEditing
+                  ? 'Update ${Money.of(draft.total)}'
+                  : settled
+                      ? 'Refund ${Money.of(draft.total)}'
+                      : 'Confirm Anyway',
               gold: true,
               busy: _busy,
               onTap: draft.isEmpty ? null : _refund,

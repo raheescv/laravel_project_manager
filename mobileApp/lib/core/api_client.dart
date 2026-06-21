@@ -104,6 +104,16 @@ class ApiClient {
     return _unwrap(res);
   }
 
+  Future<dynamic> put(String path, {Object? body, bool auth = true}) async {
+    final res = await _dio.put(
+      '${config.apiV1}$path',
+      data: body,
+      queryParameters: _query(),
+      options: auth ? await _authOpts() : _opts(),
+    );
+    return _unwrap(res);
+  }
+
   /// Unwrap the `{success,data,message}` envelope or throw [ApiException].
   dynamic _unwrap(Response res) {
     final status = res.statusCode ?? 0;

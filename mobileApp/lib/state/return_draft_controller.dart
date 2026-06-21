@@ -12,6 +12,12 @@ class ReturnLine {
   final ReturnableSaleLine source;
   double returnQty = 0;
 
+  // Edit-mode state: the existing sale_return_item id (so the row is patched in
+  // place), and the quantity this return already claimed for the line — added
+  // back to the returnable cap so it stays editable.
+  int? returnItemId;
+  double editBonus = 0;
+
   int get saleItemId => source.saleItemId;
   String get name => source.name;
   String get type => source.type;
@@ -19,7 +25,7 @@ class ReturnLine {
   String get thumbnail => '';
   double get unitPrice => source.unitPrice;
   double get sold => source.soldQuantity;
-  double get returnable => source.returnableQuantity;
+  double get returnable => source.returnableQuantity + editBonus;
   double get tax => source.tax;
 
   /// Original line discount prorated to the returned quantity.
@@ -45,6 +51,11 @@ class ReturnDraftController extends ChangeNotifier {
   String customerMobile = '';
   int? accountId;
 
+  /// The id of the sale return being edited, or empty for a brand-new return.
+  /// When set, the Review screen saves via `updateSaleReturn`.
+  String editingReturnId = '';
+  bool get isEditing => editingReturnId.isNotEmpty;
+
   final List<ReturnLine> _lines = [];
   List<ReturnLine> get lines => List.unmodifiable(_lines);
 
@@ -64,12 +75,73 @@ class ReturnDraftController extends ChangeNotifier {
     customerName = sale.customerName.isEmpty ? 'Walk-in' : sale.customerName;
     customerMobile = sale.customerMobile;
     accountId = sale.accountId;
+    editingReturnId = '';
     _lines
       ..clear()
       ..addAll(sale.lines.map(ReturnLine.new));
     payMode = PayMode.cash;
     customPayments = [];
     notifyListeners();
+  }
+
+  /// Seed the draft to EDIT an existing return. Starts from the source sale's
+  /// returnable lines (so other lines can still be added) and overlays the return
+  /// being edited: each of its lines is pre-filled with its quantity, its cap is
+  /// bumped by that quantity (since the server now excludes this return from the
+  /// already-returned tally), and its sale_return_item id is kept for patching.
+  void seedForEdit(ReturnableSale sale, SaleReturn existing) {
+    seed(sale);
+    editingReturnId = existing.id;
+    if (existing.accountId != null) accountId = existing.accountId;
+
+    final bySaleItem = <int, SaleReturnLine>{};
+    for (final l in existing.lines) {
+      if (l.saleItemId != null) bySaleItem[l.saleItemId!] = l;
+    }
+    for (final line in _lines) {
+      final prior = bySaleItem[line.saleItemId];
+      if (prior != null) {
+        line.editBonus = prior.quantity;
+        line.returnQty = prior.quantity;
+        line.returnItemId = prior.itemId;
+      }
+    }
+    _seedPayments(existing.payments, existing.paid);
+    notifyListeners();
+  }
+
+  /// Restore the refund selection from a saved return's payments — mirrors the
+  /// cart's payment seeding (single Cash/Card → that mode, otherwise Custom).
+  void _seedPayments(List<SaleReturnPayment> payments, double paid) {
+    if (payments.isEmpty) {
+      payMode = paid > 0 ? PayMode.cash : PayMode.credit;
+      customPayments = [];
+      return;
+    }
+    if (payments.length == 1 && payments.first.paymentMethodId == null) {
+      final name = payments.first.method.toLowerCase();
+      if (name.contains('cash')) {
+        payMode = PayMode.cash;
+        customPayments = [];
+        return;
+      }
+      if (name.contains('card')) {
+        payMode = PayMode.card;
+        customPayments = [];
+        return;
+      }
+    }
+    final rows = payments
+        .where((p) => p.paymentMethodId != null)
+        .map((p) => CustomPayment(methodId: p.paymentMethodId!, methodName: p.method, amount: p.amount))
+        .toList();
+    if (rows.isEmpty) {
+      payMode = paid > 0 ? PayMode.cash : PayMode.credit;
+      customPayments = [];
+      return;
+    }
+    payMode = PayMode.custom;
+    customPayments = rows;
   }
 
   void setQty(ReturnLine line, double qty) {
@@ -117,6 +189,7 @@ class ReturnDraftController extends ChangeNotifier {
     customerName = 'Walk-in';
     customerMobile = '';
     accountId = null;
+    editingReturnId = '';
     _lines.clear();
     payMode = PayMode.cash;
     customPayments = [];
@@ -129,6 +202,7 @@ class ReturnDraftController extends ChangeNotifier {
         if (accountId != null) 'account_id': accountId,
         'items': returningLines
             .map((l) => {
+                  if (l.returnItemId != null) 'id': l.returnItemId,
                   'sale_item_id': l.saleItemId,
                   'quantity': l.returnQty,
                   'unitPrice': l.unitPrice,

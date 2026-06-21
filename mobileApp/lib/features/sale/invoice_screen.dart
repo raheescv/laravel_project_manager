@@ -7,6 +7,7 @@ import '../../core/api_service.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
+import '../../state/cart_controller.dart';
 import '../../state/print_settings_controller.dart';
 import '../../state/return_draft_controller.dart';
 import '../../theme/palette.dart';
@@ -23,14 +24,21 @@ class InvoiceScreen extends StatelessWidget {
   const InvoiceScreen({super.key, required this.sale});
   final Sale sale;
 
-  // Net payable on this ticket and how much of it is still outstanding.
-  double get _payable => sale.grossAmount - sale.discount + sale.taxAmount;
-  double get _balance => _payable - sale.paid;
-  bool get _paidUp =>
-      sale.status.toUpperCase() == 'COMPLETED' || _balance <= 0.5;
+  // Net payable on this ticket and how much of it is still outstanding. Both come
+  // straight from the sale's own columns (grand_total / balance); we fall back to
+  // a local recompute only for older payloads that didn't send them.
+  double get _payable =>
+      sale.grandTotal > 0 ? sale.grandTotal : sale.grossAmount - sale.discount + sale.taxAmount;
+  double get _balance => sale.grandTotal > 0 ? sale.balance : _payable - sale.paid;
+  // Settled only when nothing is outstanding — a "completed" sale can still owe a
+  // balance (e.g. a credit sale), so status alone must not mark it paid.
+  bool get _paidUp => _balance <= 0.5;
 
   // Only completed invoices can be returned (matches the returns flow).
   bool get _returnable => sale.status.toLowerCase() == 'completed';
+
+  // A cancelled sale is view-only; completed or draft sales can be edited.
+  bool get _editable => sale.status.toLowerCase() != 'cancelled';
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +78,16 @@ class InvoiceScreen extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (_returnable) ...[
-                          _returnInvoiceButton(context, p),
+                        if (_editable || _returnable) ...[
+                          Row(
+                            children: [
+                              if (_editable)
+                                Expanded(child: _editInvoiceButton(context, p)),
+                              if (_editable && _returnable) const SizedBox(width: 9),
+                              if (_returnable)
+                                Expanded(child: _returnInvoiceButton(context, p)),
+                            ],
+                          ),
                           const SizedBox(height: 9),
                         ],
                         Row(
@@ -359,24 +375,31 @@ class InvoiceScreen extends StatelessWidget {
               child: DottedDivider(color: p.hairline),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('Total Paid', style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: Text(Money.of(sale.paid),
-                        maxLines: 1, style: serif(size: 22, color: p.primaryDark)),
-                  ),
-                ),
-              ],
-            ),
+            // Paid vs balance, driven by the sale's own paid/balance columns.
+            if (_balance > 0.5) ...[
+              _sumRow(p, 'Paid', Money.of(sale.paid), p.textSecondary),
+              const SizedBox(height: 4),
+              _totalRow(p, 'Balance Due', _balance, p.warnText),
+            ] else
+              _totalRow(p, 'Total Paid', sale.paid, p.primaryDark),
           ],
         ),
+      );
+
+  Widget _totalRow(AstraPalette p, String label, double amount, Color color) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(label, style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+          const SizedBox(width: 12),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(Money.of(amount), maxLines: 1, style: serif(size: 22, color: color)),
+            ),
+          ),
+        ],
       );
 
   Widget _sumRow(AstraPalette p, String label, String value, Color color) => Padding(
@@ -521,11 +544,43 @@ class InvoiceScreen extends StatelessWidget {
           boxShadow: t.softShadow,
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.assignment_return_outlined, size: 16, color: p.goldText),
             const SizedBox(width: 9),
-            Expanded(child: Text('Return this invoice', style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
-            Icon(Icons.chevron_right_rounded, size: 18, color: p.textMuted),
+            Flexible(child: Text('Return', maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Re-open this sale in the New Sale flow for editing: load it into the ticket
+  /// (each line keeps its sale_item id) and push the edit screen.
+  void _edit(BuildContext context) {
+    context.read<CartController>().seedFromSale(sale);
+    context.push('/sale');
+  }
+
+  Widget _editInvoiceButton(BuildContext context, AstraPalette p) {
+    final t = context.astraTheme;
+    return GestureDetector(
+      onTap: () => _edit(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: p.primary.withValues(alpha: 0.5), width: 1.5),
+          boxShadow: t.softShadow,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.edit_outlined, size: 16, color: p.primary),
+            const SizedBox(width: 9),
+            Flexible(child: Text('Edit', maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
           ],
         ),
       ),

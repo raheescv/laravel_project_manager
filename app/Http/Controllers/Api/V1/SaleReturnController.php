@@ -6,9 +6,11 @@ use App\Actions\V1\SaleReturn\CreateAction;
 use App\Actions\V1\SaleReturn\GetAction;
 use App\Actions\V1\SaleReturn\ListAction;
 use App\Actions\V1\SaleReturn\ReturnableSaleAction;
+use App\Actions\V1\SaleReturn\UpdateAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\SaleReturn\IndexRequest;
 use App\Http\Requests\V1\SaleReturn\StoreRequest;
+use App\Http\Requests\V1\SaleReturn\UpdateRequest;
 use App\Http\Resources\V1\SaleReturn\ReturnableSaleResource;
 use App\Http\Resources\V1\SaleReturn\SaleReturnResource;
 use App\Traits\ApiResponseTrait;
@@ -92,6 +94,26 @@ class SaleReturnController extends Controller
             return $this->sendSuccess(new SaleReturnResource($saleReturn), 'Sale return saved successfully', 201);
         } catch (\Exception $e) {
             return $this->sendError('Failed to save sale return: '.$e->getMessage(), [], 422);
+        }
+    }
+
+    /**
+     * Update sale return.
+     *
+     * Reconciles an existing sale return against the data sent by the app —
+     * updating, adding and removing lines and refund payments — and (for a
+     * completed return) re-runs the stock and journal postings.
+     */
+    public function update(UpdateAction $action, UpdateRequest $request, int $saleReturn): JsonResponse
+    {
+        try {
+            $updated = $action->execute($request, $saleReturn);
+
+            return $this->sendSuccess(new SaleReturnResource($updated), 'Sale return updated successfully');
+        } catch (ModelNotFoundException) {
+            return $this->sendNotFoundError('Sale return not found.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to update sale return: '.$e->getMessage(), [], 422);
         }
     }
 }
