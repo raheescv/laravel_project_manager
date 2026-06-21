@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/responsive.dart';
 import '../../state/auth_controller.dart';
+import '../../state/branch_controller.dart';
 import '../../theme/theme.dart';
 import '../../widgets/astra_widgets.dart';
 
@@ -15,6 +16,12 @@ class ProfileScreen extends StatelessWidget {
     final p = context.astra;
     final user = context.watch<AuthController>().user;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+    final branchCtrl = context.watch<BranchController>();
+    final match = branchCtrl.branches.where((b) => b.id.toString() == user.branchId);
+    final branchName = match.isNotEmpty
+        ? match.first.name
+        : (branchCtrl.selected?.name ?? '—');
 
     return Scaffold(
       body: AstraBackground(
@@ -81,8 +88,7 @@ class ProfileScreen extends StatelessWidget {
                         _infoRow(context, Icons.phone, 'Phone', user.mobile.isEmpty ? '—' : user.mobile),
                         _infoRow(context, Icons.mail_outline, 'Email', user.email.isEmpty ? '—' : user.email),
                         _sectionHeader('Work'),
-                        _infoRow(context, Icons.badge_outlined, 'Employee', user.code.isEmpty ? user.id : user.code, trailing: true),
-                        _infoRow(context, Icons.location_on_outlined, 'Branch', user.branchId ?? '—', trailing: true),
+                        _infoRow(context, Icons.location_on_outlined, 'Branch', branchName, trailing: true),
                         _infoRow(context, Icons.event_available_outlined, 'Day status',
                             user.dayOpen ? 'Open' : 'Closed', trailing: true),
                       ],
@@ -90,14 +96,16 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 11),
                   AstraCard(
-                    radius: 15,
-                    onTap: () => context.push('/change-pin'),
-                    child: Row(
+                    radius: 16,
+                    padding: EdgeInsets.zero,
+                    child: Column(
                       children: [
-                        IconChip(icon: Icons.lock_outline, size: 30, radius: 9, bg: p.tint),
-                        const SizedBox(width: 11),
-                        Expanded(child: Text('MPIN & security', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink))),
-                        Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+                        _sectionHeader('MPIN & security'),
+                        _securityRow(context, Icons.lock_outline, 'Change MPIN',
+                            'Update your 4–6 digit login PIN', () => context.push('/change-pin')),
+                        _securityRow(context, Icons.password_outlined, 'Change password',
+                            'Update your account password', () => context.push('/change-password'),
+                            topBorder: true),
                       ],
                     ),
                   ),
@@ -118,6 +126,37 @@ class ProfileScreen extends StatelessWidget {
           child: SectionLabel(text),
         ),
       );
+
+  Widget _securityRow(BuildContext context, IconData icon, String title, String subtitle,
+      VoidCallback onTap, {bool topBorder = false}) {
+    final p = context.astra;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        decoration: topBorder
+            ? BoxDecoration(border: Border(top: BorderSide(color: p.hairline)))
+            : null,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Row(
+          children: [
+            IconChip(icon: icon, size: 30, radius: 9, bg: p.tint),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: ui(size: 10.5, weight: FontWeight.w500, color: p.textMuted)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _infoRow(BuildContext context, IconData icon, String label, String value, {bool trailing = false}) {
     final p = context.astra;

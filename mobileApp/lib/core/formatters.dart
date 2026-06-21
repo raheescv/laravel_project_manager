@@ -1,9 +1,9 @@
 import 'package:intl/intl.dart';
 
 /// Currency + date helpers. The currency [symbol] is user-configurable from
-/// Settings (see CurrencyController) and applies app-wide; defaults to `$`.
+/// Settings (see CurrencyController) and applies app-wide; defaults to `QAR `.
 class Money {
-  static String symbol = r'$';
+  static String symbol = 'QAR ';
   static int decimals = 2;
 
   // Cache one formatter per (symbol, decimals) so changing currency just swaps

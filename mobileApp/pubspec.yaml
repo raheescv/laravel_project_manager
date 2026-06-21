@@ -46,6 +46,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # IBM Plex Sans Arabic (OFL) — bundled so Arabic thermal receipts render
+  # offline at the POS.
+  assets:
+    - assets/fonts/IBMPlexSansArabic-Regular.ttf
+    - assets/fonts/IBMPlexSansArabic-Bold.ttf
 
 # Invo launcher icon — gold "i" logomark on a warm-dark tile.
 # Regenerate with: dart run flutter_launcher_icons

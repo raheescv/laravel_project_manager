@@ -22,12 +22,13 @@ class Currencies {
   static const gbp = Currency(code: 'GBP', symbol: '£', name: 'British Pound');
   static const aed = Currency(code: 'AED', symbol: 'AED ', name: 'UAE Dirham');
   static const sar = Currency(code: 'SAR', symbol: 'SAR ', name: 'Saudi Riyal');
+  static const qar = Currency(code: 'QAR', symbol: 'QAR ', name: 'Qatari Riyal');
   static const jpy = Currency(code: 'JPY', symbol: '¥', name: 'Japanese Yen', decimals: 0);
 
   /// The currencies offered in the Settings picker.
-  static const all = <Currency>[usd, inr, eur, gbp, aed, sar, jpy];
+  static const all = <Currency>[usd, inr, eur, gbp, aed, sar, qar, jpy];
 
-  /// Default falls back to USD ($) — matching the app's original behaviour.
+  /// Default falls back to the Qatari Riyal (QAR) when no currency is stored.
   static Currency byCode(String? code) =>
-      all.firstWhere((c) => c.code == code, orElse: () => usd);
+      all.firstWhere((c) => c.code == code, orElse: () => qar);
 }

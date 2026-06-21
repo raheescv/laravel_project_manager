@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/login_screen.dart';
+import '../features/profile/change_password_screen.dart';
 import '../features/profile/change_pin_screen.dart';
 import '../features/profile/edit_profile_screen.dart';
 import '../features/profile/profile_screen.dart';
@@ -9,6 +10,7 @@ import '../features/sale/invoice_screen.dart';
 import '../features/sale/new_sale_screen.dart';
 import '../features/sale/review_pay_screen.dart';
 import '../features/sales/sales_list_screen.dart';
+import '../features/settings/print_settings_screen.dart';
 import '../features/shell/home_shell.dart';
 import '../models/models.dart';
 import '../state/auth_controller.dart';
@@ -38,7 +40,9 @@ GoRouter createRouter(AuthController auth) {
       GoRoute(path: '/sales', builder: (_, __) => const SalesListScreen()),
       GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
       GoRoute(path: '/change-pin', builder: (_, __) => const ChangePinScreen()),
+      GoRoute(path: '/change-password', builder: (_, __) => const ChangePasswordScreen()),
       GoRoute(path: '/edit-profile', builder: (_, __) => const EditProfileScreen()),
+      GoRoute(path: '/print-settings', builder: (_, __) => const PrintSettingsScreen()),
     ],
   );
 }

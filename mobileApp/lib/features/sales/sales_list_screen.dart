@@ -118,10 +118,11 @@ class _SalesListScreenState extends State<SalesListScreen> {
   Widget _row(Map<String, dynamic> r) {
     final p = context.astra;
     final invoice = asStr(r['invoice_no']).isEmpty ? '#${asStr(r['id'])}' : asStr(r['invoice_no']);
-    final amount = asNum(r['paid'] ?? r['gross_amount'] ?? r['amount']);
-    final who = asStr(r['customer_name']).isEmpty
-        ? (r['account'] is Map ? asStr((r['account'] as Map)['name']) : 'Walk-in')
-        : asStr(r['customer_name']);
+    // Amount lives under `summary` in SaleListResource; keep flat keys as a fallback.
+    final summary = r['summary'] is Map ? r['summary'] as Map : const {};
+    final amount = asNum(summary['paid'] ?? summary['gross_amount'] ?? r['paid'] ?? r['gross_amount'] ?? r['amount']);
+    final customer = r['customer'] is Map ? r['customer'] as Map : const {};
+    final who = asStr(customer['name']).isEmpty ? 'Walk-in' : asStr(customer['name']);
     final status = asStr(r['status']);
     final date = Dates.human(asStr(r['date']));
     final (bg, fg) = switch (status) {

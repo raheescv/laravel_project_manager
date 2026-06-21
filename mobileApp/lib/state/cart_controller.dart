@@ -87,7 +87,8 @@ class CartController extends ChangeNotifier {
   int? stylistId;
   String stylistName = '';
 
-  double orderDiscount = 0; // flat amount
+  double orderDiscount = 0; // raw value: a flat amount, or a percentage when orderDiscountIsPercent
+  bool orderDiscountIsPercent = false;
   double tipPercent = 0;
 
   PayMode payMode = PayMode.cash;
@@ -173,6 +174,11 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setOrderDiscountIsPercent(bool v) {
+    orderDiscountIsPercent = v;
+    notifyListeners();
+  }
+
   void setTip(double percent) {
     tipPercent = percent;
     notifyListeners();
@@ -200,7 +206,16 @@ class CartController extends ChangeNotifier {
   // ---- totals ----
   double get subtotal => _lines.fold(0, (a, l) => a + l.base);
   double get lineDiscounts => _lines.fold(0, (a, l) => a + l.discountAmount);
-  double get totalDiscount => lineDiscounts + orderDiscount;
+
+  /// The order discount as an actual currency amount. When entered as a
+  /// percentage it applies to the goods value after per-line discounts.
+  double get orderDiscountAmount {
+    if (!orderDiscountIsPercent) return orderDiscount;
+    final base = (subtotal - lineDiscounts).clamp(0, double.infinity);
+    return base * orderDiscount / 100.0;
+  }
+
+  double get totalDiscount => lineDiscounts + orderDiscountAmount;
   double get taxTotal => _lines.fold(0, (a, l) => a + l.taxAmount);
   double get netBeforeTip =>
       (subtotal - totalDiscount + taxTotal).clamp(0, double.infinity);
@@ -223,6 +238,7 @@ class CartController extends ChangeNotifier {
     customerName = 'Walk-in';
     customerMobile = '';
     orderDiscount = 0;
+    orderDiscountIsPercent = false;
     tipPercent = 0;
     payMode = PayMode.cash;
     customPayments = [];
@@ -243,7 +259,7 @@ class CartController extends ChangeNotifier {
                   'discount': double.parse(l.discountAmount.toStringAsFixed(2)),
                 })
             .toList(),
-        'discount': double.parse(orderDiscount.toStringAsFixed(2)),
+        'discount': double.parse(orderDiscountAmount.toStringAsFixed(2)),
         'paymentMethod': payMode.apiValue,
         'totalPayment': double.parse(total.toStringAsFixed(2)),
         if (payMode == PayMode.custom)

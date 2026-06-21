@@ -112,7 +112,8 @@ Widget cartLineCard(BuildContext context, CartLine line) {
   );
 }
 
-/// Inline-editable order discount (flat $ amount; edits right in the row, no popup).
+/// Inline-editable order discount with a %/$ toggle (matches the line-item edit
+/// sheet); edits right in the row, no popup.
 class OrderDiscountRow extends StatefulWidget {
   const OrderDiscountRow({super.key, required this.cart});
   final CartController cart;
@@ -136,6 +137,7 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
+    final isPercent = widget.cart.orderDiscountIsPercent;
     return AstraCard(
       radius: 15,
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
@@ -144,10 +146,24 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
           IconChip(icon: Icons.sell_outlined, size: 30, radius: 9, bg: AstraPalette.warnTint, fg: p.goldText),
           const SizedBox(width: 10),
           Expanded(child: Text('Order discount', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink))),
-          Text(r'$', style: ui(size: 13, weight: FontWeight.w800, color: p.goldText)),
-          const SizedBox(width: 2),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: p.isDark ? Colors.white12 : const Color(0xFFF3EFE6),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [_toggle('%', isPercent), _toggle(r'$', !isPercent)],
+            ),
+          ),
+          const SizedBox(width: 10),
+          if (!isPercent) ...[
+            Text(r'$', style: ui(size: 13, weight: FontWeight.w800, color: p.goldText)),
+            const SizedBox(width: 2),
+          ],
           SizedBox(
-            width: 78,
+            width: 54,
             child: KeyboardDoneField(
               focusNode: _focus,
               child: TextField(
@@ -161,14 +177,30 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
                 decoration: InputDecoration(
                   isCollapsed: true,
                   border: InputBorder.none,
-                  hintText: '0.00',
+                  hintText: isPercent ? '0' : '0.00',
                   hintStyle: ui(size: 13, weight: FontWeight.w700, color: p.textMuted),
                 ),
                 onChanged: (v) => widget.cart.setOrderDiscount(double.tryParse(v) ?? 0),
               ),
             ),
           ),
+          if (isPercent) ...[
+            const SizedBox(width: 2),
+            Text('%', style: ui(size: 13, weight: FontWeight.w800, color: p.goldText)),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _toggle(String label, bool active) {
+    final p = context.astra;
+    return GestureDetector(
+      onTap: () => widget.cart.setOrderDiscountIsPercent(label == '%'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(color: active ? p.card : Colors.transparent, borderRadius: BorderRadius.circular(5)),
+        child: Text(label, style: ui(size: 10, weight: FontWeight.w800, color: active ? p.ink : p.textMuted)),
       ),
     );
   }

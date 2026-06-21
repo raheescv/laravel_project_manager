@@ -24,6 +24,10 @@ class AuthController extends ChangeNotifier {
   String? error;
   bool busy = false;
 
+  /// Fired after a successful sign-in (used to default the active branch to the
+  /// freshly-authenticated user's home branch).
+  void Function(ApiUser user)? onAuthenticated;
+
   final LocalAuthentication _localAuth = LocalAuthentication();
 
   AppConfig get config => client.config;
@@ -78,6 +82,7 @@ class AuthController extends ChangeNotifier {
       status = AuthStatus.signedIn;
       busy = false;
       notifyListeners();
+      onAuthenticated?.call(res.user);
       return true;
     } on ApiException catch (e) {
       error = e.message;

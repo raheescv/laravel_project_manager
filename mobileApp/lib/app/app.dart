@@ -6,9 +6,11 @@ import '../core/api_client.dart';
 import '../core/api_service.dart';
 import '../state/admin_controller.dart';
 import '../state/auth_controller.dart';
+import '../state/branch_controller.dart';
 import '../state/cart_controller.dart';
 import '../state/catalog_controller.dart';
 import '../state/currency_controller.dart';
+import '../state/print_settings_controller.dart';
 import '../state/stylist_controller.dart';
 import '../state/theme_controller.dart';
 import '../theme/theme.dart';
@@ -20,6 +22,8 @@ class AstraApp extends StatefulWidget {
     required this.auth,
     required this.themeController,
     required this.currencyController,
+    required this.branchController,
+    required this.printSettingsController,
     required this.apiService,
     required this.apiClient,
   });
@@ -27,6 +31,8 @@ class AstraApp extends StatefulWidget {
   final AuthController auth;
   final ThemeController themeController;
   final CurrencyController currencyController;
+  final BranchController branchController;
+  final PrintSettingsController printSettingsController;
   final ApiService apiService;
   final ApiClient apiClient;
 
@@ -46,6 +52,8 @@ class _AstraAppState extends State<AstraApp> {
         ChangeNotifierProvider.value(value: widget.auth),
         ChangeNotifierProvider.value(value: widget.themeController),
         ChangeNotifierProvider.value(value: widget.currencyController),
+        ChangeNotifierProvider.value(value: widget.branchController),
+        ChangeNotifierProvider.value(value: widget.printSettingsController),
         ChangeNotifierProvider(create: (_) => CartController()),
         ChangeNotifierProvider(create: (_) => CatalogController(widget.apiService)),
         ChangeNotifierProvider(create: (_) => StylistController(widget.apiService)),

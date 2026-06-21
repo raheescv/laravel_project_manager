@@ -32,6 +32,12 @@ class ApiService {
         'new_pin_confirmation': next,
       });
 
+  Future<void> changePassword(String current, String next) => client.post('/change-password', body: {
+        'current_password': current,
+        'new_password': next,
+        'new_password_confirmation': next,
+      });
+
   // ---- Catalog ----
   Future<Paginated<Product>> products({
     String? search,

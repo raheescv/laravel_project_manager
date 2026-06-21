@@ -44,6 +44,11 @@ class ApiClient {
   late final Dio _dio;
   OnUnauthorized? onUnauthorized;
 
+  /// The branch the user is operating as (set by BranchController). When set it
+  /// is attached as `branch_id` to every request — the same app-wide injection
+  /// the tenant gets — so all branch-aware endpoints filter to this branch.
+  int? activeBranchId;
+
   Options _opts() {
     final headers = <String, dynamic>{};
     if (config.tenant.isNotEmpty) {
@@ -60,6 +65,7 @@ class ApiClient {
     final q = <String, dynamic>{};
     // Localhost tenant fallback also accepts ?tenant=
     if (config.tenant.isNotEmpty) q['tenant'] = config.tenant;
+    if (activeBranchId != null) q['branch_id'] = activeBranchId;
     return q;
   }
 

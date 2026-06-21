@@ -24,8 +24,17 @@ class Storage {
   static const _kTenant = 'astra.tenant';
   static const _kPreset = 'astra.preset';
   static const _kCurrency = 'astra.currency';
+  static const _kBranch = 'astra.branch';
   static const _kUser = 'astra.user';
   static const _kBiometric = 'astra.biometric'; // JSON credential blob for biometric replay
+  // ---- thermal print settings (mirror the web `thermal_printer_*` config) ----
+  static const _kPrintStyle = 'astra.print.style'; // english_only | with_arabic
+  static const _kPrintWidth = 'astra.print.width'; // 58 | 80
+  static const _kPrintDiscount = 'astra.print.discount'; // 1 | 0
+  static const _kPrintTotalQty = 'astra.print.totalQty'; // 1 | 0
+  static const _kPrintBarcode = 'astra.print.barcode'; // 1 | 0
+  static const _kPrintFooterEn = 'astra.print.footerEn';
+  static const _kPrintFooterAr = 'astra.print.footerAr';
 
   static Future<Storage> create() async =>
       Storage._(await SharedPreferences.getInstance());
@@ -52,6 +61,31 @@ class Storage {
 
   String? get currencyCode => _prefs.getString(_kCurrency);
   Future<void> setCurrencyCode(String v) => _prefs.setString(_kCurrency, v);
+
+  int? get branchId => _prefs.getInt(_kBranch);
+  Future<void> setBranchId(int v) => _prefs.setInt(_kBranch, v);
+
+  // ---- thermal print settings ----
+  String? get printStyle => _prefs.getString(_kPrintStyle);
+  Future<void> setPrintStyle(String v) => _prefs.setString(_kPrintStyle, v);
+
+  String? get printWidth => _prefs.getString(_kPrintWidth);
+  Future<void> setPrintWidth(String v) => _prefs.setString(_kPrintWidth, v);
+
+  bool? get printDiscount => _prefs.containsKey(_kPrintDiscount) ? _prefs.getBool(_kPrintDiscount) : null;
+  Future<void> setPrintDiscount(bool v) => _prefs.setBool(_kPrintDiscount, v);
+
+  bool? get printTotalQty => _prefs.containsKey(_kPrintTotalQty) ? _prefs.getBool(_kPrintTotalQty) : null;
+  Future<void> setPrintTotalQty(bool v) => _prefs.setBool(_kPrintTotalQty, v);
+
+  bool? get printBarcode => _prefs.containsKey(_kPrintBarcode) ? _prefs.getBool(_kPrintBarcode) : null;
+  Future<void> setPrintBarcode(bool v) => _prefs.setBool(_kPrintBarcode, v);
+
+  String? get printFooterEnglish => _prefs.getString(_kPrintFooterEn);
+  Future<void> setPrintFooterEnglish(String v) => _prefs.setString(_kPrintFooterEn, v);
+
+  String? get printFooterArabic => _prefs.getString(_kPrintFooterAr);
+  Future<void> setPrintFooterArabic(String v) => _prefs.setString(_kPrintFooterAr, v);
 
   // ---- cached user json ----
   String? get userJson => _prefs.getString(_kUser);

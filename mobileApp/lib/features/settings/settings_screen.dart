@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/currency.dart';
 import '../../core/responsive.dart';
 import '../../state/auth_controller.dart';
+import '../../state/branch_controller.dart';
 import '../../state/currency_controller.dart';
+import '../../state/print_settings_controller.dart';
 import '../../state/theme_controller.dart';
 import '../../theme/palette.dart';
 import '../../theme/theme.dart';
 import '../../widgets/astra_widgets.dart';
 import '../auth/connection_sheet.dart';
+import 'branch_sheet.dart';
 import 'currency_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -20,6 +24,7 @@ class SettingsScreen extends StatelessWidget {
     final p = context.astra;
     final theme = context.watch<ThemeController>();
     final currency = context.watch<CurrencyController>().currency;
+    final branch = context.watch<BranchController>();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -55,9 +60,11 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   _currencyCard(context, currency),
                   const SizedBox(height: 11),
+                  _branchCard(context, branch),
+                  const SizedBox(height: 11),
+                  _printerCard(context),
+                  const SizedBox(height: 11),
                   _group(context, [
-                    (Icons.business, 'Branch & tax settings'),
-                    (Icons.description_outlined, 'Receipt & invoice'),
                     (Icons.group_outlined, 'Staff & permissions'),
                   ]),
                   const SizedBox(height: 11),
@@ -189,6 +196,63 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 Text('Currency', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
                 Text('${currency.name} · ${currency.code}',
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _branchCard(BuildContext context, BranchController branch) {
+    final p = context.astra;
+    final selected = branch.selected;
+    final subtitle = branch.loading && selected == null
+        ? 'Loading branches…'
+        : selected == null
+            ? (branch.error ?? 'Tap to choose a branch')
+            : (selected.location.isEmpty ? selected.code : selected.location);
+    return AstraCard(
+      radius: 14,
+      onTap: () => showBranchSheet(context),
+      child: Row(
+        children: [
+          IconChip(icon: Icons.business, size: 34, radius: 9, bg: p.tint),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(selected?.name ?? 'Branch',
+                    style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _printerCard(BuildContext context) {
+    final p = context.astra;
+    final print = context.watch<PrintSettingsController>();
+    return AstraCard(
+      radius: 14,
+      onTap: () => context.push('/print-settings'),
+      child: Row(
+        children: [
+          IconChip(icon: Icons.receipt_long_outlined, size: 34, radius: 9, bg: p.tint),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Printer & receipt', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text('${print.style.label} · ${print.width.label}',
                     style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),

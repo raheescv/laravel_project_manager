@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invo · Sale View — Premium Redesign Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================ THEME */
+:root{
+  --primary:#4F46E5; --primary-dark:#3730A3; --accent:#38BDF8;
+  --canvas:#EEF1F7; --card:#ffffff; --card-2:#ffffff;
+  --ink:#13183A; --t2:#46507E; --muted:#7F88B3;
+  --hair:rgba(19,24,58,.08); --tint:rgba(79,70,229,.10);
+  --gold:#BF953F; --success:#1F9D63; --success-tint:#E4F6EC;
+  --hero-1:#3730A3; --hero-2:#4F46E5;
+  --glass:rgba(255,255,255,.72); --glass-brd:rgba(255,255,255,.6);
+  --shadow:0 24px 60px -28px rgba(17,22,60,.55);
+  --serif:'Marcellus',serif; --ui:'Manrope',sans-serif;
+}
+/* ---- skins ---- */
+body[data-skin="glass"]{
+  --primary:#4F46E5;--primary-dark:#3730A3;--accent:#38BDF8;--gold:#7C8BFF;
+  --canvas:#EEF1F7;--ink:#13183A;--t2:#46507E;--muted:#7F88B3;
+  --hair:rgba(19,24,58,.08);--tint:rgba(79,70,229,.10);
+  --hero-1:#3730A3;--hero-2:#4F46E5;--glass:rgba(255,255,255,.66);
+}
+body[data-skin="clean"]{
+  --primary:#4F46E5;--primary-dark:#3B35B0;--accent:#7C3AED;--gold:#7C3AED;
+  --canvas:#F4F5FB;--card:#ffffff;--card-2:#FBFBFE;--ink:#161A2B;--t2:#4A4F63;--muted:#8A8FA3;
+  --hair:#E7E9F2;--tint:rgba(79,70,229,.10);--hero-1:#3B35B0;--hero-2:#7C3AED;
+  --glass:#ffffff;
+}
+body[data-skin="signature"]{
+  --primary:#15806C;--primary-dark:#0E5648;--accent:#C9A24B;--gold:#BF953F;
+  --canvas:#F6F1E8;--card:#ffffff;--card-2:#ffffff;--ink:#16312A;--t2:#5D7269;--muted:#A8B3AB;
+  --hair:#F0ECE1;--tint:#E6F0EC;--hero-1:#0E5648;--hero-2:#15806C;
+  --glass:rgba(255,255,255,.8);
+}
+body[data-skin="editorial"]{
+  --primary:#B5862F;--primary-dark:#8a6420;--accent:#C8A24A;--gold:#C8A24A;
+  --canvas:#FBF8F1;--card:#FFFDF7;--card-2:#FFFDF7;--ink:#1C1A14;--t2:#54503F;--muted:#928C79;
+  --hair:#E6DFCE;--tint:rgba(200,162,74,.12);--hero-1:#1F1C13;--hero-2:#0C0B08;
+  --glass:rgba(255,253,247,.86);
+}
+/* ---- dark ---- */
+body[data-mode="dark"]{
+  --canvas:#0c1124;--card:#161b34;--card-2:#1a2040;--ink:#eef1ff;--t2:#aab2da;--muted:#737cab;
+  --hair:rgba(255,255,255,.09);--tint:rgba(124,139,255,.18);
+  --glass:rgba(36,42,78,.6);--glass-brd:rgba(255,255,255,.12);
+  --shadow:0 24px 60px -26px rgba(0,0,0,.7);
+}
+body[data-mode="dark"][data-skin="signature"]{--canvas:#0c1f1a;--card:#15302a;--card-2:#173a32;--ink:#f3f1ea;--t2:#a9c2ba;--muted:#7c9189;--hair:rgba(255,255,255,.1);--tint:rgba(21,128,108,.22);}
+body[data-mode="dark"][data-skin="editorial"]{--canvas:#0c0b08;--card:#15140f;--card-2:#1b1912;--ink:#f1ece0;--t2:#b7b09c;--muted:#857e6c;--hair:#2a271d;--tint:rgba(200,162,74,.16);--glass:rgba(21,20,15,.7);}
+
+/* ============================================================ SHELL */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--ui);
+  background:
+    radial-gradient(900px 600px at 12% -8%, rgba(124,92,255,.10), transparent 60%),
+    radial-gradient(800px 600px at 110% 10%, rgba(56,189,248,.10), transparent 55%),
+    #0e1020;
+  color:#fff; display:flex; flex-direction:column; align-items:center;
+  min-height:100%; padding:26px 16px 60px;
+}
+.head{width:100%;max-width:980px;text-align:center;margin-bottom:18px}
+.head h1{font-family:var(--serif);font-weight:400;font-size:25px;letter-spacing:.3px;margin:0 0 4px;color:#fff}
+.head p{margin:0;color:#aab1d6;font-size:13px;font-weight:500}
+.bar{
+  position:sticky;top:10px;z-index:30;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;
+  background:rgba(18,21,42,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:10px 12px;margin-bottom:26px;
+  box-shadow:0 20px 50px -24px rgba(0,0,0,.6);
+}
+.grp{display:flex;align-items:center;gap:6px;padding:4px;background:rgba(255,255,255,.05);border-radius:11px}
+.grp .lab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#8b93bd;font-weight:700;padding:0 6px}
+.bar button{
+  font-family:var(--ui);font-size:12px;font-weight:700;color:#cdd3ef;cursor:pointer;
+  background:transparent;border:1px solid transparent;border-radius:9px;padding:7px 12px;transition:.18s;white-space:nowrap;
+}
+.bar button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.bar button.on{background:linear-gradient(180deg,#6d63ff,#574dff);color:#fff;box-shadow:0 6px 18px -6px rgba(99,90,255,.8)}
+.bar .sw{width:34px;padding:7px 0}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:1px}
+
+/* ============================================================ PHONE */
+.stage{display:flex;justify-content:center;width:100%}
+.phone{
+  position:relative;width:390px;height:842px;border-radius:46px;padding:11px;
+  background:linear-gradient(160deg,#2a2d3c,#15171f);
+  box-shadow:0 50px 120px -40px rgba(0,0,0,.85), 0 0 0 2px rgba(255,255,255,.04) inset;
+}
+.screen{
+  position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;
+  background:var(--canvas);color:var(--ink);display:flex;flex-direction:column;
+}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#0c0d12;border-radius:0 0 18px 18px;z-index:60}
+.scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{width:0}
+.dir{display:none;flex-direction:column;height:100%}
+body[data-dir="a"] .dir-a{display:flex}
+body[data-dir="b"] .dir-b{display:flex}
+body[data-dir="c"] .dir-c{display:flex}
+body[data-dir="d"] .dir-d{display:flex}
+
+/* shared bits */
+.logo{flex:none}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:5px 10px;border-radius:999px}
+.pill.paid{background:var(--success-tint);color:var(--success)}
+.brandname{font-family:var(--serif);font-size:17px;line-height:1}
+.muted{color:var(--muted)}
+.amt{font-family:var(--serif)}
+.actionbar{display:flex;gap:9px;padding:12px 14px 16px}
+.act{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:48px;border-radius:14px;font-weight:700;font-size:13px;cursor:pointer}
+.act.ghost{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.act.cta{flex:1.9;background:linear-gradient(135deg,var(--hero-2),var(--hero-1));color:#fff;box-shadow:0 16px 32px -14px var(--primary)}
+body[data-skin="editorial"] .act.cta{background:linear-gradient(135deg,#2a2519,#0c0b08);color:#f3e9cf}
+.ic{width:17px;height:17px;display:inline-block}
+svg{display:block}
+
+/* ============================================================ A · BOARDING PASS / TICKET */
+.dir-a .hero{padding:22px 22px 16px;background:linear-gradient(135deg,var(--hero-1),var(--hero-2));color:#fff;position:relative;overflow:hidden}
+.dir-a .hero::after{content:"";position:absolute;inset:0;background:radial-gradient(380px 200px at 90% -10%,rgba(255,255,255,.25),transparent 60%)}
+.dir-a .hero .row{display:flex;align-items:center;gap:11px;position:relative;z-index:2}
+.dir-a .hero .pill.paid{background:rgba(255,255,255,.16);color:#fff}
+.ticket{margin:-26px 16px 0;position:relative;z-index:5;filter:drop-shadow(0 30px 50px rgba(17,22,60,.28))}
+.ticket .body{background:var(--card);border-radius:22px 22px 0 0;padding:22px 20px 14px}
+.ticket .stub{background:var(--card);border-radius:0 0 22px 22px;padding:16px 20px 20px;position:relative}
+.perf{position:relative;height:26px;background:var(--card)}
+.perf::before,.perf::after{content:"";position:absolute;top:50%;width:26px;height:26px;border-radius:50%;background:var(--canvas);transform:translateY(-50%)}
+.perf::before{left:-13px}.perf::after{right:-13px}
+.perf .line{position:absolute;top:50%;left:18px;right:18px;border-top:2px dashed var(--hair)}
+.metarow{display:flex;justify-content:space-between;gap:10px;margin-top:4px}
+.meta .k{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.meta .v{font-size:13px;font-weight:800;color:var(--ink);margin-top:3px}
+.line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair)}
+.line:last-of-type{border-bottom:0}
+.line .nm{font-size:13px;font-weight:700;color:var(--ink)}
+.line .sub{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:2px}
+.line .tot{font-size:13.5px;font-weight:800;color:var(--ink)}
+.dir-a .stubgrid{display:flex;align-items:center;gap:16px}
+.dir-a .qr{flex:none}
+.dir-a .stubgrid .big{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.dir-a .stubgrid .amt{font-size:30px;color:var(--primary-dark);margin-top:2px}
+body[data-skin="editorial"] .dir-a .stubgrid .amt{color:var(--gold)}
+.dir-a .scan{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:6px}
+.dir-a .totals{padding:6px 18px 12px}
+.trow{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--t2);padding:4px 0}
+.trow .g{color:var(--gold);font-weight:700}
+
+/* ============================================================ B · AURORA GLASS */
+.dir-b{position:relative}
+.dir-b .mesh{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(280px 220px at 8% 4%, color-mix(in srgb,var(--primary) 42%,transparent),transparent 60%),
+    radial-gradient(280px 240px at 100% 14%, color-mix(in srgb,var(--accent) 40%,transparent),transparent 60%),
+    radial-gradient(320px 300px at 50% 105%, color-mix(in srgb,var(--primary) 30%,transparent),transparent 60%);
+}
+.dir-b .scroll{position:relative;z-index:2;padding:20px 16px 8px}
+.dir-b .topbar{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.glass{background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd);border-radius:24px;box-shadow:var(--shadow)}
+.dir-b .totcard{padding:24px 22px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden}
+.dir-b .totcard .lab{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.dir-b .totcard .amt{font-size:46px;line-height:1;color:var(--ink);margin:8px 0 12px}
+.dir-b .totcard .sub{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--t2);background:var(--tint);padding:6px 11px;border-radius:999px}
+.dir-b .sec{padding:16px 18px;margin-bottom:14px}
+.sectitle{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:0 0 8px}
+.dir-b .grand{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-radius:18px;background:var(--tint);margin-top:4px}
+.dir-b .grand .amt{font-size:22px;color:var(--primary-dark)}
+
+/* ============================================================ C · EDITORIAL STATEMENT */
+.dir-c{background:var(--canvas)}
+.dir-c .scroll{padding:30px 26px 8px}
+.dir-c .eyebrow{font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);font-weight:800}
+.dir-c .display{font-family:var(--serif);font-size:40px;line-height:.98;color:var(--ink);margin:8px 0 0}
+.dir-c .head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.dir-c .rule{height:1px;background:var(--gold);opacity:.5;margin:18px 0}
+.dir-c .rule.thin{background:var(--hair);opacity:1}
+.dir-c .metawrap{display:flex;gap:28px;margin:14px 0 4px}
+.dir-c .metawrap .k{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.dir-c .metawrap .v{font-family:var(--serif);font-size:15px;color:var(--ink);margin-top:5px}
+.dir-c .lc{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:13px 0;border-bottom:1px solid var(--hair)}
+.dir-c .lc .nm{font-family:var(--serif);font-size:16px;color:var(--ink)}
+.dir-c .lc .sub{font-size:10.5px;letter-spacing:.05em;color:var(--muted);font-weight:600;margin-top:3px}
+.dir-c .lc .tot{font-size:15px;font-weight:700;color:var(--ink)}
+.dir-c .totstack{margin-top:16px}
+.dir-c .tr{display:flex;justify-content:space-between;font-size:12.5px;color:var(--t2);font-weight:600;padding:6px 0}
+.dir-c .tr.g span:last-child{color:var(--gold);font-weight:700}
+.dir-c .grand{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px}
+.dir-c .grand .k{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.dir-c .grand .amt{font-family:var(--serif);font-size:40px;color:var(--ink)}
+.dir-c .stamp{display:inline-block;margin-top:18px;border:1.5px solid var(--success);color:var(--success);font-size:11px;font-weight:800;letter-spacing:.18em;padding:6px 14px;border-radius:6px;transform:rotate(-4deg)}
+
+/* ============================================================ D · MODERN FINTECH */
+.dir-d .scroll{padding:18px 16px 8px}
+.dir-d .topbar{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.dir-d .hcard{border-radius:24px;padding:22px;background:linear-gradient(140deg,var(--hero-2),var(--hero-1));color:#fff;position:relative;overflow:hidden;box-shadow:0 24px 48px -22px var(--primary)}
+body[data-skin="editorial"] .dir-d .hcard{background:linear-gradient(140deg,#26221a,#0c0b08);color:#f3e9cf}
+.dir-d .hcard::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.12)}
+.dir-d .hcard .lab{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;opacity:.85;font-weight:700}
+.dir-d .hcard .amt{font-size:42px;line-height:1;margin:6px 0 4px}
+.dir-d .hcard .inv{font-size:12px;font-weight:600;opacity:.9}
+.dir-d .timeline{display:flex;align-items:center;margin:16px 4px}
+.dir-d .step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:none}
+.dir-d .step .d{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--success);color:#fff}
+.dir-d .step .d.idle{background:var(--card);border:2px solid var(--hair);color:var(--muted)}
+.dir-d .step .t{font-size:9.5px;font-weight:700;color:var(--t2);white-space:nowrap}
+.dir-d .seg{flex:1;height:2px;background:var(--success);margin:0 -2px 16px;border-radius:2px}
+.dir-d .seg.idle{background:var(--hair)}
+.dir-d .card{background:var(--card);border:1px solid var(--hair);border-radius:20px;padding:6px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.dir-d .lrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--hair)}
+.dir-d .lrow:last-child{border-bottom:0}
+.dir-d .av{width:38px;height:38px;border-radius:12px;flex:none;display:grid;place-items:center;background:var(--tint);color:var(--primary);font-weight:800}
+.dir-d .lrow .nm{font-size:13px;font-weight:700;color:var(--ink)}
+.dir-d .lrow .sub{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:2px}
+.dir-d .lrow .tot{font-size:13.5px;font-weight:800;color:var(--ink);margin-left:auto}
+.dir-d .sum{padding:14px 16px}
+.dir-d .sr{display:flex;justify-content:space-between;font-size:12.5px;color:var(--t2);font-weight:600;padding:5px 0}
+.dir-d .sr.g span:last-child{color:var(--gold);font-weight:700}
+.dir-d .sr.tot{border-top:1px dashed var(--hair);margin-top:6px;padding-top:12px}
+.dir-d .sr.tot span:first-child{font-size:13px;font-weight:800;color:var(--ink)}
+.dir-d .sr.tot .amt{font-size:22px;color:var(--primary-dark)}
+.dir-d .pay{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.dir-d .visa{width:46px;height:32px;border-radius:7px;background:linear-gradient(135deg,#1a1f71,#3b3fb6);display:grid;place-items:center;color:#fff;font-weight:800;font-style:italic;font-size:12px;flex:none}
+</style>
+</head>
+<body data-dir="a" data-skin="glass" data-mode="light">
+
+<div class="head">
+  <h1>Sale View — Premium Redesign</h1>
+  <p>Four directions for the Invo invoice screen · switch skin &amp; mode to preview against the app's themes</p>
+</div>
+
+<div class="bar">
+  <div class="grp">
+    <span class="lab">Direction</span>
+    <button data-set="dir" data-val="a" class="on">A · Ticket</button>
+    <button data-set="dir" data-val="b">B · Glass</button>
+    <button data-set="dir" data-val="c">C · Editorial</button>
+    <button data-set="dir" data-val="d">D · Fintech</button>
+  </div>
+  <div class="grp">
+    <span class="lab">Skin</span>
+    <button data-set="skin" data-val="glass" class="on"><span class="dot" style="background:#4F46E5"></span>Aurora</button>
+    <button data-set="skin" data-val="clean"><span class="dot" style="background:#7C3AED"></span>Indigo</button>
+    <button data-set="skin" data-val="signature"><span class="dot" style="background:#15806C"></span>Emerald</button>
+    <button data-set="skin" data-val="editorial"><span class="dot" style="background:#C8A24A"></span>Noir</button>
+  </div>
+  <div class="grp">
+    <span class="lab">Mode</span>
+    <button data-set="mode" data-val="light" class="on">Light</button>
+    <button data-set="mode" data-val="dark">Dark</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="phone">
+    <div class="screen">
+      <div class="notch"></div>
+
+      <!-- ============ A · BOARDING PASS / TICKET ============ -->
+      <div class="dir dir-a">
+        <div class="scroll">
+          <div class="hero">
+            <div class="row">
+              <svg class="logo" width="30" height="42" viewBox="0 0 132 184"><defs><linearGradient id="gA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6da"/><stop offset=".4" stop-color="#f6dd97"/><stop offset=".7" stop-color="#d9ad57"/><stop offset="1" stop-color="#b88a38"/></linearGradient></defs><g fill="url(#gA)"><path d="M66 16 L74 30 L88 38 L74 46 L66 60 L58 46 L44 38 L58 30 Z"/><rect x="59.5" y="70" width="13" height="86" rx="2"/><rect x="49" y="68" width="34" height="6" rx="3"/><rect x="43" y="151" width="46" height="7.5" rx="3"/></g></svg>
+              <div style="flex:1">
+                <div class="brandname" style="color:#fff">Invo</div>
+                <div style="font-size:10px;font-weight:600;opacity:.8;margin-top:2px">Marina Walk · Boarding pass receipt</div>
+              </div>
+              <span class="pill paid">✓ PAID</span>
+            </div>
+          </div>
+
+          <div class="ticket">
+            <div class="body">
+              <div class="metarow">
+                <div class="meta"><div class="k">Invoice</div><div class="v">INV-2041</div></div>
+                <div class="meta"><div class="k">Date</div><div class="v">21 Jun 2026</div></div>
+                <div class="meta" style="text-align:right"><div class="k">Stylist</div><div class="v">Layla H.</div></div>
+              </div>
+              <div style="height:14px"></div>
+              <div class="line"><div><div class="nm">Signature Cut &amp; Style</div><div class="sub">1 × $120.00 · Layla</div></div><div class="tot">$120.00</div></div>
+              <div class="line"><div><div class="nm">Keratin Treatment</div><div class="sub">1 × $280.00 · Mariam</div></div><div class="tot">$280.00</div></div>
+              <div class="line"><div><div class="nm">Argan Oil Serum 50ml</div><div class="sub">2 × $45.00</div></div><div class="tot">$90.00</div></div>
+              <div class="line"><div><div class="nm">Scalp Massage</div><div class="sub">1 × $60.00 · Layla</div></div><div class="tot">$60.00</div></div>
+            </div>
+            <div class="totals">
+              <div class="trow"><span>Subtotal</span><span>$550.00</span></div>
+              <div class="trow"><span class="g">Discount</span><span class="g">− $55.00</span></div>
+              <div class="trow"><span>Tax (5%)</span><span>$24.75</span></div>
+            </div>
+            <div class="perf"><div class="line"></div></div>
+            <div class="stub">
+              <div class="stubgrid">
+                <svg class="qr" width="64" height="64" viewBox="0 0 64 64" shape-rendering="crispEdges"><rect width="64" height="64" fill="#fff"/><g fill="var(--ink)"><path d="M0 0h20v20H0z M4 4h12v12H4z M7 7h6v6H7z"/><path d="M44 0h20v20H44z M48 4h12v12h-12z M51 7h6v6h-6z"/><path d="M0 44h20v20H0z M4 48h12v12H4z M7 51h6v6H7z"/><rect x="26" y="2" width="4" height="4"/><rect x="34" y="2" width="4" height="4"/><rect x="26" y="10" width="4" height="4"/><rect x="24" y="24" width="4" height="4"/><rect x="32" y="26" width="4" height="4"/><rect x="40" y="24" width="4" height="4"/><rect x="2" y="26" width="4" height="4"/><rect x="10" y="34" width="4" height="4"/><rect x="50" y="26" width="4" height="4"/><rect x="58" y="34" width="4" height="4"/><rect x="26" y="40" width="4" height="4"/><rect x="34" y="42" width="4" height="4"/><rect x="44" y="40" width="4" height="4"/><rect x="52" y="48" width="4" height="4"/><rect x="40" y="52" width="4" height="4"/><rect x="48" y="58" width="4" height="4"/><rect x="58" y="50" width="4" height="4"/><rect x="26" y="50" width="4" height="4"/></g></svg>
+                <div style="flex:1">
+                  <div class="big">Total Paid</div>
+                  <div class="amt">$519.75</div>
+                  <div class="scan">Scan to view digital receipt · Card ••4291</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="height:8px"></div>
+        </div>
+        <div class="actionbar">
+          <div class="act ghost">🖨 Print</div>
+          <div class="act ghost">⤴ Share</div>
+          <div class="act cta">+ New Sale</div>
+        </div>
+      </div>
+
+      <!-- ============ B · AURORA GLASS ============ -->
+      <div class="dir dir-b">
+        <div class="mesh"></div>
+        <div class="scroll">
+          <div class="topbar">
+            <svg class="logo" width="26" height="36" viewBox="0 0 132 184"><g fill="var(--gold)"><path d="M66 16 L74 30 L88 38 L74 46 L66 60 L58 46 L44 38 L58 30 Z"/><rect x="59.5" y="70" width="13" height="86" rx="2"/><rect x="49" y="68" width="34" height="6" rx="3"/><rect x="43" y="151" width="46" height="7.5" rx="3"/></g></svg>
+            <div style="flex:1"><div class="brandname">Invo</div><div style="font-size:10px;font-weight:600" class="muted">Marina Walk</div></div>
+            <span class="pill paid">✓ PAID</span>
+          </div>
+
+          <div class="glass totcard">
+            <div class="lab">Total Paid · INV-2041</div>
+            <div class="amt">$519.75</div>
+            <div class="sub">
+              <span class="chip">📅 21 Jun 2026</span>
+              <span class="chip">✂ Layla Hassan</span>
+              <span class="chip">💳 Card ••4291</span>
+            </div>
+          </div>
+
+          <div class="glass sec">
+            <p class="sectitle">Items · 4</p>
+            <div class="line"><div><div class="nm">Signature Cut &amp; Style</div><div class="sub">1 × $120.00 · Layla</div></div><div class="tot">$120.00</div></div>
+            <div class="line"><div><div class="nm">Keratin Treatment</div><div class="sub">1 × $280.00 · Mariam</div></div><div class="tot">$280.00</div></div>
+            <div class="line"><div><div class="nm">Argan Oil Serum 50ml</div><div class="sub">2 × $45.00</div></div><div class="tot">$90.00</div></div>
+            <div class="line"><div><div class="nm">Scalp Massage</div><div class="sub">1 × $60.00 · Layla</div></div><div class="tot">$60.00</div></div>
+          </div>
+
+          <div class="glass sec">
+            <p class="sectitle">Summary</p>
+            <div class="trow"><span>Subtotal</span><span>$550.00</span></div>
+            <div class="trow"><span class="g">Discount</span><span class="g">− $55.00</span></div>
+            <div class="trow"><span>Tax (5%)</span><span>$24.75</span></div>
+            <div class="grand"><span style="font-weight:800;color:var(--ink)">Total Paid</span><span class="amt">$519.75</span></div>
+          </div>
+          <div style="height:6px"></div>
+        </div>
+        <div class="actionbar">
+          <div class="act ghost">🖨 Print</div>
+          <div class="act ghost">⤴ Share</div>
+          <div class="act cta">+ New Sale</div>
+        </div>
+      </div>
+
+      <!-- ============ C · EDITORIAL STATEMENT ============ -->
+      <div class="dir dir-c">
+        <div class="scroll">
+          <div class="head">
+            <div>
+              <div class="eyebrow">Invo · Marina Walk</div>
+              <div class="display">Receipt</div>
+            </div>
+            <svg class="logo" width="26" height="36" viewBox="0 0 132 184"><g fill="var(--gold)"><path d="M66 16 L74 30 L88 38 L74 46 L66 60 L58 46 L44 38 L58 30 Z"/><rect x="59.5" y="70" width="13" height="86" rx="2"/><rect x="49" y="68" width="34" height="6" rx="3"/><rect x="43" y="151" width="46" height="7.5" rx="3"/></g></svg>
+          </div>
+
+          <div class="metawrap">
+            <div><div class="k">Invoice</div><div class="v">INV-2041</div></div>
+            <div><div class="k">Date</div><div class="v">21 Jun</div></div>
+            <div><div class="k">Stylist</div><div class="v">Layla H.</div></div>
+          </div>
+          <div class="rule"></div>
+
+          <div class="lc"><div><div class="nm">Signature Cut &amp; Style</div><div class="sub">1 × $120.00 · LAYLA</div></div><div class="tot">$120.00</div></div>
+          <div class="lc"><div><div class="nm">Keratin Treatment</div><div class="sub">1 × $280.00 · MARIAM</div></div><div class="tot">$280.00</div></div>
+          <div class="lc"><div><div class="nm">Argan Oil Serum 50ml</div><div class="sub">2 × $45.00</div></div><div class="tot">$90.00</div></div>
+          <div class="lc"><div><div class="nm">Scalp Massage</div><div class="sub">1 × $60.00 · LAYLA</div></div><div class="tot">$60.00</div></div>
+
+          <div class="totstack">
+            <div class="tr"><span>Subtotal</span><span>$550.00</span></div>
+            <div class="tr g"><span>Discount</span><span>− $55.00</span></div>
+            <div class="tr"><span>Tax (5%)</span><span>$24.75</span></div>
+          </div>
+          <div class="rule thin"></div>
+          <div class="grand">
+            <div class="k">Total Paid</div>
+            <div class="amt">$519.75</div>
+          </div>
+          <div class="stamp">✓ SETTLED · CARD</div>
+          <div style="height:14px"></div>
+        </div>
+        <div class="actionbar">
+          <div class="act ghost">🖨 Print</div>
+          <div class="act ghost">⤴ Share</div>
+          <div class="act cta">+ New Sale</div>
+        </div>
+      </div>
+
+      <!-- ============ D · MODERN FINTECH ============ -->
+      <div class="dir dir-d">
+        <div class="scroll">
+          <div class="topbar">
+            <svg class="logo" width="26" height="36" viewBox="0 0 132 184"><g fill="var(--gold)"><path d="M66 16 L74 30 L88 38 L74 46 L66 60 L58 46 L44 38 L58 30 Z"/><rect x="59.5" y="70" width="13" height="86" rx="2"/><rect x="49" y="68" width="34" height="6" rx="3"/><rect x="43" y="151" width="46" height="7.5" rx="3"/></g></svg>
+            <div style="flex:1"><div class="brandname">Invo</div><div style="font-size:10px;font-weight:600" class="muted">Marina Walk</div></div>
+            <span class="pill paid">✓ PAID</span>
+          </div>
+
+          <div class="hcard">
+            <div class="lab">Total Paid</div>
+            <div class="amt amt-d" style="font-family:var(--serif)">$519.75</div>
+            <div class="inv">Invoice INV-2041 · 21 Jun 2026, 4:32 PM</div>
+          </div>
+
+          <div class="timeline">
+            <div class="step"><div class="d">✓</div><div class="t">Created</div></div>
+            <div class="seg"></div>
+            <div class="step"><div class="d">✓</div><div class="t">Paid</div></div>
+            <div class="seg"></div>
+            <div class="step"><div class="d">✓</div><div class="t">Receipt</div></div>
+          </div>
+
+          <div class="card">
+            <div class="lrow"><div class="av">✂</div><div><div class="nm">Signature Cut &amp; Style</div><div class="sub">1 × $120.00 · Layla</div></div><div class="tot">$120.00</div></div>
+            <div class="lrow"><div class="av">✦</div><div><div class="nm">Keratin Treatment</div><div class="sub">1 × $280.00 · Mariam</div></div><div class="tot">$280.00</div></div>
+            <div class="lrow"><div class="av">🧴</div><div><div class="nm">Argan Oil Serum 50ml</div><div class="sub">2 × $45.00</div></div><div class="tot">$90.00</div></div>
+            <div class="lrow"><div class="av">💆</div><div><div class="nm">Scalp Massage</div><div class="sub">1 × $60.00 · Layla</div></div><div class="tot">$60.00</div></div>
+          </div>
+
+          <div class="card sum">
+            <div class="sr"><span>Subtotal</span><span>$550.00</span></div>
+            <div class="sr g"><span>Discount</span><span>− $55.00</span></div>
+            <div class="sr"><span>Tax (5%)</span><span>$24.75</span></div>
+            <div class="sr tot"><span>Total Paid</span><span class="amt">$519.75</span></div>
+          </div>
+
+          <div class="card pay">
+            <div class="visa">VISA</div>
+            <div style="flex:1"><div class="nm" style="font-size:13px;font-weight:700;color:var(--ink)">Card payment</div><div class="sub" style="font-size:10.5px;color:var(--muted);font-weight:600;margin-top:2px">Visa ending ••4291</div></div>
+            <div style="font-weight:800;color:var(--ink)">$519.75</div>
+          </div>
+          <div style="height:4px"></div>
+        </div>
+        <div class="actionbar">
+          <div class="act ghost">🖨 Print</div>
+          <div class="act ghost">⤴ Share</div>
+          <div class="act cta">+ New Sale</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const body=document.body;
+  document.querySelectorAll('.bar button[data-set]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const set=b.dataset.set, val=b.dataset.val;
+      body.dataset[set]=val;
+      document.querySelectorAll('.bar button[data-set="'+set+'"]').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+    });
+  });
+</script>
+</body>
+</html>

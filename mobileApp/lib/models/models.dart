@@ -213,6 +213,7 @@ class PaymentMethod {
 class SaleLine {
   SaleLine({
     required this.name,
+    required this.nameArabic,
     required this.type,
     required this.employee,
     required this.quantity,
@@ -221,6 +222,7 @@ class SaleLine {
     required this.total,
   });
   final String name;
+  final String nameArabic;
   final String type;
   final String employee;
   final double quantity;
@@ -230,6 +232,7 @@ class SaleLine {
 
   factory SaleLine.fromJson(Map<String, dynamic> j) => SaleLine(
         name: asStr(j['name']),
+        nameArabic: asStr(j['name_arabic']),
         type: asStr(j['type']),
         employee: asStr(j['employee']),
         quantity: asNum(j['quantity']).toDouble(),
