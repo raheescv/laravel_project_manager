@@ -186,6 +186,7 @@ class Product {
     required this.name,
     required this.barcode,
     required this.mrp,
+    required this.tax,
     required this.type,
     required this.categoryName,
     required this.duration,
@@ -198,6 +199,7 @@ class Product {
   final String name;
   final String barcode;
   final double mrp;
+  final double tax; // tax percentage applied to the line; mirrors products.tax
   final String type; // product | service
   final String categoryName;
   final String duration;
@@ -223,6 +225,7 @@ class Product {
       name: asStr(j['name']),
       barcode: asStr(j['barcode']),
       mrp: asNum(j['mrp']).toDouble(),
+      tax: asNum(j['tax']).toDouble(),
       type: asStr(j['type']).isEmpty ? 'service' : asStr(j['type']),
       categoryName: main is Map ? asStr(main['name']) : 'Other',
       duration: asStr(j['time']),

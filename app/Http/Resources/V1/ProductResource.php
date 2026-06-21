@@ -29,6 +29,7 @@ class ProductResource extends JsonResource
             'hsn_code' => $this->hsn_code,
             // 'cost' => $this->cost,
             'mrp' => $this->mrp,
+            'tax' => $this->tax, // percentage; the app adds this to the line total so its grand total matches the server
             'location' => $this->location,
             // 'reorder_level' => $this->reorder_level,
             // 'plu' => $this->plu,

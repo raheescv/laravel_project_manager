@@ -138,11 +138,16 @@ class _CustomPaymentSheetState extends State<_CustomPaymentSheet> {
                 ),
               ...widget.methods.map((m) {
                 final active = _selected?.id == m.id;
-                return ListTile(
-                  onTap: () => Navigator.of(context).pop(m),
-                  leading: Icon(active ? Icons.radio_button_checked : Icons.radio_button_off,
-                      size: 20, color: active ? p.primary : p.textMuted),
-                  title: Text(m.name, style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
+                // Own Material so the tap ink paints in front of the card-colored
+                // sheet Container (otherwise the splash is hidden behind it).
+                return Material(
+                  type: MaterialType.transparency,
+                  child: ListTile(
+                    onTap: () => Navigator.of(context).pop(m),
+                    leading: Icon(active ? Icons.radio_button_checked : Icons.radio_button_off,
+                        size: 20, color: active ? p.primary : p.textMuted),
+                    title: Text(m.name, style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
+                  ),
                 );
               }),
               const SizedBox(height: 10),

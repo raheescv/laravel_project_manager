@@ -139,6 +139,7 @@ class CartController extends ChangeNotifier {
         code: p.code,
         type: p.type,
         unitPrice: p.mrp,
+        taxPercent: p.tax,
         thumbnail: p.thumbnail,
         employeeId: stylistId,
         employeeName: stylistName,

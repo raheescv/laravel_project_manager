@@ -235,21 +235,27 @@ class InvoiceScreen extends StatelessWidget {
   // ---- Status timeline -----------------------------------------------------
 
   Widget _timeline(AstraPalette p) {
+    // Three genuine stages: the sale is always Created; payment is either still
+    // the active stage (Pending) or Paid; the receipt is the final stage, reached
+    // once the ticket is fully settled. The first segment is always filled since
+    // "Created" is complete, so the line never looks dead while a balance is due.
+    final paid = _paidUp;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: Row(
         children: [
-          _step(p, 'Created', true),
-          _seg(p, _paidUp),
-          _step(p, _paidUp ? 'Paid' : 'Pending', _paidUp),
-          _seg(p, _paidUp),
-          _step(p, 'Receipt', _paidUp),
+          _step(p, 'Created', done: true),
+          _seg(p, true),
+          _step(p, paid ? 'Paid' : 'Pending', done: paid, active: !paid),
+          _seg(p, paid),
+          _step(p, 'Receipt', done: paid),
         ],
       ),
     );
   }
 
-  Widget _step(AstraPalette p, String label, bool done) {
+  Widget _step(AstraPalette p, String label, {required bool done, bool active = false}) {
+    final lit = done || active; // the current or a completed stage
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -259,23 +265,23 @@ class InvoiceScreen extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: done ? AstraPalette.success : p.card,
-            border: done ? null : Border.all(color: p.hairline, width: 2),
-            boxShadow: done
-                ? [BoxShadow(color: AstraPalette.success.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: -4, offset: const Offset(0, 4))]
+            border: done ? null : Border.all(color: active ? AstraPalette.success : p.hairline, width: active ? 2.5 : 2),
+            boxShadow: lit
+                ? [BoxShadow(color: AstraPalette.success.withValues(alpha: done ? 0.4 : 0.22), blurRadius: 12, spreadRadius: -4, offset: const Offset(0, 4))]
                 : null,
           ),
           child: done
               ? const Icon(Icons.check, size: 15, color: Colors.white)
               : Center(
                   child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: p.textMuted),
+                    width: active ? 9 : 7,
+                    height: active ? 9 : 7,
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: active ? AstraPalette.success : p.textMuted),
                   ),
                 ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: ui(size: 9.5, weight: FontWeight.w700, color: done ? p.textSecondary : p.textMuted)),
+        Text(label, style: ui(size: 9.5, weight: FontWeight.w700, color: done ? p.textSecondary : (active ? AstraPalette.success : p.textMuted))),
       ],
     );
   }
