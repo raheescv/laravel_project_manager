@@ -13,8 +13,10 @@ import '../../theme/palette.dart';
 import '../../theme/theme.dart';
 import '../../widgets/astra_widgets.dart';
 import '../auth/connection_sheet.dart';
+import 'appearance_sheet.dart';
 import 'branch_sheet.dart';
 import 'currency_sheet.dart';
+import 'theme_sheet.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -38,26 +40,10 @@ class SettingsScreen extends StatelessWidget {
                 child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
                 children: [
-                  Row(
-                    children: [
-                      IconChip(icon: Icons.palette_outlined, size: 26, radius: 8),
-                      const SizedBox(width: 9),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Colour preset', style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-                          Text('Re-skins the whole app instantly',
-                              style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-                        ],
-                      ),
-                    ],
-                  ),
+                  _presetCard(context, theme),
                   const SizedBox(height: 11),
-                  for (final preset in AstraPresets.all) ...[
-                    _presetRow(context, preset, preset.id == theme.palette.id),
-                    const SizedBox(height: 9),
-                  ],
-                  const SizedBox(height: 8),
+                  _appearanceCard(context, theme),
+                  const SizedBox(height: 11),
                   _currencyCard(context, currency),
                   const SizedBox(height: 11),
                   _branchCard(context, branch),
@@ -112,65 +98,84 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _presetRow(BuildContext context, AstraPalette preset, bool active) {
+  Widget _presetCard(BuildContext context, ThemeController theme) {
     final p = context.astra;
-    final t = context.astraTheme;
-    return GestureDetector(
-      onTap: () => context.read<ThemeController>().setPreset(preset),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: t.softShadow,
-          border: Border.all(color: active ? p.primary : Colors.transparent, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 24.0 + 15 * 3,
-              height: 24,
-              child: Stack(
-                children: [
-                  for (var i = 0; i < preset.swatch.length; i++)
-                    Positioned(
-                      left: i * 15.0,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: preset.swatch[i],
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
+    final preset = theme.preset;
+    return AstraCard(
+      radius: 14,
+      onTap: () => showThemeSheet(context),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 18.0 + 12 * 3,
+            height: 34,
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: [
+                for (var i = 0; i < preset.swatch.length; i++)
+                  Positioned(
+                    left: i * 12.0,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: preset.swatch[i],
+                        shape: BoxShape.circle,
+                        border: Border.all(color: p.cardSolid, width: 2),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(preset.name, style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
-                  const SizedBox(height: 1),
-                  Text(preset.tagline, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-                ],
-              ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Colour preset', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text('${preset.name} · ${preset.tagline}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
             ),
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: active ? p.primaryGradient : null,
-                border: active ? null : Border.all(color: p.hairline, width: 1.5),
-              ),
-              child: active ? const Icon(Icons.check, size: 13, color: Colors.white) : null,
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _appearanceCard(BuildContext context, ThemeController theme) {
+    final p = context.astra;
+    final mode = theme.mode;
+    final icon = switch (mode) {
+      AstraMode.light => Icons.light_mode_outlined,
+      AstraMode.dark => Icons.dark_mode_outlined,
+      AstraMode.system => Icons.brightness_auto_outlined,
+    };
+    final subtitle = mode == AstraMode.system
+        ? 'System · ${theme.isDark ? 'Dark' : 'Light'}'
+        : mode.label;
+    return AstraCard(
+      radius: 14,
+      onTap: () => showAppearanceSheet(context),
+      child: Row(
+        children: [
+          IconChip(icon: icon, size: 34, radius: 9, bg: p.tint),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Appearance', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
             ),
-          ],
-        ),
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+        ],
       ),
     );
   }

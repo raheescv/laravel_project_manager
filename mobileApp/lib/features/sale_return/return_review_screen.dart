@@ -7,20 +7,23 @@ import '../../core/api_service.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
-import '../../state/cart_controller.dart';
+import '../../state/cart_controller.dart' show PayMode, PayModeX;
+import '../../state/return_draft_controller.dart';
 import '../../theme/palette.dart';
 import '../../theme/theme.dart';
 import '../../widgets/astra_widgets.dart';
 import '../../widgets/invo_logo.dart';
-import 'custom_payment_sheet.dart';
+import '../sale/custom_payment_sheet.dart';
 
-class ReviewPayScreen extends StatefulWidget {
-  const ReviewPayScreen({super.key});
+/// Step 3 of a return: pick how the refund is issued and confirm. Mirrors the
+/// Review & Pay screen (refund-method selector, live balance, confirm CTA).
+class ReturnReviewScreen extends StatefulWidget {
+  const ReturnReviewScreen({super.key});
   @override
-  State<ReviewPayScreen> createState() => _ReviewPayScreenState();
+  State<ReturnReviewScreen> createState() => _ReturnReviewScreenState();
 }
 
-class _ReviewPayScreenState extends State<ReviewPayScreen> {
+class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
   bool _busy = false;
   List<PaymentMethod> _methods = [];
 
@@ -30,35 +33,33 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     _loadMethods();
   }
 
-  /// Best-effort fetch of the configured payment methods for the custom split.
-  /// A failure here is non-fatal — Cash/Card/Credit still work without it.
   Future<void> _loadMethods() async {
     try {
       final methods = await context.read<ApiService>().paymentMethods();
       if (mounted) setState(() => _methods = methods);
     } catch (_) {
-      // Leave _methods empty; the custom sheet surfaces the "none configured" state.
+      // Cash/Card/Credit still work without the configured list.
     }
   }
 
-  Future<void> _charge() async {
-    final cart = context.read<CartController>();
+  Future<void> _refund() async {
+    final draft = context.read<ReturnDraftController>();
     final service = context.read<ApiService>();
     setState(() => _busy = true);
     try {
-      final sale = await service.createSale(cart.toPayload());
-      cart.clear();
-      if (mounted) context.pushReplacement('/invoice', extra: sale);
+      final saleReturn = await service.createSaleReturn(draft.toPayload());
+      draft.clear();
+      if (mounted) context.pushReplacement('/return-receipt', extra: saleReturn);
     } on ApiException catch (e) {
       _error(e.message);
     } catch (e) {
-      _error('Could not save the sale. Please try again.');
+      _error('Could not save the return. Please try again.');
     }
     if (mounted) setState(() => _busy = false);
   }
 
   Future<void> _openCustom() async {
-    final cart = context.read<CartController>();
+    final draft = context.read<ReturnDraftController>();
     if (_methods.isEmpty) {
       await _loadMethods();
       if (_methods.isEmpty) {
@@ -69,12 +70,12 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     if (!mounted) return;
     final result = await showCustomPaymentSheet(
       context,
-      total: cart.total,
+      total: draft.total,
       methods: _methods,
-      initial: cart.customPayments,
+      initial: draft.customPayments,
     );
     if (result != null && result.isNotEmpty) {
-      cart.setCustomPayments(result);
+      draft.setCustomPayments(result);
     }
   }
 
@@ -87,16 +88,19 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.watch<CartController>();
-    final settled = cart.balance.abs() < 0.001;
+    final draft = context.watch<ReturnDraftController>();
+    final settled = draft.balance.abs() < 0.001;
 
     return Scaffold(
       body: AstraBackground(
         child: Column(
           children: [
             EmeraldHeader(
-              leading: HeaderIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
-              title: 'Review & Pay',
+              leading: HeaderIconButton(
+                icon: Icons.chevron_left,
+                onTap: () => context.canPop() ? context.pop() : context.go('/sales-returns'),
+              ),
+              title: 'Review & Refund',
             ),
             Expanded(
               child: MaxWidthBox(
@@ -104,15 +108,13 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 13, 16, 130),
                   children: [
-                    _receiptCard(cart),
+                    _receiptCard(draft),
                     const SizedBox(height: 16),
-                    _tipSelector(cart),
+                    _refundSection(draft),
                     const SizedBox(height: 16),
-                    _paymentSection(cart),
-                    const SizedBox(height: 16),
-                    _summaryCard(cart),
+                    _summaryCard(draft),
                     const SizedBox(height: 12),
-                    _statusCard(cart),
+                    _statusCard(draft),
                   ],
                 ),
               ),
@@ -126,10 +128,10 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
             child: AstraButton(
-              label: settled ? 'Charge ${Money.of(cart.total)}' : 'Submit Anyway',
+              label: settled ? 'Refund ${Money.of(draft.total)}' : 'Confirm Anyway',
               gold: true,
               busy: _busy,
-              onTap: cart.isEmpty ? null : _charge,
+              onTap: draft.isEmpty ? null : _refund,
             ),
           ),
         ),
@@ -137,7 +139,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  Widget _receiptCard(CartController cart) {
+  Widget _receiptCard(ReturnDraftController draft) {
     final p = context.astra;
     return AstraCard(
       child: Column(
@@ -146,14 +148,14 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
             children: [
               const InvoLogomark(height: 28),
               const SizedBox(height: 6),
-              Text('INVO', style: ui(size: 11, weight: FontWeight.w700, color: p.ink, letterSpacing: 4)),
+              Text('REFUND', style: ui(size: 11, weight: FontWeight.w700, color: p.ink, letterSpacing: 4)),
               const SizedBox(height: 3),
-              Text('${cart.customerName} · ${cart.stylistName.isEmpty ? 'Me' : cart.stylistName}',
+              Text('${draft.customerName} · against ${draft.invoiceNo}',
                   style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
             ],
           ),
           _dashed(p),
-          for (final l in cart.lines)
+          for (final l in draft.returningLines)
             Padding(
               padding: const EdgeInsets.only(bottom: 9),
               child: Row(
@@ -161,7 +163,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                     decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(6)),
-                    child: Text('${l.qty.toStringAsFixed(l.qty % 1 == 0 ? 0 : 1)}×',
+                    child: Text('${l.returnQty.toStringAsFixed(l.returnQty % 1 == 0 ? 0 : 1)}×',
                         style: ui(size: 10.5, weight: FontWeight.w800, color: p.primaryDark)),
                   ),
                   const SizedBox(width: 8),
@@ -171,16 +173,15 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
               ),
             ),
           _dashed(p),
-          _row('Subtotal', Money.of(cart.subtotal), p.textSecondary),
-          if (cart.totalDiscount > 0) _row('Discount', '− ${Money.of(cart.totalDiscount)}', p.goldText),
-          _row('Tax', Money.of(cart.taxTotal), p.textSecondary),
-          if (cart.tipAmount > 0) _row('Tip (${cart.tipPercent.toStringAsFixed(0)}%)', Money.of(cart.tipAmount), p.textSecondary),
+          _row('Subtotal', Money.of(draft.subtotal), p.textSecondary),
+          if (draft.totalDiscount > 0) _row('Discount', '− ${Money.of(draft.totalDiscount)}', p.goldText),
+          if (draft.taxTotal > 0) _row('Tax', Money.of(draft.taxTotal), p.textSecondary),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total', style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-              Text(Money.of(cart.total), style: serif(size: 19, color: p.ink)),
+              Text('Refund total', style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
+              Text(Money.of(draft.total), style: serif(size: 19, color: p.ink)),
             ],
           ),
         ],
@@ -188,83 +189,39 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  Widget _tipSelector(CartController cart) {
-    final p = context.astra;
-    final tips = [0.0, 10.0, 15.0, 20.0];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('ADD A TIP', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-        const SizedBox(height: 7),
-        Row(
-          children: [
-            for (final tip in tips) ...[
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => cart.setTip(tip),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      gradient: cart.tipPercent == tip ? p.primaryGradient : null,
-                      color: cart.tipPercent == tip ? null : p.card,
-                      borderRadius: BorderRadius.circular(11),
-                      boxShadow: context.astraTheme.softShadow,
-                    ),
-                    child: Text(tip == 0 ? 'None' : '${tip.toStringAsFixed(0)}%',
-                        style: ui(size: 11.5, weight: FontWeight.w800, color: cart.tipPercent == tip ? Colors.white : p.textSecondary)),
-                  ),
-                ),
-              ),
-              if (tip != tips.last) const SizedBox(width: 7),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
+  // ---- Refund method (Cash / Card / Credit / Custom) ----
 
-  // ---- Payment method (Cash / Card / Credit / Custom) + WhatsApp toggle ----
-
-  Widget _paymentSection(CartController cart) {
+  Widget _refundSection(ReturnDraftController draft) {
     final p = context.astra;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text('PAYMENT METHOD',
-                  style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-            ),
-            // _whatsappToggle(cart),
-          ],
-        ),
+        Text('REFUND VIA', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
         const SizedBox(height: 8),
         Row(
           children: [
-            _method(cart, PayMode.cash, Icons.payments_outlined),
+            _method(draft, PayMode.cash, Icons.payments_outlined),
             const SizedBox(width: 8),
-            _method(cart, PayMode.card, Icons.credit_card),
+            _method(draft, PayMode.card, Icons.credit_card),
             const SizedBox(width: 8),
-            _method(cart, PayMode.credit, Icons.description_outlined),
+            _method(draft, PayMode.credit, Icons.description_outlined),
             const SizedBox(width: 8),
-            _method(cart, PayMode.custom, Icons.tune),
+            _method(draft, PayMode.custom, Icons.tune),
           ],
         ),
       ],
     );
   }
 
-  Widget _method(CartController cart, PayMode mode, IconData icon) {
+  Widget _method(ReturnDraftController draft, PayMode mode, IconData icon) {
     final p = context.astra;
-    final active = cart.payMode == mode;
+    final active = draft.payMode == mode;
     final isCustom = mode == PayMode.custom;
-    final count = cart.customPayments.length;
+    final count = draft.customPayments.length;
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => isCustom ? _openCustom() : cart.setPayMode(mode),
+        onTap: () => isCustom ? _openCustom() : draft.setPayMode(mode),
         child: Container(
           height: 64,
           alignment: Alignment.center,
@@ -287,12 +244,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
                   ),
                 ],
               ),
-              if (active)
-                Positioned(
-                  top: 4,
-                  right: 5,
-                  child: Icon(Icons.check_circle, size: 13, color: p.accent),
-                ),
+              if (active) Positioned(top: 4, right: 5, child: Icon(Icons.check_circle, size: 13, color: p.accent)),
               if (isCustom && !active && count > 0)
                 Positioned(
                   top: 4,
@@ -312,52 +264,24 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  Widget _whatsappToggle(CartController cart) {
-    final p = context.astra;
-    final on = cart.sendToWhatsapp;
-    return GestureDetector(
-      onTap: () => cart.setSendToWhatsapp(!on),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          color: on ? p.successTint : p.card,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: on ? AstraPalette.success.withValues(alpha: 0.5) : p.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(on ? Icons.check_box : Icons.check_box_outline_blank,
-                size: 14, color: on ? AstraPalette.success : p.textMuted),
-            const SizedBox(width: 5),
-            const Icon(Icons.chat_bubble, size: 12, color: AstraPalette.success),
-            const SizedBox(width: 4),
-            Text('WhatsApp',
-                style: ui(size: 10.5, weight: FontWeight.w700, color: on ? AstraPalette.success : p.textSecondary)),
-          ],
-        ),
-      ),
-    );
-  }
+  // ---- Transaction summary ----
 
-  // ---- Transaction summary (Grand Total / Paid / Balance) ----
-
-  Widget _summaryCard(CartController cart) {
+  Widget _summaryCard(ReturnDraftController draft) {
     final p = context.astra;
-    final bal = cart.balance;
+    final bal = draft.balance;
     final ({Color color, IconData icon, String label}) status = bal.abs() < 0.001
         ? (color: AstraPalette.success, icon: Icons.check_circle, label: 'Balance')
         : bal > 0
-            ? (color: AstraPalette.danger, icon: Icons.warning_amber_rounded, label: 'Remaining Balance')
-            : (color: const Color(0xFFE08A2B), icon: Icons.south, label: 'Overpaid Amount');
+            ? (color: const Color(0xFFE08A2B), icon: Icons.timelapse, label: 'Pending Refund')
+            : (color: AstraPalette.danger, icon: Icons.warning_amber_rounded, label: 'Over Refunded');
 
     return AstraCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Column(
         children: [
-          _sumRow('Grand Total', Money.of(cart.total), p.primary, p),
+          _sumRow('Refund Total', Money.of(draft.total), p.primary, p),
           Divider(height: 14, color: p.hairline),
-          _sumRow('Paid Amount', Money.of(cart.paidAmount), p.ink, p),
+          _sumRow('Refunding', Money.of(draft.refundAmount), p.ink, p),
           Divider(height: 14, color: p.hairline),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -385,21 +309,21 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         ],
       );
 
-  // ---- "Ready to submit" status card ----
+  // ---- "Ready to refund" status card ----
 
-  Widget _statusCard(CartController cart) {
+  Widget _statusCard(ReturnDraftController draft) {
     final p = context.astra;
-    final bal = cart.balance;
+    final bal = draft.balance;
     final settled = bal.abs() < 0.001;
 
     final (Color tint, Color color, IconData icon, String title, String desc) = settled
-        ? (p.successTint, AstraPalette.success, Icons.check_circle, 'Ready to Submit', 'Transaction is fully paid and ready to submit')
+        ? (p.successTint, AstraPalette.success, Icons.check_circle, 'Ready to Refund', 'The full amount will be returned to the customer')
         : bal > 0
-            ? (p.warnTint, p.warnText, Icons.warning_amber_rounded, 'Partial Payment', 'Transaction has a remaining balance')
-            : (p.tint, p.primaryDark, Icons.south, 'Overpaid Transaction', 'Transaction amount exceeds payment');
+            ? (p.warnTint, p.warnText, Icons.timelapse, 'Partial Refund', 'Part of the return amount is still pending')
+            : (p.dangerTint, AstraPalette.danger, Icons.warning_amber_rounded, 'Over Refunded', 'The refund exceeds the return total');
 
     return GestureDetector(
-      onTap: settled && !_busy ? _charge : null,
+      onTap: settled && !_busy ? _refund : null,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
@@ -422,7 +346,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
             Text(desc, textAlign: TextAlign.center, style: ui(size: 11, weight: FontWeight.w600, color: color.withValues(alpha: 0.85))),
             if (settled && !_busy) ...[
               const SizedBox(height: 5),
-              Text('Tap to submit', style: ui(size: 10.5, weight: FontWeight.w700, color: color.withValues(alpha: 0.7))),
+              Text('Tap to confirm', style: ui(size: 10.5, weight: FontWeight.w700, color: color.withValues(alpha: 0.7))),
             ],
           ],
         ),

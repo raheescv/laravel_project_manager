@@ -13,6 +13,8 @@ class ApiUser {
     required this.branchId,
     required this.daySessionStatus,
     required this.daySessionDate,
+    this.daySessionOpenedAt = '',
+    this.lastClosedSessionAt = '',
   });
 
   final String id;
@@ -25,6 +27,8 @@ class ApiUser {
   final String? branchId;
   final String daySessionStatus; // open | closed
   final String daySessionDate;
+  final String daySessionOpenedAt; // 'Y-m-d H:i:s' while a day is open, else ''
+  final String lastClosedSessionAt; // 'Y-m-d H:i:s' of the most recent close, else ''
 
   bool get dayOpen => daySessionStatus == 'open';
 
@@ -39,6 +43,8 @@ class ApiUser {
         branchId: j['branch_id']?.toString(),
         daySessionStatus: asStr(j['sale_day_session_status']),
         daySessionDate: asStr(j['sale_day_session_date']),
+        daySessionOpenedAt: asStr(j['sale_day_session_opened_at']),
+        lastClosedSessionAt: asStr(j['last_closed_session_at']),
       );
 
   Map<String, dynamic> toJson() => {
@@ -52,9 +58,96 @@ class ApiUser {
         'branch_id': branchId,
         'sale_day_session_status': daySessionStatus,
         'sale_day_session_date': daySessionDate,
+        'sale_day_session_opened_at': daySessionOpenedAt,
+        'last_closed_session_at': lastClosedSessionAt,
       };
 
+  /// Returns a copy with the day-session fields replaced — used after a
+  /// successful open/close so the profile row and dashboard pill update live.
+  ApiUser copyWith({
+    String? daySessionStatus,
+    String? daySessionDate,
+    String? daySessionOpenedAt,
+    String? lastClosedSessionAt,
+  }) =>
+      ApiUser(
+        id: id,
+        name: name,
+        code: code,
+        email: email,
+        mobile: mobile,
+        isAdmin: isAdmin,
+        designation: designation,
+        branchId: branchId,
+        daySessionStatus: daySessionStatus ?? this.daySessionStatus,
+        daySessionDate: daySessionDate ?? this.daySessionDate,
+        daySessionOpenedAt: daySessionOpenedAt ?? this.daySessionOpenedAt,
+        lastClosedSessionAt: lastClosedSessionAt ?? this.lastClosedSessionAt,
+      );
+
   String get initial => name.isNotEmpty ? name[0].toUpperCase() : '?';
+}
+
+/// One branch sale-day session (Laravel `DaySessionResource`). Returned by the
+/// open/close toggle; amounts are nullable until a closing/expected value is set.
+class DaySession {
+  DaySession({
+    required this.id,
+    required this.branch,
+    required this.status,
+    required this.openedAt,
+    required this.closedAt,
+    required this.openedBy,
+    required this.closedBy,
+    required this.openingAmount,
+    required this.closingAmount,
+    required this.expectedAmount,
+  });
+
+  final String id;
+  final String branch;
+  final String status; // open | closed
+  final String openedAt; // ISO datetime
+  final String closedAt; // ISO datetime ('' while open)
+  final String openedBy;
+  final String closedBy;
+  final double openingAmount;
+  final double? closingAmount;
+  final double? expectedAmount;
+
+  bool get isOpen => status == 'open';
+
+  factory DaySession.fromJson(Map<String, dynamic> j) => DaySession(
+        id: asStr(j['id']),
+        branch: asStr(j['branch']),
+        status: asStr(j['status']),
+        openedAt: asStr(j['opened_at']),
+        closedAt: asStr(j['closed_at']),
+        openedBy: asStr(j['opened_by']),
+        closedBy: asStr(j['closed_by']),
+        openingAmount: asNum(j['opening_amount']).toDouble(),
+        closingAmount: j['closing_amount'] == null ? null : asNum(j['closing_amount']).toDouble(),
+        expectedAmount: j['expected_amount'] == null ? null : asNum(j['expected_amount']).toDouble(),
+      );
+}
+
+/// The envelope returned by `POST /admin/day-status` — a message, the resulting
+/// `status`, and the affected [session].
+class DaySessionToggleResult {
+  DaySessionToggleResult({required this.message, required this.status, required this.session});
+  final String message;
+  final String status; // open | closed (the new state)
+  final DaySession? session;
+
+  bool get isOpen => status == 'open';
+
+  factory DaySessionToggleResult.fromJson(Map<String, dynamic> j) => DaySessionToggleResult(
+        message: asStr(j['message']),
+        status: asStr(j['status']),
+        session: j['session'] is Map
+            ? DaySession.fromJson(Map<String, dynamic>.from(j['session']))
+            : null,
+      );
 }
 
 class Branch {
@@ -329,6 +422,245 @@ class Sale {
       taxAmount: asNum(summary['tax_amount']).toDouble(),
       paid: asNum(summary['paid']).toDouble(),
       createdBy: asStr(j['created_by']),
+    );
+  }
+}
+
+// ---- Sale Return (SaleReturnResource) ----
+
+/// One line on a saved sale return — mirrors [SaleLine].
+class SaleReturnLine {
+  SaleReturnLine({
+    required this.name,
+    required this.nameArabic,
+    required this.type,
+    required this.employee,
+    required this.quantity,
+    required this.unitPrice,
+    required this.discount,
+    required this.total,
+  });
+  final String name;
+  final String nameArabic;
+  final String type;
+  final String employee;
+  final double quantity;
+  final double unitPrice;
+  final double discount;
+  final double total;
+
+  factory SaleReturnLine.fromJson(Map<String, dynamic> j) => SaleReturnLine(
+        name: asStr(j['name']),
+        nameArabic: asStr(j['name_arabic']),
+        type: asStr(j['type']),
+        employee: asStr(j['employee']),
+        quantity: asNum(j['quantity']).toDouble(),
+        unitPrice: asNum(j['unit_price']).toDouble(),
+        discount: asNum(j['discount']).toDouble(),
+        total: asNum(j['total']).toDouble(),
+      );
+}
+
+/// A refund payment on a saved sale return — mirrors [SalePayment].
+class SaleReturnPayment {
+  SaleReturnPayment({required this.method, required this.amount});
+  final String method;
+  final double amount;
+  factory SaleReturnPayment.fromJson(Map<String, dynamic> j) =>
+      SaleReturnPayment(method: asStr(j['method']), amount: asNum(j['amount']).toDouble());
+}
+
+/// A saved sale return (SaleReturnResource). Mirrors [Sale]; sale returns have
+/// no invoice_no, so [referenceNo] carries the document number.
+class SaleReturn {
+  SaleReturn({
+    required this.id,
+    required this.referenceNo,
+    required this.date,
+    required this.status,
+    required this.branch,
+    required this.customerName,
+    required this.customerMobile,
+    required this.lines,
+    required this.payments,
+    required this.grossAmount,
+    required this.itemDiscount,
+    required this.otherDiscount,
+    required this.taxAmount,
+    required this.total,
+    required this.grandTotal,
+    required this.paid,
+    required this.createdBy,
+  });
+
+  final String id;
+  final String referenceNo;
+  final String date;
+  final String status;
+  final String branch;
+  final String customerName;
+  final String customerMobile;
+  final List<SaleReturnLine> lines;
+  final List<SaleReturnPayment> payments;
+  final double grossAmount;
+  final double itemDiscount;
+  final double otherDiscount;
+  final double taxAmount;
+  final double total;
+  final double grandTotal;
+  final double paid;
+  final String createdBy;
+
+  double get discount => itemDiscount + otherDiscount;
+
+  factory SaleReturn.fromJson(Map<String, dynamic> j) {
+    final customer = (j['customer'] as Map?) ?? const {};
+    final summary = (j['summary'] as Map?) ?? const {};
+    return SaleReturn(
+      id: asStr(j['id']),
+      referenceNo: asStr(j['reference_no']),
+      date: asStr(j['date']),
+      status: asStr(j['status']),
+      branch: asStr(j['branch']),
+      customerName: asStr(customer['name']),
+      customerMobile: asStr(customer['mobile']),
+      lines: ((j['items'] as List?) ?? const [])
+          .map((e) => SaleReturnLine.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      payments: ((j['payments'] as List?) ?? const [])
+          .map((e) => SaleReturnPayment.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      grossAmount: asNum(summary['gross_amount']).toDouble(),
+      itemDiscount: asNum(summary['item_discount']).toDouble(),
+      otherDiscount: asNum(summary['other_discount']).toDouble(),
+      taxAmount: asNum(summary['tax_amount']).toDouble(),
+      total: asNum(summary['total']).toDouble(),
+      grandTotal: asNum(summary['grand_total']).toDouble(),
+      paid: asNum(summary['paid']).toDouble(),
+      createdBy: asStr(j['created_by']),
+    );
+  }
+}
+
+/// A page of sale returns plus the full-set totals — mirrors [SalesPage].
+class SaleReturnsPage {
+  SaleReturnsPage({
+    required this.rows,
+    required this.total,
+    required this.totalPaid,
+    this.currentPage = 1,
+    this.lastPage = 1,
+  });
+  final List<Map<String, dynamic>> rows;
+  final int total;
+  final double totalPaid;
+  final int currentPage;
+  final int lastPage;
+
+  bool get hasMore => currentPage < lastPage;
+}
+
+/// One returnable line of a sale (ReturnableSaleResource). Carries the source
+/// `sale_item_id` and the remaining returnable quantity so the New Return screen
+/// can cap each line's stepper.
+class ReturnableSaleLine {
+  ReturnableSaleLine({
+    required this.saleItemId,
+    required this.productId,
+    required this.inventoryId,
+    required this.unitId,
+    required this.conversionFactor,
+    required this.name,
+    required this.nameArabic,
+    required this.type,
+    required this.employee,
+    required this.employeeId,
+    required this.unitPrice,
+    required this.discount,
+    required this.tax,
+    required this.soldQuantity,
+    required this.returnedQuantity,
+    required this.returnableQuantity,
+  });
+
+  final int saleItemId;
+  final int productId;
+  final int inventoryId;
+  final int unitId;
+  final double conversionFactor;
+  final String name;
+  final String nameArabic;
+  final String type;
+  final String employee;
+  final int? employeeId;
+  final double unitPrice;
+  final double discount;
+  final double tax;
+  final double soldQuantity;
+  final double returnedQuantity;
+  final double returnableQuantity;
+
+  factory ReturnableSaleLine.fromJson(Map<String, dynamic> j) => ReturnableSaleLine(
+        saleItemId: asNum(j['sale_item_id']).toInt(),
+        productId: asNum(j['product_id']).toInt(),
+        inventoryId: asNum(j['inventory_id']).toInt(),
+        unitId: asNum(j['unit_id']).toInt(),
+        conversionFactor: asNum(j['conversion_factor']).toDouble(),
+        name: asStr(j['name']),
+        nameArabic: asStr(j['name_arabic']),
+        type: asStr(j['type']),
+        employee: asStr(j['employee']),
+        employeeId: j['employee_id'] == null ? null : asNum(j['employee_id']).toInt(),
+        unitPrice: asNum(j['unit_price']).toDouble(),
+        discount: asNum(j['discount']).toDouble(),
+        tax: asNum(j['tax']).toDouble(),
+        soldQuantity: asNum(j['sold_quantity']).toDouble(),
+        returnedQuantity: asNum(j['returned_quantity']).toDouble(),
+        returnableQuantity: asNum(j['returnable_quantity']).toDouble(),
+      );
+}
+
+/// A sale presented for return (ReturnableSaleResource) — seeds the return draft.
+class ReturnableSale {
+  ReturnableSale({
+    required this.saleId,
+    required this.invoiceNo,
+    required this.referenceNo,
+    required this.date,
+    required this.status,
+    required this.branch,
+    required this.accountId,
+    required this.customerName,
+    required this.customerMobile,
+    required this.lines,
+  });
+
+  final String saleId;
+  final String invoiceNo;
+  final String referenceNo;
+  final String date;
+  final String status;
+  final String branch;
+  final int? accountId;
+  final String customerName;
+  final String customerMobile;
+  final List<ReturnableSaleLine> lines;
+
+  factory ReturnableSale.fromJson(Map<String, dynamic> j) {
+    final customer = (j['customer'] as Map?) ?? const {};
+    return ReturnableSale(
+      saleId: asStr(j['sale_id']),
+      invoiceNo: asStr(j['invoice_no']),
+      referenceNo: asStr(j['reference_no']),
+      date: asStr(j['date']),
+      status: asStr(j['status']),
+      branch: asStr(j['branch']),
+      accountId: j['account_id'] == null ? null : asNum(j['account_id']).toInt(),
+      customerName: asStr(customer['name']),
+      customerMobile: asStr(customer['mobile']),
+      lines: ((j['items'] as List?) ?? const [])
+          .map((e) => ReturnableSaleLine.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
     );
   }
 }

@@ -140,6 +140,26 @@ class AuthController extends ChangeNotifier {
     return success ? null : (error ?? 'Saved credential no longer valid. Please sign in again.');
   }
 
+  /// Reflect a day open/close into the cached [user] so the profile row and the
+  /// dashboard pill update without a re-login. Persists the updated user blob.
+  Future<void> syncDaySession({
+    required String status,
+    String? openedAt,
+    String? date,
+    String? lastClosedAt,
+  }) async {
+    final u = user;
+    if (u == null) return;
+    user = u.copyWith(
+      daySessionStatus: status,
+      daySessionDate: date,
+      daySessionOpenedAt: status == 'open' ? (openedAt ?? u.daySessionOpenedAt) : '',
+      lastClosedSessionAt: lastClosedAt,
+    );
+    notifyListeners();
+    await storage.setUserJson(jsonEncode(user!.toJson()));
+  }
+
   Future<void> logout() async {
     try {
       await service.logout();

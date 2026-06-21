@@ -335,7 +335,7 @@ class _CustomPaymentSheetState extends State<_CustomPaymentSheet> {
                       child: Container(
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
-                          color: AstraPalette.dangerTint,
+                          color: p.dangerTint,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.delete_outline, size: 15, color: AstraPalette.danger),
@@ -395,7 +395,7 @@ class _CustomPaymentSheetState extends State<_CustomPaymentSheet> {
   Widget _errorBox(AstraPalette p, String message) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
         decoration: BoxDecoration(
-          color: AstraPalette.dangerTint,
+          color: p.dangerTint,
           borderRadius: BorderRadius.circular(11),
         ),
         child: Row(

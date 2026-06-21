@@ -76,7 +76,7 @@ class _EditLineSheetState extends State<_EditLineSheet> {
           children: [
             Center(
               child: Container(width: 42, height: 5,
-                  decoration: BoxDecoration(color: const Color(0xFFDCD6C7), borderRadius: BorderRadius.circular(3))),
+                  decoration: BoxDecoration(color: p.hairline, borderRadius: BorderRadius.circular(3))),
             ),
             const SizedBox(height: 14),
             Row(

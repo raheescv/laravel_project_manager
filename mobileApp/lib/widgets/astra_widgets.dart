@@ -29,22 +29,25 @@ class AstraBackground extends StatelessWidget {
 
     switch (p.skin) {
       case AstraSkin.glass:
+        final dark = p.isDark;
         return Stack(
           children: [
-            const Positioned.fill(
+            Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFFEAF0FF), Color(0xFFF4F6FE)],
+                    colors: dark
+                        ? const [Color(0xFF0B0E1C), Color(0xFF11142A)]
+                        : const [Color(0xFFEAF0FF), Color(0xFFF4F6FE)],
                   ),
                 ),
               ),
             ),
-            Positioned(left: -70, top: -50, child: _blob(const Color(0xFF6366F1), 280, 0.45)),
-            Positioned(right: -60, top: 20, child: _blob(const Color(0xFF22D3EE), 240, 0.40)),
-            Positioned(right: -40, bottom: 150, child: _blob(const Color(0xFFA78BFA), 260, 0.38)),
+            Positioned(left: -70, top: -50, child: _blob(const Color(0xFF6366F1), 280, dark ? 0.32 : 0.45)),
+            Positioned(right: -60, top: 20, child: _blob(const Color(0xFF22D3EE), 240, dark ? 0.26 : 0.40)),
+            Positioned(right: -40, bottom: 150, child: _blob(const Color(0xFFA78BFA), 260, dark ? 0.26 : 0.38)),
             Positioned.fill(child: child),
           ],
         );

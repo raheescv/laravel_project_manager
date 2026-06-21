@@ -19,9 +19,11 @@ import 'package:invo/features/shell/home_shell.dart';
 import 'package:invo/models/models.dart';
 import 'package:invo/state/admin_controller.dart';
 import 'package:invo/state/auth_controller.dart';
+import 'package:invo/state/branch_controller.dart';
 import 'package:invo/state/cart_controller.dart';
 import 'package:invo/state/catalog_controller.dart';
 import 'package:invo/state/currency_controller.dart';
+import 'package:invo/state/print_settings_controller.dart';
 import 'package:invo/state/theme_controller.dart';
 import 'package:invo/theme/palette.dart';
 import 'package:invo/theme/theme.dart';
@@ -72,7 +74,15 @@ class FakeApiService extends ApiService {
       );
 
   @override
-  Future<Map<String, dynamic>> report({required String type, String? startDate, String? endDate}) async => {
+  Future<Map<String, dynamic>> report({
+    required String type,
+    String? startDate,
+    String? endDate,
+    int? page,
+    int? perPage,
+    String? sort,
+  }) async =>
+      {
         'rows': type == 'employeewise'
             ? [
                 {'employee_name': 'Maya Chen', 'bills_count': 94, 'items_count': 120, 'revenue': 2540},
@@ -85,16 +95,40 @@ class FakeApiService extends ApiService {
       };
 
   @override
-  Future<List<Map<String, dynamic>>> sales({String? status, bool mineOnly = false}) async => [
-        {'id': '1', 'invoice_no': '#1042', 'customer_name': 'Walk-in', 'date': '2026-06-14', 'paid': 248.4, 'status': 'completed'},
-        {'id': '2', 'invoice_no': '#1041', 'customer_name': 'A. Rivera', 'date': '2026-06-13', 'paid': 92.0, 'status': 'completed'},
-      ];
+  Future<SalesPage> sales({
+    String? status,
+    String? search,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy = 'date',
+    String sortDirection = 'desc',
+    bool mineOnly = false,
+    int page = 1,
+    int perPage = 30,
+  }) async =>
+      SalesPage(
+        rows: [
+          {'id': '1', 'invoice_no': '#1042', 'customer_name': 'Walk-in', 'date': '2026-06-14', 'paid': 248.4, 'status': 'completed'},
+          {'id': '2', 'invoice_no': '#1041', 'customer_name': 'A. Rivera', 'date': '2026-06-13', 'paid': 92.0, 'status': 'completed'},
+        ],
+        total: 2,
+        totalPaid: 340.4,
+        currentPage: 1,
+        lastPage: 1,
+      );
 
   @override
   Future<List<PaymentMethod>> paymentMethods() async => [
         PaymentMethod(id: 1, name: 'Cash'),
         PaymentMethod(id: 2, name: 'Card'),
         PaymentMethod(id: 3, name: 'Bank Transfer'),
+      ];
+
+  @override
+  Future<List<Branch>> branches() async => [
+        Branch(id: 3, name: 'Downtown', location: 'Downtown', code: 'DT-03'),
+        Branch(id: 4, name: 'Uptown', location: 'Uptown', code: 'UP-04'),
       ];
 }
 
@@ -105,6 +139,8 @@ class Deps {
   late ThemeController theme;
   late CurrencyController currency;
   late CartController cart;
+  late BranchController branch;
+  late PrintSettingsController printSettings;
 
   Future<void> init({bool admin = false}) async {
     SharedPreferences.setMockInitialValues({});
@@ -120,6 +156,8 @@ class Deps {
     theme = ThemeController(storage);
     currency = CurrencyController(storage);
     cart = CartController();
+    branch = BranchController(service: service, client: client, storage: storage, userBranchId: 3);
+    printSettings = PrintSettingsController(storage);
   }
 
   Widget wrap(Widget child) => MultiProvider(
@@ -130,6 +168,8 @@ class Deps {
           ChangeNotifierProvider<ThemeController>.value(value: theme),
           ChangeNotifierProvider<CurrencyController>.value(value: currency),
           ChangeNotifierProvider<CartController>.value(value: cart),
+          ChangeNotifierProvider<BranchController>.value(value: branch),
+          ChangeNotifierProvider<PrintSettingsController>.value(value: printSettings),
           ChangeNotifierProvider<CatalogController>(create: (_) => CatalogController(service)),
           ChangeNotifierProvider<AdminController>(create: (_) => AdminController(service)),
         ],

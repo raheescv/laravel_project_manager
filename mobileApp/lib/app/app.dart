@@ -10,7 +10,9 @@ import '../state/branch_controller.dart';
 import '../state/cart_controller.dart';
 import '../state/catalog_controller.dart';
 import '../state/currency_controller.dart';
+import '../state/day_session_controller.dart';
 import '../state/print_settings_controller.dart';
+import '../state/return_draft_controller.dart';
 import '../state/stylist_controller.dart';
 import '../state/theme_controller.dart';
 import '../theme/theme.dart';
@@ -55,9 +57,13 @@ class _AstraAppState extends State<AstraApp> {
         ChangeNotifierProvider.value(value: widget.branchController),
         ChangeNotifierProvider.value(value: widget.printSettingsController),
         ChangeNotifierProvider(create: (_) => CartController()),
+        ChangeNotifierProvider(create: (_) => ReturnDraftController()),
         ChangeNotifierProvider(create: (_) => CatalogController(widget.apiService)),
         ChangeNotifierProvider(create: (_) => StylistController(widget.apiService)),
         ChangeNotifierProvider(create: (_) => AdminController(widget.apiService)),
+        ChangeNotifierProvider(
+          create: (_) => DaySessionController(service: widget.apiService, auth: widget.auth),
+        ),
       ],
       // Depend on currency too so a currency change reformats every amount.
       child: Consumer2<ThemeController, CurrencyController>(

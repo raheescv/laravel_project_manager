@@ -90,7 +90,8 @@ class ProfileScreen extends StatelessWidget {
                         _sectionHeader('Work'),
                         _infoRow(context, Icons.location_on_outlined, 'Branch', branchName, trailing: true),
                         _infoRow(context, Icons.event_available_outlined, 'Day status',
-                            user.dayOpen ? 'Open' : 'Closed', trailing: true),
+                            user.dayOpen ? 'Open' : 'Closed',
+                            trailing: true, onTap: () => context.push('/day-session')),
                       ],
                     ),
                   ),
@@ -158,19 +159,26 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(BuildContext context, IconData icon, String label, String value, {bool trailing = false}) {
+  Widget _infoRow(BuildContext context, IconData icon, String label, String value,
+      {bool trailing = false, VoidCallback? onTap}) {
     final p = context.astra;
-    return Container(
+    final row = Container(
       decoration: BoxDecoration(border: Border(top: BorderSide(color: p.hairline))),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
         children: [
           Icon(icon, size: 16, color: p.textMuted),
           const SizedBox(width: 11),
-          Expanded(child: Text(label, style: ui(size: 12.5, weight: FontWeight.w600, color: trailing ? p.ink : p.ink))),
+          Expanded(child: Text(label, style: ui(size: 12.5, weight: FontWeight.w600, color: p.ink))),
           Text(value, style: ui(size: 12, weight: FontWeight.w700, color: trailing ? p.textSecondary : p.ink)),
+          if (onTap != null) ...[
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right, size: 16, color: p.textMuted),
+          ],
         ],
       ),
     );
+    if (onTap == null) return row;
+    return InkWell(onTap: onTap, child: row);
   }
 }

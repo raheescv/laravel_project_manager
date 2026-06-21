@@ -8,12 +8,13 @@ import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../theme/palette.dart';
 import '../../theme/theme.dart';
+import '../../widgets/astra_bottom_nav.dart';
 import '../../widgets/astra_widgets.dart';
 
-class SalesListScreen extends StatefulWidget {
-  const SalesListScreen({super.key});
+class SalesReturnListScreen extends StatefulWidget {
+  const SalesReturnListScreen({super.key});
   @override
-  State<SalesListScreen> createState() => _SalesListScreenState();
+  State<SalesReturnListScreen> createState() => _SalesReturnListScreenState();
 }
 
 /// One sort choice: a label plus the `sort_by` / `sort_direction` the API expects.
@@ -28,12 +29,12 @@ class _SortOption {
 const _sortOptions = <_SortOption>[
   _SortOption('Newest first', 'date', 'desc', Icons.schedule),
   _SortOption('Oldest first', 'date', 'asc', Icons.history),
-  _SortOption('Amount: high to low', 'paid', 'desc', Icons.trending_down),
-  _SortOption('Amount: low to high', 'paid', 'asc', Icons.trending_up),
-  _SortOption('Invoice no', 'invoice_no', 'desc', Icons.tag),
+  _SortOption('Refund: high to low', 'paid', 'desc', Icons.trending_down),
+  _SortOption('Refund: low to high', 'paid', 'asc', Icons.trending_up),
+  _SortOption('Reference no', 'reference_no', 'desc', Icons.tag),
 ];
 
-class _SalesListScreenState extends State<SalesListScreen> {
+class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   bool _loading = true;
   bool _loadingMore = false;
   String? _error;
@@ -53,7 +54,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
   String _sortBy = 'date';
   String _sortDir = 'desc';
 
-  // Date range — preset drives [_startDate]/[_endDate]. Defaults to today.
+  // Date range — preset drives [_startDate]/[_endDate]; defaults to today.
   String _datePreset = 'today'; // today | 7d | 30d | month | custom
   DateTime? _startDate;
   DateTime? _endDate;
@@ -61,9 +62,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
   @override
   void initState() {
     super.initState();
+    // Default the list to today's returns.
     final now = DateTime.now();
-    _startDate = DateTime(now.year, now.month, now.day);
-    _endDate = _startDate;
+    _startDate = _endDate = DateTime(now.year, now.month, now.day);
     _scrollCtl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _load();
@@ -84,7 +85,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     if (pos.pixels >= pos.maxScrollExtent - 500) _loadMore();
   }
 
-  Future<SalesPage> _fetch(int page) => context.read<ApiService>().sales(
+  Future<SaleReturnsPage> _fetch(int page) => context.read<ApiService>().saleReturns(
         status: _status,
         paymentMethodId: _methodId,
         fromDate: _startDate == null ? null : Dates.iso(_startDate!),
@@ -113,7 +114,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
         _lastPage = res.lastPage;
       });
     } catch (e) {
-      if (mounted && req == _reqId) setState(() => _error = 'Could not load sales.');
+      if (mounted && req == _reqId) setState(() => _error = 'Could not load returns.');
     }
     if (mounted && req == _reqId) setState(() => _loading = false);
   }
@@ -146,7 +147,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     try {
       final m = await context.read<ApiService>().paymentMethods();
       if (mounted) setState(() => _methods = m);
-    } catch (_) {/* keep the Sales list usable without the method filter */}
+    } catch (_) {/* keep the list usable without the method filter */}
   }
 
   // ---- filter setters (click-and-go: apply on tap) ----
@@ -196,7 +197,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
       initialDateRange: _startDate != null && _endDate != null
           ? DateTimeRange(start: _startDate!, end: _endDate!)
           : null,
-      helpText: 'Select sales range',
+      helpText: 'Select returns range',
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: (p.isDark ? const ColorScheme.dark() : const ColorScheme.light()).copyWith(
@@ -237,44 +238,43 @@ class _SalesListScreenState extends State<SalesListScreen> {
       .firstWhere((o) => o.by == _sortBy && o.dir == _sortDir, orElse: () => _sortOptions.first)
       .label;
 
+  /// Pop when there's a stack to pop; otherwise fall back to Sales — this screen
+  /// is also reached via `context.go` (from a completed return), which leaves
+  /// nothing to pop.
+  void _back() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/sales');
+    }
+  }
+
+  /// Returns lives under the Sales section, so the bottom-nav tabs re-enter the
+  /// home shell at the tapped section (Sales shows highlighted here).
+  void _onNavTap(int i) => context.go('/home?tab=$i');
+
   @override
   Widget build(BuildContext context) {
-    final sub = _loading && _rows.isEmpty ? 'Loading…' : '$_total invoice${_total == 1 ? '' : 's'} found';
+    final sub = _loading && _rows.isEmpty ? 'Loading…' : '$_total return${_total == 1 ? '' : 's'} found';
     return Scaffold(
       backgroundColor: Colors.transparent,
+      extendBody: true,
       body: AstraBackground(
         child: Column(
           children: [
-            EmeraldHeader(title: 'Sales', subtitle: sub, trailing: _returnsAction()),
+            EmeraldHeader(
+              leading: HeaderIconButton(icon: Icons.chevron_left, onTap: _back),
+              title: 'Sales Returns',
+              subtitle: sub,
+              trailing: HeaderIconButton(icon: Icons.add, gold: true, onTap: () => context.push('/sale-return/pick')),
+            ),
             Expanded(child: _body()),
           ],
         ),
       ),
-    );
-  }
-
-  /// Entry point into the Sales Return module — a compact translucent pill in the
-  /// header so it doesn't crowd the 4-tab bottom nav.
-  Widget _returnsAction() {
-    final p = context.astra;
-    return GestureDetector(
-      onTap: () => context.push('/sales-returns'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.assignment_return_outlined, size: 15, color: p.accent),
-            const SizedBox(width: 7),
-            Text('Returns', style: ui(size: 12, weight: FontWeight.w800, color: Colors.white)),
-          ],
-        ),
-      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: AstraNavFab(onTap: () => context.push('/sale-return/pick')),
+      bottomNavigationBar: AstraNavBar(activeIndex: 1, onTap: _onNavTap),
     );
   }
 
@@ -292,9 +292,14 @@ class _SalesListScreenState extends State<SalesListScreen> {
             if (_loading)
               const Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator()))
             else if (_error != null)
-              EmptyState(icon: Icons.wifi_off, title: 'Sales unavailable', message: _error, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load))
+              EmptyState(icon: Icons.wifi_off, title: 'Returns unavailable', message: _error, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load))
             else if (_rows.isEmpty)
-              EmptyState(icon: Icons.receipt_long, title: 'No sales found', message: 'Try a wider date range or clearing the filters.')
+              EmptyState(
+                icon: Icons.assignment_return_outlined,
+                title: 'No returns found',
+                message: 'Try a wider date range, or start a return from a paid invoice.',
+                action: AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push('/sale-return/pick')),
+              )
             else ...[
               for (final r in _rows)
                 Padding(padding: const EdgeInsets.only(bottom: 9), child: _row(r)),
@@ -400,7 +405,6 @@ class _SalesListScreenState extends State<SalesListScreen> {
         seg('All', null),
         seg('Completed', 'completed'),
         seg('Draft', 'draft'),
-        seg('Cancelled', 'cancelled'),
       ]),
     );
   }
@@ -431,21 +435,22 @@ class _SalesListScreenState extends State<SalesListScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('$_total invoice${_total == 1 ? '' : 's'}', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
-          Text(Money.of(_totalPaid), style: serif(size: 16, color: p.goldText)),
+          Text('$_total return${_total == 1 ? '' : 's'}', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
+          Text('− ${Money.of(_totalPaid)}', style: serif(size: 16, color: p.goldText)),
         ],
       ),
     );
   }
 
-  // ---- sale row ----
+  // ---- return row ----
 
   Widget _row(Map<String, dynamic> r) {
     final p = context.astra;
-    final invoice = asStr(r['invoice_no']).isEmpty ? '#${asStr(r['id'])}' : asStr(r['invoice_no']);
-    // Amount lives under `summary` in SaleListResource; keep flat keys as a fallback.
+    final ref = asStr(r['reference_no']).isEmpty
+        ? (asStr(r['invoice_no']).isEmpty ? '#${asStr(r['id'])}' : asStr(r['invoice_no']))
+        : asStr(r['reference_no']);
     final summary = r['summary'] is Map ? r['summary'] as Map : const {};
-    final amount = asNum(summary['paid'] ?? summary['gross_amount'] ?? r['paid'] ?? r['gross_amount'] ?? r['amount']);
+    final amount = asNum(summary['paid'] ?? summary['grand_total'] ?? summary['total'] ?? r['paid']);
     final customer = r['customer'] is Map ? r['customer'] as Map : const {};
     final who = asStr(customer['name']).isEmpty ? 'Walk-in' : asStr(customer['name']);
     final status = asStr(r['status']);
@@ -453,7 +458,6 @@ class _SalesListScreenState extends State<SalesListScreen> {
     final method = asStr(r['payment_methods']);
     final (bg, fg) = switch (status) {
       'completed' => (p.successTint, AstraPalette.success),
-      'cancelled' => (p.dangerTint, AstraPalette.danger),
       _ => (p.warnTint, p.goldText),
     };
     return AstraCard(
@@ -462,7 +466,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
       onTap: () => _open(asStr(r['id'])),
       child: Row(
         children: [
-          IconChip(icon: Icons.shopping_bag_outlined, size: 40, radius: 12),
+          IconChip(icon: Icons.assignment_return_outlined, size: 40, radius: 12),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -470,12 +474,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
               children: [
                 Row(
                   children: [
-                    Flexible(
-                      child: Text(invoice,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-                    ),
+                    Flexible(child: Text(ref, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink))),
                     if (status.isNotEmpty) ...[
                       const SizedBox(width: 7),
                       StatusPill(label: status.toUpperCase(), bg: bg, fg: fg),
@@ -508,7 +507,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          Text(Money.of(amount), style: serif(size: 15, color: p.ink)),
+          Text('− ${Money.of(amount)}', style: serif(size: 15, color: AstraPalette.danger)),
         ],
       ),
     );
@@ -521,42 +520,30 @@ class _SalesListScreenState extends State<SalesListScreen> {
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.85),
-        child: Container(
-          decoration: BoxDecoration(
-            color: p.cardSolid,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(color: p.hairline, borderRadius: BorderRadius.circular(4)),
-                ),
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: p.cardSolid,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(color: p.hairline, borderRadius: BorderRadius.circular(4)),
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 10),
-                child: Text(title, style: serif(size: 17, color: p.ink)),
-              ),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: tiles,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 10),
+              child: Text(title, style: serif(size: 17, color: p.ink)),
+            ),
+            ...tiles,
+          ],
         ),
       ),
     );
@@ -652,7 +639,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
   }
 
   void _openSort() {
-    _optionSheet('Sort sales', [
+    _optionSheet('Sort returns', [
       for (final o in _sortOptions)
         _optTile(
           label: o.label,
@@ -675,12 +662,12 @@ class _SalesListScreenState extends State<SalesListScreen> {
     if (id.isEmpty) return;
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
     try {
-      final sale = await context.read<ApiService>().saleById(id);
+      final ret = await context.read<ApiService>().saleReturnById(id);
       if (mounted) Navigator.pop(context);
-      if (mounted) context.push('/invoice', extra: sale);
+      if (mounted) context.push('/return-receipt', extra: ret);
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open invoice')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open return')));
     }
   }
 }

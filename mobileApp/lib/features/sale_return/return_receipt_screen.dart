@@ -1,36 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:printing/printing.dart';
-import 'package:provider/provider.dart';
 
-import '../../core/api_service.dart';
 import '../../core/formatters.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
-import '../../state/print_settings_controller.dart';
-import '../../state/return_draft_controller.dart';
 import '../../theme/palette.dart';
 import '../../theme/theme.dart';
 import '../../widgets/astra_widgets.dart';
 import '../../widgets/invo_logo.dart';
-import 'receipt_pdf.dart';
+import '../sale/invoice_screen.dart' show DottedDivider;
 
-/// Single-sale view — "Fintech" premium layout: a gradient total hero, a
-/// Created → Paid → Receipt status timeline, an itemized card with per-line
-/// icon avatars, a summary card and a payment/customer card. Everything is
-/// palette-driven so each [AstraSkin] re-skins it.
-class InvoiceScreen extends StatelessWidget {
-  const InvoiceScreen({super.key, required this.sale});
-  final Sale sale;
+/// Sale-return confirmation / view — mirrors the invoice screen: a refund hero,
+/// the returned items, a summary and a refund-payment card. Palette-driven so
+/// every [AstraSkin] re-skins it.
+class ReturnReceiptScreen extends StatelessWidget {
+  const ReturnReceiptScreen({super.key, required this.saleReturn});
+  final SaleReturn saleReturn;
 
-  // Net payable on this ticket and how much of it is still outstanding.
-  double get _payable => sale.grossAmount - sale.discount + sale.taxAmount;
-  double get _balance => _payable - sale.paid;
-  bool get _paidUp =>
-      sale.status.toUpperCase() == 'COMPLETED' || _balance <= 0.5;
-
-  // Only completed invoices can be returned (matches the returns flow).
-  bool get _returnable => sale.status.toLowerCase() == 'completed';
+  bool get _done => saleReturn.status.toLowerCase() == 'completed';
+  double get _refunded => saleReturn.paid;
 
   @override
   Widget build(BuildContext context) {
@@ -48,10 +36,8 @@ class InvoiceScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
                     children: [
                       _heroCard(p),
-                      const SizedBox(height: 6),
-                      _timeline(p),
                       const SizedBox(height: 14),
-                      if (sale.customerName.trim().isNotEmpty) ...[
+                      if (saleReturn.customerName.trim().isNotEmpty) ...[
                         _customerCard(p),
                         const SizedBox(height: 12),
                       ],
@@ -67,24 +53,13 @@ class InvoiceScreen extends StatelessWidget {
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Row(
                       children: [
-                        if (_returnable) ...[
-                          _returnInvoiceButton(context, p),
-                          const SizedBox(height: 9),
-                        ],
-                        Row(
-                          children: [
-                            Expanded(child: _action(context, Icons.print_outlined, 'Print', () => _print(context))),
-                            const SizedBox(width: 9),
-                            Expanded(child: _action(context, Icons.ios_share, 'Share', () => _share(context))),
-                            const SizedBox(width: 9),
-                            Expanded(
-                              flex: 2,
-                              child: AstraButton(label: 'New Sale', onTap: () => context.go('/sale')),
-                            ),
-                          ],
+                        Expanded(child: _action(context, Icons.assignment_return_outlined, 'New Return', () => context.go('/sale-return/pick'))),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          flex: 2,
+                          child: AstraButton(label: 'Done', onTap: () => context.go('/sales-returns')),
                         ),
                       ],
                     ),
@@ -130,7 +105,7 @@ class InvoiceScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Invo', style: serif(size: 16, color: p.ink)),
-                Text(sale.branch.isEmpty ? 'Salon POS' : sale.branch,
+                Text(saleReturn.branch.isEmpty ? 'Sale Return' : saleReturn.branch,
                     style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),
@@ -142,13 +117,10 @@ class InvoiceScreen extends StatelessWidget {
   }
 
   (String, Color, Color, IconData) _statusBadge(AstraPalette p) {
-    if (_paidUp) {
-      return ('PAID', p.successTint, AstraPalette.success, Icons.check_circle);
+    if (_done) {
+      return ('REFUNDED', p.successTint, AstraPalette.success, Icons.check_circle);
     }
-    if (sale.paid > 0) {
-      return ('PARTIAL', p.warnTint, p.warnText, Icons.timelapse);
-    }
-    return ('UNPAID', p.dangerTint, AstraPalette.danger, Icons.error_outline);
+    return ('DRAFT', p.warnTint, p.warnText, Icons.timelapse);
   }
 
   // ---- Total hero ----------------------------------------------------------
@@ -156,9 +128,10 @@ class InvoiceScreen extends StatelessWidget {
   Widget _heroCard(AstraPalette p) {
     final amountColor = p.isEditorial ? p.accent : Colors.white;
     final faint = Colors.white.withValues(alpha: 0.82);
-    final invLine = [
-      sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo,
-      if (sale.date.isNotEmpty) Dates.human(sale.date),
+    final ref = saleReturn.referenceNo.isEmpty ? '#${saleReturn.id}' : saleReturn.referenceNo;
+    final refLine = [
+      ref,
+      if (saleReturn.date.isNotEmpty) Dates.human(saleReturn.date),
     ].join('  ·  ');
 
     return Container(
@@ -195,17 +168,17 @@ class InvoiceScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_paidUp ? 'TOTAL PAID' : 'AMOUNT DUE',
+                  Text(_done ? 'TOTAL REFUNDED' : 'REFUND TOTAL',
                       style: ui(size: 10.5, weight: FontWeight.w700, color: faint, letterSpacing: 1.4)),
                   const SizedBox(height: 7),
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Text(Money.of(_paidUp ? sale.paid : _balance),
+                    child: Text(Money.of(_done ? _refunded : saleReturn.grandTotal),
                         maxLines: 1, style: serif(size: 40, color: amountColor)),
                   ),
                   const SizedBox(height: 6),
-                  Text('Invoice  $invLine',
+                  Text('Return  $refLine',
                       style: ui(size: 11.5, weight: FontWeight.w600, color: faint)),
                 ],
               ),
@@ -215,67 +188,6 @@ class InvoiceScreen extends StatelessWidget {
       ),
     );
   }
-
-  // ---- Status timeline -----------------------------------------------------
-
-  Widget _timeline(AstraPalette p) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      child: Row(
-        children: [
-          _step(p, 'Created', true),
-          _seg(p, _paidUp),
-          _step(p, _paidUp ? 'Paid' : 'Pending', _paidUp),
-          _seg(p, _paidUp),
-          _step(p, 'Receipt', _paidUp),
-        ],
-      ),
-    );
-  }
-
-  Widget _step(AstraPalette p, String label, bool done) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: done ? AstraPalette.success : p.card,
-            border: done ? null : Border.all(color: p.hairline, width: 2),
-            boxShadow: done
-                ? [BoxShadow(color: AstraPalette.success.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: -4, offset: const Offset(0, 4))]
-                : null,
-          ),
-          child: done
-              ? const Icon(Icons.check, size: 15, color: Colors.white)
-              : Center(
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: p.textMuted),
-                  ),
-                ),
-        ),
-        const SizedBox(height: 6),
-        Text(label, style: ui(size: 9.5, weight: FontWeight.w700, color: done ? p.textSecondary : p.textMuted)),
-      ],
-    );
-  }
-
-  Widget _seg(AstraPalette p, bool done) => Expanded(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 22),
-          child: Container(
-            height: 2.5,
-            decoration: BoxDecoration(
-              color: done ? AstraPalette.success : p.hairline,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-      );
 
   // ---- Customer ------------------------------------------------------------
 
@@ -289,14 +201,14 @@ class InvoiceScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Billed to', style: ui(size: 9.5, weight: FontWeight.w700, color: p.textMuted, letterSpacing: 0.4)),
+                  Text('Refunded to', style: ui(size: 9.5, weight: FontWeight.w700, color: p.textMuted, letterSpacing: 0.4)),
                   const SizedBox(height: 2),
-                  Text(sale.customerName, style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
+                  Text(saleReturn.customerName, style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
                 ],
               ),
             ),
-            if (sale.customerMobile.trim().isNotEmpty)
-              Text(sale.customerMobile, style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary)),
+            if (saleReturn.customerMobile.trim().isNotEmpty)
+              Text(saleReturn.customerMobile, style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary)),
           ],
         ),
       );
@@ -304,7 +216,7 @@ class InvoiceScreen extends StatelessWidget {
   // ---- Items ---------------------------------------------------------------
 
   Widget _itemsCard(AstraPalette p) {
-    final lines = sale.lines;
+    final lines = saleReturn.lines;
     return AstraCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       child: Column(
@@ -318,7 +230,7 @@ class InvoiceScreen extends StatelessWidget {
     );
   }
 
-  Widget _lineRow(AstraPalette p, SaleLine l) {
+  Widget _lineRow(AstraPalette p, SaleReturnLine l) {
     final isService = l.type.toLowerCase().startsWith('serv');
     final qty = l.quantity.toStringAsFixed(l.quantity % 1 == 0 ? 0 : 1);
     final sub = '$qty × ${Money.of(l.unitPrice)}${l.employee.isEmpty ? '' : ' · ${l.employee}'}';
@@ -351,9 +263,9 @@ class InvoiceScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(
           children: [
-            _sumRow(p, 'Subtotal', Money.of(sale.grossAmount), p.textSecondary),
-            if (sale.discount > 0) _sumRow(p, 'Discount', '− ${Money.of(sale.discount)}', p.goldText),
-            if (sale.taxAmount > 0) _sumRow(p, 'Tax', Money.of(sale.taxAmount), p.textSecondary),
+            _sumRow(p, 'Subtotal', Money.of(saleReturn.grossAmount), p.textSecondary),
+            if (saleReturn.discount > 0) _sumRow(p, 'Discount', '− ${Money.of(saleReturn.discount)}', p.goldText),
+            if (saleReturn.taxAmount > 0) _sumRow(p, 'Tax', Money.of(saleReturn.taxAmount), p.textSecondary),
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: DottedDivider(color: p.hairline),
@@ -363,13 +275,13 @@ class InvoiceScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('Total Paid', style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+                Text('Total Refunded', style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
                 const SizedBox(width: 12),
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerRight,
-                    child: Text(Money.of(sale.paid),
+                    child: Text(Money.of(_refunded),
                         maxLines: 1, style: serif(size: 22, color: p.primaryDark)),
                   ),
                 ),
@@ -394,14 +306,14 @@ class InvoiceScreen extends StatelessWidget {
 
   Widget _paymentCard(AstraPalette p) {
     final rows = <Widget>[];
-    if (sale.payments.isNotEmpty) {
-      for (int i = 0; i < sale.payments.length; i++) {
-        final pay = sale.payments[i];
+    if (saleReturn.payments.isNotEmpty) {
+      for (int i = 0; i < saleReturn.payments.length; i++) {
+        final pay = saleReturn.payments[i];
         rows.add(_payRow(p, pay.method, Money.of(pay.amount)));
-        if (i != sale.payments.length - 1) rows.add(Container(height: 1, color: p.hairline));
+        if (i != saleReturn.payments.length - 1) rows.add(Container(height: 1, color: p.hairline));
       }
     } else {
-      rows.add(_payRow(p, _paidUp ? 'Paid' : 'Pending', Money.of(sale.paid)));
+      rows.add(_payRow(p, _done ? 'Refunded' : 'Pending', Money.of(saleReturn.paid)));
     }
     return AstraCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -410,7 +322,7 @@ class InvoiceScreen extends StatelessWidget {
   }
 
   Widget _payRow(AstraPalette p, String method, String amount) {
-    final label = method.trim().isEmpty ? 'Payment' : method;
+    final label = method.trim().isEmpty ? 'Refund' : method;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 11),
       child: Row(
@@ -423,7 +335,7 @@ class InvoiceScreen extends StatelessWidget {
               children: [
                 Text(_titleCase(label), style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
                 const SizedBox(height: 2),
-                Text('Payment received', style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                Text('Refund issued', style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),
           ),
@@ -442,95 +354,7 @@ class InvoiceScreen extends StatelessWidget {
     return Icons.account_balance_wallet_outlined;
   }
 
-  String _titleCase(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
-
-  // ---- PDF actions (unchanged) --------------------------------------------
-
-  String get _fileName {
-    final base = (sale.invoiceNo.isEmpty ? sale.id : sale.invoiceNo)
-        .replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '');
-    return 'invoice_${base.isEmpty ? 'receipt' : base}.pdf';
-  }
-
-  /// Open the system print dialog with the receipt PDF, laid out per the active
-  /// thermal-print settings (English / bilingual Arabic, paper width, …).
-  Future<void> _print(BuildContext context) async {
-    final settings = context.read<PrintSettingsController>().snapshot;
-    try {
-      await Printing.layoutPdf(
-        name: _fileName,
-        onLayout: (_) => buildReceiptPdf(sale, settings),
-      );
-    } catch (_) {
-      if (context.mounted) _toast(context, 'Could not open the print dialog.');
-    }
-  }
-
-  /// Open the share sheet with the receipt PDF attached.
-  Future<void> _share(BuildContext context) async {
-    final settings = context.read<PrintSettingsController>().snapshot;
-    try {
-      final bytes = await buildReceiptPdf(sale, settings);
-      await Printing.sharePdf(bytes: bytes, filename: _fileName);
-    } catch (_) {
-      if (context.mounted) _toast(context, 'Could not share the receipt.');
-    }
-  }
-
-  void _toast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  // ---- Return shortcut -----------------------------------------------------
-
-  /// Jump straight into a return for this invoice: load its returnable lines,
-  /// seed the return draft, and open the New Return screen.
-  Future<void> _return(BuildContext context) async {
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
-    try {
-      final returnable = await context.read<ApiService>().returnableSale(sale.id);
-      if (!context.mounted) return;
-      Navigator.pop(context); // close the loader
-      final hasReturnable = returnable.lines.any((l) => l.returnableQuantity > 0);
-      if (!hasReturnable) {
-        _toast(context, 'Every item on this invoice has already been returned.');
-        return;
-      }
-      context.read<ReturnDraftController>().seed(returnable);
-      context.push('/sale-return');
-    } catch (_) {
-      if (context.mounted) Navigator.pop(context);
-      if (context.mounted) _toast(context, 'Could not start a return for this invoice.');
-    }
-  }
-
-  Widget _returnInvoiceButton(BuildContext context, AstraPalette p) {
-    final t = context.astraTheme;
-    return GestureDetector(
-      onTap: () => _return(context),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: p.goldText.withValues(alpha: 0.5), width: 1.5),
-          boxShadow: t.softShadow,
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.assignment_return_outlined, size: 16, color: p.goldText),
-            const SizedBox(width: 9),
-            Expanded(child: Text('Return this invoice', style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
-            Icon(Icons.chevron_right_rounded, size: 18, color: p.textMuted),
-          ],
-        ),
-      ),
-    );
-  }
+  String _titleCase(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
   Widget _action(BuildContext context, IconData icon, String label, VoidCallback onTap) {
     final p = context.astra;
@@ -553,26 +377,4 @@ class InvoiceScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-/// A thin dashed horizontal rule (used between the summary lines and the total).
-class DottedDivider extends StatelessWidget {
-  const DottedDivider({super.key, required this.color, this.dash = 4, this.gap = 4});
-  final Color color;
-  final double dash;
-  final double gap;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, c) {
-          final count = (c.maxWidth / (dash + gap)).floor().clamp(0, 400);
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(
-              count,
-              (_) => Container(width: dash, height: 1.5, color: color),
-            ),
-          );
-        },
-      );
 }

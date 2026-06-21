@@ -22,12 +22,16 @@ class ToggleRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = ['required', 'date', 'before_or_equal:today'];
+        // `now` (not `today`) so a date *with a time-of-day* on the current day
+        // passes validation — the mobile app sends a full `Y-m-d H:i:s` datetime.
+        $rules = ['required', 'date', 'before_or_equal:now'];
 
         if ($this->isClosing()) {
             $openedAt = $this->openSession()?->opened_at;
             if ($openedAt) {
-                $rules[] = 'after_or_equal:'.$openedAt->toDateString();
+                // Compare full datetimes so a close can't land before the open
+                // moment (the picker offers a time too).
+                $rules[] = 'after_or_equal:'.$openedAt->toDateTimeString();
             }
         }
 
@@ -43,13 +47,13 @@ class ToggleRequest extends FormRequest
      */
     public function messages(): array
     {
-        $openedDate = $this->openSession()?->opened_at?->toDateString();
+        $openedAt = $this->openSession()?->opened_at?->format('d M Y, g:i A');
 
         return [
-            'date.after_or_equal' => $openedDate
-                ? 'The date must be on or after '.$openedDate.'.'
-                : 'The date must be on or after the opening date.',
-            'date.before_or_equal' => 'The date cannot be in the future.',
+            'date.after_or_equal' => $openedAt
+                ? 'The closing time must be on or after the opening ('.$openedAt.').'
+                : 'The closing time must be on or after the opening time.',
+            'date.before_or_equal' => 'The date & time cannot be in the future.',
         ];
     }
 

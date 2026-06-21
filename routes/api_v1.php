@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\PaymentMethodController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
+use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SizeController;
 use App\Http\Middleware\EnsureMobilePermission;
 use App\Http\Middleware\IdentifyTenant;
@@ -86,6 +87,14 @@ Route::prefix('v1')->group(function () {
                 Route::get('/', [SaleController::class, 'index'])->name('api.v1.sale.index');
                 Route::post('/', [SaleController::class, 'store'])->name('api.v1.sale.store');
                 Route::get('/{sale}', [SaleController::class, 'show'])->whereNumber('sale')->name('api.v1.sale.show');
+            });
+
+            // Sale return routes — a return is always raised against a paid sale.
+            Route::prefix('sale-return')->group(function () {
+                Route::get('/', [SaleReturnController::class, 'index'])->name('api.v1.sale-return.index');
+                Route::post('/', [SaleReturnController::class, 'store'])->name('api.v1.sale-return.store');
+                Route::get('/from-sale/{sale}', [SaleReturnController::class, 'fromSale'])->whereNumber('sale')->name('api.v1.sale-return.from-sale');
+                Route::get('/{saleReturn}', [SaleReturnController::class, 'show'])->whereNumber('saleReturn')->name('api.v1.sale-return.show');
             });
 
             // Customer routes

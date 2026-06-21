@@ -61,17 +61,46 @@ class AstraPalette {
   bool get isGlass => skin == AstraSkin.glass;
   bool get isEditorial => skin == AstraSkin.editorial;
 
+  /// A copy with selected fields overridden — used to derive the dark variant.
+  AstraPalette copyWith({bool? isDark, Color? canvas}) => AstraPalette(
+        id: id,
+        name: name,
+        tagline: tagline,
+        skin: skin,
+        primary: primary,
+        primaryDark: primaryDark,
+        accent: accent,
+        canvas: canvas ?? this.canvas,
+        isDark: isDark ?? this.isDark,
+        swatch: swatch,
+      );
+
+  /// The dark-brightness variant of this preset. Same hue/skin/accents; only the
+  /// canvas and the [isDark]-aware surface getters flip. Each skin gets a canvas
+  /// tuned to its character (indigo-night glass, slate clean, ink editorial,
+  /// deep-emerald signature).
+  AstraPalette get dark {
+    if (isDark) return this;
+    const darkCanvas = {
+      AstraSkin.glass: Color(0xFF0B0E1C),
+      AstraSkin.clean: Color(0xFF0E1220),
+      AstraSkin.editorial: Color(0xFF0C0B08),
+      AstraSkin.signature: Color(0xFF07140F),
+    };
+    return copyWith(isDark: true, canvas: darkCanvas[skin]);
+  }
+
   // ---- Derived, skin-aware surfaces ----------------------------------------
 
   /// Card fill as drawn (translucent for glass).
   Color get card {
     switch (skin) {
       case AstraSkin.glass:
-        return Colors.white.withValues(alpha: 0.62);
+        return isDark ? Colors.white.withValues(alpha: 0.07) : Colors.white.withValues(alpha: 0.62);
       case AstraSkin.editorial:
         return isDark ? const Color(0xFF15140F) : const Color(0xFFFBF8F1);
       case AstraSkin.clean:
-        return Colors.white;
+        return isDark ? const Color(0xFF171B2B) : Colors.white;
       case AstraSkin.signature:
         return isDark ? const Color(0xFF15302A) : Colors.white;
     }
@@ -82,11 +111,11 @@ class AstraPalette {
   Color get cardSolid {
     switch (skin) {
       case AstraSkin.glass:
-        return Colors.white;
+        return isDark ? const Color(0xFF171A2E) : Colors.white;
       case AstraSkin.editorial:
         return isDark ? const Color(0xFF15140F) : const Color(0xFFFBF8F1);
       case AstraSkin.clean:
-        return Colors.white;
+        return isDark ? const Color(0xFF171B2B) : Colors.white;
       case AstraSkin.signature:
         return isDark ? const Color(0xFF15302A) : Colors.white;
     }
@@ -96,7 +125,7 @@ class AstraPalette {
   Color get cardBorder {
     switch (skin) {
       case AstraSkin.glass:
-        return Colors.white.withValues(alpha: 0.70);
+        return isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.70);
       case AstraSkin.editorial:
         return accent.withValues(alpha: isDark ? 0.16 : 0.30);
       default:
@@ -114,9 +143,9 @@ class AstraPalette {
       case AstraSkin.editorial:
         return isDark ? const Color(0xFFF1ECE0) : const Color(0xFF1C1A14);
       case AstraSkin.glass:
-        return const Color(0xFF13183A);
+        return isDark ? const Color(0xFFEAEDF9) : const Color(0xFF13183A);
       case AstraSkin.clean:
-        return const Color(0xFF161A2B);
+        return isDark ? const Color(0xFFEDEFF7) : const Color(0xFF161A2B);
       case AstraSkin.signature:
         return isDark ? const Color(0xFFF3F1EA) : const Color(0xFF16312A);
     }
@@ -127,9 +156,9 @@ class AstraPalette {
       case AstraSkin.editorial:
         return isDark ? const Color(0xFFB7B09C) : const Color(0xFF54503F);
       case AstraSkin.glass:
-        return const Color(0xFF46507E);
+        return isDark ? const Color(0xFFAAB2D8) : const Color(0xFF46507E);
       case AstraSkin.clean:
-        return const Color(0xFF4A4F63);
+        return isDark ? const Color(0xFFADB3C9) : const Color(0xFF4A4F63);
       case AstraSkin.signature:
         return isDark ? const Color(0xFFA9C2BA) : const Color(0xFF5D7269);
     }
@@ -140,9 +169,9 @@ class AstraPalette {
       case AstraSkin.editorial:
         return isDark ? const Color(0xFF857E6C) : const Color(0xFF928C79);
       case AstraSkin.glass:
-        return const Color(0xFF7F88B3);
+        return isDark ? const Color(0xFF7079A6) : const Color(0xFF7F88B3);
       case AstraSkin.clean:
-        return const Color(0xFF8A8FA3);
+        return isDark ? const Color(0xFF767C92) : const Color(0xFF8A8FA3);
       case AstraSkin.signature:
         return isDark ? const Color(0xFF7C9189) : const Color(0xFFA8B3AB);
     }
@@ -153,9 +182,9 @@ class AstraPalette {
       case AstraSkin.editorial:
         return isDark ? const Color(0xFF2A271D) : const Color(0xFFE6DFCE);
       case AstraSkin.glass:
-        return Colors.white.withValues(alpha: 0.55);
+        return isDark ? Colors.white.withValues(alpha: 0.10) : Colors.white.withValues(alpha: 0.55);
       case AstraSkin.clean:
-        return const Color(0xFFE7E9F2);
+        return isDark ? const Color(0xFF272C3E) : const Color(0xFFE7E9F2);
       case AstraSkin.signature:
         return isDark ? const Color(0x1AFFFFFF) : const Color(0xFFF0ECE1);
     }
@@ -180,10 +209,17 @@ class AstraPalette {
 
   // Status colours (consistent across presets).
   static const Color success = Color(0xFF1F9D63);
-  static const Color successTint = Color(0xFFE4F6EC);
   static const Color danger = Color(0xFFD4546A);
-  static const Color dangerTint = Color(0xFFFBE9EC);
-  static const Color warnTint = Color(0xFFFBF3DF);
+
+  // Status chip tints — light cream/pink/gold by default; in dark mode a
+  // translucent wash of the status colour so the chip reads against the dark
+  // canvas instead of glaring as a light block. The success/danger foregrounds
+  // read on both modes; the warn foreground uses [warnText] because the light
+  // amber is too dark to sit on a dark chip.
+  Color get successTint => isDark ? success.withValues(alpha: 0.16) : const Color(0xFFE4F6EC);
+  Color get dangerTint => isDark ? danger.withValues(alpha: 0.18) : const Color(0xFFFBE9EC);
+  Color get warnTint => isDark ? const Color(0xFFC9A24B).withValues(alpha: 0.18) : const Color(0xFFFBF3DF);
+  Color get warnText => isDark ? const Color(0xFFE6C16B) : const Color(0xFF9A6A00);
 
   /// Header / hero gradient. Editorial overrides to a near-black field so the
   /// gold accent can sing on top of it.
@@ -222,8 +258,22 @@ class AstraPalette {
         ],
       );
 
-  /// Bottom-nav / floating dark surface.
-  Color get darkSurface => isDark ? const Color(0xFF0A1B17) : primaryDark;
+  /// Bottom-nav / floating dark surface. In light mode this is the brand
+  /// [primaryDark]; in dark mode it drops to a near-black tuned per skin so the
+  /// nav doesn't clash with the canvas hue.
+  Color get darkSurface {
+    if (!isDark) return primaryDark;
+    switch (skin) {
+      case AstraSkin.glass:
+        return const Color(0xFF14172B);
+      case AstraSkin.clean:
+        return const Color(0xFF161A28);
+      case AstraSkin.editorial:
+        return const Color(0xFF15140F);
+      case AstraSkin.signature:
+        return const Color(0xFF0A1B17);
+    }
+  }
 }
 
 /// The four premium presets shown in Settings. Each one wears a distinct

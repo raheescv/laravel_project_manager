@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invo · Day Session — Design Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================ THEME (matches lib/theme/palette.dart) */
+:root{
+  --primary:#15806C; --primary-dark:#0E5648; --accent:#C9A24B;
+  --canvas:#F6F1E8; --card:#ffffff; --card-2:#ffffff;
+  --ink:#16312A; --t2:#5D7269; --muted:#A8B3AB;
+  --hair:#F0ECE1; --tint:#E6F0EC; --gold:#BF953F;
+  --success:#1F9D63; --success-tint:#E4F6EC;
+  --danger:#D4546A; --danger-tint:#FBE9EC; --warn-tint:#FBF3DF; --warn:#B7892B;
+  --hero-1:#0E5648; --hero-2:#15806C;
+  --glass:rgba(255,255,255,.8); --glass-brd:rgba(255,255,255,.6);
+  --shadow:0 22px 52px -28px rgba(14,86,72,.5);
+  --serif:'Marcellus',serif; --ui:'Manrope',sans-serif;
+}
+body[data-skin="signature"]{
+  --primary:#15806C;--primary-dark:#0E5648;--accent:#C9A24B;--gold:#BF953F;
+  --canvas:#F6F1E8;--card:#fff;--card-2:#fff;--ink:#16312A;--t2:#5D7269;--muted:#A8B3AB;
+  --hair:#F0ECE1;--tint:#E6F0EC;--hero-1:#0E5648;--hero-2:#15806C;--glass:rgba(255,255,255,.82);
+}
+body[data-skin="glass"]{
+  --primary:#4F46E5;--primary-dark:#3730A3;--accent:#38BDF8;--gold:#6E78D6;
+  --canvas:#EEF1F7;--card:#fff;--card-2:#fff;--ink:#13183A;--t2:#46507E;--muted:#7F88B3;
+  --hair:rgba(19,24,58,.08);--tint:rgba(79,70,229,.10);--hero-1:#3730A3;--hero-2:#4F46E5;--glass:rgba(255,255,255,.66);
+}
+body[data-skin="clean"]{
+  --primary:#4F46E5;--primary-dark:#3B35B0;--accent:#7C3AED;--gold:#7C3AED;
+  --canvas:#F4F5FB;--card:#fff;--card-2:#FBFBFE;--ink:#161A2B;--t2:#4A4F63;--muted:#8A8FA3;
+  --hair:#E7E9F2;--tint:rgba(79,70,229,.10);--hero-1:#3B35B0;--hero-2:#7C3AED;--glass:#fff;
+}
+body[data-skin="editorial"]{
+  --primary:#B5862F;--primary-dark:#8a6420;--accent:#C8A24A;--gold:#C8A24A;
+  --canvas:#FBF8F1;--card:#FFFDF7;--card-2:#FFFDF7;--ink:#1C1A14;--t2:#54503F;--muted:#928C79;
+  --hair:#E6DFCE;--tint:rgba(200,162,74,.12);--hero-1:#1F1C13;--hero-2:#0C0B08;--glass:rgba(255,253,247,.86);
+}
+/* dark */
+body[data-mode="dark"]{
+  --canvas:#0c1f1a;--card:#15302a;--card-2:#173a32;--ink:#f3f1ea;--t2:#a9c2ba;--muted:#7c9189;
+  --hair:rgba(255,255,255,.1);--tint:rgba(21,128,108,.22);--glass:rgba(21,48,42,.62);--glass-brd:rgba(255,255,255,.12);
+  --shadow:0 22px 52px -26px rgba(0,0,0,.7);
+  --success-tint:rgba(31,157,99,.20);--danger-tint:rgba(212,84,106,.20);--warn-tint:rgba(183,137,43,.22);
+}
+body[data-mode="dark"][data-skin="glass"]{--canvas:#0c1124;--card:#161b34;--card-2:#1a2040;--ink:#eef1ff;--t2:#aab2da;--muted:#737cab;--tint:rgba(124,139,255,.18);--gold:#9aa6ef;}
+body[data-mode="dark"][data-skin="clean"]{--canvas:#0d1020;--card:#181d33;--card-2:#1b2138;--ink:#eef0fb;--t2:#aeb3cc;--muted:#7c819b;--hair:rgba(255,255,255,.08);}
+body[data-mode="dark"][data-skin="editorial"]{--canvas:#0c0b08;--card:#15140f;--card-2:#1b1912;--ink:#f1ece0;--t2:#b7b09c;--muted:#857e6c;--hair:#2a271d;--tint:rgba(200,162,74,.16);--glass:rgba(21,20,15,.7);}
+
+/* ============================================================ SHELL */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--ui);
+  background:
+    radial-gradient(900px 600px at 12% -8%, rgba(21,128,108,.16), transparent 60%),
+    radial-gradient(800px 600px at 110% 10%, rgba(201,162,75,.12), transparent 55%),
+    #0c130f;
+  color:#fff;display:flex;flex-direction:column;align-items:center;min-height:100%;padding:26px 16px 70px;
+}
+.head{width:100%;max-width:980px;text-align:center;margin-bottom:16px}
+.head h1{font-family:var(--serif);font-weight:400;font-size:25px;letter-spacing:.3px;margin:0 0 4px;color:#fff}
+.head p{margin:0;color:#9fb3ac;font-size:13px;font-weight:500}
+.bar{
+  position:sticky;top:10px;z-index:30;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;
+  background:rgba(14,22,18,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:10px 12px;margin-bottom:24px;box-shadow:0 20px 50px -24px rgba(0,0,0,.6);
+}
+.grp{display:flex;align-items:center;gap:6px;padding:4px;background:rgba(255,255,255,.05);border-radius:11px}
+.grp .lab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#86a098;font-weight:700;padding:0 6px}
+.bar button{font-family:var(--ui);font-size:12px;font-weight:700;color:#cfe0da;cursor:pointer;background:transparent;border:1px solid transparent;border-radius:9px;padding:7px 12px;transition:.18s;white-space:nowrap}
+.bar button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.bar button.on{background:linear-gradient(180deg,#1fa085,#137963);color:#fff;box-shadow:0 6px 18px -6px rgba(21,128,108,.8)}
+.bar .sw{width:34px;padding:7px 0}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;vertical-align:-1px}
+.caption{max-width:430px;margin:-10px auto 22px;color:#9fb3ac;font-size:12px;line-height:1.5;text-align:center}
+
+/* ============================================================ PHONE */
+.stage{display:flex;justify-content:center;width:100%}
+.phone{position:relative;width:390px;height:844px;border-radius:46px;padding:11px;background:linear-gradient(160deg,#26302c,#121614);box-shadow:0 50px 120px -40px rgba(0,0,0,.85),0 0 0 2px rgba(255,255,255,.04) inset}
+.screen{position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background:var(--canvas);color:var(--ink);display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#0c0d12;border-radius:0 0 18px 18px;z-index:60}
+.scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{width:0}
+.dir{display:none;flex-direction:column;height:100%}
+body[data-dir="a"] .dir-a{display:flex}
+body[data-dir="b"] .dir-b{display:flex}
+body[data-dir="c"] .dir-c{display:flex}
+svg{display:block}
+.ic{width:16px;height:16px;display:inline-block;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* state-aware visibility */
+.when-open,.when-closed{display:none}
+body[data-state="open"] .when-open{display:block}
+body[data-state="closed"] .when-closed{display:block}
+.when-open.inl,.when-closed.inl{display:none}
+body[data-state="open"] .when-open.inl{display:inline}
+body[data-state="closed"] .when-closed.inl{display:inline}
+
+/* ============================================================ TOP APP BAR (shared) */
+.appbar{display:flex;align-items:center;gap:12px;padding:16px 16px 12px;position:relative;z-index:5}
+.appbar .back{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--hair);color:var(--ink);box-shadow:var(--shadow);flex:none}
+.appbar .ttl{flex:1}
+.appbar .ttl .k{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.appbar .ttl .v{font-family:var(--serif);font-size:19px;color:var(--ink);margin-top:1px}
+.appbar .branch{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:var(--primary);background:var(--tint);border-radius:999px;padding:6px 10px;flex:none}
+
+/* shared bits */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.04em;padding:5px 11px;border-radius:999px}
+.pill.open{background:var(--success-tint);color:var(--success)}
+.pill.closed{background:var(--danger-tint);color:var(--danger)}
+.amt{font-family:var(--serif)}
+.cardx{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border:1px solid transparent}
+body[data-skin="glass"] .cardx,body[data-skin="editorial"] .cardx{border-color:var(--hair)}
+body[data-skin="glass"] .cardx{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+/* primary CTA (sticky bottom dock) */
+.dock{position:absolute;left:0;right:0;bottom:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,transparent,var(--canvas) 34%);z-index:20}
+.cta{width:100%;height:56px;border:none;border-radius:17px;font-family:var(--ui);font-size:15.5px;font-weight:800;letter-spacing:.01em;
+  display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;color:#fff}
+.cta.close{background:linear-gradient(135deg,#E0657A,#C0405A);box-shadow:0 18px 34px -12px rgba(192,64,90,.7)}
+.cta.open{background:linear-gradient(135deg,var(--primary),var(--primary-dark));box-shadow:0 18px 34px -12px color-mix(in srgb,var(--primary) 70%,transparent)}
+.cta .ic{width:20px;height:20px;stroke-width:2.4}
+.dockhint{text-align:center;font-size:10.5px;font-weight:600;color:var(--muted);margin-top:9px}
+
+/* shared date + time picker pair */
+.dtgrid{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
+.dtcell{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;background:var(--card-2);border:1px solid var(--hair);cursor:pointer}
+.dtcell .ico{width:36px;height:36px;border-radius:10px;background:var(--tint);color:var(--primary);display:flex;align-items:center;justify-content:center;flex:none}
+.dtcell .ico .ic{width:18px;height:18px}
+.dtcell .k{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.dtcell .v{font-family:var(--serif);font-size:15px;color:var(--ink);margin-top:2px;line-height:1.05}
+.nowchip{display:inline-flex;align-items:center;gap:7px;margin-top:12px;font-size:11.5px;font-weight:800;color:var(--primary);background:var(--tint);border:none;border-radius:11px;padding:9px 13px;cursor:pointer;font-family:var(--ui)}
+.nowchip .ic{width:14px;height:14px}
+
+/* ============================================================ A · SIGNATURE HERO + DATE STEPPER */
+.dir-a .scroll{padding:0 16px 150px}
+.herox{border-radius:24px;padding:22px 20px;color:#fff;position:relative;overflow:hidden;margin-bottom:14px}
+body[data-state="open"] .herox{background:linear-gradient(140deg,var(--hero-1),var(--hero-2))}
+body[data-state="closed"] .herox{background:linear-gradient(140deg,#3a4742,#222b28)}
+body[data-skin="editorial"] .herox{background:linear-gradient(140deg,#1f1c13,#0c0b08)}
+.herox::after{content:"";position:absolute;right:-50px;top:-60px;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--accent) 32%,transparent),transparent 70%)}
+.herox .eyebrow{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:color-mix(in srgb,var(--accent) 92%,#fff);font-weight:800}
+.herox .statusrow{display:flex;align-items:center;gap:13px;margin-top:14px;position:relative;z-index:2}
+.beacon{width:54px;height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex:none;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22)}
+.beacon .ic{width:26px;height:26px;color:#fff}
+body[data-state="open"] .beacon{box-shadow:0 0 0 0 rgba(255,255,255,.4);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.30)}70%{box-shadow:0 0 0 14px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+.herox h2{font-family:var(--serif);font-weight:400;font-size:27px;margin:0;line-height:1.1}
+.herox .since{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.82);margin-top:3px}
+.herox .metaline{display:flex;gap:18px;margin-top:18px;position:relative;z-index:2;border-top:1px solid rgba(255,255,255,.16);padding-top:14px}
+.herox .metaline .k{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:800}
+.herox .metaline .v{font-size:13px;font-weight:800;color:#fff;margin-top:3px}
+.herox .metaline .v.amt{font-family:var(--serif);font-weight:400;font-size:16px;color:color-mix(in srgb,var(--accent) 90%,#fff)}
+
+.flabel{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:0 2px 8px}
+.datecard{padding:16px;margin-bottom:14px}
+.seg{display:flex;background:var(--tint);border-radius:13px;padding:4px;gap:2px}
+.seg span{flex:1;text-align:center;font-size:11.5px;font-weight:700;color:var(--t2);padding:8px 4px;border-radius:10px;white-space:nowrap;cursor:pointer}
+.seg span.on{background:var(--card);color:var(--primary);font-weight:800;box-shadow:0 4px 10px -4px rgba(0,0,0,.2)}
+.datefield{display:flex;align-items:center;gap:11px;margin-top:12px;padding:13px 14px;border-radius:14px;background:var(--card-2);border:1px solid var(--hair);cursor:pointer}
+.datefield .cal{width:40px;height:40px;border-radius:11px;background:var(--tint);color:var(--primary);display:flex;align-items:center;justify-content:center;flex:none}
+.datefield .dd .k{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.datefield .dd .v{font-family:var(--serif);font-size:18px;color:var(--ink);margin-top:1px}
+.datefield .chev{margin-left:auto;color:var(--muted)}
+
+.detgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:6px}
+.detx{padding:14px}
+.detx .ic{width:18px;height:18px;color:var(--primary)}
+.detx .k{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-top:9px}
+.detx .v{font-size:14px;font-weight:800;color:var(--ink);margin-top:2px}
+.detx .v.amt{font-family:var(--serif);font-weight:400;font-size:17px;color:var(--gold)}
+.notice{display:flex;gap:10px;align-items:flex-start;padding:13px 14px;border-radius:14px;background:var(--warn-tint);margin-bottom:6px}
+.notice .ic{width:17px;height:17px;color:var(--warn);flex:none;margin-top:1px}
+.notice p{margin:0;font-size:11.5px;line-height:1.45;font-weight:600;color:var(--ink)}
+
+/* ============================================================ B · LIFECYCLE TIMELINE */
+.dir-b .scroll{padding:0 16px 150px}
+.datepill{display:inline-flex;align-items:center;gap:9px;padding:11px 14px;border-radius:15px;background:var(--card);border:1px solid var(--hair);box-shadow:var(--shadow);cursor:pointer;width:100%;margin-bottom:14px}
+.datepill .cal{color:var(--primary)}
+.datepill .lab{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.datepill .val{font-family:var(--serif);font-size:17px;color:var(--ink);margin-top:1px}
+.datepill .chev{margin-left:auto;color:var(--muted)}
+
+.tlcard{padding:20px 18px 8px;margin-bottom:14px}
+.tl{position:relative;padding-left:34px}
+.tl .node{position:relative;padding-bottom:24px}
+.tl .node:last-child{padding-bottom:4px}
+.tl .node::before{content:"";position:absolute;left:-34px;top:0;width:24px;height:24px;border-radius:50%;
+  background:var(--card);border:2px solid var(--hair);display:flex}
+.tl .node::after{content:"";position:absolute;left:-23px;top:24px;bottom:0;width:2px;background:var(--hair)}
+.tl .node:last-child::after{display:none}
+.tl .node.done::before{background:var(--success);border-color:var(--success);
+  box-shadow:0 0 0 4px var(--success-tint)}
+.tl .node.live::before{background:var(--primary);border-color:var(--primary);box-shadow:0 0 0 4px var(--tint)}
+.tl .node.pending::before{background:var(--card);border-style:dashed;border-color:var(--muted)}
+.tl .node.pending::after{background:repeating-linear-gradient(var(--hair) 0 4px,transparent 4px 8px)}
+.tl .ttl{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--ink)}
+.tl .ttl .ic{width:15px;height:15px;color:var(--muted)}
+.tl .sub{font-size:11.5px;font-weight:600;color:var(--t2);margin-top:4px;line-height:1.5}
+.tl .badge{font-size:8.5px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;background:var(--tint);color:var(--primary)}
+.tl .floatchip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;font-weight:800;padding:5px 10px;border-radius:10px;background:var(--tint);color:var(--ink)}
+.tl .floatchip b{font-family:var(--serif);font-weight:400;color:var(--gold)}
+
+.summ{padding:16px 18px;margin-bottom:6px}
+.summ h3{font-family:var(--serif);font-weight:400;font-size:15px;margin:0 0 12px;color:var(--ink)}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--hair)}
+.srow:last-child{border-bottom:none}
+.srow .l{font-size:12px;font-weight:700;color:var(--t2)}
+.srow .r{font-size:13.5px;font-weight:800;color:var(--ink)}
+.srow .r.amt{font-family:var(--serif);font-weight:400;font-size:16px}
+
+/* ============================================================ C · BENTO CONTROL + CONFIRM SHEET */
+.dir-c .scroll{padding:0 16px 150px}
+.bento{padding:18px;margin-bottom:14px}
+.bento .toprow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+.bento .lead{display:flex;align-items:center;gap:11px}
+.bento .lead .orb{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none;color:#fff}
+body[data-state="open"] .bento .lead .orb{background:linear-gradient(135deg,var(--primary),var(--primary-dark))}
+body[data-state="closed"] .bento .lead .orb{background:linear-gradient(135deg,#8a98931f,#6b7771);color:var(--t2);background:var(--tint)}
+body[data-state="closed"] .bento .lead .orb .ic{color:var(--t2)}
+.bento .lead .orb .ic{width:22px;height:22px}
+.bento .lead .lk{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.bento .lead .lv{font-family:var(--serif);font-size:19px;color:var(--ink);margin-top:1px}
+.minigrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:15px}
+.mini{background:var(--card-2);border:1px solid var(--hair);border-radius:14px;padding:12px}
+.mini .ic{width:16px;height:16px;color:var(--primary)}
+.mini .k{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-top:8px}
+.mini .v{font-size:13.5px;font-weight:800;color:var(--ink);margin-top:2px}
+.mini .v.amt{font-family:var(--serif);font-weight:400;font-size:16px;color:var(--gold)}
+.bento .dateline{display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:14px;background:var(--card-2);border:1px solid var(--hair);cursor:pointer}
+.bento .dateline .cal{width:38px;height:38px;border-radius:11px;background:var(--tint);color:var(--primary);display:flex;align-items:center;justify-content:center;flex:none}
+.bento .dateline .k{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.bento .dateline .v{font-family:var(--serif);font-size:16px;color:var(--ink);margin-top:1px}
+.bento .dateline .chev{margin-left:auto;color:var(--muted)}
+
+/* confirm sheet mock */
+.sheetwrap{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end;
+  background:rgba(8,14,11,.42);backdrop-filter:blur(2px);border-radius:36px;overflow:hidden}
+.sheet{background:var(--card);border-radius:26px 26px 0 0;padding:8px 20px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px -20px rgba(0,0,0,.5)}
+.sheet .grab{width:40px;height:4px;border-radius:99px;background:var(--hair);margin:8px auto 16px}
+.sheet .warnico{width:54px;height:54px;border-radius:16px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;background:var(--danger-tint);color:var(--danger)}
+.sheet .warnico .ic{width:26px;height:26px}
+.sheet h3{font-family:var(--serif);font-weight:400;font-size:21px;text-align:center;margin:0 0 6px;color:var(--ink)}
+.sheet p{text-align:center;font-size:12.5px;line-height:1.5;font-weight:600;color:var(--t2);margin:0 0 16px}
+.sheet p b{color:var(--ink)}
+.sheet .recap{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-radius:14px;background:var(--card-2);border:1px solid var(--hair);margin-bottom:16px}
+.sheet .recap .k{font-size:11px;font-weight:700;color:var(--t2)}
+.sheet .recap .v{font-family:var(--serif);font-size:15px;color:var(--ink)}
+.sheet .acts{display:flex;gap:11px}
+.sheet .btn{flex:1;height:52px;border-radius:15px;font-family:var(--ui);font-size:14.5px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:none}
+.sheet .btn.ghost{background:var(--tint);color:var(--ink)}
+.sheet .btn.danger{background:linear-gradient(135deg,#E0657A,#C0405A);color:#fff;box-shadow:0 14px 28px -12px rgba(192,64,90,.7)}
+.tap{font-size:10.5px;font-weight:700;color:var(--muted);text-align:center;margin-top:2px}
+</style>
+</head>
+<body data-skin="signature" data-mode="light" data-state="open" data-dir="a">
+
+<div class="head">
+  <h1>Day Session — Open &amp; Close</h1>
+  <p>Pick a date &amp; time, then open or close the branch sale day · three directions</p>
+</div>
+
+<div class="bar">
+  <div class="grp"><span class="lab">Skin</span>
+    <button data-set="skin" data-val="signature" class="on">Signature</button>
+    <button data-set="skin" data-val="glass">Glass</button>
+    <button data-set="skin" data-val="clean">Clean</button>
+    <button data-set="skin" data-val="editorial">Editorial</button>
+  </div>
+  <div class="grp"><span class="lab">Mode</span>
+    <button data-set="mode" data-val="light" class="on">Light</button>
+    <button data-set="mode" data-val="dark">Dark</button>
+  </div>
+  <div class="grp"><span class="lab">State</span>
+    <button data-set="state" data-val="open" class="on">Day open</button>
+    <button data-set="state" data-val="closed">Day closed</button>
+  </div>
+  <div class="grp"><span class="lab">Layout</span>
+    <button data-set="dir" data-val="a" class="on">A · Hero</button>
+    <button data-set="dir" data-val="b">B · Timeline</button>
+    <button data-set="dir" data-val="c">C · Bento</button>
+  </div>
+</div>
+
+<div class="caption" id="cap"></div>
+
+<div class="stage"><div class="phone"><div class="notch"></div><div class="screen">
+
+<!-- ============================================================ A · SIGNATURE HERO -->
+<div class="dir dir-a">
+  <div class="scroll">
+    <div class="appbar" style="padding-left:0;padding-right:0">
+      <div class="back"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="ttl"><div class="k">Branch</div><div class="v">Day Session</div></div>
+      <div class="branch"><svg class="ic" style="width:13px" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg> Downtown</div>
+    </div>
+
+    <div class="herox">
+      <div class="eyebrow">Branch day session</div>
+      <div class="statusrow">
+        <div class="beacon">
+          <span class="when-open"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+          <span class="when-closed"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg></span>
+        </div>
+        <div>
+          <h2><span class="when-open inl">Day Open</span><span class="when-closed inl">Day Closed</span></h2>
+          <div class="since"><span class="when-open inl">Open since Sat, 21 Jun · 09:12 AM</span><span class="when-closed inl">Last closed Fri, 20 Jun · 10:40 PM</span></div>
+        </div>
+      </div>
+      <div class="metaline">
+        <div><div class="k">Opened by</div><div class="v">Rahees K</div></div>
+        <div class="when-open"><div class="k">Opening float</div><div class="v amt">QAR 500.00</div></div>
+        <div class="when-closed"><div class="k">Next action</div><div class="v">Open a day</div></div>
+      </div>
+    </div>
+
+    <div class="flabel"><span class="when-open inl">Closing date &amp; time</span><span class="when-closed inl">Opening date &amp; time</span></div>
+    <div class="cardx datecard">
+      <div class="seg">
+        <span class="on">Today</span><span>Yesterday</span><span>Pick date</span>
+      </div>
+      <div class="dtgrid" style="margin-top:12px">
+        <div class="dtcell">
+          <div class="ico"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+          <div><div class="k">Date</div><div class="v">Sat, 21 Jun 2026</div></div>
+        </div>
+        <div class="dtcell">
+          <div class="ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><div class="k">Time</div><div class="v">09:12 AM</div></div>
+        </div>
+      </div>
+      <button class="nowchip"><svg class="ic" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg> Set to now</button>
+    </div>
+
+    <div class="when-open">
+      <div class="detgrid">
+        <div class="cardx detx">
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <div class="k">Opened at</div><div class="v">09:12 AM</div>
+        </div>
+        <div class="cardx detx">
+          <svg class="ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
+          <div class="k">Opening float</div><div class="v amt">QAR 500.00</div>
+        </div>
+      </div>
+      <div class="notice">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        <p>Closing the day finalises sales for this session. New sales need a fresh day to be opened.</p>
+      </div>
+    </div>
+
+    <div class="when-closed">
+      <div class="cardx detx" style="margin-bottom:6px">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <div class="k">Last closed</div><div class="v">Fri, 20 Jun · 10:40 PM by Rahees K</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <button class="cta close when-open"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Close day · 21 Jun, 09:12 AM</button>
+    <button class="cta open when-closed"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0"/></svg> Open day · 21 Jun, 09:12 AM</button>
+    <div class="dockhint"><span class="when-open inl">You'll confirm before the day is closed</span><span class="when-closed inl">Starts a new sale session for this branch</span></div>
+  </div>
+</div>
+
+<!-- ============================================================ B · LIFECYCLE TIMELINE -->
+<div class="dir dir-b">
+  <div class="scroll">
+    <div class="appbar" style="padding-left:0;padding-right:0">
+      <div class="back"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="ttl"><div class="k">Downtown · branch</div><div class="v">Day Session</div></div>
+      <div class="pill open when-open">● OPEN</div>
+      <div class="pill closed when-closed">● CLOSED</div>
+    </div>
+
+    <div class="cardx" style="padding:14px;margin-bottom:14px">
+      <div class="flabel" style="margin:0 2px 10px"><span class="when-open inl">Closing date &amp; time</span><span class="when-closed inl">Opening date &amp; time</span></div>
+      <div class="dtgrid">
+        <div class="dtcell">
+          <div class="ico"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+          <div><div class="k">Date</div><div class="v">Sat, 21 Jun 2026</div></div>
+        </div>
+        <div class="dtcell">
+          <div class="ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><div class="k">Time</div><div class="v">09:12 AM</div></div>
+        </div>
+      </div>
+      <button class="nowchip"><svg class="ic" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg> Set to now</button>
+    </div>
+
+    <div class="cardx tlcard">
+      <div class="tl">
+        <div class="node done">
+          <div class="ttl">Day opened <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div class="sub">Sat, 21 Jun 2026 · 09:12 AM<br>by Rahees K</div>
+          <div class="floatchip">Opening float <b>QAR 500.00</b></div>
+        </div>
+
+        <div class="node live when-open">
+          <div class="ttl">In session <span class="badge">LIVE</span></div>
+          <div class="sub">Sales are being recorded against this day. Close when the branch is done for the day.</div>
+        </div>
+
+        <div class="node done when-closed">
+          <div class="ttl">Day closed <svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div class="sub">Fri, 20 Jun 2026 · 10:40 PM<br>by Rahees K</div>
+        </div>
+
+        <div class="node pending when-open">
+          <div class="ttl">Close day</div>
+          <div class="sub">Select the closing date above, then confirm below to finalise this session.</div>
+        </div>
+
+        <div class="node pending when-closed">
+          <div class="ttl">Open next day</div>
+          <div class="sub">No open session right now. Pick the opening date above and start a new day.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cardx summ when-open">
+      <h3>Closing summary</h3>
+      <div class="srow"><div class="l">Opened at</div><div class="r">21 Jun · 09:12 AM</div></div>
+      <div class="srow"><div class="l">Closing at</div><div class="r">21 Jun · 09:12 AM</div></div>
+      <div class="srow"><div class="l">Opening float</div><div class="r amt">QAR 500.00</div></div>
+      <div class="srow"><div class="l">Opened by</div><div class="r">Rahees K</div></div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <button class="cta close when-open"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Close day · 21 Jun, 09:12 AM</button>
+    <button class="cta open when-closed"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0"/></svg> Open day · 21 Jun, 09:12 AM</button>
+    <div class="dockhint"><span class="when-open inl">A confirmation step follows</span><span class="when-closed inl">Begins recording sales for the new day</span></div>
+  </div>
+</div>
+
+<!-- ============================================================ C · BENTO CONTROL + CONFIRM SHEET -->
+<div class="dir dir-c">
+  <div class="scroll">
+    <div class="appbar" style="padding-left:0;padding-right:0">
+      <div class="back"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+      <div class="ttl"><div class="k">Branch</div><div class="v">Day Session</div></div>
+      <div class="branch"><svg class="ic" style="width:13px" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg> Downtown</div>
+    </div>
+
+    <div class="cardx bento">
+      <div class="toprow">
+        <div class="lead">
+          <div class="orb">
+            <span class="when-open"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+            <span class="when-closed"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg></span>
+          </div>
+          <div><div class="lk">Status</div><div class="lv"><span class="when-open inl">Day Open</span><span class="when-closed inl">Day Closed</span></div></div>
+        </div>
+        <div class="pill open when-open">● OPEN</div>
+        <div class="pill closed when-closed">● CLOSED</div>
+      </div>
+
+      <div class="minigrid">
+        <div class="mini">
+          <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <div class="k"><span class="when-open inl">Opened at</span><span class="when-closed inl">Last closed</span></div>
+          <div class="v"><span class="when-open inl">21 Jun · 09:12 AM</span><span class="when-closed inl">20 Jun · 10:40 PM</span></div>
+        </div>
+        <div class="mini">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M16 7a4 4 0 1 0-8 0M3 21a7 7 0 0 1 18 0"/></svg>
+          <div class="k">Opened by</div>
+          <div class="v">Rahees K</div>
+        </div>
+        <div class="mini when-open">
+          <svg class="ic" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
+          <div class="k">Opening float</div>
+          <div class="v amt">QAR 500.00</div>
+        </div>
+        <div class="mini when-open">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M12 2v20M5 12h14"/></svg>
+          <div class="k">Session age</div>
+          <div class="v">9h 48m</div>
+        </div>
+        <div class="mini when-closed">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="3"/></svg>
+          <div class="k">Sessions today</div>
+          <div class="v">None open</div>
+        </div>
+        <div class="mini when-closed">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M16 7a4 4 0 1 0-8 0M3 21a7 7 0 0 1 18 0"/></svg>
+          <div class="k">Closed by</div>
+          <div class="v">Rahees K</div>
+        </div>
+      </div>
+
+      <div class="flabel"><span class="when-open inl">Closing date &amp; time</span><span class="when-closed inl">Opening date &amp; time</span></div>
+      <div class="dtgrid">
+        <div class="dtcell">
+          <div class="ico"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+          <div><div class="k">Date</div><div class="v">Sat, 21 Jun 2026</div></div>
+        </div>
+        <div class="dtcell">
+          <div class="ico"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><div class="k">Time</div><div class="v">09:12 AM</div></div>
+        </div>
+      </div>
+      <button class="nowchip"><svg class="ic" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg> Set to now</button>
+    </div>
+
+    <div class="tap">Tap the button to preview the confirm step →</div>
+  </div>
+
+  <div class="dock">
+    <button class="cta close when-open" onclick="document.getElementById('cSheet').style.display='flex'"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Close day · 21 Jun, 09:12 AM</button>
+    <button class="cta open when-closed"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0"/></svg> Open day · 21 Jun, 09:12 AM</button>
+  </div>
+
+  <!-- confirm sheet (open-state only; toggled by the close button) -->
+  <div class="sheetwrap when-open" id="cSheet" style="display:none">
+    <div style="flex:1" onclick="document.getElementById('cSheet').style.display='none'"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <div class="warnico"><svg class="ic" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+      <h3>Close the day?</h3>
+      <p>This finalises the session opened on <b>21 Jun</b>. You'll need to open a new day to keep selling.</p>
+      <div class="recap"><div class="k">Closing at</div><div class="v">21 Jun 2026 · 09:12 AM</div></div>
+      <div class="acts">
+        <button class="btn ghost" onclick="document.getElementById('cSheet').style.display='none'">Cancel</button>
+        <button class="btn danger">Close day</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div></div></div>
+
+<script>
+const CAPS={
+  a:"A · Signature hero — a status beacon (Open/Closed) over a brand gradient, date-preset chips, a Date + Time picker pair, session details, and one big sticky action. Most premium; closest to the dashboard hero.",
+  b:"B · Lifecycle timeline — the day as a vertical ledger: Opened → In session → Close. A Date + Time card up top, then an audit-style trail with a closing summary. Clearest on what closing does.",
+  c:"C · Bento control card — one tidy card with the status orb, a mini-stat grid, and an inline Date + Time row; the close action raises a confirm sheet (tap the button). Most compact & explicit."
+};
+const cap=document.getElementById('cap');
+const b=document.body;
+function paint(){cap.textContent=CAPS[b.dataset.dir]}
+document.querySelectorAll('.bar button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const k=btn.dataset.set, v=btn.dataset.val;
+    b.dataset[k]=v;
+    btn.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    btn.classList.add('on');
+    if(k==='state'){const s=document.getElementById('cSheet'); if(s) s.style.display='none';}
+    paint();
+  });
+});
+paint();
+</script>
+</body>
+</html>

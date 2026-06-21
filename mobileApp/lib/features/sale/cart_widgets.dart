@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../core/formatters.dart';
 import '../../core/icons.dart';
 import '../../state/cart_controller.dart';
-import '../../theme/palette.dart';
 import '../../theme/theme.dart';
 import '../../widgets/astra_widgets.dart';
 import 'edit_line_sheet.dart';
@@ -57,7 +56,7 @@ Widget cartLineCard(BuildContext context, CartLine line) {
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(color: AstraPalette.warnTint, borderRadius: BorderRadius.circular(10)),
+                            decoration: BoxDecoration(color: p.warnTint, borderRadius: BorderRadius.circular(10)),
                             child: Text(line.discountLabel, style: ui(size: 9, weight: FontWeight.w800, color: p.goldText)),
                           ),
                         ],
@@ -152,7 +151,7 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
       child: Row(
         children: [
-          IconChip(icon: Icons.sell_outlined, size: 30, radius: 9, bg: AstraPalette.warnTint, fg: p.goldText),
+          IconChip(icon: Icons.sell_outlined, size: 30, radius: 9, bg: p.warnTint, fg: p.goldText),
           const SizedBox(width: 10),
           Expanded(child: Text('Order discount', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink))),
           Container(

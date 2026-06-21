@@ -121,6 +121,7 @@ class ApiService {
 
   Future<SalesPage> sales({
     String? status,
+    String? search,
     int? paymentMethodId,
     String? fromDate,
     String? toDate,
@@ -132,6 +133,7 @@ class ApiService {
   }) async {
     final data = await client.get('/sale', query: {
       if (status != null) 'status': status,
+      if (search != null && search.isNotEmpty) 'search': search,
       if (paymentMethodId != null) 'payment_method_id': paymentMethodId,
       if (fromDate != null) 'from_date': fromDate,
       if (toDate != null) 'to_date': toDate,
@@ -156,6 +158,58 @@ class ApiService {
   Future<Sale> saleById(String id) async {
     final data = await client.get('/sale/$id');
     return Sale.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  // ---- Sale Returns ----
+  Future<SaleReturn> createSaleReturn(Map<String, dynamic> payload) async {
+    final data = await client.post('/sale-return', body: payload);
+    return SaleReturn.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  Future<SaleReturnsPage> saleReturns({
+    String? status,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy = 'date', // date | reference_no | paid | grand_total | total | id
+    String sortDirection = 'desc', // asc | desc
+    bool mineOnly = false,
+    int page = 1,
+    int perPage = 30,
+  }) async {
+    final data = await client.get('/sale-return', query: {
+      if (status != null) 'status': status,
+      if (paymentMethodId != null) 'payment_method_id': paymentMethodId,
+      if (fromDate != null) 'from_date': fromDate,
+      if (toDate != null) 'to_date': toDate,
+      'sort_by': sortBy,
+      'sort_direction': sortDirection,
+      'mine_only': mineOnly,
+      'page': page,
+      'per_page': perPage,
+    });
+    final list = (data is Map ? data['data'] : data) as List? ?? const [];
+    final summary = (data is Map ? data['summary'] : null) as Map? ?? const {};
+    final pag = (data is Map ? data['pagination'] : null) as Map? ?? const {};
+    return SaleReturnsPage(
+      rows: list.map((e) => Map<String, dynamic>.from(e)).toList(),
+      total: asNum(summary['invoices'] ?? pag['total'] ?? list.length).toInt(),
+      totalPaid: asNum(summary['total_paid']).toDouble(),
+      currentPage: asNum(pag['current_page'] ?? 1).toInt(),
+      lastPage: asNum(pag['last_page'] ?? 1).toInt(),
+    );
+  }
+
+  Future<SaleReturn> saleReturnById(String id) async {
+    final data = await client.get('/sale-return/$id');
+    return SaleReturn.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  /// The source sale with each line's remaining returnable quantity — seeds the
+  /// New Return screen so the per-line steppers can be capped at what's left.
+  Future<ReturnableSale> returnableSale(String saleId) async {
+    final data = await client.get('/sale-return/from-sale/$saleId');
+    return ReturnableSale.fromJson(Map<String, dynamic>.from(data));
   }
 
   // ---- Admin ----
@@ -185,8 +239,11 @@ class ApiService {
     return Map<String, dynamic>.from(data);
   }
 
-  Future<Map<String, dynamic>> toggleDay(String date) async {
-    final data = await client.post('/admin/day-status', body: {'date': date});
-    return Map<String, dynamic>.from(data);
+  /// Toggle the branch day session. Opens a new session (at [dateTime]) when the
+  /// branch is closed, or closes the open one (at [dateTime]) when it's open.
+  /// [dateTime] is a full `yyyy-MM-dd HH:mm:ss` string (see [Dates.isoDateTime]).
+  Future<DaySessionToggleResult> toggleDay(String dateTime) async {
+    final data = await client.post('/admin/day-status', body: {'date': dateTime});
+    return DaySessionToggleResult.fromJson(Map<String, dynamic>.from(data));
   }
 }

@@ -23,6 +23,7 @@ class Storage {
   static const _kBaseUrl = 'astra.baseUrl';
   static const _kTenant = 'astra.tenant';
   static const _kPreset = 'astra.preset';
+  static const _kThemeMode = 'astra.themeMode'; // light | dark | system
   static const _kCurrency = 'astra.currency';
   static const _kBranch = 'astra.branch';
   static const _kUser = 'astra.user';
@@ -58,6 +59,9 @@ class Storage {
 
   String? get presetId => _prefs.getString(_kPreset);
   Future<void> setPresetId(String v) => _prefs.setString(_kPreset, v);
+
+  String? get themeMode => _prefs.getString(_kThemeMode);
+  Future<void> setThemeMode(String v) => _prefs.setString(_kThemeMode, v);
 
   String? get currencyCode => _prefs.getString(_kCurrency);
   Future<void> setCurrencyCode(String v) => _prefs.setString(_kCurrency, v);

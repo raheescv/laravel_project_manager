@@ -156,6 +156,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 4),
                   Text('$billsVal ${billsVal == 1 ? 'bill' : 'bills'} today · avg ${Money.of(avg)}',
                       style: ui(size: 11.5, weight: FontWeight.w600, color: Colors.white70)),
+                  const SizedBox(height: 12),
+                  _dayStatusPill(user),
                   if (admin.trendPoints.length >= 2) ...[
                     const SizedBox(height: 12),
                     AreaTrendChart(
@@ -171,6 +173,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Tappable day open/closed chip on the hero → the Day Session screen.
+  Widget _dayStatusPill(ApiUser? user) {
+    final open = user?.dayOpen ?? false;
+    final dot = open ? AstraPalette.success : AstraPalette.danger;
+    return GestureDetector(
+      onTap: () => context.push('/day-session'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            Container(width: 8, height: 8, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+            const SizedBox(width: 8),
+            Text(open ? 'Day open' : 'Day closed',
+                style: ui(size: 12, weight: FontWeight.w800, color: Colors.white)),
+            const SizedBox(width: 6),
+            Text(open ? '· tap to close' : '· tap to open',
+                style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
+            const Spacer(),
+            const Icon(Icons.chevron_right, size: 16, color: Colors.white70),
+          ],
+        ),
       ),
     );
   }

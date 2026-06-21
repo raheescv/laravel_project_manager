@@ -46,6 +46,23 @@ class Dates {
   /// `yyyy-MM-dd` for a given date — the format the report API expects.
   static String iso(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
+  /// `yyyy-MM-dd HH:mm:ss` — the datetime format the day-session API expects.
+  static String isoDateTime(DateTime d) => DateFormat('yyyy-MM-dd HH:mm:ss').format(d);
+
+  /// `Sat, 21 Jun 2026` — the weekday-prefixed date used on the day-session screen.
+  static String weekday(DateTime d) => DateFormat('EEE, d MMM yyyy').format(d);
+
+  /// `9:12 AM` — a clock time for a given moment.
+  static String time(DateTime d) => DateFormat('h:mm a').format(d);
+
+  /// `21 Jun 2026 · 9:12 AM` from an ISO/datetime string (empty if unparseable).
+  static String humanDateTime(String? iso) {
+    if (iso == null || iso.isEmpty) return '';
+    final d = DateTime.tryParse(iso);
+    if (d == null) return iso;
+    return DateFormat('d MMM yyyy · h:mm a').format(d);
+  }
+
   /// A compact range label, e.g. "8 – 14 Jun 2026" or "8 Jun – 2 Jul 2026".
   static String range(DateTime start, DateTime end) {
     if (start.year == end.year && start.month == end.month && start.day == end.day) {
