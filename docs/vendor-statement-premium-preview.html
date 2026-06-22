@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendor Statement — Premium Preview</title>
+<style>
+    /* ============================================================
+       PREVIEW CHROME (not part of the PDF) — uses CSS vars only to
+       drive the palette switcher. The real blade hard-codes the
+       chosen palette's hex values (DomPDF has no var() support).
+       ============================================================ */
+    :root{
+        --deep:#0A5E36; --band:#0E8A4F; --accent:#0A6B3C;
+        --soft:#EEF7F1; --soft-line:#CDE7D8; --gold:#B8860B; --zebra:#F4FAF6;
+        --dr:#C0392B; --cr:#1A7A3C; --ink:#1a1a1a; --muted:#6b7280;
+    }
+    [data-pal="sapphire"]{ --deep:#15307F; --band:#1E40AF; --accent:#1E40AF; --soft:#EEF2FB; --soft-line:#CFDBF2; --gold:#B8860B; --zebra:#F5F8FD; }
+    [data-pal="graphite"]{ --deep:#1F2937; --band:#334155; --accent:#334155; --soft:#F0F2F5; --soft-line:#D5DBE2; --gold:#9A7B25; --zebra:#F6F8FA; }
+
+    *{ box-sizing:border-box; }
+    body{ margin:0; background:#4b5563; background-image:radial-gradient(circle at 50% 0,#6b7280,#374151);
+        font-family:'Segoe UI',Arial,sans-serif; padding:84px 16px 60px; min-height:100vh; }
+    .toolbar{ position:fixed; top:0; left:0; right:0; z-index:50; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+        padding:12px 20px; background:rgba(17,24,39,.92); backdrop-filter:blur(8px); border-bottom:1px solid rgba(255,255,255,.08); box-shadow:0 6px 24px rgba(0,0,0,.25); }
+    .toolbar .brand{ color:#fff; font-weight:700; font-size:14px; }
+    .toolbar .brand small{ display:block; font-weight:400; font-size:11px; color:#9ca3af; }
+    .toolbar .label{ color:#9ca3af; font-size:11px; text-transform:uppercase; letter-spacing:1px; }
+    .swatch{ width:30px; height:30px; border-radius:8px; cursor:pointer; border:2px solid transparent; transition:transform .12s,border-color .12s; }
+    .swatch:hover{ transform:translateY(-2px); }
+    .swatch.active{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
+    .sw-emerald{ background:#0E8A4F; } .sw-sapphire{ background:#1E40AF; } .sw-graphite{ background:#334155; }
+    .toolbar .spacer{ flex:1; }
+    .btn-toggle{ background:rgba(255,255,255,.08); color:#e5e7eb; border:1px solid rgba(255,255,255,.12); padding:7px 12px; border-radius:8px; font-size:12px; cursor:pointer; }
+    .btn-toggle:hover{ background:rgba(255,255,255,.16); }
+
+    .paper{ width:210mm; min-height:297mm; margin:0 auto; background:#fff; box-shadow:0 30px 80px rgba(0,0,0,.45); }
+
+    /* ============================================================
+       DOCUMENT (DomPDF-safe: tables, solid bands, border-radius)
+       ============================================================ */
+    .vstmt{ font-family:'DejaVu Sans',Arial,sans-serif; font-size:10px; color:var(--ink); }
+
+    /* Masthead */
+    .vs-hdr{ width:100%; border-collapse:collapse; background:var(--deep); }
+    .vs-hdr td{ padding:12px 20px; vertical-align:middle; }
+    .vs-hdr td.logo-td{ width:120px; text-align:right; }
+    .vs-co{ font-size:16px; font-weight:700; color:#fff; margin:0 0 3px; letter-spacing:.3px; }
+    .vs-co-meta{ font-size:8.5px; color:rgba(255,255,255,.68); line-height:1.65; }
+    .vs-logo{ background:#fff; padding:5px 7px; border-radius:5px; display:inline-block; }
+    .vs-logo img{ max-width:96px; max-height:46px; display:block; }
+    .vs-logo .ph{ font-size:20px; font-weight:800; color:var(--deep); padding:4px 6px; }
+    .vs-gold{ height:3px; background:var(--gold); }
+
+    /* Title bar */
+    .vs-title{ width:100%; border-collapse:collapse; background:var(--band); }
+    .vs-title td{ padding:7px 20px; vertical-align:middle; }
+    .vs-doc{ font-size:12px; font-weight:700; color:#fff; letter-spacing:2.5px; text-transform:uppercase; }
+    .vs-title td.tr{ text-align:right; width:48%; font-size:8.5px; color:rgba(255,255,255,.8); line-height:1.7; white-space:nowrap; }
+    .vs-title td.tr strong{ color:#fff; font-size:10px; }
+
+    /* Info zone */
+    .vs-info{ width:100%; border-collapse:collapse; margin-top:12px; }
+    .vs-info td{ vertical-align:top; }
+    .vs-pad{ width:20px; }
+    .vs-gap{ width:10px; }
+
+    .vs-card{ border:1px solid var(--soft-line); border-radius:8px; background:var(--soft); overflow:hidden; }
+    .vs-card-h{ font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1.3px; color:var(--accent);
+        padding:7px 11px; border-bottom:1px solid var(--soft-line); background:#fff; }
+    .vs-card-b{ padding:9px 11px; }
+
+    .vrow{ width:100%; border-collapse:collapse; }
+    .vrow td{ padding:3px 0; font-size:9.5px; vertical-align:top; }
+    .vrow td.vk{ color:var(--muted); width:34%; }
+    .vrow td.vv{ font-weight:700; color:var(--ink); }
+
+    /* Summary stat grid */
+    .vs-sum{ width:100%; border-collapse:separate; border-spacing:7px; }
+    .vs-sum td{ width:25%; background:#fff; border:1px solid var(--soft-line); border-radius:7px; padding:8px 10px; vertical-align:top; }
+    .vs-sum .sl{ font-size:7.8px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); margin-bottom:3px; }
+    .vs-sum .sv{ font-size:12px; font-weight:800; }
+    .sv.dr{ color:var(--dr); } .sv.cr{ color:var(--cr); } .sv.nl{ color:var(--ink); }
+    .vs-sum td.closing{ background:var(--soft); border:1.5px solid var(--accent); }
+    .vs-sum td.closing .sl{ color:var(--accent); }
+
+    /* Statement table */
+    .vs-wrap{ padding:14px 20px 10px; }
+    .stmt{ width:100%; border-collapse:collapse; }
+    .stmt thead th{ background:var(--deep); color:#fff; font-size:8.8px; font-weight:600; text-transform:uppercase; letter-spacing:.4px;
+        padding:7px 7px; text-align:left; border:1px solid var(--deep); white-space:nowrap; }
+    .stmt thead th.r{ text-align:right; }
+    .stmt tbody td{ padding:5px 7px; border:1px solid var(--soft-line); font-size:9.5px; vertical-align:top; }
+    .stmt tbody tr.even td{ background:var(--zebra); }
+    .stmt tbody tr.opening td{ background:#fff; font-weight:700; }
+    .stmt .rmk{ display:block; color:var(--muted); font-size:8.3px; margin-top:1px; }
+    .stmt tfoot td{ padding:6px 7px; border:1px solid var(--soft-line); font-size:9.5px; font-weight:700; }
+    .stmt tfoot tr.ft1 td{ background:var(--soft); }
+    .stmt tfoot tr.ft2 td{ background:var(--deep); color:#fff; border-color:var(--deep); }
+    .stmt tfoot tr.ft2 td .cr, .stmt tfoot tr.ft2 td .dr{ color:#fff; }
+    .r{ text-align:right; } .c{ text-align:center; }
+    .dr{ color:var(--dr); font-weight:700; } .cr{ color:var(--cr); font-weight:700; }
+    .muted{ color:#c2c8d0; }
+    .idx-b{ display:inline-block; min-width:15px; padding:1px 5px; border-radius:4px; background:var(--soft); color:var(--accent); font-weight:700; font-size:8.5px; }
+
+    .vs-foot{ border-top:1px solid var(--soft-line); margin:8px 20px 0; padding:6px 0; text-align:center; font-size:7.8px; color:#9aa3af; }
+</style>
+</head>
+<body data-pal="graphite">
+
+<div class="toolbar">
+    <div class="brand">Vendor Statement — Premium Preview<small>print/purchase-vendor/statement/{id} · A4 PDF (DomPDF) · applied: Graphite</small></div>
+    <span class="label">Palette</span>
+    <div class="swatch sw-emerald" data-pal="emerald" title="Emerald Signature (matches LPO print)"></div>
+    <div class="swatch sw-sapphire" data-pal="sapphire" title="Royal Sapphire (refined current blue)"></div>
+    <div class="swatch sw-graphite active" data-pal="graphite" title="Graphite (applied)"></div>
+    <div class="spacer"></div>
+    <button class="btn-toggle" id="toggleLogo">Toggle logo / placeholder</button>
+</div>
+
+<div class="paper">
+  <div class="vstmt">
+
+    <!-- MASTHEAD -->
+    <table class="vs-hdr" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <div class="vs-co">BARAKAT AL SHARQ BUILDING</div>
+                <div class="vs-co-meta">Building No. 24, Salwa Road, Industrial Area, Doha, Qatar &bull; Tel: +974 4012 3456 &bull; info@barakatalsharq.qa</div>
+            </td>
+            <td class="logo-td">
+                <div class="vs-logo" id="logoSlot"><span class="ph">B</span></div>
+            </td>
+        </tr>
+    </table>
+    <div class="vs-gold"></div>
+
+    <!-- TITLE BAR -->
+    <table class="vs-title" cellpadding="0" cellspacing="0">
+        <tr>
+            <td><div class="vs-doc">Vendor Account Statement</div></td>
+            <td class="tr"><strong>GULF HARDWARE TRADING W.L.L</strong><br>Period: 22-Mar-2026 &ndash; 22-Jun-2026</td>
+        </tr>
+    </table>
+
+    <!-- INFO: VENDOR + SUMMARY -->
+    <table class="vs-info" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="vs-pad"></td>
+            <td style="width:34%;">
+                <div class="vs-card">
+                    <div class="vs-card-h">Vendor Details</div>
+                    <div class="vs-card-b">
+                        <table class="vrow" cellpadding="0" cellspacing="0">
+                            <tr><td class="vk">Name</td><td class="vv">Gulf Hardware Trading W.L.L</td></tr>
+                            <tr><td class="vk">Vendor ID</td><td class="vv">#79</td></tr>
+                            <tr><td class="vk">Mobile</td><td class="vv">+974 5566 7788</td></tr>
+                            <tr><td class="vk">Email</td><td class="vv">sales@gulfhardware.qa</td></tr>
+                            <tr><td class="vk">Place</td><td class="vv">Old Industrial Area, Doha</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </td>
+            <td class="vs-gap"></td>
+            <td style="width:62%;">
+                <div class="vs-card">
+                    <div class="vs-card-h">Balance Summary</div>
+                    <div class="vs-card-b" style="padding:4px;">
+                        <table class="vs-sum" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td><div class="sl">Opening Debit</div><div class="sv dr">12,000.00</div></td>
+                                <td><div class="sl">Opening Credit</div><div class="sv cr">4,500.00</div></td>
+                                <td><div class="sl">Period Debit</div><div class="sv dr">38,750.00</div></td>
+                                <td><div class="sl">Period Credit</div><div class="sv cr">29,200.00</div></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2"><div class="sl">Net Opening Balance</div><div class="sv nl">7,500.00 Dr</div></td>
+                                <td colspan="2" class="closing"><div class="sl">Closing Balance</div><div class="sv nl">17,050.00 Dr</div></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </td>
+            <td class="vs-pad"></td>
+        </tr>
+    </table>
+
+    <!-- STATEMENT TABLE -->
+    <div class="vs-wrap">
+        <table class="stmt" cellpadding="0" cellspacing="0">
+            <thead>
+                <tr>
+                    <th style="width:11%;">Date</th>
+                    <th style="width:33%;">Particulars</th>
+                    <th style="width:15%;">Invoice No</th>
+                    <th class="r" style="width:13%;">Debit</th>
+                    <th class="r" style="width:13%;">Credit</th>
+                    <th class="r" style="width:15%;">Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="opening">
+                    <td style="white-space:nowrap;">22-Mar-2026</td>
+                    <td>Opening Balance b/f</td>
+                    <td><span class="muted">—</span></td>
+                    <td class="r"><span class="muted">—</span></td>
+                    <td class="r"><span class="muted">—</span></td>
+                    <td class="r">7,500.00 Dr</td>
+                </tr>
+                <tr>
+                    <td style="white-space:nowrap;">28-Mar-2026</td>
+                    <td>Purchase Invoice<span class="rmk">Cement &amp; steel — site A</span></td>
+                    <td>PUR-2026-0455</td>
+                    <td class="r"><span class="dr">9,950.00</span></td>
+                    <td class="r"><span class="muted">—</span></td>
+                    <td class="r">17,450.00 Dr</td>
+                </tr>
+                <tr class="even">
+                    <td style="white-space:nowrap;">05-Apr-2026</td>
+                    <td>Payment — Bank Transfer</td>
+                    <td><span class="muted">—</span></td>
+                    <td class="r"><span class="muted">—</span></td>
+                    <td class="r"><span class="cr">10,000.00</span></td>
+                    <td class="r">7,450.00 Dr</td>
+                </tr>
+                <tr>
+                    <td style="white-space:nowrap;">18-Apr-2026</td>
+                    <td>Purchase Invoice<span class="rmk">Waterproofing materials</span></td>
+                    <td>PUR-2026-0512</td>
+                    <td class="r"><span class="dr">13,300.00</span></td>
+                    <td class="r"><span class="muted">—</span></td>
+                    <td class="r">20,750.00 Dr</td>
+                </tr>
+                <tr class="even">
+                    <td style="white-space:nowrap;">02-May-2026</td>
+                    <td>Payment — Cheque #44120</td>
+                    <td><span class="muted">—</span></td>
+                    <td class="r"><span class="muted">—</span></td>
+                    <td class="r"><span class="cr">12,000.00</span></td>
+                    <td class="r">8,750.00 Dr</td>
+                </tr>
+                <tr>
+                    <td style="white-space:nowrap;">21-May-2026</td>
+                    <td>Purchase Invoice<span class="rmk">Hardware &amp; fixings</span></td>
+                    <td>PUR-2026-0588</td>
+                    <td class="r"><span class="dr">15,500.00</span></td>
+                    <td class="r"><span class="muted">—</span></td>
+                    <td class="r">24,250.00 Dr</td>
+                </tr>
+                <tr class="even">
+                    <td style="white-space:nowrap;">10-Jun-2026</td>
+                    <td>Payment — Bank Transfer</td>
+                    <td><span class="muted">—</span></td>
+                    <td class="r"><span class="muted">—</span></td>
+                    <td class="r"><span class="cr">7,200.00</span></td>
+                    <td class="r">17,050.00 Dr</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="ft1">
+                    <td colspan="3" class="r">Period Total</td>
+                    <td class="r dr">38,750.00</td>
+                    <td class="r cr">29,200.00</td>
+                    <td></td>
+                </tr>
+                <tr class="ft2">
+                    <td colspan="3" class="r">Grand Total &bull; Closing Balance</td>
+                    <td class="r">50,750.00</td>
+                    <td class="r">33,700.00</td>
+                    <td class="r">17,050.00 Dr</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="vs-foot">Computer generated document &bull; 22/06/2026 10:42 AM</div>
+
+  </div>
+</div>
+
+<script>
+    document.querySelectorAll('.swatch').forEach(function(s){
+        s.addEventListener('click', function(){
+            document.querySelectorAll('.swatch').forEach(function(x){ x.classList.remove('active'); });
+            s.classList.add('active');
+            document.body.setAttribute('data-pal', s.dataset.pal);
+        });
+    });
+    var hasLogo=false;
+    document.getElementById('toggleLogo').addEventListener('click', function(){
+        hasLogo=!hasLogo;
+        document.getElementById('logoSlot').innerHTML = hasLogo
+            ? '<img src="https://dummyimage.com/300x140/0E8A4F/ffffff&text=LOGO" alt="logo">'
+            : '<span class="ph">B</span>';
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Voucher — Premium Preview</title>
+<style>
+    /* ============================================================
+       PREVIEW CHROME (not part of the printed PDF)
+       ============================================================ */
+    :root {
+        --accent:      #0E8A4F;   /* Emerald (brand)  */
+        --accent-dark: #0A6B3C;
+        --accent-deep: #064d2a;
+        --accent-tint: #E9F6EF;
+        --accent-tint2:#F3FAF6;
+        --gold:        #B8860B;
+        --ink:         #1a1a1a;
+        --ink-soft:    #555;
+        --line:        #e0e0e0;
+    }
+    [data-accent="royal"]    { --accent:#1E40AF; --accent-dark:#15307F; --accent-deep:#0E2360; --accent-tint:#EAF0FB; --accent-tint2:#F4F7FD; --gold:#B8860B; }
+    [data-accent="graphite"] { --accent:#334155; --accent-dark:#1E293B; --accent-deep:#0F172A; --accent-tint:#EEF1F5; --accent-tint2:#F6F8FA; --gold:#9A7B25; }
+    [data-accent="bronze"]   { --accent:#9A5B1E; --accent-dark:#784515; --accent-deep:#5a330f; --accent-tint:#F6EEE3; --accent-tint2:#FBF6EF; --gold:#8a6a12; }
+    [data-accent="plum"]     { --accent:#6D28D9; --accent-dark:#5B21B6; --accent-deep:#4C1D95; --accent-tint:#F1EBFB; --accent-tint2:#F8F5FD; --gold:#B8860B; }
+
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: radial-gradient(circle at 50% 0, #6b7280, #374151);
+        font-family: 'Segoe UI', Arial, sans-serif;
+        padding: 104px 16px 60px;
+        min-height: 100vh;
+    }
+    .toolbar {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+        display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+        padding: 12px 20px;
+        background: rgba(17,24,39,.93);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        box-shadow: 0 6px 24px rgba(0,0,0,.25);
+    }
+    .toolbar .brand { color:#fff; font-weight:700; font-size:14px; letter-spacing:.3px; margin-right:6px; }
+    .toolbar .brand small { display:block; font-weight:400; font-size:11px; color:#9ca3af; letter-spacing:0; }
+    .toolbar .group { display:flex; gap:8px; align-items:center; }
+    .toolbar .label { color:#9ca3af; font-size:11px; text-transform:uppercase; letter-spacing:1px; }
+    .swatch { width:28px; height:28px; border-radius:8px; cursor:pointer; border:2px solid transparent; transition:transform .12s ease, border-color .12s ease; }
+    .swatch:hover { transform:translateY(-2px); }
+    .swatch.active { border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
+    .sw-emerald{background:#0E8A4F;} .sw-royal{background:#1E40AF;} .sw-graphite{background:#334155;} .sw-bronze{background:#9A5B1E;} .sw-plum{background:#6D28D9;}
+    .toolbar .spacer { flex:1; }
+    .seg { display:flex; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:9px; overflow:hidden; }
+    .seg button { background:transparent; color:#cbd5e1; border:0; padding:7px 14px; font-size:12px; cursor:pointer; font-weight:600; }
+    .seg button.active { background:var(--accent); color:#fff; }
+
+    .stage { max-width: 210mm; margin: 0 auto; }
+    .variant-title { color:#e5e7eb; font-size:13px; font-weight:600; margin:0 0 10px 4px; letter-spacing:.4px; }
+    .variant-title span { color:#9ca3af; font-weight:400; }
+
+    /* A4 paper */
+    .paper {
+        width: 210mm; min-height: 297mm; margin: 0 auto 40px;
+        background: #fff; box-shadow: 0 30px 80px rgba(0,0,0,.45);
+        padding: 16mm 15mm; color: var(--ink);
+        font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 11px; line-height: 1.5;
+    }
+    .doc { display:none; }
+    .doc.show { display:block; }
+
+    /* ============================================================
+       SHARED DOC PRIMITIVES
+       ============================================================ */
+    table { border-collapse: collapse; }
+    .co-name { font-size: 16px; font-weight: 700; }
+    .co-meta { font-size: 9.5px; color: var(--ink-soft); line-height: 1.7; }
+    .logo-box { width:120px; height:46px; border:1px dashed #ccc; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#bbb; font-size:9px; letter-spacing:1px; }
+    .fields { width:100%; }
+    .fields td { padding:7px 0; vertical-align:top; }
+    .f-label { width:26%; font-weight:600; color:var(--ink-soft); font-size:10px; white-space:nowrap; }
+    .f-colon { width:1%; padding:7px 8px; color:#aaa; }
+    .f-value { font-size:11px; color:var(--ink); }
+
+    /* ─────────────────────────────────────────────
+       VARIANT A — "Banded Ledger"
+       Solid accent masthead band + framed amount cheque box
+       ───────────────────────────────────────────── */
+    .a-mast { background:var(--accent); color:#fff; padding:14px 18px; border-radius:8px 8px 0 0; }
+    .a-mast .co-name { color:#fff; }
+    .a-mast .co-meta { color:rgba(255,255,255,.82); }
+    .a-mast .logo-box { border-color:rgba(255,255,255,.45); color:rgba(255,255,255,.7); }
+    .a-ribbon { background:var(--accent-deep); color:#fff; text-align:center; padding:7px 0; font-size:13px; font-weight:700; letter-spacing:4px; text-transform:uppercase; }
+    .a-metabar { display:flex; justify-content:space-between; padding:10px 18px; background:var(--accent-tint2); border:1px solid var(--line); border-top:0; font-size:10.5px; }
+    .a-metabar .val { font-weight:700; }
+    .a-body { border:1px solid var(--line); border-top:0; padding:16px 18px 22px; border-radius:0 0 8px 8px; }
+    .a-cheque { border:2px solid var(--accent); border-radius:8px; padding:12px 16px; margin:4px 0 16px; display:flex; justify-content:space-between; align-items:center; background:var(--accent-tint2); }
+    .a-cheque .lbl { font-size:8.5px; text-transform:uppercase; letter-spacing:1.4px; color:var(--accent-dark); font-weight:700; }
+    .a-cheque .fig { font-size:24px; font-weight:800; color:var(--accent-deep); }
+    .a-cheque .qr { font-size:13px; font-weight:600; color:var(--accent-dark); vertical-align:super; }
+    .a-words { border-left:3px solid var(--accent); background:var(--accent-tint); padding:8px 12px; margin-bottom:18px; }
+    .a-words .lbl { font-size:8px; text-transform:uppercase; letter-spacing:1px; color:var(--accent-dark); font-weight:700; }
+    .a-words .val { font-style:italic; font-weight:600; }
+    .a-fields td { border-bottom:1px solid var(--line); }
+    .a-fields tr:first-child td { border-top:1px solid var(--line); }
+    .sig3 { width:100%; margin-top:34px; }
+    .sig3 td { width:33.33%; text-align:center; vertical-align:bottom; padding-top:36px; }
+    .sig-line { border-top:1px solid #777; width:74%; margin:0 auto 5px; }
+    .sig-lbl { font-size:9px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.8px; }
+    .doc-footer { margin-top:18px; border-top:1px solid #ddd; padding-top:6px; text-align:center; font-size:8px; color:#aaa; }
+
+    /* ─────────────────────────────────────────────
+       VARIANT B — "Hairline Executive"
+       Minimal, two-tone hairline rules, big amount, gold accents
+       ───────────────────────────────────────────── */
+    .b-head { width:100%; border-bottom:2px solid var(--ink); padding-bottom:12px; }
+    .b-head .co-name { font-size:17px; letter-spacing:.5px; }
+    .b-eyebrow { font-size:8px; letter-spacing:3px; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:3px; }
+    .b-title { text-align:center; margin:18px 0 6px; }
+    .b-title .t { font-size:15px; font-weight:700; letter-spacing:5px; text-transform:uppercase; color:var(--ink); }
+    .b-title .rule { width:60px; height:3px; background:var(--gold); margin:7px auto 0; }
+    .b-meta { width:100%; margin:14px 0 18px; }
+    .b-meta td { font-size:10.5px; padding:3px 0; }
+    .b-meta .k { color:var(--ink-soft); }
+    .b-meta .v { font-weight:700; text-align:right; }
+    .b-amount { text-align:center; padding:14px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:8px; }
+    .b-amount .lbl { font-size:8.5px; letter-spacing:1.6px; text-transform:uppercase; color:var(--ink-soft); }
+    .b-amount .fig { font-size:30px; font-weight:300; color:var(--ink); letter-spacing:1px; }
+    .b-amount .fig b { font-weight:700; }
+    .b-amount .cur { font-size:14px; color:var(--accent); font-weight:700; }
+    .b-words { text-align:center; font-style:italic; color:var(--ink-soft); font-size:10.5px; margin-bottom:22px; }
+    .b-words b { color:var(--ink); font-style:normal; }
+    .b-fields { width:100%; }
+    .b-fields td { padding:8px 0; border-bottom:1px dotted #ccc; }
+
+    /* ─────────────────────────────────────────────
+       VARIANT C — "Gilded Stub"
+       Accent side rail + perforated stub feel + boxed grid
+       ───────────────────────────────────────────── */
+    .c-wrap { border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+    .c-top { width:100%; }
+    .c-top td { vertical-align:middle; padding:14px 18px; }
+    .c-rail { width:8px; background:var(--accent); padding:0 !important; }
+    .c-badge { display:inline-block; background:var(--accent-tint); color:var(--accent-dark); border:1px solid var(--accent); border-radius:20px; padding:4px 14px; font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; }
+    .c-hr { height:1px; background:var(--line); }
+    .c-grid { width:100%; }
+    .c-grid td { width:50%; padding:14px 18px; vertical-align:top; }
+    .c-grid .cell-line { border-right:1px solid var(--line); }
+    .c-k { font-size:8px; text-transform:uppercase; letter-spacing:1.2px; color:var(--ink-soft); margin-bottom:3px; }
+    .c-v { font-size:12px; font-weight:600; }
+    .c-amount { background:var(--accent-deep); color:#fff; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; }
+    .c-amount .lbl { font-size:9px; letter-spacing:1.6px; text-transform:uppercase; color:rgba(255,255,255,.7); }
+    .c-amount .fig { font-size:26px; font-weight:800; }
+    .c-amount .words { font-size:9.5px; font-style:italic; color:rgba(255,255,255,.85); max-width:55%; text-align:right; }
+    .c-foot { padding:0 18px 18px; }
+</style>
+</head>
+<body data-accent="emerald">
+
+<div class="toolbar">
+    <div class="brand">Payment Voucher <small>print/purchase-vendor/payment-voucher · A4 PDF (dompdf)</small></div>
+    <div class="group">
+        <span class="label">Design</span>
+        <div class="seg" id="segDesign">
+            <button data-doc="A" class="active">A · Banded Ledger</button>
+            <button data-doc="B">B · Hairline Exec</button>
+            <button data-doc="C">C · Gilded Stub</button>
+        </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="group">
+        <span class="label">Accent</span>
+        <div class="swatch sw-emerald active" data-accent="emerald" title="Emerald"></div>
+        <div class="swatch sw-royal" data-accent="royal" title="Royal"></div>
+        <div class="swatch sw-graphite" data-accent="graphite" title="Graphite"></div>
+        <div class="swatch sw-bronze" data-accent="bronze" title="Bronze"></div>
+        <div class="swatch sw-plum" data-accent="plum" title="Plum"></div>
+    </div>
+</div>
+
+<div class="stage">
+
+<!-- ====================== VARIANT A ====================== -->
+<div class="doc show" data-doc="A">
+    <p class="variant-title">A — Banded Ledger <span>· solid accent masthead, framed cheque-style amount, ledger field rows</span></p>
+    <div class="paper">
+        <div class="a-mast">
+            <table style="width:100%"><tr>
+                <td>
+                    <div class="co-name">Al Manar Trading Co. W.L.L.</div>
+                    <div class="co-meta">Tel: +974 4012 3456 &nbsp;·&nbsp; Building 24, Salwa Road, Doha, Qatar &nbsp;·&nbsp; accounts@almanar.qa</div>
+                </td>
+                <td style="text-align:right; width:130px;"><div class="logo-box" style="margin-left:auto;">LOGO</div></td>
+            </tr></table>
+        </div>
+        <div class="a-ribbon">Payment Voucher</div>
+        <div class="a-metabar">
+            <span><span style="color:var(--ink-soft)">Voucher No:</span> <span class="val">PV-2025-0079</span></span>
+            <span><span style="color:var(--ink-soft)">Date:</span> <span class="val">22 Jun 2026</span></span>
+        </div>
+        <div class="a-body">
+            <div class="a-cheque">
+                <div><div class="lbl">Amount Paid</div><div style="font-size:9px;color:var(--ink-soft)">to supplier account</div></div>
+                <div class="fig"><span class="qr">QR</span> 12,450.00</div>
+            </div>
+            <div class="a-words">
+                <div class="lbl">Amount in Words</div>
+                <div class="val">Qatari Riyal Twelve Thousand Four Hundred Fifty Only</div>
+            </div>
+            <table class="fields a-fields">
+                <tr><td class="f-label">Paid To</td><td class="f-colon">:</td><td class="f-value">Gulf Steel Suppliers W.L.L.</td></tr>
+                <tr><td class="f-label">Payment Mode</td><td class="f-colon">:</td><td class="f-value">Bank Transfer — QNB Current A/C</td></tr>
+                <tr><td class="f-label">Remarks</td><td class="f-colon">:</td><td class="f-value">Settlement against PO-4471 &amp; PO-4488</td></tr>
+                <tr><td class="f-label">Reason</td><td class="f-colon">:</td><td class="f-value">Purchase payment — raw material</td></tr>
+                <tr><td class="f-label">Prepared By</td><td class="f-colon">:</td><td class="f-value">Rahees C V</td></tr>
+            </table>
+            <table class="sig3">
+                <tr>
+                    <td><div class="sig-line"></div><div class="sig-lbl">Prepared By</div></td>
+                    <td><div class="sig-line"></div><div class="sig-lbl">Receiver's Signature</div></td>
+                    <td><div class="sig-line"></div><div class="sig-lbl">Authorised Signature</div></td>
+                </tr>
+            </table>
+        </div>
+        <div class="doc-footer">Computer generated document · 22/06/2026 03:14 PM</div>
+    </div>
+</div>
+
+<!-- ====================== VARIANT B ====================== -->
+<div class="doc" data-doc="B">
+    <p class="variant-title">B — Hairline Executive <span>· minimal, letterpress feel, oversized light-weight amount, gold rule</span></p>
+    <div class="paper">
+        <table class="b-head"><tr>
+            <td>
+                <div class="b-eyebrow">Accounts Payable</div>
+                <div class="co-name">Al Manar Trading Co. W.L.L.</div>
+                <div class="co-meta">Building 24, Salwa Road, Doha, Qatar · +974 4012 3456 · accounts@almanar.qa</div>
+            </td>
+            <td style="text-align:right; width:130px;"><div class="logo-box" style="margin-left:auto;">LOGO</div></td>
+        </tr></table>
+
+        <div class="b-title"><div class="t">Payment Voucher</div><div class="rule"></div></div>
+
+        <table class="b-meta">
+            <tr><td class="k">Voucher No.</td><td class="v">PV-2025-0079</td></tr>
+            <tr><td class="k">Date</td><td class="v">22 Jun 2026</td></tr>
+        </table>
+
+        <div class="b-amount">
+            <div class="lbl">Amount Paid</div>
+            <div class="fig"><span class="cur">QR</span> 12,<b>450</b>.00</div>
+        </div>
+        <div class="b-words">in words — <b>Qatari Riyal Twelve Thousand Four Hundred Fifty Only</b></div>
+
+        <table class="b-fields">
+            <tr><td class="f-label">Paid To</td><td class="f-colon">:</td><td class="f-value">Gulf Steel Suppliers W.L.L.</td></tr>
+            <tr><td class="f-label">Payment Mode</td><td class="f-colon">:</td><td class="f-value">Bank Transfer — QNB Current A/C</td></tr>
+            <tr><td class="f-label">Remarks</td><td class="f-colon">:</td><td class="f-value">Settlement against PO-4471 &amp; PO-4488</td></tr>
+            <tr><td class="f-label">Reason</td><td class="f-colon">:</td><td class="f-value">Purchase payment — raw material</td></tr>
+            <tr><td class="f-label">Prepared By</td><td class="f-colon">:</td><td class="f-value">Rahees C V</td></tr>
+        </table>
+
+        <table class="sig3">
+            <tr>
+                <td><div class="sig-line"></div><div class="sig-lbl">Prepared By</div></td>
+                <td><div class="sig-line"></div><div class="sig-lbl">Receiver's Signature</div></td>
+                <td><div class="sig-line"></div><div class="sig-lbl">Authorised Signature</div></td>
+            </tr>
+        </table>
+        <div class="doc-footer">Computer generated document · 22/06/2026 03:14 PM</div>
+    </div>
+</div>
+
+<!-- ====================== VARIANT C ====================== -->
+<div class="doc" data-doc="C">
+    <p class="variant-title">C — Gilded Stub <span>· accent side-rail, pill badge, two-column boxed grid, dark amount band</span></p>
+    <div class="paper">
+        <div class="c-wrap">
+            <table class="c-top"><tr>
+                <td class="c-rail"></td>
+                <td>
+                    <div class="co-name">Al Manar Trading Co. W.L.L.</div>
+                    <div class="co-meta">Building 24, Salwa Road, Doha, Qatar · +974 4012 3456 · accounts@almanar.qa</div>
+                </td>
+                <td style="text-align:right; width:160px;">
+                    <span class="c-badge">Payment Voucher</span>
+                    <div style="margin-top:8px; font-size:10px;"><span style="color:var(--ink-soft)">No.</span> <b>PV-2025-0079</b></div>
+                    <div style="font-size:10px;"><span style="color:var(--ink-soft)">Date</span> <b>22 Jun 2026</b></div>
+                </td>
+            </tr></table>
+            <div class="c-hr"></div>
+            <div class="c-amount">
+                <div><div class="lbl">Amount Paid</div><div class="fig">QR 12,450.00</div></div>
+                <div class="words">Qatari Riyal Twelve Thousand Four Hundred Fifty Only</div>
+            </div>
+            <table class="c-grid">
+                <tr>
+                    <td class="cell-line"><div class="c-k">Paid To</div><div class="c-v">Gulf Steel Suppliers W.L.L.</div></td>
+                    <td><div class="c-k">Payment Mode</div><div class="c-v">Bank Transfer — QNB Current A/C</div></td>
+                </tr>
+                <tr>
+                    <td class="cell-line"><div class="c-k">Remarks</div><div class="c-v" style="font-weight:400">Settlement against PO-4471 &amp; PO-4488</div></td>
+                    <td><div class="c-k">Reason</div><div class="c-v" style="font-weight:400">Purchase payment — raw material</div></td>
+                </tr>
+                <tr>
+                    <td class="cell-line"><div class="c-k">Prepared By</div><div class="c-v">Rahees C V</div></td>
+                    <td><div class="c-k">Reference</div><div class="c-v">Journal #3</div></td>
+                </tr>
+            </table>
+            <div class="c-foot">
+                <table class="sig3" style="margin-top:24px">
+                    <tr>
+                        <td><div class="sig-line"></div><div class="sig-lbl">Prepared By</div></td>
+                        <td><div class="sig-line"></div><div class="sig-lbl">Receiver's Signature</div></td>
+                        <td><div class="sig-line"></div><div class="sig-lbl">Authorised Signature</div></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="doc-footer">Computer generated document · 22/06/2026 03:14 PM</div>
+    </div>
+</div>
+
+</div>
+
+<script>
+    const body = document.body;
+    document.querySelectorAll('.swatch').forEach(s => s.addEventListener('click', () => {
+        document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+        s.classList.add('active');
+        body.setAttribute('data-accent', s.dataset.accent);
+    }));
+    document.querySelectorAll('#segDesign button').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('#segDesign button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        document.querySelectorAll('.doc').forEach(d => d.classList.toggle('show', d.dataset.doc === b.dataset.doc));
+    }));
+</script>
+</body>
+</html>
