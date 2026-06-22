@@ -42,6 +42,22 @@ class Configurations extends Component
         Artisan::call('db:seed --class=View');
     }
 
+    public function dbProcedure()
+    {
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
+        try {
+            Artisan::call('db:ensure-procedures');
+            if (str_contains(Artisan::output(), '✗')) {
+                $this->dispatch('error', ['message' => 'Procedure re-create failed. Please check the logs.']);
+
+                return;
+            }
+            $this->dispatch('success', ['message' => 'Database procedures re-created successfully']);
+        } catch (\Throwable $e) {
+            $this->dispatch('error', ['message' => 'Procedure re-create failed: '.$e->getMessage()]);
+        }
+    }
+
     public function save()
     {
         abort_unless(auth()->user()?->can('configuration.settings'), 403);

@@ -371,9 +371,28 @@ class PrintController extends Controller
             return null;
         }
 
-        $path = storage_path('app/public/'.$logo);
+        // The `logo` config may hold a full URL (…/storage/company_image/x.png)
+        // or a relative disk path — reduce it to a path relative to the public disk.
+        $relative = Str::startsWith($logo, ['http://', 'https://'])
+            ? (parse_url($logo, PHP_URL_PATH) ?: $logo)
+            : $logo;
+        $relative = ltrim($relative, '/');
+        $relative = Str::after($relative, 'storage/');
 
-        return file_exists($path) ? $path : null;
+        // DomPDF renders local file paths reliably (it can't always fetch remote
+        // URLs and drops data-URIs), so resolve to the first candidate on disk.
+        foreach ([
+            \Illuminate\Support\Facades\Storage::disk('public')->path($relative),
+            storage_path('app/public/'.$relative),
+            public_path('storage/'.$relative),
+            public_path($relative),
+        ] as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**

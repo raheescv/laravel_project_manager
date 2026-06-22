@@ -29,8 +29,8 @@
         .b-eyebrow { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 3px; }
         .b-head .co-name { font-size: 17px; font-weight: 700; letter-spacing: .5px; color: var(--ink); margin: 0 0 3px; }
         .b-head .co-meta { font-size: 9.5px; color: var(--ink-soft); line-height: 1.7; }
-        .b-head .logo-cell { text-align: right; width: 130px; }
-        .b-head .logo-cell img { max-width: 120px; max-height: 55px; }
+        .b-head .logo-cell { text-align: right; width: 200px; vertical-align: top; }
+        .b-head .logo-cell img { max-width: 190px; max-height: 90px; }
 
         /* ── Title ── */
         .b-title { text-align: center; margin: 18px 0 6px; }

@@ -20,9 +20,14 @@
             </div>
         </div>
         <div class="card-footer bg-light d-flex justify-content-between align-items-center py-2 px-3">
-            <button type="button" wire:click="dbView" class="btn btn-info btn-sm">
-                <i class="fa fa-database me-1"></i>View Table Re-Create
-            </button>
+            <div class="d-flex gap-2">
+                <button type="button" wire:click="dbView" class="btn btn-info btn-sm">
+                    <i class="fa fa-database me-1"></i>View Table Re-Create
+                </button>
+                <button type="button" wire:click="dbProcedure" class="btn btn-info btn-sm">
+                    <i class="fa fa-cogs me-1"></i>Procedure Re-Create
+                </button>
+            </div>
             <button type="submit" class="btn btn-primary btn-sm px-3">
                 <i class="fa fa-save me-1"></i>Save Changes
             </button>
