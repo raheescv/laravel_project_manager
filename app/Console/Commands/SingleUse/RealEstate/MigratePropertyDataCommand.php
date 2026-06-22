@@ -134,45 +134,45 @@ class MigratePropertyDataCommand extends Command
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         try {
-            // $this->migrateUsers();
-            // $this->migrateAccountHeads();
-            // $this->migrateCustomers();
-            // $this->migrateVendors();
+            $this->migrateUsers();
+            $this->migrateAccountHeads();
+            $this->migrateCustomers();
+            $this->migrateVendors();
 
-            // $this->migratePropertyGroups();
-            // $this->migratePropertyBuildings();
-            // $this->migratePropertyTypes();
-            // $this->migrateProperties();
+            $this->migratePropertyGroups();
+            $this->migratePropertyBuildings();
+            $this->migratePropertyTypes();
+            $this->migrateProperties();
 
-            // $this->migrateRentOuts();
-            // $this->migrateUtilities();
+            $this->migrateRentOuts();
+            $this->migrateUtilities();
 
-            // $this->migrateRentOutPaymentTerms();
-            // $this->migrateRentOutCheques();
+            $this->migrateRentOutPaymentTerms();
+            $this->migrateRentOutCheques();
 
-            // $this->migrateRentOutUtilityTerms();
+            $this->migrateRentOutUtilityTerms();
 
-            // $this->migrateRentOutSecurities();
-            // $this->migrateRentOutExtends();
-            // $this->migrateRentOutServices();
-            // $this->migrateRentOutNotes();
+            $this->migrateRentOutSecurities();
+            $this->migrateRentOutExtends();
+            $this->migrateRentOutServices();
+            $this->migrateRentOutNotes();
 
-            // $this->migrateDocumentTypes();
-            // $this->migrateRentOutDocuments();
+            $this->migrateDocumentTypes();
+            $this->migrateRentOutDocuments();
 
-            // $this->migrateTenantDetails();
+            $this->migrateTenantDetails();
 
-            // $this->migratePropertyLeads();
+            $this->migratePropertyLeads();
             $this->migratePropertyAssets();
-            // $this->migrateSupplyRequests();
-            // $this->migrateSupplyRequestItems();
-            // $this->migrateSupplyRequestNotes();
-            // $this->migrateSupplyRequestImages();
-            // $this->migrateComplaintCategories();
-            // $this->migrateComplaints();
-            // $this->migrateMaintenances();
-            // $this->migrateMaintenanceComplaints();
-            // $this->backfillPropertyPaymentJournalEntries();
+            $this->migrateSupplyRequests();
+            $this->migrateSupplyRequestItems();
+            $this->migrateSupplyRequestNotes();
+            $this->migrateSupplyRequestImages();
+            $this->migrateComplaintCategories();
+            $this->migrateComplaints();
+            $this->migrateMaintenances();
+            $this->migrateMaintenanceComplaints();
+            $this->backfillPropertyPaymentJournalEntries();
         } catch (\Exception $e) {
             $this->error("Migration failed: {$e->getMessage()}");
             Log::error('Property data migration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
