@@ -360,7 +360,7 @@
                                     const product = this.productOptions.find(p => String(p.id) === String(value));
                                     if (product) {
                                         if (product.cost != null) this.newRate = Number(product.cost);
-                                        this.newAccountId = product.expense_account_id ?? null;
+                                        this.newAccountId = product.account_id ?? null;
                                     }
                                 } else {
                                     this.newAccountId = null;
@@ -439,7 +439,7 @@
                                     product_id: Number(p.product_id),
                                     quantity: Number(p.quantity),
                                     rate: Number(p.rate || 0),
-                                    account_id: prod?.expense_account_id ?? null,
+                                    account_id: prod?.account_id ?? null,
                                 });
                             }
                         });

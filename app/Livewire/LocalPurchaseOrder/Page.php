@@ -36,12 +36,25 @@ class Page extends Component
     {
         $this->vendors = Account::select('id', 'name')->vendor()->latest()->get();
 
-        $this->productOptions = Product::select('id', 'name', 'cost', 'expense_account_id')->orderBy('name')->get();
+        $this->productOptions = Product::select('id', 'name', 'cost', 'type', 'expense_account_id', 'asset_account_id')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'cost' => $product->cost,
+                'type' => $product->type,
+                // Fixed assets have no expense account; capitalize the purchase to the asset account instead.
+                'account_id' => $product->type === 'asset'
+                    ? $product->asset_account_id
+                    : $product->expense_account_id,
+            ])
+            ->values();
 
         $this->date = date('Y-m-d');
 
         $idsForAccountLabels = collect($this->productOptions)
-            ->pluck('expense_account_id')
+            ->pluck('account_id')
             ->filter()
             ->unique()
             ->values();
