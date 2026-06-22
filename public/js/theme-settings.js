@@ -73,7 +73,8 @@ function collectCurrentSettings() {
                 (document.getElementById('_dm-maxiNavRadio').checked ? 'maxi' :
                     (document.getElementById('_dm-pushNavRadio').checked ? 'push' :
                         (document.getElementById('_dm-slideNavRadio').checked ? 'slide' :
-                            (document.getElementById('_dm-revealNavRadio').checked ? 'reveal' : 'maxi'))))
+                            (document.getElementById('_dm-revealNavRadio').checked ? 'reveal' : 'maxi')))),
+            sidebarStyle: getCurrentSidebarStyle()
         },
         sidebar: {
             disableBackdrop: document.getElementById('_dm-disableBackdropCheckbox').checked,
@@ -114,6 +115,14 @@ function getCurrentColorMode() {
 }
 
 /**
+ * Get the currently selected sidebar style (skin)
+ */
+function getCurrentSidebarStyle() {
+    const activeBtn = document.querySelector('._dm-sidebarStyle.active');
+    return activeBtn ? activeBtn.getAttribute('data-nav-skin') : 'aurora';
+}
+
+/**
  * Apply theme settings to the UI elements
  */
 function applyThemeSettings(settings) {
@@ -147,6 +156,9 @@ function applyThemeSettings(settings) {
     } else if (settings.navigation.mode === 'reveal') {
         document.getElementById('_dm-revealNavRadio').checked = true;
     }
+
+    // Apply sidebar style (skin)
+    applySidebarStyle(settings.navigation.sidebarStyle);
 
     // Apply sidebar settings
     document.getElementById('_dm-disableBackdropCheckbox').checked = settings.sidebar.disableBackdrop;
@@ -244,6 +256,19 @@ function applyColorMode(mode) {
 }
 
 /**
+ * Apply sidebar style (skin) setting
+ */
+function applySidebarStyle(style) {
+    if (!style) style = 'aurora';
+
+    document.querySelectorAll('._dm-sidebarStyle').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-nav-skin') === style);
+    });
+
+    document.documentElement.setAttribute('data-nav-skin', style);
+}
+
+/**
  * Save settings to localStorage
  */
 function saveToLocalStorage(settings) {
@@ -305,6 +330,11 @@ function setupThemeEventListeners() {
     // Color mode buttons
     document.querySelectorAll('._dm-colorModeBtn').forEach(btn => {
         btn.addEventListener('click', handleColorModeChange);
+    });
+
+    // Sidebar style (skin) buttons
+    document.querySelectorAll('._dm-sidebarStyle').forEach(btn => {
+        btn.addEventListener('click', handleSidebarStyleChange);
     });
 
     // Dark mode toggle
@@ -383,6 +413,23 @@ function handleColorModeChange(e) {
     document.documentElement.className = document.documentElement.className
         .replace(/\btm--\S+/g, '')
         .concat(' ' + mode);
+
+    handleSettingChange();
+}
+
+/**
+ * Handle sidebar style (skin) change — click-and-go, applies immediately
+ */
+function handleSidebarStyleChange(e) {
+    const style = e.currentTarget.getAttribute('data-nav-skin');
+    if (!style) return;
+
+    document.querySelectorAll('._dm-sidebarStyle').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    e.currentTarget.classList.add('active');
+
+    document.documentElement.setAttribute('data-nav-skin', style);
 
     handleSettingChange();
 }

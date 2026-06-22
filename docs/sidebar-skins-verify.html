@@ -1,5 +1,23 @@
-<nav id="mainnav-container" class="mainnav luminous-nav">
-    <style>
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light" data-scheme="" data-nav-skin="aurora">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="vendor/font-awesome/font-awesome.min.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Poppins,system-ui,sans-serif;display:flex;min-height:100vh;transition:background .3s}
+[data-bs-theme="light"] body{background:#eef1f6}
+[data-bs-theme="dark"] body{background:#06060d}
+.bar{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:8px;background:rgba(255,255,255,.9);border:1px solid #dfe3ec;border-radius:12px;padding:6px 8px;backdrop-filter:blur(6px)}
+[data-bs-theme="dark"] .bar{background:rgba(20,20,30,.9);border-color:#2a2a3a}
+.bar button{font:inherit;font-size:12px;font-weight:600;padding:5px 10px;border-radius:8px;border:1px solid #dfe3ec;background:#fff;cursor:pointer}
+[data-bs-theme="dark"] .bar button{background:#16161f;color:#ccc;border-color:#2a2a3a}
+.bar b{font-size:11px;align-self:center;color:#888;margin-left:4px}
+/* give the standalone nav a fixed width (Nifty grid is absent here) */
+.mainnav.luminous-nav{width:264px;min-height:100vh}
+.mininav-content.nav.collapse{display:block}
+.stage{flex:1}
+
         /* ======================================================================
            PREMIUM SIDEBAR — "Refined Indigo".
            Compact, low-padding, theme-aware navigation. Light-first with a
@@ -782,56 +800,87 @@
             .luminous-nav *::before,
             .luminous-nav *::after { animation: none !important; transition: none !important; }
         }
-    </style>
-
-    <div class="mainnav__inner">
-        <div class="pb-5 mainnav__top-content scrollable-content">
-            <div id="_dm-mainnavProfile" class="mainnav__widget hv-outline-parent">
-                <a href="{{ route('dashboard') }}" class="mainnav__brand mininav-toggle hv-oc"
-                    aria-label="{{ config('app.name', 'Astra') }} — go to dashboard">
-                    <span class="mainnav__brand-circle">
-                        <img src="{{ cache('logo', asset('assets/img/logo.svg')) }}"
-                            alt="{{ config('app.name', 'Astra') }} logo">
-                    </span>
-                    <span class="mainnav__brand-text">
-                        <span class="mainnav__brand-name">{{ config('app.name', 'Astra') }}</span>
-                        <span class="mainnav__brand-tag">Workspace</span>
-                    </span>
-                </a>
-            </div>
-
-            {{-- Dynamic navigation: ordered and filtered by user preferences --}}
-            @php
-                $navItems = \App\Services\NavigationService::getNavigationItems();
-            @endphp
-            <ul class="mainnav__menu nav flex-column">
-                @foreach ($navItems as $navItem)
-                    @if ($navItem['visible'] ?? true)
-                        @include('layouts.nav.sections.' . $navItem['id'])
-                    @endif
-                @endforeach
-            </ul>
-        </div>
-        <div class="mainnav__bottom-content border-top">
-            <ul id="mainnav" class="mainnav__menu nav flex-column">
-                <li class="nav-item has-sub">
-                    <a href="#" class="nav-link mininav-toggle collapsed" aria-expanded="false">
-                        <i class="fa fa-sign-out fs-5"></i>
-                        <span class="nav-label mininav-content ms-1 collapse show">Logout</span>
-                    </a>
-                    <ul class="mininav-content nav flex-column collapse">
-                        <li data-popper-arrow class="arrow"></li>
-                        <li class="nav-item">
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
-                                    {{ __('Log Out') }}
-                                </x-dropdown-link>
-                            </form>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
+    
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>skin</b>
+  <button onclick="document.documentElement.setAttribute(\data-nav-skin,\aurora)">Aurora</button>
+  <button onclick="document.documentElement.setAttribute(\data-nav-skin,\mono)">Mono</button>
+  <button onclick="document.documentElement.setAttribute(\data-nav-skin,\atelier)">Atelier</button>
+  <b>theme</b>
+  <button onclick="document.documentElement.setAttribute(\data-bs-theme,\light)">Light</button>
+  <button onclick="document.documentElement.setAttribute(\data-bs-theme,\dark)">Dark</button>
+</div>
+<nav id="mainnav-container" class="mainnav luminous-nav">
+  <div class="mainnav__inner">
+    <div class="pb-5 mainnav__top-content scrollable-content">
+      <div class="mainnav__widget hv-outline-parent">
+        <a href="#" class="mainnav__brand mininav-toggle hv-oc">
+          <span class="mainnav__brand-circle"><img src="https://www.gravatar.com/avatar/0?d=blank" alt="logo"></span>
+          <span class="mainnav__brand-text"><span class="mainnav__brand-name">Size Run</span><span class="mainnav__brand-tag">Workspace</span></span>
+        </a>
+      </div>
+      <ul class="mainnav__menu nav flex-column">
+        <li class="nav-item"><a href="#" class="nav-link mininav-toggle active"><i class="fa fa-tachometer fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Dashboard</span></a></li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link active"><i class="fa fa-cubes fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Inventory</span></a>
+          <ul class="mininav-content nav collapse show">
+            <li data-popper-arrow class="arrow"></li>
+            <li class="nav-item"><a href="#" class="nav-link active">List</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">Product Search</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">Barcode Cart</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">Inventory Transfer</a></li>
+            <li class="nav-item"><a href="#" class="nav-link">Stock Check</a></li>
+          </ul>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-home fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Rent Out</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-usd fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Sales</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-filter fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Leads</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-wrench fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Maintenance</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-university fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Account</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-users fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Employee</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-sitemap fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Purchase Workflow</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-truck fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Asset Supply</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-user fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Users</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-building fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Tenants</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-ticket fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Tickets</span></a>
+        </li>
+        <li class="nav-item has-sub">
+          <a href="#" class="mininav-toggle nav-link"><i class="fa fa-files-o fs-5 me-2"></i><span class="nav-label mininav-content ms-1 collapse show">Log</span></a>
+        </li>
+      </ul>
     </div>
+    <div class="mainnav__bottom-content border-top">
+      <ul class="mainnav__menu nav flex-column">
+        <li class="nav-item has-sub">
+          <a href="#" class="nav-link mininav-toggle collapsed"><i class="fa fa-sign-out fs-5"></i><span class="nav-label mininav-content ms-1 collapse show">Logout</span></a>
+        </li>
+      </ul>
+    </div>
+  </div>
 </nav>
+<div class="stage"></div>
+</body></html>

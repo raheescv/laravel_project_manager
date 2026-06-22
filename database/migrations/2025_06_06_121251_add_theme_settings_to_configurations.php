@@ -13,7 +13,7 @@ return new class() extends Migration
                 'layout' => 'fluid',
                 'transition' => 'out-quart',
                 'header' => ['sticky' => false],
-                'navigation' => ['sticky' => false, 'profileWidget' => true, 'mode' => 'maxi'],
+                'navigation' => ['sticky' => false, 'profileWidget' => true, 'mode' => 'maxi', 'sidebarStyle' => 'aurora'],
                 'sidebar' => [
                     'disableBackdrop' => false,
                     'staticPosition' => false,

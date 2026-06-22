@@ -1096,6 +1096,35 @@
                             </div>
                         </div>
 
+                        <!-- OPTION : Sidebar Style (premium skin) -->
+                        <h6 class="mt-4 mb-2 py-1">Sidebar Style</h6>
+                        <p class="text-muted small mb-2">Premium look for the left navigation. Applies instantly.</p>
+                        <div class="dm-sidebar-style-grid">
+                            <button type="button" class="_dm-sidebarStyle dm-skin-btn active" data-nav-skin="aurora" title="Aurora Glass — frosted indigo depth">
+                                <span class="dm-skin-swatch dm-skin-swatch--aurora"></span>
+                                <span class="dm-skin-name">Aurora</span>
+                            </button>
+                            <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="mono" title="Editorial Mono — minimal, hairline restraint">
+                                <span class="dm-skin-swatch dm-skin-swatch--mono"></span>
+                                <span class="dm-skin-name">Mono</span>
+                            </button>
+                            <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="atelier" title="Warm Atelier — champagne-brass luxury">
+                                <span class="dm-skin-swatch dm-skin-swatch--atelier"></span>
+                                <span class="dm-skin-name">Atelier</span>
+                            </button>
+                        </div>
+                        <style>
+                            .dm-sidebar-style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+                            .dm-skin-btn { display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .5rem .35rem; border: 1.5px solid var(--bs-border-color, #e2e5ef); border-radius: 12px; background: var(--bs-body-bg, #fff); cursor: pointer; transition: border-color .18s, box-shadow .18s, transform .18s; }
+                            .dm-skin-btn:hover { transform: translateY(-1px); border-color: var(--bs-primary); }
+                            .dm-skin-btn.active { border-color: var(--bs-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, .18); }
+                            .dm-skin-swatch { width: 100%; height: 34px; border-radius: 8px; border: 1px solid rgba(0, 0, 0, .06); }
+                            .dm-skin-swatch--aurora { background: linear-gradient(135deg, #6366f1, #8b5cf6 60%, #38bdf8); }
+                            .dm-skin-swatch--mono { background: linear-gradient(135deg, #111114 0 50%, #f4f4f6 50% 100%); }
+                            .dm-skin-swatch--atelier { background: linear-gradient(135deg, #d2ab5e, #a87d36 60%, #2b2419); }
+                            .dm-skin-name { font-size: .72rem; font-weight: 600; color: var(--bs-body-color); }
+                        </style>
+
                     </div>
                     <div class="col-lg-6 p-4">
                         <h4 class="fw-bold pb-3 mb-2">Colors</h4>

@@ -81,6 +81,11 @@ function applyStoredThemeSettings() {
             document.documentElement.classList.remove('dark');
         }
 
+        // Apply sidebar skin
+        if (settings.navigation && settings.navigation.sidebarStyle) {
+            document.documentElement.setAttribute('data-nav-skin', settings.navigation.sidebarStyle);
+        }
+
         // Apply font size
         if (settings.misc && settings.misc.fontSize) {
             // console.log('Global: Applying font size:', settings.misc.fontSize + 'px');

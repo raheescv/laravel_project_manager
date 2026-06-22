@@ -19,6 +19,7 @@ class ThemeSettings extends Component
             'sticky' => false,
             'profileWidget' => true,
             'mode' => 'maxi', // mini, maxi, push, slide, reveal
+            'sidebarStyle' => 'aurora', // aurora, mono, atelier
         ],
         'sidebar' => [
             'disableBackdrop' => false,

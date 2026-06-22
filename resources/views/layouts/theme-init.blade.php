@@ -17,6 +17,11 @@
                     }
                 }
 
+                // Apply the saved sidebar skin immediately (anti-flash, same idea as scheme)
+                if (settings && settings.navigation && settings.navigation.sidebarStyle) {
+                    document.documentElement.setAttribute('data-nav-skin', settings.navigation.sidebarStyle);
+                }
+
                 // Apply the saved base font-size here too (theme-applier.js otherwise
                 // sets it only after first paint, so every navigation renders at the
                 // default 16px root then snaps to the saved size — reflowing all

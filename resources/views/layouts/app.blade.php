@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light" data-scheme="">
+<html lang="en" data-bs-theme="light" data-scheme="" data-nav-skin="aurora">
 
 <head>
     <!-- Early theme initialization to prevent flash of unstyled content -->
