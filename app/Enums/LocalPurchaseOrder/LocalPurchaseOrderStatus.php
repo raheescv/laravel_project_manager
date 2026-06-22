@@ -7,6 +7,7 @@ enum LocalPurchaseOrderStatus: string
     case PENDING = 'pending';
     case APPROVED = 'approved';
     case REJECTED = 'rejected';
+    case CONFIRMED = 'confirmed';
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum LocalPurchaseOrderStatus: string
             self::PENDING => 'Pending',
             self::APPROVED => 'Approved',
             self::REJECTED => 'Rejected',
+            self::CONFIRMED => 'Confirmed',
         };
     }
 

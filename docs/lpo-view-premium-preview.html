@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LPO View — Premium Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+    /* ============================================================
+       PREVIEW CHROME (not part of the app)
+       ============================================================ */
+    *{box-sizing:border-box;}
+    body{
+        margin:0;
+        font-family:'Segoe UI',system-ui,Arial,sans-serif;
+        padding:84px 18px 60px;
+        min-height:100vh;
+        transition:background .25s ease;
+    }
+    body[data-mode="light"]{ background:#eef1f5; background-image:radial-gradient(circle at 50% -10%, #f7f9fc, #e6eaf1); }
+    body[data-mode="dark"]{ background:#0c0f15; background-image:radial-gradient(circle at 50% -10%, #161b24, #0a0c11); }
+
+    .toolbar{
+        position:fixed; top:0; left:0; right:0; z-index:50;
+        display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+        padding:11px 20px;
+        background:rgba(13,17,23,.92);
+        backdrop-filter:blur(10px);
+        border-bottom:1px solid rgba(255,255,255,.08);
+        box-shadow:0 6px 24px rgba(0,0,0,.28);
+    }
+    .toolbar .brand{ color:#fff; font-weight:700; font-size:13.5px; letter-spacing:.3px; }
+    .toolbar .brand small{ display:block; font-weight:400; font-size:10.5px; color:#9ca3af; }
+    .toolbar .group{ display:flex; gap:7px; align-items:center; }
+    .toolbar .label{ color:#9ca3af; font-size:10px; text-transform:uppercase; letter-spacing:1px; }
+    .swatch{ width:26px; height:26px; border-radius:7px; cursor:pointer; border:2px solid transparent; transition:transform .12s,border-color .12s; }
+    .swatch:hover{ transform:translateY(-2px); }
+    .swatch.active{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.22); }
+    .sw-emerald{ background:#0E8A4F; } .sw-graphite{ background:#334155; } .sw-royal{ background:#1E40AF; } .sw-bronze{ background:#9A5B1E; }
+    .toolbar .spacer{ flex:1; }
+    .seg{ display:flex; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:9px; padding:3px; gap:2px; }
+    .seg button{ background:transparent; color:#cbd2dc; border:0; padding:5px 11px; border-radius:6px; font-size:11.5px; cursor:pointer; font-weight:600; letter-spacing:.2px; }
+    .seg button.active{ background:#fff; color:#111827; }
+    .btn-toggle{ background:rgba(255,255,255,.08); color:#e5e7eb; border:1px solid rgba(255,255,255,.12); padding:7px 12px; border-radius:8px; font-size:11.5px; cursor:pointer; }
+    .btn-toggle:hover{ background:rgba(255,255,255,.16); }
+    .stage{ max-width:1120px; margin:0 auto; }
+
+    /* ============================================================
+       LPO VIEW — PREMIUM  (scope: .lpox)  → goes into the blade
+       ============================================================ */
+    .lpox{
+        /* accent (brand) — switched by data-accent */
+        --acc:#0E8A4F; --acc-d:#0A6B3C; --acc-deep:#064d2a;
+        --acc-tint:#E9F6EF; --acc-tint-2:#F3FAF6; --gold:#B8860B;
+        /* neutral surfaces — switched by data-mode */
+        --surface:#ffffff; --surface-2:#f7f9fc; --raise:#ffffff;
+        --ink:#111827; --ink-2:#374151; --muted:#6b7280; --faint:#9aa3b0;
+        --line:#e8ebf1; --line-soft:#f0f2f6;
+        --shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+        --shadow-lg:0 12px 36px rgba(16,24,40,.10);
+        /* semantic */
+        --ok:#16a34a; --ok-t:#e8f7ee; --info:#2563eb; --info-t:#e8f0fe;
+        --warn:#d97706; --warn-t:#fdf3e7; --bad:#dc2626; --bad-t:#fdecec;
+        color:var(--ink);
+        font-family:'Segoe UI',system-ui,'Helvetica Neue',Arial,sans-serif;
+        font-size:13px; line-height:1.5;
+    }
+    .lpox *{ box-sizing:border-box; }
+
+    /* accent themes */
+    .lpox[data-accent="graphite"]{ --acc:#334155; --acc-d:#1E293B; --acc-deep:#0F172A; --acc-tint:#EEF1F5; --acc-tint-2:#F6F8FA; --gold:#9A7B25; }
+    .lpox[data-accent="royal"]{ --acc:#1E40AF; --acc-d:#15307F; --acc-deep:#0E2360; --acc-tint:#EAF0FB; --acc-tint-2:#F4F7FD; --gold:#B8860B; }
+    .lpox[data-accent="bronze"]{ --acc:#9A5B1E; --acc-d:#784515; --acc-deep:#5a330f; --acc-tint:#F6EEE3; --acc-tint-2:#FBF6EF; --gold:#8a6a12; }
+
+    /* dark mode */
+    body[data-mode="dark"] .lpox{
+        --surface:#161b22; --surface-2:#1b2230; --raise:#1d2531;
+        --ink:#e7ebf2; --ink-2:#c4ccd8; --muted:#9aa4b2; --faint:#6b7686;
+        --line:rgba(255,255,255,.09); --line-soft:rgba(255,255,255,.05);
+        --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.45);
+        --shadow-lg:0 16px 44px rgba(0,0,0,.55);
+        --acc-tint:rgba(255,255,255,.05); --acc-tint-2:rgba(255,255,255,.03);
+        --ok-t:rgba(34,197,94,.14); --info-t:rgba(37,99,235,.16); --warn-t:rgba(217,119,6,.16); --bad-t:rgba(220,38,38,.16);
+    }
+    body[data-mode="dark"] .lpox[data-accent="emerald"]{ --acc:#10b06a; }
+    body[data-mode="dark"] .lpox[data-accent="royal"]{ --acc:#3b82f6; }
+
+    /* ---- shared bits ---- */
+    .lpox .card2{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+    .lpox .sec{ margin-bottom:14px; }
+    .lpox .sec-head{ display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--line-soft); }
+    .lpox .sec-ic{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; background:var(--acc-tint); color:var(--acc-d); flex:0 0 auto; }
+    .lpox .sec-title{ font-size:13.5px; font-weight:750; letter-spacing:.2px; }
+    .lpox .sec-sub{ font-size:11px; color:var(--muted); font-weight:500; margin-top:-1px; }
+    .lpox .pill{ display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.3px; }
+    .lpox .chip-soft{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:7px; font-size:11px; font-weight:650; }
+
+    /* ---- HERO ---- */
+    .lpox-hero{
+        position:relative; border-radius:18px; overflow:hidden; margin-bottom:14px;
+        background:
+            radial-gradient(120% 160% at 100% 0, color-mix(in srgb, var(--acc) 22%, transparent), transparent 55%),
+            linear-gradient(135deg, var(--acc-deep), var(--acc-d));
+        box-shadow:var(--shadow-lg);
+    }
+    .lpox-hero .glow{ position:absolute; right:-60px; top:-80px; width:280px; height:280px; border-radius:50%;
+        background:radial-gradient(circle, rgba(255,255,255,.16), transparent 65%); pointer-events:none; }
+    .lpox-hero-inner{ position:relative; display:flex; align-items:center; gap:18px; padding:18px 22px; flex-wrap:wrap; }
+    .lpox-hero .doc-ic{ width:52px; height:52px; border-radius:14px; flex:0 0 auto;
+        background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22);
+        display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+    .lpox-hero .h-main{ flex:1; min-width:200px; color:#fff; }
+    .lpox-hero .h-eyebrow{ font-size:10.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
+    .lpox-hero .h-ref{ font-size:21px; font-weight:800; letter-spacing:.3px; line-height:1.15; margin-top:2px; }
+    .lpox-hero .h-meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:7px; font-size:12px; color:rgba(255,255,255,.85); }
+    .lpox-hero .h-meta i{ opacity:.8; margin-right:5px; }
+    .lpox-hero .h-right{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+    .lpox-hero .status-pill{ background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.3);
+        padding:6px 14px; border-radius:999px; font-size:12px; font-weight:750; letter-spacing:.4px; display:inline-flex; align-items:center; gap:6px; }
+    .lpox-hero .status-pill .dot{ width:8px; height:8px; border-radius:50%; box-shadow:0 0 0 3px rgba(255,255,255,.18); }
+    .lpox-hero .btn-print{ background:#fff; color:var(--acc-deep); border:0; padding:8px 16px; border-radius:10px;
+        font-size:12.5px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:7px;
+        box-shadow:0 4px 14px rgba(0,0,0,.18); transition:transform .12s; }
+    .lpox-hero .btn-print:hover{ transform:translateY(-1px); }
+
+    /* status accents on the dot/pill */
+    .st-approved .dot{ background:#34d399; } .st-confirmed .dot{ background:#60a5fa; }
+    .st-pending .dot{ background:#fbbf24; } .st-rejected .dot{ background:#f87171; }
+
+    /* ---- STAT STRIP ---- */
+    .lpox-stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+    .lpox-stat{ background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:12px 14px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+    .lpox-stat::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--acc); opacity:.85; }
+    .lpox-stat .s-k{ font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; }
+    .lpox-stat .s-v{ font-size:18px; font-weight:800; color:var(--ink); margin-top:4px; letter-spacing:.2px; }
+    .lpox-stat .s-v small{ font-size:11px; font-weight:600; color:var(--muted); }
+
+    /* ---- INFO GRID (panels) ---- */
+    .lpox-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:14px; }
+    .lpox-grid.one{ grid-template-columns:1fr; }
+    .kv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:14px 16px; }
+    .kv{ background:var(--surface-2); border:1px solid var(--line-soft); border-radius:10px; padding:9px 11px; }
+    .kv.full{ grid-column:1 / -1; }
+    .kv .kk{ font-size:10px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+    .kv .kk i{ color:var(--acc); font-size:11px; }
+    .kv .vv{ font-size:13px; font-weight:650; color:var(--ink); }
+    .panel-tone-success .sec-ic{ background:var(--ok-t); color:var(--ok); }
+    .panel-tone-info .sec-ic{ background:var(--info-t); color:var(--info); }
+    .panel-tone-danger .sec-ic{ background:var(--bad-t); color:var(--bad); }
+    .panel-tone-success .kv .kk i{ color:var(--ok); }
+    .panel-tone-info .kv .kk i{ color:var(--info); }
+    .panel-tone-danger .kv .kk i{ color:var(--bad); }
+
+    /* ---- TABLE ---- */
+    .lpox-table-wrap{ overflow-x:auto; }
+    table.lpox-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+    table.lpox-tbl thead th{ background:var(--surface-2); color:var(--muted); font-size:10px; font-weight:750; letter-spacing:.7px;
+        text-transform:uppercase; padding:9px 12px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
+    table.lpox-tbl th.num, table.lpox-tbl td.num{ text-align:right; }
+    table.lpox-tbl th.ctr, table.lpox-tbl td.ctr{ text-align:center; }
+    table.lpox-tbl tbody td{ padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+    table.lpox-tbl tbody tr:hover td{ background:var(--acc-tint-2); }
+    table.lpox-tbl tbody td .pname{ font-weight:700; color:var(--ink); }
+    table.lpox-tbl tbody td .psub{ color:var(--muted); font-size:11px; }
+    table.lpox-tbl tbody td .amt{ font-weight:800; }
+    .idx{ display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:7px;
+        background:var(--acc-tint); color:var(--acc-d); font-weight:800; font-size:11px; }
+    .tag{ display:inline-block; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:650; }
+    .tag-cat{ background:var(--acc-tint); color:var(--acc-d); }
+    .tag-sub{ background:var(--surface-2); color:var(--ink-2); border:1px solid var(--line); }
+    table.lpox-tbl tfoot td{ padding:11px 12px; font-weight:800; color:var(--ink); background:var(--surface-2); border-top:2px solid var(--line); }
+    .tfoot-accent td{ color:var(--acc-d) !important; }
+
+    /* ---- FULFILLMENT ---- */
+    .ff-top{ padding:14px 16px 4px; }
+    .ff-bar{ height:9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line-soft); overflow:hidden; }
+    .ff-bar > span{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--acc),var(--acc-d)); }
+    .ff-legend{ display:flex; justify-content:space-between; margin-top:7px; font-size:11.5px; color:var(--muted); }
+    .ff-legend b{ color:var(--ink); }
+    .mini-bar{ height:6px; border-radius:999px; background:var(--surface-2); overflow:hidden; min-width:80px; flex:1; }
+    .mini-bar > span{ display:block; height:100%; border-radius:999px; }
+    .bar-ok > span{ background:var(--ok); } .bar-warn > span{ background:var(--warn); } .bar-none > span{ background:var(--faint); }
+    .stbadge{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:700; }
+    .st-full{ background:var(--ok-t); color:var(--ok); } .st-part{ background:var(--warn-t); color:var(--warn); }
+    .st-excess{ background:var(--bad-t); color:var(--bad); } .st-zero{ background:var(--surface-2); color:var(--muted); }
+
+    /* ---- GRN ---- */
+    .grn{ border:1px solid var(--line); border-radius:12px; overflow:hidden; margin:0 16px 12px; }
+    .grn:first-of-type{ margin-top:4px; }
+    .grn-head{ display:flex; align-items:center; justify-content:space-between; padding:9px 13px; background:var(--surface-2); border-bottom:1px solid var(--line-soft); }
+    .grn-head a{ color:var(--acc-d); font-weight:750; text-decoration:none; font-size:12.5px; }
+    .grn-head .gdate{ color:var(--muted); font-size:11px; margin-left:12px; }
+
+    /* ---- ACTION PANELS ---- */
+    .lpox-action{ border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px; background:var(--surface); }
+    .lpox-action.tone-warn{ border-top:3px solid var(--warn); }
+    .lpox-action.tone-primary{ border-top:3px solid var(--acc); }
+    .lpox-action .a-body{ padding:16px 18px; }
+    .lpox-action .a-head{ display:flex; align-items:center; gap:11px; margin-bottom:14px; }
+    .lpox-action .a-ic{ width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .lpox-action.tone-warn .a-ic{ background:var(--warn-t); color:var(--warn); }
+    .lpox-action.tone-primary .a-ic{ background:var(--acc-tint); color:var(--acc-d); }
+    .lpox-action .a-title{ font-size:14px; font-weight:750; }
+    .lpox-action .a-sub{ font-size:11.5px; color:var(--muted); }
+    .lpox-lbl{ font-size:11.5px; font-weight:700; color:var(--ink-2); display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+    .lpox-ta{ width:100%; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); color:var(--ink);
+        padding:10px 12px; font-size:12.5px; font-family:inherit; resize:vertical; min-height:64px; }
+    .lpox-ta:focus{ outline:none; border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-tint); }
+    .a-actions{ display:flex; justify-content:flex-end; gap:9px; margin-top:14px; }
+    .btn{ border:0; padding:9px 18px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:transform .12s,filter .12s; }
+    .btn:hover{ transform:translateY(-1px); filter:brightness(1.04); }
+    .btn-ghost{ background:var(--surface-2); color:var(--ink-2); border:1px solid var(--line); }
+    .btn-ok{ background:var(--ok); color:#fff; } .btn-bad{ background:var(--bad); color:#fff; }
+    .btn-acc{ background:var(--acc); color:#fff; }
+
+    /* empty */
+    .lpox-empty{ text-align:center; padding:34px 0; color:var(--muted); }
+    .lpox-empty i{ font-size:34px; opacity:.3; display:block; margin-bottom:8px; }
+
+    @media (max-width:760px){
+        .lpox-stats{ grid-template-columns:repeat(2,1fr); }
+        .lpox-grid{ grid-template-columns:1fr; }
+        .kv-grid{ grid-template-columns:1fr; }
+        .lpox-hero .h-right{ align-items:flex-start; }
+    }
+
+    /* scenario visibility */
+    .when{ display:none; }
+</style>
+</head>
+<body data-mode="light">
+
+<div class="toolbar">
+    <div class="brand">LPO View — Premium Preview<small>local-purchase-orders/{id} · Livewire</small></div>
+    <div class="group">
+        <span class="label">Accent</span>
+        <div class="swatch sw-emerald active" data-acc="emerald" title="Emerald (brand)"></div>
+        <div class="swatch sw-graphite" data-acc="graphite" title="Graphite"></div>
+        <div class="swatch sw-royal" data-acc="royal" title="Royal Blue"></div>
+        <div class="swatch sw-bronze" data-acc="bronze" title="Bronze"></div>
+    </div>
+    <div class="group">
+        <span class="label">Mode</span>
+        <div class="seg" id="modeSeg">
+            <button data-mode="light" class="active">Light</button>
+            <button data-mode="dark">Dark</button>
+        </div>
+    </div>
+    <div class="spacer"></div>
+    <span class="label">Scenario</span>
+    <div class="seg" id="scenSeg">
+        <button data-scen="pending">Pending</button>
+        <button data-scen="approved">Approved</button>
+        <button data-scen="confirmed" class="active">Confirmed</button>
+        <button data-scen="rejected">Rejected</button>
+    </div>
+</div>
+
+<div class="stage">
+  <div class="lpox" data-accent="emerald" data-status="confirmed">
+
+    <!-- ============ HERO ============ -->
+    <div class="lpox-hero st-confirmed" id="hero">
+        <div class="glow"></div>
+        <div class="lpox-hero-inner">
+            <div class="doc-ic"><i class="fa fa-file-text-o"></i></div>
+            <div class="h-main">
+                <div class="h-eyebrow">Local Purchase Order</div>
+                <div class="h-ref">BASB-LPO-06-26-001</div>
+                <div class="h-meta">
+                    <span><i class="fa fa-home"></i>Doha — Main Office</span>
+                    <span><i class="fa fa-shopping-basket"></i>Gulf Hardware Trading W.L.L</span>
+                    <span><i class="fa fa-calendar-o"></i>22 Jun 2026</span>
+                </div>
+            </div>
+            <div class="h-right">
+                <span class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">CONFIRMED</span></span>
+                <a href="#" class="btn-print"><i class="fa fa-print"></i> Print / Save PDF</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ STAT STRIP ============ -->
+    <div class="lpox-stats">
+        <div class="lpox-stat">
+            <div class="s-k"><i class="fa fa-cubes"></i> Line Items</div>
+            <div class="s-v">3 <small>products</small></div>
+        </div>
+        <div class="lpox-stat">
+            <div class="s-k"><i class="fa fa-sort-amount-asc"></i> Total Qty</div>
+            <div class="s-v">355 <small>units</small></div>
+        </div>
+        <div class="lpox-stat">
+            <div class="s-k"><i class="fa fa-money"></i> Order Value</div>
+            <div class="s-v">13,945.00</div>
+        </div>
+        <div class="lpox-stat when w-fulfil" style="display:block">
+            <div class="s-k"><i class="fa fa-tasks"></i> Fulfilled</div>
+            <div class="s-v">62<small>%</small></div>
+        </div>
+    </div>
+
+    <!-- ============ INFO PANELS ============ -->
+    <div class="lpox-grid">
+        <!-- Order Information -->
+        <div class="card2">
+            <div class="sec-head">
+                <div class="sec-ic"><i class="fa fa-info"></i></div>
+                <div><div class="sec-title">Order Information</div><div class="sec-sub">Vendor & order metadata</div></div>
+            </div>
+            <div class="kv-grid">
+                <div class="kv"><div class="kk"><i class="fa fa-shopping-basket"></i>Vendor</div><div class="vv">Gulf Hardware Trading W.L.L</div></div>
+                <div class="kv"><div class="kk"><i class="fa fa-calendar-o"></i>Date</div><div class="vv">22 Jun 2026</div></div>
+                <div class="kv"><div class="kk"><i class="fa fa-user-o"></i>Created By</div><div class="vv">Ahmed Rasheed</div></div>
+                <div class="kv"><div class="kk"><i class="fa fa-home"></i>Branch</div><div class="vv">Doha — Main Office</div></div>
+                <div class="kv"><div class="kk"><i class="fa fa-cubes"></i>Total Products</div><div class="vv">3 items</div></div>
+                <div class="kv"><div class="kk"><i class="fa fa-money"></i>Total Amount</div><div class="vv">13,945.00</div></div>
+            </div>
+        </div>
+
+        <!-- Decision Details (approved/confirmed/rejected) -->
+        <div class="card2 when w-decision panel-tone-success" id="decisionPanel" style="display:block">
+            <div class="sec-head">
+                <div class="sec-ic"><i class="fa fa-check-circle" id="decisionIc"></i></div>
+                <div><div class="sec-title" id="decisionTitle">Decision Details</div><div class="sec-sub">Approval / rejection record</div></div>
+            </div>
+            <div class="kv-grid">
+                <div class="kv"><div class="kk"><i class="fa fa-user-o"></i>Action By</div><div class="vv">Khalid Al Thani</div></div>
+                <div class="kv"><div class="kk"><i class="fa fa-clock-o"></i>Action On</div><div class="vv">22 Jun 2026, 10:42 AM</div></div>
+                <div class="kv full"><div class="kk"><i class="fa fa-commenting-o"></i>Remarks</div><div class="vv">Approved — proceed with the order. Confirm delivery within 7 days.</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Details (confirmed only) -->
+    <div class="lpox-grid one when w-confirmation" style="display:none" id="confirmGrid">
+        <div class="card2 panel-tone-info">
+            <div class="sec-head">
+                <div class="sec-ic"><i class="fa fa-check-square-o"></i></div>
+                <div><div class="sec-title">Confirmation Details</div><div class="sec-sub">Final confirmation record</div></div>
+            </div>
+            <div class="kv-grid">
+                <div class="kv"><div class="kk"><i class="fa fa-user-o"></i>Confirmed By</div><div class="vv">Salem Al Kuwari</div></div>
+                <div class="kv"><div class="kk"><i class="fa fa-clock-o"></i>Confirmed On</div><div class="vv">22 Jun 2026, 02:15 PM</div></div>
+                <div class="kv full"><div class="kk"><i class="fa fa-commenting-o"></i>Confirmation Note</div><div class="vv">Verified against budget. Cleared for purchase.</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PRODUCTS ============ -->
+    <div class="sec card2">
+        <div class="sec-head">
+            <div class="sec-ic"><i class="fa fa-cubes"></i></div>
+            <div style="flex:1"><div class="sec-title">Products</div></div>
+            <span class="pill" style="background:var(--acc-tint); color:var(--acc-d);">3 items · 13,945.00</span>
+        </div>
+        <div class="lpox-table-wrap">
+            <table class="lpox-tbl">
+                <thead>
+                    <tr>
+                        <th class="ctr" style="width:46px">#</th>
+                        <th>Product</th>
+                        <th>Expense Account</th>
+                        <th>Code</th>
+                        <th>Category</th>
+                        <th>Brand</th>
+                        <th>Unit</th>
+                        <th class="num">Qty</th>
+                        <th class="num">Rate</th>
+                        <th class="num">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ctr"><span class="idx">1</span></td>
+                        <td><div class="pname">Portland Cement — Grade 53</div><div class="psub">OPC moisture-resistant</div></td>
+                        <td><span class="psub">Materials — Cement</span></td>
+                        <td><span class="psub">CEM-53</span></td>
+                        <td><span class="tag tag-cat">Building</span> <span class="tag tag-sub">Cement</span></td>
+                        <td><span class="psub">Qatar National</span></td>
+                        <td><span class="psub">Bag</span></td>
+                        <td class="num">120</td>
+                        <td class="num">18.50</td>
+                        <td class="num amt">2,220.00</td>
+                    </tr>
+                    <tr>
+                        <td class="ctr"><span class="idx">2</span></td>
+                        <td><div class="pname">Steel Reinforcement Bar 12mm</div><div class="psub">High-tensile deformed</div></td>
+                        <td><span class="psub">Materials — Steel</span></td>
+                        <td><span class="psub">STL-12</span></td>
+                        <td><span class="tag tag-cat">Building</span> <span class="tag tag-sub">Steel</span></td>
+                        <td><span class="psub">Gulf Steel</span></td>
+                        <td><span class="psub">No</span></td>
+                        <td class="num">200</td>
+                        <td class="num">42.00</td>
+                        <td class="num amt">8,400.00</td>
+                    </tr>
+                    <tr>
+                        <td class="ctr"><span class="idx">3</span></td>
+                        <td><div class="pname">Waterproofing Membrane Roll</div><div class="psub">Bituminous 1m × 10m</div></td>
+                        <td><span class="psub">Materials — Finishing</span></td>
+                        <td><span class="psub">WPM-10</span></td>
+                        <td><span class="tag tag-cat">Finishing</span> <span class="tag tag-sub">Membrane</span></td>
+                        <td><span class="psub">SealTech</span></td>
+                        <td><span class="psub">Roll</span></td>
+                        <td class="num">35</td>
+                        <td class="num">95.00</td>
+                        <td class="num amt">3,325.00</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="tfoot-accent">
+                        <td colspan="7">Total</td>
+                        <td class="num">355</td>
+                        <td></td>
+                        <td class="num">13,945.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- ============ FULFILLMENT ============ -->
+    <div class="sec card2 when w-fulfil" style="display:block">
+        <div class="sec-head">
+            <div class="sec-ic"><i class="fa fa-tasks"></i></div>
+            <div style="flex:1"><div class="sec-title">Fulfillment Summary</div><div class="sec-sub">Ordered vs received across all GRNs</div></div>
+            <span class="pill st-part">62% Fulfilled</span>
+        </div>
+        <div class="ff-top">
+            <div class="ff-bar"><span style="width:62%"></span></div>
+            <div class="ff-legend"><span>Total Ordered: <b>355</b></span><span>Total Received: <b style="color:var(--ok)">220</b></span></div>
+        </div>
+        <div class="lpox-table-wrap" style="padding-top:8px">
+            <table class="lpox-tbl">
+                <thead>
+                    <tr>
+                        <th class="ctr" style="width:46px">#</th>
+                        <th>Product</th>
+                        <th class="num">Ordered</th>
+                        <th class="num">Received</th>
+                        <th class="num">Pending</th>
+                        <th style="width:190px">Progress</th>
+                        <th class="ctr">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ctr"><span class="idx">1</span></td>
+                        <td><div class="pname">Portland Cement — Grade 53</div></td>
+                        <td class="num">120</td>
+                        <td class="num" style="color:var(--ok); font-weight:800">120</td>
+                        <td class="num" style="color:var(--muted)">0</td>
+                        <td><div style="display:flex; align-items:center; gap:9px"><div class="mini-bar bar-ok"><span style="width:100%"></span></div><b style="font-size:11px">100%</b></div></td>
+                        <td class="ctr"><span class="stbadge st-full"><i class="fa fa-check-circle"></i> Full</span></td>
+                    </tr>
+                    <tr>
+                        <td class="ctr"><span class="idx">2</span></td>
+                        <td><div class="pname">Steel Reinforcement Bar 12mm</div></td>
+                        <td class="num">200</td>
+                        <td class="num" style="color:var(--ok); font-weight:800">100</td>
+                        <td class="num" style="color:var(--bad); font-weight:700">100</td>
+                        <td><div style="display:flex; align-items:center; gap:9px"><div class="mini-bar bar-warn"><span style="width:50%"></span></div><b style="font-size:11px">50%</b></div></td>
+                        <td class="ctr"><span class="stbadge st-part"><i class="fa fa-clock-o"></i> Partial</span></td>
+                    </tr>
+                    <tr>
+                        <td class="ctr"><span class="idx">3</span></td>
+                        <td><div class="pname">Waterproofing Membrane Roll</div></td>
+                        <td class="num">35</td>
+                        <td class="num" style="color:var(--muted)">0</td>
+                        <td class="num" style="color:var(--bad); font-weight:700">35</td>
+                        <td><div style="display:flex; align-items:center; gap:9px"><div class="mini-bar bar-none"><span style="width:0%"></span></div><b style="font-size:11px">0%</b></div></td>
+                        <td class="ctr"><span class="stbadge st-zero"><i class="fa fa-minus-circle"></i> None</span></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">Total</td>
+                        <td class="num">355</td>
+                        <td class="num" style="color:var(--ok)">220</td>
+                        <td class="num" style="color:var(--bad)">135</td>
+                        <td></td><td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- ============ GRN ============ -->
+    <div class="sec card2 when w-fulfil" style="display:block">
+        <div class="sec-head">
+            <div class="sec-ic" style="background:var(--ok-t); color:var(--ok)"><i class="fa fa-truck"></i></div>
+            <div style="flex:1"><div class="sec-title">Goods Received (GRN)</div></div>
+            <span class="pill st-full">2 GRNs</span>
+        </div>
+        <div class="grn">
+            <div class="grn-head">
+                <div><a href="#"><i class="fa fa-file-text-o"></i> GRN-0001</a><span class="gdate"><i class="fa fa-calendar-o"></i> 18 Jun 2026</span></div>
+                <span class="stbadge st-full">Accepted</span>
+            </div>
+            <div class="lpox-table-wrap">
+                <table class="lpox-tbl">
+                    <thead><tr><th class="ctr" style="width:46px">#</th><th>Product</th><th class="num">Received Qty</th></tr></thead>
+                    <tbody>
+                        <tr><td class="ctr"><span class="idx">1</span></td><td><div class="pname">Portland Cement — Grade 53</div></td><td class="num" style="color:var(--ok); font-weight:800">120</td></tr>
+                        <tr><td class="ctr"><span class="idx">2</span></td><td><div class="pname">Steel Reinforcement Bar 12mm</div></td><td class="num" style="color:var(--ok); font-weight:800">100</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ ACTION: APPROVE/REJECT (pending) ============ -->
+    <div class="lpox-action tone-warn when w-approve" style="display:none">
+        <div class="a-body">
+            <div class="a-head">
+                <div class="a-ic"><i class="fa fa-gavel"></i></div>
+                <div><div class="a-title">Take Action</div><div class="a-sub">Approve or reject this local purchase order</div></div>
+            </div>
+            <div class="lpox-lbl"><i class="fa fa-commenting-o"></i> Remarks</div>
+            <textarea class="lpox-ta" placeholder="Enter remarks (required for rejection)"></textarea>
+            <div class="a-actions">
+                <button class="btn btn-bad"><i class="fa fa-times"></i> Reject</button>
+                <button class="btn btn-ok"><i class="fa fa-check"></i> Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ ACTION: CONFIRM (approved) ============ -->
+    <div class="lpox-action tone-primary when w-confirm" style="display:none">
+        <div class="a-body">
+            <div class="a-head">
+                <div class="a-ic"><i class="fa fa-check-square-o"></i></div>
+                <div><div class="a-title">Confirm Order</div><div class="a-sub">Confirm this approved local purchase order</div></div>
+            </div>
+            <div class="lpox-lbl"><i class="fa fa-commenting-o"></i> Confirmation Note</div>
+            <textarea class="lpox-ta" placeholder="Enter a confirmation note (optional)"></textarea>
+            <div class="a-actions">
+                <button class="btn btn-acc"><i class="fa fa-check-square-o"></i> Confirm</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+    // accent
+    document.querySelectorAll('.swatch').forEach(function(s){
+        s.addEventListener('click', function(){
+            document.querySelectorAll('.swatch').forEach(function(x){ x.classList.remove('active'); });
+            s.classList.add('active');
+            document.querySelector('.lpox').setAttribute('data-accent', s.dataset.acc);
+        });
+    });
+    // mode
+    document.querySelectorAll('#modeSeg button').forEach(function(b){
+        b.addEventListener('click', function(){
+            document.querySelectorAll('#modeSeg button').forEach(function(x){ x.classList.remove('active'); });
+            b.classList.add('active');
+            document.body.setAttribute('data-mode', b.dataset.mode);
+        });
+    });
+    // scenario
+    var STATUS = {
+        pending:  { text:'PENDING',   cls:'st-pending',  show:['w-approve'] },
+        approved: { text:'APPROVED',  cls:'st-approved', show:['w-decision','w-fulfil','w-confirm'] },
+        confirmed:{ text:'CONFIRMED', cls:'st-confirmed',show:['w-decision','w-confirmation','w-fulfil'] },
+        rejected: { text:'REJECTED',  cls:'st-rejected', show:['w-decision'] }
+    };
+    function applyScenario(key){
+        var cfg = STATUS[key];
+        var lpox = document.querySelector('.lpox');
+        lpox.setAttribute('data-status', key);
+        document.getElementById('statusText').textContent = cfg.text;
+        var hero = document.getElementById('hero');
+        hero.className = 'lpox-hero ' + cfg.cls;
+        // hide all conditional
+        document.querySelectorAll('.when').forEach(function(el){ el.style.display='none'; });
+        // confirm grid is a one-col grid
+        cfg.show.forEach(function(c){
+            document.querySelectorAll('.'+c).forEach(function(el){
+                el.style.display = el.classList.contains('w-confirmation') ? 'grid'
+                                  : (el.classList.contains('lpox-stat') ? 'block'
+                                  : (el.classList.contains('card2') || el.classList.contains('lpox-action') ? 'block' : 'block'));
+            });
+        });
+        // decision panel tone + label by status
+        var dp = document.getElementById('decisionPanel');
+        var dt = document.getElementById('decisionTitle');
+        var di = document.getElementById('decisionIc');
+        if (key === 'rejected'){ dp.className='card2 when w-decision panel-tone-danger'; dt.textContent='Rejection Details'; di.className='fa fa-times-circle'; }
+        else { dp.className='card2 when w-decision panel-tone-success'; dt.textContent='Decision Details'; di.className='fa fa-check-circle'; }
+        if (cfg.show.indexOf('w-decision')>=0) dp.style.display='block';
+    }
+    document.querySelectorAll('#scenSeg button').forEach(function(b){
+        b.addEventListener('click', function(){
+            document.querySelectorAll('#scenSeg button').forEach(function(x){ x.classList.remove('active'); });
+            b.classList.add('active');
+            applyScenario(b.dataset.scen);
+        });
+    });
+    applyScenario('confirmed');
+</script>
+</body>
+</html>

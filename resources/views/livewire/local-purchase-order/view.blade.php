@@ -1,6 +1,189 @@
 <div>
     @use('App\Enums\LocalPurchaseOrder\LocalPurchaseOrderStatus')
 
+    {{--
+        ╔══════════════════════════════════════════════════════════════════════╗
+        ║  Local Purchase Order — View · "Premium Compact" design system        ║
+        ║  Scoped under .lpox. Accent derives from the active SETTINGS THEME     ║
+        ║  (--bs-primary / --bs-* tokens) so it tracks the colour scheme AND     ║
+        ║  light / dark mode automatically. All Livewire bindings preserved.     ║
+        ╚══════════════════════════════════════════════════════════════════════╝
+    --}}
+    @once
+        <style>
+            .lpox{
+                /* Brand → settings theme primary */
+                --acc: var(--bs-primary);
+                --acc-rgb: var(--bs-primary-rgb);
+                --acc-d: color-mix(in srgb, var(--bs-primary), #000 14%);
+                --acc-deep: color-mix(in srgb, var(--bs-primary), #000 42%);
+                --acc-tint: color-mix(in srgb, var(--bs-primary), transparent 90%);
+                --acc-tint-2: color-mix(in srgb, var(--bs-primary), transparent 95%);
+
+                --surface:#ffffff; --surface-2:#f5f7fa;
+                --ink: var(--bs-emphasis-color);
+                --ink-2: var(--bs-body-color);
+                --muted: var(--bs-secondary-color);
+                --faint: var(--bs-tertiary-color);
+                --line:#e7ebf1; --line-soft:#eff2f6;
+
+                --ok: var(--bs-success);   --ok-rgb: var(--bs-success-rgb);
+                --info: var(--bs-info);    --info-rgb: var(--bs-info-rgb);
+                --warn: var(--bs-warning); --warn-rgb: var(--bs-warning-rgb);
+                --bad: var(--bs-danger);   --bad-rgb: var(--bs-danger-rgb);
+
+                --shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px -10px rgba(16,24,40,.12);
+                --shadow-lg: 0 18px 42px -18px rgba(var(--acc-rgb),.40), 0 8px 18px -12px rgba(16,24,40,.20);
+
+                color: var(--ink);
+                font-size: 13px; line-height: 1.5;
+                -webkit-font-smoothing: antialiased;
+            }
+            .lpox *{ box-sizing:border-box; }
+
+            [data-bs-theme="dark"] .lpox{
+                --surface:#272d34; --surface-2:#2e353d;
+                --line:#3a424c; --line-soft:#343c45;
+                --acc-tint: color-mix(in srgb, var(--bs-primary), transparent 84%);
+                --acc-tint-2: color-mix(in srgb, var(--bs-primary), transparent 90%);
+                --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px -10px rgba(0,0,0,.5);
+                --shadow-lg: 0 18px 44px -18px rgba(0,0,0,.6), 0 8px 18px -12px rgba(0,0,0,.5);
+            }
+
+            /* shared */
+            .lpox .l-card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+            .lpox .l-sec{ margin-bottom:14px; }
+            .lpox .l-head{ display:flex; align-items:center; gap:11px; padding:13px 16px; border-bottom:1px solid var(--line-soft); }
+            .lpox .l-ic{ width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; background:var(--acc-tint); color:var(--acc-d); flex:0 0 auto; }
+            .lpox .l-ic.t-ok{ background:rgba(var(--ok-rgb),.13); color:var(--ok); }
+            .lpox .l-ic.t-info{ background:rgba(var(--info-rgb),.13); color:var(--info); }
+            .lpox .l-ic.t-bad{ background:rgba(var(--bad-rgb),.13); color:var(--bad); }
+            .lpox .l-ic.t-warn{ background:rgba(var(--warn-rgb),.13); color:var(--warn); }
+            .lpox .l-title{ font-size:13.5px; font-weight:750; letter-spacing:.1px; }
+            .lpox .l-sub{ font-size:11px; color:var(--muted); font-weight:500; margin-top:-1px; }
+            .lpox .l-pill{ display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.3px; }
+            .lpox .pill-acc{ background:var(--acc-tint); color:var(--acc-d); }
+            .lpox .pill-ok{ background:rgba(var(--ok-rgb),.13); color:var(--ok); }
+            .lpox .pill-warn{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+            .lpox .pill-bad{ background:rgba(var(--bad-rgb),.13); color:var(--bad); }
+            .lpox .pill-muted{ background:var(--surface-2); color:var(--muted); }
+
+            /* HERO */
+            .lpox-hero{ position:relative; border-radius:18px; overflow:hidden; margin-bottom:14px; box-shadow:var(--shadow-lg);
+                background:
+                    radial-gradient(120% 165% at 100% 0, color-mix(in srgb, var(--acc) 26%, transparent), transparent 55%),
+                    linear-gradient(125deg, var(--acc-deep), var(--acc-d)); }
+            .lpox-hero .glow{ position:absolute; right:-60px; top:-90px; width:300px; height:300px; border-radius:50%;
+                background:radial-gradient(circle, rgba(255,255,255,.16), transparent 65%); pointer-events:none; }
+            .lpox-hero-inner{ position:relative; display:flex; align-items:center; gap:18px; padding:18px 22px; flex-wrap:wrap; }
+            .lpox-hero .doc-ic{ width:52px; height:52px; border-radius:14px; flex:0 0 auto; background:rgba(255,255,255,.14);
+                border:1px solid rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff;
+                box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+            .lpox-hero .h-main{ flex:1; min-width:210px; color:#fff; }
+            .lpox-hero .h-eyebrow{ font-size:10.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
+            .lpox-hero .h-ref{ font-size:21px; font-weight:800; letter-spacing:.3px; line-height:1.15; margin-top:2px; }
+            .lpox-hero .h-meta{ display:flex; gap:16px; flex-wrap:wrap; margin-top:7px; font-size:12px; color:rgba(255,255,255,.86); }
+            .lpox-hero .h-meta i{ opacity:.82; margin-right:5px; }
+            .lpox-hero .h-right{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+            .lpox-hero .status-pill{ background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.3);
+                padding:6px 14px; border-radius:999px; font-size:12px; font-weight:750; letter-spacing:.4px; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+            .lpox-hero .status-pill .dot{ width:8px; height:8px; border-radius:50%; box-shadow:0 0 0 3px rgba(255,255,255,.18); }
+            .lpox-hero .btn-print{ background:#fff; color:var(--acc-deep); border:0; padding:8px 16px; border-radius:10px; font-size:12.5px; font-weight:700;
+                cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:7px; box-shadow:0 4px 14px rgba(0,0,0,.18); transition:transform .12s; }
+            .lpox-hero .btn-print:hover{ transform:translateY(-1px); color:var(--acc-deep); }
+
+            /* STAT STRIP */
+            .lpox-stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
+            .lpox-stat{ background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:12px 14px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+            .lpox-stat::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--acc); opacity:.85; }
+            .lpox-stat .s-k{ font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; }
+            .lpox-stat .s-k i{ color:var(--acc); }
+            .lpox-stat .s-v{ font-size:18px; font-weight:800; color:var(--ink); margin-top:4px; letter-spacing:.2px; }
+            .lpox-stat .s-v small{ font-size:11px; font-weight:600; color:var(--muted); }
+
+            /* INFO PANELS */
+            .lpox-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:14px; }
+            .lpox-grid.one{ grid-template-columns:1fr; }
+            .lpox .kv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:14px 16px; }
+            .lpox .kv{ background:var(--surface-2); border:1px solid var(--line-soft); border-radius:10px; padding:9px 11px; }
+            .lpox .kv.full{ grid-column:1 / -1; }
+            .lpox .kv .kk{ font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+            .lpox .kv .kk i{ color:var(--acc); font-size:11px; }
+            .lpox .kv .vv{ font-size:13px; font-weight:650; color:var(--ink); word-break:break-word; }
+            .lpox .tone-ok .kv .kk i{ color:var(--ok); } .lpox .tone-info .kv .kk i{ color:var(--info); } .lpox .tone-bad .kv .kk i{ color:var(--bad); }
+
+            /* TABLE */
+            .lpox .l-tblwrap{ overflow-x:auto; }
+            .lpox table.l-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+            .lpox table.l-tbl thead th{ background:var(--surface-2); color:var(--muted); font-size:10px; font-weight:750; letter-spacing:.6px;
+                text-transform:uppercase; padding:9px 12px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
+            .lpox table.l-tbl th.num, .lpox table.l-tbl td.num{ text-align:right; }
+            .lpox table.l-tbl th.ctr, .lpox table.l-tbl td.ctr{ text-align:center; }
+            .lpox table.l-tbl tbody td{ padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+            .lpox table.l-tbl tbody tr:hover td{ background:var(--acc-tint-2); }
+            .lpox table.l-tbl tbody td .pname{ font-weight:700; color:var(--ink); }
+            .lpox table.l-tbl tbody td .psub{ color:var(--muted); font-size:11px; }
+            .lpox table.l-tbl tbody td .amt{ font-weight:800; }
+            .lpox .idx{ display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:7px; background:var(--acc-tint); color:var(--acc-d); font-weight:800; font-size:11px; }
+            .lpox .tag{ display:inline-block; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:650; line-height:1.6; }
+            .lpox .tag-cat{ background:var(--acc-tint); color:var(--acc-d); }
+            .lpox .tag-sub{ background:var(--surface-2); color:var(--ink-2); border:1px solid var(--line); }
+            .lpox table.l-tbl tfoot td{ padding:11px 12px; font-weight:800; color:var(--ink); background:var(--surface-2); border-top:2px solid var(--line); }
+            .lpox .tfoot-acc td{ color:var(--acc-d); }
+
+            /* FULFILLMENT */
+            .lpox .ff-top{ padding:14px 16px 2px; }
+            .lpox .ff-bar{ height:9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line-soft); overflow:hidden; }
+            .lpox .ff-bar > span{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--acc),var(--acc-d)); }
+            .lpox .ff-legend{ display:flex; justify-content:space-between; margin-top:7px; font-size:11.5px; color:var(--muted); }
+            .lpox .ff-legend b{ color:var(--ink); }
+            .lpox .mini-bar{ height:6px; border-radius:999px; background:var(--surface-2); overflow:hidden; min-width:70px; flex:1; }
+            .lpox .mini-bar > span{ display:block; height:100%; border-radius:999px; }
+            .lpox .bar-ok > span{ background:var(--ok); } .lpox .bar-warn > span{ background:var(--warn); } .lpox .bar-none > span{ background:var(--faint); }
+            .lpox .stbadge{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:700; }
+            .lpox .st-full{ background:rgba(var(--ok-rgb),.13); color:var(--ok); }
+            .lpox .st-part{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+            .lpox .st-excess{ background:rgba(var(--bad-rgb),.13); color:var(--bad); }
+            .lpox .st-zero{ background:var(--surface-2); color:var(--muted); }
+
+            /* GRN */
+            .lpox .grn{ border:1px solid var(--line); border-radius:12px; overflow:hidden; margin:0 16px 12px; }
+            .lpox .grn:first-of-type{ margin-top:4px; }
+            .lpox .grn-head{ display:flex; align-items:center; justify-content:space-between; padding:9px 13px; background:var(--surface-2); border-bottom:1px solid var(--line-soft); flex-wrap:wrap; gap:6px; }
+            .lpox .grn-head a{ color:var(--acc-d); font-weight:750; text-decoration:none; font-size:12.5px; }
+            .lpox .grn-head .gdate{ color:var(--muted); font-size:11px; margin-left:12px; }
+
+            /* ACTION PANELS */
+            .lpox-action{ border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px; background:var(--surface); }
+            .lpox-action.tone-warn{ border-top:3px solid var(--warn); }
+            .lpox-action.tone-primary{ border-top:3px solid var(--acc); }
+            .lpox-action .a-body{ padding:16px 18px; }
+            .lpox-action .a-head{ display:flex; align-items:center; gap:11px; margin-bottom:14px; }
+            .lpox-action .a-ic{ width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+            .lpox-action.tone-warn .a-ic{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+            .lpox-action.tone-primary .a-ic{ background:var(--acc-tint); color:var(--acc-d); }
+            .lpox-action .a-title{ font-size:14px; font-weight:750; }
+            .lpox-action .a-sub{ font-size:11.5px; color:var(--muted); }
+            .lpox .lpox-lbl{ font-size:11.5px; font-weight:700; color:var(--ink-2); display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+            .lpox .lpox-ta{ width:100%; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); color:var(--ink);
+                padding:10px 12px; font-size:12.5px; font-family:inherit; resize:vertical; min-height:64px; }
+            .lpox .lpox-ta:focus{ outline:none; border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-tint); }
+            .lpox .a-actions{ display:flex; justify-content:flex-end; gap:9px; margin-top:14px; flex-wrap:wrap; }
+            .lpox .l-btn{ border:0; padding:9px 18px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:transform .12s,filter .12s; }
+            .lpox .l-btn:hover{ transform:translateY(-1px); filter:brightness(1.05); }
+            .lpox .l-btn-ok{ background:var(--ok); color:#fff; } .lpox .l-btn-bad{ background:var(--bad); color:#fff; } .lpox .l-btn-acc{ background:var(--acc); color:#fff; }
+
+            .lpox .l-empty{ text-align:center; padding:34px 0; color:var(--muted); }
+            .lpox .l-empty i{ font-size:34px; opacity:.3; display:block; margin-bottom:8px; }
+
+            @media (max-width:760px){
+                .lpox-grid{ grid-template-columns:1fr; }
+                .lpox .kv-grid{ grid-template-columns:1fr; }
+                .lpox-hero .h-right{ align-items:flex-start; width:100%; }
+            }
+        </style>
+    @endonce
+
     @if ($errors->any())
         <div class="mb-4 alert alert-danger alert-dismissible fade show">
             <ul class="mb-0 ps-3">
@@ -12,310 +195,240 @@
         </div>
     @endif
 
-    {{-- Status Banner --}}
     @php
-        $statusColor = match ($order->status) {
+        $statusBs = match ($order->status) {
             LocalPurchaseOrderStatus::APPROVED => 'success',
+            LocalPurchaseOrderStatus::CONFIRMED => 'primary',
             LocalPurchaseOrderStatus::REJECTED => 'danger',
             default => 'warning',
         };
         $statusIcon = match ($order->status) {
             LocalPurchaseOrderStatus::APPROVED => 'fa fa-check-circle',
+            LocalPurchaseOrderStatus::CONFIRMED => 'fa fa-check-square-o',
             LocalPurchaseOrderStatus::REJECTED => 'fa fa-times-circle',
             default => 'fa fa-clock-o',
         };
+
+        $refNo = 'BASB-LPO-' . \Carbon\Carbon::parse($order->date ?? now())->format('m-y') . '-' . str_pad($order->id, 3, '0', STR_PAD_LEFT);
+        $itemCount = $order->items->count();
+        $totalQty = $order->items->sum('quantity');
+        $subtotal = $order->items->sum(fn($i) => $i->quantity * $i->rate);
+
+        $hasGrn = $order->grns->count() > 0;
+        $receivedByProduct = $order->grns->flatMap->items->groupBy('product_id')->map(fn($items) => $items->sum('quantity'));
+        $totalReceived = $receivedByProduct->sum();
+        $overallPercent = $totalQty > 0 ? round(($totalReceived / $totalQty) * 100) : 0;
     @endphp
 
-    <div class="mb-4 card border-0 shadow-sm overflow-hidden">
-        <div class="card-body p-0">
-            <div class="d-flex align-items-center p-3 bg-{{ $statusColor }} bg-opacity-10 border-start border-4 border-{{ $statusColor }}">
-                <div class="icon-box bg-{{ $statusColor }} bg-opacity-25 rounded-circle p-2 me-3">
-                    <i class="{{ $statusIcon }} text-{{ $statusColor }} fs-4"></i>
+    <div class="lpox" data-status="{{ $order->status->value }}">
+
+        {{-- ===================== HERO ===================== --}}
+        <div class="lpox-hero">
+            <div class="glow"></div>
+            <div class="lpox-hero-inner">
+                <div class="doc-ic"><i class="fa fa-file-text-o"></i></div>
+                <div class="h-main">
+                    <div class="h-eyebrow">Local Purchase Order</div>
+                    <div class="h-ref">{{ $refNo }}</div>
+                    <div class="h-meta">
+                        <span><i class="demo-psi-home"></i>{{ $order->branch?->name ?? '—' }}</span>
+                        <span><i class="demo-psi-shop"></i>{{ $order->vendor?->name ?? '—' }}</span>
+                        <span><i class="demo-psi-calendar-4"></i>{{ $order->date ? \Carbon\Carbon::parse($order->date)->format('d M Y') : '—' }}</span>
+                    </div>
                 </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center justify-content-between">
+                <div class="h-right">
+                    <span class="status-pill">
+                        <span class="dot" style="background: var(--bs-{{ $statusBs }})"></span>
+                        <i class="{{ $statusIcon }}"></i> {{ strtoupper($order->status->label()) }}
+                    </span>
+                    @can('print', $order)
+                        <a href="{{ route('lpo::print', $order->id) }}" target="_blank" class="btn-print">
+                            <i class="fa fa-print"></i> Print / Save PDF
+                        </a>
+                    @endcan
+                </div>
+            </div>
+        </div>
+
+        {{-- ===================== STAT STRIP ===================== --}}
+        <div class="lpox-stats">
+            <div class="lpox-stat">
+                <div class="s-k"><i class="demo-psi-basket-coins"></i> Line Items</div>
+                <div class="s-v">{{ $itemCount }} <small>{{ \Illuminate\Support\Str::plural('product', $itemCount) }}</small></div>
+            </div>
+            <div class="lpox-stat">
+                <div class="s-k"><i class="fa fa-sort-amount-asc"></i> Total Qty</div>
+                <div class="s-v">{{ number_format($totalQty, 0) }} <small>units</small></div>
+            </div>
+            <div class="lpox-stat">
+                <div class="s-k"><i class="demo-psi-coin"></i> Order Value</div>
+                <div class="s-v">{{ number_format($subtotal, 2) }}</div>
+            </div>
+            @if ($hasGrn)
+                <div class="lpox-stat">
+                    <div class="s-k"><i class="fa fa-tasks"></i> Fulfilled</div>
+                    <div class="s-v">{{ $overallPercent }}<small>%</small></div>
+                </div>
+            @endif
+        </div>
+
+        {{-- ===================== INFO PANELS ===================== --}}
+        <div class="lpox-grid {{ $order->status === LocalPurchaseOrderStatus::PENDING ? 'one' : '' }}">
+            {{-- Order Information --}}
+            <div class="l-card">
+                <div class="l-head">
+                    <div class="l-ic"><i class="demo-psi-file"></i></div>
+                    <div><div class="l-title">Order Information</div><div class="l-sub">Vendor &amp; order metadata</div></div>
+                </div>
+                <div class="kv-grid">
+                    <div class="kv"><div class="kk"><i class="demo-psi-shop"></i>Vendor</div><div class="vv">{{ $order->vendor?->name ?? '-' }}</div></div>
+                    <div class="kv"><div class="kk"><i class="demo-psi-calendar-4"></i>Date</div><div class="vv">{{ $order->date ? \Carbon\Carbon::parse($order->date)->format('d M Y') : '-' }}</div></div>
+                    <div class="kv"><div class="kk"><i class="demo-psi-male"></i>Created By</div><div class="vv">{{ $order->creator?->name ?? '-' }}</div></div>
+                    <div class="kv"><div class="kk"><i class="demo-psi-home"></i>Branch</div><div class="vv">{{ $order->branch?->name ?? '-' }}</div></div>
+                    <div class="kv"><div class="kk"><i class="demo-psi-basket-coins"></i>Total Products</div><div class="vv">{{ $itemCount }} items</div></div>
+                    <div class="kv"><div class="kk"><i class="demo-psi-coin"></i>Total Amount</div><div class="vv">{{ number_format($subtotal, 2) }}</div></div>
+                </div>
+            </div>
+
+            {{-- Decision Details --}}
+            @if ($order->status !== LocalPurchaseOrderStatus::PENDING)
+                @php $decTone = $order->status === LocalPurchaseOrderStatus::REJECTED ? 'bad' : 'ok'; @endphp
+                <div class="l-card tone-{{ $decTone }}">
+                    <div class="l-head">
+                        <div class="l-ic t-{{ $decTone }}"><i class="{{ $statusIcon }}"></i></div>
                         <div>
-                            <h5 class="mb-0 fw-bold">Local Purchase Order #{{ $order->id }}</h5>
-                            <small class="text-muted">{{ $order->branch?->name }}</small>
+                            <div class="l-title">{{ $order->status === LocalPurchaseOrderStatus::REJECTED ? 'Rejection Details' : 'Decision Details' }}</div>
+                            <div class="l-sub">Approval / rejection record</div>
                         </div>
-                        <span class="badge bg-{{ $statusColor }} rounded-pill px-3 py-2 fs-6">
-                            <i class="{{ $statusIcon }} me-1"></i>
-                            {{ $order->status->label() }}
-                        </span>
+                    </div>
+                    <div class="kv-grid">
+                        <div class="kv"><div class="kk"><i class="demo-psi-male"></i>Action By</div><div class="vv">{{ $order->decisionMaker?->name ?? '-' }}</div></div>
+                        <div class="kv"><div class="kk"><i class="demo-psi-calendar-4"></i>Action On</div><div class="vv">{{ $order->decision_at?->format('d M Y, h:i A') ?? '-' }}</div></div>
+                        @if ($order->decision_note)
+                            <div class="kv full"><div class="kk"><i class="demo-psi-speech-bubble-3"></i>Remarks</div><div class="vv">{{ $order->decision_note }}</div></div>
+                        @endif
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Order Details --}}
-    <div class="row g-4 mb-4">
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="icon-box bg-primary bg-opacity-10 rounded-circle p-2 me-2">
-                            <i class="demo-psi-file text-primary fs-4"></i>
-                        </div>
-                        <h5 class="mb-0 fw-bold">Order Information</h5>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <div class="p-2 rounded bg-light bg-opacity-50">
-                                <div class="d-flex align-items-center mb-1">
-                                    <i class="demo-psi-shop text-primary me-2"></i>
-                                    <small class="text-muted">Vendor</small>
-                                </div>
-                                <div class="fw-medium">{{ $order->vendor?->name ?? '-' }}</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-2 rounded bg-light bg-opacity-50">
-                                <div class="d-flex align-items-center mb-1">
-                                    <i class="demo-psi-calendar-4 text-primary me-2"></i>
-                                    <small class="text-muted">Date</small>
-                                </div>
-                                <div class="fw-medium">{{ $order->date ? \Carbon\Carbon::parse($order->date)->format('d M Y') : '-' }}</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-2 rounded bg-light bg-opacity-50">
-                                <div class="d-flex align-items-center mb-1">
-                                    <i class="demo-psi-male text-primary me-2"></i>
-                                    <small class="text-muted">Created By</small>
-                                </div>
-                                <div class="fw-medium">{{ $order->creator?->name ?? '-' }}</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-2 rounded bg-light bg-opacity-50">
-                                <div class="d-flex align-items-center mb-1">
-                                    <i class="demo-psi-home text-info me-2"></i>
-                                    <small class="text-muted">Branch</small>
-                                </div>
-                                <div class="fw-medium">{{ $order->branch?->name ?? '-' }}</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-2 rounded bg-light bg-opacity-50">
-                                <div class="d-flex align-items-center mb-1">
-                                    <i class="demo-psi-basket-coins text-success me-2"></i>
-                                    <small class="text-muted">Total Products</small>
-                                </div>
-                                <div class="fw-medium">{{ $order->items->count() }} items</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-2 rounded bg-light bg-opacity-50">
-                                <div class="d-flex align-items-center mb-1">
-                                    <i class="demo-psi-coin text-success me-2"></i>
-                                    <small class="text-muted">Total Amount</small>
-                                </div>
-                                <div class="fw-medium">{{ number_format($order->items->sum(fn($i) => $i->quantity * $i->rate), 2) }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            @endif
         </div>
 
-        @if ($order->status !== LocalPurchaseOrderStatus::PENDING)
-            <div class="col-lg-6">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body p-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="icon-box bg-{{ $statusColor }} bg-opacity-10 rounded-circle p-2 me-2">
-                                <i class="{{ $statusIcon }} text-{{ $statusColor }} fs-4"></i>
-                            </div>
-                            <h5 class="mb-0 fw-bold">Decision Details</h5>
-                        </div>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <div class="p-2 rounded bg-light bg-opacity-50">
-                                    <div class="d-flex align-items-center mb-1">
-                                        <i class="demo-psi-male text-{{ $statusColor }} me-2"></i>
-                                        <small class="text-muted">Action By</small>
-                                    </div>
-                                    <div class="fw-medium">{{ $order->decisionMaker?->name ?? '-' }}</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-2 rounded bg-light bg-opacity-50">
-                                    <div class="d-flex align-items-center mb-1">
-                                        <i class="demo-psi-calendar-4 text-{{ $statusColor }} me-2"></i>
-                                        <small class="text-muted">Action On</small>
-                                    </div>
-                                    <div class="fw-medium">{{ $order->decision_at?->format('d M Y, h:i A') }}</div>
-                                </div>
-                            </div>
-                            @if ($order->decision_note)
-                                <div class="col-12">
-                                    <div class="p-2 rounded bg-light bg-opacity-50">
-                                        <div class="d-flex align-items-center mb-1">
-                                            <i class="demo-psi-speech-bubble-3 text-{{ $statusColor }} me-2"></i>
-                                            <small class="text-muted">Remarks</small>
-                                        </div>
-                                        <div class="fw-medium">{{ $order->decision_note }}</div>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
+        {{-- Confirmation Details --}}
+        @if ($order->status === LocalPurchaseOrderStatus::CONFIRMED)
+            <div class="lpox-grid one">
+                <div class="l-card tone-info">
+                    <div class="l-head">
+                        <div class="l-ic t-info"><i class="fa fa-check-square-o"></i></div>
+                        <div><div class="l-title">Confirmation Details</div><div class="l-sub">Final confirmation record</div></div>
+                    </div>
+                    <div class="kv-grid">
+                        <div class="kv"><div class="kk"><i class="demo-psi-male"></i>Confirmed By</div><div class="vv">{{ $order->confirmedBy?->name ?? '-' }}</div></div>
+                        <div class="kv"><div class="kk"><i class="demo-psi-calendar-4"></i>Confirmed On</div><div class="vv">{{ $order->confirmation_at?->format('d M Y, h:i A') ?? '-' }}</div></div>
+                        @if ($order->confirmation_note)
+                            <div class="kv full"><div class="kk"><i class="demo-psi-speech-bubble-3"></i>Confirmation Note</div><div class="vv">{{ $order->confirmation_note }}</div></div>
+                        @endif
                     </div>
                 </div>
             </div>
         @endif
-    </div>
 
-    {{-- Products Table --}}
-    <div class="mb-4 card border-0 shadow-sm">
-        <div class="card-body p-3">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <div class="d-flex align-items-center">
-                    <div class="icon-box bg-info bg-opacity-10 rounded-circle p-2 me-2">
-                        <i class="demo-psi-basket-coins text-info fs-4"></i>
-                    </div>
-                    <h5 class="mb-0 fw-bold">Products</h5>
-                </div>
-                <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 py-2">
-                    {{ $order->items->count() }} items | Total: {{ number_format($order->items->sum(fn($i) => $i->quantity * $i->rate), 2) }}
-                </span>
+        {{-- ===================== PRODUCTS ===================== --}}
+        <div class="l-sec l-card">
+            <div class="l-head">
+                <div class="l-ic"><i class="demo-psi-basket-coins"></i></div>
+                <div style="flex:1"><div class="l-title">Products</div></div>
+                <span class="l-pill pill-acc">{{ $itemCount }} items · {{ number_format($subtotal, 2) }}</span>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+            <div class="l-tblwrap">
+                <table class="l-tbl">
                     <thead>
-                        <tr class="bg-light">
-                            <th class="border-0 rounded-start">#</th>
-                            <th class="border-0">Product</th>
-                            <th class="border-0">Expense Account</th>
-                            <th class="border-0">Code</th>
-                            <th class="border-0">Category</th>
-                            <th class="border-0">Sub Category</th>
-                            <th class="border-0">Brand</th>
-                            <th class="border-0">Unit</th>
-                            <th class="border-0 text-end">Qty</th>
-                            <th class="border-0 text-end">Rate</th>
-                            <th class="border-0 text-end rounded-end">Amount</th>
+                        <tr>
+                            <th class="ctr" style="width:46px">#</th>
+                            <th>Product</th>
+                            <th>Expense Account</th>
+                            <th>Category</th>
+                            <th class="num">Qty</th>
+                            <th class="num">Rate</th>
+                            <th class="num">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($order->items as $index => $item)
                             <tr>
+                                <td class="ctr"><span class="idx">{{ $index + 1 }}</span></td>
                                 <td>
-                                    <span class="badge bg-light text-muted rounded-pill">{{ $index + 1 }}</span>
+                                    <div class="pname">{{ $item->product->name }}</div>
+                                    <div class="psub">
+                                        {{ collect([
+                                            $item->product->code ? '#' . $item->product->code : null,
+                                            $item->product->brand?->name,
+                                            $item->product->unit?->name,
+                                        ])->filter()->implode(' · ') ?: '—' }}
+                                    </div>
                                 </td>
+                                <td><span class="psub">{{ $item->account?->name ?? '-' }}</span></td>
                                 <td>
-                                    <span class="fw-medium">{{ $item->product->name }}</span>
+                                    @if ($item->product->mainCategory?->name)
+                                        <span class="tag tag-cat">{{ $item->product->mainCategory->name }}</span>
+                                    @endif
+                                    @if ($item->product->subCategory?->name)
+                                        <span class="tag tag-sub">{{ $item->product->subCategory->name }}</span>
+                                    @endif
+                                    @unless ($item->product->mainCategory?->name || $item->product->subCategory?->name)
+                                        <span class="psub">—</span>
+                                    @endunless
                                 </td>
-                                <td>
-                                    <span class="text-muted small">{{ $item->account?->name ?? '-' }}</span>
-                                </td>
-                                <td>
-                                    <span class="text-muted small">{{ $item->product->code ?? '-' }}</span>
-                                </td>
-                                <td>
-                                    <span
-                                        class="badge bg-primary bg-opacity-10 text-primary">{{ $item->product->mainCategory?->name ?? '-' }}</span>
-                                </td>
-                                <td>
-                                    <span
-                                        class="badge bg-secondary bg-opacity-10 text-secondary">{{ $item->product->subCategory?->name ?? '-' }}</span>
-                                </td>
-                                <td>
-                                    <span class="text-muted">{{ $item->product->brand?->name ?? '-' }}</span>
-                                </td>
-                                <td>
-                                    <span class="text-muted">{{ $item->product->unit?->name ?? '-' }}</span>
-                                </td>
-                                <td class="text-end">
-                                    <span class="fw-medium">{{ $item->quantity }}</span>
-                                </td>
-                                <td class="text-end">
-                                    <span class="text-muted">{{ number_format($item->rate, 2) }}</span>
-                                </td>
-                                <td class="text-end">
-                                    <span class="fw-bold">{{ number_format($item->quantity * $item->rate, 2) }}</span>
-                                </td>
+                                <td class="num"><span class="pname">{{ $item->quantity }}</span></td>
+                                <td class="num"><span class="psub">{{ number_format($item->rate, 2) }}</span></td>
+                                <td class="num amt">{{ number_format($item->quantity * $item->rate, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="demo-psi-basket-coins fs-1 d-block mb-2 opacity-25"></i>
-                                        No products added
-                                    </div>
+                                <td colspan="7">
+                                    <div class="l-empty"><i class="demo-psi-basket-coins"></i> No products added</div>
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
-                    @if ($order->items->count())
+                    @if ($itemCount)
                         <tfoot>
-                            <tr class="bg-light">
-                                <td colspan="8" class="fw-bold border-0 rounded-start">Total</td>
-                                <td class="fw-bold text-end border-0">{{ $order->items->sum('quantity') }}</td>
-                                <td class="border-0"></td>
-                                <td class="fw-bold text-end border-0 rounded-end">
-                                    {{ number_format($order->items->sum(fn($i) => $i->quantity * $i->rate), 2) }}</td>
+                            <tr class="tfoot-acc">
+                                <td colspan="4">Total</td>
+                                <td class="num">{{ number_format($totalQty, 0) }}</td>
+                                <td></td>
+                                <td class="num">{{ number_format($subtotal, 2) }}</td>
                             </tr>
                         </tfoot>
                     @endif
                 </table>
             </div>
         </div>
-    </div>
 
-    {{-- Fulfillment Summary --}}
-    @if ($order->grns->count() && $order->items->count())
-        @php
-            $allGrnItems = $order->grns->flatMap->items;
-            $receivedByProduct = $allGrnItems->groupBy('product_id')->map(fn($items) => $items->sum('quantity'));
-            $totalOrdered = $order->items->sum('quantity');
-            $totalReceived = $receivedByProduct->sum();
-            $overallPercent = $totalOrdered > 0 ? round(($totalReceived / $totalOrdered) * 100) : 0;
-        @endphp
-
-        <div class="mb-4 card border-0 shadow-sm">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box bg-primary bg-opacity-10 rounded-circle p-2 me-2">
-                            <i class="fa fa-tasks text-primary fs-4"></i>
-                        </div>
-                        <div>
-                            <h5 class="mb-0 fw-bold">Fulfillment Summary</h5>
-                            <small class="text-muted">Ordered vs Received across all GRNs</small>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span
-                            class="badge bg-{{ $overallPercent >= 100 ? 'success' : ($overallPercent > 0 ? 'warning' : 'secondary') }} rounded-pill px-3 py-2">
-                            {{ $overallPercent }}% Fulfilled
-                        </span>
+        {{-- ===================== FULFILLMENT ===================== --}}
+        @if ($hasGrn && $itemCount)
+            <div class="l-sec l-card">
+                <div class="l-head">
+                    <div class="l-ic"><i class="fa fa-tasks"></i></div>
+                    <div style="flex:1"><div class="l-title">Fulfillment Summary</div><div class="l-sub">Ordered vs received across all GRNs</div></div>
+                    <span class="l-pill {{ $overallPercent >= 100 ? 'pill-ok' : ($overallPercent > 0 ? 'pill-warn' : 'pill-muted') }}">{{ $overallPercent }}% Fulfilled</span>
+                </div>
+                <div class="ff-top">
+                    <div class="ff-bar"><span style="width: {{ min($overallPercent, 100) }}%"></span></div>
+                    <div class="ff-legend">
+                        <span>Total Ordered: <b>{{ number_format($totalQty, 0) }}</b></span>
+                        <span>Total Received: <b style="color:var(--ok)">{{ number_format($totalReceived, 0) }}</b></span>
                     </div>
                 </div>
-
-                {{-- Overall Progress --}}
-                <div class="mb-3">
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-{{ $overallPercent >= 100 ? 'success' : ($overallPercent >= 50 ? 'info' : 'warning') }}"
-                            style="width: {{ min($overallPercent, 100) }}%"></div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1">
-                        <small class="text-muted">Total Ordered: <strong>{{ $totalOrdered }}</strong></small>
-                        <small class="text-muted">Total Received: <strong class="text-success">{{ $totalReceived }}</strong></small>
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                <div class="l-tblwrap" style="padding-top:8px">
+                    <table class="l-tbl">
                         <thead>
-                            <tr class="bg-light">
-                                <th class="border-0 rounded-start">#</th>
-                                <th class="border-0">Product</th>
-                                <th class="border-0 text-end">Ordered</th>
-                                <th class="border-0 text-end">Received</th>
-                                <th class="border-0 text-end">Pending</th>
-                                <th class="border-0" style="width: 200px;">Progress</th>
-                                <th class="border-0 text-center rounded-end">Status</th>
+                            <tr>
+                                <th class="ctr" style="width:46px">#</th>
+                                <th>Product</th>
+                                <th class="num">Ordered</th>
+                                <th class="num">Received</th>
+                                <th class="num">Pending</th>
+                                <th style="width:180px">Progress</th>
+                                <th class="ctr">Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -326,127 +439,85 @@
                                     $percent = $item->quantity > 0 ? round(($received / $item->quantity) * 100) : 0;
                                 @endphp
                                 <tr>
-                                    <td>
-                                        <span class="badge bg-light text-muted rounded-pill">{{ $index + 1 }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="fw-medium">{{ $item->product->name }}</span>
-                                    </td>
-                                    <td class="text-end">
-                                        <span class="fw-medium">{{ $item->quantity }}</span>
-                                    </td>
-                                    <td class="text-end">
-                                        <span class="fw-bold text-success">{{ $received }}</span>
-                                    </td>
-                                    <td class="text-end">
+                                    <td class="ctr"><span class="idx">{{ $index + 1 }}</span></td>
+                                    <td><div class="pname">{{ $item->product->name }}</div></td>
+                                    <td class="num">{{ $item->quantity }}</td>
+                                    <td class="num" style="color:var(--ok); font-weight:800">{{ $received }}</td>
+                                    <td class="num">
                                         @if ($pending != 0)
-                                            <span class="fw-medium text-danger">{{ $pending }}</span>
+                                            <span style="color:var(--bad); font-weight:700">{{ $pending }}</span>
                                         @else
-                                            <span class="text-muted">0</span>
+                                            <span style="color:var(--muted)">0</span>
                                         @endif
                                     </td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="progress flex-grow-1" style="height: 6px;">
-                                                <div class="progress-bar bg-{{ $percent >= 100 ? 'success' : ($percent > 0 ? 'warning' : 'secondary') }}"
-                                                    style="width: {{ min($percent, 100) }}%"></div>
-                                            </div>
-                                            <small class="text-muted fw-semibold" style="width: 35px;">{{ $percent }}%</small>
+                                        <div style="display:flex; align-items:center; gap:9px">
+                                            <div class="mini-bar {{ $percent >= 100 ? 'bar-ok' : ($percent > 0 ? 'bar-warn' : 'bar-none') }}"><span style="width: {{ min($percent, 100) }}%"></span></div>
+                                            <b style="font-size:11px">{{ $percent }}%</b>
                                         </div>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="ctr">
                                         @if ($percent > 100)
-                                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1">
-                                                <i class="fa fa-exclamation-circle me-1"></i> Excess
-                                            </span>
+                                            <span class="stbadge st-excess"><i class="fa fa-exclamation-circle"></i> Excess</span>
                                         @elseif ($percent == 100)
-                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">
-                                                <i class="fa fa-check-circle me-1"></i> Full
-                                            </span>
+                                            <span class="stbadge st-full"><i class="fa fa-check-circle"></i> Full</span>
                                         @elseif ($percent > 0)
-                                            <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1">
-                                                <i class="fa fa-clock-o me-1"></i> Partial
-                                            </span>
+                                            <span class="stbadge st-part"><i class="fa fa-clock-o"></i> Partial</span>
                                         @else
-                                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1">
-                                                <i class="fa fa-minus-circle me-1"></i> None
-                                            </span>
+                                            <span class="stbadge st-zero"><i class="fa fa-minus-circle"></i> None</span>
                                         @endif
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot>
-                            <tr class="bg-light">
-                                <td colspan="2" class="fw-bold border-0 rounded-start">Total</td>
-                                <td class="fw-bold text-end border-0">{{ $totalOrdered }}</td>
-                                <td class="fw-bold text-end border-0 text-success">{{ $totalReceived }}</td>
-                                <td class="fw-bold text-end border-0 {{ $totalOrdered - $totalReceived > 0 ? 'text-danger' : '' }}">
-                                    {{ $totalOrdered - $totalReceived }}</td>
-                                <td class="border-0"></td>
-                                <td class="border-0 rounded-end"></td>
+                            <tr>
+                                <td colspan="2">Total</td>
+                                <td class="num">{{ number_format($totalQty, 0) }}</td>
+                                <td class="num" style="color:var(--ok)">{{ number_format($totalReceived, 0) }}</td>
+                                <td class="num" style="color: {{ $totalQty - $totalReceived > 0 ? 'var(--bad)' : 'inherit' }}">{{ number_format($totalQty - $totalReceived, 0) }}</td>
+                                <td></td><td></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
-        </div>
-    @endif
+        @endif
 
-    {{-- GRN Received Items --}}
-    @if ($order->grns->count())
-        <div class="mb-4 card border-0 shadow-sm">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box bg-success bg-opacity-10 rounded-circle p-2 me-2">
-                            <i class="fa fa-cubes text-success fs-4"></i>
-                        </div>
-                        <h5 class="mb-0 fw-bold">Goods Received (GRN)</h5>
-                    </div>
-                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">
-                        {{ $order->grns->count() }} GRN{{ $order->grns->count() > 1 ? 's' : '' }}
-                    </span>
+        {{-- ===================== GRN ===================== --}}
+        @if ($hasGrn)
+            <div class="l-sec l-card">
+                <div class="l-head">
+                    <div class="l-ic t-ok"><i class="fa fa-cubes"></i></div>
+                    <div style="flex:1"><div class="l-title">Goods Received (GRN)</div></div>
+                    <span class="l-pill pill-ok">{{ $order->grns->count() }} GRN{{ $order->grns->count() > 1 ? 's' : '' }}</span>
                 </div>
-
                 @foreach ($order->grns as $grn)
-                    <div class="border rounded mb-3">
-                        <div class="bg-light px-3 py-2 d-flex align-items-center justify-content-between border-bottom">
-                            <div class="d-flex align-items-center">
-                                <a href="{{ route('grn::view', $grn->id) }}" class="fw-semibold text-primary text-decoration-none">
-                                    <i class="fa fa-file-text me-1"></i> {{ $grn->grn_no }}
-                                </a>
-                                <span class="text-muted ms-3 small">
-                                    <i class="demo-psi-calendar-4 me-1"></i>
-                                    {{ \Carbon\Carbon::parse($grn->date)->format('d M Y') }}
-                                </span>
+                    <div class="grn">
+                        <div class="grn-head">
+                            <div>
+                                <a href="{{ route('grn::view', $grn->id) }}"><i class="fa fa-file-text-o"></i> {{ $grn->grn_no }}</a>
+                                <span class="gdate"><i class="demo-psi-calendar-4"></i> {{ \Carbon\Carbon::parse($grn->date)->format('d M Y') }}</span>
                             </div>
-                            <span
-                                class="badge bg-{{ $grn->status->value === 'accepted' ? 'success' : ($grn->status->value === 'pending' ? 'warning' : 'danger') }} rounded-pill">
+                            <span class="stbadge {{ $grn->status->value === 'accepted' ? 'st-full' : ($grn->status->value === 'pending' ? 'st-part' : 'st-excess') }}">
                                 {{ $grn->status->label() }}
                             </span>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
+                        <div class="l-tblwrap">
+                            <table class="l-tbl">
                                 <thead>
-                                    <tr class="bg-light bg-opacity-50">
-                                        <th class="border-0 ps-3">#</th>
-                                        <th class="border-0">Product</th>
-                                        <th class="border-0 text-end pe-3">Received Qty</th>
+                                    <tr>
+                                        <th class="ctr" style="width:46px">#</th>
+                                        <th>Product</th>
+                                        <th class="num">Received Qty</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($grn->items as $grnIndex => $grnItem)
                                         <tr>
-                                            <td class="ps-3">
-                                                <span class="badge bg-light text-muted rounded-pill">{{ $grnIndex + 1 }}</span>
-                                            </td>
-                                            <td>
-                                                <span class="fw-medium">{{ $grnItem->product?->name }}</span>
-                                            </td>
-                                            <td class="text-end pe-3">
-                                                <span class="fw-bold text-success">{{ $grnItem->quantity }}</span>
-                                            </td>
+                                            <td class="ctr"><span class="idx">{{ $grnIndex + 1 }}</span></td>
+                                            <td><div class="pname">{{ $grnItem->product?->name }}</div></td>
+                                            <td class="num" style="color:var(--ok); font-weight:800">{{ $grnItem->quantity }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -455,41 +526,47 @@
                     </div>
                 @endforeach
             </div>
-        </div>
-    @endif
+        @endif
 
-    {{-- Approval Action --}}
-    @if ($order->status == LocalPurchaseOrderStatus::PENDING && $is_approvable)
-        <div class="mb-4 card border-0 shadow-sm border-top border-3 border-warning">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="icon-box bg-warning bg-opacity-10 rounded-circle p-2 me-2">
-                        <i class="fa fa-gavel text-warning fs-4"></i>
+        {{-- ===================== APPROVE / REJECT ===================== --}}
+        @if ($order->status == LocalPurchaseOrderStatus::PENDING && $is_approvable)
+            <div class="lpox-action tone-warn">
+                <div class="a-body">
+                    <div class="a-head">
+                        <div class="a-ic"><i class="fa fa-gavel"></i></div>
+                        <div><div class="a-title">Take Action</div><div class="a-sub">Approve or reject this local purchase order</div></div>
                     </div>
-                    <div>
-                        <h5 class="mb-0 fw-bold">Take Action</h5>
-                        <small class="text-muted">Approve or reject this local purchase order</small>
+                    <div class="lpox-lbl"><i class="demo-psi-speech-bubble-3"></i> Remarks</div>
+                    <textarea class="lpox-ta" rows="3" wire:model="remarks" placeholder="Enter remarks (required for rejection)"></textarea>
+                    <div class="a-actions">
+                        <button type="button" class="l-btn l-btn-bad" wire:click="reject" wire:confirm="Are you sure you want to reject this order?">
+                            <i class="fa fa-times"></i> Reject
+                        </button>
+                        <button type="button" class="l-btn l-btn-ok" wire:click="approve" wire:confirm="Are you sure you want to approve this order?">
+                            <i class="fa fa-check"></i> Approve
+                        </button>
                     </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">
-                        <i class="demo-psi-speech-bubble-3 me-1"></i> Remarks
-                    </label>
-                    <textarea class="form-control" rows="3" wire:model="remarks" placeholder="Enter remarks (required for rejection)"></textarea>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-danger px-4" wire:click="reject"
-                        wire:confirm="Are you sure you want to reject this order?">
-                        <i class="fa fa-times me-1"></i> Reject
-                    </button>
-                    <button type="button" class="btn btn-success px-4" wire:click="approve"
-                        wire:confirm="Are you sure you want to approve this order?">
-                        <i class="fa fa-check me-1"></i> Approve
-                    </button>
                 </div>
             </div>
-        </div>
-    @endif
+        @endif
+
+        {{-- ===================== CONFIRM ===================== --}}
+        @if ($order->status == LocalPurchaseOrderStatus::APPROVED && $is_confirmable)
+            <div class="lpox-action tone-primary">
+                <div class="a-body">
+                    <div class="a-head">
+                        <div class="a-ic"><i class="fa fa-check-square-o"></i></div>
+                        <div><div class="a-title">Confirm Order</div><div class="a-sub">Confirm this approved local purchase order</div></div>
+                    </div>
+                    <div class="lpox-lbl"><i class="demo-psi-speech-bubble-3"></i> Confirmation Note</div>
+                    <textarea class="lpox-ta" rows="3" wire:model="confirm_remarks" placeholder="Enter a confirmation note (optional)"></textarea>
+                    <div class="a-actions">
+                        <button type="button" class="l-btn l-btn-acc" wire:click="confirm" wire:confirm="Are you sure you want to confirm this order?">
+                            <i class="fa fa-check-square-o"></i> Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+    </div>
 </div>

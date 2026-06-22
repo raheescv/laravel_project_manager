@@ -73,6 +73,14 @@ class LocalPurchaseOrderPolicy
     }
 
     /**
+     * Confirm an approved LPO
+     */
+    public function confirm(User $user, LocalPurchaseOrder $order): bool
+    {
+        return $user->can('local purchase order.confirm') && $order->status === LocalPurchaseOrderStatus::APPROVED;
+    }
+
+    /**
      * Print / export LPO as PDF
      */
     public function print(User $user, LocalPurchaseOrder $order): bool

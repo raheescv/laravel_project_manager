@@ -25,6 +25,9 @@ class LocalPurchaseOrder extends Model
         'decision_by',
         'decision_at',
         'decision_note',
+        'confirmation_by',
+        'confirmation_at',
+        'confirmation_note',
         'status',
         'created_by',
     ];
@@ -32,6 +35,7 @@ class LocalPurchaseOrder extends Model
     protected $casts = [
         'status' => LocalPurchaseOrderStatus::class,
         'decision_at' => 'datetime',
+        'confirmation_at' => 'datetime',
     ];
 
     protected static function booted() {}
@@ -66,6 +70,11 @@ class LocalPurchaseOrder extends Model
         return $this->belongsTo(User::class, 'decision_by');
     }
 
+    public function confirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'confirmation_by');
+    }
+
     public function grns(): HasMany
     {
         return $this->hasMany(Grn::class);
@@ -86,6 +95,11 @@ class LocalPurchaseOrder extends Model
         return $query->where('status', LocalPurchaseOrderStatus::REJECTED);
     }
 
+    public function scopeConfirmed($query)
+    {
+        return $query->where('status', LocalPurchaseOrderStatus::CONFIRMED);
+    }
+
     public function scopeOwnedBy($query, $userId)
     {
         return $query->where('created_by', $userId);
@@ -101,13 +115,15 @@ class LocalPurchaseOrder extends Model
                     $q->where('id', 'like', '%'.$term.'%')
                         ->orWhereHas('vendor', fn ($q) => $q->where('name', 'like', '%'.$term.'%'))
                         ->orWhereHas('creator', fn ($q) => $q->where('name', 'like', '%'.$term.'%'))
-                        ->orWhereHas('decisionMaker', fn ($q) => $q->where('name', 'like', '%'.$term.'%'));
+                        ->orWhereHas('decisionMaker', fn ($q) => $q->where('name', 'like', '%'.$term.'%'))
+                        ->orWhereHas('confirmedBy', fn ($q) => $q->where('name', 'like', '%'.$term.'%'));
                 });
             })
             ->when($filters['status'] ?? null, fn ($query, $value) => $query->where('status', $value))
             ->when($filters['branch_id'] ?? null, fn ($query, $value) => $query->where('branch_id', $value))
             ->when($filters['created_by'] ?? null, fn ($query, $value) => $query->where('created_by', $value))
             ->when($filters['decision_by'] ?? null, fn ($query, $value) => $query->where('decision_by', $value))
+            ->when($filters['confirmation_by'] ?? null, fn ($query, $value) => $query->where('confirmation_by', $value))
             ->when($filters['vendor_id'] ?? null, fn ($query, $value) => $query->where('vendor_id', $value))
             ->when($filters['from_date'] ?? null, fn ($query, $value) => $query->whereDate('date', '>=', date('Y-m-d', strtotime($value))))
             ->when($filters['to_date'] ?? null, fn ($query, $value) => $query->whereDate('date', '<=', date('Y-m-d', strtotime($value))));

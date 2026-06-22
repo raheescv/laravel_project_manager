@@ -47,6 +47,13 @@ class LocalPurchaseOrderController extends BaseController
         return view('local-purchase-order.decision', compact('localPurchaseOrder'));
     }
 
+    public function confirmation(LocalPurchaseOrder $localPurchaseOrder)
+    {
+        $this->authorize('confirm', $localPurchaseOrder);
+
+        return view('local-purchase-order.confirmation', compact('localPurchaseOrder'));
+    }
+
     public function print(LocalPurchaseOrder $localPurchaseOrder)
     {
         $this->authorize('print', $localPurchaseOrder);
@@ -57,6 +64,7 @@ class LocalPurchaseOrderController extends BaseController
             'branch',
             'creator',
             'decisionMaker',
+            'confirmedBy',
             'tenant',
         ]);
 

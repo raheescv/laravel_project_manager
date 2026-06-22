@@ -12,14 +12,19 @@ class View extends Component
 
     public bool $is_approvable = false;
 
+    public bool $is_confirmable = false;
+
     public string $remarks = '';
 
-    public function mount(int $local_purchase_order_id, bool $is_approvable = false)
+    public string $confirm_remarks = '';
+
+    public function mount(int $local_purchase_order_id, bool $is_approvable = false, bool $is_confirmable = false)
     {
-        $this->order = LocalPurchaseOrder::with(['vendor', 'creator', 'branch', 'decisionMaker', 'items.product.brand', 'items.product.mainCategory', 'items.product.subCategory', 'items.product.unit', 'items.account', 'grns.items.product'])
+        $this->order = LocalPurchaseOrder::with(['vendor', 'creator', 'branch', 'decisionMaker', 'confirmedBy', 'items.product.brand', 'items.product.mainCategory', 'items.product.subCategory', 'items.product.unit', 'items.account', 'grns.items.product'])
             ->findOrFail($local_purchase_order_id);
 
         $this->is_approvable = $is_approvable;
+        $this->is_confirmable = $is_confirmable;
     }
 
     public function approve()
@@ -52,6 +57,23 @@ class View extends Component
         ]);
 
         $this->dispatch('success', ['message' => 'Rejected successfully']);
+
+        $this->navigateBack();
+    }
+
+    public function confirm()
+    {
+        abort_unless(auth()->user()?->can('local purchase order.confirm'), 403);
+        abort_unless($this->order->status === LocalPurchaseOrderStatus::APPROVED, 403);
+
+        $this->order->update([
+            'status' => LocalPurchaseOrderStatus::CONFIRMED,
+            'confirmation_by' => auth()->id(),
+            'confirmation_at' => now(),
+            'confirmation_note' => $this->confirm_remarks,
+        ]);
+
+        $this->dispatch('success', ['message' => 'Confirmed successfully']);
 
         $this->navigateBack();
     }

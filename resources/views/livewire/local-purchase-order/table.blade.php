@@ -153,8 +153,15 @@
                             </td>
                             <td class="text-end"> {{ $item->items_count }} </td>
                             <td>
-                                <div
-                                    class="badge bg-{{ $item->status === LocalPurchaseOrderStatus::APPROVED ? 'success' : ($item->status === LocalPurchaseOrderStatus::PENDING ? 'warning' : 'danger') }} bg-opacity-10 text-{{ $item->status === LocalPurchaseOrderStatus::APPROVED ? 'success' : ($item->status === LocalPurchaseOrderStatus::PENDING ? 'warning' : 'danger') }}">
+                                @php
+                                    $rowStatusColor = match ($item->status) {
+                                        LocalPurchaseOrderStatus::APPROVED => 'success',
+                                        LocalPurchaseOrderStatus::CONFIRMED => 'primary',
+                                        LocalPurchaseOrderStatus::PENDING => 'warning',
+                                        default => 'danger',
+                                    };
+                                @endphp
+                                <div class="badge bg-{{ $rowStatusColor }} bg-opacity-10 text-{{ $rowStatusColor }}">
                                     {{ $item->status->label() }}
                                 </div>
                             </td>
@@ -211,6 +218,15 @@
                                                 <li>
                                                     <a class="dropdown-item" href="{{ route('lpo::decision', $item->id) }}">
                                                         <i class="demo-pli-check me-2"></i> Approve/Reject
+                                                    </a>
+                                                </li>
+                                            @endcan
+                                        @endif
+                                        @if ($item->status === LocalPurchaseOrderStatus::APPROVED)
+                                            @can('local purchase order.confirm', $item)
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('lpo::confirmation', $item->id) }}">
+                                                        <i class="fa fa-check-square-o me-2"></i> Confirm
                                                     </a>
                                                 </li>
                                             @endcan
