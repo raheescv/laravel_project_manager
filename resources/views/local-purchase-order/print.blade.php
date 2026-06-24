@@ -324,7 +324,6 @@
         <div class="tbody">
             <div class="term"><div class="tn">1</div><div class="tt"><b>Payment Terms:</b> {{ $order->payment_terms ?? '—' }}</div></div>
             <div class="term"><div class="tn">2</div><div class="tt"><b>Remarks:</b> {{ $order->decision_note ?: '—' }}</div></div>
-            <div class="term"><div class="tn">3</div><div class="tt"><span class="danger"><b>Payment Mode:</b></span></div></div>
         </div>
     </div>
 
