@@ -69,11 +69,28 @@ class LocalPurchaseOrderController extends BaseController
         ]);
 
         $companyLogo = null;
+
+        // Prefer the dedicated LPO header image; fall back to the general company logo.
         $lpoImagePath = Configuration::where('key', 'lpo_header_image')->value('value');
+        $candidatePaths = [];
         if ($lpoImagePath) {
-            $fullPath = storage_path('app/public/'.$lpoImagePath);
-            if (file_exists($fullPath)) {
+            $candidatePaths[] = storage_path('app/public/'.ltrim($lpoImagePath, '/'));
+        }
+
+        $generalLogo = Configuration::where('key', 'logo')->value('value') ?? cache('logo');
+        if ($generalLogo) {
+            // Stored as an absolute URL (…/storage/<path>) or a relative disk path.
+            $relative = $generalLogo;
+            if (($pos = strpos($generalLogo, '/storage/')) !== false) {
+                $relative = substr($generalLogo, $pos + strlen('/storage/'));
+            }
+            $candidatePaths[] = storage_path('app/public/'.ltrim($relative, '/'));
+        }
+
+        foreach ($candidatePaths as $fullPath) {
+            if (is_file($fullPath)) {
                 $companyLogo = 'data:image/'.pathinfo($fullPath, PATHINFO_EXTENSION).';base64,'.base64_encode(file_get_contents($fullPath));
+                break;
             }
         }
 
