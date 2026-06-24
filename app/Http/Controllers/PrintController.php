@@ -11,6 +11,7 @@ use App\Models\Configuration;
 use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
+use App\Services\CompanyLogoResolver;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -38,31 +39,8 @@ class PrintController extends Controller
         ])->findOrFail($id);
 
         // Resolve the company logo to a LOCAL file path — dompdf renders file paths reliably
-        // (it drops data-URIs and can't always fetch remote URLs). cache('logo') can be stale,
-        // so try the current Configuration value and a few likely locations, then a bundled fallback.
-        $companyLogo = null;
-        $candidates = [];
-        $logoValue = Configuration::where('key', 'logo')->value('value');
-        if ($logoValue) {
-            $logoValue = ltrim($logoValue, '/');
-            $candidates[] = public_path('storage/'.$logoValue);
-            $candidates[] = public_path($logoValue);
-            $candidates[] = \Illuminate\Support\Facades\Storage::disk('public')->path($logoValue);
-        }
-        $cacheUrl = cache('logo');
-        if ($cacheUrl) {
-            $cachePath = parse_url((string) $cacheUrl, PHP_URL_PATH);
-            if ($cachePath) {
-                $candidates[] = public_path(ltrim($cachePath, '/'));
-            }
-        }
-        $candidates[] = public_path('assets/img/logo.svg');
-        foreach ($candidates as $candidate) {
-            if ($candidate && is_file($candidate)) {
-                $companyLogo = $candidate;
-                break;
-            }
-        }
+        // (it drops data-URIs and can't always fetch remote URLs).
+        $companyLogo = CompanyLogoResolver::path();
 
         $pdf = Pdf::loadView('print.rentout.checklist', compact('rentOut', 'companyLogo'));
         $pdf->setPaper('a4', 'portrait');
@@ -366,33 +344,9 @@ class PrintController extends Controller
 
     private function getCompanyLogoPath(): ?string
     {
-        $logo = Configuration::where('key', 'logo')->value('value');
-        if (! $logo) {
-            return null;
-        }
-
-        // The `logo` config may hold a full URL (…/storage/company_image/x.png)
-        // or a relative disk path — reduce it to a path relative to the public disk.
-        $relative = Str::startsWith($logo, ['http://', 'https://'])
-            ? (parse_url($logo, PHP_URL_PATH) ?: $logo)
-            : $logo;
-        $relative = ltrim($relative, '/');
-        $relative = Str::after($relative, 'storage/');
-
         // DomPDF renders local file paths reliably (it can't always fetch remote
-        // URLs and drops data-URIs), so resolve to the first candidate on disk.
-        foreach ([
-            \Illuminate\Support\Facades\Storage::disk('public')->path($relative),
-            storage_path('app/public/'.$relative),
-            public_path('storage/'.$relative),
-            public_path($relative),
-        ] as $candidate) {
-            if (is_file($candidate)) {
-                return $candidate;
-            }
-        }
-
-        return null;
+        // URLs and drops data-URIs), so resolve to an on-disk path.
+        return CompanyLogoResolver::path();
     }
 
     /**
