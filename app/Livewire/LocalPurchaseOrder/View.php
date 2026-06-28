@@ -18,6 +18,10 @@ class View extends Component
 
     public string $confirm_remarks = '';
 
+    public bool $editing_terms = false;
+
+    public array $terms_buffer = [];
+
     public function mount(int $local_purchase_order_id, bool $is_approvable = false, bool $is_confirmable = false)
     {
         $this->order = LocalPurchaseOrder::with(['vendor', 'creator', 'branch', 'decisionMaker', 'confirmedBy', 'items.product.brand', 'items.product.mainCategory', 'items.product.subCategory', 'items.product.unit', 'items.account', 'grns.items.product'])
@@ -76,6 +80,55 @@ class View extends Component
         $this->dispatch('success', ['message' => 'Confirmed successfully']);
 
         $this->navigateBack();
+    }
+
+    public function openTermsEdit(): void
+    {
+        $existing = $this->order->payment_terms ?? [];
+        $this->terms_buffer = count($existing)
+            ? $existing
+            : [['label' => 'Payment Terms', 'value' => '']];
+        $this->editing_terms = true;
+    }
+
+    public function addTermRow(): void
+    {
+        $this->terms_buffer[] = ['label' => '', 'value' => ''];
+    }
+
+    public function addQuickTerm(string $label): void
+    {
+        $exists = collect($this->terms_buffer)->contains(fn ($t) => strtolower($t['label']) === strtolower($label));
+        if (! $exists) {
+            $this->terms_buffer[] = ['label' => $label, 'value' => ''];
+        }
+    }
+
+    public function removeTermRow(int $index): void
+    {
+        array_splice($this->terms_buffer, $index, 1);
+        $this->terms_buffer = array_values($this->terms_buffer);
+    }
+
+    public function saveTerms(): void
+    {
+        abort_unless(auth()->user()?->can('editTerms', $this->order), 403);
+
+        $terms = collect($this->terms_buffer)
+            ->filter(fn ($t) => filled($t['label'] ?? ''))
+            ->map(fn ($t) => ['label' => trim($t['label']), 'value' => trim($t['value'] ?? '')])
+            ->values()
+            ->all();
+
+        $this->order->update(['payment_terms' => count($terms) ? $terms : null]);
+        $this->order->refresh();
+        $this->editing_terms = false;
+        $this->dispatch('success', ['message' => 'Terms saved']);
+    }
+
+    public function cancelTermsEdit(): void
+    {
+        $this->editing_terms = false;
     }
 
     private function navigateBack()

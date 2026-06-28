@@ -64,6 +64,11 @@ class LocalPurchaseOrderPolicy
         return false;
     }
 
+    public function editTerms(User $user, LocalPurchaseOrder $order): bool
+    {
+        return $user->can('local purchase order.edit');
+    }
+
     /**
      * Cancel LPO
      */

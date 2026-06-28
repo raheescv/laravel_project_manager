@@ -56,7 +56,9 @@
       "Bash(rm -f Amiri-Regular.ttf Amiri-Bold.ttf OFL.txt)",
       "Bash(curl -fsSL -o OFL.txt \"https://github.com/google/fonts/raw/main/ofl/ibmplexsansarabic/OFL.txt\")",
       "Bash(file IBMPlexSansArabic-*.ttf)",
-      "Bash(sips -s format png /tmp/invo_receipt_arabic_ibmplex.pdf --out /tmp/invo_receipt_arabic_ibmplex.png)"
+      "Bash(sips -s format png /tmp/invo_receipt_arabic_ibmplex.pdf --out /tmp/invo_receipt_arabic_ibmplex.png)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(php -l app/Livewire/LocalPurchaseOrder/View.php)"
     ]
   },
   "hooks": {

@@ -54,6 +54,47 @@ at the **LAN IP** of the machine running Valet.
 > always gets the same IP. While `valet loopback` points at the LAN IP, the `.test`
 > domains resolve there too and won't work offline — revert to `127.0.0.1` when off WiFi.
 
+## Build
+
+```bash
+# Android — debug APK (quick device sideload)
+flutter build apk --dart-define-from-file=env.json
+
+# Android — release APK (signed, for distribution)
+flutter build apk --release --dart-define-from-file=env.json
+
+# Android — App Bundle (Play Store upload)
+flutter build appbundle --release --dart-define-from-file=env.json
+
+# iOS — development build (registered devices, no Distribution cert needed)
+flutter build ipa --release --dart-define-from-file=env.json --export-method development
+
+# iOS — ad-hoc (specific registered devices, needs Ad Hoc provisioning profile)
+flutter build ipa --release --dart-define-from-file=env.json --export-method ad-hoc
+
+# iOS — App Store (requires iOS Distribution certificate in Keychain)
+flutter build ipa --release --dart-define-from-file=env.json --export-method app-store
+
+# Web (browser review / staging)
+flutter build web --dart-define-from-file=env.json
+```
+
+Output locations:
+| Target | Path |
+|---|---|
+| APK | `build/app/outputs/flutter-apk/app-release.apk` |
+| App Bundle | `build/app/outputs/bundle/release/app-release.aab` |
+| IPA | `build/ios/archive/Runner.xcarchive` |
+| Web | `build/web/` |
+
+> **iOS signing:** `--export-method development` only needs an Apple Developer
+> account + Xcode auto-signing (good for device testing). `ad-hoc` needs an Ad Hoc
+> provisioning profile; `app-store` needs an **iOS Distribution certificate** in
+> your Keychain (issued via Certificates, Identifiers & Profiles on developer.apple.com).
+>
+> **Android signing:** release builds require `android/key.properties` pointing to a
+> keystore — see the [Flutter docs](https://docs.flutter.dev/deployment/android).
+
 ## What's implemented
 
 | Area | Screens | API |

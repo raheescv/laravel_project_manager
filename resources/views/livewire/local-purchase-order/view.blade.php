@@ -403,6 +403,126 @@
             </div>
         </div>
 
+        {{-- ===================== TERMS & CONDITIONS ===================== --}}
+        @php
+            $terms = $order->payment_terms ?? [];
+            $quickLabels = [
+                ['label' => 'Payment Terms', 'icon' => 'fa fa-credit-card'],
+                ['label' => 'Delivery',       'icon' => 'fa fa-truck'],
+                ['label' => 'Validity',       'icon' => 'fa fa-calendar'],
+                ['label' => 'Warranty',       'icon' => 'fa fa-shield'],
+                ['label' => 'Remarks',        'icon' => 'fa fa-comment-o'],
+                ['label' => 'Penalty',        'icon' => 'fa fa-exclamation-triangle'],
+            ];
+        @endphp
+        <div class="l-sec l-card">
+            @if (!$editing_terms)
+                {{-- READ --}}
+                <div class="l-head">
+                    <div class="l-ic"><i class="fa fa-file-text-o"></i></div>
+                    <div style="flex:1">
+                        <div class="l-title">Terms &amp; Conditions</div>
+                        <div class="l-sub">Payment terms &amp; remarks for this order</div>
+                    </div>
+                    @if (count($terms))
+                        <span class="l-pill pill-acc">{{ count($terms) }} {{ \Illuminate\Support\Str::plural('term', count($terms)) }}</span>
+                    @endif
+                    @can('editTerms', $order)
+                        <button type="button" class="l-btn" style="background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line);padding:5px 12px;font-size:11.5px;"
+                            wire:click="openTermsEdit">
+                            <i class="fa fa-pencil"></i> {{ count($terms) ? 'Edit' : 'Add Terms' }}
+                        </button>
+                    @endcan
+                </div>
+                @if (count($terms))
+                    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+                        @foreach ($terms as $ti => $term)
+                            <div style="display:flex;align-items:flex-start;gap:13px;">
+                                <div class="idx" style="width:26px;height:26px;border-radius:50%;flex:0 0 auto;margin-top:1px;">{{ $ti + 1 }}</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;">{{ $term['label'] }}</div>
+                                    <div style="font-size:13px;font-weight:600;color:{{ filled($term['value']) ? 'var(--ink)' : 'var(--muted)' }};font-style:{{ filled($term['value']) ? 'normal' : 'italic' }};">
+                                        {{ filled($term['value']) ? $term['value'] : '—' }}
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="l-empty">
+                        <i class="fa fa-file-text-o"></i>
+                        No terms &amp; conditions added yet
+                    </div>
+                @endif
+
+            @else
+                {{-- EDIT --}}
+                <div class="l-head">
+                    <div class="l-ic t-warn"><i class="fa fa-pencil"></i></div>
+                    <div style="flex:1">
+                        <div class="l-title">Edit Terms &amp; Conditions</div>
+                        <div class="l-sub">Add, remove or fill in terms — saved per order</div>
+                    </div>
+                </div>
+
+                <div style="padding:12px 16px 4px;display:flex;flex-direction:column;gap:8px;">
+                    @foreach ($terms_buffer as $ti => $term)
+                        <div style="display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:11px;padding:9px 10px;">
+                            <div class="idx" style="width:24px;height:24px;border-radius:50%;flex:0 0 auto;font-size:11px;">{{ $ti + 1 }}</div>
+                            <input type="text" wire:model="terms_buffer.{{ $ti }}.label"
+                                placeholder="Label"
+                                style="width:155px;flex:0 0 auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:6px 10px;font-size:12.5px;font-family:inherit;outline:none;font-weight:600;">
+                            <input type="text" wire:model="terms_buffer.{{ $ti }}.value"
+                                placeholder="e.g. Net 30 days"
+                                style="flex:1;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:6px 10px;font-size:12.5px;font-family:inherit;outline:none;">
+                            <button type="button" wire:click="removeTermRow({{ $ti }})"
+                                style="flex:0 0 auto;width:28px;height:28px;border-radius:7px;border:0;background:rgba(var(--bad-rgb),.1);color:var(--bad);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Quick-add chips --}}
+                <div style="padding:10px 16px 2px;border-top:1px dashed var(--line-soft);">
+                    <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;display:flex;align-items:center;gap:6px;">
+                        <i class="fa fa-bolt" style="color:var(--acc-d)"></i> Quick add
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                        @foreach ($quickLabels as $ql)
+                            @php
+                                $qlUsed = collect($terms_buffer)->contains(fn($t) => strtolower($t['label']) === strtolower($ql['label']));
+                            @endphp
+                            <button type="button"
+                                wire:click="{{ $qlUsed ? '' : 'addQuickTerm(\'' . $ql['label'] . '\')' }}"
+                                style="background:{{ $ql['label'] === 'Payment Terms' ? 'var(--acc)' : 'var(--acc-tint)' }};color:{{ $ql['label'] === 'Payment Terms' ? '#fff' : 'var(--acc-d)' }};border:1px solid color-mix(in srgb,var(--acc),transparent 55%);padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:{{ $qlUsed ? 'default' : 'pointer' }};display:inline-flex;align-items:center;gap:5px;opacity:{{ $qlUsed ? '.35' : '1' }};white-space:nowrap;transition:.12s;">
+                                <i class="{{ $ql['icon'] }}" style="font-size:10px;"></i>
+                                {{ $ql['label'] }}
+                                @if ($ql['label'] === 'Payment Terms')
+                                    <small style="font-size:9px;opacity:.75">DEFAULT</small>
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div style="padding:10px 16px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:4px;">
+                    <button type="button" wire:click="addTermRow"
+                        style="background:var(--surface-2);color:var(--ink-2);border:1px dashed var(--line);padding:7px 13px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="fa fa-plus"></i> Custom Term
+                    </button>
+                    <div style="flex:1"></div>
+                    <button type="button" wire:click="cancelTermsEdit" class="l-btn" style="background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line);">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="saveTerms" class="l-btn l-btn-acc">
+                        <i class="fa fa-check"></i> Save
+                    </button>
+                </div>
+            @endif
+        </div>
+
         {{-- ===================== FULFILLMENT ===================== --}}
         @if ($hasGrn && $itemCount)
             <div class="l-sec l-card">

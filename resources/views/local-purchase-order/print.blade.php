@@ -319,11 +319,21 @@
     </div>
 
     {{-- ── TERMS ────────────────────────────────────────────── --}}
+    @php
+        $printTerms = $order->payment_terms ?? [];
+        if (empty($printTerms)) {
+            $printTerms = [['label' => 'Payment Terms', 'value' => '']];
+        }
+    @endphp
     <div class="lpo-terms">
         <div class="th">Terms &amp; Conditions</div>
         <div class="tbody">
-            <div class="term"><div class="tn">1</div><div class="tt"><b>Payment Terms:</b> {{ $order->payment_terms ?? '—' }}</div></div>
-            <div class="term"><div class="tn">2</div><div class="tt"><b>Remarks:</b> {{ $order->decision_note ?: '—' }}</div></div>
+            @foreach ($printTerms as $ti => $term)
+                <div class="term">
+                    <div class="tn">{{ $ti + 1 }}</div>
+                    <div class="tt"><b>{{ $term['label'] }}:</b> {{ filled($term['value']) ? $term['value'] : '—' }}</div>
+                </div>
+            @endforeach
         </div>
     </div>
 

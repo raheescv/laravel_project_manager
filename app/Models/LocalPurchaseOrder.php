@@ -28,6 +28,7 @@ class LocalPurchaseOrder extends Model
         'confirmation_by',
         'confirmation_at',
         'confirmation_note',
+        'payment_terms',
         'status',
         'created_by',
     ];
@@ -36,6 +37,7 @@ class LocalPurchaseOrder extends Model
         'status' => LocalPurchaseOrderStatus::class,
         'decision_at' => 'datetime',
         'confirmation_at' => 'datetime',
+        'payment_terms' => 'array',
     ];
 
     protected static function booted() {}
