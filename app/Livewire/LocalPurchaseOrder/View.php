@@ -68,7 +68,7 @@ class View extends Component
     public function confirm()
     {
         abort_unless(auth()->user()?->can('local purchase order.confirm'), 403);
-        abort_unless($this->order->status === LocalPurchaseOrderStatus::APPROVED, 403);
+        abort_unless($this->order->status === LocalPurchaseOrderStatus::PENDING, 403);
 
         $this->order->update([
             'status' => LocalPurchaseOrderStatus::CONFIRMED,

@@ -291,7 +291,7 @@
             </div>
 
             {{-- Decision Details --}}
-            @if ($order->status !== LocalPurchaseOrderStatus::PENDING)
+            @if (in_array($order->status, [LocalPurchaseOrderStatus::APPROVED, LocalPurchaseOrderStatus::REJECTED]))
                 @php $decTone = $order->status === LocalPurchaseOrderStatus::REJECTED ? 'bad' : 'ok'; @endphp
                 <div class="l-card tone-{{ $decTone }}">
                     <div class="l-head">
@@ -313,12 +313,12 @@
         </div>
 
         {{-- Confirmation Details --}}
-        @if ($order->status === LocalPurchaseOrderStatus::CONFIRMED)
+        @if ($order->status !== LocalPurchaseOrderStatus::PENDING)
             <div class="lpox-grid one">
                 <div class="l-card tone-info">
                     <div class="l-head">
                         <div class="l-ic t-info"><i class="fa fa-check-square-o"></i></div>
-                        <div><div class="l-title">Confirmation Details</div><div class="l-sub">Final confirmation record</div></div>
+                        <div><div class="l-title">Confirmation Details</div><div class="l-sub">Pre-approval confirmation record</div></div>
                     </div>
                     <div class="kv-grid">
                         <div class="kv"><div class="kk"><i class="demo-psi-male"></i>Confirmed By</div><div class="vv">{{ $order->confirmedBy?->name ?? '-' }}</div></div>
@@ -649,7 +649,7 @@
         @endif
 
         {{-- ===================== APPROVE / REJECT ===================== --}}
-        @if ($order->status == LocalPurchaseOrderStatus::PENDING && $is_approvable)
+        @if ($order->status == LocalPurchaseOrderStatus::CONFIRMED && $is_approvable)
             <div class="lpox-action tone-warn">
                 <div class="a-body">
                     <div class="a-head">
@@ -671,7 +671,7 @@
         @endif
 
         {{-- ===================== CONFIRM ===================== --}}
-        @if ($order->status == LocalPurchaseOrderStatus::APPROVED && $is_confirmable)
+        @if ($order->status == LocalPurchaseOrderStatus::PENDING && $is_confirmable)
             <div class="lpox-action tone-primary">
                 <div class="a-body">
                     <div class="a-head">

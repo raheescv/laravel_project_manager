@@ -74,15 +74,15 @@ class LocalPurchaseOrderPolicy
      */
     public function decide(User $user, LocalPurchaseOrder $order): bool
     {
-        return $user->can('local purchase order.decide') && $order->status === LocalPurchaseOrderStatus::PENDING;
+        return $user->can('local purchase order.decide') && $order->status === LocalPurchaseOrderStatus::CONFIRMED;
     }
 
     /**
-     * Confirm an approved LPO
+     * Confirm a pending LPO (confirmation comes before decision)
      */
     public function confirm(User $user, LocalPurchaseOrder $order): bool
     {
-        return $user->can('local purchase order.confirm') && $order->status === LocalPurchaseOrderStatus::APPROVED;
+        return $user->can('local purchase order.confirm') && $order->status === LocalPurchaseOrderStatus::PENDING;
     }
 
     /**

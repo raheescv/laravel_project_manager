@@ -206,31 +206,27 @@
                                                 </a>
                                             </li>
                                         @endcan
-                                        @if (!$item->decision_at)
-                                            @can('local purchase order.edit', $item)
-                                                <li>
-                                                    <a class="dropdown-item" href="{{ route('lpo::edit', $item->id) }}">
-                                                        <i class="demo-pli-file-edit me-2"></i> Edit
-                                                    </a>
-                                                </li>
-                                            @endcan
-                                            @can('local purchase order.decide', $item)
-                                                <li>
-                                                    <a class="dropdown-item" href="{{ route('lpo::decision', $item->id) }}">
-                                                        <i class="demo-pli-check me-2"></i> Approve/Reject
-                                                    </a>
-                                                </li>
-                                            @endcan
-                                        @endif
-                                        @if ($item->status === LocalPurchaseOrderStatus::APPROVED)
-                                            @can('local purchase order.confirm', $item)
-                                                <li>
-                                                    <a class="dropdown-item" href="{{ route('lpo::confirmation', $item->id) }}">
-                                                        <i class="fa fa-check-square-o me-2"></i> Confirm
-                                                    </a>
-                                                </li>
-                                            @endcan
-                                        @endif
+                                        @can('local purchase order.edit', $item)
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('lpo::edit', $item->id) }}">
+                                                    <i class="demo-pli-file-edit me-2"></i> Edit
+                                                </a>
+                                            </li>
+                                        @endcan
+                                        @can('local purchase order.confirm', $item)
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('lpo::confirmation', $item->id) }}">
+                                                    <i class="fa fa-check-square-o me-2"></i> Confirm
+                                                </a>
+                                            </li>
+                                        @endcan
+                                        @can('local purchase order.decide', $item)
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('lpo::decision', $item->id) }}">
+                                                    <i class="demo-pli-check me-2"></i> Approve/Reject
+                                                </a>
+                                            </li>
+                                        @endcan
                                     </ul>
                                 </div>
                             </td>
