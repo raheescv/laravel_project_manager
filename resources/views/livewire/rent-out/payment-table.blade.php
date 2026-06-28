@@ -594,8 +594,21 @@
         </div>
     </div>
 
+    {{-- Pay Selected Modal --}}
+    <div class="modal" id="PaySelectedModal" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                @livewire('rent-out.standalone-pay-selected-modal')
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
+            window.addEventListener('TogglePaySelectedModal', function() {
+                $('#PaySelectedModal').modal('toggle');
+            });
+
             $(document).ready(function() {
                 // ── Helper: clear & reload a TomSelect by ID ──
                 function clearAndReload(id) {

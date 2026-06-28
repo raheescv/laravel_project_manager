@@ -150,7 +150,9 @@ class Table extends Component
 
     public function updated($key, $value)
     {
-        if ($key !== 'selectedAccountId' && ! str_starts_with($key, 'visibleColumns.')) {
+        $isSelection = $key === 'selectAll' || $key === 'selected' || str_starts_with($key, 'selected.');
+
+        if ($key !== 'selectedAccountId' && ! $isSelection && ! str_starts_with($key, 'visibleColumns.')) {
             $this->selectedAccountId = null;
         }
 
@@ -160,7 +162,7 @@ class Table extends Component
                 ['key' => 'account_table_visible_columns'],
                 ['value' => json_encode($this->visibleColumns)]
             );
-        } else {
+        } elseif (! $isSelection) {
             $this->resetPage();
         }
     }

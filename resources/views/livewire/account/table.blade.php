@@ -1,6 +1,6 @@
 <div>
     {{-- Top loading bar --}}
-    <div wire:loading.delay class="position-fixed top-0 start-0 w-100" style="z-index: 1060; height: 3px;">
+    <div wire:loading.delay wire:target="search, limit, account_type, account_category_id, excludeCustomer, excludeVendor, filterByType, filterByCategory, filterByAccount, sortBy, delete, gotoPage, nextPage, previousPage, resetColumnVisibility" class="position-fixed top-0 start-0 w-100" style="z-index: 1060; height: 3px;">
         <div class="bg-primary h-100" style="animation: coa-loading 1.5s ease-in-out infinite;"></div>
     </div>
 
@@ -324,13 +324,13 @@
                 {{-- Data Table --}}
                 <div class="col-lg-9">
                     {{-- Skeleton shimmer while Livewire is busy --}}
-                    <div wire:loading.delay class="coa-skeleton-wrap">
+                    <div wire:loading.delay wire:target="search, limit, account_type, account_category_id, excludeCustomer, excludeVendor, filterByType, filterByCategory, filterByAccount, sortBy, delete, gotoPage, nextPage, previousPage, resetColumnVisibility" class="coa-skeleton-wrap">
                         @for ($s = 0; $s < 5; $s++)
                             <div class="coa-skeleton-row"></div>
                         @endfor
                     </div>
 
-                    <div wire:loading.remove class="table-responsive">
+                    <div wire:loading.remove wire:target="search, limit, account_type, account_category_id, excludeCustomer, excludeVendor, filterByType, filterByCategory, filterByAccount, sortBy, delete, gotoPage, nextPage, previousPage, resetColumnVisibility" class="table-responsive">
                         <table class="table table-hover align-middle mb-0 coa-table">
                             <thead>
                                 <tr>
