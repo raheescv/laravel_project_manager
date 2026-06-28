@@ -75,6 +75,12 @@ class ServicesTab extends Component
         $this->dispatch('edit-service-payment', paymentId: $paymentId);
     }
 
+    public function printReceipt($paymentId)
+    {
+        $url = route('print::rentout::payment-receipt', $paymentId);
+        $this->dispatch('open-receipt-tab', url: $url);
+    }
+
     public function deleteSelected()
     {
         abort_unless(auth()->user()?->can('rent out service.delete'), 403);

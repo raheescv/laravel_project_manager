@@ -172,3 +172,11 @@
         <div class="text-center text-muted py-3 small">No service transactions found</div>
     @endif
 </div>
+
+@script
+<script>
+    $wire.on('open-receipt-tab', (data) => {
+        window.open(data.url, '_blank');
+    });
+</script>
+@endscript
