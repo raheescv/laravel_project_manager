@@ -135,6 +135,82 @@
             </div>
         </div>
 
+        {{-- ── TERMS & CONDITIONS ──────────────────────────────── --}}
+        @php
+            $pageQuickLabels = [
+                ['label' => 'Payment Terms', 'icon' => 'fa-credit-card', 'default' => true],
+                ['label' => 'Delivery',      'icon' => 'fa-truck',       'default' => false],
+                ['label' => 'Validity',      'icon' => 'fa-calendar',    'default' => false],
+                ['label' => 'Warranty',      'icon' => 'fa-shield',      'default' => false],
+                ['label' => 'Remarks',       'icon' => 'fa-comment-o',   'default' => false],
+                ['label' => 'Penalty',       'icon' => 'fa-exclamation-triangle', 'default' => false],
+            ];
+        @endphp
+        <div class="mb-4 shadow-sm card">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa fa-file-text-o text-success"></i>
+                    <h5 class="mb-0 fw-bold">Terms &amp; Conditions</h5>
+                </div>
+                @if (count($payment_terms))
+                    <span class="badge bg-success rounded-pill">{{ count($payment_terms) }} {{ \Illuminate\Support\Str::plural('term', count($payment_terms)) }}</span>
+                @endif
+            </div>
+            <div class="card-body">
+
+                {{-- Rows --}}
+                <div class="d-flex flex-column gap-2 mb-3">
+                    @forelse ($payment_terms as $ti => $term)
+                        <div class="d-flex align-items-center gap-2 bg-light border rounded-3 p-2">
+                            <span class="badge bg-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                style="width:24px;height:24px;font-size:11px;">{{ $ti + 1 }}</span>
+                            <input type="text" wire:model="payment_terms.{{ $ti }}.label"
+                                placeholder="Label"
+                                class="form-control form-control-sm fw-semibold" style="width:155px;flex:0 0 auto;">
+                            <input type="text" wire:model="payment_terms.{{ $ti }}.value"
+                                placeholder="e.g. Net 30 days"
+                                class="form-control form-control-sm flex-fill">
+                            <button type="button"
+                                wire:click="removePageTerm({{ $ti }})"
+                                class="btn btn-sm btn-light text-danger border-0 flex-shrink-0" title="Remove">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted py-3">
+                            <i class="fa fa-file-text-o d-block mb-2 opacity-50" style="font-size:24px;"></i>
+                            No terms added yet
+                        </div>
+                    @endforelse
+                </div>
+
+                {{-- Quick-add chips --}}
+                <div class="border-top pt-3">
+                    <div class="text-muted mb-2" style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;">
+                        <i class="fa fa-bolt text-success me-1"></i> Quick add
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @foreach ($pageQuickLabels as $ql)
+                            @php $qlUsed = collect($payment_terms)->contains(fn($t) => strtolower($t['label']) === strtolower($ql['label'])); @endphp
+                            <button type="button"
+                                @if(!$qlUsed) wire:click="addPageTerm('{{ $ql['label'] }}')" @endif
+                                class="btn btn-sm rounded-pill {{ $ql['default'] ? 'btn-success' : 'btn-outline-success' }}"
+                                style="font-size:11.5px;{{ $qlUsed ? 'opacity:.35;pointer-events:none;' : '' }}">
+                                <i class="fa {{ $ql['icon'] }} me-1"></i>
+                                {{ $ql['label'] }}
+                                @if($ql['default']) <span class="ms-1 opacity-75" style="font-size:9px;">DEFAULT</span> @endif
+                            </button>
+                        @endforeach
+                    </div>
+                    <button type="button" wire:click="addPageTerm('')"
+                        class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-plus me-1"></i> Custom Term
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
         <div class="shadow-sm card">
             <div class="card-body d-flex justify-content-between">
                 <a href="{{ route('lpo::index') }}" class="btn btn-light">

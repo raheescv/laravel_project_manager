@@ -14,6 +14,7 @@ class CreateUpdateAction
 
             $total = collect($data['items'])->sum(fn ($item) => $item['quantity'] * $item['rate']);
 
+            $terms = $data['payment_terms'] ?? [];
             $saveData = [
                 'vendor_id' => $data['vendor_id'],
                 'date' => $data['date'],
@@ -21,6 +22,7 @@ class CreateUpdateAction
                 'branch_id' => session('branch_id'),
                 'created_by' => $userId,
                 'total' => $total,
+                'payment_terms' => count($terms) ? $terms : null,
             ];
             $order = LocalPurchaseOrder::updateOrCreate(['id' => $orderId], $saveData);
 

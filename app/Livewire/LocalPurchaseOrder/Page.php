@@ -24,6 +24,8 @@ class Page extends Component
 
     public array $items = [];
 
+    public array $payment_terms = [];
+
     public $vendors = [];
 
     public $productOptions = [];
@@ -64,6 +66,7 @@ class Page extends Component
             $this->order_id = $order->id;
             $this->vendor_id = $order->vendor_id;
             $this->date = $order->date;
+            $this->payment_terms = $order->payment_terms ?? [];
             $this->items = $order->items->map(fn ($item) => [
                 'id' => $item->id,
                 'product_id' => $item->product_id,
@@ -119,6 +122,21 @@ class Page extends Component
             });
     }
 
+    public function addPageTerm(string $label = ''): void
+    {
+        $label = trim($label);
+        if ($label && collect($this->payment_terms)->contains(fn ($t) => strtolower($t['label']) === strtolower($label))) {
+            return;
+        }
+        $this->payment_terms[] = ['label' => $label, 'value' => ''];
+    }
+
+    public function removePageTerm(int $index): void
+    {
+        array_splice($this->payment_terms, $index, 1);
+        $this->payment_terms = array_values($this->payment_terms);
+    }
+
     public function save()
     {
         abort_unless(auth()->user()?->can($this->order_id ? 'local purchase order.edit' : 'local purchase order.create'), 403);
@@ -128,6 +146,11 @@ class Page extends Component
                 'vendor_id' => $this->vendor_id,
                 'date' => $this->date,
                 'items' => $this->items,
+                'payment_terms' => collect($this->payment_terms)
+                    ->filter(fn ($t) => filled($t['label'] ?? ''))
+                    ->map(fn ($t) => ['label' => trim($t['label']), 'value' => trim($t['value'] ?? '')])
+                    ->values()
+                    ->all(),
             ];
             $response = (new CreateUpdateAction())->execute($data, Auth::id(), $this->order_id);
             if (! $response['success']) {
