@@ -6,6 +6,7 @@ use App\Actions\V1\Sale\CreateAction;
 use App\Actions\V1\Sale\GetAction;
 use App\Actions\V1\Sale\ListAction;
 use App\Actions\V1\Sale\UpdateAction;
+use App\Helpers\Facades\SaleHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\Sale\IndexRequest;
 use App\Http\Requests\V1\Sale\StoreRequest;
@@ -16,7 +17,9 @@ use App\Traits\UsesBrowsershot;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 #[Group('Mobile - Sales')]
 class SaleController extends Controller
@@ -92,6 +95,15 @@ class SaleController extends Controller
                 'Content-Disposition' => 'inline; filename="invoice-'.$sale.'.pdf"',
             ]);
         } catch (\Throwable $e) {
+            // Log the real Browsershot/Chromium failure so it can be diagnosed from
+            // the server log even when APP_DEBUG is off and the app only shows a
+            // short message.
+            Log::error('Sale receipt PDF generation failed', [
+                'sale_id' => $sale,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return $this->sendServerError('Failed to generate receipt: '.$e->getMessage());
         }
     }
