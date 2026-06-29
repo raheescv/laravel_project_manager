@@ -2,7 +2,6 @@
 
 namespace App\Livewire\RentOut\Report;
 
-use App\Enums\RentOut\PaymentMode;
 use App\Enums\RentOut\SecurityStatus;
 use App\Enums\RentOut\SecurityType;
 use App\Exports\RentOut\SecurityExport;
@@ -34,12 +33,12 @@ class SecurityTable extends Component
     protected function buildQuery(): Builder
     {
         return RentOutSecurity::query()
-            ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'rentOut.type'])
+            ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'rentOut.type', 'account'])
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'due_date'))
             ->tap(fn ($q) => $this->applySearch($q))
             ->when($this->filterSecurityType, fn ($q, $v) => $q->where('type', $v))
-            ->when($this->filterPaymentMethod, fn ($q, $v) => $q->where('payment_mode', $v))
+            ->when($this->filterPaymentMethod, fn ($q, $v) => $q->where('account_id', $v))
             ->when($this->filterSecurityStatus, fn ($q, $v) => $q->where('status', $v))
             ->orderBy($this->sortField === 'id' ? 'rent_out_securities.id' : $this->sortField, $this->sortDirection);
     }
@@ -111,7 +110,7 @@ class SecurityTable extends Component
             'summaryCards' => $this->summaryCards,
             'securityTypes' => SecurityType::cases(),
             'securityStatuses' => SecurityStatus::cases(),
-            'paymentModes' => PaymentMode::cases(),
+            'paymentMethods' => paymentMethodsOptions(),
             ...$this->getFilterData(),
         ]);
     }

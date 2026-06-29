@@ -289,6 +289,15 @@ class StoreTransactionAction
 
     protected function resolveJournalMetadata(RentOut $rentOut, array $data, bool $isPayout): array
     {
+        // Explicit counter account (e.g. Security Deposit liability) overrides the
+        // default customer/income routing for both receipts and payouts.
+        if (! empty($data['counter_account_id'])) {
+            return [
+                'source' => $data['journal_source'] ?? ($isPayout ? 'expense' : ($rentOut->agreement_type?->sourceSlug() ?? 'rent_out')),
+                'counter_account_id' => (int) $data['counter_account_id'],
+            ];
+        }
+
         if ($isPayout) {
             return [
                 'source' => 'expense',

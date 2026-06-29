@@ -15,6 +15,12 @@ class UpdateAction
             }
             validationHelper(RentOutSecurity::rules($id), $data);
             $model->update($data);
+
+            $sync = (new SyncAccountingAction())->execute($model->fresh());
+            if (! $sync['success']) {
+                throw new \Exception($sync['message']);
+            }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Updated Security Deposit';
             $return['data'] = $model;

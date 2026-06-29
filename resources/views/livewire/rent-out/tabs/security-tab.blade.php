@@ -20,7 +20,7 @@
                 <tr class="text-capitalize small">
                     <th class="fw-semibold py-2">#</th>
                     <th class="fw-semibold py-2 text-end">Amount</th>
-                    <th class="fw-semibold py-2">Payment Mode</th>
+                    <th class="fw-semibold py-2">Payment Method</th>
                     <th class="fw-semibold py-2">Type</th>
                     <th class="fw-semibold py-2">Status</th>
                     <th class="fw-semibold py-2">Due Date</th>
@@ -33,7 +33,7 @@
                     <tr class="{{ $security->status?->value === 'collected' ? 'table-success' : ($security->status?->value === 'returned' ? 'table-info' : '') }}">
                         <td>{{ $index + 1 }}</td>
                         <td class="text-end fw-medium">{{ number_format($security->amount, 2) }}</td>
-                        <td>{{ $security->payment_mode?->label() }}</td>
+                        <td>{{ $security->account?->name ?? $security->payment_mode?->label() }}</td>
                         <td>{{ $security->type?->label() }}</td>
                         <td>
                             <span class="badge bg-{{ $security->status?->color() }}">

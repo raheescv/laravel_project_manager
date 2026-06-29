@@ -21,6 +21,7 @@ class RentOutSecurity extends Model implements AuditableContracts
         'branch_id',
         'rent_out_id',
         'amount',
+        'account_id',
         'payment_mode',
         'bank_name',
         'cheque_no',
@@ -44,12 +45,17 @@ class RentOutSecurity extends Model implements AuditableContracts
         return [
             'rent_out_id' => 'required|exists:rent_outs,id',
             'amount' => 'required|numeric|min:0',
-            'payment_mode' => 'required',
+            'account_id' => 'nullable|exists:accounts,id',
         ];
     }
 
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class);
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'account_id');
     }
 }

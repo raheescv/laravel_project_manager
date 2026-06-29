@@ -172,8 +172,8 @@
                     </label>
                     <select wire:model="filterPaymentMethod" class="form-select form-select-sm border-secondary-subtle shadow-sm">
                         <option value="">All</option>
-                        @foreach($paymentModes as $mode)
-                            <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
+                        @foreach($paymentMethods as $id => $name)
+                            <option value="{{ $id }}">{{ $name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -311,7 +311,7 @@
                                     <td>{{ $item->type?->label() }}</td>
                                 @endif
                                 @if($this->isColumnVisible('payment_method'))
-                                    <td>{{ $item->payment_mode?->label() }}</td>
+                                    <td>{{ $item->account?->name ?? $item->payment_mode?->label() }}</td>
                                 @endif
                                 @if($this->isColumnVisible('cheque_no'))
                                     <td>{{ $item->cheque_no }}</td>

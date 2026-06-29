@@ -4,9 +4,9 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Security\CreateAction;
 use App\Actions\RentOut\Security\UpdateAction;
-use App\Enums\RentOut\PaymentMode;
 use App\Enums\RentOut\SecurityStatus;
 use App\Enums\RentOut\SecurityType;
+use App\Models\Account;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -17,7 +17,7 @@ class SecurityModal extends Component
 
     public array $form = [
         'amount' => 0,
-        'payment_mode' => '',
+        'account_id' => '',
         'bank_name' => '',
         'cheque_no' => '',
         'type' => '',
@@ -33,7 +33,7 @@ class SecurityModal extends Component
     {
         $this->form = [
             'amount' => $form['amount'] ?? 0,
-            'payment_mode' => $form['payment_mode'] ?? '',
+            'account_id' => $form['account_id'] ?? '',
             'bank_name' => $form['bank_name'] ?? '',
             'cheque_no' => $form['cheque_no'] ?? '',
             'type' => $form['type'] ?? '',
@@ -52,7 +52,7 @@ class SecurityModal extends Component
         abort_unless(auth()->user()?->can($this->editingId ? 'rent out security.edit' : 'rent out security.create'), 403);
         $rules = [
             'form.amount' => 'required|numeric|min:0.01',
-            'form.payment_mode' => 'required',
+            'form.account_id' => 'required',
             'form.type' => 'required',
             'form.status' => 'required',
             'form.due_date' => 'required|date',
@@ -61,13 +61,14 @@ class SecurityModal extends Component
         $messages = [
             'form.amount.required' => 'Amount is required.',
             'form.amount.min' => 'Amount must be greater than zero.',
-            'form.payment_mode.required' => 'Payment mode is required.',
+            'form.account_id.required' => 'Payment method is required.',
             'form.type.required' => 'Type is required.',
             'form.status.required' => 'Status is required.',
             'form.due_date.required' => 'Due date is required.',
         ];
 
-        if ($this->form['payment_mode'] === 'cheque') {
+        $isCheque = $this->isChequeSelected();
+        if ($isCheque) {
             $rules['form.bank_name'] = 'required|string|max:255';
             $rules['form.cheque_no'] = 'required|string|max:255';
             $messages['form.bank_name.required'] = 'Bank name is required for cheque payments.';
@@ -79,9 +80,9 @@ class SecurityModal extends Component
         $data = [
             'rent_out_id' => $this->rentOutId,
             'amount' => $this->form['amount'],
-            'payment_mode' => $this->form['payment_mode'],
-            'bank_name' => $this->form['payment_mode'] === 'cheque' ? ($this->form['bank_name'] ?? '') : null,
-            'cheque_no' => $this->form['payment_mode'] === 'cheque' ? ($this->form['cheque_no'] ?? '') : null,
+            'account_id' => $this->form['account_id'],
+            'bank_name' => $isCheque ? ($this->form['bank_name'] ?? '') : null,
+            'cheque_no' => $isCheque ? ($this->form['cheque_no'] ?? '') : null,
             'type' => $this->form['type'],
             'status' => $this->form['status'],
             'due_date' => $this->form['due_date'],
@@ -108,10 +109,29 @@ class SecurityModal extends Component
         }
     }
 
+    /**
+     * Payment-method account ids flagged as cheque accounts (as strings, to
+     * match the select value).
+     */
+    protected function chequeAccountIds(): array
+    {
+        return Account::whereIn('id', array_keys(paymentMethodsOptions()))
+            ->where('is_cheque', 1)
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->toArray();
+    }
+
+    public function isChequeSelected(): bool
+    {
+        return in_array((string) $this->form['account_id'], $this->chequeAccountIds(), true);
+    }
+
     public function render()
     {
         return view('livewire.rent-out.tabs.security-modal', [
-            'paymentModes' => PaymentMode::cases(),
+            'paymentMethods' => paymentMethodsOptions(),
+            'chequeAccountIds' => $this->chequeAccountIds(),
             'securityTypes' => SecurityType::cases(),
             'securityStatuses' => SecurityStatus::cases(),
         ]);

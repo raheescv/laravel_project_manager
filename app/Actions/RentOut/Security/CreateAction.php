@@ -11,6 +11,12 @@ class CreateAction
         try {
             validationHelper(RentOutSecurity::rules(), $data, 'RentOut Security');
             $model = RentOutSecurity::create($data);
+
+            $sync = (new SyncAccountingAction())->execute($model);
+            if (! $sync['success']) {
+                throw new \Exception($sync['message']);
+            }
+
             $return['success'] = true;
             $return['message'] = 'Successfully Created Security Deposit';
             $return['data'] = $model;

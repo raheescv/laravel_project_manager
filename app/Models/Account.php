@@ -42,6 +42,11 @@ class Account extends Model implements AuditableContracts
         'opening_debit',
         'opening_credit',
         'second_reference_no',
+        'is_cheque',
+    ];
+
+    protected $casts = [
+        'is_cheque' => 'boolean',
     ];
 
     public static function rules($id = 0, $merge = [])

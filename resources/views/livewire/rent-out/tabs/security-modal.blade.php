@@ -22,19 +22,19 @@
                 @enderror
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold small mb-1"><i class="fa fa-credit-card me-1 text-muted"></i> Payment Mode <span
+                <label class="form-label fw-semibold small mb-1"><i class="fa fa-credit-card me-1 text-muted"></i> Payment Method <span
                         class="text-danger">*</span></label>
-                <select class="form-select form-select-sm" wire:model.live="form.payment_mode">
+                <select class="form-select form-select-sm" wire:model.live="form.account_id">
                     <option value="">Select</option>
-                    @foreach ($paymentModes as $mode)
-                        <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
+                    @foreach ($paymentMethods as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
                     @endforeach
                 </select>
-                @error('form.payment_mode')
+                @error('form.account_id')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>
-            @if ($form['payment_mode'] === 'cheque')
+            @if (in_array((string) $form['account_id'], $chequeAccountIds, true))
                 <div class="col-md-6">
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-university me-1 text-muted"></i> Bank Name <span
                             class="text-danger">*</span></label>

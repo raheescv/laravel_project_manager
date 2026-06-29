@@ -29,7 +29,7 @@ class SecurityTab extends Component
             form: [
                 'rent_out_id' => $rentOut->id,
                 'amount' => 0,
-                'payment_mode' => 'cash',
+                'account_id' => '',
                 'bank_name' => '',
                 'cheque_no' => '',
                 'type' => 'deposit',
@@ -52,7 +52,7 @@ class SecurityTab extends Component
             form: [
                 'rent_out_id' => $security->rent_out_id,
                 'amount' => $security->amount,
-                'payment_mode' => $security->payment_mode?->value ?? 'cash',
+                'account_id' => $security->account_id,
                 'bank_name' => $security->bank_name ?? '',
                 'cheque_no' => $security->cheque_no ?? '',
                 'type' => $security->type?->value ?? 'deposit',
@@ -84,7 +84,7 @@ class SecurityTab extends Component
 
     public function render()
     {
-        $rentOut = RentOut::with('securities')->find($this->rentOutId);
+        $rentOut = RentOut::with('securities.account')->find($this->rentOutId);
 
         return view('livewire.rent-out.tabs.security-tab', [
             'rentOut' => $rentOut,

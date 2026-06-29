@@ -3,9 +3,11 @@
 namespace App\Helpers;
 
 use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Models\Account;
 use App\Models\RentOut;
 use App\Models\RentOutCheque;
 use App\Models\RentOutPaymentTerm;
+use App\Models\RentOutSecurity;
 use App\Models\RentOutUtilityTerm;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -218,5 +220,70 @@ class RentOutTransactionHelper
             'remark' => $remark ?: ('Cheque #'.($cheque->cheque_no ?? '').' cleared'),
             'created_by' => Auth::id(),
         ]);
+    }
+
+    /**
+     * Record a security deposit collection (money IN).
+     * Journal: Dr Payment Method (Cash/Bank), Cr Security Deposit (liability).
+     */
+    public function storeSecurityCollection(RentOutSecurity $security, ?int $userId = null): array
+    {
+        return $this->execute($this->securityData($security, false, $userId));
+    }
+
+    /**
+     * Record a security deposit refund (money OUT).
+     * Journal: Dr Security Deposit (liability), Cr Payment Method (Cash/Bank).
+     */
+    public function storeSecurityRefund(RentOutSecurity $security, ?int $userId = null): array
+    {
+        return $this->execute($this->securityData($security, true, $userId));
+    }
+
+    /**
+     * Resolve the locked "Security Deposit" liability account, falling back to the
+     * customer account if it has not been provisioned for the tenant.
+     */
+    protected function securityDepositAccountId(RentOutSecurity $security): ?int
+    {
+        $accounts = Cache::get('accounts_slug_id_map', []);
+
+        return $accounts['security_deposit']
+            ?? Account::where('tenant_id', $security->tenant_id)
+                ->where('slug', 'security_deposit')
+                ->where('is_locked', 1)
+                ->value('id')
+            ?? $security->rentOut?->account_id;
+    }
+
+    protected function securityData(RentOutSecurity $security, bool $isRefund, ?int $userId): array
+    {
+        $date = $isRefund
+            ? now()->format('Y-m-d')
+            : ($security->due_date?->format('Y-m-d') ?? now()->format('Y-m-d'));
+
+        return [
+            'rent_out_id' => $security->rent_out_id,
+            'date' => $date,
+            'credit' => $isRefund ? 0 : $security->amount,
+            'debit' => $isRefund ? $security->amount : 0,
+            'account_id' => $security->account_id,
+            'counter_account_id' => $this->securityDepositAccountId($security),
+            'journal_source' => 'security_deposit',
+            'source' => 'SecurityDeposit',
+            'source_id' => $security->id,
+            'model' => 'RentOutSecurity',
+            'model_id' => $security->id,
+            'due_date' => $security->due_date?->format('Y-m-d'),
+            'paid_date' => $date,
+            'cheque_no' => $security->cheque_no,
+            'bank_name' => $security->bank_name,
+            'reason' => $isRefund ? 'Security Deposit Refund' : 'Security Deposit Collection',
+            'group' => 'Security Deposit',
+            'category' => $isRefund ? 'security_refund' : 'security_collection',
+            'payment_type' => 'Security Deposit',
+            'remark' => $security->remarks ?: ($isRefund ? 'Security deposit refunded' : 'Security deposit collected'),
+            'created_by' => $userId ?? Auth::id(),
+        ];
     }
 }

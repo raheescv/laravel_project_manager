@@ -13,6 +13,10 @@ class DeleteAction
             if (! $model) {
                 throw new \Exception("RentOut Security not found with the specified ID: $id.", 1);
             }
+
+            // Reverse any ledger + payment entries before removing the deposit.
+            (new SyncAccountingAction())->reverseExisting($model);
+
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the Security Deposit. Please try again.', 1);
             }

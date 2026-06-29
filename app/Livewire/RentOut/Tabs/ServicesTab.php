@@ -4,6 +4,7 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Models\Account;
 use App\Models\Journal;
+use App\Models\JournalEntry;
 use App\Models\RentOutTransaction;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -94,9 +95,10 @@ class ServicesTab extends Component
             ->where('rent_out_id', $this->rentOutId)
             ->get();
 
-        // Delete associated journals
+        // Delete associated journals AND their entries (entries drive balances).
         $journalIds = $payments->pluck('journal_id')->filter()->unique()->values()->toArray();
         if ($journalIds) {
+            JournalEntry::whereIn('journal_id', $journalIds)->delete();
             Journal::whereIn('id', $journalIds)->delete();
         }
 

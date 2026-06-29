@@ -17,7 +17,7 @@ class SecurityExport implements FromQuery, WithHeadings, WithMapping
     public function query()
     {
         return RentOutSecurity::query()
-            ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'rentOut.type'])
+            ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'rentOut.type', 'account'])
             ->when($this->filters['filterGroup'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_group_id', $v)))
             ->when($this->filters['filterBuilding'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_building_id', $v)))
             ->when($this->filters['filterType'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_type_id', $v)))
@@ -25,7 +25,7 @@ class SecurityExport implements FromQuery, WithHeadings, WithMapping
             ->when($this->filters['filterCustomer'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('account_id', $v)))
             ->when($this->filters['filterOwnership'] ?? '', fn ($q, $v) => $q->whereHas('rentOut.property', fn ($p) => $p->where('ownership', $v)))
             ->when($this->filters['filterSecurityType'] ?? '', fn ($q, $v) => $q->where('type', $v))
-            ->when($this->filters['filterPaymentMethod'] ?? '', fn ($q, $v) => $q->where('payment_mode', $v))
+            ->when($this->filters['filterPaymentMethod'] ?? '', fn ($q, $v) => $q->where('account_id', $v))
             ->when($this->filters['filterSecurityStatus'] ?? '', fn ($q, $v) => $q->where('status', $v))
             ->when($this->filters['dateFrom'] ?? '', fn ($q, $v) => $q->where('due_date', '>=', $v))
             ->when($this->filters['dateTo'] ?? '', fn ($q, $v) => $q->where('due_date', '<=', $v))
@@ -53,7 +53,7 @@ class SecurityExport implements FromQuery, WithHeadings, WithMapping
             $row->rentOut?->type?->name,
             $row->rentOut?->property?->number,
             $row->type?->label(),
-            $row->payment_mode?->label(),
+            $row->account?->name ?? $row->payment_mode?->label(),
             $row->cheque_no,
             $row->bank_name,
             $row->due_date?->format('d-m-Y'),

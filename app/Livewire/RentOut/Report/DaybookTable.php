@@ -13,7 +13,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class DaybookTable extends Component
 {
-    use HasRentOutReportFilters, WithPagination;
+    use HasRentOutReportFilters, WithPagination {
+        HasRentOutReportFilters::resetFilters as protected resetBaseFilters;
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -164,7 +166,7 @@ class DaybookTable extends Component
         $this->filterGroupCol = '';
         $this->filterDirection = '';
         $this->filterPaymentType = '';
-        parent::resetFilters();
+        $this->resetBaseFilters();
         $this->js("
             ['daybook_filterGroup', 'daybook_filterBuilding', 'daybook_filterProperty', 'daybook_filterCustomer'].forEach(id => {
                 const el = document.getElementById(id);

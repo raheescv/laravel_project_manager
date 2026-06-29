@@ -155,6 +155,26 @@
                 </div>
             </div>
 
+            {{-- Cheque Account Toggle --}}
+            <div class="mb-4">
+                <div class="card border-0 bg-light-subtle shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="form-check form-switch d-flex align-items-center mb-0" style="min-height:auto;">
+                            <input class="form-check-input me-2" type="checkbox" role="switch"
+                                id="account_is_cheque" wire:model="accounts.is_cheque" style="cursor:pointer;">
+                            <label class="form-check-label fw-semibold" for="account_is_cheque" style="cursor:pointer;">
+                                <i class="fa fa-money me-1 text-primary"></i>
+                                Cheque Account
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1 ms-1">
+                            <i class="fa fa-info-circle me-1"></i>
+                            When this account is used as a payment method, cheque details (bank name &amp; cheque no) will be requested.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
             {{-- Description Field --}}
             <div class="mb-3">
                 <label for="description" class="form-label fw-semibold mb-2">
