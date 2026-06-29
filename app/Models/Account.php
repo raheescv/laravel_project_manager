@@ -7,6 +7,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -34,6 +35,7 @@ class Account extends Model implements AuditableContracts
         'id_no',
         'nationality',
         'company',
+        'image',
         'credit_period_days',
 
         'description',
@@ -148,5 +150,19 @@ class Account extends Model implements AuditableContracts
     public function getNameAttribute($value)
     {
         return ucwords($value);
+    }
+
+    /**
+     * Resolve a usable URL for the account's profile photo, falling back to the
+     * default placeholder avatar when none has been uploaded.
+     */
+    public function getImageUrlAttribute(): string
+    {
+        $image = $this->attributes['image'] ?? null;
+        if ($image && Storage::disk('public')->exists($image)) {
+            return asset('storage/'.$image);
+        }
+
+        return secure_asset('assets/img/profile-photos/1.png');
     }
 }

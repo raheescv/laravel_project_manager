@@ -77,6 +77,7 @@ class AccountSeeder extends Seeder
 
         // Liability accounts
         $data[] = ['name' => 'Tax Amount', 'slug' => 'tax_amount', 'account_type' => 'liability', 'description' => 'Sales and purchase tax liabilities', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $provisionForTaxationGroup->id];
+        $data[] = ['name' => 'Security Deposit', 'slug' => 'security_deposit', 'account_type' => 'liability', 'description' => 'Refundable security deposits collected from tenants', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $currentLiabilityMaster->id];
 
         // Process existing accounts first
         foreach ($data as $value) {

@@ -16,22 +16,57 @@
                 <h6 class="text-secondary fw-semibold border-bottom pb-2 mb-3">
                     <i class="fa fa-user-circle me-1"></i> Personal Details
                 </h6>
-                <div class="row g-2">
-                    <div class="col-md-8">
-                        <div class="form-floating">
-                            {{ html()->input('name')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.name')->placeholder('Full Name') }}
-                            <label><i class="fa fa-user me-1 text-muted"></i> Full Name <span class="text-danger">*</span></label>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div wire:ignore>
-                            <label class="form-label small mb-1 text-secondary">
-                                <i class="fa fa-tag me-1"></i> Customer Type <span class="text-danger">*</span>
+                <div class="row g-3 align-items-center">
+                    {{-- Profile Photo --}}
+                    <div class="col-12 col-sm-auto text-center">
+                        @php
+                            $previewUrl = $photo
+                                ? $photo->temporaryUrl()
+                                : (! empty($accounts['image'])
+                                    ? asset('storage/' . $accounts['image'])
+                                    : secure_asset('assets/img/profile-photos/1.png'));
+                        @endphp
+                        <div class="customer-photo-uploader position-relative d-inline-block" wire:loading.class="opacity-50" wire:target="photo">
+                            <img src="{{ $previewUrl }}" alt="Customer Photo" class="customer-photo-preview rounded-circle border shadow-sm">
+                            <label for="customer_photo_input" class="customer-photo-edit position-absolute bottom-0 end-0 d-flex align-items-center justify-content-center rounded-circle shadow"
+                                title="Upload photo">
+                                <i class="fa fa-camera"></i>
                             </label>
-                            {{ html()->select('customer_type_id', $customerTypes ?? [])->value(old('customer_type_id', $accounts['customer_type_id'] ?? ''))->class('tomSelect')->id('modal_customer_type_id')->placeholder('Select customer type')->attribute('wire:model.live', 'accounts.customer_type_id')->attribute('style', 'width:100%') }}
-                            @error('accounts.customer_type_id')
-                                <div class="text-danger small mt-1"><i class="fa fa-exclamation-circle me-1"></i>{{ $message }}</div>
-                            @enderror
+                            <div wire:loading wire:target="photo" class="customer-photo-spinner position-absolute top-50 start-50 translate-middle">
+                                <span class="spinner-border spinner-border-sm text-primary"></span>
+                            </div>
+                            @if ($photo || !empty($accounts['image']))
+                                <button type="button" wire:click="removePhoto" class="customer-photo-remove position-absolute top-0 end-0 d-flex align-items-center justify-content-center rounded-circle shadow"
+                                    title="Remove photo">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            @endif
+                        </div>
+                        <input type="file" id="customer_photo_input" class="d-none" wire:model="photo" accept="image/png,image/jpeg,image/webp">
+                        <div class="small text-muted mt-1" style="font-size: 0.65rem;">JPG / PNG / WEBP · max 5MB</div>
+                        @error('photo')
+                            <div class="text-danger small mt-1"><i class="fa fa-exclamation-circle me-1"></i>{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col">
+                        <div class="row g-2">
+                            <div class="col-md-7">
+                                <div class="form-floating">
+                                    {{ html()->input('name')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.name')->placeholder('Full Name') }}
+                                    <label><i class="fa fa-user me-1 text-muted"></i> Full Name <span class="text-danger">*</span></label>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div wire:ignore>
+                                    <label class="form-label small mb-1 text-secondary">
+                                        <i class="fa fa-tag me-1"></i> Customer Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ html()->select('customer_type_id', $customerTypes ?? [])->value(old('customer_type_id', $accounts['customer_type_id'] ?? ''))->class('tomSelect')->id('modal_customer_type_id')->placeholder('Select customer type')->attribute('wire:model.live', 'accounts.customer_type_id')->attribute('style', 'width:100%') }}
+                                    @error('accounts.customer_type_id')
+                                        <div class="text-danger small mt-1"><i class="fa fa-exclamation-circle me-1"></i>{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -208,5 +243,47 @@
                 });
             });
         </script>
+    @endpush
+    @push('styles')
+        <style>
+            .customer-photo-preview {
+                width: 90px;
+                height: 90px;
+                object-fit: cover;
+                background: #f1f3f5;
+            }
+
+            .customer-photo-edit {
+                width: 28px;
+                height: 28px;
+                background: var(--bs-primary, #0d6efd);
+                color: #fff;
+                cursor: pointer;
+                font-size: 0.75rem;
+                border: 2px solid #fff;
+                transition: transform 0.2s ease, background 0.2s ease;
+            }
+
+            .customer-photo-edit:hover {
+                transform: scale(1.1);
+                background: var(--bs-primary, #0b5ed7);
+            }
+
+            .customer-photo-remove {
+                width: 22px;
+                height: 22px;
+                background: #dc3545;
+                color: #fff;
+                cursor: pointer;
+                font-size: 0.65rem;
+                border: 2px solid #fff;
+                padding: 0;
+                line-height: 1;
+            }
+
+            .customer-photo-remove:hover {
+                background: #bb2d3b;
+            }
+        </style>
     @endpush
 </div>

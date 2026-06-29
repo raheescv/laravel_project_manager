@@ -36,7 +36,12 @@
                             <div class="flex-shrink-0 me-0 me-sm-3 mb-2 mb-sm-0">
                                 <div class="position-relative customer-avatar">
                                     <div class="avatar-ring"></div>
-                                    <img class="img-fluid rounded-circle shadow-lg customer-avatar-img" src="{{ secure_asset('assets/img/profile-photos/1.png') }}" alt="Profile Picture">
+                                    @php
+                                        $customerPhoto = ! empty($accounts['image'])
+                                            ? asset('storage/' . $accounts['image'])
+                                            : secure_asset('assets/img/profile-photos/1.png');
+                                    @endphp
+                                    <img class="img-fluid rounded-circle shadow-lg customer-avatar-img" src="{{ $customerPhoto }}" alt="Profile Picture">
 
                                     <!-- Status Indicator -->
                                     <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border-3 border-white shadow-sm pulse-animation status-indicator" data-bs-toggle="tooltip"
@@ -655,6 +660,13 @@
             /* Customer Avatar */
             .customer-avatar {
                 position: relative;
+            }
+
+            .customer-avatar-img {
+                width: 96px;
+                height: 96px;
+                object-fit: cover;
+                background: #f1f3f5;
             }
 
             .avatar-ring {

@@ -13,6 +13,7 @@ class View extends Component
 {
     protected $listeners = [
         'Customer-View-Component' => 'view',
+        'RefreshCustomerView' => '$refresh',
     ];
 
     public $account_id;
