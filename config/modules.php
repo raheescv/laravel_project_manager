@@ -230,6 +230,7 @@ return [
         'property_management' => [
             'label' => 'Property Management',
             'permissions' => [
+                'customer',
                 'asset',
                 'property',
                 'property dashboard',
