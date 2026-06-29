@@ -376,6 +376,9 @@ class InvoiceScreen extends StatelessWidget {
             _sumRow(p, 'Subtotal', Money.of(sale.grossAmount), p.textSecondary),
             if (sale.discount > 0) _sumRow(p, 'Discount', '− ${Money.of(sale.discount)}', p.goldText),
             if (sale.taxAmount > 0) _sumRow(p, 'Tax', Money.of(sale.taxAmount), p.textSecondary),
+            // Gratuity — a standalone extra that is excluded from grand_total but
+            // included in the amount paid, so it reads as Subtotal − Discount + Tax + Tip = Total.
+            if (sale.tip > 0) _sumRow(p, 'Tip', Money.of(sale.tip), p.goldText),
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: DottedDivider(color: p.hairline),
