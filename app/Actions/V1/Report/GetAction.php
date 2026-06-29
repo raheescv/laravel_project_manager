@@ -37,9 +37,11 @@ class GetAction
         $page = max(1, (int) ($request->validated('page') ?? 1));
         $perPage = min(100, max(1, (int) ($request->validated('per_page') ?? 20)));
 
+        $productType = $request->validated('product_type');
+
         [$rows, $summary, $total] = match ($type) {
             'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $page, $perPage),
-            'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $page, $perPage, $sort),
+            'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $page, $perPage, $sort, $productType),
             default => $this->billWise($startDate, $endDate, $employeeId, $page, $perPage),
         };
 
@@ -51,6 +53,7 @@ class GetAction
             ],
             'filters' => [
                 'employee_id' => $employeeId ? (string) $employeeId : null,
+                'product_type' => $productType ?? null,
             ],
             'summary' => $summary,
             'rows' => $rows,
@@ -188,7 +191,7 @@ class GetAction
      *
      * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
      */
-    private function itemWise(?string $startDate, ?string $endDate, ?int $employeeId, int $page, int $perPage, ?string $sort): array
+    private function itemWise(?string $startDate, ?string $endDate, ?int $employeeId, int $page, int $perPage, ?string $sort, ?string $productType): array
     {
         $saleItems = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
@@ -198,6 +201,7 @@ class GetAction
             ->when($startDate, fn ($q, $value) => $q->whereDate('sales.date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->whereDate('sales.date', '<=', $value))
             ->when($employeeId, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
+            ->when($productType, fn ($q, $value) => $q->where('products.type', $value))
             ->groupBy('products.id', 'products.name', 'products.code')
             ->selectRaw('products.id, products.name as item_name, products.code as item_code')
             ->selectRaw('SUM(sale_items.total) as sale_total')
@@ -214,6 +218,7 @@ class GetAction
             ->when($startDate, fn ($q, $value) => $q->whereDate('sale_returns.date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->whereDate('sale_returns.date', '<=', $value))
             ->when($employeeId, fn ($q, $value) => $q->where('sale_return_items.employee_id', $value))
+            ->when($productType, fn ($q, $value) => $q->where('products.type', $value))
             ->groupBy('products.id', 'products.name', 'products.code')
             ->selectRaw('products.id, products.name as item_name, products.code as item_code')
             ->selectRaw('0 as sale_total')

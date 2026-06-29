@@ -27,6 +27,7 @@ class GetRequest extends FormRequest
             'endDate' => ['nullable', 'date', 'after_or_equal:startDate'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
             'employee_id' => ['nullable', 'integer', 'exists:users,id'],
+            'product_type' => ['nullable', 'string', 'in:product,service,asset'],
             'sort' => ['nullable', 'string', 'in:amount,quantity'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
