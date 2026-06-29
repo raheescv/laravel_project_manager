@@ -119,6 +119,9 @@ Route::prefix('v1')->group(function () {
                 Route::get('/reports', [ReportController::class, 'index'])
                     ->middleware(EnsureMobilePermission::class.':report.sales overview')
                     ->name('api.v1.admin.reports');
+                Route::get('/day-status', [DaySessionController::class, 'status'])
+                    ->middleware(EnsureMobilePermission::class.':day session.create')
+                    ->name('api.v1.admin.day-status.check');
                 Route::post('/day-status', [DaySessionController::class, 'toggle'])
                     ->middleware(EnsureMobilePermission::class.':day session.create')
                     ->name('api.v1.admin.day-status');

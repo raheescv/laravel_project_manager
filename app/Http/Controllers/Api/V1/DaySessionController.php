@@ -31,4 +31,36 @@ class DaySessionController extends Controller
             return $this->sendServerError('Failed to toggle day status: '.$e->getMessage());
         }
     }
+
+    /**
+     * Check the current day session status.
+     *
+     * Returns whether the authenticated user's default branch currently has an
+     * open day session, along with the open session's details when one exists.
+     */
+    public function status(Request $request): JsonResponse
+    {
+        try {
+            $branchId = $request->user()?->default_branch_id;
+
+            if (! $branchId) {
+                return $this->sendError('No default branch assigned to this user.');
+            }
+
+            $session = SaleDaySession::getOpenSessionForBranch($branchId);
+            $isOpen = $session !== null;
+
+            if ($session) {
+                $session->load(['opener:id,name', 'closer:id,name', 'branch']);
+            }
+
+            return $this->sendSuccess([
+                'is_open' => $isOpen,
+                'status' => $isOpen ? 'open' : 'closed',
+                'session' => $session ? new DaySessionResource($session) : null,
+            ], $isOpen ? 'Day is open' : 'Day is closed');
+        } catch (\Exception $e) {
+            return $this->sendServerError('Failed to check day status: '.$e->getMessage());
+        }
+    }
 }
