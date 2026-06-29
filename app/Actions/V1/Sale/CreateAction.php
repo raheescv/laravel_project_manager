@@ -63,6 +63,7 @@ class CreateAction
                 'tax_amount' => 0,
                 'other_discount' => (float) ($request->validated('discount') ?? 0),
                 'freight' => 0,
+                'tip' => (float) ($request->validated('tip') ?? 0),
                 'round_off' => 0,
                 'payment_method_ids' => $payment['ids'],
                 'payment_method_name' => $payment['names'],

@@ -403,6 +403,7 @@ class Sale {
     required this.itemDiscount,
     required this.otherDiscount,
     required this.taxAmount,
+    required this.tip,
     required this.grandTotal,
     required this.paid,
     required this.balance,
@@ -422,6 +423,8 @@ class Sale {
   final double itemDiscount;
   final double otherDiscount;
   final double taxAmount;
+  // Gratuity stored on the sale as an independent extra amount (not in grandTotal).
+  final double tip;
   // Net payable on the ticket (gross − discounts + tax + freight ± round-off).
   final double grandTotal;
   final double paid;
@@ -452,6 +455,7 @@ class Sale {
       itemDiscount: asNum(summary['item_discount']).toDouble(),
       otherDiscount: asNum(summary['other_discount']).toDouble(),
       taxAmount: asNum(summary['tax_amount']).toDouble(),
+      tip: asNum(summary['tip']).toDouble(),
       grandTotal: asNum(summary['grand_total']).toDouble(),
       paid: asNum(summary['paid']).toDouble(),
       balance: asNum(summary['balance']).toDouble(),

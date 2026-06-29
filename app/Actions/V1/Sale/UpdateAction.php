@@ -82,6 +82,7 @@ class UpdateAction
                 'other_discount' => $totals['other_discount'],
                 'total' => $totals['total'],
                 'freight' => 0,
+                'tip' => (float) ($request->validated('tip') ?? 0),
                 'round_off' => 0,
                 'payment_method_ids' => $payment['ids'],
                 'payment_method_name' => $payment['names'],

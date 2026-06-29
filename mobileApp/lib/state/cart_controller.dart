@@ -349,6 +349,8 @@ class CartController extends ChangeNotifier {
                 })
             .toList(),
         'discount': double.parse(orderDiscountAmount.toStringAsFixed(2)),
+        // Gratuity — sent as an independent extra amount the server stores as-is.
+        'tip': double.parse(tipAmount.toStringAsFixed(2)),
         'paymentMethod': payMode.apiValue,
         'totalPayment': double.parse(total.toStringAsFixed(2)),
         if (payMode == PayMode.custom)

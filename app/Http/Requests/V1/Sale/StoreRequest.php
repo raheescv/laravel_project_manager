@@ -31,6 +31,8 @@ class StoreRequest extends FormRequest
             'items.*.unitPrice' => ['nullable', 'numeric', 'min:0'],
             'items.*.discount' => ['nullable', 'numeric', 'min:0'],
             'discount' => ['nullable', 'numeric', 'min:0'],
+            // Gratuity collected on the sale — stored as an independent extra amount.
+            'tip' => ['nullable', 'numeric', 'min:0'],
             // The payment "mode": a method name (e.g. "Cash"), "credit" (no payment),
             // or "custom" (one or more methods supplied in `payments`).
             'paymentMethod' => ['required', 'string', 'max:50'],
