@@ -15,6 +15,12 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // The list endpoint only needs the lightweight card fields. The heavy
+        // per-row lookups (available/related sizes, 360° images) are detail-view
+        // concerns — computing them for every row triggers an N+1 query storm,
+        // so they are emitted only for the single-product endpoints.
+        $isList = $request->routeIs('api.v1.products.index');
+
         return [
             'id' => $this->id,
             'code' => $this->code,
@@ -93,7 +99,7 @@ class ProductResource extends JsonResource
                 });
             }),
 
-            'images360' => $this->whenLoaded('images', function () {
+            'images360' => $this->when(! $isList && $this->relationLoaded('images'), function () {
                 return $this->angleImages()->orderedByAngle()->get()->map(function ($image) {
                     return [
                         'id' => $image->id,
@@ -145,8 +151,8 @@ class ProductResource extends JsonResource
                 return $this->getStockQuantityAvailabilityStatus();
             }),
 
-            'available_sizes' => $this->getAvailableSizes(),
-            'related_sizes' => $this->getRelatedSizes(),
+            'available_sizes' => $this->when(! $isList, fn () => $this->getAvailableSizes()),
+            'related_sizes' => $this->when(! $isList, fn () => $this->getRelatedSizes()),
         ];
     }
 

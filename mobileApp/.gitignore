@@ -1,5 +1,6 @@
-# Local dev connection config (per-machine WiFi IP). Use env.example.json as the template.
+# Local dev connection config (per-machine WiFi IP). Copy .env.example → .env, run gen_env.sh.
 /env.json
+/.env
 
 # Miscellaneous
 *.class

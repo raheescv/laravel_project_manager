@@ -313,7 +313,7 @@ class StoreTransactionAction
         }
 
         return [
-            'source' => 'rent_out',
+            'source' => $rentOut->agreement_type?->sourceSlug() ?? 'rent_out',
             'counter_account_id' => $rentOut->account_id,
         ];
     }

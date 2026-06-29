@@ -19,4 +19,13 @@ enum AgreementType: string
     {
         return new \App\Support\RentOutConfig($this);
     }
+
+    /**
+     * Slug stored on transactions/journals so the originating module can be
+     * identified later (e.g. on receipts, vouchers and ledgers).
+     */
+    public function sourceSlug(): string
+    {
+        return $this === self::Lease ? 'sale' : 'rent_out';
+    }
 }
