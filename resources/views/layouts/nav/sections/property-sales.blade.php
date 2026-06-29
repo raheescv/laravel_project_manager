@@ -9,6 +9,7 @@
                 'property/sale/booking/edit/*',
                 'property/sale/booking/view/*',
                 'property/report/service-charge',
+                'property/report/daybook/lease',
             ];
         @endphp
         <a href="#" class="mininav-toggle nav-link {{ request()->is($salesList) ? 'active' : '' }}">
@@ -45,6 +46,12 @@
                 <li class="nav-item">
                     <a href="{{ route('property::sale::cheque-management') }}"
                         class="nav-link {{ request()->is(['property/sale/cheque-management']) ? 'active' : '' }}">Cheque Management</a>
+                </li>
+            @endcan
+            @can('rent out lease.view')
+                <li class="nav-item">
+                    <a href="{{ route('property::report::daybook', 'lease') }}"
+                        class="nav-link {{ request()->is(['property/report/daybook/lease']) ? 'active' : '' }}">Day Book</a>
                 </li>
             @endcan
         </ul>

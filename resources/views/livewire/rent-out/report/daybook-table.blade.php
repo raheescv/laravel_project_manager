@@ -354,8 +354,19 @@
                 </div>
             </div>
 
-            {{-- ─── Filters Row 3: Source / Direction / Payment Type ─── --}}
+            {{-- ─── Filters Row 3: Agreement Type / Source / Direction / Payment Type ─── --}}
             <div class="row g-3 mt-1">
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                    <label class="form-label fw-medium small mb-1">
+                        <i class="fa fa-handshake-o text-primary me-1"></i> Agreement Type
+                    </label>
+                    <select wire:model.live="agreementType"
+                        class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                        <option value="">All (Rent &amp; Sale)</option>
+                        <option value="rental">Rental</option>
+                        <option value="lease">Lease / Sale</option>
+                    </select>
+                </div>
                 <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                     <label class="form-label fw-medium small mb-1">
                         <i class="fa fa-filter text-primary me-1"></i> Source

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Property;
 
+use App\Enums\RentOut\AgreementType;
 use App\Http\Controllers\Controller;
 
 class RentOutReportController extends Controller
@@ -21,8 +22,13 @@ class RentOutReportController extends Controller
         return view('property.report.service-charge');
     }
 
-    public function daybook()
+    public function daybook(?string $agreement_type = null)
     {
-        return view('property.report.daybook');
+        $type = $agreement_type ? AgreementType::tryFrom($agreement_type) : null;
+
+        return view('property.report.daybook', [
+            'agreementType' => $type?->value ?? '',
+            'typeLabel' => $type?->label(),
+        ]);
     }
 }

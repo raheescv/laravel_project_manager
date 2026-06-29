@@ -1,4 +1,7 @@
 <x-app-layout>
+    @php
+        $pageTitle = ($typeLabel ?? null) ? $typeLabel.' Day Book' : 'RentOut Day Book';
+    @endphp
     <div class="content__header content__boxed overlapping">
         <div class="content__wrap">
             <nav aria-label="breadcrumb">
@@ -6,16 +9,16 @@
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}"><i class="demo-psi-home"></i></a></li>
                     <li class="breadcrumb-item">Properties</li>
                     <li class="breadcrumb-item">Report</li>
-                    <li class="breadcrumb-item active" aria-current="page">RentOut Day Book</li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ $pageTitle }}</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">RentOut Day Book</h1>
+            <h1 class="page-title mb-0 mt-2">{{ $pageTitle }}</h1>
             <p class="lead">Daily log of all rent out transactions — rent, services, utilities, security and more.</p>
         </div>
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('rent-out.report.daybook-table')
+            @livewire('rent-out.report.daybook-table', ['agreementType' => $agreementType ?? ''])
         </div>
     </div>
     @push('scripts')

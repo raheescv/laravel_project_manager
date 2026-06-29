@@ -113,7 +113,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('customer-property', 'customerProperty')->name('customer-property')->can('rent out.view');
             Route::get('security', 'security')->name('security')->can('rent out security.view');
             Route::get('service-charge', 'serviceCharge')->name('service-charge')->can('rent out lease.view');
-            Route::get('daybook', 'daybook')->name('daybook')->can('rent out.view');
+            Route::get('daybook/{agreement_type?}', 'daybook')->name('daybook')->where('agreement_type', 'rental|lease')->can('rent out.view');
         });
 
         // Tenant Details

@@ -17,7 +17,17 @@ class DaybookTable extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    public $agreementType = ''; // '', 'rental', 'lease' — scopes the daybook to Rent vs Sale
+
+    public $defaultAgreementType = ''; // route-provided context, restored on reset
+
     public $filterCategory = '';
+
+    public function mount(string $agreementType = ''): void
+    {
+        $this->agreementType = $agreementType;
+        $this->defaultAgreementType = $agreementType;
+    }
 
     public $filterSource = ''; // dynamic from DB
 
@@ -37,6 +47,7 @@ class DaybookTable extends Component
         return RentOutTransaction::query()
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'date'))
+            ->when($this->agreementType, fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('agreement_type', $v)))
             ->when($this->filterCategory, fn ($q, $v) => $q->where('category', $v))
             ->when($this->filterSource, fn ($q, $v) => $q->where('source', $v))
             ->when($this->filterGroupCol, fn ($q, $v) => $q->where('group', $v))
@@ -122,6 +133,7 @@ class DaybookTable extends Component
     {
         abort_unless(auth()->user()?->can('rent out.export'), 403);
         $filters = [
+            'agreementType' => $this->agreementType,
             'filterGroup' => $this->filterGroup,
             'filterBuilding' => $this->filterBuilding,
             'filterType' => $this->filterType,
@@ -146,6 +158,7 @@ class DaybookTable extends Component
 
     public function resetFilters(): void
     {
+        $this->agreementType = $this->defaultAgreementType;
         $this->filterCategory = '';
         $this->filterSource = '';
         $this->filterGroupCol = '';

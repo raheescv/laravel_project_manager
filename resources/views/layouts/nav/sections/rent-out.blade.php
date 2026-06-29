@@ -15,7 +15,7 @@
                 'property/tenant',
                 'property/report/customer-property',
                 'property/report/security',
-                'property/report/daybook',
+                'property/report/daybook/rental',
             ];
         @endphp
         <a href="#" class="mininav-toggle nav-link {{ request()->is($rentOutList) ? 'active' : '' }}">
@@ -92,8 +92,8 @@
             @endcan
             @can('rent out.view')
                 <li class="nav-item">
-                    <a href="{{ route('property::report::daybook') }}"
-                        class="nav-link {{ request()->is(['property/report/daybook']) ? 'active' : '' }}">Day Book</a>
+                    <a href="{{ route('property::report::daybook', 'rental') }}"
+                        class="nav-link {{ request()->is(['property/report/daybook/rental']) ? 'active' : '' }}">Day Book</a>
                 </li>
             @endcan
         </ul>
