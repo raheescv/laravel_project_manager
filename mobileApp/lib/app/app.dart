@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../core/api_client.dart';
 import '../core/api_service.dart';
+import '../core/haptics.dart';
 import '../state/admin_controller.dart';
 import '../state/auth_controller.dart';
 import '../state/branch_controller.dart';
@@ -72,12 +73,16 @@ class _AstraAppState extends State<AstraApp> {
           debugShowCheckedModeBanner: false,
           theme: buildAstraTheme(theme.palette),
           routerConfig: _router,
-          // Tap anywhere outside a field to dismiss the keyboard. iOS number
-          // pads have no return key, so this is the app-wide escape hatch.
-          builder: (context, child) => GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: child,
+          // App-wide chrome wrapping every route, dialog and bottom sheet:
+          //  • HapticTapDetector — a light haptic tick on every tap, anywhere.
+          //  • GestureDetector — tap outside a field to dismiss the keyboard.
+          //    iOS number pads have no return key, so this is the escape hatch.
+          builder: (context, child) => HapticTapDetector(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: child,
+            ),
           ),
         ),
       ),

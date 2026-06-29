@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/currency.dart';
 import '../../core/responsive.dart';
 import '../../state/auth_controller.dart';
 import '../../state/branch_controller.dart';
@@ -25,7 +24,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.astra;
     final theme = context.watch<ThemeController>();
-    final currency = context.watch<CurrencyController>().currency;
+    final currencyCtl = context.watch<CurrencyController>();
     final branch = context.watch<BranchController>();
 
     return Scaffold(
@@ -44,7 +43,7 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 11),
                   _appearanceCard(context, theme),
                   const SizedBox(height: 11),
-                  _currencyCard(context, currency),
+                  _currencyCard(context, currencyCtl),
                   const SizedBox(height: 11),
                   _branchCard(context, branch),
                   const SizedBox(height: 11),
@@ -180,8 +179,13 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _currencyCard(BuildContext context, Currency currency) {
+  Widget _currencyCard(BuildContext context, CurrencyController controller) {
     final p = context.astra;
+    final currency = controller.currency;
+    final count = controller.available.length;
+    final subtitle = count > 1
+        ? '${currency.code} · $count available${controller.isCached ? ' · cached' : ''}'
+        : '${currency.name} · ${currency.code}';
     return AstraCard(
       radius: 14,
       onTap: () => showCurrencySheet(context),
@@ -200,8 +204,7 @@ class SettingsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Currency', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                Text('${currency.name} · ${currency.code}',
-                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+                Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),
           ),

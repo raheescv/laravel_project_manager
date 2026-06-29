@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Multi-Currency — Feature Preview (NOT production)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        /* ============================================================
+           OFFLINE MULTI-CURRENCY — feature preview (NOT production)
+           Web Settings tab (source of truth) + Mobile offline picker.
+           Styling follows the applied "Glass" settings direction.
+           Accent maps to --bs-primary in production.
+           ============================================================ */
+        * { box-sizing: border-box; }
+
+        .host {
+            --p: #4f46e5;
+            --p-rgb: 79, 70, 229;
+            --p-700: color-mix(in srgb, #4f46e5, #000 28%);
+            --p-400: color-mix(in srgb, #4f46e5, #fff 22%);
+            --ok: #0f9d6b; --ok-rgb: 15, 157, 107;
+            --bg: #eef1f5;
+            --surface: #ffffff;
+            --surface2: #f5f7fa;
+            --surface3: #eceff4;
+            --border: #e4e8ee;
+            --text: #1f2937;
+            --text2: #5b6573;
+            --text3: #8a94a3;
+            margin: 0;
+            min-height: 100vh;
+            padding: 22px clamp(12px, 4vw, 40px) 70px;
+            font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            background: radial-gradient(120% 120% at 0 0, #e9edf6, #eef1f7);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .host[data-bs-theme="dark"] {
+            --p: #818cf8;
+            --p-rgb: 129, 140, 248;
+            --p-700: color-mix(in srgb, #818cf8, #000 24%);
+            --p-400: color-mix(in srgb, #818cf8, #fff 16%);
+            --ok: #34d399; --ok-rgb: 52, 211, 153;
+            --bg: #0f1115;
+            --surface: #1c2128;
+            --surface2: #232a32;
+            --surface3: #2b333c;
+            --border: #2d343d;
+            --text: #e6e9ee;
+            --text2: #a6b0bd;
+            --text3: #7c8693;
+            background: radial-gradient(120% 120% at 0 0, #0b0d12, #07080c);
+        }
+
+        /* ===== harness ===== */
+        .bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; max-width: 1100px; margin: 0 auto 6px; }
+        .bar h1 { font-size: 1.15rem; font-weight: 800; margin: 0; letter-spacing: -.02em; }
+        .bar .pick { font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--p); border: 1px solid color-mix(in srgb, var(--p), transparent 65%); padding: .15rem .5rem; border-radius: 6px; margin-left: .5rem; vertical-align: middle; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; }
+        .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 3px; gap: 2px; }
+        .seg button { border: 0; background: transparent; color: var(--text2); font: inherit; font-size: .8rem; font-weight: 700; padding: .42rem .8rem; border-radius: 8px; cursor: pointer; transition: all .15s; }
+        .seg button:hover { color: var(--text); }
+        .seg button.on { background: linear-gradient(120deg, var(--p), var(--p-700)); color: #fff; box-shadow: 0 6px 14px -7px rgba(var(--p-rgb), .7); }
+        .toggle { border: 1px solid var(--border); background: var(--surface); color: inherit; font: inherit; font-size: .8rem; font-weight: 700; padding: .42rem .9rem; border-radius: 10px; cursor: pointer; }
+        .desc { max-width: 1100px; margin: 0 auto 14px; color: var(--text2); font-size: .85rem; }
+        .desc b { color: var(--text); }
+        .frame { max-width: 1100px; margin: 0 auto; border-radius: 18px; box-shadow: 0 30px 60px -28px rgba(15, 23, 42, .5); overflow: hidden; }
+        .host[data-bs-theme="dark"] .frame { box-shadow: 0 30px 60px -25px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .04); }
+
+        .stage { background: var(--bg); }
+        .stage .pad { padding: 18px; }
+        .view { display: none; }
+        .view.on { display: block; }
+
+        /* ===== hero (glass) ===== */
+        .pv-hero { position: relative; isolation: isolate; overflow: hidden; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; color: var(--text);
+            border: 1px solid color-mix(in srgb, var(--p), transparent 78%);
+            background:
+                radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--p), transparent 80%), transparent 60%),
+                linear-gradient(135deg, color-mix(in srgb, var(--p), transparent 86%), color-mix(in srgb, var(--p), transparent 96%));
+            box-shadow: 0 12px 34px -18px rgba(var(--p-rgb), .4); }
+        .pv-crumb { font-size: .72rem; color: var(--text2); margin-bottom: .4rem; }
+        .pv-hero-row { display: flex; align-items: center; gap: 1rem; }
+        .pv-hero-ic { width: 52px; height: 52px; flex: 0 0 auto; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--p); background: color-mix(in srgb, var(--p), transparent 84%); border: 1px solid color-mix(in srgb, var(--p), transparent 70%); }
+        .pv-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--p); }
+        .pv-title { font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; margin: .05rem 0 0; line-height: 1.1; }
+        .pv-sub { font-size: .82rem; color: var(--text2); margin: .12rem 0 0; }
+
+        /* ===== shell (tab rail + content) ===== */
+        .pv-shell { display: flex; gap: 0; background: color-mix(in srgb, var(--surface), transparent 12%); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px -2px rgba(16, 24, 40, .1); }
+        .pv-tabs { width: 224px; flex: 0 0 auto; padding: 12px; background: color-mix(in srgb, var(--surface2), transparent 30%); border-right: 1px solid var(--border); }
+        .pv-tabs-head { font-size: .65rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); padding: .25rem .5rem .55rem; }
+        .pv-tab { display: flex; align-items: center; gap: .6rem; width: 100%; border: 0; background: transparent; color: var(--text); font: inherit; font-size: .84rem; font-weight: 600; text-align: left; padding: .5rem .6rem; border-radius: 10px; cursor: pointer; margin-bottom: 2px; transition: all .15s; }
+        .pv-tab i { width: 1.9rem; height: 1.9rem; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; font-size: .92rem; background: var(--surface3); color: var(--text2); transition: all .15s; }
+        .pv-tab:hover { background: color-mix(in srgb, var(--p), transparent 92%); color: var(--p); }
+        .pv-tab.on { background: color-mix(in srgb, var(--p), transparent 86%); color: var(--p); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--p), transparent 70%); }
+        .pv-tab.on i { background: color-mix(in srgb, var(--p), transparent 78%); color: var(--p); }
+        .pv-tab .new { margin-left: auto; font-size: .56rem; font-weight: 800; letter-spacing: .06em; padding: .1rem .35rem; border-radius: 5px; background: color-mix(in srgb, var(--p), transparent 80%); color: var(--p); }
+
+        .pv-content { flex: 1; min-width: 0; padding: 16px; }
+        .pv-card { background: color-mix(in srgb, var(--surface), transparent 8%); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px -2px rgba(16, 24, 40, .1); }
+        .pv-card + .pv-card { margin-top: 14px; }
+        .pv-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: .85rem 1rem; border-bottom: 1px solid var(--border); background: linear-gradient(110deg, color-mix(in srgb, var(--p), transparent 93%), transparent 62%); }
+        .pv-card-title { font-weight: 800; font-size: 1rem; letter-spacing: -.01em; }
+        .pv-card-sub { font-size: .76rem; color: var(--text3); margin-top: 1px; }
+        .pv-badge { font-size: .68rem; font-weight: 700; color: var(--p); background: color-mix(in srgb, var(--p), transparent 88%); border: 1px solid color-mix(in srgb, var(--p), transparent 72%); padding: .25rem .55rem; border-radius: 999px; white-space: nowrap; }
+        .pv-card-body { padding: 1rem 1.1rem 1.2rem; }
+
+        /* base currency picker row */
+        .base-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+        .pv-field { min-width: 180px; }
+        .pv-label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text3); margin-bottom: 5px; }
+        .pv-input, .pv-select { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); padding: .5rem .65rem; font-size: .85rem; outline: none; transition: border-color .15s, box-shadow .15s; }
+        .pv-input:focus, .pv-select:focus { border-color: var(--p-400); box-shadow: 0 0 0 3px rgba(var(--p-rgb), .16); }
+        .hint { font-size: .74rem; color: var(--text3); margin: 0; max-width: 360px; line-height: 1.5; }
+        .hint code { background: var(--surface3); padding: .05rem .35rem; border-radius: 5px; font-size: .92em; }
+
+        /* currency table */
+        .ctable { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .82rem; }
+        .ctable th { text-align: left; font-size: .64rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); padding: 0 .5rem .5rem; white-space: nowrap; }
+        .ctable th.num, .ctable td.num { text-align: right; }
+        .ctable th.ctr, .ctable td.ctr { text-align: center; }
+        .ctable td { padding: .35rem .5rem; border-top: 1px solid var(--border); vertical-align: middle; }
+        .ctable tbody tr:hover td { background: color-mix(in srgb, var(--p), transparent 95%); }
+        .ctable tr.is-base td { background: color-mix(in srgb, var(--p), transparent 93%); }
+        .cell-in { width: 100%; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text); padding: .38rem .5rem; font: inherit; font-size: .82rem; outline: none; }
+        .cell-in:hover { border-color: var(--border); }
+        .cell-in:focus { border-color: var(--p-400); background: var(--surface); box-shadow: 0 0 0 3px rgba(var(--p-rgb), .14); }
+        .cell-in.code { font-weight: 800; letter-spacing: .04em; text-transform: uppercase; width: 78px; }
+        .cell-in.sym { width: 64px; text-align: center; font-weight: 700; }
+        .cell-in.num { text-align: right; width: 96px; font-variant-numeric: tabular-nums; }
+        .cell-in.dec { text-align: center; width: 58px; }
+        .cell-in[disabled] { color: var(--text3); cursor: not-allowed; }
+
+        .rate-locked { display: inline-flex; align-items: center; gap: .3rem; justify-content: flex-end; width: 96px; color: var(--text3); font-variant-numeric: tabular-nums; font-weight: 700; padding-right: .5rem; }
+
+        /* base radio */
+        .baseradio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); display: inline-block; position: relative; cursor: pointer; }
+        .baseradio.on { border-color: var(--p); }
+        .baseradio.on::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--p); }
+
+        /* active toggle */
+        .sw { width: 38px; height: 22px; border-radius: 999px; background: var(--border); position: relative; display: inline-block; cursor: pointer; transition: background .15s; }
+        .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+        .sw.on { background: var(--ok); }
+        .sw.on::after { left: 19px; }
+
+        .iconbtn { border: 0; background: transparent; color: var(--text3); cursor: pointer; width: 30px; height: 30px; border-radius: 7px; font-size: .9rem; }
+        .iconbtn:hover { background: color-mix(in srgb, #e11d48, transparent 88%); color: #e11d48; }
+
+        .table-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+        .addbtn { font: inherit; font-size: .8rem; font-weight: 700; padding: .5rem .85rem; border-radius: 9px; cursor: pointer; border: 1px dashed color-mix(in srgb, var(--p), transparent 55%); background: color-mix(in srgb, var(--p), transparent 93%); color: var(--p); }
+
+        /* live conversion strip */
+        .conv { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: .7rem .9rem; border-radius: 10px; background: color-mix(in srgb, var(--ok), transparent 92%); border: 1px solid color-mix(in srgb, var(--ok), transparent 78%); font-size: .82rem; }
+        .conv i { color: var(--ok); }
+        .conv b { font-variant-numeric: tabular-nums; }
+        .conv .pill-in { border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); padding: .25rem .45rem; width: 74px; font: inherit; font-size: .82rem; text-align: right; }
+        .conv select { border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); padding: .25rem .4rem; font: inherit; font-size: .82rem; }
+
+        .pv-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: .8rem 1rem; border-top: 1px solid var(--border); background: var(--surface2); }
+        .syncnote { font-size: .72rem; color: var(--text3); display: flex; align-items: center; gap: .4rem; }
+        .pv-btns { display: flex; gap: 9px; }
+        .pv-btn { font: inherit; font-size: .82rem; font-weight: 700; padding: .5rem .95rem; border-radius: 9px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); }
+        .pv-btn.primary { border: 0; color: #fff; background: linear-gradient(120deg, var(--p), var(--p-700)); box-shadow: 0 8px 18px -8px rgba(var(--p-rgb), .6); }
+
+        /* ============================================================
+           MOBILE VIEW
+           ============================================================ */
+        .mwrap { display: flex; gap: 28px; align-items: flex-start; justify-content: center; flex-wrap: wrap; padding: 8px 0 6px; }
+        .phone { width: 320px; flex: 0 0 auto; border-radius: 38px; padding: 12px; background: linear-gradient(160deg, #2a2f3a, #15181f); box-shadow: 0 26px 50px -22px rgba(0,0,0,.6); }
+        .host[data-bs-theme="dark"] .phone { background: linear-gradient(160deg, #20242c, #0c0e12); }
+        .screen { border-radius: 28px; overflow: hidden; background: var(--bg); height: 600px; position: relative; display: flex; flex-direction: column; }
+        .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 116px; height: 22px; border-radius: 14px; background: #0b0d12; z-index: 5; }
+        .m-cap { text-align: center; font-size: .8rem; font-weight: 700; color: var(--text2); margin-top: 10px; }
+        .m-cap span { color: var(--p); }
+
+        /* phone — settings list (left phone) */
+        .m-top { padding: 30px 18px 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--p), transparent 84%), color-mix(in srgb, var(--p), transparent 95%)); border-bottom: 1px solid var(--border); }
+        .m-top h2 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+        .m-top p { margin: 2px 0 0; font-size: .74rem; color: var(--text2); }
+        .m-list { padding: 12px; overflow-y: auto; flex: 1; }
+        .m-group { font-size: .62rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); margin: 10px 6px 6px; }
+        .m-item { display: flex; align-items: center; gap: 12px; padding: .7rem .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; margin-bottom: 8px; }
+        .m-item .ic { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--p), transparent 86%); color: var(--p); font-size: .95rem; }
+        .m-item .tx { flex: 1; min-width: 0; }
+        .m-item .tx b { display: block; font-size: .86rem; font-weight: 700; }
+        .m-item .tx small { color: var(--text3); font-size: .72rem; }
+        .m-item .val { font-size: .82rem; font-weight: 700; color: var(--p); }
+        .m-item .chev { color: var(--text3); font-size: .8rem; }
+        .m-item.active-cur { border-color: color-mix(in srgb, var(--p), transparent 55%); box-shadow: 0 0 0 3px color-mix(in srgb, var(--p), transparent 88%); }
+
+        /* phone — currency sheet (right phone) */
+        .scrim { position: absolute; inset: 0; background: rgba(8,10,14,.45); display: flex; align-items: flex-end; }
+        .sheet { width: 100%; background: var(--surface); border-radius: 22px 22px 0 0; padding: 8px 0 14px; max-height: 86%; display: flex; flex-direction: column; box-shadow: 0 -10px 30px -10px rgba(0,0,0,.4); }
+        .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 6px auto 4px; }
+        .sheet-head { padding: .5rem 1.1rem .7rem; border-bottom: 1px solid var(--border); }
+        .sheet-head h3 { margin: 0; font-size: 1.02rem; font-weight: 800; display: flex; align-items: center; gap: .5rem; }
+        .offline-chip { font-size: .6rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--ok); background: color-mix(in srgb, var(--ok), transparent 86%); border: 1px solid color-mix(in srgb, var(--ok), transparent 70%); padding: .12rem .4rem; border-radius: 999px; display: inline-flex; align-items: center; gap: .25rem; }
+        .sheet-sub { font-size: .72rem; color: var(--text3); margin: .25rem 0 0; }
+        .cur-list { overflow-y: auto; padding: 6px; }
+        .cur { display: flex; align-items: center; gap: 12px; padding: .65rem .8rem; border-radius: 13px; margin: 3px 4px; cursor: pointer; }
+        .cur:hover { background: var(--surface2); }
+        .cur.sel { background: color-mix(in srgb, var(--p), transparent 90%); }
+        .cur .glyph { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: .9rem; background: var(--surface3); color: var(--text2); }
+        .cur.sel .glyph { background: var(--p); color: #fff; }
+        .cur .meta { flex: 1; min-width: 0; }
+        .cur .meta b { display: block; font-size: .88rem; font-weight: 700; }
+        .cur .meta small { color: var(--text3); font-size: .72rem; }
+        .cur .tag { font-size: .58rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: .1rem .35rem; border-radius: 5px; background: color-mix(in srgb, var(--p), transparent 84%); color: var(--p); }
+        .cur .rate { font-size: .7rem; color: var(--text3); font-variant-numeric: tabular-nums; }
+        .cur .check { color: var(--p); font-size: 1rem; opacity: 0; }
+        .cur.sel .check { opacity: 1; }
+        .cur.off { opacity: .45; }
+
+        .legend { max-width: 1100px; margin: 16px auto 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .legend .box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: .85rem 1rem; font-size: .8rem; color: var(--text2); }
+        .legend .box b { color: var(--text); display: block; margin-bottom: .25rem; font-size: .82rem; }
+        .legend .box code { background: var(--surface3); padding: .05rem .35rem; border-radius: 5px; }
+
+        @media (max-width: 720px) {
+            .pv-shell { flex-direction: column; }
+            .pv-tabs { width: 100%; border-right: 0; border-bottom: 1px solid var(--border); display: flex; gap: 6px; overflow-x: auto; }
+            .pv-tabs-head { display: none; }
+            .pv-tab { width: auto; flex: 0 0 auto; white-space: nowrap; margin: 0; }
+            .pv-tab span { display: none; }
+            .pv-tab .new { display: none; }
+            .ctable { font-size: .76rem; }
+            .legend { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body class="host" data-bs-theme="light" id="host">
+    <div class="bar">
+        <h1>Offline Multi-Currency <span class="pick">preview only</span></h1>
+        <div class="controls">
+            <div class="seg" id="seg">
+                <button data-view="web" class="on"><i class="fa fa-desktop"></i>&nbsp; Web — Settings</button>
+                <button data-view="mobile"><i class="fa fa-mobile"></i>&nbsp; Mobile — App</button>
+            </div>
+            <button class="toggle" id="themeBtn"><i class="fa fa-adjust"></i>&nbsp; Light / Dark</button>
+        </div>
+    </div>
+    <p class="desc" id="desc"></p>
+
+    <div class="frame">
+        <div class="stage" id="stage">
+
+            <!-- ============ WEB VIEW ============ -->
+            <div class="view on" id="view-web">
+                <div class="pad">
+                    <div class="pv-hero">
+                        <div class="pv-crumb">Home &nbsp;/&nbsp; Settings &nbsp;/&nbsp; Currencies</div>
+                        <div class="pv-hero-row">
+                            <span class="pv-hero-ic"><i class="fa fa-money"></i></span>
+                            <div>
+                                <div class="pv-eyebrow">Workspace &middot; Source of Truth</div>
+                                <div class="pv-title">Currencies</div>
+                                <div class="pv-sub">Define the currencies, decimals and exchange rates the whole business — and the mobile app — uses.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pv-shell">
+                        <div class="pv-tabs">
+                            <div class="pv-tabs-head">Categories</div>
+                            <button class="pv-tab"><i class="fa fa-sliders"></i><span>Configuration</span></button>
+                            <button class="pv-tab"><i class="fa fa-cube"></i><span>Product</span></button>
+                            <button class="pv-tab"><i class="fa fa-shopping-cart"></i><span>Sale</span></button>
+                            <button class="pv-tab on"><i class="fa fa-money"></i><span>Currencies</span><span class="new">NEW</span></button>
+                            <button class="pv-tab"><i class="fa fa-user"></i><span>Company</span></button>
+                            <button class="pv-tab"><i class="fa fa-paint-brush"></i><span>Theme</span></button>
+                        </div>
+
+                        <div class="pv-content">
+                            <div class="pv-card">
+                                <div class="pv-card-head">
+                                    <div>
+                                        <div class="pv-card-title">Currency List &amp; Exchange Rates</div>
+                                        <div class="pv-card-sub">One base currency · rates expressed in base units</div>
+                                    </div>
+                                    <span class="pv-badge"><i class="fa fa-database"></i>&nbsp; configurations</span>
+                                </div>
+                                <div class="pv-card-body">
+
+                                    <div class="base-row">
+                                        <div class="pv-field">
+                                            <label class="pv-label">Base currency</label>
+                                            <select class="pv-select" id="baseSel">
+                                                <option value="QAR" selected>QAR — Qatari Riyal</option>
+                                                <option value="AED">AED — UAE Dirham</option>
+                                                <option value="USD">USD — US Dollar</option>
+                                                <option value="INR">INR — Indian Rupee</option>
+                                            </select>
+                                        </div>
+                                        <p class="hint">Rates are stored as <code>rate_to_base</code> — how many base units <b>1 unit</b> of each currency is worth. The base is locked at <code>1.0000</code>.</p>
+                                    </div>
+
+                                    <table class="ctable">
+                                        <thead>
+                                            <tr>
+                                                <th class="ctr">Base</th>
+                                                <th>Code</th>
+                                                <th class="ctr">Symbol</th>
+                                                <th>Name</th>
+                                                <th class="ctr">Decimals</th>
+                                                <th class="num">Rate&nbsp;→&nbsp;base</th>
+                                                <th class="ctr">Active</th>
+                                                <th class="ctr"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="curBody">
+                                            <tr class="is-base">
+                                                <td class="ctr"><span class="baseradio on" title="Base currency"></span></td>
+                                                <td><input class="cell-in code" value="QAR"></td>
+                                                <td class="ctr"><input class="cell-in sym" value="ر.ق"></td>
+                                                <td><input class="cell-in" value="Qatari Riyal"></td>
+                                                <td class="ctr"><input class="cell-in dec" value="2"></td>
+                                                <td class="num"><span class="rate-locked"><i class="fa fa-lock"></i> 1.0000</span></td>
+                                                <td class="ctr"><span class="sw on"></span></td>
+                                                <td class="ctr"><button class="iconbtn" title="Base can't be removed" disabled style="opacity:.3"><i class="fa fa-trash-o"></i></button></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ctr"><span class="baseradio" title="Set as base"></span></td>
+                                                <td><input class="cell-in code" value="AED"></td>
+                                                <td class="ctr"><input class="cell-in sym" value="AED"></td>
+                                                <td><input class="cell-in" value="UAE Dirham"></td>
+                                                <td class="ctr"><input class="cell-in dec" value="2"></td>
+                                                <td class="num"><input class="cell-in num" value="0.9920"></td>
+                                                <td class="ctr"><span class="sw on"></span></td>
+                                                <td class="ctr"><button class="iconbtn"><i class="fa fa-trash-o"></i></button></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ctr"><span class="baseradio" title="Set as base"></span></td>
+                                                <td><input class="cell-in code" value="USD"></td>
+                                                <td class="ctr"><input class="cell-in sym" value="$"></td>
+                                                <td><input class="cell-in" value="US Dollar"></td>
+                                                <td class="ctr"><input class="cell-in dec" value="2"></td>
+                                                <td class="num"><input class="cell-in num" value="3.6400"></td>
+                                                <td class="ctr"><span class="sw on"></span></td>
+                                                <td class="ctr"><button class="iconbtn"><i class="fa fa-trash-o"></i></button></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ctr"><span class="baseradio" title="Set as base"></span></td>
+                                                <td><input class="cell-in code" value="INR"></td>
+                                                <td class="ctr"><input class="cell-in sym" value="₹"></td>
+                                                <td><input class="cell-in" value="Indian Rupee"></td>
+                                                <td class="ctr"><input class="cell-in dec" value="2"></td>
+                                                <td class="num"><input class="cell-in num" value="0.0440"></td>
+                                                <td class="ctr"><span class="sw"></span></td>
+                                                <td class="ctr"><button class="iconbtn"><i class="fa fa-trash-o"></i></button></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="table-foot">
+                                        <button class="addbtn"><i class="fa fa-plus"></i>&nbsp; Add currency</button>
+                                        <div class="conv">
+                                            <i class="fa fa-exchange"></i>
+                                            <input class="pill-in" value="100" id="convAmt">
+                                            <select id="convFrom"><option>USD</option><option>AED</option><option selected>INR</option><option>QAR</option></select>
+                                            <span>=</span>
+                                            <b id="convOut">4.40 ر.ق</b>
+                                            <span style="color:var(--text3)">(base)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pv-card-foot">
+                                    <div class="syncnote"><i class="fa fa-mobile"></i> Saving publishes to <code>GET /api/v1/settings/currencies</code> — the app caches it for offline use.</div>
+                                    <div class="pv-btns">
+                                        <button class="pv-btn">Cancel</button>
+                                        <button class="pv-btn primary"><i class="fa fa-check"></i>&nbsp; Save Changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                        <div class="box"><b>Where it's stored</b> Two tenant-scoped keys in the existing <code>configurations</code> table: <code>currencies</code> (JSON list) and <code>base_currency_code</code> — same pattern as <code>payment_methods</code>. No new migration needed.</div>
+                        <div class="box"><b>Rate convention</b> <code>rate_to_base</code> = base units per 1 unit of the currency. <code>this → base = amount × rate</code>; <code>base → this = amount ÷ rate</code>. Base is always <code>1.0000</code>.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ MOBILE VIEW ============ -->
+            <div class="view" id="view-mobile">
+                <div class="pad">
+                    <div class="pv-hero">
+                        <div class="pv-crumb">Astra App &nbsp;/&nbsp; Settings &nbsp;/&nbsp; Currency</div>
+                        <div class="pv-hero-row">
+                            <span class="pv-hero-ic"><i class="fa fa-mobile"></i></span>
+                            <div>
+                                <div class="pv-eyebrow">Mobile &middot; Offline Consumer</div>
+                                <div class="pv-title">Currency picker — works offline</div>
+                                <div class="pv-sub">The app fetches the list once, caches it in SharedPreferences, and switches currency instantly with no network.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mwrap">
+                        <!-- phone 1: settings list -->
+                        <div>
+                            <div class="phone">
+                                <div class="screen">
+                                    <div class="notch"></div>
+                                    <div class="m-top">
+                                        <h2>Settings</h2>
+                                        <p>Appearance, branch &amp; currency</p>
+                                    </div>
+                                    <div class="m-list">
+                                        <div class="m-group">Appearance</div>
+                                        <div class="m-item"><span class="ic"><i class="fa fa-paint-brush"></i></span><div class="tx"><b>Theme</b><small>Signature · System</small></div><i class="fa fa-angle-right chev"></i></div>
+                                        <div class="m-item"><span class="ic"><i class="fa fa-building-o"></i></span><div class="tx"><b>Branch</b><small>Main Showroom</small></div><i class="fa fa-angle-right chev"></i></div>
+                                        <div class="m-group">Regional</div>
+                                        <div class="m-item active-cur"><span class="ic"><i class="fa fa-money"></i></span><div class="tx"><b>Currency</b><small>4 available · cached</small></div><span class="val">₹ INR</span></div>
+                                        <div class="m-item"><span class="ic"><i class="fa fa-print"></i></span><div class="tx"><b>Printer</b><small>58mm thermal</small></div><i class="fa fa-angle-right chev"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="m-cap">Settings → <span>Currency</span> shows the cached list</div>
+                        </div>
+
+                        <!-- phone 2: currency sheet -->
+                        <div>
+                            <div class="phone">
+                                <div class="screen">
+                                    <div class="notch"></div>
+                                    <div class="m-top" style="filter:brightness(.96)">
+                                        <h2>Settings</h2>
+                                        <p>Appearance, branch &amp; currency</p>
+                                    </div>
+                                    <div class="scrim">
+                                        <div class="sheet">
+                                            <div class="grab"></div>
+                                            <div class="sheet-head">
+                                                <h3>Currency <span class="offline-chip"><i class="fa fa-bolt"></i> Offline</span></h3>
+                                                <p class="sheet-sub">Synced from web settings · tap to apply</p>
+                                            </div>
+                                            <div class="cur-list">
+                                                <div class="cur"><span class="glyph">ر.ق</span><div class="meta"><b>QAR</b><small>Qatari Riyal</small></div><span class="tag">Base</span><i class="fa fa-check check"></i></div>
+                                                <div class="cur"><span class="glyph">AED</span><div class="meta"><b>AED</b><small>UAE Dirham</small></div><span class="rate">0.9920</span><i class="fa fa-check check"></i></div>
+                                                <div class="cur"><span class="glyph">$</span><div class="meta"><b>USD</b><small>US Dollar</small></div><span class="rate">3.6400</span><i class="fa fa-check check"></i></div>
+                                                <div class="cur sel"><span class="glyph">₹</span><div class="meta"><b>INR</b><small>Indian Rupee</small></div><span class="rate">0.0440</span><i class="fa fa-check check"></i></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="m-cap">Tap-to-apply sheet · reformats <span>every amount</span> instantly</div>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                        <div class="box"><b>Offline-first</b> On login the app calls <code>GET /settings/currencies</code>, stores the JSON in SharedPreferences, and falls back to the cached list (or built-in defaults) whenever the network is down.</div>
+                        <div class="box"><b>Instant reformat</b> Picking a currency updates the global <code>Money</code> formatter via <code>CurrencyController</code>, so prices across sales, invoices &amp; receipts reformat app-wide with no rebuild.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        var DESCRIPTIONS = {
+            web: "<b>Web — Settings (source of truth).</b> New <b>Currencies</b> tab in the existing settings shell. Inline-editable table: base radio, code, symbol, name, decimals, rate-to-base, active toggle, delete. Live conversion strip at the bottom. Saving writes two keys to <code>configurations</code> and publishes the list to the app's API.",
+            mobile: "<b>Mobile — App (offline consumer).</b> Settings → Currency opens a tap-to-apply sheet built from the cached list. The <b>Offline</b> chip shows it works with no connection; the base currency is tagged and rates are shown. Selecting one reformats every amount instantly."
+        };
+        var host = document.getElementById('host');
+        var desc = document.getElementById('desc');
+        function setView(v) {
+            document.querySelectorAll('.view').forEach(function (el) { el.classList.toggle('on', el.id === 'view-' + v); });
+            document.querySelectorAll('#seg button').forEach(function (b) { b.classList.toggle('on', b.dataset.view === v); });
+            desc.innerHTML = DESCRIPTIONS[v];
+        }
+        document.querySelectorAll('#seg button').forEach(function (b) {
+            b.addEventListener('click', function () { setView(b.dataset.view); });
+        });
+        document.getElementById('themeBtn').addEventListener('click', function () {
+            host.setAttribute('data-bs-theme', host.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
+        });
+
+        // tiny live-conversion demo
+        var RATES = { USD: 3.64, AED: 0.992, INR: 0.044, QAR: 1.0 };
+        function recompute() {
+            var amt = parseFloat(document.getElementById('convAmt').value) || 0;
+            var from = document.getElementById('convFrom').value;
+            var out = amt * (RATES[from] || 1);
+            document.getElementById('convOut').textContent = out.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ر.ق';
+        }
+        document.getElementById('convAmt').addEventListener('input', recompute);
+        document.getElementById('convFrom').addEventListener('change', recompute);
+
+        setView('web');
+        recompute();
+    </script>
+</body>
+
+</html>

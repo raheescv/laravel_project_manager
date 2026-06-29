@@ -53,41 +53,27 @@ Future<void> _loadArabicFonts() async {
 /// web sale-print design (resources/views/sale/print.blade.php): bordered
 /// tables, the boxed invoice header, served-by box, barcode + QR and dashed
 /// dividers — honouring the in-app [PrintSettings].
-Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings, [PdfPageFormat? pageFormat]) async {
+Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
   final ar = settings.style.isArabic;
   if (ar) await _loadArabicFonts();
 
-  // Latin base + Arabic fallback so English stays crisp and Arabic shapes right.
-  final theme = pw.ThemeData.withFont(
-    base: pw.Font.helvetica(),
-    bold: pw.Font.helveticaBold(),
-    fontFallback: [if (_arabicFont != null) _arabicFont!, if (_arabicFontBold != null) _arabicFontBold!],
-  );
+  // Bilingual receipts use IBM Plex Sans Arabic as the BASE font — it carries
+  // Latin glyphs too. This matters: as a *fallback* font the pdf package
+  // mis-shapes RTL Arabic (letters reversed and disconnected); as the *base*
+  // font it joins and shapes correctly. English-only receipts keep Helvetica.
+  final theme = ar && _arabicFont != null
+      ? pw.ThemeData.withFont(base: _arabicFont!, bold: _arabicFontBold ?? _arabicFont!)
+      : pw.ThemeData.withFont(base: pw.Font.helvetica(), bold: pw.Font.helveticaBold());
 
-  const mm = PdfPageFormat.mm;
+  // Always render at the printer's native thermal width — print on the actual
+  // 80mm/57mm roll, never scaled to the OS-reported paper (e.g. A4), which would
+  // shift the centred header off the printable area. On-screen sizing is handled
+  // separately by the in-app PdfPreview.
   final is58 = settings.width == PaperWidth.mm58;
-
-  // Native thermal roll for this printer — used when no concrete paper is given
-  // (share / export) so the saved PDF stays true thermal width.
-  final roll = is58 ? PdfPageFormat.roll57 : PdfPageFormat.roll80;
-
-  // When the OS print dialog hands us the selected paper (via onLayout) we lay
-  // the receipt across THAT paper's full width so it fills the sheet instead of
-  // floating tiny in the middle of an A4 preview. A real thermal printer reports
-  // an ~80mm/57mm page (k≈1, native); with no printer selected iOS defaults to
-  // A4 and the receipt scales up proportionally to fill it.
-  final paper = pageFormat ?? roll;
-  final pad = paper.width <= 60 * mm ? 6.0 : 10.0;
-
-  // Element sizes were authored against an 80mm roll (≈60mm printable). Scale
-  // everything by how much wider/narrower the target printable width is.
-  final designWidth = 80 * mm - 2 * 10.0;
-  final k = (paper.width - 2 * pad) / designWidth;
+  final format = is58 ? PdfPageFormat.roll57 : PdfPageFormat.roll80;
+  final pad = is58 ? 6.0 : 10.0;
+  final k = is58 ? 0.84 : 1.0;
   double s(double v) => v * k;
-
-  // Edge-to-edge page at the target width; height grows with content (roll
-  // style) so there's no wasted paper above or below either.
-  final format = PdfPageFormat(paper.width, double.infinity, marginAll: 0);
 
   final invoiceNo = sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo;
   final codeData = sale.invoiceNo.isEmpty ? sale.id : sale.invoiceNo;
@@ -123,8 +109,22 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings, [PdfPageFor
             ),
             padding: const pw.EdgeInsets.fromLTRB(6, 4, 4, 4),
             child: pw.Center(
-              child: pw.Text(ar ? 'INVOICE  |  ${_ar['invoice']}' : 'INVOICE',
-                  style: pw.TextStyle(fontSize: s(12), fontWeight: pw.FontWeight.bold)),
+              // English + Arabic as separate, correctly-directioned spans — a
+              // single mixed string with no rtl direction reverses the Arabic.
+              child: ar
+                  ? pw.Row(
+                      mainAxisSize: pw.MainAxisSize.min,
+                      mainAxisAlignment: pw.MainAxisAlignment.center,
+                      children: [
+                        pw.Text('INVOICE  |  ',
+                            style: pw.TextStyle(fontSize: s(12), fontWeight: pw.FontWeight.bold)),
+                        pw.Text(_ar['invoice']!,
+                            textDirection: pw.TextDirection.rtl,
+                            style: pw.TextStyle(fontSize: s(12), fontWeight: pw.FontWeight.bold)),
+                      ],
+                    )
+                  : pw.Text('INVOICE',
+                      style: pw.TextStyle(fontSize: s(12), fontWeight: pw.FontWeight.bold)),
             ),
           ),
           pw.SizedBox(height: 6),
@@ -230,10 +230,10 @@ pw.Widget _itemsTable(Sale sale, bool ar, double Function(double) s) {
       // header
       pw.TableRow(
         children: [
-          _hcell(ar ? 'Item\n${_ar['item']}' : 'Item', s(8)),
-          _hcell(ar ? 'Qty\n${_ar['quantity']}' : 'Qty', s(8), align: pw.Alignment.center),
-          _hcell(ar ? 'Price\n${_ar['price']}' : 'Price', s(8), align: pw.Alignment.centerRight),
-          _hcell(ar ? 'Amount\n${_ar['amount']}' : 'Amount', s(8), align: pw.Alignment.centerRight),
+          _hcell('Item', ar ? _ar['item'] : null, s(8)),
+          _hcell('Qty', ar ? _ar['quantity'] : null, s(8), align: pw.Alignment.center),
+          _hcell('Price', ar ? _ar['price'] : null, s(8), align: pw.Alignment.centerRight),
+          _hcell('Amount', ar ? _ar['amount'] : null, s(8), align: pw.Alignment.centerRight),
         ],
       ),
       for (var i = 0; i < sale.lines.length; i++)
@@ -380,18 +380,28 @@ pw.Widget _cell(String text, double size,
       ),
     );
 
-pw.Widget _hcell(String text, double size, {pw.Alignment align = pw.Alignment.centerLeft}) =>
-    pw.Container(
-      alignment: align,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 3),
-      child: pw.Text(
-        text,
-        textAlign: align == pw.Alignment.centerRight
-            ? pw.TextAlign.right
-            : (align == pw.Alignment.center ? pw.TextAlign.center : pw.TextAlign.left),
-        style: pw.TextStyle(fontSize: size, fontWeight: pw.FontWeight.bold),
-      ),
-    );
+pw.Widget _hcell(String en, String? ar, double size, {pw.Alignment align = pw.Alignment.centerLeft}) {
+  final textAlign = align == pw.Alignment.centerRight
+      ? pw.TextAlign.right
+      : (align == pw.Alignment.center ? pw.TextAlign.center : pw.TextAlign.left);
+  final cross = align == pw.Alignment.centerRight
+      ? pw.CrossAxisAlignment.end
+      : (align == pw.Alignment.center ? pw.CrossAxisAlignment.center : pw.CrossAxisAlignment.start);
+  final style = pw.TextStyle(fontSize: size, fontWeight: pw.FontWeight.bold);
+  return pw.Container(
+    alignment: align,
+    padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 3),
+    // English and Arabic stacked as separate Texts — the Arabic line marked rtl
+    // so it shapes/joins instead of rendering reversed.
+    child: pw.Column(
+      crossAxisAlignment: cross,
+      children: [
+        pw.Text(en, textAlign: textAlign, style: style),
+        if (ar != null) pw.Text(ar, textDirection: pw.TextDirection.rtl, textAlign: textAlign, style: style),
+      ],
+    ),
+  );
+}
 
 pw.Widget _dashed() => pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 5),

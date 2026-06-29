@@ -636,6 +636,12 @@
                                             <i class="demo-pli-data-settings"></i><span>Configuration</span>
                                         </button>
                                     </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsCurrencies" type="button" role="tab" aria-selected="false"
+                                            tabindex="-1">
+                                            <i class="fa fa-money"></i><span>Currencies</span>
+                                        </button>
+                                    </li>
                                 @endcan
                                 @can('product.view')
                                     <li class="nav-item" role="presentation">
@@ -758,6 +764,9 @@
                                 @can('configuration.settings')
                                     <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
                                         @livewire('settings.configurations')
+                                    </div>
+                                    <div id="tabsCurrencies" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.currency-configuration')
                                     </div>
                                     <div id="tabsProductSettings" class="tab-pane" role="tabpanel">
                                         @livewire('settings.product-configuration')

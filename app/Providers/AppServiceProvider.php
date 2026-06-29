@@ -104,6 +104,14 @@ class AppServiceProvider extends ServiceProvider
             Cache::remember('currency_symbol', now()->addYear(), function () {
                 return Configuration::where('key', 'currency_symbol')->value('value');
             });
+            Cache::remember('currencies', now()->addYear(), function () {
+                $list = Configuration::where('key', 'currencies')->value('value');
+
+                return $list ? json_decode($list, true) : [];
+            });
+            Cache::remember('base_currency_code', now()->addYear(), function () {
+                return Configuration::where('key', 'base_currency_code')->value('value');
+            });
         }
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);

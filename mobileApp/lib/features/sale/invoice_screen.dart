@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
@@ -94,13 +93,13 @@ class InvoiceScreen extends StatelessWidget {
                         ],
                         Row(
                           children: [
-                            Expanded(child: _action(context, Icons.print_outlined, 'Print', () => _print(context))),
+                            Expanded(child: _action(context, Icons.print_outlined, 'Print', () => _preview(context))),
                             const SizedBox(width: 9),
                             Expanded(child: _action(context, Icons.ios_share, 'Share', () => _share(context))),
                             const SizedBox(width: 9),
                             Expanded(
                               flex: 2,
-                              child: AstraButton(label: 'New Sale', onTap: () => context.go('/sale')),
+                              child: AstraButton(label: 'New Sale', onTap: () => _tap(() => context.go('/sale'))),
                             ),
                           ],
                         ),
@@ -126,7 +125,7 @@ class InvoiceScreen extends StatelessWidget {
         children: [
           if (context.canPop()) ...[
             GestureDetector(
-              onTap: () => context.pop(),
+              onTap: () => _tap(() => context.pop()),
               child: Container(
                 width: 36,
                 height: 36,
@@ -487,54 +486,44 @@ class InvoiceScreen extends StatelessWidget {
     return 'invoice_${base.isEmpty ? 'receipt' : base}.pdf';
   }
 
-  /// Open the system print dialog with the receipt PDF.
-  ///
-  /// We prefer the server-rendered (Chromium) PDF so Arabic shapes correctly —
-  /// the on-device PDF engine can't shape Arabic. If that fetch fails (offline /
-  /// server error) we fall back to the on-device build, laid out for the paper
-  /// the dialog selected so it still fills the sheet.
-  Future<void> _print(BuildContext context) async {
-    final settings = context.read<PrintSettingsController>().snapshot;
-    final api = context.read<ApiService>();
-    try {
-      final server = await _serverReceipt(context, api);
-      await Printing.layoutPdf(
-        name: _fileName,
-        onLayout: (format) {
-          if (server != null) return server;
-          return buildReceiptPdf(sale, settings, format);
-        },
-      );
-    } catch (_) {
-      if (context.mounted) _toast(context, 'Could not open the print dialog.');
-    }
-  }
-
   /// Open the share sheet with the receipt PDF attached.
   Future<void> _share(BuildContext context) async {
     final settings = context.read<PrintSettingsController>().snapshot;
-    final api = context.read<ApiService>();
     try {
-      final bytes = await _serverReceipt(context, api) ?? await buildReceiptPdf(sale, settings);
+      final bytes = await buildReceiptPdf(sale, settings);
       await Printing.sharePdf(bytes: bytes, filename: _fileName);
     } catch (_) {
       if (context.mounted) _toast(context, 'Could not share the receipt.');
     }
   }
 
-  /// Fetch the server-rendered receipt PDF (correct Arabic). Returns null — so
-  /// callers fall back to the on-device build — when the device is offline or
-  /// the request fails, surfacing the reason so a silent fallback isn't mistaken
-  /// for "nothing changed".
-  Future<Uint8List?> _serverReceipt(BuildContext context, ApiService api) async {
-    try {
-      return await api.saleReceiptPdf(sale.id);
-    } catch (e) {
-      if (context.mounted) {
-        _toast(context, 'Server receipt unavailable — printing on-device copy.\n$e');
-      }
-      return null;
-    }
+  /// Preview-before-print: a full-screen preview of the actual thermal receipt,
+  /// filling the screen width in its native thermal style (header included,
+  /// nothing cropped). The user reviews it, then prints/shares from the preview's
+  /// own action bar — that's the actual print step.
+  void _preview(BuildContext context) {
+    final settings = context.read<PrintSettingsController>().snapshot;
+    final title = 'Invoice ${sale.invoiceNo.isEmpty ? sale.id : sale.invoiceNo}';
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) => Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(title: Text(title)),
+        body: PdfPreview(
+          // Always render the native thermal roll; the preview scales it to fill
+          // the screen width so the receipt occupies the page edge-to-edge.
+          build: (_) => buildReceiptPdf(sale, settings),
+          useActions: true,
+          canChangePageFormat: false,
+          canChangeOrientation: false,
+          canDebug: false,
+          pdfFileName: _fileName,
+          padding: EdgeInsets.zero,
+          previewPageMargin: EdgeInsets.zero,
+          scrollViewDecoration: const BoxDecoration(color: Colors.white),
+        ),
+      ),
+    ));
   }
 
   void _toast(BuildContext context, String message) {
@@ -569,7 +558,7 @@ class InvoiceScreen extends StatelessWidget {
   Widget _returnInvoiceButton(BuildContext context, AstraPalette p) {
     final t = context.astraTheme;
     return GestureDetector(
-      onTap: () => _return(context),
+      onTap: () => _tap(() => _return(context)),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
@@ -601,7 +590,7 @@ class InvoiceScreen extends StatelessWidget {
   Widget _editInvoiceButton(BuildContext context, AstraPalette p) {
     final t = context.astraTheme;
     return GestureDetector(
-      onTap: () => _edit(context),
+      onTap: () => _tap(() => _edit(context)),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
@@ -623,11 +612,18 @@ class InvoiceScreen extends StatelessWidget {
     );
   }
 
+  /// Fire a short tap vibration, then run [action]. Every button on this view
+  /// page is routed through here so taps give haptic feedback.
+  void _tap(VoidCallback action) {
+    HapticFeedback.lightImpact();
+    action();
+  }
+
   Widget _action(BuildContext context, IconData icon, String label, VoidCallback onTap) {
     final p = context.astra;
     final t = context.astraTheme;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => _tap(onTap),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         alignment: Alignment.center,

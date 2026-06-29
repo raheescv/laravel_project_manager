@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ColorController;
+use App\Http\Controllers\Api\V1\CurrencyController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DaySessionController;
@@ -110,6 +111,9 @@ Route::prefix('v1')->group(function () {
 
             // Payment methods (for the custom-payment selector)
             Route::get('payment-methods', [PaymentMethodController::class, 'index'])->name('api.v1.payment-methods.index');
+
+            // Currencies (multi-currency list + base, cached by the app for offline use)
+            Route::get('settings/currencies', [CurrencyController::class, 'index'])->name('api.v1.settings.currencies');
 
             // Admin routes — access is permission-driven (Spatie), not the is_admin
             // flag, so any staff role granted the permission can reach them.

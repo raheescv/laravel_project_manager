@@ -398,9 +398,87 @@ if (! function_exists('getPercentage')) {
     }
 }
 
-if (! function_exists('currency')) {
-    function currency($value, $decimal_count = 2)
+if (! function_exists('currencies')) {
+    /**
+     * The configured currency list (each: code, symbol, name, decimals,
+     * rate_to_base, is_base, active). Empty when multi-currency is unconfigured.
+     */
+    function currencies()
     {
+        $list = cache('currencies', []);
+
+        return is_array($list) ? $list : [];
+    }
+}
+
+if (! function_exists('base_currency')) {
+    /**
+     * The base currency row, or null when multi-currency is unconfigured.
+     */
+    function base_currency()
+    {
+        $code = cache('base_currency_code');
+        $list = currencies();
+        foreach ($list as $c) {
+            if ($code && ($c['code'] ?? null) === $code) {
+                return $c;
+            }
+        }
+        foreach ($list as $c) {
+            if (! empty($c['is_base'])) {
+                return $c;
+            }
+        }
+
+    }
+}
+
+if (! function_exists('currency_decimals')) {
+    /**
+     * Decimal places for the base currency (defaults to 2 — current behaviour).
+     */
+    function currency_decimals()
+    {
+        $base = base_currency();
+
+        return isset($base['decimals']) ? (int) $base['decimals'] : 2;
+    }
+}
+
+if (! function_exists('convert_currency')) {
+    /**
+     * Convert an amount between two configured currencies using their
+     * rate_to_base (base units per 1 unit). Returns the amount unchanged when a
+     * code is unknown or multi-currency is unconfigured.
+     */
+    function convert_currency($amount, $fromCode, $toCode)
+    {
+        if (! is_numeric($amount) || $fromCode === $toCode) {
+            return (float) $amount;
+        }
+        $rates = [];
+        foreach (currencies() as $c) {
+            if (! empty($c['code'])) {
+                $rates[$c['code']] = (float) ($c['rate_to_base'] ?? 1);
+            }
+        }
+        $from = $rates[$fromCode] ?? null;
+        $to = $rates[$toCode] ?? null;
+        if (! $from || ! $to) {
+            return (float) $amount;
+        }
+
+        // amount(from) -> base -> amount(to)
+        return ((float) $amount * $from) / $to;
+    }
+}
+
+if (! function_exists('currency')) {
+    function currency($value, $decimal_count = null)
+    {
+        if ($decimal_count === null) {
+            $decimal_count = currency_decimals();
+        }
         if (is_numeric($value)) {
             return number_format($value, $decimal_count);
         } else {

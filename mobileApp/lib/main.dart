@@ -34,15 +34,23 @@ Future<void> main() async {
   await auth.bootstrap();
 
   final theme = ThemeController(storage);
-  final currency = CurrencyController(storage);
+  final currency = CurrencyController(storage, service: service);
   final branch = BranchController(
     service: service,
     client: client,
     storage: storage,
     userBranchId: int.tryParse(auth.user?.branchId ?? ''),
   );
-  // After a fresh sign-in, default the active branch to that user's home branch.
-  auth.onAuthenticated = (user) => branch.applyUserDefault(int.tryParse(user.branchId ?? ''));
+  // Refresh the cached currency list when already signed in (the endpoint is
+  // authenticated). On a cold start with no network this no-ops and the cache
+  // is used.
+  if (auth.user != null) currency.refresh();
+  // After a fresh sign-in, default the active branch to that user's home branch
+  // and pull the latest currency list to cache for offline use.
+  auth.onAuthenticated = (user) {
+    branch.applyUserDefault(int.tryParse(user.branchId ?? ''));
+    currency.refresh();
+  };
   final printSettings = PrintSettingsController(storage);
 
   runApp(AstraApp(

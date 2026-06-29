@@ -16,6 +16,7 @@ Future<void> showCurrencySheet(BuildContext context) {
     builder: (sheetContext) {
       final controller = sheetContext.watch<CurrencyController>();
       final current = controller.currency;
+      final baseCode = controller.base?.code;
       return Container(
         decoration: BoxDecoration(
           color: p.canvas,
@@ -38,7 +39,10 @@ Future<void> showCurrencySheet(BuildContext context) {
                   children: [
                     Icon(Icons.payments_outlined, size: 18, color: p.primary),
                     const SizedBox(width: 9),
-                    Expanded(child: Text('Currency', style: serif(size: 20, color: p.ink))),
+                    Text('Currency', style: serif(size: 20, color: p.ink)),
+                    const SizedBox(width: 9),
+                    if (controller.isCached) _offlineChip(sheetContext),
+                    const Spacer(),
                     GestureDetector(
                       onTap: () => Navigator.of(sheetContext).pop(),
                       child: Icon(Icons.close, size: 20, color: p.textMuted),
@@ -51,7 +55,8 @@ Future<void> showCurrencySheet(BuildContext context) {
                   shrinkWrap: true,
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
                   children: [
-                    for (final c in Currencies.all) _row(sheetContext, c, c.code == current.code),
+                    for (final c in controller.available)
+                      _row(sheetContext, c, c.code == current.code, c.code == baseCode),
                   ],
                 ),
               ),
@@ -63,7 +68,26 @@ Future<void> showCurrencySheet(BuildContext context) {
   );
 }
 
-Widget _row(BuildContext context, Currency c, bool active) {
+Widget _offlineChip(BuildContext context) {
+  final p = context.astra;
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+    decoration: BoxDecoration(
+      color: p.tint,
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.bolt, size: 11, color: p.primaryDark),
+        const SizedBox(width: 3),
+        Text('Offline', style: ui(size: 9.5, weight: FontWeight.w800, color: p.primaryDark, letterSpacing: 0.4)),
+      ],
+    ),
+  );
+}
+
+Widget _row(BuildContext context, Currency c, bool active, bool isBase) {
   final p = context.astra;
   return GestureDetector(
     onTap: () {
@@ -99,6 +123,19 @@ Widget _row(BuildContext context, Currency c, bool active) {
               ],
             ),
           ),
+          if (isBase)
+            Container(
+              margin: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(6)),
+              child: Text('BASE', style: ui(size: 9, weight: FontWeight.w800, color: p.primaryDark, letterSpacing: 0.5)),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: Text(c.rateToBase.toStringAsFixed(4),
+                  style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+            ),
           Container(
             width: 24,
             height: 24,

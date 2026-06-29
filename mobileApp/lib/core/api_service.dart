@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../models/models.dart';
 import 'api_client.dart';
+import 'currency.dart';
 import 'formatters.dart';
 
 /// Typed wrappers over the Laravel `api/v1` endpoints (see mobileApp/BUILD_PROMPT.md).
@@ -113,6 +114,18 @@ class ApiService {
     return ((data as List?) ?? const [])
         .map((e) => PaymentMethod.fromJson(Map<String, dynamic>.from(e)))
         .toList();
+  }
+
+  // ---- Currencies ----
+  /// The multi-currency list + base code configured under Settings → Currencies.
+  /// The app caches these so prices format and convert offline.
+  Future<({String? baseCode, List<Currency> currencies})> currencies() async {
+    final data = await client.get('/settings/currencies');
+    final map = Map<String, dynamic>.from(data as Map);
+    final list = ((map['currencies'] as List?) ?? const [])
+        .map((e) => Currency.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+    return (baseCode: map['base_currency_code']?.toString(), currencies: list);
   }
 
   // ---- Sales ----

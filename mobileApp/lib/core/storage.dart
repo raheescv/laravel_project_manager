@@ -25,6 +25,8 @@ class Storage {
   static const _kPreset = 'astra.preset';
   static const _kThemeMode = 'astra.themeMode'; // light | dark | system
   static const _kCurrency = 'astra.currency';
+  static const _kCurrencies = 'astra.currencies'; // JSON list synced from web settings
+  static const _kBaseCurrency = 'astra.baseCurrency'; // base currency code
   static const _kBranch = 'astra.branch';
   static const _kUser = 'astra.user';
   static const _kBiometric = 'astra.biometric'; // JSON credential blob for biometric replay
@@ -65,6 +67,14 @@ class Storage {
 
   String? get currencyCode => _prefs.getString(_kCurrency);
   Future<void> setCurrencyCode(String v) => _prefs.setString(_kCurrency, v);
+
+  /// Cached currency list (JSON array) + base code, fetched from the web so the
+  /// app can format and convert amounts offline.
+  String? get currenciesJson => _prefs.getString(_kCurrencies);
+  Future<void> setCurrenciesJson(String v) => _prefs.setString(_kCurrencies, v);
+
+  String? get baseCurrencyCode => _prefs.getString(_kBaseCurrency);
+  Future<void> setBaseCurrencyCode(String v) => _prefs.setString(_kBaseCurrency, v);
 
   int? get branchId => _prefs.getInt(_kBranch);
   Future<void> setBranchId(int v) => _prefs.setInt(_kBranch, v);
