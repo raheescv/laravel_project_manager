@@ -178,28 +178,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Tappable day open/closed chip on the hero → the Day Session screen.
+  /// When the day is closed it is highlighted (danger-tinted) to nudge the
+  /// user to open it; a second line shows the open time (when open) or the
+  /// last close time (when closed).
   Widget _dayStatusPill(ApiUser? user) {
     final open = user?.dayOpen ?? false;
-    final dot = open ? AstraPalette.success : AstraPalette.danger;
+    final accent = open ? AstraPalette.success : AstraPalette.danger;
+
+    // Sub-label: opened-at while open, last-closed-at while closed.
+    final whenIso = open ? (user?.daySessionOpenedAt ?? '') : (user?.lastClosedSessionAt ?? '');
+    final when = Dates.humanDateTime(whenIso);
+    final whenLabel = open
+        ? (when.isEmpty ? 'Opened today' : 'Opened $when')
+        : (when.isEmpty ? 'Not opened yet today' : 'Last closed $when');
+
     return GestureDetector(
       onTap: () => context.push('/day-session'),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.14),
+          // Closed → bold danger tint that stands out; open → subtle glass.
+          color: open
+              ? Colors.white.withValues(alpha: 0.14)
+              : accent.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          border: Border.all(
+            color: open ? Colors.white.withValues(alpha: 0.18) : accent.withValues(alpha: 0.85),
+            width: open ? 1 : 1.5,
+          ),
         ),
         child: Row(
           children: [
-            Container(width: 8, height: 8, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+            Container(width: 8, height: 8, decoration: BoxDecoration(color: accent, shape: BoxShape.circle)),
             const SizedBox(width: 8),
-            Text(open ? 'Day open' : 'Day closed',
-                style: ui(size: 12, weight: FontWeight.w800, color: Colors.white)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(open ? 'Day open' : 'Day closed',
+                          style: ui(size: 12, weight: FontWeight.w800, color: Colors.white)),
+                      const SizedBox(width: 6),
+                      Text(open ? '· tap to close' : '· tap to open',
+                          style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(whenLabel,
+                      style: ui(size: 10.5, weight: FontWeight.w600, color: Colors.white70)),
+                ],
+              ),
+            ),
             const SizedBox(width: 6),
-            Text(open ? '· tap to close' : '· tap to open',
-                style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
-            const Spacer(),
             const Icon(Icons.chevron_right, size: 16, color: Colors.white70),
           ],
         ),

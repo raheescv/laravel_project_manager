@@ -37,6 +37,7 @@ class AdminController extends ChangeNotifier {
   String? reportError;
   String reportType = 'itemwise'; // itemwise | employeewise
   String itemMetric = 'amount'; // amount | qty — how the item report is ranked
+  String? itemProductType; // null (all) | product | service | asset — item report filter
   List<ReportRow> reportRows = [];
   double reportTotal = 0; // full-set grand total (from the summary, not just loaded rows)
   int reportRowCount = 0; // total rows across all pages (for the count badge)
@@ -231,6 +232,7 @@ class AdminController extends ChangeNotifier {
         page: page,
         perPage: _reportPageSize,
         sort: reportType == 'itemwise' ? (itemMetric == 'qty' ? 'quantity' : 'amount') : null,
+        productType: reportType == 'itemwise' ? itemProductType : null,
       );
 
   /// Merge a fetched page into the table. The grand total + row count come from
@@ -285,6 +287,14 @@ class AdminController extends ChangeNotifier {
   void setItemMetric(String metric) {
     if (itemMetric == metric) return;
     loadReports(metric: metric);
+  }
+
+  /// Filter the item report by product type (null = all). The server re-queries,
+  /// so this reloads from page 1.
+  void setItemProductType(String? productType) {
+    if (itemProductType == productType) return;
+    itemProductType = productType;
+    loadReports();
   }
 
   /// Grand-total label for the active table — currency for amounts, a plain

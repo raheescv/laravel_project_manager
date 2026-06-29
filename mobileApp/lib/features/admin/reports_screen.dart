@@ -733,6 +733,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
           if (admin.reportType == 'itemwise') ...[
             const SizedBox(height: 10),
             _itemMetricRow(admin),
+            const SizedBox(height: 10),
+            _itemTypeRow(admin),
           ],
           const SizedBox(height: 14),
           _breakdownBody(admin),
@@ -817,6 +819,55 @@ class _ReportsScreenState extends State<ReportsScreen> {
         chip('Amount', 'amount', Icons.payments_rounded),
         const SizedBox(width: 7),
         chip('Qty', 'qty', Icons.numbers_rounded),
+      ],
+    );
+  }
+
+  /// Item-report type filter: All / Product / Service / Asset. Passing null to
+  /// the controller clears the filter (the server returns every type). Mirrors
+  /// the web report's `product_type` filter.
+  Widget _itemTypeRow(AdminController admin) {
+    final p = context.astra;
+    Widget chip(String label, String? id, IconData icon) {
+      final active = admin.itemProductType == id;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => admin.setItemProductType(id),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: active ? p.primaryGradient : null,
+              color: active ? null : p.tint,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: active ? context.astraTheme.floatShadow(p.primary) : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 13, color: active ? Colors.white : p.textSecondary),
+                const SizedBox(width: 6),
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 11, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Text('TYPE',
+            style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
+        const SizedBox(width: 10),
+        chip('All', null, Icons.apps_rounded),
+        const SizedBox(width: 7),
+        chip('Product', 'product', Icons.inventory_2_rounded),
+        const SizedBox(width: 7),
+        chip('Service', 'service', Icons.design_services_rounded),
       ],
     );
   }

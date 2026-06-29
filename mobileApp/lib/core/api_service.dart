@@ -243,6 +243,7 @@ class ApiService {
     int? page,
     int? perPage,
     String? sort, // itemwise ranking: amount | quantity
+    String? productType, // itemwise filter: product | service | asset
   }) async {
     final data = await client.get('/admin/reports', query: {
       'type': type,
@@ -251,6 +252,7 @@ class ApiService {
       if (page != null) 'page': page,
       if (perPage != null) 'per_page': perPage,
       if (sort != null) 'sort': sort,
+      if (productType != null) 'product_type': productType,
     });
     return Map<String, dynamic>.from(data);
   }
