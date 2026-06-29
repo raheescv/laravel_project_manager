@@ -394,12 +394,14 @@ class RentOut extends Model implements AuditableContracts
 
     public static function getOverlapping($propertyId, $startDate, $endDate, $excludeId = null)
     {
-        return static::where('property_id', $propertyId)
-            ->whereIn('status', [
+        $statuses = [
                 RentOutStatus::Occupied,
                 RentOutStatus::Vacated,
                 RentOutStatus::Expired,
-            ])
+        ];
+
+        return static::where('property_id', $propertyId)
+            ->whereIn('status', $statuses)
             ->where('start_date', '<=', $endDate)
             ->where('end_date', '>=', $startDate)
             ->when($excludeId, fn ($q, $id) => $q->where('id', '!=', $id))

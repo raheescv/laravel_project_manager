@@ -23,6 +23,8 @@ class RentOutConfig
 
     public string $detailsLabel;
 
+    public string $paymentGroupLabel;
+
     public string $periodLabel;
 
     public string $bookingLabel;
@@ -125,6 +127,7 @@ class RentOutConfig
             $this->amountLabel = 'Rent';
             $this->unitPriceLabel = 'Rent';
             $this->detailsLabel = 'Rent Details';
+            $this->paymentGroupLabel = 'Rent Payment';
             $this->periodLabel = 'Rental Period';
             $this->bookingLabel = 'Rental Booking';
             $this->defaultTermLabel = 'rent payment';
@@ -141,6 +144,7 @@ class RentOutConfig
             $this->amountLabel = 'Total';
             $this->unitPriceLabel = 'Unit Sale Price';
             $this->detailsLabel = 'Sale Details';
+            $this->paymentGroupLabel = 'Installment Payment';
             $this->periodLabel = 'Period';
             $this->bookingLabel = 'Sale Booking';
             $this->defaultTermLabel = 'installment';

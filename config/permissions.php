@@ -249,7 +249,7 @@ return [
     ],
 
     'purchase request' => ['create', 'view', 'edit', 'view', 'delete', 'decide'],
-    'local purchase order' => ['create', 'edit', 'view', 'delete', 'decide', 'confirm', 'print','payments'],
+    'local purchase order' => ['create', 'edit', 'view', 'delete', 'decide', 'confirm', 'print', 'payments'],
     'grn' => ['create', 'view', 'edit', 'delete', 'decide'],
     'lpo-purchase' => ['create', 'view', 'edit', 'delete', 'decide'],
 

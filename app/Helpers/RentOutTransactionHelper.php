@@ -22,6 +22,11 @@ class RentOutTransactionHelper
         return $this->action()->execute($data);
     }
 
+    protected function paymentGroupLabel(?RentOut $rentOut): string
+    {
+        return $rentOut?->agreement_type?->config()->paymentGroupLabel ?? 'Rent Payment';
+    }
+
     public function charge(int $rentOutId, array $data): array
     {
         return $this->action()->charge($rentOutId, $data);
@@ -156,7 +161,7 @@ class RentOutTransactionHelper
             'due_date' => $term->due_date?->format('Y-m-d'),
             'paid_date' => $payDate,
             'reason' => $term->label ?? 'Rent Payment',
-            'group' => 'Rent Payment',
+            'group' => $this->paymentGroupLabel($term->rentOut),
             'category' => $term->label ?? '',
             'payment_type' => 'Rent',
             'remark' => $remark,
@@ -207,7 +212,7 @@ class RentOutTransactionHelper
             'cheque_no' => $cheque->cheque_no,
             'bank_name' => $cheque->bank_name,
             'reason' => 'Cheque #'.($cheque->cheque_no ?? '').' cleared',
-            'group' => 'Rent Payment',
+            'group' => $this->paymentGroupLabel($cheque->rentOut),
             'category' => $term->label ?? '',
             'payment_type' => 'Cheque',
             'remark' => $remark ?: ('Cheque #'.($cheque->cheque_no ?? '').' cleared'),
