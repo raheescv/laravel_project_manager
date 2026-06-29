@@ -53,7 +53,7 @@ Future<void> _loadArabicFonts() async {
 /// web sale-print design (resources/views/sale/print.blade.php): bordered
 /// tables, the boxed invoice header, served-by box, barcode + QR and dashed
 /// dividers — honouring the in-app [PrintSettings].
-Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
+Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings, [PdfPageFormat? pageFormat]) async {
   final ar = settings.style.isArabic;
   if (ar) await _loadArabicFonts();
 
@@ -64,11 +64,30 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
     fontFallback: [if (_arabicFont != null) _arabicFont!, if (_arabicFontBold != null) _arabicFontBold!],
   );
 
+  const mm = PdfPageFormat.mm;
   final is58 = settings.width == PaperWidth.mm58;
-  final format = is58 ? PdfPageFormat.roll57 : PdfPageFormat.roll80;
-  final pad = is58 ? 6.0 : 10.0;
-  final k = is58 ? 0.84 : 1.0;
+
+  // Native thermal roll for this printer — used when no concrete paper is given
+  // (share / export) so the saved PDF stays true thermal width.
+  final roll = is58 ? PdfPageFormat.roll57 : PdfPageFormat.roll80;
+
+  // When the OS print dialog hands us the selected paper (via onLayout) we lay
+  // the receipt across THAT paper's full width so it fills the sheet instead of
+  // floating tiny in the middle of an A4 preview. A real thermal printer reports
+  // an ~80mm/57mm page (k≈1, native); with no printer selected iOS defaults to
+  // A4 and the receipt scales up proportionally to fill it.
+  final paper = pageFormat ?? roll;
+  final pad = paper.width <= 60 * mm ? 6.0 : 10.0;
+
+  // Element sizes were authored against an 80mm roll (≈60mm printable). Scale
+  // everything by how much wider/narrower the target printable width is.
+  final designWidth = 80 * mm - 2 * 10.0;
+  final k = (paper.width - 2 * pad) / designWidth;
   double s(double v) => v * k;
+
+  // Edge-to-edge page at the target width; height grows with content (roll
+  // style) so there's no wasted paper above or below either.
+  final format = PdfPageFormat(paper.width, double.infinity, marginAll: 0);
 
   final invoiceNo = sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo;
   final codeData = sale.invoiceNo.isEmpty ? sale.id : sale.invoiceNo;

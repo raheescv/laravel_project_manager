@@ -12,6 +12,7 @@ use App\Http\Requests\V1\Sale\StoreRequest;
 use App\Http\Requests\V1\Sale\UpdateRequest;
 use App\Http\Resources\V1\Sale\SaleResource;
 use App\Traits\ApiResponseTrait;
+use App\Traits\UsesBrowsershot;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +22,7 @@ use Illuminate\Validation\ValidationException;
 class SaleController extends Controller
 {
     use ApiResponseTrait;
+    use UsesBrowsershot;
 
     /**
      * List sales.
@@ -56,6 +58,41 @@ class SaleController extends Controller
             return $this->sendNotFoundError('Sale not found.');
         } catch (\Exception $e) {
             return $this->sendServerError('Failed to retrieve sale: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Print sale receipt.
+     *
+     * Renders the thermal (80mm) invoice through Chromium (Browsershot) and returns
+     * it as a PDF, so Arabic shapes correctly — unlike the app's on-device PDF engine.
+     */
+    public function receipt(int $sale): Response
+    {
+        try {
+            // SaleHelper renders the shared sale.print thermal blade to HTML; it
+            // returns a redirect (non-string) when the sale can't be found.
+            $html = SaleHelper::saleInvoice($sale);
+            if (! is_string($html)) {
+                return $this->sendNotFoundError('Sale not found.');
+            }
+
+            // preferCSSPageSize lets Chromium honour the blade's `@page { size: 80mm auto }`,
+            // producing a single continuous 80mm-wide receipt instead of an A4 page.
+            $pdf = $this->makeBrowsershot($html)
+                ->showBackground()
+                ->pdf([
+                    'printBackground' => true,
+                    'preferCSSPageSize' => true,
+                    'scale' => 1,
+                ]);
+
+            return response($pdf, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="invoice-'.$sale.'.pdf"',
+            ]);
+        } catch (\Throwable $e) {
+            return $this->sendServerError('Failed to generate receipt: '.$e->getMessage());
         }
     }
 

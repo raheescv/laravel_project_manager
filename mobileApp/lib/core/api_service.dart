@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/models.dart';
 import 'api_client.dart';
 import 'formatters.dart';
@@ -159,6 +161,10 @@ class ApiService {
     final data = await client.get('/sale/$id');
     return Sale.fromJson(Map<String, dynamic>.from(data));
   }
+
+  /// Server-rendered thermal receipt PDF for a sale. Rendered through Chromium
+  /// on the backend so Arabic shapes correctly (the on-device PDF engine can't).
+  Future<Uint8List> saleReceiptPdf(String id) => client.getBytes('/sale/$id/receipt');
 
   /// Update an existing sale. The payload mirrors [createSale] but each line may
   /// carry an `id` (its sale_item id) so the server patches the existing row

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import 'config.dart';
@@ -92,6 +95,35 @@ class ApiClient {
       options: auth ? await _authOpts() : _opts(),
     );
     return _unwrap(res);
+  }
+
+  /// Download raw bytes (e.g. a server-rendered PDF) from an authenticated
+  /// endpoint, bypassing the JSON envelope unwrapping. On an error status the
+  /// body is the usual JSON envelope, so we decode it to surface its message.
+  Future<Uint8List> getBytes(String path, {Map<String, dynamic>? query}) async {
+    final opts = await _authOpts();
+    opts.responseType = ResponseType.bytes;
+    opts.headers!['Accept'] = 'application/pdf';
+    final res = await _dio.get(
+      '${config.apiV1}$path',
+      queryParameters: _encodeQuery({..._query(), ...?query}),
+      options: opts,
+    );
+    final status = res.statusCode ?? 0;
+    if (status == 401) onUnauthorized?.call();
+    final bytes = Uint8List.fromList((res.data as List<int>?) ?? const []);
+    if (status >= 200 && status < 300) return bytes;
+
+    var message = 'Request failed ($status)';
+    try {
+      final decoded = jsonDecode(utf8.decode(bytes));
+      if (decoded is Map && decoded['message'] != null) {
+        message = decoded['message'].toString();
+      }
+    } catch (_) {
+      // Not a JSON error body — keep the generic message.
+    }
+    throw ApiException(message, statusCode: status);
   }
 
   Future<dynamic> post(String path, {Object? body, bool auth = true}) async {
