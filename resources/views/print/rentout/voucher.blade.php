@@ -4,103 +4,194 @@
     <meta charset="utf-8">
     <title>Payment Voucher - #{{ $payment->voucher_no ?? $payment->id }}</title>
     <style>
-        .clearfix:after{content:"";display:table;clear:both}
-        a{color:#0087C3;text-decoration:none}
-        body{margin:0;padding:10px 20px;color:#444;background:#fff;font-family:'DejaVu Sans',Arial,sans-serif;font-size:11px}
+        :root {
+            --accent:      #0E8A4F;
+            --accent-dark: #0A6B3C;
+            --gold:        #B8860B;
+            --ink:         #1a1a1a;
+            --ink-soft:    #555;
+            --line:        #e0e0e0;
+        }
 
-        .hdr{padding:5px 0 6px;margin-bottom:5px;border-bottom:2px solid #2c3e50;overflow:hidden}
-        .hdr::after{content:"";display:table;clear:both}
-        .hdr-l{float:left;width:60%}
-        .hdr-l h2{font-size:1.4em;font-weight:700;color:#1a252f;margin:0 0 2px}
-        .hdr-l p{font-size:10px;color:#666;line-height:1.5;margin:0}
-        .hdr-r{float:right;width:130px;border:1px solid #e8e8e8;border-radius:6px;padding:3px;text-align:center;background:#fafbfc}
-        .hdr-r img{max-width:120px;max-height:50px;display:block;margin:0 auto}
+        body {
+            margin: 0;
+            padding: 28px 36px;
+            color: var(--ink);
+            background: #fff;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.5;
+        }
 
-        .title{text-align:center;margin:5px 0 6px;padding:4px 0;background:#2c3e50}
-        .title h3{font-size:1.3em;font-weight:700;color:#fff;margin:0;letter-spacing:2px;text-transform:uppercase}
+        /* ── Header ── */
+        .b-head { width: 100%; border-collapse: collapse; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+        .b-head td { vertical-align: middle; padding: 0; }
+        .b-eyebrow { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 3px; }
+        .b-head .co-name { font-size: 17px; font-weight: 700; letter-spacing: .5px; color: var(--ink); margin: 0 0 3px; }
+        .b-head .co-meta { font-size: 9.5px; color: var(--ink-soft); line-height: 1.7; }
+        .b-head .logo-cell { text-align: right; width: 200px; vertical-align: top; }
+        .b-head .logo-cell img { max-width: 190px; max-height: 90px; }
 
-        .amt-row{margin-bottom:5px;overflow:hidden}
-        .amt-row::after{content:"";display:table;clear:both}
-        .amt-box{float:left;width:50%;background:#eaf4fb;border-left:3px solid #0087C3;padding:4px 8px}
-        .amt-box .lb{font-size:8px;color:#999;text-transform:uppercase;letter-spacing:1px}
-        .amt-box .vl{font-size:18px;font-weight:700;color:#0087C3}
-        .meta{float:right;width:38%}
-        .meta table{margin:0;width:100%}
-        .meta td{padding:2px 5px;font-size:11px;background:transparent;border-bottom:1px solid #eee}
-        .meta .k{font-weight:600;color:#888;text-align:right;width:35%;background:#f8f9fa}
-        .meta .v{font-weight:600;color:#333;text-align:left}
+        /* ── Title ── */
+        .b-title { text-align: center; margin: 18px 0 6px; }
+        .b-title .t { font-size: 15px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase; color: var(--ink); }
+        .b-title .rule { width: 60px; height: 3px; background: var(--gold); margin: 7px auto 0; }
 
-        .row{margin-bottom:0;border-left:3px solid #0087C3;background:#f8f9fa;padding:3px 8px;font-size:11px}
-        .row b{color:#333}
-        .row2{overflow:hidden;margin-bottom:0}
-        .row2::after{content:"";display:table;clear:both}
-        .row2 .c{float:left;width:50%;border-left:3px solid #0087C3;background:#f8f9fa;padding:3px 8px;font-size:11px;box-sizing:border-box}
+        /* ── Meta (No. + Date) ── */
+        .b-meta { width: 100%; border-collapse: collapse; margin: 14px 0 18px; }
+        .b-meta td { font-size: 10.5px; padding: 3px 0; }
+        .b-meta .k { color: var(--ink-soft); }
+        .b-meta .v { font-weight: 700; text-align: right; }
 
-        .sigs{margin-top:25px;padding-top:6px;border-top:1px dashed #bbb;overflow:hidden}
-        .sigs::after{content:"";display:table;clear:both}
-        .sig{float:left;width:45%;text-align:center;padding-top:22px}
-        .sig:last-child{float:right}
-        .sig span{display:block;border-top:1px solid #999;width:65%;margin:0 auto;padding-top:3px;font-size:9px;color:#777}
+        /* ── Amount ── */
+        .b-amount { text-align: center; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+        .b-amount .lbl { font-size: 8.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 3px; }
+        .b-amount .fig { font-size: 30px; font-weight: 700; color: var(--ink); letter-spacing: 1px; }
+        .b-amount .cur { font-size: 14px; color: var(--accent); font-weight: 700; }
 
-        .ft{margin-top:12px;padding-top:3px;border-top:1px solid #eee;text-align:center;font-size:8px;color:#bbb}
+        /* ── Words ── */
+        .b-words { text-align: center; font-style: italic; color: var(--ink-soft); font-size: 10.5px; margin-bottom: 22px; }
+        .b-words b { color: var(--ink); font-style: normal; }
+
+        /* ── Field rows ── */
+        .b-fields { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        .b-fields td { padding: 8px 0; border-bottom: 1px dotted #ccc; vertical-align: top; }
+        .b-fields .f-label { width: 26%; font-size: 10px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
+        .b-fields .f-colon { width: 1%; padding: 8px 8px; color: #aaa; }
+        .b-fields .f-value { font-size: 11px; color: var(--ink); word-break: break-word; }
+        .b-fields .pos { color: var(--accent-dark); font-weight: 700; }
+        .b-fields .neg { color: #b3261e; font-weight: 700; }
+
+        /* ── Signatures ── */
+        .sig-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        .sig-table td { width: 50%; text-align: center; padding-top: 38px; vertical-align: bottom; }
+        .sig-table .sig-line { border-top: 1px solid #777; width: 74%; margin: 0 auto 5px; }
+        .sig-table .sig-lbl { font-size: 9px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.8px; }
+
+        /* ── Footer ── */
+        .footer { margin-top: 18px; border-top: 1px solid #ddd; padding-top: 6px; text-align: center; font-size: 8px; color: #aaa; }
     </style>
 </head>
 <body>
-    <header class="hdr clearfix">
-        <div class="hdr-l">
-            <h2>{{ $companyName }}</h2>
-            <p>
-                @if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }}<br>@endif
-                @if($companyAddress){{ $companyAddress }}<br>@endif
-                @if($companyEmail)<a href="mailto:{{ $companyEmail }}">{{ $companyEmail }}</a>@endif
-            </p>
-        </div>
-        <div class="hdr-r">
-            @if($companyLogo)<img src="{{ $companyLogo }}" alt="Logo">@endif
-        </div>
-    </header>
+    @php
+        $voucherAmount = $payment->credit > 0 ? $payment->credit : $payment->debit;
+        $voucherNo     = $payment->voucher_no ?? $payment->id;
+    @endphp
 
-    <div class="title"><h3>Payment Voucher</h3></div>
+    {{-- ── Header ── --}}
+    <table class="b-head">
+        <tr>
+            <td>
+                <div class="b-eyebrow">Accounts Payable</div>
+                <div class="co-name">{{ $companyName }}</div>
+                <div class="co-meta">
+                    @if ($companyAddress){{ $companyAddress }}<br>@endif
+                    @if ($companyPhone)Tel: {{ $companyPhone }}@endif
+                    @if ($companyEmail) &bull; {{ $companyEmail }}@endif
+                </div>
+            </td>
+            <td class="logo-cell">
+                @if ($companyLogo)
+                    <img src="{{ $companyLogo }}" alt="Logo">
+                @endif
+            </td>
+        </tr>
+    </table>
 
-    <div class="amt-row">
-        <div class="amt-box">
-            <div class="lb">Amount</div>
-            <div class="vl">QR {{ currency($payment->credit > 0 ? $payment->credit : $payment->debit) }}</div>
-        </div>
-        <div class="meta">
-            <table border="0" cellspacing="0" cellpadding="0">
-                <tr><td class="k">#</td><td class="v">{{ $payment->voucher_no ?? $payment->id }}</td></tr>
-                <tr><td class="k">Date</td><td class="v">{{ $payment->date?->format('d-m-Y') }}</td></tr>
-            </table>
-        </div>
+    {{-- ── Title ── --}}
+    <div class="b-title">
+        <div class="t">Payment Voucher</div>
+        <div class="rule"></div>
     </div>
 
-    @if($rentOut->customer)
-        <div class="row"><b>Paid To Mr/M/s:</b> {{ $rentOut->customer->name }}</div>
-    @endif
-    @if($rentOut->property)
-        <div class="row"><b>Property/Unit No:</b> {{ $rentOut->property->number }}@if($rentOut->building) ({{ $rentOut->building->name }})@endif</div>
-    @endif
-    <div class="row"><b>Remarks:</b> {{ $payment->remark ?? '-' }}</div>
-    @if($payment->category)
-        <div class="row"><b>Category:</b> {{ $payment->category }}</div>
-    @endif
-    <div class="row2">
-        <div class="c"><b>Payment Mode:</b> {{ $payment->account?->name ?? '-' }}</div>
-        <div class="c"><b>Agreement No:</b> {{ $rentOut->agreement_no }}</div>
-    </div>
-    <div class="row2">
-        <div class="c"><b>Source:</b> {{ $payment->source }}@if($payment->group) &mdash; {{ $payment->group }}@endif</div>
-        <div class="c">
-            @if($payment->credit > 0)<b>Credit:</b> <span style="color:#28a745;font-weight:700">QR {{ currency($payment->credit) }}</span>@endif
-            @if($payment->debit > 0)<b>Debit:</b> <span style="color:#dc3545;font-weight:700">QR {{ currency($payment->debit) }}</span>@endif
-        </div>
+    {{-- ── Voucher No. & Date ── --}}
+    <table class="b-meta">
+        <tr><td class="k">Voucher No.</td><td class="v">{{ $voucherNo }}</td></tr>
+        <tr><td class="k">Date</td><td class="v">{{ $payment->date?->format('d-m-Y') }}</td></tr>
+    </table>
+
+    {{-- ── Amount ── --}}
+    <div class="b-amount">
+        <div class="lbl">Amount Paid</div>
+        <div class="fig"><span class="cur">QR</span> {{ currency($voucherAmount) }}</div>
     </div>
 
-    <div class="sigs">
-        <div class="sig"><span>Receiver's Sign</span></div>
-        <div class="sig"><span>Accountant Sign</span></div>
-    </div>
-    <div class="ft">Computer-generated voucher &bull; {{ now()->format('d/m/Y h:i A') }}</div>
+    {{-- ── Amount in Words ── --}}
+    <div class="b-words">in words — <b>{{ convertCurrencyToWords($voucherAmount) }}</b></div>
+
+    {{-- ── Fields ── --}}
+    <table class="b-fields">
+        <tbody>
+            @if ($rentOut->customer)
+            <tr>
+                <td class="f-label">Paid To</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $rentOut->customer->name }}</td>
+            </tr>
+            @endif
+            @if ($rentOut->property)
+            <tr>
+                <td class="f-label">Property / Unit No.</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $rentOut->property->number }}@if ($rentOut->building) ({{ $rentOut->building->name }})@endif</td>
+            </tr>
+            @endif
+            <tr>
+                <td class="f-label">Agreement No.</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $rentOut->agreement_no ?: '—' }}</td>
+            </tr>
+            <tr>
+                <td class="f-label">Payment Mode</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $payment->account?->name ?: '—' }}</td>
+            </tr>
+            <tr>
+                <td class="f-label">Source</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $payment->source ?: '—' }}@if ($payment->group) &mdash; {{ $payment->group }}@endif</td>
+            </tr>
+            @if ($payment->category)
+            <tr>
+                <td class="f-label">Category</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $payment->category }}</td>
+            </tr>
+            @endif
+            @if ($payment->credit > 0 || $payment->debit > 0)
+            <tr>
+                <td class="f-label">Entry</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">
+                    @if ($payment->credit > 0)<span class="pos">Credit QR {{ currency($payment->credit) }}</span>@endif
+                    @if ($payment->debit > 0)<span class="neg">Debit QR {{ currency($payment->debit) }}</span>@endif
+                </td>
+            </tr>
+            @endif
+            <tr>
+                <td class="f-label">Remarks</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $payment->remark ?: '—' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {{-- ── Signatures ── --}}
+    <table class="sig-table">
+        <tr>
+            <td>
+                <div class="sig-line"></div>
+                <div class="sig-lbl">Receiver's Signature</div>
+            </td>
+            <td>
+                <div class="sig-line"></div>
+                <div class="sig-lbl">Accountant Signature</div>
+            </td>
+        </tr>
+    </table>
+
+    {{-- ── Footer ── --}}
+    <div class="footer">Computer generated voucher &bull; {{ now()->format('d/m/Y h:i A') }}</div>
+
 </body>
 </html>

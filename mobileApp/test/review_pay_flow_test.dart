@@ -1,58 +1,67 @@
-import 'package:invo/core/api_client.dart';
-import 'package:invo/core/api_service.dart';
-import 'package:invo/core/config.dart';
-import 'package:invo/core/storage.dart';
-import 'package:invo/features/sale/invoice_screen.dart';
-import 'package:invo/features/sale/review_pay_screen.dart';
-import 'package:invo/models/models.dart';
-import 'package:invo/state/auth_controller.dart';
-import 'package:invo/state/cart_controller.dart';
-import 'package:invo/theme/palette.dart';
-import 'package:invo/theme/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+
+import 'package:invo/features/auth/domain/repository/auth_repository.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/sale/domain/repository/sale_repository.dart';
+import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
+import 'package:invo/features/sale/screens/v3/invoice_screen.dart';
+import 'package:invo/features/sale/screens/v3/review_pay_screen.dart';
+import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
+import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
+import 'package:invo/shared/domain/constants/app_config.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/domain/repository/lookup_repository.dart';
+import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
+import 'package:invo/shared/utils/router/http_utils/http_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// A fake that returns a finished sale for createSale (so the Charge → Invoice
-/// navigation can be exercised) and a canned payment-method list.
-class FlowApiService extends ApiService {
-  FlowApiService(super.client);
-  Map<String, dynamic>? lastPayload;
-
-  @override
-  Future<List<PaymentMethod>> paymentMethods() async =>
-      [PaymentMethod(id: 1, name: 'Cash'), PaymentMethod(id: 2, name: 'Card')];
-
-  @override
-  Future<Sale> createSale(Map<String, dynamic> payload) async {
-    lastPayload = payload;
-    return Sale.fromJson({
-      'id': '9001', 'invoice_no': 'INV-9001', 'date': '2026-06-14', 'status': 'completed', 'branch': 'Downtown',
-      'customer': {'name': 'Walk-in', 'mobile': ''},
-      'items': [
-        {'name': 'Signature Cut', 'type': 'service', 'employee': 'Maya', 'quantity': 1, 'unit_price': 45, 'discount': 0, 'total': 45},
-      ],
-      'payments': [{'method': 'Cash', 'amount': 45}],
-      'summary': {'gross_amount': 45, 'item_discount': 0, 'other_discount': 0, 'tax_amount': 0, 'paid': 45},
-      'created_by': 'Maya',
-    });
-  }
-}
+import 'support/fake_lookup_repository.dart';
+import 'support/fake_repositories.dart';
 
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
+  tearDown(() async => serviceLocator.reset());
 
   testWidgets('Charge on Review & Pay navigates to the Invoice screen', (tester) async {
     SharedPreferences.setMockInitialValues({});
-    final storage = await Storage.create();
-    final client = ApiClient(storage: storage, config: AppConfig(baseUrl: 'http://test.local', tenant: ''));
-    final service = FlowApiService(client);
-    final auth = AuthController(client: client, service: service, storage: storage);
-    final cart = CartController()
-      ..add(Product(id: 1, code: 'SC-01', name: 'Signature Cut', barcode: '', mrp: 45, type: 'service', categoryName: 'Hair', duration: '45', totalStock: 5, thumbnail: ''));
+    await serviceLocator.reset();
+
+    final storage = await LocalStorageService.create();
+    final http = HttpService(
+      storage: storage,
+      config: AppConfig(baseUrl: 'http://test.local', tenant: ''),
+    );
+    final sale = FakeSaleRepository();
+
+    serviceLocator
+      ..registerSingleton<LocalStorageService>(storage)
+      ..registerSingleton<HttpService>(http)
+      ..registerLazySingleton<LookupRepository>(() => FakeLookupRepository())
+      ..registerLazySingleton<AuthRepository>(() => FakeAuthRepository())
+      ..registerLazySingleton<SaleRepository>(() => sale);
+
+    final authCubit = AuthCubit()..status = AuthStatus.signedIn;
+    final cart = CartCubit()
+      ..add(Product(
+        id: 1,
+        code: 'SC-01',
+        name: 'Signature Cut',
+        barcode: '',
+        mrp: 45,
+        tax: 0,
+        type: 'service',
+        categoryName: 'Hair',
+        duration: '45',
+        totalStock: 5,
+        thumbnail: '',
+      ));
 
     final router = GoRouter(
       initialLocation: '/review',
@@ -67,14 +76,20 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MultiProvider(
-      providers: [
-        Provider<ApiClient>.value(value: client),
-        Provider<ApiService>.value(value: service),
-        ChangeNotifierProvider<AuthController>.value(value: auth),
-        ChangeNotifierProvider<CartController>.value(value: cart),
-      ],
-      child: MaterialApp.router(theme: buildAstraTheme(AstraPresets.emeraldGold), routerConfig: router),
+    await tester.pumpWidget(ScreenUtilInit(
+      designSize: const Size(393, 865),
+      builder: (_, __) => MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>.value(value: authCubit),
+          BlocProvider<CartCubit>.value(value: cart),
+          BlocProvider<PrintSettingsCubit>(create: (_) => PrintSettingsCubit()),
+          BlocProvider<ReturnDraftCubit>(create: (_) => ReturnDraftCubit()),
+        ],
+        child: MaterialApp.router(
+          theme: buildAstraTheme(AstraPresets.emeraldGold),
+          routerConfig: router,
+        ),
+      ),
     ));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -87,9 +102,10 @@ void main() {
 
     expect(tester.takeException(), isNull, reason: 'charging must not throw');
     // The default Cash mode → paymentMethod "Cash", sendToWhatsapp flag present.
-    expect(service.lastPayload?['paymentMethod'], 'Cash');
-    expect(service.lastPayload?.containsKey('sendToWhatsapp'), true);
-    // We must now be on the Invoice screen.
-    expect(find.text('INV-9001'), findsWidgets, reason: 'should have navigated to the invoice');
+    expect(sale.lastPayload?['paymentMethod'], 'Cash');
+    expect(sale.lastPayload?.containsKey('sendToWhatsapp'), true);
+    // We must now be on the Invoice screen (the invoice number is shown in the
+    // hero line, e.g. "Invoice  INV-9001  ·  Jun 14, 2026").
+    expect(find.textContaining('INV-9001'), findsWidgets, reason: 'should have navigated to the invoice');
   });
 }

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:invo/features/sale/receipt_pdf.dart';
-import 'package:invo/models/models.dart';
-import 'package:invo/state/print_settings_controller.dart';
+import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/widgets/receipt_pdf.dart';
 
 Sale _demoSale() => Sale.fromJson({
       'id': '5001', 'invoice_no': 'INV-0001', 'date': '2026-06-14', 'status': 'completed', 'branch': 'Downtown',

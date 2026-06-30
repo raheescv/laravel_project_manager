@@ -1,65 +1,38 @@
 import 'package:flutter/material.dart';
 
-import 'app/app.dart';
-import 'core/api_client.dart';
-import 'core/api_service.dart';
-import 'core/config.dart';
-import 'core/storage.dart';
-import 'state/auth_controller.dart';
-import 'state/branch_controller.dart';
-import 'state/currency_controller.dart';
-import 'state/print_settings_controller.dart';
-import 'state/theme_controller.dart';
+import 'app.dart';
+import 'flavors.dart';
+import 'features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'shared/domain/constants/global_variables.dart';
+import 'shared/logic/branch_cubit/branch_cubit.dart';
+import 'shared/logic/currency_cubit/currency_cubit.dart';
+import 'shared/utils/service_locator_setup/setup.dart';
 
+/// Shared boot sequence. The flavor entry points (`main_dev.dart` /
+/// `main_prod.dart`) set `F.appFlavor` then call this; a plain `flutter run`
+/// lands here directly and defaults to the dev flavor.
 Future<void> main() async {
+  F.appFlavor ??= Flavor.dev;
   WidgetsFlutterBinding.ensureInitialized();
 
-  final storage = await Storage.create();
-  final config = AppConfig.resolve(
-    savedBaseUrl: storage.baseUrl,
-    savedTenant: storage.tenant,
-  );
+  await setUpServiceLocator();
 
-  // Startup diagnostic: confirms whether env.json was compiled in. If
-  // env.baseUrl is empty here, the --dart-define-from-file flag did NOT reach
-  // this build (you're running without the flag or it's a stale build).
-  debugPrint('[AstraConfig] env.baseUrl="${AppConfig.envBaseUrl}" '
-      'env.tenant="${AppConfig.envTenant}" env.host="${AppConfig.envHostHeader}" '
-      '-> active baseUrl=${config.baseUrl} tenant=${config.tenant} '
-      'host=${config.hostHeader}');
-
-  final client = ApiClient(storage: storage, config: config);
-  final service = ApiService(client);
-  final auth = AuthController(client: client, service: service, storage: storage);
+  final auth = serviceLocator<AuthCubit>();
   await auth.bootstrap();
 
-  final theme = ThemeController(storage);
-  final currency = CurrencyController(storage, service: service);
-  final branch = BranchController(
-    service: service,
-    client: client,
-    storage: storage,
-    userBranchId: int.tryParse(auth.user?.branchId ?? ''),
-  );
-  // Refresh the cached currency list when already signed in (the endpoint is
-  // authenticated). On a cold start with no network this no-ops and the cache
-  // is used.
-  if (auth.user != null) currency.refresh();
+  final currency = serviceLocator<CurrencyCubit>();
+  final branch = serviceLocator<BranchCubit>();
+
+  // Refresh the cached currency list when already signed in (authenticated
+  // endpoint; no-ops offline and the cache is used).
+  if (auth.user != null) currency.refreshCurrencies();
+
   // After a fresh sign-in, default the active branch to that user's home branch
   // and pull the latest currency list to cache for offline use.
   auth.onAuthenticated = (user) {
     branch.applyUserDefault(int.tryParse(user.branchId ?? ''));
-    currency.refresh();
+    currency.refreshCurrencies();
   };
-  final printSettings = PrintSettingsController(storage);
 
-  runApp(AstraApp(
-    auth: auth,
-    themeController: theme,
-    currencyController: currency,
-    branchController: branch,
-    printSettingsController: printSettings,
-    apiService: service,
-    apiClient: client,
-  ));
+  runApp(const InvoApp());
 }

@@ -1,68 +1,25 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:invo/core/api_client.dart';
-import 'package:invo/core/api_service.dart';
-import 'package:invo/core/config.dart';
-import 'package:invo/core/storage.dart';
-import 'package:invo/models/models.dart';
-import 'package:invo/state/catalog_controller.dart';
+import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// A catalog API that serves [total] products in pages, so we can drive the
-/// controller's load → loadMore (infinite scroll) accumulation in isolation.
-class PagingApiService extends ApiService {
-  PagingApiService(super.client, {this.total = 55});
-  final int total;
-  int productCalls = 0;
-  final List<int> requestedPages = [];
-
-  @override
-  Future<Paginated<Product>> products({
-    String? search,
-    int? mainCategoryId,
-    String? type,
-    int page = 1,
-    int perPage = 50,
-  }) async {
-    productCalls++;
-    requestedPages.add(page);
-    final last = (total / perPage).ceil();
-    final start = (page - 1) * perPage;
-    final count = (total - start).clamp(0, perPage);
-    final items = List.generate(
-      count,
-      (i) => Product(
-        id: start + i + 1,
-        code: 'P${start + i + 1}',
-        name: 'Item ${start + i + 1}',
-        barcode: '',
-        mrp: 10,
-        type: 'service',
-        categoryName: 'Hair',
-        duration: '',
-        totalStock: 1,
-        thumbnail: '',
-      ),
-    );
-    return Paginated(items: items, currentPage: page, lastPage: last, total: total);
-  }
-
-  @override
-  Future<List<Category>> categories() async => [Category(id: 1, name: 'Hair', productCount: total)];
-}
+import 'support/fake_lookup_repository.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<CatalogController> makeController(PagingApiService Function(ApiClient) build) async {
+  tearDown(() async => serviceLocator.reset());
+
+  Future<({CatalogCubit cat, FakeLookupRepository repo})> makeController({int total = 55}) async {
     SharedPreferences.setMockInitialValues({});
-    final storage = await Storage.create();
-    final client = ApiClient(storage: storage, config: AppConfig(baseUrl: 'http://test.local', tenant: ''));
-    return CatalogController(build(client));
+    final repo = FakeLookupRepository(total: total);
+    serviceLocator.registerLazySingleton<LookupRepository>(() => repo);
+    return (cat: CatalogCubit(), repo: repo);
   }
 
   test('load fetches page 1; loadMore appends until the last page, then stops', () async {
-    late PagingApiService svc;
-    final cat = await makeController((c) => svc = PagingApiService(c, total: 55)); // 55 → 3 pages of 20
+    final (cat: cat, repo: svc) = await makeController(total: 55); // 55 → 3 pages of 20
 
     await cat.load();
     expect(cat.products.length, 20);
@@ -80,6 +37,8 @@ void main() {
     final calls = svc.productCalls;
     await cat.loadMore();
     expect(svc.productCalls, calls);
+    // load() also fetches categories alongside page 1, but only the product
+    // pages are recorded on requestedPages.
     expect(svc.requestedPages, [1, 2, 3]);
 
     // No duplicate ids leaked through the accumulation.
@@ -87,8 +46,7 @@ void main() {
   });
 
   test('selecting a category reloads from page 1', () async {
-    late PagingApiService svc;
-    final cat = await makeController((c) => svc = PagingApiService(c, total: 55));
+    final (cat: cat, repo: svc) = await makeController(total: 55);
 
     await cat.load();
     await cat.loadMore();
