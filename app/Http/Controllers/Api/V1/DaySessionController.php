@@ -10,7 +10,7 @@ use App\Models\SaleDaySession;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Http\Request;
 
 #[Group('Mobile - Admin')]
 class DaySessionController extends Controller
