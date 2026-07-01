@@ -94,12 +94,25 @@ Route::prefix('v1')->group(function () {
             });
 
             // Sale return routes — a return is always raised against a paid sale.
+            // Access is permission-driven (Spatie) to match the web module:
+            // viewing, creating and editing returns are gated separately.
             Route::prefix('sale-return')->group(function () {
-                Route::get('/', [SaleReturnController::class, 'index'])->name('api.v1.sale-return.index');
-                Route::post('/', [SaleReturnController::class, 'store'])->name('api.v1.sale-return.store');
-                Route::get('/from-sale/{sale}', [SaleReturnController::class, 'fromSale'])->whereNumber('sale')->name('api.v1.sale-return.from-sale');
-                Route::get('/{saleReturn}', [SaleReturnController::class, 'show'])->whereNumber('saleReturn')->name('api.v1.sale-return.show');
-                Route::match(['put', 'patch'], '/{saleReturn}', [SaleReturnController::class, 'update'])->whereNumber('saleReturn')->name('api.v1.sale-return.update');
+                Route::get('/', [SaleReturnController::class, 'index'])
+                    ->middleware(EnsureMobilePermission::class.':sales return.view')
+                    ->name('api.v1.sale-return.index');
+                Route::post('/', [SaleReturnController::class, 'store'])
+                    ->middleware(EnsureMobilePermission::class.':sales return.create')
+                    ->name('api.v1.sale-return.store');
+                // Shared by the create pick-flow and the edit re-fetch, so allow either.
+                Route::get('/from-sale/{sale}', [SaleReturnController::class, 'fromSale'])->whereNumber('sale')
+                    ->middleware(EnsureMobilePermission::class.':sales return.create,sales return.edit')
+                    ->name('api.v1.sale-return.from-sale');
+                Route::get('/{saleReturn}', [SaleReturnController::class, 'show'])->whereNumber('saleReturn')
+                    ->middleware(EnsureMobilePermission::class.':sales return.view')
+                    ->name('api.v1.sale-return.show');
+                Route::match(['put', 'patch'], '/{saleReturn}', [SaleReturnController::class, 'update'])->whereNumber('saleReturn')
+                    ->middleware(EnsureMobilePermission::class.':sales return.edit')
+                    ->name('api.v1.sale-return.update');
             });
 
             // Customer routes
@@ -126,7 +139,7 @@ Route::prefix('v1')->group(function () {
                     ->middleware(EnsureMobilePermission::class.':report.sales overview')
                     ->name('api.v1.admin.dashboard');
                 Route::get('/reports', [ReportController::class, 'index'])
-                    ->middleware(EnsureMobilePermission::class.':report.sales overview')
+                    ->middleware(EnsureMobilePermission::class.':report.sale item')
                     ->name('api.v1.admin.reports');
                 Route::get('/day-status', [DaySessionController::class, 'status'])
                     ->middleware(EnsureMobilePermission::class.':day session.create')

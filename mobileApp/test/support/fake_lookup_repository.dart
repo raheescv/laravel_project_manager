@@ -78,6 +78,9 @@ class FakeLookupRepository implements LookupRepository {
   @override
   Future<({String? baseCode, List<Currency> currencies})> currencies() async =>
       (baseCode: null, currencies: const <Currency>[]);
+
+  @override
+  Future<double?> defaultQuantity() async => null;
 }
 
 /// A [FakeLookupRepository] preset with the four demo catalog items the widget

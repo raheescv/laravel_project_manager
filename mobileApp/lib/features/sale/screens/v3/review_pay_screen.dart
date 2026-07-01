@@ -23,6 +23,7 @@ class ReviewPayScreen extends StatefulWidget {
 
 class _ReviewPayScreenState extends State<ReviewPayScreen> {
   bool _busy = false;
+  bool _busyDraft = false;
   List<PaymentMethod> _methods = [];
 
   @override
@@ -61,6 +62,33 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           : 'Could not update the sale. Please try again.');
     }
     if (mounted) setState(() => _busy = false);
+  }
+
+  /// Parks the sale without completing it — no stock movement or journal entry
+  /// is posted until the draft is later reopened and charged.
+  Future<void> _saveDraft() async {
+    final cart = context.read<CartCubit>();
+    final service = serviceLocator<SaleRepository>();
+    setState(() => _busyDraft = true);
+    try {
+      await service.createSale(cart.toPayload(status: 'draft'));
+      cart.clear();
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(const SnackBar(
+            content: Text('Saved as draft'),
+            duration: Duration(milliseconds: 900),
+          ));
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) context.go('/sale');
+      }
+    } on ApiException catch (e) {
+      _error(e.message);
+    } catch (e) {
+      _error('Could not save the draft. Please try again.');
+    }
+    if (mounted) setState(() => _busyDraft = false);
   }
 
   Future<void> _openCustom() async {
@@ -131,18 +159,55 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           maxWidth: 560,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child: AstraButton(
-              label: cart.isEditing
-                  ? 'Update ${Money.of(cart.total)}'
-                  : settled
-                      ? 'Charge ${Money.of(cart.total)}'
-                      : 'Submit Anyway',
-              gold: true,
-              busy: _busy,
-              onTap: cart.isEmpty ? null : _charge,
-            ),
+            child: cart.isEditing
+                ? AstraButton(
+                    label: 'Update ${Money.of(cart.total)}',
+                    gold: true,
+                    busy: _busy,
+                    onTap: cart.isEmpty ? null : _charge,
+                  )
+                : Row(
+                    children: [
+                      _draftButton(
+                        onTap: cart.isEmpty || _busy || _busyDraft ? null : _saveDraft,
+                        busy: _busyDraft,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AstraButton(
+                          label: settled ? 'Charge ${Money.of(cart.total)}' : 'Submit Anyway',
+                          gold: true,
+                          busy: _busy,
+                          onTap: cart.isEmpty || _busy || _busyDraft ? null : _charge,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _draftButton({required VoidCallback? onTap, required bool busy}) {
+    final p = context.astra;
+    final t = context.astraTheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(t.rButton),
+          border: Border.all(color: p.primaryDark.withValues(alpha: 0.25), width: 1.4),
+        ),
+        child: busy
+            ? SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2.4, color: p.primaryDark),
+              )
+            : Text('Save Draft', style: ui(size: 14.5, weight: FontWeight.w800, color: p.primaryDark)),
       ),
     );
   }

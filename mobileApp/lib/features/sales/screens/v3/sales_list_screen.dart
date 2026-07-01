@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/domain/repository/sale_repository.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
@@ -254,8 +257,12 @@ class _SalesListScreenState extends State<SalesListScreen> {
   }
 
   /// Entry point into the Sales Return module — a compact translucent pill in the
-  /// header so it doesn't crowd the 4-tab bottom nav.
-  Widget _returnsAction() {
+  /// header so it doesn't crowd the 4-tab bottom nav. Hidden when the user
+  /// can't view returns.
+  Widget? _returnsAction() {
+    if (!context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnView)) {
+      return null;
+    }
     final p = context.astra;
     return GestureDetector(
       onTap: () => context.push('/sales-returns'),

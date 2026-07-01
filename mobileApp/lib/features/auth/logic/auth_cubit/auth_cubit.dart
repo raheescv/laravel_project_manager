@@ -35,6 +35,11 @@ class AuthCubit extends HolderCubit {
 
   AppConfig get config => _http.config;
 
+  /// Whether the signed-in user holds the given Spatie permission slug.
+  /// Mirrors the backend's EnsureMobilePermission gate so UI stays in sync
+  /// with what the API will actually allow.
+  bool hasPermission(String permission) => user?.hasPermission(permission) ?? false;
+
   Future<void> bootstrap() async {
     _http.onUnauthorized = _forceSignOut;
     final token = await _storage.readToken();
@@ -110,6 +115,18 @@ class AuthCubit extends HolderCubit {
       return (await _storage.readBiometric()) != null;
     } catch (_) {
       return false;
+    }
+  }
+
+  /// Mode ('pin' | 'cred') of the last successful sign-in, used to default the
+  /// login screen to whichever method the user actually uses.
+  Future<String?> lastLoginMode() async {
+    final saved = await _storage.readBiometric();
+    if (saved == null) return null;
+    try {
+      return (jsonDecode(saved) as Map<String, dynamic>)['mode'] as String?;
+    } catch (_) {
+      return null;
     }
   }
 

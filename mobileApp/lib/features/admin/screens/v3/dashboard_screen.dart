@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -191,8 +192,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? (when.isEmpty ? 'Opened today' : 'Opened $when')
         : (when.isEmpty ? 'Not opened yet today' : 'Last closed $when');
 
+    final canManageDaySession = context.read<AuthCubit>().hasPermission(PermissionSlug.daySession);
+
     return GestureDetector(
-      onTap: () => context.push('/day-session'),
+      onTap: canManageDaySession ? () => context.push('/day-session') : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
         decoration: BoxDecoration(

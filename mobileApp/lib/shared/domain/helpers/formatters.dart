@@ -79,6 +79,18 @@ class Dates {
   }
 }
 
+/// Formats a sale quantity for display: whole numbers show without decimals,
+/// fractional quantities show up to 3 decimals with trailing zeros trimmed
+/// (e.g. 1 → "1", 1.5 → "1.5", 2.500 → "2.5", 0.001 → "0.001"). Mirrors the web
+/// POS which allows quantities in 0.001 steps.
+String qtyLabel(num v) {
+  if (v == v.roundToDouble()) return v.toInt().toString();
+  var s = v.toStringAsFixed(3);
+  s = s.replaceFirst(RegExp(r'0+$'), '');
+  s = s.replaceFirst(RegExp(r'\.$'), '');
+  return s;
+}
+
 num asNum(dynamic v) {
   if (v == null) return 0;
   if (v is num) return v;

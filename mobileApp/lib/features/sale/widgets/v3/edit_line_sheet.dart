@@ -6,6 +6,7 @@ import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/qty_input_sheet.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
 
 /// Bottom sheet to edit a whole line: stylist, unit price, tax, discount, qty.
@@ -264,6 +265,7 @@ class _EditLineSheetState extends State<_EditLineSheet> {
 
   Widget _qtyCard() {
     final p = context.astra;
+    final step = context.read<CartCubit>().defaultQty;
     return AstraCard(
       radius: 15,
       padding: const EdgeInsets.all(11),
@@ -273,9 +275,18 @@ class _EditLineSheetState extends State<_EditLineSheet> {
           Text('QUANTITY', style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
           const SizedBox(height: 5),
           QtyStepper(
-            qty: _qty.toStringAsFixed(_qty % 1 == 0 ? 0 : 2),
-            onMinus: () => setState(() => _qty = (_qty - 1).clamp(1, 999)),
-            onPlus: () => setState(() => _qty = (_qty + 1).clamp(1, 999)),
+            qty: qtyLabel(_qty),
+            onMinus: () => setState(() => _qty = (_qty - step).clamp(0.001, 999999)),
+            onPlus: () => setState(() => _qty = (_qty + step).clamp(0.001, 999999)),
+            onTapValue: () async {
+              final v = await showQtyInputSheet(
+                context,
+                current: _qty,
+                title: widget.line.name,
+                subtitle: 'Enter quantity',
+              );
+              if (v != null) setState(() => _qty = v);
+            },
           ),
         ],
       ),

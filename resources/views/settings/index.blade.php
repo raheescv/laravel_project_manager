@@ -629,6 +629,12 @@
                         <div class="col-12 col-md-4 col-lg-3 border-end settings-tabs-column">
                             <h6 class="settings-tabs-heading d-none d-md-block">Categories</h6>
                             <ul class="nav flex-row flex-md-column nav-pills settings-tabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsMyPermissions" type="button" role="tab"
+                                        aria-selected="false" tabindex="-1">
+                                        <i class="fa fa-key"></i><span>My Permissions</span>
+                                    </button>
+                                </li>
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-selected="false"
@@ -761,6 +767,43 @@
                         </div>
                         <div class="col-12 col-md-8 col-lg-9 settings-content-column">
                             <div class="tab-content settings-content">
+                                <div id="tabsMyPermissions" class="tab-pane" role="tabpanel">
+                                    @php
+                                        $myPermissions = auth()->user()->getAllPermissions()->pluck('name')->sort()->values();
+                                        $myPermissionGroups = $myPermissions->groupBy(fn ($name) => \Illuminate\Support\Str::before($name, '.'));
+                                    @endphp
+                                    <div class="card">
+                                        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                            <div>
+                                                <h5 class="card-title mb-0 fw-bold">My Permissions</h5>
+                                                <small class="text-body-secondary">Permissions granted to your account &mdash; these also control what you can access in the mobile app.</small>
+                                            </div>
+                                            <span class="badge text-bg-primary-subtle text-primary border border-primary-subtle">
+                                                {{ $myPermissions->count() }} {{ \Illuminate\Support\Str::plural('permission', $myPermissions->count()) }}
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
+                                            @if (auth()->user()->is_admin || auth()->user()->is_super_admin)
+                                                <div class="alert alert-info mb-3">
+                                                    <i class="demo-psi-information me-1"></i>
+                                                    Your account is an administrator, so it implicitly has access to every feature regardless of the list below.
+                                                </div>
+                                            @endif
+                                            @forelse ($myPermissionGroups as $group => $permissions)
+                                                <div class="mb-3">
+                                                    <h6 class="text-uppercase text-body-secondary small fw-bold mb-2">{{ $group }}</h6>
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        @foreach ($permissions as $permission)
+                                                            <span class="badge text-bg-secondary-subtle text-body border">{{ $permission }}</span>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @empty
+                                                <p class="text-body-secondary mb-0">No explicit permissions are assigned to your account.</p>
+                                            @endforelse
+                                        </div>
+                                    </div>
+                                </div>
                                 @can('configuration.settings')
                                     <div id="tabsConfiguration" class="tab-pane" role="tabpanel">
                                         @livewire('settings.configurations')

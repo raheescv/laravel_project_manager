@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
@@ -256,6 +259,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   @override
   Widget build(BuildContext context) {
     final sub = _loading && _rows.isEmpty ? 'Loading…' : '$_total return${_total == 1 ? '' : 's'} found';
+    final canCreate = context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnCreate);
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBody: true,
@@ -266,19 +270,21 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
               leading: HeaderIconButton(icon: Icons.chevron_left, onTap: _back),
               title: 'Sales Returns',
               subtitle: sub,
-              trailing: HeaderIconButton(icon: Icons.add, gold: true, onTap: () => context.push('/sale-return/pick')),
+              trailing: canCreate
+                  ? HeaderIconButton(icon: Icons.add, gold: true, onTap: () => context.push('/sale-return/pick'))
+                  : null,
             ),
-            Expanded(child: _body()),
+            Expanded(child: _body(canCreate)),
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: AstraNavFab(onTap: () => context.push('/sale-return/pick')),
+      floatingActionButton: canCreate ? AstraNavFab(onTap: () => context.push('/sale-return/pick')) : null,
       bottomNavigationBar: AstraNavBar(activeIndex: 1, onTap: _onNavTap),
     );
   }
 
-  Widget _body() {
+  Widget _body(bool canCreate) {
     return RefreshIndicator(
       onRefresh: _load,
       child: MaxWidthBox(
@@ -297,8 +303,12 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
               EmptyState(
                 icon: Icons.assignment_return_outlined,
                 title: 'No returns found',
-                message: 'Try a wider date range, or start a return from a paid invoice.',
-                action: AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push('/sale-return/pick')),
+                message: canCreate
+                    ? 'Try a wider date range, or start a return from a paid invoice.'
+                    : 'Try a wider date range.',
+                action: canCreate
+                    ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push('/sale-return/pick'))
+                    : null,
               )
             else ...[
               for (final r in _rows)

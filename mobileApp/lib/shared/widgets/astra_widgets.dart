@@ -487,12 +487,15 @@ class StatusPill extends StatelessWidget {
   }
 }
 
-/// Quantity stepper (− value +).
+/// Quantity stepper (− value +). When [onTapValue] is supplied the value in the
+/// middle becomes tappable (underlined) so the user can type an exact quantity.
 class QtyStepper extends StatelessWidget {
-  const QtyStepper({super.key, required this.qty, this.onMinus, this.onPlus});
+  const QtyStepper(
+      {super.key, required this.qty, this.onMinus, this.onPlus, this.onTapValue});
   final String qty;
   final VoidCallback? onMinus;
   final VoidCallback? onPlus;
+  final VoidCallback? onTapValue;
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
@@ -505,13 +508,28 @@ class QtyStepper extends StatelessWidget {
             child: Icon(i, size: 13, color: fg),
           ),
         );
+    Widget value = Text(qty, style: ui(size: 14, weight: FontWeight.w800, color: p.ink));
+    if (onTapValue != null) {
+      value = GestureDetector(
+        onTap: onTapValue,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 34),
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: p.primary.withValues(alpha: 0.55), width: 1.5)),
+          ),
+          child: Text(qty, textAlign: TextAlign.center, style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
+        ),
+      );
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         btn(Icons.remove, p.isDark ? Colors.white12 : const Color(0xFFF3EFE6), p.ink, onMinus),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(qty, style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
+          child: value,
         ),
         btn(Icons.add, p.primary, Colors.white, onPlus),
       ],

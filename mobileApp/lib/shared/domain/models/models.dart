@@ -15,6 +15,7 @@ class ApiUser {
     required this.daySessionDate,
     this.daySessionOpenedAt = '',
     this.lastClosedSessionAt = '',
+    this.permissions = const [],
   });
 
   final String id;
@@ -29,8 +30,12 @@ class ApiUser {
   final String daySessionDate;
   final String daySessionOpenedAt; // 'Y-m-d H:i:s' while a day is open, else ''
   final String lastClosedSessionAt; // 'Y-m-d H:i:s' of the most recent close, else ''
+  final List<String> permissions; // Spatie permission slugs granted to this user
 
   bool get dayOpen => daySessionStatus == 'open';
+
+  /// Admins implicitly hold every permission; staff need the slug explicitly.
+  bool hasPermission(String permission) => isAdmin || permissions.contains(permission);
 
   factory ApiUser.fromJson(Map<String, dynamic> j) => ApiUser(
         id: asStr(j['id']),
@@ -45,6 +50,9 @@ class ApiUser {
         daySessionDate: asStr(j['sale_day_session_date']),
         daySessionOpenedAt: asStr(j['sale_day_session_opened_at']),
         lastClosedSessionAt: asStr(j['last_closed_session_at']),
+        permissions: (j['permissions'] as List<dynamic>? ?? [])
+            .map((e) => asStr(e))
+            .toList(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -60,6 +68,7 @@ class ApiUser {
         'sale_day_session_date': daySessionDate,
         'sale_day_session_opened_at': daySessionOpenedAt,
         'last_closed_session_at': lastClosedSessionAt,
+        'permissions': permissions,
       };
 
   /// Returns a copy with the day-session fields replaced — used after a
@@ -83,6 +92,7 @@ class ApiUser {
         daySessionDate: daySessionDate ?? this.daySessionDate,
         daySessionOpenedAt: daySessionOpenedAt ?? this.daySessionOpenedAt,
         lastClosedSessionAt: lastClosedSessionAt ?? this.lastClosedSessionAt,
+        permissions: permissions,
       );
 
   String get initial => name.isNotEmpty ? name[0].toUpperCase() : '?';

@@ -28,8 +28,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final ready = await context.read<AuthCubit>().biometricReady();
-      if (mounted) setState(() => _bioReady = ready);
+      final auth = context.read<AuthCubit>();
+      final lastMode = await auth.lastLoginMode();
+      final ready = await auth.biometricReady();
+      if (mounted) {
+        setState(() {
+          if (lastMode == 'cred') _mode = 'password';
+          _bioReady = ready;
+        });
+      }
     });
   }
 

@@ -90,4 +90,11 @@ class LookupService implements LookupRepository {
         .toList();
     return (baseCode: map['base_currency_code']?.toString(), currencies: list);
   }
+
+  @override
+  Future<double?> defaultQuantity() async {
+    final data = await _http.get('/settings/sale');
+    final map = Map<String, dynamic>.from(data as Map);
+    return double.tryParse(map['default_quantity']?.toString() ?? '');
+  }
 }

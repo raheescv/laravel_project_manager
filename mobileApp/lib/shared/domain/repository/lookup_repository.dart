@@ -25,4 +25,6 @@ abstract class LookupRepository {
   Future<List<PaymentMethod>> paymentMethods();
 
   Future<({String? baseCode, List<Currency> currencies})> currencies();
+
+  Future<double?> defaultQuantity();
 }

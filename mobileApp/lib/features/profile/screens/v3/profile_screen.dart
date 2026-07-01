@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
@@ -91,7 +92,10 @@ class ProfileScreen extends StatelessWidget {
                         _infoRow(context, Icons.location_on_outlined, 'Branch', branchName, trailing: true),
                         _infoRow(context, Icons.event_available_outlined, 'Day status',
                             user.dayOpen ? 'Open' : 'Closed',
-                            trailing: true, onTap: () => context.push('/day-session')),
+                            trailing: user.hasPermission(PermissionSlug.daySession),
+                            onTap: user.hasPermission(PermissionSlug.daySession)
+                                ? () => context.push('/day-session')
+                                : null),
                       ],
                     ),
                   ),

@@ -64,6 +64,12 @@ class LocalStorageService {
   Future<void> setBaseCurrencyCode(String v) =>
       _prefs.setString(LocalStorageKeys.baseCurrency, v);
 
+  // Sale item default quantity (Settings → Sale Configuration).
+  double? get defaultQuantity =>
+      _prefs.getDouble(LocalStorageKeys.defaultQuantity);
+  Future<void> setDefaultQuantity(double v) =>
+      _prefs.setDouble(LocalStorageKeys.defaultQuantity, v);
+
   int? get branchId => _prefs.getInt(LocalStorageKeys.branch);
   Future<void> setBranchId(int v) =>
       _prefs.setInt(LocalStorageKeys.branch, v);

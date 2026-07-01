@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -22,6 +24,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
   void initState() {
     super.initState();
     _scrollCtl.addListener(_onScroll);
+    // Skip the report fetches entirely when the user can't view reports —
+    // the endpoint would 403 (see EnsureMobilePermission on /admin/reports).
+    if (!context.read<AuthCubit>().hasPermission(PermissionSlug.report)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AdminCubit>()
         ..loadReports()
@@ -37,6 +42,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   /// Infinite scroll: pull the next page of the breakdown once near the bottom.
   void _onScroll() {
+    if (!context.read<AuthCubit>().hasPermission(PermissionSlug.report)) return;
     if (!_scrollCtl.hasClients) return;
     final pos = _scrollCtl.position;
     if (pos.pixels >= pos.maxScrollExtent - 500) {
@@ -47,6 +53,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminCubit>();
+    final canView = context.read<AuthCubit>().hasPermission(PermissionSlug.report);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -56,10 +63,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             EmeraldHeader(
               title: 'Reports',
               subtitle: 'Every angle on your sales',
-              trailing: HeaderIconButton(icon: Icons.download, gold: true),
+              trailing: canView ? HeaderIconButton(icon: Icons.download, gold: true) : null,
             ),
             Expanded(
-              child: MaxWidthBox(
+              child: canView
+                  ? MaxWidthBox(
                 maxWidth: 820,
                 child: ListView(
                   controller: _scrollCtl,
@@ -78,7 +86,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       if (section != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: section),
                   ],
                 ),
-              ),
+              )
+                  : const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: EmptyState(
+                          icon: Icons.lock_outline,
+                          title: 'Reports restricted',
+                          message: "You don't have permission to view sales reports. "
+                              'Ask an administrator to grant access.',
+                        ),
+                      ),
+                    ),
             ),
           ],
         ),

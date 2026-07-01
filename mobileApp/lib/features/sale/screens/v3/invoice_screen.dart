@@ -504,11 +504,18 @@ class InvoiceScreen extends StatelessWidget {
   void _preview(BuildContext context) {
     final settings = context.read<PrintSettingsCubit>().snapshot;
     final title = 'Invoice ${sale.invoiceNo.isEmpty ? sale.id : sale.invoiceNo}';
+    // The preview navbar picks up the selected theme preset's brand colour so it
+    // matches the rest of the app rather than the platform default.
+    final p = context.astra;
     Navigator.of(context).push(MaterialPageRoute<void>(
       fullscreenDialog: true,
       builder: (_) => Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(title: Text(title)),
+        appBar: AppBar(
+          title: Text(title),
+          backgroundColor: p.primary,
+          foregroundColor: Colors.white,
+        ),
         body: PdfPreview(
           // Always render the native thermal roll; the preview scales it to fill
           // the screen width so the receipt occupies the page edge-to-edge.
@@ -521,6 +528,13 @@ class InvoiceScreen extends StatelessWidget {
           padding: EdgeInsets.zero,
           previewPageMargin: EdgeInsets.zero,
           scrollViewDecoration: const BoxDecoration(color: Colors.white),
+          // The PdfPreview action bar (print/share/format icons) otherwise falls
+          // back to the platform Theme.primaryColor — pin it to the selected
+          // preset so the whole preview matches the chosen theme.
+          actionBarTheme: PdfActionBarTheme(
+            backgroundColor: p.primary,
+            iconColor: Colors.white,
+          ),
         ),
       ),
     ));

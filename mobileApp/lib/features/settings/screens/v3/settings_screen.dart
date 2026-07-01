@@ -48,9 +48,7 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: 11),
                   _printerCard(context),
                   const SizedBox(height: 11),
-                  _group(context, [
-                    (Icons.group_outlined, 'Staff & permissions'),
-                  ]),
+                  _permissionsCard(context),
                   const SizedBox(height: 11),
                   AstraCard(
                     radius: 14,
@@ -270,29 +268,30 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _group(BuildContext context, List<(IconData, String)> items) {
+  Widget _permissionsCard(BuildContext context) {
     final p = context.astra;
-    final t = context.astraTheme;
-    return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), boxShadow: t.softShadow),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
+    final user = context.watch<AuthCubit>().user;
+    final count = user?.permissions.length ?? 0;
+    final subtitle = (user?.isAdmin ?? false)
+        ? 'Administrator · full access'
+        : '$count ${count == 1 ? 'permission' : 'permissions'} granted';
+    return AstraCard(
+      radius: 14,
+      onTap: () => context.push('/permissions'),
+      child: Row(
         children: [
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) Container(height: 1, color: p.hairline),
-            Container(
-              color: p.card,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-              child: Row(
-                children: [
-                  IconChip(icon: items[i].$1, size: 28, radius: 8, bg: p.tint),
-                  const SizedBox(width: 11),
-                  Expanded(child: Text(items[i].$2, style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink))),
-                  Icon(Icons.chevron_right, color: p.textMuted, size: 18),
-                ],
-              ),
+          IconChip(icon: Icons.verified_user_outlined, size: 34, radius: 9, bg: p.tint),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('My permissions', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
             ),
-          ],
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
         ],
       ),
     );

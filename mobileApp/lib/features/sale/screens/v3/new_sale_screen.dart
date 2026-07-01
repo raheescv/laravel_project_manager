@@ -38,6 +38,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       // Default stylist = logged-in user.
       final user = context.read<AuthCubit>().user;
       final cart = context.read<CartCubit>();
+      // Pull the latest default quantity (Settings → Sale Configuration) so new
+      // lines and the stepper reflect the current web setting.
+      cart.syncDefaultQuantity();
       if (user != null && cart.stylistName.isEmpty) {
         cart.setStylist(int.tryParse(user.id), user.name);
       }
@@ -571,7 +574,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   Future<void> _pickClient() async {
     final cart = context.read<CartCubit>();
     final nameCtl = TextEditingController(text: cart.customerName == 'Walk-in' ? '' : cart.customerName);
-    final mobileCtl = TextEditingController(text: cart.customerMobile.isEmpty ? '1' : cart.customerMobile);
+    final mobileCtl = TextEditingController(text: cart.customerMobile == '9633155669' ? '' : cart.customerMobile);
     final p = context.astra;
     await showModalBottomSheet(
       context: context,

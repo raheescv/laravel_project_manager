@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -41,6 +43,9 @@ class ReturnReceiptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
+    final auth = context.read<AuthCubit>();
+    final canEdit = auth.hasPermission(PermissionSlug.saleReturnEdit);
+    final canCreate = auth.hasPermission(PermissionSlug.saleReturnCreate);
     return Scaffold(
       body: AstraBackground(
         child: SafeArea(
@@ -74,14 +79,16 @@ class ReturnReceiptScreen extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (_editable) ...[
+                        if (_editable && canEdit) ...[
                           _editReturnButton(context, p),
                           const SizedBox(height: 9),
                         ],
                         Row(
                           children: [
-                            Expanded(child: _action(context, Icons.assignment_return_outlined, 'New Return', () => context.go('/sale-return/pick'))),
-                            const SizedBox(width: 9),
+                            if (canCreate) ...[
+                              Expanded(child: _action(context, Icons.assignment_return_outlined, 'New Return', () => context.go('/sale-return/pick'))),
+                              const SizedBox(width: 9),
+                            ],
                             Expanded(
                               flex: 2,
                               child: AstraButton(label: 'Done', onTap: () => context.go('/sales-returns')),

@@ -16,8 +16,10 @@ import 'package:invo/features/sale_return/screens/v3/return_receipt_screen.dart'
 import 'package:invo/features/sale_return/screens/v3/return_review_screen.dart';
 import 'package:invo/features/sales/screens/v3/sales_list_screen.dart';
 import 'package:invo/features/sales_returns/screens/v3/sales_returns_list_screen.dart';
+import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/models/index.dart';
 
 import 'go_router_refresh_stream.dart';
@@ -31,7 +33,24 @@ GoRouter createRouter(AuthCubit auth) {
       final atLogin = state.matchedLocation == '/login';
       if (auth.status == AuthStatus.unknown) return null;
       if (!loggedIn) return atLogin ? null : '/login';
-      if (atLogin) return (auth.user?.isAdmin ?? false) ? '/home' : '/sale';
+      final canViewAdmin = auth.hasPermission(PermissionSlug.salesOverview);
+      if (atLogin) return canViewAdmin ? '/home' : '/sale';
+      if (state.matchedLocation == '/home' && !canViewAdmin) return '/sale';
+      if (state.matchedLocation == '/day-session' &&
+          !auth.hasPermission(PermissionSlug.daySession)) {
+        return '/sale';
+      }
+      // Sale-return module: viewing the list needs `.view`; the authoring flow
+      // (pick/compose/review, shared by create AND edit) needs create OR edit.
+      final loc = state.matchedLocation;
+      if (loc == '/sales-returns' && !auth.hasPermission(PermissionSlug.saleReturnView)) {
+        return '/sale';
+      }
+      final canAuthorReturn = auth.hasPermission(PermissionSlug.saleReturnCreate) ||
+          auth.hasPermission(PermissionSlug.saleReturnEdit);
+      if (loc.startsWith('/sale-return') && !canAuthorReturn) {
+        return '/sale';
+      }
       return null;
     },
     routes: [
@@ -79,6 +98,8 @@ GoRouter createRouter(AuthCubit auth) {
       GoRoute(
           path: '/print-settings',
           builder: (_, __) => const PrintSettingsScreen()),
+      GoRoute(
+          path: '/permissions', builder: (_, __) => const PermissionsScreen()),
     ],
   );
 }

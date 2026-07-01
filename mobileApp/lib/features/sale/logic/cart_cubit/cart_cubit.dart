@@ -1,5 +1,8 @@
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 
 /// One editable line on the ticket. Discount can be a percentage or a flat
 /// amount; tax is a percentage. Mirrors the "Edit line item" sheet fields.
@@ -10,7 +13,7 @@ class CartLine {
     required this.code,
     required this.type,
     required this.unitPrice,
-    this.qty = 1,
+    required this.qty,
     this.discountValue = 0,
     this.discountIsPercent = true,
     this.taxPercent = 0,
@@ -102,6 +105,29 @@ class CartCubit extends HolderCubit {
   List<CustomPayment> customPayments = [];
   bool sendToWhatsapp = false;
 
+  LocalStorageService get _storage => serviceLocator<LocalStorageService>();
+  LookupRepository get _lookup => serviceLocator<LookupRepository>();
+
+  /// The store's configured default quantity (Settings → Sale Configuration
+  /// → Default Quantity), used both as a new line's starting qty and as the
+  /// quantity stepper's increment.
+  double get defaultQty => _storage.defaultQuantity ?? 1;
+
+  /// Pulls the latest default quantity from the server and caches it so new
+  /// lines and the stepper reflect the current web setting. Called when the
+  /// New Sale screen opens; no-ops offline (the cached value is kept).
+  Future<void> syncDefaultQuantity() async {
+    try {
+      final qty = await _lookup.defaultQuantity();
+      if (qty != null && qty != _storage.defaultQuantity) {
+        await _storage.setDefaultQuantity(qty);
+        refresh();
+      }
+    } catch (_) {
+      // Offline or server error — keep the cached value.
+    }
+  }
+
   bool get isEmpty => _lines.isEmpty;
   int get count => _lines.fold(0, (a, l) => a + l.qty.round());
 
@@ -126,7 +152,7 @@ class CartCubit extends HolderCubit {
   void add(Product p) {
     final existing = _lines.where((l) => l.productId == p.id).firstOrNull;
     if (existing != null) {
-      existing.qty += 1;
+      existing.qty += defaultQty;
     } else {
       _lines.add(CartLine(
         productId: p.id,
@@ -134,6 +160,7 @@ class CartCubit extends HolderCubit {
         code: p.code,
         type: p.type,
         unitPrice: p.mrp,
+        qty: defaultQty,
         taxPercent: p.tax,
         thumbnail: p.thumbnail,
         employeeId: stylistId,
@@ -144,8 +171,19 @@ class CartCubit extends HolderCubit {
   }
 
   void changeQty(CartLine line, double delta) {
-    line.qty = (line.qty + delta).clamp(0, 999);
+    line.qty = (line.qty + delta).clamp(0, 999999);
     if (line.qty <= 0) _lines.remove(line);
+    refresh();
+  }
+
+  /// Sets an exact (typed) quantity on a line. A value of 0 or less removes the
+  /// line, matching the stepper's behaviour.
+  void setQty(CartLine line, double qty) {
+    if (qty <= 0) {
+      _lines.remove(line);
+    } else {
+      line.qty = qty.clamp(0.001, 999999);
+    }
     refresh();
   }
 
@@ -317,7 +355,9 @@ class CartCubit extends HolderCubit {
   }
 
   /// Build the POST /sale payload (matches Sale StoreRequest exactly).
-  Map<String, dynamic> toPayload() => {
+  /// Pass status: 'draft' to park the sale without completing it.
+  Map<String, dynamic> toPayload({String? status}) => {
+        if (status != null) 'status': status,
         'customerName': customerName,
         if (customerMobile.isNotEmpty) 'phoneNumber': customerMobile,
         'items': _lines

@@ -8,6 +8,7 @@ import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/edit_line_sheet.dart';
+import 'package:invo/shared/widgets/qty_input_sheet.dart';
 
 /// Shared cart building blocks used by both the full-screen Cart (phone) and the
 /// persistent cart panel (tablet split view).
@@ -82,14 +83,24 @@ Widget cartLineCard(BuildContext context, CartLine line) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               QtyStepper(
-                qty: line.qty.toStringAsFixed(line.qty % 1 == 0 ? 0 : 2),
+                qty: qtyLabel(line.qty),
                 onMinus: () {
                   HapticFeedback.selectionClick();
-                  cart.changeQty(line, -1);
+                  cart.changeQty(line, -cart.defaultQty);
                 },
                 onPlus: () {
                   HapticFeedback.selectionClick();
-                  cart.changeQty(line, 1);
+                  cart.changeQty(line, cart.defaultQty);
+                },
+                onTapValue: () async {
+                  HapticFeedback.selectionClick();
+                  final v = await showQtyInputSheet(
+                    context,
+                    current: line.qty,
+                    title: line.name,
+                    subtitle: 'Enter quantity',
+                  );
+                  if (v != null) cart.setQty(line, v);
                 },
               ),
               GestureDetector(
