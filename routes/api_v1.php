@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
+use App\Http\Controllers\Api\V1\SaleSettingController;
 use App\Http\Controllers\Api\V1\SizeController;
 use App\Http\Middleware\EnsureMobilePermission;
 use App\Http\Middleware\IdentifyTenant;
@@ -114,6 +115,9 @@ Route::prefix('v1')->group(function () {
 
             // Currencies (multi-currency list + base, cached by the app for offline use)
             Route::get('settings/currencies', [CurrencyController::class, 'index'])->name('api.v1.settings.currencies');
+
+            // Sale settings (default quantity, cached by the app for offline use)
+            Route::get('settings/sale', [SaleSettingController::class, 'index'])->name('api.v1.settings.sale');
 
             // Admin routes — access is permission-driven (Spatie), not the is_admin
             // flag, so any staff role granted the permission can reach them.

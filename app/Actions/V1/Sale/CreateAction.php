@@ -51,7 +51,7 @@ class CreateAction
             $this->guardAgainstDuplicate($branchId, (int) $customer->id, (int) $user->id, $items, $payment['paid']);
 
             $data = [
-                'status' => 'completed',
+                'status' => $request->validated('status') ?: 'completed',
                 'branch_id' => $branchId,
                 'account_id' => $customer->id,
                 'customer_name' => $customer->name,

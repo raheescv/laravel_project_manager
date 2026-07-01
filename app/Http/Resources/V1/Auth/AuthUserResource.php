@@ -32,6 +32,7 @@ class AuthUserResource extends JsonResource
             'email' => $this->email,
             'mobile' => $this->mobile,
             'is_admin' => (bool) $this->is_admin,
+            'permissions' => $this->getAllPermissions()->pluck('name')->values(),
             'designation' => $this->designation?->name,
             'branch_id' => $default_branch_id,
             'sale_day_session_date' => $date,

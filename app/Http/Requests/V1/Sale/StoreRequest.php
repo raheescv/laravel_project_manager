@@ -42,6 +42,9 @@ class StoreRequest extends FormRequest
             'payments.*.payment_method_id' => ['required_with:payments', 'integer'],
             'payments.*.amount' => ['required_with:payments', 'numeric', 'min:0'],
             'sendToWhatsapp' => ['nullable', 'boolean'],
+            // Omitted (or "completed") finalizes the sale; "draft" parks it without
+            // touching stock or posting a journal entry.
+            'status' => ['nullable', 'string', 'in:draft,completed'],
         ];
     }
 
