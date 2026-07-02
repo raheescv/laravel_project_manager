@@ -54,7 +54,7 @@
                 </div>
                 <div class="col-md-2" wire:ignore>
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-user-cog text-danger me-1"></i>Technician</label>
-                    <select id="filter_technician_id" class="form-select form-select-sm">
+                    <select id="filter_technician_id" class="">
                         <option value="">All Technicians</option>
                     </select>
                 </div>
@@ -78,7 +78,7 @@
                 </div>
                 <div class="col-md-2" wire:ignore>
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-exclamation-circle text-warning me-1"></i>Complaint</label>
-                    <select id="filter_complaint_id" class="form-select form-select-sm">
+                    <select id="filter_complaint_id" class="">
                         <option value="">All Complaints</option>
                     </select>
                 </div>
