@@ -356,7 +356,7 @@
         </table>
     </div>
 
-    @if($footerLogoUrl)
+    @if($footerLogoUrl || $bondPaperMode)
         <footer>
             @if($bondPaperMode)
                 <div style="width: 100%; height: {{ $footerHeight }}px;"></div>

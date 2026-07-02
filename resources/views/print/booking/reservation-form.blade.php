@@ -416,7 +416,7 @@
         @endif
     </div>
 
-    @if($footerLogoUrl)
+    @if($footerLogoUrl || $bondPaperMode)
         <footer style="position: fixed; bottom: 0; left: 0; right: 0; margin-bottom: 10px;">
             @if($bondPaperMode)
                 <div style="width: 100%; height: {{ $footerHeight }}px;"></div>
