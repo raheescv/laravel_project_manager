@@ -2,17 +2,19 @@
 
 namespace App\Livewire\Maintenance;
 
-use App\Enums\Maintenance\MaintenanceComplaintStatus;
+use App\Actions\Maintenance\Complaint\AddAttachmentsAction;
+use App\Actions\Maintenance\Complaint\AddNoteAction;
+use App\Actions\Maintenance\Complaint\AddSupplyItemAction;
+use App\Actions\Maintenance\Complaint\CompleteAction;
+use App\Actions\Maintenance\Complaint\DeleteAttachmentAction;
+use App\Actions\Maintenance\Complaint\DeleteNoteAction;
+use App\Actions\Maintenance\Complaint\DeleteSupplyItemAction;
+use App\Actions\Maintenance\Complaint\SaveRemarkAction;
+use App\Actions\Maintenance\Complaint\UpdateSupplyItemAction;
 use App\Models\Branch;
 use App\Models\MaintenanceComplaint;
 use App\Models\Product;
-use App\Models\SupplyRequest;
-use App\Models\SupplyRequestImage;
-use App\Models\SupplyRequestItem;
-use App\Models\SupplyRequestNote;
-use Exception;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -227,40 +229,6 @@ class Complaint extends Component
         }
     }
 
-    // ── Supply Request: Create or get ──
-
-    private function getOrCreateSupplyRequest()
-    {
-        $mc = MaintenanceComplaint::with('maintenance')->find($this->complaint_id);
-
-        if ($mc->supply_request_id) {
-            return SupplyRequest::find($mc->supply_request_id);
-        }
-
-        $maintenance = $mc->maintenance;
-        $sr = SupplyRequest::create([
-            'tenant_id' => $mc->tenant_id,
-            'branch_id' => $mc->branch_id,
-            'property_id' => $maintenance->property_id,
-            'property_group_id' => $maintenance->property_group_id,
-            'property_building_id' => $maintenance->property_building_id,
-            'property_type_id' => $maintenance->property_type_id,
-            'order_no' => time(),
-            'date' => now()->format('Y-m-d'),
-            'type' => 'Add',
-            'status' => 'requirement',
-            'total' => 0,
-            'other_charges' => 0,
-            'grand_total' => 0,
-            'created_by' => Auth::id(),
-        ]);
-
-        $mc->supply_request_id = $sr->id;
-        $mc->save();
-
-        return $sr;
-    }
-
     // ── Methods expected by the shared partial ──
 
     public function updated($key, $value): void
@@ -290,53 +258,31 @@ class Complaint extends Component
 
     public function addCart(): void
     {
-        try {
-            if (! $this->item['branch_id']) {
-                throw new Exception('Please select a store');
-            }
-            if (! $this->item['product_id']) {
-                throw new Exception('Please select an asset/product');
-            }
+        $response = (new AddSupplyItemAction())->execute($this->complaint_id, [
+            'branch_id' => $this->item['branch_id'],
+            'product_id' => $this->item['product_id'],
+            'mode' => $this->item['mode'] ?? 'New',
+            'quantity' => $this->item['quantity'] ?? 1,
+            'unit_price' => $this->item['unit_price'] ?? null,
+            'remarks' => $this->item['remarks'] ?? '',
+        ], Auth::id());
 
-            DB::beginTransaction();
-            $sr = $this->getOrCreateSupplyRequest();
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
 
-            $branch = Branch::find($this->item['branch_id']);
-            $product = Product::find($this->item['product_id']);
+            return;
+        }
 
-            $this->item['branch_name'] = $branch?->name ?? '';
-            $this->item['product_name'] = $product?->name ?? '';
-            $this->item['edit_flag'] = false;
+        $savedItem = $this->item;
+        $this->initItem();
+        $this->item['branch_id'] = $savedItem['branch_id'];
 
-            // Save to DB immediately
-            SupplyRequestItem::create([
-                'supply_request_id' => $sr->id,
-                'product_id' => $this->item['product_id'],
-                'branch_id' => $this->item['branch_id'],
-                'mode' => $this->item['mode'] ?? 'New',
-                'quantity' => $this->item['quantity'] ?? 1,
-                'unit_price' => $this->item['unit_price'] ?? 0,
-                'total' => $this->item['total'] ?? 0,
-                'remarks' => $this->item['remarks'] ?? '',
-            ]);
-
-            $this->updateSupplyTotals($sr);
-            DB::commit();
-
-            $savedItem = $this->item;
-            $this->initItem();
-            $this->item['branch_id'] = $savedItem['branch_id'];
-
-            $this->loadData();
-            $this->dispatch('success', ['message' => 'Successfully added to cart']);
-            if ($savedItem['barcode']) {
-                $this->dispatch('barcodeAutofocus');
-            } else {
-                $this->dispatch('openProductSelectBox');
-            }
-        } catch (Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+        $this->loadData();
+        $this->dispatch('success', ['message' => $response['message']]);
+        if ($savedItem['barcode']) {
+            $this->dispatch('barcodeAutofocus');
+        } else {
+            $this->dispatch('openProductSelectBox');
         }
     }
 
@@ -344,18 +290,17 @@ class Complaint extends Component
     {
         $this->items[$key]['edit_flag'] = ! $this->items[$key]['edit_flag'];
 
-        // If toggling off (saving), persist to DB
+        // If toggling off (saving), persist to DB via the shared action.
         if (! $this->items[$key]['edit_flag'] && isset($this->items[$key]['id'])) {
-            $item = SupplyRequestItem::find($this->items[$key]['id']);
-            if ($item) {
-                $item->update([
-                    'quantity' => $this->items[$key]['quantity'],
-                    'unit_price' => $this->items[$key]['unit_price'],
-                    'total' => $this->items[$key]['total'],
-                    'remarks' => $this->items[$key]['remarks'] ?? '',
-                    'branch_id' => $this->items[$key]['branch_id'] ?? $item->branch_id,
-                ]);
-                $this->updateSupplyTotals($item->supplyRequest);
+            $response = (new UpdateSupplyItemAction())->execute($this->items[$key]['id'], [
+                'quantity' => $this->items[$key]['quantity'],
+                'unit_price' => $this->items[$key]['unit_price'],
+                'remarks' => $this->items[$key]['remarks'] ?? '',
+                'branch_id' => $this->items[$key]['branch_id'] ?? null,
+            ]);
+
+            if (! $response['success']) {
+                $this->dispatch('error', ['message' => $response['message']]);
             }
         }
 
@@ -378,47 +323,38 @@ class Complaint extends Component
     public function deleteItem($key): void
     {
         abort_unless(auth()->user()?->can('supply request.delete item'), 403);
-        try {
-            DB::beginTransaction();
-            if (isset($this->items[$key]['id'])) {
-                $item = SupplyRequestItem::find($this->items[$key]['id']);
-                if ($item) {
-                    $sr = $item->supplyRequest;
-                    $item->delete();
-                    $this->updateSupplyTotals($sr);
-                }
+
+        if (isset($this->items[$key]['id'])) {
+            $response = (new DeleteSupplyItemAction())->execute($this->items[$key]['id']);
+            if (! $response['success']) {
+                $this->dispatch('error', ['message' => $response['message']]);
+
+                return;
             }
-            unset($this->items[$key]);
-            $this->items = array_values($this->items);
-            $this->mainCalculator();
-            DB::commit();
-            $this->dispatch('success', ['message' => 'Successfully deleted item']);
-        } catch (Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+
+        unset($this->items[$key]);
+        $this->items = array_values($this->items);
+        $this->mainCalculator();
+        $this->dispatch('success', ['message' => 'Successfully deleted item']);
     }
 
     public function deleteImage($key): void
     {
-        // TODO(C7): unmapped (candidate: 'supply request.delete item')
-        try {
-            DB::beginTransaction();
-            if (isset($this->imageList[$key]['id'])) {
-                $image = SupplyRequestImage::find($this->imageList[$key]['id']);
-                if ($image) {
-                    $image->deleteFile();
-                    $image->delete();
-                }
-            }
-            unset($this->imageList[$key]);
-            $this->imageList = array_values($this->imageList);
-            DB::commit();
-            $this->dispatch('success', ['message' => 'Successfully deleted image']);
-        } catch (Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+        if (! isset($this->imageList[$key]['id'])) {
+            return;
         }
+
+        $response = (new DeleteAttachmentAction())->execute($this->imageList[$key]['id']);
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+
+        unset($this->imageList[$key]);
+        $this->imageList = array_values($this->imageList);
+        $this->dispatch('success', ['message' => $response['message']]);
     }
 
     public function addNote(): void
@@ -427,123 +363,68 @@ class Complaint extends Component
             return;
         }
 
-        try {
-            DB::beginTransaction();
-            $sr = $this->getOrCreateSupplyRequest();
+        $response = (new AddNoteAction())->execute($this->complaint_id, $this->note, Auth::id());
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
 
-            SupplyRequestNote::create([
-                'supply_request_id' => $sr->id,
-                'note' => $this->note,
-                'created_by' => Auth::id(),
-            ]);
-
-            DB::commit();
-            $this->note = '';
-            $this->loadData();
-        } catch (Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            return;
         }
+
+        $this->note = '';
+        $this->loadData();
     }
 
     public function deleteNote($key): void
     {
-        // TODO(C7): unmapped (candidate: 'supply request.delete item')
-        try {
-            if (isset($this->notes[$key]['id'])) {
-                SupplyRequestNote::destroy($this->notes[$key]['id']);
+        if (isset($this->notes[$key]['id'])) {
+            $response = (new DeleteNoteAction())->execute($this->notes[$key]['id']);
+            if (! $response['success']) {
+                $this->dispatch('error', ['message' => $response['message']]);
+
+                return;
             }
-            unset($this->notes[$key]);
-            $this->notes = array_values($this->notes);
-        } catch (Exception $e) {
-            $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+
+        unset($this->notes[$key]);
+        $this->notes = array_values($this->notes);
     }
 
     public function updatedImages(): void
     {
-        try {
-            DB::beginTransaction();
-            $sr = $this->getOrCreateSupplyRequest();
+        $response = (new AddAttachmentsAction())->execute($this->complaint_id, $this->images, Auth::id());
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
 
-            foreach ($this->images as $file) {
-                $image = new SupplyRequestImage();
-                $result = $image->storeFile($file, $sr->id);
-                if (! ($result['success'] ?? false)) {
-                    throw new Exception($result['message'] ?? 'Failed to upload file.');
-                }
-                $image->supply_request_id = $sr->id;
-                $image->name = $file->getClientOriginalName();
-                $image->type = $result['type'] ?? $file->getClientMimeType();
-                $image->path = $result['path'];
-                $image->save();
-            }
-
-            DB::commit();
-            $this->images = [];
-            $this->loadData();
-            $this->dispatch('success', ['message' => 'Files uploaded successfully.']);
-        } catch (Exception $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            return;
         }
-    }
 
-    private function updateSupplyTotals($sr): void
-    {
-        $sr->total = $sr->items()->sum('total');
-        $sr->grand_total = $sr->total + ($sr->other_charges ?? 0);
-        $sr->save();
+        $this->images = [];
+        $this->loadData();
+        $this->dispatch('success', ['message' => $response['message']]);
     }
 
     // ── Save / Complete ──
 
     public function save($status = 'pending')
     {
-        // TODO(C7): review save authz (dual-purpose: saves technician remark when pending, completes complaint when $status==='completed' → 'maintenance.complete'; gating whole method would block legitimate remark saves)
-        try {
-            if ($status === 'completed' && empty(trim($this->technician_remark))) {
-                $this->addError('technician_remark', 'The technician remark is required to complete.');
+        if ($status === 'completed' && empty(trim($this->technician_remark))) {
+            $this->addError('technician_remark', 'The technician remark is required to complete.');
 
-                return;
-            }
-
-            DB::beginTransaction();
-
-            $mc = MaintenanceComplaint::find($this->complaint_id);
-            $mc->technician_remark = $this->technician_remark;
-            $mc->updated_by = Auth::id();
-
-            if ($status === 'completed') {
-                $mc->status = MaintenanceComplaintStatus::Completed;
-                $mc->completed_by = Auth::id();
-                $mc->completed_at = now();
-            }
-
-            $mc->save();
-
-            // Auto-complete maintenance if all complaints done
-            if ($status === 'completed') {
-                $maintenance = $mc->maintenance;
-                $allDone = $maintenance->maintenanceComplaints()
-                    ->whereNotIn('status', ['completed', 'cancelled'])
-                    ->count() === 0;
-
-                if ($allDone) {
-                    $maintenance->status = 'completed';
-                    $maintenance->completed_by = Auth::id();
-                    $maintenance->completed_at = now();
-                    $maintenance->save();
-                }
-            }
-
-            DB::commit();
-            $this->dispatch('success', ['message' => $status === 'completed' ? 'Complaint completed successfully.' : 'Saved successfully.']);
-            $this->loadData();
-        } catch (\Throwable $e) {
-            DB::rollback();
-            $this->dispatch('error', ['message' => $e->getMessage()]);
+            return;
         }
+
+        $response = $status === 'completed'
+            ? (new CompleteAction())->execute($this->complaint_id, Auth::id(), $this->technician_remark)
+            : (new SaveRemarkAction())->execute($this->complaint_id, $this->technician_remark, Auth::id());
+
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+
+        $this->dispatch('success', ['message' => $status === 'completed' ? 'Complaint completed successfully.' : 'Saved successfully.']);
+        $this->loadData();
     }
 
     public function render()
