@@ -11,6 +11,7 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 
 import '../../logic/complaints_cubit/complaints_cubit.dart';
 import '../../widgets/v3/complaint_card.dart';
+import '../../widgets/v3/status_style.dart';
 
 class _StatusTab {
   const _StatusTab(this.label, this.value);
@@ -23,6 +24,16 @@ const _statusTabs = <_StatusTab>[
   _StatusTab('Assigned', 'assigned'),
   _StatusTab('Completed', 'completed'),
   _StatusTab('All', null),
+];
+
+/// Priority filter options — (value, label, backend colour name). A null value
+/// clears the filter ("All"); the rest map to MaintenancePriority cases.
+const _priorityOptions = <(String?, String, String)>[
+  (null, 'All', ''),
+  ('critical', 'Critical', 'danger'),
+  ('high', 'High', 'warning'),
+  ('medium', 'Medium', 'info'),
+  ('low', 'Low', 'secondary'),
 ];
 
 const _datePresets = <(String, String)>[
@@ -127,6 +138,8 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
             const SizedBox(height: 12),
             _statusSegments(context, cubit),
             const SizedBox(height: 12),
+            _priorityRow(context, cubit),
+            const SizedBox(height: 10),
             _dateRow(context, cubit),
           ],
         ),
@@ -273,6 +286,67 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// Horizontal priority filter — colour-coded chips that light up in the
+  /// priority's own tint when active, so urgency reads at a glance.
+  Widget _priorityRow(BuildContext context, ComplaintsCubit cubit) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final opt in _priorityOptions) ...[
+            _priorityChip(context, cubit, opt.$1, opt.$2, opt.$3),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _priorityChip(
+      BuildContext context, ComplaintsCubit cubit, String? value, String label, String colorName) {
+    final p = context.astra;
+    final t = context.astraTheme;
+    final active = cubit.priority == value;
+    final tint = colorName.isEmpty ? null : astraTint(context, colorName);
+    final accent = tint?.fg ?? p.primary;
+
+    return GestureDetector(
+      onTap: () => cubit.setPriority(value),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: active ? (tint?.bg ?? p.tint) : p.card,
+          borderRadius: BorderRadius.circular(t.rChip),
+          border: Border.all(
+            width: 1.2,
+            color: active ? accent.withValues(alpha: 0.55) : Colors.transparent,
+          ),
+          boxShadow: active ? null : t.softShadow,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (tint != null) ...[
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 7),
+            ],
+            Text(label,
+                style: ui(
+                    size: 12.5,
+                    weight: FontWeight.w700,
+                    color: active ? accent : p.textSecondary)),
+          ],
+        ),
       ),
     );
   }

@@ -19,6 +19,7 @@ class IndexRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', 'string', 'in:pending,assigned,completed,outstanding,cancelled'],
+            'priority' => ['nullable', 'string', 'in:low,medium,high,critical'],
             'from_date' => ['nullable', 'date'],
             'to_date' => ['nullable', 'date', 'after_or_equal:from_date'],
             'sort_direction' => ['nullable', 'string', 'in:asc,desc'],

@@ -24,6 +24,7 @@ class TechnicianService implements TechnicianRepository {
   @override
   Future<Map<String, dynamic>> complaints({
     String? status,
+    String? priority,
     String? search,
     String? fromDate,
     String? toDate,
@@ -32,6 +33,7 @@ class TechnicianService implements TechnicianRepository {
   }) async {
     final data = await _http.get(EndPoints.technicianComplaints, query: {
       if (status != null && status.isNotEmpty) 'status': status,
+      if (priority != null && priority.isNotEmpty) 'priority': priority,
       if (search != null && search.isNotEmpty) 'search': search,
       if (fromDate != null) 'from_date': fromDate,
       if (toDate != null) 'to_date': toDate,

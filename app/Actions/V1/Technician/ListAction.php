@@ -60,6 +60,7 @@ class ListAction
     {
         $query
             ->when($filters['status'] ?? '', fn (Builder $q, $value) => $q->where('maintenance_complaints.status', $value))
+            ->when($filters['priority'] ?? '', fn (Builder $q, $value) => $q->whereHas('maintenance', fn (Builder $m) => $m->where('priority', $value)))
             ->when($filters['search'] ?? '', function (Builder $q, $search) {
                 $q->where(function (Builder $inner) use ($search) {
                     $inner->where('maintenance_complaints.technician_remark', 'like', "%{$search}%")

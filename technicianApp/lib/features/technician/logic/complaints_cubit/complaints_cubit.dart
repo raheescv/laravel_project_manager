@@ -32,6 +32,7 @@ class ComplaintsCubit extends HolderCubit {
 
   // Filters
   String? status; // null = all
+  String? priority; // null = all — low | medium | high | critical
   String search = '';
   String datePreset = 'month'; // today | 7d | 30d | month | all | custom
   late DateTime startDate;
@@ -42,6 +43,12 @@ class ComplaintsCubit extends HolderCubit {
   void setStatus(String? value) {
     if (status == value) return;
     status = value;
+    load();
+  }
+
+  void setPriority(String? value) {
+    if (priority == value) return;
+    priority = value;
     load();
   }
 
@@ -122,6 +129,7 @@ class ComplaintsCubit extends HolderCubit {
 
   Future<Map<String, dynamic>> _fetch(int page) => _repo.complaints(
         status: status,
+        priority: priority,
         search: search,
         fromDate: _rangeActive ? Dates.iso(startDate) : null,
         toDate: _rangeActive ? Dates.iso(endDate) : null,

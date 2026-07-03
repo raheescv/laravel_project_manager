@@ -46,6 +46,17 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
       _seededFor = detail.id;
     }
 
+    final current = detail == null ? null : _currentComplaint(detail);
+
+    // The header identity (REG # + status pill) and the property card hero
+    // (category + complaint) don't repeat each other; the subtitle stays a
+    // quiet locator so nothing is duplicated. Building/group carries it best.
+    final headerSubtitle = detail == null
+        ? null
+        : (detail.propertyInfo.building.isNotEmpty
+            ? detail.propertyInfo.building
+            : (detail.propertyInfo.group.isNotEmpty ? detail.propertyInfo.group : null));
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
@@ -54,13 +65,13 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
             EmeraldHeader(
               leading: HeaderIconButton(icon: Icons.arrow_back, onTap: () => context.pop()),
               title: detail != null ? 'REG #${detail.propertyInfo.registrationId}' : 'Complaint',
-              subtitle: detail?.statusLabel,
+              subtitle: headerSubtitle,
               trailing: detail != null
                   ? AstraStatusPill(label: detail.statusLabel, colorName: detail.statusColor)
                   : null,
             ),
             Expanded(
-              child: MaxWidthBox(maxWidth: 640, child: _body(context, cubit, detail)),
+              child: MaxWidthBox(maxWidth: 640, child: _body(context, cubit, detail, current)),
             ),
           ],
         ),
@@ -68,7 +79,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     );
   }
 
-  Widget _body(BuildContext context, ComplaintDetailCubit cubit, ComplaintDetail? detail) {
+  Widget _body(BuildContext context, ComplaintDetailCubit cubit, ComplaintDetail? detail, SiblingComplaint? current) {
     final p = context.astra;
     if (cubit.loading && detail == null) {
       return Center(child: CircularProgressIndicator(color: p.primary));
@@ -89,7 +100,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
         children: [
-          _propertyBar(context, detail.propertyInfo),
+          _propertyBar(context, detail, current),
           const SizedBox(height: 14),
           _detailsCard(context, detail.customerInfo),
           const SizedBox(height: 14),
@@ -113,15 +124,42 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     );
   }
 
-  // ── Property info bar — gradient masthead + label/value tile grid ──
-  Widget _propertyBar(BuildContext context, PropertyInfo info) {
+  /// The complaint this technician is currently viewing within the maintenance
+  /// registration — the source of the category + complaint name shown up top.
+  SiblingComplaint? _currentComplaint(ComplaintDetail detail) {
+    for (final s in detail.allComplaints) {
+      if (s.isCurrent) return s;
+    }
+    return null;
+  }
+
+  // ── Property + complaint bar — gradient masthead leads with the job
+  // (category + complaint), then a de-duplicated property fact grid. ──
+  Widget _propertyBar(BuildContext context, ComplaintDetail detail, SiblingComplaint? current) {
     final p = context.astra;
-    final facts = <(IconData, String, String)>[
-      if (info.group.isNotEmpty) (Icons.location_city_outlined, 'Group', info.group),
-      if (info.building.isNotEmpty) (Icons.business_outlined, 'Building', info.building),
+    final info = detail.propertyInfo;
+
+    // What am I fixing: the current complaint carries category + name.
+    final category = current?.categoryName ?? '';
+    final complaint = current?.complaintName ?? '';
+
+    // Group and Building often name the same tower — collapse to one "Property"
+    // fact when they match so the grid never repeats itself. Location facts run
+    // full width (long names); Type + Unit are short, so they share a row.
+    final sameProperty = info.group.trim().toLowerCase() == info.building.trim().toLowerCase();
+    final wideFacts = <(IconData, String, String)>[
+      if (info.group.isNotEmpty && (sameProperty || info.building.isEmpty))
+        (Icons.location_city_outlined, 'Property', info.group)
+      else ...[
+        if (info.group.isNotEmpty) (Icons.location_city_outlined, 'Group', info.group),
+        if (info.building.isNotEmpty) (Icons.business_outlined, 'Building', info.building),
+      ],
+    ];
+    final compactFacts = <(IconData, String, String)>[
       if (info.type.isNotEmpty) (Icons.category_outlined, 'Type', info.type),
       if (info.propertyNumber.isNotEmpty) (Icons.door_front_door_outlined, 'Unit', info.propertyNumber),
     ];
+    final hasFacts = wideFacts.isNotEmpty || compactFacts.isNotEmpty;
 
     return AstraCard(
       radius: 18,
@@ -131,10 +169,12 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Masthead — hero gradient with the REG identity + priority pill.
+            // Masthead — hero gradient carrying the job: category eyebrow,
+            // complaint name headline, priority pill. The REG # already lives
+            // in the page header, so it isn't repeated here.
             Container(
               decoration: BoxDecoration(gradient: p.heroGradient),
-              padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+              padding: const EdgeInsets.fromLTRB(16, 14, 14, 15),
               child: Stack(
                 children: [
                   // Oversized watermark icon anchoring the right edge — kept
@@ -142,10 +182,11 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                   Positioned(
                     right: -12,
                     top: -20,
-                    child: Icon(Icons.apartment_rounded,
-                        size: 96, color: Colors.white.withValues(alpha: 0.14)),
+                    child: Icon(Icons.handyman_rounded,
+                        size: 96, color: Colors.white.withValues(alpha: 0.12)),
                   ),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         width: 44,
@@ -155,64 +196,64 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                           borderRadius: BorderRadius.circular(13),
                           border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
                         ),
-                        child: Icon(Icons.apartment_outlined, size: 20, color: p.accent),
+                        child: Icon(Icons.build_outlined, size: 20, color: p.accent),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('REGISTRATION',
+                            Text(category.isEmpty ? 'MAINTENANCE REQUEST' : category.toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: ui(
-                                    size: 9,
+                                    size: 9.5,
                                     weight: FontWeight.w800,
-                                    letterSpacing: 2,
-                                    color: Colors.white.withValues(alpha: 0.65))),
-                            const SizedBox(height: 2),
-                            // Priority rides beside the number so the right edge
-                            // stays clear for the watermark icon.
-                            Row(
-                              children: [
-                                Text('#${info.registrationId}',
-                                    style: serif(size: 24, color: Colors.white)),
-                                if (info.priority.isNotEmpty) ...[
-                                  const SizedBox(width: 10),
-                                  _priorityPill(context, info),
-                                ],
-                              ],
-                            ),
+                                    letterSpacing: 1.8,
+                                    color: Colors.white.withValues(alpha: 0.72))),
+                            const SizedBox(height: 3),
+                            Text(complaint.isEmpty ? 'Registration #${info.registrationId}' : complaint,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: serif(size: 20, color: Colors.white)),
                           ],
                         ),
                       ),
+                      if (info.priority.isNotEmpty) ...[
+                        const SizedBox(width: 10),
+                        _priorityPill(context, info),
+                      ],
                     ],
                   ),
                 ],
               ),
             ),
-            // Fact grid — two tiles per row, tiny caps label over bold value.
-            if (facts.isNotEmpty)
+            // Fact grid — location fact(s) full width, then Type + Unit paired.
+            if (hasFacts)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
                 child: Column(
                   children: [
-                    for (var i = 0; i < facts.length; i += 2) ...[
-                      if (i > 0)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Container(height: 1, color: p.hairline.withValues(alpha: 0.6)),
-                        ),
+                    // Location — each on its own full-width row.
+                    for (var i = 0; i < wideFacts.length; i++) ...[
+                      if (i > 0) _factDivider(p),
+                      _factTile(context, wideFacts[i]),
+                    ],
+                    // Compact pair — Type on the left, Unit on the right.
+                    if (compactFacts.isNotEmpty) ...[
+                      if (wideFacts.isNotEmpty) _factDivider(p),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(child: _factTile(context, facts[i])),
-                          if (i + 1 < facts.length) ...[
+                          Expanded(child: _factTile(context, compactFacts[0])),
+                          if (compactFacts.length > 1) ...[
                             Container(
                               width: 1,
                               height: 30,
                               margin: const EdgeInsets.symmetric(horizontal: 12),
                               color: p.hairline.withValues(alpha: 0.6),
                             ),
-                            Expanded(child: _factTile(context, facts[i + 1])),
+                            Expanded(child: _factTile(context, compactFacts[1])),
                           ] else
                             const Spacer(),
                         ],
@@ -257,6 +298,12 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
       ),
     );
   }
+
+  /// Hairline row separator inside the fact grid.
+  Widget _factDivider(AstraPalette p) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Container(height: 1, color: p.hairline.withValues(alpha: 0.6)),
+      );
 
   /// One masthead fact: icon + tiny caps label over a bold, legible value.
   Widget _factTile(BuildContext context, (IconData, String, String) fact) {
@@ -433,7 +480,6 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
 
   // ── Sibling complaints ──
   Widget _siblingsCard(BuildContext context, ComplaintDetail detail) {
-    final p = context.astra;
     return AstraCard(
       radius: 16,
       child: Column(
@@ -441,42 +487,111 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
         children: [
           SectionLabel('Maintenance requests'),
           const SizedBox(height: 10),
-          for (final s in detail.allComplaints)
+          for (var i = 0; i < detail.allComplaints.length; i++)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: GestureDetector(
-                onTap: s.isCurrent ? null : () => context.pushReplacement('/complaints/${s.id}'),
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  padding: const EdgeInsets.all(11),
-                  decoration: BoxDecoration(
-                    color: s.isCurrent ? p.tint.withValues(alpha: 0.7) : p.card,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: s.isCurrent ? p.primary.withValues(alpha: 0.4) : p.cardBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(s.complaintName.isEmpty ? 'Complaint #${s.id}' : s.complaintName,
-                                maxLines: 1, overflow: TextOverflow.ellipsis,
-                                style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                            if (s.technicianName.isNotEmpty)
-                              Text(s.technicianName, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      AstraStatusPill(label: s.statusLabel, colorName: s.statusColor),
-                      if (!s.isCurrent) ...[const SizedBox(width: 4), Icon(Icons.chevron_right, size: 16, color: p.textMuted)],
-                    ],
-                  ),
-                ),
-              ),
+              padding: EdgeInsets.only(bottom: i == detail.allComplaints.length - 1 ? 0 : 10),
+              child: _siblingRow(context, detail.allComplaints[i]),
             ),
         ],
+      ),
+    );
+  }
+
+  /// One "Maintenance requests" row — complaint name + category badge, with a
+  /// gradient-lit tint and "YOU" marker on the request currently open.
+  Widget _siblingRow(BuildContext context, SiblingComplaint s) {
+    final p = context.astra;
+    final tint = astraTint(context, s.statusColor);
+    return GestureDetector(
+      onTap: s.isCurrent ? null : () => context.pushReplacement('/complaints/${s.id}'),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: s.isCurrent
+              ? LinearGradient(colors: [p.tint, p.tint.withValues(alpha: 0.3)], begin: Alignment.centerLeft, end: Alignment.centerRight)
+              : null,
+          color: s.isCurrent ? null : p.card,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(
+              color: s.isCurrent ? p.primary.withValues(alpha: 0.45) : p.cardBorder, width: s.isCurrent ? 1.3 : 1),
+          boxShadow: s.isCurrent ? [BoxShadow(color: p.primary.withValues(alpha: 0.14), blurRadius: 14, offset: const Offset(0, 4))] : null,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IconChip(icon: Icons.build_outlined, size: 38, radius: 11, bg: tint.bg, fg: tint.fg),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(s.complaintName.isEmpty ? 'Complaint #${s.id}' : s.complaintName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+                      ),
+                      if (s.isCurrent) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                          decoration: BoxDecoration(gradient: p.primaryGradient, borderRadius: BorderRadius.circular(20)),
+                          child: Text('YOU',
+                              style: ui(size: 8.5, weight: FontWeight.w800, color: Colors.white, letterSpacing: 0.6)),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (s.categoryName.isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: p.hairline.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.category_outlined, size: 10, color: p.textSecondary),
+                          const SizedBox(width: 4),
+                          Text(s.categoryName, style: ui(size: 10, weight: FontWeight.w700, color: p.textSecondary)),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (s.technicianName.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.person_outline, size: 11, color: p.textMuted),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(s.technicianName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                AstraStatusPill(label: s.statusLabel, colorName: s.statusColor),
+                if (!s.isCurrent) ...[const SizedBox(height: 10), Icon(Icons.chevron_right, size: 16, color: p.textMuted)],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

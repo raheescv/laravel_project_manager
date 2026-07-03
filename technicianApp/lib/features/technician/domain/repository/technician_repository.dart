@@ -10,6 +10,7 @@ abstract class TechnicianRepository {
   /// the pagination block the cubit needs for infinite scroll).
   Future<Map<String, dynamic>> complaints({
     String? status,
+    String? priority,
     String? search,
     String? fromDate,
     String? toDate,
