@@ -360,7 +360,7 @@ class AstraPresets {
   ];
 
   /// The preset applied on a fresh install / when nothing is persisted yet.
-  static const AstraPalette fallback = auroraGlass;
+  static const AstraPalette fallback = emeraldGold;
 
   /// Resolve a persisted id to a preset. Unknown ids fall back to the default.
   static AstraPalette byId(String? id) =>
