@@ -54,7 +54,10 @@ class AuthCubit extends HolderCubit {
 
   Future<void> updateConnection(
       {required String baseUrl, required String tenant}) async {
-    _http.config = AppConfig(baseUrl: baseUrl.trim(), tenant: tenant.trim());
+    // copyWith preserves the build-time hostHeader so LAN-IP vhost routing
+    // survives a manual connection change.
+    _http.config =
+        _http.config.copyWith(baseUrl: baseUrl.trim(), tenant: tenant.trim());
     await _storage.setBaseUrl(baseUrl.trim());
     await _storage.setTenant(tenant.trim());
     refresh();

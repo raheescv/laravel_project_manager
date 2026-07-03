@@ -6,9 +6,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:invo/shared/domain/constants/app_config.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/http_utils/http_service.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 
 import '../../domain/models/technician_models.dart';
@@ -832,27 +835,41 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
           if (images.isEmpty)
             Text('No files uploaded.', style: ui(size: 12.5, weight: FontWeight.w500, color: p.textMuted))
           else
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [for (final a in images) _thumb(context, cubit, a, locked)],
-            ),
+            // Size each tile to the available width instead of a fixed 82px so
+            // the grid fills the card (≈3 columns on a phone, more on a tablet).
+            LayoutBuilder(builder: (context, c) {
+              const spacing = 10.0;
+              final cols = (c.maxWidth / 116).floor().clamp(3, 6);
+              final size = (c.maxWidth - spacing * (cols - 1)) / cols;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [for (final a in images) _thumb(context, cubit, a, locked, size)],
+              );
+            }),
         ],
       ),
     );
   }
 
-  Widget _thumb(BuildContext context, ComplaintDetailCubit cubit, Attachment a, bool locked) {
+  Widget _thumb(BuildContext context, ComplaintDetailCubit cubit, Attachment a, bool locked, double size) {
     final p = context.astra;
     Widget preview;
     if (a.isImage) {
       preview = ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Image.network(a.path, width: 82, height: 82, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _fileIcon(p, Icons.broken_image_outlined)),
+        child: Image.network(_cfg.assetUrl(a.path),
+            headers: _cfg.assetHeaders,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            loadingBuilder: (_, child, progress) => progress == null
+                ? child
+                : _thumbSpinner(p, size, progress),
+            errorBuilder: (_, __, ___) => _fileIcon(p, Icons.broken_image_outlined, size)),
       );
     } else {
-      preview = _fileIcon(p, a.isVideo ? Icons.play_circle_outline : Icons.picture_as_pdf_outlined);
+      preview = _fileIcon(p, a.isVideo ? Icons.play_circle_outline : Icons.picture_as_pdf_outlined, size);
     }
     return GestureDetector(
       onTap: () => _openAttachment(context, a),
@@ -878,11 +895,33 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     );
   }
 
-  Widget _fileIcon(AstraPalette p, IconData icon) => Container(
-        width: 82,
-        height: 82,
+  /// Tinted placeholder with a centered progress ring shown while a thumbnail
+  /// downloads. Uses determinate progress when the server reports a total size.
+  Widget _thumbSpinner(AstraPalette p, double size, ImageChunkEvent progress) {
+    final total = progress.expectedTotalBytes;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(12)),
+      child: Center(
+        child: SizedBox(
+          width: (size * 0.32).clamp(18, 30),
+          height: (size * 0.32).clamp(18, 30),
+          child: CircularProgressIndicator(
+            strokeWidth: 2.4,
+            valueColor: AlwaysStoppedAnimation(p.primary),
+            value: total != null ? progress.cumulativeBytesLoaded / total : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fileIcon(AstraPalette p, IconData icon, double size) => Container(
+        width: size,
+        height: size,
         decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(12)),
-        child: Icon(icon, size: 30, color: p.primary),
+        child: Icon(icon, size: (size * 0.36).clamp(24, 40), color: p.primary),
       );
 
   // ── Actions ──
@@ -1107,14 +1146,23 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     _toast(ok ? 'Uploaded' : (cubit.actionError ?? 'Upload failed'));
   }
 
+  /// Live connection config (reachable base URL + optional Host override) so
+  /// attachment URLs are built the same way the API is reached, not from the
+  /// unreachable host the server would bake in.
+  AppConfig get _cfg => serviceLocator<HttpService>().config;
+
   void _openAttachment(BuildContext context, Attachment a) {
     if (a.isImage) {
       Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => _Lightbox(url: a.path, name: a.name),
+        builder: (_) => _Lightbox(
+          url: _cfg.assetUrl(a.path),
+          headers: _cfg.assetHeaders,
+          name: a.name,
+        ),
         fullscreenDialog: true,
       ));
     } else {
-      _launch(a.path);
+      _launch(_cfg.assetUrl(a.path));
     }
   }
 
@@ -1156,9 +1204,10 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
 
 /// Full-screen pinch-to-zoom image viewer.
 class _Lightbox extends StatelessWidget {
-  const _Lightbox({required this.url, required this.name});
+  const _Lightbox({required this.url, required this.name, this.headers});
   final String url;
   final String name;
+  final Map<String, String>? headers;
 
   @override
   Widget build(BuildContext context) {
@@ -1173,7 +1222,20 @@ class _Lightbox extends StatelessWidget {
         child: InteractiveViewer(
           minScale: 0.8,
           maxScale: 4,
-          child: Image.network(url, fit: BoxFit.contain,
+          child: Image.network(url, headers: headers, fit: BoxFit.contain,
+              loadingBuilder: (_, child, progress) => progress == null
+                  ? child
+                  : SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.6,
+                        color: Colors.white70,
+                        value: progress.expectedTotalBytes != null
+                            ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
               errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined, color: Colors.white38, size: 60)),
         ),
       ),
