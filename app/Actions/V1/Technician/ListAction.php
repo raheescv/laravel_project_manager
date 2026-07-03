@@ -25,6 +25,10 @@ class ListAction
         $filters = $request->validatedWithDefaults();
 
         $query = $this->ownedComplaints()
+            // The technician app only surfaces active work: "assigned" jobs (its
+            // pending bucket) and "completed" ones. Pending/outstanding/cancelled
+            // complaints are hidden from the list.
+            ->whereIn('maintenance_complaints.status', ['assigned', 'completed'])
             ->with([
                 'maintenance.property.building.group',
                 'complaint.category',

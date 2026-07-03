@@ -19,8 +19,9 @@ class _StatusTab {
   final String? value;
 }
 
+// The technician's pending work is the "assigned" bucket; pending/outstanding/
+// cancelled complaints aren't surfaced in the app, so only these tabs show.
 const _statusTabs = <_StatusTab>[
-  _StatusTab('Pending', 'pending'),
   _StatusTab('Assigned', 'assigned'),
   _StatusTab('Completed', 'completed'),
   _StatusTab('All', null),
