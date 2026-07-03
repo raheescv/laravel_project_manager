@@ -5,6 +5,7 @@ namespace App\Actions\V1\Technician;
 use App\Actions\V1\Technician\Concerns\InteractsWithComplaint;
 use App\Http\Requests\V1\Technician\IndexRequest;
 use App\Http\Resources\V1\Technician\ComplaintListResource;
+use App\Models\Maintenance;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -34,11 +35,7 @@ class ListAction
         // Order by the parent maintenance appointment date via a correlated
         // sub-select so we keep the eager-loaded relations intact.
         $direction = $filters['sort_direction'];
-        $query->orderBy(
-            \App\Models\Maintenance::select('date')
-                ->whereColumn('maintenances.id', 'maintenance_complaints.maintenance_id'),
-            $direction
-        )->orderBy('maintenance_complaints.id', 'desc');
+        $query->orderBy(Maintenance::select('date')->whereColumn('maintenances.id', 'maintenance_complaints.maintenance_id'), $direction)->orderBy('maintenance_complaints.id', 'desc');
 
         $paginator = $query->paginate($filters['per_page']);
 
