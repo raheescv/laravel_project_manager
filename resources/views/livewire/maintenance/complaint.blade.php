@@ -26,6 +26,11 @@
                     </span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
+                    @if(!empty($propertyInfo['segment']))
+                        <span class="badge bg-{{ $propertyInfo['segment_color'] ?? 'secondary' }} bg-opacity-10 text-{{ $propertyInfo['segment_color'] ?? 'secondary' }} rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                            <i class="fa fa-tags me-1"></i>{{ $propertyInfo['segment'] }}
+                        </span>
+                    @endif
                     <span class="badge bg-{{ $propertyInfo['priority_color'] ?? 'secondary' }} rounded-pill px-2 py-1" style="font-size: 0.7rem;">
                         {{ $propertyInfo['priority'] ?? '' }}
                     </span>

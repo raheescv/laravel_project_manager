@@ -216,12 +216,19 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: serif(size: 20, color: Colors.white)),
+                            // Segment — the maintenance classification captured
+                            // at registration (PPMC / Corrective / Preparation).
+                            if (info.segment.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              _heroPill(context,
+                                  label: info.segment, colorName: info.segmentColor, icon: Icons.sell_outlined),
+                            ],
                           ],
                         ),
                       ),
                       if (info.priority.isNotEmpty) ...[
                         const SizedBox(width: 10),
-                        _priorityPill(context, info),
+                        _heroPill(context, label: info.priority, colorName: info.priorityColor),
                       ],
                     ],
                   ),
@@ -268,10 +275,10 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     );
   }
 
-  /// Priority pill for the masthead — glassy white so it reads on any gradient,
-  /// with a colour dot carrying the priority tint.
-  Widget _priorityPill(BuildContext context, PropertyInfo info) {
-    final tint = astraTint(context, info.priorityColor);
+  /// Glassy masthead pill (priority / segment) — white on any gradient, with a
+  /// colour dot carrying the tint. An optional leading icon labels the kind.
+  Widget _heroPill(BuildContext context, {required String label, required String colorName, IconData? icon}) {
+    final tint = astraTint(context, colorName);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
@@ -282,17 +289,20 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: tint.fg,
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: tint.fg.withValues(alpha: 0.7), blurRadius: 6)],
+          if (icon != null)
+            Icon(icon, size: 11, color: Colors.white.withValues(alpha: 0.9))
+          else
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: tint.fg,
+                shape: BoxShape.circle,
+                boxShadow: [BoxShadow(color: tint.fg.withValues(alpha: 0.7), blurRadius: 6)],
+              ),
             ),
-          ),
           const SizedBox(width: 6),
-          Text(info.priority,
+          Text(label,
               style: ui(size: 10.5, weight: FontWeight.w800, color: Colors.white)),
         ],
       ),

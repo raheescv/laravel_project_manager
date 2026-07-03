@@ -236,6 +236,8 @@ class PropertyInfo {
     required this.propertyNumber,
     required this.priority,
     required this.priorityColor,
+    required this.segment,
+    required this.segmentColor,
     required this.date,
     required this.time,
   });
@@ -247,6 +249,8 @@ class PropertyInfo {
   final String propertyNumber;
   final String priority;
   final String priorityColor;
+  final String segment;
+  final String segmentColor;
   final String date;
   final String time;
 
@@ -258,6 +262,8 @@ class PropertyInfo {
         propertyNumber: asStr(j['property_number']),
         priority: asStr(j['priority']),
         priorityColor: asStr(j['priority_color']),
+        segment: asStr(j['segment']),
+        segmentColor: asStr(j['segment_color']),
         date: asStr(j['date']),
         time: asStr(j['time']),
       );

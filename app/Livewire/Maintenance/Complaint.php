@@ -135,6 +135,8 @@ class Complaint extends Component
             'property_number' => $property?->number ?? '',
             'priority' => $maintenance?->priority?->label() ?? '',
             'priority_color' => $maintenance?->priority?->color() ?? 'secondary',
+            'segment' => $maintenance?->segment?->label() ?? '',
+            'segment_color' => $maintenance?->segment?->color() ?? 'secondary',
             'date' => $maintenance?->date?->format('d-m-Y') ?? '',
             'time' => $maintenance?->time ?? '',
         ];
