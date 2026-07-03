@@ -13,8 +13,14 @@ Future<void> main() async {
   F.appFlavor ??= Flavor.dev;
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables from .env file
-  await dotenv.load();
+  // Local dev API URL override — see `.env` / `.env.example`. Never let a
+  // missing/malformed file block boot: AppConfig falls back to the saved or
+  // default URL when `.env` isn't loaded.
+  try {
+    await dotenv.load();
+  } catch (_) {
+    // No .env bundled (e.g. release build) — fall through to other sources.
+  }
 
   await setUpServiceLocator();
 

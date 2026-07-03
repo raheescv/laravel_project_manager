@@ -1,3 +1,5 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 /// Connection configuration for the Laravel `api/v1` backend.
 ///
 /// Tenant resolution on the server is host/subdomain based; for device &
@@ -5,6 +7,9 @@
 /// without a real subdomain host.
 ///
 /// Defaults are build-time values supplied via `--dart-define-from-file=env.json`.
+/// A `.env` file (loaded in `main.dart`) is checked next — the quickest way to
+/// point a local dev build at a different URL: edit `.env`, hot-restart, no
+/// rebuild needed. A saved in-app override (settings screen) comes after that.
 class AppConfig {
   AppConfig({required this.baseUrl, required this.tenant, this.hostHeader = ''});
 
@@ -30,13 +35,41 @@ class AppConfig {
   /// Last-resort host when there is neither an env value nor a saved override.
   static const String fallbackBaseUrl = 'https://project_manager.test';
 
-  /// Resolve the active connection. A build-time env value ALWAYS wins so a stale
-  /// saved value can never silently shadow `env.json`.
+  /// Whether `.env` was loaded (via `dotenv.load()` in `main.dart`). Guarded so
+  /// a missing/failed `.env` file never crashes boot — `dotenv.env` throws if
+  /// read before `load()` succeeds.
+  static bool get _hasDotenv => dotenv.isInitialized;
+
+  static bool get _dotenvUseLan =>
+      (dotenv.env['USE_LAN_API'] ?? 'false').toLowerCase() == 'true';
+
+  static String get _dotenvBaseUrl {
+    if (!_hasDotenv) return '';
+    return _dotenvUseLan
+        ? (dotenv.env['API_BASE_URL_LAN'] ?? '')
+        : (dotenv.env['API_BASE_URL'] ?? '');
+  }
+
+  static String get _dotenvTenant {
+    if (!_hasDotenv) return '';
+    return _dotenvUseLan
+        ? (dotenv.env['API_TENANT_LAN'] ?? '')
+        : (dotenv.env['API_TENANT'] ?? '');
+  }
+
+  /// Resolve the active connection. Priority: build-time `--dart-define`
+  /// (always wins so a stale saved/`.env` value can never silently shadow a
+  /// release build) > `.env` file > saved in-app override > last-resort fallback.
   static AppConfig resolve({String? savedBaseUrl, String? savedTenant}) =>
       AppConfig(
-        baseUrl:
-            envBaseUrl.isNotEmpty ? envBaseUrl : (savedBaseUrl ?? fallbackBaseUrl),
-        tenant: envTenant.isNotEmpty ? envTenant : (savedTenant ?? ''),
+        baseUrl: envBaseUrl.isNotEmpty
+            ? envBaseUrl
+            : (_dotenvBaseUrl.isNotEmpty
+                ? _dotenvBaseUrl
+                : (savedBaseUrl ?? fallbackBaseUrl)),
+        tenant: envTenant.isNotEmpty
+            ? envTenant
+            : (_dotenvTenant.isNotEmpty ? _dotenvTenant : (savedTenant ?? '')),
         hostHeader: envHostHeader,
       );
 
