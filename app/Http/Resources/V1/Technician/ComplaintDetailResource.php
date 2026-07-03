@@ -114,7 +114,10 @@ class ComplaintDetailResource extends JsonResource
                     'id' => $image->id,
                     'name' => $image->name,
                     'type' => $image->type,
-                    'path' => asset($image->path),
+                    // Build from the request host (not asset()/ASSET_URL) so the URL
+                    // resolves on a real device — ASSET_URL points at the local .test
+                    // domain, which a physical phone can't reach.
+                    'path' => url($image->path),
                     'is_image' => Str::contains($image->type ?? '', 'image'),
                     'is_video' => $image->is_video,
                     'is_pdf' => $image->is_pdf,
