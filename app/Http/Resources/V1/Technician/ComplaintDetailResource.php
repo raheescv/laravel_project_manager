@@ -71,7 +71,11 @@ class ComplaintDetailResource extends JsonResource
                 'completed_at' => $mc->completed_at?->format('d-m-Y h:i:s A') ?? '',
             ],
 
-            'all_complaints' => $maintenance?->maintenanceComplaints->map(fn ($item) => [
+            // Only the sibling complaints assigned to this technician — other
+            // technicians' jobs on the same maintenance aren't surfaced here.
+            'all_complaints' => $maintenance?->maintenanceComplaints
+                ->where('technician_id', $mc->technician_id)
+                ->map(fn ($item) => [
                 'id' => $item->id,
                 'category_name' => $item->complaint?->category?->name ?? '',
                 'complaint_name' => $item->complaint?->name ?? '',
