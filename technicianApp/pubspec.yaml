@@ -1,0 +1,89 @@
+name: invo
+description: "Astra Technician — field maintenance workflow (mobile + tablet)."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management (BLoC / Cubit) + DI
+  flutter_bloc: ^8.1.6
+  bloc: ^8.1.4
+  equatable: ^2.0.7
+  get_it: ^8.0.3
+
+  # Responsive sizing
+  flutter_screenutil: ^5.9.3
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Environment configuration
+  flutter_dotenv: ^5.1.0
+
+  # Networking
+  dio: ^5.7.0
+
+  # Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.3
+
+  # Biometric auth (Touch ID / Face ID / fingerprint)
+  local_auth: ^2.3.0
+
+  # Camera barcode / QR scanning (iOS / Android / macOS)
+  mobile_scanner: ^6.0.10
+
+  # Technician attachments — capture from camera / gallery and pick files
+  image_picker: ^1.1.2
+  file_picker: ^8.1.6
+
+  # Tap-to-call / open attachment URLs externally
+  url_launcher: ^6.3.1
+
+  # UI
+  google_fonts: ^6.2.1
+  intl: ^0.20.1
+  # Crisp vector brand mark (FixMate "FixPin" logo)
+  flutter_svg: ^2.0.10
+
+  # Receipt printing + share sheet (generates a PDF; iOS / Android / macOS / web)
+  printing: ^5.13.4
+  pdf: ^3.11.1
+
+  # Re-exported by flutter_bloc for context.read/watch in widgets.
+  provider: ^6.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+  # IBM Plex Sans Arabic (OFL) — bundled so Arabic thermal receipts render
+  # offline at the POS.
+  assets:
+    - .env
+    - assets/fonts/IBMPlexSansArabic-Regular.ttf
+    - assets/fonts/IBMPlexSansArabic-Bold.ttf
+
+# FixMate launcher icon — "FixPin" mark (white location pin + emerald wrench on
+# emerald). Regenerate with: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/fixmate_icon.png"
+  android: true
+  min_sdk_android: 21
+  adaptive_icon_background: "#0FA968"
+  adaptive_icon_foreground: "assets/icon/fixmate_icon_fg.png"
+  ios: true
+  remove_alpha_ios: true
+  macos:
+    generate: true
+    image_path: "assets/icon/fixmate_icon.png"
