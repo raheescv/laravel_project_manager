@@ -225,19 +225,48 @@ class RentOutTransactionHelper
     /**
      * Record a security deposit collection (money IN).
      * Journal: Dr Payment Method (Cash/Bank), Cr Security Deposit (liability).
+     *
+     * Two rent_out_transactions rows are written to mirror the ledger:
+     *  - Payment-method leg  : credit (money received)
+     *  - Security-deposit leg: debit  (contra), sharing the same journal.
      */
     public function storeSecurityCollection(RentOutSecurity $security, ?int $userId = null): array
     {
-        return $this->execute($this->securityData($security, false, $userId));
+        return $this->storeSecurityPair($security, false, $userId);
     }
 
     /**
      * Record a security deposit refund (money OUT).
      * Journal: Dr Security Deposit (liability), Cr Payment Method (Cash/Bank).
+     *
+     * Two rent_out_transactions rows are written to mirror the ledger:
+     *  - Payment-method leg  : debit  (money paid out)
+     *  - Security-deposit leg: credit (contra), sharing the same journal.
      */
     public function storeSecurityRefund(RentOutSecurity $security, ?int $userId = null): array
     {
-        return $this->execute($this->securityData($security, true, $userId));
+        return $this->storeSecurityPair($security, true, $userId);
+    }
+
+    /**
+     * Store both ledger legs of a security deposit movement. The first (cash)
+     * leg creates the journal; the second (Security Deposit account) leg is a
+     * contra row reusing that journal so the ledger nets to a single entry.
+     */
+    protected function storeSecurityPair(RentOutSecurity $security, bool $isRefund, ?int $userId): array
+    {
+        $primary = $this->execute($this->securityData($security, $isRefund, $userId));
+        if (! $primary['success']) {
+            return $primary;
+        }
+
+        $journalId = $primary['data']->journal_id ?? null;
+        $contra = $this->action()->storeContraRow($this->securityContraData($security, $isRefund, $userId, $journalId));
+        if (! $contra['success']) {
+            return $contra;
+        }
+
+        return $primary;
     }
 
     /**
@@ -259,8 +288,10 @@ class RentOutTransactionHelper
     protected function securityData(RentOutSecurity $security, bool $isRefund, ?int $userId): array
     {
         $date = $isRefund
-            ? now()->format('Y-m-d')
-            : ($security->due_date?->format('Y-m-d') ?? now()->format('Y-m-d'));
+            ? ($security->returned_date?->format('Y-m-d') ?? now()->format('Y-m-d'))
+            : ($security->collected_date?->format('Y-m-d')
+                ?? $security->due_date?->format('Y-m-d')
+                ?? now()->format('Y-m-d'));
 
         return [
             'rent_out_id' => $security->rent_out_id,
@@ -285,5 +316,28 @@ class RentOutTransactionHelper
             'remark' => $security->remarks ?: ($isRefund ? 'Security deposit refunded' : 'Security deposit collected'),
             'created_by' => $userId ?? Auth::id(),
         ];
+    }
+
+    /**
+     * Contra (mirror) leg for a security deposit movement. Same amount and
+     * metadata as the primary leg, but posted against the Security Deposit
+     * account with the opposite debit/credit side and no new journal (it reuses
+     * the primary leg's journal via $journalId).
+     */
+    protected function securityContraData(RentOutSecurity $security, bool $isRefund, ?int $userId, ?int $journalId): array
+    {
+        $data = $this->securityData($security, $isRefund, $userId);
+
+        // Mirror the opposite side onto the Security Deposit ledger account.
+        $data['account_id'] = $this->securityDepositAccountId($security) ?? $data['account_id'];
+        $data['credit'] = $isRefund ? $security->amount : 0;
+        $data['debit'] = $isRefund ? 0 : $security->amount;
+        $data['journal_id'] = $journalId;
+        $data['reason'] = $isRefund ? 'Security Deposit Refund (Ledger)' : 'Security Deposit Collection (Ledger)';
+
+        // The journal is already created by the primary leg; do not create another.
+        unset($data['counter_account_id'], $data['journal_source']);
+
+        return $data;
     }
 }

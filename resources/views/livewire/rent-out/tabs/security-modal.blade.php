@@ -70,7 +70,7 @@
             <div class="col-md-6">
                 <label class="form-label fw-semibold small mb-1"><i class="fa fa-info-circle me-1 text-muted"></i> Status <span
                         class="text-danger">*</span></label>
-                <select class="form-select form-select-sm" wire:model="form.status">
+                <select class="form-select form-select-sm" wire:model.live="form.status">
                     <option value="">Select</option>
                     @foreach ($securityStatuses as $status)
                         <option value="{{ $status->value }}">{{ $status->label() }}</option>
@@ -89,6 +89,28 @@
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>
+            @if (in_array($form['status'], ['collected', 'returned', 'adjusted'], true))
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar-check-o me-1 text-muted"></i> Collected Date <span
+                            class="text-danger">*</span></label>
+                    <input type="date" class="form-control form-control-sm"
+                        wire:model="form.collected_date">
+                    @error('form.collected_date')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+            @endif
+            @if ($form['status'] === 'returned')
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar-times-o me-1 text-muted"></i> Returned Date <span
+                            class="text-danger">*</span></label>
+                    <input type="date" class="form-control form-control-sm"
+                        wire:model="form.returned_date">
+                    @error('form.returned_date')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+            @endif
             <div class="col-12">
                 <label class="form-label fw-semibold small mb-1"><i class="fa fa-comment-o me-1 text-muted"></i> Remarks</label>
                 <textarea class="form-control form-control-sm" wire:model="form.remarks" rows="2"

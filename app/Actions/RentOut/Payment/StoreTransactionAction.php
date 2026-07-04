@@ -152,31 +152,7 @@ class StoreTransactionAction
             $rentOut = RentOut::findOrFail($data['rent_out_id']);
             $createdBy = $this->resolveCreatedBy($rentOut, $data);
 
-            $payment = RentOutTransaction::create([
-                'tenant_id' => $rentOut->tenant_id,
-                'branch_id' => $rentOut->branch_id,
-                'rent_out_id' => $rentOut->id,
-                'date' => $data['date'],
-                'due_date' => $data['due_date'] ?? null,
-                'paid_date' => $data['paid_date'] ?? null,
-                'cheque_date' => $data['cheque_date'] ?? null,
-                'cheque_no' => $data['cheque_no'] ?? null,
-                'bank_name' => $data['bank_name'] ?? null,
-                'credit' => $data['credit'] ?? 0,
-                'debit' => $data['debit'] ?? 0,
-                'account_id' => $data['account_id'],
-                'source' => $data['source'],
-                'source_id' => $data['source_id'] ?? null,
-                'model' => $data['model'] ?? null,
-                'model_id' => $data['model_id'] ?? null,
-                'group' => $data['group'] ?? null,
-                'category' => $data['category'] ?? null,
-                'payment_type' => $data['payment_type'] ?? null,
-                'remark' => $data['remark'] ?? null,
-                'reason' => $data['reason'] ?? null,
-                'voucher_no' => $data['voucher_no'] ?? null,
-                'created_by' => $createdBy,
-            ]);
+            $payment = RentOutTransaction::create($this->buildTransactionAttributes($rentOut, $data, $createdBy));
 
             // Create journal entry
             $amount = max($data['credit'] ?? 0, $data['debit'] ?? 0);
@@ -227,6 +203,65 @@ class StoreTransactionAction
                 'message' => $th->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Store an additional ledger row (a contra leg) that reuses an already
+     * created journal. Used to mirror the second side of a double-entry movement
+     * into rent_out_transactions without generating a duplicate journal.
+     */
+    public function storeContraRow(array $data): array
+    {
+        try {
+            $rentOut = RentOut::findOrFail($data['rent_out_id']);
+            $createdBy = $this->resolveCreatedBy($rentOut, $data);
+
+            $payment = RentOutTransaction::create($this->buildTransactionAttributes($rentOut, $data, $createdBy));
+
+            return [
+                'success' => true,
+                'message' => 'Ledger row recorded successfully',
+                'data' => $payment->fresh(),
+            ];
+        } catch (\Throwable $th) {
+            return [
+                'success' => false,
+                'message' => $th->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Build the RentOutTransaction attribute array from a payment data payload.
+     */
+    protected function buildTransactionAttributes(RentOut $rentOut, array $data, int $createdBy): array
+    {
+        return [
+            'tenant_id' => $rentOut->tenant_id,
+            'branch_id' => $rentOut->branch_id,
+            'rent_out_id' => $rentOut->id,
+            'date' => $data['date'],
+            'due_date' => $data['due_date'] ?? null,
+            'paid_date' => $data['paid_date'] ?? null,
+            'cheque_date' => $data['cheque_date'] ?? null,
+            'cheque_no' => $data['cheque_no'] ?? null,
+            'bank_name' => $data['bank_name'] ?? null,
+            'credit' => $data['credit'] ?? 0,
+            'debit' => $data['debit'] ?? 0,
+            'account_id' => $data['account_id'],
+            'source' => $data['source'],
+            'source_id' => $data['source_id'] ?? null,
+            'model' => $data['model'] ?? null,
+            'model_id' => $data['model_id'] ?? null,
+            'journal_id' => $data['journal_id'] ?? null,
+            'group' => $data['group'] ?? null,
+            'category' => $data['category'] ?? null,
+            'payment_type' => $data['payment_type'] ?? null,
+            'remark' => $data['remark'] ?? null,
+            'reason' => $data['reason'] ?? null,
+            'voucher_no' => $data['voucher_no'] ?? null,
+            'created_by' => $createdBy,
+        ];
     }
 
     /**

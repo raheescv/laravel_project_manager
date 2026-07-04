@@ -23,6 +23,8 @@ class SecurityModal extends Component
         'type' => '',
         'status' => '',
         'due_date' => '',
+        'collected_date' => '',
+        'returned_date' => '',
         'remarks' => '',
     ];
 
@@ -39,6 +41,8 @@ class SecurityModal extends Component
             'type' => $form['type'] ?? '',
             'status' => $form['status'] ?? '',
             'due_date' => $form['due_date'] ?? now()->format('Y-m-d'),
+            'collected_date' => $form['collected_date'] ?? '',
+            'returned_date' => $form['returned_date'] ?? '',
             'remarks' => $form['remarks'] ?? '',
         ];
         $this->rentOutId = $form['rent_out_id'] ?? null;
@@ -75,6 +79,17 @@ class SecurityModal extends Component
             $messages['form.cheque_no.required'] = 'Cheque number is required for cheque payments.';
         }
 
+        // Collection date is needed once the deposit is collected/returned/adjusted;
+        // return date only once it is returned.
+        if (in_array($this->form['status'], ['collected', 'returned', 'adjusted'], true)) {
+            $rules['form.collected_date'] = 'required|date';
+            $messages['form.collected_date.required'] = 'Collected date is required for this status.';
+        }
+        if ($this->form['status'] === 'returned') {
+            $rules['form.returned_date'] = 'required|date';
+            $messages['form.returned_date.required'] = 'Returned date is required when the deposit is returned.';
+        }
+
         $this->validate($rules, $messages);
 
         $data = [
@@ -86,6 +101,8 @@ class SecurityModal extends Component
             'type' => $this->form['type'],
             'status' => $this->form['status'],
             'due_date' => $this->form['due_date'],
+            'collected_date' => $this->form['collected_date'] ?: null,
+            'returned_date' => $this->form['returned_date'] ?: null,
             'remarks' => $this->form['remarks'] ?? '',
         ];
 

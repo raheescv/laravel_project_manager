@@ -28,6 +28,8 @@ class RentOutSecurity extends Model implements AuditableContracts
         'status',
         'type',
         'due_date',
+        'collected_date',
+        'returned_date',
         'remarks',
         'created_by',
     ];
@@ -37,6 +39,8 @@ class RentOutSecurity extends Model implements AuditableContracts
         'status' => SecurityStatus::class,
         'type' => SecurityType::class,
         'due_date' => 'date',
+        'collected_date' => 'date',
+        'returned_date' => 'date',
         'amount' => 'decimal:2',
     ];
 

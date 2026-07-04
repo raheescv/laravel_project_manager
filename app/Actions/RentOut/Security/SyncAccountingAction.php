@@ -9,6 +9,7 @@ use App\Models\JournalEntry;
 use App\Models\RentOutSecurity;
 use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SyncAccountingAction
 {
@@ -26,35 +27,39 @@ class SyncAccountingAction
         try {
             $userId ??= Auth::id();
 
-            $this->reverseExisting($security);
+            // Reverse + recreate atomically so a failed recreate can never leave
+            // the deposit with its prior ledger rows deleted but not rebuilt.
+            DB::transaction(function () use ($security, $userId): void {
+                $this->reverseExisting($security);
 
-            $status = $security->status instanceof SecurityStatus
-                ? $security->status
-                : SecurityStatus::tryFrom((string) $security->status);
+                $status = $security->status instanceof SecurityStatus
+                    ? $security->status
+                    : SecurityStatus::tryFrom((string) $security->status);
 
-            $hasCashLeg = $security->account_id && (float) $security->amount > 0;
+                $hasCashLeg = $security->account_id && (float) $security->amount > 0;
 
-            $needsCollection = $hasCashLeg && in_array($status, [
-                SecurityStatus::Collected,
-                SecurityStatus::Returned,
-                SecurityStatus::Adjusted,
-            ], true);
+                $needsCollection = $hasCashLeg && in_array($status, [
+                    SecurityStatus::Collected,
+                    SecurityStatus::Returned,
+                    SecurityStatus::Adjusted,
+                ], true);
 
-            $needsRefund = $hasCashLeg && $status === SecurityStatus::Returned;
+                $needsRefund = $hasCashLeg && $status === SecurityStatus::Returned;
 
-            if ($needsCollection) {
-                $response = RentOutTransactionHelper::storeSecurityCollection($security, $userId);
-                if (! $response['success']) {
-                    throw new \Exception($response['message']);
+                if ($needsCollection) {
+                    $response = RentOutTransactionHelper::storeSecurityCollection($security, $userId);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message']);
+                    }
                 }
-            }
 
-            if ($needsRefund) {
-                $response = RentOutTransactionHelper::storeSecurityRefund($security, $userId);
-                if (! $response['success']) {
-                    throw new \Exception($response['message']);
+                if ($needsRefund) {
+                    $response = RentOutTransactionHelper::storeSecurityRefund($security, $userId);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message']);
+                    }
                 }
-            }
+            });
 
             return ['success' => true, 'message' => 'Security accounting synced', 'data' => []];
         } catch (\Throwable $th) {
