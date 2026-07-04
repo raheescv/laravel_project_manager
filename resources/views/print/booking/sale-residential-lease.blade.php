@@ -274,7 +274,6 @@
                         $rowHeight = 28;
                         $pageHeight = 1500;
                         $usablePageHeight = $pageHeight - $headerHeight;
-                        $footerHeight = 50;
                         $breakThreshold = $usablePageHeight - $footerHeight;
                         $currentPosition = $headerHeight;
                         $currentPage = 1;
