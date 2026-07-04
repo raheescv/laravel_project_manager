@@ -306,7 +306,15 @@ class _SupplyItemSheetState extends State<_SupplyItemSheet> {
       backgroundColor: Colors.transparent,
       builder: (_) => _ProductPickerSheet(cubit: widget.cubit),
     );
-    if (chosen != null) setState(() => _product = chosen);
+    if (chosen != null) {
+      setState(() {
+        _product = chosen;
+        // Prefill the unit price with the product's cost on selection.
+        if (chosen.cost > 0) {
+          _priceCtl.text = qtyLabel(chosen.cost);
+        }
+      });
+    }
   }
 }
 
