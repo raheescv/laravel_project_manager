@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Product Card — Redesign (no blob)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f0e7;
+    --ink: #141310;
+    --ink-soft: #3a372f;
+    --muted: #7c766a;
+    --muted-2: #9a9384;
+    --line: #e4ddce;
+    --line-soft: #ece5d6;
+    --card: #ffffff;
+    --paper: #f7f3ea;
+    --gold: #2f2bd6;
+    --gold-deep: #1b1970;
+    --amber: #c9852a;
+    --green-soft: #4f8a3d;
+    --red: #c8492f;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Hanken Grotesk', -apple-system, sans-serif;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: radial-gradient(130% 90% at 82% -12%, #faf7ef, transparent 58%), var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    padding: 52px 34px 110px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  .kicker { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 14px; }
+  h1.page { font-family: var(--font-display); font-weight: 400; font-size: clamp(30px, 4.4vw, 48px); letter-spacing: -0.02em; line-height: 1.03; margin: 0 0 16px; }
+  h1.page em { font-style: italic; color: var(--gold-deep); }
+  .lede { font-size: 15px; color: var(--muted); max-width: 660px; line-height: 1.62; }
+  .lede b { color: var(--ink); font-weight: 700; }
+  .toolbar { display: flex; gap: 10px; margin-top: 24px; }
+  .toggle { font: inherit; font-size: 12.5px; font-weight: 600; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); padding: 9px 16px; border-radius: 99px; cursor: pointer; transition: all .2s var(--ease); }
+  .toggle:hover { border-color: var(--gold); color: var(--gold); }
+  .toggle[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .variant { margin-top: 66px; }
+  .variant__head { display: flex; align-items: baseline; gap: 14px; }
+  .variant__no { font-family: var(--font-display); font-style: italic; font-size: 15px; color: var(--gold); }
+  .variant__name { font-family: var(--font-display); font-weight: 600; font-size: 26px; letter-spacing: -0.01em; }
+  .pill-rec { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #fff; background: var(--gold); border-radius: 99px; padding: 4px 10px; align-self: center; }
+  .variant__desc { color: var(--muted); font-size: 13.5px; margin: 8px 0 14px; max-width: 680px; line-height: 1.6; }
+  .legend { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted-2); font-weight: 700; margin-bottom: 22px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 28px; align-items: start; }
+  a.card { text-decoration: none; color: inherit; display: block; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.16), 0 0 0 1.5px var(--card); display: inline-block; }
+  .dots { display: inline-flex; gap: 5px; }
+  .icon { width: 46%; height: auto; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ==========================================================
+     1 — MONOGRAM PLATE
+     No-photo = a pressed monogram on paper: large serif initial,
+     fine corner ticks, a hairline seal. Reads like a luxury tag.
+     ========================================================== */
+  .m1 { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; transition: transform .4s var(--ease), box-shadow .4s var(--ease); box-shadow: 0 1px 2px rgba(20,19,16,.04); }
+  .m1:hover { transform: translateY(-6px); box-shadow: 0 34px 70px rgba(20,19,16,.14); }
+  .m1__media { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; background: var(--paper); box-shadow: inset 0 0 0 1px rgba(20,19,16,.05); display: flex; align-items: center; justify-content: center; }
+  .m1__plate { position: absolute; inset: 16px; border: 1px solid rgba(20,19,16,.1); border-radius: 8px; }
+  .m1__plate::before, .m1__plate::after { content: ""; position: absolute; width: 9px; height: 9px; border: 1px solid rgba(20,19,16,.28); }
+  .m1__plate::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+  .m1__plate::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+  .m1__mono { font-family: var(--font-display); font-weight: 400; font-size: 82px; line-height: 1; color: var(--ink); opacity: .9; }
+  .m1__seal { position: absolute; bottom: 22px; left: 0; right: 0; text-align: center; font-size: 8.5px; letter-spacing: .3em; text-transform: uppercase; font-weight: 700; color: var(--muted-2); }
+  .m1__flag { position: absolute; top: 12px; left: 12px; z-index: 2; font-size: 10px; font-weight: 700; color: var(--gold-deep); background: rgba(255,255,255,.85); border: 1px solid rgba(20,19,16,.06); border-radius: 99px; padding: 5px 11px; }
+  .m1__photo { position: absolute; inset: 0; }
+  .m1__body { padding: 16px 6px 6px; }
+  .m1__top { display: flex; align-items: center; justify-content: space-between; }
+  .m1__brand { font-size: 10px; color: var(--gold); font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+  .m1__name { font-family: var(--font-display); font-weight: 500; font-size: 20px; letter-spacing: -0.01em; line-height: 1.18; margin: 11px 0 16px; }
+  .m1__foot { display: flex; align-items: baseline; justify-content: space-between; padding-top: 13px; border-top: 1px solid var(--line); }
+  .m1__price { font-family: var(--font-display); font-weight: 600; font-size: 21px; }
+  .m1__price small { font-family: var(--font-body); font-weight: 700; font-size: 10.5px; letter-spacing: .1em; color: var(--muted); margin-right: 5px; text-transform: uppercase; }
+  .m1__size { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+
+  /* ==========================================================
+     2 — CATALOGUE ICON
+     No-photo = a clean line drawing of the category on a faint
+     dot-grid. Technical, neat, unmistakably a product catalogue.
+     ========================================================== */
+  .m2 { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; transition: transform .4s var(--ease), box-shadow .4s var(--ease); box-shadow: 0 1px 2px rgba(20,19,16,.04); }
+  .m2:hover { transform: translateY(-6px); box-shadow: 0 34px 70px rgba(20,19,16,.14); }
+  .m2__media { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--ink-soft);
+    background-color: var(--paper);
+    background-image: radial-gradient(rgba(20,19,16,.09) 1px, transparent 1.2px);
+    background-size: 15px 15px; background-position: 7px 7px;
+    box-shadow: inset 0 0 0 1px rgba(20,19,16,.05); }
+  .m2 .icon { transition: transform .5s var(--ease); }
+  .m2:hover .icon { transform: scale(1.05); }
+  .m2__cat { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 9px; letter-spacing: .26em; text-transform: uppercase; font-weight: 700; color: var(--muted-2); }
+  .m2__flag { position: absolute; top: 12px; left: 12px; font-size: 10px; font-weight: 700; color: #fff; background: var(--gold); border-radius: 99px; padding: 5px 11px; box-shadow: 0 4px 12px rgba(47,43,214,.25); }
+  .m2__body { padding: 16px 6px 6px; }
+  .m2__top { display: flex; align-items: center; justify-content: space-between; }
+  .m2__brand { font-size: 10px; color: var(--gold); font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+  .m2__name { font-family: var(--font-display); font-weight: 500; font-size: 20px; line-height: 1.18; margin: 11px 0 16px; }
+  .m2__foot { display: flex; align-items: baseline; justify-content: space-between; padding-top: 13px; border-top: 1px solid var(--line); }
+  .m2__price { font-family: var(--font-display); font-weight: 600; font-size: 21px; }
+  .m2__price small { font-family: var(--font-body); font-weight: 700; font-size: 10.5px; letter-spacing: .1em; color: var(--muted); margin-right: 5px; text-transform: uppercase; }
+  .m2__size { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+
+  /* ==========================================================
+     3 — TYPE POSTER
+     No-photo = the product name IS the art, set huge in Fraunces
+     on a flat refined tint. Bold, editorial, zero blur.
+     ========================================================== */
+  .m3 { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; transition: transform .4s var(--ease), box-shadow .4s var(--ease); box-shadow: 0 1px 2px rgba(20,19,16,.04); }
+  .m3:hover { transform: translateY(-6px); box-shadow: 0 34px 70px rgba(20,19,16,.14); }
+  .m3__media { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; color: #fff; }
+  .m3__eyebrow { font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; font-weight: 700; opacity: .82; }
+  .m3__display { font-family: var(--font-display); font-weight: 500; font-size: 34px; line-height: 1.02; letter-spacing: -0.02em; }
+  .m3__foot-in { display: flex; align-items: center; justify-content: space-between; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; opacity: .82; }
+  .m3__flag { position: absolute; top: 14px; right: 14px; font-size: 10px; font-weight: 700; color: var(--ink); background: rgba(255,255,255,.9); border-radius: 99px; padding: 5px 11px; }
+  .m3__body { padding: 15px 6px 6px; }
+  .m3__top { display: flex; align-items: center; justify-content: space-between; }
+  .m3__brand { font-size: 10px; color: var(--gold); font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+  .m3__name { font-family: var(--font-display); font-weight: 500; font-size: 19px; line-height: 1.18; margin: 10px 0 15px; }
+  .m3__foot { display: flex; align-items: baseline; justify-content: space-between; padding-top: 13px; border-top: 1px solid var(--line); }
+  .m3__price { font-family: var(--font-display); font-weight: 600; font-size: 21px; }
+  .m3__price small { font-family: var(--font-body); font-weight: 700; font-size: 10.5px; letter-spacing: .1em; color: var(--muted); margin-right: 5px; text-transform: uppercase; }
+  .m3__size { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+
+  /* simulated real photo (studio) — for the "with photo" columns */
+  .photo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(165deg, #efeae0 0%, #e6dfd0 100%); }
+  .photo .icon { width: 58%; stroke: rgba(20,19,16,.42); }
+  .photo::after { content: "photo"; position: absolute; bottom: 10px; right: 12px; font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(20,19,16,.28); font-weight: 700; }
+
+  .foot-note { margin-top: 92px; padding-top: 26px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.65; }
+  .foot-note b { color: var(--ink); font-weight: 700; }
+
+  body.dark { --bg: #14130f; --card: #1c1a15; --paper: #201d17; --ink: #f4efe4; --ink-soft: #d8d1c2; --muted: #9a9384; --muted-2: #6f6a5d; --line: #2b2820; }
+  body.dark { background: radial-gradient(130% 90% at 82% -12%, #221f18, transparent 58%), var(--bg); }
+  body.dark .m1__plate { border-color: rgba(244,239,228,.12); }
+  body.dark .m1__plate::before, body.dark .m1__plate::after { border-color: rgba(244,239,228,.3); }
+  body.dark .m2__media { background-image: radial-gradient(rgba(244,239,228,.1) 1px, transparent 1.2px); }
+  body.dark .photo { background: linear-gradient(165deg, #26231c, #1a1813); }
+  body.dark .photo .icon { stroke: rgba(244,239,228,.4); }
+  body.dark .photo::after { color: rgba(244,239,228,.28); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">SIZERUN · Storefront</div>
+  <h1 class="page">Product card, <em>reimagined</em> — no blob</h1>
+  <p class="lede">The blurry gradient placeholder is gone. Each direction gives the <b>no-photo</b> state a real, designed identity, and real photos drop straight into the same frame. Left card in every row = <b>no photo</b>, right card = <b>with photo</b>. Toggle dark, hover to feel the motion.</p>
+  <div class="toolbar"><button class="toggle" id="themeBtn" aria-pressed="false">◐ Dark canvas</button></div>
+
+  <!-- 1 MONOGRAM PLATE -->
+  <section class="variant">
+    <div class="variant__head"><span class="variant__no">1</span><span class="variant__name">Monogram Plate</span><span class="pill-rec">Recommended</span></div>
+    <p class="variant__desc">No photo becomes a pressed monogram on warm paper — the brand's initial in Fraunces, a fine inset plate with corner ticks, and a small seal. Quiet, timeless, and it never looks "broken/empty". Photos fill the same rounded frame edge to edge.</p>
+    <div class="legend">← no photo · with photo →</div>
+    <div class="grid">
+      <a class="card"><div class="m1">
+        <div class="m1__media">
+          <span class="m1__flag">Other branches</span>
+          <div class="m1__plate"></div>
+          <div class="m1__mono">A</div>
+          <div class="m1__seal">Sizerun · Acceseries</div>
+        </div>
+        <div class="m1__body">
+          <div class="m1__top"><span class="m1__brand">Acceseries</span>
+            <span class="dots"><span class="dot" style="background:#c8492f"></span><span class="dot" style="background:#2f2bd6"></span></span></div>
+          <div class="m1__name">cap 100</div>
+          <div class="m1__foot"><div class="m1__price"><small>QAR</small>100</div><span class="m1__size">Size M</span></div>
+        </div>
+      </div></a>
+      <a class="card"><div class="m1">
+        <div class="m1__media">
+          <div class="photo"><svg class="icon" viewBox="0 0 64 44"><path d="M8 30 C8 8 56 8 56 30"/><path d="M8 30 L56 30"/><path d="M56 28 L62 30 Q64 31 62 33 L52 33"/><circle cx="32" cy="11" r="2"/></svg></div>
+        </div>
+        <div class="m1__body">
+          <div class="m1__top"><span class="m1__brand">Nike</span>
+            <span class="dots"><span class="dot" style="background:#141310"></span><span class="dot" style="background:#c9852a"></span></span></div>
+          <div class="m1__name">Air Court Runner</div>
+          <div class="m1__foot"><div class="m1__price"><small>QAR</small>349</div><span class="m1__size">Size 42</span></div>
+        </div>
+      </div></a>
+    </div>
+  </section>
+
+  <!-- 2 CATALOGUE ICON -->
+  <section class="variant">
+    <div class="variant__head"><span class="variant__no">2</span><span class="variant__name">Catalogue Icon</span></div>
+    <p class="variant__desc">No photo becomes a clean line drawing of the category (cap, shoe, bag…) on a faint dot-grid — a technical, product-catalogue feel. Reads instantly as "what it is", stays elegant, and prints beautifully.</p>
+    <div class="legend">← no photo · with photo →</div>
+    <div class="grid">
+      <a class="card"><div class="m2">
+        <div class="m2__media">
+          <span class="m2__flag">Other branches</span>
+          <svg class="icon" viewBox="0 0 64 44"><path d="M8 30 C8 8 56 8 56 30"/><path d="M8 30 L56 30"/><path d="M56 28 L62 30 Q64 31 62 33 L52 33"/><circle cx="32" cy="11" r="2"/></svg>
+          <div class="m2__cat">Acceseries</div>
+        </div>
+        <div class="m2__body">
+          <div class="m2__top"><span class="m2__brand">Acceseries</span>
+            <span class="dots"><span class="dot" style="background:#c8492f"></span><span class="dot" style="background:#2f2bd6"></span></span></div>
+          <div class="m2__name">cap 100</div>
+          <div class="m2__foot"><div class="m2__price"><small>QAR</small>100</div><span class="m2__size">Size M</span></div>
+        </div>
+      </div></a>
+      <a class="card"><div class="m2">
+        <div class="m2__media">
+          <div class="photo"><svg class="icon" viewBox="0 0 66 40"><path d="M5 31 L5 26 C5 24 7 23 10 23 L21 23 L31 15 C34 13 37 14 38 18 L41 24 L55 26 C60 26 62 28 62 31 L62 32 C62 33 61 34 60 34 L7 34 C6 34 5 33 5 31 Z"/><path d="M22 23 L25 27 M28 21 L31 25 M34 19 L37 23"/></svg></div>
+        </div>
+        <div class="m2__body">
+          <div class="m2__top"><span class="m2__brand">Adidas</span>
+            <span class="dots"><span class="dot" style="background:#4f8a3d"></span><span class="dot" style="background:#1b1970"></span></span></div>
+          <div class="m2__name">Terrace 84 Low</div>
+          <div class="m2__foot"><div class="m2__price"><small>QAR</small>420</div><span class="m2__size">Size 41</span></div>
+        </div>
+      </div></a>
+    </div>
+  </section>
+
+  <!-- 3 TYPE POSTER -->
+  <section class="variant">
+    <div class="variant__head"><span class="variant__no">3</span><span class="variant__name">Type Poster</span></div>
+    <p class="variant__desc">No photo turns the media panel into a poster — the product name set huge in Fraunces on a flat, refined brand tint (muted, never neon). Boldest of the three, still crisp and premium. Great when you want the grid to feel like a lookbook.</p>
+    <div class="legend">← no photo · with photo →</div>
+    <div class="grid">
+      <a class="card"><div class="m3">
+        <div class="m3__media" style="background:#20204a">
+          <span class="m3__flag">Other branches</span>
+          <div class="m3__eyebrow">Acceseries</div>
+          <div class="m3__display">cap 100</div>
+          <div class="m3__foot-in"><span>Qatar</span><span>No. 100</span></div>
+        </div>
+        <div class="m3__body">
+          <div class="m3__top"><span class="m3__brand">Acceseries</span>
+            <span class="dots"><span class="dot" style="background:#c8492f"></span><span class="dot" style="background:#2f2bd6"></span></span></div>
+          <div class="m3__name">cap 100</div>
+          <div class="m3__foot"><div class="m3__price"><small>QAR</small>100</div><span class="m3__size">Size M</span></div>
+        </div>
+      </div></a>
+      <a class="card"><div class="m3">
+        <div class="m3__media" style="padding:0">
+          <div class="photo"><svg class="icon" viewBox="0 0 66 40"><path d="M5 31 L5 26 C5 24 7 23 10 23 L21 23 L31 15 C34 13 37 14 38 18 L41 24 L55 26 C60 26 62 28 62 31 L62 32 C62 33 61 34 60 34 L7 34 C6 34 5 33 5 31 Z"/><path d="M22 23 L25 27 M28 21 L31 25 M34 19 L37 23"/></svg></div>
+        </div>
+        <div class="m3__body">
+          <div class="m3__top"><span class="m3__brand">New Balance</span>
+            <span class="dots"><span class="dot" style="background:#4f8a3d"></span><span class="dot" style="background:#5a56ff"></span></span></div>
+          <div class="m3__name">550 Heritage</div>
+          <div class="m3__foot"><div class="m3__price"><small>QAR</small>510</div><span class="m3__size">Size 42</span></div>
+        </div>
+      </div></a>
+    </div>
+  </section>
+
+  <p class="foot-note">The category icon set (cap / shoe / bag / default) is small inline SVG — I'll map it from <b>main_category</b>. Everything else reuses your colour dots, stock badges and <b>formatPrice</b>. Tell me <b>1</b>, <b>2</b>, or <b>3</b> (or a mix) and I'll rebuild <b>ProductCard.vue</b> for real.</p>
+</div>
+<script>
+  const b = document.getElementById('themeBtn');
+  b.addEventListener('click', () => {
+    const on = document.body.classList.toggle('dark');
+    b.setAttribute('aria-pressed', on);
+    b.textContent = on ? '☀ Light canvas' : '◐ Dark canvas';
+  });
+</script>
+</body>
+</html>

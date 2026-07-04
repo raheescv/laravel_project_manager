@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SIZERUN · Product Detail — Concept Previews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f4f0e7; --paper:#fbf9f3; --ink:#141310; --ink-soft:#3a372f;
+  --muted:#7c766a; --muted-2:#9a9384; --line:#e4ddce; --line-soft:#ece5d6; --card:#fff;
+  --gold:#2f2bd6; --gold-rgb:47,43,214; --gold-bright:#5a56ff; --gold-deep:#1b1970;
+  --amber:#c9852a; --amber-soft:#f3e4c8; --green:#4f8a3d; --red:#c8492f;
+  --font-display:'Fraunces',Georgia,serif; --font-body:'Hanken Grotesk',sans-serif;
+  --mono:'Space Mono',monospace; --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* ============ Preview chrome ============ */
+.chrome{position:sticky;top:0;z-index:100;background:rgba(20,19,16,.92);backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.1);padding:14px 26px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.chrome__brand{font-family:var(--font-display);font-weight:900;color:#f4f0e7;font-size:17px;letter-spacing:-.02em}
+.chrome__brand small{font-family:var(--mono);font-weight:400;font-size:10px;letter-spacing:.22em;color:#a8a294;display:block;margin-top:2px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:8px 15px;border-radius:99px;color:#c9c4b8;font-weight:600;font-size:13px;
+  border:1px solid transparent;transition:.2s var(--ease);white-space:nowrap}
+.tab:hover{color:#fff}
+.tab.on{background:#f4f0e7;color:#141310;border-color:#f4f0e7}
+.tab small{font-family:var(--mono);opacity:.55;font-size:10px;margin-right:6px}
+.chrome__spacer{flex:1}
+.chrome__note{color:#7c766a;font-size:12px;font-family:var(--mono);letter-spacing:.03em}
+
+.stage{display:none}
+.stage.on{display:block;animation:fade .5s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.concept-head{max-width:1240px;margin:0 auto;padding:30px 40px 0}
+.concept-head h2{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:.02em}
+.concept-head p{color:var(--muted);font-size:13px;margin-top:4px;max-width:640px;line-height:1.55}
+.concept-head .badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--gold);border:1px solid rgba(var(--gold-rgb),.3);
+  border-radius:99px;padding:3px 10px;margin-bottom:10px}
+
+/* shared product-image placeholder art (no external assets) */
+.shoe{width:100%;height:100%;display:grid;place-items:center;position:relative;overflow:hidden}
+.shoe svg{width:74%;filter:drop-shadow(0 30px 40px rgba(20,19,16,.28))}
+
+/* ============================================================
+   CONCEPT A — EDITORIAL VITRINE
+   ============================================================ */
+.A{max-width:1240px;margin:0 auto;padding:26px 40px 90px}
+.A__masthead{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.A__issue{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.A__cat{font-family:var(--font-display);font-style:italic;font-size:22px}
+.A__hero{position:relative;margin-top:-6px}
+.A__title{font-family:var(--font-display);font-weight:900;font-size:clamp(60px,11vw,150px);
+  line-height:.85;letter-spacing:-.04em;margin:34px 0 0;position:relative;z-index:3;pointer-events:none;max-width:9ch}
+.A__title em{font-style:italic;font-weight:500;color:var(--gold)}
+.A__frame{position:relative;margin-top:-6%;display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:stretch}
+.A__img{aspect-ratio:4/5;background:
+    radial-gradient(120% 90% at 30% 10%,#fff,#e8eaf2 60%,#dfe1ee);
+  border:1.5px solid var(--ink);position:relative;z-index:2}
+.A__side{z-index:4;padding:44px 0 0 44px;display:flex;flex-direction:column;justify-content:flex-end}
+.A__lede{font-family:var(--font-display);font-size:20px;line-height:1.4;font-weight:400;color:var(--ink-soft);
+  border-left:2px solid var(--gold);padding-left:18px;margin-bottom:26px}
+.A__price{display:flex;align-items:baseline;gap:14px;margin-bottom:26px}
+.A__price b{font-family:var(--font-display);font-size:46px;font-weight:600}
+.A__price span{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.A__row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+.chip{min-width:52px;height:46px;padding:0 14px;border:1.5px solid var(--ink);border-radius:0;
+  display:grid;place-items:center;font-weight:600;font-size:15px;transition:.15s var(--ease);background:var(--paper)}
+.chip:hover{background:var(--ink);color:var(--paper)}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.chip.out{border-color:var(--line);color:var(--muted-2);text-decoration:line-through;background:transparent;cursor:not-allowed}
+.A__cta{display:flex;gap:12px}
+.btn-fill{background:var(--ink);color:var(--paper);padding:16px 30px;font-weight:600;font-size:15px;
+  border-radius:0;transition:.2s var(--ease);letter-spacing:.01em}
+.btn-fill:hover{background:var(--gold)}
+.btn-line{border:1.5px solid var(--ink);padding:16px 26px;font-weight:600;font-size:15px}
+.A__meta{display:grid;grid-template-columns:repeat(4,1fr);border-top:1.5px solid var(--ink);margin-top:44px}
+.A__meta div{padding:20px 20px 20px 0;border-right:1px solid var(--line)}
+.A__meta div:last-child{border-right:none}
+.A__meta .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.A__meta .v{font-family:var(--font-display);font-size:17px;font-weight:600}
+.A__num{position:absolute;right:0;top:6%;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.2em;writing-mode:vertical-rl}
+
+/* ============================================================
+   CONCEPT B — CONCEPT-STORE PLINTH (minimal, floating annotations)
+   ============================================================ */
+.B{background:var(--paper);border-top:1px solid var(--line)}
+.B__wrap{max-width:1180px;margin:0 auto;padding:70px 40px 100px;text-align:center;position:relative}
+.B__kicker{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+.B__name{font-family:var(--font-display);font-weight:500;font-size:clamp(38px,6vw,72px);letter-spacing:-.03em;margin:14px 0 6px;line-height:1}
+.B__sub{color:var(--muted);font-size:15px;margin-bottom:6px}
+.B__stagewrap{position:relative;width:min(560px,100%);margin:20px auto 0;aspect-ratio:1}
+.B__disc{position:absolute;inset:8% 6% 4%;border-radius:50%;
+  background:radial-gradient(60% 60% at 50% 35%,#fff,#eceef6 70%,#e2e4ef);filter:blur(.3px)}
+.B__plinth{position:absolute;left:50%;bottom:2%;transform:translateX(-50%);width:64%;height:26px;
+  background:radial-gradient(50% 100% at 50% 0,rgba(20,19,16,.16),transparent 72%)}
+.B__shoe{position:absolute;inset:12% 10% 8%;z-index:2}
+.ann{position:absolute;text-align:left;z-index:4}
+.ann .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.ann .v{font-family:var(--font-display);font-size:19px;font-weight:600;margin-top:3px}
+.ann::before{content:'';position:absolute;top:50%;width:34px;height:1px;background:var(--gold)}
+.ann.l{right:calc(100% + 14px);top:22%;text-align:right}
+.ann.l::before{left:100%}
+.ann.l2{right:calc(100% + 14px);top:60%;text-align:right}
+.ann.l2::before{left:100%}
+.ann.r{left:calc(100% + 14px);top:30%}
+.ann.r::before{right:100%}
+.ann.r2{left:calc(100% + 14px);top:66%}
+.ann.r2::before{right:100%}
+.B__price{font-family:var(--font-display);font-size:40px;font-weight:600;margin:34px 0 4px}
+.B__taxnote{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em}
+.B__sizes{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:26px 0}
+.pill{min-width:50px;height:44px;padding:0 12px;border-radius:99px;border:1.5px solid var(--line);
+  display:grid;place-items:center;font-weight:600;background:#fff;transition:.15s var(--ease)}
+.pill:hover{border-color:var(--ink)}
+.pill.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.pill.out{color:var(--muted-2);text-decoration:line-through;cursor:not-allowed}
+.B__buy{background:var(--gold);color:#fff;padding:17px 46px;border-radius:99px;font-weight:600;font-size:15px;
+  box-shadow:0 14px 30px -12px rgba(var(--gold-rgb),.7);transition:.2s var(--ease)}
+.B__buy:hover{transform:translateY(-2px);box-shadow:0 20px 38px -12px rgba(var(--gold-rgb),.8)}
+.B__branches{display:flex;gap:20px;justify-content:center;margin-top:40px;flex-wrap:wrap}
+.bdot{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft)}
+.bdot i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green)}
+.bdot.low i{background:var(--amber);box-shadow:0 0 7px var(--amber)}
+.bdot.no i{background:#c9c4b8;box-shadow:none}
+
+/* ============================================================
+   CONCEPT C — TECHNICAL DOSSIER (dark blueprint)
+   ============================================================ */
+.C{background:#0d0c14;color:#e7e6f0;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:40px 40px}
+.C__wrap{max-width:1240px;margin:0 auto;padding:40px;display:grid;grid-template-columns:1.15fr 1fr;gap:0}
+.C__index{position:absolute;font-family:var(--mono);font-size:12px;color:#5a56ff;letter-spacing:.2em}
+.C__left{border:1px solid rgba(255,255,255,.14);position:relative}
+.C__topbar{display:flex;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.14);
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#8a88a6;text-transform:uppercase}
+.C__topbar b{color:#5a56ff;font-weight:400}
+.C__viewport{aspect-ratio:1;position:relative;display:grid;place-items:center;overflow:hidden}
+.C__viewport::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(60% 60% at 50% 45%,rgba(90,86,255,.22),transparent 70%)}
+.C__cross{position:absolute;color:#3a3860;font-family:var(--mono);font-size:11px}
+.C__cross.tl{top:12px;left:12px}.C__cross.tr{top:12px;right:12px}
+.C__cross.bl{bottom:12px;left:12px}.C__cross.br{bottom:12px;right:12px}
+.C__shoe{width:76%;z-index:2;filter:drop-shadow(0 20px 40px rgba(90,86,255,.35))}
+.C__scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#5a56ff,transparent);
+  animation:scan 4s linear infinite;z-index:3}
+@keyframes scan{0%{top:8%}50%{top:88%}100%{top:8%}}
+.C__right{padding:0 0 0 44px;display:flex;flex-direction:column}
+.C__tag{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:#5a56ff;text-transform:uppercase}
+.C__name{font-family:var(--font-display);font-size:clamp(34px,4.6vw,58px);font-weight:600;line-height:.98;letter-spacing:-.03em;margin:12px 0 18px}
+.C__desc{color:#a8a6c0;font-size:14px;line-height:1.6;margin-bottom:26px;max-width:44ch}
+.C__price{font-family:var(--mono);font-size:34px;font-weight:700;color:#fff;margin-bottom:4px}
+.C__price small{color:#5a56ff}
+.C__specs{border-top:1px solid rgba(255,255,255,.14);margin:24px 0}
+.C__spec{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.08);
+  font-family:var(--mono);font-size:13px}
+.C__spec .k{color:#8a88a6;letter-spacing:.08em}
+.C__spec .v{color:#e7e6f0}
+.C__sizes{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 26px}
+.tick{min-width:48px;height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;
+  font-family:var(--mono);font-size:14px;color:#c9c8dc;transition:.15s var(--ease)}
+.tick:hover{border-color:#5a56ff;color:#fff}
+.tick.on{background:#5a56ff;border-color:#5a56ff;color:#fff}
+.tick.out{color:#4a4866;text-decoration:line-through;cursor:not-allowed;border-color:rgba(255,255,255,.08)}
+.C__cta{display:flex;gap:12px;margin-top:auto}
+.btn-glow{background:#5a56ff;color:#fff;padding:16px 32px;font-weight:600;font-size:15px;
+  box-shadow:0 0 0 1px #5a56ff,0 14px 34px -10px rgba(90,86,255,.7);transition:.2s var(--ease)}
+.btn-glow:hover{box-shadow:0 0 0 1px #5a56ff,0 20px 44px -8px rgba(90,86,255,.9)}
+.btn-ghost{border:1px solid rgba(255,255,255,.24);padding:16px 26px;font-weight:600;font-size:15px;color:#e7e6f0}
+
+/* ============================================================
+   CONCEPT D — BOUTIQUE SPLIT (sticky color-block buy card)
+   ============================================================ */
+.D{display:grid;grid-template-columns:.92fr 1.08fr;min-height:640px}
+.D__panel{background:var(--gold);color:#fff;padding:60px 56px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.D__panel::after{content:'';position:absolute;right:-30%;bottom:-30%;width:70%;height:70%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(255,255,255,.16),transparent)}
+.D__kick{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;opacity:.8}
+.D__name{font-family:var(--font-display);font-weight:600;font-size:clamp(40px,4.8vw,66px);line-height:.98;letter-spacing:-.03em;margin:16px 0 20px}
+.D__lede{font-size:15px;line-height:1.6;opacity:.9;max-width:38ch;margin-bottom:auto}
+.D__pricebox{margin-top:44px}
+.D__pricebox .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.75}
+.D__pricebox b{font-family:var(--font-display);font-size:56px;font-weight:600;display:block;line-height:1;margin-top:6px}
+.D__buy{background:#fff;color:var(--gold);margin-top:26px;padding:18px;font-weight:700;font-size:16px;
+  border-radius:14px;transition:.2s var(--ease);width:100%}
+.D__buy:hover{background:var(--ink);color:#fff}
+.D__right{padding:52px 56px;background:var(--paper);display:flex;flex-direction:column;gap:30px}
+.D__gallery{display:grid;grid-template-columns:1.4fr 1fr;grid-template-rows:1fr 1fr;gap:14px;height:400px}
+.D__g0{grid-row:span 2;border-radius:20px;background:radial-gradient(120% 90% at 30% 15%,#fff,#e8eaf2 65%,#dfe1ee);position:relative;overflow:hidden}
+.D__g1,.D__g2{border-radius:16px;background:linear-gradient(140deg,#eceef6,#e0e2ee)}
+.D__block .t{font-family:var(--font-display);font-size:16px;font-weight:600;margin-bottom:13px}
+.D__sizes{display:flex;gap:9px;flex-wrap:wrap}
+.sq{min-width:52px;height:48px;padding:0 14px;border:1.5px solid var(--line);border-radius:12px;
+  display:grid;place-items:center;font-weight:600;background:#fff;transition:.15s var(--ease)}
+.sq:hover{border-color:var(--gold)}
+.sq.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.sq.out{color:var(--muted-2);text-decoration:line-through;cursor:not-allowed;background:#f5f3ee}
+.D__branch{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#fff;
+  border:1px solid var(--line);border-radius:13px;margin-bottom:8px}
+.D__branch .n{font-weight:600;font-size:14px}
+.D__branch .s{font-size:13px;font-weight:600;color:var(--green)}
+.D__branch .s.low{color:var(--amber)}
+.D__branch .s.no{color:var(--muted-2)}
+.you{background:var(--gold);color:#fff;font-size:10px;font-weight:600;border-radius:99px;padding:2px 9px;margin-left:7px}
+
+@media(max-width:900px){
+  .A__frame{grid-template-columns:1fr}.A__side{padding:24px 0 0}.A__meta{grid-template-columns:1fr 1fr}
+  .C__wrap{grid-template-columns:1fr;gap:30px}.C__right{padding:0}
+  .D{grid-template-columns:1fr}.ann{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <div class="chrome__brand">SIZERUN <small>PRODUCT DETAIL · CONCEPTS</small></div>
+  <div class="tabs">
+    <button class="tab on" data-s="A"><small>A</small>Editorial Vitrine</button>
+    <button class="tab" data-s="B"><small>B</small>Concept-Store Plinth</button>
+    <button class="tab" data-s="C"><small>C</small>Technical Dossier</button>
+    <button class="tab" data-s="D"><small>D</small>Boutique Split</button>
+  </div>
+  <div class="chrome__spacer"></div>
+  <div class="chrome__note">preview · not wired to real code</div>
+</div>
+
+<!-- ============ SHOE SVG (reused) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="sneaker">
+      <path d="M20 118 C18 100 30 92 52 90 C70 88 84 78 100 66 C120 52 150 44 176 52 C196 58 206 72 214 86 C226 90 244 96 258 104 C272 112 278 122 276 132 C274 140 264 144 250 144 L44 144 C30 144 22 132 20 118 Z"
+        fill="#1c1a3a"/>
+      <path d="M20 118 C18 100 30 92 52 90 C70 88 84 78 100 66 C120 52 150 44 176 52 C196 58 206 72 214 86 C216 92 214 96 208 96 C196 92 178 90 160 92 C120 96 78 108 40 120 C30 122 22 122 20 118 Z"
+        fill="#2f2bd6"/>
+      <path d="M22 128 L276 130 C278 138 268 144 252 144 L44 144 C30 144 24 138 22 128 Z" fill="#e4ddce"/>
+      <circle cx="150" cy="76" r="5" fill="#f4f0e7"/><circle cx="132" cy="82" r="5" fill="#f4f0e7"/>
+      <circle cx="168" cy="72" r="5" fill="#f4f0e7"/>
+      <path d="M96 96 C120 100 150 100 182 96" stroke="#c9852a" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ===================== CONCEPT A ===================== -->
+<section class="stage on" id="stage-A">
+  <div class="concept-head">
+    <span class="badge">Concept A</span>
+    <h2>Editorial Vitrine — magazine cover energy</h2>
+    <p>Oversized Fraunces headline overlaps the product frame, hard rules, no rounded corners. Feels like a printed lookbook. Best when photography is strong. Light / ivory.</p>
+  </div>
+  <div class="A">
+    <div class="A__masthead">
+      <div class="A__issue">SIZERUN — Issue Nº 08 / Footwear</div>
+      <div class="A__cat">Running</div>
+    </div>
+    <div class="A__hero">
+      <span class="A__num">SKU · SR-8308</span>
+      <h1 class="A__title">Velo<em>city</em> Pro</h1>
+      <div class="A__frame">
+        <div class="A__img"><div class="shoe"><svg viewBox="0 0 296 160"><use href="#sneaker"/></svg></div></div>
+        <div class="A__side">
+          <p class="A__lede">A carbon-plated racer built for the last mile — feather-light knit upper, responsive foam, zero break-in.</p>
+          <div class="A__price"><b>₹ 12,900</b><span>INCL. 5% GST</span></div>
+          <div class="A__row">
+            <button class="chip out">6</button><button class="chip">7</button>
+            <button class="chip on">8</button><button class="chip">9</button>
+            <button class="chip">10</button><button class="chip out">11</button>
+          </div>
+          <div class="A__cta"><button class="btn-fill">Enquire · Downtown</button><button class="btn-line">All branches</button></div>
+        </div>
+      </div>
+      <div class="A__meta">
+        <div><div class="k">Model</div><div class="v">VC-Pro 24</div></div>
+        <div><div class="k">Colour</div><div class="v">Indigo / Bone</div></div>
+        <div><div class="k">Drop</div><div class="v">8 mm</div></div>
+        <div><div class="k">Weight</div><div class="v">212 g</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONCEPT B ===================== -->
+<section class="stage" id="stage-B">
+  <div class="concept-head">
+    <span class="badge">Concept B</span>
+    <h2>Concept-Store Plinth — museum object</h2>
+    <p>Product centred on a soft pedestal, key facts float around it on hairline connector lines. Maximum negative space, calm and luxurious. Everything applies on tap.</p>
+  </div>
+  <div class="B"><div class="B__wrap">
+    <div class="B__kicker">SIZERUN · Footwear</div>
+    <h1 class="B__name">Velocity Pro</h1>
+    <div class="B__sub">Carbon-plated road racer</div>
+    <div class="B__stagewrap">
+      <div class="ann l"><div class="k">Weight</div><div class="v">212 g</div></div>
+      <div class="ann l2"><div class="k">Drop</div><div class="v">8 mm</div></div>
+      <div class="ann r"><div class="k">Plate</div><div class="v">Carbon</div></div>
+      <div class="ann r2"><div class="k">Colour</div><div class="v">Indigo</div></div>
+      <div class="B__disc"></div>
+      <div class="B__shoe shoe"><svg viewBox="0 0 296 160"><use href="#sneaker"/></svg></div>
+      <div class="B__plinth"></div>
+    </div>
+    <div class="B__price">₹ 12,900</div>
+    <div class="B__taxnote">incl. 5% GST · SKU SR-8308</div>
+    <div class="B__sizes">
+      <button class="pill out">6</button><button class="pill">7</button>
+      <button class="pill on">8</button><button class="pill">9</button>
+      <button class="pill">10</button><button class="pill out">11</button>
+    </div>
+    <button class="B__buy">Enquire at Downtown →</button>
+    <div class="B__branches">
+      <div class="bdot"><i></i>Downtown · 12</div>
+      <div class="bdot low"><i></i>Marina · 3 left</div>
+      <div class="bdot no"><i></i>Airport · out</div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ===================== CONCEPT C ===================== -->
+<section class="stage" id="stage-C">
+  <div class="concept-head">
+    <span class="badge">Concept C</span>
+    <h2>Technical Dossier — dark blueprint</h2>
+    <p>Data-sheet layout on a grid canvas with a scanning line and monospace specs. Reads as engineered / performance. Dark, high-contrast indigo glow.</p>
+  </div>
+  <div class="C"><div class="C__wrap">
+    <div class="C__left">
+      <div class="C__topbar"><span>SPEC SHEET · <b>SR-8308</b></span><span>REV 24.1</span></div>
+      <div class="C__viewport">
+        <span class="C__cross tl">+</span><span class="C__cross tr">+</span>
+        <span class="C__cross bl">+</span><span class="C__cross br">+</span>
+        <div class="C__scan"></div>
+        <svg class="C__shoe" viewBox="0 0 296 160"><use href="#sneaker"/></svg>
+      </div>
+    </div>
+    <div class="C__right">
+      <div class="C__tag">// Footwear · Performance</div>
+      <h1 class="C__name">Velocity Pro</h1>
+      <p class="C__desc">Carbon-plated racer with a feather-light engineered knit upper and PEBA supercritical foam. Tuned for tempo and race day.</p>
+      <div class="C__price">₹12,900 <small>/ +5% GST</small></div>
+      <div class="C__specs">
+        <div class="C__spec"><span class="k">MODEL</span><span class="v">VC-Pro 24</span></div>
+        <div class="C__spec"><span class="k">WEIGHT</span><span class="v">212 g</span></div>
+        <div class="C__spec"><span class="k">HEEL DROP</span><span class="v">8 mm</span></div>
+        <div class="C__spec"><span class="k">PLATE</span><span class="v">Carbon fibre</span></div>
+      </div>
+      <div class="C__sizes">
+        <button class="tick out">6</button><button class="tick">7</button>
+        <button class="tick on">8</button><button class="tick">9</button>
+        <button class="tick">10</button><button class="tick out">11</button>
+      </div>
+      <div class="C__cta"><button class="btn-glow">Enquire · Downtown</button><button class="btn-ghost">Branches</button></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ===================== CONCEPT D ===================== -->
+<section class="stage" id="stage-D">
+  <div class="concept-head">
+    <span class="badge">Concept D</span>
+    <h2>Boutique Split — sticky colour-block buy card</h2>
+    <p>Full-height indigo panel holds name, story & price like a fashion product page; the right side carries a mosaic gallery, sizes and live branch stock. Confident, e-com ready.</p>
+  </div>
+  <div class="D">
+    <div class="D__panel">
+      <div class="D__kick">SIZERUN · Footwear</div>
+      <h1 class="D__name">Velocity Pro</h1>
+      <p class="D__lede">A carbon-plated road racer built for the last mile. Feather-light knit, supercritical foam, zero break-in.</p>
+      <div class="D__pricebox"><div class="lbl">Price · incl. GST</div><b>₹ 12,900</b></div>
+      <button class="D__buy">Enquire at Downtown</button>
+    </div>
+    <div class="D__right">
+      <div class="D__gallery">
+        <div class="D__g0 shoe"><svg viewBox="0 0 296 160" style="width:82%"><use href="#sneaker"/></svg></div>
+        <div class="D__g1"></div><div class="D__g2"></div>
+      </div>
+      <div class="D__block">
+        <div class="t">Select size</div>
+        <div class="D__sizes">
+          <button class="sq out">6</button><button class="sq">7</button>
+          <button class="sq on">8</button><button class="sq">9</button>
+          <button class="sq">10</button><button class="sq out">11</button>
+        </div>
+      </div>
+      <div class="D__block">
+        <div class="t">Availability by branch</div>
+        <div class="D__branch"><span class="n">Downtown <span class="you">Your branch</span></span><span class="s">In stock · 12</span></div>
+        <div class="D__branch"><span class="n">Marina Walk</span><span class="s low">Low · 3 left</span></div>
+        <div class="D__branch"><span class="n">Airport T3</span><span class="s no">Out of stock</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const tabs=document.querySelectorAll('.tab'),stages=document.querySelectorAll('.stage');
+tabs.forEach(t=>t.onclick=()=>{
+  tabs.forEach(x=>x.classList.remove('on'));t.classList.add('on');
+  stages.forEach(s=>s.classList.remove('on'));
+  document.getElementById('stage-'+t.dataset.s).classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+// let the size chips feel alive in the preview
+document.querySelectorAll('.chip,.pill,.tick,.sq').forEach(b=>{
+  if(b.classList.contains('out'))return;
+  b.onclick=()=>{const sib=b.parentElement.querySelectorAll('.on');sib.forEach(s=>s.classList.remove('on'));b.classList.add('on');};
+});
+</script>
+</body>
+</html>
