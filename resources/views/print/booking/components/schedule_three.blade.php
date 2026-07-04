@@ -1,26 +1,16 @@
 <!-- Schedule 3 Component -->
 <div class="schedule-three">
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-        <!-- Header -->
-        <tr>
-            <td style="width: 50%; border: 1px solid #000; padding: 10px; text-align: center;">
-                <h3>SCHEDULE 3</h3>
-            </td>
-            <td style="width: 50%; border: 1px solid #000; padding: 10px; text-align: center;">
-                <h3>الجدول 3</h3>
-            </td>
-        </tr>
-        <tr>
-            <td style="border: 1px solid #000; padding: 10px; text-align: center;">
-                <h4>Specifications</h4>
-            </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: center;">
-                <h4>المواصفات</h4>
-            </td>
-        </tr>
+    <div class="sched-head">
+        <div class="main">SCHEDULE 3 – الجدول 3</div>
+        <div class="sub">Specifications / المواصفات</div>
+    </div>
+
+    {{-- Rows never split across pages; pagination between the specification
+         blocks is automatic — no manual page-break markers needed. --}}
+    <table class="data-table">
         <!-- 1. Foyer -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
+            <td style="width: 50%; vertical-align: top;">
                 <strong>1. Foyer</strong>
                 <table style="width: 100%;">
                     <tr><td>Floors</td><td>Porcelain tiles</td></tr>
@@ -29,7 +19,7 @@
                     <tr><td>Ceiling</td><td>Gypsum boards finished in emulsion paint</td></tr>
                 </table>
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="width: 50%; vertical-align: top; text-align: right;" lang="ar">
                 <strong>١. البهو</strong>
                 <table style="width: 100%; text-align: right;">
                     <tr><td>الأرضيات</td><td>بلاط بورسلين</td></tr>
@@ -41,7 +31,7 @@
         </tr>
         <!-- 2. Living area -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
+            <td style="vertical-align: top;">
                 <strong>2. Living area:</strong>
                 <table style="width: 100%;">
                     <tr><td>Floors</td><td>Porcelain tiles</td></tr>
@@ -51,7 +41,7 @@
                     <tr><td>Woodwork</td><td>As per design</td></tr>
                 </table>
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="vertical-align: top; text-align: right;" lang="ar">
                 <strong>٢. منطقة المعيشة</strong>
                 <table style="width: 100%; text-align: right;">
                     <tr><td>أرضيات</td><td>بلاط بورسلين</td></tr>
@@ -64,7 +54,7 @@
         </tr>
         <!-- 3. Dining area -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
+            <td style="vertical-align: top;">
                 <strong>3. Dining area:</strong>
                 <table style="width: 100%;">
                     <tr><td>Floors</td><td>Porcelain tiles</td></tr>
@@ -73,7 +63,7 @@
                     <tr><td>Ceiling</td><td>Emulsion paint and pendant light fittings</td></tr>
                 </table>
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="vertical-align: top; text-align: right;" lang="ar">
                 <strong>٣. غرفة الطعام</strong>
                 <table style="width: 100%; text-align: right;">
                     <tr><td>أرضيات</td><td>بلاط بورسلين</td></tr>
@@ -85,7 +75,7 @@
         </tr>
         <!-- 4. Kitchen -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
+            <td style="vertical-align: top;">
                 <strong>4. Kitchen:</strong>
                 <table style="width: 100%;">
                     <tr><td>Floors</td><td>Porcelain tiles</td></tr>
@@ -94,7 +84,7 @@
                     <tr><td>Cabinets</td><td>Base and wall units MDF with melamine, Shutters MDF with veneer finish</td></tr>
                 </table>
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="vertical-align: top; text-align: right;" lang="ar">
                 <strong>٤. المطبخ</strong>
                 <table style="width: 100%; text-align: right;">
                     <tr><td>أرضيات</td><td>بلاط بورسلين</td></tr>
@@ -106,7 +96,7 @@
         </tr>
         <!-- 5. Bedroom -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
+            <td style="vertical-align: top;">
                 <strong>5. Bedroom:</strong>
                 <table style="width: 100%;">
                     <tr><td>Floors</td><td>Porcelain tiles</td></tr>
@@ -116,7 +106,7 @@
                     <tr><td>Joinery</td><td>Built in painted I veneer wardrobe</td></tr>
                 </table>
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="vertical-align: top; text-align: right;" lang="ar">
                 <strong>٥. غرف النوم</strong>
                 <table style="width: 100%; text-align: right;">
                     <tr><td>أرضيات</td><td>بلاط بورسلين</td></tr>
@@ -129,7 +119,7 @@
         </tr>
         <!-- 6. Bathroom -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
+            <td style="vertical-align: top;">
                 <strong>6. Bathroom</strong>
                 <table style="width: 100%;">
                     <tr><td>Floors</td><td>Porcelain tiles</td></tr>
@@ -138,7 +128,7 @@
                     <tr><td>Joinery</td><td>Built in painted I marble countertop</td></tr>
                 </table>
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="vertical-align: top; text-align: right;" lang="ar">
                 <strong>٦. الحمامات</strong>
                 <table style="width: 100%; text-align: right;">
                     <tr><td>أرضيات</td><td>بلاط بورسلين</td></tr>
@@ -151,18 +141,18 @@
 
         <!-- Disclosure Statement -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;" colspan="2">
-                <h4 style="text-align: center;">DISCLOSURE STATEMENT / بيان الافصاح عن معلومات</h4>
+            <td colspan="2" style="text-align: center; background: #f1f3f5;">
+                <strong>DISCLOSURE STATEMENT / بيان الافصاح عن معلومات</strong>
             </td>
         </tr>
 
         <!-- Building Description -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
+            <td style="vertical-align: top;">
                 <strong>Description of Building or Project:</strong><br>
                 {{ $rentOut->building?->name }} - {{ $rentOut->group?->name }}
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="vertical-align: top; text-align: right;" lang="ar">
                 <strong>وصف المبنى أو المشروع:</strong><br>
                 {{ $rentOut->building?->arabic_name }} - {{ $rentOut->group?->arabic_name }}
             </td>
@@ -170,63 +160,55 @@
 
         <!-- Intended Use -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
+            <td style="vertical-align: top;">
                 <strong>Intended land uses within the Building or Project:</strong><br>
                 Residential Tower
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="vertical-align: top; text-align: right;" lang="ar">
                 <strong>الاستخدام المفروض للمبنى والمشروع:</strong><br>
                 برج شقق سكنية
             </td>
         </tr>
-    </table>
-    <!-- Furniture and Fixtures -->
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-        <div class="page-break"></div>
-        <br>
-        <br>
+
+        <!-- Furniture and Fixtures -->
         <tr>
-            <td width="50%" style="border: 1px solid #000; padding: 10px;">
+            <td style="vertical-align: top;">
                 <strong>Furniture, Fixtures and Fittings included in the sale:</strong><br>
-                <p style="margin: 10px 0;">
-                    Built-in cupboards, kitchen cabinets, oven, stove, refrigerator/freezer, washing machine, living room set, master bedroom and secondary bedroom, dining room set, tv.
-                </p>
+                Built-in cupboards, kitchen cabinets, oven, stove, refrigerator/freezer, washing machine, living room set, master bedroom and secondary bedroom, dining room set, tv.
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
+            <td style="vertical-align: top; text-align: right;" lang="ar">
                 <strong>الأثاث والتركيبات والتجهيزات المشمولة بالبيع:</strong><br>
-                <p style="margin: 10px 0;">
-                    خزائن مدمجة، خزائن مطبخ ، فرن ، موقد ، ثلاجة / فريزر ، غسالة ، غرفة جلوس ، غرفة نوم رئيسية و غرفة نوم ثانوية ، غرفة جلوس ، سفرة ، تلفاز .
-                </p>
+                خزائن مدمجة، خزائن مطبخ ، فرن ، موقد ، ثلاجة / فريزر ، غسالة ، غرفة جلوس ، غرفة نوم رئيسية و غرفة نوم ثانوية ، غرفة جلوس ، سفرة ، تلفاز .
             </td>
         </tr>
 
         <!-- First Party Details -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
-                <strong>First Party's Name:</strong> {{ \App\Models\Configuration::where('key', 'lessor_name_en')->value('value') ?? '' }}<br><br>
-                <strong>First Party's Representative:</strong><br><br>
-                <strong>Signature & Stamp:</strong><br>
-                <div style="height: 60px;"></div>
+            <td style="vertical-align: top;">
+                <strong>First Party's Name:</strong> {{ \App\Models\Configuration::where('key', 'lessor_name_en')->value('value') ?? '' }}<br>
+                <strong>First Party's Representative:</strong><br>
+                <strong>Signature &amp; Stamp:</strong>
+                <div style="height: 50px;"></div>
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
-                <strong>اسم الطرف الاول : {{ \App\Models\Configuration::where('key', 'lessor_name_ar')->value('value') ?? '' }}</strong><br><br>
-                <strong>ممثل الطرف الاول :</strong><br><br>
-                <strong>توقيع وخاتم الطرف الاول :</strong><br>
-                <div style="height: 60px;"></div>
+            <td style="vertical-align: top; text-align: right;" lang="ar">
+                <strong>اسم الطرف الاول : {{ \App\Models\Configuration::where('key', 'lessor_name_ar')->value('value') ?? '' }}</strong><br>
+                <strong>ممثل الطرف الاول :</strong><br>
+                <strong>توقيع وخاتم الطرف الاول :</strong>
+                <div style="height: 50px;"></div>
             </td>
         </tr>
 
         <!-- Second Party Details -->
         <tr>
-            <td style="border: 1px solid #000; padding: 10px;">
-                <strong>Second Party's Name: Mr. {{ $rentOut->customer?->name }}</strong><br><br>
-                <strong>Signature: \ handwritten signature\</strong><br>
-                <div style="height: 60px;"></div>
+            <td style="vertical-align: top;">
+                <strong>Second Party's Name: Mr. {{ $rentOut->customer?->name }}</strong><br>
+                <strong>Signature: \ handwritten signature \</strong>
+                <div style="height: 50px;"></div>
             </td>
-            <td style="border: 1px solid #000; padding: 10px; text-align: right;">
-                <strong>اسم الطرف الثاني: السيد / {{ $rentOut->customer?->name }}</strong><br><br>
-                <strong>التوقيع: / توقيع بخط اليد/</strong><br>
-                <div style="height: 60px;"></div>
+            <td style="vertical-align: top; text-align: right;" lang="ar">
+                <strong>اسم الطرف الثاني: السيد / {{ $rentOut->customer?->name }}</strong><br>
+                <strong>التوقيع: / توقيع بخط اليد /</strong>
+                <div style="height: 50px;"></div>
             </td>
         </tr>
     </table>
