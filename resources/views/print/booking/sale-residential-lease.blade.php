@@ -21,17 +21,65 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>AGREEMENT FOR SALE OF SINGLE UNIT – OFF PLAN</title>
     @include('print.booking.components.styles')
+    <style>
+        /* Utilise the page: let sections flow and fill the sheet instead of
+           forcing each group onto its own page, but never split an individual
+           article (or party/detail row) across a page boundary. */
+        .section .row { page-break-inside: avoid; }
+        .section { page-break-inside: auto; }
+    </style>
+    @if ($bondPaperMode)
+        {{-- Bond paper / letterhead: reserve the pre-printed header band at the
+             top of EVERY page via a page margin (page 1 uses the inline gap
+             block below, so its top margin is zeroed to avoid double spacing).
+             The footer signature band repeats on every page via the table
+             <tfoot>, which also reserves its own space so content never
+             overlaps it. --}}
+        <style>
+            @page { margin-top: {{ $logoHeight }}px; }
+            @page :first { margin-top: 0; }
+            .container { margin-bottom: 0; }
+        </style>
+    @endif
 </head>
 
 <body>
-    <div style="width: 100%; line-height: 10;">
-        @if ($bondPaperMode)
-            <div style="width: 100%; height: {{ $logoHeight }}px;"></div>
-        @elseif($residentialLogoLeaseUrl)
-            <img src="{{ $residentialLogoLeaseUrl }}" alt="Logo" style="width: 100%; height: auto; display: block;">
-        @endif
-    </div>
-    <div class="container">
+    {{-- The whole document is wrapped in a table so the signature block in
+         <tfoot> repeats at the bottom of EVERY page and the browser reserves its
+         space (unlike position:fixed, which Chrome does not repeat reliably). --}}
+    <table style="width: 100%; border-collapse: collapse; border: 0;">
+        <tfoot>
+            <tr>
+                <td style="border: 0; padding: 0;">
+                    <div class="signature-row">
+                        <div>
+                            <div>____________________</div>
+                            <div class="signature-label">First Party Signature</div>
+                        </div>
+                        <div>
+                            <div>____________________</div>
+                            <div class="signature-label">Second Party Signature</div>
+                        </div>
+                    </div>
+                    @if ($bondPaperMode)
+                        {{-- Blank strip reserved for the pre-printed bond-paper footer,
+                             below the signatures, on every page. --}}
+                        <div style="width: 100%; height: {{ $footerHeight }}px;"></div>
+                    @endif
+                </td>
+            </tr>
+        </tfoot>
+        <tbody>
+            <tr>
+                <td style="border: 0; padding: 0;">
+                    <div style="width: 100%; line-height: 10;">
+                        @if ($bondPaperMode)
+                            <div style="width: 100%; height: {{ $logoHeight }}px;"></div>
+                        @elseif($residentialLogoLeaseUrl)
+                            <img src="{{ $residentialLogoLeaseUrl }}" alt="Logo" style="width: 100%; height: auto; display: block;">
+                        @endif
+                    </div>
+                    <div class="container">
 
         <!-- Header Table -->
         <div id="header_container" style="display: flex; align-items: flex-start; gap: 20px;">
@@ -153,8 +201,6 @@
                 </div>
             </div>
         </div>
-        <div class="page-break"></div>
-
         <!-- Preliminary Clause -->
         <br>
         <div class="section">
@@ -218,7 +264,6 @@
 
         <!-- Payment Schedule -->
         <div class="page-break"></div>
-        <br>
         <br>
         <!-- Schedule 1 Header -->
         <div>
@@ -446,11 +491,6 @@
                     <p>يقر الطرف الأول بأن ملكية الأرض المقام عليها المشروع قد آلت إليه عن طريق الشراء كما أنه من المعلوم للطرفين أن تملك الطرف الثاني للوحدة المباعة بعد استلامها بعد اتمام المشروع يخضع لأحكام ملكية الطبقات المنصوص عليها بالقانون المدني.</p>
                 </div>
             </div>
-        </div>
-        <div class="page-break"></div>
-        <br>
-        <br>
-        <div class="section">
             <div class="row">
                 <div class="cell cell-en">
                     <div class="section-title">Article Five</div>
@@ -471,11 +511,6 @@
                     <p>يقر الطرف الثاني – المشتري – بأنه قد عاين المخططات والرسومات الهندسية المعتمدة قيد التشييد وبناء المشروع وقبلها على حالتها وبالشروط المتفق عليها.</p>
                 </div>
             </div>
-        </div>
-        <div class="page-break"></div>
-        <br>
-        <br>
-        <div class="section">
             <div class="row">
                 <div class="cell cell-en">
                     <div class="section-title">Article Seven</div>
@@ -517,9 +552,6 @@
                 </div>
             </div>
         </div>
-        <div class="page-break"></div>
-        <br>
-        <br>
         <div class="section">
             <div class="row">
                 <div class="cell cell-en">
@@ -605,21 +637,10 @@
         <br>
         @include('print.booking.components.schedule_three')
     </div>
-    <div class="page-footer">
-        <div class="signature-row">
-            <div>
-                <div>____________________</div>
-                <div class="signature-label">First Party Signature</div>
-            </div>
-            <div>
-                <div>____________________</div>
-                <div class="signature-label">Second Party Signature</div>
-            </div>
-        </div>
-        @if ($bondPaperMode)
-            <div style="width: 100%; height: {{ $footerHeight }}px;"></div>
-        @endif
-    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </body>
 
 </html>
