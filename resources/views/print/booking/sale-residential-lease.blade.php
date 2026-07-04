@@ -13,6 +13,7 @@
 
     $bondPaperMode = Configuration::where('key', 'reservation_bond_paper_mode')->value('value') === 'yes';
     $logoHeight = (int) (Configuration::where('key', 'reservation_logo_height')->value('value') ?: 80);
+    $footerHeight = (int) (Configuration::where('key', 'reservation_footer_height')->value('value') ?: 30);
 @endphp
 <html xmlns="http://www.w3.org/1999/xhtml">
 
@@ -616,6 +617,9 @@
                 <div class="signature-label">Second Party Signature</div>
             </div>
         </div>
+        @if ($bondPaperMode)
+            <div style="width: 100%; height: {{ $footerHeight }}px;"></div>
+        @endif
     </div>
 </body>
 

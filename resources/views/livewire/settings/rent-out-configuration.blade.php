@@ -37,10 +37,10 @@
                             <small class="form-text text-muted">Reserved blank space height for header area when bond paper mode is on.</small>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-medium small">Footer Image Height (Px)</label>
+                            <label class="form-label fw-medium small">Footer Reserved Height (Px)</label>
                             <input type="number" wire:model="reservation_footer_height" class="form-control form-control-sm" min="0"
                                 placeholder="30">
-                            <small class="form-text text-muted">Reserved blank space height for footer area when bond paper mode is on.</small>
+                            <small class="form-text text-muted">Reserved blank space height at the bottom (footer image / signature area) when bond paper mode is on.</small>
                         </div>
                     </div>
                 </div>
