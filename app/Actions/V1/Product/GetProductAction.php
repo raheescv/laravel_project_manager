@@ -25,7 +25,7 @@ class GetProductAction
             'mainCategory:id,name',
             'subCategory:id,name',
             'images:id,product_id,path',
-            'inventories.branch:id,name',
+            'inventories.branch:id,name,location',
         ]);
 
         return new ProductResource($product);

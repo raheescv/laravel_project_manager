@@ -24,7 +24,9 @@ class GetBrandsAction
                 'products' => function ($query) use ($filters, $availableProductsOnly) {
                     $query->when($filters->get('size'), fn ($q, $v) => $q->where('size', $v))
                         ->when($filters->get('main_category_id'), fn ($q, $v) => $q->where('main_category_id', $v))
-                        ->when($filters->get('sub_category_id'), fn ($q, $v) => $q->where('sub_category_id', $v));
+                        ->when($filters->get('sub_category_id'), fn ($q, $v) => $q->where('sub_category_id', $v))
+                        // Only count products in an online-visible category (matches /categories).
+                        ->whereHas('mainCategory', fn ($catQ) => $catQ->where('online_visibility_flag', true));
 
                     // When availableProductsOnly is true, only count products with inventory stock
                     if ($availableProductsOnly) {

@@ -23,6 +23,9 @@ class GetSizesRequest extends FormRequest
     {
         return [
             'code' => ['nullable', 'string', 'max:20'],
+            'main_category_id' => ['nullable'],
+            'sub_category_id' => ['nullable'],
+            'brand_id' => ['nullable'],
         ];
     }
 
@@ -49,6 +52,9 @@ class GetSizesRequest extends FormRequest
 
         return array_merge([
             'code' => null,
+            'main_category_id' => null,
+            'sub_category_id' => null,
+            'brand_id' => null,
         ], $validated);
     }
 }

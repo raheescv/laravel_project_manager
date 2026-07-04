@@ -28,6 +28,7 @@ class GetProductsRequest extends FormRequest
             'sub_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
+            'hsn_code' => ['nullable', 'string', 'max:50'],
             'size' => ['nullable', 'string', 'max:50'],
             'color' => ['nullable', 'string', 'max:50'],
             'min_price' => ['nullable', 'numeric', 'min:0'],

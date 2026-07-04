@@ -84,6 +84,10 @@ class GetProductsAction
             ->when($filters['brand_id'] ?? null, function ($q, $value) {
                 return $q->where('brand_id', $value);
             })
+            // HSN code filter (used to surface related products)
+            ->when($filters['hsn_code'] ?? null, function ($q, $value) {
+                return $q->where('hsn_code', $value);
+            })
             // Inventory branch filter
             ->when($filters['branch_id'] ?? null, function ($q, $value) {
                 return $q->whereHas('inventories', function ($invQ) use ($value) {
