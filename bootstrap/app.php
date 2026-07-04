@@ -9,10 +9,12 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -48,8 +50,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustHosts();
 
         // Global middleware
+        // NOTE: use() REPLACES Laravel's default global stack, so HandleCors
+        // (shipped by default in L11/12) must be listed explicitly — without it
+        // cross-origin API calls (e.g. the showcase site) get no CORS headers.
         $middleware->use([
             TrustProxies::class,
+            HandleCors::class,
             TrackVisitor::class,
         ]);
 
