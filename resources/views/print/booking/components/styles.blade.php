@@ -9,10 +9,10 @@
         box-sizing: border-box;
     }
 
-    /* A4 sheet. Horizontal margins are 0 (the .container supplies them) so the
-       fixed page footer can span the full sheet width. The top/bottom bands
-       reserved for the letterhead and the repeating signature strip are set
-       per-mode in the template via @page margin-top / margin-bottom. */
+    /* A4 sheet. Horizontal margins are 0 (the .container supplies them). The
+       top band reserved for the letterhead is set per-mode in the template via
+       @page margin-top; the bottom band is reserved by the .doc-wrap table's
+       repeating <tfoot> signature strip, so content can never overlap it. */
     @page {
         size: A4;
         margin: 0;
@@ -179,7 +179,9 @@
         border-collapse: collapse;
     }
 
-    tr {
+    /* Rows never split across a page boundary — except the .doc-wrap wrapper
+       table's single body row, which holds the whole document and must flow. */
+    table:not(.doc-wrap) tr {
         page-break-inside: avoid;
     }
 
@@ -260,24 +262,15 @@
         page-break-before: always;
     }
 
-    /* ── Repeating page footer (signature strip) ───────────────── */
-    /* Sits inside the bottom band reserved by @page margin-bottom and repeats
-       on every printed page. Its padding-bottom (set per-mode in the template)
-       keeps the signatures clear of the pre-printed bond-paper footer. */
-    .page-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        background: transparent;
-    }
-
+    /* ── Repeating signature strip (lives in the .doc-wrap <tfoot>) ── */
+    /* The <tfoot> repeats at the bottom of every printed page and the table
+       layout reserves its height, so body content can never render into it.
+       The top padding leaves a blank band to sign/initial in. */
     .signature-row {
         display: table;
         width: 100%;
         table-layout: fixed;
-        padding: 0 20mm;
+        padding: 22px 20mm 4px;
     }
 
     .signature-row > div {

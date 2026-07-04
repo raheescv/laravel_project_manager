@@ -533,6 +533,8 @@
                     <p>يقر الطرف الثاني بأنه ممنوع من القيام بأي من الأعمال من شأنها أن تخل بالإنتفاع المشترك أو تضر بباقي الملاك أو شاغليه.</p>
                 </div>
             </div>
+        </div>
+        <div class="section">
             <div class="row">
                 <div class="cell cell-en">
                     <div class="section-title">Article Nine</div>
@@ -553,8 +555,6 @@
                     <p>يجب على المشتري دفع جميع الأقساط المستحقة للبائع في تاريخ الاستحقاق وحتى تاريخ الوفاء التام.</p>
                 </div>
             </div>
-        </div>
-        <div class="section">
             <div class="row">
                 <div class="cell cell-en">
                     <div class="section-title">Article Eleven</div>
