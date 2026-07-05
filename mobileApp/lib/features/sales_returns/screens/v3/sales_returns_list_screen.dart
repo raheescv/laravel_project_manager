@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
+import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:go_router/go_router.dart';
@@ -48,6 +51,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   int _lastPage = 1;
   int _reqId = 0; // guards against out-of-order / superseded responses
   final _scrollCtl = ScrollController();
+  StreamSubscription<int>? _branchSub;
 
   bool get _hasMore => _page < _lastPage;
 
@@ -73,11 +77,18 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       _load();
       _loadMethods();
     });
+    // Reload for the new branch if it changes while this screen is alive.
+    _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
+      if (!mounted) return;
+      _load();
+      _loadMethods();
+    });
   }
 
   @override
   void dispose() {
     _scrollCtl.dispose();
+    _branchSub?.cancel();
     super.dispose();
   }
 

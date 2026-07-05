@@ -4,12 +4,25 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 
 /// Loads the sellable catalog (services + products) for the New Sale screen.
 /// Server-paginated with debounced search and infinite-scroll append.
 class CatalogCubit extends HolderCubit {
-  CatalogCubit();
+  CatalogCubit() {
+    // When the active branch changes, drop the previous branch's catalog and
+    // refetch (if it had already loaded) so the New Sale screen never shows
+    // another branch's stock. If it was never opened, the first open fetches
+    // fresh under the new branch header anyway.
+    _branchSub = serviceLocator<BranchCubit>().onBranchChanged.listen((_) {
+      if (!_loaded) return;
+      _loaded = false;
+      load();
+    });
+  }
+
+  StreamSubscription<int>? _branchSub;
 
   LookupRepository get _repo => serviceLocator<LookupRepository>();
 
@@ -114,6 +127,7 @@ class CatalogCubit extends HolderCubit {
   @override
   Future<void> close() {
     _searchDebounce?.cancel();
+    _branchSub?.cancel();
     return super.close();
   }
 }

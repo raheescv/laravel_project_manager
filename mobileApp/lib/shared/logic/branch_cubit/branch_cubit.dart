@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
@@ -27,6 +29,13 @@ class BranchCubit extends HolderCubit {
   Branch? _selected;
   bool loading = false;
   String? error;
+
+  // Broadcasts the newly-selected branch id whenever the active branch actually
+  // changes. Branch-scoped screens/cubits (dashboard, reports, sales & returns
+  // lists, sale catalog) listen to this and reload so every screen reflects the
+  // new branch's data — not just the requests made after the switch.
+  final StreamController<int> _branchChanged = StreamController<int>.broadcast();
+  Stream<int> get onBranchChanged => _branchChanged.stream;
 
   Branch? get selected => _selected;
   int? get selectedId => _selected?.id ?? _http.activeBranchId;
@@ -73,5 +82,13 @@ class BranchCubit extends HolderCubit {
     _http.activeBranchId = b.id;
     refresh();
     await _storage.setBranchId(b.id);
+    // Fan out to every branch-scoped screen/cubit so they reload for this branch.
+    _branchChanged.add(b.id);
+  }
+
+  @override
+  Future<void> close() {
+    _branchChanged.close();
+    return super.close();
   }
 }

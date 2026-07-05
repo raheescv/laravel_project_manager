@@ -54,15 +54,28 @@ Future<void> _loadArabicFonts() async {
 /// dividers — honouring the in-app [PrintSettings].
 Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
   final ar = settings.style.isArabic;
-  if (ar) await _loadArabicFonts();
+  // Always load the bundled font: Arabic receipts use it as the base font, and
+  // English receipts use it as a glyph fallback (see below).
+  await _loadArabicFonts();
 
   // Bilingual receipts use IBM Plex Sans Arabic as the BASE font — it carries
   // Latin glyphs too. This matters: as a *fallback* font the pdf package
   // mis-shapes RTL Arabic (letters reversed and disconnected); as the *base*
-  // font it joins and shapes correctly. English-only receipts keep Helvetica.
+  // font it joins and shapes correctly. English-only receipts keep Helvetica,
+  // but register IBM Plex as a *fallback* so currency symbols outside Helvetica's
+  // built-in set (₹, €, ﷼, …) still render instead of showing tofu boxes. The
+  // fallback only fires for those LTR glyphs, so it can't trigger the Arabic
+  // mis-shaping the base-font rule guards against.
   final theme = ar && _arabicFont != null
       ? pw.ThemeData.withFont(base: _arabicFont!, bold: _arabicFontBold ?? _arabicFont!)
-      : pw.ThemeData.withFont(base: pw.Font.helvetica(), bold: pw.Font.helveticaBold());
+      : pw.ThemeData.withFont(
+          base: pw.Font.helvetica(),
+          bold: pw.Font.helveticaBold(),
+          fontFallback: [
+            if (_arabicFont != null) _arabicFont!,
+            if (_arabicFontBold != null) _arabicFontBold!,
+          ],
+        );
 
   // Always render at the printer's native thermal width — print on the actual
   // 80mm/57mm roll, never scaled to the OS-reported paper (e.g. A4), which would

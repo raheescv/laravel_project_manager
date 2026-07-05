@@ -119,7 +119,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 children: [
                   Expanded(child: _selector(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient)),
                   const SizedBox(width: 9),
-                  Expanded(child: _selector(Icons.brush, 'STYLIST', cart.stylistName.isEmpty ? 'Me' : cart.stylistName, _pickStylist)),
+                  Expanded(child: _selector(Icons.brush, 'STAFF', cart.stylistName.isEmpty ? 'Me' : cart.stylistName, _pickStylist)),
                 ],
               ),
             ),
@@ -591,7 +591,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             children: [
               const SectionLabel('Client'),
               const SizedBox(height: 4),
-              Text('Who’s in the chair?', style: serif(size: 22, color: p.ink)),
+              Text('Client Details?', style: serif(size: 22, color: p.ink)),
               const SizedBox(height: 16),
               _sheetField(ctx, 'Name', nameCtl, hint: 'Walk-in'),
               const SizedBox(height: 12),

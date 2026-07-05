@@ -137,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     Text('INVO',
                         style: ui(size: 13, weight: FontWeight.w700, color: p.accent, letterSpacing: 7)),
                     const SizedBox(height: 4),
-                    Text('SALON POS',
+                    Text('Astra POS',
                         style: ui(size: 9, weight: FontWeight.w700, color: Colors.white54, letterSpacing: 4)),
                     const SizedBox(height: 12),
                     Text('Welcome back', style: serif(size: 29, color: Colors.white)),

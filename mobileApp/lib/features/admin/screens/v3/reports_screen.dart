@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
@@ -19,6 +22,7 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   final _scrollCtl = ScrollController();
+  StreamSubscription<int>? _branchSub;
 
   @override
   void initState() {
@@ -32,11 +36,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ..loadReports()
         ..loadOverview();
     });
+    // The shell keeps this screen alive, so reload the current range for the
+    // new branch when the active branch changes.
+    _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
+      if (!mounted) return;
+      context.read<AdminCubit>()
+        ..loadReports()
+        ..loadOverview();
+    });
   }
 
   @override
   void dispose() {
     _scrollCtl.dispose();
+    _branchSub?.cancel();
     super.dispose();
   }
 

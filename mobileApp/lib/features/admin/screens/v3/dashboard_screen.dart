@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +10,7 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
@@ -19,10 +22,23 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  StreamSubscription<int>? _branchSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => context.read<AdminCubit>().loadDashboard());
+    // The shell keeps this screen alive, so initState won't re-run on a branch
+    // switch — reload the dashboard explicitly when the active branch changes.
+    _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
+      if (mounted) context.read<AdminCubit>().loadDashboard();
+    });
+  }
+
+  @override
+  void dispose() {
+    _branchSub?.cancel();
+    super.dispose();
   }
 
   // ---- metric helpers ----
