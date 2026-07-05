@@ -18,8 +18,8 @@ export const useFilterStore = defineStore('filters', {
     activeChips(state) {
       const chips = []
       if (state.category) chips.push({ label: 'Category', value: state.category.name, to: '/' })
-      if (state.brand) chips.push({ label: 'Brand', value: state.brand.name, to: '/brands' })
       if (state.size) chips.push({ label: 'Size', value: state.size, to: '/sizes' })
+      if (state.brand) chips.push({ label: 'Brand', value: state.brand.name, to: '/brands' })
       return chips
     },
 

@@ -48,7 +48,7 @@ function selectCategory(cat) {
   filters.category = { id: cat.id, name: cat.name }
   filters.brand = null
   filters.size = null
-  router.push('/brands')
+  router.push('/sizes')
 }
 
 function browseAll() {
@@ -64,7 +64,7 @@ function scrollToCategories() {
 <template>
   <div class="anim-screen">
     <!-- HERO -->
-    <section class="hero">
+    <!-- <section class="hero">
       <div class="hero__glow hero__glow--tr"></div>
       <div class="hero__glow hero__glow--bl"></div>
       <div class="container hero__inner">
@@ -110,7 +110,7 @@ function scrollToCategories() {
           </div>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <!-- CATEGORY GRID -->
     <main ref="gridEl" class="container catmain">
@@ -151,7 +151,7 @@ function scrollToCategories() {
       </div>
 
       <!-- VALUE STRIP -->
-      <div class="values">
+      <!-- <div class="values">
         <div class="value">
           <div class="value__icon">✓</div>
           <div>
@@ -173,7 +173,7 @@ function scrollToCategories() {
             <div class="value__sub">Wrong fit? Swap sizes at any branch within 30 days.</div>
           </div>
         </div>
-      </div>
+      </div> -->
     </main>
   </div>
 </template>

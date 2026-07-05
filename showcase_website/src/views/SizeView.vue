@@ -15,9 +15,7 @@ const loading = ref(true)
 const error = ref(null)
 const selected = ref(filters.size)
 
-const scopeLabel = computed(() =>
-  [filters.brand?.name, filters.category?.name].filter(Boolean).join(' · '),
-)
+const scopeLabel = computed(() => filters.category?.name || '')
 
 const youngSizes = computed(() => sizes.value.filter((s) => s.group === 'young'))
 const adultSizes = computed(() => sizes.value.filter((s) => s.group !== 'young'))
@@ -28,7 +26,6 @@ async function load() {
   try {
     const params = {
       main_category_id: filters.category?.id ?? null,
-      brand_id: filters.brand?.id ?? null,
     }
     sizes.value = ((await fetchSizes(params)) || []).filter((s) => s.size)
   } catch (e) {
@@ -47,15 +44,16 @@ function selectSize(size) {
 
 function finish(anySize = false) {
   filters.size = anySize ? null : selected.value
-  router.push('/products')
+  filters.brand = null
+  router.push('/brands')
 }
 </script>
 
 <template>
   <main class="container screen anim-screen">
-    <router-link to="/brands" class="btn-back">← Back</router-link>
+    <router-link to="/" class="btn-back">← Back</router-link>
     <div style="margin-top: 24px">
-      <StepDots :step="3" label="Size" />
+      <StepDots :step="2" label="Size" />
     </div>
     <h1 class="screen__title">Your size</h1>
     <p class="screen__sub">

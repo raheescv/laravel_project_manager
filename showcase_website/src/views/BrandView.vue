@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { fetchBrands } from '@/api/resources'
@@ -15,12 +15,21 @@ const brands = ref([])
 const loading = ref(true)
 const error = ref(null)
 
+const scopeLabel = computed(() =>
+  [filters.category?.name, filters.size ? `size ${filters.size}` : null]
+    .filter(Boolean)
+    .join(' · '),
+)
+
 async function load() {
   loading.value = true
   error.value = null
   try {
     brands.value =
-      (await fetchBrands({ main_category_id: filters.category?.id ?? null })) || []
+      (await fetchBrands({
+        main_category_id: filters.category?.id ?? null,
+        size: filters.size ?? null,
+      })) || []
   } catch (e) {
     error.value = e.message
   } finally {
@@ -32,19 +41,19 @@ onMounted(load)
 
 function selectBrand(brand) {
   filters.brand = brand ? { id: brand.id, name: brand.name } : null
-  router.push('/sizes')
+  router.push('/products')
 }
 </script>
 
 <template>
   <main class="container screen anim-screen">
-    <router-link to="/" class="btn-back">← Back</router-link>
+    <router-link to="/sizes" class="btn-back">← Back</router-link>
     <div style="margin-top: 24px">
-      <StepDots :step="2" label="Brand" />
+      <StepDots :step="3" label="Brand" />
     </div>
     <h1 class="screen__title">Pick a brand</h1>
-    <p v-if="filters.category" class="screen__sub">
-      Brands with stock in <strong>{{ filters.category.name }}</strong>
+    <p v-if="scopeLabel" class="screen__sub">
+      Brands with stock in <strong>{{ scopeLabel }}</strong>
     </p>
 
     <ErrorBanner v-if="error" :message="error" @retry="load" />

@@ -9,18 +9,18 @@ const branchStore = useBranchStore()
 <template>
   <div class="topwrap">
     <!-- editorial marquee -->
-    <div class="ticker" aria-hidden="true">
+    <!--<div class="ticker" aria-hidden="true">
       <div class="ticker__track">
-        <span>
+         <span>
           <b>FREE FITTING</b> at every branch <i class="ticker__dot"></i> NEW ART TOYS DROPS WEEKLY
           <i class="ticker__dot"></i> RESERVE ONLINE · COLLECT IN-STORE <i class="ticker__dot"></i>
           SNEAKERS · STREETWEAR · COLLECTIBLES <i class="ticker__dot"></i>
           <b>FREE FITTING</b> at every branch <i class="ticker__dot"></i> NEW ART TOYS DROPS WEEKLY
           <i class="ticker__dot"></i> RESERVE ONLINE · COLLECT IN-STORE <i class="ticker__dot"></i>
           SNEAKERS · STREETWEAR · COLLECTIBLES <i class="ticker__dot"></i>
-        </span>
+        </span> 
       </div>
-    </div>
+    </div>-->
 
     <header class="topbar">
       <div class="container topbar__inner">
