@@ -80,6 +80,16 @@ function clearAll() {
       <button v-if="filters.activeCount" class="fs__clear" @click="clearAll">Clear all</button>
     </div>
 
+    <!-- Availability -->
+    <section class="fs__group">
+      <div class="fs__label">Availability</div>
+      <label class="fs__toggle">
+        <input v-model="filters.inStockOnly" type="checkbox" class="fs__toggle-input" />
+        <span class="fs__toggle-track"><span class="fs__toggle-thumb"></span></span>
+        <span class="fs__toggle-text">Exclude out of stock</span>
+      </label>
+    </section>
+
     <!-- Category -->
     <section v-if="categories.length" class="fs__group">
       <div class="fs__label">Category</div>
@@ -336,5 +346,62 @@ function clearAll() {
 
 .fs__price-sep {
   color: var(--muted-2);
+}
+
+/* ===== Availability toggle ===== */
+.fs__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.fs__toggle-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fs__toggle-track {
+  flex: none;
+  width: 40px;
+  height: 23px;
+  border-radius: 99px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  position: relative;
+  transition: background 0.18s ease;
+}
+
+.fs__toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(20, 19, 16, 0.3);
+  transition: transform 0.18s var(--ease-out);
+}
+
+.fs__toggle-input:checked + .fs__toggle-track {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.fs__toggle-input:checked + .fs__toggle-track .fs__toggle-thumb {
+  transform: translateX(17px);
+}
+
+.fs__toggle-input:focus-visible + .fs__toggle-track {
+  box-shadow: 0 0 0 3px rgba(var(--gold-rgb), 0.28);
+}
+
+.fs__toggle-text {
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-weight: 600;
 }
 </style>

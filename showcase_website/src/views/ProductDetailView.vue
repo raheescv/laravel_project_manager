@@ -70,7 +70,6 @@ const specs = computed(() => {
     { label: 'Colour', value: p.color },
     { label: 'Size', value: p.size },
     { label: 'Barcode', value: p.barcode },
-    { label: 'Unit', value: p.unit?.name },
   ].filter((s) => s.value)
 })
 
@@ -355,38 +354,23 @@ function endDrag() {
    CONCEPT-STORE PLINTH — the product floats on a soft pedestal, key
    specs orbit it on hairline connector lines. Calm, luxurious, lots of
    negative space; everything applies on tap. Self-contained stage card
-   driven by scoped --pl-* tokens so it reads as an airy ivory gallery in
-   light and a dramatic dark vitrine under prefers-color-scheme: dark.
-   The branding accent (--gold) drives highlights in both.
+   driven by scoped --pl-* tokens so it reads as an airy ivory gallery,
+   matching the always-light editorial look of the rest of the storefront.
+   The branding accent (--gold) drives highlights throughout.
    ==================================================================== */
 .detail {
-  /* light (default) */
   --pl-canvas: var(--paper);
   --pl-ink: var(--ink);
   --pl-ink-soft: var(--ink-soft);
   --pl-muted: var(--muted);
   --pl-line: var(--line);
   --pl-chip: #fff;
-  --pl-disc: radial-gradient(60% 60% at 50% 34%, #ffffff, #eceef6 68%, #e2e4ef);
-  --pl-plinth: rgba(20, 19, 16, 0.16);
-  --pl-shoe-shadow: rgba(20, 19, 16, 0.26);
+  --pl-disc: radial-gradient(62% 62% at 50% 32%, #ffffff, #f4f1ea 60%, #ece7dc);
+  --pl-plinth: rgba(20, 19, 16, 0.14);
+  --pl-shoe-shadow: rgba(20, 19, 16, 0.22);
 
   padding-top: 30px;
   padding-bottom: 96px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .detail {
-    --pl-canvas: #100f18;
-    --pl-ink: #ece9f5;
-    --pl-ink-soft: #b6b3c9;
-    --pl-muted: #8a88a6;
-    --pl-line: rgba(255, 255, 255, 0.12);
-    --pl-chip: rgba(255, 255, 255, 0.05);
-    --pl-disc: radial-gradient(60% 60% at 50% 34%, #262433, #17161f 68%, #100f18);
-    --pl-plinth: rgba(0, 0, 0, 0.55);
-    --pl-shoe-shadow: rgba(0, 0, 0, 0.5);
-  }
 }
 
 /* ===== Stage card (full width) ===== */
@@ -395,12 +379,15 @@ function endDrag() {
   margin: 22px 0 0;
   padding: 54px clamp(24px, 6vw, 88px) 48px;
   text-align: center;
-  background: var(--pl-canvas);
+  background:
+    radial-gradient(120% 60% at 50% -8%, rgba(var(--gold-rgb), 0.06), transparent 60%),
+    linear-gradient(180deg, #fffdf8, var(--pl-canvas) 40%);
   border: 1px solid var(--pl-line);
   border-radius: 30px;
   color: var(--pl-ink);
   position: relative;
   overflow: visible;
+  box-shadow: 0 30px 80px -50px rgba(20, 19, 16, 0.5);
 }
 
 .pl--loading {
@@ -433,7 +420,7 @@ function endDrag() {
 /* ===== Stage · disc + product + plinth + floating annotations ===== */
 .pl__stagewrap {
   position: relative;
-  width: min(600px, 90%);
+  width: min(760px, 96%);
   aspect-ratio: 1;
   margin: 30px auto 6px;
 }
@@ -443,6 +430,18 @@ function endDrag() {
   inset: 5% 7% 8%;
   border-radius: 50%;
   background: var(--pl-disc);
+  box-shadow:
+    inset 0 2px 5px rgba(255, 255, 255, 0.9),
+    inset 0 -14px 30px rgba(20, 19, 16, 0.06),
+    0 24px 60px -30px rgba(20, 19, 16, 0.35);
+}
+
+.pl__disc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--gold-rgb), 0.14);
 }
 
 .pl__plinth {
@@ -458,7 +457,7 @@ function endDrag() {
 
 .pl__stage {
   position: absolute;
-  inset: 7% 9% 10%;
+  inset: 4% 6% 7%;
   z-index: 2;
   display: grid;
   place-items: center;
@@ -871,7 +870,7 @@ function endDrag() {
     display: flex;
   }
   .pl__stagewrap {
-    width: min(400px, 100%);
+    width: min(560px, 100%);
   }
 }
 

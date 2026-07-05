@@ -8,6 +8,7 @@ export const useFilterStore = defineStore('filters', {
     color: null, // string
     minPrice: null, // number
     maxPrice: null, // number
+    inStockOnly: true, // exclude out-of-stock products
     search: '',
     sortBy: 'name', // name | price
     sortDirection: 'asc',
@@ -44,6 +45,7 @@ export const useFilterStore = defineStore('filters', {
         color: state.color,
         min_price: state.minPrice ?? null,
         max_price: state.maxPrice ?? null,
+        in_stock_only: state.inStockOnly ? 1 : 0,
         search: state.search || null,
         sort_by: state.sortBy,
         sort_direction: state.sortDirection,

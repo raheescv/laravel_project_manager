@@ -111,6 +111,7 @@ watch(
     filters.color,
     filters.minPrice,
     filters.maxPrice,
+    filters.inStockOnly,
     filters.search,
     filters.sortBy,
     filters.sortDirection,
