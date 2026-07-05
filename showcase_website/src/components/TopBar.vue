@@ -1,4 +1,5 @@
 <script setup>
+import { brandLogo } from '@/branding'
 import { useBranchStore } from '@/stores/branch'
 import { initialOf, storeName } from '@/utils/format'
 
@@ -24,7 +25,8 @@ const branchStore = useBranchStore()
     <header class="topbar">
       <div class="container topbar__inner">
         <router-link to="/" class="topbar__logo">
-          <div class="topbar__mark">{{ initialOf(storeName) }}</div>
+          <img v-if="brandLogo" :src="brandLogo" :alt="storeName" class="topbar__logoimg" />
+          <div v-else class="topbar__mark">{{ initialOf(storeName) }}</div>
           <div>
             <span class="topbar__name">{{ storeName }}</span>
             <span class="topbar__sub">Concept Store</span>
@@ -124,6 +126,13 @@ const branchStore = useBranchStore()
   box-shadow:
     0 8px 20px rgba(var(--gold-rgb), 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.topbar__logoimg {
+  height: 44px;
+  max-width: 160px;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .topbar__name {

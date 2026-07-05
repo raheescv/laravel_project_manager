@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SaleSettingController;
 use App\Http\Controllers\Api\V1\SizeController;
+use App\Http\Controllers\Api\V1\StorefrontController;
 use App\Http\Middleware\EnsureMobilePermission;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +71,9 @@ Route::prefix('v1')->group(function () {
         Route::prefix('branches')->group(function () {
             Route::get('/', [BranchController::class, 'index'])->name('api.v1.branches.index');
         });
+
+        // Storefront branding (accent color the showcase website applies at boot)
+        Route::get('settings/branding', [StorefrontController::class, 'branding'])->name('api.v1.settings.branding');
     });
 
     // Mobile routes (PIN-authenticated staff / POS app)

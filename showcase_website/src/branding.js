@@ -1,4 +1,12 @@
+import { ref } from 'vue'
+
 import { fetchBranding } from '@/api/resources'
+
+/**
+ * System logo URL (Settings → General upload), or null to keep the initial-
+ * letter monogram. Reactive because branding loads in parallel with mount.
+ */
+export const brandLogo = ref(null)
 
 /** Parse a #rrggbb / #rgb string to [r, g, b] (0–255), or null if invalid. */
 function hexToRgb(hex) {
@@ -49,6 +57,7 @@ export async function loadBranding() {
   try {
     const data = await fetchBranding()
     if (data?.primary_color) applyPrimaryColor(data.primary_color)
+    if (data?.logo) brandLogo.value = data.logo
   } catch {
     /* keep CSS defaults */
   }

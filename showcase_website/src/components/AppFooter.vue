@@ -1,4 +1,5 @@
 <script setup>
+import { brandLogo } from '@/branding'
 import { useBranchStore } from '@/stores/branch'
 import { initialOf, storeName } from '@/utils/format'
 
@@ -12,7 +13,8 @@ const year = new Date().getFullYear()
       <div class="footer__top">
         <div>
           <div class="footer__brand">
-            <div class="footer__mark">{{ initialOf(storeName) }}</div>
+            <img v-if="brandLogo" :src="brandLogo" :alt="storeName" class="footer__logoimg" />
+            <div v-else class="footer__mark">{{ initialOf(storeName) }}</div>
             <span class="footer__name">{{ storeName }}</span>
           </div>
           <div class="footer__tag">
@@ -82,6 +84,16 @@ const year = new Date().getFullYear()
   font-weight: 900;
   font-size: 14px;
   color: #fff;
+}
+
+/* Light chip behind the logo so dark logo art stays visible on the dark footer. */
+.footer__logoimg {
+  height: 28px;
+  max-width: 110px;
+  object-fit: contain;
+  background: var(--white-warm);
+  border-radius: 9px;
+  padding: 3px 6px;
 }
 
 .footer__name {

@@ -724,6 +724,12 @@
                                             <i class="demo-psi-gear"></i><span>Theme</span>
                                         </button>
                                     </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsStorefront" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="fa fa-paint-brush"></i><span>Storefront</span>
+                                        </button>
+                                    </li>
                                 @endcan
                                 @if (false)
                                     <li class="nav-item" role="presentation">
@@ -851,6 +857,9 @@
                                 @can('configuration.settings')
                                     <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
                                         @livewire('settings.company-profile')
+                                    </div>
+                                    <div id="tabsStorefront" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.storefront-branding')
                                     </div>
                                     <div id="tabsTheme" class="tab-pane" role="tabpanel">
                                         <div class="card">

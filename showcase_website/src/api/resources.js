@@ -56,7 +56,8 @@ export function fetchBranches(params = {}) {
 
 /**
  * GET /settings/branding — storefront branding configured in the admin
- * (Settings → Storefront). Returns { primary_color } as a hex string. The
+ * (Settings → Storefront). Returns { primary_color, logo } — a hex string and
+ * an absolute logo URL (null when the tenant hasn't uploaded one). The
  * accent color drives the whole theme via CSS variables (see branding.js).
  */
 export function fetchBranding() {
