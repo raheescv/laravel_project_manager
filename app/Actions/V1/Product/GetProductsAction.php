@@ -94,10 +94,14 @@ class GetProductsAction
                     $invQ->where('branch_id', $value);
                 });
             })
-            // In stock only filter
-            ->when($filters['in_stock_only'] ?? false, function ($q) {
-                return $q->whereHas('inventories', function ($invQ) {
+            // In stock only filter — scoped to the selected branch so it matches
+            // the branch-specific "Out of stock" badge shown on each card.
+            ->when($filters['in_stock_only'] ?? false, function ($q) use ($filters) {
+                return $q->whereHas('inventories', function ($invQ) use ($filters) {
                     $invQ->where('quantity', '>', 0);
+                    if (! empty($filters['branch_id'])) {
+                        $invQ->where('branch_id', $filters['branch_id']);
+                    }
                 });
             })
             // Size filter
