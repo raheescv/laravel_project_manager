@@ -102,6 +102,7 @@ class Page extends Component
                 'pattern' => '',
                 'color' => '',
                 'size' => '',
+                'size_category' => '',
                 'model' => '',
                 'brand_id' => null,
                 'part_no' => '',

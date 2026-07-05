@@ -33,11 +33,65 @@ class Product extends Model implements AuditableContracts
                 $product->barcode_prefix = $prefix;
             }
         });
+        static::saving(function (Product $product): void {
+            // Auto-derive the size category so products stay grouped on the
+            // storefront: fill it when missing, and re-derive it when the size
+            // changes. A non-empty category set in the same save is preserved;
+            // an emptied one ("Auto" in the form) always re-derives.
+            $explicit = $product->isDirty('size_category') && ! empty($product->size_category);
+            $shouldDerive = $product->isDirty('size')
+                ? ! $explicit
+                : empty($product->size_category);
+            if ($shouldDerive && ! empty($product->size)) {
+                $product->size_category = self::classifySizeCategory($product->size);
+            }
+        });
         static::saved(function (Product $product): void {
             if (array_key_exists('unit_id', $product->getChanges())) {
                 Cache::increment('product_units_version_'.$product->id);
             }
         });
+    }
+
+    /** Size categories used to group products on the storefront. */
+    public const SIZE_CATEGORY_YOUNG = 'young';
+
+    public const SIZE_CATEGORY_ADULT = 'adult';
+
+    /**
+     * Classify a raw size string into a size category (young | adult).
+     *
+     * "Young" covers kids/baby sizing detected via keywords, small numeric
+     * sizes and month/year patterns; everything else is treated as adult.
+     */
+    public static function classifySizeCategory(?string $size): ?string
+    {
+        $size = trim((string) $size);
+        if ($size === '') {
+            return null;
+        }
+
+        $upper = strtoupper($size);
+
+        $youngKeywords = ['KID', 'KIDS', 'BOY', 'BOYS', 'GIRL', 'GIRLS', 'BABY', 'INFANT', 'TODDLER', 'YR', 'YRS', 'YEAR', 'YEARS'];
+        foreach ($youngKeywords as $kw) {
+            if (str_contains($upper, $kw)) {
+                return self::SIZE_CATEGORY_YOUNG;
+            }
+        }
+
+        // Numeric-only sizes up to 34 considered young by default.
+        if (preg_match('/^\d{1,2}$/', $upper)) {
+            return (int) $upper <= 34 ? self::SIZE_CATEGORY_YOUNG : self::SIZE_CATEGORY_ADULT;
+        }
+
+        // Common young patterns like 0-3M, 6-12M, 2-3Y, 6Y, 12M, etc.
+        if (preg_match('/^(\d+\s*-\s*\d+\s*)(M|MOS|MONTH|MONTHS|Y|YR|YRS|YEAR|YEARS)$/i', $upper)
+            || preg_match('/^(\d+)(M|MOS|MONTH|MONTHS|Y|YR|YRS|YEAR|YEARS)$/i', $upper)) {
+            return self::SIZE_CATEGORY_YOUNG;
+        }
+
+        return self::SIZE_CATEGORY_ADULT;
     }
 
     protected $fillable = [
@@ -73,6 +127,7 @@ class Product extends Model implements AuditableContracts
         'pattern',
         'color',
         'size',
+        'size_category',
         'model',
         'part_no',
         'item_no',

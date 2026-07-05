@@ -192,6 +192,13 @@
                                         </label>
                                         {{ html()->input('size')->value('')->class('form-control')->placeholder('Enter your size')->attribute('wire:model', 'products.size')->id('size') }}
                                     </div>
+                                    <div class="col-md-4">
+                                        <label for="size_category" class="form-label fw-medium">
+                                            <i class="fa fa-child text-primary me-1 small"></i>
+                                            Size Category
+                                        </label>
+                                        {{ html()->input('size_category')->value('')->class('form-control shadow-sm')->attribute('dir', 'rtl')->placeholder('Enter size category name')->id('size_category')->attribute('wire:model', 'products.size_category') }}
+                                    </div>
                                 @endif
                                 @if ($isProduct)
                                     <div class="col-12">

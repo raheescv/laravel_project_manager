@@ -8,78 +8,58 @@ use App\Models\Product;
 class GetSizesAction
 {
     /**
-     * Execute the action to get all unique sizes with HSN code and product code filtering.
+     * Execute the action to get all unique sizes grouped by size category.
      */
     public function execute(GetSizesRequest $request): array
     {
         $filters = $request->validatedWithDefaults();
 
-        $query = Product::selectRaw('size')
+        $rows = Product::selectRaw('size, size_category')
             ->when($filters['code'] ?? null, function ($q, $value) {
                 return $q->where('code', 'like', "%{$value}%");
             })
+            ->when($filters['main_category_id'] ?? null, fn ($q, $v) => $q->where('main_category_id', $v))
+            ->when($filters['sub_category_id'] ?? null, fn ($q, $v) => $q->where('sub_category_id', $v))
+            ->when($filters['brand_id'] ?? null, fn ($q, $v) => $q->where('brand_id', $v))
+            // Only surface sizes from products in an online-visible category (matches /categories).
+            ->whereHas('mainCategory', fn ($catQ) => $catQ->where('online_visibility_flag', true))
             ->whereNotNull('size')
             ->where('size', '!=', '')
-            ->groupBy('size')
-            ->orderByDesc('size');
+            ->groupBy('size', 'size_category')
+            ->get();
 
-        $sizes = $query->get()->pluck('size')->filter()->values();
+        $young = [];
+        $adult = [];
 
-        $kidsKeywords = ['KID', 'KIDS', 'BOY', 'BOYS', 'GIRL', 'GIRLS', 'BABY', 'INFANT', 'TODDLER', 'YR', 'YRS', 'YEAR', 'YEARS'];
+        foreach ($rows as $row) {
+            $size = (string) $row->size;
 
-        $isKidsSize = function (string $size) use ($kidsKeywords): bool {
-            $upper = strtoupper(trim($size));
+            // Fall back to on-the-fly classification for legacy rows that were
+            // never backfilled (defensive; the migration backfills existing data).
+            $category = $row->size_category ?: Product::classifySizeCategory($size);
 
-            foreach ($kidsKeywords as $kw) {
-                if (str_contains($upper, $kw)) {
-                    return true;
-                }
-            }
-
-            // Numeric-only sizes up to 34 considered kids by default (tweak if needed)
-            if (preg_match('/^\d{1,2}$/', $upper)) {
-                return (int) $upper <= 34;
-            }
-
-            // Common kids patterns like 0-3M, 6-12M, 2-3Y, etc.
-            if (preg_match('/^(\d+\s*-\s*\d+\s*)(M|MOS|MONTH|MONTHS|Y|YR|YRS|YEAR|YEARS)$/i', $upper)) {
-                return true;
-            }
-            if (preg_match('/^(\d+)(M|MOS|MONTH|MONTHS|Y|YR|YRS|YEAR|YEARS)$/i', $upper)) {
-                return true;
-            }
-
-            return false;
-        };
-
-        $kids = [];
-        $others = [];
-
-        foreach ($sizes as $size) {
-            $item = ['size' => $size];
-            if ($isKidsSize((string) $size)) {
-                $kids[] = $item;
+            if ($category === Product::SIZE_CATEGORY_YOUNG) {
+                $young[$size] = ['size' => $size];
             } else {
-                $others[] = $item;
+                $adult[$size] = ['size' => $size];
             }
         }
-        $others = array_merge($others, $kids);
 
-        // for temporary emptying the kids array
-        $kids = [];
+        $young = array_values($young);
+        $adult = array_values($adult);
 
-        // Sort both arrays by size (descending)
-        // usort($kids, function ($a, $b) {
-        //     return strnatcmp($b['size'], $a['size']);
-        // });
-
-        usort($others, function ($a, $b) {
-            return strnatcmp($b['size'], $a['size']);
-        });
+        $sortDesc = function (array &$items): void {
+            usort($items, fn ($a, $b) => strnatcmp($b['size'], $a['size']));
+        };
+        $sortDesc($young);
+        $sortDesc($adult);
 
         return [
-            'kids_sizes' => $kids,
-            'other_sizes' => $others,
+            'young_sizes' => $young,
+            'adult_sizes' => $adult,
+            // Backwards-compatible aliases for older API consumers.
+            'kids_sizes' => $young,
+            'other_sizes' => $adult,
         ];
     }
 }
