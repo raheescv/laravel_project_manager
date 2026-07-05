@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { resolveImage } from '@/api/client'
@@ -22,7 +22,14 @@ const error = ref(null)
 const activeImage = ref(0)
 const mode360 = ref(false)
 const frame360 = ref(0)
+const spinning = ref(false)
 const selectedSize = ref(null)
+
+// Progress (0–100) of the current 360° frame, for the scrubber fill.
+const spinProgress = computed(() => {
+  const n = images360.value.length
+  return n > 1 ? (frame360.value / (n - 1)) * 100 : 0
+})
 
 // ===== Hover-to-zoom (magnifier) on the main preview =====
 const zooming = ref(false)
@@ -110,6 +117,7 @@ async function load() {
   error.value = null
   product.value = null
   mode360.value = false
+  stopSpin()
   activeImage.value = 0
   frame360.value = 0
   try {
@@ -152,6 +160,7 @@ let dragFrame = 0
 
 function startDrag(e) {
   if (!mode360.value || images360.value.length < 2) return
+  stopSpin() // grabbing the shoe takes over from auto-rotation
   dragging = true
   dragX = e.clientX ?? e.touches?.[0]?.clientX ?? 0
   dragFrame = frame360.value
@@ -168,6 +177,60 @@ function moveDrag(e) {
 function endDrag() {
   dragging = false
 }
+
+// ===== 360° control bar — auto-spin + scrubber =====
+let spinTimer = null
+
+function enter360() {
+  if (!images360.value.length) return
+  mode360.value = true
+}
+
+/** Primary 360° button: enter 360 view and toggle auto-rotation. */
+function toggle360() {
+  if (!mode360.value) {
+    enter360()
+    startSpin()
+    return
+  }
+  spinning.value ? stopSpin() : startSpin()
+}
+
+function startSpin() {
+  if (images360.value.length < 2) return
+  enter360()
+  spinning.value = true
+  clearInterval(spinTimer)
+  spinTimer = setInterval(() => {
+    frame360.value = (frame360.value + 1) % images360.value.length
+  }, 90)
+}
+
+function stopSpin() {
+  spinning.value = false
+  clearInterval(spinTimer)
+  spinTimer = null
+}
+
+/** Click/scrub the track to jump to a frame. */
+function scrub(e) {
+  const n = images360.value.length
+  if (n < 2) return
+  stopSpin()
+  enter360()
+  const r = e.currentTarget.getBoundingClientRect()
+  const pct = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
+  frame360.value = Math.round(pct * (n - 1))
+}
+
+/** Leaving 360 (e.g. picking a still photo) also halts rotation. */
+function showPhoto(i) {
+  stopSpin()
+  mode360.value = false
+  activeImage.value = i
+}
+
+onBeforeUnmount(stopSpin)
 </script>
 
 <template>
@@ -237,21 +300,34 @@ function endDrag() {
               "
             />
             <span v-else class="pl__noimg">no photo yet</span>
-            <div v-if="mode360" class="pl__hint">⟲ drag to rotate · {{ frame360 + 1 }}/{{ images360.length }}</div>
+            <div v-if="mode360" class="pl__grab">⟲ drag to rotate</div>
           </div>
           <div class="pl__plinth"></div>
         </div>
 
-        <!-- 360° view toggle -->
-        <div v-if="images360.length" class="pl__360toggle">
+        <!-- 360° control bar — auto-spin · scrubber · frame counter -->
+        <div v-if="images360.length > 1" class="pl__orbit" :class="{ 'pl__orbit--on': mode360 }">
           <button
-            class="pl__360btn"
-            :class="{ 'pl__360btn--on': mode360 }"
-            @click="mode360 = !mode360"
+            class="pl__orbit-btn"
+            :class="{ 'pl__orbit-btn--playing': spinning }"
+            @click="toggle360"
           >
-            <span class="pl__360ico">⟲</span>
-            {{ mode360 ? 'Drag to rotate' : '360° view' }}
+            <span class="pl__orbit-ico">⟲</span>
+            {{ spinning ? 'Rotating' : '360° view' }}
           </button>
+          <button
+            class="pl__orbit-track"
+            type="button"
+            aria-label="Scrub 360° view"
+            @pointerdown="scrub"
+            @pointermove="(e) => e.buttons && scrub(e)"
+          >
+            <span class="pl__orbit-fill" :style="{ width: spinProgress + '%' }"></span>
+            <span class="pl__orbit-knob" :style="{ left: spinProgress + '%' }"></span>
+          </button>
+          <span class="pl__orbit-frame">
+            {{ String(frame360 + 1).padStart(2, '0') }} / {{ images360.length }}
+          </span>
         </div>
 
         <!-- thumbnails -->
@@ -261,7 +337,7 @@ function endDrag() {
             :key="img"
             class="pl__thumb"
             :class="{ 'pl__thumb--on': !mode360 && activeImage === i }"
-            @click="((mode360 = false), (activeImage = i))"
+            @click="showPhoto(i)"
           >
             <img :src="img" alt="" loading="lazy" />
           </button>
@@ -493,20 +569,19 @@ function endDrag() {
   letter-spacing: 0.06em;
 }
 
-.pl__hint {
+.pl__grab {
   position: absolute;
-  bottom: 6%;
+  bottom: 4%;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(16, 15, 24, 0.82);
-  color: #f3efe6;
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  border-radius: 99px;
-  padding: 7px 15px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pl-muted);
   pointer-events: none;
   white-space: nowrap;
+  opacity: 0.75;
 }
 
 /* floating spec annotations (desktop) */
@@ -597,47 +672,51 @@ function endDrag() {
   object-fit: cover;
 }
 
-/* ===== 360° toggle ===== */
-.pl__360toggle {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
+/* ===== 360° control bar — auto-spin · scrubber · frame counter ===== */
+.pl__orbit {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  margin: 22px auto 0;
+  padding: 8px 12px 8px 8px;
+  background: var(--pl-chip);
+  border: 1px solid var(--pl-line);
+  border-radius: 99px;
+  box-shadow: 0 16px 34px -22px rgba(20, 19, 16, 0.5);
+  transition: box-shadow 0.2s var(--ease-out);
+}
+.pl__orbit--on {
+  box-shadow: 0 18px 40px -20px rgba(var(--gold-rgb), 0.5);
 }
 
-.pl__360btn {
+.pl__orbit-btn {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--pl-ink);
-  border: 1.5px solid var(--pl-line);
-  background: var(--pl-chip);
-  border-radius: 99px;
-  padding: 11px 22px;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-.pl__360btn:hover {
-  border-color: var(--gold);
-  color: var(--gold);
-}
-.pl__360btn--on {
+  flex: none;
   background: var(--gold);
-  border-color: var(--gold);
   color: #fff;
-  box-shadow: 0 12px 26px -12px rgba(var(--gold-rgb), 0.7);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: filter 0.18s ease, transform 0.18s ease;
+}
+.pl__orbit-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
 }
 
-.pl__360ico {
-  font-size: 15px;
+.pl__orbit-ico {
+  font-size: 14px;
   line-height: 1;
   display: inline-block;
 }
-.pl__360btn--on .pl__360ico {
-  animation: pl-spin 3.6s linear infinite;
+.pl__orbit-btn--playing .pl__orbit-ico {
+  animation: pl-spin 3.4s linear infinite;
 }
 @keyframes pl-spin {
   to {
@@ -645,9 +724,49 @@ function endDrag() {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pl__360btn--on .pl__360ico {
+  .pl__orbit-btn--playing .pl__orbit-ico {
     animation: none;
   }
+}
+
+.pl__orbit-track {
+  position: relative;
+  width: clamp(90px, 22vw, 160px);
+  height: 4px;
+  border-radius: 3px;
+  background: var(--pl-line);
+  cursor: pointer;
+  padding: 0;
+  touch-action: none;
+}
+.pl__orbit-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gold);
+}
+.pl__orbit-knob {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--pl-chip);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 6px rgba(var(--gold-rgb), 0.5);
+}
+
+.pl__orbit-frame {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--pl-muted);
+  padding-right: 6px;
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===== Spec strip (mobile home for the callouts) ===== */

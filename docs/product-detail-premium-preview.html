@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-dir="a">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Product Detail — Premium Redesign Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #f4f0e7;
+  --paper: #fbf9f3;
+  --ink: #141310;
+  --ink-soft: #3a372f;
+  --muted: #7c766a;
+  --muted-2: #9a9384;
+  --line: #e4ddce;
+  --line-soft: #ece5d6;
+  --card: #ffffff;
+  --accent: #2f2bd6;
+  --accent-rgb: 47, 43, 214;
+  --accent-bright: #5a56ff;
+  --accent-deep: #1b1970;
+  --amber: #c9852a;
+  --green: #4f8a3d;
+  --red: #c8492f;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Hanken Grotesk', -apple-system, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --disc: radial-gradient(62% 62% at 50% 32%, #ffffff, #f4f1ea 60%, #ece7dc);
+  --frame: linear-gradient(160deg, #ffffff, #f6f2ea 70%, #efe9dc);
+}
+html[data-theme="dark"] {
+  --bg: #0d0c14;
+  --paper: #14131d;
+  --ink: #ece9f5;
+  --ink-soft: #c3c0d4;
+  --muted: #8f8ca6;
+  --muted-2: #6f6d86;
+  --line: rgba(255,255,255,0.11);
+  --line-soft: rgba(255,255,255,0.07);
+  --card: #1a1926;
+  --disc: radial-gradient(62% 62% at 50% 30%, #262435, #17161f 62%, #100f18);
+  --frame: linear-gradient(160deg, #201f2d, #17161f 70%, #131220);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(60vw 60vw at 84% -10%, rgba(var(--accent-rgb), 0.10), transparent 60%),
+    radial-gradient(50vw 50vw at -12% 10%, rgba(201, 133, 42, 0.10), transparent 58%);
+}
+img { max-width: 100%; display: block; }
+button { font: inherit; border: none; background: none; cursor: pointer; color: inherit; padding: 0; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.03em; margin: 0; font-weight: 500; }
+
+/* ============ Toolbar ============ */
+.toolbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 14px clamp(16px, 4vw, 40px);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border-bottom: 1px solid var(--line);
+}
+.toolbar__brand {
+  font-family: var(--font-display); font-weight: 600; font-size: 17px;
+  letter-spacing: -0.02em; margin-right: auto;
+}
+.toolbar__brand span { color: var(--accent); }
+.seg {
+  display: inline-flex; padding: 3px; border-radius: 99px;
+  background: var(--card); border: 1px solid var(--line);
+}
+.seg button {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 7px 14px; border-radius: 99px;
+  color: var(--muted); transition: all 0.2s var(--ease); white-space: nowrap;
+}
+.seg button.on { background: var(--accent); color: #fff; box-shadow: 0 6px 16px -8px rgba(var(--accent-rgb), 0.8); }
+.tag {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted-2);
+}
+
+/* ============ Shell ============ */
+.wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: clamp(20px, 4vw, 46px) clamp(16px, 4vw, 40px) 100px; }
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  background: var(--card); border: 1px solid var(--line);
+  padding: 9px 16px; border-radius: 99px; transition: all 0.18s var(--ease);
+  margin-bottom: clamp(20px, 3vw, 32px);
+}
+.back:hover { color: var(--accent); border-color: var(--accent); transform: translateX(-2px); }
+
+.dir { display: none; }
+html[data-dir="a"] .dir--a { display: block; }
+html[data-dir="b"] .dir--b { display: block; }
+
+/* ==========================================================
+   DIRECTION A — Editorial Split
+   ========================================================== */
+.split { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: clamp(28px, 4vw, 64px); align-items: start; }
+
+/* --- Gallery (left) --- */
+.gal { position: sticky; top: 92px; }
+.gal__frame {
+  position: relative; aspect-ratio: 1; border-radius: 28px; overflow: hidden;
+  background: var(--frame); border: 1px solid var(--line);
+  box-shadow: 0 40px 90px -60px rgba(20,19,16,0.6);
+  display: grid; place-items: center;
+}
+.gal__frame::after {
+  content: ''; position: absolute; inset: 0; border-radius: 28px; pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 0 0 1px rgba(var(--accent-rgb),0.05);
+}
+.gal__watermark {
+  position: absolute; left: 50%; top: 46%; transform: translate(-50%,-50%);
+  font-family: var(--font-display); font-weight: 600; font-size: clamp(80px, 16vw, 150px);
+  color: rgba(var(--accent-rgb), 0.05); letter-spacing: -0.04em; user-select: none; pointer-events: none;
+}
+.gal__img {
+  position: relative; z-index: 2; width: 80%; height: 80%; object-fit: contain;
+  filter: drop-shadow(0 30px 40px rgba(20,19,16,0.22));
+  transition: transform 0.4s var(--ease); touch-action: none;
+}
+.gal__frame.zoom { cursor: zoom-in; }
+.gal__badge {
+  position: absolute; top: 18px; left: 18px; z-index: 5;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--ink); color: var(--bg); padding: 7px 13px; border-radius: 99px;
+}
+/* view switch — top right of frame */
+.viewswitch {
+  position: absolute; top: 16px; right: 16px; z-index: 6;
+  display: inline-flex; padding: 3px; border-radius: 99px;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  backdrop-filter: blur(10px); border: 1px solid var(--line);
+  box-shadow: 0 8px 20px -12px rgba(20,19,16,0.4);
+}
+.viewswitch button {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 7px 13px; border-radius: 99px; color: var(--muted); transition: all 0.2s var(--ease);
+}
+.viewswitch button.on { background: var(--accent); color: #fff; }
+.viewswitch .spin { display: inline-block; }
+.viewswitch button.on .spin { animation: spin 3.4s linear infinite; }
+@keyframes spin { to { transform: rotate(-360deg); } }
+
+/* --- 360 viewer (redesigned) --- */
+.orbit { position: absolute; inset: 0; z-index: 3; display: none; place-items: center; }
+.gal__frame.is360 .orbit { display: grid; }
+.gal__frame.is360 .gal__img { display: none; }
+.gal__frame.is360 .gal__watermark { opacity: 0.4; }
+.orbit__stage {
+  width: 82%; height: 82%; display: grid; place-items: center;
+  cursor: grab; touch-action: none;
+}
+.orbit__stage:active { cursor: grabbing; }
+.orbit__stage img {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 30px 40px rgba(20,19,16,0.22));
+  will-change: transform;
+}
+/* premium orbit control: dial + scrubber */
+.orbit__ui {
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+  z-index: 6; display: flex; align-items: center; gap: 14px;
+  background: color-mix(in srgb, var(--ink) 88%, transparent); color: var(--bg);
+  padding: 10px 16px 10px 14px; border-radius: 99px;
+  box-shadow: 0 18px 40px -18px rgba(0,0,0,0.7);
+}
+.orbit__dial {
+  width: 26px; height: 26px; border-radius: 50%; flex: none; position: relative;
+  border: 1.5px solid rgba(244,240,231,0.5);
+}
+.orbit__dial::after {
+  content: ''; position: absolute; top: 2px; left: 50%; width: 2px; height: 7px; border-radius: 2px;
+  background: var(--accent-bright); transform-origin: 50% 11px; transform: translateX(-50%) rotate(var(--deg, 0deg));
+}
+.orbit__track { position: relative; width: 130px; height: 3px; border-radius: 2px; background: rgba(244,240,231,0.28); }
+.orbit__fill { position: absolute; inset: 0 auto 0 0; width: 30%; background: var(--accent-bright); border-radius: 2px; }
+.orbit__hint { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; white-space: nowrap; opacity: 0.85; }
+
+/* --- thumbnails --- */
+.thumbs { display: flex; gap: 12px; margin-top: 16px; }
+.thumb {
+  flex: 1; aspect-ratio: 1; max-width: 84px; border-radius: 16px; overflow: hidden;
+  background: var(--frame); border: 1px solid var(--line); transition: all 0.18s var(--ease);
+  display: grid; place-items: center; padding: 12%;
+}
+.thumb img { width: 100%; height: 100%; object-fit: contain; }
+.thumb.on { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.14); }
+.thumb:hover { border-color: var(--accent); }
+
+/* --- Info (right) --- */
+.info__kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); }
+.info__name { font-size: clamp(34px, 4.4vw, 52px); line-height: 1.03; margin: 14px 0 8px; letter-spacing: -0.03em; }
+.info__code { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+.info__pricerow { display: flex; align-items: baseline; gap: 14px; margin: 26px 0 4px; }
+.info__price { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 3.6vw, 40px); }
+.info__price s { color: var(--muted-2); font-weight: 400; font-size: 0.6em; }
+.info__tax { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.info__stockline { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 13px; color: var(--ink-soft); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot--in { background: var(--green); box-shadow: 0 0 0 4px rgba(79,138,61,0.16); }
+
+.field { margin-top: 30px; }
+.field__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.field__label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.field__aux { font-size: 12px; font-weight: 600; color: var(--accent); border-bottom: 1px solid transparent; }
+.field__aux:hover { border-color: var(--accent); }
+.swatches { display: flex; gap: 10px; }
+.swatch { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); position: relative; cursor: pointer; transition: transform 0.15s var(--ease); }
+.swatch.on { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+.swatch:hover { transform: scale(1.08); }
+.pills { display: flex; flex-wrap: wrap; gap: 9px; }
+.pill {
+  min-width: 52px; height: 46px; padding: 0 16px; border-radius: 14px;
+  border: 1.5px solid var(--line); background: var(--card); color: var(--ink);
+  display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 15px;
+  cursor: pointer; transition: all 0.15s var(--ease);
+}
+.pill:hover:not(.out) { border-color: var(--accent); color: var(--accent); }
+.pill.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 10px 22px -12px rgba(var(--accent-rgb),0.8); }
+.pill.out { color: var(--muted-2); text-decoration: line-through; opacity: 0.5; cursor: not-allowed; }
+
+.cta { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+.btn-primary {
+  flex: 1; min-width: 200px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--accent); color: #fff; padding: 17px 30px; border-radius: 16px;
+  font-weight: 600; font-size: 15px; transition: all 0.2s var(--ease);
+  box-shadow: 0 18px 38px -16px rgba(var(--accent-rgb), 0.85);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 26px 50px -16px rgba(var(--accent-rgb), 0.95); }
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 17px 26px; border-radius: 16px; border: 1.5px solid var(--line);
+  font-weight: 600; font-size: 15px; color: var(--ink-soft); transition: all 0.18s var(--ease);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+.rule { height: 1px; background: var(--line); margin: 36px 0; }
+.specs { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line-soft); border-radius: 16px; overflow: hidden; border: 1px solid var(--line-soft); }
+.spec { background: var(--card); padding: 16px 18px; }
+.spec__k { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted-2); }
+.spec__v { font-family: var(--font-display); font-weight: 600; font-size: 16px; margin-top: 5px; }
+
+.branches { margin-top: 34px; }
+.branch {
+  display: flex; align-items: center; gap: 12px; padding: 13px 0;
+  border-top: 1px solid var(--line-soft); font-size: 14px;
+}
+.branch:first-of-type { border-top: none; }
+.branch__name { font-weight: 600; }
+.branch__meta { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.branch__you { background: rgba(var(--accent-rgb),0.1); color: var(--accent); font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; }
+
+/* ==========================================================
+   DIRECTION B — Centered Vitrine
+   ========================================================== */
+.vitrine {
+  background: var(--paper); border: 1px solid var(--line); border-radius: 32px;
+  padding: clamp(30px, 5vw, 66px) clamp(20px, 5vw, 80px) 54px; text-align: center; position: relative;
+  background-image: radial-gradient(120% 55% at 50% -8%, rgba(var(--accent-rgb),0.06), transparent 60%);
+  box-shadow: 0 40px 100px -70px rgba(20,19,16,0.6);
+}
+.vitrine__kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--accent); }
+.vitrine__name { font-size: clamp(34px, 5vw, 62px); line-height: 1.02; margin: 14px 0 6px; }
+.vitrine__code { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.stagewrap { position: relative; width: min(560px, 92%); aspect-ratio: 1; margin: 34px auto 8px; }
+.stagewrap .disc { position: absolute; inset: 4% 6% 7%; border-radius: 50%; background: var(--disc);
+  box-shadow: inset 0 2px 5px rgba(255,255,255,0.8), inset 0 -14px 30px rgba(20,19,16,0.06), 0 30px 70px -34px rgba(20,19,16,0.4); }
+.stagewrap .disc::after { content:''; position:absolute; inset:0; border-radius:50%; border:1px solid rgba(var(--accent-rgb),0.14); }
+.stagewrap .shoe { position: absolute; inset: 8% 10% 11%; z-index: 2; display: grid; place-items: center; cursor: grab; touch-action: none; }
+.stagewrap .shoe:active { cursor: grabbing; }
+.stagewrap .shoe img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 26px 34px rgba(20,19,16,0.24)); will-change: transform; }
+.ann { position: absolute; z-index: 4; white-space: nowrap; }
+.ann__k { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.ann__v { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin-top: 3px; }
+.ann::before { content:''; position: absolute; top: 52%; width: clamp(30px, 4vw, 80px); height: 1px; background: var(--accent); }
+.ann.l { right: calc(100% + clamp(20px,5vw,90px)); text-align: right; } .ann.l::before { left: 100%; }
+.ann.r { left: calc(100% + clamp(20px,5vw,90px)); text-align: left; } .ann.r::before { right: 100%; }
+.ann.l1 { top: 22%; } .ann.r1 { top: 20%; } .ann.l2 { top: 66%; } .ann.r2 { top: 64%; }
+/* B: 360 dial control */
+.orbitbar {
+  display: inline-flex; align-items: center; gap: 16px; margin: 6px auto 0;
+  background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 8px 10px 8px 8px;
+  box-shadow: 0 14px 30px -18px rgba(20,19,16,0.5);
+}
+.orbitbar__btn { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 9px 16px; border-radius: 99px; }
+.orbitbar__btn .spin2 { display: inline-block; }
+.orbitbar.playing .orbitbar__btn .spin2 { animation: spin 3.4s linear infinite; }
+.orbitbar__track { position: relative; width: 150px; height: 4px; border-radius: 3px; background: var(--line); }
+.orbitbar__fill { position: absolute; inset: 0 auto 0 0; width: 30%; background: var(--accent); border-radius: 3px; }
+.orbitbar__frame { font-family: var(--font-mono); font-size: 11px; color: var(--muted); padding-right: 6px; }
+.vitrine .thumbs { justify-content: center; margin-top: 18px; }
+.vitrine .thumb { flex: 0 0 auto; width: 70px; }
+.specchips { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px 26px; margin-top: 30px; }
+.specchip { display: flex; flex-direction: column; gap: 3px; }
+.specchip .k { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted-2); }
+.specchip .v { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+.vitrine__price { font-family: var(--font-display); font-weight: 600; font-size: clamp(34px, 4vw, 46px); margin-top: 34px; }
+.vitrine__tax { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 5px; }
+.vitrine .pills { justify-content: center; margin: 26px 0; }
+.vitrine .cta { justify-content: center; }
+.vitrine .cta .btn-primary { flex: 0 0 auto; }
+.bdots { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px 22px; margin-top: 34px; }
+.bdot { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
+.bdot .meta { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+/* ==========================================================
+   Related (shared)
+   ========================================================== */
+.related { margin-top: clamp(56px, 8vw, 88px); }
+.related__head { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; }
+.related__head h2 { font-size: clamp(22px, 3vw, 28px); white-space: nowrap; }
+.related__rule { flex: 1; height: 1px; background: var(--line); }
+.rgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.rcard { background: var(--card); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; transition: all 0.25s var(--ease); }
+.rcard:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 24px 48px -28px rgba(20,19,16,0.4); }
+.rcard__media { aspect-ratio: 1; background: var(--frame); display: grid; place-items: center; padding: 18%; }
+.rcard__media img { width: 100%; height: 100%; object-fit: contain; }
+.rcard__body { padding: 16px 18px 20px; }
+.rcard__brand { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.rcard__name { font-family: var(--font-display); font-weight: 600; font-size: 16px; margin: 7px 0 12px; line-height: 1.2; }
+.rcard__price { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+
+/* ============ Responsive ============ */
+@media (max-width: 940px) {
+  .split { grid-template-columns: 1fr; }
+  .gal { position: static; }
+  .ann { display: none; }
+  .rgrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .info__name { font-size: 32px; }
+  .rgrid { grid-template-columns: 1fr 1fr; }
+  .specs { grid-template-columns: 1fr; }
+  .btn-primary, .btn-ghost { min-width: 0; width: 100%; }
+}
+.reveal { opacity: 0; transform: translateY(14px); animation: reveal 0.7s var(--ease) forwards; }
+@keyframes reveal { to { opacity: 1; transform: none; } }
+.d1 { animation-delay: .05s; } .d2 { animation-delay: .12s; } .d3 { animation-delay: .19s; } .d4 { animation-delay: .26s; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="toolbar__brand">SIZE<span>RUN</span> · PDP redesign</div>
+  <span class="tag">Direction</span>
+  <div class="seg" id="dirSeg">
+    <button data-dir="a" class="on">A · Editorial Split</button>
+    <button data-dir="b">B · Centered Vitrine</button>
+  </div>
+  <span class="tag">Theme</span>
+  <div class="seg" id="themeSeg">
+    <button data-theme="light" class="on">Light</button>
+    <button data-theme="dark">Dark</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <a class="back">← Back to results</a>
+
+  <!-- ============ DIRECTION A ============ -->
+  <div class="dir dir--a">
+    <div class="split">
+      <!-- Gallery -->
+      <div class="gal reveal d1">
+        <div class="gal__frame zoom" id="frameA">
+          <span class="gal__badge">In stock · 35.5</span>
+          <div class="viewswitch">
+            <button class="on" data-view="photo" onclick="setViewA('photo')">Photos</button>
+            <button data-view="360" onclick="setViewA('360')"><span class="spin">⟲</span> 360°</button>
+          </div>
+          <div class="gal__watermark">A</div>
+          <img class="gal__img" id="mainA" src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=1100&auto=format&fit=crop" alt="Adidas Samba" draggable="false" />
+          <!-- 360 -->
+          <div class="orbit">
+            <div class="orbit__stage" id="orbitStageA">
+              <img id="orbitImgA" src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=1100&auto=format&fit=crop" alt="360 view" draggable="false" />
+            </div>
+            <div class="orbit__ui">
+              <span class="orbit__dial" id="dialA"></span>
+              <div class="orbit__track"><div class="orbit__fill" id="fillA"></div></div>
+              <span class="orbit__hint" id="hintA">drag to rotate</span>
+            </div>
+          </div>
+        </div>
+        <div class="thumbs" id="thumbsA">
+          <button class="thumb on"><img src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=300&auto=format&fit=crop" alt=""></button>
+          <button class="thumb"><img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=300&auto=format&fit=crop" alt=""></button>
+          <button class="thumb"><img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=300&auto=format&fit=crop" alt=""></button>
+          <button class="thumb"><img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=300&auto=format&fit=crop" alt=""></button>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="info reveal d2">
+        <div class="info__kicker">Adidas</div>
+        <h1 class="info__name">Aaidas Samba Red 3.5</h1>
+        <div class="info__code">CODE · IG1025 &nbsp;·&nbsp; BARCODE · 8941</div>
+
+        <div class="info__pricerow">
+          <span class="info__price">QAR 380</span>
+        </div>
+        <div class="info__tax">incl. 5% GST</div>
+        <div class="info__stockline"><span class="dot dot--in"></span> In stock at Doha · Msheireb</div>
+
+        <div class="field">
+          <div class="field__head"><span class="field__label">Colour</span></div>
+          <div class="swatches">
+            <span class="swatch on" style="background:#f4f0e7" title="Cloud White"></span>
+            <span class="swatch" style="background:#b23a2e" title="Red"></span>
+            <span class="swatch" style="background:#2f2bd6" title="Indigo"></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field__head">
+            <span class="field__label">Select size</span>
+            <a class="field__aux">Size guide</a>
+          </div>
+          <div class="pills" id="pillsA">
+            <button class="pill">35.5</button>
+            <button class="pill on">36</button>
+            <button class="pill">37</button>
+            <button class="pill">38</button>
+            <button class="pill out">39</button>
+            <button class="pill">40</button>
+            <button class="pill">41</button>
+          </div>
+        </div>
+
+        <div class="cta">
+          <a class="btn-primary">Enquire at Msheireb →</a>
+          <a class="btn-ghost">All branches</a>
+        </div>
+
+        <div class="rule"></div>
+
+        <div class="specs">
+          <div class="spec"><div class="spec__k">Code</div><div class="spec__v">IG1025</div></div>
+          <div class="spec"><div class="spec__k">Model</div><div class="spec__v">Samba OG</div></div>
+          <div class="spec"><div class="spec__k">Colour</div><div class="spec__v">Cloud White / Red</div></div>
+          <div class="spec"><div class="spec__k">Size</div><div class="spec__v">35.5</div></div>
+        </div>
+
+        <div class="branches">
+          <div class="field__head" style="margin-bottom:6px"><span class="field__label">Branch availability</span></div>
+          <div class="branch"><span class="dot dot--in"></span><span class="branch__name">Msheireb</span><span class="branch__you">you</span><span class="branch__meta">6 in stock</span></div>
+          <div class="branch"><span class="dot" style="background:var(--amber)"></span><span class="branch__name">West Bay</span><span class="branch__meta">2 left</span></div>
+          <div class="branch"><span class="dot" style="background:var(--muted-2)"></span><span class="branch__name">Al Sadd</span><span class="branch__meta">out</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DIRECTION B ============ -->
+  <div class="dir dir--b">
+    <div class="vitrine reveal d1">
+      <div class="vitrine__kicker">Adidas</div>
+      <h1 class="vitrine__name">Aaidas Samba Red 3.5</h1>
+      <div class="vitrine__code">ig1025</div>
+
+      <div class="stagewrap">
+        <div class="ann l l1"><div class="ann__k">Size</div><div class="ann__v">35.5</div></div>
+        <div class="ann r r1"><div class="ann__k">Code</div><div class="ann__v">ig1025</div></div>
+        <div class="ann l l2"><div class="ann__k">Colour</div><div class="ann__v">White / Red</div></div>
+        <div class="ann r r2"><div class="ann__k">Barcode</div><div class="ann__v">8941</div></div>
+        <div class="disc"></div>
+        <div class="shoe" id="shoeB">
+          <img id="imgB" src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=1100&auto=format&fit=crop" alt="Adidas Samba" draggable="false" />
+        </div>
+      </div>
+
+      <div class="orbitbar" id="orbitbarB">
+        <button class="orbitbar__btn" onclick="toggleSpinB()"><span class="spin2">⟲</span> 360° view</button>
+        <div class="orbitbar__track" id="trackB"><div class="orbitbar__fill" id="fillB"></div></div>
+        <span class="orbitbar__frame" id="frameNumB">01 / 24</span>
+      </div>
+
+      <div class="thumbs">
+        <button class="thumb on"><img src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=300&auto=format&fit=crop" alt=""></button>
+        <button class="thumb"><img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=300&auto=format&fit=crop" alt=""></button>
+        <button class="thumb"><img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=300&auto=format&fit=crop" alt=""></button>
+      </div>
+
+      <div class="specchips">
+        <div class="specchip"><span class="k">Code</span><span class="v">ig1025</span></div>
+        <div class="specchip"><span class="k">Model</span><span class="v">Samba OG</span></div>
+        <div class="specchip"><span class="k">Colour</span><span class="v">White / Red</span></div>
+        <div class="specchip"><span class="k">Size</span><span class="v">35.5</span></div>
+        <div class="specchip"><span class="k">Barcode</span><span class="v">8941</span></div>
+      </div>
+
+      <div class="vitrine__price">QAR 380</div>
+      <div class="vitrine__tax">incl. 5% GST</div>
+
+      <div class="pills">
+        <button class="pill">35.5</button>
+        <button class="pill on">36</button>
+        <button class="pill">37</button>
+        <button class="pill">38</button>
+        <button class="pill out">39</button>
+        <button class="pill">40</button>
+      </div>
+
+      <div class="cta">
+        <a class="btn-primary">Enquire at Msheireb →</a>
+        <a class="btn-ghost">All branches</a>
+      </div>
+
+      <div class="bdots">
+        <div class="bdot"><span class="dot dot--in"></span><span class="branch__name">Msheireb</span><span class="meta">6 in stock</span></div>
+        <div class="bdot"><span class="dot" style="background:var(--amber)"></span><span class="branch__name">West Bay</span><span class="meta">2 left</span></div>
+        <div class="bdot"><span class="dot" style="background:var(--muted-2)"></span><span class="branch__name">Al Sadd</span><span class="meta">out</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Related (shared) ============ -->
+  <div class="related reveal d3">
+    <div class="related__head">
+      <div class="related__rule"></div>
+      <h2>You might also like</h2>
+      <div class="related__rule"></div>
+    </div>
+    <div class="rgrid">
+      <a class="rcard"><div class="rcard__media"><img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=400&auto=format&fit=crop" alt=""></div><div class="rcard__body"><div class="rcard__brand">Adidas</div><div class="rcard__name">Gazelle Indoor</div><div class="rcard__price">QAR 420</div></div></a>
+      <a class="rcard"><div class="rcard__media"><img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=400&auto=format&fit=crop" alt=""></div><div class="rcard__body"><div class="rcard__brand">Nike</div><div class="rcard__name">Killshot 2</div><div class="rcard__price">QAR 510</div></div></a>
+      <a class="rcard"><div class="rcard__media"><img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=400&auto=format&fit=crop" alt=""></div><div class="rcard__body"><div class="rcard__brand">New Balance</div><div class="rcard__name">550 White Green</div><div class="rcard__price">QAR 640</div></div></a>
+      <a class="rcard"><div class="rcard__media"><img src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=400&auto=format&fit=crop" alt=""></div><div class="rcard__body"><div class="rcard__brand">Adidas</div><div class="rcard__name">Samba Vegan</div><div class="rcard__price">QAR 380</div></div></a>
+    </div>
+  </div>
+</div>
+
+<script>
+const root = document.documentElement;
+document.getElementById('dirSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  root.dataset.dir = b.dataset.dir;
+  [...e.currentTarget.children].forEach(c => c.classList.toggle('on', c === b));
+});
+document.getElementById('themeSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  root.dataset.theme = b.dataset.theme;
+  [...e.currentTarget.children].forEach(c => c.classList.toggle('on', c === b));
+});
+
+// --- selection helpers (pills, thumbs) ---
+function wireSelect(container, selector) {
+  const el = document.getElementById(container) || document.querySelector(container);
+}
+document.querySelectorAll('.pills').forEach(g => g.addEventListener('click', e => {
+  const p = e.target.closest('.pill'); if (!p || p.classList.contains('out')) return;
+  g.querySelectorAll('.pill').forEach(x => x.classList.remove('on')); p.classList.add('on');
+}));
+document.querySelectorAll('.thumbs').forEach(g => g.addEventListener('click', e => {
+  const t = e.target.closest('.thumb'); if (!t) return;
+  g.querySelectorAll('.thumb').forEach(x => x.classList.remove('on')); t.classList.add('on');
+  const src = t.querySelector('img').src.replace('w=300','w=1100');
+  const main = document.getElementById('mainA'); if (g.id === 'thumbsA' && main) main.src = src;
+  const imgB = document.getElementById('imgB'); if (!main && imgB) imgB.src = src;
+}));
+document.querySelectorAll('.swatch').forEach(s => s.addEventListener('click', () => {
+  s.parentElement.querySelectorAll('.swatch').forEach(x => x.classList.remove('on')); s.classList.add('on');
+}));
+
+// ================= Direction A — 360 =================
+const frameA = document.getElementById('frameA');
+function setViewA(v) {
+  document.querySelectorAll('.viewswitch button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  frameA.classList.toggle('is360', v === '360');
+  frameA.classList.toggle('zoom', v !== '360');
+}
+(function orbitA(){
+  const stage = document.getElementById('orbitStageA');
+  const img = document.getElementById('orbitImgA');
+  const dial = document.getElementById('dialA');
+  const fill = document.getElementById('fillA');
+  const hint = document.getElementById('hintA');
+  let deg = 0, dragging = false, lastX = 0;
+  function render(){
+    img.style.transform = `rotateY(${deg}deg) scale(${1 - Math.abs(Math.sin(deg*Math.PI/180))*0.06})`;
+    dial.style.setProperty('--deg', (deg % 360) + 'deg');
+    fill.style.width = (((deg % 360)+360)%360 / 360 * 100) + '%';
+  }
+  stage.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; hint.textContent = 'rotating…'; stage.setPointerCapture(e.pointerId); });
+  stage.addEventListener('pointermove', e => { if(!dragging) return; deg += (e.clientX - lastX) * 0.9; lastX = e.clientX; render(); });
+  stage.addEventListener('pointerup', () => { dragging = false; hint.textContent = 'drag to rotate'; });
+  render();
+})();
+
+// ================= Direction B — 360 =================
+let spinTimerB = null;
+(function orbitB(){
+  const shoe = document.getElementById('shoeB');
+  const img = document.getElementById('imgB');
+  const track = document.getElementById('trackB');
+  const fill = document.getElementById('fillB');
+  const frameNum = document.getElementById('frameNumB');
+  const TOTAL = 24;
+  let frame = 0, dragging = false, lastX = 0;
+  window._renderB = function(){
+    const deg = frame / TOTAL * 360;
+    img.style.transform = `rotateY(${deg}deg) scale(${1 - Math.abs(Math.sin(deg*Math.PI/180))*0.05})`;
+    fill.style.width = (frame/(TOTAL-1)*100) + '%';
+    frameNum.textContent = String(frame+1).padStart(2,'0') + ' / ' + TOTAL;
+  };
+  shoe.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; shoe.setPointerCapture(e.pointerId); stopSpinB(); });
+  shoe.addEventListener('pointermove', e => { if(!dragging) return; const d = Math.round((e.clientX-lastX)/14); if(d){ frame = ((frame+d)%TOTAL+TOTAL)%TOTAL; lastX = e.clientX; window._renderB(); } });
+  shoe.addEventListener('pointerup', () => dragging = false);
+  track.addEventListener('click', e => { const r = track.getBoundingClientRect(); frame = Math.round((e.clientX-r.left)/r.width*(TOTAL-1)); window._renderB(); });
+  window._frameB = () => frame; window._setFrameB = f => { frame = f; window._renderB(); };
+  window._renderB();
+})();
+function toggleSpinB(){ spinTimerB ? stopSpinB() : startSpinB(); }
+function startSpinB(){
+  document.getElementById('orbitbarB').classList.add('playing');
+  spinTimerB = setInterval(() => { window._setFrameB((window._frameB()+1)%24); }, 90);
+}
+function stopSpinB(){
+  document.getElementById('orbitbarB').classList.remove('playing');
+  clearInterval(spinTimerB); spinTimerB = null;
+}
+</script>
+</body>
+</html>
