@@ -115,19 +115,30 @@ class StockUpdateAction
             return;
         }
 
-        $rawMaterialProductIds = ProductRawMaterial::whereIn('product_id', $sale->items->pluck('product_id'))
+        $this->assertProductStockIsAvailable($sale);
+        $this->assertRawMaterialStockIsAvailable($sale);
+    }
+
+    private function assertProductStockIsAvailable($sale): void
+    {
+        // Composite products are validated against their raw material stock instead.
+        $compositeProductIds = ProductRawMaterial::whereIn('product_id', $sale->items->pluck('product_id'))
+            ->distinct()
             ->pluck('product_id')
-            ->unique()
             ->all();
 
-        $stockItems = $sale->items->reject(fn ($item) => in_array($item->product_id, $rawMaterialProductIds, true));
-
-        $requiredQuantities = $stockItems
+        $requiredQuantities = $sale->items
+            ->reject(fn ($item) => in_array($item->product_id, $compositeProductIds, true))
             ->groupBy('inventory_id')
             ->map(fn ($items) => (float) $items->sum('base_unit_quantity'));
 
+        if ($requiredQuantities->isEmpty()) {
+            return;
+        }
+
         $inventories = Inventory::withoutGlobalScopes()
             ->whereIn('id', $requiredQuantities->keys())
+            ->with('product:id,name,type')
             ->get()
             ->keyBy('id');
 
@@ -137,18 +148,16 @@ class StockUpdateAction
                 throw new Exception('inventory not found', 1);
             }
 
-            if ((float) $inventory->quantity < $requiredQuantity) {
-                $item = $sale->items->firstWhere('inventory_id', $inventoryId);
-                $productName = $item?->product?->name ?? 'selected item';
+            if ($inventory->product?->type !== 'product') {
+                continue;
+            }
 
-                throw new Exception(
-                    "Insufficient stock for {$productName}. Available: {$inventory->quantity}, required: {$requiredQuantity}.",
-                    1
-                );
+            if ((float) $inventory->quantity < $requiredQuantity) {
+                $productName = $inventory->product->name ?? 'selected item';
+
+                throw new Exception("Insufficient stock for {$productName}. Available: {$inventory->quantity}, required: {$requiredQuantity}.", 1);
             }
         }
-
-        $this->assertRawMaterialStockIsAvailable($sale);
     }
 
     private function assertRawMaterialStockIsAvailable($sale): void
