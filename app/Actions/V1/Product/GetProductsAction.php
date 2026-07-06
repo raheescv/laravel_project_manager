@@ -96,12 +96,12 @@ class GetProductsAction
             })
             // In stock only filter — scoped to the selected branch so it matches
             // the branch-specific "Out of stock" badge shown on each card.
-            ->when($filters['in_stock_only'] ?? false, function ($q) use ($filters) {
+            ->when(($filters['in_stock_only'] ?? false) && ($filters['type'] ?? null) === 'product', function ($q) use ($filters) {
                 return $q->whereHas('inventories', function ($invQ) use ($filters) {
-                    $invQ->where('quantity', '>', 0);
-                    if (! empty($filters['branch_id'])) {
-                        $invQ->where('branch_id', $filters['branch_id']);
-                    }
+                    $invQ->where('quantity', '>', 0)
+                        ->when($filters['branch_id'] ?? null, function ($branchQ, $branchId) {
+                            return $branchQ->where('branch_id', $branchId);
+                        });
                 });
             })
             // Size filter

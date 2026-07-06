@@ -15,7 +15,6 @@ use Illuminate\Session\TokenMismatchException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: [
