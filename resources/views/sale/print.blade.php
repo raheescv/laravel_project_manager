@@ -413,11 +413,11 @@
                     </tr>
                 </table>
             @endif
-            @if ($sale->account?->gst_no)
+            @if ($sale->account?->tax_no)
                 <table class="table">
                     <tr>
                         <td class="nowrap text-left" width="28%"><b>GST No.</b></td>
-                        <td colspan="3" class="text-left"><b>{{ $sale->account->gst_no }}</b></td>
+                        <td colspan="3" class="text-left"><b>{{ $sale->account->tax_no }}</b></td>
                     </tr>
                 </table>
             @endif
@@ -478,10 +478,10 @@
                         <td class="text-left"><b>{{ $sale->account->email }}</b></td>
                     </tr>
                 @endif
-                @if ($sale->account?->gst_no)
+                @if ($sale->account?->tax_no)
                     <tr>
                         <td class="nowrap text-left"><b>GST No</b></td>
-                        <td class="text-left"><b>{{ $sale->account->gst_no }}</b></td>
+                        <td class="text-left"><b>{{ $sale->account->tax_no }}</b></td>
                     </tr>
                 @endif
                 <tr>

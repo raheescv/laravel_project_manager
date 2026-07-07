@@ -127,12 +127,12 @@
                                     {{ customer.id_no }}
                                 </p>
                             </div>
-                            <!-- GST Number -->
-                            <div v-if="customer.gst_no" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
-                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">GST Number</label>
+                            <!-- Tax Number -->
+                            <div v-if="customer.tax_no" class="break-words pb-2 border-b border-slate-100 last:border-b-0 sm:last:border-b sm:border-b-0">
+                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Tax Number</label>
                                 <p class="text-sm font-semibold text-slate-800 break-words">
                                     <i class="fa fa-file-text-o mr-1.5 text-cyan-500"></i>
-                                    {{ customer.gst_no }}
+                                    {{ customer.tax_no }}
                                 </p>
                             </div>
                         </div>
@@ -419,11 +419,11 @@
                                             class="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-cyan-100 rounded-full mr-1.5">
                                             <i class="fa fa-file-text-o text-cyan-600 text-xs"></i>
                                         </div>
-                                        GST Number
+                                        Tax Number
                                     </label>
-                                    <input v-model="customer.gst_no" type="text" maxlength="30"
+                                    <input v-model="customer.tax_no" type="text" maxlength="30"
                                         class="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm transition-all duration-200"
-                                        placeholder="GST number">
+                                        placeholder="Tax number">
                                 </div>
 
                             </div>
@@ -592,7 +592,7 @@ export default {
             whatsapp_mobile: '',
             email: '',
             company: '',
-            gst_no: '',
+            tax_no: '',
             dob: null,
             id_no: '',
             nationality: null,
@@ -619,7 +619,7 @@ export default {
                 whatsapp_mobile: '',
                 email: '',
                 company: '',
-                gst_no: '',
+                tax_no: '',
                 dob: null,
                 id_no: '',
                 nationality: null,
@@ -708,7 +708,7 @@ export default {
                     mobile: customer.value.mobile.trim(),
                     email: customer.value.email ? customer.value.email.trim() : null,
                     company: customer.value.company ? customer.value.company.trim() : null,
-                    gst_no: customer.value.gst_no ? customer.value.gst_no.trim() : null
+                    tax_no: customer.value.tax_no ? customer.value.tax_no.trim() : null
                 }
 
                 const endpoint = customerData.id ? `/customers/${customerData.id}` : '/customers/'

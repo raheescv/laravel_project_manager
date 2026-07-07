@@ -135,8 +135,8 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-floating">
-                            {{ html()->input('gst_no')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.gst_no')->placeholder('GST Number') }}
-                            <label><i class="fa fa-file-text-o me-1 text-muted"></i> GST Number</label>
+                            {{ html()->input('tax_no')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.tax_no')->placeholder('Tax Number') }}
+                            <label><i class="fa fa-file-text-o me-1 text-muted"></i> Tax Number</label>
                         </div>
                     </div>
                 </div>

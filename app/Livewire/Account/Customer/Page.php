@@ -87,7 +87,7 @@ class Page extends Component
                 'id_no' => '',
                 'nationality' => null,
                 'company' => '',
-                'gst_no' => '',
+                'tax_no' => '',
                 'image' => null,
                 'credit_period_days' => null,
                 'model' => 'customer',
@@ -118,7 +118,7 @@ class Page extends Component
             'accounts.name' => ['required', 'max:100'],
             'accounts.email' => ['email', 'max:50'],
             'accounts.mobile' => ['required', 'max:15'],
-            'accounts.gst_no' => ['nullable', 'max:30'],
+            'accounts.tax_no' => ['nullable', 'max:30'],
             'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ];
     }
@@ -130,7 +130,7 @@ class Page extends Component
         'accounts.mobile.max' => 'The name field must not be greater than 15 characters',
         'accounts.email.max' => 'The name field must not be greater than 50 characters',
         'accounts.email.email' => 'The email field must be a valid email address.',
-        'accounts.gst_no.max' => 'The GST number must not be greater than 30 characters',
+        'accounts.tax_no.max' => 'The tax number must not be greater than 30 characters',
         'photo.image' => 'The profile photo must be an image',
         'photo.mimes' => 'The photo must be a JPG, PNG or WEBP file',
         'photo.max' => 'The photo size must not exceed 5MB',
