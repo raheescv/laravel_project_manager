@@ -119,7 +119,7 @@ function getCurrentColorMode() {
  */
 function getCurrentSidebarStyle() {
     const activeBtn = document.querySelector('._dm-sidebarStyle.active');
-    return activeBtn ? activeBtn.getAttribute('data-nav-skin') : 'aurora';
+    return activeBtn ? activeBtn.getAttribute('data-nav-skin') : 'standard';
 }
 
 /**
@@ -259,7 +259,8 @@ function applyColorMode(mode) {
  * Apply sidebar style (skin) setting
  */
 function applySidebarStyle(style) {
-    if (!style) style = 'aurora';
+    // legacy "aurora" (and anything unknown) now maps to the Standard skin
+    if (!style || !document.querySelector('._dm-sidebarStyle[data-nav-skin="' + style + '"]')) style = 'standard';
 
     document.querySelectorAll('._dm-sidebarStyle').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-nav-skin') === style);

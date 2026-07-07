@@ -1161,9 +1161,9 @@
                         <h6 class="mt-4 mb-2 py-1">Sidebar Style</h6>
                         <p class="text-muted small mb-2">Premium look for the left navigation. Applies instantly.</p>
                         <div class="dm-sidebar-style-grid">
-                            <button type="button" class="_dm-sidebarStyle dm-skin-btn active" data-nav-skin="aurora" title="Aurora Glass — frosted indigo depth">
-                                <span class="dm-skin-swatch dm-skin-swatch--aurora"></span>
-                                <span class="dm-skin-name">Aurora</span>
+                            <button type="button" class="_dm-sidebarStyle dm-skin-btn active" data-nav-skin="standard" title="Standard — clean flat, single blue accent">
+                                <span class="dm-skin-swatch dm-skin-swatch--standard"></span>
+                                <span class="dm-skin-name">Standard</span>
                             </button>
                             <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="mono" title="Editorial Mono — minimal, hairline restraint">
                                 <span class="dm-skin-swatch dm-skin-swatch--mono"></span>
@@ -1180,7 +1180,7 @@
                             .dm-skin-btn:hover { transform: translateY(-1px); border-color: var(--bs-primary); }
                             .dm-skin-btn.active { border-color: var(--bs-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, .18); }
                             .dm-skin-swatch { width: 100%; height: 34px; border-radius: 8px; border: 1px solid rgba(0, 0, 0, .06); }
-                            .dm-skin-swatch--aurora { background: linear-gradient(135deg, #6366f1, #8b5cf6 60%, #38bdf8); }
+                            .dm-skin-swatch--standard { background: linear-gradient(135deg, #2563eb 0 55%, #ffffff 55% 100%); }
                             .dm-skin-swatch--mono { background: linear-gradient(135deg, #111114 0 50%, #f4f4f6 50% 100%); }
                             .dm-skin-swatch--atelier { background: linear-gradient(135deg, #d2ab5e, #a87d36 60%, #2b2419); }
                             .dm-skin-name { font-size: .72rem; font-weight: 600; color: var(--bs-body-color); }

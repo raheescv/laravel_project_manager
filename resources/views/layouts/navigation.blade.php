@@ -1,113 +1,114 @@
 <nav id="mainnav-container" class="mainnav luminous-nav">
     <style>
         /* ======================================================================
-           PREMIUM SIDEBAR — "Refined Indigo".
-           Compact, low-padding, theme-aware navigation. Light-first with a
-           [data-bs-theme="dark"] override (matches the app's premium .rvx system).
+           PREMIUM SIDEBAR — "Standard" (default skin).
+           Clean flat SaaS look: single blue accent, no gradients or glows,
+           compact rows. Light-first with a [data-bs-theme="dark"] override.
            Structure / collapse classes (.mainnav, .mininav-*, .has-sub) are
            preserved so the existing Nifty behavior keeps working.
            ====================================================================== */
 
         /* ---------- palette tokens (light-first, dark overrides below) ---------- */
         .luminous-nav {
-            --ln-primary: #4f46e5;
-            --ln-secondary: #7c3aed;
+            --ln-primary: #2563eb;
+            --ln-secondary: #2563eb;
 
             --ln-bg: #ffffff;
-            --ln-surface: #f7f8fc;
-            --ln-border: #eceef5;
-            --ln-border-strong: #e2e5ef;
-            --ln-divider: #eef0f6;
+            --ln-surface: #f8f9fb;
+            --ln-border: #e7e9ee;
+            --ln-border-strong: #dcdfe6;
+            --ln-divider: #edeff3;
 
-            --ln-text: #334155;
-            --ln-text-strong: #0f172a;
-            --ln-text-muted: #64748b;
-            --ln-text-dim: #94a3b8;
+            --ln-text: #42495a;
+            --ln-text-strong: #111827;
+            --ln-text-muted: #6b7280;
+            --ln-text-dim: #9ca3af;
 
-            --ln-chip-bg: #f1f3f9;
-            --ln-chip-border: #eceef5;
-            --ln-chip-color: #64748b;
+            --ln-chip-bg: transparent;
+            --ln-chip-border: transparent;
+            --ln-chip-color: #6b7280;
 
-            --ln-hover-bg: #f4f4fd;
+            --ln-hover-bg: #f3f5f9;
 
-            --ln-active-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.10), rgba(124, 58, 237, 0.06));
-            --ln-active-color: #4f46e5;
-            --ln-accent-bar: linear-gradient(180deg, #6366f1, #7c3aed);
+            --ln-active-bg: #eaf1fe;
+            --ln-active-color: #1d4ed8;
+            --ln-accent-bar: #2563eb;
 
-            --ln-sub-line: #ececf6;
-            --ln-sub-dot: #cbd2e0;
+            --ln-sub-line: #e7e9ee;
+            --ln-sub-dot: #d1d5db;
             --ln-sub-dot-ring: #ffffff;
 
-            --ln-scrollbar: rgba(79, 70, 229, 0.22);
-            --ln-scrollbar-hover: rgba(79, 70, 229, 0.42);
+            --ln-scrollbar: rgba(37, 99, 235, 0.22);
+            --ln-scrollbar-hover: rgba(37, 99, 235, 0.42);
 
             --ln-popover-bg: #ffffff;
 
-            --ln-danger: #ef4444;
-            --ln-danger-bg: rgba(239, 68, 68, 0.10);
-            --ln-danger-border: rgba(239, 68, 68, 0.22);
+            --ln-danger: #dc2626;
+            --ln-danger-bg: #fef2f2;
+            --ln-danger-border: #fecaca;
 
-            /* skin-driven accents (overridden per [data-nav-skin]) — defaults = Aurora */
-            --ln-ring: linear-gradient(135deg, #38bdf8, #6366f1, #a855f7);
-            --ln-logo-shadow: 0 6px 14px -8px rgba(79, 70, 229, 0.8);
-            --ln-logo-shadow-hover: 0 9px 18px -10px rgba(79, 70, 229, 0.85);
-            --ln-active-chip: linear-gradient(135deg, var(--ln-primary), var(--ln-secondary));
+            /* skin-driven accents (overridden per [data-nav-skin]) — defaults = Standard */
+            --ln-ring: #111827;
+            --ln-logo-shadow: none;
+            --ln-logo-shadow-hover: 0 4px 10px -6px rgba(17, 24, 39, 0.4);
+            --ln-active-chip: #2563eb;
             --ln-active-chip-ink: #ffffff;
-            --ln-glow: 0 5px 12px -5px rgba(99, 102, 241, 0.6);
-            --ln-danger-grad: linear-gradient(135deg, var(--ln-danger), #ec4899);
+            --ln-glow: none;
+            --ln-danger-grad: var(--ln-danger);
         }
 
         /* Dark-theme overrides (app toggles [data-bs-theme="dark"]) */
         [data-bs-theme="dark"] .luminous-nav {
-            --ln-primary: #818cf8;
-            --ln-secondary: #a78bfa;
+            --ln-primary: #60a5fa;
+            --ln-secondary: #60a5fa;
 
-            --ln-bg: linear-gradient(180deg, #0d0d1f 0%, #0a0a18 100%);
+            --ln-bg: #111420;
             --ln-surface: rgba(255, 255, 255, 0.04);
-            --ln-border: rgba(255, 255, 255, 0.07);
-            --ln-border-strong: rgba(255, 255, 255, 0.12);
+            --ln-border: rgba(255, 255, 255, 0.08);
+            --ln-border-strong: rgba(255, 255, 255, 0.13);
             --ln-divider: rgba(255, 255, 255, 0.06);
 
-            --ln-text: #cbd5e1;
-            --ln-text-strong: #e2e8f0;
-            --ln-text-muted: #94a3b8;
-            --ln-text-dim: #64748b;
+            --ln-text: #c6cbd8;
+            --ln-text-strong: #f1f3f8;
+            --ln-text-muted: #8e96a8;
+            --ln-text-dim: #5f6779;
 
-            --ln-chip-bg: rgba(255, 255, 255, 0.05);
-            --ln-chip-border: rgba(255, 255, 255, 0.08);
-            --ln-chip-color: #94a3b8;
+            --ln-chip-bg: transparent;
+            --ln-chip-border: transparent;
+            --ln-chip-color: #8e96a8;
 
-            --ln-hover-bg: rgba(129, 140, 248, 0.12);
+            --ln-hover-bg: rgba(255, 255, 255, 0.05);
 
-            --ln-active-bg: rgba(129, 140, 248, 0.14);
-            --ln-active-color: #c7d2fe;
-            --ln-accent-bar: linear-gradient(180deg, #818cf8, #a78bfa);
+            --ln-active-bg: rgba(96, 165, 250, 0.13);
+            --ln-active-color: #93c5fd;
+            --ln-accent-bar: #60a5fa;
 
-            --ln-sub-line: rgba(255, 255, 255, 0.09);
+            --ln-sub-line: rgba(255, 255, 255, 0.10);
             --ln-sub-dot: #475569;
-            --ln-sub-dot-ring: #0c0c1a;
+            --ln-sub-dot-ring: #111420;
 
-            --ln-scrollbar: rgba(129, 140, 248, 0.3);
-            --ln-scrollbar-hover: rgba(129, 140, 248, 0.55);
+            --ln-scrollbar: rgba(96, 165, 250, 0.3);
+            --ln-scrollbar-hover: rgba(96, 165, 250, 0.55);
 
-            --ln-popover-bg: #14141f;
+            --ln-popover-bg: #171b28;
 
             --ln-danger: #f87171;
-            --ln-danger-bg: rgba(248, 113, 113, 0.12);
+            --ln-danger-bg: rgba(248, 113, 113, 0.10);
             --ln-danger-border: rgba(248, 113, 113, 0.28);
 
-            --ln-ring: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
-            --ln-logo-shadow: 0 6px 16px -8px rgba(129, 140, 248, 0.9);
-            --ln-logo-shadow-hover: 0 9px 18px -10px rgba(129, 140, 248, 0.95);
-            --ln-active-chip: linear-gradient(135deg, var(--ln-primary), var(--ln-secondary));
+            --ln-ring: #e5e7eb;
+            --ln-logo-shadow: none;
+            --ln-logo-shadow-hover: 0 4px 12px -6px rgba(229, 231, 235, 0.35);
+            --ln-active-chip: #3b82f6;
             --ln-active-chip-ink: #ffffff;
-            --ln-glow: 0 6px 18px -5px rgba(129, 140, 248, 0.7);
-            --ln-danger-grad: linear-gradient(135deg, var(--ln-danger), #ec4899);
+            --ln-glow: none;
+            --ln-danger-grad: var(--ln-danger);
         }
 
         /* ======================================================================
            SKIN OVERRIDES — set via [data-nav-skin] on <html> (theme settings).
-           Aurora is the default (the base tokens above). Each block below is a
+           Standard is the default (the base tokens above; unknown/legacy skin
+           values such as "aurora" also resolve to it). Each block below is a
            COMPLETE token set so the cascade resolves cleanly in light AND dark.
            ====================================================================== */
 
@@ -546,7 +547,7 @@
                 border: 1px solid var(--ln-border-strong) !important;
                 border-radius: 12px !important;
                 box-shadow: 0 18px 44px -14px rgba(15, 23, 42, 0.28),
-                            0 6px 16px -8px rgba(79, 70, 229, 0.18) !important;
+                            0 6px 16px -8px rgba(15, 23, 42, 0.12) !important;
                 padding: 0.35rem !important;
                 margin: 0 0 0 0.25rem !important;
                 overflow: visible !important;
@@ -557,7 +558,7 @@
             [data-bs-theme="dark"] .mn--min .luminous-nav .mininav-content.nav,
             [data-bs-theme="dark"] .mn--min .luminous-nav .mainnav__widget .mininav-content {
                 box-shadow: 0 22px 50px -12px rgba(0, 0, 0, 0.6),
-                            0 8px 20px -8px rgba(99, 102, 241, 0.25) !important;
+                            0 8px 20px -8px rgba(0, 0, 0, 0.35) !important;
             }
 
             /* no tree line in popover mode */

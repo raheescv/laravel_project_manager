@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sidebar Redesign — Premium / Standard / Classic</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PAGE CHROME (preview harness only — not part of the sidebar)
+   ============================================================ */
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:16px; }
+body {
+    font-family:'Plus Jakarta Sans', -apple-system, sans-serif;
+    background:var(--page-bg);
+    color:var(--page-ink);
+    min-height:100vh;
+    transition:background .3s;
+}
+:root {
+    --page-bg:#eef0f6;
+    --page-ink:#1e293b;
+    --panel-bg:#ffffff;
+    --panel-border:#e5e8f0;
+}
+[data-theme="dark"] {
+    --page-bg:#0b0c14;
+    --page-ink:#cbd5e1;
+    --panel-bg:#12141f;
+    --panel-border:rgba(255,255,255,.08);
+}
+
+/* ---- control bar ---- */
+.ctrl {
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:12px 18px;
+    background:var(--panel-bg);
+    border-bottom:1px solid var(--panel-border);
+}
+.ctrl h1 { font-size:.95rem; font-weight:800; letter-spacing:-.01em; margin-right:8px; }
+.ctrl .seg {
+    display:inline-flex; background:var(--page-bg); border:1px solid var(--panel-border);
+    border-radius:10px; padding:3px; gap:2px;
+}
+.ctrl .seg button {
+    border:0; background:transparent; color:inherit; font:inherit;
+    font-size:.78rem; font-weight:600; padding:6px 14px; border-radius:8px; cursor:pointer;
+    opacity:.65; transition:all .18s;
+}
+.ctrl .seg button.on {
+    background:var(--panel-bg); opacity:1;
+    box-shadow:0 1px 4px rgba(15,23,42,.12);
+}
+.ctrl .spacer { flex:1; }
+.ctrl .hint { font-size:.72rem; opacity:.55; }
+
+/* ---- stage ---- */
+.stage { display:flex; min-height:calc(100vh - 57px); }
+.fake-content { flex:1; padding:26px; min-width:0; }
+.fake-content .crumb { font-size:.75rem; opacity:.5; margin-bottom:6px; }
+.fake-content h2 { font-size:1.35rem; font-weight:800; letter-spacing:-.02em; margin-bottom:18px; }
+.fake-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
+.fake-card {
+    height:110px; border-radius:14px; background:var(--panel-bg);
+    border:1px solid var(--panel-border);
+}
+.fake-lines { margin-top:16px; border-radius:14px; background:var(--panel-bg); border:1px solid var(--panel-border); padding:16px; }
+.fake-lines i { display:block; height:11px; border-radius:6px; background:var(--page-bg); margin-bottom:10px; }
+.fake-lines i:nth-child(2){width:82%} .fake-lines i:nth-child(3){width:64%} .fake-lines i:nth-child(4){width:71%}
+
+/* mobile hamburger (appears < 900px) */
+.burger {
+    display:none; border:1px solid var(--panel-border); background:var(--panel-bg);
+    color:inherit; border-radius:9px; width:36px; height:34px; cursor:pointer; font-size:.9rem;
+}
+.scrim {
+    display:none; position:fixed; inset:0; z-index:80;
+    background:rgba(10,12,25,.45); backdrop-filter:blur(2px);
+}
+body.drawer-open .scrim { display:block; }
+
+/* ============================================================
+   SIDEBAR — shared skeleton (token-driven)
+   All three variants override ONLY the tokens + a few accents.
+   ============================================================ */
+.snav {
+    --w:236px;
+    width:var(--w); flex-shrink:0;
+    display:flex; flex-direction:column;
+    background:var(--s-bg);
+    border-right:1px solid var(--s-border);
+    transition:width .25s cubic-bezier(.4,0,.2,1), background .3s;
+    position:relative; z-index:90;
+}
+.snav-scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding:10px 10px 14px; }
+.snav-scroll::-webkit-scrollbar { width:4px; }
+.snav-scroll::-webkit-scrollbar-thumb { background:var(--s-scrollbar); border-radius:4px; }
+
+/* ---- workspace / brand card ---- */
+.snav-brand {
+    display:flex; align-items:center; gap:10px;
+    margin:4px 2px 12px; padding:9px 10px;
+    border-radius:12px;
+    background:var(--s-brand-bg);
+    border:1px solid var(--s-brand-border);
+    cursor:pointer; text-decoration:none; color:inherit;
+    transition:all .2s;
+}
+.snav-brand:hover { border-color:var(--s-accent); }
+.snav-logo {
+    width:34px; height:34px; flex-shrink:0; border-radius:10px;
+    display:grid; place-items:center;
+    background:var(--s-logo-bg); color:var(--s-logo-ink);
+    font-weight:800; font-size:.8rem; letter-spacing:.02em;
+    box-shadow:var(--s-logo-shadow);
+}
+.snav-brand-name { font-size:.83rem; font-weight:800; color:var(--s-ink-strong); letter-spacing:-.01em; line-height:1.15; white-space:nowrap; }
+.snav-brand-tag { font-size:.58rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--s-ink-dim); white-space:nowrap; }
+
+/* ---- nav items ---- */
+.snav ul { list-style:none; }
+.snav-item { position:relative; margin:1px 0; }
+.snav-link {
+    display:flex; align-items:center; gap:10px;
+    padding:7px 10px; border-radius:9px;
+    color:var(--s-ink); text-decoration:none;
+    font-size:.8rem; font-weight:600;
+    cursor:pointer; white-space:nowrap;
+    transition:background .16s, color .16s;
+    position:relative;
+}
+.snav-link .fa {
+    width:26px; height:26px; flex-shrink:0;
+    display:grid; place-items:center;
+    font-size:.78rem; border-radius:8px;
+    background:var(--s-icon-bg); color:var(--s-icon-ink);
+    border:1px solid var(--s-icon-border);
+    transition:all .18s;
+}
+.snav-link .lbl { flex:1; overflow:hidden; text-overflow:ellipsis; }
+.snav-link .caret {
+    font-size:.6rem; opacity:.45; transition:transform .22s;
+}
+.snav-item.open > .snav-link .caret { transform:rotate(180deg); }
+.snav-link:hover { background:var(--s-hover); color:var(--s-ink-strong); }
+.snav-link:hover .fa { color:var(--s-accent); }
+
+/* active parent */
+.snav-item.active > .snav-link {
+    background:var(--s-active-bg);
+    color:var(--s-active-ink);
+}
+.snav-item.active > .snav-link .fa {
+    background:var(--s-active-icon-bg);
+    color:var(--s-active-icon-ink);
+    border-color:transparent;
+    box-shadow:var(--s-glow);
+}
+.snav-item.active > .snav-link::before {
+    content:''; position:absolute; left:-10px; top:20%; bottom:20%;
+    width:3px; border-radius:0 4px 4px 0;
+    background:var(--s-bar);
+}
+
+/* ---- submenu ---- */
+.snav-sub {
+    max-height:0; overflow:hidden;
+    transition:max-height .28s cubic-bezier(.4,0,.2,1);
+    margin-left:22px; padding-left:14px;
+    border-left:1px solid var(--s-subline);
+}
+.snav-item.open > .snav-sub { max-height:340px; }
+.snav-sub a {
+    display:block; padding:5.5px 9px; margin:1px 0;
+    font-size:.76rem; font-weight:500;
+    color:var(--s-ink-muted); text-decoration:none;
+    border-radius:7px; white-space:nowrap;
+    transition:all .15s; position:relative;
+}
+.snav-sub a:hover { color:var(--s-ink-strong); background:var(--s-hover); }
+.snav-sub a.sub-active {
+    color:var(--s-active-ink); font-weight:700;
+    background:var(--s-active-bg);
+}
+.snav-sub a.sub-active::before {
+    content:''; position:absolute; left:-15.5px; top:50%; transform:translateY(-50%);
+    width:6px; height:6px; border-radius:50%;
+    background:var(--s-accent); outline:2px solid var(--s-bg);
+}
+
+/* ---- section footer (logout) ---- */
+.snav-foot {
+    border-top:1px solid var(--s-border);
+    padding:8px 10px;
+}
+.snav-foot .snav-link:hover { background:var(--s-danger-bg); color:var(--s-danger); }
+.snav-foot .snav-link:hover .fa { color:var(--s-danger); background:transparent; border-color:var(--s-danger-border); }
+
+/* ============================================================
+   RAIL (collapsed) MODE — icons only, flyout labels
+   ============================================================ */
+.stage.rail .snav { --w:66px; }
+.stage.rail .snav-brand { justify-content:center; padding:9px 6px; }
+.stage.rail .snav-brand-name, .stage.rail .snav-brand-tag,
+.stage.rail .snav-link .lbl, .stage.rail .snav-link .caret { display:none; }
+.stage.rail .snav-link { justify-content:center; padding:7px 6px; }
+.stage.rail .snav-item.active > .snav-link::before { left:-10px; }
+.stage.rail .snav-sub { display:none; }
+/* flyout on hover */
+.stage.rail .snav-item:hover > .snav-link::after {
+    content:attr(data-label);
+    position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%);
+    background:var(--s-fly-bg); color:var(--s-fly-ink);
+    font-size:.72rem; font-weight:700; padding:5px 11px; border-radius:8px;
+    white-space:nowrap; z-index:200;
+    box-shadow:0 8px 24px -6px rgba(10,12,30,.35);
+    border:1px solid var(--s-border);
+    pointer-events:none;
+}
+
+/* ============================================================
+   VARIANT 1 — PREMIUM  (refined glass, gradient accents)
+   ============================================================ */
+.stage[data-variant="premium"] .snav {
+    --s-bg:linear-gradient(180deg,#ffffff 0%,#fafaff 100%);
+    --s-border:#eceef5;
+    --s-ink:#3f4658;
+    --s-ink-strong:#0f172a;
+    --s-ink-muted:#69748c;
+    --s-ink-dim:#98a2b8;
+    --s-accent:#4f46e5;
+    --s-hover:#f2f3fc;
+    --s-active-bg:linear-gradient(135deg,rgba(99,102,241,.11),rgba(124,58,237,.06));
+    --s-active-ink:#4338ca;
+    --s-active-icon-bg:linear-gradient(135deg,#6366f1,#7c3aed);
+    --s-active-icon-ink:#fff;
+    --s-bar:linear-gradient(180deg,#6366f1,#a855f7);
+    --s-glow:0 5px 14px -5px rgba(99,102,241,.55);
+    --s-icon-bg:#f2f3f9;
+    --s-icon-ink:#5b6478;
+    --s-icon-border:#eceef5;
+    --s-subline:#e7e8f4;
+    --s-brand-bg:linear-gradient(135deg,#f7f8ff,#fdfaff);
+    --s-brand-border:#e9eaf6;
+    --s-logo-bg:linear-gradient(135deg,#1e1b4b,#312e81);
+    --s-logo-ink:#e0e7ff;
+    --s-logo-shadow:0 6px 14px -7px rgba(49,46,129,.65);
+    --s-scrollbar:rgba(99,102,241,.28);
+    --s-fly-bg:#0f172a; --s-fly-ink:#e2e8f0;
+    --s-danger:#e11d48; --s-danger-bg:rgba(225,29,72,.08); --s-danger-border:rgba(225,29,72,.25);
+}
+[data-theme="dark"] .stage[data-variant="premium"] .snav {
+    --s-bg:linear-gradient(180deg,#0e0f1d 0%,#0a0b16 100%);
+    --s-border:rgba(255,255,255,.07);
+    --s-ink:#c3cbdc;
+    --s-ink-strong:#eef1f8;
+    --s-ink-muted:#8b96ad;
+    --s-ink-dim:#5d6880;
+    --s-accent:#a5b4fc;
+    --s-hover:rgba(129,140,248,.1);
+    --s-active-bg:rgba(129,140,248,.14);
+    --s-active-ink:#c7d2fe;
+    --s-active-icon-bg:linear-gradient(135deg,#6366f1,#8b5cf6);
+    --s-active-icon-ink:#fff;
+    --s-bar:linear-gradient(180deg,#818cf8,#c084fc);
+    --s-glow:0 6px 16px -5px rgba(129,140,248,.6);
+    --s-icon-bg:rgba(255,255,255,.05);
+    --s-icon-ink:#9aa4bc;
+    --s-icon-border:rgba(255,255,255,.07);
+    --s-subline:rgba(255,255,255,.09);
+    --s-brand-bg:rgba(255,255,255,.035);
+    --s-brand-border:rgba(255,255,255,.08);
+    --s-logo-bg:linear-gradient(135deg,#4338ca,#7c3aed);
+    --s-logo-ink:#fff;
+    --s-logo-shadow:0 6px 18px -7px rgba(124,58,237,.8);
+    --s-scrollbar:rgba(129,140,248,.3);
+    --s-fly-bg:#1e2235; --s-fly-ink:#e2e8f0;
+    --s-danger:#fb7185; --s-danger-bg:rgba(251,113,133,.1); --s-danger-border:rgba(251,113,133,.3);
+}
+
+/* ============================================================
+   VARIANT 2 — STANDARD  (clean flat SaaS, single accent, no gradients)
+   ============================================================ */
+.stage[data-variant="standard"] .snav {
+    --s-bg:#ffffff;
+    --s-border:#e7e9ee;
+    --s-ink:#42495a;
+    --s-ink-strong:#111827;
+    --s-ink-muted:#6b7280;
+    --s-ink-dim:#9ca3af;
+    --s-accent:#2563eb;
+    --s-hover:#f3f5f9;
+    --s-active-bg:#eaf1fe;
+    --s-active-ink:#1d4ed8;
+    --s-active-icon-bg:#2563eb;
+    --s-active-icon-ink:#fff;
+    --s-bar:#2563eb;
+    --s-glow:none;
+    --s-icon-bg:transparent;
+    --s-icon-ink:#6b7280;
+    --s-icon-border:transparent;
+    --s-subline:#e7e9ee;
+    --s-brand-bg:#f8f9fb;
+    --s-brand-border:#e7e9ee;
+    --s-logo-bg:#111827;
+    --s-logo-ink:#fff;
+    --s-logo-shadow:none;
+    --s-scrollbar:rgba(37,99,235,.25);
+    --s-fly-bg:#111827; --s-fly-ink:#f3f4f6;
+    --s-danger:#dc2626; --s-danger-bg:#fef2f2; --s-danger-border:#fecaca;
+}
+.stage[data-variant="standard"] .snav-link .fa { width:22px; height:22px; }
+.stage[data-variant="standard"] .snav-brand,
+.stage[data-variant="standard"] .snav-link { border-radius:7px; }
+.stage[data-variant="standard"] .snav-logo { border-radius:7px; }
+[data-theme="dark"] .stage[data-variant="standard"] .snav {
+    --s-bg:#111420;
+    --s-border:rgba(255,255,255,.08);
+    --s-ink:#c6cbd8;
+    --s-ink-strong:#f1f3f8;
+    --s-ink-muted:#8e96a8;
+    --s-ink-dim:#5f6779;
+    --s-accent:#60a5fa;
+    --s-hover:rgba(255,255,255,.05);
+    --s-active-bg:rgba(96,165,250,.13);
+    --s-active-ink:#93c5fd;
+    --s-active-icon-bg:#3b82f6;
+    --s-active-icon-ink:#fff;
+    --s-bar:#60a5fa;
+    --s-icon-ink:#8e96a8;
+    --s-subline:rgba(255,255,255,.1);
+    --s-brand-bg:rgba(255,255,255,.04);
+    --s-brand-border:rgba(255,255,255,.08);
+    --s-logo-bg:#e5e7eb;
+    --s-logo-ink:#111827;
+    --s-scrollbar:rgba(96,165,250,.3);
+    --s-fly-bg:#1f2433; --s-fly-ink:#e5e7eb;
+    --s-danger:#f87171; --s-danger-bg:rgba(248,113,113,.1); --s-danger-border:rgba(248,113,113,.3);
+}
+
+/* ============================================================
+   VARIANT 3 — CLASSIC  (timeless navy admin sidebar, dense)
+   ============================================================ */
+.stage[data-variant="classic"] .snav {
+    --s-bg:linear-gradient(180deg,#232f55 0%,#1d2747 100%);
+    --s-border:rgba(255,255,255,.06);
+    --s-ink:#aeb8d5;
+    --s-ink-strong:#ffffff;
+    --s-ink-muted:#8892b5;
+    --s-ink-dim:#6a7499;
+    --s-accent:#fbbf24;
+    --s-hover:rgba(255,255,255,.06);
+    --s-active-bg:rgba(255,255,255,.09);
+    --s-active-ink:#ffffff;
+    --s-active-icon-bg:transparent;
+    --s-active-icon-ink:#fbbf24;
+    --s-bar:#fbbf24;
+    --s-glow:none;
+    --s-icon-bg:transparent;
+    --s-icon-ink:#8e99bd;
+    --s-icon-border:transparent;
+    --s-subline:rgba(255,255,255,.12);
+    --s-brand-bg:rgba(255,255,255,.05);
+    --s-brand-border:rgba(255,255,255,.09);
+    --s-logo-bg:#ffffff;
+    --s-logo-ink:#1d2747;
+    --s-logo-shadow:none;
+    --s-scrollbar:rgba(255,255,255,.2);
+    --s-fly-bg:#141c38; --s-fly-ink:#e2e8f0;
+    --s-danger:#fca5a5; --s-danger-bg:rgba(252,165,165,.1); --s-danger-border:rgba(252,165,165,.3);
+}
+.stage[data-variant="classic"] .snav-item { margin:0; }
+.stage[data-variant="classic"] .snav-link { border-radius:0; padding:8px 12px; margin:0 -10px; }
+.stage[data-variant="classic"] .snav-scroll { padding:10px 10px 14px; }
+.stage[data-variant="classic"] .snav-item.active > .snav-link::before { left:0; top:0; bottom:0; border-radius:0; }
+.stage[data-variant="classic"] .snav-sub { margin-left:26px; }
+.stage[data-variant="classic"] .snav-sub a { border-radius:0; }
+.stage[data-variant="classic"] .snav-sub a.sub-active::before { outline-color:#1f2949; }
+.stage[data-variant="classic"] .snav-brand { border-radius:8px; }
+.stage[data-variant="classic"] .snav-logo { border-radius:8px; }
+[data-theme="dark"] .stage[data-variant="classic"] .snav {
+    --s-bg:linear-gradient(180deg,#151b33 0%,#10152a 100%);
+    --s-fly-bg:#0c1122;
+}
+
+/* ============================================================
+   RESPONSIVE — drawer below 900px
+   ============================================================ */
+@media (max-width:900px) {
+    .burger { display:grid; place-items:center; }
+    .snav {
+        position:fixed; top:0; left:0; bottom:0; z-index:100;
+        transform:translateX(-105%);
+        transition:transform .28s cubic-bezier(.4,0,.2,1);
+        box-shadow:8px 0 40px -12px rgba(5,8,25,.4);
+    }
+    body.drawer-open .snav { transform:translateX(0); }
+    .stage.rail .snav { --w:236px; }   /* rail mode irrelevant on mobile */
+    .stage.rail .snav-brand-name, .stage.rail .snav-brand-tag,
+    .stage.rail .snav-link .lbl, .stage.rail .snav-link .caret { display:initial; }
+    .stage.rail .snav-link { justify-content:flex-start; padding:7px 10px; }
+    .stage.rail .snav-brand { justify-content:flex-start; }
+    .stage.rail .snav-sub { display:block; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= CONTROL BAR ================= -->
+<div class="ctrl">
+    <button class="burger" id="burger" aria-label="Open menu"><i class="fa fa-bars"></i></button>
+    <h1>Sidebar Redesign</h1>
+    <div class="seg" id="variantSeg">
+        <button data-v="premium" class="on">Premium</button>
+        <button data-v="standard">Standard</button>
+        <button data-v="classic">Classic</button>
+    </div>
+    <div class="seg" id="themeSeg">
+        <button data-t="light" class="on"><i class="fa fa-sun-o"></i> Light</button>
+        <button data-t="dark"><i class="fa fa-moon-o"></i> Dark</button>
+    </div>
+    <div class="seg" id="railSeg">
+        <button data-r="full" class="on">Expanded</button>
+        <button data-r="rail">Rail (icons)</button>
+    </div>
+    <div class="spacer"></div>
+    <span class="hint">Resize below 900px (or open on phone) to see the mobile drawer</span>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- ================= STAGE ================= -->
+<div class="stage" data-variant="premium" id="stage">
+
+    <!-- ============ THE SIDEBAR ============ -->
+    <nav class="snav">
+        <div class="snav-scroll">
+            <a class="snav-brand" href="#">
+                <span class="snav-logo">SR</span>
+                <span>
+                    <span class="snav-brand-name">Size Run</span><br>
+                    <span class="snav-brand-tag">Workspace</span>
+                </span>
+            </a>
+
+            <ul>
+                <li class="snav-item"><a class="snav-link" data-label="Dashboard"><i class="fa fa-dashboard"></i><span class="lbl">Dashboard</span></a></li>
+
+                <li class="snav-item has-sub">
+                    <a class="snav-link" data-label="Inventory"><i class="fa fa-cubes"></i><span class="lbl">Inventory</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">Products</a>
+                        <a href="#">Stock List</a>
+                        <a href="#">Categories</a>
+                    </ul>
+                </li>
+
+                <li class="snav-item has-sub active open">
+                    <a class="snav-link" data-label="Sale"><i class="fa fa-shopping-cart"></i><span class="lbl">Sale</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">Create</a>
+                        <a href="#" class="sub-active">List</a>
+                        <a href="#">Item Wise Report</a>
+                        <a href="#">Receipts</a>
+                        <a href="#">Return Create</a>
+                        <a href="#">Return List</a>
+                        <a href="#">Return Payments</a>
+                    </ul>
+                </li>
+
+                <li class="snav-item has-sub">
+                    <a class="snav-link" data-label="Day Session"><i class="fa fa-clock-o"></i><span class="lbl">Day Session</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">Open / Close</a>
+                        <a href="#">History</a>
+                    </ul>
+                </li>
+
+                <li class="snav-item has-sub">
+                    <a class="snav-link" data-label="Purchase"><i class="fa fa-truck"></i><span class="lbl">Purchase</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">Create</a>
+                        <a href="#">List</a>
+                        <a href="#">Return List</a>
+                    </ul>
+                </li>
+
+                <li class="snav-item has-sub">
+                    <a class="snav-link" data-label="Account"><i class="fa fa-university"></i><span class="lbl">Account</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">Chart of Accounts</a>
+                        <a href="#">Journal Entry</a>
+                        <a href="#">Ledger</a>
+                    </ul>
+                </li>
+
+                <li class="snav-item has-sub">
+                    <a class="snav-link" data-label="Employee"><i class="fa fa-users"></i><span class="lbl">Employee</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">List</a>
+                        <a href="#">Attendance</a>
+                    </ul>
+                </li>
+
+                <li class="snav-item has-sub">
+                    <a class="snav-link" data-label="Users"><i class="fa fa-user"></i><span class="lbl">Users</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">List</a>
+                        <a href="#">Roles</a>
+                    </ul>
+                </li>
+
+                <li class="snav-item has-sub">
+                    <a class="snav-link" data-label="FlatTrade"><i class="fa fa-line-chart"></i><span class="lbl">FlatTrade</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">Overview</a>
+                    </ul>
+                </li>
+
+                <li class="snav-item has-sub">
+                    <a class="snav-link" data-label="Log"><i class="fa fa-file-text-o"></i><span class="lbl">Log</span><i class="fa fa-chevron-down caret"></i></a>
+                    <ul class="snav-sub">
+                        <a href="#">Activity Log</a>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="snav-foot">
+            <ul>
+                <li class="snav-item"><a class="snav-link" data-label="Logout"><i class="fa fa-sign-out"></i><span class="lbl">Logout</span></a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ============ FAKE PAGE CONTENT ============ -->
+    <main class="fake-content">
+        <div class="crumb">Sale / List</div>
+        <h2>Sale List</h2>
+        <div class="fake-cards">
+            <div class="fake-card"></div><div class="fake-card"></div>
+            <div class="fake-card"></div><div class="fake-card"></div>
+        </div>
+        <div class="fake-lines"><i></i><i></i><i></i><i></i></div>
+    </main>
+</div>
+
+<script>
+const stage = document.getElementById('stage');
+
+/* variant / theme / rail segments */
+function seg(id, fn) {
+    const el = document.getElementById(id);
+    el.addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        el.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+        b.classList.add('on'); fn(b);
+    });
+}
+seg('variantSeg', b => stage.dataset.variant = b.dataset.v);
+seg('themeSeg',   b => document.documentElement.dataset.theme = b.dataset.t);
+seg('railSeg',    b => stage.classList.toggle('rail', b.dataset.r === 'rail'));
+
+/* accordion + active states */
+document.querySelectorAll('.snav-item.has-sub > .snav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        const item = link.parentElement;
+        const wasOpen = item.classList.contains('open');
+        item.closest('ul').querySelectorAll(':scope > .snav-item.open').forEach(o => o.classList.remove('open'));
+        if (!wasOpen) item.classList.add('open');
+    });
+});
+document.querySelectorAll('.snav-sub a').forEach(a => {
+    a.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelectorAll('.snav-sub a.sub-active').forEach(x => x.classList.remove('sub-active'));
+        document.querySelectorAll('.snav-item.active').forEach(x => x.classList.remove('active'));
+        a.classList.add('sub-active');
+        a.closest('.snav-item').classList.add('active');
+    });
+});
+document.querySelectorAll('.snav-item:not(.has-sub) > .snav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        if (link.closest('.snav-foot')) return;
+        document.querySelectorAll('.snav-sub a.sub-active').forEach(x => x.classList.remove('sub-active'));
+        document.querySelectorAll('.snav-item.active').forEach(x => x.classList.remove('active'));
+        link.parentElement.classList.add('active');
+    });
+});
+
+/* mobile drawer */
+document.getElementById('burger').addEventListener('click', () => document.body.classList.add('drawer-open'));
+document.getElementById('scrim').addEventListener('click', () => document.body.classList.remove('drawer-open'));
+</script>
+</body>
+</html>
