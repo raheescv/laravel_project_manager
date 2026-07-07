@@ -81,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   Center(
-                    child: Text('Invo · Salon POS · v1.0.0',
+                    child: Text('Invo · Astra POS · v1.0.0',
                         style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
                   ),
                 ],

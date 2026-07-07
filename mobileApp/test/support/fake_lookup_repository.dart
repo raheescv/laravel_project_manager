@@ -80,7 +80,8 @@ class FakeLookupRepository implements LookupRepository {
       (baseCode: null, currencies: const <Currency>[]);
 
   @override
-  Future<double?> defaultQuantity() async => null;
+  Future<({double? defaultQuantity, bool? tipEnabled})> saleSettings() async =>
+      (defaultQuantity: null, tipEnabled: null);
 }
 
 /// A [FakeLookupRepository] preset with the four demo catalog items the widget

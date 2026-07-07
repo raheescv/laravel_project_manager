@@ -70,6 +70,11 @@ class LocalStorageService {
   Future<void> setDefaultQuantity(double v) =>
       _prefs.setDouble(LocalStorageKeys.defaultQuantity, v);
 
+  // Whether the "Add a Tip" option is enabled (Settings → Sale Configuration).
+  bool? get tipEnabled => _prefs.getBool(LocalStorageKeys.tipEnabled);
+  Future<void> setTipEnabled(bool v) =>
+      _prefs.setBool(LocalStorageKeys.tipEnabled, v);
+
   int? get branchId => _prefs.getInt(LocalStorageKeys.branch);
   Future<void> setBranchId(int v) =>
       _prefs.setInt(LocalStorageKeys.branch, v);

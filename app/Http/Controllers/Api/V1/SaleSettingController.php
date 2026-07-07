@@ -16,17 +16,20 @@ class SaleSettingController extends Controller
     /**
      * Sale configuration used by the POS.
      *
-     * Returns the default quantity configured under Settings → Sale
-     * Configuration, so the mobile app can prefill new cart lines and the
-     * quantity stepper the same way the web POS does.
+     * Returns the default quantity and tip availability configured under
+     * Settings → Sale Configuration, so the mobile app can prefill new cart
+     * lines and show or hide the "Add a Tip" option the same way the web
+     * POS does.
      */
     public function index(): JsonResponse
     {
         try {
             $defaultQuantity = (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
+            $tipEnabled = (Configuration::where('key', 'enable_tip')->value('value') ?? 'yes') === 'yes';
 
             return $this->sendSuccess([
                 'default_quantity' => $defaultQuantity,
+                'tip_enabled' => $tipEnabled,
             ], 'Sale settings retrieved successfully');
         } catch (\Exception $e) {
             return $this->sendServerError('Failed to retrieve sale settings: '.$e->getMessage());

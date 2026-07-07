@@ -140,8 +140,10 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
                   children: [
                     _receiptCard(cart),
                     const SizedBox(height: 16),
-                    _tipSelector(cart),
-                    const SizedBox(height: 16),
+                    if (cart.tipEnabled) ...[
+                      _tipSelector(cart),
+                      const SizedBox(height: 16),
+                    ],
                     _paymentSection(cart),
                     const SizedBox(height: 16),
                     _summaryCard(cart),

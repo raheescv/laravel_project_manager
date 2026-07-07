@@ -147,7 +147,7 @@ class InvoiceScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Invo', style: serif(size: 16, color: p.ink)),
-                Text(sale.branch.isEmpty ? 'Salon POS' : sale.branch,
+                Text(sale.branch.isEmpty ? 'Astra POS' : sale.branch,
                     style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),

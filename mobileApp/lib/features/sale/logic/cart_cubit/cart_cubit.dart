@@ -113,18 +113,32 @@ class CartCubit extends HolderCubit {
   /// quantity stepper's increment.
   double get defaultQty => _storage.defaultQuantity ?? 1;
 
-  /// Pulls the latest default quantity from the server and caches it so new
-  /// lines and the stepper reflect the current web setting. Called when the
-  /// New Sale screen opens; no-ops offline (the cached value is kept).
-  Future<void> syncDefaultQuantity() async {
+  /// Whether the "Add a Tip" option is shown at checkout (Settings → Sale
+  /// Configuration → Enable Tip on the web). Defaults to enabled offline.
+  bool get tipEnabled => _storage.tipEnabled ?? true;
+
+  /// Pulls the latest sale settings (default quantity, tip availability) from
+  /// the server and caches them so the POS reflects the current web settings.
+  /// Called when the New Sale screen opens; no-ops offline (cached values are
+  /// kept).
+  Future<void> syncSaleSettings() async {
     try {
-      final qty = await _lookup.defaultQuantity();
+      final settings = await _lookup.saleSettings();
+      var changed = false;
+      final qty = settings.defaultQuantity;
       if (qty != null && qty != _storage.defaultQuantity) {
         await _storage.setDefaultQuantity(qty);
-        refresh();
+        changed = true;
       }
+      final tip = settings.tipEnabled;
+      if (tip != null && tip != _storage.tipEnabled) {
+        await _storage.setTipEnabled(tip);
+        if (!tip) tipPercent = 0;
+        changed = true;
+      }
+      if (changed) refresh();
     } catch (_) {
-      // Offline or server error — keep the cached value.
+      // Offline or server error — keep the cached values.
     }
   }
 

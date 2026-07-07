@@ -92,9 +92,12 @@ class LookupService implements LookupRepository {
   }
 
   @override
-  Future<double?> defaultQuantity() async {
+  Future<({double? defaultQuantity, bool? tipEnabled})> saleSettings() async {
     final data = await _http.get('/settings/sale');
     final map = Map<String, dynamic>.from(data as Map);
-    return double.tryParse(map['default_quantity']?.toString() ?? '');
+    return (
+      defaultQuantity: double.tryParse(map['default_quantity']?.toString() ?? ''),
+      tipEnabled: map['tip_enabled'] is bool ? map['tip_enabled'] as bool : null,
+    );
   }
 }

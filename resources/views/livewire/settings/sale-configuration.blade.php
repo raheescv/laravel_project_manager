@@ -123,6 +123,13 @@
                         <small class="form-text text-muted">When enabled, completed sales cannot reduce inventory below zero.</small>
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label fw-medium" for="enable_tip">Enable Tip</label>
+                        {{ html()->select('enable_tip', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Show the "Add a Tip" option at checkout?')->attribute('wire:model', 'enable_tip') }}
+                        <small class="form-text text-muted">When disabled, the "Add a Tip" option is hidden on the sale payment screens (web and mobile app).</small>
+                    </div>
+                </div>
                 <div class="col-12">
                     <div class="form-group">
                         <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>

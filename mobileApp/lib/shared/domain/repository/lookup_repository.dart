@@ -26,5 +26,5 @@ abstract class LookupRepository {
 
   Future<({String? baseCode, List<Currency> currencies})> currencies();
 
-  Future<double?> defaultQuantity();
+  Future<({double? defaultQuantity, bool? tipEnabled})> saleSettings();
 }

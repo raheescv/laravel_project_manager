@@ -38,9 +38,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       // Default stylist = logged-in user.
       final user = context.read<AuthCubit>().user;
       final cart = context.read<CartCubit>();
-      // Pull the latest default quantity (Settings → Sale Configuration) so new
-      // lines and the stepper reflect the current web setting.
-      cart.syncDefaultQuantity();
+      // Pull the latest sale settings (Settings → Sale Configuration) so the
+      // default quantity and tip availability reflect the current web setting.
+      cart.syncSaleSettings();
       if (user != null && cart.stylistName.isEmpty) {
         cart.setStylist(int.tryParse(user.id), user.name);
       }
