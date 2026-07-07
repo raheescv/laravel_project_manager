@@ -133,6 +133,12 @@
                             {{ html()->select('nationality', $countries)->value('')->class('tomSelect')->id('modal_nationality')->placeholder('Select nationality')->attribute('wire:model.live', 'accounts.nationality')->attribute('style', 'width:100%') }}
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->input('gst_no')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.gst_no')->placeholder('GST Number') }}
+                            <label><i class="fa fa-file-text-o me-1 text-muted"></i> GST Number</label>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -195,7 +195,7 @@
                                         </div>
                                     </div>
                                     @php
-                                        $percentage = $total_sales?->grand_total ? round(($total_sales?->paid / $total_sales?->grand_total) * 100) : 0;
+                                        $percentage = (float) $total_sales?->grand_total != 0 ? round(($total_sales?->paid / $total_sales?->grand_total) * 100) : 0;
                                     @endphp
                                     <div class="progress progress-md mb-2">
                                         <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
@@ -239,7 +239,7 @@
                                     </div>
                                     <div class="progress progress-md mb-2">
                                         @php
-                                            $percentage = $total_sales?->grand_total ? round(($total_sales?->balance / $total_sales?->grand_total) * 100) : 0;
+                                            $percentage = (float) $total_sales?->grand_total != 0 ? round(($total_sales?->balance / $total_sales?->grand_total) * 100) : 0;
                                         @endphp
                                         <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
                                             aria-valuemax="100">

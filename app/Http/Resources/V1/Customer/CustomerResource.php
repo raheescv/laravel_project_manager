@@ -22,6 +22,7 @@ class CustomerResource extends JsonResource
             'whatsapp_mobile' => $this->whatsapp_mobile,
             'email' => $this->email,
             'place' => $this->place,
+            'gst_no' => $this->gst_no,
         ];
     }
 }

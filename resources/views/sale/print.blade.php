@@ -397,6 +397,30 @@
                     </td>
                 </tr>
             </table>
+            @if ($sale->account?->mobile)
+                <table class="table">
+                    <tr>
+                        <td class="nowrap text-left" width="28%"><b>Mobile</b></td>
+                        <td colspan="3" class="text-left"><b>{{ $sale->account->mobile }}</b></td>
+                    </tr>
+                </table>
+            @endif
+            @if ($sale->account?->email)
+                <table class="table">
+                    <tr>
+                        <td class="nowrap text-left" width="28%"><b>Email</b></td>
+                        <td colspan="3" class="text-left"><b>{{ $sale->account->email }}</b></td>
+                    </tr>
+                </table>
+            @endif
+            @if ($sale->account?->gst_no)
+                <table class="table">
+                    <tr>
+                        <td class="nowrap text-left" width="28%"><b>GST No.</b></td>
+                        <td colspan="3" class="text-left"><b>{{ $sale->account->gst_no }}</b></td>
+                    </tr>
+                </table>
+            @endif
             <table class="table">
                 <tr>
                     <td class="text-left"><b>Payment Mode</b> <br></td>
@@ -442,6 +466,24 @@
                         </b>
                     </td>
                 </tr>
+                @if ($sale->account?->mobile)
+                    <tr>
+                        <td class="nowrap text-left"><b>Mobile</b></td>
+                        <td class="text-left"><b>{{ $sale->account->mobile }}</b></td>
+                    </tr>
+                @endif
+                @if ($sale->account?->email)
+                    <tr>
+                        <td class="nowrap text-left"><b>Email</b></td>
+                        <td class="text-left"><b>{{ $sale->account->email }}</b></td>
+                    </tr>
+                @endif
+                @if ($sale->account?->gst_no)
+                    <tr>
+                        <td class="nowrap text-left"><b>GST No</b></td>
+                        <td class="text-left"><b>{{ $sale->account->gst_no }}</b></td>
+                    </tr>
+                @endif
                 <tr>
                     <td class="text-left"><b>Payment Mode</b></td>
                     <td class="text-left">

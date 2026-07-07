@@ -35,6 +35,7 @@ class Account extends Model implements AuditableContracts
         'id_no',
         'nationality',
         'company',
+        'gst_no',
         'image',
         'credit_period_days',
 
