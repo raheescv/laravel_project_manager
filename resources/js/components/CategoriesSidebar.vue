@@ -21,6 +21,7 @@
                             class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-1.5 py-0.5 rounded-full text-xs font-semibold shadow-md border border-white/20 flex items-center gap-1 d-print-none"
                             aria-label="Open sale list" title="Sale list">
                             <i class="fa fa-list-ul text-xs"></i>
+                            Sale List
                         </a>
                         <button type="button" @click="toggleFullscreen"
                             class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-1.5 py-0.5 rounded-full text-xs font-semibold shadow-md border border-white/20 flex items-center gap-1 d-print-none"
