@@ -94,7 +94,7 @@ Route::prefix('v1')->group(function () {
                 Route::post('/', [SaleController::class, 'store'])->name('api.v1.sale.store');
                 Route::get('/{sale}', [SaleController::class, 'show'])->whereNumber('sale')->name('api.v1.sale.show');
                 Route::get('/{sale}/receipt', [SaleController::class, 'receipt'])->whereNumber('sale')->name('api.v1.sale.receipt');
-                Route::match(['put', 'patch'], '/{sale}', [SaleController::class, 'update'])->whereNumber('sale')->name('api.v1.sale.update');
+                Route::match(['post', 'put', 'patch'], '/{sale}', [SaleController::class, 'update'])->whereNumber('sale')->name('api.v1.sale.update');
             });
 
             // Sale return routes — a return is always raised against a paid sale.
