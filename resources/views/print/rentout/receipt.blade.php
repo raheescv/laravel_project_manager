@@ -82,7 +82,13 @@
     <table class="b-head">
         <tr>
             <td>
-                <div class="b-eyebrow">Rental Income</div>
+                <div class="b-eyebrow">
+                    @if ($rentOut->agreement_type === 'sale')
+                        Sale Income
+                    @else
+                        Rental Income
+                    @endif
+                </div>
                 <div class="co-name">{{ $companyName }}</div>
                 <div class="co-meta">
                     @if ($companyAddress){{ $companyAddress }}<br>@endif
