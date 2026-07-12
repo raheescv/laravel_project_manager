@@ -133,7 +133,13 @@ class BranchSaleDaySessionManager extends Component
             ->whereDate('opened_at', $this->date)
             ->first();
         if (! empty($existsForDate)) {
-            $existsForDate->update(['closed_at' => null, 'closed_by' => null, 'status' => 'open']);
+            $data = [
+                'opening_amount' => $this->opening_amount,
+                'closed_at' => null,
+                'closed_by' => null,
+                'status' => 'open',
+            ];
+            $existsForDate->update($data);
         } else {
             // Create new day session
             SaleDaySession::create([
