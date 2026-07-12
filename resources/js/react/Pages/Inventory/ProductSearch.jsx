@@ -17,6 +17,7 @@ export default function ProductSearch() {
 
     // Data & pagination / sort
     const [products, setProducts] = useState([]);
+    const [branchColumns, setBranchColumns] = useState([]);
     const [totalQuantity, setTotalQuantity] = useState(0);
     const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
     const [limit, setLimit] = useState(10);
@@ -157,8 +158,9 @@ export default function ProductSearch() {
                 sortDirection,
             };
             const res = await axios.get('/inventory/product/getProduct', { params });
-            const { data, total_quantity, links, per_page, total } = res.data;
+            const { data, branch_columns, total_quantity, links, per_page, total } = res.data;
             setProducts(data || []);
+            setBranchColumns(branch_columns || []);
             setTotalQuantity(total_quantity || 0);
             setMeta({
                 current_page: links?.current_page || p,
@@ -256,9 +258,10 @@ export default function ProductSearch() {
             }
 
             const resFull = await axios.get('/inventory/product/getProduct', { params: { ...baseParams, limit, page: 1 } });
-            const { data, total_quantity, links, per_page, total } = resFull.data;
+            const { data, branch_columns, total_quantity, links, per_page, total } = resFull.data;
 
             setProducts(data || []);
+            setBranchColumns(branch_columns || []);
             setTotalQuantity(total_quantity || 0);
             setMeta({
                 current_page: links?.current_page || 1,
@@ -298,7 +301,9 @@ export default function ProductSearch() {
         if (last <= 1) return null;
 
         const pages = [];
-        const maxButtons = 3;
+        // Show a wider window of numbered pages on desktop so further pages are
+        // reachable directly; keep it compact on small screens.
+        const maxButtons = (typeof window !== 'undefined' && window.innerWidth >= 768) ? 9 : 5;
         let start = Math.max(1, current - Math.floor(maxButtons / 2));
         let end = Math.min(last, start + maxButtons - 1);
         if (end - start < maxButtons - 1) start = Math.max(1, end - maxButtons + 1);
@@ -377,8 +382,7 @@ export default function ProductSearch() {
         { field: 'products.name', label: 'Name' },
         { field: 'products.size', label: 'Size' },
         { field: 'products.mrp', label: 'Price' },
-        { field: 'inventories.quantity', label: 'Quantity' },
-        { field: 'branches.name', label: 'Branch' },
+        { field: 'inventories.quantity', label: 'Total Qty' },
     ];
 
     function renderMobileCards() {
@@ -423,11 +427,24 @@ export default function ProductSearch() {
                             )}
                         </div>
 
-                        {/* Row 3: Branch + Price */}
-                        <div className="d-flex justify-content-between align-items-center mt-2">
-                            <span className="text-muted" style={{ fontSize: '0.78rem' }}>
-                                <i className="fa fa-building me-1" style={{ opacity: 0.5 }} />{item.branch_name}
-                            </span>
+                        {/* Row 3: Per-branch stock breakdown */}
+                        <div className="mt-2 d-flex flex-wrap gap-1">
+                            {branchColumns.map(branch => {
+                                const qty = item.branch_quantities?.[branch.id] ?? 0;
+                                return (
+                                    <span
+                                        key={branch.id}
+                                        className={`badge ${qty > 0 ? 'bg-success bg-opacity-10 text-success border border-success border-opacity-25' : 'bg-light text-muted border'}`}
+                                        style={{ fontSize: '0.68rem' }}
+                                    >
+                                        <i className="fa fa-building me-1" style={{ opacity: 0.5, fontSize: '0.6rem' }} />{branch.name}: {qty}
+                                    </span>
+                                );
+                            })}
+                        </div>
+
+                        {/* Row 4: Price */}
+                        <div className="d-flex justify-content-end align-items-center mt-2">
                             <span className="fw-semibold text-dark" style={{ fontSize: '0.85rem' }}>
                                 {item.mrp}
                             </span>
@@ -759,8 +776,16 @@ export default function ProductSearch() {
                                                 {sortableHeader('products.size', 'Size', 'arrows-h', 'text-end')}
                                                 {sortableHeader('inventories.barcode', 'Barcode', 'qrcode', 'text-end')}
                                                 {sortableHeader('products.mrp', 'Price', 'money', 'text-end')}
-                                                {sortableHeader('branches.name', 'Branch', 'building')}
-                                                {sortableHeader('inventories.quantity', 'Qty', 'cubes', 'text-end')}
+                                                {branchColumns.map(branch => (
+                                                    <th
+                                                        key={branch.id}
+                                                        className="text-end user-select-none"
+                                                        style={{ whiteSpace: 'nowrap', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, color: '#6c757d', borderBottom: '2px solid #dee2e6' }}
+                                                    >
+                                                        <i className="fa fa-building me-1" style={{ opacity: 0.5 }} />{branch.name}
+                                                    </th>
+                                                ))}
+                                                {sortableHeader('inventories.quantity', 'Total', 'cubes', 'text-end')}
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -787,11 +812,19 @@ export default function ProductSearch() {
                                                     <td className="text-end text-muted">{item.size}</td>
                                                     <td className="text-end" style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{item.barcode}</td>
                                                     <td className="text-end fw-medium">{item.mrp}</td>
-                                                    <td>
-                                                        <span className="badge bg-light text-dark border" style={{ fontSize: '0.75rem' }}>
-                                                            <i className="fa fa-building me-1" style={{ opacity: 0.4 }} />{item.branch_name}
-                                                        </span>
-                                                    </td>
+                                                    {branchColumns.map(branch => {
+                                                        const qty = item.branch_quantities?.[branch.id] ?? 0;
+                                                        return (
+                                                            <td key={branch.id} className="text-end">
+                                                                <span
+                                                                    className={`badge rounded-pill ${qty > 0 ? 'bg-success' : 'bg-light text-muted border'}`}
+                                                                    style={{ fontSize: '0.78rem', minWidth: '32px' }}
+                                                                >
+                                                                    {qty}
+                                                                </span>
+                                                            </td>
+                                                        );
+                                                    })}
                                                     <td className="text-end">
                                                         <span
                                                             className={`badge rounded-pill ${item.quantity > 0 ? 'bg-success' : 'bg-danger'}`}

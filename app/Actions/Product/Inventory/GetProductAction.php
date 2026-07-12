@@ -2,36 +2,28 @@
 
 namespace App\Actions\Product\Inventory;
 
+use App\Models\Branch;
 use App\Models\Inventory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class GetProductAction
 {
-    private const ALLOWED_SORT_FIELDS = [
-        'products.code' => 'products.code',
-        'products.name' => 'products.name',
-        'products.size' => 'products.size',
-        'inventories.barcode' => 'inventories.barcode',
-        'products.mrp' => 'products.mrp',
-        'branches.name' => 'branches.name',
-        'inventories.quantity' => 'inventories.quantity',
-        'inventories.id' => 'inventories.id',
-        'inventories.product_id' => 'inventories.product_id',
-    ];
-
     public function execute(array $params): array
     {
         $filters = $this->normalizeFilters($params);
 
-        $query = $this->buildQuery($filters);
-        $query = $this->applySorting($query, $filters);
+        // Branches rendered as columns (respect the branch filter when set).
+        $branchColumns = $this->getBranchColumns($filters);
 
-        $total = $this->getTotalCount($query, $filters);
-        $rows = $this->getRows($query, $filters);
-        $totalQuantity = $this->calculateTotalQuantity($query, $filters, $rows);
+        $base = $this->buildQuery($filters);
 
-        return $this->formatResponse($rows, $total, $totalQuantity, $filters);
+        $total = $this->getTotalCount($base, $filters);
+        $rows = $this->getRows($base, $filters, $branchColumns);
+        $totalQuantity = $this->calculateTotalQuantity($base, $filters);
+
+        return $this->formatResponse($rows, $total, $totalQuantity, $filters, $branchColumns);
     }
 
     private function normalizeFilters(array $params): array
@@ -82,14 +74,30 @@ class GetProductAction
             $branchIds = explode(',', $branchIds);
         }
 
-        return array_map('intval', $branchIds);
+        $ids = array_values(array_filter(array_map('intval', $branchIds)));
+
+        return empty($ids) ? null : $ids;
+    }
+
+    /**
+     * Branches shown as pivot columns. When the branch filter is set we only
+     * show those branches; otherwise every branch of the tenant.
+     */
+    private function getBranchColumns(array $filters): Collection
+    {
+        $query = Branch::query()->orderBy('name');
+
+        if (! empty($filters['branch_id'])) {
+            $query->whereIn('id', $filters['branch_id']);
+        }
+
+        return $query->get(['id', 'name']);
     }
 
     private function buildQuery(array $filters): Builder
     {
         $query = Inventory::withoutGlobalScopes()
             ->join('products', 'inventories.product_id', '=', 'products.id')
-            ->join('branches', 'inventories.branch_id', '=', 'branches.id')
             ->where('products.type', '=', 'product');
 
         $this->applyProductNameFilter($query, $filters);
@@ -99,7 +107,6 @@ class GetProductAction
         $this->applyInventoryIdsFilter($query, $filters);
         $this->applyBranchFilter($query, $filters);
         $this->applyNonZeroFilter($query, $filters);
-        $this->applyBarcodeSkuFilter($query, $filters);
 
         return $query;
     }
@@ -177,111 +184,97 @@ class GetProductAction
     private function applyNonZeroFilter(Builder $query, array $filters): void
     {
         if ($filters['show_non_zero']) {
-            $query->where('quantity', '>', 0);
+            $query->where('inventories.quantity', '>', 0);
         }
     }
 
-    private function applySorting(Builder $query, array $filters): Builder
+    /**
+     * Distinct products matching the filters (one product = one pivot row).
+     */
+    private function getTotalCount(Builder $base, array $filters): int
     {
-        $sortField = $filters['sortField'];
-
-        if (! array_key_exists($sortField, self::ALLOWED_SORT_FIELDS)) {
-            $sortField = 'products.code';
-        }
-
-        $sortField = self::ALLOWED_SORT_FIELDS[$sortField];
-        $sortDirection = $filters['sortDirection'];
-
-        // Joins are already applied in buildQuery, so we can directly order by
-        $query->orderBy($sortField, $sortDirection);
-
-        return $query;
+        return (clone $base)->distinct()->count('products.id');
     }
 
-    private function getTotalCount(Builder $query, array $filters): int
+    /**
+     * One row per product with a conditional-sum column per branch.
+     */
+    private function getRows(Builder $base, array $filters, Collection $branchColumns): Collection
     {
-        // Total count for pagination (only if not barcode scan)
-        return empty($filters['productBarcode']) ? (clone $query)->count() : 1;
-    }
+        $query = clone $base;
 
-    private function getRows(Builder $query, array $filters): Collection
-    {
-        $query->select([
-            'inventories.id as id',
+        $branchSelects = $branchColumns->map(function ($branch) {
+            $id = (int) $branch->id;
+
+            return DB::raw("COALESCE(SUM(CASE WHEN inventories.branch_id = {$id} THEN inventories.quantity ELSE 0 END), 0) as branch_{$id}");
+        })->all();
+
+        $query->select(array_merge([
+            DB::raw('MIN(inventories.id) as id'),
             'products.id as product_id',
-            'inventories.id as inventory_id',
             'products.code',
             'products.name',
             'products.size',
-            'inventories.barcode',
+            DB::raw('MAX(inventories.barcode) as barcode'),
             'products.mrp',
-            'branches.id as branch_id',
-            'branches.name as branch_name',
-            'inventories.quantity',
             'products.thumbnail',
-        ]);
+            DB::raw('SUM(inventories.quantity) as quantity'),
+        ], $branchSelects))
+            ->groupBy('products.id', 'products.code', 'products.name', 'products.size', 'products.mrp', 'products.thumbnail');
 
-        if (empty($filters['productBarcode'])) {
-            return $query->forPage($filters['page'], $filters['limit'])->get();
-        }
+        $this->applySorting($query, $filters);
 
-        return $query->get();
+        return $query->forPage($filters['page'], $filters['limit'])->get();
     }
 
-    private function calculateTotalQuantity(Builder $query, array $filters, Collection $rows): int
+    private function applySorting(Builder $query, array $filters): void
     {
-        if (! empty($filters['productBarcode'])) {
-            return (int) $rows->sum('quantity');
-        }
+        $map = [
+            'products.code' => 'products.code',
+            'products.name' => 'products.name',
+            'products.size' => 'products.size',
+            'products.mrp' => 'products.mrp',
+            'inventories.barcode' => 'barcode',
+            'inventories.quantity' => 'quantity',
+            // Branch is now a set of columns, so fall back to product name.
+            'branches.name' => 'products.name',
+        ];
 
-        // Build quantity query with same filters
-        $quantityQuery = Inventory::query()
-            ->join('products', 'inventories.product_id', '=', 'products.id')
-            ->where('products.type', 'product');
+        $field = $map[$filters['sortField']] ?? 'products.code';
 
-        if (! empty($filters['productName'])) {
-            $quantityQuery->where('products.name', 'like', "%{$filters['productName']}%");
-        }
-
-        if (! empty($filters['productCode'])) {
-            $quantityQuery->where('products.code', 'like', "%{$filters['productCode']}%");
-        }
-
-        if (! empty($filters['productSize'])) {
-            $quantityQuery->where('products.size', 'like', "%{$filters['productSize']}%");
-        }
-
-        if (! empty($filters['branch_id'])) {
-            $quantityQuery->whereIn('inventories.branch_id', $filters['branch_id']);
-        }
-
-        if ($filters['show_non_zero']) {
-            $quantityQuery->where('inventories.quantity', '>', 0);
-        }
-
-        if ($filters['show_barcode_sku']) {
-            $quantityQuery->whereNotNull('inventories.barcode')
-                ->where('inventories.barcode', '<>', '');
-        }
-
-        return (int) $quantityQuery->sum('inventories.quantity');
+        $query->orderBy($field, $filters['sortDirection']);
     }
 
-    private function formatResponse(Collection $rows, int $total, int $totalQuantity, array $filters): array
+    private function calculateTotalQuantity(Builder $base, array $filters): int
     {
-        $data = $rows->map(function ($row) {
+        return (int) (clone $base)->sum('inventories.quantity');
+    }
+
+    private function formatResponse(Collection $rows, int $total, int $totalQuantity, array $filters, Collection $branchColumns): array
+    {
+        $branches = $branchColumns->map(fn ($branch) => [
+            'id' => (int) $branch->id,
+            'name' => $branch->name,
+        ])->values()->all();
+
+        $data = $rows->map(function ($row) use ($branchColumns) {
+            $branchQuantities = [];
+            foreach ($branchColumns as $branch) {
+                $key = 'branch_'.((int) $branch->id);
+                $branchQuantities[(int) $branch->id] = (int) ($row->{$key} ?? 0);
+            }
+
             return [
                 'id' => $row->id,
-                'inventory_id' => $row->inventory_id,
+                'inventory_id' => $row->id,
                 'product_id' => $row->product_id,
                 'code' => $row->code,
                 'name' => $row->name,
                 'size' => $row->size,
                 'barcode' => $row->barcode,
                 'mrp' => $row->mrp,
-                'branch_id' => $row->branch_id,
-                'branch_name' => $row->branch_name,
                 'quantity' => (int) $row->quantity,
+                'branch_quantities' => $branchQuantities,
                 'thumbnail' => $row->thumbnail,
             ];
         })->toArray();
@@ -290,6 +283,7 @@ class GetProductAction
 
         return [
             'data' => $data,
+            'branch_columns' => $branches,
             'total_quantity' => $totalQuantity,
             'links' => [
                 'current_page' => $filters['page'],
