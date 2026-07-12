@@ -154,7 +154,7 @@ class DaybookTable extends Component
 
         return Excel::download(
             new ServiceDaybookExport($filters),
-            'rentout-service-daybook-'.now()->format('Y-m-d').'.xlsx'
+            $filters['agreementType'].'-service-daybook-'.now()->format('Y-m-d').'.xlsx'
         );
     }
 
