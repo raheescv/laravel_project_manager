@@ -517,7 +517,7 @@
                     <div class="alert alert-warning d-flex align-items-center" role="alert">
                         <i class="demo-pli-warning-window fs-4 me-2"></i>
                         <div>
-                            <strong>Warning!</strong> This action will reset all inventory quantities to 0 based on your current filters. This action cannot be undone.
+                            <strong>Warning!</strong> This action will reset all inventory quantities to 0 for branch <strong>{{ session('branch_name') }}</strong> based on your current filters. This action cannot be undone.
                         </div>
                     </div>
                     <form wire:submit.prevent="resetStock">
