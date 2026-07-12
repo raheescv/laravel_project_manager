@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-dir="a" data-state="active">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Day Session Management — Premium Redesign Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #eef1f6;
+  --paper: #f7f9fc;
+  --ink: #111826;
+  --ink-soft: #2c3648;
+  --muted: #64708a;
+  --muted-2: #93a0b8;
+  --line: #dde3ee;
+  --line-soft: #e8edf5;
+  --card: #ffffff;
+  --card-2: #f4f7fc;
+  /* --bs-primary = the app's settings theme colour; the whole page derives its accent from it */
+  --bs-primary: #3457d5;
+  --accent: var(--bs-primary);
+  --accent-rgb: 52, 87, 213;
+  --accent-bright: color-mix(in srgb, var(--bs-primary) 78%, #ffffff);
+  --accent-deep: color-mix(in srgb, var(--bs-primary) 62%, #000000);
+  --green: #1f9d63;
+  --green-rgb: 31, 157, 99;
+  --amber: #c98a12;
+  --amber-rgb: 201, 138, 18;
+  --red: #d64545;
+  --red-rgb: 214, 69, 69;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Hanken Grotesk', -apple-system, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-sm: 0 1px 2px rgba(17,24,38,0.04), 0 4px 14px -8px rgba(17,24,38,0.10);
+  --shadow-md: 0 8px 30px -14px rgba(17,24,38,0.22);
+  --shadow-lg: 0 24px 60px -28px rgba(28,46,122,0.40);
+}
+html[data-theme="dark"] {
+  --bg: #0a0d15;
+  --paper: #10141f;
+  --ink: #eaf0fb;
+  --ink-soft: #c2cbdd;
+  --muted: #8b96ad;
+  --muted-2: #626d84;
+  --line: rgba(255,255,255,0.10);
+  --line-soft: rgba(255,255,255,0.06);
+  --card: #161b28;
+  --card-2: #1b2130;
+  --bs-primary: #6f8dff;
+  --accent: var(--bs-primary);
+  --accent-rgb: 111, 141, 255;
+  --accent-bright: color-mix(in srgb, var(--bs-primary) 82%, #ffffff);
+  --accent-deep: color-mix(in srgb, var(--bs-primary) 70%, #ffffff);
+  --green: #43c98a;
+  --green-rgb: 67, 201, 138;
+  --amber: #e0ab4a;
+  --amber-rgb: 224, 171, 74;
+  --red: #f16b6b;
+  --red-rgb: 241, 107, 107;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4), 0 4px 14px -8px rgba(0,0,0,0.6);
+  --shadow-md: 0 10px 34px -14px rgba(0,0,0,0.7);
+  --shadow-lg: 0 30px 70px -30px rgba(0,0,0,0.85);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(58vw 50vw at 88% -12%, rgba(var(--accent-rgb), 0.13), transparent 60%),
+    radial-gradient(46vw 46vw at -10% 6%, rgba(var(--green-rgb), 0.10), transparent 58%);
+}
+button { font: inherit; border: none; background: none; cursor: pointer; color: inherit; padding: 0; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; margin: 0; font-weight: 500; }
+input, textarea { font: inherit; }
+
+/* ============ Toolbar ============ */
+.toolbar {
+  position: sticky; top: 0; z-index: 60;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px clamp(16px, 4vw, 40px);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid var(--line);
+}
+.toolbar__brand {
+  font-family: var(--font-display); font-weight: 600; font-size: 16px;
+  letter-spacing: -0.02em; margin-right: auto; display: flex; align-items: center; gap: 10px;
+}
+.toolbar__brand b { color: var(--accent); font-weight: 600; }
+.toolbar__brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(var(--green-rgb),0.18); }
+.seg {
+  display: inline-flex; padding: 3px; border-radius: 99px;
+  background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+}
+.seg button {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 7px 13px; border-radius: 99px;
+  color: var(--muted); transition: all 0.2s var(--ease); white-space: nowrap;
+}
+.seg button.on { background: var(--accent); color: #fff; box-shadow: 0 6px 16px -8px rgba(var(--accent-rgb), 0.8); }
+.seg--lbl { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted-2); align-self: center; }
+.swatches { gap: 3px; }
+.swatches button { width: 20px; height: 20px; padding: 0; border-radius: 50%; background: rgb(var(--c)); box-shadow: inset 0 0 0 2px var(--card); transition: transform 0.15s var(--ease), box-shadow 0.15s; }
+.swatches button.on { box-shadow: inset 0 0 0 2px var(--card), 0 0 0 2px rgb(var(--c)); transform: scale(1.12); }
+
+/* ============ Shell ============ */
+.wrap { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; padding: clamp(12px, 2vw, 20px) clamp(12px, 3vw, 28px) 56px; }
+
+.crumb { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--muted); font-family: var(--font-mono); letter-spacing: 0.04em; margin-bottom: 12px; }
+.crumb span.sep { opacity: 0.5; }
+.crumb b { color: var(--ink-soft); font-weight: 600; }
+
+.dir { display: none; }
+html[data-dir="a"] .dir--a { display: block; }
+html[data-dir="b"] .dir--b { display: block; }
+.state-active { display: none; }
+.state-empty { display: none; }
+html[data-state="active"] .state-active { display: revert; }
+html[data-state="empty"] .state-empty { display: revert; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 99px; border: 1px solid var(--line);
+}
+.pill--green { color: var(--green); background: rgba(var(--green-rgb), 0.10); border-color: rgba(var(--green-rgb),0.28); }
+.pill--amber { color: var(--amber); background: rgba(var(--amber-rgb), 0.10); border-color: rgba(var(--amber-rgb),0.28); }
+.pill--accent { color: var(--accent); background: rgba(var(--accent-rgb), 0.10); border-color: rgba(var(--accent-rgb),0.28); }
+.pill--red { color: var(--red); background: rgba(var(--red-rgb), 0.10); border-color: rgba(var(--red-rgb),0.28); }
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 0 currentColor; animation: pulse 2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(var(--green-rgb),0.5);} 70% { box-shadow: 0 0 0 7px rgba(var(--green-rgb),0);} 100% { box-shadow: 0 0 0 0 rgba(var(--green-rgb),0);} }
+
+/* ==========================================================
+   HERO — session command band
+   ========================================================== */
+.hero {
+  position: relative; overflow: hidden;
+  border-radius: 18px; border: 1px solid var(--line);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(var(--accent-rgb),0.16), transparent 55%),
+    linear-gradient(150deg, var(--card), var(--card-2));
+  box-shadow: var(--shadow-md);
+  padding: clamp(14px, 2vw, 20px);
+}
+.hero::after {
+  content: ''; position: absolute; right: -60px; top: -80px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(var(--accent-rgb),0.22), transparent 62%);
+  pointer-events: none;
+}
+.hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; position: relative; z-index: 1; }
+.hero__id { display: flex; align-items: center; gap: 16px; }
+.hero__glyph {
+  width: 46px; height: 46px; border-radius: 13px; flex: none;
+  display: grid; place-items: center; font-size: 19px; color: #fff;
+  background: linear-gradient(150deg, var(--accent-bright), var(--accent-deep));
+  box-shadow: 0 10px 22px -10px rgba(var(--accent-rgb), 0.7);
+}
+.hero__glyph.is-empty { background: linear-gradient(150deg, var(--green), #0f6a41); box-shadow: 0 10px 22px -10px rgba(var(--green-rgb),0.6); }
+.hero__title { font-size: clamp(18px, 2.4vw, 24px); font-weight: 600; line-height: 1.05; }
+.hero__sub { color: var(--muted); font-size: 12.5px; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+.hero__sub i { color: var(--accent); margin-right: 5px; }
+.hero__date {
+  display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line);
+  padding: 6px 10px 6px 12px; border-radius: 11px; box-shadow: var(--shadow-sm);
+}
+.hero__date label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted-2); }
+.hero__date input { border: none; background: none; color: var(--ink); font-weight: 600; font-size: 14px; outline: none; width: 130px; }
+.hero__date .ic { color: var(--accent); font-size: 15px; }
+
+/* KPI row */
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; position: relative; z-index: 1; }
+.kpi {
+  background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 11px 12px 10px;
+  position: relative; overflow: hidden; transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.kpi__rail { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px; }
+.kpi__ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 13px; margin-bottom: 8px; }
+.kpi__lbl { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.kpi__val { font-family: var(--font-display); font-size: clamp(17px, 2vw, 22px); font-weight: 600; letter-spacing: -0.02em; margin-top: 2px; }
+.kpi__val small { font-size: 11px; color: var(--muted); font-family: var(--font-body); font-weight: 500; margin-left: 3px; }
+.kpi__foot { margin-top: 7px; font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.i-green { color: var(--green); background: rgba(var(--green-rgb),0.12); }
+.i-accent { color: var(--accent); background: rgba(var(--accent-rgb),0.12); }
+.i-amber { color: var(--amber); background: rgba(var(--amber-rgb),0.12); }
+.i-deep { color: var(--accent-deep); background: rgba(var(--accent-rgb),0.14); }
+.r-green { background: var(--green); } .r-accent { background: var(--accent); } .r-amber { background: var(--amber); } .r-deep { background: var(--accent-deep); }
+
+/* ==========================================================
+   RECONCILE + CLOSE
+   ========================================================== */
+.grid2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 12px; margin-top: 12px; align-items: start; }
+html[data-dir="b"] .grid2 { grid-template-columns: 1fr; max-width: 720px; margin-left: auto; margin-right: auto; }
+
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-sm); overflow: hidden; }
+.panel__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 16px; border-bottom: 1px solid var(--line-soft); }
+.panel__head h3 { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.panel__head h3 i { color: var(--accent); font-size: 14px; }
+.panel__body { padding: 16px; }
+
+/* reconciliation meter */
+.recon { display: grid; gap: 11px; }
+.recon__row { display: flex; align-items: baseline; justify-content: space-between; }
+.recon__row .k { color: var(--muted); font-size: 13px; }
+.recon__row .v { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+.recon__row.big .v { font-size: 21px; }
+.recon__bar { height: 10px; border-radius: 99px; background: var(--card-2); border: 1px solid var(--line); overflow: hidden; display: flex; }
+.recon__bar span { display: block; height: 100%; }
+.b-open { background: linear-gradient(90deg, var(--accent), var(--accent-bright)); }
+.b-sales { background: linear-gradient(90deg, var(--green), #37c98a); }
+.recon__legend { display: flex; gap: 18px; font-size: 11.5px; color: var(--muted); flex-wrap: wrap; }
+.recon__legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 3px; }
+.variance {
+  margin-top: 2px; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 13px; border-radius: 11px; border: 1px dashed rgba(var(--green-rgb),0.4);
+  background: rgba(var(--green-rgb),0.08);
+}
+.variance .lab { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.variance .amt { font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--green); }
+.variance .tag { font-size: 11px; color: var(--green); font-weight: 600; }
+
+/* close form */
+.field { margin-bottom: 11px; }
+.field > label { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--ink-soft); margin-bottom: 5px; }
+.field > label i { color: var(--green); font-size: 12px; }
+.field > label .req { color: var(--red); }
+.field > label .opt { color: var(--muted-2); font-weight: 500; }
+.control { display: flex; align-items: stretch; border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card-2); transition: border-color 0.18s, box-shadow 0.18s; }
+.control:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.14); }
+.control .cur { display: grid; place-items: center; padding: 0 12px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); background: color-mix(in srgb, var(--accent) 8%, transparent); border-right: 1px solid var(--line); }
+.control input { flex: 1; border: none; background: none; padding: 9px 12px; color: var(--ink); font-size: 15px; font-weight: 600; outline: none; }
+.control input::placeholder { color: var(--muted-2); font-weight: 400; }
+textarea.ctl { width: 100%; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card-2); padding: 9px 12px; color: var(--ink); resize: vertical; min-height: 48px; outline: none; transition: border-color 0.18s, box-shadow 0.18s; }
+textarea.ctl:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),0.14); }
+
+.actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line-soft); flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; transition: transform 0.15s var(--ease), box-shadow 0.2s, filter 0.2s; }
+.btn i { font-size: 12px; }
+.btn:hover { transform: translateY(-2px); }
+.btn--danger { background: linear-gradient(135deg, var(--red), #b02f2f); color: #fff; box-shadow: 0 10px 24px -12px rgba(var(--red-rgb),0.9); }
+.btn--green { background: linear-gradient(135deg, var(--green), #0f7a4a); color: #fff; box-shadow: 0 10px 24px -12px rgba(var(--green-rgb),0.9); }
+.btn--accent { background: linear-gradient(135deg, var(--accent-bright), var(--accent-deep)); color: #fff; box-shadow: 0 10px 24px -12px rgba(var(--accent-rgb),0.9); }
+.btn--ghost { background: var(--card); border: 1px solid var(--line); color: var(--ink-soft); }
+.btn--block { width: 100%; justify-content: center; padding: 11px; font-size: 14px; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.hint { margin-top: 10px; display: flex; gap: 8px; align-items: flex-start; padding: 9px 11px; border-radius: 9px; background: rgba(var(--green-rgb),0.08); color: var(--muted); font-size: 11.5px; }
+.hint i { color: var(--green); margin-top: 1px; }
+
+/* ==========================================================
+   EMPTY STATE — start session
+   ========================================================== */
+.empty { text-align: center; padding: clamp(18px, 3vw, 34px) 16px; }
+.empty__ring { width: 68px; height: 68px; border-radius: 20px; margin: 0 auto 14px; display: grid; place-items: center; font-size: 28px; color: #fff; background: linear-gradient(150deg, var(--green), #0f6a41); box-shadow: 0 14px 32px -16px rgba(var(--green-rgb),0.7); }
+.empty h2 { font-size: clamp(20px, 2.6vw, 26px); font-weight: 600; }
+.empty p { color: var(--muted); max-width: 440px; margin: 8px auto 0; font-size: 13.5px; line-height: 1.5; }
+.start-card { max-width: 460px; margin: 18px auto 0; }
+
+/* ==========================================================
+   OPEN SESSIONS TABLE
+   ========================================================== */
+.sessions { margin-top: 14px; }
+.tbl-wrap { overflow-x: auto; }
+table.sx { width: 100%; border-collapse: collapse; min-width: 640px; }
+table.sx thead th { text-align: left; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 9px 14px; border-bottom: 1px solid var(--line); }
+table.sx tbody td { padding: 9px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+table.sx tbody tr { transition: background 0.15s; }
+table.sx tbody tr:hover { background: var(--card-2); }
+table.sx tbody tr:last-child td { border-bottom: none; }
+.br-cell { display: flex; align-items: center; gap: 9px; }
+.br-ic { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: rgba(var(--accent-rgb),0.12); color: var(--accent); font-size: 13px; flex: none; }
+.br-name { font-weight: 600; font-size: 13px; }
+.muted-line { color: var(--muted); font-size: 11.5px; }
+.who { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; }
+.who .av { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--accent-bright), var(--accent-deep)); }
+.amt-chip { font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: var(--amber); background: rgba(var(--amber-rgb),0.12); padding: 4px 8px; border-radius: 7px; }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.icon-btn { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); font-size: 12px; transition: all 0.15s var(--ease); }
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+.icon-btn.solid { background: linear-gradient(135deg, var(--accent-bright), var(--accent-deep)); color: #fff; border: none; }
+
+.section-title { display: flex; align-items: center; gap: 8px; margin: 18px 2px 9px; }
+.section-title h3 { font-size: 15px; font-weight: 600; }
+.section-title .cnt { margin-left: auto; }
+
+@media (max-width: 900px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .grid2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .hero__date input { width: 96px; }
+}
+.note { text-align: center; color: var(--muted-2); font-size: 11.5px; margin-top: 40px; font-family: var(--font-mono); letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<!-- ============ TOOLBAR ============ -->
+<div class="toolbar">
+  <div class="toolbar__brand"><span class="dot"></span> Day&nbsp;Session <b>Management</b> · preview</div>
+
+  <span class="seg--lbl">State</span>
+  <div class="seg" id="stateSeg">
+    <button data-state="active" class="on">Active</button>
+    <button data-state="empty">Not started</button>
+  </div>
+
+  <span class="seg--lbl">Layout</span>
+  <div class="seg" id="dirSeg">
+    <button data-dir="a" class="on">Command deck</button>
+    <button data-dir="b">Focus flow</button>
+  </div>
+
+  <span class="seg--lbl">Accent</span>
+  <div class="seg swatches" id="accentSeg">
+    <button class="on" title="Indigo" data-c="52,87,213" style="--c:52,87,213"></button>
+    <button title="Royal Blue" data-c="26,115,232" style="--c:26,115,232"></button>
+    <button title="Emerald" data-c="16,150,94" style="--c:16,150,94"></button>
+    <button title="Violet" data-c="124,58,237" style="--c:124,58,237"></button>
+    <button title="Amber" data-c="201,138,18" style="--c:201,138,18"></button>
+    <button title="Crimson" data-c="214,69,69" style="--c:214,69,69"></button>
+    <button title="Slate" data-c="71,85,105" style="--c:71,85,105"></button>
+  </div>
+
+  <span class="seg--lbl">Theme</span>
+  <div class="seg" id="themeSeg">
+    <button data-theme="light" class="on">Light</button>
+    <button data-theme="dark">Dark</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="crumb">Home <span class="sep">/</span> Sale <span class="sep">/</span> <b>Day Session Management</b></div>
+
+  <!-- ==================================================== -->
+  <!-- ACTIVE SESSION STATE                                 -->
+  <!-- ==================================================== -->
+  <div class="state-active">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero__top">
+        <div class="hero__id">
+          <div class="hero__glyph"><i class="fa fa-bolt"></i></div>
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div class="hero__title">Downtown Flagship</div>
+              <span class="pill pill--green"><span class="pulse"></span> Session #1042 · Live</span>
+            </div>
+            <div class="hero__sub">
+              <span><i class="fa fa-clock-o"></i> Opened 09:04 AM · 6h 21m ago</span>
+              <span><i class="fa fa-user"></i> by Rahees Muhammed</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero__date">
+          <i class="fa fa-calendar ic"></i>
+          <div>
+            <label>Business date</label><br/>
+            <input type="date" value="2026-07-12" />
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="kpi">
+          <span class="kpi__rail r-green"></span>
+          <div class="kpi__ic i-green"><i class="fa fa-university"></i></div>
+          <div class="kpi__lbl">Opening balance</div>
+          <div class="kpi__val">500<small>.00</small></div>
+          <div class="kpi__foot"><i class="fa fa-lock"></i> Counted at open</div>
+        </div>
+        <div class="kpi">
+          <span class="kpi__rail r-accent"></span>
+          <div class="kpi__ic i-accent"><i class="fa fa-shopping-cart"></i></div>
+          <div class="kpi__lbl">Total sales</div>
+          <div class="kpi__val">87 <small>invoices</small></div>
+          <div class="kpi__foot"><i class="fa fa-scissors"></i> incl. 6 tailoring orders</div>
+        </div>
+        <div class="kpi">
+          <span class="kpi__rail r-amber"></span>
+          <div class="kpi__ic i-amber"><i class="fa fa-money"></i></div>
+          <div class="kpi__lbl">Collected revenue</div>
+          <div class="kpi__val">12,480<small>.00</small></div>
+          <div class="kpi__foot"><i class="fa fa-arrow-up"></i> Cash + card received</div>
+        </div>
+        <div class="kpi">
+          <span class="kpi__rail r-deep"></span>
+          <div class="kpi__ic i-deep"><i class="fa fa-calculator"></i></div>
+          <div class="kpi__lbl">Expected in drawer</div>
+          <div class="kpi__val">12,980<small>.00</small></div>
+          <div class="kpi__foot"><i class="fa fa-info-circle"></i> Opening + revenue</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECONCILE + CLOSE -->
+    <div class="grid2">
+      <!-- Reconciliation -->
+      <div class="panel">
+        <div class="panel__head">
+          <h3><i class="fa fa-balance-scale"></i> Cash reconciliation</h3>
+          <span class="pill pill--accent">Live preview</span>
+        </div>
+        <div class="panel__body">
+          <div class="recon">
+            <div class="recon__row"><span class="k">Opening balance</span><span class="v">500.00</span></div>
+            <div class="recon__row"><span class="k">+ Collected today</span><span class="v" style="color:var(--green)">12,480.00</span></div>
+            <div class="recon__bar">
+              <span class="b-open" style="width:4%"></span>
+              <span class="b-sales" style="width:96%"></span>
+            </div>
+            <div class="recon__legend">
+              <span><span class="sw" style="background:var(--accent)"></span> Opening 4%</span>
+              <span><span class="sw" style="background:var(--green)"></span> Sales 96%</span>
+            </div>
+            <div class="recon__row big" style="border-top:1px solid var(--line-soft);padding-top:14px;">
+              <span class="k">Expected in drawer</span><span class="v">12,980.00</span>
+            </div>
+            <div class="recon__row"><span class="k">Counted (closing)</span><span class="v" style="color:var(--accent)">12,980.00</span></div>
+            <div class="variance">
+              <div>
+                <div class="lab">Variance (over / short)</div>
+                <div class="tag">Balanced — drawer matches expected</div>
+              </div>
+              <div class="amt">0.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Close session -->
+      <div class="panel">
+        <div class="panel__head">
+          <h3><i class="fa fa-lock"></i> Close session</h3>
+          <span class="pill pill--red">Critical action</span>
+        </div>
+        <div class="panel__body">
+          <div class="field">
+            <label><i class="fa fa-money"></i> Closing amount <span class="req">*</span></label>
+            <div class="control"><span class="cur">AED</span><input type="number" value="12980.00" /></div>
+          </div>
+          <div class="field">
+            <label><i class="fa fa-refresh"></i> Sync amount <span class="req">*</span> <span class="opt">· permission gated</span></label>
+            <div class="control"><span class="cur">AED</span><input type="number" value="12980.00" /></div>
+          </div>
+          <div class="field">
+            <label><i class="fa fa-comment-o" style="color:var(--muted)"></i> Notes <span class="opt">(optional)</span></label>
+            <textarea class="ctl" placeholder="Anything worth noting about today's session…"></textarea>
+          </div>
+          <div class="hint"><i class="fa fa-info-circle"></i> Recount all cash in the drawer before closing. This action can't be undone.</div>
+          <div class="actions">
+            <button class="btn btn--danger"><i class="fa fa-lock"></i> Close session</button>
+            <div class="btn-group">
+              <button class="btn btn--green"><i class="fa fa-plus"></i> New sale</button>
+              <button class="btn btn--accent"><i class="fa fa-eye"></i> Details</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- EMPTY / NOT STARTED STATE                            -->
+  <!-- ==================================================== -->
+  <div class="state-empty">
+    <section class="hero">
+      <div class="hero__top">
+        <div class="hero__id">
+          <div class="hero__glyph is-empty"><i class="fa fa-unlock-alt"></i></div>
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div class="hero__title">Downtown Flagship</div>
+              <span class="pill pill--amber"><i class="fa fa-moon-o"></i> Day not started</span>
+            </div>
+            <div class="hero__sub"><span><i class="fa fa-calendar"></i> No open session for this branch today</span></div>
+          </div>
+        </div>
+        <div class="hero__date">
+          <i class="fa fa-calendar ic"></i>
+          <div><label>Business date</label><br/><input type="date" value="2026-07-12" /></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="empty">
+      <div class="empty__ring"><i class="fa fa-unlock-alt"></i></div>
+      <h2>Start the day session</h2>
+      <p>Count the cash in your drawer, enter the opening float below, and unlock sales &amp; tailoring for this branch.</p>
+
+      <div class="panel start-card">
+        <div class="panel__head">
+          <h3><i class="fa fa-unlock"></i> Open new session</h3>
+          <span class="pill pill--green">Step 1 of 1</span>
+        </div>
+        <div class="panel__body" style="text-align:left;">
+          <div class="field">
+            <label><i class="fa fa-money"></i> Opening cash amount <span class="req">*</span></label>
+            <div class="control"><span class="cur">AED</span><input type="number" placeholder="0.00" /></div>
+          </div>
+          <button class="btn btn--green btn--block"><i class="fa fa-unlock"></i> Start session</button>
+          <div class="hint"><i class="fa fa-info-circle"></i> Count all physical cash before starting so your closing reconciliation is accurate.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== -->
+  <!-- ALL OPEN SESSIONS                                    -->
+  <!-- ==================================================== -->
+  <div class="sessions">
+    <div class="section-title">
+      <i class="fa fa-th-list" style="color:var(--accent)"></i>
+      <h3>All open sessions</h3>
+      <span class="pill pill--green cnt"><span class="pulse"></span> 3 active</span>
+    </div>
+    <div class="panel">
+      <div class="tbl-wrap">
+        <table class="sx">
+          <thead>
+            <tr><th>Branch</th><th>Started</th><th>Opened by</th><th>Opening</th><th style="text-align:right">Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="br-cell"><div class="br-ic"><i class="fa fa-building"></i></div><div><div class="br-name">Downtown Flagship</div><span class="pill pill--green" style="padding:2px 8px;font-size:9px;">Active</span></div></div></td>
+              <td><div class="br-name" style="font-weight:600">Jul 12, 2026</div><div class="muted-line">09:04 AM</div></td>
+              <td><span class="who"><span class="av">RM</span> Rahees Muhammed</span></td>
+              <td><span class="amt-chip">AED 500.00</span></td>
+              <td><div class="row-actions"><button class="icon-btn" title="Manage"><i class="fa fa-cog"></i></button><button class="icon-btn solid" title="Details"><i class="fa fa-eye"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div class="br-cell"><div class="br-ic"><i class="fa fa-building"></i></div><div><div class="br-name">Marina Walk</div><span class="pill pill--green" style="padding:2px 8px;font-size:9px;">Active</span></div></div></td>
+              <td><div class="br-name" style="font-weight:600">Jul 12, 2026</div><div class="muted-line">08:47 AM</div></td>
+              <td><span class="who"><span class="av" style="background:linear-gradient(135deg,var(--green),#0f6a41)">SA</span> Sara Ahmed</span></td>
+              <td><span class="amt-chip">AED 750.00</span></td>
+              <td><div class="row-actions"><button class="icon-btn" title="Manage"><i class="fa fa-cog"></i></button><button class="icon-btn solid" title="Details"><i class="fa fa-eye"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div class="br-cell"><div class="br-ic"><i class="fa fa-building"></i></div><div><div class="br-name">Airport Kiosk</div><span class="pill pill--green" style="padding:2px 8px;font-size:9px;">Active</span></div></div></td>
+              <td><div class="br-name" style="font-weight:600">Jul 12, 2026</div><div class="muted-line">07:30 AM</div></td>
+              <td><span class="who"><span class="av" style="background:linear-gradient(135deg,var(--amber),#8a5c08)">MK</span> Musa Khan</span></td>
+              <td><span class="amt-chip">AED 300.00</span></td>
+              <td><div class="row-actions"><button class="icon-btn" title="Manage"><i class="fa fa-cog"></i></button><button class="icon-btn solid" title="Details"><i class="fa fa-eye"></i></button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">Preview only · accent follows the app settings theme colour (--bs-primary) · toggle State / Layout / Accent / Theme above · Font Awesome 4.3.0 icons</div>
+</div>
+
+<script>
+  function wire(id, attr) {
+    const seg = document.getElementById(id);
+    seg.addEventListener('click', function (e) {
+      const b = e.target.closest('button'); if (!b) return;
+      document.documentElement.setAttribute('data-' + attr, b.getAttribute('data-' + attr));
+      seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    });
+  }
+  wire('stateSeg', 'state');
+  wire('dirSeg', 'dir');
+  wire('themeSeg', 'theme');
+
+  // Accent = app settings theme colour (--bs-primary). Re-skins the whole page.
+  const accentSeg = document.getElementById('accentSeg');
+  accentSeg.addEventListener('click', function (e) {
+    const b = e.target.closest('button'); if (!b) return;
+    const rgb = b.getAttribute('data-c');
+    const root = document.documentElement;
+    root.style.setProperty('--bs-primary', 'rgb(' + rgb + ')');
+    root.style.setProperty('--accent-rgb', rgb);
+    accentSeg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  });
+</script>
+</body>
+</html>

@@ -16,6 +16,10 @@ import 'package:invo/features/sale_return/screens/v3/return_receipt_screen.dart'
 import 'package:invo/features/sale_return/screens/v3/return_review_screen.dart';
 import 'package:invo/features/sales/screens/v3/sales_list_screen.dart';
 import 'package:invo/features/sales_returns/screens/v3/sales_returns_list_screen.dart';
+import 'package:invo/features/stock_check/domain/models/stock_check_models.dart';
+import 'package:invo/features/stock_check/screens/v3/new_stock_check_screen.dart';
+import 'package:invo/features/stock_check/screens/v3/stock_check_count_screen.dart';
+import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
@@ -51,6 +55,10 @@ GoRouter createRouter(AuthCubit auth) {
       if (loc.startsWith('/sale-return') && !canAuthorReturn) {
         return '/sale';
       }
+      // Stock Check module — gated on the same permission as the web feature.
+      if (loc.startsWith('/stock-check') && !auth.hasPermission(PermissionSlug.stockCheck)) {
+        return '/sale';
+      }
       return null;
     },
     routes: [
@@ -72,6 +80,13 @@ GoRouter createRouter(AuthCubit auth) {
       GoRoute(
           path: '/sales-returns',
           builder: (_, __) => const SalesReturnListScreen()),
+      GoRoute(
+          path: '/stock-check', builder: (_, __) => const StockCheckListScreen()),
+      GoRoute(
+          path: '/stock-check/new', builder: (_, __) => const NewStockCheckScreen()),
+      GoRoute(
+          path: '/stock-check/count',
+          builder: (_, state) => StockCheckCountScreen(detail: state.extra as StockCheckDetail)),
       GoRoute(
           path: '/sale-return', builder: (_, __) => const NewSaleReturnScreen()),
       GoRoute(

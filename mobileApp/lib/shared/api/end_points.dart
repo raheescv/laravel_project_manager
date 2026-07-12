@@ -35,4 +35,10 @@ class EndPoints {
   static const String dashboard = '/admin/dashboard';
   static const String reports = '/admin/reports';
   static const String dayStatus = '/admin/day-status';
+
+  // ---- Stock Check ----
+  static const String stockCheck = '/stock-check';
+  static String stockCheckById(int id) => '/stock-check/$id';
+  static String stockCheckItems(int id) => '/stock-check/$id/items';
+  static String stockCheckScan(int id) => '/stock-check/$id/scan';
 }

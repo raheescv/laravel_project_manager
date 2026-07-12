@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile · Stock Check module — preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra theme tokens — mirrors lib/theme/palette.dart.
+   Driven by [data-preset] + [data-theme] on #stage.
+   ============================================================ */
+#stage{
+  --success:#1F9D63; --success-tint:#E4F6EC;
+  --danger:#D4546A;  --danger-tint:#FBE9EC;
+  --warn-tint:#FBF3DF; --warn-ink:#9A6A00;
+  --card-border:transparent; --card-blur:0px;
+  --hero-ink:#ffffff;
+}
+#stage[data-preset="emerald"]{
+  --primary:#15806C; --primary-dark:#0E5648; --accent:#C9A24B;
+  --canvas:#F6F1E8; --card:#FFFFFF; --card-solid:#FFFFFF;
+  --ink:#16312A; --text2:#5D7269; --muted:#A8B3AB;
+  --hairline:#F0ECE1; --tint:#E6F0EC; --gold:#BF953F;
+  --bg-glow:#CFE6DD;
+  --hero:linear-gradient(135deg,#15806C,#0E5648);
+  --shadow:0 9px 22px -15px rgba(11,40,33,.18);
+  --shadow-sm:0 7px 18px -14px rgba(11,40,33,.16);
+}
+#stage[data-preset="emerald"][data-theme="dark"]{
+  --canvas:#0C1E1A; --card:#15302A; --card-solid:#15302A;
+  --ink:#F3F1EA; --text2:#A9C2BA; --muted:#7C9189;
+  --hairline:rgba(255,255,255,.10); --tint:rgba(21,128,108,.20); --gold:#C9A24B;
+  --bg-glow:rgba(21,128,108,.28);
+  --shadow:0 12px 26px -14px rgba(0,0,0,.55);
+  --shadow-sm:0 9px 20px -14px rgba(0,0,0,.5);
+}
+#stage[data-preset="aurora"]{
+  --primary:#4F46E5; --primary-dark:#3730A3; --accent:#38BDF8;
+  --canvas:#EEF1F7; --card:rgba(255,255,255,.62); --card-solid:#FFFFFF;
+  --ink:#13183A; --text2:#46507E; --muted:#7F88B3;
+  --hairline:rgba(255,255,255,.65); --tint:rgba(79,70,229,.12); --gold:#38BDF8;
+  --bg-glow:rgba(99,102,241,.18); --card-border:rgba(255,255,255,.70); --card-blur:14px;
+  --hero:linear-gradient(135deg,#4F46E5,#3730A3);
+  --shadow:0 18px 30px -18px rgba(58,70,160,.34);
+  --shadow-sm:0 12px 22px -16px rgba(58,70,160,.30);
+}
+#stage[data-preset="aurora"][data-theme="dark"]{
+  --primary:#6366F1; --primary-dark:#4338CA; --accent:#38BDF8;
+  --canvas:#0B1020; --card:rgba(255,255,255,.06); --card-solid:#141A2E;
+  --ink:#E6E9F5; --text2:#9AA3CF; --muted:#6F78A8;
+  --hairline:rgba(255,255,255,.12); --tint:rgba(99,102,241,.24); --gold:#38BDF8;
+  --bg-glow:rgba(99,102,241,.28); --card-border:rgba(255,255,255,.10);
+  --shadow:0 20px 34px -16px rgba(0,0,0,.6);
+  --shadow-sm:0 12px 24px -14px rgba(0,0,0,.5);
+}
+#stage[data-preset="luminous"]{
+  --primary:#4F46E5; --primary-dark:#3B35B0; --accent:#7C3AED;
+  --canvas:#F4F5FB; --card:#FFFFFF; --card-solid:#FFFFFF;
+  --ink:#161A2B; --text2:#4A4F63; --muted:#8A8FA3;
+  --hairline:#E7E9F2; --tint:rgba(79,70,229,.12); --gold:#7C3AED;
+  --bg-glow:rgba(79,70,229,.09);
+  --hero:linear-gradient(135deg,#4F46E5,#3B35B0);
+  --shadow:0 10px 24px -16px rgba(38,48,107,.22);
+  --shadow-sm:0 8px 18px -14px rgba(38,48,107,.18);
+}
+#stage[data-preset="luminous"][data-theme="dark"]{
+  --primary:#6366F1; --primary-dark:#4F46E5; --accent:#A78BFA;
+  --canvas:#0E0F1A; --card:#16182A; --card-solid:#16182A;
+  --ink:#E7E9F5; --text2:#A6ABC4; --muted:#71768F;
+  --hairline:rgba(255,255,255,.08); --tint:rgba(99,102,241,.24); --gold:#A78BFA;
+  --bg-glow:rgba(99,102,241,.22);
+  --shadow:0 18px 30px -16px rgba(0,0,0,.6);
+  --shadow-sm:0 12px 22px -14px rgba(0,0,0,.5);
+}
+#stage[data-preset="editorial"]{
+  --primary:#B5862F; --primary-dark:#8A6A22; --accent:#C8A24A;
+  --canvas:#F3EFE6; --card:#FBF8F1; --card-solid:#FBF8F1;
+  --ink:#1C1A14; --text2:#54503F; --muted:#928C79;
+  --hairline:#E6DFCE; --tint:rgba(181,134,47,.12); --gold:#C8A24A;
+  --bg-glow:rgba(200,162,74,.16); --card-border:rgba(200,162,74,.30);
+  --hero:linear-gradient(135deg,#1F1C13,#0C0B08); --hero-ink:#C8A24A;
+  --shadow:0 18px 30px -18px rgba(0,0,0,.30);
+  --shadow-sm:0 12px 22px -16px rgba(0,0,0,.26);
+}
+#stage[data-preset="editorial"][data-theme="dark"]{
+  --primary:#C8A24A; --primary-dark:#B5862F; --accent:#C8A24A;
+  --canvas:#0C0B08; --card:#15140F; --card-solid:#15140F;
+  --ink:#F1ECE0; --text2:#B7B09C; --muted:#857E6C;
+  --hairline:#2A271D; --tint:rgba(200,162,74,.22); --gold:#C8A24A;
+  --bg-glow:rgba(200,162,74,.14); --card-border:rgba(200,162,74,.16);
+  --hero:linear-gradient(135deg,#1F1C13,#0C0B08); --hero-ink:#C8A24A;
+  --shadow:0 20px 34px -16px rgba(0,0,0,.7);
+  --shadow-sm:0 12px 24px -14px rgba(0,0,0,.6);
+}
+
+/* ============================================================ harness ============ */
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Manrope',-apple-system,BlinkMacSystemFont,sans-serif;}
+#stage{min-height:100vh;padding:22px 26px 64px;transition:background .25s;}
+#stage[data-theme="light"]{background:radial-gradient(130% 120% at 0% 0%,#ece7da,#f3eee3);color:#2a2a2a;}
+#stage[data-theme="dark"]{background:radial-gradient(130% 120% at 0% 0%,#10130f,#070806);color:#e7e3d8;}
+
+.bar{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:8px;}
+.bar h1{font-family:'Marcellus',serif;font-size:1.5rem;margin:0;letter-spacing:.2px;}
+.bar .lead{font-size:.82rem;margin:.35rem 0 0;opacity:.7;max-width:660px;line-height:1.55;}
+.controls{display:flex;gap:18px;flex-wrap:wrap;align-items:center;}
+.ctl-group{display:flex;flex-direction:column;gap:6px;}
+.ctl-group .cap{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.5;}
+.segbtns{display:flex;background:rgba(130,130,130,.14);border-radius:11px;padding:3px;gap:2px;}
+.segbtns button{border:0;background:transparent;color:inherit;font:inherit;font-size:.74rem;font-weight:700;
+  padding:.42rem .7rem;border-radius:8px;cursor:pointer;opacity:.62;transition:.18s;white-space:nowrap;}
+.segbtns button.on{background:var(--card-solid,#fff);opacity:1;box-shadow:0 4px 12px -6px rgba(0,0,0,.4);color:#15806c;}
+#stage[data-theme="dark"] .segbtns button.on{color:#e7e3d8;background:rgba(255,255,255,.12);}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0 26px;font-size:.74rem;opacity:.72;}
+.legend b{font-weight:800;}
+
+/* device frame */
+.gallery{display:flex;gap:34px 30px;flex-wrap:wrap;align-items:flex-start;}
+.unit{width:340px;}
+.unit .label{font-size:.72rem;font-weight:800;letter-spacing:.05em;margin:0 0 4px 4px;text-transform:uppercase;opacity:.85;}
+.unit .desc{font-size:.7rem;opacity:.6;margin:0 0 12px 4px;line-height:1.45;}
+.device{width:340px;height:724px;border-radius:46px;padding:10px;position:relative;
+  background:linear-gradient(160deg,#2a2a2a,#0d0d0d);
+  box-shadow:0 40px 70px -34px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);}
+#stage[data-theme="light"] .device{box-shadow:0 40px 70px -36px rgba(40,30,15,.45),0 0 0 1px rgba(0,0,0,.05);}
+.screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;
+  display:flex;flex-direction:column;background:radial-gradient(120% 75% at 82% -8%,var(--bg-glow),transparent 60%),var(--canvas);}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{width:0;}
+.pad{padding:13px 14px 22px;}
+
+/* status bar */
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:9px 20px 0;color:#fff;font-size:11px;font-weight:700;z-index:2;}
+.statusbar .ico{display:flex;gap:6px;font-size:10px;opacity:.9;}
+[data-hero-light] .statusbar{color:var(--hero-ink);}
+
+/* hero header */
+.hdr{background:var(--hero);border-radius:0 0 30px 30px;padding:2px 16px 18px;color:#fff;position:relative;overflow:hidden;}
+.hdr .glow{position:absolute;right:-40px;top:-46px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);}
+.hdr-row{display:flex;align-items:center;gap:11px;padding-top:8px;position:relative;}
+.hdr .ey{font-size:9.5px;font-weight:800;letter-spacing:.18em;color:var(--accent);text-transform:uppercase;}
+.hdr h1{font-family:'Marcellus',serif;font-weight:400;font-size:23px;margin:2px 0 0;color:#fff;}
+.hdr .sub{font-size:11px;font-weight:600;color:rgba(255,255,255,.78);margin-top:3px;}
+.hbtn{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.20);color:#fff;font-size:15px;flex:0 0 auto;}
+.hbtn.gold{color:var(--accent);}
+#stage[data-preset="editorial"] .hdr h1{color:var(--hero-ink);}
+#stage[data-preset="editorial"] .hbtn{color:var(--hero-ink);}
+
+/* progress in hero */
+.hprog{margin-top:16px;position:relative;}
+.hprog .top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;}
+.hprog .big{font-family:'Marcellus',serif;font-size:26px;color:#fff;line-height:1;}
+.hprog .big small{font-size:13px;color:rgba(255,255,255,.7);}
+.hprog .pct{font-size:12px;font-weight:800;color:var(--accent);}
+.htrack{height:8px;border-radius:6px;background:rgba(255,255,255,.16);overflow:hidden;}
+.htrack .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#fff));}
+.hstats{display:flex;gap:9px;margin-top:14px;position:relative;}
+.hstat{flex:1;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);border-radius:13px;padding:9px 11px;}
+.hstat .l{font-size:8.5px;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.66);text-transform:uppercase;}
+.hstat .v{font-family:'Marcellus',serif;font-size:17px;color:#fff;margin-top:2px;}
+.hstat .v.gold{color:var(--accent);}
+.hstat .v.rose{color:#FFC2CC;}
+
+/* cards & bits */
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border:1px solid var(--card-border);
+  padding:14px;backdrop-filter:blur(var(--card-blur));-webkit-backdrop-filter:blur(var(--card-blur));}
+.card.r20{border-radius:20px;}
+.card.tight{padding:12px;}
+.chip{width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;}
+.chip.sm{width:30px;height:30px;border-radius:9px;font-size:12px;}
+.flabel{font-size:8.5px;font-weight:800;letter-spacing:.11em;color:var(--muted);text-transform:uppercase;margin:0 0 6px 2px;}
+.selbox{background:var(--tint);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:8px;}
+.selbox .si{color:var(--primary);font-size:13px;}
+.selbox .sv{flex:1;font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.selbox .sc{color:var(--muted);font-size:12px;}
+.seg{background:var(--tint);border-radius:13px;padding:3px;display:flex;}
+.seg .opt{flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:10.5px;font-weight:700;color:var(--text2);}
+.seg .opt.active{background:var(--card-solid);color:var(--primary);font-weight:800;box-shadow:var(--shadow-sm);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stack>*+*{margin-top:9px;}
+.stack14>*+*{margin-top:14px;}
+.resultline{display:flex;justify-content:space-between;align-items:center;padding:16px 4px 8px;}
+.resultline .cnt{font-size:11.5px;font-weight:700;color:var(--muted);}
+.resultline .sum{font-family:'Marcellus',serif;font-size:16px;color:var(--gold);}
+
+.section{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin:0 0 8px 2px;}
+#stage[data-preset="editorial"] .section{color:var(--gold);}
+
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:20px;font-size:8.5px;font-weight:800;flex:0 0 auto;letter-spacing:.02em;text-transform:uppercase;}
+.pill.green{background:var(--success-tint);color:var(--success);}
+.pill.gold{background:var(--warn-tint);color:var(--warn-ink);}
+.pill.rose{background:var(--danger-tint);color:var(--danger);}
+.pill.grey{background:var(--tint);color:var(--text2);}
+
+/* filter chips */
+.chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0;}
+.chips::-webkit-scrollbar{height:0;}
+.fchip{white-space:nowrap;padding:7px 13px;border-radius:20px;font-size:11px;font-weight:800;background:var(--card);color:var(--text2);box-shadow:var(--shadow-sm);border:1px solid var(--card-border);flex:0 0 auto;display:flex;align-items:center;gap:6px;}
+.fchip.on{background:var(--hero);color:#fff;border-color:transparent;}
+#stage[data-preset="editorial"] .fchip.on{color:var(--hero-ink);}
+.fchip .b{background:rgba(255,255,255,.22);padding:1px 6px;border-radius:10px;font-size:9.5px;}
+.fchip:not(.on) .b{background:var(--tint);color:var(--text2);}
+
+/* search */
+.searchbox{background:var(--card);border-radius:13px;box-shadow:var(--shadow-sm);padding:11px 13px;display:flex;align-items:center;gap:10px;border:1px solid var(--card-border);}
+.searchbox i{color:var(--muted);font-size:14px;}
+.searchbox .ph{font-size:12.5px;font-weight:500;color:var(--muted);flex:1;}
+.searchbox .sc{width:26px;height:26px;border-radius:8px;background:var(--tint);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;}
+
+/* list card (stock-check summary) */
+.scard{display:flex;flex-direction:column;gap:10px;}
+.scard .top{display:flex;align-items:flex-start;gap:11px;}
+.scard .nm{font-family:'Marcellus',serif;font-size:15.5px;color:var(--ink);line-height:1.2;}
+.scard .meta{font-size:10px;font-weight:700;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.scard .meta i{margin-right:3px;}
+.ptrack{height:7px;border-radius:5px;background:var(--tint);overflow:hidden;}
+.ptrack .pf{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 60%,var(--accent)));}
+.scard .foot{display:flex;justify-content:space-between;align-items:center;}
+.scard .foot .l{font-size:10.5px;font-weight:700;color:var(--text2);}
+.scard .foot .r{font-size:11px;font-weight:800;}
+.dff{color:var(--danger);} .dfz{color:var(--success);} .dfp{color:var(--warn-ink);}
+
+/* item count card (the star) */
+.item{padding:13px;}
+.item .top{display:flex;align-items:flex-start;gap:11px;}
+.thumb{width:44px;height:44px;border-radius:12px;background:var(--tint);display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:17px;flex:0 0 auto;overflow:hidden;}
+.item .nm{font-family:'Marcellus',serif;font-size:14.5px;color:var(--ink);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.item .code{font-size:9.5px;font-weight:700;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;}
+.item .divh{height:1px;background:var(--hairline);margin:12px 0 11px;}
+.item .grid{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;}
+.qb{text-align:center;}
+.qb .l{font-size:8px;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;}
+.qb .v{font-family:'Marcellus',serif;font-size:19px;color:var(--ink);margin-top:2px;line-height:1;}
+.qb.sys .v{color:var(--text2);}
+/* stepper */
+.stepper{display:flex;align-items:center;gap:10px;justify-content:center;}
+.stepper .sbtn{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.stepper .minus{background:var(--tint);color:var(--ink);}
+.stepper .plus{background:var(--primary);color:#fff;}
+.countpill{min-width:46px;text-align:center;background:var(--card-solid);border:1.5px solid var(--primary);border-radius:10px;padding:5px 4px;}
+.countpill .cv{font-family:'Marcellus',serif;font-size:19px;color:var(--ink);line-height:1;}
+.countpill .cl{font-size:7px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-top:1px;}
+.diffbadge{min-width:52px;text-align:center;border-radius:11px;padding:7px 6px;}
+.diffbadge .dv{font-family:'Marcellus',serif;font-size:18px;line-height:1;}
+.diffbadge .dl{font-size:7.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.diffbadge.neg{background:var(--danger-tint);} .diffbadge.neg .dv,.diffbadge.neg .dl{color:var(--danger);}
+.diffbadge.pos{background:var(--warn-tint);} .diffbadge.pos .dv,.diffbadge.pos .dl{color:var(--warn-ink);}
+.diffbadge.zero{background:var(--success-tint);} .diffbadge.zero .dv,.diffbadge.zero .dl{color:var(--success);}
+.item.done{border:1px solid color-mix(in srgb,var(--success) 40%,transparent);}
+.item.pend .thumb{opacity:.9;}
+
+/* buttons & dock */
+.btn{border:0;width:100%;padding:15px;border-radius:15px;font-size:14.5px;font-weight:800;cursor:default;display:flex;align-items:center;justify-content:center;gap:9px;}
+.btn.gold{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,#fff),var(--accent));color:var(--primary-dark);box-shadow:0 14px 24px -10px color-mix(in srgb,var(--accent) 55%,transparent);}
+.btn.primary{background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 95%,#fff),var(--primary-dark));color:#fff;box-shadow:0 14px 24px -10px color-mix(in srgb,var(--primary) 55%,transparent);}
+.btn.ghost{background:var(--tint);color:var(--ink);box-shadow:none;}
+.btn.sm{width:auto;padding:12px 15px;font-size:12.5px;border-radius:13px;}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:14px 14px 16px;
+  background:linear-gradient(180deg,transparent,var(--canvas) 34%);}
+.dock .meta{display:flex;justify-content:center;gap:16px;margin-bottom:10px;font-size:10.5px;font-weight:700;}
+.dock .meta b{color:var(--ink);} .dock .meta span{color:var(--muted);}
+.scroll.has-dock{padding-bottom:120px;}
+.scroll.has-dock2{padding-bottom:160px;}
+
+/* scan mode */
+.scanwrap{flex:1;position:relative;background:#0a0a0a;display:flex;flex-direction:column;}
+.scanview{flex:1;position:relative;background:
+  radial-gradient(120% 80% at 50% 30%,#1a2420,#070807);overflow:hidden;}
+.reticle{position:absolute;top:34%;left:50%;transform:translate(-50%,-50%);width:210px;height:150px;border-radius:18px;
+  box-shadow:0 0 0 2000px rgba(0,0,0,.42);}
+.reticle span{position:absolute;width:26px;height:26px;border:3px solid var(--accent);}
+.reticle .tl{top:-2px;left:-2px;border-right:0;border-bottom:0;border-radius:12px 0 0 0;}
+.reticle .tr{top:-2px;right:-2px;border-left:0;border-bottom:0;border-radius:0 12px 0 0;}
+.reticle .bl{bottom:-2px;left:-2px;border-right:0;border-top:0;border-radius:0 0 0 12px;}
+.reticle .br{bottom:-2px;right:-2px;border-left:0;border-top:0;border-radius:0 0 12px 0;}
+.laser{position:absolute;left:8px;right:8px;top:50%;height:2px;background:var(--accent);box-shadow:0 0 10px 1px var(--accent);border-radius:2px;}
+.scanhint{position:absolute;top:calc(34% + 96px);left:0;right:0;text-align:center;color:rgba(255,255,255,.8);font-size:11.5px;font-weight:700;}
+.scantop{position:absolute;top:0;left:0;right:0;padding:16px;display:flex;align-items:center;gap:11px;z-index:3;}
+.scancount{position:absolute;top:64px;left:0;right:0;text-align:center;z-index:3;}
+.scancount .n{font-family:'Marcellus',serif;font-size:34px;color:#fff;line-height:1;}
+.scancount .l{font-size:9.5px;font-weight:800;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;margin-top:4px;}
+.scanfeed{background:#0f0f0f;padding:12px 14px 16px;max-height:250px;}
+.toast{background:linear-gradient(135deg,color-mix(in srgb,var(--primary) 90%,#000),var(--primary-dark));
+  border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:16px;padding:11px 13px;
+  display:flex;align-items:center;gap:11px;margin-bottom:12px;box-shadow:0 14px 24px -12px rgba(0,0,0,.6);}
+.toast .tk{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.14);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;}
+.toast .tm{flex:1;min-width:0;}
+.toast .tt{font-size:12.5px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.toast .ts{font-size:10px;font-weight:600;color:rgba(255,255,255,.7);margin-top:2px;}
+.toast .tv{font-family:'Marcellus',serif;font-size:22px;color:var(--accent);flex:0 0 auto;}
+.feedrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid rgba(255,255,255,.06);}
+.feedrow .fn{flex:1;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.feedrow .fq{font-size:11px;font-weight:800;color:var(--accent);}
+.feedrow .ft{font-size:9px;font-weight:600;color:rgba(255,255,255,.4);}
+.scanbtns{display:flex;gap:9px;margin-top:6px;}
+.scanic{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;}
+
+/* note */
+.note{display:flex;align-items:flex-start;gap:10px;background:var(--tint);border-radius:13px;padding:11px 12px;font-size:10.5px;font-weight:600;color:var(--text2);line-height:1.5;}
+.note i{color:var(--primary);font-size:13px;margin-top:1px;}
+.fieldbox{background:var(--card);border-radius:13px;box-shadow:var(--shadow-sm);padding:12px 13px;display:flex;align-items:center;gap:9px;border:1px solid var(--card-border);}
+.fieldbox i{color:var(--muted);font-size:14px;}
+.fieldbox .ph{font-size:12.5px;font-weight:500;color:var(--muted);flex:1;}
+.fieldbox .fv{font-size:12.5px;font-weight:700;color:var(--ink);flex:1;}
+.datebox{background:var(--tint);border-radius:13px;padding:12px 13px;display:flex;align-items:center;gap:10px;}
+.datebox .di{color:var(--primary);font-size:15px;}
+.datebox .dv{flex:1;font-family:'Marcellus',serif;font-size:15px;color:var(--ink);}
+.datebox .dc{color:var(--muted);font-size:14px;}
+.sheetgrip{width:38px;height:5px;border-radius:3px;background:var(--hairline);margin:0 auto 4px;}
+</style>
+</head>
+<body>
+<div id="stage" data-preset="emerald" data-theme="light">
+
+  <div class="bar">
+    <div>
+      <h1>Mobile · Stock Check module</h1>
+      <p class="lead">Proposed screens for the new <b>Stock Check</b> (physical inventory count) flow on the Astra app, matched 1:1 to the web feature: a count <b>snapshots current stock at creation</b>, then staff <b>count against that fixed list</b> — typing a physical qty or <b>scanning barcodes to +1</b> — with live variance, and marking items <b>completed reconciles real inventory</b>. Flip the preset and light/dark to confirm parity across every Astra skin.</p>
+    </div>
+    <div class="controls">
+      <div class="ctl-group">
+        <span class="cap">Theme preset</span>
+        <div class="segbtns" id="presets">
+          <button data-preset="emerald" class="on">Emerald &amp; Gold</button>
+          <button data-preset="aurora">Aurora Glass</button>
+          <button data-preset="luminous">Luminous</button>
+          <button data-preset="editorial">Editorial Noir</button>
+        </div>
+      </div>
+      <div class="ctl-group">
+        <span class="cap">Mode</span>
+        <div class="segbtns" id="themes">
+          <button data-theme="light" class="on">Light</button>
+          <button data-theme="dark">Dark</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>1 · List</b> all stock checks + progress</span>
+    <span><b>2 · New count</b> auto-snapshots stock</span>
+    <span><b>3 · Count</b> the star — scan or step qty, live variance</span>
+    <span><b>4 · Scan mode</b> rapid barcode +1 counting</span>
+  </div>
+
+  <div class="gallery">
+
+    <!-- ========================= 1 · LIST ========================= -->
+    <div class="unit">
+      <p class="label">1 · Stock Check list</p>
+      <p class="desc">Bento control card (branch · status · search) reused from Sales. Each card shows count progress + net variance at a glance.</p>
+      <div class="device">
+        <div class="screen" data-hero-light>
+          <div class="hdr">
+            <div class="glow"></div>
+            <div class="statusbar"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+            <div class="hdr-row">
+              <div style="flex:1">
+                <div class="ey">Inventory</div>
+                <h1>Stock Check</h1>
+              </div>
+              <div class="hbtn"><i class="fa fa-sliders"></i></div>
+              <div class="hbtn gold"><i class="fa fa-plus"></i></div>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="pad">
+              <!-- bento control -->
+              <div class="card r20 stack14">
+                <div>
+                  <p class="flabel">Branch</p>
+                  <div class="selbox"><i class="fa fa-building-o si"></i><span class="sv">Main Warehouse</span><i class="fa fa-angle-down sc"></i></div>
+                </div>
+                <div>
+                  <p class="flabel">Status</p>
+                  <div class="seg"><div class="opt active">All</div><div class="opt">Pending</div><div class="opt">Completed</div></div>
+                </div>
+                <div>
+                  <p class="flabel">Search</p>
+                  <div class="searchbox"><i class="fa fa-search"></i><span class="ph">Title or description…</span></div>
+                </div>
+              </div>
+
+              <div class="resultline"><span class="cnt">3 stock checks</span><span class="sum">2 open</span></div>
+
+              <div class="stack">
+                <!-- card A: in progress -->
+                <div class="card scard">
+                  <div class="top">
+                    <div class="chip"><i class="fa fa-clipboard"></i></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="nm">July Full Count</div>
+                      <div class="meta"><span><i class="fa fa-building-o"></i>Main Warehouse</span><span><i class="fa fa-calendar-o"></i>12 Jul</span></div>
+                    </div>
+                    <span class="pill gold"><i class="fa fa-clock-o"></i>Pending</span>
+                  </div>
+                  <div class="ptrack"><div class="pf" style="width:23%"></div></div>
+                  <div class="foot"><span class="l">48 / 210 counted</span><span class="r dff">−6 net</span></div>
+                </div>
+                <!-- card B: in progress -->
+                <div class="card scard">
+                  <div class="top">
+                    <div class="chip"><i class="fa fa-clipboard"></i></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="nm">Footwear Aisle Spot-check</div>
+                      <div class="meta"><span><i class="fa fa-building-o"></i>Main Warehouse</span><span><i class="fa fa-calendar-o"></i>11 Jul</span></div>
+                    </div>
+                    <span class="pill gold"><i class="fa fa-clock-o"></i>Pending</span>
+                  </div>
+                  <div class="ptrack"><div class="pf" style="width:78%"></div></div>
+                  <div class="foot"><span class="l">64 / 82 counted</span><span class="r dfp">+3 net</span></div>
+                </div>
+                <!-- card C: completed -->
+                <div class="card scard">
+                  <div class="top">
+                    <div class="chip"><i class="fa fa-check-circle"></i></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="nm">June Month-end</div>
+                      <div class="meta"><span><i class="fa fa-building-o"></i>Main Warehouse</span><span><i class="fa fa-calendar-o"></i>30 Jun</span></div>
+                    </div>
+                    <span class="pill green"><i class="fa fa-check"></i>Completed</span>
+                  </div>
+                  <div class="ptrack"><div class="pf" style="width:100%;background:var(--success)"></div></div>
+                  <div class="foot"><span class="l">196 / 196 counted</span><span class="r dfz">balanced</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================= 2 · CREATE ========================= -->
+    <div class="unit">
+      <p class="label">2 · New count (sheet)</p>
+      <p class="desc">A short form — the item list is auto-snapshotted from live branch stock, so no manual product picking. Applies branch default from session.</p>
+      <div class="device">
+        <div class="screen" data-hero-light>
+          <div class="hdr">
+            <div class="glow"></div>
+            <div class="statusbar"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+            <div class="hdr-row">
+              <div class="hbtn"><i class="fa fa-angle-left"></i></div>
+              <div style="flex:1">
+                <div class="ey">Inventory</div>
+                <h1>New Stock Check</h1>
+              </div>
+            </div>
+          </div>
+          <div class="scroll has-dock">
+            <div class="pad stack14">
+              <div>
+                <p class="section">Details</p>
+                <div class="stack">
+                  <div>
+                    <p class="flabel">Title</p>
+                    <div class="fieldbox"><i class="fa fa-tag"></i><span class="fv">July Full Count</span></div>
+                  </div>
+                  <div>
+                    <p class="flabel">Branch</p>
+                    <div class="selbox"><i class="fa fa-building-o si"></i><span class="sv">Main Warehouse</span><i class="fa fa-angle-down sc"></i></div>
+                  </div>
+                  <div>
+                    <p class="flabel">Count date</p>
+                    <div class="datebox"><i class="fa fa-calendar-o di"></i><span class="dv">12 Jul 2026</span><i class="fa fa-angle-down dc"></i></div>
+                  </div>
+                  <div>
+                    <p class="flabel">Description <span style="opacity:.6;font-weight:700">(optional)</span></p>
+                    <div class="fieldbox" style="align-items:flex-start;min-height:64px"><i class="fa fa-align-left"></i><span class="ph">Notes for this count…</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="note">
+                <i class="fa fa-info-circle"></i>
+                <span>On create, every product currently in <b>Main Warehouse</b> is snapshotted into this count with its system quantity. You then count against that list.</span>
+              </div>
+            </div>
+          </div>
+          <div class="dock">
+            <button class="btn primary"><i class="fa fa-camera"></i>Create &amp; start counting</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================= 3 · COUNT (STAR) ========================= -->
+    <div class="unit">
+      <p class="label">3 · Counting screen ★</p>
+      <p class="desc">Live progress + net variance in the hero. Filter chips, per-item stepper (tap the number to type exact qty), colour-coded difference, and a per-item Done toggle. Save reconciles stock.</p>
+      <div class="device">
+        <div class="screen" data-hero-light>
+          <div class="hdr">
+            <div class="glow"></div>
+            <div class="statusbar"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+            <div class="hdr-row">
+              <div class="hbtn"><i class="fa fa-angle-left"></i></div>
+              <div style="flex:1;min-width:0">
+                <div class="ey">Stock Check · #1042</div>
+                <h1 style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">July Full Count</h1>
+              </div>
+              <div class="hbtn"><i class="fa fa-ellipsis-v"></i></div>
+            </div>
+            <div class="hprog">
+              <div class="top">
+                <div class="big">48<small> / 210</small></div>
+                <div class="pct">23% counted</div>
+              </div>
+              <div class="htrack"><div class="fill" style="width:23%"></div></div>
+            </div>
+            <div class="hstats">
+              <div class="hstat"><div class="l">Counted</div><div class="v">48</div></div>
+              <div class="hstat"><div class="l">Variances</div><div class="v gold">12</div></div>
+              <div class="hstat"><div class="l">Net diff</div><div class="v rose">−6</div></div>
+            </div>
+          </div>
+          <div class="scroll has-dock2">
+            <div class="pad">
+              <div class="searchbox" style="margin-bottom:10px"><i class="fa fa-search"></i><span class="ph">Product, code or barcode…</span><span class="sc"><i class="fa fa-barcode"></i></span></div>
+              <div class="chips" style="margin-bottom:12px">
+                <div class="fchip on">All <span class="b">210</span></div>
+                <div class="fchip">Pending <span class="b">162</span></div>
+                <div class="fchip">Counted <span class="b">48</span></div>
+                <div class="fchip">Variance <span class="b">12</span></div>
+              </div>
+
+              <div class="stack">
+                <!-- item: negative variance, counted -->
+                <div class="card item done">
+                  <div class="top">
+                    <div class="thumb"><i class="fa fa-cube"></i></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="nm">Nike Air Max 90 · 42</div>
+                      <div class="code"><span><i class="fa fa-tag"></i> AM90-42</span><span><i class="fa fa-barcode"></i> 8901234567</span></div>
+                    </div>
+                    <span class="pill green"><i class="fa fa-check"></i>Done</span>
+                  </div>
+                  <div class="divh"></div>
+                  <div class="grid">
+                    <div class="qb sys"><div class="l">System</div><div class="v">24</div></div>
+                    <div class="stepper">
+                      <div class="sbtn minus"><i class="fa fa-minus"></i></div>
+                      <div class="countpill"><div class="cv">22</div><div class="cl">Counted</div></div>
+                      <div class="sbtn plus"><i class="fa fa-plus"></i></div>
+                    </div>
+                    <div class="diffbadge neg"><div class="dv">−2</div><div class="dl">Short</div></div>
+                  </div>
+                </div>
+
+                <!-- item: positive variance -->
+                <div class="card item done">
+                  <div class="top">
+                    <div class="thumb"><i class="fa fa-cube"></i></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="nm">Adidas Ultraboost · 41</div>
+                      <div class="code"><span><i class="fa fa-tag"></i> UB-41</span><span><i class="fa fa-barcode"></i> 8907654321</span></div>
+                    </div>
+                    <span class="pill green"><i class="fa fa-check"></i>Done</span>
+                  </div>
+                  <div class="divh"></div>
+                  <div class="grid">
+                    <div class="qb sys"><div class="l">System</div><div class="v">15</div></div>
+                    <div class="stepper">
+                      <div class="sbtn minus"><i class="fa fa-minus"></i></div>
+                      <div class="countpill"><div class="cv">18</div><div class="cl">Counted</div></div>
+                      <div class="sbtn plus"><i class="fa fa-plus"></i></div>
+                    </div>
+                    <div class="diffbadge pos"><div class="dv">+3</div><div class="dl">Over</div></div>
+                  </div>
+                </div>
+
+                <!-- item: balanced -->
+                <div class="card item done">
+                  <div class="top">
+                    <div class="thumb"><i class="fa fa-cube"></i></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="nm">Puma RS-X · 40</div>
+                      <div class="code"><span><i class="fa fa-tag"></i> RSX-40</span><span><i class="fa fa-barcode"></i> 8903216549</span></div>
+                    </div>
+                    <span class="pill green"><i class="fa fa-check"></i>Done</span>
+                  </div>
+                  <div class="divh"></div>
+                  <div class="grid">
+                    <div class="qb sys"><div class="l">System</div><div class="v">30</div></div>
+                    <div class="stepper">
+                      <div class="sbtn minus"><i class="fa fa-minus"></i></div>
+                      <div class="countpill"><div class="cv">30</div><div class="cl">Counted</div></div>
+                      <div class="sbtn plus"><i class="fa fa-plus"></i></div>
+                    </div>
+                    <div class="diffbadge zero"><div class="dv">0</div><div class="dl">Match</div></div>
+                  </div>
+                </div>
+
+                <!-- item: pending (not yet counted) -->
+                <div class="card item pend">
+                  <div class="top">
+                    <div class="thumb"><i class="fa fa-cube"></i></div>
+                    <div style="flex:1;min-width:0">
+                      <div class="nm">New Balance 574 · 43</div>
+                      <div class="code"><span><i class="fa fa-tag"></i> NB574-43</span><span><i class="fa fa-barcode"></i> 8901112223</span></div>
+                    </div>
+                    <span class="pill grey"><i class="fa fa-clock-o"></i>Pending</span>
+                  </div>
+                  <div class="divh"></div>
+                  <div class="grid">
+                    <div class="qb sys"><div class="l">System</div><div class="v">12</div></div>
+                    <div class="stepper">
+                      <div class="sbtn minus"><i class="fa fa-minus"></i></div>
+                      <div class="countpill" style="border-color:var(--hairline)"><div class="cv" style="color:var(--muted)">0</div><div class="cl">Counted</div></div>
+                      <div class="sbtn plus"><i class="fa fa-plus"></i></div>
+                    </div>
+                    <div class="diffbadge neg"><div class="dv">−12</div><div class="dl">Short</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dock">
+            <div class="meta"><span><b>48</b> counted</span><span><b>12</b> variances</span><span><b>162</b> left</span></div>
+            <div style="display:flex;gap:9px">
+              <button class="btn gold sm" style="flex:1"><i class="fa fa-barcode"></i>Scan</button>
+              <button class="btn primary" style="flex:2"><i class="fa fa-check"></i>Save count</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================= 4 · SCAN MODE ========================= -->
+    <div class="unit">
+      <p class="label">4 · Scan mode</p>
+      <p class="desc">Rapid physical counting: each barcode scan increments that item's counted qty by +1 (mirrors the web scan-gun flow). Live feed confirms every hit; keeps the camera hot.</p>
+      <div class="device">
+        <div class="screen">
+          <div class="scanwrap">
+            <div class="scanview">
+              <div class="statusbar"><span>9:41</span><span class="ico"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><i class="fa fa-battery-three-quarters"></i></span></div>
+              <div class="scantop">
+                <div class="hbtn"><i class="fa fa-angle-left"></i></div>
+                <div style="flex:1;text-align:center;color:#fff">
+                  <div class="ey" style="color:var(--accent)">Scanning · July Full Count</div>
+                </div>
+                <div class="hbtn gold"><i class="fa fa-flash"></i></div>
+              </div>
+              <div class="scancount">
+                <div class="n">49</div>
+                <div class="l">items counted</div>
+              </div>
+              <div class="reticle">
+                <span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span>
+                <div class="laser"></div>
+              </div>
+              <div class="scanhint">Point at a product barcode to add +1</div>
+            </div>
+            <div class="scanfeed">
+              <div class="toast">
+                <div class="tk"><i class="fa fa-check"></i></div>
+                <div class="tm">
+                  <div class="tt">Nike Air Max 90 · 42</div>
+                  <div class="ts">Counted 22 → 23 · system 24</div>
+                </div>
+                <div class="tv">+1</div>
+              </div>
+              <div class="feedrow"><span class="fq">+1</span><span class="fn">Adidas Ultraboost · 41</span><span class="ft">now 18</span></div>
+              <div class="feedrow"><span class="fq">+1</span><span class="fn">Puma RS-X · 40</span><span class="ft">now 30</span></div>
+              <div class="feedrow"><span class="fq">+1</span><span class="fn">Nike Air Max 90 · 42</span><span class="ft">now 22</span></div>
+              <div class="scanbtns">
+                <div class="scanic"><i class="fa fa-keyboard-o"></i></div>
+                <div class="scanic"><i class="fa fa-list-ul"></i></div>
+                <button class="btn primary" style="flex:1"><i class="fa fa-check"></i>Done scanning</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  const stage=document.getElementById('stage');
+  document.getElementById('presets').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    stage.dataset.preset=b.dataset.preset;
+    [...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));
+  });
+  document.getElementById('themes').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    stage.dataset.theme=b.dataset.theme;
+    [...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));
+  });
+</script>
+</body>
+</html>

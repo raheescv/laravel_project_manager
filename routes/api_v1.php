@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SaleSettingController;
 use App\Http\Controllers\Api\V1\SizeController;
+use App\Http\Controllers\Api\V1\StockCheckController;
 use App\Http\Controllers\Api\V1\StorefrontController;
 use App\Http\Middleware\EnsureMobilePermission;
 use App\Http\Middleware\IdentifyTenant;
@@ -135,6 +136,22 @@ Route::prefix('v1')->group(function () {
 
             // Sale settings (default quantity, cached by the app for offline use)
             Route::get('settings/sale', [SaleSettingController::class, 'index'])->name('api.v1.settings.sale');
+
+            // Stock Check (physical inventory count) — permission-driven, matching
+            // the web `inventory.stock check` gate. A count snapshots branch stock
+            // on create, is counted against (scan +1 or typed qty), and marking
+            // items completed reconciles real inventory.
+            Route::prefix('stock-check')
+                ->middleware(EnsureMobilePermission::class.':inventory.stock check')
+                ->group(function () {
+                    Route::get('/', [StockCheckController::class, 'index'])->name('api.v1.stock-check.index');
+                    Route::post('/', [StockCheckController::class, 'store'])->name('api.v1.stock-check.store');
+                    Route::get('/{id}', [StockCheckController::class, 'show'])->whereNumber('id')->name('api.v1.stock-check.show');
+                    Route::get('/{id}/items', [StockCheckController::class, 'items'])->whereNumber('id')->name('api.v1.stock-check.items');
+                    Route::post('/{id}/scan', [StockCheckController::class, 'scan'])->whereNumber('id')->name('api.v1.stock-check.scan');
+                    Route::match(['put', 'patch'], '/{id}', [StockCheckController::class, 'update'])->whereNumber('id')->name('api.v1.stock-check.update');
+                    Route::delete('/{id}', [StockCheckController::class, 'destroy'])->whereNumber('id')->name('api.v1.stock-check.destroy');
+                });
 
             // Admin routes — access is permission-driven (Spatie), not the is_admin
             // flag, so any staff role granted the permission can reach them.

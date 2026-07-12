@@ -31,6 +31,7 @@ abstract final class PermissionSlug {
   static const saleReturnView = 'sales return.view';
   static const saleReturnCreate = 'sales return.create';
   static const saleReturnEdit = 'sales return.edit';
+  static const stockCheck = 'inventory.stock check';
 }
 
 /// The permissions the app checks — the ONLY ones surfaced on the "My
@@ -78,5 +79,12 @@ const mobilePermissions = <MobilePermission>[
     description: 'Modify an existing return',
     group: 'Sale Returns',
     icon: Icons.edit_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.stockCheck,
+    label: 'Stock Check',
+    description: 'Count physical stock & reconcile inventory',
+    group: 'Inventory',
+    icon: Icons.fact_check_outlined,
   ),
 ];

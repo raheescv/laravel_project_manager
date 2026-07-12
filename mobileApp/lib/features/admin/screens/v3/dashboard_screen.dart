@@ -72,6 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: ListView(
                               padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
                               children: [
+                                ..._quickActions(),
                                 _periodCards(admin),
                                 const SizedBox(height: 14),
                                 _trendCard(admin),
@@ -84,6 +85,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---- QUICK ACTIONS (permission-gated module shortcuts) ----
+  List<Widget> _quickActions() {
+    final tiles = <Widget>[];
+    if (context.read<AuthCubit>().hasPermission(PermissionSlug.stockCheck)) {
+      tiles.add(_actionTile(
+        icon: Icons.fact_check_outlined,
+        title: 'Stock Check',
+        subtitle: 'Count physical stock & reconcile',
+        onTap: () => context.push('/stock-check'),
+      ));
+    }
+    if (tiles.isEmpty) return const [];
+    return [
+      ...tiles,
+      const SizedBox(height: 14),
+    ];
+  }
+
+  Widget _actionTile({required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
+    final p = context.astra;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: AstraCard(
+        radius: 18,
+        padding: const EdgeInsets.all(14),
+        onTap: onTap,
+        child: Row(
+          children: [
+            IconChip(icon: icon, size: 42, radius: 12),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: serif(size: 15.5, color: p.ink)),
+                  const SizedBox(height: 3),
+                  Text(subtitle, style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: p.textMuted),
           ],
         ),
       ),
