@@ -72,7 +72,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: ListView(
                               padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
                               children: [
-                                ..._quickActions(),
                                 _periodCards(admin),
                                 const SizedBox(height: 14),
                                 _trendCard(admin),
@@ -85,53 +84,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---- QUICK ACTIONS (permission-gated module shortcuts) ----
-  List<Widget> _quickActions() {
-    final tiles = <Widget>[];
-    if (context.read<AuthCubit>().hasPermission(PermissionSlug.stockCheck)) {
-      tiles.add(_actionTile(
-        icon: Icons.fact_check_outlined,
-        title: 'Stock Check',
-        subtitle: 'Count physical stock & reconcile',
-        onTap: () => context.push('/stock-check'),
-      ));
-    }
-    if (tiles.isEmpty) return const [];
-    return [
-      ...tiles,
-      const SizedBox(height: 14),
-    ];
-  }
-
-  Widget _actionTile({required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
-    final p = context.astra;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: AstraCard(
-        radius: 18,
-        padding: const EdgeInsets.all(14),
-        onTap: onTap,
-        child: Row(
-          children: [
-            IconChip(icon: icon, size: 42, radius: 12),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: serif(size: 15.5, color: p.ink)),
-                  const SizedBox(height: 3),
-                  Text(subtitle, style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, size: 18, color: p.textMuted),
           ],
         ),
       ),
@@ -189,6 +141,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Row(
                     children: [
+                      _drawerButton(),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,6 +191,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Hamburger that opens the shell's [AstraDrawer]. The dashboard has its own
+  /// (transparent) Scaffold, so the nearest Scaffold has no drawer — walk up to
+  /// the root one, which is the HomeShell scaffold that hosts it.
+  Widget _drawerButton() {
+    return GestureDetector(
+      onTap: () => context.findRootAncestorStateOfType<ScaffoldState>()?.openDrawer(),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
+        ),
+        child: const Icon(Icons.menu_rounded, size: 20, color: Colors.white),
       ),
     );
   }

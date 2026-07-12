@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
+import 'package:invo/shared/widgets/astra_drawer.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
 import 'package:invo/features/admin/screens/v3/dashboard_screen.dart';
 import 'package:invo/features/admin/screens/v3/reports_screen.dart';
@@ -34,6 +35,13 @@ class _HomeShellState extends State<HomeShell> {
     SettingsScreen(),
   ];
 
+  /// Shared by the phone and tablet scaffolds — the frosted drawer that holds
+  /// every module link (tab items switch the shell, the rest push routes).
+  Widget get _drawer =>
+      AstraDrawer(activeTab: _index, onSelectTab: (i) => setState(() => _index = i));
+
+  static const _drawerScrim = Color(0x85040C09);
+
   bool _onScroll(UserScrollNotification n) {
     if (n.metrics.axis != Axis.vertical) return false;
     // Don't hide when the content is too short to scroll meaningfully.
@@ -51,6 +59,8 @@ class _HomeShellState extends State<HomeShell> {
 
     if (context.isTablet) {
       return Scaffold(
+        drawer: _drawer,
+        drawerScrimColor: _drawerScrim,
         body: SafeArea(
           child: Row(
             children: [
@@ -64,6 +74,8 @@ class _HomeShellState extends State<HomeShell> {
 
     return Scaffold(
       extendBody: true,
+      drawer: _drawer,
+      drawerScrimColor: _drawerScrim,
       body: NotificationListener<UserScrollNotification>(
         onNotification: _onScroll,
         child: IndexedStack(index: _index, children: _pages),
