@@ -13,8 +13,8 @@
                 'property/rent/edit/*',
                 'property/rent/booking/view/*',
                 'property/tenant',
-                'property/report/customer-property',
-                'property/report/security',
+                'property/report/customer-property/rental',
+                'property/report/security/rental',
                 'property/report/daybook/rental',
             ];
         @endphp
@@ -80,14 +80,14 @@
             @endcan
             @can('rent out.view')
                 <li class="nav-item">
-                    <a href="{{ route('property::report::customer-property') }}"
-                        class="nav-link {{ request()->is(['property/report/customer-property']) ? 'active' : '' }}">Customer Property</a>
+                    <a href="{{ route('property::report::customer-property', 'rental') }}"
+                        class="nav-link {{ request()->is(['property/report/customer-property/rental']) ? 'active' : '' }}">Customer Property</a>
                 </li>
             @endcan
             @can('rent out security.view')
                 <li class="nav-item">
-                    <a href="{{ route('property::report::security') }}"
-                        class="nav-link {{ request()->is(['property/report/security']) ? 'active' : '' }}">Security Report</a>
+                    <a href="{{ route('property::report::security', 'rental') }}"
+                        class="nav-link {{ request()->is(['property/report/security/rental']) ? 'active' : '' }}">Security Report</a>
                 </li>
             @endcan
             @can('rent out.view')

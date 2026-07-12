@@ -74,7 +74,7 @@ Route::middleware('auth')->group(function (): void {
             Route::controller(RentOutTransactionController::class)->group(function (): void {
                 Route::get('payments', 'payments')->name('payments')->defaults('agreement_type', 'rental')->can('rent out.payment');
                 Route::get('utilities', 'utilities')->name('utilities')->can('rent out utility.view');
-                Route::get('services', 'services')->name('services')->can('rent out service.view');
+                Route::get('services', 'services')->name('services')->defaults('agreement_type', 'rental')->can('rent out service.view');
                 Route::get('payment-due', 'paymentDue')->name('payment-due')->defaults('agreement_type', 'rental')->can('rent out.payment');
                 Route::get('cheque-management', 'chequeManagement')->name('cheque-management')->defaults('agreement_type', 'rental')->can('rent out cheque.view');
                 Route::get('payment-history', 'paymentHistory')->name('payment-history')->defaults('agreement_type', 'rental')->can('rent out.payment');
@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function (): void {
 
             Route::controller(RentOutTransactionController::class)->group(function (): void {
                 Route::get('payments', 'payments')->name('payments')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
+                Route::get('services', 'services')->name('services')->defaults('agreement_type', 'lease')->can('rent out service.view');
                 Route::get('payment-due', 'paymentDue')->name('payment-due')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
                 Route::get('payment-history', 'paymentHistory')->name('payment-history')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
                 Route::get('cheque-management', 'chequeManagement')->name('cheque-management')->defaults('agreement_type', 'lease')->can('rent out lease.cheque management');
@@ -110,8 +111,8 @@ Route::middleware('auth')->group(function (): void {
 
         // Reports
         Route::name('report::')->prefix('report')->controller(RentOutReportController::class)->group(function (): void {
-            Route::get('customer-property', 'customerProperty')->name('customer-property')->can('rent out.view');
-            Route::get('security', 'security')->name('security')->can('rent out security.view');
+            Route::get('customer-property/{agreement_type?}', 'customerProperty')->name('customer-property')->where('agreement_type', 'rental|lease')->can('rent out.view');
+            Route::get('security/{agreement_type?}', 'security')->name('security')->where('agreement_type', 'rental|lease')->can('rent out security.view');
             Route::get('service-charge', 'serviceCharge')->name('service-charge')->can('rent out lease.view');
             Route::get('daybook/{agreement_type?}', 'daybook')->name('daybook')->where('agreement_type', 'rental|lease')->can('rent out.view');
         });

@@ -15,7 +15,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            @livewire('rent-out.report.security-table')
+            @livewire('rent-out.report.security-table', ['agreementType' => $agreementType ?? ''])
         </div>
     </div>
     @push('scripts')

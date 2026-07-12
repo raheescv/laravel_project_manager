@@ -592,7 +592,7 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
                       // queue before this can fire. It catches errors that
                       // arrive AFTER a healthy start (camera stolen by
                       // another app, sensor fault).
-                      errorBuilder: (_, error, __) {
+                      errorBuilder: (_, error) {
                         if (!_attaching) {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             if (!mounted || _attaching) return;

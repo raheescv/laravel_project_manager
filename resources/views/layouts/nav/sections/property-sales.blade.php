@@ -1,6 +1,8 @@
 @if (auth()->user()->can('rent out lease.view') ||
         auth()->user()->can('rent out lease.payment') ||
-        auth()->user()->can('rent out lease.cheque management'))
+        auth()->user()->can('rent out lease.cheque management') ||
+        auth()->user()->can('rent out service.view') ||
+        auth()->user()->can('rent out security.view'))
     <li class="nav-item has-sub">
         @php
             $salesList = [
@@ -9,6 +11,8 @@
                 'property/sale/booking/edit/*',
                 'property/sale/booking/view/*',
                 'property/report/service-charge',
+                'property/report/customer-property/lease',
+                'property/report/security/lease',
                 'property/report/daybook/lease',
             ];
         @endphp
@@ -36,6 +40,18 @@
                         class="nav-link {{ request()->is(['property/sale/payments']) ? 'active' : '' }}">Payments</a>
                 </li>
             @endcan
+            @can('rent out service.view')
+                <li class="nav-item">
+                    <a href="{{ route('property::sale::services') }}"
+                        class="nav-link {{ request()->is(['property/sale/services']) ? 'active' : '' }}">Services</a>
+                </li>
+            @endcan
+            @can('rent out lease.payment')
+                <li class="nav-item">
+                    <a href="{{ route('property::sale::payment-due') }}"
+                        class="nav-link {{ request()->is(['property/sale/payment-due']) ? 'active' : '' }}">Payment Due</a>
+                </li>
+            @endcan
             @can('rent out lease.view')
                 <li class="nav-item">
                     <a href="{{ route('property::report::service-charge') }}"
@@ -46,6 +62,24 @@
                 <li class="nav-item">
                     <a href="{{ route('property::sale::cheque-management') }}"
                         class="nav-link {{ request()->is(['property/sale/cheque-management']) ? 'active' : '' }}">Cheque Management</a>
+                </li>
+            @endcan
+            @can('rent out lease.payment')
+                <li class="nav-item">
+                    <a href="{{ route('property::sale::payment-history') }}"
+                        class="nav-link {{ request()->is(['property/sale/payment-history']) ? 'active' : '' }}">Payment History</a>
+                </li>
+            @endcan
+            @can('rent out.view')
+                <li class="nav-item">
+                    <a href="{{ route('property::report::customer-property', 'lease') }}"
+                        class="nav-link {{ request()->is(['property/report/customer-property/lease']) ? 'active' : '' }}">Customer Property</a>
+                </li>
+            @endcan
+            @can('rent out security.view')
+                <li class="nav-item">
+                    <a href="{{ route('property::report::security', 'lease') }}"
+                        class="nav-link {{ request()->is(['property/report/security/lease']) ? 'active' : '' }}">Security Report</a>
                 </li>
             @endcan
             @can('rent out lease.view')

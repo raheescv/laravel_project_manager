@@ -16,7 +16,7 @@
     <div class="content__boxed">
         <div class="content__wrap">
             <div class="card mb-3">
-                @livewire('rent-out.report.customer-property-table')
+                @livewire('rent-out.report.customer-property-table', ['agreementType' => $agreementType ?? ''])
             </div>
         </div>
     </div>

@@ -18,6 +18,7 @@ class SecurityExport implements FromQuery, WithHeadings, WithMapping
     {
         return RentOutSecurity::query()
             ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'rentOut.type', 'account'])
+            ->when($this->filters['agreementType'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('agreement_type', $v)))
             ->when($this->filters['filterGroup'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_group_id', $v)))
             ->when($this->filters['filterBuilding'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_building_id', $v)))
             ->when($this->filters['filterType'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_type_id', $v)))

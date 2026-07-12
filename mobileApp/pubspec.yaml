@@ -34,7 +34,7 @@ dependencies:
   local_auth: ^2.3.0
 
   # Camera barcode / QR scanning (iOS / Android / macOS)
-  mobile_scanner: ^6.0.10
+  mobile_scanner: ^7.2.0
 
   # UI
   google_fonts: ^6.2.1

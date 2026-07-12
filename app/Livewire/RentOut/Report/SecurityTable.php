@@ -18,12 +18,30 @@ class SecurityTable extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    public string $agreementType = '';
+
     // Security-specific filters
     public $filterSecurityType = '';
 
     public $filterPaymentMethod = '';
 
     public $filterSecurityStatus = '';
+
+    public function mount(string $agreementType = ''): void
+    {
+        $this->agreementType = $agreementType;
+    }
+
+    /**
+     * Constrain a security query to the current agreement type (rental vs
+     * lease/sale) via the parent rentOut.
+     */
+    protected function applyAgreementType(Builder $query): Builder
+    {
+        return $query->when($this->agreementType, function ($q, $value) {
+            return $q->whereHas('rentOut', fn ($r) => $r->where('agreement_type', $value));
+        });
+    }
 
     public function getDefaultColumns(): array
     {
@@ -34,6 +52,7 @@ class SecurityTable extends Component
     {
         return RentOutSecurity::query()
             ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'rentOut.type', 'account'])
+            ->tap(fn ($q) => $this->applyAgreementType($q))
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'due_date'))
             ->tap(fn ($q) => $this->applySearch($q))
@@ -49,6 +68,7 @@ class SecurityTable extends Component
     public function getSummaryCardsProperty(): array
     {
         $baseQuery = RentOutSecurity::query()
+            ->tap(fn ($q) => $this->applyAgreementType($q))
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'due_date'));
 
@@ -72,6 +92,7 @@ class SecurityTable extends Component
     {
         // TODO(C7): unmapped (candidate: 'rent out security.export') — 'rent out security' has no export action in config/permissions.php
         $filters = [
+            'agreementType' => $this->agreementType,
             'filterGroup' => $this->filterGroup,
             'filterBuilding' => $this->filterBuilding,
             'filterType' => $this->filterType,

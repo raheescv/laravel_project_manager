@@ -20,7 +20,14 @@ class CustomerPropertyTable extends Component
 
     public $filterProperty = '';
 
+    public string $agreementType = '';
+
     public $fetched = false;
+
+    public function mount(string $agreementType = ''): void
+    {
+        $this->agreementType = $agreementType;
+    }
 
     public function fetch(): void
     {
@@ -50,6 +57,7 @@ class CustomerPropertyTable extends Component
                 'customer', 'property', 'building', 'group', 'type',
                 'rentOutTransactions', 'paymentTerms', 'cheques', 'utilityTerms.utility',
             ])
+            ->when($this->agreementType, fn ($q, $v) => $q->where('agreement_type', $v))
             ->when($this->filterCustomer, fn ($q, $v) => $q->where('account_id', $v))
             ->when($this->filterGroup, fn ($q, $v) => $q->where('property_group_id', $v))
             ->when($this->filterBuilding, fn ($q, $v) => $q->where('property_building_id', $v))

@@ -20,9 +20,15 @@ class RentOutTransactionController extends Controller
         return view('property.rent-out.utilities');
     }
 
-    public function services()
+    public function services($agreementType = 'rental')
     {
-        return view('property.rent.services');
+        $title = $agreementType === 'lease' ? 'Sale Service Report' : 'RentOut Service Report';
+        $subtitle = $agreementType === 'lease'
+            ? 'Track service charges, payments and outstanding balances across all sale agreements.'
+            : 'Track service charges, payments and outstanding balances across all rent agreements.';
+        $breadcrumb = $agreementType === 'lease' ? 'Sale' : 'Rent';
+
+        return view('property.rent.services', compact('agreementType', 'title', 'subtitle', 'breadcrumb'));
     }
 
     public function paymentDue($agreementType = 'rental')

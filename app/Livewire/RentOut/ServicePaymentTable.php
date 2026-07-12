@@ -17,6 +17,8 @@ class ServicePaymentTable extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    public string $agreementType = 'rental';
+
     // Service-specific filters
     public $filterCategory = '';
 
@@ -24,11 +26,24 @@ class ServicePaymentTable extends Component
 
     public $filterDirection = ''; // '', 'charge', 'payment'
 
-    public function mount(): void
+    public function mount(string $agreementType = 'rental'): void
     {
+        $this->agreementType = $agreementType;
+
         // Default to a wider range (year-to-date) so data shows on first load.
         $this->dateFrom = \Carbon\Carbon::now()->startOfYear()->format('Y-m-d');
         $this->dateTo = \Carbon\Carbon::now()->endOfYear()->format('Y-m-d');
+    }
+
+    /**
+     * Constrain a service transaction query to the current agreement type
+     * (rental vs lease/sale) via the parent rentOut.
+     */
+    protected function applyAgreementType(Builder $query): Builder
+    {
+        return $query->when($this->agreementType, function ($q, $value) {
+            return $q->whereHas('rentOut', fn ($r) => $r->where('agreement_type', $value));
+        });
     }
 
     public function getDefaultColumns(): array
@@ -46,6 +61,7 @@ class ServicePaymentTable extends Component
         return RentOutTransaction::query()
             ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'account'])
             ->whereIn('source', ['Service', 'ServiceCharge'])
+            ->tap(fn ($q) => $this->applyAgreementType($q))
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'date'))
             ->tap(fn ($q) => $this->applySearch($q))
@@ -68,6 +84,7 @@ class ServicePaymentTable extends Component
     {
         $baseQuery = RentOutTransaction::query()
             ->whereIn('source', ['Service', 'ServiceCharge'])
+            ->tap(fn ($q) => $this->applyAgreementType($q))
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'date'))
             ->when($this->filterCategory, fn ($q, $v) => $q->where('category', $v))
@@ -120,6 +137,7 @@ class ServicePaymentTable extends Component
     {
         $baseQuery = RentOutTransaction::query()
             ->whereIn('source', ['Service', 'ServiceCharge'])
+            ->tap(fn ($q) => $this->applyAgreementType($q))
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'date'))
             ->when($this->filterCategory, fn ($q, $v) => $q->where('category', $v))
@@ -154,6 +172,7 @@ class ServicePaymentTable extends Component
     {
         // TODO(C7): unmapped (candidate: 'rent out service.export') — 'rent out service' has no export action in config/permissions.php
         $filters = [
+            'agreementType' => $this->agreementType,
             'filterGroup' => $this->filterGroup,
             'filterBuilding' => $this->filterBuilding,
             'filterType' => $this->filterType,
@@ -191,6 +210,7 @@ class ServicePaymentTable extends Component
     {
         $categoryIds = RentOutTransaction::query()
             ->whereIn('source', ['Service', 'ServiceCharge'])
+            ->tap(fn ($q) => $this->applyAgreementType($q))
             ->whereNotNull('category')
             ->distinct()
             ->pluck('category')
