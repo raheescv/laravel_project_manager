@@ -12,10 +12,11 @@ import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
+import 'package:invo/shared/utils/camera_permission.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
-import 'package:invo/features/sale/screens/v3/scanner_screen.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
 
 class NewSaleScreen extends StatefulWidget {
@@ -637,17 +638,33 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Future<void> _scanBarcode(CatalogCubit cat) async {
-    // Open the camera scanner (with a manual-entry fallback inside it).
-    final code = await ScannerScreen.open(context);
-    if (code == null || code.isEmpty || !mounted) return;
-    final product = await cat.findByBarcode(code);
+    // Gate on camera access first (re-prompts, or routes to Settings).
+    if (!await ensureCameraPermission(context)) return;
     if (!mounted) return;
-    if (product == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No product for "$code"')));
-    } else {
-      HapticFeedback.lightImpact();
-      context.read<CartCubit>().add(product);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added ${product.name}')));
-    }
+    // Open the shared continuous scanner: it stays open and adds each scanned
+    // product straight to the cart. The cart list updates live underneath.
+    final cart = context.read<CartCubit>();
+    await ContinuousScannerScreen.open(
+      context,
+      title: 'ADD TO SALE',
+      tallyLabel: 'ADDED THIS SESSION',
+      emptyHint: 'Point the camera at a product barcode to add it to the sale.',
+      onScan: (code) async {
+        final product = await cat.findByBarcode(code);
+        if (product == null) return ScanFeedback.error(code, 'No product for this code');
+        cart.add(product);
+        final qty = cart.defaultQty;
+        return ScanFeedback(
+          title: product.name,
+          detail: 'Added ${qtyLabel(qty)}${product.code.isEmpty ? '' : ' · ${product.code}'}',
+          undo: () async {
+            final matches = cart.lines.where((l) => l.productId == product.id);
+            if (matches.isEmpty) return null;
+            cart.changeQty(matches.first, -qty);
+            return ScanFeedback(title: product.name, detail: 'Removed from sale');
+          },
+        );
+      },
+    );
   }
 }

@@ -42,6 +42,15 @@ post_install do |installer|
     target.build_configurations.each do |config|
       # Keep every pod at the app's minimum so the scanner pod links cleanly.
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
+
+      # permission_handler: compile ONLY the camera permission (the scanner is the
+      # only OS permission the app requests). Defining any PERMISSION_* macro makes
+      # permission_handler_apple strip every other permission API, so App Store
+      # review never sees photo/mic/etc. usage we don't ship.
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_CAMERA=1',
+      ]
     end
   end
 end

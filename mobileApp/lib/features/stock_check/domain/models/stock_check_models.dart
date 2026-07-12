@@ -224,6 +224,7 @@ class ScanResult {
     required this.physical,
     required this.recorded,
     required this.difference,
+    required this.status,
   });
 
   final int id;
@@ -232,6 +233,11 @@ class ScanResult {
   final double physical;
   final double recorded;
   final double difference;
+  final String status;
+
+  /// The scanned count is above the system quantity — flags an over-count so the
+  /// app can warn the user during scanning.
+  bool get isOver => difference > 0;
 
   factory ScanResult.fromJson(Map<String, dynamic> j) => ScanResult(
         id: asNum(j['id']).toInt(),
@@ -240,5 +246,6 @@ class ScanResult {
         physical: asNum(j['physical_quantity']).toDouble(),
         recorded: asNum(j['recorded_quantity']).toDouble(),
         difference: asNum(j['difference']).toDouble(),
+        status: asStr(j['status']).isEmpty ? 'pending' : asStr(j['status']),
       );
 }

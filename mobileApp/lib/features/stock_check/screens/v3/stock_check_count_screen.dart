@@ -7,12 +7,14 @@ import 'package:go_router/go_router.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
+import 'package:invo/shared/utils/camera_permission.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
 
 import '../../domain/models/stock_check_models.dart';
 import '../../domain/repository/stock_check_repository.dart';
-import 'stock_check_scan_screen.dart';
 
 /// One filter chip → the API `status` / `difference_condition` it maps to.
 class _Filter {
@@ -27,7 +29,11 @@ const _filters = <_Filter>[
   _Filter('all', 'All'),
   _Filter('pending', 'Pending', status: 'pending'),
   _Filter('counted', 'Counted', status: 'completed'),
-  _Filter('variance', 'Variance', diff: 'variance'),
+  // Variance = a CONFIRMED discrepancy: a counted (completed) item whose physical
+  // differs from system. Must match the `variance_count` KPI, which is also
+  // scoped to completed — otherwise the filter would surface every uncounted
+  // item (physical 0 → difference = −system) and dwarf the badge.
+  _Filter('variance', 'Variance', status: 'completed', diff: 'variance'),
 ];
 
 class StockCheckCountScreen extends StatefulWidget {
@@ -270,17 +276,59 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
     );
   }
 
+  /// Opens the shared continuous scanner: the camera stays open and every
+  /// barcode +1's its item live (via [_scanOne]). On return, reload so the list
+  /// and stats reflect everything counted in the session.
   Future<void> _openScan() async {
+    // Gate on camera access first — re-prompts after an accidental deny, or
+    // routes the user to Settings when the OS won't ask again.
+    if (!await ensureCameraPermission(context)) return;
+    if (!mounted) return;
     // Persist local edits first so scanning (which mutates server-side) can't
-    // clobber them on the reload that follows.
+    // clobber them.
     if (!await _ensureSaved()) return;
     if (!mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => StockCheckScanScreen(detail: widget.detail),
-    ));
-    if (!mounted) return;
+
+    final counted = await ContinuousScannerScreen.open(
+      context,
+      title: 'STOCK CHECK',
+      tallyLabel: 'COUNTED THIS SESSION',
+      onScan: _scanOne,
+    );
+    if (!mounted || counted == 0) return;
     await _reload();
     await _refreshStats();
+  }
+
+  /// Count one scanned barcode server-side (+1) and describe the result for the
+  /// scanner's feed. Over-counts warn; the returned `undo` reverts the +1.
+  Future<ScanFeedback> _scanOne(String code) async {
+    try {
+      final res = await _repo.scan(widget.detail.id, code);
+      final name = res.productName.isEmpty ? code : res.productName;
+      // Revert target: physical before the +1, keeping the post-scan status so
+      // nothing reconciles from an undo.
+      final undoTarget = (res.physical - 1).clamp(0, double.infinity).toDouble();
+      return ScanFeedback(
+        title: name,
+        detail: 'now ${qtyLabel(res.physical)} · system ${qtyLabel(res.recorded)}${res.isOver ? '  ·  OVER' : ''}',
+        status: res.isOver ? ScanStatus.warn : ScanStatus.ok,
+        undo: () async {
+          try {
+            await _repo.saveCounts(widget.detail.id, [
+              {'id': res.id, 'physical_quantity': undoTarget, 'status': res.status},
+            ]);
+            return ScanFeedback(title: name, detail: 'Undone · −1 → ${qtyLabel(undoTarget)}');
+          } catch (_) {
+            return null;
+          }
+        },
+      );
+    } on ApiException catch (e) {
+      return ScanFeedback.error(code, e.message);
+    } catch (_) {
+      return ScanFeedback.error(code, 'Scan failed — check your connection.');
+    }
   }
 
   void _onSearch(String v) {

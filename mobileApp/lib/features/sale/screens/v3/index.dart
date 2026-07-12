@@ -3,4 +3,3 @@ export 'cart_screen.dart';
 export 'invoice_screen.dart';
 export 'new_sale_screen.dart';
 export 'review_pay_screen.dart';
-export 'scanner_screen.dart';
