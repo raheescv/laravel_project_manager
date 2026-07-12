@@ -187,7 +187,7 @@ class ServicePaymentTable extends Component
             'search' => $this->search,
         ];
 
-        return Excel::download(new ServiceExport($filters), 'rentout-service-report-'.now()->format('Y-m-d').'.xlsx');
+        return Excel::download(new ServiceExport($filters), $this->agreementType.'-service-report-'.now()->format('Y-m-d').'.xlsx');
     }
 
     public function resetFilters(): void
