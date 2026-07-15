@@ -121,7 +121,7 @@
                         $sortableColumns = [
                             'date' => ['label' => 'Date', 'class' => ''],
                             'due_date' => ['label' => 'Due Date', 'class' => ''],
-                            'paid_date' => ['label' => 'Paid Date', 'class' => ''],
+                            'cheque_date' => ['label' => 'Cheque Date', 'class' => ''],
                             'source' => ['label' => 'Source', 'class' => ''],
                             'group' => ['label' => 'Group', 'class' => ''],
                             'category' => ['label' => 'Category', 'class' => ''],
@@ -156,7 +156,7 @@
                         <td class="small">{{ $index + 1 }}</td>
                         <td class="small text-nowrap">{{ $payment->date?->format('d-m-Y') ?? '' }}</td>
                         <td class="small text-nowrap">{{ $payment->due_date?->format('d-m-Y') ?? '' }}</td>
-                        <td class="small text-nowrap">{{ $payment->paid_date?->format('d-m-Y') ?? '' }}</td>
+                        <td class="small text-nowrap">{{ $payment->cheque_date?->format('d-m-Y') ?? '' }}</td>
                         <td>
                             <span
                                 class="badge bg-{{ match ($payment->source) {
