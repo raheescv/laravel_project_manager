@@ -57,6 +57,7 @@
                                             'property' => 'Property No/Unit',
                                             'bank' => 'Bank',
                                             'cheque_no' => 'Cheque No',
+                                            'payee_name' => 'Payee Name',
                                             'amount' => 'Amount',
                                             'status' => 'Status',
                                         ];
@@ -223,6 +224,12 @@
                                         label="Cheque No" />
                                 </th>
                             @endif
+                            @if ($this->isColumnVisible('payee_name'))
+                                <th class="fw-semibold">
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="payee_name"
+                                        label="Payee Name" />
+                                </th>
+                            @endif
                             @if ($this->isColumnVisible('amount'))
                                 <th class="fw-semibold text-end">
                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="amount"
@@ -285,6 +292,12 @@
                                 @endif
                                 @if ($this->isColumnVisible('cheque_no'))
                                     <td>{{ $item->cheque_no }}</td>
+                                @endif
+                                @if ($this->isColumnVisible('payee_name'))
+                                    <td>
+                                        <i class="fa fa-pencil-square-o me-1 text-muted opacity-75"></i>
+                                        {{ $item->payee_name }}
+                                    </td>
                                 @endif
                                 @if ($this->isColumnVisible('amount'))
                                     <td class="text-end fw-medium">{{ number_format($item->amount, 2) }}</td>

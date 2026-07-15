@@ -42,7 +42,7 @@ class ChequeExport implements FromQuery, WithHeadings, WithMapping
 
     public function headings(): array
     {
-        return ['#', 'Date', 'Customer', 'Building', 'Property No/Unit', 'Bank', 'Cheque No', 'Amount', 'Status'];
+        return ['#', 'Date', 'Customer', 'Building', 'Property No/Unit', 'Bank', 'Cheque No', 'Payee Name', 'Amount', 'Status'];
     }
 
     public function map($row): array
@@ -55,6 +55,7 @@ class ChequeExport implements FromQuery, WithHeadings, WithMapping
             $row->rentOut?->property?->number,
             $row->bank_name,
             $row->cheque_no,
+            $row->payee_name,
             $row->amount,
             $row->status?->label(),
         ];

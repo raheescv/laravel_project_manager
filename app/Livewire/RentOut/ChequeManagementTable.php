@@ -32,7 +32,7 @@ class ChequeManagementTable extends Component
 
     public function getDefaultColumns(): array
     {
-        return ['date', 'customer', 'building', 'property', 'bank', 'cheque_no', 'amount', 'status'];
+        return ['date', 'customer', 'building', 'property', 'bank', 'cheque_no', 'payee_name', 'amount', 'status'];
     }
 
     protected function getSelectableIds(): array
