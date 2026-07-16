@@ -33,6 +33,8 @@ class GetAction
         }
 
         $employeeId = $request->validated('employee_id');
+        $productId = $request->validated('product_id');
+        $branchId = $request->validated('branch_id');
         $sort = $request->validated('sort');
         $page = max(1, (int) ($request->validated('page') ?? 1));
         $perPage = min(100, max(1, (int) ($request->validated('per_page') ?? 20)));
@@ -42,6 +44,7 @@ class GetAction
         [$rows, $summary, $total] = match ($type) {
             'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $page, $perPage),
             'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $page, $perPage, $sort, $productType),
+            'commission' => (new CommissionAction())->execute($startDate, $endDate, $employeeId, $productId, $branchId, $page, $perPage),
             default => $this->billWise($startDate, $endDate, $employeeId, $page, $perPage),
         };
 
@@ -53,6 +56,7 @@ class GetAction
             ],
             'filters' => [
                 'employee_id' => $employeeId ? (string) $employeeId : null,
+                'product_id' => $productId ? (string) $productId : null,
                 'product_type' => $productType ?? null,
             ],
             'summary' => $summary,
