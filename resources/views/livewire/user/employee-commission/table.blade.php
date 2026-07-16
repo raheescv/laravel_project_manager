@@ -8,6 +8,10 @@
                             <i class="fa fa-plus me-2"></i>
                             Add New
                         </button>
+                        <button class="btn btn-info text-white d-flex align-items-center shadow-sm" id="EmployeeCommissionBulkAdd" title="Assign commission to many products at once">
+                            <i class="fa fa-layer-group me-2"></i>
+                            Bulk Assign
+                        </button>
                     @endcan
                     <div class="btn-group shadow-sm">
                         @can('employee commission.delete')
@@ -183,6 +187,10 @@
 
                     $('#EmployeeCommissionAdd, #MobileEmployeeCommissionAdd').click(function() {
                         Livewire.dispatch("EmployeeCommission-Page-Create-Component");
+                    });
+
+                    $('#EmployeeCommissionBulkAdd').click(function() {
+                        Livewire.dispatch("EmployeeCommission-Page-BulkAssign-Component");
                     });
 
                     window.addEventListener('RefreshEmployeeCommissionTable', event => {

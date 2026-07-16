@@ -21,6 +21,7 @@
         </div>
     </div>
     <x-user.employee-commission-modal />
+    <x-user.employee-commission-bulk-modal />
     @push('scripts')
     @endpush
 </x-app-layout>
