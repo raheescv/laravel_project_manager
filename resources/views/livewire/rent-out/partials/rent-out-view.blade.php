@@ -65,7 +65,7 @@
                         </span>
                     @endif
                 </div>
-                <h1 class="hero-title">{{ $title }} <span class="hash">#{{ $rentOut->agreement_no }}</span></h1>
+                <h1 class="hero-title text-white">{{ $title }} <span class="hash">#{{ $rentOut->agreement_no }}</span></h1>
                 <div class="hero-meta mt-2">
                     @if ($custName)<i class="fa fa-user-o me-1"></i> {{ $custName }}@endif
                     @if ($rentOut->building?->name)
