@@ -82,12 +82,12 @@ Route::middleware('auth')->group(function (): void {
     // LPO
     Route::name('lpo::')->prefix('local-purchase-orders')->controller(LocalPurchaseOrderController::class)->group(function (): void {
         Route::get('', 'index')->name('index');
-        Route::get('create', 'create')->name('create');
-        Route::get('{localPurchaseOrder}/edit', 'edit')->name('edit');
-        Route::get('{localPurchaseOrder}', 'show')->name('view');
-        Route::get('{localPurchaseOrder}/decision', 'decision')->name('decision');
-        Route::get('{localPurchaseOrder}/confirmation', 'confirmation')->name('confirmation');
-        Route::get('{localPurchaseOrder}/print', 'print')->name('print');
+        Route::get('create', 'create')->can('local purchase order.create')->name('create');
+        Route::get('{localPurchaseOrder}/edit', 'edit')->can('local purchase order.edit')->name('edit');
+        Route::get('{localPurchaseOrder}', 'show')->can('local purchase order.view')->name('view');
+        Route::get('{localPurchaseOrder}/decision', 'decision')->can('local purchase order.decide')->name('decision');
+        Route::get('{localPurchaseOrder}/confirmation', 'confirmation')->can('local purchase order.confirm')->name('confirmation');
+        Route::get('{localPurchaseOrder}/print', 'print')->can('local purchase order.print')->name('print');
     });
 
     // GRN

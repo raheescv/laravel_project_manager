@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LPO View — 3 Design Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+  :root{
+    --p:#4f46e5; --p-rgb:79,70,229;
+    --ok:#16a34a; --ok-rgb:22,163,74;
+    --info:#0ea5e9; --info-rgb:14,165,233;
+    --warn:#d97706; --warn-rgb:217,119,6;
+    --bad:#dc2626; --bad-rgb:220,38,38;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:#eceff4; color:#0b1220; padding:0 0 60px; transition:.2s; }
+  body[data-t="dark"]{ background:#14181e; color:#eef2f7; }
+  .bar{ position:sticky; top:0; z-index:50; display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap;
+    padding:12px; background:rgba(255,255,255,.82); backdrop-filter:blur(10px); border-bottom:1px solid #dde3ea; }
+  body[data-t="dark"] .bar{ background:rgba(26,31,38,.82); border-color:#30373f; }
+  .bar button{ border:1px solid #cbd5e1; background:#fff; padding:8px 15px; border-radius:9px; font-weight:750; font-size:12.5px; cursor:pointer; }
+  body[data-t="dark"] .bar button{ background:#272d34; color:#cbd5e1; border-color:#3a424c; }
+  .bar button.on{ background:var(--p); color:#fff; border-color:var(--p); }
+  .bar .sep{ width:1px; height:22px; background:#cbd5e1; margin:0 4px; }
+  .stage{ max-width:1060px; margin:26px auto; padding:0 16px; }
+  .variant{ display:none; }
+  .variant.show{ display:block; }
+  .vlabel{ font-size:12px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:#64748b; margin-bottom:14px; display:flex; align-items:center; gap:9px; }
+  .vlabel span{ background:var(--p); color:#fff; padding:3px 9px; border-radius:7px; font-size:11px; }
+  .grid2{ display:grid; grid-template-columns:1.05fr .95fr; gap:12px; }
+  @media(max-width:820px){ .grid2{ grid-template-columns:1fr; } }
+
+/* ============================================================
+   VARIANT A — "AURORA"  (bold gradient hero, integrated stats)
+   ============================================================ */
+.va{ --sf:#fff; --sf2:#f6f8fb; --ink:#0b1220; --ink2:#334155; --mut:#64748b; --ln:#e6eaf1; --lns:#eef1f6;
+  --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 16%); --accdeep:color-mix(in srgb,var(--p),#000 46%);
+  --tint:color-mix(in srgb,var(--p),transparent 90%); font-size:12.5px; }
+body[data-t="dark"] .va{ --sf:#242a31; --sf2:#2b323a; --ink:#f1f5f9; --ink2:#cbd5e1; --mut:#94a3b8; --ln:#39424c; --lns:#333b44; --tint:color-mix(in srgb,var(--p),transparent 82%); }
+.va .card{ background:var(--sf); border:1px solid var(--ln); border-radius:14px; box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 26px -14px rgba(16,24,40,.18); overflow:hidden; margin-bottom:12px; }
+.va .chd{ display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--lns); }
+.va .ci{ width:29px; height:29px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; background:var(--tint); color:var(--accd); }
+.va .ct{ font-size:12.5px; font-weight:750; } .va .cs{ font-size:10.5px; color:var(--mut); }
+.va .pill{ margin-left:auto; background:var(--tint); color:var(--accd); padding:3px 10px; border-radius:999px; font-size:10.5px; font-weight:750; }
+.va .hero{ position:relative; border-radius:16px; overflow:hidden; margin-bottom:12px; box-shadow:0 18px 40px -20px rgba(var(--acc-rgb),.55);
+  background:radial-gradient(120% 150% at 100% 0,color-mix(in srgb,var(--acc) 30%,transparent),transparent 55%),linear-gradient(125deg,var(--accdeep),var(--accd)); }
+.va .htop{ display:flex; align-items:center; gap:14px; padding:15px 18px; flex-wrap:wrap; }
+.va .dic{ width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:19px; color:#fff; }
+.va .hmain{ flex:1; min-width:200px; color:#fff; }
+.va .heye{ font-size:9.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
+.va .href{ font-size:19px; font-weight:800; margin-top:2px; }
+.va .hmeta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; font-size:11.5px; color:rgba(255,255,255,.86); }
+.va .hmeta i{ margin-right:5px; opacity:.82; }
+.va .spill{ background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.3); padding:5px 12px; border-radius:999px; font-size:11px; font-weight:750; display:inline-flex; gap:6px; align-items:center; }
+.va .hstats{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.14); border-top:1px solid rgba(255,255,255,.14); }
+.va .hs{ background:linear-gradient(180deg,rgba(255,255,255,.05),transparent); padding:10px 16px; }
+.va .hs .k{ font-size:9px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.66); }
+.va .hs .v{ font-size:16px; font-weight:800; color:#fff; margin-top:3px; }
+.va .kv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:7px; padding:12px 14px; }
+.va .kv{ background:var(--sf2); border:1px solid var(--lns); border-radius:9px; padding:8px 10px; }
+.va .kv .k{ font-size:9px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--mut); margin-bottom:3px; }
+.va .kv .v{ font-size:12px; font-weight:650; }
+.va .tl{ padding:12px 14px 4px; }
+.va .ti{ --tc:var(--acc); --tc-rgb:var(--acc-rgb); display:flex; gap:12px; padding-bottom:13px; }
+.va .ti.ok{ --tc:var(--ok); --tc-rgb:var(--ok-rgb); } .va .ti.info{ --tc:var(--info); --tc-rgb:var(--info-rgb); }
+.va .trail{ display:flex; flex-direction:column; align-items:center; width:32px; }
+.va .tdot{ width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#fff;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--tc),#fff 12%),color-mix(in srgb,var(--tc),#000 20%)); box-shadow:0 5px 13px -6px rgba(var(--tc-rgb),.65); }
+.va .tline{ flex:1; width:2px; margin:4px 0 -3px; background:linear-gradient(to bottom,rgba(var(--tc-rgb),.5),var(--ln) 70%); }
+.va .ti:last-child .tline{ display:none; }
+.va .tbody{ flex:1; background:var(--sf); border:1px solid var(--lns); border-radius:11px; padding:9px 12px; position:relative; overflow:hidden; }
+.va .tbody::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--tc); }
+.va .ttop{ display:flex; justify-content:space-between; gap:8px; align-items:center; flex-wrap:wrap; }
+.va .ttl{ font-size:12px; font-weight:800; }
+.va .tb{ font-size:8.5px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; padding:2px 7px; border-radius:999px; background:rgba(var(--tc-rgb),.13); color:var(--tc); margin-left:6px; }
+.va .ttime{ font-size:10px; color:var(--mut); background:var(--sf2); border:1px solid var(--lns); padding:2px 8px; border-radius:999px; }
+.va .twho{ font-size:11px; color:var(--mut); margin-top:5px; }
+.va .twho b{ color:var(--ink); }
+.va table{ width:100%; border-collapse:collapse; font-size:12px; }
+.va thead th{ background:var(--sf2); color:var(--mut); font-size:9.5px; font-weight:750; letter-spacing:.5px; text-transform:uppercase; padding:8px 11px; text-align:left; }
+.va tbody td{ padding:8px 11px; border-bottom:1px solid var(--lns); }
+.va .num{ text-align:right; } .va .pn{ font-weight:700; } .va .ps{ color:var(--mut); font-size:10.5px; }
+.va .idx{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:7px; background:var(--tint); color:var(--accd); font-weight:800; font-size:10px; }
+
+/* ============================================================
+   VARIANT B — "ATELIER"  (editorial / paper, hairline, calm)
+   ============================================================ */
+.vb{ --pa:#fbfaf7; --pa2:#f3f1ea; --ink:#1a1712; --ink2:#4a453c; --mut:#8b8577; --ln:#e5e1d6; --acc:var(--p); --acc-rgb:var(--p-rgb);
+  font-size:13px; background:var(--pa); border:1px solid var(--ln); border-radius:16px; overflow:hidden;
+  box-shadow:0 1px 2px rgba(0,0,0,.03),0 20px 50px -30px rgba(0,0,0,.25); }
+body[data-t="dark"] .vb{ --pa:#20242b; --pa2:#262b33; --ink:#f0ece3; --ink2:#c7c2b6; --mut:#8f8a7e; --ln:#343a43; }
+.vb .mast{ padding:26px 30px 20px; border-bottom:1px solid var(--ln); }
+.vb .mrow{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
+.vb .meye{ font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--mut); }
+.vb .mref{ font-family:Georgia,"Times New Roman",serif; font-size:30px; font-weight:600; letter-spacing:.3px; margin-top:6px; color:var(--ink); }
+.vb .msub{ font-size:12px; color:var(--mut); margin-top:6px; }
+.vb .msub i{ margin-right:5px; }
+.vb .mstat{ text-align:right; }
+.vb .badge{ display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:750; letter-spacing:.3px; padding:5px 12px; border-radius:999px; border:1px solid color-mix(in srgb,var(--ok),transparent 60%); color:var(--ok); background:color-mix(in srgb,var(--ok),transparent 90%); }
+.vb .mprint{ display:inline-flex; gap:6px; align-items:center; margin-top:12px; font-size:11.5px; font-weight:700; color:var(--acc); border:1px solid color-mix(in srgb,var(--acc),transparent 60%); padding:6px 13px; border-radius:8px; text-decoration:none; }
+.vb .stats{ display:flex; flex-wrap:wrap; gap:0; margin-top:22px; border-top:1px solid var(--ln); }
+.vb .st{ flex:1; min-width:120px; padding:14px 4px 2px; border-right:1px solid var(--ln); }
+.vb .st:last-child{ border-right:0; }
+.vb .st .k{ font-size:9.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--mut); }
+.vb .st .v{ font-family:Georgia,serif; font-size:22px; font-weight:600; margin-top:4px; color:var(--ink); }
+.vb .st .v small{ font-family:system-ui; font-size:11px; color:var(--mut); }
+.vb .body{ padding:8px 30px 26px; }
+.vb .sec{ padding:22px 0; border-bottom:1px solid var(--ln); }
+.vb .sec:last-child{ border-bottom:0; }
+.vb .sh{ display:flex; align-items:baseline; gap:10px; margin-bottom:14px; }
+.vb .sh h3{ margin:0; font-size:13px; font-weight:750; letter-spacing:.3px; text-transform:uppercase; color:var(--ink); }
+.vb .sh .line{ flex:1; height:1px; background:var(--ln); }
+.vb .sh .cnt{ font-size:11px; color:var(--mut); }
+.vb .info{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px 24px; }
+.vb .f .k{ font-size:9.5px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--mut); }
+.vb .f .v{ font-size:13.5px; font-weight:600; margin-top:4px; color:var(--ink); }
+.vb .tl2{ position:relative; padding-left:6px; }
+.vb .e{ position:relative; padding:0 0 18px 26px; border-left:1px solid var(--ln); }
+.vb .e:last-child{ border-left-color:transparent; padding-bottom:2px; }
+.vb .e::before{ content:""; position:absolute; left:-5px; top:2px; width:9px; height:9px; border-radius:50%; background:var(--acc); box-shadow:0 0 0 3px var(--pa); }
+.vb .e.ok::before{ background:var(--ok); } .vb .e.info::before{ background:var(--info); }
+.vb .etop{ display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
+.vb .ett{ font-size:13px; font-weight:750; color:var(--ink); }
+.vb .etime{ font-size:10.5px; color:var(--mut); }
+.vb .ewho{ font-size:11.5px; color:var(--mut); margin-top:3px; }
+.vb .ewho b{ color:var(--ink2); }
+.vb .enote{ margin-top:7px; font-size:12px; color:var(--ink2); font-style:italic; padding-left:12px; border-left:2px solid var(--ln); }
+.vb table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.vb thead th{ color:var(--mut); font-size:9.5px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; padding:0 8px 9px; text-align:left; border-bottom:1px solid var(--ln); }
+.vb tbody td{ padding:11px 8px; border-bottom:1px solid var(--ln); }
+.vb .num{ text-align:right; } .vb .pn{ font-weight:650; color:var(--ink); } .vb .ps{ color:var(--mut); font-size:11px; }
+.vb tfoot td{ padding:12px 8px; font-weight:750; font-family:Georgia,serif; font-size:14px; color:var(--ink); border-top:2px solid var(--ln); }
+
+/* ============================================================
+   VARIANT C — "OBSIDIAN"  (glass / neon-line SaaS dashboard)
+   ============================================================ */
+.vc{ --bg:#0f1520; --sf:#161d2b; --sf2:#1c2536; --ink:#eaf0fb; --ink2:#aab6cd; --mut:#6b7a95; --ln:#26324a; --acc:var(--p); --acc-rgb:var(--p-rgb);
+  --ok:#22c55e; --ok-rgb:34,197,94; --info:#38bdf8; --info-rgb:56,189,248;
+  font-size:12.5px; color:var(--ink); background:
+    radial-gradient(120% 90% at 100% 0,rgba(var(--acc-rgb),.18),transparent 50%),
+    radial-gradient(90% 80% at 0 100%,rgba(var(--info-rgb),.10),transparent 50%), var(--bg);
+  border:1px solid var(--ln); border-radius:18px; padding:16px; }
+.vc .glass{ background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015)); border:1px solid var(--ln); border-radius:14px;
+  box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 20px 40px -24px rgba(0,0,0,.7); backdrop-filter:blur(8px); overflow:hidden; margin-bottom:12px; position:relative; }
+.vc .glass::before{ content:""; position:absolute; left:16px; right:16px; top:0; height:1px; background:linear-gradient(90deg,transparent,rgba(var(--acc-rgb),.8),transparent); }
+.vc .hero{ padding:18px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+.vc .dic{ width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--acc),#fff 8%),color-mix(in srgb,var(--acc),#000 30%)); box-shadow:0 8px 22px -8px rgba(var(--acc-rgb),.8); }
+.vc .hmain{ flex:1; min-width:200px; }
+.vc .heye{ font-size:9.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--mut); }
+.vc .href{ font-size:20px; font-weight:800; margin-top:2px; background:linear-gradient(90deg,var(--ink),color-mix(in srgb,var(--acc),#fff 30%)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.vc .hmeta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; font-size:11.5px; color:var(--ink2); }
+.vc .hmeta i{ color:var(--acc); margin-right:5px; }
+.vc .spill{ display:inline-flex; gap:6px; align-items:center; padding:6px 13px; border-radius:999px; font-size:11px; font-weight:750;
+  background:rgba(var(--ok-rgb),.14); color:var(--ok); border:1px solid rgba(var(--ok-rgb),.35); box-shadow:0 0 18px -4px rgba(var(--ok-rgb),.5); }
+.vc .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
+@media(max-width:640px){ .vc .stats{ grid-template-columns:repeat(2,1fr); } }
+.vc .stat{ position:relative; background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.01)); border:1px solid var(--ln); border-radius:13px; padding:12px 14px; overflow:hidden; }
+.vc .stat::after{ content:""; position:absolute; left:0; top:12px; bottom:12px; width:2px; border-radius:2px; background:var(--acc); box-shadow:0 0 10px rgba(var(--acc-rgb),.8); }
+.vc .stat .k{ font-size:9px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--mut); }
+.vc .stat .v{ font-size:18px; font-weight:800; margin-top:3px; }
+.vc .stat .v small{ font-size:10px; color:var(--mut); }
+.vc .chd{ display:flex; align-items:center; gap:10px; padding:12px 15px; border-bottom:1px solid var(--ln); }
+.vc .ci{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--acc);
+  background:rgba(var(--acc-rgb),.12); border:1px solid rgba(var(--acc-rgb),.3); }
+.vc .ct{ font-size:12.5px; font-weight:750; } .vc .cs{ font-size:10.5px; color:var(--mut); }
+.vc .pill{ margin-left:auto; background:rgba(var(--acc-rgb),.14); color:color-mix(in srgb,var(--acc),#fff 25%); border:1px solid rgba(var(--acc-rgb),.3); padding:3px 10px; border-radius:999px; font-size:10.5px; font-weight:750; }
+.vc .kv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:13px 15px; }
+.vc .kv{ background:rgba(255,255,255,.03); border:1px solid var(--ln); border-radius:10px; padding:9px 11px; }
+.vc .kv .k{ font-size:9px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--mut); margin-bottom:3px; }
+.vc .kv .k i{ color:var(--acc); } .vc .kv .v{ font-size:12px; font-weight:650; }
+.vc .tl{ padding:13px 15px 5px; }
+.vc .ti{ --tc:var(--acc); --tc-rgb:var(--acc-rgb); display:flex; gap:12px; padding-bottom:13px; }
+.vc .ti.ok{ --tc:var(--ok); --tc-rgb:var(--ok-rgb); } .vc .ti.info{ --tc:var(--info); --tc-rgb:var(--info-rgb); }
+.vc .trail{ display:flex; flex-direction:column; align-items:center; width:32px; }
+.vc .tdot{ width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#fff;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--tc),#fff 6%),color-mix(in srgb,var(--tc),#000 30%)); box-shadow:0 0 18px -4px rgba(var(--tc-rgb),.8); }
+.vc .tline{ flex:1; width:2px; margin:4px 0 -3px; background:linear-gradient(to bottom,rgba(var(--tc-rgb),.6),var(--ln) 70%); }
+.vc .ti:last-child .tline{ display:none; }
+.vc .tbody{ flex:1; background:rgba(255,255,255,.03); border:1px solid var(--ln); border-radius:11px; padding:9px 12px; position:relative; overflow:hidden; }
+.vc .tbody::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--tc); box-shadow:0 0 10px rgba(var(--tc-rgb),.7); }
+.vc .ttop{ display:flex; justify-content:space-between; gap:8px; align-items:center; flex-wrap:wrap; }
+.vc .ttl{ font-size:12px; font-weight:800; }
+.vc .tb{ font-size:8.5px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; padding:2px 7px; border-radius:999px; background:rgba(var(--tc-rgb),.16); color:color-mix(in srgb,var(--tc),#fff 25%); margin-left:6px; }
+.vc .ttime{ font-size:10px; color:var(--mut); background:rgba(255,255,255,.04); border:1px solid var(--ln); padding:2px 8px; border-radius:999px; }
+.vc .twho{ font-size:11px; color:var(--mut); margin-top:5px; } .vc .twho b{ color:var(--ink); }
+.vc table{ width:100%; border-collapse:collapse; font-size:12px; }
+.vc thead th{ color:var(--mut); font-size:9.5px; font-weight:750; letter-spacing:.5px; text-transform:uppercase; padding:9px 12px; text-align:left; border-bottom:1px solid var(--ln); }
+.vc tbody td{ padding:9px 12px; border-bottom:1px solid var(--ln); }
+.vc tbody tr:hover td{ background:rgba(var(--acc-rgb),.06); }
+.vc .num{ text-align:right; } .vc .pn{ font-weight:700; color:var(--ink); } .vc .ps{ color:var(--mut); font-size:10.5px; }
+.vc .idx{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:7px; background:rgba(var(--acc-rgb),.14); color:color-mix(in srgb,var(--acc),#fff 20%); font-weight:800; font-size:10px; border:1px solid rgba(var(--acc-rgb),.3); }
+</style>
+</head>
+<body data-t="light">
+  <div class="bar">
+    <button id="b1" class="on" onclick="show(1)">① Aurora</button>
+    <button id="b2" onclick="show(2)">② Atelier</button>
+    <button id="b3" onclick="show(3)">③ Obsidian</button>
+    <span class="sep"></span>
+    <button onclick="document.body.dataset.t='light'">☀ Light</button>
+    <button onclick="document.body.dataset.t='dark'">🌙 Dark</button>
+    <span class="sep"></span>
+    <button onclick="acc('79,70,229','#4f46e5')" style="color:#4f46e5">Indigo</button>
+    <button onclick="acc('13,148,136','#0d9488')" style="color:#0d9488">Teal</button>
+    <button onclick="acc('190,18,60','#be123c')" style="color:#be123c">Crimson</button>
+  </div>
+
+  <div class="stage">
+    <!-- ============ VARIANT A ============ -->
+    <div class="variant show" id="v1">
+      <div class="vlabel"><span>Sample 1</span> Aurora — bold gradient hero, integrated KPI rail</div>
+      <div class="va">
+        <div class="hero">
+          <div class="htop">
+            <div class="dic"><i class="fa fa-file-text-o"></i></div>
+            <div class="hmain"><div class="heye">Local Purchase Order</div><div class="href">BASB-LPO-07-26-011</div>
+              <div class="hmeta"><span><i class="fa fa-home"></i>Main Branch</span><span><i class="fa fa-shopping-bag"></i>Al Noor Trading LLC</span><span><i class="fa fa-calendar"></i>12 Jul 2026</span></div></div>
+            <span class="spill"><span class="dot"></span><i class="fa fa-check-circle"></i> APPROVED</span>
+          </div>
+          <div class="hstats">
+            <div class="hs"><div class="k">Line Items</div><div class="v">6</div></div>
+            <div class="hs"><div class="k">Total Qty</div><div class="v">248</div></div>
+            <div class="hs"><div class="k">Order Value</div><div class="v">18,420</div></div>
+            <div class="hs"><div class="k">Fulfilled</div><div class="v">72%</div></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card" style="margin:0">
+            <div class="chd"><div class="ci"><i class="fa fa-file-o"></i></div><div><div class="ct">Order Information</div><div class="cs">Vendor &amp; metadata</div></div></div>
+            <div class="kv-grid">
+              <div class="kv"><div class="k">Vendor</div><div class="v">Al Noor Trading LLC</div></div>
+              <div class="kv"><div class="k">Date</div><div class="v">12 Jul 2026</div></div>
+              <div class="kv"><div class="k">Created By</div><div class="v">Rahees A.</div></div>
+              <div class="kv"><div class="k">Branch</div><div class="v">Main Branch</div></div>
+              <div class="kv"><div class="k">Products</div><div class="v">6 items</div></div>
+              <div class="kv"><div class="k">Amount</div><div class="v">18,420.00</div></div>
+            </div>
+          </div>
+          <div class="card" style="margin:0">
+            <div class="chd"><div class="ci"><i class="fa fa-history"></i></div><div style="flex:1"><div class="ct">Activity Timeline</div></div><span class="pill">4 events</span></div>
+            <div class="tl">
+              <div class="ti"><div class="trail"><div class="tdot"><i class="fa fa-file-text-o"></i></div><div class="tline"></div></div><div class="tbody"><div class="ttop"><div><span class="ttl">Order Created</span><span class="tb">Draft</span></div><span class="ttime">12 Jul, 09:14</span></div><div class="twho">by <b>Rahees A.</b></div></div></div>
+              <div class="ti info"><div class="trail"><div class="tdot"><i class="fa fa-check-square-o"></i></div><div class="tline"></div></div><div class="tbody"><div class="ttop"><div><span class="ttl">Confirmed</span><span class="tb">Confirmed</span></div><span class="ttime">13 Jul, 11:02</span></div><div class="twho">by <b>Sana M.</b></div></div></div>
+              <div class="ti ok"><div class="trail"><div class="tdot"><i class="fa fa-check-circle"></i></div><div class="tline"></div></div><div class="tbody"><div class="ttop"><div><span class="ttl">Approved</span><span class="tb">Approved</span></div><span class="ttime">13 Jul, 16:47</span></div><div class="twho">by <b>Mohammed K.</b></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="chd"><div class="ci"><i class="fa fa-cubes"></i></div><div style="flex:1"><div class="ct">Products</div></div><span class="pill">6 items · 18,420.00</span></div>
+          <table>
+            <thead><tr><th style="width:40px">#</th><th>Product</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td><span class="idx">1</span></td><td><div class="pn">Nitrile Gloves (M)</div><div class="ps">#GLV-021 · MediGrip</div></td><td class="num">120</td><td class="num ps">42.00</td><td class="num pn">5,040.00</td></tr>
+              <tr><td><span class="idx">2</span></td><td><div class="pn">Surgical Masks</div><div class="ps">#MSK-004 · SafeBreath</div></td><td class="num">80</td><td class="num ps">30.00</td><td class="num pn">2,400.00</td></tr>
+              <tr><td><span class="idx">3</span></td><td><div class="pn">Alcohol Wipes</div><div class="ps">#WIP-011 · CleanCo</div></td><td class="num">48</td><td class="num ps">225.00</td><td class="num pn">10,800.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ VARIANT B ============ -->
+    <div class="variant" id="v2">
+      <div class="vlabel"><span>Sample 2</span> Atelier — editorial paper, hairline rules, serif numerals</div>
+      <div class="vb">
+        <div class="mast">
+          <div class="mrow">
+            <div><div class="meye">Local Purchase Order</div><div class="mref">BASB-LPO-07-26-011</div>
+              <div class="msub"><i class="fa fa-home"></i>Main Branch &nbsp;·&nbsp; <i class="fa fa-shopping-bag"></i>Al Noor Trading LLC &nbsp;·&nbsp; <i class="fa fa-calendar"></i>12 Jul 2026</div></div>
+            <div class="mstat"><div class="badge"><i class="fa fa-check-circle"></i> Approved</div><br><a class="mprint"><i class="fa fa-print"></i> Print / Save PDF</a></div>
+          </div>
+          <div class="stats">
+            <div class="st"><div class="k">Line Items</div><div class="v">6 <small>products</small></div></div>
+            <div class="st"><div class="k">Total Qty</div><div class="v">248 <small>units</small></div></div>
+            <div class="st"><div class="k">Order Value</div><div class="v">18,420<small>.00</small></div></div>
+            <div class="st"><div class="k">Fulfilled</div><div class="v">72<small>%</small></div></div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="sec">
+            <div class="sh"><h3>Order Information</h3><div class="line"></div></div>
+            <div class="info">
+              <div class="f"><div class="k">Vendor</div><div class="v">Al Noor Trading LLC</div></div>
+              <div class="f"><div class="k">Date</div><div class="v">12 Jul 2026</div></div>
+              <div class="f"><div class="k">Created By</div><div class="v">Rahees A.</div></div>
+              <div class="f"><div class="k">Branch</div><div class="v">Main Branch</div></div>
+              <div class="f"><div class="k">Total Products</div><div class="v">6 items</div></div>
+              <div class="f"><div class="k">Total Amount</div><div class="v">18,420.00</div></div>
+            </div>
+          </div>
+          <div class="sec">
+            <div class="sh"><h3>Activity Timeline</h3><div class="line"></div><div class="cnt">4 events</div></div>
+            <div class="tl2">
+              <div class="e"><div class="etop"><div class="ett">Order Created</div><div class="etime">12 Jul 2026, 09:14 AM</div></div><div class="ewho">Action by <b>Rahees A.</b></div></div>
+              <div class="e info"><div class="etop"><div class="ett">Confirmed</div><div class="etime">13 Jul 2026, 11:02 AM</div></div><div class="ewho">Action by <b>Sana M.</b></div><div class="enote">Vendor pricing verified against quotation #Q-8821.</div></div>
+              <div class="e ok"><div class="etop"><div class="ett">Approved</div><div class="etime">13 Jul 2026, 04:47 PM</div></div><div class="ewho">Action by <b>Mohammed K.</b></div><div class="enote">Approved within budget. Expedite the fast-moving lines.</div></div>
+            </div>
+          </div>
+          <div class="sec">
+            <div class="sh"><h3>Products</h3><div class="line"></div><div class="cnt">6 items</div></div>
+            <table>
+              <thead><tr><th>Product</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+              <tbody>
+                <tr><td><div class="pn">Nitrile Gloves (M)</div><div class="ps">#GLV-021 · MediGrip</div></td><td class="num">120</td><td class="num">42.00</td><td class="num">5,040.00</td></tr>
+                <tr><td><div class="pn">Surgical Masks</div><div class="ps">#MSK-004 · SafeBreath</div></td><td class="num">80</td><td class="num">30.00</td><td class="num">2,400.00</td></tr>
+                <tr><td><div class="pn">Alcohol Wipes</div><div class="ps">#WIP-011 · CleanCo</div></td><td class="num">48</td><td class="num">225.00</td><td class="num">10,800.00</td></tr>
+              </tbody>
+              <tfoot><tr><td>Total</td><td class="num">248</td><td></td><td class="num">18,420.00</td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ VARIANT C ============ -->
+    <div class="variant" id="v3">
+      <div class="vlabel"><span>Sample 3</span> Obsidian — glass panels, neon accent lines, dashboard feel</div>
+      <div class="vc">
+        <div class="glass">
+          <div class="hero">
+            <div class="dic"><i class="fa fa-file-text-o"></i></div>
+            <div class="hmain"><div class="heye">Local Purchase Order</div><div class="href">BASB-LPO-07-26-011</div>
+              <div class="hmeta"><span><i class="fa fa-home"></i>Main Branch</span><span><i class="fa fa-shopping-bag"></i>Al Noor Trading LLC</span><span><i class="fa fa-calendar"></i>12 Jul 2026</span></div></div>
+            <span class="spill"><i class="fa fa-check-circle"></i> APPROVED</span>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="k">Line Items</div><div class="v">6 <small>products</small></div></div>
+          <div class="stat"><div class="k">Total Qty</div><div class="v">248 <small>units</small></div></div>
+          <div class="stat"><div class="k">Order Value</div><div class="v">18,420</div></div>
+          <div class="stat"><div class="k">Fulfilled</div><div class="v">72<small>%</small></div></div>
+        </div>
+        <div class="grid2">
+          <div class="glass" style="margin:0">
+            <div class="chd"><div class="ci"><i class="fa fa-file-o"></i></div><div><div class="ct">Order Information</div><div class="cs">Vendor &amp; metadata</div></div></div>
+            <div class="kv-grid">
+              <div class="kv"><div class="k"><i class="fa fa-shopping-bag"></i> Vendor</div><div class="v">Al Noor Trading LLC</div></div>
+              <div class="kv"><div class="k"><i class="fa fa-calendar"></i> Date</div><div class="v">12 Jul 2026</div></div>
+              <div class="kv"><div class="k"><i class="fa fa-user"></i> Created By</div><div class="v">Rahees A.</div></div>
+              <div class="kv"><div class="k"><i class="fa fa-home"></i> Branch</div><div class="v">Main Branch</div></div>
+              <div class="kv"><div class="k"><i class="fa fa-cubes"></i> Products</div><div class="v">6 items</div></div>
+              <div class="kv"><div class="k"><i class="fa fa-money"></i> Amount</div><div class="v">18,420.00</div></div>
+            </div>
+          </div>
+          <div class="glass" style="margin:0">
+            <div class="chd"><div class="ci"><i class="fa fa-history"></i></div><div style="flex:1"><div class="ct">Activity Timeline</div></div><span class="pill">4 events</span></div>
+            <div class="tl">
+              <div class="ti"><div class="trail"><div class="tdot"><i class="fa fa-file-text-o"></i></div><div class="tline"></div></div><div class="tbody"><div class="ttop"><div><span class="ttl">Order Created</span><span class="tb">Draft</span></div><span class="ttime">12 Jul, 09:14</span></div><div class="twho">by <b>Rahees A.</b></div></div></div>
+              <div class="ti info"><div class="trail"><div class="tdot"><i class="fa fa-check-square-o"></i></div><div class="tline"></div></div><div class="tbody"><div class="ttop"><div><span class="ttl">Confirmed</span><span class="tb">Confirmed</span></div><span class="ttime">13 Jul, 11:02</span></div><div class="twho">by <b>Sana M.</b></div></div></div>
+              <div class="ti ok"><div class="trail"><div class="tdot"><i class="fa fa-check-circle"></i></div><div class="tline"></div></div><div class="tbody"><div class="ttop"><div><span class="ttl">Approved</span><span class="tb">Approved</span></div><span class="ttime">13 Jul, 16:47</span></div><div class="twho">by <b>Mohammed K.</b></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="glass">
+          <div class="chd"><div class="ci"><i class="fa fa-cubes"></i></div><div style="flex:1"><div class="ct">Products</div></div><span class="pill">6 items · 18,420.00</span></div>
+          <table>
+            <thead><tr><th style="width:40px">#</th><th>Product</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <tr><td><span class="idx">1</span></td><td><div class="pn">Nitrile Gloves (M)</div><div class="ps">#GLV-021 · MediGrip</div></td><td class="num">120</td><td class="num ps">42.00</td><td class="num pn">5,040.00</td></tr>
+              <tr><td><span class="idx">2</span></td><td><div class="pn">Surgical Masks</div><div class="ps">#MSK-004 · SafeBreath</div></td><td class="num">80</td><td class="num ps">30.00</td><td class="num pn">2,400.00</td></tr>
+              <tr><td><span class="idx">3</span></td><td><div class="pn">Alcohol Wipes</div><div class="ps">#WIP-011 · CleanCo</div></td><td class="num">48</td><td class="num ps">225.00</td><td class="num pn">10,800.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function show(n){
+    [1,2,3].forEach(i=>{
+      document.getElementById('v'+i).classList.toggle('show', i===n);
+      document.getElementById('b'+i).classList.toggle('on', i===n);
+    });
+  }
+  function acc(rgb,hex){
+    document.documentElement.style.setProperty('--p',hex);
+    document.documentElement.style.setProperty('--p-rgb',rgb);
+  }
+</script>
+</body>
+</html>

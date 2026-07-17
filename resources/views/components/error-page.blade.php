@@ -79,7 +79,7 @@
                             <line x1="12" y1="16" x2="12.01" y2="16"/>
                         </svg>
                     </div>
-                    <p class="error-info-text">{{ $infoText }}</p>
+                    <p class="error-info-text">{{ $details['reason'] ?? $infoText }}</p>
                 </div>
 
                 @if($details && is_array($details) && array_filter($details))

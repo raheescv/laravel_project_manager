@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LPO Activity Timeline — Premium Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+  :root{
+    --bs-primary:#4f46e5; --bs-primary-rgb:79,70,229;
+    --bs-success:#16a34a; --bs-success-rgb:22,163,74;
+    --bs-info:#0ea5e9; --bs-info-rgb:14,165,233;
+    --bs-warning:#d97706; --bs-warning-rgb:217,119,6;
+    --bs-danger:#dc2626; --bs-danger-rgb:220,38,38;
+    --bs-emphasis-color:#0b1220; --bs-body-color:#334155;
+    --bs-secondary-color:#64748b; --bs-tertiary-color:#94a3b8;
+  }
+  [data-bs-theme="dark"]{
+    --bs-emphasis-color:#f1f5f9; --bs-body-color:#cbd5e1;
+    --bs-secondary-color:#94a3b8; --bs-tertiary-color:#64748b;
+  }
+  body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:#eef1f6; padding:34px 18px; transition:.2s; }
+  [data-bs-theme="dark"] body{ background:#1b2027; }
+  .wrap{ max-width:760px; margin:0 auto; }
+  .toggle{ display:flex; gap:8px; justify-content:center; margin-bottom:22px; }
+  .toggle button{ border:1px solid #cbd5e1; background:#fff; padding:7px 15px; border-radius:9px; font-weight:700; font-size:12.5px; cursor:pointer; }
+  [data-bs-theme="dark"] .toggle button{ background:#272d34; color:#cbd5e1; border-color:#3a424c; }
+
+  /* ==== copied timeline styles from view.blade.php (.lpox scope) ==== */
+  .lpox{
+    --acc: var(--bs-primary); --acc-rgb: var(--bs-primary-rgb);
+    --acc-d: color-mix(in srgb, var(--bs-primary), #000 14%);
+    --acc-tint: color-mix(in srgb, var(--bs-primary), transparent 90%);
+    --surface:#ffffff; --surface-2:#f5f7fa;
+    --ink: var(--bs-emphasis-color); --ink-2: var(--bs-body-color);
+    --muted: var(--bs-secondary-color); --faint: var(--bs-tertiary-color);
+    --line:#e7ebf1; --line-soft:#eff2f6;
+    --ok: var(--bs-success); --ok-rgb: var(--bs-success-rgb);
+    --info: var(--bs-info); --info-rgb: var(--bs-info-rgb);
+    --warn: var(--bs-warning); --warn-rgb: var(--bs-warning-rgb);
+    --bad: var(--bs-danger); --bad-rgb: var(--bs-danger-rgb);
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px -10px rgba(16,24,40,.12);
+    color:var(--ink); font-size:13px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .lpox *{ box-sizing:border-box; }
+  [data-bs-theme="dark"] .lpox{
+    --surface:#272d34; --surface-2:#2e353d; --line:#3a424c; --line-soft:#343c45;
+    --acc-tint: color-mix(in srgb, var(--bs-primary), transparent 84%);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px -10px rgba(0,0,0,.5);
+  }
+  .lpox .l-card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+  .lpox .l-head{ display:flex; align-items:center; gap:11px; padding:13px 16px; border-bottom:1px solid var(--line-soft); }
+  .lpox .l-ic{ width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; background:var(--acc-tint); color:var(--acc-d); flex:0 0 auto; }
+  .lpox .l-title{ font-size:13.5px; font-weight:750; }
+  .lpox .l-sub{ font-size:11px; color:var(--muted); margin-top:-1px; }
+  .lpox .l-pill{ display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:999px; font-size:11px; font-weight:700; }
+  .lpox .pill-acc{ background:var(--acc-tint); color:var(--acc-d); }
+
+  .lpox .tl{ padding:20px 20px 8px; }
+  .lpox .tl-item{ --tc: var(--acc); --tc-rgb: var(--acc-rgb); position:relative; display:flex; gap:16px; padding-bottom:20px; }
+  .lpox .tl-item.t-ok{ --tc: var(--ok); --tc-rgb: var(--ok-rgb); }
+  .lpox .tl-item.t-info{ --tc: var(--info); --tc-rgb: var(--info-rgb); }
+  .lpox .tl-item.t-bad{ --tc: var(--bad); --tc-rgb: var(--bad-rgb); }
+  .lpox .tl-item.t-muted{ --tc: var(--muted); --tc-rgb: var(--faint); }
+  .lpox .tl-item:last-child{ padding-bottom:6px; }
+  .lpox .tl-rail{ position:relative; flex:0 0 auto; display:flex; flex-direction:column; align-items:center; width:40px; }
+  .lpox .tl-dot{ position:relative; width:40px; height:40px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:15px; z-index:1; color:#fff;
+    background:linear-gradient(145deg, color-mix(in srgb,var(--tc),#fff 12%), color-mix(in srgb,var(--tc),#000 20%));
+    box-shadow:0 6px 16px -6px rgba(var(--tc-rgb),.65), inset 0 1px 0 rgba(255,255,255,.35);
+    border:1px solid color-mix(in srgb,var(--tc),#000 8%); }
+  .lpox .tl-dot::after{ content:""; position:absolute; inset:-4px; border-radius:16px; border:1.5px solid rgba(var(--tc-rgb),.22); }
+  .lpox .tl-item.t-muted .tl-dot{ color:var(--muted); background:linear-gradient(145deg, var(--surface), var(--surface-2)); box-shadow:0 3px 10px -6px rgba(0,0,0,.3); border-color:var(--line); }
+  .lpox .tl-item.t-muted .tl-dot::after{ border-color:var(--line); }
+  .lpox .tl-item.is-latest .tl-dot::before{ content:""; position:absolute; inset:-4px; border-radius:16px; box-shadow:0 0 0 0 rgba(var(--tc-rgb),.45); animation:tlpulse 2.4s ease-out infinite; }
+  @keyframes tlpulse{ 0%{ box-shadow:0 0 0 0 rgba(var(--tc-rgb),.4); } 70%{ box-shadow:0 0 0 10px rgba(var(--tc-rgb),0); } 100%{ box-shadow:0 0 0 0 rgba(var(--tc-rgb),0); } }
+  .lpox .tl-line{ flex:1; width:2px; margin:6px 0 -4px; border-radius:2px; background:linear-gradient(to bottom, rgba(var(--tc-rgb),.5), var(--line) 70%); }
+  .lpox .tl-item:last-child .tl-line{ display:none; }
+  .lpox .tl-body{ flex:1; min-width:0; background:var(--surface); border:1px solid var(--line-soft); border-radius:13px; padding:12px 15px; box-shadow:0 1px 2px rgba(16,24,40,.04); position:relative; overflow:hidden; transition:box-shadow .16s, transform .16s, border-color .16s; }
+  .lpox .tl-body::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--tc); opacity:.8; }
+  .lpox .tl-item:hover .tl-body{ transform:translateX(2px); border-color:color-mix(in srgb,var(--tc),transparent 65%); box-shadow:0 10px 26px -14px rgba(var(--tc-rgb),.5); }
+  .lpox .tl-item.is-latest .tl-body{ border-color:color-mix(in srgb,var(--tc),transparent 60%); background:linear-gradient(180deg, rgba(var(--tc-rgb),.05), var(--surface) 60%); }
+  .lpox .tl-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .lpox .tl-ttlwrap{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .lpox .tl-ttl{ font-size:13.5px; font-weight:800; color:var(--ink); }
+  .lpox .tl-badge{ font-size:9px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; padding:2px 8px; border-radius:999px; background:rgba(var(--tc-rgb),.13); color:var(--tc); border:1px solid rgba(var(--tc-rgb),.22); }
+  .lpox .tl-item.t-muted .tl-badge{ color:var(--muted); background:var(--surface-2); border-color:var(--line); }
+  .lpox .tl-time{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--muted); font-weight:650; white-space:nowrap; background:var(--surface-2); border:1px solid var(--line-soft); padding:3px 9px; border-radius:999px; }
+  .lpox .tl-time i{ color:var(--tc); font-size:10px; }
+  .lpox .tl-who{ font-size:11.5px; color:var(--muted); margin-top:7px; display:inline-flex; align-items:center; gap:8px; }
+  .lpox .tl-ava{ width:20px; height:20px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; color:#fff; background:linear-gradient(145deg, color-mix(in srgb,var(--tc),#fff 10%), color-mix(in srgb,var(--tc),#000 22%)); box-shadow:0 2px 6px -2px rgba(var(--tc-rgb),.6); }
+  .lpox .tl-who b{ color:var(--ink); font-weight:750; }
+  .lpox .tl-note{ margin-top:9px; background:var(--surface-2); border:1px solid var(--line-soft); border-left:3px solid var(--tc); border-radius:9px; padding:9px 12px; font-size:12px; color:var(--ink-2); line-height:1.5; }
+  .lpox .tl-note .tl-note-k{ font-size:9.5px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--tc); display:flex; align-items:center; gap:5px; margin-bottom:3px; opacity:.9; }
+</style>
+</head>
+<body data-bs-theme="light">
+  <div class="wrap">
+    <div class="toggle">
+      <button onclick="document.body.dataset.bsTheme='light'">☀ Light</button>
+      <button onclick="document.body.dataset.bsTheme='dark'">🌙 Dark</button>
+    </div>
+    <div class="lpox">
+      <div class="l-card">
+        <div class="l-head">
+          <div class="l-ic"><i class="fa fa-history"></i></div>
+          <div style="flex:1"><div class="l-title">Activity Timeline</div><div class="l-sub">Who did what, and when</div></div>
+          <span class="l-pill pill-acc">4 events</span>
+        </div>
+        <div class="tl">
+          <div class="tl-item t-acc">
+            <div class="tl-rail"><div class="tl-dot"><i class="fa fa-file-text-o"></i></div><div class="tl-line"></div></div>
+            <div class="tl-body">
+              <div class="tl-top"><div class="tl-ttlwrap"><span class="tl-ttl">Order Created</span><span class="tl-badge">Draft</span></div><div class="tl-time"><i class="fa fa-calendar"></i> 12 Jul 2026, 09:14 AM</div></div>
+              <div class="tl-who"><span class="tl-ava">RA</span> Action by <b>Rahees A.</b></div>
+            </div>
+          </div>
+          <div class="tl-item t-info">
+            <div class="tl-rail"><div class="tl-dot"><i class="fa fa-check-square-o"></i></div><div class="tl-line"></div></div>
+            <div class="tl-body">
+              <div class="tl-top"><div class="tl-ttlwrap"><span class="tl-ttl">Confirmed</span><span class="tl-badge">Confirmed</span></div><div class="tl-time"><i class="fa fa-calendar"></i> 13 Jul 2026, 11:02 AM</div></div>
+              <div class="tl-who"><span class="tl-ava">SM</span> Action by <b>Sana M.</b></div>
+              <div class="tl-note"><span class="tl-note-k"><i class="fa fa-comment-o"></i> Confirmation Note</span>Vendor pricing verified against quotation #Q-8821. Cleared to proceed.</div>
+            </div>
+          </div>
+          <div class="tl-item t-ok">
+            <div class="tl-rail"><div class="tl-dot"><i class="fa fa-check-circle"></i></div><div class="tl-line"></div></div>
+            <div class="tl-body">
+              <div class="tl-top"><div class="tl-ttlwrap"><span class="tl-ttl">Approved</span><span class="tl-badge">Approved</span></div><div class="tl-time"><i class="fa fa-calendar"></i> 13 Jul 2026, 04:47 PM</div></div>
+              <div class="tl-who"><span class="tl-ava">MK</span> Action by <b>Mohammed K.</b></div>
+              <div class="tl-note"><span class="tl-note-k"><i class="fa fa-comment-o"></i> Remarks</span>Approved within budget. Expedite delivery for the fast-moving lines.</div>
+            </div>
+          </div>
+          <div class="tl-item t-muted is-latest">
+            <div class="tl-rail"><div class="tl-dot"><i class="fa fa-pencil"></i></div><div class="tl-line"></div></div>
+            <div class="tl-body">
+              <div class="tl-top"><div class="tl-ttlwrap"><span class="tl-ttl">Last Updated</span><span class="tl-badge">Edited</span></div><div class="tl-time"><i class="fa fa-calendar"></i> 15 Jul 2026, 10:20 AM</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

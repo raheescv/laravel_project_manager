@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\LocalPurchaseOrder\LocalPurchaseOrderStatus;
 use App\Models\LocalPurchaseOrder;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class LocalPurchaseOrderPolicy
 {
@@ -35,9 +36,17 @@ class LocalPurchaseOrderPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, LocalPurchaseOrder $order): bool
+    public function update(User $user, LocalPurchaseOrder $order): Response
     {
-        return $user->can('local purchase order.create') && $order->status === LocalPurchaseOrderStatus::PENDING;
+         if (! $user->can('local purchase order.edit')) {
+            return Response::deny('You do not have permission to edit local purchase orders.');
+        }
+
+        if ($order->status !== LocalPurchaseOrderStatus::CONFIRMED) {
+            return Response::deny("This local purchase order is {$order->status->label()} and cannot be edited.");
+        }
+
+        return Response::allow();
     }
 
     /**
@@ -72,17 +81,41 @@ class LocalPurchaseOrderPolicy
     /**
      * Cancel LPO
      */
-    public function decide(User $user, LocalPurchaseOrder $order): bool
+    public function decide(User $user, LocalPurchaseOrder $order): Response
     {
-        return $user->can('local purchase order.decide') && $order->status === LocalPurchaseOrderStatus::CONFIRMED;
+        if (! $user->can('local purchase order.decide')) {
+            return Response::deny('You do not have permission to approve or reject local purchase orders.');
+        }
+
+        if ($order->status == LocalPurchaseOrderStatus::APPROVED) {
+            return Response::allow();
+        }
+
+        if ($order->status !== LocalPurchaseOrderStatus::CONFIRMED) {
+            return Response::deny("This local purchase order is {$order->status->label()} and is not awaiting a decision. Only confirmed orders can be approved or rejected.");
+        }
+
+        return Response::allow();
     }
 
     /**
      * Confirm a pending LPO (confirmation comes before decision)
      */
-    public function confirm(User $user, LocalPurchaseOrder $order): bool
+    public function confirm(User $user, LocalPurchaseOrder $order): Response
     {
-        return $user->can('local purchase order.confirm') && $order->status === LocalPurchaseOrderStatus::PENDING;
+        if (! $user->can('local purchase order.confirm')) {
+            return Response::deny('You do not have permission to confirm local purchase orders.');
+        }
+
+        if (in_array($order->status, [LocalPurchaseOrderStatus::CONFIRMED, LocalPurchaseOrderStatus::APPROVED])) {
+            return Response::allow();
+        }
+        
+        if ($order->status !== LocalPurchaseOrderStatus::PENDING) {
+            return Response::deny("This local purchase order is already {$order->status->label()} and can no longer be confirmed. Only pending orders can be confirmed.");
+        }
+
+        return Response::allow();
     }
 
     /**

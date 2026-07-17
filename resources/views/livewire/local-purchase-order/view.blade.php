@@ -1,4 +1,5 @@
 <div>
+    @use('Illuminate\Support\Str')
     @use('App\Enums\LocalPurchaseOrder\LocalPurchaseOrderStatus')
 
     {{--
@@ -36,7 +37,7 @@
                 --shadow-lg: 0 18px 42px -18px rgba(var(--acc-rgb),.40), 0 8px 18px -12px rgba(16,24,40,.20);
 
                 color: var(--ink);
-                font-size: 13px; line-height: 1.5;
+                font-size: 12.5px; line-height: 1.5;
                 -webkit-font-smoothing: antialiased;
             }
             .lpox *{ box-sizing:border-box; }
@@ -68,43 +69,44 @@
             .lpox .pill-bad{ background:rgba(var(--bad-rgb),.13); color:var(--bad); }
             .lpox .pill-muted{ background:var(--surface-2); color:var(--muted); }
 
-            /* HERO */
-            .lpox-hero{ position:relative; border-radius:18px; overflow:hidden; margin-bottom:14px; box-shadow:var(--shadow-lg);
+            /* HERO — compact, with integrated KPI rail */
+            .lpox-hero{ position:relative; border-radius:16px; overflow:hidden; margin-bottom:12px; box-shadow:var(--shadow-lg);
                 background:
-                    radial-gradient(120% 165% at 100% 0, color-mix(in srgb, var(--acc) 26%, transparent), transparent 55%),
+                    radial-gradient(120% 165% at 100% 0, color-mix(in srgb, var(--acc) 28%, transparent), transparent 55%),
                     linear-gradient(125deg, var(--acc-deep), var(--acc-d)); }
             .lpox-hero .glow{ position:absolute; right:-60px; top:-90px; width:300px; height:300px; border-radius:50%;
                 background:radial-gradient(circle, rgba(255,255,255,.16), transparent 65%); pointer-events:none; }
-            .lpox-hero-inner{ position:relative; display:flex; align-items:center; gap:18px; padding:18px 22px; flex-wrap:wrap; }
-            .lpox-hero .doc-ic{ width:52px; height:52px; border-radius:14px; flex:0 0 auto; background:rgba(255,255,255,.14);
-                border:1px solid rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff;
+            .lpox-hero-inner{ position:relative; display:flex; align-items:center; gap:15px; padding:15px 18px; flex-wrap:wrap; }
+            .lpox-hero .doc-ic{ width:46px; height:46px; border-radius:13px; flex:0 0 auto; background:rgba(255,255,255,.14);
+                border:1px solid rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff;
                 box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
-            .lpox-hero .h-main{ flex:1; min-width:210px; color:#fff; }
-            .lpox-hero .h-eyebrow{ font-size:10.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
-            .lpox-hero .h-ref{ font-size:21px; font-weight:800; letter-spacing:.3px; line-height:1.15; margin-top:2px; }
-            .lpox-hero .h-meta{ display:flex; gap:16px; flex-wrap:wrap; margin-top:7px; font-size:12px; color:rgba(255,255,255,.86); }
+            .lpox-hero .h-main{ flex:1; min-width:200px; color:#fff; }
+            .lpox-hero .h-eyebrow{ font-size:9.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
+            .lpox-hero .h-ref{ font-size:19px; font-weight:800; letter-spacing:.3px; line-height:1.15; margin-top:2px; }
+            .lpox-hero .h-meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; font-size:11.5px; color:rgba(255,255,255,.86); }
             .lpox-hero .h-meta i{ opacity:.82; margin-right:5px; }
-            .lpox-hero .h-right{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+            .lpox-hero .h-right{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
             .lpox-hero .status-pill{ background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.3);
-                padding:6px 14px; border-radius:999px; font-size:12px; font-weight:750; letter-spacing:.4px; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
-            .lpox-hero .status-pill .dot{ width:8px; height:8px; border-radius:50%; box-shadow:0 0 0 3px rgba(255,255,255,.18); }
-            .lpox-hero .btn-print{ background:#fff; color:var(--acc-deep); border:0; padding:8px 16px; border-radius:10px; font-size:12.5px; font-weight:700;
-                cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:7px; box-shadow:0 4px 14px rgba(0,0,0,.18); transition:transform .12s; }
+                padding:5px 12px; border-radius:999px; font-size:11.5px; font-weight:750; letter-spacing:.4px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+            .lpox-hero .status-pill .dot{ width:7px; height:7px; border-radius:50%; box-shadow:0 0 0 3px rgba(255,255,255,.18); }
+            .lpox-hero .btn-print{ background:#fff; color:var(--acc-deep); border:0; padding:6px 13px; border-radius:9px; font-size:11.5px; font-weight:700;
+                cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,.18); transition:transform .12s; }
             .lpox-hero .btn-print:hover{ transform:translateY(-1px); color:var(--acc-deep); }
-
-            /* STAT STRIP */
-            .lpox-stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
-            .lpox-stat{ background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:12px 14px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
-            .lpox-stat::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--acc); opacity:.85; }
-            .lpox-stat .s-k{ font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; }
-            .lpox-stat .s-k i{ color:var(--acc); }
-            .lpox-stat .s-v{ font-size:18px; font-weight:800; color:var(--ink); margin-top:4px; letter-spacing:.2px; }
-            .lpox-stat .s-v small{ font-size:11px; font-weight:600; color:var(--muted); }
+            /* integrated stat rail */
+            .lpox-hstats{ position:relative; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1px;
+                background:rgba(255,255,255,.14); border-top:1px solid rgba(255,255,255,.14); }
+            .lpox-hs{ background:linear-gradient(180deg, rgba(255,255,255,.05), transparent); padding:10px 16px; }
+            .lpox-hs .s-k{ font-size:9px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.66); display:flex; align-items:center; gap:5px; }
+            .lpox-hs .s-k i{ color:rgba(255,255,255,.75); }
+            .lpox-hs .s-v{ font-size:16px; font-weight:800; color:#fff; margin-top:3px; letter-spacing:.2px; }
+            .lpox-hs .s-v small{ font-size:10px; font-weight:600; color:rgba(255,255,255,.7); }
+            @media(max-width:600px){ .lpox-hero .h-right{ align-items:flex-start; width:100%; } }
 
             /* INFO PANELS */
-            .lpox-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:14px; }
+            .lpox-grid{ display:grid; grid-template-columns:1.05fr .95fr; gap:12px; margin-bottom:12px; }
             .lpox-grid.one{ grid-template-columns:1fr; }
-            .lpox .kv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:14px 16px; }
+            @media(max-width:820px){ .lpox-grid{ grid-template-columns:1fr; } }
+            .lpox .kv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:7px; padding:12px 14px; }
             .lpox .kv{ background:var(--surface-2); border:1px solid var(--line-soft); border-radius:10px; padding:9px 11px; }
             .lpox .kv.full{ grid-column:1 / -1; }
             .lpox .kv .kk{ font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; margin-bottom:3px; }
@@ -152,6 +154,55 @@
             .lpox .grn-head{ display:flex; align-items:center; justify-content:space-between; padding:9px 13px; background:var(--surface-2); border-bottom:1px solid var(--line-soft); flex-wrap:wrap; gap:6px; }
             .lpox .grn-head a{ color:var(--acc-d); font-weight:750; text-decoration:none; font-size:12.5px; }
             .lpox .grn-head .gdate{ color:var(--muted); font-size:11px; margin-left:12px; }
+
+            /* TIMELINE — premium */
+            .lpox .tl{ padding:20px 20px 8px; }
+            .lpox .tl-item{ --tc: var(--acc); --tc-rgb: var(--acc-rgb); position:relative; display:flex; gap:16px; padding-bottom:20px; }
+            .lpox .tl-item.t-ok{ --tc: var(--ok); --tc-rgb: var(--ok-rgb); }
+            .lpox .tl-item.t-info{ --tc: var(--info); --tc-rgb: var(--info-rgb); }
+            .lpox .tl-item.t-bad{ --tc: var(--bad); --tc-rgb: var(--bad-rgb); }
+            .lpox .tl-item.t-muted{ --tc: var(--muted); --tc-rgb: var(--faint); }
+            .lpox .tl-item:last-child{ padding-bottom:6px; }
+            .lpox .tl-rail{ position:relative; flex:0 0 auto; display:flex; flex-direction:column; align-items:center; width:40px; }
+            .lpox .tl-dot{ position:relative; width:40px; height:40px; border-radius:13px; display:flex; align-items:center; justify-content:center;
+                font-size:15px; z-index:1; color:#fff;
+                background:linear-gradient(145deg, color-mix(in srgb,var(--tc),#fff 12%), color-mix(in srgb,var(--tc),#000 20%));
+                box-shadow:0 6px 16px -6px rgba(var(--tc-rgb),.65), inset 0 1px 0 rgba(255,255,255,.35);
+                border:1px solid color-mix(in srgb,var(--tc),#000 8%); }
+            .lpox .tl-dot::after{ content:""; position:absolute; inset:-4px; border-radius:16px; border:1.5px solid rgba(var(--tc-rgb),.22); }
+            .lpox .tl-item.t-muted .tl-dot{ color:var(--muted);
+                background:linear-gradient(145deg, var(--surface), var(--surface-2)); box-shadow:0 3px 10px -6px rgba(0,0,0,.3); border-color:var(--line); }
+            .lpox .tl-item.t-muted .tl-dot::after{ border-color:var(--line); }
+            /* latest event gets a soft pulse */
+            .lpox .tl-item.is-latest .tl-dot::before{ content:""; position:absolute; inset:-4px; border-radius:16px;
+                box-shadow:0 0 0 0 rgba(var(--tc-rgb),.45); animation:tlpulse 2.4s ease-out infinite; }
+            @keyframes tlpulse{ 0%{ box-shadow:0 0 0 0 rgba(var(--tc-rgb),.4); } 70%{ box-shadow:0 0 0 10px rgba(var(--tc-rgb),0); } 100%{ box-shadow:0 0 0 0 rgba(var(--tc-rgb),0); } }
+            .lpox .tl-line{ flex:1; width:2px; margin:6px 0 -4px; border-radius:2px;
+                background:linear-gradient(to bottom, rgba(var(--tc-rgb),.5), var(--line) 70%); }
+            .lpox .tl-item:last-child .tl-line{ display:none; }
+
+            .lpox .tl-body{ flex:1; min-width:0; background:var(--surface); border:1px solid var(--line-soft); border-radius:13px;
+                padding:12px 15px; box-shadow:0 1px 2px rgba(16,24,40,.04); position:relative; overflow:hidden; transition:box-shadow .16s, transform .16s, border-color .16s; }
+            .lpox .tl-body::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--tc); opacity:.8; }
+            .lpox .tl-item:hover .tl-body{ transform:translateX(2px); border-color:color-mix(in srgb,var(--tc),transparent 65%); box-shadow:0 10px 26px -14px rgba(var(--tc-rgb),.5); }
+            .lpox .tl-item.is-latest .tl-body{ border-color:color-mix(in srgb,var(--tc),transparent 60%); background:linear-gradient(180deg, rgba(var(--tc-rgb),.05), var(--surface) 60%); }
+            .lpox .tl-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+            .lpox .tl-ttlwrap{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+            .lpox .tl-ttl{ font-size:13.5px; font-weight:800; color:var(--ink); letter-spacing:.1px; }
+            .lpox .tl-badge{ font-size:9px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; padding:2px 8px; border-radius:999px;
+                background:rgba(var(--tc-rgb),.13); color:var(--tc); border:1px solid rgba(var(--tc-rgb),.22); }
+            .lpox .tl-item.t-muted .tl-badge{ color:var(--muted); background:var(--surface-2); border-color:var(--line); }
+            .lpox .tl-time{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--muted); font-weight:650; white-space:nowrap;
+                background:var(--surface-2); border:1px solid var(--line-soft); padding:3px 9px; border-radius:999px; }
+            .lpox .tl-time i{ color:var(--tc); font-size:10px; }
+            .lpox .tl-who{ font-size:11.5px; color:var(--muted); margin-top:7px; display:inline-flex; align-items:center; gap:8px; }
+            .lpox .tl-ava{ width:20px; height:20px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+                font-size:9px; font-weight:800; color:#fff; letter-spacing:.2px;
+                background:linear-gradient(145deg, color-mix(in srgb,var(--tc),#fff 10%), color-mix(in srgb,var(--tc),#000 22%)); box-shadow:0 2px 6px -2px rgba(var(--tc-rgb),.6); }
+            .lpox .tl-who b{ color:var(--ink); font-weight:750; }
+            .lpox .tl-note{ margin-top:9px; background:var(--surface-2); border:1px solid var(--line-soft); border-left:3px solid var(--tc);
+                border-radius:9px; padding:9px 12px; font-size:12px; color:var(--ink-2); line-height:1.5; }
+            .lpox .tl-note .tl-note-k{ font-size:9.5px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--tc); display:flex; align-items:center; gap:5px; margin-bottom:3px; opacity:.9; }
 
             /* ACTION PANELS */
             .lpox-action{ border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px; background:var(--surface); }
@@ -248,34 +299,98 @@
                     @endcan
                 </div>
             </div>
-        </div>
 
-        {{-- ===================== STAT STRIP ===================== --}}
-        <div class="lpox-stats">
-            <div class="lpox-stat">
-                <div class="s-k"><i class="demo-psi-basket-coins"></i> Line Items</div>
-                <div class="s-v">{{ $itemCount }} <small>{{ \Illuminate\Support\Str::plural('product', $itemCount) }}</small></div>
-            </div>
-            <div class="lpox-stat">
-                <div class="s-k"><i class="fa fa-sort-amount-asc"></i> Total Qty</div>
-                <div class="s-v">{{ number_format($totalQty, 0) }} <small>units</small></div>
-            </div>
-            <div class="lpox-stat">
-                <div class="s-k"><i class="demo-psi-coin"></i> Order Value</div>
-                <div class="s-v">{{ number_format($subtotal, 2) }}</div>
-            </div>
-            @if ($hasGrn)
-                <div class="lpox-stat">
-                    <div class="s-k"><i class="fa fa-tasks"></i> Fulfilled</div>
-                    <div class="s-v">{{ $overallPercent }}<small>%</small></div>
+            {{-- integrated KPI rail --}}
+            <div class="lpox-hstats">
+                <div class="lpox-hs">
+                    <div class="s-k"><i class="demo-psi-basket-coins"></i> Line Items</div>
+                    <div class="s-v">{{ $itemCount }} <small>{{ Str::plural('product', $itemCount) }}</small></div>
                 </div>
-            @endif
+                <div class="lpox-hs">
+                    <div class="s-k"><i class="fa fa-sort-amount-asc"></i> Total Qty</div>
+                    <div class="s-v">{{ number_format($totalQty, 0) }} <small>units</small></div>
+                </div>
+                <div class="lpox-hs">
+                    <div class="s-k"><i class="demo-psi-coin"></i> Order Value</div>
+                    <div class="s-v">{{ number_format($subtotal, 2) }}</div>
+                </div>
+                @if ($hasGrn)
+                    <div class="lpox-hs">
+                        <div class="s-k"><i class="fa fa-tasks"></i> Fulfilled</div>
+                        <div class="s-v">{{ $overallPercent }}<small>%</small></div>
+                    </div>
+                @endif
+            </div>
         </div>
 
         {{-- ===================== INFO PANELS ===================== --}}
-        <div class="lpox-grid {{ $order->status === LocalPurchaseOrderStatus::PENDING ? 'one' : '' }}">
+        @php
+            // Build the chronological activity timeline.
+            $timeline = [];
+
+            // 1. Created
+            $timeline[] = [
+                'ts' => $order->created_at,
+                'title' => 'Order Created',
+                'badge' => 'Draft',
+                'icon' => 'demo-psi-file',
+                'tone' => 'acc',
+                'who' => $order->creator?->name,
+                'note' => null,
+                'note_label' => null,
+            ];
+
+            // 2. Confirmed
+            if ($order->confirmation_at) {
+                $timeline[] = [
+                    'ts' => $order->confirmation_at,
+                    'title' => 'Confirmed',
+                    'badge' => 'Confirmed',
+                    'icon' => 'fa fa-check-square-o',
+                    'tone' => 'info',
+                    'who' => $order->confirmedBy?->name,
+                    'note' => $order->confirmation_note,
+                    'note_label' => 'Confirmation Note',
+                ];
+            }
+
+            // 3. Approved / Rejected decision
+            if ($order->decision_at && in_array($order->status, [LocalPurchaseOrderStatus::APPROVED, LocalPurchaseOrderStatus::REJECTED])) {
+                $isReject = $order->status === LocalPurchaseOrderStatus::REJECTED;
+                $timeline[] = [
+                    'ts' => $order->decision_at,
+                    'title' => $isReject ? 'Rejected' : 'Approved',
+                    'badge' => $isReject ? 'Rejected' : 'Approved',
+                    'icon' => $isReject ? 'fa fa-times-circle' : 'fa fa-check-circle',
+                    'tone' => $isReject ? 'bad' : 'ok',
+                    'who' => $order->decisionMaker?->name,
+                    'note' => $order->decision_note,
+                    'note_label' => $isReject ? 'Rejection Reason' : 'Remarks',
+                ];
+            }
+
+            // 4. Last updated (only if meaningfully after the last recorded event)
+            $lastEventTs = collect($timeline)->max('ts');
+            if ($order->updated_at && $lastEventTs && $order->updated_at->gt($lastEventTs->copy()->addMinute())) {
+                $timeline[] = [
+                    'ts' => $order->updated_at,
+                    'title' => 'Last Updated',
+                    'badge' => 'Edited',
+                    'icon' => 'fa fa-pencil',
+                    'tone' => 'muted',
+                    'who' => null,
+                    'note' => null,
+                    'note_label' => null,
+                ];
+            }
+
+            // Chronological order.
+            $timeline = collect($timeline)->sortBy('ts')->values();
+        @endphp
+
+        <div class="lpox-grid">
             {{-- Order Information --}}
-            <div class="l-card">
+            <div class="l-card" style="margin-bottom:0">
                 <div class="l-head">
                     <div class="l-ic"><i class="demo-psi-file"></i></div>
                     <div><div class="l-title">Order Information</div><div class="l-sub">Vendor &amp; order metadata</div></div>
@@ -290,46 +405,47 @@
                 </div>
             </div>
 
-            {{-- Decision Details --}}
-            @if (in_array($order->status, [LocalPurchaseOrderStatus::APPROVED, LocalPurchaseOrderStatus::REJECTED]))
-                @php $decTone = $order->status === LocalPurchaseOrderStatus::REJECTED ? 'bad' : 'ok'; @endphp
-                <div class="l-card tone-{{ $decTone }}">
-                    <div class="l-head">
-                        <div class="l-ic t-{{ $decTone }}"><i class="{{ $statusIcon }}"></i></div>
-                        <div>
-                            <div class="l-title">{{ $order->status === LocalPurchaseOrderStatus::REJECTED ? 'Rejection Details' : 'Decision Details' }}</div>
-                            <div class="l-sub">Approval / rejection record</div>
+            {{-- Activity Timeline --}}
+            <div class="l-card" style="margin-bottom:0">
+                <div class="l-head">
+                    <div class="l-ic"><i class="fa fa-history"></i></div>
+                    <div style="flex:1"><div class="l-title">Activity Timeline</div><div class="l-sub">Who did what, and when</div></div>
+                    <span class="l-pill pill-acc">{{ $timeline->count() }} {{ Str::plural('event', $timeline->count()) }}</span>
+                </div>
+                <div class="tl">
+                @foreach ($timeline as $ev)
+                    @php $isLatest = $loop->last; @endphp
+                    <div class="tl-item t-{{ $ev['tone'] }} {{ $isLatest ? 'is-latest' : '' }}">
+                        <div class="tl-rail">
+                            <div class="tl-dot"><i class="{{ $ev['icon'] }}"></i></div>
+                            <div class="tl-line"></div>
+                        </div>
+                        <div class="tl-body">
+                            <div class="tl-top">
+                                <div class="tl-ttlwrap">
+                                    <span class="tl-ttl">{{ $ev['title'] }}</span>
+                                    <span class="tl-badge">{{ $ev['badge'] }}</span>
+                                </div>
+                                <div class="tl-time"><i class="demo-psi-calendar-4"></i> {{ $ev['ts'] ? \Carbon\Carbon::parse($ev['ts'])->format('d M Y, h:i A') : '—' }}</div>
+                            </div>
+                            @if ($ev['who'])
+                                <div class="tl-who">
+                                    <span class="tl-ava">{{ Str::of($ev['who'])->explode(' ')->take(2)->map(fn($p) => Str::substr($p, 0, 1))->implode('') ?: 'U' }}</span>
+                                    Action by <b>{{ $ev['who'] }}</b>
+                                </div>
+                            @endif
+                            @if (!empty($ev['note']))
+                                <div class="tl-note">
+                                    <span class="tl-note-k"><i class="demo-psi-speech-bubble-3"></i> {{ $ev['note_label'] }}</span>
+                                    {{ $ev['note'] }}
+                                </div>
+                            @endif
                         </div>
                     </div>
-                    <div class="kv-grid">
-                        <div class="kv"><div class="kk"><i class="demo-psi-male"></i>Action By</div><div class="vv">{{ $order->decisionMaker?->name ?? '-' }}</div></div>
-                        <div class="kv"><div class="kk"><i class="demo-psi-calendar-4"></i>Action On</div><div class="vv">{{ $order->decision_at?->format('d M Y, h:i A') ?? '-' }}</div></div>
-                        @if ($order->decision_note)
-                            <div class="kv full"><div class="kk"><i class="demo-psi-speech-bubble-3"></i>Remarks</div><div class="vv">{{ $order->decision_note }}</div></div>
-                        @endif
-                    </div>
-                </div>
-            @endif
-        </div>
-
-        {{-- Confirmation Details --}}
-        @if ($order->status !== LocalPurchaseOrderStatus::PENDING)
-            <div class="lpox-grid one">
-                <div class="l-card tone-info">
-                    <div class="l-head">
-                        <div class="l-ic t-info"><i class="fa fa-check-square-o"></i></div>
-                        <div><div class="l-title">Confirmation Details</div><div class="l-sub">Pre-approval confirmation record</div></div>
-                    </div>
-                    <div class="kv-grid">
-                        <div class="kv"><div class="kk"><i class="demo-psi-male"></i>Confirmed By</div><div class="vv">{{ $order->confirmedBy?->name ?? '-' }}</div></div>
-                        <div class="kv"><div class="kk"><i class="demo-psi-calendar-4"></i>Confirmed On</div><div class="vv">{{ $order->confirmation_at?->format('d M Y, h:i A') ?? '-' }}</div></div>
-                        @if ($order->confirmation_note)
-                            <div class="kv full"><div class="kk"><i class="demo-psi-speech-bubble-3"></i>Confirmation Note</div><div class="vv">{{ $order->confirmation_note }}</div></div>
-                        @endif
-                    </div>
+                @endforeach
                 </div>
             </div>
-        @endif
+        </div>
 
         {{-- ===================== PRODUCTS ===================== --}}
         <div class="l-sec l-card">
@@ -425,7 +541,7 @@
                         <div class="l-sub">Payment terms &amp; remarks for this order</div>
                     </div>
                     @if (count($terms))
-                        <span class="l-pill pill-acc">{{ count($terms) }} {{ \Illuminate\Support\Str::plural('term', count($terms)) }}</span>
+                        <span class="l-pill pill-acc">{{ count($terms) }} {{ Str::plural('term', count($terms)) }}</span>
                     @endif
                     @can('editTerms', $order)
                         <button type="button" class="l-btn" style="background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line);padding:5px 12px;font-size:11.5px;"

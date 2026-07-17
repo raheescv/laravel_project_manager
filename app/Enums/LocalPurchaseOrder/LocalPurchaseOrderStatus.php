@@ -13,9 +13,9 @@ enum LocalPurchaseOrderStatus: string
     {
         return match ($this) {
             self::PENDING => 'Pending',
+            self::CONFIRMED => 'Confirmed',
             self::APPROVED => 'Approved',
             self::REJECTED => 'Rejected',
-            self::CONFIRMED => 'Confirmed',
         };
     }
 
