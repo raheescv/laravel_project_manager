@@ -588,14 +588,14 @@
                                                         <i class="fa fa-credit-card text-primary me-1 small"></i>
                                                         Expense Account
                                                     </label>
-                                                    {{ html()->select('expense_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select expense account')->id('expense_account_id') }}
+                                                    {{ html()->select('expense_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select expense account')->id('expense_account_id')->attribute('account_type', 'expense') }}
                                                 </div>
                                                 <div class="col-md-6" wire:ignore>
                                                     <label for="income_account_id" class="form-label fw-medium">
                                                         <i class="fa fa-bank text-success me-1 small"></i>
                                                         Income Account
                                                     </label>
-                                                    {{ html()->select('income_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select income account')->id('income_account_id') }}
+                                                    {{ html()->select('income_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select income account')->id('income_account_id')->attribute('account_type', 'income') }}
                                                 </div>
                                             </div>
                                         </div>
@@ -1107,7 +1107,7 @@
                                                                 <label for="accumulated_depreciation_account_id"
                                                                     class="form-label fw-medium">Accumulated Depreciation Account <span
                                                                         class="text-danger">*</span></label>
-                                                                {{ html()->select('accumulated_depreciation_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select accumulated depreciation account')->id('accumulated_depreciation_account_id') }}
+                                                                {{ html()->select('accumulated_depreciation_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select accumulated depreciation account')->id('accumulated_depreciation_account_id')->attribute('account_type', 'asset') }}
                                                                 <small class="text-muted mt-1 d-block">This contra asset account stores the total
                                                                     depreciation posted over the asset life.</small>
                                                             </div>
@@ -1115,7 +1115,7 @@
                                                                 <label for="depreciation_expense_account_id"
                                                                     class="form-label fw-medium">Depreciation Expense Account <span
                                                                         class="text-danger">*</span></label>
-                                                                {{ html()->select('depreciation_expense_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select depreciation expense account')->id('depreciation_expense_account_id') }}
+                                                                {{ html()->select('depreciation_expense_account_id', [])->value('')->class('select-account_id-list border-primary-subtle shadow-sm')->placeholder('Select depreciation expense account')->id('depreciation_expense_account_id')->attribute('account_type', 'expense') }}
                                                                 <small class="text-muted mt-1 d-block">Each posted depreciation entry will debit this
                                                                     expense account.</small>
                                                             </div>

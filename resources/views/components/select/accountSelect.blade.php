@@ -1,6 +1,7 @@
 <script type="text/javascript">
     function initAccountSelectList(el, onChange) {
         var url = "{{ route('account::list') }}";
+        var account_type = el.getAttribute('account_type') || null;
         return new TomSelect(el, {
             persist: false,
             plugins: ['remove_button'],
@@ -8,7 +9,11 @@
             labelField: 'name',
             searchField: ['name', 'id'],
             load: function(query, callback) {
-                fetch(url + '?query=' + encodeURIComponent(query))
+                var fetchUrl = url + '?query=' + encodeURIComponent(query);
+                if (account_type) {
+                    fetchUrl += '&account_type=' + account_type;
+                }
+                fetch(fetchUrl)
                     .then(r => r.json()).then(j => callback(j.items)).catch(() => callback());
             },
             onFocus: function() { this.load(''); },
