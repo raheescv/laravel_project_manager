@@ -333,9 +333,16 @@ class Page extends Component
 
             $id = $this->items[$targetKey]['id'] ?? '';
             if ($id) {
-                $response = (new ItemDeleteAction())->execute($id);
-                if (! $response['success']) {
-                    throw new \Exception($response['message'], 1);
+                DB::beginTransaction();
+                try {
+                    $response = (new ItemDeleteAction())->execute($id);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message'], 1);
+                    }
+                    DB::commit();
+                } catch (\Throwable $th) {
+                    DB::rollback();
+                    throw $th;
                 }
             }
 
@@ -353,9 +360,16 @@ class Page extends Component
         try {
             $id = $this->payments[$index]['id'] ?? '';
             if ($id) {
-                $response = (new PaymentDeleteAction())->execute($id);
-                if (! $response['success']) {
-                    throw new \Exception($response['message'], 1);
+                DB::beginTransaction();
+                try {
+                    $response = (new PaymentDeleteAction())->execute($id);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message'], 1);
+                    }
+                    DB::commit();
+                } catch (\Throwable $th) {
+                    DB::rollback();
+                    throw $th;
                 }
             }
             unset($this->payments[$index]);
