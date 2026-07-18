@@ -17,7 +17,9 @@ class DeleteAction
 
             $nonDeletable = $purchases->filter(fn ($p) => $p->status !== 'pending');
 
-            Purchase::whereIn('id', $deletable->pluck('id'))->delete();
+            $deletableIds = $deletable->pluck('id');
+            PurchaseItem::whereIn('purchase_id', $deletableIds)->delete();
+            Purchase::whereIn('id', $deletableIds)->delete();
 
             $return['success'] = true;
 

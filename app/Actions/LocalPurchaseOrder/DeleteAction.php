@@ -4,6 +4,7 @@ namespace App\Actions\LocalPurchaseOrder;
 
 use App\Enums\LocalPurchaseOrder\LocalPurchaseOrderStatus;
 use App\Models\LocalPurchaseOrder;
+use App\Models\LocalPurchaseOrderItem;
 
 class DeleteAction
 {
@@ -20,7 +21,9 @@ class DeleteAction
 
             $nonDeletable = $orders->filter(fn ($o) => $o->status !== LocalPurchaseOrderStatus::PENDING);
 
-            LocalPurchaseOrder::whereIn('id', $deletable->pluck('id'))->delete();
+            $deletableIds = $deletable->pluck('id');
+            LocalPurchaseOrderItem::whereIn('local_purchase_order_id', $deletableIds)->delete();
+            LocalPurchaseOrder::whereIn('id', $deletableIds)->delete();
 
             $return['success'] = true;
 

@@ -24,7 +24,9 @@ class DeleteAction
                 fn ($g) => $g->status !== GrnStatus::PENDING
             );
 
-            Grn::whereIn('id', $deletable->pluck('id'))->delete();
+            $deletableIds = $deletable->pluck('id');
+            GrnItem::whereIn('grn_id', $deletableIds)->delete();
+            Grn::whereIn('id', $deletableIds)->delete();
 
             $return['success'] = true;
 
