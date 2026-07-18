@@ -34,7 +34,7 @@ class Page extends Component
 
     public function mount(?int $purchase_id = null)
     {
-        $this->approvedLpos = LocalPurchaseOrder::confirmed()
+        $this->approvedLpos = LocalPurchaseOrder::approved()
             ->with('branch', 'vendor')
             ->latest()
             ->get()
