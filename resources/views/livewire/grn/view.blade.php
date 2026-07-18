@@ -621,5 +621,26 @@
                 </div>
             </div>
         @endif
+
+        {{-- ===================== REVERSE (accepted GRN) ===================== --}}
+        @if ($grn->status == GrnStatus::ACCEPTED)
+            @can('grn.reverse')
+                <div class="lpox-action tone-warn">
+                    <div class="a-body">
+                        <div class="a-head">
+                            <div class="a-ic"><i class="fa fa-undo"></i></div>
+                            <div><div class="a-title">Reverse GRN</div><div class="a-sub">Roll back the received stock and journal entries</div></div>
+                        </div>
+                        <div class="lpox-lbl"><i class="demo-psi-speech-bubble-3"></i> Remarks</div>
+                        <textarea class="lpox-ta" rows="3" wire:model="remarks" placeholder="Reason for reversal (required)"></textarea>
+                        <div class="a-actions">
+                            <button type="button" class="l-btn l-btn-bad" wire:click="reverse" wire:confirm="This will roll back stock and journals for this GRN. Continue?">
+                                <i class="fa fa-undo"></i> Reverse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endcan
+        @endif
     </div>
 </div>

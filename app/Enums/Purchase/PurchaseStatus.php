@@ -10,6 +10,7 @@ enum PurchaseStatus: string
     case REJECTED = 'rejected';
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
+    case REVERSED = 'reversed';
 
     public function label(): string
     {
@@ -20,6 +21,7 @@ enum PurchaseStatus: string
             self::REJECTED => 'Rejected',
             self::COMPLETED => 'Completed',
             self::CANCELLED => 'Cancelled',
+            self::REVERSED => 'Reversed',
         };
     }
 
@@ -34,6 +36,8 @@ enum PurchaseStatus: string
             self::PENDING => 'warning',
             self::ACCEPTED => 'success',
             self::REJECTED => 'danger',
+            self::REVERSED => 'secondary',
+            default => 'secondary',
         };
     }
 
@@ -43,6 +47,8 @@ enum PurchaseStatus: string
             self::PENDING => 'fa fa-clock',
             self::ACCEPTED => 'fa fa-check-circle',
             self::REJECTED => 'fa fa-times-circle',
+            self::REVERSED => 'fa fa-undo',
+            default => 'fa fa-circle',
         };
     }
 }

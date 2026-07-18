@@ -101,6 +101,30 @@ class View extends Component
         }
     }
 
+    public function reverse()
+    {
+        abort_unless(auth()->user()?->can('grn.reverse'), 403);
+        $this->validate([
+            'remarks' => 'required|string|min:3',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $response = (new ReverseAction())->execute($this->grn, Auth::id(), $this->remarks);
+            if (! $response['success']) {
+                throw new Exception($response['message']);
+            }
+
+            DB::commit();
+            $this->dispatch('success', ['message' => $response['message']]);
+            $this->navigateBack();
+        } catch (Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
     private function navigateBack()
     {
         return $this->redirect(route('grn::view', $this->grn->id), true);

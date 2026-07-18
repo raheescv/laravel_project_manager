@@ -650,5 +650,26 @@
                 </div>
             </div>
         @endif
+
+        {{-- ===================== REVERSE (accepted bill) ===================== --}}
+        @if ($purchase->status === 'accepted')
+            @can('lpo-purchase.reverse')
+                <div class="lpox-action tone-warn">
+                    <div class="a-body">
+                        <div class="a-head">
+                            <div class="a-ic"><i class="fa fa-undo"></i></div>
+                            <div><div class="a-title">Reverse Purchase</div><div class="a-sub">Roll back the journal entries for this bill</div></div>
+                        </div>
+                        <div class="lpox-lbl"><i class="demo-psi-speech-bubble-3"></i> Remarks</div>
+                        <textarea class="lpox-ta" rows="3" wire:model="remarks" placeholder="Reason for reversal (required)"></textarea>
+                        <div class="a-actions">
+                            <button type="button" class="l-btn l-btn-bad" wire:click="reverse" wire:confirm="This will roll back the journal entries for this bill. Continue?">
+                                <i class="fa fa-undo"></i> Reverse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endcan
+        @endif
     </div>
 </div>

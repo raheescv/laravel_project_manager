@@ -7,6 +7,7 @@ enum GrnStatus: string
     case PENDING = 'pending';
     case ACCEPTED = 'accepted';
     case REJECTED = 'rejected';
+    case REVERSED = 'reversed';
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum GrnStatus: string
             self::PENDING => 'Pending',
             self::ACCEPTED => 'Accepted',
             self::REJECTED => 'Rejected',
+            self::REVERSED => 'Reversed',
         };
     }
 
