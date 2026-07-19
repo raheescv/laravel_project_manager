@@ -9,6 +9,7 @@ use App\Models\LocalPurchaseOrder;
 use App\Models\Purchase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use App\Actions\Purchase\Payment\ReverseAction;
 
 class View extends Component
 {
@@ -43,6 +44,22 @@ class View extends Component
         $this->statement_to_date = date('Y-m-d');
         $this->purchase_from_date = date('Y-m-d', strtotime('-3 months'));
         $this->purchase_to_date = date('Y-m-d');
+    }
+
+    public function reversePayment($paymentId)
+    {
+        DB::beginTransaction();
+        try {
+            $response = (new ReverseAction())->execute($paymentId);
+            if (! $response['success']) {
+                throw new \Exception($response['message'], 1);
+            }
+            DB::commit();
+            $this->dispatch('success', ['message' => 'Payment reversed successfully']);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
     }
 
     public function render()

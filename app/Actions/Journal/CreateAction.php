@@ -28,6 +28,9 @@ class CreateAction
 
                 $single['model'] = $single['model'] ?? null;
                 $single['model_id'] = $single['model_id'] ?? null;
+                $single['cheque_no'] = $single['cheque_no'] ?? null;
+                $single['bank_name'] = $single['bank_name'] ?? null;
+                $single['cheque_date'] = $single['cheque_date'] ?? null;
                 $single['journal_id'] = $model->id;
                 $single['created_at'] = now();
                 $single['updated_at'] = now();

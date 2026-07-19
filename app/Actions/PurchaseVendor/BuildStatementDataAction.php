@@ -54,6 +54,10 @@ class BuildStatementDataAction
                 'model' => $entry->model,
                 'model_invoice_no' => $entry->purchase?->invoice_no,
                 'model_id' => $entry->model_id,
+                'cheque_no' => $entry->cheque_no,
+                'bank_name' => $entry->bank_name,
+                'cheque_date' => $entry->cheque_date,
+                'has_cheque' => filled($entry->cheque_no) || filled($entry->bank_name) || filled($entry->cheque_date),
                 'debit' => (float) $entry->debit,
                 'credit' => (float) $entry->credit,
                 'balance' => $runningBalance,
@@ -61,6 +65,9 @@ class BuildStatementDataAction
                 'can_view_payment_voucher' => $entry->model === 'PurchasePayment'
                     && (float) $entry->debit > 0
                     && filled($entry->journal_id),
+                'can_reverse_payment' => $entry->model === 'PurchasePayment'
+                    && (float) $entry->debit > 0
+                    && filled($entry->model_id),
             ];
         });
 

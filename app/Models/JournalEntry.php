@@ -49,6 +49,9 @@ class JournalEntry extends Model implements AuditableContracts
         'description',
         'journal_remarks',
         'reference_number',
+        'cheque_no',
+        'bank_name',
+        'cheque_date',
         'journal_model',
         'journal_model_id',
 

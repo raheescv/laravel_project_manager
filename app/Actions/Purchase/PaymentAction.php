@@ -55,19 +55,26 @@ class PaymentAction
             }
 
             if ($payment) {
-                $purchasePaymentData = [
+                $isCheque = (bool) ($paymentMethod?->is_cheque);
+                $chequeDetails = [
+                    'cheque_no' => $isCheque ? ($paymentData['cheque_no'] ?? null) : null,
+                    'bank_name' => $isCheque ? ($paymentData['bank_name'] ?? null) : null,
+                    'cheque_date' => $isCheque ? ($paymentData['cheque_date'] ?? null) : null,
+                ];
+
+                $purchasePaymentData = array_merge([
                     'purchase_id' => $purchase_id,
                     'payment_method_id' => $paymentData['payment_method_id'],
                     'date' => $paymentData['date'],
                     'amount' => $payment,
-                ];
+                ], $chequeDetails);
 
                 $purchasePaymentResponse = (new PurchasePaymentCreateAction())->execute($purchasePaymentData, $user_id);
                 $purchasePaymentId = $purchasePaymentResponse['data']['id'];
 
                 $remarks = $paymentMethod->name.' payment made by '.$name;
 
-                $entries[] = [
+                $entries[] = array_merge([
                     'account_id' => $paymentData['payment_method_id'],
                     'counter_account_id' => $account_id,
                     'debit' => 0,
@@ -76,8 +83,8 @@ class PaymentAction
                     'remarks' => $remarks,
                     'model' => 'PurchasePayment',
                     'model_id' => $purchasePaymentId,
-                ];
-                $entries[] = [
+                ], $chequeDetails);
+                $entries[] = array_merge([
                     'account_id' => $account_id,
                     'counter_account_id' => $paymentData['payment_method_id'],
                     'debit' => $payment,
@@ -86,7 +93,7 @@ class PaymentAction
                     'remarks' => $remarks,
                     'model' => 'PurchasePayment',
                     'model_id' => $purchasePaymentId,
-                ];
+                ], $chequeDetails);
             }
 
             $journalData['entries'] = $entries;

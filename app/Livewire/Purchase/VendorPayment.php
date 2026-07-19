@@ -35,6 +35,8 @@ class VendorPayment extends Component
 
     public $account_ids = [];
 
+    public $isChequeMethod = false;
+
     public function open($name, $vendor_id)
     {
         $this->mount($name, $vendor_id);
@@ -54,7 +56,11 @@ class VendorPayment extends Component
             'amount' => 0,
             'remarks' => '',
             'payment_method_id' => 1,
+            'cheque_no' => '',
+            'bank_name' => '',
+            'cheque_date' => date('Y-m-d'),
         ];
+        $this->isChequeMethod = (bool) Account::where('id', $this->default_payment_method_id)->value('is_cheque');
         $this->total = [
             'total' => 0,
             'other_discount' => 0,
@@ -118,6 +124,9 @@ class VendorPayment extends Component
         }
         if (in_array($key, ['payment.amount'])) {
             $this->amountSplit();
+        }
+        if ($key == 'payment.payment_method_id') {
+            $this->isChequeMethod = (bool) Account::where('id', $value)->value('is_cheque');
         }
         if ($key == 'checkAll') {
             foreach ($this->vendor_purchases as $key => $item) {
@@ -199,8 +208,17 @@ class VendorPayment extends Component
 
     public function save()
     {
-        abort_unless(auth()->user()?->can('local purchase order.payments'), 403);
+        abort_unless(Auth::user()?->can('local purchase order.payments'), 403);
         $this->validate();
+        if ($this->isChequeMethod) {
+            $this->validate([
+                'payment.cheque_no' => ['required', 'string'],
+                'payment.cheque_date' => ['required', 'date'],
+            ], [
+                'payment.cheque_no.required' => 'The cheque no field is required',
+                'payment.cheque_date.required' => 'The cheque date field is required',
+            ]);
+        }
         try {
             DB::beginTransaction();
             $vendor_purchases = collect($this->vendor_purchases);

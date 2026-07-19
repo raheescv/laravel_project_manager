@@ -132,6 +132,21 @@
         .pv-wrap .pv-stmt-table tfoot td { font-weight: 700; background: #f1f5f9; }
         .pv-wrap .pv-stmt-table tfoot tr:last-child td { background: #e0eaff; }
 
+        /* Cheque details chips */
+        .pv-cheque { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
+        .pv-cheque-chip {
+            display: inline-flex; align-items: center; gap: 0.28rem;
+            padding: 0.1rem 0.45rem; border-radius: 999px;
+            font-size: 0.68rem; font-weight: 600; line-height: 1.5;
+            background: #eef2ff; color: #3730a3; border: 1px solid #e0e7ff;
+            white-space: nowrap;
+        }
+        .pv-cheque-chip i { font-size: 0.66rem; opacity: 0.8; }
+        .pv-cheque-chip.is-no   { background: #eef2ff; color: #3730a3; border-color: #e0e7ff; }
+        .pv-cheque-chip.is-bank { background: #ecfeff; color: #155e63; border-color: #cff2f5; }
+        .pv-cheque-chip.is-date { background: #f0fdf4; color: #166534; border-color: #dcfce7; }
+        .pv-cheque-chip .lbl { color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-size: 0.6rem; }
+
         @media (max-width: 767px) {
             .pv-hero { flex-direction: column; align-items: flex-start; }
             .pv-hero-stats { flex-wrap: wrap; }
@@ -300,15 +315,40 @@
                                                     <span class="text-muted">-</span>
                                                 @endif
                                             </td>
-                                            <td>{{ $entry['remarks'] ?: '-' }}</td>
-                                            <td class="text-center">
+                                            <td>
+                                                <div>{{ $entry['remarks'] ?: '-' }}</div>
+                                                @if (! empty($entry['has_cheque']))
+                                                    <div class="pv-cheque">
+                                                        @if (! empty($entry['cheque_no']))
+                                                            <span class="pv-cheque-chip is-no"><i class="fa fa-money"></i><span class="lbl">Cheque</span> {{ $entry['cheque_no'] }}</span>
+                                                        @endif
+                                                        @if (! empty($entry['bank_name']))
+                                                            <span class="pv-cheque-chip is-bank"><i class="fa fa-university"></i>{{ $entry['bank_name'] }}</span>
+                                                        @endif
+                                                        @if (! empty($entry['cheque_date']))
+                                                            <span class="pv-cheque-chip is-date"><i class="fa fa-calendar-o"></i>{{ systemDate($entry['cheque_date']) }}</span>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td class="text-center text-nowrap">
                                                 @if (! empty($entry['can_view_payment_voucher']))
                                                     <a href="{{ route('print::purchase_vendor::payment-voucher', ['vendorId' => $vendor_id, 'journalId' => $entry['journal_id']]) }}"
                                                         target="_blank" rel="noopener"
                                                         class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.7rem;">
                                                         <i class="fa fa-file-pdf-o"></i> Voucher
                                                     </a>
-                                                @else
+                                                @endif
+                                                @if (! empty($entry['can_reverse_payment']))
+                                                    <button type="button"
+                                                        wire:click="reversePayment({{ $entry['model_id'] }})"
+                                                        wire:confirm="Reverse this payment? This will delete the payment and its journal entries."
+                                                        wire:loading.attr="disabled"
+                                                        class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size:0.7rem;">
+                                                        <i class="fa fa-undo"></i> Reverse
+                                                    </button>
+                                                @endif
+                                                @if (empty($entry['can_view_payment_voucher']) && empty($entry['can_reverse_payment']))
                                                     <span class="text-muted">-</span>
                                                 @endif
                                             </td>

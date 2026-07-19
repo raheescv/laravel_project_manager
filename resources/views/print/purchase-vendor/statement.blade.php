@@ -84,6 +84,18 @@
         .stmt tbody tr.even td { background: #F6F8FA; }
         .stmt tbody tr.opening td { background: #fff; font-weight: 700; }
         .stmt .rmk { display: block; color: #6b7280; font-size: 8.3px; margin-top: 1px; }
+        /* Cheque detail chips (DomPDF-safe: inline-block, solid hex, no flex) */
+        .chq { margin-top: 3px; }
+        .chq-chip {
+            display: inline-block; padding: 1px 5px; margin: 1px 3px 0 0;
+            font-size: 7.8px; font-weight: 700; line-height: 1.5;
+            border: 1px solid #D5DBE2; background: #F0F2F5; color: #334155;
+            border-radius: 2px; white-space: nowrap;
+        }
+        .chq-chip .k { color: #9aa3af; font-weight: 700; }
+        .chq-chip.no   { background: #EEF1F6; color: #1F2937; border-color: #D5DBE2; }
+        .chq-chip.bank { background: #F0F2F5; color: #334155; border-color: #D5DBE2; }
+        .chq-chip.date { background: #F6F3EA; color: #9A7B25; border-color: #E7DFC9; }
         .stmt tfoot td { padding: 6px 7px; border: 1px solid #D5DBE2; font-size: 9.5px; font-weight: 700; }
         .stmt tfoot tr.ft1 td { background: #F0F2F5; }
         .stmt tfoot tr.ft2 td { background: #1F2937; color: #fff; border-color: #1F2937; }
@@ -210,6 +222,19 @@
                             {{ $row->particulars ?: '—' }}
                             @if ($row->remarks)
                                 <span class="rmk">{{ $row->remarks }}</span>
+                            @endif
+                            @if (! empty($row->has_cheque))
+                                <div class="chq">
+                                    @if (! empty($row->cheque_no))
+                                        <span class="chq-chip no"><span class="k">Cheque</span> {{ $row->cheque_no }}</span>
+                                    @endif
+                                    @if (! empty($row->bank_name))
+                                        <span class="chq-chip bank">{{ $row->bank_name }}</span>
+                                    @endif
+                                    @if (! empty($row->cheque_date))
+                                        <span class="chq-chip date"><span class="k">Dated</span> {{ systemDate($row->cheque_date) }}</span>
+                                    @endif
+                                </div>
                             @endif
                         </td>
                         <td>{{ $row?->model_invoice_no ?: '—' }}</td>
