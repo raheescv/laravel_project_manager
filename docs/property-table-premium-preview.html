@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Properties · Premium List — Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+  :root{
+    --bs-primary:#3b5bdb; --bs-primary-rgb:59,91,219;
+    --bs-success:#1f9d63; --bs-success-rgb:31,157,99;
+    --bs-info:#2a9fd6;    --bs-info-rgb:42,159,214;
+    --bs-warning:#d99a17; --bs-warning-rgb:217,154,23;
+    --bs-danger:#d64545;  --bs-danger-rgb:214,69,69;
+    --bs-emphasis-color:#0f1522; --bs-body-color:#333b49;
+    --bs-secondary-color:#697488; --bs-tertiary-color:#98a1b0;
+    --page:#eef1f6;
+  }
+  [data-bs-theme="dark"]{
+    --bs-emphasis-color:#eef1f6; --bs-body-color:#c4ccd8;
+    --bs-secondary-color:#8b95a5; --bs-tertiary-color:#5f6a7a;
+    --page:#1b2027;
+  }
+  body{ margin:0; background:var(--page); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; padding:22px; transition:background .2s; }
+  .toolbar-demo{ max-width:1240px; margin:0 auto 16px; display:flex; justify-content:flex-end; gap:8px; }
+  .toolbar-demo button{ border:0; padding:7px 14px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; background:#fff; color:#333; box-shadow:0 2px 8px rgba(0,0,0,.12); }
+  [data-bs-theme="dark"] .toolbar-demo button{ background:#2b323b; color:#eee; }
+  .wrap{ max-width:1240px; margin:0 auto; }
+
+  /* ============ .propx — Premium Compact list system ============ */
+  .propx{
+    --acc:var(--bs-primary); --acc-rgb:var(--bs-primary-rgb);
+    --acc-d:color-mix(in srgb, var(--bs-primary), #000 14%);
+    --acc-deep:color-mix(in srgb, var(--bs-primary), #000 42%);
+    --acc-tint:color-mix(in srgb, var(--bs-primary), transparent 90%);
+    --surface:#ffffff; --surface-2:#f5f7fa;
+    --ink:var(--bs-emphasis-color); --ink-2:var(--bs-body-color);
+    --muted:var(--bs-secondary-color); --faint:var(--bs-tertiary-color);
+    --line:#e7ebf1; --line-soft:#eff2f6;
+    --ok:var(--bs-success); --ok-rgb:var(--bs-success-rgb);
+    --info:var(--bs-info); --info-rgb:var(--bs-info-rgb);
+    --warn:var(--bs-warning); --warn-rgb:var(--bs-warning-rgb);
+    --bad:var(--bs-danger); --bad-rgb:var(--bs-danger-rgb);
+    --shadow:0 1px 2px rgba(16,24,40,.05), 0 8px 24px -10px rgba(16,24,40,.12);
+    --shadow-lg:0 18px 42px -18px rgba(var(--acc-rgb),.40), 0 8px 18px -12px rgba(16,24,40,.20);
+    color:var(--ink); font-size:12.5px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .propx *{ box-sizing:border-box; }
+  [data-bs-theme="dark"] .propx{
+    --surface:#272d34; --surface-2:#2e353d; --line:#3a424c; --line-soft:#343c45;
+    --acc-tint:color-mix(in srgb, var(--bs-primary), transparent 84%);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -10px rgba(0,0,0,.5);
+    --shadow-lg:0 18px 44px -18px rgba(0,0,0,.6), 0 8px 18px -12px rgba(0,0,0,.5);
+  }
+
+  .propx .p-card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+
+  /* HERO */
+  .propx-hero{ position:relative; border-radius:16px; overflow:hidden; margin-bottom:12px; box-shadow:var(--shadow-lg);
+    background:radial-gradient(120% 165% at 100% 0, color-mix(in srgb, var(--acc) 28%, transparent), transparent 55%),
+              linear-gradient(125deg, var(--acc-deep), var(--acc-d)); }
+  .propx-hero .glow{ position:absolute; right:-60px; top:-90px; width:300px; height:300px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.16), transparent 65%); pointer-events:none; }
+  .propx-hero-inner{ position:relative; display:flex; align-items:center; gap:15px; padding:15px 18px; flex-wrap:wrap; }
+  .propx-hero .doc-ic{ width:46px; height:46px; border-radius:13px; flex:0 0 auto; background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+  .propx-hero .h-main{ flex:1; min-width:200px; color:#fff; }
+  .propx-hero .h-eyebrow{ font-size:9.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
+  .propx-hero .h-ref{ font-size:20px; font-weight:800; letter-spacing:.3px; line-height:1.15; margin-top:2px; }
+  .propx-hero .h-meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; font-size:11.5px; color:rgba(255,255,255,.86); }
+  .propx-hero .h-meta i{ opacity:.82; margin-right:5px; }
+  .propx-hero .h-right{ display:flex; gap:8px; flex-wrap:wrap; }
+  .propx-hero .btn-hero{ background:#fff; color:var(--acc-deep); border:0; padding:8px 14px; border-radius:9px; font-size:11.5px; font-weight:700;
+    cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,.18); transition:transform .12s; }
+  .propx-hero .btn-hero:hover{ transform:translateY(-1px); }
+  .propx-hero .btn-hero.ghost{ background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.28); box-shadow:none; }
+  /* KPI rail */
+  .propx-hstats{ position:relative; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1px;
+    background:rgba(255,255,255,.14); border-top:1px solid rgba(255,255,255,.14); }
+  .propx-hs{ background:linear-gradient(180deg, rgba(255,255,255,.05), transparent); padding:10px 16px; }
+  .propx-hs .s-k{ font-size:9px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.66); display:flex; align-items:center; gap:5px; }
+  .propx-hs .s-v{ font-size:16px; font-weight:800; color:#fff; margin-top:3px; letter-spacing:.2px; }
+  .propx-hs .s-v .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+
+  /* TOOLBAR + FILTERS card */
+  .propx .p-toolbar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:13px 16px; border-bottom:1px solid var(--line-soft); }
+  .propx .p-search{ flex:1; min-width:180px; display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:8px 12px; }
+  .propx .p-search i{ color:var(--muted); }
+  .propx .p-search input{ border:0; background:transparent; outline:none; width:100%; font-size:12.5px; color:var(--ink); }
+  .propx .btn-x{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:var(--surface); color:var(--ink-2); padding:8px 12px; border-radius:10px; font-size:11.5px; font-weight:700; cursor:pointer; }
+  .propx .btn-x:hover{ border-color:var(--acc); color:var(--acc-d); }
+  .propx .btn-x.ok{ color:var(--ok); } .propx .btn-x.bad{ color:var(--bad); }
+  .propx .p-select{ position:relative; }
+  .propx .p-select select{ appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:8px 30px 8px 12px; border-radius:10px; font-size:11.5px; font-weight:600; cursor:pointer; }
+  .propx .p-select::after{ content:"\f107"; font-family:FontAwesome; position:absolute; right:11px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; font-size:12px; }
+
+  .propx .p-filters{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; padding:14px 16px; border-bottom:1px solid var(--line-soft); background:color-mix(in srgb, var(--acc) 3%, var(--surface)); }
+  .propx .f-item label{ font-size:10px; font-weight:750; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+  .propx .f-item label i{ color:var(--acc); }
+  .propx .f-item .p-select select{ width:100%; }
+
+  /* Columns dropdown */
+  .propx .cols-pop{ position:absolute; right:0; top:110%; z-index:20; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-lg); padding:8px; min-width:200px; }
+  .propx .cols-pop .ch{ font-size:9.5px; font-weight:750; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); padding:4px 8px; }
+  .propx .cols-pop label{ display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:8px; font-size:12px; font-weight:600; color:var(--ink); cursor:pointer; }
+  .propx .cols-pop label:hover{ background:var(--surface-2); }
+
+  /* TABLE */
+  .propx .p-tblwrap{ overflow-x:auto; }
+  .propx table.p-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .propx table.p-tbl thead th{ background:var(--surface-2); color:var(--muted); font-size:10px; font-weight:750; letter-spacing:.6px; text-transform:uppercase; text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .propx table.p-tbl thead th .sort{ color:var(--faint); margin-left:4px; }
+  .propx table.p-tbl tbody td{ padding:11px 12px; border-bottom:1px solid var(--line-soft); vertical-align:middle; color:var(--ink-2); }
+  .propx table.p-tbl tbody tr{ transition:background .12s; }
+  .propx table.p-tbl tbody tr:hover{ background:var(--acc-tint); }
+  .propx .num-cell{ display:flex; align-items:center; gap:9px; }
+  .propx .num-ic{ width:30px; height:30px; border-radius:9px; background:var(--acc-tint); color:var(--acc-d); display:flex; align-items:center; justify-content:center; font-size:13px; flex:0 0 auto; }
+  .propx .num-cell .nm{ font-weight:750; color:var(--ink); }
+  .propx .num-cell .sub{ font-size:10.5px; color:var(--muted); }
+  .propx .chip{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:700; letter-spacing:.2px; }
+  .propx .chip.soft{ background:var(--surface-2); color:var(--ink-2); border:1px solid var(--line); }
+  .propx .chip.acc{ background:var(--acc-tint); color:var(--acc-d); }
+  .propx .st{ display:inline-flex; align-items:center; gap:6px; padding:4px 11px; border-radius:999px; font-size:10.5px; font-weight:750; letter-spacing:.3px; }
+  .propx .st .dot{ width:7px; height:7px; border-radius:50%; }
+  .propx .st.occupied{ background:rgba(var(--bad-rgb),.12); color:var(--bad); } .propx .st.occupied .dot{ background:var(--bad); }
+  .propx .st.vacant{ background:rgba(var(--ok-rgb),.13); color:var(--ok); } .propx .st.vacant .dot{ background:var(--ok); }
+  .propx .st.booked{ background:rgba(var(--warn-rgb),.14); color:var(--warn); } .propx .st.booked .dot{ background:var(--warn); }
+  .propx .rent{ font-weight:750; color:var(--ink); } .propx .rent small{ color:var(--muted); font-weight:600; }
+  .propx .muted{ color:var(--faint); }
+  .propx .act-btn{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--acc-d); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+  .propx .act-btn:hover{ background:var(--acc); color:#fff; border-color:var(--acc); }
+  .propx .p-check{ width:15px; height:15px; accent-color:var(--acc); }
+
+  /* FOOTER */
+  .propx .p-foot{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:12px 16px; }
+  .propx .p-foot .info{ font-size:11.5px; color:var(--muted); }
+  .propx .pager{ display:flex; gap:4px; }
+  .propx .pager a{ min-width:32px; height:32px; padding:0 9px; border:1px solid var(--line); border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--ink-2); text-decoration:none; }
+  .propx .pager a.active{ background:var(--acc); color:#fff; border-color:var(--acc); }
+  .propx .pager a.disabled{ opacity:.45; pointer-events:none; }
+</style>
+</head>
+<body>
+
+<div class="toolbar-demo">
+  <button onclick="document.documentElement.setAttribute('data-bs-theme','light')">☀ Light</button>
+  <button onclick="document.documentElement.setAttribute('data-bs-theme','dark')">🌙 Dark</button>
+</div>
+
+<div class="wrap">
+  <div class="propx">
+
+    <!-- HERO -->
+    <div class="propx-hero">
+      <div class="glow"></div>
+      <div class="propx-hero-inner">
+        <div class="doc-ic"><i class="fa fa-building"></i></div>
+        <div class="h-main">
+          <div class="h-eyebrow">Real Estate · Portfolio</div>
+          <div class="h-ref">Properties</div>
+          <div class="h-meta">
+            <span><i class="fa fa-th-large"></i>248 units</span>
+            <span><i class="fa fa-object-group"></i>12 projects</span>
+            <span><i class="fa fa-building-o"></i>34 buildings</span>
+          </div>
+        </div>
+        <div class="h-right">
+          <a class="btn-hero ghost"><i class="fa fa-cloud-upload"></i>Import</a>
+          <a class="btn-hero"><i class="fa fa-plus-circle"></i>Add Property</a>
+        </div>
+      </div>
+      <div class="propx-hstats">
+        <div class="propx-hs"><div class="s-k"><i class="fa fa-th-large"></i>Total</div><div class="s-v">248</div></div>
+        <div class="propx-hs"><div class="s-k"><i class="fa fa-check-circle"></i>Vacant</div><div class="s-v"><span class="dot" style="background:var(--bs-success)"></span>76</div></div>
+        <div class="propx-hs"><div class="s-k"><i class="fa fa-user"></i>Occupied</div><div class="s-v"><span class="dot" style="background:var(--bs-danger)"></span>158</div></div>
+        <div class="propx-hs"><div class="s-k"><i class="fa fa-bookmark"></i>Booked</div><div class="s-v"><span class="dot" style="background:var(--bs-warning)"></span>14</div></div>
+        <div class="propx-hs"><div class="s-k"><i class="fa fa-money"></i>Monthly Rent</div><div class="s-v">1.24M <small style="font-size:10px;color:rgba(255,255,255,.7)">QAR</small></div></div>
+      </div>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="p-card">
+
+      <!-- toolbar -->
+      <div class="p-toolbar">
+        <div class="p-search"><i class="fa fa-search"></i><input placeholder="Search by number, floor, building, type…"></div>
+        <div class="p-select"><select><option>Show 10</option><option>Show 100</option><option>Show 500</option></select></div>
+        <div style="position:relative">
+          <button class="btn-x" onclick="var p=document.getElementById('colsPop'); p.style.display=p.style.display==='block'?'none':'block'"><i class="fa fa-columns"></i>Columns</button>
+          <div class="cols-pop" id="colsPop" style="display:none">
+            <div class="ch">Visible Columns</div>
+            <label><input type="checkbox" class="p-check" checked>Type</label>
+            <label><input type="checkbox" class="p-check" checked>Group</label>
+            <label><input type="checkbox" class="p-check" checked>Building</label>
+            <label><input type="checkbox" class="p-check" checked>Floor</label>
+            <label><input type="checkbox" class="p-check" checked>Rent</label>
+            <label><input type="checkbox" class="p-check" checked>Ownership</label>
+            <label><input type="checkbox" class="p-check" checked>Kahramaa</label>
+            <label><input type="checkbox" class="p-check" checked>Parking</label>
+            <label><input type="checkbox" class="p-check" checked>Status</label>
+          </div>
+        </div>
+        <button class="btn-x ok"><i class="fa fa-file-excel-o"></i>Export</button>
+        <button class="btn-x bad"><i class="fa fa-trash"></i>Delete</button>
+      </div>
+
+      <!-- filters -->
+      <div class="p-filters">
+        <div class="f-item"><label><i class="fa fa-object-group"></i>Group / Project</label><div class="p-select"><select><option>All Groups</option><option>Pearl Residences</option></select></div></div>
+        <div class="f-item"><label><i class="fa fa-building"></i>Building</label><div class="p-select"><select><option>All Buildings</option><option>Tower A</option></select></div></div>
+        <div class="f-item"><label><i class="fa fa-tags"></i>Type</label><div class="p-select"><select><option>All Types</option><option>Flat</option><option>Villa</option></select></div></div>
+        <div class="f-item"><label><i class="fa fa-circle"></i>Status</label><div class="p-select"><select><option>All Status</option><option>Vacant</option><option>Occupied</option></select></div></div>
+        <div class="f-item"><label><i class="fa fa-check-circle"></i>Availability</label><div class="p-select"><select><option>All</option><option>Available</option><option>Sold</option></select></div></div>
+        <div class="f-item"><label><i class="fa fa-key"></i>Ownership</label><div class="p-select"><select><option>All</option><option>Owner</option><option>Tenant</option></select></div></div>
+        <div class="f-item"><label><i class="fa fa-flag"></i>Flag</label><div class="p-select"><select><option>All</option><option>Active</option><option>Disabled</option></select></div></div>
+      </div>
+
+      <!-- table -->
+      <div class="p-tblwrap">
+        <table class="p-tbl">
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="p-check"></th>
+              <th>Number <i class="fa fa-sort sort"></i></th>
+              <th>Type</th>
+              <th>Group</th>
+              <th>Building</th>
+              <th>Floor <i class="fa fa-sort sort"></i></th>
+              <th>Rent <i class="fa fa-sort sort"></i></th>
+              <th>Ownership</th>
+              <th>Kahramaa</th>
+              <th>Parking</th>
+              <th>Status</th>
+              <th style="text-align:center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox" class="p-check"></td>
+              <td><div class="num-cell"><div class="num-ic"><i class="fa fa-home"></i></div><div><div class="nm">A-1204</div><div class="sub">Unit 1204</div></div></div></td>
+              <td><span class="chip soft"><i class="fa fa-tag"></i>Flat</span></td>
+              <td>Pearl Residences</td>
+              <td>Tower A</td>
+              <td>12</td>
+              <td class="rent">6,500 <small>QAR</small></td>
+              <td><span class="chip acc">Tenant</span></td>
+              <td>#K-44821</td>
+              <td><i class="fa fa-car muted"></i> 2</td>
+              <td><span class="st occupied"><span class="dot"></span>Occupied</span></td>
+              <td style="text-align:center"><button class="act-btn"><i class="fa fa-eye"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="p-check"></td>
+              <td><div class="num-cell"><div class="num-ic"><i class="fa fa-home"></i></div><div><div class="nm">A-0803</div><div class="sub">Unit 0803</div></div></div></td>
+              <td><span class="chip soft"><i class="fa fa-tag"></i>Flat</span></td>
+              <td>Pearl Residences</td>
+              <td>Tower A</td>
+              <td>8</td>
+              <td class="rent">5,800 <small>QAR</small></td>
+              <td><span class="chip acc">Owner</span></td>
+              <td>#K-44119</td>
+              <td><i class="fa fa-car muted"></i> 1</td>
+              <td><span class="st vacant"><span class="dot"></span>Vacant</span></td>
+              <td style="text-align:center"><button class="act-btn"><i class="fa fa-eye"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="p-check"></td>
+              <td><div class="num-cell"><div class="num-ic"><i class="fa fa-home"></i></div><div><div class="nm">V-07</div><div class="sub">Villa 07</div></div></div></td>
+              <td><span class="chip soft"><i class="fa fa-tag"></i>Villa</span></td>
+              <td>Al Waab Gardens</td>
+              <td>Cluster C</td>
+              <td>—</td>
+              <td class="rent">18,000 <small>QAR</small></td>
+              <td><span class="chip acc">Tenant</span></td>
+              <td>#K-51002</td>
+              <td><i class="fa fa-car muted"></i> 3</td>
+              <td><span class="st booked"><span class="dot"></span>Booked</span></td>
+              <td style="text-align:center"><button class="act-btn"><i class="fa fa-eye"></i></button></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="p-check"></td>
+              <td><div class="num-cell"><div class="num-ic"><i class="fa fa-home"></i></div><div><div class="nm">B-1501</div><div class="sub">Unit 1501</div></div></div></td>
+              <td><span class="chip soft"><i class="fa fa-tag"></i>Penthouse</span></td>
+              <td>Marina Heights</td>
+              <td>Tower B</td>
+              <td>15</td>
+              <td class="rent">9,200 <small>QAR</small></td>
+              <td><span class="muted">—</span></td>
+              <td><span class="muted">—</span></td>
+              <td><i class="fa fa-car muted"></i> 2</td>
+              <td><span class="st vacant"><span class="dot"></span>Vacant</span></td>
+              <td style="text-align:center"><button class="act-btn"><i class="fa fa-eye"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- footer -->
+      <div class="p-foot">
+        <div class="info">Showing <strong>1–10</strong> of <strong>248</strong> properties</div>
+        <div class="pager">
+          <a class="disabled">‹</a>
+          <a class="active">1</a>
+          <a>2</a>
+          <a>3</a>
+          <a>…</a>
+          <a>25</a>
+          <a>›</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

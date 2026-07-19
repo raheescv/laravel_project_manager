@@ -40,15 +40,39 @@ class Table extends Component
 
     public $filterOwnership = '';
 
+    public $columns = [
+        'type' => true,
+        'group' => true,
+        'building' => true,
+        'floor' => true,
+        'rent' => true,
+        'ownership' => true,
+        'kahramaa' => true,
+        'parking' => true,
+        'status' => true,
+    ];
+
+    public $columnLabels = [
+        'type' => 'Type',
+        'group' => 'Group',
+        'building' => 'Building',
+        'floor' => 'Floor',
+        'rent' => 'Rent',
+        'ownership' => 'Ownership',
+        'kahramaa' => 'Kahramaa',
+        'parking' => 'Parking',
+        'status' => 'Status',
+    ];
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
         'Property-Refresh-Component' => '$refresh',
     ];
 
-    private function query()
+    private function applyFilters($query, bool $includeStatus = true)
     {
-        return Property::with(['building.group', 'type'])
+        return $query
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $q->where('number', 'like', "%{$value}%")
@@ -70,8 +94,8 @@ class Table extends Component
             ->when($this->filterType, function ($query, $value) {
                 return $query->where('property_type_id', $value);
             })
-            ->when($this->filterStatus, function ($query, $value) {
-                return $query->where('status', $value);
+            ->when($includeStatus && $this->filterStatus, function ($query) {
+                return $query->where('status', $this->filterStatus);
             })
             ->when($this->filterAvailabilityStatus, function ($query, $value) {
                 return $query->where('availability_status', $value);
@@ -82,6 +106,32 @@ class Table extends Component
             ->when($this->filterOwnership, function ($query, $value) {
                 return $query->where('ownership', $value);
             });
+    }
+
+    private function query()
+    {
+        return $this->applyFilters(Property::with(['building.group', 'type']));
+    }
+
+    /**
+     * KPI figures for the hero rail. Reflects the active filter context
+     * (except Status, so the status breakdown always stays meaningful).
+     */
+    private function stats(): array
+    {
+        $row = $this->applyFilters(Property::query(), includeStatus: false)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN status = 'vacant' THEN 1 ELSE 0 END) as vacant")
+            ->selectRaw("SUM(CASE WHEN status = 'occupied' THEN 1 ELSE 0 END) as occupied")
+            ->selectRaw("SUM(CASE WHEN status = 'booked' THEN 1 ELSE 0 END) as booked")
+            ->first();
+
+        return [
+            'total' => (int) ($row->total ?? 0),
+            'vacant' => (int) ($row->vacant ?? 0),
+            'occupied' => (int) ($row->occupied ?? 0),
+            'booked' => (int) ($row->booked ?? 0),
+        ];
     }
 
     public function export()
@@ -138,7 +188,7 @@ class Table extends Component
 
     public function updated($key, $value)
     {
-        if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key)) {
+        if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key) && ! preg_match('/^columns\..*/', $key)) {
             $this->resetPage();
         }
     }
@@ -170,6 +220,7 @@ class Table extends Component
 
         return view('livewire.property.property.table', [
             'data' => $data,
+            'stats' => $this->stats(),
         ]);
     }
 }

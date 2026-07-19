@@ -15,9 +15,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
-                @livewire('property.property.table')
-            </div>
+            @livewire('property.property.table')
         </div>
     </div>
     <x-property.property.property-modal />
