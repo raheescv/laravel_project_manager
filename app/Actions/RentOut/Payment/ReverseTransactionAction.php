@@ -28,6 +28,14 @@ class ReverseTransactionAction
      */
     public function reverse(RentOutTransaction $payment, bool $resetCheque = true): void
     {
+        // A payment transfer is two ledger rows sharing one journal; unwinding
+        // either must restore both terms and remove both rows as a single unit.
+        if ($payment->source === 'Transfer') {
+            $this->reverseTransfer($payment);
+
+            return;
+        }
+
         $this->rollbackSideEffects($payment, $resetCheque);
 
         if ($payment->journal_id) {
@@ -36,6 +44,67 @@ class ReverseTransactionAction
         }
 
         $payment->delete();
+    }
+
+    /**
+     * Unwind a payment transfer (see TransferTransactionAction): re-charge the
+     * source term (undo its release), roll back the target term's paid total,
+     * then delete the shared journal and both mirrored ledger rows.
+     */
+    public function reverseTransfer(RentOutTransaction $payment): void
+    {
+        $rows = $payment->journal_id
+            ? RentOutTransaction::where('journal_id', $payment->journal_id)->get()
+            : collect([$payment]);
+
+        foreach ($rows as $row) {
+            if ($row->category === 'transfer_out' && $row->debit > 0) {
+                // Restore the source term the transfer had freed. The originating
+                // receipt is referenced by source_id; re-add the amount to its term.
+                $origin = $row->source_id ? RentOutTransaction::find($row->source_id) : null;
+                $term = $this->resolveTerm($origin);
+                if ($term) {
+                    $term->paid = (float) $term->paid + (float) $row->debit;
+                    if ($term->paid > 0 && ! $term->paid_date) {
+                        $term->paid_date = $row->date;
+                    }
+                    $term->save();
+                }
+            }
+
+            if ($row->category === 'transfer_in' && $row->credit > 0) {
+                // Roll back the target term's paid total (reuses the shared helper).
+                $this->rollbackSideEffects($row, resetCheque: false);
+            }
+        }
+
+        if ($payment->journal_id) {
+            JournalEntry::where('journal_id', $payment->journal_id)->delete();
+            Journal::where('id', $payment->journal_id)->delete();
+        }
+
+        RentOutTransaction::whereIn('id', $rows->pluck('id'))->delete();
+    }
+
+    /**
+     * Resolve the payment term a receipt was applied to, whether it is linked by
+     * model (RentOutPaymentTerm) or by source (PaymentTerm/source_id).
+     */
+    protected function resolveTerm(?RentOutTransaction $payment): ?RentOutPaymentTerm
+    {
+        if (! $payment) {
+            return null;
+        }
+
+        if ($payment->model === 'RentOutPaymentTerm' && $payment->model_id) {
+            return RentOutPaymentTerm::find($payment->model_id);
+        }
+
+        if ($payment->source === 'PaymentTerm' && $payment->source_id) {
+            return RentOutPaymentTerm::find($payment->source_id);
+        }
+
+        return null;
     }
 
     /**

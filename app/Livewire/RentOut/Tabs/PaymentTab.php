@@ -125,6 +125,11 @@ class PaymentTab extends Component
         $this->dispatch('open-payout-modal', rentOutId: $this->rentOutId);
     }
 
+    public function openTransferModal($paymentId)
+    {
+        $this->dispatch('open-transfer-modal', paymentId: $paymentId);
+    }
+
     protected function getFilteredPayments()
     {
         $query = RentOutTransaction::with('account')

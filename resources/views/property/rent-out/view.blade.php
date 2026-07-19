@@ -18,6 +18,7 @@
     <x-rent-out.service-charge-modal />
     <x-rent-out.service-payment-modal />
     <x-rent-out.payout-modal />
+    <x-rent-out.transfer-payment-modal />
 
     {{-- Scripts --}}
     @include('livewire.rent-out.partials.payment-term-scripts')
