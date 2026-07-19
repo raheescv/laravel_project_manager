@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Property;
 
 use App\Enums\Property\PropertyStatus;
+use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\RentOutStatus;
 use App\Models\Property;
 use Illuminate\Console\Command;
@@ -12,7 +13,7 @@ class PropertyStatusCheck extends Command
 {
     protected $signature = 'property:status-check';
 
-    protected $description = 'Syncs property statuses based on active rent outs';
+    protected $description = 'Syncs property occupancy status and availability status based on active rent outs';
 
     public function handle()
     {
@@ -48,12 +49,33 @@ class PropertyStatusCheck extends Command
                     $newStatus = PropertyStatus::Booked;
                 }
 
+                // Availability: a property is "sold" while it has an active
+                // Lease (= Sale) agreement, otherwise it is "available".
+                $hasActiveSale = $property->rentOuts->contains('agreement_type', AgreementType::Lease);
+                $newAvailability = $hasActiveSale ? 'sold' : 'available';
+
+                $changes = [];
                 if ($property->status !== $newStatus) {
+                    $changes['status'] = $newStatus->value;
+                }
+                if ($property->availability_status !== $newAvailability) {
+                    $changes['availability_status'] = $newAvailability;
+                }
+
+                if (! empty($changes)) {
                     DB::beginTransaction();
-                    $property->update(['status' => $newStatus]);
+                    $property->update($changes);
                     DB::commit();
                     $updatedCount++;
-                    $this->info("Property ID {$property->id} ({$property->name}): status changed to {$newStatus->label()}");
+
+                    $parts = [];
+                    if (isset($changes['status'])) {
+                        $parts[] = "status → {$newStatus->label()}";
+                    }
+                    if (isset($changes['availability_status'])) {
+                        $parts[] = "availability → {$newAvailability}";
+                    }
+                    $this->info("Property ID {$property->id} ({$property->name}): ".implode(', ', $parts));
                 }
             } catch (\Exception $e) {
                 DB::rollBack();

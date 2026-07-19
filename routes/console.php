@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Schedule;
 use Spatie\Health\Commands\RunHealthChecksCommand;
 
 Schedule::command('backup:run --only-db')->daily();
+Schedule::command('property:status-check')->daily();
 Schedule::command('backup:clean')->daily();
 
 if (config('constants.auto_pull_enabled')) {

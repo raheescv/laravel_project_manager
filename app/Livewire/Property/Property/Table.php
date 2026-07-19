@@ -50,6 +50,7 @@ class Table extends Component
         'kahramaa' => true,
         'parking' => true,
         'status' => true,
+        'availability' => true,
     ];
 
     public $columnLabels = [
@@ -62,6 +63,7 @@ class Table extends Component
         'kahramaa' => 'Kahramaa',
         'parking' => 'Parking',
         'status' => 'Status',
+        'availability' => 'Availability',
     ];
 
     protected $paginationTheme = 'bootstrap';
@@ -70,7 +72,7 @@ class Table extends Component
         'Property-Refresh-Component' => '$refresh',
     ];
 
-    private function applyFilters($query, bool $includeStatus = true)
+    private function applyFilters($query, bool $includeStatus = true, bool $includeAvailability = true)
     {
         return $query
             ->when($this->search ?? '', function ($query, $value) {
@@ -97,8 +99,8 @@ class Table extends Component
             ->when($includeStatus && $this->filterStatus, function ($query) {
                 return $query->where('status', $this->filterStatus);
             })
-            ->when($this->filterAvailabilityStatus, function ($query, $value) {
-                return $query->where('availability_status', $value);
+            ->when($includeAvailability && $this->filterAvailabilityStatus, function ($query) {
+                return $query->where('availability_status', $this->filterAvailabilityStatus);
             })
             ->when($this->filterFlag, function ($query, $value) {
                 return $query->where('flag', $value);
@@ -115,15 +117,17 @@ class Table extends Component
 
     /**
      * KPI figures for the hero rail. Reflects the active filter context
-     * (except Status, so the status breakdown always stays meaningful).
+     * (except Status / Availability, so those breakdowns always stay meaningful).
      */
     private function stats(): array
     {
-        $row = $this->applyFilters(Property::query(), includeStatus: false)
+        $row = $this->applyFilters(Property::query(), includeStatus: false, includeAvailability: false)
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("SUM(CASE WHEN status = 'vacant' THEN 1 ELSE 0 END) as vacant")
             ->selectRaw("SUM(CASE WHEN status = 'occupied' THEN 1 ELSE 0 END) as occupied")
             ->selectRaw("SUM(CASE WHEN status = 'booked' THEN 1 ELSE 0 END) as booked")
+            ->selectRaw("SUM(CASE WHEN availability_status = 'available' THEN 1 ELSE 0 END) as available")
+            ->selectRaw("SUM(CASE WHEN availability_status = 'sold' THEN 1 ELSE 0 END) as sold")
             ->first();
 
         return [
@@ -131,6 +135,8 @@ class Table extends Component
             'vacant' => (int) ($row->vacant ?? 0),
             'occupied' => (int) ($row->occupied ?? 0),
             'booked' => (int) ($row->booked ?? 0),
+            'available' => (int) ($row->available ?? 0),
+            'sold' => (int) ($row->sold ?? 0),
         ];
     }
 

@@ -150,6 +150,8 @@
                 <div class="propx-hs"><div class="s-k"><i class="fa fa-check-circle"></i>Vacant</div><div class="s-v"><span class="dot" style="background:var(--bs-success)"></span>{{ number_format($stats['vacant']) }}</div></div>
                 <div class="propx-hs"><div class="s-k"><i class="fa fa-user"></i>Occupied</div><div class="s-v"><span class="dot" style="background:var(--bs-danger)"></span>{{ number_format($stats['occupied']) }}</div></div>
                 <div class="propx-hs"><div class="s-k"><i class="fa fa-bookmark"></i>Booked</div><div class="s-v"><span class="dot" style="background:var(--bs-warning)"></span>{{ number_format($stats['booked']) }}</div></div>
+                <div class="propx-hs"><div class="s-k"><i class="fa fa-check-circle-o"></i>Available</div><div class="s-v"><span class="dot" style="background:var(--bs-success)"></span>{{ number_format($stats['available']) }}</div></div>
+                <div class="propx-hs"><div class="s-k"><i class="fa fa-handshake-o"></i>Sold</div><div class="s-v"><span class="dot" style="background:var(--bs-info)"></span>{{ number_format($stats['sold']) }}</div></div>
             </div>
         </div>
 
@@ -276,6 +278,7 @@
                             @if($columns['kahramaa'])<th>Kahramaa</th>@endif
                             @if($columns['parking'])<th>Parking</th>@endif
                             @if($columns['status'])<th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" /></th>@endif
+                            @if($columns['availability'])<th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="availability_status" label="Availability" /></th>@endif
                             <th style="text-align:center">Actions</th>
                         </tr>
                     </thead>
@@ -340,6 +343,15 @@
                                 <td>
                                     @if($item->status)
                                         <span class="st {{ $item->status->value }}"><span class="dot"></span>{{ $item->status->label() }}</span>
+                                    @endif
+                                </td>
+                                @endif
+                                @if($columns['availability'])
+                                <td>
+                                    @if($item->availability_status)
+                                        <span class="st {{ $item->availability_status === 'sold' ? 'sold' : 'vacant' }}"><span class="dot"></span>{{ ucfirst($item->availability_status) }}</span>
+                                    @else
+                                        <span class="faint">—</span>
                                     @endif
                                 </td>
                                 @endif
