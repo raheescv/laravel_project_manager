@@ -117,9 +117,8 @@ class TransferPaymentModal extends Component
         // Candidate targets: the SAME customer's other agreements (same tenant is
         // auto-scoped), matching the search term, excluding the source agreement.
         $targets = collect();
-        if ($this->customerId && ! $this->form['to_rent_out_id']) {
+        if (! $this->form['to_rent_out_id']) {
             $targets = RentOut::query()
-                ->where('account_id', $this->customerId)
                 ->where('id', '!=', $this->fromRentOutId)
                 ->when($this->search !== '', function ($q) {
                     $term = trim($this->search);
@@ -136,7 +135,7 @@ class TransferPaymentModal extends Component
                 })
                 ->with(['property', 'group', 'building', 'type'])
                 ->orderByDesc('id')
-                ->limit(50)
+                ->limit(10)
                 ->get();
         }
 
