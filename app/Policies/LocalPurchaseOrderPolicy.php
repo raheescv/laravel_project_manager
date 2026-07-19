@@ -38,7 +38,7 @@ class LocalPurchaseOrderPolicy
      */
     public function update(User $user, LocalPurchaseOrder $order): Response
     {
-         if (! $user->can('local purchase order.edit')) {
+        if (! $user->can('local purchase order.edit')) {
             return Response::deny('You do not have permission to edit local purchase orders.');
         }
 
@@ -110,7 +110,7 @@ class LocalPurchaseOrderPolicy
         if (in_array($order->status, [LocalPurchaseOrderStatus::CONFIRMED, LocalPurchaseOrderStatus::APPROVED])) {
             return Response::allow();
         }
-        
+
         if ($order->status !== LocalPurchaseOrderStatus::PENDING) {
             return Response::deny("This local purchase order is already {$order->status->label()} and can no longer be confirmed. Only pending orders can be confirmed.");
         }
