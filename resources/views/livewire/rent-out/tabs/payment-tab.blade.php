@@ -93,6 +93,131 @@
                 padding: .2rem 0;
             }
         }
+
+        /* ── Premium action menu ─────────────────────────────── */
+        .pmx-menu {
+            --pmx-accent: var(--bs-primary, #4f46e5);
+            min-width: 200px;
+            max-height: min(70vh, 340px);
+            overflow-y: auto;
+            padding: .3rem;
+            border: 1px solid rgba(0, 0, 0, .06);
+            border-radius: .85rem;
+            background: #fff;
+            box-shadow: 0 12px 34px -8px rgba(15, 23, 42, .22), 0 4px 12px -4px rgba(15, 23, 42, .12);
+            transform-origin: top right;
+        }
+
+        .pmx-menu__head {
+            padding: .3rem .6rem .45rem;
+            font-size: .62rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+
+        .pmx-item {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            width: 100%;
+            padding: .42rem .55rem;
+            border: 0;
+            border-radius: .55rem;
+            background: transparent;
+            color: #334155;
+            font-size: .8rem;
+            font-weight: 500;
+            text-align: left;
+            text-decoration: none;
+            transition: background .14s ease, color .14s ease, transform .14s ease;
+        }
+
+        .pmx-item:hover,
+        .pmx-item:focus {
+            background: color-mix(in srgb, var(--pmx-accent) 10%, transparent);
+            color: var(--pmx-accent);
+        }
+
+        .pmx-item__ic {
+            display: grid;
+            place-items: center;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: .45rem;
+            background: color-mix(in srgb, var(--pmx-accent) 12%, transparent);
+            color: var(--pmx-accent);
+            font-size: .82rem;
+            transition: background .14s ease, color .14s ease;
+        }
+
+        .pmx-item:hover .pmx-item__ic,
+        .pmx-item:focus .pmx-item__ic {
+            background: var(--pmx-accent);
+            color: #fff;
+        }
+
+        .pmx-item--danger {
+            color: #dc2626;
+        }
+
+        .pmx-item--danger .pmx-item__ic {
+            background: rgba(220, 38, 38, .1);
+            color: #dc2626;
+        }
+
+        .pmx-item--danger:hover,
+        .pmx-item--danger:focus {
+            background: rgba(220, 38, 38, .1);
+            color: #dc2626;
+        }
+
+        .pmx-item--danger:hover .pmx-item__ic,
+        .pmx-item--danger:focus .pmx-item__ic {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .pmx-sep {
+            height: 1px;
+            margin: .2rem .35rem;
+            background: linear-gradient(90deg, transparent, rgba(15, 23, 42, .1), transparent);
+        }
+
+        .pmx-trigger {
+            width: 30px;
+            height: 30px;
+            display: inline-grid;
+            place-items: center;
+            border: 0;
+            border-radius: .55rem;
+            background: transparent;
+            color: #94a3b8;
+            transition: background .14s ease, color .14s ease;
+        }
+
+        .pmx-trigger:hover,
+        .pmx-trigger[aria-expanded="true"] {
+            background: rgba(15, 23, 42, .06);
+            color: #334155;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .pmx-menu {
+                background: #1e293b;
+                border-color: rgba(255, 255, 255, .08);
+            }
+
+            .pmx-item {
+                color: #cbd5e1;
+            }
+
+            .pmx-sep {
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .12), transparent);
+            }
+        }
     </style>
 
     {{-- Summary Bar --}}
@@ -321,46 +446,51 @@
                                 open: false,
                                 x: 0,
                                 y: 0,
+                                flip: false,
                                 toggle(e) {
                                     const r = e.currentTarget.getBoundingClientRect();
+                                    const menuH = 300;
+                                    this.flip = (window.innerHeight - r.bottom) < menuH && r.top > (window.innerHeight - r.bottom);
                                     this.x = r.right;
-                                    this.y = r.bottom;
+                                    this.y = this.flip ? r.top : r.bottom;
                                     this.open = !this.open;
                                 }
                             }" @click.outside="open = false" @keydown.escape.window="open = false"
                                 @scroll.window="open = false">
-                                <button type="button" class="btn btn-sm btn-light border-0 p-1"
-                                    @click="toggle($event)">
-                                    <i class="fa fa-ellipsis-v text-muted"></i>
+                                <button type="button" class="pmx-trigger" @click="toggle($event)"
+                                    :aria-expanded="open" aria-label="Actions">
+                                    <i class="fa fa-ellipsis-v"></i>
                                 </button>
-                                <div x-show="open" x-cloak class="card shadow-sm py-1 text-start"
-                                    :style="`position: fixed; top: ${y}px; left: ${x}px; transform: translateX(-100%); z-index: 2000; min-width: 180px;`">
-                                    <a class="dropdown-item small" href="#" @click="open = false"
+                                <div x-show="open" x-cloak x-transition.origin.top.right
+                                    class="pmx-menu text-start"
+                                    :style="`position: fixed; ${flip ? 'bottom: ' + (window.innerHeight - y + 6) + 'px' : 'top: ' + (y + 6) + 'px'}; left: ${x}px; transform: translateX(-100%); z-index: 2000;`">
+                                    <div class="pmx-menu__head">Payment Actions</div>
+                                    <a class="pmx-item" href="#" @click="open = false"
                                         wire:click.prevent="editPayment({{ $payment->id }})">
-                                        <i class="fa fa-pencil me-2 text-primary"></i> Edit
+                                        <span class="pmx-item__ic"><i class="fa fa-pencil"></i></span> Edit
                                     </a>
-                                    <hr class="dropdown-divider my-1">
-                                    <a class="dropdown-item small" @click="open = false"
+                                    <div class="pmx-sep"></div>
+                                    <a class="pmx-item" @click="open = false"
                                         href="{{ route('print::rentout::payment-receipt', $payment->id) }}"
                                         target="_blank">
-                                        <i class="fa fa-print me-2 text-primary"></i> Print Receipt
+                                        <span class="pmx-item__ic"><i class="fa fa-print"></i></span> Print Receipt
                                     </a>
-                                    <a class="dropdown-item small" @click="open = false"
+                                    <a class="pmx-item" @click="open = false"
                                         href="{{ route('print::rentout::payment-voucher', $payment->id) }}"
                                         target="_blank">
-                                        <i class="fa fa-file-text-o me-2 text-info"></i> Print Voucher
+                                        <span class="pmx-item__ic"><i class="fa fa-file-text-o"></i></span> Print Voucher
                                     </a>
-                                    <hr class="dropdown-divider my-1">
-                                    <a class="dropdown-item small" @click="open = false"
+                                    <div class="pmx-sep"></div>
+                                    <a class="pmx-item" @click="open = false"
                                         href="{{ route('audit::index', ['model' => 'RentOutTransaction', 'id' => $payment->id]) }}"
                                         target="_blank">
-                                        <i class="fa fa-history me-2 text-secondary"></i> Audit History
+                                        <span class="pmx-item__ic"><i class="fa fa-history"></i></span> Audit History
                                     </a>
-                                    <hr class="dropdown-divider my-1">
-                                    <button type="button" class="dropdown-item small text-danger" @click="open = false"
+                                    <div class="pmx-sep"></div>
+                                    <button type="button" class="pmx-item pmx-item--danger" @click="open = false"
                                         wire:click="deletePayment({{ $payment->id }})"
                                         wire:confirm="Are you sure you want to delete this payment record?">
-                                        <i class="fa fa-trash me-2"></i> Delete
+                                        <span class="pmx-item__ic"><i class="fa fa-trash"></i></span> Delete
                                     </button>
                                 </div>
                             </div>
