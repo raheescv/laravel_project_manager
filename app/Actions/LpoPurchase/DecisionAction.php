@@ -91,7 +91,13 @@ class DecisionAction
             ->groupBy('product_id')
             ->pluck('qty', 'product_id');
 
+        $serviceProductIds = Product::whereIn('id', $purchase->items->pluck('product_id')->unique())
+            ->where('type', 'service')
+            ->pluck('id')
+            ->all();
+
         $billedByProduct = $purchase->items
+            ->reject(fn ($item) => in_array($item->product_id, $serviceProductIds))
             ->groupBy('product_id')
             ->map(fn ($items) => $items->sum('quantity'));
 
@@ -99,9 +105,8 @@ class DecisionAction
             $receivedQty = (float) ($receivedByProduct[$productId] ?? 0);
             if (round($billedQty, 4) > round($receivedQty, 4)) {
                 $productName = Product::whereKey($productId)->value('name') ?? "#$productId";
-                throw new \Exception(
-                    "Cannot accept: billed quantity ($billedQty) for \"$productName\" exceeds received quantity ($receivedQty). Receive the goods via an accepted GRN first."
-                );
+                $message = "Cannot accept: billed quantity ($billedQty) for \"$productName\" exceeds received quantity ($receivedQty). Receive the goods via an accepted GRN first.";
+                throw new \Exception($message);
             }
         }
     }
