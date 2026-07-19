@@ -133,7 +133,6 @@
         .pv-wrap .pv-stmt-table tfoot tr:last-child td { background: #e0eaff; }
 
         /* Cheque details chips */
-        .pv-cheque { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
         .pv-cheque-chip {
             display: inline-flex; align-items: center; gap: 0.28rem;
             padding: 0.1rem 0.45rem; border-radius: 999px;
@@ -145,7 +144,6 @@
         .pv-cheque-chip.is-no   { background: #eef2ff; color: #3730a3; border-color: #e0e7ff; }
         .pv-cheque-chip.is-bank { background: #ecfeff; color: #155e63; border-color: #cff2f5; }
         .pv-cheque-chip.is-date { background: #f0fdf4; color: #166534; border-color: #dcfce7; }
-        .pv-cheque-chip .lbl { color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-size: 0.6rem; }
 
         @media (max-width: 767px) {
             .pv-hero { flex-direction: column; align-items: flex-start; }
@@ -296,6 +294,8 @@
                                         <th>Description</th>
                                         <th class="text-nowrap">Reference</th>
                                         <th>Remarks</th>
+                                        <th class="text-nowrap">Cheque No</th>
+                                        <th class="text-nowrap">Cheque Date</th>
                                         <th class="text-center text-nowrap">Voucher</th>
                                         <th class="text-end text-nowrap">Debit</th>
                                         <th class="text-end text-nowrap">Credit</th>
@@ -315,20 +315,24 @@
                                                     <span class="text-muted">-</span>
                                                 @endif
                                             </td>
-                                            <td>
-                                                <div>{{ $entry['remarks'] ?: '-' }}</div>
-                                                @if (! empty($entry['has_cheque']))
-                                                    <div class="pv-cheque">
-                                                        @if (! empty($entry['cheque_no']))
-                                                            <span class="pv-cheque-chip is-no"><i class="fa fa-money"></i><span class="lbl">Cheque</span> {{ $entry['cheque_no'] }}</span>
-                                                        @endif
-                                                        @if (! empty($entry['bank_name']))
-                                                            <span class="pv-cheque-chip is-bank"><i class="fa fa-university"></i>{{ $entry['bank_name'] }}</span>
-                                                        @endif
-                                                        @if (! empty($entry['cheque_date']))
-                                                            <span class="pv-cheque-chip is-date"><i class="fa fa-calendar-o"></i>{{ systemDate($entry['cheque_date']) }}</span>
-                                                        @endif
-                                                    </div>
+                                            <td>{{ $entry['remarks'] ?: '-' }}</td>
+                                            <td class="text-nowrap">
+                                                @if (! empty($entry['cheque_no']))
+                                                    <span class="pv-cheque-chip is-no"><i class="fa fa-money"></i>{{ $entry['cheque_no'] }}</span>
+                                                    @if (! empty($entry['bank_name']))
+                                                        <div class="text-muted mt-1" style="font-size:0.68rem;"><i class="fa fa-university"></i> {{ $entry['bank_name'] }}</div>
+                                                    @endif
+                                                @elseif (! empty($entry['bank_name']))
+                                                    <span class="pv-cheque-chip is-bank"><i class="fa fa-university"></i>{{ $entry['bank_name'] }}</span>
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-nowrap">
+                                                @if (! empty($entry['cheque_date']))
+                                                    <span class="pv-cheque-chip is-date"><i class="fa fa-calendar-o"></i>{{ systemDate($entry['cheque_date']) }}</span>
+                                                @else
+                                                    <span class="text-muted">-</span>
                                                 @endif
                                             </td>
                                             <td class="text-center text-nowrap">
@@ -339,7 +343,10 @@
                                                         <i class="fa fa-file-pdf-o"></i> Voucher
                                                     </a>
                                                 @endif
-                                                @if (! empty($entry['can_reverse_payment']))
+                                                @php
+                                                    $canReverse = ! empty($entry['can_reverse_payment']) && auth()->user()?->can('vendor.payment reverse');
+                                                @endphp
+                                                @if ($canReverse)
                                                     <button type="button"
                                                         wire:click="reversePayment({{ $entry['model_id'] }})"
                                                         wire:confirm="Reverse this payment? This will delete the payment and its journal entries."
@@ -348,7 +355,7 @@
                                                         <i class="fa fa-undo"></i> Reverse
                                                     </button>
                                                 @endif
-                                                @if (empty($entry['can_view_payment_voucher']) && empty($entry['can_reverse_payment']))
+                                                @if (empty($entry['can_view_payment_voucher']) && ! $canReverse)
                                                     <span class="text-muted">-</span>
                                                 @endif
                                             </td>
@@ -370,7 +377,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="9" class="text-center text-muted py-4" style="font-size:0.8rem;">
+                                            <td colspan="11" class="text-center text-muted py-4" style="font-size:0.8rem;">
                                                 No statement entries found for the selected period.
                                             </td>
                                         </tr>
@@ -378,13 +385,13 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="6" class="text-end">Period Total</td>
+                                        <td colspan="8" class="text-end">Period Total</td>
                                         <td class="text-end text-danger">{{ currency($statementSummary['total_debit'] ?? 0) }}</td>
                                         <td class="text-end text-success">{{ currency($statementSummary['total_credit'] ?? 0) }}</td>
                                         <td></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="8" class="text-end">Closing Balance</td>
+                                        <td colspan="10" class="text-end">Closing Balance</td>
                                         <td class="text-end">{{ $statementSummary['closing_balance_label'] ?? currency(0) }}</td>
                                     </tr>
                                 </tfoot>

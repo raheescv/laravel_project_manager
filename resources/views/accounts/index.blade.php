@@ -1,21 +1,13 @@
 <x-app-layout>
-    <div class="content__header content__boxed overlapping">
+    <div class="content__boxed">
         <div class="content__wrap">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb mb-0">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item">Accounts</li>
                     <li class="breadcrumb-item active" aria-current="page">Chart of Accounts</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">
-                <i class="fa fa-book me-2" style="opacity: .85;"></i>Chart of Accounts
-            </h1>
-            <p class="lead mb-0" style="opacity: .85;">Manage all account heads, categories, and ledgers in one place.</p>
-        </div>
-    </div>
-    <div class="content__boxed">
-        <div class="content__wrap">
             @livewire('account.table')
         </div>
     </div>

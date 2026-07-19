@@ -48,6 +48,7 @@ class View extends Component
 
     public function reversePayment($paymentId)
     {
+        abort_unless(auth()->user()?->can('vendor.payment reverse'), 403);
         DB::beginTransaction();
         try {
             $response = (new ReverseAction())->execute($paymentId);

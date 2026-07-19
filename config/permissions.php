@@ -11,7 +11,7 @@ return [
     'customer' => ['create', 'view', 'edit', 'delete', 'export'],
     'customer type' => ['create', 'view', 'edit', 'delete'],
     'country' => ['create', 'view', 'edit', 'delete'],
-    'vendor' => ['create', 'view', 'edit', 'delete', 'export'],
+    'vendor' => ['create', 'view', 'edit', 'delete', 'export', 'payment reverse'],
     'user' => ['create', 'view', 'edit', 'delete'],
     'employee' => ['create', 'view', 'edit', 'delete', 'export'],
     'employee attendance' => ['create', 'view', 'modify', 'export'],
