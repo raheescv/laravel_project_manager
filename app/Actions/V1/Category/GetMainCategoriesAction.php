@@ -13,7 +13,11 @@ class GetMainCategoriesAction
      */
     public function execute(Collection $filters): array
     {
-        $categories = Category::withCount('products')->whereNull('parent_id')
+        $type = $filters->get('type');
+
+        $categories = Category::withCount(['products' => function ($query) use ($type) {
+            $query->when($type, fn ($q) => $q->where('type', $type));
+        }])->whereNull('parent_id')
             ->where('online_visibility_flag', true)
             ->when($filters->get('query'), function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
@@ -22,11 +26,13 @@ class GetMainCategoriesAction
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return $categories->map(function ($category) {
+        return $categories->map(function ($category) use ($type) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
-                'product_count' => Product::where('main_category_id', $category->id)->count(),
+                'product_count' => Product::where('main_category_id', $category->id)
+                    ->when($type, fn ($q) => $q->where('type', $type))
+                    ->count(),
             ];
         })->toArray();
     }
