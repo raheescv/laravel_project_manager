@@ -80,7 +80,8 @@
         $voucherAmount = $paymentEntry ? ((float) $paymentEntry->debit > 0 ? $paymentEntry->debit : $paymentEntry->credit) : 0;
         $paymentMode   = $paymentEntry?->counterAccount?->name ?? $journal->entries->firstWhere('credit', '>', 0)?->account?->name;
         $paidTo        = array_values(array_unique(array_filter([$journal->person_name, $vendor->name])));
-        $remarks       = array_values(array_unique(array_filter([$journal->remarks, $paymentEntry?->remarks])));
+        // $remarks       = array_values(array_unique(array_filter([$journal->remarks, $paymentEntry?->remarks])));
+        $remarks       = array_values(array_unique(array_filter([$journal->remarks])));
         $reasons       = array_values(array_unique(array_filter([$journal->description])));
         $voucherNo     = $journal->reference_number ?: $journal->id;
     @endphp
