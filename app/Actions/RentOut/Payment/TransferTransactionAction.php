@@ -2,163 +2,101 @@
 
 namespace App\Actions\RentOut\Payment;
 
-use App\Actions\Journal\CreateAction as JournalCreateAction;
 use App\Enums\RentOut\AgreementType;
 use App\Models\Account;
+use App\Models\Journal;
+use App\Models\JournalEntry;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
 use App\Models\RentOutTransaction;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Transfer a received payment from one property agreement (RentOut) to another
- * WITHOUT moving cash a second time.
+ * Move a received payment from one property agreement (RentOut) to another,
+ * fully and in place — the whole amount moves, nothing is split.
  *
- * The customer's money was received once and stays in the bank; a transfer only
- * re-allocates the recognised value from the source property to the target one.
- * We therefore post a single income-to-income journal:
+ * Rather than posting counter-entries, the existing receipt is simply
+ * re-homed onto the target agreement:
+ *   - the ledger row's rent_out_id (and branch) is re-pointed to the target;
+ *   - its journal + entries are re-pointed to the target (and the income leg is
+ *     swapped when the two agreements recognise income to different accounts,
+ *     e.g. a Rental → Lease move);
+ *   - the source payment term it satisfied is freed (its balance re-opens);
+ *   - an optional target term is credited, otherwise the payment lands as an
+ *     unapplied credit that simply reduces the target's outstanding balance.
  *
- *      Dr  Rent/Sale Income (source property)   amount
- *      Cr  Rent/Sale Income (target property)   amount
- *
- * and mirror it with two rent_out_transactions ledger rows that share that one
- * journal (via storeContraRow, so no duplicate journal is created):
- *
- *   - source ledger: a DEBIT row (reverses the earlier receipt → source owes again)
- *   - target ledger: a CREDIT row (applies the payment to the target)
- *
- * Both rows carry source = 'Transfer' and share journal_id, which is the grouping
- * key ReverseTransactionAction uses to unwind the whole movement as one unit.
+ * The move leaves ONE receipt and ONE journal — no residue on the source — and
+ * the row's audit trail records where it came from.
  */
 class TransferTransactionAction
 {
     /**
-     * @param  int  $paymentId  the source receipt (rent_out_transactions.id) to transfer from
-     * @param  int  $toRentOutId  the target RentOut agreement to transfer to
-     * @param  float  $amount  how much to transfer (supports partial transfers)
-     * @param  int|null  $toTermId  optional target payment term on the destination agreement
+     * @param  int  $paymentId  the receipt (rent_out_transactions.id) to move
+     * @param  int  $toRentOutId  the target RentOut agreement to move it to
+     * @param  int|null  $toTermId  optional target payment term on the destination
      */
-    public function execute(int $paymentId, int $toRentOutId, float $amount, ?int $toTermId = null, string $remark = '', ?string $date = null): array
+    public function execute(int $paymentId, int $toRentOutId, ?int $toTermId = null, string $remark = ''): array
     {
         try {
-            return DB::transaction(function () use ($paymentId, $toRentOutId, $amount, $toTermId, $remark, $date) {
+            return DB::transaction(function () use ($paymentId, $toRentOutId, $toTermId, $remark) {
                 $payment = RentOutTransaction::findOrFail($paymentId);
                 $fromRentOut = RentOut::findOrFail($payment->rent_out_id);
                 $toRentOut = RentOut::findOrFail($toRentOutId);
 
-                $this->guard($payment, $fromRentOut, $toRentOut, $amount);
+                $this->guard($payment, $fromRentOut, $toRentOut);
 
-                $date ??= now()->format('Y-m-d');
-                $store = new StoreTransactionAction();
-                $store2 = $store; // same instance; storeContraRow is stateless
+                $amount = (float) $payment->credit;
+                $today = now()->format('Y-m-d');
 
-                $fromIncomeAccountId = $this->incomeAccountId($fromRentOut);
-                $toIncomeAccountId = $this->incomeAccountId($toRentOut);
-                $createdBy = Auth::id() ?? $fromRentOut->created_by;
-                // One balanced journal: Dr source income, Cr target income (no cash leg).
-                $journalData = [
-                    'tenant_id' => $fromRentOut->tenant_id,
-                    'branch_id' => $fromRentOut->branch_id,
-                    'date' => $date,
-                    'description' => 'Payment Transfer',
-                    'remarks' => $remark ?: ('Transfer from '.$fromRentOut->agreement_type->label().' #'.$fromRentOut->id.' to #'.$toRentOut->id),
-                    'source' => 'transfer',
-                    'model' => 'RentOut',
-                    'model_id' => $fromRentOut->id,
-                    'created_by' => $createdBy,
-                    'entries' => [
-                        [
-                            'account_id' => $fromIncomeAccountId,
-                            'counter_account_id' => $toIncomeAccountId,
-                            'debit' => $amount,
-                            'credit' => 0,
-                            'created_by' => $createdBy,
-                            'remarks' => $remark,
-                            'model' => 'RentOut',
-                            'model_id' => $fromRentOut->id,
-                        ],
-                        [
-                            'account_id' => $toIncomeAccountId,
-                            'counter_account_id' => $fromIncomeAccountId,
-                            'debit' => 0,
-                            'credit' => $amount,
-                            'created_by' => $createdBy,
-                            'remarks' => $remark,
-                            'model' => 'RentOut',
-                            'model_id' => $toRentOut->id,
-                        ],
-                    ],
+                // 1. Free the source term this receipt was covering (balance re-opens).
+                $this->releaseSourceTerm($payment);
+
+                // 2. Re-point the journal + entries onto the target agreement.
+                $this->moveJournal($payment, $fromRentOut, $toRentOut, $remark);
+
+                // 3. Credit the chosen target term (if any).
+                if ($toTermId) {
+                    $this->applyTargetTerm($toTermId, $amount, $today);
+                }
+
+                // 4. Re-home the ledger row itself onto the target agreement.
+                $movedFrom = 'Moved from '.$fromRentOut->agreement_type?->label().' #'.$fromRentOut->id
+                    .($fromRentOut->property?->number ? ' (Unit '.$fromRentOut->property->number.')' : '');
+
+                $attributes = [
+                    'rent_out_id' => $toRentOut->id,
+                    'branch_id' => $toRentOut->branch_id,
+                    'remark' => trim(($remark ? $remark.' — ' : '').$movedFrom),
                 ];
 
-                $journalResponse = (new JournalCreateAction())->execute($journalData);
-                if (! $journalResponse['success']) {
-                    throw new \Exception($journalResponse['message']);
-                }
-                $journalId = $journalResponse['data']->id;
-
-                // Source ledger leg: DEBIT reverses the earlier receipt on the source.
-                $fromRow = $store->storeContraRow([
-                    'rent_out_id' => $fromRentOut->id,
-                    'date' => $date,
-                    'debit' => $amount,
-                    'credit' => 0,
-                    'account_id' => $payment->account_id,
-                    'journal_id' => $journalId,
-                    'source' => 'Transfer',
-                    'source_id' => $payment->id,
-                    'model' => 'RentOut',
-                    'model_id' => $toRentOut->id,
-                    'group' => 'Payment Transfer',
-                    'category' => 'transfer_out',
-                    'payment_type' => 'Transfer',
-                    'paid_date' => $date,
-                    'reason' => 'Transferred to RentOut #'.$toRentOut->id,
-                    'remark' => $remark ?: ('Transferred to '.($toRentOut->property?->name ?? ('RentOut #'.$toRentOut->id))),
-                    'created_by' => $createdBy,
-                ]);
-                if (! $fromRow['success']) {
-                    throw new \Exception($fromRow['message']);
-                }
-
-                // Target ledger leg: CREDIT applies the payment to the destination.
-                // When a target term is chosen, link the row to it so a later reversal
-                // rolls the term's paid total back (ReverseTransactionAction handles this).
-                $toRow = $store2->storeContraRow([
-                    'rent_out_id' => $toRentOut->id,
-                    'date' => $date,
-                    'debit' => 0,
-                    'credit' => $amount,
-                    'account_id' => $payment->account_id,
-                    'journal_id' => $journalId,
-                    'source' => 'Transfer',
-                    'source_id' => $fromRow['data']->id,
-                    'model' => $toTermId ? 'RentOutPaymentTerm' : 'RentOut',
-                    'model_id' => $toTermId ?: $toRentOut->id,
-                    'group' => 'Payment Transfer',
-                    'category' => 'transfer_in',
-                    'payment_type' => 'Transfer',
-                    'paid_date' => $date,
-                    'reason' => 'Transferred from RentOut #'.$fromRentOut->id,
-                    'remark' => $remark ?: ('Transferred from '.($fromRentOut->property?->name ?? ('RentOut #'.$fromRentOut->id))),
-                    'created_by' => $createdBy,
-                ]);
-                if (! $toRow['success']) {
-                    throw new \Exception($toRow['message']);
-                }
-
-                // Free the source term (the money no longer sits against it).
-                $this->releaseSourceTerm($payment, $amount);
-
-                // Advance the target term's paid total.
                 if ($toTermId) {
-                    $this->applyTargetTerm($toTermId, $amount, $date);
+                    $term = RentOutPaymentTerm::find($toTermId);
+                    $attributes += [
+                        'source' => 'PaymentTerm',
+                        'source_id' => $toTermId,
+                        'model' => 'RentOutPaymentTerm',
+                        'model_id' => $toTermId,
+                        'due_date' => $term?->due_date?->format('Y-m-d'),
+                        'group' => $toRentOut->agreement_type?->config()->paymentGroupLabel ?? 'Rent Payment',
+                        'category' => $term?->label ?? $payment->category,
+                    ];
+                } else {
+                    // Unapplied credit on the target — not tied to a specific term.
+                    $attributes += [
+                        'source' => 'Transfer',
+                        'source_id' => null,
+                        'model' => 'RentOut',
+                        'model_id' => $toRentOut->id,
+                        'group' => 'Payment Transfer',
+                    ];
                 }
+
+                $payment->update($attributes);
 
                 return [
                     'success' => true,
-                    'message' => 'Payment transferred successfully',
-                    'data' => ['from' => $fromRow['data'], 'to' => $toRow['data'], 'journal_id' => $journalId],
+                    'message' => 'Payment moved successfully',
+                    'data' => $payment->fresh(),
                 ];
             });
         } catch (\Throwable $th) {
@@ -166,26 +104,16 @@ class TransferTransactionAction
         }
     }
 
-    /**
-     * How much of a receipt is still available to transfer (its credit minus any
-     * amount already transferred out of it).
-     */
-    public function transferableAmount(RentOutTransaction $payment): float
-    {
-        $alreadyTransferred = (float) RentOutTransaction::query()
-            ->where('source', 'Transfer')
-            ->where('source_id', $payment->id)
-            ->where('rent_out_id', $payment->rent_out_id)
-            ->where('debit', '>', 0)
-            ->sum('debit');
-
-        return max(0, (float) $payment->credit - $alreadyTransferred);
-    }
-
-    protected function guard(RentOutTransaction $payment, RentOut $fromRentOut, RentOut $toRentOut, float $amount): void
+    protected function guard(RentOutTransaction $payment, RentOut $fromRentOut, RentOut $toRentOut): void
     {
         if ((float) $payment->credit <= 0) {
             throw new \RuntimeException('Only received payments can be transferred.');
+        }
+        if ($payment->source !== 'PaymentTerm') {
+            throw new \RuntimeException('Only rent (payment term) receipts can be transferred.');
+        }
+        if ($payment->model === 'RentOutCheque') {
+            throw new \RuntimeException('Cheque-based payments cannot be transferred; manage the cheque on the original property instead.');
         }
         if ($fromRentOut->id === $toRentOut->id) {
             throw new \RuntimeException('Cannot transfer a payment to the same property.');
@@ -196,20 +124,56 @@ class TransferTransactionAction
         if ($fromRentOut->account_id !== $toRentOut->account_id) {
             throw new \RuntimeException('A payment can only be transferred between properties of the same customer.');
         }
-        if ($amount <= 0) {
-            throw new \RuntimeException('Transfer amount must be greater than zero.');
+    }
+
+    /**
+     * Re-point the receipt's journal (and its entries) from the source agreement
+     * to the target one. When the two agreements recognise income to different
+     * accounts, the income leg is swapped so the books stay correct.
+     */
+    protected function moveJournal(RentOutTransaction $payment, RentOut $fromRentOut, RentOut $toRentOut, string $remark): void
+    {
+        if (! $payment->journal_id) {
+            return;
         }
-        if ($amount > $this->transferableAmount($payment) + 0.001) {
-            throw new \RuntimeException('Transfer amount exceeds the available balance of this payment.');
+
+        $journal = Journal::find($payment->journal_id);
+        if (! $journal) {
+            return;
+        }
+
+        $journal->update([
+            'model_id' => $toRentOut->id,
+            'branch_id' => $toRentOut->branch_id,
+            'remarks' => trim(($remark ? $remark.' — ' : '').'Transferred from #'.$fromRentOut->id.' to #'.$toRentOut->id),
+        ]);
+
+        $fromIncome = $this->incomeAccountId($fromRentOut);
+        $toIncome = $this->incomeAccountId($toRentOut);
+
+        foreach (JournalEntry::where('journal_id', $journal->id)->get() as $entry) {
+            $update = [
+                'model_id' => $toRentOut->id,
+                'branch_id' => $toRentOut->branch_id,
+            ];
+            // Swap the income leg only when the target recognises to a different account.
+            if ($fromIncome && $toIncome && $fromIncome !== $toIncome) {
+                if ((int) $entry->account_id === $fromIncome) {
+                    $update['account_id'] = $toIncome;
+                }
+                if ((int) $entry->counter_account_id === $fromIncome) {
+                    $update['counter_account_id'] = $toIncome;
+                }
+            }
+            $entry->update($update);
         }
     }
 
     /**
-     * Reduce the source payment term's paid total by the transferred amount and
-     * flip it back to pending when it is no longer fully covered. Mirrors
-     * ReverseTransactionAction::rollbackSideEffects but scoped to a partial amount.
+     * Free the source payment term this receipt covered: deduct the amount from
+     * its paid total and flip it back to pending when it is no longer covered.
      */
-    protected function releaseSourceTerm(RentOutTransaction $payment, float $amount): void
+    protected function releaseSourceTerm(RentOutTransaction $payment): void
     {
         $term = null;
         if ($payment->model === 'RentOutPaymentTerm' && $payment->model_id) {
@@ -222,7 +186,7 @@ class TransferTransactionAction
             return;
         }
 
-        $term->paid = max(0, (float) $term->paid - $amount);
+        $term->paid = max(0, (float) $term->paid - (float) $payment->credit);
         if ($term->paid <= 0) {
             $term->paid_date = null;
         }

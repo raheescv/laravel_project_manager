@@ -469,7 +469,7 @@
                                         wire:click.prevent="editPayment({{ $payment->id }})">
                                         <span class="pmx-item__ic"><i class="fa fa-pencil"></i></span> Edit
                                     </a>
-                                    @if ($canTransfer)
+                                    @if ($canTransfer && $payment->source === 'PaymentTerm')
                                         <a class="pmx-item" href="#" @click="open = false"
                                             wire:click.prevent="openTransferModal({{ $payment->id }})">
                                             <span class="pmx-item__ic"><i class="fa fa-exchange"></i></span> Transfer

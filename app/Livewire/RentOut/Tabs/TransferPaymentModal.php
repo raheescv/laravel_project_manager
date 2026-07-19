@@ -21,7 +21,8 @@ class TransferPaymentModal extends Component
 
     public ?string $customerName = null;
 
-    public float $transferable = 0;
+    // The full amount that will be moved (whole receipt — never partial).
+    public float $amount = 0;
 
     // Search term for the (searchable) target-property picker.
     public string $search = '';
@@ -32,8 +33,6 @@ class TransferPaymentModal extends Component
     public array $form = [
         'to_rent_out_id' => '',
         'to_term_id' => '',
-        'amount' => 0,
-        'date' => '',
         'remark' => '',
     ];
 
@@ -47,15 +46,13 @@ class TransferPaymentModal extends Component
         $this->fromRentOutId = $fromRentOut->id;
         $this->customerId = $fromRentOut->account_id;
         $this->customerName = $fromRentOut->customer?->name;
-        $this->transferable = (new TransferTransactionAction())->transferableAmount($payment);
+        $this->amount = (float) $payment->credit;
 
         $this->search = '';
         $this->selectedTargetLabel = null;
         $this->form = [
             'to_rent_out_id' => '',
             'to_term_id' => '',
-            'amount' => $this->transferable,
-            'date' => now()->format('Y-m-d'),
             'remark' => '',
         ];
 
@@ -85,20 +82,15 @@ class TransferPaymentModal extends Component
 
         $this->validate([
             'form.to_rent_out_id' => 'required',
-            'form.amount' => 'required|numeric|min:0.01|max:'.($this->transferable ?: 0),
-            'form.date' => 'required|date',
         ], [
             'form.to_rent_out_id.required' => 'Select the property to transfer to.',
-            'form.amount.max' => 'Amount exceeds the available balance of this payment.',
         ]);
 
         $response = (new TransferTransactionAction())->execute(
             $this->paymentId,
             (int) $this->form['to_rent_out_id'],
-            (float) $this->form['amount'],
             $this->form['to_term_id'] ? (int) $this->form['to_term_id'] : null,
             $this->form['remark'] ?? '',
-            $this->form['date'],
         );
 
         if (! $response['success']) {

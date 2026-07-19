@@ -11,11 +11,8 @@
     <div class="modal-body p-3">
         <div class="alert alert-info py-2 px-3 small mb-3">
             <i class="fa fa-info-circle me-1"></i>
-            Re-allocates this receipt to another property. No cash is moved &mdash; the source
-            property is credited back and the target property is paid.
-            <div class="mt-1">Available to transfer:
-                <strong>{{ number_format($transferable, 2) }}</strong>
-            </div>
+            Moves this receipt in full to another property. It is removed from the current
+            property and applied to the target.
         </div>
 
         <div class="row g-3">
@@ -72,15 +69,14 @@
                 @error('form.to_rent_out_id') <small class="text-danger">{{ $message }}</small> @enderror
             </div>
 
-            <div class="col-md-4">
-                <label class="form-label fw-semibold small mb-1">
-                    <i class="fa fa-calendar me-1 text-muted"></i> Date <span class="text-danger">*</span>
-                </label>
-                <input type="date" class="form-control form-control-sm" wire:model="form.date">
-                @error('form.date') <small class="text-danger">{{ $message }}</small> @enderror
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="w-100 text-end">
+                    <div class="form-label fw-semibold small mb-1 text-muted">Amount to move</div>
+                    <div class="fs-5 fw-bold text-success">{{ number_format($amount, 2) }}</div>
+                </div>
             </div>
 
-            <div class="col-md-8">
+            <div class="col-12">
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-list me-1 text-muted"></i> Apply To Payment Term <span class="text-muted">(optional)</span>
                 </label>
@@ -94,15 +90,6 @@
                         </option>
                     @endforeach
                 </select>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label fw-semibold small mb-1">
-                    <i class="fa fa-money me-1 text-muted"></i> Amount <span class="text-danger">*</span>
-                </label>
-                <input type="number" class="form-control form-control-sm" wire:model="form.amount" step="0.01"
-                    max="{{ $transferable }}">
-                @error('form.amount') <small class="text-danger">{{ $message }}</small> @enderror
             </div>
 
             <div class="col-12">
@@ -122,8 +109,8 @@
         </button>
         <button type="button" class="btn btn-sm btn-primary" wire:click="transfer" wire:loading.attr="disabled"
             wire:target="transfer">
-            <span wire:loading.remove wire:target="transfer"><i class="fa fa-exchange me-1"></i> Transfer Payment</span>
-            <span wire:loading wire:target="transfer"><i class="fa fa-spinner fa-spin me-1"></i> Transferring...</span>
+            <span wire:loading.remove wire:target="transfer"><i class="fa fa-exchange me-1"></i> Move Payment</span>
+            <span wire:loading wire:target="transfer"><i class="fa fa-spinner fa-spin me-1"></i> Moving...</span>
         </button>
     </div>
 </div>
