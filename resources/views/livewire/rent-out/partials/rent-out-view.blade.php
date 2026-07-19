@@ -67,7 +67,7 @@
                 </div>
                 <h1 class="hero-title text-white">{{ $title }} <span class="hash">#{{ $rentOut->agreement_no }}</span></h1>
                 <div class="hero-meta mt-2">
-                    @if ($custName)<i class="fa fa-user-o me-1"></i> {{ $custName }}@endif
+                    @if ($custName)<i class="fa fa-user me-1"></i> {{ $custName }}@endif
                     @if ($rentOut->building?->name)
                         <span class="mx-2" style="opacity:.4">•</span>
                         <i class="fa fa-map-marker me-1"></i> {{ $rentOut->building?->name }}@if ($rentOut->property?->number) · Unit {{ $rentOut->property?->number }} @endif
@@ -140,11 +140,11 @@
                     <span class="avatar">{{ $initials }}</span>
                     <div class="min-w-0">
                         <div class="nm text-truncate">{{ $custName !== '' ? $custName : '—' }}</div>
-                        <div class="sub"><i class="fa fa-user-o me-1"></i> Tenant of record</div>
+                        <div class="sub"><i class="fa fa-user me-1"></i> Tenant of record</div>
                     </div>
                 </div>
                 <div class="dl">
-                    <x-rent-out.view.field icon="fa-hashtag" label="Reference No" :value="$rentOut->agreement_no" />
+                    <x-rent-out.view.field icon="fa-barcode" label="Reference No" :value="$rentOut->agreement_no" />
                     <x-rent-out.view.field icon="fa-th-large" label="Group" :value="$rentOut->group?->name" />
                     <x-rent-out.view.field icon="fa-building" label="Building" :value="$rentOut->building?->name" />
                     <x-rent-out.view.field icon="fa-cubes" label="Unit Type" :value="$rentOut->type?->name" />
@@ -188,7 +188,7 @@
 
                 <div class="dl">
                     <x-rent-out.view.field icon="fa-calendar-o" label="Start Date" :value="$rentOut->start_date?->format('d M Y')" />
-                    <x-rent-out.view.field icon="fa-calendar-check-o" label="End Date">
+                    <x-rent-out.view.field icon="fa-calendar" label="End Date">
                         {{ $rentOut->end_date?->format('d M Y') ?? '—' }}
                         @if ($rentOut->end_date)
                             <span class="chip {{ $overdue ? 'chip-danger' : 'chip-info' }} ms-1">{{ $overdue ? abs($daysRemaining) . 'd ago' : $daysRemaining . 'd left' }}</span>
@@ -196,7 +196,7 @@
                     </x-rent-out.view.field>
                     <x-rent-out.view.field icon="fa-tag" label="{{ $isRental ? 'Booking Type' : 'Agreement Type' }}" :value="$isRental ? $rentOut->booking_type : $rentOut->agreement_type?->label()" />
                     <x-rent-out.view.field icon="fa-user" label="Salesman" :value="$rentOut->salesman?->name" />
-                    <x-rent-out.view.field icon="fa-hourglass-half" label="Duration" :value="$rentOut->totalStay() . ' months'" />
+                    <x-rent-out.view.field icon="fa-clock-o" label="Duration" :value="$rentOut->totalStay() . ' months'" />
                     @if ($isRental)
                         <x-rent-out.view.field icon="fa-gift" label="Free Months" :value="(string) ($rentOut->free_month ?? 0)" />
                     @endif
