@@ -310,7 +310,7 @@
             {{-- integrated KPI rail --}}
             <div class="lpox-hstats">
                 <div class="lpox-hs">
-                    <div class="s-k"><i class="demo-psi-basket-coins"></i> Line Items</div>
+                    <div class="s-k"><i class="fa fa-cubes"></i> Line Items</div>
                     <div class="s-v">{{ $itemCount }} <small>{{ Str::plural('product', $itemCount) }}</small></div>
                 </div>
                 <div class="lpox-hs">
