@@ -292,12 +292,12 @@
                                         </th>
                                     @endif
                                     @if ($visibleColumns['account_category'] ?? true)
-                                        <th class="d-none d-md-table-cell" style="width: 150px;">
+                                        <th class="d-none d-md-table-cell" style="width: 22%; min-width: 150px;">
                                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_category_id" label="Category" />
                                         </th>
                                     @endif
                                     @if ($visibleColumns['name'] ?? true)
-                                        <th>
+                                        <th style="min-width: 180px;">
                                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Name" />
                                         </th>
                                     @endif
@@ -307,7 +307,7 @@
                                         </th>
                                     @endif
                                     @if ($visibleColumns['description'] ?? true)
-                                        <th class="d-none d-xl-table-cell" style="width: 200px;">
+                                        <th class="d-none d-xl-table-cell" style="width: 26%; min-width: 180px;">
                                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="Description" />
                                         </th>
                                     @endif
