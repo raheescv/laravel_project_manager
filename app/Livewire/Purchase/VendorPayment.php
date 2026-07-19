@@ -69,7 +69,7 @@ class VendorPayment extends Component
             'balance' => 0,
         ];
         if ($this->vendor_id) {
-            $data = Purchase::where('balance', '>', 0)
+            $data = Purchase::accepted()->where('balance', '>', 0)
                 ->when($this->search ?? '', function ($query, $value) {
                     return $query->where(function ($q) use ($value): void {
                         $value = trim($value);

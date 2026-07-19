@@ -149,6 +149,11 @@ class Purchase extends Model implements AuditableContracts
         return $query->where('status', 'accepted');
     }
 
+    public function scopeAccepted($query)
+    {
+        return $query->where('status', 'accepted');
+    }
+
     public function scopeDecisionRejected($query)
     {
         return $query->where('status', 'rejected');
