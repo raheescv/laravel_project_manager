@@ -512,10 +512,10 @@
                                             <div class="mb-3">
                                                 <label for="time" class="form-label fw-medium">
                                                     <i class="fa fa-hourglass text-primary me-1 small"></i>
-                                                    Time in Minutes <span class="text-danger">*</span>
+                                                    Time in Minutes
                                                 </label>
                                                 <div class="input-group">
-                                                    {{ html()->number('time')->value('')->attribute('step', 'any')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter duration in minutes')->attribute('wire:model', 'products.time') }}
+                                                    {{ html()->number('time')->value('')->attribute('step', 'any')->class('form-control border-primary-subtle shadow-sm')->placeholder('Enter duration in minutes')->attribute('wire:model', 'products.time') }}
                                                     <span class="input-group-text bg-white border-primary-subtle">
                                                         <i class="fa fa-clock-o"></i>
                                                     </span>
