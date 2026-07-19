@@ -2,6 +2,8 @@
 
 namespace App\Enums\RentOut;
 
+use App\Support\RentOutConfig;
+
 enum AgreementType: string
 {
     case Rental = 'rental';
@@ -15,9 +17,9 @@ enum AgreementType: string
         };
     }
 
-    public function config(): \App\Support\RentOutConfig
+    public function config(): RentOutConfig
     {
-        return new \App\Support\RentOutConfig($this);
+        return new RentOutConfig($this);
     }
 
     /**

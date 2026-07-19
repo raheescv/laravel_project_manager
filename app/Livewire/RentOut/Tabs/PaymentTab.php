@@ -185,12 +185,16 @@ class PaymentTab extends Component
             ->filter()
             ->sort();
 
+        $rentOut = RentOut::find($this->rentOutId);
+        $canTransfer = Auth::user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.transfer payment' : 'rent out.transfer payment') ?? false;
+
         return view('livewire.rent-out.tabs.payment-tab', [
             'payments' => $payments,
             'sourceSummary' => $sourceSummary,
             'sources' => $sources,
             'categories' => $categories,
             'paymentModes' => $paymentModes,
+            'canTransfer' => $canTransfer,
         ]);
     }
 }

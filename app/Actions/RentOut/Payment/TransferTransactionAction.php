@@ -56,14 +56,13 @@ class TransferTransactionAction
                 $fromIncomeAccountId = $this->incomeAccountId($fromRentOut);
                 $toIncomeAccountId = $this->incomeAccountId($toRentOut);
                 $createdBy = Auth::id() ?? $fromRentOut->created_by;
-
                 // One balanced journal: Dr source income, Cr target income (no cash leg).
                 $journalData = [
                     'tenant_id' => $fromRentOut->tenant_id,
                     'branch_id' => $fromRentOut->branch_id,
                     'date' => $date,
                     'description' => 'Payment Transfer',
-                    'remarks' => $remark ?: ('Transfer from RentOut #'.$fromRentOut->id.' to #'.$toRentOut->id),
+                    'remarks' => $remark ?: ('Transfer from '.$fromRentOut->agreement_type->label().' #'.$fromRentOut->id.' to #'.$toRentOut->id),
                     'source' => 'transfer',
                     'model' => 'RentOut',
                     'model_id' => $fromRentOut->id,

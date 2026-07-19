@@ -190,6 +190,7 @@ return [
         'complete',
         'view journal entries',
         'payment',
+        'transfer payment',
     ],
     'rent out booking' => [
         'create',
@@ -231,6 +232,7 @@ return [
         'complete',
         'view journal entries',
         'payment',
+        'transfer payment',
         'cheque management',
     ],
     'rent out lease booking' => [

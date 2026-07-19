@@ -469,10 +469,12 @@
                                         wire:click.prevent="editPayment({{ $payment->id }})">
                                         <span class="pmx-item__ic"><i class="fa fa-pencil"></i></span> Edit
                                     </a>
-                                    <a class="pmx-item" href="#" @click="open = false"
-                                        wire:click.prevent="openTransferModal({{ $payment->id }})">
-                                        <span class="pmx-item__ic"><i class="fa fa-exchange"></i></span> Transfer
-                                    </a>
+                                    @if ($canTransfer)
+                                        <a class="pmx-item" href="#" @click="open = false"
+                                            wire:click.prevent="openTransferModal({{ $payment->id }})">
+                                            <span class="pmx-item__ic"><i class="fa fa-exchange"></i></span> Transfer
+                                        </a>
+                                    @endif
                                     <div class="pmx-sep"></div>
                                     <a class="pmx-item" @click="open = false"
                                         href="{{ route('print::rentout::payment-receipt', $payment->id) }}"

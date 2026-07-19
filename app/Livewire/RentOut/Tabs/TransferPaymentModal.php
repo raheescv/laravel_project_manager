@@ -81,7 +81,7 @@ class TransferPaymentModal extends Component
     public function transfer()
     {
         $fromRentOut = RentOut::find($this->fromRentOutId);
-        abort_unless(auth()->user()?->can($fromRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
+        abort_unless(auth()->user()?->can($fromRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.transfer payment' : 'rent out.transfer payment'), 403);
 
         $this->validate([
             'form.to_rent_out_id' => 'required',

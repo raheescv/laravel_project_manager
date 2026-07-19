@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chart of Accounts — Premium Compact Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+    :root{
+        --bs-primary:#2563eb; --bs-primary-rgb:37,99,235;
+        --bs-success:#16a34a; --bs-success-rgb:22,163,74;
+        --bs-info:#0891b2;    --bs-info-rgb:8,145,178;
+        --bs-warning:#d97706; --bs-warning-rgb:217,119,6;
+        --bs-danger:#dc2626;  --bs-danger-rgb:220,38,38;
+        --bs-emphasis-color:#0f1720; --bs-body-color:#334155;
+        --bs-secondary-color:#64748b; --bs-tertiary-color:#94a3b8;
+        --page:#eef1f6;
+    }
+    [data-bs-theme="dark"]{
+        --bs-emphasis-color:#f1f5f9; --bs-body-color:#cbd5e1;
+        --bs-secondary-color:#94a3b8; --bs-tertiary-color:#64748b;
+        --page:#1a1f26;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; background:var(--page); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; padding:24px; transition:background .2s; }
+    .page-wrap{ max-width:1240px; margin:0 auto; }
+
+    /* ═══════════ demo toolbar ═══════════ */
+    .demo-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:20px; padding:10px 14px; background:var(--bs-primary); border-radius:12px; color:#fff; box-shadow:0 8px 24px -10px rgba(0,0,0,.3); }
+    .demo-bar b{ font-size:13px; letter-spacing:.3px; margin-right:auto; }
+    .demo-bar button{ border:0; background:rgba(255,255,255,.16); color:#fff; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; }
+    .demo-bar button:hover{ background:rgba(255,255,255,.28); }
+    .demo-bar .sw{ display:inline-flex; gap:5px; align-items:center; }
+    .demo-bar .dot{ width:20px; height:20px; border-radius:50%; border:2px solid rgba(255,255,255,.5); cursor:pointer; }
+    .demo-bar .dot.on{ border-color:#fff; box-shadow:0 0 0 2px var(--bs-primary), 0 0 0 4px #fff; }
+
+    /* ═══════════ COAX design system ═══════════ */
+    .coax{
+        --acc:var(--bs-primary); --acc-rgb:var(--bs-primary-rgb);
+        --acc-d:color-mix(in srgb, var(--bs-primary), #000 14%);
+        --acc-deep:color-mix(in srgb, var(--bs-primary), #000 42%);
+        --acc-tint:color-mix(in srgb, var(--bs-primary), transparent 90%);
+        --acc-tint-2:color-mix(in srgb, var(--bs-primary), transparent 95%);
+        --surface:#ffffff; --surface-2:#f5f7fa;
+        --ink:var(--bs-emphasis-color); --ink-2:var(--bs-body-color);
+        --muted:var(--bs-secondary-color); --faint:var(--bs-tertiary-color);
+        --line:#e7ebf1; --line-soft:#eff2f6;
+        --ok:var(--bs-success); --ok-rgb:var(--bs-success-rgb);
+        --info:var(--bs-info); --info-rgb:var(--bs-info-rgb);
+        --warn:var(--bs-warning); --warn-rgb:var(--bs-warning-rgb);
+        --bad:var(--bs-danger); --bad-rgb:var(--bs-danger-rgb);
+        --shadow:0 1px 2px rgba(16,24,40,.05), 0 8px 24px -10px rgba(16,24,40,.12);
+        --shadow-lg:0 18px 42px -18px rgba(var(--acc-rgb),.40), 0 8px 18px -12px rgba(16,24,40,.20);
+        color:var(--ink); font-size:12.5px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    }
+    .coax *{ box-sizing:border-box; }
+    [data-bs-theme="dark"] .coax{
+        --surface:#272d34; --surface-2:#2e353d;
+        --line:#3a424c; --line-soft:#343c45;
+        --acc-tint:color-mix(in srgb, var(--bs-primary), transparent 84%);
+        --acc-tint-2:color-mix(in srgb, var(--bs-primary), transparent 90%);
+        --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -10px rgba(0,0,0,.5);
+        --shadow-lg:0 18px 44px -18px rgba(0,0,0,.6), 0 8px 18px -12px rgba(0,0,0,.5);
+    }
+
+    /* ── HERO with integrated KPI rail ── */
+    .coax-hero{ position:relative; border-radius:16px; overflow:hidden; margin-bottom:12px; box-shadow:var(--shadow-lg);
+        background:
+            radial-gradient(120% 165% at 100% 0, color-mix(in srgb, var(--acc) 28%, transparent), transparent 55%),
+            linear-gradient(125deg, var(--acc-deep), var(--acc-d)); }
+    .coax-hero .glow{ position:absolute; right:-60px; top:-90px; width:300px; height:300px; border-radius:50%;
+        background:radial-gradient(circle, rgba(255,255,255,.16), transparent 65%); pointer-events:none; }
+    .coax-hero-inner{ position:relative; display:flex; align-items:center; gap:15px; padding:16px 18px; flex-wrap:wrap; }
+    .coax-hero .doc-ic{ width:46px; height:46px; border-radius:13px; flex:0 0 auto; background:rgba(255,255,255,.14);
+        border:1px solid rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+    .coax-hero .h-main{ flex:1; min-width:200px; color:#fff; }
+    .coax-hero .h-eyebrow{ font-size:9.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
+    .coax-hero .h-ref{ font-size:19px; font-weight:800; letter-spacing:.3px; line-height:1.15; margin-top:2px; }
+    .coax-hero .h-sub{ font-size:11.5px; color:rgba(255,255,255,.82); margin-top:4px; }
+    .coax-hero .h-right{ display:flex; gap:8px; align-items:center; }
+    .coax-hero .btn-hero{ background:#fff; color:var(--acc-deep); border:0; padding:7px 14px; border-radius:9px; font-size:12px; font-weight:700;
+        cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,.18); transition:transform .12s; text-decoration:none; }
+    .coax-hero .btn-hero:hover{ transform:translateY(-1px); }
+    .coax-hero .btn-ghost{ background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.28); padding:7px 12px; border-radius:9px;
+        font-size:12px; font-weight:650; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+    .coax-hero .btn-ghost:hover{ background:rgba(255,255,255,.24); }
+
+    /* integrated stat rail (also acts as type filters) */
+    .coax-hstats{ position:relative; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px;
+        background:rgba(255,255,255,.14); border-top:1px solid rgba(255,255,255,.14); }
+    .coax-hs{ background:linear-gradient(180deg, rgba(255,255,255,.05), transparent); padding:11px 16px; cursor:pointer; border:0; text-align:left; transition:background .15s; position:relative; }
+    .coax-hs:hover{ background:rgba(255,255,255,.12); }
+    .coax-hs.on{ background:rgba(255,255,255,.18); }
+    .coax-hs.on::after{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:#fff; }
+    .coax-hs .s-k{ font-size:9px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.72); display:flex; align-items:center; gap:6px; }
+    .coax-hs .s-k .ci{ width:18px; height:18px; border-radius:5px; background:rgba(255,255,255,.18); display:inline-flex; align-items:center; justify-content:center; font-size:9px; }
+    .coax-hs .s-v{ font-size:19px; font-weight:800; color:#fff; margin-top:5px; letter-spacing:.2px; }
+    .coax-hs .s-v small{ font-size:10px; font-weight:600; color:rgba(255,255,255,.7); margin-left:3px; }
+
+    /* ── TOOLBAR ── */
+    .coax-toolbar{ background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:11px 13px; margin-bottom:12px; }
+    .coax-tb-row{ display:flex; flex-wrap:wrap; align-items:center; gap:9px; }
+    .coax-tb-row + .coax-tb-row{ margin-top:9px; }
+    .coax-search{ position:relative; flex:1 1 220px; min-width:180px; }
+    .coax-search i{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--faint); font-size:13px; }
+    .coax-search input{ width:100%; border:1px solid var(--line); background:var(--surface-2); border-radius:9px; padding:8px 12px 8px 34px; font-size:12.5px; color:var(--ink); outline:0; transition:border-color .15s, box-shadow .15s; }
+    .coax-search input:focus{ border-color:var(--acc); box-shadow:0 0 0 3px rgba(var(--acc-rgb),.14); background:var(--surface); }
+    .coax-select{ border:1px solid var(--line); background:var(--surface-2); border-radius:9px; padding:8px 30px 8px 12px; font-size:12px; color:var(--ink-2); font-weight:600; cursor:pointer; outline:0;
+        appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2394a3b8' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 11px center; }
+    .coax-btn{ border:1px solid var(--line); background:var(--surface); color:var(--ink-2); padding:8px 13px; border-radius:9px; font-size:12px; font-weight:650; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:all .15s; white-space:nowrap; }
+    .coax-btn:hover{ border-color:var(--acc); color:var(--acc-d); }
+    .coax-btn-primary{ background:linear-gradient(180deg,var(--acc),var(--acc-d)); border-color:var(--acc-d); color:#fff; box-shadow:0 4px 12px -4px rgba(var(--acc-rgb),.55); }
+    .coax-btn-primary:hover{ color:#fff; transform:translateY(-1px); }
+    .coax-btn-danger{ background:rgba(var(--bad-rgb),.1); border-color:rgba(var(--bad-rgb),.3); color:var(--bad); }
+    .coax-divider{ width:1px; height:24px; background:var(--line); }
+    .coax-tb-meta{ font-size:11px; color:var(--muted); font-weight:600; }
+    /* chips */
+    .coax-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface-2); color:var(--muted); font-size:11.5px; font-weight:650; cursor:pointer; transition:all .15s; user-select:none; }
+    .coax-chip:hover{ border-color:var(--acc); color:var(--acc-d); }
+    .coax-chip.on{ background:var(--acc); border-color:var(--acc); color:#fff; }
+    .coax-chip-lbl{ font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--faint); align-self:center; margin-right:2px; }
+
+    /* ── MAIN SPLIT ── */
+    .coax-main{ display:grid; grid-template-columns:266px 1fr; gap:12px; align-items:start; }
+    @media(max-width:900px){ .coax-main{ grid-template-columns:1fr; } .coax-tree-card{ display:none; } }
+
+    .coax-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; }
+
+    /* tree */
+    .coax-tree-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--line-soft); background:var(--surface-2); }
+    .coax-tree-head .tt{ font-size:10.5px; font-weight:750; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:7px; }
+    .coax-tree-head .tc{ font-size:10.5px; color:var(--faint); font-weight:600; }
+    .coax-tree-body{ padding:8px; max-height:560px; overflow-y:auto; }
+    .coax-tnode{ display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:9px; cursor:pointer; border-left:3px solid transparent; transition:background .12s; }
+    .coax-tnode:hover{ background:var(--acc-tint-2); }
+    .coax-tnode.on{ background:var(--acc-tint); border-left-color:var(--acc); }
+    .coax-tnode .chev{ font-size:9px; color:var(--faint); width:12px; }
+    .coax-tnode .tic{ width:22px; height:22px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; flex:0 0 auto; }
+    .coax-tnode .tlbl{ font-size:12.5px; font-weight:700; color:var(--ink); flex:1; }
+    .coax-tnode .tbadge{ font-size:10px; font-weight:700; padding:1px 8px; border-radius:999px; background:var(--surface-2); color:var(--muted); }
+    .coax-tchild{ padding-left:20px; }
+    .coax-tcat{ display:flex; align-items:center; gap:7px; padding:5px 9px; border-radius:8px; cursor:pointer; }
+    .coax-tcat:hover{ background:var(--acc-tint-2); }
+    .coax-tcat .tlbl{ font-size:12px; font-weight:600; color:var(--ink-2); flex:1; }
+    .coax-tcat .tbadge{ font-size:9.5px; padding:0 7px; }
+    .tic.t-asset{ background:rgba(var(--acc-rgb),.13); color:var(--acc-d); }
+    .tic.t-liab{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+    .tic.t-income{ background:rgba(var(--ok-rgb),.13); color:var(--ok); }
+    .tic.t-expense{ background:rgba(var(--bad-rgb),.13); color:var(--bad); }
+    .tic.t-equity{ background:rgba(var(--info-rgb),.13); color:var(--info); }
+
+    /* table */
+    .coax-tbl-wrap{ overflow-x:auto; }
+    table.coax-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+    table.coax-tbl thead th{ background:var(--surface-2); color:var(--muted); font-size:10px; font-weight:750; letter-spacing:.6px; text-transform:uppercase; padding:11px 12px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; }
+    table.coax-tbl thead th .sort{ opacity:.4; margin-left:3px; }
+    table.coax-tbl tbody td{ padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+    table.coax-tbl tbody tr{ transition:background .12s; }
+    table.coax-tbl tbody tr:hover td{ background:var(--acc-tint-2); }
+    table.coax-tbl tbody tr:hover .row-act{ opacity:1; }
+    .coax-chk{ width:15px; height:15px; accent-color:var(--acc); cursor:pointer; }
+    .coax-id{ color:var(--faint); font-weight:600; font-size:11.5px; }
+    .aname{ font-weight:700; color:var(--ink); text-decoration:none; }
+    .aname:hover{ color:var(--acc-d); }
+    .asub{ color:var(--muted); font-size:11px; }
+    .tag{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:700; letter-spacing:.2px; }
+    .tag-asset{ background:rgba(var(--acc-rgb),.12); color:var(--acc-d); }
+    .tag-liab{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+    .tag-income{ background:rgba(var(--ok-rgb),.13); color:var(--ok); }
+    .tag-expense{ background:rgba(var(--bad-rgb),.13); color:var(--bad); }
+    .tag-model{ background:var(--surface-2); color:var(--ink-2); border:1px solid var(--line); }
+    .cat-cell{ color:var(--ink-2); font-weight:600; display:inline-flex; align-items:center; gap:6px; }
+    .cat-cell i{ color:var(--faint); }
+    .desc-cell{ color:var(--muted); max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .row-act{ opacity:0; transition:opacity .15s; display:inline-flex; gap:5px; justify-content:flex-end; }
+    .icon-btn{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--muted); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:12px; transition:all .15s; }
+    .icon-btn:hover{ border-color:var(--acc); color:var(--acc-d); background:var(--acc-tint); }
+
+    /* footer / pagination */
+    .coax-foot{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:12px 14px; border-top:1px solid var(--line-soft); background:var(--surface-2); }
+    .coax-foot .fm{ font-size:11.5px; color:var(--muted); }
+    .coax-foot .fm b{ color:var(--ink); }
+    .coax-pg{ display:inline-flex; gap:4px; }
+    .coax-pg button{ min-width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink-2); font-size:12px; font-weight:650; cursor:pointer; }
+    .coax-pg button:hover{ border-color:var(--acc); color:var(--acc-d); }
+    .coax-pg button.on{ background:var(--acc); border-color:var(--acc); color:#fff; }
+
+    .note{ margin:18px 4px 4px; font-size:11.5px; color:var(--bs-secondary-color); }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+    <div class="demo-bar">
+        <b><i class="fa fa-book"></i>&nbsp; Chart of Accounts — Premium Compact preview</b>
+        <span class="sw">
+            <span class="dot on" style="background:#2563eb" data-acc="37,99,235" data-hex="#2563eb" title="Blue"></span>
+            <span class="dot" style="background:#7c3aed" data-acc="124,58,237" data-hex="#7c3aed" title="Violet"></span>
+            <span class="dot" style="background:#0d9488" data-acc="13,148,136" data-hex="#0d9488" title="Teal"></span>
+            <span class="dot" style="background:#e11d48" data-acc="225,29,72" data-hex="#e11d48" title="Rose"></span>
+            <span class="dot" style="background:#ea580c" data-acc="234,88,12" data-hex="#ea580c" title="Amber"></span>
+        </span>
+        <button id="themeBtn"><i class="fa fa-moon-o"></i> Dark</button>
+    </div>
+
+    <div class="coax">
+
+        <!-- HERO -->
+        <div class="coax-hero">
+            <span class="glow"></span>
+            <div class="coax-hero-inner">
+                <div class="doc-ic"><i class="fa fa-book"></i></div>
+                <div class="h-main">
+                    <div class="h-eyebrow">Accounts · Ledger</div>
+                    <div class="h-ref">Chart of Accounts</div>
+                    <div class="h-sub">All account heads, categories &amp; ledgers in one place</div>
+                </div>
+                <div class="h-right">
+                    <button class="btn-ghost"><i class="fa fa-cloud-upload"></i> Import</button>
+                    <button class="btn-ghost"><i class="fa fa-file-excel-o"></i> Export</button>
+                    <button class="btn-hero"><i class="fa fa-plus"></i> Add Account</button>
+                </div>
+            </div>
+            <div class="coax-hstats">
+                <button class="coax-hs on"><div class="s-k"><span class="ci"><i class="fa fa-list"></i></span> Total Heads</div><div class="s-v">1,284</div></button>
+                <button class="coax-hs"><div class="s-k"><span class="ci"><i class="fa fa-cube"></i></span> Assets</div><div class="s-v">412</div></button>
+                <button class="coax-hs"><div class="s-k"><span class="ci"><i class="fa fa-credit-card"></i></span> Liabilities</div><div class="s-v">176</div></button>
+                <button class="coax-hs"><div class="s-k"><span class="ci"><i class="fa fa-arrow-down"></i></span> Income</div><div class="s-v">243</div></button>
+                <button class="coax-hs"><div class="s-k"><span class="ci"><i class="fa fa-arrow-up"></i></span> Expenses</div><div class="s-v">453</div></button>
+            </div>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div class="coax-toolbar">
+            <div class="coax-tb-row">
+                <div class="coax-search">
+                    <i class="fa fa-search"></i>
+                    <input type="text" placeholder="Search name, alias, mobile, email…">
+                </div>
+                <select class="coax-select"><option>Account Type</option></select>
+                <select class="coax-select"><option>Category</option></select>
+                <div class="coax-divider"></div>
+                <select class="coax-select"><option>100 / page</option></select>
+                <button class="coax-btn"><i class="fa fa-columns"></i> Columns</button>
+            </div>
+            <div class="coax-tb-row">
+                <span class="coax-chip-lbl"><i class="fa fa-filter"></i> Quick</span>
+                <span class="coax-chip"><i class="fa fa-eye"></i> Exclude Customers</span>
+                <span class="coax-chip on"><i class="fa fa-eye-slash"></i> Exclude Vendors</span>
+                <span class="coax-tb-meta" style="margin-left:auto"><i class="fa fa-info-circle"></i> Showing filtered results · <a href="#" style="color:var(--acc-d);text-decoration:none">clear all</a></span>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="coax-main">
+
+            <!-- TREE -->
+            <div class="coax-card coax-tree-card">
+                <div class="coax-tree-head">
+                    <span class="tt"><i class="fa fa-sitemap"></i> Account Tree</span>
+                    <span class="tc">1,284 total</span>
+                </div>
+                <div style="padding:10px 12px 4px"><div class="coax-search"><i class="fa fa-search"></i><input type="text" placeholder="Filter tree…" style="padding-top:6px;padding-bottom:6px"></div></div>
+                <div class="coax-tree-body">
+                    <div class="coax-tnode on"><i class="fa fa-chevron-down chev"></i><span class="tic t-asset"><i class="fa fa-cube"></i></span><span class="tlbl">Assets</span><span class="tbadge">412</span></div>
+                    <div class="coax-tchild">
+                        <div class="coax-tcat"><i class="fa fa-chevron-right chev"></i><i class="fa fa-folder-o" style="color:var(--faint)"></i><span class="tlbl">Current Assets</span><span class="tbadge">148</span></div>
+                        <div class="coax-tcat"><i class="fa fa-chevron-right chev"></i><i class="fa fa-folder-o" style="color:var(--faint)"></i><span class="tlbl">Bank Accounts</span><span class="tbadge">24</span></div>
+                        <div class="coax-tcat"><i class="fa fa-chevron-right chev"></i><i class="fa fa-folder-o" style="color:var(--faint)"></i><span class="tlbl">Fixed Assets</span><span class="tbadge">62</span></div>
+                    </div>
+                    <div class="coax-tnode"><i class="fa fa-chevron-right chev"></i><span class="tic t-liab"><i class="fa fa-credit-card"></i></span><span class="tlbl">Liabilities</span><span class="tbadge">176</span></div>
+                    <div class="coax-tnode"><i class="fa fa-chevron-right chev"></i><span class="tic t-income"><i class="fa fa-arrow-down"></i></span><span class="tlbl">Income</span><span class="tbadge">243</span></div>
+                    <div class="coax-tnode"><i class="fa fa-chevron-right chev"></i><span class="tic t-expense"><i class="fa fa-arrow-up"></i></span><span class="tlbl">Expenses</span><span class="tbadge">453</span></div>
+                    <div class="coax-tnode"><i class="fa fa-chevron-right chev"></i><span class="tic t-equity"><i class="fa fa-pie-chart"></i></span><span class="tlbl">Equity</span><span class="tbadge">28</span></div>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="coax-card">
+                <div class="coax-tbl-wrap">
+                    <table class="coax-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width:34px"><input type="checkbox" class="coax-chk"></th>
+                                <th style="width:48px">#<i class="fa fa-sort sort"></i></th>
+                                <th style="width:120px">Type<i class="fa fa-sort sort"></i></th>
+                                <th style="width:150px">Category<i class="fa fa-sort sort"></i></th>
+                                <th>Name<i class="fa fa-sort sort"></i></th>
+                                <th style="width:120px">Alias</th>
+                                <th style="width:110px">Model</th>
+                                <th style="width:70px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="rows"></tbody>
+                    </table>
+                </div>
+                <div class="coax-foot">
+                    <span class="fm">Showing <b>1</b>–<b>8</b> of <b>1,284</b> accounts</span>
+                    <div class="coax-pg">
+                        <button><i class="fa fa-angle-left"></i></button>
+                        <button class="on">1</button><button>2</button><button>3</button><button>…</button><button>129</button>
+                        <button><i class="fa fa-angle-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <p class="note">Preview only — accent tracks the active settings theme (<code>--bs-primary</code>) and follows light/dark automatically, exactly like the LPO / Settings / Employee premium pages. Nothing here is wired to Livewire yet.</p>
+</div>
+
+<script>
+    const data = [
+        {id:1042, type:'asset',   tag:'tag-asset',   cat:'Bank Accounts',   name:'HDFC Current A/C',    alias:'HDFC-CURR',  model:'', mi:''},
+        {id:1043, type:'asset',   tag:'tag-asset',   cat:'Current Assets',  name:'Accounts Receivable', alias:'AR',         model:'', mi:''},
+        {id:2011, type:'income',  tag:'tag-income',  cat:'Sales Revenue',   name:'Retail Sales',        alias:'SALES-RTL',  model:'', mi:''},
+        {id:3120, type:'expense', tag:'tag-expense', cat:'Operating',       name:'Office Rent',         alias:'RENT',       model:'', mi:''},
+        {id:4501, type:'liab',    tag:'tag-liab',    cat:'Payables',        name:'Al Futtaim Trading',  alias:'AF-TRD',     model:'Vendor',   mi:'fa-truck'},
+        {id:4502, type:'asset',   tag:'tag-asset',   cat:'Receivables',     name:'Mohammed Rashid',     alias:'',           model:'Customer', mi:'fa-user-o'},
+        {id:3121, type:'expense', tag:'tag-expense', cat:'Operating',       name:'Electricity & Water', alias:'UTIL',       model:'', mi:''},
+        {id:1044, type:'asset',   tag:'tag-asset',   cat:'Fixed Assets',    name:'Delivery Vehicle',    alias:'VEH-01',     model:'', mi:''},
+    ];
+    const typeName = {asset:'Asset', liab:'Liability', income:'Income', expense:'Expense'};
+    const typeIcon = {asset:'fa-cube', liab:'fa-credit-card', income:'fa-arrow-down', expense:'fa-arrow-up'};
+    document.getElementById('rows').innerHTML = data.map(r=>`
+        <tr>
+            <td><input type="checkbox" class="coax-chk"></td>
+            <td class="coax-id">#${r.id}</td>
+            <td><span class="tag ${r.tag}"><i class="fa ${typeIcon[r.type]}"></i> ${typeName[r.type]}</span></td>
+            <td><span class="cat-cell"><i class="fa fa-folder-o"></i> ${r.cat}</span></td>
+            <td><a href="#" class="aname">${r.name}</a>${r.alias?'':'<div class="asub">—</div>'}</td>
+            <td class="asub">${r.alias||'—'}</td>
+            <td>${r.model?`<span class="tag tag-model"><i class="fa ${r.mi}"></i> ${r.model}</span>`:'<span class="asub">—</span>'}</td>
+            <td style="text-align:right"><span class="row-act"><button class="icon-btn"><i class="fa fa-pencil"></i></button></span></td>
+        </tr>`).join('');
+
+    // theme toggle
+    const html=document.documentElement, tb=document.getElementById('themeBtn');
+    tb.onclick=()=>{ const d=html.getAttribute('data-bs-theme')==='dark'; html.setAttribute('data-bs-theme', d?'light':'dark'); tb.innerHTML = d?'<i class="fa fa-moon-o"></i> Dark':'<i class="fa fa-sun-o"></i> Light'; };
+    // accent switch
+    document.querySelectorAll('.demo-bar .dot').forEach(d=>d.onclick=()=>{
+        document.querySelectorAll('.demo-bar .dot').forEach(x=>x.classList.remove('on')); d.classList.add('on');
+        document.documentElement.style.setProperty('--bs-primary', d.dataset.hex);
+        document.documentElement.style.setProperty('--bs-primary-rgb', d.dataset.acc);
+    });
+    // hero stat + tree toggles (demo only)
+    document.querySelectorAll('.coax-hs').forEach(s=>s.onclick=()=>{ document.querySelectorAll('.coax-hs').forEach(x=>x.classList.remove('on')); s.classList.add('on'); });
+</script>
+</body>
+</html>
