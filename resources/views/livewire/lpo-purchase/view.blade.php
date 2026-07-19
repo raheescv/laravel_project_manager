@@ -274,16 +274,16 @@
         <div class="lpox-hero">
             <div class="glow"></div>
             <div class="lpox-hero-inner">
-                <div class="doc-ic"><i class="fa fa-shopping-bag"></i></div>
+                <div class="doc-ic"><i class="fa fa-shopping-cart"></i></div>
                 <div class="h-main">
                     <div class="h-eyebrow">LPO Purchase</div>
                     <div class="h-ref">{{ $refNo }}</div>
                     <div class="h-meta">
-                        <span><i class="demo-psi-home"></i>{{ $purchase->branch?->name ?? '—' }}</span>
-                        <span><i class="demo-psi-shop"></i>{{ $purchase->account?->name ?? '—' }}</span>
-                        <span><i class="demo-psi-calendar-4"></i>{{ $purchase->date ? \Carbon\Carbon::parse($purchase->date)->format('d M Y') : '—' }}</span>
+                        <span><i class="fa fa-home"></i>{{ $purchase->branch?->name ?? '—' }}</span>
+                        <span><i class="fa fa-building"></i>{{ $purchase->account?->name ?? '—' }}</span>
+                        <span><i class="fa fa-calendar"></i>{{ $purchase->date ? \Carbon\Carbon::parse($purchase->date)->format('d M Y') : '—' }}</span>
                         @if ($purchase->localPurchaseOrder)
-                            <span><i class="demo-psi-shopping-cart"></i><a href="{{ route('lpo::view', $purchase->localPurchaseOrder->id) }}">LPO #{{ $purchase->localPurchaseOrder->id }}</a></span>
+                            <span><i class="fa fa-shopping-cart"></i><a href="{{ route('lpo::view', $purchase->localPurchaseOrder->id) }}">LPO #{{ $purchase->localPurchaseOrder->id }}</a></span>
                         @endif
                     </div>
                 </div>
@@ -318,7 +318,7 @@
                     <div class="s-v">{{ number_format($totalQty, 0) }} <small>units</small></div>
                 </div>
                 <div class="lpox-hs">
-                    <div class="s-k"><i class="demo-psi-coin"></i> Grand Total</div>
+                    <div class="s-k"><i class="fa fa-money"></i> Grand Total</div>
                     <div class="s-v">{{ number_format($purchase->grand_total, 2) }}</div>
                 </div>
                 @if ($purchase->journals->count())
@@ -340,7 +340,7 @@
                 'ts' => $purchase->created_at,
                 'title' => 'Purchase Created',
                 'badge' => 'Draft',
-                'icon' => 'demo-psi-file',
+                'icon' => 'fa fa-file-text-o',
                 'tone' => 'acc',
                 'who' => $purchase->createdUser?->name,
                 'note' => null,
@@ -385,24 +385,24 @@
             {{-- Purchase Information --}}
             <div class="l-card" style="margin-bottom:0">
                 <div class="l-head">
-                    <div class="l-ic"><i class="demo-psi-file"></i></div>
+                    <div class="l-ic"><i class="fa fa-file-text-o"></i></div>
                     <div><div class="l-title">Purchase Information</div><div class="l-sub">Vendor &amp; invoice metadata</div></div>
                 </div>
                 <div class="kv-grid">
                     <div class="kv"><div class="kk"><i class="fa fa-barcode"></i>Invoice No</div><div class="vv">{{ $purchase->invoice_no ?? '-' }}</div></div>
-                    <div class="kv"><div class="kk"><i class="demo-psi-calendar-4"></i>Date</div><div class="vv">{{ $purchase->date ? \Carbon\Carbon::parse($purchase->date)->format('d M Y') : '-' }}</div></div>
-                    <div class="kv"><div class="kk"><i class="demo-psi-shop"></i>Vendor</div><div class="vv">{{ $purchase->account?->name ?? '-' }}</div></div>
-                    <div class="kv"><div class="kk"><i class="demo-psi-shopping-cart"></i>LPO</div><div class="vv">
+                    <div class="kv"><div class="kk"><i class="fa fa-calendar"></i>Date</div><div class="vv">{{ $purchase->date ? \Carbon\Carbon::parse($purchase->date)->format('d M Y') : '-' }}</div></div>
+                    <div class="kv"><div class="kk"><i class="fa fa-building"></i>Vendor</div><div class="vv">{{ $purchase->account?->name ?? '-' }}</div></div>
+                    <div class="kv"><div class="kk"><i class="fa fa-shopping-cart"></i>LPO</div><div class="vv">
                         @if ($purchase->localPurchaseOrder)
                             <a href="{{ route('lpo::view', $purchase->localPurchaseOrder->id) }}">LPO #{{ $purchase->localPurchaseOrder->id }} <i class="fa fa-external-link" style="font-size:9px"></i></a>
                         @else
                             -
                         @endif
                     </div></div>
-                    <div class="kv"><div class="kk"><i class="demo-psi-male"></i>Created By</div><div class="vv">{{ $purchase->createdUser?->name ?? '-' }}</div></div>
-                    <div class="kv"><div class="kk"><i class="demo-psi-home"></i>Branch</div><div class="vv">{{ $purchase->branch?->name ?? '-' }}</div></div>
-                    <div class="kv"><div class="kk"><i class="demo-psi-basket-coins"></i>Total Items</div><div class="vv">{{ $itemCount }} items</div></div>
-                    <div class="kv"><div class="kk"><i class="demo-psi-coin"></i>Grand Total</div><div class="vv" style="color:var(--ok)">{{ number_format($purchase->grand_total, 2) }}</div></div>
+                    <div class="kv"><div class="kk"><i class="fa fa-user"></i>Created By</div><div class="vv">{{ $purchase->createdUser?->name ?? '-' }}</div></div>
+                    <div class="kv"><div class="kk"><i class="fa fa-home"></i>Branch</div><div class="vv">{{ $purchase->branch?->name ?? '-' }}</div></div>
+                    <div class="kv"><div class="kk"><i class="fa fa-cubes"></i>Total Items</div><div class="vv">{{ $itemCount }} items</div></div>
+                    <div class="kv"><div class="kk"><i class="fa fa-money"></i>Grand Total</div><div class="vv" style="color:var(--ok)">{{ number_format($purchase->grand_total, 2) }}</div></div>
                 </div>
             </div>
 
@@ -427,7 +427,7 @@
                                     <span class="tl-ttl">{{ $ev['title'] }}</span>
                                     <span class="tl-badge">{{ $ev['badge'] }}</span>
                                 </div>
-                                <div class="tl-time"><i class="demo-psi-calendar-4"></i> {{ $ev['ts'] ? \Carbon\Carbon::parse($ev['ts'])->format('d M Y, h:i A') : '—' }}</div>
+                                <div class="tl-time"><i class="fa fa-calendar"></i> {{ $ev['ts'] ? \Carbon\Carbon::parse($ev['ts'])->format('d M Y, h:i A') : '—' }}</div>
                             </div>
                             @if ($ev['who'])
                                 <div class="tl-who">
@@ -437,7 +437,7 @@
                             @endif
                             @if (!empty($ev['note']))
                                 <div class="tl-note">
-                                    <span class="tl-note-k"><i class="demo-psi-speech-bubble-3"></i> {{ $ev['note_label'] }}</span>
+                                    <span class="tl-note-k"><i class="fa fa-comment-o"></i> {{ $ev['note_label'] }}</span>
                                     {{ $ev['note'] }}
                                 </div>
                             @endif
@@ -451,7 +451,7 @@
         {{-- ===================== PURCHASE ITEMS ===================== --}}
         <div class="l-sec l-card">
             <div class="l-head">
-                <div class="l-ic t-info"><i class="demo-psi-basket-coins"></i></div>
+                <div class="l-ic t-info"><i class="fa fa-cubes"></i></div>
                 <div style="flex:1"><div class="l-title">Purchase Items</div></div>
                 <span class="l-pill pill-acc">{{ $itemCount }} items · {{ number_format($purchase->grand_total, 2) }}</span>
             </div>
@@ -507,7 +507,7 @@
                         @empty
                             <tr>
                                 <td colspan="9">
-                                    <div class="l-empty"><i class="demo-psi-basket-coins"></i> No items</div>
+                                    <div class="l-empty"><i class="fa fa-cubes"></i> No items</div>
                                 </td>
                             </tr>
                         @endforelse
@@ -576,7 +576,7 @@
                                     <span class="jref">Ref: {{ $journal->reference_number }}</span>
                                 @endif
                             </div>
-                            <span class="jdate"><i class="demo-psi-calendar-4"></i> {{ $journal->date ? \Carbon\Carbon::parse($journal->date)->format('d M Y') : '-' }}</span>
+                            <span class="jdate"><i class="fa fa-calendar"></i> {{ $journal->date ? \Carbon\Carbon::parse($journal->date)->format('d M Y') : '-' }}</span>
                         </div>
                         <div class="l-tblwrap">
                             <table class="l-tbl">
@@ -637,7 +637,7 @@
                         <div class="a-ic"><i class="fa fa-gavel"></i></div>
                         <div><div class="a-title">Take Action</div><div class="a-sub">Accept or reject this LPO purchase</div></div>
                     </div>
-                    <div class="lpox-lbl"><i class="demo-psi-speech-bubble-3"></i> Remarks</div>
+                    <div class="lpox-lbl"><i class="fa fa-comment-o"></i> Remarks</div>
                     <textarea class="lpox-ta" rows="3" wire:model="remarks" placeholder="Enter remarks (required for rejection)"></textarea>
                     <div class="a-actions">
                         <button type="button" class="l-btn l-btn-bad" wire:click="reject" wire:confirm="Are you sure you want to reject this LPO Purchase?">
@@ -660,7 +660,7 @@
                             <div class="a-ic"><i class="fa fa-undo"></i></div>
                             <div><div class="a-title">Reverse Purchase</div><div class="a-sub">Roll back the journal entries for this bill</div></div>
                         </div>
-                        <div class="lpox-lbl"><i class="demo-psi-speech-bubble-3"></i> Remarks</div>
+                        <div class="lpox-lbl"><i class="fa fa-comment-o"></i> Remarks</div>
                         <textarea class="lpox-ta" rows="3" wire:model="remarks" placeholder="Reason for reversal (required)"></textarea>
                         <div class="a-actions">
                             <button type="button" class="l-btn l-btn-bad" wire:click="reverse" wire:confirm="This will roll back the journal entries for this bill. Continue?">

@@ -3,6 +3,7 @@
 namespace App\Actions\Purchase;
 
 use App\Actions\Journal\CreateAction;
+use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
@@ -39,12 +40,32 @@ class JournalEntryAction
                 throw new \Exception('Required account heads are missing for purchase journal posting.');
             }
 
-            // Purchase Entry
+            // Purchase Entry — service lines are debited to their own expense
+            // account (there is no inventory/GRN movement to clear), while goods
+            // lines keep the default header account: Unbilled Payables for LPO
+            // bills (so the GRNI clearing nets to zero against the GRN) or
+            // Inventory for direct purchases. Lines with no expense account set
+            // fall back to that same default.
             if ($purchase->gross_amount > 0) {
+                $serviceProductIds = Product::whereIn('id', $purchase->items->pluck('product_id')->unique())
+                    ->where('type', 'service')
+                    ->pluck('id')
+                    ->all();
+
+                $debitByAccount = [];
+                foreach ($purchase->items as $item) {
+                    if ($item->total <= 0) {
+                        continue;
+                    }
+                    $isServiceExpense = in_array($item->product_id, $serviceProductIds) && $item->account_id;
+                    $debitAccountId = $isServiceExpense ? $item->account_id : $purchaseAccountId;
+                    $debitByAccount[$debitAccountId] = ($debitByAccount[$debitAccountId] ?? 0) + (float) $item->total;
+                }
+
                 $remarks = 'Purchase from '.$purchase->account->name;
-                $debit = $purchase->gross_amount;
-                $credit = 0;
-                $entries[] = $this->makeEntryPair($purchaseAccountId, $purchase->account_id, $debit, $credit, $remarks, 'Purchase', $purchase->id);
+                foreach ($debitByAccount as $accountId => $amount) {
+                    $entries[] = $this->makeEntryPair($accountId, $purchase->account_id, $amount, 0, $remarks, 'Purchase', $purchase->id);
+                }
             }
 
             // Tax Entry
