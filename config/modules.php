@@ -64,6 +64,7 @@ return [
             'sales',
             'reports_sales',
             'simple_purchase_management',
+            'reports_hr',
             'accounting',
             'hr_management',
             'reports_inventory',
