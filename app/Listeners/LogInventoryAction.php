@@ -6,6 +6,7 @@ use App\Events\InventoryActionOccurred;
 use App\Models\Inventory;
 use App\Models\InventoryLog;
 use App\Models\Product;
+use App\Support\Migration\BulkImport;
 
 class LogInventoryAction
 {
@@ -51,6 +52,13 @@ class LogInventoryAction
                 'user_name' => $newInventory->updatedUser?->name,
             ];
             InventoryLog::create($logData);
+        }
+
+        // During a bulk migration this weighted-average recompute would run for every sale line and
+        // write products.cost, serialising parallel workers on the shared product row. Skip it here;
+        // MigrateDataCommand recomputes every product's cost once after the replay finishes.
+        if (BulkImport::enabled()) {
+            return;
         }
 
         // Update product cost based on weighted average of all inventories

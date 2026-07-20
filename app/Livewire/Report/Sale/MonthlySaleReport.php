@@ -9,6 +9,7 @@ use App\Models\TailoringOrder;
 use App\Models\TailoringPayment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Livewire\Component;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -24,16 +25,63 @@ class MonthlySaleReport extends Component
 
     public $to_month;
 
-    public function mount()
+    public $filter_branch_id = '';
+
+    public $filter_from_year;
+
+    public $filter_to_year;
+
+    public $filter_from_month;
+
+    public $filter_to_month;
+
+    public function mount(): void
     {
         $this->branch_id = session('branch_id');
         $this->from_year = date('Y');
         $this->to_year = date('Y');
         $this->from_month = date('m');
         $this->to_month = date('m');
+
+        $this->syncFilterValues();
     }
 
-    private function getReportData()
+    public function fetchReport(): void
+    {
+        $this->validate([
+            'filter_branch_id' => ['nullable', 'integer'],
+            'filter_from_year' => ['required', 'in:'.implode(',', range(date('Y'), date('Y') - 10))],
+            'filter_to_year' => ['required', 'in:'.implode(',', range(date('Y'), date('Y') - 10))],
+            'filter_from_month' => ['required', 'in:01,02,03,04,05,06,07,08,09,10,11,12'],
+            'filter_to_month' => ['required', 'in:01,02,03,04,05,06,07,08,09,10,11,12'],
+        ]);
+
+        $fromDate = Carbon::create($this->filter_from_year, $this->filter_from_month, 1)->startOfMonth();
+        $toDate = Carbon::create($this->filter_to_year, $this->filter_to_month, 1)->endOfMonth();
+
+        if ($fromDate->greaterThan($toDate)) {
+            $this->addError('filter_to_month', 'The end month must be after or equal to the start month.');
+
+            return;
+        }
+
+        $this->branch_id = $this->filter_branch_id;
+        $this->from_year = $this->filter_from_year;
+        $this->to_year = $this->filter_to_year;
+        $this->from_month = str_pad((string) $this->filter_from_month, 2, '0', STR_PAD_LEFT);
+        $this->to_month = str_pad((string) $this->filter_to_month, 2, '0', STR_PAD_LEFT);
+    }
+
+    private function syncFilterValues(): void
+    {
+        $this->filter_branch_id = $this->branch_id;
+        $this->filter_from_year = $this->from_year;
+        $this->filter_to_year = $this->to_year;
+        $this->filter_from_month = $this->from_month;
+        $this->filter_to_month = $this->to_month;
+    }
+
+    private function getReportData(): array
     {
         // Build date range
         $fromDate = Carbon::create($this->from_year, $this->from_month, 1)->startOfMonth();
@@ -149,7 +197,7 @@ class MonthlySaleReport extends Component
         return Excel::download(new MonthlySaleReportExport($data, $total, $filters), $exportFileName);
     }
 
-    public function render()
+    public function render(): View
     {
         [$data, $total] = $this->getReportData();
         $months = [
@@ -167,10 +215,22 @@ class MonthlySaleReport extends Component
             '12' => 'December',
         ];
 
+        $chartData = [
+            'labels' => array_map(fn ($row) => $row['month_name'], $data),
+            'gross_sales' => array_map(fn ($row) => round((float) $row['gross_sales'], 2), $data),
+            'discount' => array_map(fn ($row) => round((float) $row['discount'], 2), $data),
+            'net_sale' => array_map(fn ($row) => round((float) $row['net_sale'], 2), $data),
+            'paid_total' => array_map(fn ($row) => round((float) $row['paid_total'], 2), $data),
+            'credit' => array_map(fn ($row) => round((float) $row['credit'], 2), $data),
+            'card' => array_map(fn ($row) => round((float) $row['card'], 2), $data),
+            'cash' => array_map(fn ($row) => round((float) $row['cash'], 2), $data),
+        ];
+
         return view('livewire.report.sale.monthly-sale-report', [
             'months' => $months,
             'data' => $data,
             'total' => $total,
+            'chartData' => $chartData,
         ]);
     }
 }

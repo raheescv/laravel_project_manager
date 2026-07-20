@@ -16,12 +16,13 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
+            <div class="monthly-report-container mb-3">
                 @livewire('report.sale.monthly-sale-report')
             </div>
         </div>
     </div>
     @push('scripts')
+        <script src="{{ secure_asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
         <x-select.branchSelect />
     @endpush
 </x-app-layout>

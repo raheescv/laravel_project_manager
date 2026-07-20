@@ -4,11 +4,18 @@ namespace App\Support\Sale;
 
 use App\Models\Configuration;
 use App\Models\Inventory;
+use App\Support\Migration\BulkImport;
 
 class OutOfStockSales
 {
     public static function prevented(): bool
     {
+        // A bulk migration replays sales in parallel and reconciles stock afterwards, so quantity is
+        // deliberately unreliable mid-run. Never block a migrated sale on an out-of-stock check.
+        if (BulkImport::enabled()) {
+            return false;
+        }
+
         return (Configuration::where('key', 'prevent_out_of_stock_sales')->value('value') ?? 'yes') === 'yes';
     }
 

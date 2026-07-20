@@ -261,6 +261,19 @@ class CountrySeeder extends Seeder
             ['name' => 'Zambia', 'code' => 'ZM', 'phone_code' => '260'],
             ['name' => 'Zimbabwe', 'code' => 'ZW', 'phone_code' => '263'],
         ];
+        // Batch insert() derives its column list from the FIRST row's keys, so rows with
+        // extra keys (India/Qatar carry currency_code + currency_symbol) would produce a
+        // value/column count mismatch. Normalise every row to the same column set first.
+        $columns = ['name', 'code', 'phone_code', 'currency_code', 'currency_symbol'];
+        $data = array_map(function ($row) use ($columns) {
+            $normalized = [];
+            foreach ($columns as $column) {
+                $normalized[$column] = $row[$column] ?? null;
+            }
+
+            return $normalized;
+        }, $data);
+
         DB::table('countries')->insert($data);
     }
 }

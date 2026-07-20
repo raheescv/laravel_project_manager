@@ -5,21 +5,22 @@ namespace App\Console\Commands\SingleUse;
 use App\Actions\Appointment\CreateAction as AppointmentCreateAction;
 use App\Actions\InventoryTransfer\CreateAction as InventoryTransferCreateAction;
 use App\Actions\Purchase\CreateAction as PurchaseCreateAction;
-use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Actions\SaleReturn\CreateAction as SaleReturnCreateAction;
 use App\Jobs\BranchProductCreationJob;
+use App\Jobs\MigrateSalesChunkJob;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Inventory;
 use App\Models\Product;
-use App\Models\Property;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\SupplyRequest;
-use App\Models\SupplyRequestItem;
 use App\Models\User;
 use App\Models\UserHasBranch;
+use App\Services\TenantService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -27,35 +28,133 @@ use Spatie\Permission\Models\Role;
 
 class MigrateDataCommand extends Command
 {
-    protected $signature = 'migrate:database-data';
+    protected $signature = 'migrate:database-data
+        {--force : Run even if the target database already contains migrated data}
+        {--fast : Also relax global sync_binlog for maximum speed (dedicated migration DB only; restored on finish)}';
 
     protected $description = 'Migrate data from mysql2 to mysql database';
 
     public $paymentModesIds;
 
+    public $tenantId;
+
     public function handle()
     {
+        // This command is not idempotent: branches() truncates and every other entity uses
+        // ::create(), so a second run duplicates all data. Abort if the target already looks
+        // migrated, unless explicitly forced.
+        if (! $this->option('force') && (User::query()->exists() || Product::query()->exists() || Sale::query()->exists())) {
+            $this->error('Target database already contains data (users/products/sales). This command is a one-shot migration and would duplicate records.');
+            $this->warn('Start from a fresh, migrated (empty) database, or re-run with --force if you are certain.');
+
+            return self::FAILURE;
+        }
+
         $this->info('Starting data migration...');
+
+        // Force the queue to run inline for the whole migration. products()/service()
+        // dispatch BranchProductCreationJob -> BranchInventoryCreationJob, which create the
+        // Inventory rows that sales()/purchases()/salesReturns()/stockTransfers() immediately
+        // look up. On the database queue those jobs would still be pending, so the lookups
+        // throw "Inventory not found" and silently skip the row. Running sync guarantees the
+        // inventory exists before any transaction is replayed.
+        config(['queue.default' => 'sync']);
+
+        // branches/accounts are inserted with raw DB::table()->insertOrIgnore(), which bypasses
+        // the BelongsToTenant creating-hook. Their tenant_id columns are NOT NULL with no default,
+        // so tenant_id must be supplied explicitly or every row is silently dropped by insertOrIgnore.
+        $this->tenantId = app(TenantService::class)->getCurrentTenantId();
+
         $this->paymentModesIds = DB::connection('mysql2')->table('account_heads')->whereIn('account_category_id', [16, 17])->pluck('id', 'id')->toArray();
+        Artisan::call('db:ensure-procedures');
+
+        // Speed: this migration replays ~100k+ sales/purchases, each in its own short transaction.
+        // With the default innodb_flush_log_at_trx_commit=1 every COMMIT fsyncs the redo log to
+        // disk, and that per-commit fsync — not CPU or query planning — is what dominates runtime.
+        // Relaxing it to 2 (flush once per second) is the single biggest win. This variable is
+        // GLOBAL-only in MySQL, so we capture the current value and restore it in the finally block
+        // below; the relaxed setting is in effect only while this one-shot migration runs.
+        $originalFlushLog = null;
+        try {
+            $originalFlushLog = DB::selectOne('SELECT @@GLOBAL.innodb_flush_log_at_trx_commit AS v')->v;
+            DB::statement('SET GLOBAL innodb_flush_log_at_trx_commit = 2');
+        } catch (\Throwable $e) {
+            $originalFlushLog = null;
+            $this->warn('Could not relax innodb_flush_log_at_trx_commit (needs SET GLOBAL privilege) — continuing without it: '.$e->getMessage());
+        }
+
+        // --fast additionally relaxes sync_binlog (the binary log's own per-commit fsync). This
+        // further reduces crash durability server-wide for the duration, so it is opt-in and only
+        // appropriate on a dedicated migration DB. The original value is captured here and restored
+        // in the finally block below.
+        $originalSyncBinlog = null;
+        if ($this->option('fast')) {
+            try {
+                $originalSyncBinlog = DB::selectOne('SELECT @@GLOBAL.sync_binlog AS v')->v;
+                DB::statement('SET GLOBAL sync_binlog = 0');
+                $this->warn('Turbo mode: sync_binlog=0 set globally for the migration (reduced crash durability until it finishes).');
+            } catch (\Throwable $e) {
+                $originalSyncBinlog = null;
+                $this->warn('Could not set global sync_binlog (needs privilege) — continuing without it: '.$e->getMessage());
+            }
+        }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        $this->branches();
-        $this->accounts();
-        $this->customer();
-        $this->vendor();
-        $this->service();
-        $this->products();
-        $this->employees();
-        $this->users();
-        // sleep(200);
-        $this->sales();
-        $this->salesReturns();
-        $this->purchases();
-        $this->appointments();
-        $this->stockTransfers();
-        $this->supplyRequests();
+        try {
+            $this->branches();
+            $this->settings();
+            $this->accounts();
+            $this->customer();
+            $this->vendor();
+            $this->service();
+            $this->products();
+            $this->employees();
+            $this->users();
+            $this->employeeCommissions();
+            // The journal-entry actions replayed by sales()/salesReturns()/purchases() read
+            // account + branch ids from long-lived (1-year) caches that AppServiceProvider primes
+            // at boot. On a freshly wiped/migrated DB those caches were primed empty, so rebuild
+            // them now that branches and the seeded locked accounts exist — otherwise
+            // JournalEntryAction fails with "Undefined array key 'sale'".
+            $this->refreshLookupCaches();
+            $this->purchases();
+            $this->appointments();
+            $this->stockTransfers();
+            $this->sales();
+            $this->salesReturns();
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            // Restore the global durability settings we relaxed, whatever happened above.
+            if ($originalFlushLog !== null) {
+                try {
+                    DB::statement('SET GLOBAL innodb_flush_log_at_trx_commit = '.(int) $originalFlushLog);
+                } catch (\Throwable $e) {
+                    $this->warn('Could not restore global innodb_flush_log_at_trx_commit to '.$originalFlushLog.': '.$e->getMessage());
+                }
+            }
+            if ($originalSyncBinlog !== null) {
+                try {
+                    DB::statement('SET GLOBAL sync_binlog = '.(int) $originalSyncBinlog);
+                } catch (\Throwable $e) {
+                    $this->warn('Could not restore global sync_binlog to '.$originalSyncBinlog.': '.$e->getMessage());
+                }
+            }
+        }
 
         $this->info('Data migration completed successfully!');
+    }
+
+    private function refreshLookupCaches(): void
+    {
+        Cache::put('branches', Branch::select('id', 'name')->get(), now()->addYear());
+
+        $accountSlugMap = DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
+        Cache::put('accounts_slug_id_map', $accountSlugMap, now()->addYear());
+
+        if (! isset($accountSlugMap['sale'])) {
+            $this->warn('Locked default accounts (slug "sale", "inventory", ...) are missing. Seed the default chart of accounts before running this command, or completed sales will fail their journal entries.');
+        }
     }
 
     private function stockTransfers()
@@ -67,7 +166,7 @@ class MigrateDataCommand extends Command
 
         $stockTransfers = DB::connection('mysql2')
             ->table('stock_transfers')
-            ->where('id', 445)
+            ->orderBy('id')
             ->get();
         foreach ($stockTransfers as $stockTransfer) {
             DB::beginTransaction();
@@ -143,6 +242,7 @@ class MigrateDataCommand extends Command
         foreach ($branches as $branch) {
             $branchData = [
                 'id' => $branch->id,
+                'tenant_id' => $this->tenantId,
                 'name' => $branch->name,
                 'code' => $branch->code,
                 'location' => $branch->code,
@@ -155,6 +255,46 @@ class MigrateDataCommand extends Command
         }
         $progressBar->finish();
         $this->info('Branches migration completed.');
+    }
+
+    private function settings()
+    {
+        $this->info('Migrating settings (configurations)...');
+
+        // Old accounts DB stores settings as a key/value table: `configurations` (keys, values).
+        // New project_manager DB uses `configurations` (tenant_id, key, value) unique per
+        // (tenant_id, key). We map keys->key, values->value under tenant 1.
+        $configurations = DB::connection('mysql2')
+            ->table('configurations')
+            ->get();
+
+        $progressBar = $this->output->createProgressBar($configurations->count());
+        $progressBar->start();
+
+        foreach ($configurations as $configuration) {
+            $progressBar->advance();
+
+            // Preserve the new app's freshly-seeded theme_settings row; the old app's theme
+            // structure is incompatible with the new UI and would break rendering.
+            if ($configuration->keys === 'theme_settings') {
+                continue;
+            }
+
+            // updateOrInsert on (tenant_id, key) keeps this idempotent and honours the unique
+            // constraint. `value` is NOT NULL in the new schema, so coerce null -> ''.
+            DB::table('configurations')->updateOrInsert(
+                ['tenant_id' => 1, 'key' => $configuration->keys],
+                [
+                    'value' => $configuration->values ?? '',
+                    'created_at' => $configuration->created_at,
+                    'updated_at' => $configuration->updated_at,
+                ]
+            );
+        }
+
+        $progressBar->finish();
+        $this->newLine();
+        $this->info('Settings migration completed.');
     }
 
     private function appointments()
@@ -344,7 +484,7 @@ class MigrateDataCommand extends Command
                                 ->table('journals')
                                 ->whereNull('deleted_at')
                                 ->where('purchase_id', $purchase->id)
-                                ->whereIn('credit', [1, 16, 94, 336])
+                                ->whereIn('credit', $this->paymentModesIds)
                                 ->get();
                             $data['payments'] = [];
                             foreach ($journals as $value) {
@@ -378,152 +518,128 @@ class MigrateDataCommand extends Command
     {
         $this->info('Migrating sales...');
 
-        // Get total count for progress bar
-        $totalSales = DB::connection('mysql2')
+        // The sales replay is the heaviest phase (~100k+ rows). Instead of processing it inline, split
+        // it into 500-sale chunks dispatched as a Bus batch onto the dedicated `migration` queue so
+        // MANY workers drain it in parallel. MigrateSalesChunkJob rebuilds the in-memory lookup maps
+        // once per worker process (statically memoised), so we don't lose the "preload once" win.
+        //
+        // Fast-path: the jobs run in BulkImport mode (no inventory lock, no per-line product-cost
+        // recompute, no out-of-stock prevention) so parallel workers never serialise on hot products.
+        // That leaves Inventory.quantity racy during the run, so once the batch finishes we reconcile
+        // every inventory's quantity from the (race-proof) InventoryLog deltas and recompute product
+        // costs once — see reconcileInventoryAndCosts(). Accounting is insert-only and always correct.
+        $saleIds = DB::connection('mysql2')
             ->table('sales')
             ->whereNull('deleted_at')
-            ->count();
+            ->orderBy('id')
+            ->pluck('id');
 
-        $progressBar = $this->output->createProgressBar($totalSales);
+        $totalSales = $saleIds->count();
+        if ($totalSales === 0) {
+            $this->info('No sales to migrate.');
+
+            return;
+        }
+
+        $jobs = $saleIds
+            ->chunk(500)
+            ->map(fn ($chunk) => new MigrateSalesChunkJob($chunk->values()->all(), array_values($this->paymentModesIds), $this->tenantId))
+            ->all();
+
+        $this->info("Queuing {$totalSales} sales as ".count($jobs).' batched jobs (500 each) on the `migration` queue.');
+        $this->warn('Start one or more workers in other terminals to drain them (run several for more speed):');
+        $this->warn('  php artisan queue:work --queue=migration --stop-when-empty --tries=1 --timeout=3600');
+
+        // Dispatch explicitly onto the database connection so the command-wide queue.default=sync
+        // (set in handle() for the inline inventory jobs) does not force these to run in-process.
+        $batch = Bus::batch($jobs)
+            ->name('sales-migration')
+            ->onConnection('database')
+            ->onQueue('migration')
+            ->allowFailures()
+            ->dispatch();
+
+        // salesReturns() runs immediately after this method and looks the migrated sales up by
+        // invoice_no, so block here until the worker has drained the batch. Progress is tracked over
+        // jobs (the batch's unit of work), not individual sales.
+        $progressBar = $this->output->createProgressBar(count($jobs));
         $progressBar->start();
-
-        DB::connection('mysql2')
-            ->table('sales')
-            ->whereNull('sales.deleted_at')
-            // ->where('invoice_no', '25-26/614')
-            ->orderBy('sales.id')
-            ->chunk(100, function ($sales) use ($progressBar): void {
-                foreach ($sales as $sale) {
-                    $progressBar->advance();
-                    try {
-                        DB::transaction(function () use ($sale): void {
-                            $account = Account::where('second_reference_no', $sale->customer_id)->first();
-                            $created_by = User::where('type', 'user')->where('second_reference_no', $sale->created_by)->value('id');
-                            $updated_by = User::where('type', 'user')->where('second_reference_no', $sale->updated_by)->value('id');
-                            $data = [
-                                'branch_id' => $sale->branch_id,
-                                'date' => $sale->date,
-                                'due_date' => $sale->due_date,
-                                'invoice_no' => $sale->invoice_no,
-                                'sale_type' => 'normal',
-                                'account_id' => $account->id,
-                                'customer_name' => $sale->customer_name,
-                                'customer_mobile' => $sale->customer_mobile,
-                                'tax_amount' => 0,
-                                'other_discount' => $sale->other_discount ? $sale->other_discount : 0,
-                                'freight' => 0,
-                                'grand_total' => $sale->grand_total,
-                                'paid' => $sale->paid ? $sale->paid : 0,
-                                'balance' => $sale->balance,
-                                'address' => null,
-                                'status' => $sale->status == 2 ? 'completed' : 'draft',
-                                'created_by' => $created_by,
-                                'updated_by' => $updated_by,
-                            ];
-                            $data['comboOffers'] = [];
-                            $data['items'] = [];
-                            $sale_service_items = DB::connection('mysql2')
-                                ->table('sale_service_items')
-                                ->whereNull('deleted_at')
-                                ->where('sale_id', $sale->id)
-                                ->get();
-                            foreach ($sale_service_items as $value) {
-                                $product_id = Product::where('type', 'service')->where('second_reference_no', $value->spa_service_id)->value('id');
-                                $employee_id = User::where('type', 'employee')->where('second_reference_no', $value->employee_id)->value('id');
-                                $inventory_id = Inventory::where('product_id', $product_id)->value('id');
-                                if (! $inventory_id) {
-                                    throw new \Exception('Inventory not found for service ID: '.$value->spa_service_id);
-                                }
-                                $item = [
-                                    'inventory_id' => $inventory_id,
-                                    'employee_id' => $employee_id,
-                                    'product_id' => $product_id,
-                                    'unit_price' => $value->unit_price,
-                                    'quantity' => $value->quantity,
-                                    'gross_total' => $value->unit_price * $value->quantity,
-                                    'discount' => $value->discount,
-                                    'tax' => 0,
-                                    'total' => $value->unit_price * $value->quantity,
-                                    ];
-                                $data['items'][] = $item;
-                            }
-
-                            $sale_items = DB::connection('mysql2')
-                                ->table('sale_items')
-                                ->select(
-                                    'product_id',
-                                    'employee_id',
-                                    'unit_price',
-                                    DB::raw('SUM(quantity) as total_quantity'),
-                                    DB::raw('SUM(discount) as total_discount')
-                                )
-                                ->whereNull('deleted_at')
-                                ->where('sale_id', $sale->id)
-                                ->groupBy('product_id', 'employee_id', 'unit_price')
-                                ->get();
-
-                            foreach ($sale_items as $value) {
-                                $product_id = Product::where('type', 'product')
-                                    ->where('second_reference_no', $value->product_id)
-                                    ->value('id');
-                                $employee_id = User::where('type', 'employee')
-                                    ->where('second_reference_no', $value->employee_id)
-                                    ->value('id');
-                                $inventory_id = Inventory::where('product_id', $product_id)
-                                    ->value('id');
-
-                                $item = [
-                                    'inventory_id' => $inventory_id,
-                                    'employee_id' => $employee_id,
-                                    'product_id' => $product_id,
-                                    'unit_price' => $value->unit_price,
-                                    'quantity' => $value->total_quantity,
-                                    'net_amount' => $value->unit_price * $value->total_quantity,
-                                    'discount' => $value->total_discount,
-                                    'tax' => 0,
-                                    'total' => ($value->unit_price * $value->total_quantity) - $value->total_discount,
-                                ];
-                                $data['items'][] = $item;
-                            }
-
-                            $data['items'] = collect($data['items']);
-
-                            $data['gross_amount'] = $data['items']->sum('net_amount');
-                            $data['item_discount'] = $data['items']->sum('discount');
-                            $data['total_quantity'] = $data['items']->sum('quantity');
-                            $data['total'] = $data['items']->sum('total');
-
-                            $journals = DB::connection('mysql2')
-                                ->table('journals')
-                                ->whereNull('deleted_at')
-                                ->where('sale_id', $sale->id)
-                                ->whereIn('debit', $this->paymentModesIds)
-                                ->get(['amount', 'debit']);
-                            $data['payments'] = [];
-                            foreach ($journals as $value) {
-                                $account_id = Account::where('second_reference_no', $value->debit)->value('id');
-                                $journal = [
-                                    'payment_method_id' => $account_id,
-                                    'amount' => $value->amount,
-                                ];
-                                $data['payments'][] = $journal;
-                            }
-                            $response = (new SaleCreateAction())->execute($data, 1);
-                            if (! $response['success']) {
-                                $this->error('Failed to create sale: '.$response['message']);
-                                Log::error('Failed to create sale: '.$response['message']);
-                                Log::error($data);
-                            }
-                        });
-                    } catch (\Exception $e) {
-                        $this->error('Error migrating sales: '.$e->getMessage());
-                        Log::error('Sales migration error: '.$e->getMessage());
-                    }
-                }
-            });
+        $lastProcessed = 0;
+        while (true) {
+            $batch = $batch->fresh();
+            if (! $batch) {
+                break;
+            }
+            $processed = $batch->totalJobs - $batch->pendingJobs;
+            if ($processed > $lastProcessed) {
+                $progressBar->advance($processed - $lastProcessed);
+                $lastProcessed = $processed;
+            }
+            if ($batch->finished()) {
+                break;
+            }
+            sleep(2);
+        }
         $progressBar->finish();
         $this->newLine();
+
+        if ($batch && $batch->failedJobs > 0) {
+            $this->warn("Sales migration finished with {$batch->failedJobs} failed chunk job(s) — check the log and job_batches/failed_jobs.");
+        }
+
+        // The parallel workers left Inventory.quantity racy (BulkImport mode). Now that every sale is
+        // committed, rebuild the exact quantities from the InventoryLog movement deltas and recompute
+        // product costs once. Must run before salesReturns(), which reads/adjusts these quantities.
+        $this->reconcileInventoryAndCosts();
+
         $this->info('Sales migration completed successfully!');
+    }
+
+    /**
+     * Post-parallel-replay reconciliation. During the batch the workers ran in BulkImport mode, so
+     * Inventory.quantity was written without locks (racy) and product costs were not recomputed. Both
+     * are rebuilt here from source-of-truth data that is immune to those races:
+     *  - inventory.quantity  = SUM(quantity_in) - SUM(quantity_out) of that product/branch's
+     *    InventoryLog rows. Each log delta equals the movement's own amount regardless of the stale
+     *    read it was computed against, and every movement (opening create, purchase, sale, ...) is
+     *    logged, so the running total is exact.
+     *  - products.cost       = weighted-average cost across the product's inventories (what
+     *    LogInventoryAction maintains per-write in normal operation), computed once at the end.
+     */
+    private function reconcileInventoryAndCosts(): void
+    {
+        $this->info('Reconciling inventory quantities from movement logs...');
+
+        // inventory.quantity <- net of InventoryLog deltas, per product+branch (one inventory row per
+        // product+branch in this dataset). Done as a correlated UPDATE so it is a single statement.
+        DB::statement('
+            UPDATE inventories i
+            JOIN (
+                SELECT product_id, branch_id,
+                       COALESCE(SUM(quantity_in), 0) - COALESCE(SUM(quantity_out), 0) AS net
+                FROM inventory_logs
+                GROUP BY product_id, branch_id
+            ) l ON l.product_id = i.product_id AND l.branch_id = i.branch_id
+            SET i.quantity = l.net
+        ');
+
+        $this->info('Recomputing product costs (weighted average)...');
+
+        // products.cost <- SUM(cost*quantity) / SUM(quantity) across each product's inventories.
+        DB::statement('
+            UPDATE products p
+            JOIN (
+                SELECT product_id,
+                       SUM(cost * quantity) AS total_cost,
+                       SUM(quantity)        AS total_qty
+                FROM inventories
+                GROUP BY product_id
+                HAVING total_qty > 0
+            ) c ON c.product_id = p.id
+            SET p.cost = ROUND(c.total_cost / c.total_qty, 2)
+        ');
+
+        $this->info('Inventory and cost reconciliation completed.');
     }
 
     private function salesReturns()
@@ -775,6 +891,82 @@ class MigrateDataCommand extends Command
         }
     }
 
+    private function employeeCommissions()
+    {
+        $this->info('Migrating employee commissions...');
+
+        // Old accounts DB splits commissions across two tables:
+        //   product_commissions      (product_id     -> old products.id)
+        //   spa_service_commissions  (spa_service_id -> old spa_services.id)
+        // New project_manager DB unifies them into employee_commissions, where product_id
+        // points at the unified products table (services are products with type='service')
+        // and employee_id points at users (type='employee'). The new table has a single
+        // commission_percentage column, so the old `ot_commission` has no target and is
+        // NOT migrated.
+        $sources = [
+            // [old table, old item-id column, new product type]
+            ['product_commissions', 'product_id', 'product'],
+            ['spa_service_commissions', 'spa_service_id', 'service'],
+        ];
+
+        $total = 0;
+        foreach ($sources as [$table]) {
+            $total += DB::connection('mysql2')->table($table)->count();
+        }
+
+        $progressBar = $this->output->createProgressBar($total);
+        $progressBar->start();
+
+        foreach ($sources as [$table, $itemColumn, $productType]) {
+            DB::connection('mysql2')
+                ->table($table)
+                ->orderBy('id')
+                ->chunk(200, function ($rows) use ($progressBar, $itemColumn, $productType, $table): void {
+                    foreach ($rows as $row) {
+                        $progressBar->advance();
+                        try {
+                            $itemRef = $row->{$itemColumn};
+
+                            $product_id = Product::where('type', $productType)
+                                ->where('second_reference_no', $itemRef)
+                                ->value('id');
+                            $employee_id = User::where('type', 'employee')
+                                ->where('second_reference_no', $row->employee_id)
+                                ->value('id');
+
+                            if (! $product_id || ! $employee_id) {
+                                Log::warning("Employee commission skipped from {$table}: {$productType} ref {$itemRef} or employee ref {$row->employee_id} not found.");
+
+                                continue;
+                            }
+
+                            // updateOrInsert on the unique key (tenant_id, product_id, employee_id)
+                            // keeps this idempotent. Old tables carry no timestamps, so stamp now().
+                            DB::table('employee_commissions')->updateOrInsert(
+                                [
+                                    'tenant_id' => 1,
+                                    'product_id' => $product_id,
+                                    'employee_id' => $employee_id,
+                                ],
+                                [
+                                    'commission_percentage' => $row->commission ?? 0,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]
+                            );
+                        } catch (\Exception $e) {
+                            $this->error('Error migrating employee commission: '.$e->getMessage());
+                            Log::error('Employee commission migration error: '.$e->getMessage());
+                        }
+                    }
+                });
+        }
+
+        $progressBar->finish();
+        $this->newLine();
+        $this->info('Employee commissions migration completed.');
+    }
+
     private function products()
     {
         $this->info('Migrating products...');
@@ -886,6 +1078,7 @@ class MigrateDataCommand extends Command
         foreach ($vendors as $vendor) {
             $vendorData = [
                 'account_type' => 'liability',
+                'tenant_id' => $this->tenantId,
                 'second_reference_no' => $vendor->account_head_id,
                 'model' => 'vendor',
                 'name' => ucfirst(strtolower($vendor->name)),
@@ -952,6 +1145,7 @@ class MigrateDataCommand extends Command
             }
             $customerData = [
                 'account_type' => 'asset',
+                'tenant_id' => $this->tenantId,
                 'second_reference_no' => $customer->account_head_id,
                 'model' => 'customer',
                 'name' => ucfirst(strtolower($name[0])),
@@ -967,132 +1161,5 @@ class MigrateDataCommand extends Command
             ];
             DB::table('accounts')->insertOrIgnore((array) $customerData);
         }
-    }
-
-    private function supplyRequests()
-    {
-        $this->info('Migrating supply requests...');
-
-        $statusMap = [
-            'Requirement' => 'requirement',
-            'Approved' => 'approved',
-            'Rejected' => 'rejected',
-            'Collected' => 'collected',
-            'Final Approved' => 'final_approved',
-            'Completed' => 'completed',
-            'Expired' => 'expired',
-        ];
-
-        $totalSupplyRequests = DB::connection('mysql2')
-            ->table('property_asset_supplies')
-            ->count();
-
-        $progressBar = $this->output->createProgressBar($totalSupplyRequests);
-        $progressBar->start();
-
-        DB::connection('mysql2')
-            ->table('property_asset_supplies')
-            ->orderBy('id')
-            ->chunk(100, function ($supplyRequests) use ($progressBar, $statusMap): void {
-                foreach ($supplyRequests as $supplyRequest) {
-                    $progressBar->advance();
-                    try {
-                        DB::transaction(function () use ($supplyRequest, $statusMap): void {
-                            $created_by = User::where('type', 'user')->where('second_reference_no', $supplyRequest->created_by)->value('id');
-                            $updated_by = User::where('type', 'user')->where('second_reference_no', $supplyRequest->updated_by)->value('id');
-                            $approved_by = $supplyRequest->approved_by ? User::where('type', 'user')->where('second_reference_no', $supplyRequest->approved_by)->value('id') : null;
-                            $accounted_by = $supplyRequest->accounted_by ? User::where('type', 'user')->where('second_reference_no', $supplyRequest->accounted_by)->value('id') : null;
-                            $final_approved_by = $supplyRequest->final_approved_by ? User::where('type', 'user')->where('second_reference_no', $supplyRequest->final_approved_by)->value('id') : null;
-                            $completed_by = $supplyRequest->completed_by ? User::where('type', 'user')->where('second_reference_no', $supplyRequest->completed_by)->value('id') : null;
-
-                            $payment_mode_id = null;
-                            if ($supplyRequest->payment_mode_id) {
-                                $payment_mode_id = Account::where('second_reference_no', $supplyRequest->payment_mode_id)->value('id');
-                            }
-
-                            $property = null;
-                            $property_group_id = null;
-                            $property_building_id = null;
-                            $property_type_id = null;
-                            if ($supplyRequest->property_id) {
-                                $property = Property::find($supplyRequest->property_id);
-                                if ($property) {
-                                    $property_group_id = $property->property_group_id;
-                                    $property_building_id = $property->property_building_id;
-                                    $property_type_id = $property->property_type_id;
-                                }
-                            }
-
-                            $status = $statusMap[$supplyRequest->status] ?? 'requirement';
-                            $branch_id = $supplyRequest->branch_id ?? 1;
-
-                            $model = SupplyRequest::create([
-                                'tenant_id' => 1,
-                                'branch_id' => $branch_id,
-                                'date' => $supplyRequest->date,
-                                'order_no' => $supplyRequest->order_no,
-                                'contact_person' => $supplyRequest->contact_person,
-                                'property_id' => $supplyRequest->property_id,
-                                'property_group_id' => $property_group_id,
-                                'property_building_id' => $property_building_id,
-                                'property_type_id' => $property_type_id,
-                                'type' => $supplyRequest->type,
-                                'total' => $supplyRequest->total,
-                                'other_charges' => $supplyRequest->other_charges,
-                                'grand_total' => $supplyRequest->grand_total,
-                                'payment_mode_id' => $payment_mode_id,
-                                'remarks' => $supplyRequest->remarks,
-                                'status' => $status,
-                                'approved_by' => $approved_by,
-                                'approved_at' => $approved_by ? $supplyRequest->updated_at : null,
-                                'accounted_by' => $accounted_by,
-                                'accounted_at' => $accounted_by ? $supplyRequest->updated_at : null,
-                                'final_approved_by' => $final_approved_by,
-                                'final_approved_at' => $final_approved_by ? $supplyRequest->updated_at : null,
-                                'completed_by' => $completed_by,
-                                'completed_at' => $completed_by ? $supplyRequest->updated_at : null,
-                                'created_by' => $created_by ?? 1,
-                                'updated_by' => $updated_by,
-                                'created_at' => $supplyRequest->created_at,
-                                'updated_at' => $supplyRequest->updated_at,
-                            ]);
-
-                            // Migrate items
-                            $items = DB::connection('mysql2')
-                                ->table('property_asset_supply_items')
-                                ->where('property_asset_supply_id', $supplyRequest->id)
-                                ->get();
-
-                            foreach ($items as $item) {
-                                $product_id = Product::where('type', 'product')->where('second_reference_no', $item->property_asset_id)->value('id');
-
-                                if (! $product_id) {
-                                    Log::warning('Product not found for property_asset_id: '.$item->property_asset_id.', skipping item.');
-
-                                    continue;
-                                }
-
-                                SupplyRequestItem::create([
-                                    'supply_request_id' => $model->id,
-                                    'branch_id' => $branch_id,
-                                    'product_id' => $product_id,
-                                    'mode' => $item->mode ?? 'New',
-                                    'quantity' => $item->quantity,
-                                    'unit_price' => $item->unit_price,
-                                    'remarks' => $item->remarks,
-                                    'created_at' => $item->created_at,
-                                    'updated_at' => $item->updated_at,
-                                ]);
-                            }
-                        });
-                    } catch (\Exception $e) {
-                        $this->error('Error migrating supply request: '.$e->getMessage());
-                        Log::error('Supply request migration error: '.$e->getMessage());
-                    }
-                }
-            });
-
-        $progressBar->finish();
-        $this->info('Supply requests migration completed.');
     }
 }
