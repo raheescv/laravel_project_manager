@@ -38,3 +38,12 @@ it('shows responsive value labels above the gross and net sale bars', function (
         ->toContain('chart.ctx.rotate(labelAngle * Math.PI / 180)')
         ->toContain('chart.ctx.fillText(fmtCompact.format(value), 0, 0)');
 });
+
+it('keeps the enhanced branch selector value readable on the dark filter panel', function (): void {
+    $reportView = file_get_contents(resource_path('views/livewire/report/sale/monthly-sale-report.blade.php'));
+
+    expect($reportView)
+        ->toContain('.monthly-branch-control .ts-wrapper.input-active .ts-control')
+        ->toContain('background: transparent !important;')
+        ->toContain('-webkit-text-fill-color: #f8fafc;');
+});

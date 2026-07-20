@@ -812,20 +812,35 @@
                 min-width: 0;
             }
 
-            .monthly-sale-report-ui .monthly-branch-control .ts-control {
+            .monthly-sale-report-ui .monthly-branch-control .ts-wrapper .ts-control,
+            .monthly-sale-report-ui .monthly-branch-control .ts-wrapper.input-active .ts-control {
                 min-height: auto;
-                padding: 0 3px;
-                border: 0;
-                background: transparent;
-                box-shadow: none;
-                color: #f8fafc;
+                padding: 0 3px !important;
+                border: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                color: #f8fafc !important;
             }
 
             .monthly-sale-report-ui .monthly-branch-control .ts-control input,
             .monthly-sale-report-ui .monthly-branch-control .ts-control .item {
-                color: #f8fafc;
+                border: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                color: #f8fafc !important;
+                -webkit-text-fill-color: #f8fafc;
                 font-size: .82rem;
                 font-weight: 650;
+            }
+
+            .monthly-sale-report-ui .monthly-branch-control .ts-control .item {
+                padding: 0 !important;
+            }
+
+            .monthly-sale-report-ui .monthly-branch-control .ts-control input::placeholder {
+                color: #aab4c6 !important;
+                -webkit-text-fill-color: #aab4c6;
+                opacity: 1;
             }
 
             .monthly-sale-report-ui .monthly-submit-btn {
