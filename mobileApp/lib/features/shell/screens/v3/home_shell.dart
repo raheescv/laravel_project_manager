@@ -28,17 +28,18 @@ class _HomeShellState extends State<HomeShell> {
   late int _index = widget.initialTab.clamp(0, _pages.length - 1);
   bool _navVisible = true;
 
-  static const _pages = [
-    DashboardScreen(),
-    SalesListScreen(),
-    ReportsScreen(),
-    SettingsScreen(),
+  late final List<Widget> _pages = [
+    DashboardScreen(onSelectTab: _goToTab),
+    const SalesListScreen(),
+    const ReportsScreen(),
+    const SettingsScreen(),
   ];
+
+  void _goToTab(int i) => setState(() => _index = i);
 
   /// Shared by the phone and tablet scaffolds — the frosted drawer that holds
   /// every module link (tab items switch the shell, the rest push routes).
-  Widget get _drawer =>
-      AstraDrawer(activeTab: _index, onSelectTab: (i) => setState(() => _index = i));
+  Widget get _drawer => AstraDrawer(activeTab: _index, onSelectTab: _goToTab);
 
   static const _drawerScrim = Color(0x85040C09);
 

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:invo/shared/domain/models/index.dart';
 
 /// Profile self-service: the signed-in user edits their own name / email /
@@ -10,6 +12,6 @@ abstract class ProfileRepository {
     required String mobile,
   });
 
-  /// Uploads the image at [filePath] as the new avatar.
-  Future<ApiUser> updatePhoto(String filePath);
+  /// Uploads the given (cropped) image [bytes] as the new avatar.
+  Future<ApiUser> updatePhoto(Uint8List bytes);
 }

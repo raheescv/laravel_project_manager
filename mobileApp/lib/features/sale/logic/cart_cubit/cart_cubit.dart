@@ -136,6 +136,12 @@ class CartCubit extends HolderCubit {
         if (!tip) tipPercent = 0;
         changed = true;
       }
+      // Cache the default Product/Service filter so the catalog can preselect
+      // it. Read by CatalogCubit — no cart refresh needed here.
+      final type = settings.defaultProductType;
+      if (type != null && type != _storage.defaultProductType) {
+        await _storage.setDefaultProductType(type);
+      }
       if (changed) refresh();
     } catch (_) {
       // Offline or server error — keep the cached values.

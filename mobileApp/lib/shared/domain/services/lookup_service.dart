@@ -38,8 +38,10 @@ class LookupService implements LookupRepository {
   }
 
   @override
-  Future<List<Category>> categories() async {
-    final data = await _http.get('/categories', auth: false);
+  Future<List<Category>> categories({String? type}) async {
+    final data = await _http.get('/categories', auth: false, query: {
+      if (type != null) 'type': type,
+    });
     return ((data as List?) ?? const [])
         .map((e) => Category.fromJson(Map<String, dynamic>.from(e)))
         .toList();
@@ -92,12 +94,13 @@ class LookupService implements LookupRepository {
   }
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled})> saleSettings() async {
+  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType})> saleSettings() async {
     final data = await _http.get('/settings/sale');
     final map = Map<String, dynamic>.from(data as Map);
     return (
       defaultQuantity: double.tryParse(map['default_quantity']?.toString() ?? ''),
       tipEnabled: map['tip_enabled'] is bool ? map['tip_enabled'] as bool : null,
+      defaultProductType: map['default_product_type']?.toString(),
     );
   }
 }

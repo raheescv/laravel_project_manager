@@ -12,6 +12,7 @@ import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
+import 'package:invo/features/sale/logic/stylist_cubit/stylist_cubit.dart';
 import 'package:invo/shared/utils/camera_permission.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
@@ -36,12 +37,18 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final cat = context.read<CatalogCubit>();
       cat.loadIfNeeded();
+      // Warm the stylist list so the STAFF selector can show the assigned
+      // staff's photo (e.g. when editing a sale) without opening the picker.
+      context.read<StylistCubit>().loadIfNeeded();
       // Default stylist = logged-in user.
       final user = context.read<AuthCubit>().user;
       final cart = context.read<CartCubit>();
       // Pull the latest sale settings (Settings → Sale Configuration) so the
-      // default quantity and tip availability reflect the current web setting.
-      cart.syncSaleSettings();
+      // default quantity, tip availability and default Product/Service filter
+      // reflect the current web setting; then preselect that type on the catalog.
+      cart.syncSaleSettings().then((_) {
+        if (mounted) cat.applyDefaultType();
+      });
       if (user != null && cart.stylistName.isEmpty) {
         cart.setStylist(int.tryParse(user.id), user.name);
       }
@@ -120,7 +127,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 children: [
                   Expanded(child: _selector(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient)),
                   const SizedBox(width: 9),
-                  Expanded(child: _selector(Icons.brush, 'STAFF', cart.stylistName.isEmpty ? 'Me' : cart.stylistName, _pickStylist)),
+                  Expanded(
+                    child: _selector(
+                      Icons.brush,
+                      'STAFF',
+                      cart.stylistName.isEmpty ? 'Me' : cart.stylistName,
+                      _pickStylist,
+                      avatarUrl: _staffAvatarUrl(cart),
+                      avatarHeaders: context.read<AuthCubit>().config.assetHeaders,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -234,6 +250,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 children: [
                   _searchRow(cat),
                   const SizedBox(height: 13),
+                  _typeChips(cat),
+                  const SizedBox(height: 11),
                   _categoryChips(cat),
                 ],
               ),
@@ -355,6 +373,37 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Product / Service filter — mirrors the web POS type selector. Tapping a
+  /// chip re-scopes both this row's categories and the product list. Default
+  /// selection comes from Settings → Sale Configuration → Default Product Type.
+  Widget _typeChips(CatalogCubit cat) {
+    const options = <(String?, String, IconData)>[
+      (null, 'All Types', Icons.grid_view),
+      ('product', 'Products', Icons.inventory_2_outlined),
+      ('service', 'Services', Icons.design_services_outlined),
+    ];
+    return SizedBox(
+      height: 38,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          for (final (value, label, icon) in options) ...[
+            AstraChip(
+              label: label,
+              icon: icon,
+              active: cat.selectedType == value,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                cat.selectType(value);
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
     );
   }
 
@@ -519,7 +568,31 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _selector(IconData icon, String label, String value, VoidCallback? onTap) {
+  Widget _selector(IconData icon, String label, String value, VoidCallback? onTap,
+      {String? avatarUrl, Map<String, String>? avatarHeaders}) {
+    final iconChip = Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, size: 13, color: context.astra.accent),
+    );
+    // When a selected staff has a photo, show it in place of the icon chip.
+    final leading = (avatarUrl != null && avatarUrl.startsWith('http'))
+        ? ClipOval(
+            child: Image.network(
+              avatarUrl,
+              headers: avatarHeaders,
+              width: 26,
+              height: 26,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+              errorBuilder: (_, __, ___) => iconChip,
+            ),
+          )
+        : iconChip;
     return GestureDetector(
       onTap: onTap == null
           ? null
@@ -536,15 +609,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
         child: Row(
           children: [
-            Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, size: 13, color: context.astra.accent),
-            ),
+            leading,
             const SizedBox(width: 9),
             Expanded(
               child: Column(
@@ -570,6 +635,27 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     // Ticket-level stylist: applies to existing lines and becomes the default
     // for new ones. Per-line overrides can still be set in the edit sheet.
     cart.setStylist(chosen.id, chosen.name);
+  }
+
+  /// Absolute avatar URL for the ticket's selected staff (or null). Resolves the
+  /// logged-in user ("Me") from AuthCubit and any other stylist from the loaded
+  /// stylist list — the cart only stores the stylist id + name.
+  String? _staffAvatarUrl(CartCubit cart) {
+    final auth = context.read<AuthCubit>();
+    final user = auth.user;
+    final id = cart.stylistId;
+    var raw = '';
+    if (id == null || (user != null && int.tryParse(user.id) == id)) {
+      raw = user?.photoUrl ?? '';
+    } else {
+      for (final e in context.read<StylistCubit>().all) {
+        if (e.id == id) {
+          raw = e.photoUrl;
+          break;
+        }
+      }
+    }
+    return raw.isEmpty ? null : auth.config.assetUrl(raw);
   }
 
   Future<void> _pickClient() async {

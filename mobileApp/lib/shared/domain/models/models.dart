@@ -317,12 +317,22 @@ class Customer {
 /// A staff member who can be assigned to a sale / line as the stylist.
 /// Mirrors `GET /employees` (active users with type = employee).
 class Employee {
-  Employee({required this.id, required this.name, required this.code, required this.mobile, required this.designation});
+  Employee({
+    required this.id,
+    required this.name,
+    required this.code,
+    required this.mobile,
+    required this.designation,
+    this.photoUrl = '',
+  });
   final int id;
   final String name;
   final String code;
   final String mobile;
   final String designation;
+  // Root-relative avatar path (e.g. /storage/users/…), '' when none. Resolve to
+  // an absolute URL with AppConfig.assetUrl before display.
+  final String photoUrl;
 
   factory Employee.fromJson(Map<String, dynamic> j) => Employee(
         id: asNum(j['id']).toInt(),
@@ -330,7 +340,10 @@ class Employee {
         code: asStr(j['code']),
         mobile: asStr(j['mobile']),
         designation: asStr(j['designation']),
+        photoUrl: asStr(j['photo']),
       );
+
+  bool get hasPhoto => photoUrl.isNotEmpty;
 
   String get initial => name.isNotEmpty ? name[0].toUpperCase() : '?';
 }

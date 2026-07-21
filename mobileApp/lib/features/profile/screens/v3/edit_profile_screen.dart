@@ -9,6 +9,7 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/profile/domain/repository/profile_repository.dart';
+import 'package:invo/features/profile/screens/v3/crop_photo_screen.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
@@ -93,20 +94,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (source == null) return;
     final XFile? file = await ImagePicker().pickImage(
       source: source,
-      imageQuality: 85,
-      maxWidth: 1024,
-      maxHeight: 1024,
+      imageQuality: 92,
+      maxWidth: 2048,
+      maxHeight: 2048,
     );
     if (file == null) return;
 
-    final bytes = await file.readAsBytes();
+    final raw = await file.readAsBytes();
     if (!mounted) return;
+
+    // Premium in-app crop step — returns the cropped square bytes (or null).
+    final cropped = await Navigator.of(context).push<Uint8List>(
+      MaterialPageRoute(builder: (_) => CropPhotoScreen(imageBytes: raw)),
+    );
+    if (cropped == null || !mounted) return;
+
     setState(() {
-      _preview = bytes;
+      _preview = cropped;
       _photoBusy = true;
     });
     try {
-      final updated = await serviceLocator<ProfileRepository>().updatePhoto(file.path);
+      final updated = await serviceLocator<ProfileRepository>().updatePhoto(cropped);
       if (!mounted) return;
       await context.read<AuthCubit>().applyUser(updated);
       if (mounted) _snack('Profile photo updated');

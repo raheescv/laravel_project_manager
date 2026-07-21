@@ -56,6 +56,7 @@ class _StylistSheetState extends State<_StylistSheet> {
       code: u.code,
       mobile: u.mobile,
       designation: u.designation,
+      photoUrl: u.photoUrl,
     );
   }
 
@@ -85,7 +86,7 @@ class _StylistSheetState extends State<_StylistSheet> {
                 children: [
                   Icon(Icons.brush, size: 18, color: p.primary),
                   const SizedBox(width: 9),
-                  Expanded(child: Text('Select stylist', style: serif(size: 20, color: p.ink))),
+                  Expanded(child: Text('Select staff', style: serif(size: 20, color: p.ink))),
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
                     child: Icon(Icons.close, size: 20, color: p.textMuted),
@@ -156,6 +157,7 @@ class _StylistSheetState extends State<_StylistSheet> {
 
   Widget _tile(AstraPalette p, Employee e, {String? label}) {
     final selected = widget.selectedId != null && widget.selectedId == e.id;
+    final cfg = context.read<AuthCubit>().config;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: AstraCard(
@@ -164,7 +166,12 @@ class _StylistSheetState extends State<_StylistSheet> {
         onTap: () => Navigator.of(context).pop(e),
         child: Row(
           children: [
-            Monogram(letter: e.initial, size: 36),
+            ProfileAvatar(
+              letter: e.initial,
+              imageUrl: e.hasPhoto ? cfg.assetUrl(e.photoUrl) : null,
+              headers: cfg.assetHeaders,
+              size: 36,
+            ),
             const SizedBox(width: 11),
             Expanded(
               child: Column(

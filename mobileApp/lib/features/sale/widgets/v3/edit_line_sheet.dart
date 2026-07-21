@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/helpers/formatters.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
+import 'package:invo/features/sale/logic/stylist_cubit/stylist_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/qty_input_sheet.dart';
@@ -34,6 +36,23 @@ class _EditLineSheetState extends State<_EditLineSheet> {
   late double _qty = widget.line.qty;
   late int? _employeeId = widget.line.employeeId;
   late String _employeeName = widget.line.employeeName;
+  String _employeePhotoUrl = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _employeePhotoUrl = _resolvePhoto(widget.line.employeeId);
+  }
+
+  /// Look up the assigned stylist's avatar from the (already-loaded) stylist
+  /// list — the cart line only carries the id/name, not the photo.
+  String _resolvePhoto(int? id) {
+    if (id == null) return '';
+    for (final e in context.read<StylistCubit>().all) {
+      if (e.id == id) return e.photoUrl;
+    }
+    return '';
+  }
 
   late final TextEditingController _unitCtl = TextEditingController(text: _fmt(_unitPrice));
   late final TextEditingController _taxCtl = TextEditingController(text: _fmt(_tax));
@@ -55,6 +74,7 @@ class _EditLineSheetState extends State<_EditLineSheet> {
     setState(() {
       _employeeId = chosen.id;
       _employeeName = chosen.name;
+      _employeePhotoUrl = chosen.photoUrl;
     });
   }
 
@@ -66,6 +86,7 @@ class _EditLineSheetState extends State<_EditLineSheet> {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
+    final cfg = context.read<AuthCubit>().config;
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
@@ -106,7 +127,12 @@ class _EditLineSheetState extends State<_EditLineSheet> {
               onTap: _pickLineStylist,
               child: Row(
                 children: [
-                  Monogram(letter: _employeeName.isEmpty ? '?' : _employeeName[0], size: 34),
+                  ProfileAvatar(
+                    letter: _employeeName.isEmpty ? '?' : _employeeName[0],
+                    imageUrl: _employeePhotoUrl.isNotEmpty ? cfg.assetUrl(_employeePhotoUrl) : null,
+                    headers: cfg.assetHeaders,
+                    size: 34,
+                  ),
                   const SizedBox(width: 11),
                   Expanded(
                     child: Column(

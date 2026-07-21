@@ -19,6 +19,9 @@ class EmployeeResource extends JsonResource
             'name' => $this->name,
             'code' => $this->code,
             'mobile' => $this->mobile,
+            // Root-relative storage path; the mobile client prepends its own base
+            // URL (see AuthUserResource for the same convention).
+            'photo' => $this->image ? '/storage/'.ltrim($this->image, '/') : null,
             'designation' => $this->whenLoaded('designation', fn () => $this->designation?->name),
         ];
     }

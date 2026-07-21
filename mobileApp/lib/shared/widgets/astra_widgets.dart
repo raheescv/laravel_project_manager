@@ -1,7 +1,9 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 
 /// Page background — skin-aware. Glass gets a soft aurora *mesh*; editorial a
@@ -295,11 +297,17 @@ class ProductThumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.astra;
     final fallback = IconChip(icon: fallbackIcon, size: size, radius: radius);
-    if (!url.startsWith('http')) return fallback;
+    if (url.isEmpty) return fallback;
+    // The API returns storage paths relative to the site root (e.g. `/storage/…`).
+    // Resolve them onto the reachable baseUrl and attach the same host header the
+    // API uses, exactly like the staff/user avatars — otherwise the image never
+    // loads on a real device and we'd silently fall back to the icon.
+    final cfg = context.read<AuthCubit>().config;
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: Image.network(
-        url,
+        cfg.assetUrl(url),
+        headers: cfg.assetHeaders,
         width: size,
         height: size,
         fit: BoxFit.cover,

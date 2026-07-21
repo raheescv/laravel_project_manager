@@ -16,7 +16,13 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, this.onSelectTab});
+
+  /// Switches the shell to a primary tab (0=Home … 3=Settings). Injected by
+  /// [HomeShell] so the Quick-actions launcher can jump to the Sales / Reports
+  /// tabs, exactly the way the drawer does.
+  final ValueChanged<int>? onSelectTab;
+
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -56,33 +62,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             _hero(admin, user),
             Expanded(
-              child: admin.loading && admin.dashboard == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : admin.error != null && admin.dashboard == null
-                      ? EmptyState(
-                          icon: Icons.wifi_off,
-                          title: 'Dashboard unavailable',
-                          message: admin.error,
-                          action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: admin.loadDashboard),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: admin.loadDashboard,
-                          child: MaxWidthBox(
-                            maxWidth: 960,
-                            child: ListView(
-                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-                              children: [
-                                _periodCards(admin),
-                                const SizedBox(height: 14),
-                                _trendCard(admin),
-                                const SizedBox(height: 14),
-                                _topPerformers(admin),
-                                const SizedBox(height: 14),
-                                _overview(admin),
-                              ],
-                            ),
-                          ),
+              // Editorial "spotlight" layout: the hero owns the headline number,
+              // then a Quick-actions launcher (always present — usable even for a
+              // cashier who can't load admin insights), then the insight blocks.
+              child: RefreshIndicator(
+                onRefresh: admin.loadDashboard,
+                child: MaxWidthBox(
+                  maxWidth: 960,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 120),
+                    children: [
+                      _quickActions(),
+                      const SizedBox(height: 20),
+                      if (admin.dashboard != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 10),
+                          child: SectionLabel('Insights'),
                         ),
+                        _periodCards(admin),
+                        const SizedBox(height: 14),
+                        _topPerformers(admin),
+                        const SizedBox(height: 18),
+                        _overview(admin),
+                      ] else if (admin.loading) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 48),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      ] else if (admin.error != null) ...[
+                        _insightsUnavailable(admin),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -92,6 +105,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // ---- HERO ----
   Widget _hero(AdminCubit admin, ApiUser? user) {
+    final cfg = context.read<AuthCubit>().config;
     final p = context.astra;
     final today = _byTitle(admin.dashboard?.today);
     final sales = today["Today's Sales"];
@@ -157,7 +171,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       GestureDetector(
                         onTap: () => context.push('/profile'),
-                        child: Monogram(letter: user?.initial ?? 'A', size: 44),
+                        child: ProfileAvatar(
+                          letter: user?.initial ?? 'A',
+                          imageUrl: (user?.hasPhoto ?? false) ? cfg.assetUrl(user!.photoUrl) : null,
+                          headers: cfg.assetHeaders,
+                          size: 44,
+                        ),
                       ),
                     ],
                   ),
@@ -342,52 +361,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ---- TREND ----
-  Widget _trendCard(AdminCubit admin) {
+  // ---- QUICK ACTIONS (module launcher) ----
+  /// The editorial launcher grid. Mirrors the drawer's module set and the exact
+  /// same permission gates and destinations: tab items switch the shell, the
+  /// rest push their route. Tiles reflow as gates hide them (a cashier sees the
+  /// three ungated ones).
+  Widget _quickActions() {
+    final auth = context.read<AuthCubit>();
+    final tiles = <Widget>[
+      _launchTile('New Sale', Icons.add_shopping_cart, () => context.push('/sale'), gold: true),
+      _launchTile('Sales', Icons.receipt_long, () => widget.onSelectTab?.call(1)),
+      if (auth.hasPermission(PermissionSlug.saleReturnView))
+        _launchTile('Returns', Icons.assignment_return_outlined, () => context.push('/sales-returns')),
+      if (auth.hasPermission(PermissionSlug.stockCheck))
+        _launchTile('Stock Check', Icons.fact_check_outlined, () => context.push('/stock-check')),
+      _launchTile('Reports', Icons.bar_chart, () => widget.onSelectTab?.call(2)),
+      if (auth.hasPermission(PermissionSlug.daySession))
+        _launchTile('Day Session', Icons.schedule, () => context.push('/day-session')),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: SectionLabel('Quick actions'),
+        ),
+        GridView.count(
+          crossAxisCount: context.isTablet ? 6 : 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.92,
+          children: tiles,
+        ),
+      ],
+    );
+  }
+
+  /// One launcher tile. [gold] marks the primary CTA (New Sale) with the gold
+  /// champagne accent instead of the emerald tint.
+  Widget _launchTile(String label, IconData icon, VoidCallback onTap, {bool gold = false}) {
     final p = context.astra;
-    final pts = admin.trendPoints;
-    final total = pts.fold<double>(0, (a, b) => a + b);
+    final chipBg = gold ? p.accent.withValues(alpha: p.isDark ? 0.22 : 0.16) : p.tint;
+    final chipFg = gold ? p.goldText : p.primary;
     return AstraCard(
+      radius: 20,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      onTap: onTap,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text('Revenue trend', maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: ui(size: 13, weight: FontWeight.w700, color: p.ink))),
-              if (pts.length >= 2)
-                Text('${pts.length}-day · ${Money.of(total)}',
-                    style: ui(size: 10.5, weight: FontWeight.w700, color: p.textMuted)),
-            ],
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(color: chipBg, borderRadius: BorderRadius.circular(15)),
+            child: Icon(icon, size: 22, color: chipFg),
           ),
-          const SizedBox(height: 12),
-          if (pts.length < 2)
-            SizedBox(
-              height: 96,
-              child: Center(child: Text('Not enough sales data yet',
-                  style: ui(size: 12, weight: FontWeight.w500, color: p.textMuted))),
-            )
-          else ...[
-            AreaTrendChart(values: pts, height: 110),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                for (final l in admin.trendLabels)
-                  Text(_dayLabel(l), style: ui(size: 9, weight: FontWeight.w700, color: p.textMuted)),
-              ],
-            ),
-          ],
+          const SizedBox(height: 10),
+          Text(label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(size: 11.5, weight: FontWeight.w700, color: p.ink)),
         ],
       ),
     );
   }
 
-  String _dayLabel(String iso) {
-    final d = DateTime.tryParse(iso);
-    if (d == null) return '';
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[d.weekday - 1];
+  /// Slim inline notice shown in place of the Insights block when the dashboard
+  /// metrics fail to load — the hero and Quick actions stay usable above it.
+  Widget _insightsUnavailable(AdminCubit admin) {
+    final p = context.astra;
+    return AstraCard(
+      child: Column(
+        children: [
+          Icon(Icons.wifi_off, size: 26, color: p.textMuted),
+          const SizedBox(height: 10),
+          Text('Insights unavailable', style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+          const SizedBox(height: 4),
+          Text(admin.error ?? 'Pull down to refresh and try again.',
+              textAlign: TextAlign.center,
+              style: ui(size: 11.5, weight: FontWeight.w500, color: p.textMuted)),
+          const SizedBox(height: 14),
+          AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: admin.loadDashboard),
+        ],
+      ),
+    );
   }
 
   // ---- TOP PERFORMERS ----

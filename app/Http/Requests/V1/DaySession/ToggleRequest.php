@@ -24,7 +24,7 @@ class ToggleRequest extends FormRequest
     {
         // `now` (not `today`) so a date *with a time-of-day* on the current day
         // passes validation — the mobile app sends a full `Y-m-d H:i:s` datetime.
-        $rules = ['required', 'date', 'before_or_equal:now'];
+        $rules = ['required', 'date', 'after_or_equal:now'];
 
         if ($this->isClosing()) {
             $openedAt = $this->openSession()?->opened_at;

@@ -123,23 +123,17 @@ class HttpService {
     return _unwrap(res);
   }
 
-  /// Multipart POST — uploads one or more files (plus optional scalar fields)
-  /// to an authenticated endpoint. [files] is a list of (field, path) pairs;
-  /// repeated files reuse the same field name. Dio sets the multipart
+  /// Multipart POST of raw in-memory [bytes] as a single file field — for data
+  /// that never touched disk (e.g. a cropped image). Dio sets the multipart
   /// content-type + boundary from the [FormData] automatically.
-  Future<dynamic> postFiles(
+  Future<dynamic> postFileBytes(
     String path, {
-    Map<String, String> fields = const {},
-    required List<({String field, String path})> files,
+    required String field,
+    required Uint8List bytes,
+    required String filename,
   }) async {
     final form = FormData();
-    fields.forEach((k, v) => form.fields.add(MapEntry(k, v)));
-    for (final f in files) {
-      form.files.add(MapEntry(
-        f.field,
-        await MultipartFile.fromFile(f.path, filename: f.path.split('/').last),
-      ));
-    }
+    form.files.add(MapEntry(field, MultipartFile.fromBytes(bytes, filename: filename)));
     final res = await _dio.post(
       '${config.apiV1}$path',
       data: form,

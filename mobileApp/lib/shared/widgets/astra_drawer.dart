@@ -161,7 +161,12 @@ class AstraDrawer extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Monogram(letter: user?.initial ?? 'A', size: 42),
+              ProfileAvatar(
+                letter: user?.initial ?? 'A',
+                imageUrl: (user?.hasPhoto ?? false) ? auth.config.assetUrl(user!.photoUrl) : null,
+                headers: auth.config.assetHeaders,
+                size: 42,
+              ),
               const SizedBox(width: 11),
               Expanded(
                 child: Column(

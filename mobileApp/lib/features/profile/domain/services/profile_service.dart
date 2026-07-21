@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:invo/shared/api/end_points.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -23,10 +25,12 @@ class ProfileService implements ProfileRepository {
   }
 
   @override
-  Future<ApiUser> updatePhoto(String filePath) async {
-    final data = await _http.postFiles(
+  Future<ApiUser> updatePhoto(Uint8List bytes) async {
+    final data = await _http.postFileBytes(
       EndPoints.profilePhoto,
-      files: [(field: 'photo', path: filePath)],
+      field: 'photo',
+      bytes: bytes,
+      filename: 'avatar.png',
     );
     return ApiUser.fromJson(Map<String, dynamic>.from(data));
   }

@@ -75,6 +75,13 @@ class LocalStorageService {
   Future<void> setTipEnabled(bool v) =>
       _prefs.setBool(LocalStorageKeys.tipEnabled, v);
 
+  // Default POS Product/Service filter (Settings → Sale Configuration).
+  // 'product' / 'service' narrow the catalog; '' means All Types.
+  String? get defaultProductType =>
+      _prefs.getString(LocalStorageKeys.defaultProductType);
+  Future<void> setDefaultProductType(String v) =>
+      _prefs.setString(LocalStorageKeys.defaultProductType, v);
+
   // Whether the app-wide haptic tap feedback is enabled (Settings → Haptics).
   bool? get hapticsEnabled => _prefs.getBool(LocalStorageKeys.haptics);
   Future<void> setHapticsEnabled(bool v) =>

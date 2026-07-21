@@ -14,7 +14,9 @@ abstract class LookupRepository {
 
   Future<Product?> productByBarcode(String barcode);
 
-  Future<List<Category>> categories();
+  /// [type] narrows the list to categories that hold at least one product of
+  /// that type ('product' / 'service'); null returns every visible category.
+  Future<List<Category>> categories({String? type});
 
   Future<List<Branch>> branches();
 
@@ -26,5 +28,5 @@ abstract class LookupRepository {
 
   Future<({String? baseCode, List<Currency> currencies})> currencies();
 
-  Future<({double? defaultQuantity, bool? tipEnabled})> saleSettings();
+  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType})> saleSettings();
 }

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astra · Home Redesign — 3 Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ STUDIO CHROME (theme-independent, dark presentation) ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#15806C; --primary-dark:#0E5648; --accent:#C9A24B; --gold:#BF953F;
+  --canvas:#F6F1E8; --card:#FFFFFF; --card-2:#FFFFFF; --ink:#16312A;
+  --sec:#5D7269; --muted:#A8B3AB; --hairline:#F0ECE1; --tint:#E6F0EC;
+  --surface:#0E5648; --hero-a:#15806C; --hero-b:#0E5648;
+  --success:#1F9D63; --danger:#D4546A;
+  --shadow:0 18px 40px -22px rgba(14,86,72,.45);
+  --radius:20px;
+}
+html,body{background:#12100E;color:#e9e4d8;font-family:'Manrope',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{padding:28px 22px 80px;background:
+  radial-gradient(1200px 600px at 20% -10%, #1c2622 0%, transparent 55%),
+  radial-gradient(1000px 700px at 100% 0%, #23201a 0%, transparent 50%), #100e0c;}
+.wrap{max-width:1320px;margin:0 auto}
+.masthead{display:flex;flex-direction:column;gap:6px;margin-bottom:22px}
+.eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:#b79a5e;font-weight:800}
+.masthead h1{font-family:'Marcellus',serif;font-size:32px;font-weight:400;color:#f4efe4;letter-spacing:.3px}
+.masthead p{font-size:14px;color:#9a948a;max-width:760px;line-height:1.55}
+
+/* Controls */
+.controls{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;
+  padding:14px 18px;margin:18px 0 30px;border-radius:16px;
+  background:rgba(20,18,15,.82);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.06)}
+.ctl-group{display:flex;align-items:center;gap:10px}
+.ctl-label{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:#7c766c;font-weight:800}
+.pills{display:flex;gap:6px;background:rgba(255,255,255,.04);padding:4px;border-radius:12px}
+.pill{border:none;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;color:#b8b2a6;
+  padding:7px 13px;border-radius:9px;background:transparent;transition:.18s;display:flex;align-items:center;gap:7px}
+.pill:hover{color:#efe9dc}
+.pill.on{background:#efe9dc;color:#1a1712}
+.dot{width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.toggle{display:flex;background:rgba(255,255,255,.04);border-radius:12px;padding:4px}
+.toggle button{border:none;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;color:#b8b2a6;
+  padding:7px 14px;border-radius:9px;background:transparent;transition:.18s}
+.toggle button.on{background:#efe9dc;color:#1a1712}
+
+/* Stage */
+.stage{display:flex;gap:30px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.col{display:flex;flex-direction:column;align-items:center;gap:16px;width:392px}
+.cap{text-align:center;padding:0 6px}
+.cap .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--gold));color:#1a1712;font-weight:800;font-size:13px;margin-bottom:10px}
+.cap h2{font-family:'Marcellus',serif;font-size:22px;font-weight:400;color:#f2ecdf;letter-spacing:.3px}
+.cap .tag{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#b79a5e;font-weight:800;margin-top:3px}
+.cap p{font-size:12.5px;color:#928c82;line-height:1.5;margin-top:8px}
+
+/* ============ PHONE DEVICE ============ */
+.phone{width:392px;height:812px;border-radius:46px;padding:11px;position:relative;
+  background:linear-gradient(160deg,#2a2722,#141210);
+  box-shadow:0 40px 80px -30px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.05),inset 0 0 0 2px rgba(255,255,255,.03)}
+.screen{width:100%;height:100%;border-radius:36px;overflow:hidden;position:relative;background:var(--canvas);
+  display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:128px;height:28px;
+  background:#141210;border-radius:0 0 18px 18px;z-index:30}
+.statusbar{height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 26px;font-size:13px;font-weight:700;color:var(--ink);z-index:20}
+.statusbar .sig{display:flex;gap:5px;align-items:center}
+.statusbar svg{width:16px;height:16px}
+.body{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+.body::-webkit-scrollbar{width:0}
+.pad{padding:6px 18px 118px}
+
+/* Bottom nav (shared) */
+.nav{position:absolute;left:16px;right:16px;bottom:16px;height:64px;border-radius:24px;z-index:25;
+  display:flex;align-items:center;justify-content:space-around;padding:0 14px;
+  background:var(--nav-bg,rgba(255,255,255,.86));backdrop-filter:blur(18px);
+  border:1px solid var(--nav-brd,rgba(255,255,255,.6));box-shadow:0 20px 40px -18px rgba(0,0,0,.4)}
+.nav .item{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);position:relative}
+.nav .item svg{width:22px;height:22px}
+.nav .item span{font-size:9px;font-weight:700;letter-spacing:.04em}
+.nav .item.act{color:var(--primary)}
+.nav .item.act::after{content:"";position:absolute;bottom:-9px;width:22px;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,var(--primary),var(--accent))}
+.nav .fab{width:52px;height:52px;border-radius:18px;margin-top:-26px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--accent),var(--gold));color:#1a1712;box-shadow:0 12px 26px -8px rgba(201,162,75,.7)}
+.nav .fab svg{width:26px;height:26px}
+[data-theme="dark"] .nav{background:var(--surface);border-color:rgba(255,255,255,.08)}
+
+/* ---- reusable atoms ---- */
+.serif{font-family:'Marcellus',serif;font-weight:400}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--card-brd,transparent)}
+[data-skin="glass"] .card,[data-skin="editorial"] .card{border-color:var(--hairline)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:10.5px;font-weight:800}
+.up{color:var(--success);background:color-mix(in srgb,var(--success) 13%,transparent)}
+.down{color:var(--danger);background:color-mix(in srgb,var(--danger) 14%,transparent)}
+.iconchip{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:var(--tint);color:var(--primary)}
+.iconchip svg{width:18px;height:18px}
+.mono{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-family:'Marcellus',serif;font-size:18px}
+.ghostbtn{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2)}
+.ghostbtn svg{width:20px;height:20px}
+.label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--muted)}
+.sec-label{font-size:12px;letter-spacing:.06em;font-weight:800;color:var(--ink);text-transform:uppercase;opacity:.85}
+
+/* spark line generic */
+.spark{width:100%;height:44px;display:block}
+.admin-only{transition:.2s}
+[data-role="employee"] .admin-only{display:none !important}
+
+/* =========================================================
+   DIRECTION 1 — AURORA BENTO
+   ========================================================= */
+.b1 .topbar{display:flex;align-items:center;gap:12px;padding:4px 2px 14px}
+.b1 .topbar .txt{flex:1;min-width:0}
+.b1 .topbar .txt .g{font-size:10px;font-weight:800;letter-spacing:.18em;color:var(--gold);text-transform:uppercase}
+.b1 .topbar .txt .n{font-family:'Marcellus',serif;font-size:22px;color:var(--ink);line-height:1.1;margin-top:2px}
+.b1 .roundbtn{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.b1 .roundbtn svg{width:19px;height:19px}
+.b1 .roundbtn .bdge{position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--canvas)}
+.bento{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bento .span2{grid-column:1/3}
+.hero-tile{grid-column:1/3;border-radius:24px;padding:18px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(140deg,var(--hero-a),var(--hero-b))}
+.hero-tile .glow{position:absolute;width:170px;height:170px;border-radius:50%;right:-50px;top:-60px;
+  background:radial-gradient(circle,color-mix(in srgb,var(--accent) 40%,transparent),transparent 70%)}
+.hero-tile .lab{font-size:10px;letter-spacing:.16em;font-weight:800;color:rgba(255,255,255,.7);text-transform:uppercase}
+.hero-tile .big{font-family:'Marcellus',serif;font-size:40px;line-height:1;margin:6px 0 4px}
+.hero-tile .sub{font-size:12px;color:rgba(255,255,255,.8);font-weight:600}
+.stat-tile{padding:15px}
+.stat-tile .top{display:flex;justify-content:space-between;align-items:flex-start}
+.stat-tile .v{font-family:'Marcellus',serif;font-size:22px;color:var(--ink);margin-top:14px}
+.stat-tile .k{font-size:11px;font-weight:600;color:var(--muted)}
+.qrow{display:flex;gap:10px;grid-column:1/3}
+.qact{flex:1;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:7px}
+.qact .ic{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--tint);color:var(--primary)}
+.qact .ic svg{width:19px;height:19px}
+.qact span{font-size:10px;font-weight:700;color:var(--ink)}
+.day-banner{grid-column:1/3;border-radius:18px;padding:13px 15px;display:flex;align-items:center;gap:12px}
+.day-banner.open{background:var(--tint)}
+.day-banner.open .pdot{background:var(--success)}
+.day-banner .pdot{width:9px;height:9px;border-radius:50%}
+.day-banner .info{flex:1}
+.day-banner .t{font-size:12.5px;font-weight:800;color:var(--ink)}
+.day-banner .s{font-size:10.5px;font-weight:600;color:var(--sec);margin-top:1px}
+.day-banner .cta{font-size:11px;font-weight:800;color:var(--primary)}
+.perf-tile{grid-column:1/3;padding:16px}
+.perf-tile .hd{display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.perf-tile .hd svg{width:16px;height:16px;color:var(--gold)}
+.perf-tile .hd .t{font-size:13px;font-weight:800;color:var(--ink)}
+.prow{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.prow .rk{width:18px;text-align:center;font-family:'Marcellus',serif;font-size:15px;color:var(--gold)}
+.prow .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.prow .mid{flex:1;min-width:0}
+.prow .mid .l1{display:flex;justify-content:space-between}
+.prow .mid .nm{font-size:12px;font-weight:700;color:var(--ink)}
+.prow .mid .am{font-family:'Marcellus',serif;font-size:13px;color:var(--primary-dark)}
+.bar{height:6px;border-radius:6px;background:var(--hairline);margin-top:6px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+.ov-tile .top{display:flex;justify-content:space-between;align-items:center}
+.ov-tile .v{font-family:'Marcellus',serif;font-size:20px;color:var(--ink);margin-top:12px}
+.ov-tile .k{font-size:10.5px;font-weight:600;color:var(--muted)}
+
+/* =========================================================
+   DIRECTION 2 — EDITORIAL SPOTLIGHT
+   ========================================================= */
+.s2 .hero{padding:0 0 22px;border-radius:0 0 34px 34px;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,var(--hero-a),var(--hero-b));margin:-6px -18px 0}
+[data-skin="editorial"] .s2 .hero{background:linear-gradient(150deg,#1F1C13,#0C0B08)}
+.s2 .hero .glow1{position:absolute;width:220px;height:220px;border-radius:50%;right:-60px;top:-70px;
+  background:radial-gradient(circle,color-mix(in srgb,var(--accent) 32%,transparent),transparent 70%)}
+.s2 .hero .glow2{position:absolute;width:200px;height:200px;border-radius:50%;left:-70px;bottom:-90px;
+  background:radial-gradient(circle,rgba(255,255,255,.08),transparent 70%)}
+.s2 .hero .inner{position:relative;padding:6px 20px 0}
+.s2 .hrow{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.s2 .hrow .txt{flex:1}
+.s2 .hrow .g{font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+.s2 .hrow .n{font-family:'Marcellus',serif;font-size:24px;color:#fff;margin-top:2px}
+.s2 .rev-lab{font-size:10px;letter-spacing:.18em;font-weight:800;color:rgba(255,255,255,.65);text-transform:uppercase}
+.s2 .rev-big{font-family:'Marcellus',serif;font-size:46px;color:#fff;line-height:1;margin:5px 0 5px}
+.s2 .rev-sub{font-size:12px;font-weight:600;color:rgba(255,255,255,.78)}
+.s2 .daypill{margin-top:16px;display:inline-flex;align-items:center;gap:9px;padding:9px 14px;border-radius:14px;
+  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2)}
+.s2 .daypill .pdot{width:8px;height:8px;border-radius:50%;background:var(--success)}
+.s2 .daypill .t{font-size:12px;font-weight:800;color:#fff}
+.s2 .daypill .s{font-size:11px;font-weight:600;color:rgba(255,255,255,.72)}
+.s2 .daypill svg{width:15px;height:15px;color:rgba(255,255,255,.72)}
+.s2 .launch-title{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 14px}
+.s2 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.s2 .tile{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:16px 8px 13px;
+  display:flex;flex-direction:column;align-items:center;gap:9px;border:1px solid var(--card-brd,transparent)}
+[data-skin="glass"] .s2 .tile,[data-skin="editorial"] .s2 .tile{border-color:var(--hairline)}
+.s2 .tile .ic{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;
+  background:var(--tint);color:var(--primary)}
+.s2 .tile.gold .ic{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--gold)}
+.s2 .tile .ic svg{width:22px;height:22px}
+.s2 .tile span{font-size:11px;font-weight:700;color:var(--ink)}
+.s2 .insights{display:flex;gap:12px;margin-top:16px}
+.s2 .ins{flex:1;background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px;border:1px solid var(--card-brd,transparent)}
+[data-skin="glass"] .s2 .ins,[data-skin="editorial"] .s2 .ins{border-color:var(--hairline)}
+.s2 .ins .k{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.s2 .ins .v{font-family:'Marcellus',serif;font-size:22px;color:var(--ink);margin:9px 0 6px}
+.s2 .perfstrip{margin-top:16px;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:15px;border:1px solid var(--card-brd,transparent)}
+[data-skin="glass"] .s2 .perfstrip,[data-skin="editorial"] .s2 .perfstrip{border-color:var(--hairline)}
+
+/* =========================================================
+   DIRECTION 3 — OPERATIONS CONSOLE
+   ========================================================= */
+.o3 .head{display:flex;align-items:center;gap:12px;padding:4px 2px 16px}
+.o3 .head .mono{border-radius:16px}
+.o3 .head .txt{flex:1}
+.o3 .head .n{font-family:'Marcellus',serif;font-size:20px;color:var(--ink);line-height:1.05}
+.o3 .head .r{font-size:11px;font-weight:700;color:var(--sec);margin-top:2px;display:flex;align-items:center;gap:6px}
+.o3 .head .r .live{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 22%,transparent)}
+.o3 .head .roundbtn{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.o3 .head .roundbtn svg{width:19px;height:19px}
+.o3 .daycard{border-radius:20px;padding:15px 16px;display:flex;align-items:center;gap:13px;margin-bottom:16px;
+  background:linear-gradient(135deg,var(--hero-a),var(--hero-b));color:#fff;box-shadow:var(--shadow)}
+.o3 .daycard .ic{width:42px;height:42px;border-radius:14px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center}
+.o3 .daycard .ic svg{width:22px;height:22px}
+.o3 .daycard .info{flex:1}
+.o3 .daycard .t{font-size:14px;font-weight:800}
+.o3 .daycard .s{font-size:11px;color:rgba(255,255,255,.78);font-weight:600;margin-top:2px}
+.o3 .daycard .arrow{width:30px;height:30px;border-radius:10px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center}
+.o3 .daycard .arrow svg{width:18px;height:18px}
+.o3 .seg{display:flex;background:var(--card);border-radius:14px;padding:4px;box-shadow:var(--shadow);margin-bottom:14px}
+.o3 .seg button{flex:1;border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:700;color:var(--muted);
+  padding:9px 0;border-radius:10px;cursor:pointer;transition:.15s}
+.o3 .seg button.on{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+.o3 .kpis{display:flex;gap:10px;margin-bottom:16px}
+.o3 .kpi{flex:1;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px}
+.o3 .kpi .k{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.o3 .kpi .v{font-family:'Marcellus',serif;font-size:21px;color:var(--ink);margin-top:8px}
+.o3 .kpi .d{font-size:10px;font-weight:700;margin-top:2px}
+.o3 .cta{border-radius:20px;padding:17px 18px;display:flex;align-items:center;gap:14px;margin-bottom:18px;
+  background:linear-gradient(135deg,var(--accent),var(--gold));color:#1a1712;box-shadow:0 16px 34px -14px color-mix(in srgb,var(--accent) 70%,transparent)}
+.o3 .cta .ic{width:46px;height:46px;border-radius:15px;background:rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center}
+.o3 .cta .ic svg{width:24px;height:24px}
+.o3 .cta .t{font-size:16px;font-weight:800}
+.o3 .cta .s{font-size:11.5px;font-weight:600;opacity:.72;margin-top:1px}
+.o3 .cta .go{margin-left:auto;width:34px;height:34px;border-radius:11px;background:rgba(0,0,0,.14);display:flex;align-items:center;justify-content:center}
+.o3 .cta .go svg{width:20px;height:20px}
+.o3 .railhead{display:flex;justify-content:space-between;align-items:center;margin:0 2px 12px}
+.o3 .rail{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;margin:0 -18px 20px;padding-left:18px;padding-right:18px}
+.o3 .rail::-webkit-scrollbar{height:0}
+.o3 .rcard{flex:0 0 96px;background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px 10px;
+  display:flex;flex-direction:column;gap:10px}
+.o3 .rcard .ic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--tint);color:var(--primary)}
+.o3 .rcard .ic svg{width:20px;height:20px}
+.o3 .rcard span{font-size:11px;font-weight:700;color:var(--ink)}
+.o3 .rcard small{font-size:9.5px;color:var(--muted);font-weight:600}
+.o3 .listcard{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:16px}
+.o3 .listcard .hd{display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.o3 .listcard .hd svg{width:16px;height:16px;color:var(--gold)}
+.o3 .listcard .hd .t{font-size:13px;font-weight:800;color:var(--ink)}
+
+/* responsive */
+@media(max-width:900px){.col{width:100%;max-width:392px}}
+</style>
+</head>
+<body data-skin="signature" data-theme="light" data-role="admin">
+<div class="wrap">
+  <div class="masthead">
+    <div class="eyebrow">Astra Mobile · Home Screen</div>
+    <h1>Home Redesign — three premium directions</h1>
+    <p>Same data, three layout philosophies for the employee / admin home. Switch the theme preset and light/dark below to preview each direction under the app's real palettes (Marcellus + Manrope type, exact Astra tokens). Toggle the role to see how admin-only insight blocks collapse for a cashier. Pick one and I'll build it in Flutter.</p>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-group">
+      <span class="ctl-label">Preset</span>
+      <div class="pills" id="presetPills">
+        <button class="pill on" data-skin="signature"><span class="dot" style="background:#15806C"></span>Emerald&nbsp;&amp;&nbsp;Gold</button>
+        <button class="pill" data-skin="glass"><span class="dot" style="background:#4F46E5"></span>Aurora</button>
+        <button class="pill" data-skin="clean"><span class="dot" style="background:#7C3AED"></span>Luminous</button>
+        <button class="pill" data-skin="editorial"><span class="dot" style="background:#B5862F"></span>Editorial</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Mode</span>
+      <div class="toggle" id="themeToggle">
+        <button class="on" data-theme="light">Light</button>
+        <button data-theme="dark">Dark</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Role</span>
+      <div class="toggle" id="roleToggle">
+        <button class="on" data-role="admin">Admin</button>
+        <button data-role="employee">Cashier</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <!-- ============ DIRECTION 1 : AURORA BENTO ============ -->
+    <div class="col">
+      <div class="cap">
+        <div class="num">1</div>
+        <h2>Aurora Bento</h2>
+        <div class="tag">Analytics-dense</div>
+        <p>Compact greeting bar, then a modular bento mosaic — one gradient revenue hero, paired period stats, quick-action pills, day banner, performers &amp; overview. Everything at a glance.</p>
+      </div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen b1">
+          <div class="statusbar"><span>9:41</span><span class="sig"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 20h4v-8H2v8zm7 0h4V4H9v16zm7 0h4v-12h-4v12z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4C7 4 2.7 6.6 1 10l11 12L23 10c-1.7-3.4-6-6-11-6z"/></svg></span></div>
+          <div class="body"><div class="pad">
+            <div class="topbar">
+              <div class="mono">R</div>
+              <div class="txt"><div class="g">Good morning</div><div class="n">Rahees</div></div>
+              <div class="roundbtn" style="position:relative"><span class="bdge"></span>__I_bell__</div>
+              <div class="roundbtn">__I_menu__</div>
+            </div>
+            <div class="bento">
+              <div class="hero-tile">
+                <div class="glow"></div>
+                <div class="lab">Today's revenue</div>
+                <div class="big">AED 12,480</div>
+                <div class="sub">18 bills today · avg AED 693</div>
+                <svg class="spark" viewBox="0 0 300 44" preserveAspectRatio="none">__SPARK_W__</svg>
+              </div>
+
+              <div class="qrow">
+                <div class="qact"><div class="ic">__I_cart__</div><span>New Sale</span></div>
+                <div class="qact"><div class="ic">__I_receipt__</div><span>Sales</span></div>
+                <div class="qact"><div class="ic">__I_return__</div><span>Returns</span></div>
+                <div class="qact"><div class="ic">__I_check__</div><span>Stock</span></div>
+              </div>
+
+              <div class="card stat-tile">
+                <div class="top"><div class="iconchip">__I_week__</div><span class="chip up">__ar_up__ 12%</span></div>
+                <div class="v">AED 84,200</div><div class="k">This week</div>
+              </div>
+              <div class="card stat-tile">
+                <div class="top"><div class="iconchip">__I_month__</div><span class="chip up">__ar_up__ 8%</span></div>
+                <div class="v">AED 312.9k</div><div class="k">This month</div>
+              </div>
+
+              <div class="day-banner open">
+                <span class="pdot"></span>
+                <div class="info"><div class="t">Day open · since 08:30</div><div class="s">Tap to review or close the session</div></div>
+                <span class="cta">Manage ›</span>
+              </div>
+
+              <div class="card perf-tile admin-only">
+                <div class="hd">__I_trophy__<span class="t">Top performers</span></div>
+                <div class="prow"><div class="rk">1</div><div class="av">A</div><div class="mid"><div class="l1"><span class="nm">Aisha K.</span><span class="am">AED 9,200</span></div><div class="bar"><i style="width:100%"></i></div></div></div>
+                <div class="prow"><div class="rk">2</div><div class="av">O</div><div class="mid"><div class="l1"><span class="nm">Omar S.</span><span class="am">AED 7,850</span></div><div class="bar"><i style="width:85%"></i></div></div></div>
+                <div class="prow" style="margin-bottom:0"><div class="rk">3</div><div class="av">L</div><div class="mid"><div class="l1"><span class="nm">Lena M.</span><span class="am">AED 6,300</span></div><div class="bar"><i style="width:68%"></i></div></div></div>
+              </div>
+
+              <div class="card stat-tile ov-tile admin-only"><div class="top"><div class="iconchip">__I_badge__</div></div><div class="v">14</div><div class="k">Employees</div></div>
+              <div class="card stat-tile ov-tile admin-only"><div class="top"><div class="iconchip">__I_people__</div></div><div class="v">1,204</div><div class="k">Customers</div></div>
+              <div class="card stat-tile ov-tile admin-only"><div class="top"><div class="iconchip">__I_box__</div></div><div class="v">320</div><div class="k">Products</div></div>
+              <div class="card stat-tile ov-tile admin-only"><div class="top"><div class="iconchip">__I_scissors__</div></div><div class="v">26</div><div class="k">Services</div></div>
+            </div>
+          </div></div>
+          <div class="nav">
+            <div class="item act">__I_home__<span>Home</span></div>
+            <div class="item">__I_receipt__<span>Sales</span></div>
+            <div class="fab">__I_plus__</div>
+            <div class="item">__I_chart__<span>Reports</span></div>
+            <div class="item">__I_gear__<span>Settings</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ DIRECTION 2 : EDITORIAL SPOTLIGHT ============ -->
+    <div class="col">
+      <div class="cap">
+        <div class="num">2</div>
+        <h2>Editorial Spotlight</h2>
+        <div class="tag">Luxe &amp; spacious</div>
+        <p>A full-bleed gradient hero owns the headline number, day status and live trend. Below, an elegant module launcher grid for fast navigation, then slim insight cards. Breathing room, magazine feel.</p>
+      </div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen s2">
+          <div class="statusbar" style="color:#fff"><span>9:41</span><span class="sig"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 20h4v-8H2v8zm7 0h4V4H9v16zm7 0h4v-12h-4v12z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4C7 4 2.7 6.6 1 10l11 12L23 10c-1.7-3.4-6-6-11-6z"/></svg></span></div>
+          <div class="body"><div class="pad" style="padding-top:0">
+            <div class="hero">
+              <div class="glow1"></div><div class="glow2"></div>
+              <div class="inner">
+                <div class="hrow">
+                  <div class="ghostbtn">__I_menu__</div>
+                  <div class="txt"><div class="g">Good morning</div><div class="n">Rahees</div></div>
+                  <div class="mono" style="border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25)">R</div>
+                </div>
+                <div class="rev-lab">Today's revenue</div>
+                <div class="rev-big">AED 12,480</div>
+                <div class="rev-sub">18 bills today · avg AED 693</div>
+                <svg class="spark" viewBox="0 0 320 44" preserveAspectRatio="none" style="margin-top:12px;height:40px">__SPARK_W__</svg>
+                <div class="daypill">
+                  <span class="pdot"></span>
+                  <div><div class="t">Day open · since 08:30</div><div class="s">Tap to close session</div></div>
+                  __I_chev__
+                </div>
+              </div>
+            </div>
+
+            <div class="launch-title"><span class="sec-label">Quick actions</span></div>
+            <div class="grid">
+              <div class="tile gold"><div class="ic">__I_cart__</div><span>New Sale</span></div>
+              <div class="tile"><div class="ic">__I_receipt__</div><span>Sales</span></div>
+              <div class="tile"><div class="ic">__I_return__</div><span>Returns</span></div>
+              <div class="tile"><div class="ic">__I_check__</div><span>Stock Check</span></div>
+              <div class="tile"><div class="ic">__I_chart__</div><span>Reports</span></div>
+              <div class="tile"><div class="ic">__I_clock__</div><span>Day Session</span></div>
+            </div>
+
+            <div class="insights admin-only">
+              <div class="ins"><div class="k">This week</div><div class="v">AED 84,200</div><span class="chip up">__ar_up__ 12%</span></div>
+              <div class="ins"><div class="k">This month</div><div class="v">AED 312.9k</div><span class="chip up">__ar_up__ 8%</span></div>
+            </div>
+
+            <div class="perfstrip admin-only">
+              <div class="perf-tile" style="padding:0;box-shadow:none;background:none">
+                <div class="hd">__I_trophy__<span class="t">Top performers</span></div>
+                <div class="prow"><div class="rk">1</div><div class="av">A</div><div class="mid"><div class="l1"><span class="nm">Aisha K.</span><span class="am">AED 9,200</span></div><div class="bar"><i style="width:100%"></i></div></div></div>
+                <div class="prow" style="margin-bottom:0"><div class="rk">2</div><div class="av">O</div><div class="mid"><div class="l1"><span class="nm">Omar S.</span><span class="am">AED 7,850</span></div><div class="bar"><i style="width:85%"></i></div></div></div>
+              </div>
+            </div>
+          </div></div>
+          <div class="nav">
+            <div class="item act">__I_home__<span>Home</span></div>
+            <div class="item">__I_receipt__<span>Sales</span></div>
+            <div class="fab">__I_plus__</div>
+            <div class="item">__I_chart__<span>Reports</span></div>
+            <div class="item">__I_gear__<span>Settings</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ DIRECTION 3 : OPERATIONS CONSOLE ============ -->
+    <div class="col">
+      <div class="cap">
+        <div class="num">3</div>
+        <h2>Operations Console</h2>
+        <div class="tag">Action-first</div>
+        <p>Built for a shift: role header, a prominent day-session card up top, a Today/Week/Month segmented switcher over KPIs, a big "Start selling" CTA, a scrollable module rail, then a compact performers list. Operational &amp; fast.</p>
+      </div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen o3">
+          <div class="statusbar"><span>9:41</span><span class="sig"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 20h4v-8H2v8zm7 0h4V4H9v16zm7 0h4v-12h-4v12z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4C7 4 2.7 6.6 1 10l11 12L23 10c-1.7-3.4-6-6-11-6z"/></svg></span></div>
+          <div class="body"><div class="pad">
+            <div class="head">
+              <div class="mono">R</div>
+              <div class="txt"><div class="n">Rahees</div><div class="r"><span class="live"></span>On shift · Main Branch</div></div>
+              <div class="roundbtn">__I_menu__</div>
+            </div>
+
+            <div class="daycard">
+              <div class="ic">__I_clock__</div>
+              <div class="info"><div class="t">Day is open</div><div class="s">Opened 08:30 · 18 bills · AED 12,480</div></div>
+              <div class="arrow">__I_chev__</div>
+            </div>
+
+            <div class="seg">
+              <button class="on">Today</button><button>This Week</button><button>This Month</button>
+            </div>
+            <div class="kpis">
+              <div class="kpi"><div class="k">Revenue</div><div class="v">12,480</div><div class="d up" style="background:none;padding:0">__ar_up__ 12%</div></div>
+              <div class="kpi"><div class="k">Bills</div><div class="v">18</div><div class="d" style="color:var(--muted)">avg 693</div></div>
+              <div class="kpi"><div class="k">Returns</div><div class="v">2</div><div class="d" style="color:var(--muted)">AED 410</div></div>
+            </div>
+
+            <div class="cta">
+              <div class="ic">__I_cart__</div>
+              <div><div class="t">Start a New Sale</div><div class="s">Open the register</div></div>
+              <div class="go">__I_arrow__</div>
+            </div>
+
+            <div class="railhead"><span class="sec-label">Modules</span><span style="font-size:11px;font-weight:700;color:var(--primary)">All ›</span></div>
+            <div class="rail">
+              <div class="rcard"><div class="ic">__I_receipt__</div><span>Sales</span><small>124 today</small></div>
+              <div class="rcard"><div class="ic">__I_return__</div><span>Returns</span><small>2 today</small></div>
+              <div class="rcard"><div class="ic">__I_check__</div><span>Stock</span><small>Check</small></div>
+              <div class="rcard"><div class="ic">__I_chart__</div><span>Reports</span><small>Insights</small></div>
+              <div class="rcard"><div class="ic">__I_clock__</div><span>Session</span><small>Day</small></div>
+            </div>
+
+            <div class="listcard admin-only">
+              <div class="hd">__I_trophy__<span class="t">Top performers today</span></div>
+              <div class="prow"><div class="rk">1</div><div class="av">A</div><div class="mid"><div class="l1"><span class="nm">Aisha K.</span><span class="am">AED 9,200</span></div><div class="bar"><i style="width:100%"></i></div></div></div>
+              <div class="prow"><div class="rk">2</div><div class="av">O</div><div class="mid"><div class="l1"><span class="nm">Omar S.</span><span class="am">AED 7,850</span></div><div class="bar"><i style="width:85%"></i></div></div></div>
+              <div class="prow" style="margin-bottom:0"><div class="rk">3</div><div class="av">L</div><div class="mid"><div class="l1"><span class="nm">Lena M.</span><span class="am">AED 6,300</span></div><div class="bar"><i style="width:68%"></i></div></div></div>
+            </div>
+          </div></div>
+          <div class="nav">
+            <div class="item act">__I_home__<span>Home</span></div>
+            <div class="item">__I_receipt__<span>Sales</span></div>
+            <div class="fab">__I_plus__</div>
+            <div class="item">__I_chart__<span>Reports</span></div>
+            <div class="item">__I_gear__<span>Settings</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- icon sprite (lucide-style strokes) ---------- */
+const S='stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"';
+const ICONS={
+  menu:`<svg viewBox="0 0 24 24" ${S}><path d="M3 6h18M3 12h18M3 18h18"/></svg>`,
+  bell:`<svg viewBox="0 0 24 24" ${S}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>`,
+  cart:`<svg viewBox="0 0 24 24" ${S}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>`,
+  receipt:`<svg viewBox="0 0 24 24" ${S}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 2v6h6M9 13h6M9 17h4"/></svg>`,
+  return:`<svg viewBox="0 0 24 24" ${S}><path d="M3 7v6h6M3.5 13a9 9 0 1 0 2.1-9.4L3 6"/></svg>`,
+  check:`<svg viewBox="0 0 24 24" ${S}><path d="M8 4h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 3h6v3H9zM9 13l2 2 4-4"/></svg>`,
+  chart:`<svg viewBox="0 0 24 24" ${S}><path d="M3 3v18h18M7 15v-4M12 15V8M17 15v-6"/></svg>`,
+  clock:`<svg viewBox="0 0 24 24" ${S}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  week:`<svg viewBox="0 0 24 24" ${S}><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 14h2M14 14h2"/></svg>`,
+  month:`<svg viewBox="0 0 24 24" ${S}><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M7 13h2M11 13h2M15 13h2M7 17h2M11 17h2"/></svg>`,
+  trophy:`<svg viewBox="0 0 24 24" ${S}><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM5 4H3v2a3 3 0 0 0 3 3M19 4h2v2a3 3 0 0 1-3 3"/></svg>`,
+  badge:`<svg viewBox="0 0 24 24" ${S}><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 16a3 3 0 0 1 6 0M15 9h4M15 13h4"/></svg>`,
+  people:`<svg viewBox="0 0 24 24" ${S}><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 6a3 3 0 0 1 0 6M18 20a6 6 0 0 0-3-5.2"/></svg>`,
+  box:`<svg viewBox="0 0 24 24" ${S}><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>`,
+  scissors:`<svg viewBox="0 0 24 24" ${S}><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.5 8.5L20 20M8.5 15.5L20 4"/></svg>`,
+  home:`<svg viewBox="0 0 24 24" ${S}><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5"/></svg>`,
+  gear:`<svg viewBox="0 0 24 24" ${S}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H1a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 2.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 7 2.6h.1A1.6 1.6 0 0 0 8.9 1a2 2 0 0 1 4 0v.1A1.6 1.6 0 0 0 15 2.6a1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1A1.6 1.6 0 0 0 23 8.9a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.1z"/></svg>`,
+  plus:`<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M12 5v14M5 12h14"/></svg>`,
+  chev:`<svg viewBox="0 0 24 24" ${S}><path d="M9 6l6 6-6 6"/></svg>`,
+  arrow:`<svg viewBox="0 0 24 24" ${S}><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
+};
+const AR_UP=`<svg viewBox="0 0 24 24" width="10" height="10" ${S} style="display:inline-block"><path d="M7 17L17 7M8 7h9v9"/></svg>`;
+/* soft area sparkline (white stroke for on-gradient) */
+function sparkWhite(){
+  const pts=[8,14,10,20,16,26,22,30,26,38,34,40];
+  const w=300,h=44,max=44,min=6,step=w/(pts.length-1);
+  let d='',line='';
+  pts.forEach((v,i)=>{const x=i*step;const y=h-((v-min)/(max-min))*(h-8)-4;line+=(i?'L':'M')+x.toFixed(0)+' '+y.toFixed(0)+' ';});
+  d=`M0 ${h} `+line.replace('M','L')+`L${w} ${h} Z`;
+  return `<defs><linearGradient id="sw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.35)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></linearGradient></defs>`+
+    `<path d="${d}" fill="url(#sw)"/><path d="${line}" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+}
+/* inject */
+document.body.innerHTML=document.body.innerHTML
+  .replace(/__I_menu__/g,ICONS.menu).replace(/__I_bell__/g,ICONS.bell)
+  .replace(/__I_cart__/g,ICONS.cart).replace(/__I_receipt__/g,ICONS.receipt)
+  .replace(/__I_return__/g,ICONS.return).replace(/__I_check__/g,ICONS.check)
+  .replace(/__I_chart__/g,ICONS.chart).replace(/__I_clock__/g,ICONS.clock)
+  .replace(/__I_week__/g,ICONS.week).replace(/__I_month__/g,ICONS.month)
+  .replace(/__I_trophy__/g,ICONS.trophy).replace(/__I_badge__/g,ICONS.badge)
+  .replace(/__I_people__/g,ICONS.people).replace(/__I_box__/g,ICONS.box)
+  .replace(/__I_scissors__/g,ICONS.scissors).replace(/__I_home__/g,ICONS.home)
+  .replace(/__I_gear__/g,ICONS.gear).replace(/__I_plus__/g,ICONS.plus)
+  .replace(/__I_chev__/g,ICONS.chev).replace(/__I_arrow__/g,ICONS.arrow)
+  .replace(/__ar_up__/g,AR_UP)
+  .replace(/__SPARK_W__/g,sparkWhite());
+
+/* ---------- theming ---------- */
+const PRESETS={
+  signature:{p:'#15806C',pd:'#0E5648',ac:'#C9A24B',gold:'#BF953F',
+    light:{canvas:'#F6F1E8',card:'#FFFFFF',ink:'#16312A',sec:'#5D7269',muted:'#A8B3AB',hair:'#F0ECE1',tint:'#E6F0EC',navbg:'rgba(255,255,255,.86)',navbrd:'rgba(255,255,255,.6)'},
+    dark:{canvas:'#07140F',card:'#15302A',ink:'#F3F1EA',sec:'#A9C2BA',muted:'#7C9189',hair:'rgba(255,255,255,.1)',tint:'rgba(21,128,108,.22)',surface:'#0A1B17',gold:'#C9A24B'}},
+  glass:{p:'#4F46E5',pd:'#3730A3',ac:'#38BDF8',gold:'#38BDF8',
+    light:{canvas:'#EEF1F7',card:'#FFFFFF',ink:'#13183A',sec:'#46507E',muted:'#7F88B3',hair:'#E4E8F3',tint:'rgba(79,70,229,.12)',navbg:'rgba(255,255,255,.82)',navbrd:'rgba(255,255,255,.7)'},
+    dark:{canvas:'#0B0E1C',card:'#171A2E',ink:'#EAEDF9',sec:'#AAB2D8',muted:'#7079A6',hair:'rgba(255,255,255,.1)',tint:'rgba(79,70,229,.24)',surface:'#14172B',gold:'#38BDF8'}},
+  clean:{p:'#4F46E5',pd:'#3B35B0',ac:'#7C3AED',gold:'#7C3AED',
+    light:{canvas:'#F4F5FB',card:'#FFFFFF',ink:'#161A2B',sec:'#4A4F63',muted:'#8A8FA3',hair:'#E7E9F2',tint:'rgba(79,70,229,.12)',navbg:'rgba(255,255,255,.9)',navbrd:'#EDEFF6'},
+    dark:{canvas:'#0E1220',card:'#171B2B',ink:'#EDEFF7',sec:'#ADB3C9',muted:'#767C92',hair:'#272C3E',tint:'rgba(79,70,229,.24)',surface:'#161A28',gold:'#7C3AED'}},
+  editorial:{p:'#B5862F',pd:'#8A6A22',ac:'#C8A24A',gold:'#C8A24A',
+    light:{canvas:'#F3EFE6',card:'#FBF8F1',ink:'#1C1A14',sec:'#54503F',muted:'#928C79',hair:'#E6DFCE',tint:'rgba(181,134,47,.14)',navbg:'rgba(251,248,241,.9)',navbrd:'#E6DFCE'},
+    dark:{canvas:'#0C0B08',card:'#15140F',ink:'#F1ECE0',sec:'#B7B09C',muted:'#857E6C',hair:'#2A271D',tint:'rgba(181,134,47,.24)',surface:'#15140F',gold:'#C8A24A'}},
+};
+function apply(){
+  const skin=document.body.dataset.skin, mode=document.body.dataset.theme;
+  const P=PRESETS[skin], v=P[mode], r=document.documentElement.style;
+  r.setProperty('--primary',P.p); r.setProperty('--primary-dark',P.pd); r.setProperty('--accent',P.ac);
+  r.setProperty('--gold',v.gold||P.gold);
+  r.setProperty('--canvas',v.canvas); r.setProperty('--card',v.card); r.setProperty('--ink',v.ink);
+  r.setProperty('--sec',v.sec); r.setProperty('--muted',v.muted); r.setProperty('--hairline',v.hair);
+  r.setProperty('--tint',v.tint);
+  r.setProperty('--surface',v.surface||P.pd);
+  r.setProperty('--hero-a',P.p); r.setProperty('--hero-b',P.pd);
+  r.setProperty('--card-brd', (skin==='glass'||skin==='editorial')?v.hair:'transparent');
+  r.setProperty('--nav-bg', mode==='dark'?(v.surface||P.pd):v.navbg);
+  r.setProperty('--nav-brd', mode==='dark'?'rgba(255,255,255,.08)':v.navbrd);
+  r.setProperty('--shadow', mode==='dark'?'0 18px 40px -22px rgba(0,0,0,.6)':'0 16px 36px -24px rgba(20,40,34,.4)');
+}
+function bindToggle(id,attr){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); document.body.dataset[attr]=b.dataset[attr]; apply();
+  });
+}
+document.querySelectorAll('#presetPills .pill').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#presetPills .pill').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); document.body.dataset.skin=b.dataset.skin; apply();
+});
+bindToggle('themeToggle','theme');
+bindToggle('roleToggle','role');
+apply();
+</script>
+</body>
+</html>
