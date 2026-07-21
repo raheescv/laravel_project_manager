@@ -36,6 +36,9 @@ dependencies:
   # Camera barcode / QR scanning (iOS / Android / macOS)
   mobile_scanner: ^7.2.0
 
+  # Profile photo capture / library picking
+  image_picker: ^1.1.2
+
   # UI
   google_fonts: ^6.2.1
   intl: ^0.20.1

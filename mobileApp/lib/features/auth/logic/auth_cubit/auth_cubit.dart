@@ -157,6 +157,15 @@ class AuthCubit extends HolderCubit {
         : (error ?? 'Saved credential no longer valid. Please sign in again.');
   }
 
+  /// Replaces the cached user with a freshly-returned one (e.g. after a profile
+  /// or avatar update) so every screen watching [AuthCubit] reflects it live,
+  /// and re-persists it for the next launch.
+  Future<void> applyUser(ApiUser updated) async {
+    user = updated;
+    refresh();
+    await _storage.setUserJson(jsonEncode(updated.toJson()));
+  }
+
   Future<void> syncDaySession({
     required String status,
     String? openedAt,

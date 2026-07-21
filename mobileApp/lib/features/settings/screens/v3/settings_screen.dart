@@ -274,7 +274,9 @@ class SettingsScreen extends StatelessWidget {
         ? 'Loading branches…'
         : selected == null
             ? (branch.error ?? 'Tap to choose a branch')
-            : (selected.location.isEmpty ? selected.code : selected.location);
+            : (selected.location.isEmpty
+                ? selected.name
+                : '${selected.name} · ${selected.location}');
     return AstraCard(
       radius: 14,
       onTap: () => showBranchSheet(context),
@@ -286,7 +288,7 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(selected?.name ?? 'Branch',
+                Text('Branch',
                     style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
                 Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
               ],

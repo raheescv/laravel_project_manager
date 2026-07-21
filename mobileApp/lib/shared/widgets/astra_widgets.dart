@@ -464,6 +464,69 @@ class Monogram extends StatelessWidget {
   }
 }
 
+/// Circular avatar: shows the user's uploaded photo (gold-ringed, clipped to a
+/// circle) when [imageUrl] is an absolute URL, otherwise falls back to the
+/// letter [Monogram]. [headers] mirror the API's Host override so the image
+/// loads over a LAN IP the same way requests do.
+class ProfileAvatar extends StatelessWidget {
+  const ProfileAvatar({
+    super.key,
+    required this.letter,
+    this.imageUrl,
+    this.headers,
+    this.size = 78,
+    this.fontSize,
+  });
+  final String letter;
+  final String? imageUrl;
+  final Map<String, String>? headers;
+  final double size;
+  final double? fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final url = imageUrl;
+    final hasPhoto = url != null && url.startsWith('http');
+    final letterChild = Text(letter, style: serif(size: fontSize ?? size * 0.42, color: Colors.white));
+
+    Widget inner;
+    if (hasPhoto) {
+      inner = Image.network(
+        url,
+        headers: headers,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => Center(child: letterChild),
+        loadingBuilder: (context, child, progress) => progress == null
+            ? child
+            : Center(
+                child: SizedBox(
+                  width: size * 0.3,
+                  height: size * 0.3,
+                  child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                ),
+              ),
+      );
+    } else {
+      inner = Center(child: letterChild);
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(shape: BoxShape.circle, gradient: p.accentGradient),
+      child: Container(
+        decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF0E5347)),
+        clipBehavior: Clip.antiAlias,
+        alignment: Alignment.center,
+        child: inner,
+      ),
+    );
+  }
+}
+
 /// Status pill (Paid / Refund / Held etc.).
 class StatusPill extends StatelessWidget {
   const StatusPill({super.key, required this.label, required this.bg, required this.fg, this.icon});

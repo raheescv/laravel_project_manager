@@ -718,13 +718,27 @@
                     <div>
                         <div class="empx-errors-title">Please correct the following errors:</div>
                         <ul class="empx-errors-list">
-                            @foreach ($this->getErrorBag()->toArray() as $field => $errors)
-                                <li>{{ $errors[0] }}</li>
+                            @foreach ($this->getErrorBag()->toArray() as $field => $fieldErrors)
+                                <li>{{ $fieldErrors[0] }}</li>
                             @endforeach
                         </ul>
                     </div>
                 </div>
             @endif
+
+            <style>
+                .empx-photo { display: flex; align-items: center; gap: 16px; }
+                .empx-photo-uploader { position: relative; width: 84px; height: 84px; flex: 0 0 auto; }
+                .empx-photo-uploader.is-loading { opacity: .5; }
+                .empx-photo-img { width: 84px; height: 84px; object-fit: cover; border-radius: 50%; border: 2px solid var(--border); background: var(--surface-3); }
+                .empx-photo-edit { position: absolute; right: -2px; bottom: -2px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--brand); color: #fff; cursor: pointer; border: 2px solid var(--surface); font-size: .72rem; transition: transform .15s ease; }
+                .empx-photo-edit:hover { transform: scale(1.08); }
+                .empx-photo-remove { position: absolute; right: -2px; top: -2px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--danger); color: #fff; cursor: pointer; border: 2px solid var(--surface); font-size: .6rem; padding: 0; line-height: 1; }
+                .empx-photo-spin { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--brand); }
+                .empx-photo-title { font-weight: 700; color: var(--text); }
+                .empx-photo-hint { color: var(--text-3); font-size: .68rem; margin-top: 2px; }
+                .empx-photo-err { color: var(--danger); font-size: .68rem; margin-top: 4px; }
+            </style>
 
             <!-- Personal Information -->
             <div class="empx-panel">
@@ -737,6 +751,33 @@
                 </div>
                 <div class="empx-panel-body">
                     <div class="empx-grid">
+                        <div class="c12">
+                            @php
+                                $previewUrl = $photo
+                                    ? $photo->temporaryUrl()
+                                    : (! empty($users['image'])
+                                        ? asset('storage/' . $users['image'])
+                                        : secure_asset('assets/img/profile-photos/1.png'));
+                            @endphp
+                            <div class="empx-photo">
+                                <div class="empx-photo-uploader" wire:loading.class="is-loading" wire:target="photo">
+                                    <img src="{{ $previewUrl }}" alt="Employee Photo" class="empx-photo-img">
+                                    <label for="employee_photo_input" class="empx-photo-edit" title="Upload photo"><i class="fa fa-camera"></i></label>
+                                    <div wire:loading wire:target="photo" class="empx-photo-spin"><span class="spinner-border spinner-border-sm"></span></div>
+                                    @if ($photo || !empty($users['image']))
+                                        <button type="button" wire:click="removePhoto" class="empx-photo-remove" title="Remove photo"><i class="fa fa-times"></i></button>
+                                    @endif
+                                </div>
+                                <div class="empx-photo-meta">
+                                    <div class="empx-photo-title">Profile Photo</div>
+                                    <div class="empx-photo-hint">Square image works best · JPG / PNG / WEBP · max 5MB</div>
+                                    <input type="file" id="employee_photo_input" class="d-none" wire:model="photo" accept="image/png,image/jpeg,image/webp">
+                                    @error('photo')
+                                        <div class="empx-photo-err"><i class="fa fa-exclamation-circle"></i> {{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
                         <div class="c4">
                             <label for="code" class="empx-label"><i class="fa fa-hashtag"></i> Employee Code</label>
                             <div class="empx-input">

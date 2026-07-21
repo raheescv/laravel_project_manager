@@ -5,7 +5,9 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Invo uses Face ID to sign you in securely.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Invo uses the camera to scan product barcodes.</string>
+	<string>Invo uses the camera to scan product barcodes and take your profile photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Invo lets you choose a profile photo from your library.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

@@ -89,6 +89,11 @@ Route::prefix('v1')->group(function () {
             Route::post('change-pin', [AuthController::class, 'changePin'])->name('api.v1.change-pin');
             Route::post('change-password', [AuthController::class, 'changePassword'])->name('api.v1.change-password');
 
+            // Profile — the signed-in user edits their own name/email/mobile and avatar.
+            // No extra permission gate: anyone authenticated may manage their own profile.
+            Route::match(['put', 'patch', 'post'], 'profile', [ProfileController::class, 'update'])->name('api.v1.profile.update');
+            Route::post('profile/photo', [ProfileController::class, 'updatePhoto'])->name('api.v1.profile.photo');
+
             // Bill routes
             Route::prefix('sale')->group(function () {
                 Route::get('/', [SaleController::class, 'index'])->name('api.v1.sale.index');

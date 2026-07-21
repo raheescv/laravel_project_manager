@@ -42,8 +42,35 @@ class AppConfig {
 
   String get apiV1 => '$baseUrl/api/v1';
 
-  AppConfig copyWith({String? baseUrl, String? tenant}) => AppConfig(
+  /// Absolute URL for a server asset/attachment. The API returns storage paths
+  /// relative to the site root (e.g. `/storage/…`); we point them at the
+  /// reachable [baseUrl] instead of whatever host the server would bake in, so
+  /// images load on a real device (LAN IP / correct host) exactly like the API.
+  /// If the server ever returns an absolute URL we rewrite it onto [baseUrl] too.
+  String assetUrl(String raw) {
+    if (raw.isEmpty) return raw;
+    var path = raw;
+    final uri = Uri.tryParse(raw);
+    if (uri != null && uri.hasScheme) {
+      path = uri.path;
+      if (uri.hasQuery) path = '$path?${uri.query}';
+    }
+    if (!path.startsWith('/')) path = '/$path';
+    final base =
+        baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    return '$base$path';
+  }
+
+  /// Headers to attach when loading an asset over HTTP — mirrors the Dio config
+  /// so `Image.network` reaches the server the same way. The `Host` override lets
+  /// nginx route a LAN-IP request to the right virtual host.
+  Map<String, String>? get assetHeaders =>
+      hostHeader.isEmpty ? null : {'Host': hostHeader};
+
+  AppConfig copyWith({String? baseUrl, String? tenant, String? hostHeader}) =>
+      AppConfig(
         baseUrl: baseUrl ?? this.baseUrl,
         tenant: tenant ?? this.tenant,
+        hostHeader: hostHeader ?? this.hostHeader,
       );
 }

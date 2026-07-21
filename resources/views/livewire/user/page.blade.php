@@ -1,4 +1,11 @@
 <div>
+    <style>
+        .user-photo-preview { width: 90px; height: 90px; object-fit: cover; background: #f1f3f5; }
+        .user-photo-edit { width: 28px; height: 28px; background: var(--bs-primary, #0d6efd); color: #fff; cursor: pointer; font-size: .75rem; border: 2px solid #fff; transition: transform .2s ease, background .2s ease; }
+        .user-photo-edit:hover { transform: scale(1.1); }
+        .user-photo-remove { width: 22px; height: 22px; background: #dc3545; color: #fff; cursor: pointer; font-size: .65rem; border: 2px solid #fff; padding: 0; line-height: 1; }
+        .user-photo-remove:hover { background: #bb2d3b; }
+    </style>
     <div class="modal-header bg-light">
         <h1 class="modal-title fs-5">
             <i class="fa fa-user-circle me-2 text-primary"></i>
@@ -13,8 +20,8 @@
                     <i class="fa fa-exclamation-triangle me-2"></i>
                     <strong>Please correct the following errors:</strong>
                     <ul class="mb-0 ps-3 mt-1">
-                        @foreach ($this->getErrorBag()->toArray() as $field => $errors)
-                            <li>{{ ucfirst($field) }}: {{ $errors[0] }}</li>
+                        @foreach ($this->getErrorBag()->toArray() as $field => $fieldErrors)
+                            <li>{{ ucfirst($field) }}: {{ $fieldErrors[0] }}</li>
                         @endforeach
                     </ul>
                 </div>
@@ -28,6 +35,34 @@
                     </h6>
                 </div>
                 <div class="card-body">
+                    <div class="text-center mb-3">
+                        @php
+                            $previewUrl = $photo
+                                ? $photo->temporaryUrl()
+                                : (! empty($users['image'])
+                                    ? asset('storage/' . $users['image'])
+                                    : secure_asset('assets/img/profile-photos/1.png'));
+                        @endphp
+                        <div class="user-photo-uploader position-relative d-inline-block" wire:loading.class="opacity-50" wire:target="photo">
+                            <img src="{{ $previewUrl }}" alt="User Photo" class="user-photo-preview rounded-circle border shadow-sm">
+                            <label for="user_photo_input" class="user-photo-edit position-absolute bottom-0 end-0 d-flex align-items-center justify-content-center rounded-circle shadow" title="Upload photo">
+                                <i class="fa fa-camera"></i>
+                            </label>
+                            <div wire:loading wire:target="photo" class="position-absolute top-50 start-50 translate-middle">
+                                <span class="spinner-border spinner-border-sm text-primary"></span>
+                            </div>
+                            @if ($photo || !empty($users['image']))
+                                <button type="button" wire:click="removePhoto" class="user-photo-remove position-absolute top-0 end-0 d-flex align-items-center justify-content-center rounded-circle shadow" title="Remove photo">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            @endif
+                        </div>
+                        <input type="file" id="user_photo_input" class="d-none" wire:model="photo" accept="image/png,image/jpeg,image/webp">
+                        <div class="small text-muted mt-1" style="font-size: 0.65rem;">JPG / PNG / WEBP · max 5MB</div>
+                        @error('photo')
+                            <div class="text-danger small mt-1"><i class="fa fa-exclamation-circle me-1"></i>{{ $message }}</div>
+                        @enderror
+                    </div>
                     <div class="row g-3">
                         <div class="col-md-12">
                             <div class="form-group">

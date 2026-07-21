@@ -28,6 +28,7 @@ class User extends Authenticatable implements AuditableContracts
         'code',
         'email',
         'mobile',
+        'image',
         'is_admin',
         'is_super_admin',
         'default_branch_id',
@@ -117,6 +118,18 @@ class User extends Authenticatable implements AuditableContracts
     public function designation()
     {
         return $this->belongsTo(Designation::class, 'designation_id');
+    }
+
+    /**
+     * Resolved avatar URL for web blades — the uploaded photo when set, else the
+     * default placeholder. (The mobile API deliberately returns a root-relative
+     * path instead; see AuthUserResource.)
+     */
+    public function getPhotoUrlAttribute(): string
+    {
+        return $this->image
+            ? asset('storage/'.$this->image)
+            : secure_asset('assets/img/profile-photos/1.png');
     }
 
     protected function casts(): array

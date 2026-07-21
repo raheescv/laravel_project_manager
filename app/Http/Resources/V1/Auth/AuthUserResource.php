@@ -31,6 +31,10 @@ class AuthUserResource extends JsonResource
             'code' => $this->code,
             'email' => $this->email,
             'mobile' => $this->mobile,
+            // Root-relative storage path (e.g. /storage/users/…). The mobile client
+            // prepends its own reachable base URL — url()/asset() would bake in the
+            // server host a LAN device can't resolve.
+            'photo' => $this->image ? '/storage/'.ltrim($this->image, '/') : null,
             'is_admin' => (bool) $this->is_admin,
             'permissions' => $this->getAllPermissions()->pluck('name')->values(),
             'designation' => $this->designation?->name,

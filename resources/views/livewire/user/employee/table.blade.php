@@ -176,9 +176,12 @@
                                     <span class="badge bg-light text-dark border">{{ $item->order_no ?? 0 }}</span>
                                 </td>
                                 <td class="text-capitalize">
-                                    <a href="{{ route('users::employee::view', $item->id) }}" class="text-decoration-none fw-semibold link-primary">
-                                        {{ $item->name }}
-                                    </a>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="{{ $item->photo_url }}" alt="" class="rounded-circle border flex-shrink-0" style="width: 34px; height: 34px; object-fit: cover;" loading="lazy">
+                                        <a href="{{ route('users::employee::view', $item->id) }}" class="text-decoration-none fw-semibold link-primary">
+                                            {{ $item->name }}
+                                        </a>
+                                    </div>
                                 </td>
                                 <td class="text-capitalize">
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $item?->designation }}</span>

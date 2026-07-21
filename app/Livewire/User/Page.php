@@ -5,12 +5,17 @@ namespace App\Livewire\User;
 use App\Actions\User\CreateAction;
 use App\Actions\User\UpdateAction;
 use App\Models\User;
+use App\Traits\OptimizesUploadedImage;
 use Faker\Factory;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Spatie\Permission\Models\Role;
 
 class Page extends Component
 {
+    use OptimizesUploadedImage;
+    use WithFileUploads;
+
     protected $listeners = [
         'User-Page-Create-Component' => 'create',
         'User-Page-Update-Component' => 'edit',
@@ -21,6 +26,12 @@ class Page extends Component
     public $table_id;
 
     public $selectedRoles = [];
+
+    // Newly-picked upload (Livewire temporary file) and the path of the avatar
+    // already on record, kept so it can be deleted once a replacement is saved.
+    public $photo;
+
+    public $originalImage;
 
     public function create()
     {
@@ -37,6 +48,7 @@ class Page extends Component
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
+        $this->photo = null;
         if (! $this->table_id) {
             $faker = Factory::create();
             $name = '';
@@ -55,10 +67,12 @@ class Page extends Component
                 'mobile' => $mobile,
                 'password' => $password,
             ];
+            $this->originalImage = null;
         } else {
             $user = User::find($this->table_id);
             $this->users = $user->toArray();
             $this->selectedRoles = $user->roles->pluck('name')->toArray();
+            $this->originalImage = $this->users['image'] ?? null;
         }
     }
 
@@ -68,12 +82,19 @@ class Page extends Component
             'users.name' => ['required'],
             'users.email' => ['required', 'unique:users,email,'.$this->table_id],
             'users.mobile' => ['required'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ];
         if (! $this->table_id) {
             $rules['users.password'] = ['required'];
         }
 
         return $rules;
+    }
+
+    public function removePhoto()
+    {
+        $this->photo = null;
+        $this->users['image'] = null;
     }
 
     protected $messages = [
@@ -90,6 +111,10 @@ class Page extends Component
         abort_unless(auth()->user()?->can($this->table_id ? 'user.edit' : 'user.create'), 403);
         $this->validate();
         try {
+            // A freshly-picked upload replaces the stored avatar path.
+            if ($this->photo) {
+                $this->users['image'] = $this->storeOptimizedImage($this->photo, 'users');
+            }
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->users);
                 if ($response['success'] && ! empty($this->selectedRoles)) {
@@ -105,6 +130,11 @@ class Page extends Component
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
+            }
+            // Drop the previous file only once the new record is safely saved.
+            $newImage = $response['data']['image'] ?? null;
+            if ($this->originalImage && $this->originalImage !== $newImage) {
+                Storage::disk('public')->delete($this->originalImage);
             }
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->table_id);

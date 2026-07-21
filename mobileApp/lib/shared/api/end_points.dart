@@ -10,6 +10,10 @@ class EndPoints {
   static const String changePin = '/change-pin';
   static const String changePassword = '/change-password';
 
+  // ---- Profile ----
+  static const String profile = '/profile';
+  static const String profilePhoto = '/profile/photo';
+
   // ---- Catalog ----
   static const String products = '/products';
   static const String categories = '/categories';

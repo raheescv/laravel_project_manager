@@ -18,6 +18,9 @@ class ProfileScreen extends StatelessWidget {
     final user = context.watch<AuthCubit>().user;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
+    final cfg = context.read<AuthCubit>().config;
+    final photoUrl = user.hasPhoto ? cfg.assetUrl(user.photoUrl) : null;
+
     final branchCtrl = context.watch<BranchCubit>();
     final match = branchCtrl.branches.where((b) => b.id.toString() == user.branchId);
     final branchName = match.isNotEmpty
@@ -50,7 +53,13 @@ class ProfileScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 14),
-                      Monogram(letter: user.initial, size: 78, fontSize: 32),
+                      ProfileAvatar(
+                        letter: user.initial,
+                        imageUrl: photoUrl,
+                        headers: cfg.assetHeaders,
+                        size: 78,
+                        fontSize: 32,
+                      ),
                       const SizedBox(height: 11),
                       Text(user.name, style: serif(size: 23, color: Colors.white)),
                       const SizedBox(height: 5),

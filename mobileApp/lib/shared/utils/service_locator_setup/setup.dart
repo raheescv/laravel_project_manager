@@ -3,6 +3,8 @@ import 'package:invo/features/admin/domain/services/admin_service.dart';
 import 'package:invo/features/auth/domain/repository/auth_repository.dart';
 import 'package:invo/features/auth/domain/services/auth_service.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/profile/domain/repository/profile_repository.dart';
+import 'package:invo/features/profile/domain/services/profile_service.dart';
 import 'package:invo/features/sale/domain/repository/sale_repository.dart';
 import 'package:invo/features/sale/domain/services/sale_service.dart';
 import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
@@ -37,6 +39,7 @@ Future<void> setUpServiceLocator() async {
     // ---- Repositories (abstract → concrete) ----
     ..registerLazySingleton<LookupRepository>(LookupService.new)
     ..registerLazySingleton<AuthRepository>(AuthService.new)
+    ..registerLazySingleton<ProfileRepository>(ProfileService.new)
     ..registerLazySingleton<SaleRepository>(SaleService.new)
     ..registerLazySingleton<SaleReturnRepository>(SaleReturnService.new)
     ..registerLazySingleton<StockCheckRepository>(StockCheckService.new)

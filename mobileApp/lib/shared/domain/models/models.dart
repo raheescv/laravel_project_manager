@@ -13,6 +13,7 @@ class ApiUser {
     required this.branchId,
     required this.daySessionStatus,
     required this.daySessionDate,
+    this.photoUrl = '',
     this.daySessionOpenedAt = '',
     this.lastClosedSessionAt = '',
     this.permissions = const [],
@@ -26,6 +27,9 @@ class ApiUser {
   final bool isAdmin;
   final String designation;
   final String? branchId;
+  // Root-relative storage path to the avatar (e.g. /storage/users/…), '' when
+  // none. Resolve to an absolute URL with AppConfig.assetUrl before display.
+  final String photoUrl;
   final String daySessionStatus; // open | closed
   final String daySessionDate;
   final String daySessionOpenedAt; // 'Y-m-d H:i:s' while a day is open, else ''
@@ -33,6 +37,9 @@ class ApiUser {
   final List<String> permissions; // Spatie permission slugs granted to this user
 
   bool get dayOpen => daySessionStatus == 'open';
+
+  /// Whether the user has an uploaded avatar (vs. the letter monogram fallback).
+  bool get hasPhoto => photoUrl.isNotEmpty;
 
   /// Admins implicitly hold every permission; staff need the slug explicitly.
   bool hasPermission(String permission) => isAdmin || permissions.contains(permission);
@@ -46,6 +53,7 @@ class ApiUser {
         isAdmin: j['is_admin'] == true,
         designation: asStr(j['designation']),
         branchId: j['branch_id']?.toString(),
+        photoUrl: asStr(j['photo']),
         daySessionStatus: asStr(j['sale_day_session_status']),
         daySessionDate: asStr(j['sale_day_session_date']),
         daySessionOpenedAt: asStr(j['sale_day_session_opened_at']),
@@ -64,6 +72,7 @@ class ApiUser {
         'is_admin': isAdmin,
         'designation': designation,
         'branch_id': branchId,
+        'photo': photoUrl,
         'sale_day_session_status': daySessionStatus,
         'sale_day_session_date': daySessionDate,
         'sale_day_session_opened_at': daySessionOpenedAt,
@@ -71,9 +80,14 @@ class ApiUser {
         'permissions': permissions,
       };
 
-  /// Returns a copy with the day-session fields replaced — used after a
-  /// successful open/close so the profile row and dashboard pill update live.
+  /// Returns a copy with selected fields replaced. Covers the day-session fields
+  /// (after an open/close) and the editable profile fields + avatar (after a
+  /// profile update) so the profile row and dashboard pill update live.
   ApiUser copyWith({
+    String? name,
+    String? email,
+    String? mobile,
+    String? photoUrl,
     String? daySessionStatus,
     String? daySessionDate,
     String? daySessionOpenedAt,
@@ -81,13 +95,14 @@ class ApiUser {
   }) =>
       ApiUser(
         id: id,
-        name: name,
+        name: name ?? this.name,
         code: code,
-        email: email,
-        mobile: mobile,
+        email: email ?? this.email,
+        mobile: mobile ?? this.mobile,
         isAdmin: isAdmin,
         designation: designation,
         branchId: branchId,
+        photoUrl: photoUrl ?? this.photoUrl,
         daySessionStatus: daySessionStatus ?? this.daySessionStatus,
         daySessionDate: daySessionDate ?? this.daySessionDate,
         daySessionOpenedAt: daySessionOpenedAt ?? this.daySessionOpenedAt,
