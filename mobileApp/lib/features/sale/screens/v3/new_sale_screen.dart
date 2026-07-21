@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/icons.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
@@ -77,8 +78,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   /// Close / cancel the ticket: confirm if there are items, then leave the
-  /// screen — pop back if New Sale was pushed, otherwise fall back to the Home
-  /// shell (dashboard) so the screen is never a dead-end.
+  /// screen — pop back to whatever pushed New Sale (dashboard, sales list, …)
+  /// when there's a back stack, otherwise land on a sensible home so the
+  /// buttons are never a dead-end.
   Future<void> _close() async {
     HapticFeedback.selectionClick();
     final cart = context.read<CartCubit>();
@@ -98,10 +100,18 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       cart.clear();
     }
     if (!mounted) return;
+    // If New Sale was pushed (from the dashboard, sales list, home FAB, …) pop
+    // straight back to it. With no back stack — the signed-in landing screen,
+    // or after a completed sale reset the stack via `go('/sale')` — fall back
+    // to a home that won't bounce us. `/home` redirects non-admins back to
+    // `/sale` (app_router redirect), so only send admins there; a cashier's
+    // home IS the sale screen, so reset it in place.
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/home');
+      final canViewAdmin =
+          context.read<AuthCubit>().hasPermission(PermissionSlug.salesOverview);
+      context.go(canViewAdmin ? '/home' : '/sale');
     }
   }
 
