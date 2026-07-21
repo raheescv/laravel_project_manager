@@ -13,6 +13,7 @@ import 'features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'shared/domain/constants/global_variables.dart';
 import 'shared/logic/branch_cubit/branch_cubit.dart';
 import 'shared/logic/currency_cubit/currency_cubit.dart';
+import 'shared/logic/haptics_cubit/haptics_cubit.dart';
 import 'shared/logic/theme_cubit/theme_cubit.dart';
 import 'shared/utils/components/haptics.dart';
 import 'shared/utils/components/theme/theme_manager.dart';
@@ -41,6 +42,7 @@ class _InvoAppState extends State<InvoApp> {
           // App-wide singletons (resolved from get_it).
           BlocProvider.value(value: serviceLocator<AuthCubit>()),
           BlocProvider.value(value: serviceLocator<ThemeCubit>()),
+          BlocProvider.value(value: serviceLocator<HapticsCubit>()),
           BlocProvider.value(value: serviceLocator<CurrencyCubit>()),
           BlocProvider.value(value: serviceLocator<BranchCubit>()),
           BlocProvider.value(value: serviceLocator<PrintSettingsCubit>()),

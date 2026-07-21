@@ -16,6 +16,7 @@ import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:invo/shared/domain/services/lookup_service.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/logic/currency_cubit/currency_cubit.dart';
+import 'package:invo/shared/logic/haptics_cubit/haptics_cubit.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/http_service.dart';
@@ -43,6 +44,7 @@ Future<void> setUpServiceLocator() async {
     // ---- App-wide cubits (survive the whole session) ----
     ..registerLazySingleton<AuthCubit>(AuthCubit.new)
     ..registerLazySingleton<ThemeCubit>(ThemeCubit.new)
+    ..registerLazySingleton<HapticsCubit>(HapticsCubit.new)
     ..registerLazySingleton<CurrencyCubit>(CurrencyCubit.new)
     ..registerLazySingleton<BranchCubit>(() => BranchCubit(
           userBranchId:

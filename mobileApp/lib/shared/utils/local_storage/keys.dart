@@ -18,6 +18,7 @@ class LocalStorageKeys {
   static const String baseCurrency = 'astra.baseCurrency';
   static const String defaultQuantity = 'astra.defaultQuantity';
   static const String tipEnabled = 'astra.tipEnabled';
+  static const String haptics = 'astra.haptics';
   static const String branch = 'astra.branch';
   static const String user = 'astra.user';
 

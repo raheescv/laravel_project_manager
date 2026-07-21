@@ -7,8 +7,17 @@ import 'package:flutter/services.dart';
 class Haptics {
   Haptics._();
 
+  /// App-wide on/off switch, mirrored from `HapticsCubit` (Settings → Haptics).
+  /// Kept as a plain static so the hot pointer-up path stays a cheap bool check
+  /// instead of a service-locator lookup on every tap.
+  static bool enabled = true;
+
   /// Light tap tick — the default feedback for buttons, chips, list rows.
-  static void tap() => HapticFeedback.selectionClick();
+  /// No-op when the user has turned haptics off in settings.
+  static void tap() {
+    if (!enabled) return;
+    HapticFeedback.selectionClick();
+  }
 }
 
 /// Wraps the whole app so a light haptic fires on **every genuine tap, anywhere**

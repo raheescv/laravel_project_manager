@@ -75,6 +75,11 @@ class LocalStorageService {
   Future<void> setTipEnabled(bool v) =>
       _prefs.setBool(LocalStorageKeys.tipEnabled, v);
 
+  // Whether the app-wide haptic tap feedback is enabled (Settings → Haptics).
+  bool? get hapticsEnabled => _prefs.getBool(LocalStorageKeys.haptics);
+  Future<void> setHapticsEnabled(bool v) =>
+      _prefs.setBool(LocalStorageKeys.haptics, v);
+
   int? get branchId => _prefs.getInt(LocalStorageKeys.branch);
   Future<void> setBranchId(int v) =>
       _prefs.setInt(LocalStorageKeys.branch, v);

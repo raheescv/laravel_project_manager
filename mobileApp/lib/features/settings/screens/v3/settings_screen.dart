@@ -7,6 +7,7 @@ import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/logic/currency_cubit/currency_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
+import 'package:invo/shared/logic/haptics_cubit/haptics_cubit.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
@@ -41,6 +42,8 @@ class SettingsScreen extends StatelessWidget {
                   _presetCard(context, theme),
                   const SizedBox(height: 11),
                   _appearanceCard(context, theme),
+                  const SizedBox(height: 11),
+                  _hapticsCard(context),
                   const SizedBox(height: 11),
                   _currencyCard(context, currencyCtl),
                   const SizedBox(height: 11),
@@ -172,6 +175,59 @@ class SettingsScreen extends StatelessWidget {
           ),
           Icon(Icons.chevron_right, color: p.textMuted, size: 18),
         ],
+      ),
+    );
+  }
+
+  Widget _hapticsCard(BuildContext context) {
+    final p = context.astra;
+    final haptics = context.watch<HapticsCubit>();
+    final on = haptics.enabled;
+    return AstraCard(
+      radius: 14,
+      onTap: () => context.read<HapticsCubit>().toggle(),
+      child: Row(
+        children: [
+          IconChip(
+            icon: on ? Icons.vibration : Icons.smartphone_outlined,
+            size: 34,
+            radius: 9,
+            bg: p.tint,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Haptics', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text(on ? 'Vibration feedback on tap' : 'Vibration feedback off',
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          _switch(context, on),
+        ],
+      ),
+    );
+  }
+
+  Widget _switch(BuildContext context, bool value) {
+    final p = context.astra;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      width: 44,
+      height: 26,
+      padding: const EdgeInsets.all(3),
+      alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+      decoration: BoxDecoration(
+        gradient: value ? p.primaryGradient : null,
+        color: value ? null : p.hairline,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
       ),
     );
   }
