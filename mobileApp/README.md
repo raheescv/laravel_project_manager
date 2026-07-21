@@ -79,6 +79,31 @@ flutter build ipa --release --dart-define-from-file=env.json --export-method app
 flutter build web --dart-define-from-file=env.json
 ```
 
+### Production build (SIZERUN)
+
+The production connection is committed in `.env` and turned into `env.json` by
+`gen_env.sh` (no manual editing of `env.json` needed):
+
+```
+ENV=prod
+API_BASE_URL_PROD=https://sizerun.astraqatar.com
+API_TENANT_PROD=sizerun
+```
+
+Generate the env file, then build the target you need:
+
+```bash
+cd mobileApp
+bash gen_env.sh                                             # writes env.json from .env (ENV=prod)
+flutter build apk --release --dart-define-from-file=env.json      # Android APK
+flutter build appbundle --release --dart-define-from-file=env.json # Play Store bundle
+flutter build ipa --release --dart-define-from-file=env.json --export-method app-store  # iOS
+```
+
+`gen_env.sh` reads `ENV` in `.env` (`lan` | `prod`) and writes the matching
+`API_BASE_URL` / `API_TENANT` into `env.json`. To build against the LAN backend
+instead, set `ENV=lan` in `.env` and re-run `gen_env.sh`.
+
 Output locations:
 | Target | Path |
 |---|---|

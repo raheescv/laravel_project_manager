@@ -123,7 +123,9 @@ trait BuildsCustomerReminderQuery
         }
 
         $sortField = $filters['sort_field'] ?? 'derived_sales.last_purchase_date';
-        $sortDirection = $filters['sort_direction'] ?? 'desc';
+        // Whitelist the direction: it is interpolated into orderByRaw() below, so it must
+        // never be taken from user input verbatim. Anything but "asc" collapses to "desc".
+        $sortDirection = strtolower($filters['sort_direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
 
         $dbSortableFields = ['name', 'email', 'mobile', 'nationality', 'created_at'];
         if (in_array($sortField, $dbSortableFields)) {
