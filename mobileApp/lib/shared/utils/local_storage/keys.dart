@@ -40,4 +40,6 @@ class LocalStorageKeys {
   static const String printLogo = 'astra.print.logo';
   static const String printLogoVersion = 'astra.print.logoVersion';
   static const String printLogoData = 'astra.print.logoData';
+  static const String printShowCompany = 'astra.print.showCompany';
+  static const String printCompanyName = 'astra.print.companyName';
 }

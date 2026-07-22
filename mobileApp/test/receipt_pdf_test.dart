@@ -21,6 +21,7 @@ PrintSettings _settings({
   PrintStyle style = PrintStyle.englishOnly,
   PaperWidth width = PaperWidth.mm80,
   Uint8List? logo,
+  String companyName = '',
 }) =>
     PrintSettings(
       style: style,
@@ -31,6 +32,7 @@ PrintSettings _settings({
       footerEnglish: 'Thank you!',
       footerArabic: 'شكرا لك',
       logo: logo,
+      companyName: companyName,
     );
 
 // A 1x1 red pixel PNG — the smallest valid raster logo.
@@ -84,5 +86,10 @@ void main() {
       final bytes = await buildReceiptPdf(_demoSale(), _settings(logo: logo));
       expect(bytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]);
     }
+  });
+
+  test('buildReceiptPdf renders the company name header', () async {
+    final bytes = await buildReceiptPdf(_demoSale(), _settings(companyName: 'Astra Beauty Lounge'));
+    expect(bytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]);
   });
 }

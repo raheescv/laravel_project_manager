@@ -173,6 +173,20 @@ class LocalStorageService {
   Future<void> setPrintLogoData(String v) =>
       _prefs.setString(LocalStorageKeys.printLogoData, v);
 
+  // Company name on the receipt header (web `enable_company_name_in_print` +
+  // `company_name` from Company Profile).
+  bool? get printShowCompany =>
+      _prefs.containsKey(LocalStorageKeys.printShowCompany)
+          ? _prefs.getBool(LocalStorageKeys.printShowCompany)
+          : null;
+  Future<void> setPrintShowCompany(bool v) =>
+      _prefs.setBool(LocalStorageKeys.printShowCompany, v);
+
+  String? get printCompanyName =>
+      _prefs.getString(LocalStorageKeys.printCompanyName);
+  Future<void> setPrintCompanyName(String v) =>
+      _prefs.setString(LocalStorageKeys.printCompanyName, v);
+
   // ---- cached user json ----
   String? get userJson => _prefs.getString(LocalStorageKeys.user);
   Future<void> setUserJson(String v) =>

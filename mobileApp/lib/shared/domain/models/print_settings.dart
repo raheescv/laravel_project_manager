@@ -65,6 +65,7 @@ class PrintSettings {
     required this.footerArabic,
     this.quantityLabel = QuantityLabel.quantity,
     this.logo,
+    this.companyName = '',
   });
 
   final PrintStyle style;
@@ -79,6 +80,10 @@ class PrintSettings {
   /// Company logo bytes (png/jpg/svg) for the receipt header, or null to skip
   /// — already gated on the web `enable_logo_in_print` flag by the cubit.
   final Uint8List? logo;
+
+  /// Company name printed above the branch line, or '' to skip — already
+  /// gated on the web `enable_company_name_in_print` flag by the cubit.
+  final String companyName;
 }
 
 /// The thermal-print block of GET /settings/sale — the web Sale Configuration
@@ -94,6 +99,8 @@ class RemotePrintConfig {
     this.showBarcode,
     this.showLogo,
     this.logoVersion,
+    this.showCompanyName,
+    this.companyName,
     this.quantityLabelKey,
   });
 
@@ -106,6 +113,8 @@ class RemotePrintConfig {
         showBarcode: j['show_barcode'] is bool ? j['show_barcode'] as bool : null,
         showLogo: j['show_logo'] is bool ? j['show_logo'] as bool : null,
         logoVersion: j['logo_version']?.toString(),
+        showCompanyName: j['show_company_name'] is bool ? j['show_company_name'] as bool : null,
+        companyName: j['company_name']?.toString(),
         quantityLabelKey: j['quantity_label']?.toString(),
       );
 
@@ -120,5 +129,7 @@ class RemotePrintConfig {
   /// Opaque marker that changes when a new logo is uploaded on the web —
   /// tells the app to re-download GET /settings/logo.
   final String? logoVersion;
+  final bool? showCompanyName;
+  final String? companyName;
   final String? quantityLabelKey;
 }

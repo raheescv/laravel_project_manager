@@ -152,6 +152,12 @@ Route::prefix('v1')->group(function () {
             // re-fetched when print.logo_version changes)
             Route::get('settings/logo', [SaleSettingController::class, 'logo'])->name('api.v1.settings.logo');
 
+            // Edit the thermal-print options from the app — writes the shared
+            // Sale Configuration, gated like the web Settings page.
+            Route::put('settings/sale/print', [SaleSettingController::class, 'updatePrint'])
+                ->middleware(EnsureMobilePermission::class.':configuration.settings')
+                ->name('api.v1.settings.sale.print');
+
             // Stock Check (physical inventory count) — permission-driven, matching
             // the web `inventory.stock check` gate. A count snapshots branch stock
             // on create, is counted against (scan +1 or typed qty), and marking

@@ -118,6 +118,13 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
               padding: const pw.EdgeInsets.only(bottom: 3),
               child: pw.Center(child: logo),
             ),
+          // Company name above the branch, like the web `enable_company_name_in_print`.
+          if (settings.companyName.trim().isNotEmpty)
+            pw.Center(
+              child: pw.Text(settings.companyName.trim(),
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(fontSize: s(14), fontWeight: pw.FontWeight.bold, letterSpacing: 0.4)),
+            ),
           pw.Center(
             child: pw.Text((sale.branch.isEmpty ? 'INVO' : sale.branch).toUpperCase(),
                 style: pw.TextStyle(fontSize: s(14), fontWeight: pw.FontWeight.bold, letterSpacing: 0.4)),

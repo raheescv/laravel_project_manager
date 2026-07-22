@@ -87,6 +87,9 @@ class FakeLookupRepository implements LookupRepository {
 
   @override
   Future<Uint8List> logo() async => Uint8List(0);
+
+  @override
+  Future<RemotePrintConfig?> savePrintSettings(Map<String, dynamic> body) async => null;
 }
 
 /// A [FakeLookupRepository] preset with the four demo catalog items the widget

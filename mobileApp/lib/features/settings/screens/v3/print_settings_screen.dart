@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 
 /// Thermal-printer configuration. The receipt options (language, footers,
-/// discount / total-quantity / barcode, Qty vs Weight label) follow the web
-/// Settings → Sale Configuration — the server is the source of truth, so they
-/// are shown read-only here and refresh on open. Only the paper width is a
-/// device-local choice (each till can hold a different roll).
+/// the show-on-receipt toggles, Qty vs Weight label) live in the shared web
+/// Settings → Sale Configuration: they sync down on open, and users holding
+/// `configuration.settings` (the web Settings page gate) can edit them here —
+/// click-and-go, written straight back to the web config. Everyone else sees
+/// them read-only. Only the paper width is a device-local choice.
 class PrintSettingsScreen extends StatefulWidget {
   const PrintSettingsScreen({super.key});
 
@@ -28,10 +31,22 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
     context.read<PrintSettingsCubit>().syncFromServer();
   }
 
+  /// Awaits a cubit save and toasts when it was rolled back (offline / server
+  /// rejected).
+  Future<void> _apply(Future<bool> save) async {
+    final ok = await save;
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(const SnackBar(content: Text('Couldn\'t save — check your connection.')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
     final c = context.watch<PrintSettingsCubit>();
+    final canEdit = context.read<AuthCubit>().hasPermission(PermissionSlug.settings);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -65,62 +80,111 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.cloud_done_outlined, size: 13, color: p.textMuted),
+                          Icon(canEdit ? Icons.cloud_sync_outlined : Icons.cloud_done_outlined,
+                              size: 13, color: p.textMuted),
                           const SizedBox(width: 5),
                           Expanded(
                             child: Text(
-                              'Managed in web Settings → Sale Configuration and synced automatically.',
+                              canEdit
+                                  ? 'Shared with the web Sale Configuration — changes here update the web invoice print too.'
+                                  : 'Managed in web Settings → Sale Configuration and synced automatically.',
                               style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    _valueRow(
-                      context,
-                      icon: Icons.translate,
-                      title: 'Print language',
-                      subtitle: c.style.isArabic
-                          ? 'English with Arabic labels & item names alongside'
-                          : 'English only',
-                      value: c.style.label,
-                    ),
-                    const SizedBox(height: 9),
-                    _valueRow(
-                      context,
-                      icon: Icons.straighten,
-                      title: 'Quantity label',
-                      subtitle: 'Column and total row wording',
-                      value: c.quantityLabel.column,
-                    ),
-                    const SizedBox(height: 9),
+                    if (canEdit) ...[
+                      _label(context, 'Print language'),
+                      const SizedBox(height: 8),
+                      _segment<PrintStyle>(
+                        context,
+                        options: PrintStyle.values,
+                        selected: c.style,
+                        labelOf: (s) => s.label,
+                        onSelect: (s) => _apply(context.read<PrintSettingsCubit>().setStyle(s)),
+                      ),
+                      const SizedBox(height: 14),
+                      _label(context, 'Quantity label'),
+                      const SizedBox(height: 8),
+                      _segment<QuantityLabel>(
+                        context,
+                        options: QuantityLabel.values,
+                        selected: c.quantityLabel,
+                        labelOf: (q) => q.column,
+                        onSelect: (q) => _apply(context.read<PrintSettingsCubit>().setQuantityLabel(q)),
+                      ),
+                      const SizedBox(height: 14),
+                    ] else ...[
+                      _valueRow(
+                        context,
+                        icon: Icons.translate,
+                        title: 'Print language',
+                        subtitle: c.style.isArabic
+                            ? 'English with Arabic labels & item names alongside'
+                            : 'English only',
+                        value: c.style.label,
+                      ),
+                      const SizedBox(height: 9),
+                      _valueRow(
+                        context,
+                        icon: Icons.straighten,
+                        title: 'Quantity label',
+                        subtitle: 'Column and total row wording',
+                        value: c.quantityLabel.column,
+                      ),
+                      const SizedBox(height: 9),
+                    ],
                     _flagRow(context,
                         icon: Icons.image_outlined,
                         title: 'Logo',
                         subtitle: 'Print the company logo',
-                        value: c.showLogo),
+                        value: c.showLogo,
+                        onChanged: canEdit
+                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowLogo(v))
+                            : null),
+                    const SizedBox(height: 9),
+                    _flagRow(context,
+                        icon: Icons.storefront_outlined,
+                        title: 'Company name',
+                        subtitle: c.showCompanyName && c.companyName.trim().isNotEmpty
+                            ? c.companyName.trim()
+                            : 'Print the company name',
+                        value: c.showCompanyName,
+                        onChanged: canEdit
+                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowCompanyName(v))
+                            : null),
                     const SizedBox(height: 9),
                     _flagRow(context,
                         icon: Icons.percent,
                         title: 'Discount',
                         subtitle: 'Print the discount line',
-                        value: c.showDiscount),
+                        value: c.showDiscount,
+                        onChanged: canEdit
+                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowDiscount(v))
+                            : null),
                     const SizedBox(height: 9),
                     _flagRow(context,
                         icon: Icons.numbers,
                         title: 'Total quantity',
                         subtitle: 'Print the total item count',
-                        value: c.showTotalQty),
+                        value: c.showTotalQty,
+                        onChanged: canEdit
+                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowTotalQty(v))
+                            : null),
                     const SizedBox(height: 9),
                     _flagRow(context,
                         icon: Icons.qr_code_2,
                         title: 'Barcode & QR',
                         subtitle: 'Print the barcode and QR code',
-                        value: c.showBarcode),
+                        value: c.showBarcode,
+                        onChanged: canEdit
+                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowBarcode(v))
+                            : null),
                     const SizedBox(height: 20),
                     SectionLabel('Footer'),
                     const SizedBox(height: 8),
-                    _footerCard(context, c),
+                    _footerCard(context, c, canEdit),
                   ],
                 ),
               ),
@@ -130,6 +194,8 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
       ),
     );
   }
+
+  Widget _label(BuildContext context, String text) => SectionLabel(text);
 
   /// A two/three-way pill selector. Tapping applies instantly.
   Widget _segment<T>(
@@ -189,16 +255,24 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
   }) =>
       _row(context, icon: icon, title: title, subtitle: subtitle, trailing: _pill(context, value, on: true));
 
-  /// Read-only row showing a server-managed on/off flag.
+  /// On/off flag row — a live switch when [onChanged] is given (editors),
+  /// otherwise a read-only status pill.
   Widget _flagRow(
     BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
     required bool value,
+    void Function(bool)? onChanged,
   }) =>
       _row(context,
-          icon: icon, title: title, subtitle: subtitle, trailing: _pill(context, value ? 'On' : 'Off', on: value));
+          icon: icon,
+          title: title,
+          subtitle: subtitle,
+          onTap: onChanged == null ? null : () => onChanged(!value),
+          trailing: onChanged == null
+              ? _pill(context, value ? 'On' : 'Off', on: value)
+              : _switch(context, value));
 
   Widget _row(
     BuildContext context, {
@@ -206,10 +280,12 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
     required String title,
     required String subtitle,
     required Widget trailing,
+    VoidCallback? onTap,
   }) {
     final p = context.astra;
     return AstraCard(
       radius: 14,
+      onTap: onTap,
       child: Row(
         children: [
           IconChip(icon: icon, size: 32, radius: 9, bg: p.tint),
@@ -242,34 +318,151 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
     );
   }
 
-  /// Read-only preview of the configured footer message(s).
-  Widget _footerCard(BuildContext context, PrintSettingsCubit c) {
+  Widget _switch(BuildContext context, bool value) {
+    final p = context.astra;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      width: 44,
+      height: 26,
+      padding: const EdgeInsets.all(3),
+      alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+      decoration: BoxDecoration(
+        gradient: value ? p.primaryGradient : null,
+        color: value ? null : p.hairline,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+      ),
+    );
+  }
+
+  /// The configured footer message(s) — tappable for editors, preview-only
+  /// otherwise.
+  Widget _footerCard(BuildContext context, PrintSettingsCubit c, bool canEdit) {
     final p = context.astra;
     final en = c.footerEnglish.trim();
     final ar = c.footerArabic.trim();
     return AstraCard(
       radius: 14,
-      child: Column(
+      onTap: canEdit ? () => _editFooters(context, c) : null,
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (en.isEmpty && (!c.style.isArabic || ar.isEmpty))
-            Text('No footer message configured.',
-                style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted))
-          else ...[
-            if (en.isNotEmpty)
-              Text(en, style: ui(size: 11, weight: FontWeight.w600, color: p.ink)),
-            if (c.style.isArabic && ar.isNotEmpty) ...[
-              if (en.isNotEmpty) const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(ar,
-                    textDirection: TextDirection.rtl,
-                    style: ui(size: 11, weight: FontWeight.w600, color: p.ink)),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (en.isEmpty && (!c.style.isArabic || ar.isEmpty))
+                  Text(canEdit ? 'No footer message — tap to add one.' : 'No footer message configured.',
+                      style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted))
+                else ...[
+                  if (en.isNotEmpty)
+                    Text(en, style: ui(size: 11, weight: FontWeight.w600, color: p.ink)),
+                  if (c.style.isArabic && ar.isNotEmpty) ...[
+                    if (en.isNotEmpty) const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(ar,
+                          textDirection: TextDirection.rtl,
+                          style: ui(size: 11, weight: FontWeight.w600, color: p.ink)),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+          if (canEdit) ...[
+            const SizedBox(width: 8),
+            Icon(Icons.edit_outlined, size: 15, color: p.textMuted),
           ],
         ],
       ),
+    );
+  }
+
+  /// Bottom sheet with the two footer messages; saves both in one go.
+  void _editFooters(BuildContext context, PrintSettingsCubit c) {
+    final p = context.astra;
+    final enCtrl = TextEditingController(text: c.footerEnglish);
+    final arCtrl = TextEditingController(text: c.footerArabic);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: p.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(sheetContext).viewInsets.bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Receipt footer', style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
+            const SizedBox(height: 2),
+            Text('Printed at the bottom of every receipt — web invoices too.',
+                style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+            const SizedBox(height: 14),
+            _footerField(sheetContext, controller: enCtrl, label: 'English'),
+            const SizedBox(height: 10),
+            _footerField(sheetContext, controller: arCtrl, label: 'Arabic', rtl: true),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _apply(c.setFooters(english: enCtrl.text.trim(), arabic: arCtrl.text.trim()));
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    gradient: p.primaryGradient,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Text('Save footer',
+                      style: ui(size: 13, weight: FontWeight.w800, color: Colors.white)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _footerField(
+    BuildContext context, {
+    required TextEditingController controller,
+    required String label,
+    bool rtl = false,
+  }) {
+    final p = context.astra;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: ui(size: 10.5, weight: FontWeight.w700, color: p.textMuted)),
+        const SizedBox(height: 5),
+        Container(
+          decoration: BoxDecoration(
+            color: p.tint,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: TextField(
+            controller: controller,
+            maxLines: 2,
+            minLines: 1,
+            textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
+            style: ui(size: 12, weight: FontWeight.w600, color: p.ink),
+            decoration: const InputDecoration(border: InputBorder.none),
+          ),
+        ),
+      ],
     );
   }
 }

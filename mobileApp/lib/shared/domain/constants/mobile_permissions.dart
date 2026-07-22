@@ -39,6 +39,9 @@ abstract final class PermissionSlug {
   static const saleReturnCreate = 'sales return.create';
   static const saleReturnEdit = 'sales return.edit';
   static const stockCheck = 'inventory.stock check';
+  // Same gate as the web Settings page — editing the shared Sale
+  // Configuration (printer & receipt options) from the app.
+  static const settings = 'configuration.settings';
 }
 
 /// The permissions surfaced on the "My Permissions" screen, grouped by module
@@ -124,5 +127,12 @@ const mobilePermissions = <MobilePermission>[
     description: 'Count physical stock & reconcile inventory',
     group: 'Inventory',
     icon: Icons.fact_check_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.settings,
+    label: 'Sale Configuration',
+    description: 'Change the printer & receipt settings',
+    group: 'Administration',
+    icon: Icons.print_outlined,
   ),
 ];

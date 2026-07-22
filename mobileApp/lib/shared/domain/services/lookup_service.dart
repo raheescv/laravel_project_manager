@@ -109,4 +109,11 @@ class LookupService implements LookupRepository {
 
   @override
   Future<Uint8List> logo() => _http.getBytes('/settings/logo');
+
+  @override
+  Future<RemotePrintConfig?> savePrintSettings(Map<String, dynamic> body) async {
+    final data = await _http.put('/settings/sale/print', body: body);
+    final map = Map<String, dynamic>.from(data as Map);
+    return map['print'] is Map ? RemotePrintConfig.fromJson(Map<String, dynamic>.from(map['print'] as Map)) : null;
+  }
 }

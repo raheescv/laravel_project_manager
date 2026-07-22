@@ -2,9 +2,10 @@ import 'dart:typed_data';
 
 import '../models/index.dart';
 
-/// Read-only reference data used across features (catalog, branches, customers,
-/// employees, payment methods, currencies). Lives in `shared/` because several
-/// features and the app-wide Branch/Currency cubits all depend on it.
+/// Reference data used across features (catalog, branches, customers,
+/// employees, payment methods, currencies) plus the shared settings sync.
+/// Lives in `shared/` because several features and the app-wide Branch/
+/// Currency cubits all depend on it. Read-only except [savePrintSettings].
 abstract class LookupRepository {
   Future<Paginated<Product>> products({
     String? search,
@@ -35,4 +36,9 @@ abstract class LookupRepository {
   /// Company logo bytes (png/jpg/svg) for the receipt header; cached by the
   /// print cubit keyed on `RemotePrintConfig.logoVersion`.
   Future<Uint8List> logo();
+
+  /// Saves print options back to the shared web Sale Configuration (partial
+  /// [body] of the same keys GET /settings/sale returns under `print`).
+  /// Returns the server's fresh print block. Needs `configuration.settings`.
+  Future<RemotePrintConfig?> savePrintSettings(Map<String, dynamic> body);
 }
