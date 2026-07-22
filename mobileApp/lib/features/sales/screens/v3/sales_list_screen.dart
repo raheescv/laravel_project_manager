@@ -696,7 +696,11 @@ class _SalesListScreenState extends State<SalesListScreen> {
     try {
       final sale = await serviceLocator<SaleRepository>().saleById(id);
       if (mounted) Navigator.pop(context);
-      if (mounted) context.push('/invoice', extra: sale);
+      if (!mounted) return;
+      // The invoice view returns `true` after deleting the sale — reload so the
+      // deleted row drops off the list.
+      final deleted = await context.push<bool>('/invoice', extra: sale);
+      if (deleted == true && mounted) _load();
     } catch (e) {
       if (mounted) Navigator.pop(context);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open invoice')));

@@ -102,6 +102,11 @@ Route::prefix('v1')->group(function () {
                 Route::get('/{sale}', [SaleController::class, 'show'])->whereNumber('sale')->name('api.v1.sale.show');
                 Route::get('/{sale}/receipt', [SaleController::class, 'receipt'])->whereNumber('sale')->name('api.v1.sale.receipt');
                 Route::match(['post', 'put', 'patch'], '/{sale}', [SaleController::class, 'update'])->whereNumber('sale')->name('api.v1.sale.update');
+                // Delete is the one permission-gated sale action (matching the web
+                // `sale.delete` guard); the create/view/edit endpoints stay open.
+                Route::delete('/{sale}', [SaleController::class, 'destroy'])->whereNumber('sale')
+                    ->middleware(EnsureMobilePermission::class.':sale.delete')
+                    ->name('api.v1.sale.destroy');
             });
 
             // Sale return routes — a return is always raised against a paid sale.

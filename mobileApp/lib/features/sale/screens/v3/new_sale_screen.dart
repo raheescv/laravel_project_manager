@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/icons.dart';
@@ -15,11 +16,16 @@ import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
 import 'package:invo/features/sale/logic/stylist_cubit/stylist_cubit.dart';
 import 'package:invo/shared/utils/camera_permission.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
+
+/// How the catalog renders on the New Sale screen — a full-image tile grid or a
+/// compact row list. Persisted per device (LocalStorageService.saleView).
+enum _ProductView { grid, list }
 
 class NewSaleScreen extends StatefulWidget {
   const NewSaleScreen({super.key});
@@ -30,6 +36,11 @@ class NewSaleScreen extends StatefulWidget {
 class _NewSaleScreenState extends State<NewSaleScreen> {
   final _searchCtl = TextEditingController();
   final _scrollCtl = ScrollController();
+
+  /// Grid (image tiles) vs list — restored from the last choice on this device.
+  _ProductView _view = serviceLocator<LocalStorageService>().saleView == 'list'
+      ? _ProductView.list
+      : _ProductView.grid;
 
   @override
   void initState() {
@@ -50,8 +61,18 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       cart.syncSaleSettings().then((_) {
         if (mounted) cat.applyDefaultType();
       });
-      if (user != null && cart.stylistName.isEmpty) {
-        cart.setStylist(int.tryParse(user.id), user.name);
+      // Preselect the staff: the last employee used on a ticket (remembered
+      // across sales) wins; otherwise default to the logged-in user. Skipped
+      // while editing, where the ticket already carries its own stylist.
+      if (cart.stylistName.isEmpty) {
+        final storage = serviceLocator<LocalStorageService>();
+        final savedId = storage.saleStylistId;
+        final savedName = storage.saleStylistName;
+        if (savedId != null && savedName != null && savedName.isNotEmpty) {
+          cart.setStylist(savedId, savedName);
+        } else if (user != null) {
+          cart.setStylist(int.tryParse(user.id), user.name);
+        }
       }
       // Prompt for the client up front so the ticket starts with who's in the
       // chair. Only on a fresh ticket (still the default Walk-in, no items).
@@ -120,49 +141,29 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     final cat = context.watch<CatalogCubit>();
     final cart = context.watch<CartCubit>();
     final tablet = context.isTablet;
+    final p = context.astra;
+    // Flat "Clean Boutique" surface — a calm near-white (the preset canvas
+    // lifted toward white in light, canvas as-is in dark) rather than the
+    // app-wide aurora, so the product photos read on a clean ground.
+    final surface = p.isDark ? p.canvas : Color.lerp(p.canvas, Colors.white, 0.5)!;
 
     return Scaffold(
-      body: AstraBackground(
-        child: Column(
-          children: [
-            EmeraldHeader(
-              leading: HeaderIconButton(icon: Icons.chevron_left, onTap: _close),
-              titleWidget: Row(
-                children: [
-                  Expanded(child: Text(cart.isEditing ? 'Edit Sale' : 'New Sale', style: serif(size: 23, color: Colors.white))),
-                  HeaderIconButton(icon: Icons.close, onTap: _close),
-                ],
-              ),
-              bottom: Row(
-                children: [
-                  Expanded(child: _selector(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient)),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: _selector(
-                      Icons.brush,
-                      'STAFF',
-                      cart.stylistName.isEmpty ? 'Me' : cart.stylistName,
-                      _pickStylist,
-                      avatarUrl: _staffAvatarUrl(cart),
-                      avatarHeaders: context.read<AuthCubit>().config.assetHeaders,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: tablet
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(child: _body(cat)),
-                        _tabletCartPanel(cart),
-                      ],
-                    )
-                  : _body(cat),
-            ),
-          ],
-        ),
+      backgroundColor: surface,
+      body: Column(
+        children: [
+          _header(cart),
+          Expanded(
+            child: tablet
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _body(cat)),
+                      _tabletCartPanel(cart),
+                    ],
+                  )
+                : _body(cat),
+          ),
+        ],
       ),
       // Phone keeps the floating cart bar; tablet has the persistent panel.
       bottomNavigationBar: (tablet || cart.isEmpty)
@@ -173,6 +174,152 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 child: _cartBar(cart),
               ),
             ),
+    );
+  }
+
+  // ─── Header (Atelier — light editorial, token-driven) ──────────────────────
+
+  /// A subtle recessed fill for the search field + segmented control. Neutral so
+  /// it reads the same on every preset (light or dark) rather than picking up a
+  /// brand tint.
+  Color get _soft {
+    final p = context.astra;
+    return p.isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.04);
+  }
+
+  /// Flat centered serif title framed by two borderless ghost buttons, then the
+  /// joined Client / Staff selector.
+  Widget _header(CartCubit cart) {
+    final p = context.astra;
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                _ghostBtn(Icons.chevron_left, _close),
+                Expanded(
+                  child: Text(
+                    cart.isEditing ? 'Edit Sale' : 'New Sale',
+                    textAlign: TextAlign.center,
+                    style: serif(size: 23, color: p.ink),
+                  ),
+                ),
+                _ghostBtn(Icons.close, _close),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _whoRow(cart),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Borderless header icon button (back / close).
+  Widget _ghostBtn(IconData icon, VoidCallback onTap) {
+    final p = context.astra;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: SizedBox(
+        width: 42,
+        height: 42,
+        child: Icon(icon, size: 23, color: p.textSecondary),
+      ),
+    );
+  }
+
+  /// Joined Client | Staff selector — one rounded card split by a hairline, each
+  /// half a tappable segment with a gold micro-label and circular avatar.
+  Widget _whoRow(CartCubit cart) {
+    final p = context.astra;
+    return Container(
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: p.hairline),
+        boxShadow: context.astraTheme.softShadow,
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _whoSeg(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient)),
+          Container(width: 1, height: 46, color: p.hairline),
+          Expanded(
+            child: _whoSeg(
+              Icons.brush,
+              'STAFF',
+              cart.stylistName.isEmpty ? 'Me' : cart.stylistName,
+              _pickStylist,
+              avatarUrl: _staffAvatarUrl(cart),
+              avatarHeaders: context.read<AuthCubit>().config.assetHeaders,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// One half of the joined selector — circular avatar (staff photo when set),
+  /// gold micro-label, value and a chevron.
+  Widget _whoSeg(IconData icon, String label, String value, VoidCallback onTap,
+      {String? avatarUrl, Map<String, String>? avatarHeaders}) {
+    final p = context.astra;
+    final fallback = Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: p.tint),
+      child: Icon(icon, size: 17, color: p.primary),
+    );
+    final leading = (avatarUrl != null && avatarUrl.startsWith('http'))
+        ? ClipOval(
+            child: Image.network(
+              avatarUrl,
+              headers: avatarHeaders,
+              width: 38,
+              height: 38,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+              errorBuilder: (_, __, ___) => fallback,
+            ),
+          )
+        : fallback;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        child: Row(
+          children: [
+            leading,
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: ui(size: 9.5, weight: FontWeight.w800, color: p.goldText, letterSpacing: 1.5)),
+                  const SizedBox(height: 1),
+                  Text(value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 14, weight: FontWeight.w700, color: p.ink)),
+                ],
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down, color: p.textMuted, size: 16),
+          ],
+        ),
+      ),
     );
   }
 
@@ -246,7 +393,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: cat.load),
       );
     }
-    final tablet = context.isTablet;
     return RefreshIndicator(
       onRefresh: cat.load,
       child: CustomScrollView(
@@ -255,16 +401,20 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Column(
                 children: [
                   _searchRow(cat),
-                  const SizedBox(height: 13),
-                  _typeChips(cat),
-                  const SizedBox(height: 11),
-                  _categoryChips(cat),
+                  const SizedBox(height: 16),
+                  _typeFilterRow(cat),
                 ],
               ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14, bottom: 4),
+              child: _categoryChips(cat),
             ),
           ),
           if (cat.isEmpty)
@@ -277,52 +427,159 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     message: 'Try another search or category.'),
               ),
             )
-          else if (tablet)
-            _gridSliver(cat)
+          else if (_view == _ProductView.grid)
+            _productGrid(cat)
           else
-            _listSliver(cat),
+            _productList(cat),
           SliverToBoxAdapter(child: _footer(cat)),
         ],
       ),
     );
   }
 
-  /// Phone: single-column paginated list.
-  Widget _listSliver(CatalogCubit cat) => SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, i) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _serviceRow(cat.products[i]),
-            ),
-            childCount: cat.products.length,
-          ),
-        ),
-      );
-
-  /// Tablet/desktop: multi-column paginated grid (lazily built). Column count
-  /// tracks the available width (≈340px per tile) so each card stays roomy.
-  Widget _gridSliver(CatalogCubit cat) => SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+  /// Two-up boutique tile grid (more columns on tablet/desktop — ≈200px each).
+  /// Lazily built so long catalogs stay smooth as pages stream in.
+  Widget _productGrid(CatalogCubit cat) => SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
         sliver: SliverLayoutBuilder(
           builder: (context, constraints) {
-            final cols = (constraints.crossAxisExtent / 340).floor().clamp(2, 5);
+            final cols = (constraints.crossAxisExtent / 200).floor().clamp(2, 5);
             return SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: cols,
-                mainAxisExtent: 74,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+                crossAxisSpacing: 13,
+                mainAxisSpacing: 13,
+                childAspectRatio: 0.72,
               ),
               delegate: SliverChildBuilderDelegate(
-                (context, i) => _serviceRow(cat.products[i]),
+                (context, i) => _serviceTile(cat.products[i]),
                 childCount: cat.products.length,
               ),
             );
           },
         ),
       );
+
+  /// Single-column list mode — a premium row with a full-height image on the
+  /// left, name + meta, and a serif price with the add button.
+  Widget _productList(CatalogCubit cat) => SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, i) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _serviceListRow(cat.products[i]),
+            ),
+            childCount: cat.products.length,
+          ),
+        ),
+      );
+
+  /// Compact grid / list switcher — a small segmented control pinned to the
+  /// right of the category row. The choice is remembered per device.
+  Widget _viewToggle() {
+    final p = context.astra;
+    Widget btn(IconData icon, _ProductView mode) {
+      final active = _view == mode;
+      return GestureDetector(
+        onTap: () => _setView(mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: 34,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: active ? p.primaryGradient : null,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(icon, size: 17, color: active ? Colors.white : p.textMuted),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: p.hairline),
+        boxShadow: context.astraTheme.softShadow,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          btn(Icons.grid_view_rounded, _ProductView.grid),
+          const SizedBox(width: 2),
+          btn(Icons.view_agenda_outlined, _ProductView.list),
+        ],
+      ),
+    );
+  }
+
+  void _setView(_ProductView mode) {
+    if (_view == mode) return;
+    HapticFeedback.selectionClick();
+    setState(() => _view = mode);
+    serviceLocator<LocalStorageService>()
+        .setSaleView(mode == _ProductView.list ? 'list' : 'grid');
+  }
+
+  Widget _serviceListRow(Product s) {
+    final p = context.astra;
+    final cart = context.read<CartCubit>();
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        cart.add(s);
+      },
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: p.hairline),
+          boxShadow: context.astraTheme.softShadow,
+        ),
+        child: Row(
+          children: [
+            SizedBox(width: 84, height: 84, child: _tileImage(s)),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(s.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 13.5, weight: FontWeight.w800, color: p.ink, height: 1.2)),
+                  const SizedBox(height: 4),
+                  Text(_metaLine(s),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            _priceText(s.mrp),
+            const SizedBox(width: 12),
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: p.primaryGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: context.astraTheme.floatShadow(p.primary),
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 12),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Bottom of the list: a spinner while the next page loads, otherwise just
   /// breathing room so the floating cart bar never covers the last row.
@@ -338,80 +595,111 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return const SizedBox(height: 120);
   }
 
+  /// Recessed soft search field with the barcode scanner tucked inside it.
   Widget _searchRow(CatalogCubit cat) {
     final p = context.astra;
-    final t = context.astraTheme;
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: p.card,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: t.softShadow,
-            ),
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.only(left: 16, right: 8),
+      decoration: BoxDecoration(
+        color: _soft,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.search, color: p.textSecondary, size: 21),
+          const SizedBox(width: 10),
+          Expanded(
             child: TextField(
               controller: _searchCtl,
               onChanged: cat.setSearch,
-              style: ui(size: 13, weight: FontWeight.w600, color: p.ink),
+              style: ui(size: 13.5, weight: FontWeight.w600, color: p.ink),
               decoration: InputDecoration(
                 isDense: true,
                 hintText: 'Search name or code',
-                hintStyle: ui(size: 12.5, weight: FontWeight.w500, color: p.textMuted),
-                prefixIcon: Icon(Icons.search, color: p.textMuted, size: 20),
+                hintStyle: ui(size: 13, weight: FontWeight.w500, color: p.textMuted),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                contentPadding: EdgeInsets.zero,
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 9),
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            _scanBarcode(cat);
-          },
-          child: Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              gradient: p.primaryGradient,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: t.floatShadow(p.primary),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              _scanBarcode(cat);
+            },
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: p.card,
+                borderRadius: BorderRadius.circular(11),
+                boxShadow: context.astraTheme.softShadow,
+              ),
+              child: Icon(Icons.qr_code_scanner, color: p.primary, size: 19),
             ),
-            child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  /// Product / Service filter (segmented control) + the grid/list switcher, on
+  /// one neat row. Default type comes from Settings → Sale Configuration.
+  Widget _typeFilterRow(CatalogCubit cat) {
+    return Row(
+      children: [
+        Expanded(child: _typeSegmented(cat)),
+        const SizedBox(width: 10),
+        _viewToggle(),
       ],
     );
   }
 
-  /// Product / Service filter — mirrors the web POS type selector. Tapping a
-  /// chip re-scopes both this row's categories and the product list. Default
-  /// selection comes from Settings → Sale Configuration → Default Product Type.
-  Widget _typeChips(CatalogCubit cat) {
-    const options = <(String?, String, IconData)>[
-      (null, 'All Types', Icons.grid_view),
-      ('product', 'Products', Icons.inventory_2_outlined),
-      ('service', 'Services', Icons.design_services_outlined),
+  Widget _typeSegmented(CatalogCubit cat) {
+    final p = context.astra;
+    const options = <(String?, String)>[
+      (null, 'All Types'),
+      ('product', 'Products'),
+      ('service', 'Services'),
     ];
-    return SizedBox(
-      height: 38,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _soft,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
         children: [
-          for (final (value, label, icon) in options) ...[
-            AstraChip(
-              label: label,
-              icon: icon,
-              active: cat.selectedType == value,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                cat.selectType(value);
-              },
+          for (final (value, label) in options)
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  cat.selectType(value);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: cat.selectedType == value ? p.card : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: cat.selectedType == value ? context.astraTheme.softShadow : null,
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(
+                        size: 12.5,
+                        weight: FontWeight.w700,
+                        color: cat.selectedType == value ? p.primary : p.textSecondary),
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: 8),
-          ],
         ],
       ),
     );
@@ -419,78 +707,162 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   Widget _categoryChips(CatalogCubit cat) {
     return SizedBox(
-      height: 38,
+      height: 36,
       child: ListView(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          AstraChip(
-            label: 'All',
-            icon: Icons.grid_view,
-            active: cat.selectedCategoryId == null,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              cat.selectCategory(null);
-            },
-          ),
+          _catChip('All', cat.selectedCategoryId == null, () => cat.selectCategory(null)),
           for (final c in cat.categories) ...[
             const SizedBox(width: 8),
-            AstraChip(
-              label: c.name,
-              active: cat.selectedCategoryId == c.id,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                cat.selectCategory(c.id);
-              },
-            ),
+            _catChip(c.name, cat.selectedCategoryId == c.id, () => cat.selectCategory(c.id)),
           ],
         ],
       ),
     );
   }
 
-  Widget _serviceRow(Product s) {
+  /// Pill category chip — filled ink when active, hairline outline otherwise.
+  Widget _catChip(String label, bool active, VoidCallback onTap) {
+    final p = context.astra;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: active ? p.ink : p.card,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: active ? p.ink : p.hairline),
+        ),
+        child: Text(label,
+            style: ui(
+                size: 12.5,
+                weight: FontWeight.w700,
+                color: active ? p.canvas : p.textSecondary)),
+      ),
+    );
+  }
+
+  /// Boutique product tile: a full-bleed image (or a tinted category panel when
+  /// there's no photo) crowning the card, then name, meta and a serif price with
+  /// a corner add-button.
+  Widget _serviceTile(Product s) {
     final p = context.astra;
     final cart = context.read<CartCubit>();
-    return AstraCard(
-      radius: 15,
-      padding: const EdgeInsets.all(11),
+    return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         cart.add(s);
       },
-      child: Row(
-        children: [
-          ProductThumb(url: s.thumbnail, fallbackIcon: iconForName('${s.categoryName} ${s.name}')),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(s.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                const SizedBox(height: 2),
-                Text(
-                  [s.code, if (s.duration.isNotEmpty && s.duration != '0') '${s.duration} min']
-                      .where((e) => e.isNotEmpty)
-                      .join(' · '),
-                  style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
-                ),
-              ],
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: p.hairline),
+          boxShadow: context.astraTheme.softShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: _tileImage(s)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 10, 11),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(s.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink, height: 1.2)),
+                  const SizedBox(height: 3),
+                  Text(_metaLine(s),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                  const SizedBox(height: 9),
+                  Row(
+                    children: [
+                      Flexible(child: _priceText(s.mrp)),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          gradient: p.primaryGradient,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: context.astraTheme.floatShadow(p.primary),
+                        ),
+                        child: const Icon(Icons.add, color: Colors.white, size: 18),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(Money.of(s.mrp), style: serif(size: 15, color: p.ink)),
-          const SizedBox(width: 10),
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(gradient: p.primaryGradient, borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.add, color: Colors.white, size: 16),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  /// The tile's crowning image — cover-fills the whole slot when the product has
+  /// a photo, otherwise a tinted panel with a large category icon so the frame
+  /// is never empty. Storage paths are resolved onto the reachable base URL with
+  /// the same host header the API uses (mirrors [ProductThumb]).
+  Widget _tileImage(Product s) {
+    if (s.thumbnail.isEmpty) return _tileFallback(s);
+    final cfg = context.read<AuthCubit>().config;
+    return Image.network(
+      cfg.assetUrl(s.thumbnail),
+      headers: cfg.assetHeaders,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      gaplessPlayback: true,
+      errorBuilder: (_, __, ___) => _tileFallback(s),
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : _tileFallback(s, loading: true),
+    );
+  }
+
+  Widget _tileFallback(Product s, {bool loading = false}) {
+    final p = context.astra;
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [p.tint, p.tint.withValues(alpha: p.isDark ? 0.35 : 0.55)],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: loading
+          ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: p.primary))
+          : Icon(iconForName('${s.categoryName} ${s.name}'), size: 40, color: p.primary.withValues(alpha: 0.85)),
+    );
+  }
+
+  String _metaLine(Product s) => [
+        s.code,
+        if (s.duration.isNotEmpty && s.duration != '0') '${s.duration} min',
+      ].where((e) => e.isNotEmpty).join(' · ');
+
+  /// Two-tone serif price: gold currency mark + ink amount.
+  Widget _priceText(double v) {
+    final p = context.astra;
+    return RichText(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(children: [
+        TextSpan(text: '${Money.symbol.trim()} ', style: serif(size: 12, color: p.goldText)),
+        TextSpan(text: Money.plain(v), style: serif(size: 17, color: p.ink)),
+      ]),
     );
   }
 
@@ -578,66 +950,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _selector(IconData icon, String label, String value, VoidCallback? onTap,
-      {String? avatarUrl, Map<String, String>? avatarHeaders}) {
-    final iconChip = Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(icon, size: 13, color: context.astra.accent),
-    );
-    // When a selected staff has a photo, show it in place of the icon chip.
-    final leading = (avatarUrl != null && avatarUrl.startsWith('http'))
-        ? ClipOval(
-            child: Image.network(
-              avatarUrl,
-              headers: avatarHeaders,
-              width: 26,
-              height: 26,
-              fit: BoxFit.cover,
-              gaplessPlayback: true,
-              errorBuilder: (_, __, ___) => iconChip,
-            ),
-          )
-        : iconChip;
-    return GestureDetector(
-      onTap: onTap == null
-          ? null
-          : () {
-              HapticFeedback.selectionClick();
-              onTap();
-            },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.13),
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        ),
-        child: Row(
-          children: [
-            leading,
-            const SizedBox(width: 9),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: ui(size: 9, weight: FontWeight.w700, color: Colors.white70, letterSpacing: 0.6)),
-                  Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: ui(size: 12, weight: FontWeight.w700, color: Colors.white)),
-                ],
-              ),
-            ),
-            if (onTap != null) const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _pickStylist() async {
     final cart = context.read<CartCubit>();
     final chosen = await pickStylist(context, selectedId: cart.stylistId);
@@ -645,6 +957,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     // Ticket-level stylist: applies to existing lines and becomes the default
     // for new ones. Per-line overrides can still be set in the edit sheet.
     cart.setStylist(chosen.id, chosen.name);
+    // Remember this employee so the next new sale preselects them.
+    serviceLocator<LocalStorageService>().setSaleStylist(chosen.id, chosen.name);
   }
 
   /// Absolute avatar URL for the ticket's selected staff (or null). Resolves the

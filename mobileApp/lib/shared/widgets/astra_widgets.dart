@@ -356,11 +356,21 @@ class SectionLabel extends StatelessWidget {
 
 /// Pill filter chip (category filter row).
 class AstraChip extends StatelessWidget {
-  const AstraChip({super.key, required this.label, required this.active, this.onTap, this.icon});
+  const AstraChip(
+      {super.key,
+      required this.label,
+      required this.active,
+      this.onTap,
+      this.icon,
+      this.expand = false});
   final String label;
   final bool active;
   final VoidCallback? onTap;
   final IconData? icon;
+
+  /// When true the chip fills the width given by its parent (e.g. an
+  /// [Expanded] slot in a full-width segmented row) and centers its content.
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -369,6 +379,7 @@ class AstraChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        width: expand ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
           gradient: active ? p.primaryGradient : null,
@@ -377,7 +388,9 @@ class AstraChip extends StatelessWidget {
           boxShadow: active ? t.floatShadow(p.primary) : t.softShadow,
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisAlignment:
+              expand ? MainAxisAlignment.center : MainAxisAlignment.start,
           children: [
             if (icon != null) ...[
               Icon(icon, size: 12, color: active ? Colors.white : p.textSecondary),

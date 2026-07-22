@@ -20,3 +20,24 @@ void configureDevHttp(Dio dio) {
     },
   );
 }
+
+/// Route Flutter's **default** `HttpClient` — used by `Image.network` /
+/// `NetworkImage` and any non-Dio networking — through the same self-signed-cert
+/// bypass in dev builds. Without this, product/asset images fail to load from a
+/// local `.test` HTTPS host on a physical device: the Valet/Herd dev CA is
+/// trusted on the build Mac (so images render there) but not on the phone, so
+/// only Dio — which already bypasses cert checks — could reach the server.
+///
+/// Prod builds keep full certificate validation — the override never ships.
+void configureDevHttpOverrides() {
+  if (!F.isDev) return;
+  HttpOverrides.global = _DevHttpOverrides();
+}
+
+class _DevHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (cert, host, port) => true;
+  }
+}

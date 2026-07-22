@@ -69,4 +69,7 @@ class SaleService implements SaleRepository {
     final data = await _http.put(EndPoints.saleById(id), body: payload);
     return Sale.fromJson(Map<String, dynamic>.from(data));
   }
+
+  @override
+  Future<void> deleteSale(String id) => _http.delete(EndPoints.saleById(id));
 }

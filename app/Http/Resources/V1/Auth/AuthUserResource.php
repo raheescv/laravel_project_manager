@@ -37,6 +37,7 @@ class AuthUserResource extends JsonResource
             'photo' => $this->image ? '/storage/'.ltrim($this->image, '/') : null,
             'is_admin' => (bool) $this->is_admin,
             'permissions' => $this->getAllPermissions()->pluck('name')->values(),
+            'role' => $this->getRoleNames()->implode(', '),
             'designation' => $this->designation?->name,
             'branch_id' => $default_branch_id,
             'sale_day_session_date' => $date,

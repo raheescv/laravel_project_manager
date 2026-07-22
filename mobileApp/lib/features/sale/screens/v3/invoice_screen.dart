@@ -6,12 +6,16 @@ import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/sale/domain/repository/sale_repository.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
+import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
@@ -44,6 +48,9 @@ class InvoiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
+    // Delete is permission-gated (matches the web `sale.delete` guard). The
+    // server still enforces the business rule — a completed sale is refused.
+    final canDelete = context.read<AuthCubit>().hasPermission(PermissionSlug.saleDelete);
     return Scaffold(
       body: AstraBackground(
         child: SafeArea(
@@ -75,35 +82,27 @@ class InvoiceScreen extends StatelessWidget {
                 SafeArea(
                   top: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_editable || _returnable) ...[
-                          Row(
-                            children: [
-                              if (_editable)
-                                Expanded(child: _editInvoiceButton(context, p)),
-                              if (_editable && _returnable) const SizedBox(width: 9),
-                              if (_returnable)
-                                Expanded(child: _returnInvoiceButton(context, p)),
-                            ],
-                          ),
-                          const SizedBox(height: 9),
-                        ],
-                        Row(
-                          children: [
-                            Expanded(child: _action(context, Icons.print_outlined, 'Print', () => _preview(context))),
-                            const SizedBox(width: 9),
-                            Expanded(child: _action(context, Icons.ios_share, 'Share', () => _share(context))),
-                            const SizedBox(width: 9),
-                            Expanded(
-                              flex: 2,
-                              child: AstraButton(label: 'New Sale', onTap: () => _tap(() => context.go('/sale'))),
+                    padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
+                    // Compact action bar: Print stays visible next to the dominant
+                    // "New Sale" CTA; every other action (Edit / Return / Share /
+                    // Delete) lives one tap deep behind the "•••" overflow sheet.
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _utilityButton(context, p, Icons.print_outlined, 'Print', () => _preview(context)),
+                          const SizedBox(width: 9),
+                          Expanded(
+                            child: AstraButton(
+                              label: 'New Sale',
+                              icon: Icons.add,
+                              onTap: () => _tap(() => context.go('/sale')),
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(width: 9),
+                          _moreButton(context, p, canDelete),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -569,31 +568,6 @@ class InvoiceScreen extends StatelessWidget {
     }
   }
 
-  Widget _returnInvoiceButton(BuildContext context, AstraPalette p) {
-    final t = context.astraTheme;
-    return GestureDetector(
-      onTap: () => _tap(() => _return(context)),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: p.goldText.withValues(alpha: 0.5), width: 1.5),
-          boxShadow: t.softShadow,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.assignment_return_outlined, size: 16, color: p.goldText),
-            const SizedBox(width: 9),
-            Flexible(child: Text('Return', maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// Re-open this sale in the New Sale flow for editing: load it into the ticket
   /// (each line keeps its sale_item id) and push the edit screen.
   void _edit(BuildContext context) {
@@ -601,29 +575,53 @@ class InvoiceScreen extends StatelessWidget {
     context.push('/sale');
   }
 
-  Widget _editInvoiceButton(BuildContext context, AstraPalette p) {
-    final t = context.astraTheme;
-    return GestureDetector(
-      onTap: () => _tap(() => _edit(context)),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: p.primary.withValues(alpha: 0.5), width: 1.5),
-          boxShadow: t.softShadow,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.edit_outlined, size: 16, color: p.primary),
-            const SizedBox(width: 9),
-            Flexible(child: Text('Edit', maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
-          ],
-        ),
+  // ---- Delete --------------------------------------------------------------
+
+  /// Confirm, then permanently delete this sale. On success we leave the view
+  /// page (the sale no longer exists) — popping back to the sales list with a
+  /// `true` result so it refreshes, or falling back to the list route. The
+  /// server enforces the rule that a completed sale can't be deleted; its exact
+  /// message is surfaced if it refuses.
+  Future<void> _delete(BuildContext context) async {
+    final ref = sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete this sale?'),
+        content: Text('Invoice $ref, its items and payments will be permanently '
+            'removed. This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete',
+                style: TextStyle(color: AstraPalette.danger, fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
+    if (confirmed != true || !context.mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      await serviceLocator<SaleRepository>().deleteSale(sale.id);
+      if (!context.mounted) return;
+      Navigator.pop(context); // dismiss the loader
+      _toast(context, 'Sale deleted.');
+      if (context.canPop()) {
+        context.pop(true); // signal the sales list to reload
+      } else {
+        context.go('/sales');
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.pop(context); // dismiss the loader
+      _toast(context, e is ApiException ? e.message : 'Could not delete the sale.');
+    }
   }
 
   /// Fire a short tap vibration, then run [action]. Every button on this view
@@ -633,23 +631,154 @@ class InvoiceScreen extends StatelessWidget {
     action();
   }
 
-  Widget _action(BuildContext context, IconData icon, String label, VoidCallback onTap) {
-    final p = context.astra;
+  // ---- Compact action bar --------------------------------------------------
+
+  /// A slim card button (icon + label) that stretches to the CTA's height via
+  /// the enclosing IntrinsicHeight/stretch row. Used for the always-visible
+  /// Print action beside "New Sale".
+  Widget _utilityButton(BuildContext context, AstraPalette p, IconData icon, String label, VoidCallback onTap) {
     final t = context.astraTheme;
     return GestureDetector(
       onTap: () => _tap(onTap),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: p.card, borderRadius: BorderRadius.circular(13), boxShadow: t.softShadow),
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(t.rButton),
+          boxShadow: t.softShadow,
+        ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: p.ink),
+            Icon(icon, size: 16, color: p.ink),
             const SizedBox(width: 7),
-            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12, weight: FontWeight.w700, color: p.ink))),
+            Text(label, style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// The "•••" overflow trigger — same card treatment, square-ish footprint.
+  Widget _moreButton(BuildContext context, AstraPalette p, bool canDelete) {
+    final t = context.astraTheme;
+    return GestureDetector(
+      onTap: () => _tap(() => _moreSheet(context, canDelete)),
+      child: Container(
+        width: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(t.rButton),
+          boxShadow: t.softShadow,
+        ),
+        child: Icon(Icons.more_horiz, size: 22, color: p.ink),
+      ),
+    );
+  }
+
+  /// Overflow sheet holding the secondary invoice actions. Each row respects
+  /// the same guards as the old inline buttons (edit/return/delete visibility).
+  Future<void> _moreSheet(BuildContext context, bool canDelete) async {
+    final p = context.astra;
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: p.sheet,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: p.textMuted.withValues(alpha: 0.30),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const SectionLabel('Invoice'),
+              const SizedBox(height: 4),
+              Text('Actions', style: serif(size: 22, color: p.ink)),
+              const SizedBox(height: 16),
+              if (_editable)
+                _sheetAction(ctx, p, Icons.edit_outlined, p.primary, 'Edit',
+                    'Re-open this sale to change items', () => _edit(context)),
+              if (_returnable)
+                _sheetAction(ctx, p, Icons.assignment_return_outlined, p.goldText, 'Return',
+                    'Start a return against this invoice', () => _return(context)),
+              _sheetAction(ctx, p, Icons.ios_share, p.ink, 'Share',
+                  'Send the receipt as a PDF', () => _share(context)),
+              if (canDelete)
+                _sheetAction(ctx, p, Icons.delete_outline, AstraPalette.danger, 'Delete',
+                    'Permanently remove this sale', () => _delete(context)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A single row inside the overflow sheet: tinted icon tile, title + hint,
+  /// chevron. Taps close the sheet first, then run [action] on the page.
+  Widget _sheetAction(BuildContext ctx, AstraPalette p, IconData icon, Color tint,
+      String label, String subtitle, VoidCallback action) {
+    final t = ctx.astraTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          Navigator.pop(ctx);
+          action();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: p.card,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: t.softShadow,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tint.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(icon, size: 18, color: tint),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
+                    const SizedBox(height: 1),
+                    Text(subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ui(size: 11, weight: FontWeight.w500, color: p.textMuted)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, size: 18, color: p.textMuted),
+            ],
+          ),
         ),
       ),
     );

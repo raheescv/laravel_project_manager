@@ -21,23 +21,61 @@ class MobilePermission {
   final IconData icon;
 }
 
-/// Canonical permission slugs the app gates on. Referenced by the router
-/// guards, the dashboard/profile day-session actions, and the list below so
-/// there is a single source of truth for each string.
+/// Canonical permission slugs referenced by the app — router guards, the
+/// dashboard/profile day-session actions, and the "My Permissions" list — so
+/// each string lives in one place. Note: not every slug is enforced by the app
+/// yet. The `sale.*` CRUD slugs are surfaced on the permissions screen for
+/// visibility, but the mobile POS sale endpoints are currently ungated (see the
+/// `sale` prefix group in routes/api_v1.php).
 abstract final class PermissionSlug {
   static const salesOverview = 'report.sales overview';
   static const report = 'report.sale item';
   static const daySession = 'day session.create';
+  static const saleCreate = 'sale.create';
+  static const saleView = 'sale.view';
+  static const saleEdit = 'sale.edit';
+  static const saleDelete = 'sale.delete';
   static const saleReturnView = 'sales return.view';
   static const saleReturnCreate = 'sales return.create';
   static const saleReturnEdit = 'sales return.edit';
   static const stockCheck = 'inventory.stock check';
 }
 
-/// The permissions the app checks — the ONLY ones surfaced on the "My
-/// Permissions" screen. Keep this list in sync with the router/dashboard
-/// gates so the screen reflects exactly what the app enforces.
+/// The permissions surfaced on the "My Permissions" screen, grouped by module
+/// so staff can see their access — and the exact backend permission name — at a
+/// glance. Most rows are gated by the app (router / dashboard / module guards);
+/// the "Sales" rows mirror the web Sale CRUD permissions for visibility (the
+/// mobile POS sale endpoints are not yet gated on them, see routes/api_v1.php).
 const mobilePermissions = <MobilePermission>[
+  // Sales — core POS actions. Shown for visibility; see the note above.
+  MobilePermission(
+    slug: PermissionSlug.saleCreate,
+    label: 'Create Sale',
+    description: 'Ring up and save a new sale',
+    group: 'Sales',
+    icon: Icons.add_shopping_cart,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.saleView,
+    label: 'View Sales',
+    description: 'Open the sales list and invoices',
+    group: 'Sales',
+    icon: Icons.receipt_long,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.saleEdit,
+    label: 'Edit Sale',
+    description: 'Modify an existing sale',
+    group: 'Sales',
+    icon: Icons.edit_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.saleDelete,
+    label: 'Delete Sale',
+    description: 'Remove a sale',
+    group: 'Sales',
+    icon: Icons.delete_outline,
+  ),
   MobilePermission(
     slug: PermissionSlug.salesOverview,
     label: 'Dashboard',

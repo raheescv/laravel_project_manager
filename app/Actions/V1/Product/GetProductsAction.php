@@ -21,6 +21,10 @@ class GetProductsAction
             'department:id,name',
             'mainCategory:id,name',
             'subCategory:id,name',
+            // Load normal images (lightweight) so each card can show a photo.
+            // The resource falls back to the first image when a product has no
+            // explicit thumbnail set — otherwise the app shows a placeholder icon.
+            'images' => fn ($q) => $q->where('method', 'normal')->select('id', 'product_id', 'path', 'method'),
         ];
 
         if (! empty($filters['branch_id'])) {

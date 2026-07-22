@@ -82,6 +82,25 @@ class LocalStorageService {
   Future<void> setDefaultProductType(String v) =>
       _prefs.setString(LocalStorageKeys.defaultProductType, v);
 
+  // New Sale catalog rendering preference — 'grid' (image tiles) or 'list'.
+  String? get saleView => _prefs.getString(LocalStorageKeys.saleView);
+  Future<void> setSaleView(String v) =>
+      _prefs.setString(LocalStorageKeys.saleView, v);
+
+  // New Sale — last used Product/Service filter ('', 'product', 'service').
+  String? get saleType => _prefs.getString(LocalStorageKeys.saleType);
+  Future<void> setSaleType(String v) =>
+      _prefs.setString(LocalStorageKeys.saleType, v);
+
+  // New Sale — last used staff/stylist, auto-selected on the next ticket.
+  int? get saleStylistId => _prefs.getInt(LocalStorageKeys.saleStylistId);
+  String? get saleStylistName =>
+      _prefs.getString(LocalStorageKeys.saleStylistName);
+  Future<void> setSaleStylist(int id, String name) async {
+    await _prefs.setInt(LocalStorageKeys.saleStylistId, id);
+    await _prefs.setString(LocalStorageKeys.saleStylistName, name);
+  }
+
   // Whether the app-wide haptic tap feedback is enabled (Settings → Haptics).
   bool? get hapticsEnabled => _prefs.getBool(LocalStorageKeys.haptics);
   Future<void> setHapticsEnabled(bool v) =>

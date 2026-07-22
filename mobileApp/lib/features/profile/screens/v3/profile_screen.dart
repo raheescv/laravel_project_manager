@@ -98,6 +98,8 @@ class ProfileScreen extends StatelessWidget {
                         _infoRow(context, Icons.phone, 'Phone', user.mobile.isEmpty ? '—' : user.mobile),
                         _infoRow(context, Icons.mail_outline, 'Email', user.email.isEmpty ? '—' : user.email),
                         _sectionHeader('Work'),
+                        _infoRow(context, Icons.badge_outlined, 'Role',
+                            user.role.isEmpty ? '—' : user.role, trailing: true),
                         _infoRow(context, Icons.location_on_outlined, 'Branch', branchName, trailing: true),
                         _infoRow(context, Icons.event_available_outlined, 'Day status',
                             user.dayOpen ? 'Open' : 'Closed',

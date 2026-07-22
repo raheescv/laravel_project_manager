@@ -27,7 +27,7 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'name_arabic' => $this->name_arabic,
             'description' => $this->description,
-            'thumbnail' => $this->thumbnail,
+            'thumbnail' => $this->resolvedThumbnail(),
             'barcode' => $this->barcode,
             'color' => $this->color,
             'size' => $this->size,
@@ -85,7 +85,10 @@ class ProductResource extends JsonResource
                 ];
             }),
 
-            'images' => $this->whenLoaded('images', function () {
+            // Full image list is a detail-view concern. On the list we eager-load
+            // normal images only to resolve the card thumbnail (see below), so skip
+            // this per-row re-query there to avoid an N+1.
+            'images' => $this->when(! $isList && $this->relationLoaded('images'), function () {
                 return $this->normalImages()->get()->map(function ($image) {
                     return [
                         'id' => $image->id,
@@ -154,6 +157,27 @@ class ProductResource extends JsonResource
             'available_sizes' => $this->when(! $isList, fn () => $this->getAvailableSizes()),
             'related_sizes' => $this->when(! $isList, fn () => $this->getRelatedSizes()),
         ];
+    }
+
+    /**
+     * The card thumbnail: use the explicit thumbnail column when set, otherwise
+     * fall back to the first normal product image (when the images relation is
+     * loaded). Keeps mobile/POS product cards from showing a placeholder icon for
+     * products that have images but no thumbnail chosen.
+     */
+    private function resolvedThumbnail(): ?string
+    {
+        if (! empty($this->thumbnail)) {
+            return $this->thumbnail;
+        }
+
+        if ($this->relationLoaded('images')) {
+            $image = $this->images->firstWhere('method', 'normal') ?? $this->images->first();
+
+            return $image?->url;
+        }
+
+        return $this->thumbnail;
     }
 
     /**

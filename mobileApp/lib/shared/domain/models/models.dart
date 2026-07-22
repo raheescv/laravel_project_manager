@@ -10,6 +10,7 @@ class ApiUser {
     required this.mobile,
     required this.isAdmin,
     required this.designation,
+    required this.role,
     required this.branchId,
     required this.daySessionStatus,
     required this.daySessionDate,
@@ -26,6 +27,7 @@ class ApiUser {
   final String mobile;
   final bool isAdmin;
   final String designation;
+  final String role; // Spatie role name(s), comma-joined; '' when none assigned
   final String? branchId;
   // Root-relative storage path to the avatar (e.g. /storage/users/…), '' when
   // none. Resolve to an absolute URL with AppConfig.assetUrl before display.
@@ -52,6 +54,7 @@ class ApiUser {
         mobile: asStr(j['mobile']),
         isAdmin: j['is_admin'] == true,
         designation: asStr(j['designation']),
+        role: asStr(j['role']),
         branchId: j['branch_id']?.toString(),
         photoUrl: asStr(j['photo']),
         daySessionStatus: asStr(j['sale_day_session_status']),
@@ -71,6 +74,7 @@ class ApiUser {
         'mobile': mobile,
         'is_admin': isAdmin,
         'designation': designation,
+        'role': role,
         'branch_id': branchId,
         'photo': photoUrl,
         'sale_day_session_status': daySessionStatus,
@@ -101,6 +105,7 @@ class ApiUser {
         mobile: mobile ?? this.mobile,
         isAdmin: isAdmin,
         designation: designation,
+        role: role,
         branchId: branchId,
         photoUrl: photoUrl ?? this.photoUrl,
         daySessionStatus: daySessionStatus ?? this.daySessionStatus,

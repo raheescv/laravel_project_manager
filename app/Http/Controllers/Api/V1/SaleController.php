@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\V1\Sale\CreateAction;
+use App\Actions\V1\Sale\DeleteAction;
 use App\Actions\V1\Sale\GetAction;
 use App\Actions\V1\Sale\ListAction;
 use App\Actions\V1\Sale\UpdateAction;
@@ -141,6 +142,29 @@ class SaleController extends Controller
             return $this->sendNotFoundError('Sale not found.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to update sale: '.$e->getMessage(), [], 422);
+        }
+    }
+
+    /**
+     * Delete sale.
+     *
+     * Soft-deletes a sale with its line items and payments. Completed sales are
+     * refused (they must be returned or cancelled instead, to keep the stock and
+     * accounting intact). Gated by the `sale.delete` permission on the route.
+     */
+    public function destroy(DeleteAction $action, int $sale): JsonResponse
+    {
+        try {
+            $action->execute($sale, auth()->id());
+
+            return $this->sendSuccess([], 'Sale deleted successfully');
+        } catch (\DomainException $e) {
+            // Business-rule refusal (e.g. completed sale) — surface verbatim.
+            return $this->sendError($e->getMessage(), [], 422);
+        } catch (ModelNotFoundException) {
+            return $this->sendNotFoundError('Sale not found.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to delete sale: '.$e->getMessage(), [], 422);
         }
     }
 }

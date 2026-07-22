@@ -22,6 +22,11 @@ class LocalStorageKeys {
   static const String haptics = 'astra.haptics';
   static const String branch = 'astra.branch';
   static const String user = 'astra.user';
+  // New Sale — remembered choices, auto-selected on the next ticket.
+  static const String saleView = 'astra.saleView'; // 'grid' | 'list'
+  static const String saleType = 'astra.saleType'; // '' | 'product' | 'service'
+  static const String saleStylistId = 'astra.saleStylistId';
+  static const String saleStylistName = 'astra.saleStylistName';
 
   // Thermal print settings (mirror the web `thermal_printer_*` config).
   static const String printStyle = 'astra.print.style';

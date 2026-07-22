@@ -6,6 +6,8 @@ import 'features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'shared/domain/constants/global_variables.dart';
 import 'shared/logic/branch_cubit/branch_cubit.dart';
 import 'shared/logic/currency_cubit/currency_cubit.dart';
+import 'shared/utils/router/http_utils/dev_http_stub.dart'
+    if (dart.library.io) 'shared/utils/router/http_utils/dev_http_io.dart';
 import 'shared/utils/service_locator_setup/setup.dart';
 
 /// Shared boot sequence. The flavor entry points (`main_dev.dart` /
@@ -14,6 +16,10 @@ import 'shared/utils/service_locator_setup/setup.dart';
 Future<void> main() async {
   F.appFlavor ??= Flavor.dev;
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Let Image.network / NetworkImage reach local `.test` HTTPS hosts on a
+  // physical device (dev only) — same self-signed-cert bypass Dio already uses.
+  configureDevHttpOverrides();
 
   await setUpServiceLocator();
 

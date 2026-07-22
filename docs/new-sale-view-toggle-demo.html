@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Sale — Clean Boutique + Grid / List</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Live demo of the shipped New Sale screen — Clean Boutique chrome (joined
+     who-row, inline-scan search, segmented type filter) + the grid/list switcher
+     on the filter row. Emerald & Gold · Marcellus + Manrope. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --page-bg:#E9E3D6; --page-ink:#1c2a25; --page-sub:#6c7a72; --page-card:#fffdf8; --page-hair:#d8cfbd; }
+  .stage[data-theme="dark"]{ --page-bg:#0a0d0c; --page-ink:#eef1ec; --page-sub:#8b988f; --page-card:#141a17; --page-hair:#26302b; }
+  body { font-family:'Manrope',system-ui,sans-serif;
+    background: radial-gradient(1200px 700px at 12% -5%, rgba(21,128,108,.12), transparent 60%),
+                radial-gradient(1100px 700px at 100% 0%, rgba(201,162,75,.13), transparent 55%), var(--page-bg);
+    color:var(--page-ink); min-height:100vh; -webkit-font-smoothing:antialiased; transition:background .4s,color .4s; }
+  .toolbar { position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:16px; padding:18px clamp(16px,4vw,44px);
+    background:color-mix(in srgb,var(--page-bg) 78%,transparent); backdrop-filter:blur(18px) saturate(1.4);
+    -webkit-backdrop-filter:blur(18px) saturate(1.4); border-bottom:1px solid var(--page-hair); }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .mark{ width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#15806C,#0E5648); display:grid; place-items:center; box-shadow:0 6px 18px rgba(14,86,72,.35); }
+  .brand .mark svg{ width:18px; height:18px; stroke:#fff; fill:none; stroke-width:1.9; }
+  .brand h1{ font-family:'Marcellus',serif; font-size:19px; font-weight:400; }
+  .brand p{ font-size:11.5px; color:var(--page-sub); margin-top:1px; }
+  .toolbar .spacer{ flex:1; }
+  .toggle{ display:inline-flex; align-items:center; gap:9px; padding:9px 15px; border-radius:999px; cursor:pointer;
+    border:1px solid var(--page-hair); background:var(--page-card); color:var(--page-ink); font-weight:700; font-size:12.5px; }
+  .toggle:hover{ border-color:#C9A24B; }
+  .toggle svg{ width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+  .hint{ text-align:center; color:var(--page-sub); font-size:13.5px; padding:26px 20px 4px; }
+  .hint b{ color:var(--page-ink); }
+  .wrap{ display:grid; place-items:center; padding:22px 16px 70px; }
+
+  .phone{ position:relative; width:392px; max-width:92vw; height:824px; border-radius:47px; padding:11px;
+    background:linear-gradient(160deg,#1b1b1b,#2a2a2a 40%,#101010);
+    box-shadow:0 2px 3px rgba(0,0,0,.5) inset, 0 44px 90px -32px rgba(0,0,0,.55); }
+  .screen{ position:relative; width:100%; height:100%; border-radius:37px; overflow:hidden; display:flex; flex-direction:column;
+    background:var(--bg); color:var(--ink);
+    --bg:#FBFAF6; --card:#FFFFFF; --soft:rgba(20,30,25,.05); --ink:#16312A; --sec:#5F7169; --muted:#A6B0A8; --hair:#ECE7DC;
+    --primary:#15806C; --primaryDark:#0E5648; --gold:#C9A24B; --goldText:#A9822E; --tint:#EAF2ED; }
+  [data-theme="dark"] .screen{ --bg:#0C1210; --card:#141B17; --soft:rgba(255,255,255,.06); --ink:#EDF0EC; --sec:#93a29a; --muted:#6c7a72; --hair:#212a25; --goldText:#D8B15A; --tint:rgba(21,128,108,.17); }
+  .island{ position:absolute; top:12px; left:50%; transform:translateX(-50%); width:110px; height:31px; border-radius:999px; background:#000; z-index:40; }
+  .statusbar{ height:47px; flex:0 0 47px; display:flex; align-items:center; justify-content:space-between; padding:0 27px; font-size:13.5px; font-weight:700; color:var(--ink); }
+  .statusbar .dots{ display:flex; align-items:center; gap:6px; }
+  .statusbar .bar{ width:3px; border-radius:2px; background:currentColor; opacity:.9; }
+  .statusbar .batt{ width:22px; height:11px; border:1.5px solid currentColor; border-radius:3px; position:relative; opacity:.9; }
+  .statusbar .batt::after{ content:''; position:absolute; right:-3px; top:3px; width:2px; height:5px; background:currentColor; border-radius:1px; }
+  .statusbar .batt i{ position:absolute; inset:1.5px; width:72%; background:currentColor; border-radius:1px; }
+  .view{ flex:1; overflow-y:auto; overflow-x:hidden; }
+  .view::-webkit-scrollbar{ width:0; }
+  svg.i{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* header (Clean Boutique) */
+  .head{ padding:4px 20px 8px; }
+  .topbar{ display:flex; align-items:center; margin-bottom:18px; }
+  .ghost{ width:42px; height:42px; margin:0 -6px; display:grid; place-items:center; color:var(--sec); }
+  .ghost svg.i{ width:23px; height:23px; }
+  .topbar h2{ flex:1; text-align:center; font-family:'Marcellus',serif; font-weight:400; font-size:23px; }
+  .who{ display:flex; align-items:stretch; border:1px solid var(--hair); border-radius:18px; background:var(--card); box-shadow:0 12px 26px -20px rgba(20,40,32,.5); }
+  .seg{ flex:1; display:flex; align-items:center; gap:11px; padding:13px 15px; }
+  .seg + .seg{ border-left:1px solid var(--hair); }
+  .seg .av{ width:38px; height:38px; border-radius:50%; flex:0 0 38px; display:grid; place-items:center; background:var(--tint); color:var(--primary); }
+  .seg .av.ph{ background:linear-gradient(135deg,#1f9d83,#0E5648); color:#eafaf5; font-family:'Marcellus',serif; font-size:13px; }
+  .seg .av svg.i{ width:17px; height:17px; }
+  .seg .k{ font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--goldText); font-weight:800; }
+  .seg .v{ font-size:14px; font-weight:700; }
+  .seg .cv{ margin-left:auto; color:var(--muted); }
+
+  /* search with inline scan */
+  .search{ margin:16px 20px 0; display:flex; align-items:center; gap:11px; height:54px; padding:0 8px 0 16px; border-radius:16px; background:var(--soft); color:var(--muted); }
+  .search svg.i{ color:var(--sec); width:21px; height:21px; }
+  .search span{ flex:1; font-size:14px; font-weight:600; }
+  .search .qr{ width:38px; height:38px; border-radius:11px; display:grid; place-items:center; background:var(--card); color:var(--primary); box-shadow:0 3px 10px rgba(0,0,0,.06); }
+  .search .qr svg.i{ width:19px; height:19px; }
+
+  /* type segmented control + view toggle */
+  .typerow{ display:flex; align-items:center; gap:10px; margin:16px 20px 0; }
+  .segctl{ flex:1; display:flex; padding:4px; border-radius:14px; background:var(--soft); gap:4px; }
+  .segbtn{ flex:1; text-align:center; font-weight:700; font-size:12.5px; color:var(--sec); padding:11px 0; border-radius:10px; cursor:pointer; transition:.16s; }
+  .segbtn.on{ background:var(--card); color:var(--primary); box-shadow:0 4px 12px -4px rgba(0,0,0,.2); }
+  .vtoggle{ flex:0 0 auto; display:flex; gap:2px; padding:3px; border-radius:12px; border:1px solid var(--hair); background:var(--card); box-shadow:0 6px 16px -12px rgba(20,40,32,.6); }
+  .vbtn{ width:34px; height:30px; border-radius:9px; display:grid; place-items:center; color:var(--muted); cursor:pointer; transition:.16s; }
+  .vbtn.on{ background:linear-gradient(135deg,#16866f,#0E5648); color:#fff; }
+  .vbtn svg.i{ width:17px; height:17px; }
+
+  /* categories */
+  .cats{ display:flex; gap:8px; overflow-x:auto; padding:18px 16px 4px; }
+  .cats::-webkit-scrollbar{ height:0; }
+  .cat{ flex:0 0 auto; font-size:12.5px; font-weight:700; padding:9px 16px; border-radius:999px; color:var(--sec); border:1px solid var(--hair); white-space:nowrap; }
+  .cat.on{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+
+  /* GRID */
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:13px; padding:12px 20px 20px; }
+  .tile{ border:1px solid var(--hair); background:var(--card); border-radius:20px; overflow:hidden; box-shadow:0 14px 30px -22px rgba(20,40,32,.5); }
+  .img{ height:136px; width:100%; display:grid; place-items:center; background-size:cover; background-position:center; }
+  .img.fallback{ background:linear-gradient(135deg,var(--tint),color-mix(in srgb,var(--tint) 45%,transparent)); color:var(--primary); }
+  .img.fallback svg.i{ width:42px; height:42px; opacity:.9; }
+  .img.mono{ background:linear-gradient(150deg,#173a2e,#0d251c); color:#E7CE8C; font-family:'Marcellus',serif; font-size:30px; }
+  .img.photo{ background-image:linear-gradient(160deg,#d8c39a,#b89b62 55%,#8a6f3a); }
+  .body{ padding:11px 12px 12px; }
+  .body .nm{ font-size:12.5px; font-weight:800; line-height:1.25; min-height:31px; }
+  .body .meta{ font-size:10.5px; color:var(--muted); font-weight:600; margin-top:3px; }
+  .foot{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+  .pr{ font-family:'Marcellus',serif; font-size:18px; color:var(--ink); }
+  .pr .cur{ color:var(--goldText); font-size:12px; margin-right:1px; }
+  .add{ width:34px; height:34px; border-radius:12px; display:grid; place-items:center; color:#fff; background:linear-gradient(135deg,#16866f,#0E5648); box-shadow:0 8px 16px -6px rgba(14,86,72,.6); }
+  .add svg.i{ width:17px; height:17px; stroke-width:2.4; }
+
+  /* LIST */
+  .list{ display:flex; flex-direction:column; gap:10px; padding:12px 20px 20px; }
+  .lrow{ display:flex; align-items:stretch; border:1px solid var(--hair); background:var(--card); border-radius:18px; overflow:hidden; box-shadow:0 12px 26px -22px rgba(20,40,32,.5); }
+  .lrow .limg{ width:84px; flex:0 0 84px; display:grid; place-items:center; background-size:cover; background-position:center; }
+  .lrow .limg.fallback{ background:linear-gradient(135deg,var(--tint),color-mix(in srgb,var(--tint) 45%,transparent)); color:var(--primary); }
+  .lrow .limg.fallback svg.i{ width:34px; height:34px; opacity:.9; }
+  .lrow .limg.mono{ background:linear-gradient(150deg,#173a2e,#0d251c); color:#E7CE8C; font-family:'Marcellus',serif; font-size:22px; }
+  .lrow .limg.photo{ background-image:linear-gradient(160deg,#d8c39a,#b89b62 55%,#8a6f3a); }
+  .lrow .lbody{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; padding:12px 6px 12px 13px; }
+  .lrow .nm{ font-size:13.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lrow .meta{ font-size:11px; color:var(--muted); font-weight:600; margin-top:4px; }
+  .lrow .lend{ display:flex; align-items:center; gap:12px; padding:0 12px; }
+
+  .hide{ display:none !important; }
+
+  .dock{ padding:12px 18px 20px; }
+  .bar{ display:flex; align-items:center; gap:14px; padding:12px 12px 12px 18px; border-radius:22px; background:linear-gradient(135deg,#103d33,#0b241d); color:#fff; box-shadow:0 20px 40px -18px rgba(11,36,29,.8); border:1px solid rgba(201,162,75,.28); }
+  .bar .cnt{ width:44px; height:44px; border-radius:14px; display:grid; place-items:center; background:rgba(255,255,255,.12); color:#E7CE8C; position:relative; }
+  .bar .cnt b{ position:absolute; top:-6px; right:-6px; min-width:20px; height:20px; border-radius:999px; background:linear-gradient(135deg,#E7CE8C,#C9A24B); color:#402f0d; font-size:11px; display:grid; place-items:center; padding:0 5px; }
+  .bar .lbl{ font-size:10.5px; color:rgba(255,255,255,.72); font-weight:600; }
+  .bar .tot{ font-family:'Marcellus',serif; font-size:21px; }
+  .bar .go{ margin-left:auto; display:flex; align-items:center; gap:8px; padding:12px 17px; border-radius:14px; background:linear-gradient(135deg,#E7CE8C,#C9A24B); color:#402f0d; font-weight:800; font-size:13px; }
+  .bar .go svg.i{ width:16px; height:16px; stroke:#402f0d; stroke-width:2.4; }
+  @media (max-width:520px){ .phone{ height:770px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="ic-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="ic-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></symbol>
+  <symbol id="ic-qr" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 011-1h3M20 8V5a1 1 0 00-1-1h-3M4 16v3a1 1 0 001 1h3M20 16v3a1 1 0 01-1 1h-3M3 12h18"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="ic-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></symbol>
+  <symbol id="ic-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 019 6c4-2 8-2 11-2 0 3 0 7-2 11a7 7 0 01-7 5zM8 16c2-4 5-7 9-9"/></symbol>
+  <symbol id="ic-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></symbol>
+  <symbol id="ic-bag" viewBox="0 0 24 24"><path d="M6 7h12l1 13H5L6 7zM9 7a3 3 0 016 0"/></symbol>
+  <symbol id="ic-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="ic-rows" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="6" rx="2"/><rect x="4" y="13" width="16" height="6" rx="2"/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></symbol>
+</svg>
+
+<div class="stage" data-theme="light" id="stage">
+  <div class="toolbar">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 24 24"><path d="M6 7h12l1 13H5L6 7zM9 7a3 3 0 016 0"/></svg></div>
+      <div><h1>New Sale · Clean Boutique + Grid / List</h1><p>Tap the grid / list toggle on the filter row</p></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="toggle" id="themeBtn"><svg id="themeIcon"><use href="#ic-moon"/></svg><span id="themeLabel">Dark</span></button>
+  </div>
+
+  <div class="hint">Clean chrome from design 2 + the boutique image grid from design 1. The small switcher sits at the right of the <b>type-filter row</b> — <b>grid</b> for image tiles, <b>list</b> for a compact scan. Remembered per device.</div>
+
+  <div class="wrap">
+    <div class="phone">
+      <div class="island"></div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span class="dots"><span class="bar" style="height:8px"></span><span class="bar" style="height:11px"></span><span class="bar" style="height:14px"></span><span class="batt"><i></i></span></span></div>
+        <div class="view">
+          <div class="head">
+            <div class="topbar">
+              <div class="ghost"><svg class="i"><use href="#ic-back"/></svg></div>
+              <h2>New Sale</h2>
+              <div class="ghost"><svg class="i"><use href="#ic-close"/></svg></div>
+            </div>
+            <div class="who">
+              <div class="seg"><div class="av"><svg class="i"><use href="#ic-person"/></svg></div><div><div class="k">Client</div><div class="v">Walk-in</div></div><svg class="i cv" style="width:16px"><use href="#ic-down"/></svg></div>
+              <div class="seg"><div class="av ph">MK</div><div><div class="k">Staff</div><div class="v">Makbul</div></div><svg class="i cv" style="width:16px"><use href="#ic-down"/></svg></div>
+            </div>
+          </div>
+
+          <div class="search"><svg class="i"><use href="#ic-search"/></svg><span>Search name or code</span><div class="qr"><svg class="i"><use href="#ic-qr"/></svg></div></div>
+
+          <div class="typerow">
+            <div class="segctl"><div class="segbtn">All Types</div><div class="segbtn">Products</div><div class="segbtn on">Services</div></div>
+            <div class="vtoggle">
+              <div class="vbtn on" id="vGrid" onclick="setView('grid')"><svg class="i"><use href="#ic-grid"/></svg></div>
+              <div class="vbtn" id="vList" onclick="setView('list')"><svg class="i"><use href="#ic-rows"/></svg></div>
+            </div>
+          </div>
+
+          <div class="cats"><div class="cat on">All</div><div class="cat">Adult</div><div class="cat">Facial</div><div class="cat">Hair color</div><div class="cat">Hair dr…</div></div>
+
+          <!-- GRID -->
+          <div class="grid" id="gridView">
+            <div class="tile"><div class="img mono">SM</div><div class="body"><div class="nm">123</div><div class="meta">988671 · 2 min</div><div class="foot"><div class="pr"><span class="cur">₹</span>0.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div></div>
+            <div class="tile"><div class="img fallback"><svg class="i"><use href="#ic-leaf"/></svg></div><div class="body"><div class="nm">ABC Test</div><div class="meta">915756 · 20 min</div><div class="foot"><div class="pr"><span class="cur">₹</span>23.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div></div>
+            <div class="tile"><div class="img photo"></div><div class="body"><div class="nm">Beard Cutting &amp; Coloring</div><div class="meta">725555</div><div class="foot"><div class="pr"><span class="cur">₹</span>35.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div></div>
+            <div class="tile"><div class="img fallback"><svg class="i"><use href="#ic-scissors"/></svg></div><div class="body"><div class="nm">Beard Setting</div><div class="meta">601953</div><div class="foot"><div class="pr"><span class="cur">₹</span>15.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div></div>
+          </div>
+
+          <!-- LIST -->
+          <div class="list hide" id="listView">
+            <div class="lrow"><div class="limg mono">SM</div><div class="lbody"><div class="nm">123</div><div class="meta">988671 · 2 min</div></div><div class="lend"><div class="pr"><span class="cur">₹</span>0.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div>
+            <div class="lrow"><div class="limg fallback"><svg class="i"><use href="#ic-leaf"/></svg></div><div class="lbody"><div class="nm">ABC Test</div><div class="meta">915756 · 20 min</div></div><div class="lend"><div class="pr"><span class="cur">₹</span>23.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div>
+            <div class="lrow"><div class="limg photo"></div><div class="lbody"><div class="nm">Beard Cutting &amp; Coloring</div><div class="meta">725555</div></div><div class="lend"><div class="pr"><span class="cur">₹</span>35.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div>
+            <div class="lrow"><div class="limg fallback"><svg class="i"><use href="#ic-scissors"/></svg></div><div class="lbody"><div class="nm">Beard Setting</div><div class="meta">601953</div></div><div class="lend"><div class="pr"><span class="cur">₹</span>15.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div>
+            <div class="lrow"><div class="limg fallback"><svg class="i"><use href="#ic-scissors"/></svg></div><div class="lbody"><div class="nm">Children</div><div class="meta">663775</div></div><div class="lend"><div class="pr"><span class="cur">₹</span>15.00</div><div class="add"><svg class="i"><use href="#ic-plus"/></svg></div></div></div>
+          </div>
+        </div>
+        <div class="dock">
+          <div class="bar"><div class="cnt"><svg class="i"><use href="#ic-bag"/></svg><b>2</b></div><div><div class="lbl">2 services · Total</div><div class="tot">₹58.00</div></div><div class="go">View Cart <svg class="i"><use href="#ic-arrow"/></svg></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setView(v){
+    document.getElementById('gridView').classList.toggle('hide', v!=='grid');
+    document.getElementById('listView').classList.toggle('hide', v!=='list');
+    document.getElementById('vGrid').classList.toggle('on', v==='grid');
+    document.getElementById('vList').classList.toggle('on', v==='list');
+  }
+  const stage=document.getElementById('stage'), btn=document.getElementById('themeBtn'),
+        icon=document.getElementById('themeIcon'), label=document.getElementById('themeLabel');
+  btn.addEventListener('click',()=>{ const d=stage.getAttribute('data-theme')==='dark';
+    stage.setAttribute('data-theme', d?'light':'dark');
+    icon.querySelector('use').setAttribute('href', d?'#ic-moon':'#ic-sun'); label.textContent=d?'Dark':'Light'; });
+</script>
+</body>
+</html>

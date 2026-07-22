@@ -61,17 +61,29 @@ class CatalogCubit extends HolderCubit {
     return (def == 'product' || def == 'service') ? def : null;
   }
 
-  /// Seed [selectedType] from config on the first load, before any fetch.
+  /// Preferred initial type: the last type the user picked (remembered across
+  /// tickets) wins; otherwise the Settings → Sale Configuration default.
+  String? _resolveInitialType() {
+    final last = _storage.saleType;
+    if (last != null) {
+      return (last == 'product' || last == 'service') ? last : null;
+    }
+    return _resolveDefaultType();
+  }
+
+  /// Seed [selectedType] on the first load, before any fetch.
   void _initDefaultType() {
     if (_typeInitialised) return;
     _typeInitialised = true;
-    selectedType = _resolveDefaultType();
+    selectedType = _resolveInitialType();
   }
 
   /// Adopt the freshly-synced default type once sale settings arrive from the
-  /// server — but never override a type the user has picked this session.
+  /// server — but never override a type the user has picked this session, nor a
+  /// remembered last-used type (that wins over the Settings default).
   void applyDefaultType() {
     if (_typeTouched) return;
+    if (_storage.saleType != null) return;
     final resolved = _resolveDefaultType();
     _typeInitialised = true;
     if (resolved == selectedType) return;
@@ -169,6 +181,7 @@ class CatalogCubit extends HolderCubit {
     _typeTouched = true;
     _typeInitialised = true;
     selectedType = type;
+    _storage.setSaleType(type ?? ''); // remember for the next ticket
     selectedCategoryId = null;
     _loaded = false; // refetch categories scoped to the new type
     load();

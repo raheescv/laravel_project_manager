@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Sale — Premium Redesign · 3 Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     New Sale — 3 premium redesign directions
+     Palette: Astra "Emerald & Gold" (Signature skin)
+       primary #15806C · primaryDark #0E5648 · gold #C9A24B
+       cream canvas #F6F1E8 · Marcellus (serif) + Manrope (ui)
+     ============================================================ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --page-bg: #E9E3D6;
+    --page-bg2: #DED6C4;
+    --page-ink: #1c2a25;
+    --page-sub: #6c7a72;
+    --page-card: #fffdf8;
+    --page-hair: #d8cfbd;
+  }
+  .stage[data-theme="dark"] {
+    --page-bg: #0a0d0c;
+    --page-bg2: #0f1512;
+    --page-ink: #eef1ec;
+    --page-sub: #8b988f;
+    --page-card: #141a17;
+    --page-hair: #26302b;
+  }
+
+  body {
+    font-family: 'Manrope', system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 700px at 15% -5%, rgba(21,128,108,.12), transparent 60%),
+      radial-gradient(1100px 700px at 100% 0%, rgba(201,162,75,.12), transparent 55%),
+      var(--page-bg);
+    color: var(--page-ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    transition: background .4s ease, color .4s ease;
+  }
+  .stage { transition: background .4s ease; }
+
+  /* ---------- top toolbar ---------- */
+  .toolbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px clamp(16px, 4vw, 44px);
+    background: color-mix(in srgb, var(--page-bg) 78%, transparent);
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    border-bottom: 1px solid var(--page-hair);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .mark {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, #15806C, #0E5648);
+    display: grid; place-items: center; color: #fff;
+    box-shadow: 0 6px 18px rgba(14,86,72,.35);
+  }
+  .brand .mark svg { width: 18px; height: 18px; }
+  .brand h1 { font-family: 'Marcellus', serif; font-size: 19px; font-weight: 400; letter-spacing: .2px; }
+  .brand p { font-size: 11.5px; color: var(--page-sub); margin-top: 1px; letter-spacing: .3px; }
+  .toolbar .spacer { flex: 1; }
+  .toggle {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 9px 15px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--page-hair);
+    background: var(--page-card); color: var(--page-ink);
+    font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 12.5px;
+    letter-spacing: .3px; transition: .2s;
+  }
+  .toggle:hover { border-color: #C9A24B; }
+  .toggle svg { width: 15px; height: 15px; }
+
+  /* ---------- layout ---------- */
+  .lead {
+    max-width: 900px; margin: 34px auto 8px; padding: 0 24px; text-align: center;
+  }
+  .lead .eyebrow {
+    font-size: 11px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase;
+    color: #B08A34;
+  }
+  .lead h2 { font-family: 'Marcellus', serif; font-weight: 400; font-size: clamp(26px, 4vw, 38px); margin: 12px 0 10px; }
+  .lead p { color: var(--page-sub); font-size: 14.5px; line-height: 1.6; max-width: 640px; margin: 0 auto; }
+
+  .stage-wrap { padding: 30px clamp(12px, 3vw, 40px) 80px; }
+  .rail {
+    display: flex; gap: clamp(20px, 3vw, 46px);
+    justify-content: center; align-items: flex-start; flex-wrap: wrap;
+  }
+  .col { width: 384px; max-width: 92vw; }
+
+  .caption { margin: 22px 4px 0; }
+  .caption .idx {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+    color: #B08A34; margin-bottom: 8px;
+  }
+  .caption .idx b {
+    width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+    background: #15806C; color: #fff; font-size: 11px;
+  }
+  .caption h3 { font-family: 'Marcellus', serif; font-weight: 400; font-size: 23px; margin-bottom: 6px; }
+  .caption p { color: var(--page-sub); font-size: 13px; line-height: 1.55; }
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+  .tags span {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .3px;
+    padding: 5px 10px; border-radius: 999px;
+    background: var(--page-card); border: 1px solid var(--page-hair); color: var(--page-sub);
+  }
+
+  /* ---------- device frame ---------- */
+  .phone {
+    position: relative; width: 384px; max-width: 92vw; height: 812px;
+    border-radius: 46px; padding: 11px;
+    background: linear-gradient(160deg, #1b1b1b, #2a2a2a 40%, #101010);
+    box-shadow:
+      0 2px 3px rgba(0,0,0,.5) inset,
+      0 40px 80px -30px rgba(0,0,0,.55),
+      0 12px 30px -12px rgba(0,0,0,.4);
+  }
+  .screen {
+    position: relative; width: 100%; height: 100%;
+    border-radius: 36px; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .island {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 108px; height: 30px; border-radius: 999px; background: #000; z-index: 40;
+  }
+  .statusbar {
+    height: 46px; flex: 0 0 46px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 26px; font-size: 13.5px; font-weight: 700; position: relative; z-index: 30;
+  }
+  .statusbar .dots { display: flex; align-items: center; gap: 6px; }
+  .statusbar .bar { width: 3px; border-radius: 2px; background: currentColor; opacity: .9; }
+  .statusbar .batt { width: 22px; height: 11px; border: 1.5px solid currentColor; border-radius: 3px; position: relative; opacity: .9; }
+  .statusbar .batt::after { content:''; position: absolute; right: -3px; top: 3px; width: 2px; height: 5px; background: currentColor; border-radius: 1px; }
+  .statusbar .batt i { position: absolute; inset: 1.5px; width: 70%; background: currentColor; border-radius: 1px; }
+
+  .view { flex: 1; overflow-y: auto; overflow-x: hidden; }
+  .view::-webkit-scrollbar { width: 0; }
+
+  /* shared bits */
+  .price { font-family: 'Marcellus', serif; }
+  .ser { font-family: 'Marcellus', serif; font-weight: 400; }
+
+  svg.i { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* =========================================================================
+     DIRECTION 1 — ATELIER  (Editorial boutique · warm cream · visual tile grid)
+     ========================================================================= */
+  .atelier {
+    --bg: #F7F2E8; --card: #FFFFFF; --ink: #1B2E28; --sec: #6B7C74; --muted: #AFB8AF;
+    --hair: #EBE2D2; --primary: #15806C; --primaryDark: #0E5648; --gold: #C9A24B;
+    --goldText: #A9822E; --tint: #ECF3EE;
+    background: var(--bg); color: var(--ink);
+  }
+  [data-theme="dark"] .atelier {
+    --bg: #13110B; --card: #1C1910; --ink: #F1ECE0; --sec: #B4AB93; --muted: #837B67;
+    --hair: #2c2718; --tint: rgba(21,128,108,.20); --goldText: #D8B15A;
+  }
+  .atelier .statusbar { color: var(--ink); }
+
+  .atl-head { padding: 4px 22px 20px; }
+  .atl-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .atl-ghost {
+    width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center;
+    border: 1px solid var(--hair); color: var(--ink); background: var(--card);
+  }
+  .atl-ghost svg.i { width: 19px; height: 19px; }
+  .atl-topbar .t { flex: 1; text-align: center; }
+  .atl-topbar .t .k { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--goldText); font-weight: 800; }
+  .atl-topbar .t h2 { font-family: 'Marcellus', serif; font-weight: 400; font-size: 25px; margin-top: 2px; }
+
+  .atl-who { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .atl-card {
+    border: 1px solid var(--hair); background: var(--card); border-radius: 16px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 11px;
+  }
+  .atl-card .av {
+    width: 34px; height: 34px; border-radius: 11px; flex: 0 0 34px; display: grid; place-items: center;
+    background: var(--tint); color: var(--primary);
+  }
+  .atl-card .av.gold { background: linear-gradient(135deg, #E7CE8C, #C9A24B); color: #4a3a12; font-family:'Marcellus',serif; font-size: 12px; }
+  .atl-card .av svg.i { width: 17px; height: 17px; }
+  .atl-card .m { min-width: 0; flex: 1; }
+  .atl-card .m .k { font-size: 9px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--goldText); font-weight: 800; }
+  .atl-card .m .v { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .atl-card .cv { color: var(--muted); }
+
+  .atl-tools { padding: 0 22px; display: flex; gap: 11px; margin-bottom: 20px; }
+  .atl-search {
+    flex: 1; display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px;
+    border-radius: 15px; border: 1px solid var(--hair); background: var(--card); color: var(--muted);
+  }
+  .atl-search svg.i { color: var(--sec); }
+  .atl-search span { font-size: 13.5px; font-weight: 600; }
+  .atl-scan {
+    width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, #16866f, #0E5648);
+    box-shadow: 0 10px 22px -8px rgba(14,86,72,.6);
+  }
+
+  .atl-tabs { display: flex; gap: 26px; padding: 0 24px; margin-bottom: 6px; border-bottom: 1px solid var(--hair); }
+  .atl-tab { padding: 0 0 12px; font-size: 13px; font-weight: 700; color: var(--muted); position: relative; letter-spacing: .2px; }
+  .atl-tab.on { color: var(--ink); }
+  .atl-tab.on::after { content:''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--gold); border-radius: 2px; }
+
+  .atl-cats { display: flex; gap: 9px; padding: 16px 22px 4px; overflow-x: auto; }
+  .atl-cats::-webkit-scrollbar { height: 0; }
+  .atl-cat { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 8px 15px; border-radius: 999px; color: var(--sec); border: 1px solid var(--hair); white-space: nowrap; }
+  .atl-cat.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .atl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; padding: 14px 22px 20px; }
+  .atl-tile {
+    position: relative; border: 1px solid var(--hair); background: var(--card); border-radius: 20px;
+    overflow: hidden; box-shadow: 0 14px 30px -22px rgba(20,40,32,.5);
+  }
+  /* Full-bleed image crowns the tile. Photos cover-fill; imageless services get
+     a tinted category panel so the frame is never empty. */
+  .atl-img { height: 134px; width: 100%; display: grid; place-items: center; background-size: cover; background-position: center; }
+  .atl-img.fallback { background: linear-gradient(135deg, var(--tint), color-mix(in srgb, var(--tint) 45%, transparent)); color: var(--primary); }
+  .atl-img.fallback svg.i { width: 42px; height: 42px; opacity: .9; }
+  .atl-img.p1 { background-image: linear-gradient(135deg,#173a2e,#0d251c); color:#E7CE8C; font-family:'Marcellus',serif; font-size:30px; }
+  .atl-img.p2 { background-image: linear-gradient(160deg,#d8c39a,#b89b62 55%,#8a6f3a); }
+  .atl-body { padding: 11px 12px 12px; }
+  .atl-tile .nm { font-size: 12.5px; font-weight: 800; letter-spacing: .2px; line-height: 1.25; min-height: 31px; }
+  .atl-tile .meta { font-size: 10.5px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+  .atl-tile .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .atl-tile .pr { font-family: 'Marcellus', serif; font-size: 18px; color: var(--ink); }
+  .atl-tile .pr .cur { color: var(--goldText); font-size: 12px; margin-right: 1px; }
+  .atl-add {
+    width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, #16866f, #0E5648); box-shadow: 0 8px 16px -6px rgba(14,86,72,.6);
+  }
+  .atl-add svg.i { width: 17px; height: 17px; stroke-width: 2.4; }
+
+  .atl-dock { padding: 12px 18px 20px; }
+  .atl-bar {
+    display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 18px; border-radius: 20px;
+    background: linear-gradient(135deg, #103d33, #0b241d); color: #fff;
+    box-shadow: 0 20px 40px -18px rgba(11,36,29,.8); border: 1px solid rgba(201,162,75,.28);
+  }
+  .atl-bar .lbl { font-size: 10.5px; color: rgba(255,255,255,.72); font-weight: 600; letter-spacing: .3px; }
+  .atl-bar .tot { font-family: 'Marcellus', serif; font-size: 20px; }
+  .atl-bar .go {
+    margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 13px;
+    background: linear-gradient(135deg, #E7CE8C, #C9A24B); color: #402f0d; font-weight: 800; font-size: 13px;
+  }
+  .atl-bar .go svg.i { width: 16px; height: 16px; stroke: #402f0d; stroke-width: 2.4; }
+  .atl-bar .cnt { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: rgba(255,255,255,.12); color: #E7CE8C; position: relative; }
+  .atl-bar .cnt b { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; border-radius: 999px; background: linear-gradient(135deg,#E7CE8C,#C9A24B); color:#402f0d; font-size:11px; display:grid; place-items:center; padding: 0 5px; }
+
+  /* =========================================================================
+     DIRECTION 2 — STUDIO  (Ultra-clean minimal · near-white · borderless list)
+     ========================================================================= */
+  .studio {
+    --bg: #FBFAF6; --card: #FFFFFF; --soft: #F1EFE8; --ink: #16312A; --sec: #5F7169;
+    --muted: #A7B1A9; --hair: #ECEAE1; --primary: #15806C; --primaryDark: #0E5648; --gold: #C9A24B; --goldText:#A9822E;
+    background: var(--bg); color: var(--ink);
+  }
+  [data-theme="dark"] .studio {
+    --bg: #0C1210; --card: #131a17; --soft: #141d19; --ink: #EDF0EC; --sec: #93a29a;
+    --muted: #6c7a72; --hair: #202824; --goldText:#D8B15A;
+  }
+  .studio .statusbar { color: var(--ink); }
+
+  .std-head { padding: 4px 20px 10px; }
+  .std-topbar { display: flex; align-items: center; }
+  .std-icon { width: 40px; height: 40px; margin: 0 -8px; border-radius: 12px; display: grid; place-items: center; color: var(--sec); }
+  .std-topbar h2 { flex: 1; text-align: center; font-family: 'Marcellus', serif; font-weight: 400; font-size: 21px; letter-spacing: .3px; }
+  .std-who { display: flex; align-items: center; margin-top: 18px; border: 1px solid var(--hair); border-radius: 16px; background: var(--card); }
+  .std-seg { flex: 1; display: flex; align-items: center; gap: 11px; padding: 13px 16px; }
+  .std-seg + .std-seg { border-left: 1px solid var(--hair); }
+  .std-seg .av { width: 30px; height: 30px; border-radius: 50%; flex: 0 0 30px; display: grid; place-items: center; background: var(--soft); color: var(--primary); }
+  .std-seg .av.ph { background: linear-gradient(135deg,#1f9d83,#0E5648); color:#dff3ee; font-family:'Marcellus',serif; font-size:12px;}
+  .std-seg .av svg.i { width: 15px; height: 15px; }
+  .std-seg .k { font-size: 9px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+  .std-seg .v { font-size: 13px; font-weight: 700; margin-top: 1px; }
+  .std-seg .cv { margin-left: auto; color: var(--muted); }
+
+  .std-search {
+    margin: 16px 20px 0; display: flex; align-items: center; gap: 11px; height: 46px; padding: 0 15px;
+    border-radius: 14px; background: var(--soft); color: var(--muted);
+  }
+  .std-search svg.i { color: var(--sec); width: 19px; height: 19px; }
+  .std-search span { flex: 1; font-size: 13.5px; font-weight: 600; }
+  .std-search .qr { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+  .std-search .qr svg.i { width: 16px; height: 16px; }
+
+  .std-segctl {
+    display: flex; margin: 16px 20px 0; padding: 4px; border-radius: 13px; background: var(--soft); gap: 4px;
+  }
+  .std-segctl button {
+    flex: 1; border: 0; background: transparent; font-family: 'Manrope',sans-serif; font-weight: 700; font-size: 12.5px;
+    color: var(--sec); padding: 10px 0; border-radius: 10px; cursor: pointer;
+  }
+  .std-segctl button.on { background: var(--card); color: var(--primary); box-shadow: 0 3px 10px -4px rgba(0,0,0,.18); }
+
+  .std-cats { display: flex; gap: 22px; padding: 20px 22px 4px; overflow-x: auto; }
+  .std-cats::-webkit-scrollbar { height: 0; }
+  .std-cat { flex: 0 0 auto; font-size: 12.5px; font-weight: 700; color: var(--muted); white-space: nowrap; padding-bottom: 2px; }
+  .std-cat.on { color: var(--ink); border-bottom: 2px solid var(--primary); }
+
+  .std-list { padding: 8px 22px 20px; }
+  .std-row { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .std-row .th { width: 42px; height: 42px; border-radius: 13px; flex: 0 0 42px; display: grid; place-items: center; border: 1.5px solid var(--hair); color: var(--primary); }
+  .std-row .th svg.i { width: 19px; height: 19px; }
+  .std-row .m { flex: 1; min-width: 0; }
+  .std-row .nm { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .std-row .meta { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+  .std-row .pr { font-family: 'Marcellus', serif; font-size: 16.5px; }
+  .std-row .pr .cur { color: var(--goldText); font-size: 11px; }
+  .std-plus {
+    width: 32px; height: 32px; border-radius: 50%; flex: 0 0 32px; display: grid; place-items: center;
+    border: 1.6px solid var(--primary); color: var(--primary);
+  }
+  .std-plus svg.i { width: 16px; height: 16px; stroke-width: 2.4; }
+
+  .std-dock { border-top: 1px solid var(--hair); padding: 14px 22px calc(14px + env(safe-area-inset-bottom)); background: var(--card); display: flex; align-items: center; gap: 12px; }
+  .std-dock .n { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--soft); color: var(--primary); position: relative; }
+  .std-dock .n b { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; border-radius: 999px; background: var(--primary); color:#fff; font-size: 10.5px; display: grid; place-items: center; padding: 0 4px; }
+  .std-dock .lbl { font-size: 10.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .std-dock .tot { font-family: 'Marcellus', serif; font-size: 19px; }
+  .std-dock .go { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 800; font-size: 13.5px; }
+  .std-dock .go svg.i { width: 17px; height: 17px; stroke-width: 2.4; }
+
+  /* =========================================================================
+     DIRECTION 3 — ONYX  (Dark immersive luxe · emerald-black · frosted glass)
+     ========================================================================= */
+  .onyx {
+    --ink: #F0E9D8; --sec: #9FB3AB; --muted: #6f867d; --gold: #D8B15A; --primary: #2BC39C;
+    --glass: rgba(255,255,255,.055); --glassB: rgba(255,255,255,.11);
+    color: var(--ink);
+    background:
+      radial-gradient(120% 60% at 50% -8%, rgba(43,195,156,.20), transparent 55%),
+      radial-gradient(90% 50% at 100% 8%, rgba(216,177,90,.14), transparent 50%),
+      linear-gradient(180deg, #07140F 0%, #0A1B16 45%, #061009 100%);
+  }
+  [data-theme="light"] .onyx {
+    --ink: #123128; --sec: #4C6A5F; --muted: #7d9187; --gold: #A9822E; --primary: #15806C;
+    --glass: rgba(255,255,255,.62); --glassB: rgba(255,255,255,.75);
+    background:
+      radial-gradient(120% 60% at 50% -8%, rgba(21,128,108,.22), transparent 55%),
+      radial-gradient(90% 50% at 100% 8%, rgba(201,162,75,.18), transparent 50%),
+      linear-gradient(180deg, #EAF3EE 0%, #F3EFE6 55%, #E6EFE9 100%);
+  }
+  .onyx .statusbar { color: var(--ink); }
+  .onyx .glass { background: var(--glass); border: 1px solid var(--glassB); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+
+  .onx-head { padding: 6px 22px 18px; }
+  .onx-topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .onx-circ { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); }
+  .onx-circ svg.i { width: 19px; height: 19px; }
+  .onx-topbar .t { flex: 1; }
+  .onx-topbar .t .k { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); font-weight: 800; }
+  .onx-topbar .t h2 { font-family: 'Marcellus', serif; font-weight: 400; font-size: 27px; margin-top: 3px; letter-spacing: .3px; }
+
+  .onx-who { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .onx-chip { border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 11px; }
+  .onx-chip .av { width: 32px; height: 32px; border-radius: 10px; flex: 0 0 32px; display: grid; place-items: center; background: rgba(43,195,156,.16); color: var(--primary); }
+  [data-theme="light"] .onx-chip .av { background: rgba(21,128,108,.14); }
+  .onx-chip .av.gold { background: linear-gradient(135deg,#E7CE8C,#C9A24B); color:#3a2c0b; font-family:'Marcellus',serif; font-size:12px; }
+  .onx-chip .av svg.i { width: 16px; height: 16px; }
+  .onx-chip .k { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); font-weight: 800; }
+  .onx-chip .v { font-size: 13px; font-weight: 700; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .onx-chip .cv { margin-left: auto; color: var(--sec); }
+
+  .onx-tools { display: flex; gap: 11px; padding: 0 22px; margin-bottom: 18px; }
+  .onx-search { flex: 1; display: flex; align-items: center; gap: 11px; height: 50px; padding: 0 16px; border-radius: 16px; color: var(--muted); }
+  .onx-search svg.i { color: var(--sec); }
+  .onx-search span { font-size: 13.5px; font-weight: 600; }
+  .onx-scan {
+    width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; color: #3a2c0b;
+    background: linear-gradient(135deg, #EAD08C, #C9A24B);
+    box-shadow: 0 12px 28px -8px rgba(201,162,75,.55), 0 0 0 1px rgba(255,255,255,.15) inset;
+  }
+
+  .onx-types { display: flex; gap: 9px; padding: 0 22px; margin-bottom: 12px; }
+  .onx-type { flex: 1; text-align: center; font-size: 12px; font-weight: 700; padding: 10px 0; border-radius: 12px; color: var(--sec); }
+  .onx-type.on { background: linear-gradient(135deg,#EAD08C,#C9A24B); color: #3a2c0b; box-shadow: 0 8px 20px -8px rgba(201,162,75,.5); }
+
+  .onx-cats { display: flex; gap: 9px; padding: 0 22px 4px; overflow-x: auto; }
+  .onx-cats::-webkit-scrollbar { height: 0; }
+  .onx-cat { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 999px; color: var(--sec); white-space: nowrap; }
+  .onx-cat.on { color: var(--ink); box-shadow: inset 0 0 0 1px rgba(43,195,156,.5); background: rgba(43,195,156,.12); }
+  [data-theme="light"] .onx-cat.on { box-shadow: inset 0 0 0 1px rgba(21,128,108,.5); background: rgba(21,128,108,.10); }
+
+  .onx-list { padding: 14px 22px 20px; display: flex; flex-direction: column; gap: 11px; }
+  .onx-item { border-radius: 18px; padding: 13px 13px 13px 14px; display: flex; align-items: center; gap: 13px; }
+  .onx-item .th { width: 46px; height: 46px; border-radius: 14px; flex: 0 0 46px; display: grid; place-items: center; background: rgba(43,195,156,.14); color: var(--primary); }
+  [data-theme="light"] .onx-item .th { background: rgba(21,128,108,.12); }
+  .onx-item .th.mono { background: linear-gradient(135deg, rgba(216,177,90,.22), rgba(216,177,90,.08)); color: var(--gold); font-family:'Marcellus',serif; font-size: 15px; }
+  .onx-item .th svg.i { width: 21px; height: 21px; }
+  .onx-item .m { flex: 1; min-width: 0; }
+  .onx-item .nm { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .onx-item .meta { font-size: 10.5px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+  .onx-item .pr { font-family: 'Marcellus', serif; font-size: 18px; color: var(--gold); }
+  .onx-item .pr .cur { font-size: 12px; opacity: .85; }
+  .onx-add {
+    width: 34px; height: 34px; border-radius: 12px; flex: 0 0 34px; display: grid; place-items: center; color: #3a2c0b;
+    background: linear-gradient(135deg,#EAD08C,#C9A24B); box-shadow: 0 8px 18px -7px rgba(201,162,75,.6);
+  }
+  .onx-add svg.i { width: 17px; height: 17px; stroke: #3a2c0b; stroke-width: 2.4; }
+
+  .onx-dock { padding: 12px 18px 22px; }
+  .onx-bar {
+    display: flex; align-items: center; gap: 14px; padding: 11px 11px 11px 16px; border-radius: 22px;
+    background: linear-gradient(135deg, #EAD08C, #C9A24B); color: #3a2c0b;
+    box-shadow: 0 20px 45px -14px rgba(201,162,75,.6), 0 0 0 1px rgba(255,255,255,.25) inset;
+  }
+  .onx-bar .cnt { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: rgba(58,44,11,.14); position: relative; }
+  .onx-bar .cnt b { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; border-radius: 999px; background: #0E5648; color:#EAD08C; font-size: 11px; display: grid; place-items: center; padding: 0 5px; }
+  .onx-bar .lbl { font-size: 10.5px; font-weight: 700; opacity: .72; letter-spacing: .3px; }
+  .onx-bar .tot { font-family: 'Marcellus', serif; font-size: 21px; }
+  .onx-bar .go { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 12px 17px; border-radius: 15px; background: #0b241d; color: #EAD08C; font-weight: 800; font-size: 13px; }
+  .onx-bar .go svg.i { width: 16px; height: 16px; stroke: #EAD08C; stroke-width: 2.4; }
+
+  .footnote { text-align: center; color: var(--page-sub); font-size: 12.5px; padding: 10px 24px 60px; line-height: 1.6; }
+  .footnote b { color: var(--page-ink); font-weight: 700; }
+  @media (max-width: 520px){ .phone{ height: 760px; } }
+</style>
+</head>
+<body>
+
+<!-- icon library (Material-style monoline, matches Flutter Icons.*) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="ic-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="ic-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></symbol>
+  <symbol id="ic-qr" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 011-1h3M20 8V5a1 1 0 00-1-1h-3M4 16v3a1 1 0 001 1h3M20 16v3a1 1 0 01-1 1h-3M3 12h18"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="ic-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></symbol>
+  <symbol id="ic-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 019 6c4-2 8-2 11-2 0 3 0 7-2 11a7 7 0 01-7 5zM8 16c2-4 5-7 9-9"/></symbol>
+  <symbol id="ic-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></symbol>
+  <symbol id="ic-brush" viewBox="0 0 24 24"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"/></symbol>
+  <symbol id="ic-bag" viewBox="0 0 24 24"><path d="M6 7h12l1 13H5L6 7zM9 7a3 3 0 016 0"/></symbol>
+  <symbol id="ic-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></symbol>
+</svg>
+
+<div class="stage" data-theme="light" id="stage">
+
+  <div class="toolbar">
+    <div class="brand">
+      <div class="mark"><svg class="i"><use href="#ic-bag"/></svg></div>
+      <div>
+        <h1>New Sale · Premium Redesign</h1>
+        <p>Astra POS — Emerald &amp; Gold · pick a direction</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="toggle" id="themeBtn">
+      <svg class="i" id="themeIcon"><use href="#ic-moon"/></svg>
+      <span id="themeLabel">Dark</span>
+    </button>
+  </div>
+
+  <div class="lead">
+    <div class="eyebrow">Three directions · one salon POS</div>
+    <h2>Redesigning the New Sale screen</h2>
+    <p>Same data, same actions — three distinct premium treatments. All built on your Marcellus + Manrope
+       type system and the Emerald &amp; Gold palette. Flip the top-right toggle to preview light / dark.</p>
+  </div>
+
+  <div class="stage-wrap">
+  <div class="rail">
+
+    <!-- ============ DIRECTION 1 · ATELIER ============ -->
+    <div class="col">
+      <div class="phone">
+        <div class="island"></div>
+        <div class="screen atelier">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="dots">
+              <span class="bar" style="height:8px"></span><span class="bar" style="height:11px"></span><span class="bar" style="height:14px"></span>
+              <span class="batt"><i></i></span>
+            </span>
+          </div>
+          <div class="view">
+            <div class="atl-head">
+              <div class="atl-topbar">
+                <div class="atl-ghost"><svg class="i"><use href="#ic-back"/></svg></div>
+                <div class="t"><div class="k">Ticket</div><h2>New Sale</h2></div>
+                <div class="atl-ghost"><svg class="i"><use href="#ic-close"/></svg></div>
+              </div>
+              <div class="atl-who">
+                <div class="atl-card">
+                  <div class="av"><svg class="i"><use href="#ic-person"/></svg></div>
+                  <div class="m"><div class="k">Client</div><div class="v">Walk-in</div></div>
+                  <svg class="i cv" style="width:16px"><use href="#ic-down"/></svg>
+                </div>
+                <div class="atl-card">
+                  <div class="av gold">MK</div>
+                  <div class="m"><div class="k">Staff</div><div class="v">Makbul</div></div>
+                  <svg class="i cv" style="width:16px"><use href="#ic-down"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="atl-tools">
+              <div class="atl-search"><svg class="i"><use href="#ic-search"/></svg><span>Search name or code</span></div>
+              <div class="atl-scan"><svg class="i"><use href="#ic-qr"/></svg></div>
+            </div>
+            <div class="atl-tabs">
+              <div class="atl-tab">All Types</div>
+              <div class="atl-tab">Products</div>
+              <div class="atl-tab on">Services</div>
+            </div>
+            <div class="atl-cats">
+              <div class="atl-cat on">All</div><div class="atl-cat">Adult</div><div class="atl-cat">Facial</div><div class="atl-cat">Hair color</div><div class="atl-cat">Hair dr…</div>
+            </div>
+            <div class="atl-grid">
+              <div class="atl-tile">
+                <div class="atl-img p1">SM</div>
+                <div class="atl-body">
+                  <div class="nm">123</div>
+                  <div class="meta">988671 · 2 min</div>
+                  <div class="foot"><div class="pr"><span class="cur">₹</span>0.00</div><div class="atl-add"><svg class="i"><use href="#ic-plus"/></svg></div></div>
+                </div>
+              </div>
+              <div class="atl-tile">
+                <div class="atl-img fallback"><svg class="i"><use href="#ic-leaf"/></svg></div>
+                <div class="atl-body">
+                  <div class="nm">ABC Test</div>
+                  <div class="meta">915756 · 20 min</div>
+                  <div class="foot"><div class="pr"><span class="cur">₹</span>23.00</div><div class="atl-add"><svg class="i"><use href="#ic-plus"/></svg></div></div>
+                </div>
+              </div>
+              <div class="atl-tile">
+                <div class="atl-img p2"></div>
+                <div class="atl-body">
+                  <div class="nm">Beard Cutting &amp; Coloring</div>
+                  <div class="meta">725555</div>
+                  <div class="foot"><div class="pr"><span class="cur">₹</span>35.00</div><div class="atl-add"><svg class="i"><use href="#ic-plus"/></svg></div></div>
+                </div>
+              </div>
+              <div class="atl-tile">
+                <div class="atl-img fallback"><svg class="i"><use href="#ic-scissors"/></svg></div>
+                <div class="atl-body">
+                  <div class="nm">Beard Setting</div>
+                  <div class="meta">601953</div>
+                  <div class="foot"><div class="pr"><span class="cur">₹</span>15.00</div><div class="atl-add"><svg class="i"><use href="#ic-plus"/></svg></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="atl-dock">
+            <div class="atl-bar">
+              <div class="cnt"><svg class="i"><use href="#ic-bag"/></svg><b>2</b></div>
+              <div><div class="lbl">2 services · Total</div><div class="tot">₹58.00</div></div>
+              <div class="go">View Cart <svg class="i"><use href="#ic-arrow"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="idx"><b>1</b> Atelier</div>
+        <h3>Editorial Boutique</h3>
+        <p>Magazine-grade calm. A slim ghost header, gold-underlined type tabs, and a
+           two-up grid where a <b>full-bleed product image</b> crowns every tile — photos
+           cover-fill, imageless services fall back to a tinted category panel.</p>
+        <div class="tags"><span>Full-image tiles</span><span>Gold hairlines</span><span>Serif prices</span><span>Cream &amp; ivory</span></div>
+      </div>
+    </div>
+
+    <!-- ============ DIRECTION 2 · STUDIO ============ -->
+    <div class="col">
+      <div class="phone">
+        <div class="island"></div>
+        <div class="screen studio">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="dots">
+              <span class="bar" style="height:8px"></span><span class="bar" style="height:11px"></span><span class="bar" style="height:14px"></span>
+              <span class="batt"><i></i></span>
+            </span>
+          </div>
+          <div class="view">
+            <div class="std-head">
+              <div class="std-topbar">
+                <div class="std-icon"><svg class="i" style="width:22px"><use href="#ic-back"/></svg></div>
+                <h2>New Sale</h2>
+                <div class="std-icon"><svg class="i" style="width:22px"><use href="#ic-close"/></svg></div>
+              </div>
+              <div class="std-who">
+                <div class="std-seg">
+                  <div class="av"><svg class="i"><use href="#ic-person"/></svg></div>
+                  <div><div class="k">Client</div><div class="v">Walk-in</div></div>
+                  <svg class="i cv" style="width:15px"><use href="#ic-down"/></svg>
+                </div>
+                <div class="std-seg">
+                  <div class="av ph">MK</div>
+                  <div><div class="k">Staff</div><div class="v">Makbul</div></div>
+                  <svg class="i cv" style="width:15px"><use href="#ic-down"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="std-search">
+              <svg class="i"><use href="#ic-search"/></svg>
+              <span>Search name or code</span>
+              <div class="qr"><svg class="i"><use href="#ic-qr"/></svg></div>
+            </div>
+            <div class="std-segctl">
+              <button>All Types</button><button>Products</button><button class="on">Services</button>
+            </div>
+            <div class="std-cats">
+              <div class="std-cat on">All</div><div class="std-cat">Adult</div><div class="std-cat">Facial</div><div class="std-cat">Hair color</div><div class="std-cat">Hair dr…</div>
+            </div>
+            <div class="std-list">
+              <div class="std-row">
+                <div class="th"><svg class="i"><use href="#ic-grid"/></svg></div>
+                <div class="m"><div class="nm">123</div><div class="meta">988671 · 2 min</div></div>
+                <div class="pr"><span class="cur">₹</span>0.00</div>
+                <div class="std-plus"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+              <div class="std-row">
+                <div class="th"><svg class="i"><use href="#ic-leaf"/></svg></div>
+                <div class="m"><div class="nm">ABC Test</div><div class="meta">915756 · 20 min</div></div>
+                <div class="pr"><span class="cur">₹</span>23.00</div>
+                <div class="std-plus"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+              <div class="std-row">
+                <div class="th"><svg class="i"><use href="#ic-leaf"/></svg></div>
+                <div class="m"><div class="nm">as</div><div class="meta">769573 · 10 min</div></div>
+                <div class="pr"><span class="cur">₹</span>10.00</div>
+                <div class="std-plus"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+              <div class="std-row">
+                <div class="th"><svg class="i"><use href="#ic-scissors"/></svg></div>
+                <div class="m"><div class="nm">Beard Cutting &amp; Coloring</div><div class="meta">725555</div></div>
+                <div class="pr"><span class="cur">₹</span>35.00</div>
+                <div class="std-plus"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+              <div class="std-row">
+                <div class="th"><svg class="i"><use href="#ic-scissors"/></svg></div>
+                <div class="m"><div class="nm">Beard Setting</div><div class="meta">601953</div></div>
+                <div class="pr"><span class="cur">₹</span>15.00</div>
+                <div class="std-plus"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+            </div>
+          </div>
+          <div class="std-dock">
+            <div class="n"><svg class="i" style="width:18px"><use href="#ic-bag"/></svg><b>2</b></div>
+            <div><div class="lbl">Total</div><div class="tot">₹58.00</div></div>
+            <div class="go">View cart <svg class="i"><use href="#ic-arrow"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="idx"><b>2</b> Studio</div>
+        <h3>Quiet Minimal</h3>
+        <p>Whitespace does the work. A flat white header, an iOS-style <b>segmented filter</b>,
+           and a borderless hairline-separated list with outline add-buttons. Neat, restrained, fast.</p>
+        <div class="tags"><span>Borderless list</span><span>Segmented control</span><span>Near-white</span><span>Airy</span></div>
+      </div>
+    </div>
+
+    <!-- ============ DIRECTION 3 · ONYX ============ -->
+    <div class="col">
+      <div class="phone">
+        <div class="island"></div>
+        <div class="screen onyx">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="dots">
+              <span class="bar" style="height:8px"></span><span class="bar" style="height:11px"></span><span class="bar" style="height:14px"></span>
+              <span class="batt"><i></i></span>
+            </span>
+          </div>
+          <div class="view">
+            <div class="onx-head">
+              <div class="onx-topbar">
+                <div class="onx-circ glass"><svg class="i"><use href="#ic-back"/></svg></div>
+                <div class="t"><div class="k">New Ticket</div><h2>New Sale</h2></div>
+                <div class="onx-circ glass"><svg class="i"><use href="#ic-close"/></svg></div>
+              </div>
+              <div class="onx-who">
+                <div class="onx-chip glass">
+                  <div class="av"><svg class="i"><use href="#ic-person"/></svg></div>
+                  <div style="min-width:0"><div class="k">Client</div><div class="v">Walk-in</div></div>
+                  <svg class="i cv" style="width:15px"><use href="#ic-down"/></svg>
+                </div>
+                <div class="onx-chip glass">
+                  <div class="av gold">MK</div>
+                  <div style="min-width:0"><div class="k">Staff</div><div class="v">Makbul</div></div>
+                  <svg class="i cv" style="width:15px"><use href="#ic-down"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="onx-tools">
+              <div class="onx-search glass"><svg class="i"><use href="#ic-search"/></svg><span>Search name or code</span></div>
+              <div class="onx-scan"><svg class="i"><use href="#ic-qr"/></svg></div>
+            </div>
+            <div class="onx-types">
+              <div class="onx-type glass">All Types</div>
+              <div class="onx-type glass">Products</div>
+              <div class="onx-type on">Services</div>
+            </div>
+            <div class="onx-cats">
+              <div class="onx-cat on">All</div><div class="onx-cat">Adult</div><div class="onx-cat">Facial</div><div class="onx-cat">Hair color</div><div class="onx-cat">Hair dr…</div>
+            </div>
+            <div class="onx-list">
+              <div class="onx-item glass">
+                <div class="th mono">SM</div>
+                <div class="m"><div class="nm">123</div><div class="meta">988671 · 2 min</div></div>
+                <div class="pr"><span class="cur">₹</span>0.00</div>
+                <div class="onx-add"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+              <div class="onx-item glass">
+                <div class="th"><svg class="i"><use href="#ic-leaf"/></svg></div>
+                <div class="m"><div class="nm">ABC Test</div><div class="meta">915756 · 20 min</div></div>
+                <div class="pr"><span class="cur">₹</span>23.00</div>
+                <div class="onx-add"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+              <div class="onx-item glass">
+                <div class="th"><svg class="i"><use href="#ic-scissors"/></svg></div>
+                <div class="m"><div class="nm">Beard Cutting &amp; Coloring</div><div class="meta">725555</div></div>
+                <div class="pr"><span class="cur">₹</span>35.00</div>
+                <div class="onx-add"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+              <div class="onx-item glass">
+                <div class="th"><svg class="i"><use href="#ic-scissors"/></svg></div>
+                <div class="m"><div class="nm">Beard Setting</div><div class="meta">601953</div></div>
+                <div class="pr"><span class="cur">₹</span>15.00</div>
+                <div class="onx-add"><svg class="i"><use href="#ic-plus"/></svg></div>
+              </div>
+            </div>
+          </div>
+          <div class="onx-dock">
+            <div class="onx-bar">
+              <div class="cnt"><svg class="i" style="stroke:#3a2c0b"><use href="#ic-bag"/></svg><b>2</b></div>
+              <div><div class="lbl">2 SERVICES · TOTAL</div><div class="tot">₹58.00</div></div>
+              <div class="go">View Cart <svg class="i"><use href="#ic-arrow"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <div class="idx"><b>3</b> Onyx</div>
+        <h3>Dark Immersive Luxe</h3>
+        <p>The show-stopper. Deep emerald-to-black canvas, <b>frosted-glass cards</b>, gold
+           serif prices with a glow, and a floating champagne cart pill. Drama, done tastefully.</p>
+        <div class="tags"><span>Frosted glass</span><span>Emerald-black</span><span>Gold glow</span><span>Immersive</span></div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <div class="footnote">
+    Mockups only — no Flutter code changed yet. Tell me a number (<b>1</b>, <b>2</b>, or <b>3</b>), or mix ideas
+    (e.g. “Onyx cards, Studio header”), and I’ll build it into <b>new_sale_screen.dart</b> with proper light + dark support.
+  </div>
+
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const btn = document.getElementById('themeBtn');
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  btn.addEventListener('click', () => {
+    const dark = stage.getAttribute('data-theme') === 'dark';
+    stage.setAttribute('data-theme', dark ? 'light' : 'dark');
+    icon.querySelector('use').setAttribute('href', dark ? '#ic-moon' : '#ic-sun');
+    label.textContent = dark ? 'Dark' : 'Light';
+  });
+</script>
+</body>
+</html>

@@ -24,7 +24,7 @@ class GetProductAction
             'department:id,name',
             'mainCategory:id,name',
             'subCategory:id,name',
-            'images:id,product_id,path',
+            'images:id,product_id,path,method',
             'inventories.branch:id,name,location',
         ]);
 

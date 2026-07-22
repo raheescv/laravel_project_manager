@@ -23,4 +23,9 @@ abstract class SaleRepository {
   Future<Uint8List> saleReceiptPdf(String id);
 
   Future<Sale> updateSale(String id, Map<String, dynamic> payload);
+
+  /// Permanently delete a sale (with its items and payments). Throws an
+  /// [ApiException] the caller can surface when the server refuses — e.g. a
+  /// completed sale, which can't be deleted.
+  Future<void> deleteSale(String id);
 }
