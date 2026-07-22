@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 
@@ -50,7 +52,7 @@ class FakeLookupRepository implements LookupRepository {
   Future<Product?> productByBarcode(String barcode) async => null;
 
   @override
-  Future<List<Category>> categories() async => [
+  Future<List<Category>> categories({String? type}) async => [
         Category(id: 1, name: 'Hair', productCount: total),
         Category(id: 2, name: 'Color', productCount: 1),
         Category(id: 3, name: 'Spa', productCount: 1),
@@ -80,8 +82,11 @@ class FakeLookupRepository implements LookupRepository {
       (baseCode: null, currencies: const <Currency>[]);
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled})> saleSettings() async =>
-      (defaultQuantity: null, tipEnabled: null);
+  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, RemotePrintConfig? print})> saleSettings() async =>
+      (defaultQuantity: null, tipEnabled: null, defaultProductType: null, print: null);
+
+  @override
+  Future<Uint8List> logo() async => Uint8List(0);
 }
 
 /// A [FakeLookupRepository] preset with the four demo catalog items the widget

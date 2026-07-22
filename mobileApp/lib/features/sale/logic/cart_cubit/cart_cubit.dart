@@ -1,3 +1,4 @@
+import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
@@ -142,6 +143,9 @@ class CartCubit extends HolderCubit {
       if (type != null && type != _storage.defaultProductType) {
         await _storage.setDefaultProductType(type);
       }
+      // Thermal-print options ride along on the same response — hand them to
+      // the print cubit so receipts follow the web Sale Configuration.
+      await serviceLocator<PrintSettingsCubit>().applyRemote(settings.print);
       if (changed) refresh();
     } catch (_) {
       // Offline or server error — keep the cached values.

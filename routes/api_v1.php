@@ -148,6 +148,10 @@ Route::prefix('v1')->group(function () {
             // Sale settings (default quantity, cached by the app for offline use)
             Route::get('settings/sale', [SaleSettingController::class, 'index'])->name('api.v1.settings.sale');
 
+            // Company logo bytes for the receipt header (cached by the app,
+            // re-fetched when print.logo_version changes)
+            Route::get('settings/logo', [SaleSettingController::class, 'logo'])->name('api.v1.settings.logo');
+
             // Stock Check (physical inventory count) — permission-driven, matching
             // the web `inventory.stock check` gate. A count snapshots branch stock
             // on create, is counted against (scan +1 or typed qty), and marking

@@ -7,12 +7,26 @@ import 'package:invo/features/settings/logic/print_settings_cubit/print_settings
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 
-/// In-app thermal-printer configuration. Mirrors the web sale-print options
-/// (resources/views/sale/print.blade.php): English-only vs bilingual Arabic,
-/// roll width and the discount / total-quantity toggles.
-/// Click-and-go — every change applies and persists instantly.
-class PrintSettingsScreen extends StatelessWidget {
+/// Thermal-printer configuration. The receipt options (language, footers,
+/// discount / total-quantity / barcode, Qty vs Weight label) follow the web
+/// Settings → Sale Configuration — the server is the source of truth, so they
+/// are shown read-only here and refresh on open. Only the paper width is a
+/// device-local choice (each till can hold a different roll).
+class PrintSettingsScreen extends StatefulWidget {
   const PrintSettingsScreen({super.key});
+
+  @override
+  State<PrintSettingsScreen> createState() => _PrintSettingsScreenState();
+}
+
+class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Pull the latest web configuration so changes made in Settings → Sale
+    // Configuration show up immediately; offline keeps the cached values.
+    context.read<PrintSettingsCubit>().syncFromServer();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,26 +49,7 @@ class PrintSettingsScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                   children: [
-                    _label(context, 'Print language'),
-                    const SizedBox(height: 8),
-                    _segment<PrintStyle>(
-                      context,
-                      options: PrintStyle.values,
-                      selected: c.style,
-                      labelOf: (s) => s.label,
-                      onSelect: (s) => context.read<PrintSettingsCubit>().setStyle(s),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 4),
-                      child: Text(
-                        c.style.isArabic
-                            ? 'Receipt prints English with Arabic labels & item names alongside.'
-                            : 'Receipt prints in English only.',
-                        style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _label(context, 'Paper width'),
+                    SectionLabel('Paper width'),
                     const SizedBox(height: 8),
                     _segment<PaperWidth>(
                       context,
@@ -64,34 +59,68 @@ class PrintSettingsScreen extends StatelessWidget {
                       onSelect: (w) => context.read<PrintSettingsCubit>().setWidth(w),
                     ),
                     const SizedBox(height: 20),
-                    _label(context, 'Show on receipt'),
+                    SectionLabel('Receipt options'),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 4, bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.cloud_done_outlined, size: 13, color: p.textMuted),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              'Managed in web Settings → Sale Configuration and synced automatically.',
+                              style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _valueRow(
+                      context,
+                      icon: Icons.translate,
+                      title: 'Print language',
+                      subtitle: c.style.isArabic
+                          ? 'English with Arabic labels & item names alongside'
+                          : 'English only',
+                      value: c.style.label,
+                    ),
+                    const SizedBox(height: 9),
+                    _valueRow(
+                      context,
+                      icon: Icons.straighten,
+                      title: 'Quantity label',
+                      subtitle: 'Column and total row wording',
+                      value: c.quantityLabel.column,
+                    ),
+                    const SizedBox(height: 9),
+                    _flagRow(context,
+                        icon: Icons.image_outlined,
+                        title: 'Logo',
+                        subtitle: 'Print the company logo',
+                        value: c.showLogo),
+                    const SizedBox(height: 9),
+                    _flagRow(context,
+                        icon: Icons.percent,
+                        title: 'Discount',
+                        subtitle: 'Print the discount line',
+                        value: c.showDiscount),
+                    const SizedBox(height: 9),
+                    _flagRow(context,
+                        icon: Icons.numbers,
+                        title: 'Total quantity',
+                        subtitle: 'Print the total item count',
+                        value: c.showTotalQty),
+                    const SizedBox(height: 9),
+                    _flagRow(context,
+                        icon: Icons.qr_code_2,
+                        title: 'Barcode & QR',
+                        subtitle: 'Print the barcode and QR code',
+                        value: c.showBarcode),
+                    const SizedBox(height: 20),
+                    SectionLabel('Footer'),
                     const SizedBox(height: 8),
-                    _toggle(
-                      context,
-                      icon: Icons.percent,
-                      title: 'Discount',
-                      subtitle: 'Print the discount line',
-                      value: c.showDiscount,
-                      onChanged: (v) => context.read<PrintSettingsCubit>().setShowDiscount(v),
-                    ),
-                    const SizedBox(height: 9),
-                    _toggle(
-                      context,
-                      icon: Icons.numbers,
-                      title: 'Total quantity',
-                      subtitle: 'Print the total item count',
-                      value: c.showTotalQty,
-                      onChanged: (v) => context.read<PrintSettingsCubit>().setShowTotalQty(v),
-                    ),
-                    const SizedBox(height: 9),
-                    _toggle(
-                      context,
-                      icon: Icons.qr_code_2,
-                      title: 'Barcode & QR',
-                      subtitle: 'Print the barcode and QR code',
-                      value: c.showBarcode,
-                      onChanged: (v) => context.read<PrintSettingsCubit>().setShowBarcode(v),
-                    ),
+                    _footerCard(context, c),
                   ],
                 ),
               ),
@@ -101,8 +130,6 @@ class PrintSettingsScreen extends StatelessWidget {
       ),
     );
   }
-
-  Widget _label(BuildContext context, String text) => SectionLabel(text);
 
   /// A two/three-way pill selector. Tapping applies instantly.
   Widget _segment<T>(
@@ -152,18 +179,37 @@ class PrintSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _toggle(
+  /// Read-only row showing a server-managed choice as text.
+  Widget _valueRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+  }) =>
+      _row(context, icon: icon, title: title, subtitle: subtitle, trailing: _pill(context, value, on: true));
+
+  /// Read-only row showing a server-managed on/off flag.
+  Widget _flagRow(
     BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
     required bool value,
-    required void Function(bool) onChanged,
+  }) =>
+      _row(context,
+          icon: icon, title: title, subtitle: subtitle, trailing: _pill(context, value ? 'On' : 'Off', on: value));
+
+  Widget _row(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
   }) {
     final p = context.astra;
     return AstraCard(
       radius: 14,
-      onTap: () => onChanged(!value),
       child: Row(
         children: [
           IconChip(icon: icon, size: 32, radius: 9, bg: p.tint),
@@ -177,29 +223,52 @@ class PrintSettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-          _switch(context, value),
+          trailing,
         ],
       ),
     );
   }
 
-  Widget _switch(BuildContext context, bool value) {
+  Widget _pill(BuildContext context, String text, {required bool on}) {
     final p = context.astra;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      width: 44,
-      height: 26,
-      padding: const EdgeInsets.all(3),
-      alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        gradient: value ? p.primaryGradient : null,
-        color: value ? null : p.hairline,
+        color: on ? p.tint : p.hairline,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Container(
-        width: 20,
-        height: 20,
-        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+      child: Text(text,
+          style: ui(size: 10.5, weight: FontWeight.w700, color: on ? p.ink : p.textMuted)),
+    );
+  }
+
+  /// Read-only preview of the configured footer message(s).
+  Widget _footerCard(BuildContext context, PrintSettingsCubit c) {
+    final p = context.astra;
+    final en = c.footerEnglish.trim();
+    final ar = c.footerArabic.trim();
+    return AstraCard(
+      radius: 14,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (en.isEmpty && (!c.style.isArabic || ar.isEmpty))
+            Text('No footer message configured.',
+                style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted))
+          else ...[
+            if (en.isNotEmpty)
+              Text(en, style: ui(size: 11, weight: FontWeight.w600, color: p.ink)),
+            if (c.style.isArabic && ar.isNotEmpty) ...[
+              if (en.isNotEmpty) const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(ar,
+                    textDirection: TextDirection.rtl,
+                    style: ui(size: 11, weight: FontWeight.w600, color: p.ink)),
+              ),
+            ],
+          ],
+        ],
       ),
     );
   }

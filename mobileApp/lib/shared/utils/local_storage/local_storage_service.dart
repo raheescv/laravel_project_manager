@@ -147,6 +147,32 @@ class LocalStorageService {
   Future<void> setPrintFooterArabic(String v) =>
       _prefs.setString(LocalStorageKeys.printFooterAr, v);
 
+  // Receipt quantity label ('quantity' → Qty, 'weight' → Weight); mirrors the
+  // web `print_quantity_label` config.
+  String? get printQuantityLabel =>
+      _prefs.getString(LocalStorageKeys.printQtyLabel);
+  Future<void> setPrintQuantityLabel(String v) =>
+      _prefs.setString(LocalStorageKeys.printQtyLabel, v);
+
+  // Company logo on the receipt: show flag (web `enable_logo_in_print`), the
+  // server-side version marker and the cached image bytes (base64) so receipts
+  // print the logo offline.
+  bool? get printLogo => _prefs.containsKey(LocalStorageKeys.printLogo)
+      ? _prefs.getBool(LocalStorageKeys.printLogo)
+      : null;
+  Future<void> setPrintLogo(bool v) =>
+      _prefs.setBool(LocalStorageKeys.printLogo, v);
+
+  String? get printLogoVersion =>
+      _prefs.getString(LocalStorageKeys.printLogoVersion);
+  Future<void> setPrintLogoVersion(String v) =>
+      _prefs.setString(LocalStorageKeys.printLogoVersion, v);
+
+  String? get printLogoData =>
+      _prefs.getString(LocalStorageKeys.printLogoData);
+  Future<void> setPrintLogoData(String v) =>
+      _prefs.setString(LocalStorageKeys.printLogoData, v);
+
   // ---- cached user json ----
   String? get userJson => _prefs.getString(LocalStorageKeys.user);
   Future<void> setUserJson(String v) =>

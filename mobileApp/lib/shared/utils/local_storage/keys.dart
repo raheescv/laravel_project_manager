@@ -36,4 +36,8 @@ class LocalStorageKeys {
   static const String printBarcode = 'astra.print.barcode';
   static const String printFooterEn = 'astra.print.footerEn';
   static const String printFooterAr = 'astra.print.footerAr';
+  static const String printQtyLabel = 'astra.print.qtyLabel';
+  static const String printLogo = 'astra.print.logo';
+  static const String printLogoVersion = 'astra.print.logoVersion';
+  static const String printLogoData = 'astra.print.logoData';
 }

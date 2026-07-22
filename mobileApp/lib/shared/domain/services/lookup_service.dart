@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../utils/router/http_utils/http_service.dart';
 import '../constants/global_variables.dart';
 import '../models/index.dart';
@@ -94,13 +96,17 @@ class LookupService implements LookupRepository {
   }
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType})> saleSettings() async {
+  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, RemotePrintConfig? print})> saleSettings() async {
     final data = await _http.get('/settings/sale');
     final map = Map<String, dynamic>.from(data as Map);
     return (
       defaultQuantity: double.tryParse(map['default_quantity']?.toString() ?? ''),
       tipEnabled: map['tip_enabled'] is bool ? map['tip_enabled'] as bool : null,
       defaultProductType: map['default_product_type']?.toString(),
+      print: map['print'] is Map ? RemotePrintConfig.fromJson(Map<String, dynamic>.from(map['print'] as Map)) : null,
     );
   }
+
+  @override
+  Future<Uint8List> logo() => _http.getBytes('/settings/logo');
 }

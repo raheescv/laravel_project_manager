@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/index.dart';
 
 /// Read-only reference data used across features (catalog, branches, customers,
@@ -28,5 +30,9 @@ abstract class LookupRepository {
 
   Future<({String? baseCode, List<Currency> currencies})> currencies();
 
-  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType})> saleSettings();
+  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, RemotePrintConfig? print})> saleSettings();
+
+  /// Company logo bytes (png/jpg/svg) for the receipt header; cached by the
+  /// print cubit keyed on `RemotePrintConfig.logoVersion`.
+  Future<Uint8List> logo();
 }

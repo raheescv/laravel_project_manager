@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/widgets/receipt_pdf.dart';
@@ -17,6 +20,7 @@ Sale _demoSale() => Sale.fromJson({
 PrintSettings _settings({
   PrintStyle style = PrintStyle.englishOnly,
   PaperWidth width = PaperWidth.mm80,
+  Uint8List? logo,
 }) =>
     PrintSettings(
       style: style,
@@ -26,7 +30,15 @@ PrintSettings _settings({
       showBarcode: true,
       footerEnglish: 'Thank you!',
       footerArabic: 'شكرا لك',
+      logo: logo,
     );
+
+// A 1x1 red pixel PNG — the smallest valid raster logo.
+final Uint8List _pngLogo = base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+
+final Uint8List _svgLogo = Uint8List.fromList(utf8.encode(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="40"><rect width="80" height="40" fill="#0a5"/></svg>'));
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -65,5 +77,12 @@ void main() {
     });
     final bytes = await buildReceiptPdf(sale, _settings());
     expect(bytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]);
+  });
+
+  test('buildReceiptPdf renders png, svg and garbage logos safely', () async {
+    for (final logo in [_pngLogo, _svgLogo, Uint8List.fromList([1, 2, 3])]) {
+      final bytes = await buildReceiptPdf(_demoSale(), _settings(logo: logo));
+      expect(bytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]);
+    }
   });
 }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
@@ -97,6 +98,8 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
   final balance = grandTotal - sale.paid;
   final totalQty = sale.lines.fold<double>(0, (t, l) => t + l.quantity);
 
+  final logo = _logoWidget(settings.logo, s);
+
   final doc = pw.Document(title: 'Invoice $invoiceNo');
 
   doc.addPage(
@@ -109,6 +112,12 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
         mainAxisSize: pw.MainAxisSize.min,
         children: [
           // ---- store header ----
+          // Company logo (web `enable_logo_in_print`; ~80px on the web receipt).
+          if (logo != null)
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 3),
+              child: pw.Center(child: logo),
+            ),
           pw.Center(
             child: pw.Text((sale.branch.isEmpty ? 'INVO' : sale.branch).toUpperCase(),
                 style: pw.TextStyle(fontSize: s(14), fontWeight: pw.FontWeight.bold, letterSpacing: 0.4)),
@@ -144,12 +153,13 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
           _metaTable(sale, invoiceNo, ar, s),
           _dashed(),
           // ---- items ----
-          _itemsTable(sale, ar, s),
+          _itemsTable(sale, ar, s, settings.quantityLabel),
           _dashed(),
           // ---- totals ----
           _totalsTable(
             ar: ar,
             s: s,
+            qtyLabel: settings.quantityLabel,
             showTotalQty: settings.showTotalQty,
             showDiscount: settings.showDiscount,
             totalQty: totalQty,
@@ -198,6 +208,25 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
   return doc.save();
 }
 
+// ---- logo ----------------------------------------------------------------
+
+/// The cached company logo as a pdf widget — raster (png/jpg) via MemoryImage,
+/// svg via SvgImage; anything else (corrupt cache, unsupported format) returns
+/// null so the receipt still prints without it.
+pw.Widget? _logoWidget(Uint8List? bytes, double Function(double) s) {
+  if (bytes == null || bytes.isEmpty) return null;
+  try {
+    final isPng = bytes.length > 8 && bytes[0] == 0x89 && bytes[1] == 0x50;
+    final isJpg = bytes.length > 3 && bytes[0] == 0xFF && bytes[1] == 0xD8;
+    if (isPng || isJpg) return pw.Image(pw.MemoryImage(bytes), width: s(60));
+    final text = utf8.decode(bytes, allowMalformed: true);
+    if (text.contains('<svg')) return pw.SvgImage(svg: text, width: s(60));
+  } catch (_) {
+    // Undecodable image — skip the logo.
+  }
+  return null;
+}
+
 // ---- meta table ----------------------------------------------------------
 
 pw.Widget _metaTable(Sale sale, String invoiceNo, bool ar, double Function(double) s) {
@@ -229,7 +258,7 @@ pw.Widget _metaTable(Sale sale, String invoiceNo, bool ar, double Function(doubl
 
 // ---- items table ---------------------------------------------------------
 
-pw.Widget _itemsTable(Sale sale, bool ar, double Function(double) s) {
+pw.Widget _itemsTable(Sale sale, bool ar, double Function(double) s, QuantityLabel qtyLabel) {
   return pw.Table(
     border: pw.TableBorder.all(width: 0.5, color: PdfColors.black),
     columnWidths: {
@@ -243,7 +272,7 @@ pw.Widget _itemsTable(Sale sale, bool ar, double Function(double) s) {
       pw.TableRow(
         children: [
           _hcell('Item', ar ? _ar['item'] : null, s(8)),
-          _hcell('Qty', ar ? _ar['quantity'] : null, s(8), align: pw.Alignment.center),
+          _hcell(qtyLabel.column, ar ? _ar['quantity'] : null, s(8), align: pw.Alignment.center),
           _hcell('Price', ar ? _ar['price'] : null, s(8), align: pw.Alignment.centerRight),
           _hcell('Amount', ar ? _ar['amount'] : null, s(8), align: pw.Alignment.centerRight),
         ],
@@ -281,6 +310,7 @@ pw.Widget _itemsTable(Sale sale, bool ar, double Function(double) s) {
 pw.Widget _totalsTable({
   required bool ar,
   required double Function(double) s,
+  required QuantityLabel qtyLabel,
   required bool showTotalQty,
   required bool showDiscount,
   required double totalQty,
@@ -293,7 +323,7 @@ pw.Widget _totalsTable({
 }) {
   // (english label, value, arabic label, bold)
   final rows = <List<dynamic>>[
-    if (showTotalQty) ['Total Qty', _num(totalQty), _ar['total_quantity'], false],
+    if (showTotalQty) [qtyLabel.total, _num(totalQty), _ar['total_quantity'], false],
     ['Net Value', Money.of(netValue), _ar['net_value'], false],
     if (showDiscount && discount != 0) ['Discount', '- ${Money.of(discount)}', _ar['discount'], false],
     if (tax != 0) ['Tax', Money.of(tax), _ar['tax'], false],
