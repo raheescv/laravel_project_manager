@@ -39,7 +39,10 @@ Future<void> showCurrencySheet(BuildContext context) {
                   children: [
                     Icon(Icons.payments_outlined, size: 18, color: p.primary),
                     const SizedBox(width: 9),
-                    Text('Currency', style: serif(size: 20, color: p.ink)),
+                    Flexible(
+                      child: Text('Currency', maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: serif(size: 20, color: p.ink)),
+                    ),
                     const SizedBox(width: 9),
                     if (controller.isCached) _offlineChip(sheetContext),
                     const Spacer(),

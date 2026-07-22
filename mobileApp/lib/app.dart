@@ -64,13 +64,29 @@ class _InvoAppState extends State<InvoApp> {
               debugShowCheckedModeBanner: false,
               theme: buildAstraTheme(palette),
               routerConfig: _router,
-              builder: (context, child) => HapticTapDetector(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                  child: child,
-                ),
-              ),
+              builder: (context, child) {
+                // Clamp the OS text-scale so a large accessibility setting can't
+                // blow past the app's fixed-height rows/tiles and trip overflow.
+                // We still honour moderate scale-ups (up to 1.3×) and any
+                // scale-down; only the runaway upper end is capped.
+                final mq = MediaQuery.of(context);
+                final scaled = MediaQuery(
+                  data: mq.copyWith(
+                    textScaler: mq.textScaler.clamp(
+                      minScaleFactor: 0.85,
+                      maxScaleFactor: 1.3,
+                    ),
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                );
+                return HapticTapDetector(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                    child: scaled,
+                  ),
+                );
+              },
             );
           },
         ),

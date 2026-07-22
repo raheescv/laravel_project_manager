@@ -66,13 +66,22 @@ Widget cartLineCard(BuildContext context, CartLine line) {
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(Money.of(line.total), style: serif(size: 16, color: p.goldText)),
-                  Text('${Money.of(line.unitPrice)} / unit',
-                      style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted)),
-                ],
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(Money.of(line.total), style: serif(size: 16, color: p.goldText)),
+                    ),
+                    Text('${Money.of(line.unitPrice)} / unit',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted)),
+                  ],
+                ),
               ),
             ],
           ),

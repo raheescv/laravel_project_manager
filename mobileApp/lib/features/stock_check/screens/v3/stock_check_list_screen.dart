@@ -359,9 +359,14 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${r.itemsCounted} / ${r.itemsTotal} counted · $pct%',
-                  style: ui(size: 10.5, weight: FontWeight.w700, color: p.textSecondary)),
-              Text(netLabel, style: ui(size: 11, weight: FontWeight.w800, color: netColor)),
+              Flexible(
+                child: Text('${r.itemsCounted} / ${r.itemsTotal} counted · $pct%',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10.5, weight: FontWeight.w700, color: p.textSecondary)),
+              ),
+              const SizedBox(width: 8),
+              Text(netLabel, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 11, weight: FontWeight.w800, color: netColor)),
             ],
           ),
         ],

@@ -167,6 +167,9 @@ class AstraNavBar extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 astraNavTabs[i].label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: ui(size: 9, weight: active ? FontWeight.w800 : FontWeight.w600, color: color),
               ),
             ],

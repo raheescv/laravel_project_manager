@@ -456,8 +456,19 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('$_total return${_total == 1 ? '' : 's'}', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
-          Text('− ${Money.of(_totalPaid)}', style: serif(size: 16, color: p.goldText)),
+          Flexible(
+            child: Text('$_total return${_total == 1 ? '' : 's'}',
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text('− ${Money.of(_totalPaid)}', style: serif(size: 16, color: p.goldText)),
+            ),
+          ),
         ],
       ),
     );
@@ -541,30 +552,42 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: p.cardSolid,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(color: p.hairline, borderRadius: BorderRadius.circular(4)),
+      isScrollControlled: true,
+      builder: (ctx) => ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.85),
+        child: Container(
+          decoration: BoxDecoration(
+            color: p.cardSolid,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(color: p.hairline, borderRadius: BorderRadius.circular(4)),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 10),
-              child: Text(title, style: serif(size: 17, color: p.ink)),
-            ),
-            ...tiles,
-          ],
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 10),
+                child: Text(title, style: serif(size: 17, color: p.ink)),
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: tiles,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

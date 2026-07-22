@@ -288,7 +288,13 @@ class ReturnReceiptScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Text(Money.of(l.total), style: ui(size: 13.5, weight: FontWeight.w800, color: p.ink)),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(Money.of(l.total), style: ui(size: 13.5, weight: FontWeight.w800, color: p.ink)),
+            ),
+          ),
         ],
       ),
     );
@@ -340,8 +346,15 @@ class ReturnReceiptScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: ui(size: 12.5, weight: FontWeight.w600, color: color)),
-            Text(value, style: ui(size: 12.5, weight: FontWeight.w700, color: color)),
+            Flexible(
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: ui(size: 12.5, weight: FontWeight.w600, color: color)),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right,
+                  style: ui(size: 12.5, weight: FontWeight.w700, color: color)),
+            ),
           ],
         ),
       );
@@ -377,13 +390,20 @@ class ReturnReceiptScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_titleCase(label), style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+                Text(_titleCase(label), maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
                 const SizedBox(height: 2),
-                Text('Refund issued', style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                Text('Refund issued', maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),
           ),
-          Text(amount, style: ui(size: 13.5, weight: FontWeight.w800, color: p.ink)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(amount, style: ui(size: 13.5, weight: FontWeight.w800, color: p.ink)),
+            ),
+          ),
         ],
       ),
     );

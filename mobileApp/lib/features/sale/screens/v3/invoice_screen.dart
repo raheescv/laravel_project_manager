@@ -715,17 +715,29 @@ class InvoiceScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text('Actions', style: serif(size: 22, color: p.ink)),
               const SizedBox(height: 16),
-              if (_editable && canEdit)
-                _sheetAction(ctx, p, Icons.edit_outlined, p.primary, 'Edit',
-                    'Re-open this sale to change items', () => _edit(context)),
-              if (_returnable)
-                _sheetAction(ctx, p, Icons.assignment_return_outlined, p.goldText, 'Return',
-                    'Start a return against this invoice', () => _return(context)),
-              _sheetAction(ctx, p, Icons.ios_share, p.ink, 'Share',
-                  'Send the receipt as a PDF', () => _share(context)),
-              if (canDelete)
-                _sheetAction(ctx, p, Icons.delete_outline, AstraPalette.danger, 'Delete',
-                    'Permanently remove this sale', () => _delete(context)),
+              // Scrollable so all four actions never overflow the sheet in
+              // landscape / on a short viewport.
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_editable && canEdit)
+                        _sheetAction(ctx, p, Icons.edit_outlined, p.primary, 'Edit',
+                            'Re-open this sale to change items', () => _edit(context)),
+                      if (_returnable)
+                        _sheetAction(ctx, p, Icons.assignment_return_outlined, p.goldText, 'Return',
+                            'Start a return against this invoice', () => _return(context)),
+                      _sheetAction(ctx, p, Icons.ios_share, p.ink, 'Share',
+                          'Send the receipt as a PDF', () => _share(context)),
+                      if (canDelete)
+                        _sheetAction(ctx, p, Icons.delete_outline, AstraPalette.danger, 'Delete',
+                            'Permanently remove this sale', () => _delete(context)),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),

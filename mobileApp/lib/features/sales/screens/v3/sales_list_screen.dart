@@ -450,8 +450,19 @@ class _SalesListScreenState extends State<SalesListScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('$_total invoice${_total == 1 ? '' : 's'}', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
-          Text(Money.of(_totalPaid), style: serif(size: 16, color: p.goldText)),
+          Flexible(
+            child: Text('$_total invoice${_total == 1 ? '' : 's'}',
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(Money.of(_totalPaid), style: serif(size: 16, color: p.goldText)),
+            ),
+          ),
         ],
       ),
     );

@@ -514,10 +514,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ---- TODAY'S PAYMENTS ----
+  // ---- SESSION PAYMENTS ----
   /// Replaces the old static "Business overview" counts with an actionable
-  /// breakdown of what was actually collected today, split by payment method —
-  /// the figure an owner reconciles against at day-close.
+  /// breakdown of what was collected during the branch's open day session,
+  /// split by payment method — the figure an owner reconciles at day-close.
+  /// Empty when no day session is open.
   Widget _paymentSplit(AdminCubit admin) {
     final p = context.astra;
     final methods = admin.dashboard?.payments ?? const <Metric>[];
@@ -528,7 +529,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 10),
-          child: SectionLabel("Today's payments"),
+          child: SectionLabel('Session payments'),
         ),
         AstraCard(
           child: methods.isEmpty
@@ -539,7 +540,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Icon(Icons.account_balance_wallet_outlined, size: 18, color: p.textMuted),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text('No payments collected yet today.',
+                        child: Text('No payments collected this session yet.',
                             style: ui(size: 12, weight: FontWeight.w600, color: p.textMuted)),
                       ),
                     ],
@@ -552,7 +553,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Icon(Icons.account_balance_wallet_outlined, size: 16, color: p.primary),
                         const SizedBox(width: 7),
-                        Text('Collected today', style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+                        Text('Collected this session', style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
                         const Spacer(),
                         Text(Money.of(total), style: serif(size: 16, color: p.primaryDark)),
                       ],

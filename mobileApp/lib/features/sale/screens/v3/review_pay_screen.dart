@@ -358,9 +358,15 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
                 children: [
                   Icon(icon, size: 18, color: active ? p.accent : p.textSecondary),
                   const SizedBox(height: 5),
-                  Text(
-                    isCustom && count > 0 ? '$count method${count == 1 ? '' : 's'}' : mode.label,
-                    style: ui(size: 10.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      isCustom && count > 0 ? '$count method${count == 1 ? '' : 's'}' : mode.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: ui(size: 10.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary),
+                    ),
                   ),
                 ],
               ),

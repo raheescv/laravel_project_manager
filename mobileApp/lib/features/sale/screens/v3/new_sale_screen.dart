@@ -562,7 +562,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            _priceText(s.mrp),
+            Flexible(child: _priceText(s.mrp)),
             const SizedBox(width: 12),
             Container(
               width: 34,
@@ -996,7 +996,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         child: Container(
           decoration: BoxDecoration(color: p.sheet, borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
+          // Scrollable so the form never overflows when the keyboard is up on a
+          // short phone or in landscape.
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1018,6 +1021,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 },
               ),
             ],
+            ),
           ),
         ),
       ),

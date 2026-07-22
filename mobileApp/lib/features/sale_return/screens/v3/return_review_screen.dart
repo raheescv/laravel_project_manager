@@ -233,8 +233,9 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
       child: GestureDetector(
         onTap: () => isCustom ? _openCustom() : draft.setPayMode(mode),
         child: Container(
-          height: 64,
+          constraints: const BoxConstraints(minHeight: 64),
           alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: active ? p.primaryDark : p.card,
             borderRadius: BorderRadius.circular(13),
@@ -248,9 +249,15 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
                 children: [
                   Icon(icon, size: 18, color: active ? p.accent : p.textSecondary),
                   const SizedBox(height: 5),
-                  Text(
-                    isCustom && count > 0 ? '$count method${count == 1 ? '' : 's'}' : mode.label,
-                    style: ui(size: 10.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      isCustom && count > 0 ? '$count method${count == 1 ? '' : 's'}' : mode.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: ui(size: 10.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary),
+                    ),
                   ),
                 ],
               ),
@@ -296,14 +303,27 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(status.icon, size: 14, color: status.color),
-                  const SizedBox(width: 6),
-                  Text(status.label, style: ui(size: 12, weight: FontWeight.w800, color: status.color)),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(status.icon, size: 14, color: status.color),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(status.label,
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: ui(size: 12, weight: FontWeight.w800, color: status.color)),
+                    ),
+                  ],
+                ),
               ),
-              Text(Money.of(bal.abs()), style: ui(size: 14, weight: FontWeight.w800, color: status.color)),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(Money.of(bal.abs()), style: ui(size: 14, weight: FontWeight.w800, color: status.color)),
+                ),
+              ),
             ],
           ),
         ],

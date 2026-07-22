@@ -92,7 +92,10 @@ class _EditLineSheetState extends State<_EditLineSheet> {
       child: Container(
         decoration: BoxDecoration(color: p.sheet, borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
-        child: Column(
+        // Scrollable so the full edit form never overflows vertically when the
+        // keyboard is up on a small phone or in landscape.
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -196,6 +199,7 @@ class _EditLineSheetState extends State<_EditLineSheet> {
               ],
             ),
           ],
+          ),
         ),
       ),
     );
@@ -337,12 +341,21 @@ class _EditLineSheetState extends State<_EditLineSheet> {
                 Text('LINE TOTAL', style: ui(size: 10, weight: FontWeight.w700, color: p.textSecondary, letterSpacing: 0.4)),
                 Text(
                   '${Money.of(_unitPrice)} ${_discount > 0 ? '− ${_isPercent ? '${_discount.toStringAsFixed(0)}%' : Money.of(_discount)} ' : ''}${_tax > 0 ? '+ ${_tax.toStringAsFixed(0)}% tax' : ''}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted),
                 ),
               ],
             ),
           ),
-          Text(Money.of(_total), style: serif(size: 24, color: p.primaryDark)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(Money.of(_total), style: serif(size: 24, color: p.primaryDark)),
+            ),
+          ),
         ],
       ),
     );

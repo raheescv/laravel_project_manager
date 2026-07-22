@@ -241,7 +241,10 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
               borderRadius: BorderRadius.circular(10),
               boxShadow: active ? context.astraTheme.softShadow : null,
             ),
-            child: Text(label, style: ui(size: 11.5, weight: active ? FontWeight.w800 : FontWeight.w700, color: active ? p.primary : p.textSecondary)),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label, maxLines: 1, style: ui(size: 11.5, weight: active ? FontWeight.w800 : FontWeight.w700, color: active ? p.primary : p.textSecondary)),
+            ),
           ),
         ),
       );

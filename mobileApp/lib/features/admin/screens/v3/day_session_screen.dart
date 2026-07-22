@@ -136,21 +136,27 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
                         ),
                       ),
                       if (branchName.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.storefront_outlined, size: 13, color: Colors.white),
-                              const SizedBox(width: 5),
-                              Text(branchName,
-                                  style: ui(size: 11, weight: FontWeight.w800, color: Colors.white)),
-                            ],
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 150),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.storefront_outlined, size: 13, color: Colors.white),
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: Text(branchName,
+                                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                                      style: ui(size: 11, weight: FontWeight.w800, color: Colors.white)),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                     ],
@@ -176,8 +182,11 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
                           children: [
                             Row(
                               children: [
-                                Text(open ? 'Day Open' : 'Day Closed',
-                                    style: serif(size: 26, color: Colors.white)),
+                                Flexible(
+                                  child: Text(open ? 'Day Open' : 'Day Closed',
+                                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                                      style: serif(size: 26, color: Colors.white)),
+                                ),
                                 const SizedBox(width: 10),
                                 _heroPill(open),
                               ],
@@ -611,7 +620,11 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
                 children: [
                   Icon(icon, size: 19, color: Colors.white),
                   const SizedBox(width: 10),
-                  Text(label, style: ui(size: 15, weight: FontWeight.w800, color: Colors.white)),
+                  Flexible(
+                    child: Text(label,
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: ui(size: 15, weight: FontWeight.w800, color: Colors.white)),
+                  ),
                 ],
               ),
       ),
@@ -853,9 +866,12 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
                 children: [
                   Text('Closing at',
                       style: ui(size: 11.5, weight: FontWeight.w700, color: p.textSecondary)),
-                  const Spacer(),
-                  Text('${Dates.weekday(c.selected)} · ${Dates.time(c.selected)}',
-                      style: serif(size: 14, color: p.ink)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text('${Dates.weekday(c.selected)} · ${Dates.time(c.selected)}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.right,
+                        style: serif(size: 14, color: p.ink)),
+                  ),
                 ],
               ),
             ),

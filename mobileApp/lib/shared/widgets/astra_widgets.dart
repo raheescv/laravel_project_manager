@@ -342,6 +342,8 @@ class SectionLabel extends StatelessWidget {
     final p = context.astra;
     final label = Text(
       text.toUpperCase(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: ui(
         size: 10.5,
         weight: FontWeight.w800,
@@ -350,7 +352,11 @@ class SectionLabel extends StatelessWidget {
       ),
     );
     if (trailing == null) return label;
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [label, trailing!]);
+    // Let a long label ellipsize instead of shoving the trailing action off-screen.
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [Flexible(child: label), trailing!],
+    );
   }
 }
 
@@ -376,6 +382,14 @@ class AstraChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.astra;
     final t = context.astraTheme;
+    final labelText = Text(label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        softWrap: false,
+        style: ui(
+            size: 12.5,
+            weight: FontWeight.w700,
+            color: active ? Colors.white : p.textSecondary));
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -396,11 +410,10 @@ class AstraChip extends StatelessWidget {
               Icon(icon, size: 12, color: active ? Colors.white : p.textSecondary),
               const SizedBox(width: 6),
             ],
-            Text(label,
-                style: ui(
-                    size: 12.5,
-                    weight: FontWeight.w700,
-                    color: active ? Colors.white : p.textSecondary)),
+            // In expand mode the chip width is bounded (fills its slot), so the
+            // label can flex + ellipsize; in hug mode it sizes to content, where
+            // a Flexible would fault on the unbounded scroll row.
+            if (expand) Flexible(child: labelText) else labelText,
           ],
         ),
       ),
@@ -431,6 +444,13 @@ class AstraButton extends StatelessWidget {
     final p = context.astra;
     final t = context.astraTheme;
     final fg = gold ? p.primaryDark : Colors.white;
+    final labelText = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      softWrap: false,
+      style: ui(size: 14.5, weight: FontWeight.w800, color: fg),
+    );
     final child = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -442,7 +462,10 @@ class AstraButton extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2.4, color: fg),
           )
         else ...[
-          Text(label, style: ui(size: 14.5, weight: FontWeight.w800, color: fg)),
+          // Full-width (expand) buttons have bounded width, so a long label —
+          // e.g. "Charge AED 1,234,567.00" — can flex + ellipsize; hug-width
+          // buttons size to content, where a Flexible would fault.
+          if (expand) Flexible(child: labelText) else labelText,
           if (icon != null) ...[const SizedBox(width: 8), Icon(icon, size: 16, color: fg)],
         ],
       ],

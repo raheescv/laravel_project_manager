@@ -653,12 +653,17 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
           ),
           Row(
             children: [
-              Column(
-                children: [
-                  Text('SYSTEM', style: ui(size: 8, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
-                  const SizedBox(height: 3),
-                  Text(qtyLabel(it.recorded), style: serif(size: 18, color: p.textSecondary)),
-                ],
+              Flexible(
+                child: Column(
+                  children: [
+                    Text('SYSTEM', style: ui(size: 8, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
+                    const SizedBox(height: 3),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(qtyLabel(it.recorded), style: serif(size: 18, color: p.textSecondary)),
+                    ),
+                  ],
+                ),
               ),
               const Spacer(),
               _stepper(it),
@@ -669,8 +674,11 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
                 decoration: BoxDecoration(color: dbg, borderRadius: BorderRadius.circular(11)),
                 child: Column(
                   children: [
-                    Text(diff == 0 ? '0' : '${diff > 0 ? '+' : ''}${qtyLabel(diff)}', style: serif(size: 16, color: dfg)),
-                    Text(dlabel.toUpperCase(), style: ui(size: 7.5, weight: FontWeight.w800, color: dfg, letterSpacing: 0.4)),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(diff == 0 ? '0' : '${diff > 0 ? '+' : ''}${qtyLabel(diff)}', style: serif(size: 16, color: dfg)),
+                    ),
+                    Text(dlabel.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 7.5, weight: FontWeight.w800, color: dfg, letterSpacing: 0.4)),
                   ],
                 ),
               ),
@@ -695,12 +703,15 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
         GestureDetector(
           onTap: () => _typeQty(it),
           child: Container(
-            constraints: const BoxConstraints(minWidth: 48),
+            constraints: const BoxConstraints(minWidth: 48, maxWidth: 84),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             decoration: BoxDecoration(color: p.cardSolid, borderRadius: BorderRadius.circular(10), border: Border.all(color: p.primary, width: 1.4)),
             child: Column(
               children: [
-                Text(qtyLabel(it.physical), style: serif(size: 18, color: p.ink)),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(qtyLabel(it.physical), style: serif(size: 18, color: p.ink)),
+                ),
                 Text('COUNTED', style: ui(size: 6.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.4)),
               ],
             ),

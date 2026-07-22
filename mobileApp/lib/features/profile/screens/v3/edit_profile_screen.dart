@@ -199,43 +199,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Text('Save', style: ui(size: 12.5, weight: FontWeight.w800, color: p.accent)),
                     ),
             ),
-            const SizedBox(height: 16),
-            Center(
-              child: GestureDetector(
-                onTap: _photoBusy ? null : _changePhoto,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    _avatar(user.initial, photoUrl, cfg.assetHeaders),
-                    Positioned(
-                      right: -2,
-                      bottom: -2,
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: p.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: p.canvas, width: 3),
-                        ),
-                        child: const Icon(Icons.camera_alt, size: 13, color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _photoBusy ? 'Uploading photo…' : 'Tap the photo to change it',
-              style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
-            ),
             Expanded(
               child: MaxWidthBox(
                 maxWidth: 560,
+                // Avatar + caption live inside the scroll view so the whole area
+                // below the header scrolls when the keyboard opens / on a short
+                // phone, instead of the fixed block fighting the form for space.
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
                   children: [
+                    Center(
+                      child: GestureDetector(
+                        onTap: _photoBusy ? null : _changePhoto,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            _avatar(user.initial, photoUrl, cfg.assetHeaders),
+                            Positioned(
+                              right: -2,
+                              bottom: -2,
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: p.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: p.canvas, width: 3),
+                                ),
+                                child: const Icon(Icons.camera_alt, size: 13, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Center(
+                      child: Text(
+                        _photoBusy ? 'Uploading photo…' : 'Tap the photo to change it',
+                        style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     _editField('Full name', _name, icon: Icons.person_outline, textCapitalization: TextCapitalization.words),
                     const SizedBox(height: 12),
                     _editField('Phone', _phone, icon: Icons.phone_outlined, keyboardType: TextInputType.phone),

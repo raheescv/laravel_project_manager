@@ -66,8 +66,11 @@ class ProfileScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(user.designation.isEmpty ? (user.isAdmin ? 'Administrator' : 'Staff') : user.designation,
-                              style: ui(size: 11.5, weight: FontWeight.w600, color: Colors.white70)),
+                          Flexible(
+                            child: Text(user.designation.isEmpty ? (user.isAdmin ? 'Administrator' : 'Staff') : user.designation,
+                                maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: ui(size: 11.5, weight: FontWeight.w600, color: Colors.white70)),
+                          ),
                           const SizedBox(width: 7),
                           Container(width: 3, height: 3, decoration: const BoxDecoration(color: Colors.white54, shape: BoxShape.circle)),
                           const SizedBox(width: 7),
@@ -184,8 +187,15 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: p.textMuted),
           const SizedBox(width: 11),
-          Expanded(child: Text(label, style: ui(size: 12.5, weight: FontWeight.w600, color: p.ink))),
-          Text(value, style: ui(size: 12, weight: FontWeight.w700, color: trailing ? p.textSecondary : p.ink)),
+          Text(label, style: ui(size: 12.5, weight: FontWeight.w600, color: p.ink)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(value,
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ui(size: 12, weight: FontWeight.w700, color: trailing ? p.textSecondary : p.ink)),
+          ),
           if (onTap != null) ...[
             const SizedBox(width: 6),
             Icon(Icons.chevron_right, size: 16, color: p.textMuted),

@@ -351,7 +351,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 9,
       crossAxisSpacing: 9,
-      childAspectRatio: context.isTablet ? 3.3 : 2.7,
+      // Phone tiles were borderline-short for the label+value at 1× and could
+      // clip once text-scale grows; a little more height gives headroom.
+      childAspectRatio: context.isTablet ? 3.3 : 2.3,
       children: tiles,
     );
   }
@@ -646,7 +648,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: ui(size: 12, weight: FontWeight.w700, color: p.textSecondary)),
+            Flexible(
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: ui(size: 12, weight: FontWeight.w700, color: p.textSecondary)),
+            ),
+            const SizedBox(width: 8),
             Text('${pct.toStringAsFixed(1)}%', style: ui(size: 12, weight: FontWeight.w800, color: colors.first)),
           ],
         ),

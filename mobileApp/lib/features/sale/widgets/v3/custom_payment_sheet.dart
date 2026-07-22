@@ -109,7 +109,9 @@ class _CustomPaymentSheetState extends State<_CustomPaymentSheet> {
     final chosen = await showModalBottomSheet<PaymentMethod>(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (_) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
         decoration: BoxDecoration(
           color: p.card,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
@@ -134,22 +136,35 @@ class _CustomPaymentSheetState extends State<_CustomPaymentSheet> {
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                   child: Text('No payment methods are configured.',
                       style: ui(size: 12.5, weight: FontWeight.w600, color: p.textSecondary)),
-                ),
-              ...widget.methods.map((m) {
-                final active = _selected?.id == m.id;
-                // Own Material so the tap ink paints in front of the card-colored
-                // sheet Container (otherwise the splash is hidden behind it).
-                return Material(
-                  type: MaterialType.transparency,
-                  child: ListTile(
-                    onTap: () => Navigator.of(context).pop(m),
-                    leading: Icon(active ? Icons.radio_button_checked : Icons.radio_button_off,
-                        size: 20, color: active ? p.primary : p.textMuted),
-                    title: Text(m.name, style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
+                )
+              else
+                // Scrollable so a long list of configured methods (or a short
+                // landscape viewport) can't overflow the sheet vertically.
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.only(bottom: 10),
+                    children: [
+                      for (final m in widget.methods)
+                        Builder(builder: (context) {
+                          final active = _selected?.id == m.id;
+                          // Own Material so the tap ink paints in front of the
+                          // card-colored sheet Container (otherwise the splash is
+                          // hidden behind it).
+                          return Material(
+                            type: MaterialType.transparency,
+                            child: ListTile(
+                              onTap: () => Navigator.of(context).pop(m),
+                              leading: Icon(active ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 20, color: active ? p.primary : p.textMuted),
+                              title: Text(m.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
+                            ),
+                          );
+                        }),
+                    ],
                   ),
-                );
-              }),
-              const SizedBox(height: 10),
+                ),
+              if (widget.methods.isEmpty) const SizedBox(height: 10),
             ],
           ),
         ),

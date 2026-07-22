@@ -89,10 +89,13 @@ class _QtyInputSheetState extends State<_QtyInputSheet> {
             color: p.sheet,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        // Scrollable so the field + buttons never overflow when the keyboard is
+        // up on a short/landscape viewport (isScrollControlled sheet).
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Center(
               child: Container(
                   width: 42,
@@ -150,6 +153,7 @@ class _QtyInputSheetState extends State<_QtyInputSheet> {
               ],
             ),
           ],
+          ),
         ),
       ),
     );
