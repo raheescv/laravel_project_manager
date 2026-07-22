@@ -374,7 +374,10 @@ pw.Widget _codes(String data, double Function(double) s) => pw.Row(
           ),
         ),
         pw.SizedBox(width: 8),
-        pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: data, width: s(52), height: s(52)),
+        // drawText: false matters even for a QR (which draws no text anyway):
+        // BarcodeWidget defaults it to true and then binds its built-in Courier
+        // font, spamming "Courier has no Unicode support" in debug runs.
+        pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: data, width: s(52), height: s(52), drawText: false),
       ],
     );
 
