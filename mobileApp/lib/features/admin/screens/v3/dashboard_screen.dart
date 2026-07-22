@@ -83,7 +83,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 14),
                         _topPerformers(admin),
                         const SizedBox(height: 18),
-                        _overview(admin),
+                        _paymentSplit(admin),
                       ] else if (admin.loading) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 48),
@@ -514,48 +514,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ---- BUSINESS OVERVIEW ----
-  Widget _overview(AdminCubit admin) {
+  // ---- TODAY'S PAYMENTS ----
+  /// Replaces the old static "Business overview" counts with an actionable
+  /// breakdown of what was actually collected today, split by payment method —
+  /// the figure an owner reconciles against at day-close.
+  Widget _paymentSplit(AdminCubit admin) {
     final p = context.astra;
-    final inv = _byTitle(admin.dashboard?.inventory);
-    final tiles = <(String, IconData, Metric?)>[
-      ('Employees', Icons.badge_outlined, inv['Active Employees']),
-      ('Customers', Icons.people_outline, inv['Customers']),
-      ('Products', Icons.inventory_2_outlined, inv['Products']),
-      ('Services', Icons.content_cut, inv['Services']),
-    ];
+    final methods = admin.dashboard?.payments ?? const <Metric>[];
+    final total = methods.fold<double>(0, (sum, m) => sum + asNum(m.value));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 10),
-          child: SectionLabel('Business overview'),
+          child: SectionLabel("Today's payments"),
         ),
-        GridView.count(
-          crossAxisCount: context.isTablet ? 4 : 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.7,
-          children: [
-            for (final t in tiles)
-              AstraCard(
-                radius: 16,
-                child: Column(
+        AstraCard(
+          child: methods.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.account_balance_wallet_outlined, size: 18, color: p.textMuted),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text('No payments collected yet today.',
+                            style: ui(size: 12, weight: FontWeight.w600, color: p.textMuted)),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    IconChip(icon: t.$2, size: 30, radius: 9),
-                    const Spacer(),
-                    Text(t.$3 == null ? '—' : asNum(t.$3!.value).toInt().toString(),
-                        style: serif(size: 21, color: p.ink)),
-                    Text(t.$1, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                    Row(
+                      children: [
+                        Icon(Icons.account_balance_wallet_outlined, size: 16, color: p.primary),
+                        const SizedBox(width: 7),
+                        Text('Collected today', style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+                        const Spacer(),
+                        Text(Money.of(total), style: serif(size: 16, color: p.primaryDark)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    for (var i = 0; i < methods.length; i++) ...[
+                      if (i != 0) const SizedBox(height: 13),
+                      _paymentRow(methods[i], total, i),
+                    ],
                   ],
                 ),
-              ),
+        ),
+      ],
+    );
+  }
+
+  /// One payment-method row: colour dot, name, amount, share %, and a bar
+  /// sized to its slice of today's total.
+  Widget _paymentRow(Metric m, double total, int i) {
+    final p = context.astra;
+    final amount = asNum(m.value);
+    final frac = total <= 0 ? 0.0 : amount / total;
+    final pct = (frac * 100).round();
+    final bars = [p.primary, p.accent, AstraPalette.success, p.primaryDark];
+    final color = bars[i % bars.length];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(m.title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+            ),
+            Text(Money.of(amount), style: serif(size: 13.5, color: p.ink)),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 36,
+              child: Text('$pct%',
+                  textAlign: TextAlign.right,
+                  style: ui(size: 11, weight: FontWeight.w700, color: p.textMuted)),
+            ),
           ],
         ),
+        const SizedBox(height: 7),
+        ProgressBar(fraction: frac, color: color),
       ],
     );
   }

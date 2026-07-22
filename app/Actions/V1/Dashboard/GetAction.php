@@ -3,17 +3,15 @@
 namespace App\Actions\V1\Dashboard;
 
 use App\Http\Requests\V1\Dashboard\IndexRequest;
-use App\Models\Account;
-use App\Models\Product;
 use App\Models\Sale;
-use App\Models\User;
+use App\Models\SalePayment;
 
 class GetAction
 {
     /**
      * Build the admin overview dashboard:
      *  - today's sales snapshot
-     *  - inventory overview (employees, customers, products, services)
+     *  - today's payment split (how much was collected per payment method)
      *  - business overview (weekly / monthly sales with growth %)
      */
     public function execute(IndexRequest $request): array
@@ -24,7 +22,7 @@ class GetAction
         return [
             'date' => $today,
             'todaySummary' => $this->todaySummary($today, $branchId),
-            'inventoryOverview' => $this->inventoryOverview(),
+            'paymentSplit' => $this->paymentSplit($today, $branchId),
             'bussinessOverview' => $this->bussinessOverview($branchId),
         ];
     }
@@ -46,16 +44,31 @@ class GetAction
     }
 
     /**
+     * How much was collected today, grouped by payment method (Cash / Card /
+     * Bank / …). Highest-collecting method first — this is what an owner
+     * reconciles against at day-close.
+     *
      * @return array<int, array<string, mixed>>
      */
-    private function inventoryOverview(): array
+    private function paymentSplit(string $today, ?int $branchId): array
     {
-        return [
-            ['title' => 'Active Employees', 'value' => User::query()->employee()->where('is_active', true)->count(), 'type' => 'count'],
-            ['title' => 'Customers', 'value' => Account::query()->customer()->count(), 'type' => 'count'],
-            ['title' => 'Products', 'value' => Product::query()->product()->count(), 'type' => 'count'],
-            ['title' => 'Services', 'value' => Product::query()->service()->count(), 'type' => 'count'],
-        ];
+        return SalePayment::query()
+            ->whereHas('sale', function ($query) use ($branchId) {
+                $query->where('status', 'completed')
+                    ->when($branchId, fn ($q, $value) => $q->where('branch_id', $value));
+            })
+            ->where('date', $today)
+            ->selectRaw('payment_method_id, SUM(amount) as total')
+            ->groupBy('payment_method_id')
+            ->with('paymentMethod:id,name')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($row) => [
+                'title' => $row->paymentMethod?->name ?? 'Unknown',
+                'value' => round((float) $row->total, 2),
+                'type' => 'currency',
+            ])
+            ->all();
     }
 
     /**

@@ -9,6 +9,7 @@ class ApiUser {
     required this.email,
     required this.mobile,
     required this.isAdmin,
+    this.type = 'user',
     required this.designation,
     required this.role,
     required this.branchId,
@@ -26,6 +27,10 @@ class ApiUser {
   final String email;
   final String mobile;
   final bool isAdmin;
+  // Account class from the backend: 'user' | 'employee'. Non-admin employees are
+  // scoped to their own data server-side (e.g. the Sales list only returns the
+  // invoices they created) — see [isNonAdminEmployee].
+  final String type;
   final String designation;
   final String role; // Spatie role name(s), comma-joined; '' when none assigned
   final String? branchId;
@@ -46,6 +51,14 @@ class ApiUser {
   /// Admins implicitly hold every permission; staff need the slug explicitly.
   bool hasPermission(String permission) => isAdmin || permissions.contains(permission);
 
+  /// True when this is a staff (employee-type) account rather than a back-office
+  /// 'user' account.
+  bool get isEmployee => type == 'employee';
+
+  /// A non-admin staff account — the class the backend restricts to their own
+  /// data (their Sales list only shows sales they created).
+  bool get isNonAdminEmployee => isEmployee && !isAdmin;
+
   factory ApiUser.fromJson(Map<String, dynamic> j) => ApiUser(
         id: asStr(j['id']),
         name: asStr(j['name']),
@@ -53,6 +66,7 @@ class ApiUser {
         email: asStr(j['email']),
         mobile: asStr(j['mobile']),
         isAdmin: j['is_admin'] == true,
+        type: j['type'] == null ? 'user' : asStr(j['type']),
         designation: asStr(j['designation']),
         role: asStr(j['role']),
         branchId: j['branch_id']?.toString(),
@@ -73,6 +87,7 @@ class ApiUser {
         'email': email,
         'mobile': mobile,
         'is_admin': isAdmin,
+        'type': type,
         'designation': designation,
         'role': role,
         'branch_id': branchId,
@@ -104,6 +119,7 @@ class ApiUser {
         email: email ?? this.email,
         mobile: mobile ?? this.mobile,
         isAdmin: isAdmin,
+        type: type,
         designation: designation,
         role: role,
         branchId: branchId,
@@ -800,14 +816,17 @@ class Metric {
 }
 
 class DashboardData {
-  DashboardData({required this.today, required this.inventory, required this.business});
+  DashboardData({required this.today, required this.payments, required this.business});
   final List<Metric> today;
-  final List<Metric> inventory;
+
+  /// Today's collections grouped by payment method (Cash / Card / Bank / …),
+  /// highest first — powers the dashboard's "Today's payments" block.
+  final List<Metric> payments;
   final List<Metric> business;
 
   factory DashboardData.fromJson(Map<String, dynamic> j) => DashboardData(
         today: _list(j['todaySummary']),
-        inventory: _list(j['inventoryOverview']),
+        payments: _list(j['paymentSplit']),
         business: _list(j['bussinessOverview']),
       );
 

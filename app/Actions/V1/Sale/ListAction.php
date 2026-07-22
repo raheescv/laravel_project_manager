@@ -17,6 +17,15 @@ class ListAction
         $filters = $request->validatedWithDefaults();
         $user = $request->user();
 
+        // Non-admin employees only ever see their own invoices: the list is
+        // hard-scoped to sales they created, whatever the mine_only flag says.
+        // Admins and 'user'-type accounts get the full (branch-scoped) list and
+        // still honour mine_only when the app requests it.
+        $scopeToSelf = $user && (
+            ! empty($filters['mine_only'])
+            || ($user->type === 'employee' && ! $user->is_admin)
+        );
+
         $query = Sale::query()
             ->with([
                 'account:id,name,mobile',
@@ -26,7 +35,7 @@ class ListAction
             ->withCount('items')
             ->filter($filters);
 
-        if (! empty($filters['mine_only']) && $user) {
+        if ($scopeToSelf) {
             $query->where('created_by', $user->id);
         }
 
@@ -42,7 +51,7 @@ class ListAction
         // app can show an accurate "N invoices · total" result line.
         $summary = Sale::query()
             ->filter($filters)
-            ->when(! empty($filters['mine_only']) && $user, fn ($q) => $q->where('created_by', $user->id))
+            ->when($scopeToSelf, fn ($q) => $q->where('created_by', $user->id))
             ->selectRaw('COUNT(*) as invoices, COALESCE(SUM(paid), 0) as total_paid')
             ->first();
 

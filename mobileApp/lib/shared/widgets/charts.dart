@@ -216,9 +216,12 @@ class BarChart extends StatelessWidget {
 
 /// Thin progress bar (emerald→gold) for ranked lists.
 class ProgressBar extends StatelessWidget {
-  const ProgressBar({super.key, required this.fraction, this.height = 5});
+  const ProgressBar({super.key, required this.fraction, this.height = 5, this.color});
   final double fraction;
   final double height;
+
+  /// Fill colour; defaults to the theme primary when omitted.
+  final Color? color;
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
@@ -228,7 +231,7 @@ class ProgressBar extends StatelessWidget {
         value: fraction.clamp(0, 1),
         minHeight: height,
         backgroundColor: p.isDark ? Colors.white12 : const Color(0xFFEEF0EA),
-        valueColor: AlwaysStoppedAnimation(p.primary),
+        valueColor: AlwaysStoppedAnimation(color ?? p.primary),
       ),
     );
   }
