@@ -39,6 +39,12 @@ class CreateStockCheckAction
             $items = Inventory::withoutGlobalScopes()
                 ->where('branch_id', $stockCheck->branch_id)
                 ->whereNull('employee_id')
+                // Only stock-countable goods — exclude services / assets.
+                ->whereIn('product_id', function ($query) {
+                    $query->select('id')
+                        ->from('products')
+                        ->where('type', 'product');
+                })
                 ->groupBy('product_id')
                 ->get($columns)
                 ->toArray();
