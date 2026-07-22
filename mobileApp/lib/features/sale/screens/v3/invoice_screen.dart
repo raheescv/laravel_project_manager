@@ -48,9 +48,12 @@ class InvoiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    // Delete is permission-gated (matches the web `sale.delete` guard). The
-    // server still enforces the business rule — a completed sale is refused.
-    final canDelete = context.read<AuthCubit>().hasPermission(PermissionSlug.saleDelete);
+    // Edit and Delete are permission-gated (match the web `sale.edit` /
+    // `sale.delete` guards). The server still enforces the business rules —
+    // e.g. a completed sale is refused for delete.
+    final auth = context.read<AuthCubit>();
+    final canEdit = auth.hasPermission(PermissionSlug.saleEdit);
+    final canDelete = auth.hasPermission(PermissionSlug.saleDelete);
     return Scaffold(
       body: AstraBackground(
         child: SafeArea(
@@ -100,7 +103,7 @@ class InvoiceScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 9),
-                          _moreButton(context, p, canDelete),
+                          _moreButton(context, p, canEdit, canDelete),
                         ],
                       ),
                     ),
@@ -661,10 +664,10 @@ class InvoiceScreen extends StatelessWidget {
   }
 
   /// The "•••" overflow trigger — same card treatment, square-ish footprint.
-  Widget _moreButton(BuildContext context, AstraPalette p, bool canDelete) {
+  Widget _moreButton(BuildContext context, AstraPalette p, bool canEdit, bool canDelete) {
     final t = context.astraTheme;
     return GestureDetector(
-      onTap: () => _tap(() => _moreSheet(context, canDelete)),
+      onTap: () => _tap(() => _moreSheet(context, canEdit, canDelete)),
       child: Container(
         width: 52,
         alignment: Alignment.center,
@@ -680,7 +683,7 @@ class InvoiceScreen extends StatelessWidget {
 
   /// Overflow sheet holding the secondary invoice actions. Each row respects
   /// the same guards as the old inline buttons (edit/return/delete visibility).
-  Future<void> _moreSheet(BuildContext context, bool canDelete) async {
+  Future<void> _moreSheet(BuildContext context, bool canEdit, bool canDelete) async {
     final p = context.astra;
     await showModalBottomSheet(
       context: context,
@@ -712,7 +715,7 @@ class InvoiceScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text('Actions', style: serif(size: 22, color: p.ink)),
               const SizedBox(height: 16),
-              if (_editable)
+              if (_editable && canEdit)
                 _sheetAction(ctx, p, Icons.edit_outlined, p.primary, 'Edit',
                     'Re-open this sale to change items', () => _edit(context)),
               if (_returnable)
