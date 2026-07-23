@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RentOut · Documents Tab — Premium Redesign Preview</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --rvx-mand-a: #3a9e7a;
+            --rvx-mand-b: #2e7d56;
+        }
+
+        body {
+            background: var(--bs-body-bg);
+        }
+
+        /* preview canvas mimics the app page background */
+        .preview-canvas {
+            background:
+                radial-gradient(1200px 400px at 80% -10%, rgba(58, 158, 122, .10), transparent 60%),
+                var(--bs-tertiary-bg);
+            min-height: 100vh;
+        }
+
+        /* ---- Mandatory panel ---- */
+        .rvx-mand-head {
+            background: linear-gradient(135deg, var(--rvx-mand-a), var(--rvx-mand-b));
+        }
+
+        .rvx-mand-head * {
+            color: #fff !important;
+        }
+
+        .rvx-donut {
+            --pct: 100;
+            --size: 96px;
+            width: var(--size);
+            height: var(--size);
+            border-radius: 50%;
+            background:
+                conic-gradient(var(--rvx-mand-a) calc(var(--pct) * 1%), var(--bs-secondary-bg) 0);
+            display: grid;
+            place-items: center;
+        }
+
+        .rvx-donut.warn {
+            background: conic-gradient(var(--bs-warning) calc(var(--pct) * 1%), var(--bs-secondary-bg) 0);
+        }
+
+        .rvx-donut::after {
+            content: "";
+            position: absolute;
+            width: calc(var(--size) - 16px);
+            height: calc(var(--size) - 16px);
+            border-radius: 50%;
+            background: var(--bs-card-bg, var(--bs-body-bg));
+        }
+
+        .rvx-donut>span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .rvx-checkitem+.rvx-checkitem {
+            border-top: 1px solid var(--bs-border-color-translucent);
+        }
+
+        .rvx-checkitem {
+            transition: background-color .15s ease;
+        }
+
+        .rvx-checkitem:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        /* ---- File type chip ---- */
+        .rvx-file-ico {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            font-size: .9rem;
+            flex: 0 0 auto;
+        }
+
+        .ft-img {
+            background: rgba(13, 110, 253, .12);
+            color: #0d6efd;
+        }
+
+        .ft-pdf {
+            background: rgba(220, 53, 69, .12);
+            color: #dc3545;
+        }
+
+        .ft-doc {
+            background: rgba(25, 135, 84, .12);
+            color: #198754;
+        }
+
+        .ft-generic {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-secondary-color);
+        }
+
+        /* ---- Table polish ---- */
+        .rvx-doc-table thead th {
+            font-size: .64rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color);
+            border-bottom: 1px solid var(--bs-border-color);
+            background: var(--bs-tertiary-bg);
+        }
+
+        .rvx-doc-table tbody tr {
+            transition: background-color .12s ease;
+        }
+
+        .rvx-doc-table tbody tr:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        .rvx-remarks {
+            max-width: 260px;
+        }
+
+        .rvx-act .btn {
+            --bs-btn-padding-y: .28rem;
+            --bs-btn-padding-x: .5rem;
+            border-radius: 8px;
+        }
+
+        /* ---- Card view ---- */
+        .rvx-doc-card {
+            transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+        }
+
+        .rvx-doc-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--bs-primary-border-subtle) !important;
+            box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08) !important;
+        }
+
+        .rvx-clamp2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* preview chrome only */
+        .ctl-bar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ===== Preview control bar (NOT part of the real UI) ===== -->
+    <div class="ctl-bar border-bottom bg-body-tertiary bg-opacity-75 py-2 px-3">
+        <div class="d-flex flex-wrap align-items-center gap-2 justify-content-between">
+            <span class="fw-semibold small"><i class="fa fa-flask me-1 text-primary"></i>Documents Tab — redesign
+                preview</span>
+            <div class="d-flex align-items-center gap-2">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Layout direction">
+                    <button class="btn btn-primary" id="dirTable" onclick="setDir('table')">
+                        <i class="fa fa-table me-1"></i>Table
+                    </button>
+                    <button class="btn btn-outline-primary" id="dirCards" onclick="setDir('cards')">
+                        <i class="fa fa-th-large me-1"></i>Cards
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleTheme()">
+                    <i class="fa fa-adjust me-1"></i><span id="themeLbl">Dark</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-canvas py-3 py-md-4">
+        <div class="container-xxl" style="max-width: 1200px;">
+
+            <div class="row g-3">
+                <!-- ======================= Mandatory panel ======================= -->
+                <div class="col-12 col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                        <div
+                            class="rvx-mand-head d-flex align-items-center justify-content-between py-2 px-3">
+                            <span class="fw-semibold d-inline-flex align-items-center gap-2"
+                                style="font-size: .82rem;">
+                                <i class="fa fa-shield"></i> Mandatory Documents
+                            </span>
+                            <button class="btn btn-light btn-sm fw-semibold d-inline-flex align-items-center"
+                                style="font-size: .68rem; border-radius: 8px;">
+                                <i class="fa fa-sliders me-1"></i> Configure
+                            </button>
+                        </div>
+
+                        <div class="card-body p-3">
+                            <!-- donut + summary -->
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rvx-donut position-relative" style="--pct:100;">
+                                    <span class="text-center lh-1">
+                                        <span class="fw-bold d-block" style="font-size: 1.05rem;">100%</span>
+                                        <span class="text-muted" style="font-size: .58rem;">complete</span>
+                                    </span>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-success d-inline-flex align-items-center gap-1"
+                                        style="font-size: .8rem;">
+                                        <i class="fa fa-check-circle"></i> 1 / 1 uploaded
+                                    </div>
+                                    <div class="text-muted" style="font-size: .72rem;">All required documents are in
+                                        place for this booking.</div>
+                                </div>
+                            </div>
+
+                            <div class="text-uppercase text-muted fw-semibold mb-1"
+                                style="font-size: .6rem; letter-spacing: .05em;">Checklist</div>
+                            <div class="border rounded-3 overflow-hidden">
+                                <div class="rvx-checkitem d-flex align-items-center justify-content-between px-3 py-2">
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <i class="fa fa-check-circle text-success"></i>
+                                        <span class="fw-medium" style="font-size: .78rem;">test</span>
+                                    </span>
+                                    <span class="badge rounded-pill bg-success-subtle text-success-emphasis"
+                                        style="font-size: .6rem;"><i class="fa fa-check me-1"></i>Done</span>
+                                </div>
+                                <div class="rvx-checkitem d-flex align-items-center justify-content-between px-3 py-2">
+                                    <span class="d-inline-flex align-items-center gap-2">
+                                        <i class="fa fa-circle-o text-secondary opacity-50"></i>
+                                        <span class="fw-medium" style="font-size: .78rem;">Emirates ID</span>
+                                    </span>
+                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis"
+                                        style="font-size: .6rem;"><i class="fa fa-clock-o me-1"></i>Pending</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ======================= Documents panel ======================= -->
+                <div class="col-12 col-lg-8">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div
+                            class="card-header bg-body border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2 py-2 px-3">
+                            <span class="fw-semibold d-inline-flex align-items-center gap-2"
+                                style="font-size: .85rem;">
+                                <i class="fa fa-folder-open text-primary"></i> Documents
+                                <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis"
+                                    style="font-size: .62rem;">2</span>
+                            </span>
+                            <button class="btn btn-primary btn-sm d-inline-flex align-items-center"
+                                style="font-size: .74rem; border-radius: 8px;">
+                                <i class="fa fa-upload me-1"></i> Add New Document
+                            </button>
+                        </div>
+
+                        <div class="card-body p-3">
+                            <!-- toolbar -->
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                <div class="input-group input-group-sm" style="max-width: 260px;">
+                                    <span class="input-group-text bg-body"><i class="fa fa-filter text-muted"></i></span>
+                                    <select class="form-select">
+                                        <option>All Document Types</option>
+                                        <option>test</option>
+                                        <option>Emirates ID</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-outline-danger btn-sm d-inline-flex align-items-center ms-auto"
+                                    style="font-size: .74rem; border-radius: 8px;" disabled>
+                                    <i class="fa fa-trash me-1"></i> Delete Selected
+                                </button>
+                            </div>
+
+                            <!-- ============ TABLE VIEW ============ -->
+                            <div id="viewTable">
+                                <div class="table-responsive d-none d-md-block">
+                                    <table class="table align-middle mb-0 rvx-doc-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="py-2 ps-2" style="width: 34px;">
+                                                    <input type="checkbox" class="form-check-input">
+                                                </th>
+                                                <th class="py-2">Document</th>
+                                                <th class="py-2">Type</th>
+                                                <th class="py-2">Remarks</th>
+                                                <th class="py-2 text-nowrap">Uploaded</th>
+                                                <th class="py-2 text-end pe-3" style="width: 150px;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="ps-2"><input type="checkbox" class="form-check-input"></td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="rvx-file-ico ft-img"><i
+                                                                class="fa fa-file-image-o"></i></span>
+                                                        <div class="lh-sm">
+                                                            <div class="fw-medium text-truncate" style="max-width: 180px;"
+                                                                title="TALENT.png">TALENT.png</div>
+                                                            <div class="text-muted" style="font-size: .68rem;">PNG · image
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td><span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border">test</span>
+                                                </td>
+                                                <td>
+                                                    <div class="rvx-remarks text-truncate text-muted small"
+                                                        title="test test test test test test test test test test test test test test test test test test test test test test test">
+                                                        test test test test test test test test test test test…
+                                                    </div>
+                                                </td>
+                                                <td class="text-nowrap small text-muted">24 Jul 2026<br><span
+                                                        style="font-size: .68rem;">01:01 AM</span></td>
+                                                <td class="pe-3">
+                                                    <div class="rvx-act d-flex justify-content-end gap-1">
+                                                        <a class="btn btn-light" title="View"><i
+                                                                class="fa fa-eye text-info"></i></a>
+                                                        <button class="btn btn-light" title="Download"><i
+                                                                class="fa fa-download text-primary"></i></button>
+                                                        <button class="btn btn-light" title="Edit"><i
+                                                                class="fa fa-pencil text-warning"></i></button>
+                                                        <button class="btn btn-light" title="Delete"><i
+                                                                class="fa fa-trash text-danger"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ps-2"><input type="checkbox" class="form-check-input"></td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="rvx-file-ico ft-pdf"><i
+                                                                class="fa fa-file-pdf-o"></i></span>
+                                                        <div class="lh-sm">
+                                                            <div class="fw-medium text-truncate" style="max-width: 180px;"
+                                                                title="tenancy-contract.pdf">tenancy-contract.pdf</div>
+                                                            <div class="text-muted" style="font-size: .68rem;">PDF ·
+                                                                document</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td><span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border">Emirates ID</span>
+                                                </td>
+                                                <td>
+                                                    <div class="rvx-remarks text-truncate text-muted small"
+                                                        title="Signed copy received from tenant">Signed copy received
+                                                        from tenant</div>
+                                                </td>
+                                                <td class="text-nowrap small text-muted">24 Jul 2026<br><span
+                                                        style="font-size: .68rem;">12:42 AM</span></td>
+                                                <td class="pe-3">
+                                                    <div class="rvx-act d-flex justify-content-end gap-1">
+                                                        <a class="btn btn-light" title="View"><i
+                                                                class="fa fa-eye text-info"></i></a>
+                                                        <button class="btn btn-light" title="Download"><i
+                                                                class="fa fa-download text-primary"></i></button>
+                                                        <button class="btn btn-light" title="Edit"><i
+                                                                class="fa fa-pencil text-warning"></i></button>
+                                                        <button class="btn btn-light" title="Delete"><i
+                                                                class="fa fa-trash text-danger"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- mobile stacked cards (table view falls back to these under md) -->
+                                <div class="d-md-none vstack gap-2">
+                                    <div class="border rounded-3 p-2">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <span class="rvx-file-ico ft-img"><i class="fa fa-file-image-o"></i></span>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="fw-medium text-truncate">TALENT.png</div>
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border"
+                                                        style="font-size: .6rem;">test</span>
+                                                    <span class="text-muted" style="font-size: .66rem;">24 Jul 2026,
+                                                        01:01 AM</span>
+                                                </div>
+                                                <div class="rvx-clamp2 text-muted small">test test test test test test
+                                                    test test test test test</div>
+                                            </div>
+                                        </div>
+                                        <div class="rvx-act d-flex justify-content-end gap-1 mt-2">
+                                            <a class="btn btn-light btn-sm"><i class="fa fa-eye text-info"></i></a>
+                                            <button class="btn btn-light btn-sm"><i
+                                                    class="fa fa-download text-primary"></i></button>
+                                            <button class="btn btn-light btn-sm"><i
+                                                    class="fa fa-pencil text-warning"></i></button>
+                                            <button class="btn btn-light btn-sm"><i
+                                                    class="fa fa-trash text-danger"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ============ CARD VIEW ============ -->
+                            <div id="viewCards" class="d-none">
+                                <div class="row g-2">
+                                    <div class="col-12 col-xl-6">
+                                        <div class="rvx-doc-card card border shadow-sm rounded-3 h-100">
+                                            <div class="card-body p-3">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <span class="rvx-file-ico ft-img"><i
+                                                            class="fa fa-file-image-o"></i></span>
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <div class="fw-semibold text-truncate" title="TALENT.png">
+                                                            TALENT.png</div>
+                                                        <div class="text-muted" style="font-size: .68rem;">PNG · uploaded
+                                                            24 Jul 2026, 01:01 AM</div>
+                                                    </div>
+                                                    <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border">test</span>
+                                                </div>
+                                                <p class="rvx-clamp2 text-muted small mt-2 mb-2">test test test test test
+                                                    test test test test test test test test test test test</p>
+                                                <div class="rvx-act d-flex gap-1 pt-1 border-top">
+                                                    <a class="btn btn-light btn-sm flex-fill mt-2"><i
+                                                            class="fa fa-eye text-info me-1"></i>View</a>
+                                                    <button class="btn btn-light btn-sm flex-fill mt-2"><i
+                                                            class="fa fa-download text-primary me-1"></i>Get</button>
+                                                    <button class="btn btn-light btn-sm mt-2"><i
+                                                            class="fa fa-pencil text-warning"></i></button>
+                                                    <button class="btn btn-light btn-sm mt-2"><i
+                                                            class="fa fa-trash text-danger"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-xl-6">
+                                        <div class="rvx-doc-card card border shadow-sm rounded-3 h-100">
+                                            <div class="card-body p-3">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <span class="rvx-file-ico ft-pdf"><i
+                                                            class="fa fa-file-pdf-o"></i></span>
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <div class="fw-semibold text-truncate"
+                                                            title="tenancy-contract.pdf">tenancy-contract.pdf</div>
+                                                        <div class="text-muted" style="font-size: .68rem;">PDF · uploaded
+                                                            24 Jul 2026, 12:42 AM</div>
+                                                    </div>
+                                                    <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis border">Emirates
+                                                        ID</span>
+                                                </div>
+                                                <p class="rvx-clamp2 text-muted small mt-2 mb-2">Signed copy received from
+                                                    tenant</p>
+                                                <div class="rvx-act d-flex gap-1 pt-1 border-top">
+                                                    <a class="btn btn-light btn-sm flex-fill mt-2"><i
+                                                            class="fa fa-eye text-info me-1"></i>View</a>
+                                                    <button class="btn btn-light btn-sm flex-fill mt-2"><i
+                                                            class="fa fa-download text-primary me-1"></i>Get</button>
+                                                    <button class="btn btn-light btn-sm mt-2"><i
+                                                            class="fa fa-pencil text-warning"></i></button>
+                                                    <button class="btn btn-light btn-sm mt-2"><i
+                                                            class="fa fa-trash text-danger"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-center text-muted small mt-4 mb-0">
+                Resize the window to see responsive behaviour · Toggle <strong>Table / Cards</strong> and
+                <strong>Light / Dark</strong> above.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function setDir(dir) {
+            document.getElementById('viewTable').classList.toggle('d-none', dir !== 'table');
+            document.getElementById('viewCards').classList.toggle('d-none', dir !== 'cards');
+            document.getElementById('dirTable').className = 'btn ' + (dir === 'table' ? 'btn-primary' : 'btn-outline-primary');
+            document.getElementById('dirCards').className = 'btn ' + (dir === 'cards' ? 'btn-primary' : 'btn-outline-primary');
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const dark = html.getAttribute('data-bs-theme') === 'dark';
+            html.setAttribute('data-bs-theme', dark ? 'light' : 'dark');
+            document.getElementById('themeLbl').textContent = dark ? 'Dark' : 'Light';
+        }
+    </script>
+</body>
+
+</html>

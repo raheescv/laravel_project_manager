@@ -48,7 +48,7 @@
                         {{ $title }} &mdash; {{ $rentOut->agreement_no }}
                     </h5>
                     <div class="d-flex align-items-center gap-2 mt-1" style="font-size: .75rem; opacity: .8;">
-                        <span><i class="fa fa-user-circle me-1"></i>{{ $rentOut->customer?->name }}</span>
+                        <span><i class="fa fa-user-circle me-1"></i> <a class="text-white" href="{{ route('account::customer::view', $rentOut->customer->id) }}" class="text-decoration-underline">{{ $rentOut->customer?->name }}</a> </span>
                         <span style="opacity: .4;">&bull;</span>
                         <span><i class="fa fa-home me-1"></i>{{ $rentOut->property?->number }}</span>
                     </div>
@@ -111,13 +111,13 @@
                                 'Building' => $rentOut->building?->name,
                                 'Unit Type' => $rentOut->type?->name,
                                 'Property/Unit' => $rentOut->property?->number,
-                                'Customer' => $rentOut->customer?->name,
+                                'Customer' => '<a href="' . route('account::customer::view', $rentOut->customer->id) . '" class="text-decoration-underline">' . ($rentOut->customer?->name ?? '—') . '</a>',
                             ];
                         @endphp
                         @foreach ($propertyInfo as $label => $value)
                             <div class="d-flex justify-content-between align-items-center px-2 py-1 bk-row {{ !$loop->last ? 'border-bottom' : '' }}">
                                 <span class="bk-lbl">{{ $label }}</span>
-                                <span class="bk-val text-end">{{ $value ?? '—' }}</span>
+                                <span class="bk-val text-end">{!! $value ?? '—' !!}</span>
                             </div>
                         @endforeach
                     </div>
@@ -341,7 +341,7 @@
 
         {{-- MANAGEMENT TABS --}}
         @if ($rentOut->booking_status !== RentOutBookingStatus::Submitted)
-            @include('livewire.rent-out.partials.management-tabs')
+            @include('livewire.rent-out.partials.management-tabs', ['isBooking' => true])
         @endif
 
         {{-- ACTION BUTTONS --}}

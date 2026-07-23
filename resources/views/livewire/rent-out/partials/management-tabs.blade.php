@@ -108,7 +108,7 @@
             </div>
 
             <div x-show="activeTab === 'DocumentsTab'" x-transition:enter.duration.150ms>
-                @livewire('rent-out.tabs.documents-tab', ['rentOutId' => $rentOut->id], key('documents-tab-' . $rentOut->id))
+                @livewire('rent-out.tabs.documents-tab', ['rentOutId' => $rentOut->id, 'isBooking' => $isBooking ?? false], key('documents-tab-' . $rentOut->id))
             </div>
 
             <div x-show="activeTab === 'ChecklistTab'" x-transition:enter.duration.150ms>

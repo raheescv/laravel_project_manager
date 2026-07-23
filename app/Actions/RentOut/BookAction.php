@@ -6,6 +6,7 @@ use App\Enums\RentOut\RentOutBookingStatus;
 use App\Enums\RentOut\RentOutStatus;
 use App\Helpers\Facades\RentOutTransactionHelper;
 use App\Jobs\RentOutNotificationJob;
+use App\Models\Configuration;
 use App\Models\RentOut;
 
 class BookAction
@@ -17,6 +18,12 @@ class BookAction
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             $data['status'] = RentOutStatus::Booked->value;
             $data['booking_status'] = RentOutBookingStatus::Created->value;
+
+            // Seed the booking's mandatory documents from the tenant-wide default
+            // configured in settings, unless the caller supplied an explicit list.
+            if (blank($data['mandatory_documents'] ?? null)) {
+                $data['mandatory_documents'] = Configuration::where('key', RentOut::MANDATORY_DOCUMENTS_CONFIG_KEY)->value('value');
+            }
 
             validationHelper(RentOut::$bookingRules, $data, 'RentOut Booking');
 

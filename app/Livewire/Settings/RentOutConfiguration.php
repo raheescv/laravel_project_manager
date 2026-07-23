@@ -3,6 +3,8 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
+use App\Models\DocumentType;
+use App\Models\RentOut;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -50,6 +52,9 @@ class RentOutConfiguration extends Component
 
     public $clear_agreement_images = false;
 
+    // Mandatory documents (default required checklist for new rent-out / lease bookings)
+    public array $mandatory_document_types = [];
+
     private array $configKeys = [
         'reservation_bond_paper_mode',
         'reservation_logo_height',
@@ -86,6 +91,14 @@ class RentOutConfiguration extends Component
 
         $imagesJson = Configuration::where('key', 'rent_out_agreement_images')->value('value');
         $this->existing_rent_out_agreement_images = $imagesJson ? (json_decode($imagesJson, true) ?: []) : [];
+
+        // Load mandatory document types
+        $storedMandatory = Configuration::where('key', RentOut::MANDATORY_DOCUMENTS_CONFIG_KEY)->value('value');
+        $this->mandatory_document_types = collect(explode(',', (string) $storedMandatory))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->toArray();
     }
 
     public function save()
@@ -105,6 +118,17 @@ class RentOutConfiguration extends Component
         foreach ($this->configKeys as $key) {
             Configuration::updateOrCreate(['key' => $key], ['value' => $this->{$key}]);
         }
+
+        // Save mandatory document types
+        $mandatory = collect($this->mandatory_document_types)
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->implode(',');
+        Configuration::updateOrCreate(
+            ['key' => RentOut::MANDATORY_DOCUMENTS_CONFIG_KEY],
+            ['value' => $mandatory]
+        );
 
         // Save logo uploads
         foreach ($this->logoKeys as $property => $configKey) {
@@ -155,6 +179,8 @@ class RentOutConfiguration extends Component
 
     public function render()
     {
-        return view('livewire.settings.rent-out-configuration');
+        return view('livewire.settings.rent-out-configuration', [
+            'documentTypes' => DocumentType::orderBy('name')->pluck('name', 'id'),
+        ]);
     }
 }

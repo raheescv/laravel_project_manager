@@ -24,4 +24,9 @@ class PropertyController extends Controller
     {
         return view('property.property.import');
     }
+
+    public function view($id)
+    {
+        return view('property.property.view', ['id' => $id]);
+    }
 }

@@ -14,6 +14,7 @@
     <x-rent-out.extend-modal />
     <x-rent-out.utility-term-modal />
     <x-rent-out.document-modal />
+    <x-rent-out.mandatory-document-modal />
     <x-rent-out.service-modal />
     <x-rent-out.service-charge-modal />
     <x-rent-out.service-payment-modal />

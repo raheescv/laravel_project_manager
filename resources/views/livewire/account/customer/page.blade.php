@@ -14,7 +14,7 @@
             {{-- Personal Details --}}
             <div class="mb-3">
                 <h6 class="text-secondary fw-semibold border-bottom pb-2 mb-3">
-                    <i class="fa fa-user-circle me-1"></i> Personal Details
+                    <i class="fa fa-user me-1"></i> Personal Details
                 </h6>
                 <div class="row g-3 align-items-center">
                     {{-- Profile Photo --}}
@@ -75,7 +75,7 @@
             {{-- Contact Information --}}
             <div class="mb-3">
                 <h6 class="text-secondary fw-semibold border-bottom pb-2 mb-3">
-                    <i class="fa fa-address-card me-1"></i> Contact Information
+                    <i class="fa fa-credit-card me-1"></i> Contact Information
                 </h6>
                 <div class="row g-2 mb-2">
                     <div class="col-md-6">
@@ -110,7 +110,7 @@
             {{-- Additional Details --}}
             <div class="mb-3">
                 <h6 class="text-secondary fw-semibold border-bottom pb-2 mb-3">
-                    <i class="fa fa-id-card me-1"></i> Additional Details
+                    <i class="fa fa-credit-card me-1"></i> Additional Details
                 </h6>
                 <div class="row g-2">
                     <div class="col-md-4">
@@ -122,7 +122,7 @@
                     <div class="col-md-4">
                         <div class="form-floating">
                             {{ html()->input('id_no')->value('')->class('form-control form-control-sm')->attribute('wire:model.live', 'accounts.id_no')->placeholder('ID Number') }}
-                            <label><i class="fa fa-id-card-o me-1 text-muted"></i> ID Number</label>
+                            <label><i class="fa fa-credit-card me-1 text-muted"></i> ID Number</label>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -187,7 +187,7 @@
                             <tbody>
                                 @foreach ($existingCustomers as $item)
                                     <tr wire:click="selectCustomer('{{ $item->id }}')" style="cursor:pointer;">
-                                        <td class="small"><i class="fa fa-user-circle me-1 text-muted"></i> {{ $item['name'] }}</td>
+                                        <td class="small"><i class="fa fa-user me-1 text-muted"></i> {{ $item['name'] }}</td>
                                         <td class="small"><i class="fa fa-phone me-1 text-muted"></i> {{ $item['mobile'] }}</td>
                                         <td class="small"><i class="fa fa-envelope-o me-1 text-muted"></i> {{ $item['email'] ?: '-' }}</td>
                                     </tr>

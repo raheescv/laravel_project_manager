@@ -94,6 +94,7 @@
                                         <h5 class="flex-grow-1 m-0">Report</h5>
                                     </div>
                                     <div class="header-mega-grid">
+                                        @canany(['report.daily sales insights', 'report.monthly sale', 'report.sales overview', 'report.sale and sales return items', 'report.sale calendar', 'report.day wise sale'])
                                         <div class="header-mega-section">
                                             <div class="header-mega-title">
                                                 <i class="fa fa-line-chart"></i>
@@ -130,6 +131,8 @@
                                                 </a>
                                             @endcan
                                         </div>
+                                        @endcanany
+                                        @canany(['report.profit loss', 'report.profit loss statement', 'report.trial balance', 'report.balance sheet', 'report.day wise tax report', 'report.tax report'])
                                         <div class="header-mega-section">
                                             <div class="header-mega-title">
                                                 <i class="fa fa-calculator"></i>
@@ -166,6 +169,8 @@
                                                 </a>
                                             @endcan
                                         </div>
+                                        @endcanany
+                                        @canany(['report.customer', 'report.employee', 'report.employee productivity', 'report.customer callback reminder', 'report.vendor aging', 'report.customer aging', 'report.stock analysis'])
                                         <div class="header-mega-section">
                                             <div class="header-mega-title">
                                                 <i class="fa fa-users"></i>
@@ -207,6 +212,7 @@
                                                 </a>
                                             @endcan
                                         </div>
+                                        @endcanany
                                     </div>
                                 </div>
                             </div>

@@ -19,6 +19,14 @@ class RentOut extends Model implements AuditableContracts
 {
     use Auditable, BelongsToTenant, SoftDeletes;
 
+    /**
+     * Configuration key holding the tenant-wide default list of mandatory
+     * document type ids (comma-separated). New bookings copy this list into
+     * their own `mandatory_documents` column, after which the per-booking
+     * value becomes the source of truth.
+     */
+    public const MANDATORY_DOCUMENTS_CONFIG_KEY = 'rent_out_mandatory_document_types';
+
     protected $fillable = [
         'tenant_id',
         'branch_id',
@@ -260,6 +268,44 @@ class RentOut extends Model implements AuditableContracts
     public function documents(): HasMany
     {
         return $this->hasMany(RentOutDocument::class);
+    }
+
+    /**
+     * Parse a comma-separated list of document-type ids into a clean,
+     * de-duplicated array of positive integers.
+     */
+    public static function parseDocumentTypeIds(?string $csv): array
+    {
+        return collect(explode(',', (string) $csv))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * The tenant-wide default mandatory document type ids configured in settings.
+     */
+    public static function defaultMandatoryDocumentTypeIds(): array
+    {
+        return self::parseDocumentTypeIds(
+            Configuration::where('key', self::MANDATORY_DOCUMENTS_CONFIG_KEY)->value('value')
+        );
+    }
+
+    /**
+     * The mandatory document type ids that apply to this booking. Falls back to
+     * the settings default only while the booking has never been configured
+     * (null column) — an explicit empty selection is respected.
+     */
+    public function mandatoryDocumentTypeIds(): array
+    {
+        if ($this->mandatory_documents === null) {
+            return self::defaultMandatoryDocumentTypeIds();
+        }
+
+        return self::parseDocumentTypeIds($this->mandatory_documents);
     }
 
     public function paymentTerms(): HasMany

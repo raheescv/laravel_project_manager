@@ -140,7 +140,7 @@
                                 </td>
                                 <td>
                                     @if ($item->id_no)
-                                        <i class="fa fa-id-card-o me-1 text-muted"></i>{{ $item->id_no }}
+                                        <i class="fa fa-credit-card me-1 text-muted"></i>{{ $item->id_no }}
                                     @else
                                         -
                                     @endif

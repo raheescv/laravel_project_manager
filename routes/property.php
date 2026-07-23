@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('', 'index')->name('index')->can('property.view');
             Route::get('list', 'get')->name('list');
             Route::get('import', 'import')->name('import')->can('property.create');
+            Route::get('view/{id}', 'view')->name('view')->can('property.view');
         });
 
         // Property Leads

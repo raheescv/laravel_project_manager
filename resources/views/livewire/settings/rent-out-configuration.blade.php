@@ -4,6 +4,29 @@
     </div>
     <form wire:submit="save">
         <div class="card-body p-3">
+            {{-- Mandatory Documents --}}
+            <h6 class="fw-bold text-muted text-uppercase mb-2 pb-1 border-bottom">
+                <i class="fa fa-check-square-o me-1"></i> Mandatory Documents
+            </h6>
+            <p class="text-muted small mb-2">
+                Document types selected here become the default required checklist on every new rent-out / lease booking.
+                Each booking can still fine-tune its own list from the Documents tab.
+            </p>
+
+            @if ($documentTypes->isEmpty())
+                <div class="alert alert-warning py-2 px-3 small mb-3">
+                    <i class="fa fa-exclamation-triangle me-1"></i>
+                    No document types created yet.
+                    <a href="{{ route('settings::document_type::index') }}" class="alert-link">Add document types</a>
+                    first, then mark the ones required for bookings.
+                </div>
+            @else
+                <div class="mb-3" wire:ignore>
+                    <label class="form-label fw-medium small mb-1" for="mandatory_document_types">Select Document Types</label>
+                    {{ html()->select('mandatory_document_types', $documentTypes)->value($mandatory_document_types)->class('select-document_type_id-list')->id('mandatory_document_types')->multiple()->placeholder('Select Document Types')->attribute('wire:model', 'mandatory_document_types') }}
+                </div>
+            @endif
+
             {{-- Reservation/Booking Form Logos --}}
             <h6 class="fw-bold text-muted text-uppercase mb-2 pb-1 border-bottom">
                 <i class="fa fa-image me-1"></i> Reservation / Booking Form Logos
@@ -167,3 +190,14 @@
         </div>
     </form>
 </div>
+
+@push('scripts')
+    <x-select.documentTypeSelect />
+    <script>
+        $(document).ready(function() {
+            $('#mandatory_document_types').on('change', function() {
+                @this.set('mandatory_document_types', $(this).val() || []);
+            });
+        });
+    </script>
+@endpush

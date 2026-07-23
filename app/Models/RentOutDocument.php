@@ -18,6 +18,7 @@ class RentOutDocument extends Model implements AuditableContracts
         'tenant_id',
         'branch_id',
         'rent_out_id',
+        'account_id',
         'document_type_id',
         'name',
         'path',
@@ -38,6 +39,11 @@ class RentOutDocument extends Model implements AuditableContracts
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class);
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'account_id');
     }
 
     public function documentType(): BelongsTo

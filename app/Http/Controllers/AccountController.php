@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Account\Customer\GenerateKycFormAction;
 use App\Actions\Account\Customer\GenerateStatementAction;
 use App\Actions\Account\Customer\GetCustomerDetailsAction;
 use App\Actions\Account\GetJournalEntriesAction;
@@ -70,6 +71,11 @@ class AccountController extends Controller
         $toDate = $request->input('to_date');
 
         return (new GenerateStatementAction())->execute($id, $fromDate, $toDate);
+    }
+
+    public function kyc($id, $rentout = null)
+    {
+        return (new GenerateKycFormAction())->execute($id, $rentout);
     }
 
     public function bankReconciliation()

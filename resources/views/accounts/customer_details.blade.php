@@ -17,10 +17,8 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
                 <div class="card-body">
                     @livewire('account.customer.view', ['account_id' => $id])
-                </div>
             </div>
         </div>
     </div>

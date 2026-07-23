@@ -150,6 +150,7 @@ return [
             'label' => 'Sales & POS',
             'permissions' => [
                 'customer',
+                'customer kyc',
                 'customer type',
                 'sale',
                 'sales return',
@@ -232,6 +233,7 @@ return [
             'label' => 'Property Management',
             'permissions' => [
                 'customer',
+                'customer kyc',
                 'asset',
                 'property',
                 'property dashboard',
@@ -259,6 +261,7 @@ return [
                 'rent out service',
                 'rent out payment term',
                 'rent out note',
+                'rent out document',
             ],
         ],
 

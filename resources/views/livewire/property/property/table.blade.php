@@ -85,6 +85,9 @@
             .propx .cols-menu .form-check:hover{ background:var(--surface-2); }
             .propx .cols-menu .form-check-label{ color:var(--ink); font-weight:600; }
             .propx .cols-menu .form-check-input{ accent-color:var(--acc); }
+            .propx .cols-menu .cols-reset{ display:block; width:100%; margin-top:6px; padding:6px 8px; border:0; border-top:1px solid var(--line-soft); border-radius:0 0 8px 8px;
+                background:transparent; text-align:left; font-size:11px; font-weight:700; color:var(--muted); cursor:pointer; }
+            .propx .cols-menu .cols-reset:hover{ background:var(--surface-2); color:var(--ink); }
 
             /* TABLE */
             .propx .p-tblwrap{ overflow-x:auto; }
@@ -185,6 +188,11 @@
                                 </div>
                             </li>
                         @endforeach
+                        <li>
+                            <button type="button" class="cols-reset" wire:click="resetColumns">
+                                <i class="fa fa-undo"></i> Reset to default
+                            </button>
+                        </li>
                     </ul>
                 </div>
 
@@ -292,7 +300,9 @@
                                     <div class="num-cell">
                                         <div class="num-ic"><i class="fa fa-home"></i></div>
                                         <div>
-                                            <div class="nm">{{ $item->number }}</div>
+                                            <div class="nm">
+                                                <a href="{{ route('property::property::view', $item->id) }}" class="text-reset text-decoration-none">{{ $item->number }}</a>
+                                            </div>
                                             @if($item->unit_no)<div class="sub">Unit {{ $item->unit_no }}</div>@endif
                                         </div>
                                     </div>
@@ -356,8 +366,11 @@
                                 </td>
                                 @endif
                                 <td style="text-align:center">
+                                    <a href="{{ route('property::property::view', $item->id) }}" class="act-btn" title="View" data-bs-toggle="tooltip">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
                                     @can('property.edit')
-                                        <button table_id="{{ $item->id }}" class="act-btn edit" title="View / Edit" data-bs-toggle="tooltip">
+                                        <button table_id="{{ $item->id }}" class="act-btn edit" title="Edit" data-bs-toggle="tooltip">
                                             <i class="fa fa-pencil"></i>
                                         </button>
                                     @endcan

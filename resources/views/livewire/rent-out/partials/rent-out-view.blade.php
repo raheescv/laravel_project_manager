@@ -67,7 +67,7 @@
                 </div>
                 <h1 class="hero-title text-white">{{ $title }} <span class="hash">#{{ $rentOut->agreement_no }}</span></h1>
                 <div class="hero-meta mt-2">
-                    @if ($custName)<i class="fa fa-user me-1"></i> {{ $custName }}@endif
+                    @if ($custName)<i class="fa fa-user me-1"></i> <a href="{{ route('account::customer::view', $rentOut->customer->id) }}" class="text-decoration-underline">{{ $custName }}</a> @endif
                     @if ($rentOut->building?->name)
                         <span class="mx-2" style="opacity:.4">•</span>
                         <i class="fa fa-map-marker me-1"></i> {{ $rentOut->building?->name }}@if ($rentOut->property?->number) · Unit {{ $rentOut->property?->number }} @endif
@@ -139,7 +139,9 @@
                 <div class="cust mb-3">
                     <span class="avatar">{{ $initials }}</span>
                     <div class="min-w-0">
-                        <div class="nm text-truncate">{{ $custName !== '' ? $custName : '—' }}</div>
+                        <div class="nm text-truncate">
+                            <a href="{{ route('account::customer::view', $rentOut->customer->id) }}">{{ $custName }}</a>
+                        </div>
                         <div class="sub"><i class="fa fa-user me-1"></i> Tenant of record</div>
                     </div>
                 </div>
@@ -149,7 +151,7 @@
                     <x-rent-out.view.field icon="fa-building" label="Building" :value="$rentOut->building?->name" />
                     <x-rent-out.view.field icon="fa-cubes" label="Unit Type" :value="$rentOut->type?->name" />
                     <x-rent-out.view.field icon="fa-home" label="Unit / Property">
-                        @if ($rentOut->property?->number)<span class="chip chip-info">{{ $rentOut->property?->number }}</span>@else — @endif
+                        @if ($rentOut->property?->number)<span class="chip chip-info"> <a href="{{  route('property::property::view',$rentOut->property_id)  }}">{{ $rentOut->property?->number }}</a> </span>@else — @endif
                     </x-rent-out.view.field>
                     <x-rent-out.view.field icon="fa-sign-out" label="Vacate Date">
                         @if ($rentOut->vacate_date)
@@ -282,7 +284,7 @@
 
     {{-- ════════════════════════════  MANAGEMENT TABS  ════════════════════════════ --}}
     <section class="mt-4">
-        @include('livewire.rent-out.partials.management-tabs')
+        @include('livewire.rent-out.partials.management-tabs', ['isBooking' => false])
     </section>
 
     {{-- ════════════════════════════  MODALS  ════════════════════════════ --}}

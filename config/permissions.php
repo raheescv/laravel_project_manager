@@ -9,6 +9,7 @@ return [
     'general voucher' => ['create', 'view', 'edit', 'delete', 'export'],
     'cheque' => ['create', 'view', 'edit', 'delete', 'print'],
     'customer' => ['create', 'view', 'edit', 'delete', 'export'],
+    'customer kyc' => ['view', 'edit', 'confirm', 'print'],
     'customer type' => ['create', 'view', 'edit', 'delete'],
     'country' => ['create', 'view', 'edit', 'delete'],
     'vendor' => ['create', 'view', 'edit', 'delete', 'export', 'payment reverse'],
@@ -213,6 +214,7 @@ return [
     'rent out service' => ['create', 'view', 'edit', 'delete'],
     'rent out payment term' => ['create', 'view', 'edit', 'delete'],
     'rent out note' => ['create', 'view', 'delete'],
+    'rent out document' => ['create', 'view', 'edit', 'delete'],
     'rent out checklist' => ['view', 'create', 'edit', 'delete', 'print'],
     'rent out checklist item' => ['create', 'view', 'edit', 'delete'],
 

@@ -2,7 +2,7 @@
     <div class="modal-header py-2 px-3 text-white border-0"
         style="background: linear-gradient(135deg, #3a9e7a, #2e7d56);">
         <h6 class="modal-title fw-bold mb-0">
-            <i class="fa fa-cloud-upload me-2"></i> Upload Document
+            <i class="fa fa-cloud-upload me-2"></i> {{ $editingId ? 'Edit Document' : 'Upload Document' }}
         </h6>
         <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
@@ -11,9 +11,19 @@
         <div class="row g-3">
             <div class="col-12">
                 <label class="form-label fw-semibold small mb-1">
-                    <i class="fa fa-file me-1 text-muted"></i> Choose File <span class="text-danger">*</span>
+                    <i class="fa fa-file me-1 text-muted"></i>
+                    {{ $editingId ? 'Replace File' : 'Choose File' }}
+                    @unless ($editingId)
+                        <span class="text-danger">*</span>
+                    @endunless
                 </label>
                 <input type="file" class="form-control form-control-sm" wire:model="file">
+                @if ($editingId && $existingFileName)
+                    <small class="text-muted d-block mt-1">
+                        <i class="fa fa-paperclip me-1"></i>Current: <strong>{{ $existingFileName }}</strong>
+                        — leave empty to keep it, or choose a file to replace it.
+                    </small>
+                @endif
                 <small class="text-muted">Max file size: 10MB</small>
                 @error('file')
                     <br><small class="text-danger">{{ $message }}</small>
@@ -24,13 +34,15 @@
                     </small>
                 </div>
             </div>
-            <div class="col-12" wire:ignore>
+            <div class="col-12">
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-tag me-1 text-muted"></i> Document Type <span class="text-danger">*</span>
                 </label>
-                <select class="select-document_type_id" id="docModalDocumentTypeSelect" placeholder="Search Here">
-                    <option value="">Select</option>
-                </select>
+                <div wire:ignore>
+                    <select class="select-document_type_id" id="docModalDocumentTypeSelect" placeholder="Search Here">
+                        <option value="">Select</option>
+                    </select>
+                </div>
                 @error('documentTypeId')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
@@ -51,7 +63,7 @@
         <button type="button" class="btn btn-sm btn-success" wire:click="save"
             wire:loading.attr="disabled" wire:target="save, file">
             <i class="fa fa-check me-1"></i>
-            <span wire:loading.remove wire:target="save">Save</span>
+            <span wire:loading.remove wire:target="save">{{ $editingId ? 'Update' : 'Save' }}</span>
             <span wire:loading wire:target="save">Saving...</span>
         </button>
     </div>
@@ -63,10 +75,17 @@
                     const value = $(this).val() || null;
                     @this.set('documentTypeId', value);
                 });
-                window.addEventListener('ClearDocumentModal', event => {
+                window.addEventListener('FillDocumentModal', event => {
                     var ts = document.querySelector('#docModalDocumentTypeSelect')?.tomselect;
-                    if (ts) {
-                        ts.clear();
+                    if (!ts) return;
+                    var detail = event.detail || {};
+                    var id = Array.isArray(detail) ? detail[0]?.id : detail.id;
+                    var name = Array.isArray(detail) ? detail[0]?.name : detail.name;
+                    if (id) {
+                        ts.addOption({ id: id, name: name });
+                        ts.setValue(id, true); // silent: value already set server-side
+                    } else {
+                        ts.clear(true);
                     }
                 });
             });

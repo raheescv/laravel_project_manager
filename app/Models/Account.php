@@ -39,6 +39,34 @@ class Account extends Model implements AuditableContracts
         'image',
         'credit_period_days',
 
+        'emergency_contact_no',
+        'po_box',
+        'id_expiry_date',
+        'passport_no',
+        'marital_status',
+        'occupation',
+        'job',
+        'sponsor_name',
+        'position_nature_of_business',
+        'monthly_income',
+        'residential_address',
+        'employer_address',
+        'contact_person',
+        'contact_person_mobile',
+        'cr_number',
+        'cr_issue_date',
+        'cr_expiry_date',
+        'cp_number',
+        'cp_issue_date',
+        'cp_expiry_date',
+        'eid_number',
+        'eid_issue_date',
+        'eid_expiry_date',
+        'tax_card_no',
+        'tax_card_issue_date',
+        'kyc_confirmed_at',
+        'kyc_confirmed_by',
+
         'description',
         'opening_debit',
         'opening_credit',
@@ -146,6 +174,11 @@ class Account extends Model implements AuditableContracts
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    public function kycConfirmer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'kyc_confirmed_by');
     }
 
     public function sales()

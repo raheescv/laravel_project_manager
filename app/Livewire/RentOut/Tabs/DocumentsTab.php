@@ -4,7 +4,9 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Document\DeleteAction;
 use App\Models\DocumentType;
+use App\Models\RentOut;
 use App\Models\RentOutDocument;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
@@ -20,9 +22,12 @@ class DocumentsTab extends Component
 
     public bool $selectAll = false;
 
-    public function mount($rentOutId)
+    public bool $isBooking = false;
+
+    public function mount($rentOutId, $isBooking = false)
     {
         $this->rentOutId = $rentOutId;
+        $this->isBooking = (bool) $isBooking;
     }
 
     #[On('rent-out-updated')]
@@ -52,6 +57,23 @@ class DocumentsTab extends Component
         );
     }
 
+    public function openMandatoryModal()
+    {
+        // Mandatory documents are configured at the booking stage only.
+        if (! $this->isBooking) {
+            return;
+        }
+        $this->dispatch('open-mandatory-document-modal', rentOutId: $this->rentOutId);
+    }
+
+    public function editDocument($id)
+    {
+        $this->dispatch('open-document-modal',
+            rentOutId: $this->rentOutId,
+            editingId: $id,
+        );
+    }
+
     public function downloadDocument($id)
     {
         $doc = RentOutDocument::find($id);
@@ -67,7 +89,7 @@ class DocumentsTab extends Component
 
     public function deleteDocument($id)
     {
-        // TODO(C7): unmapped (candidate: 'rent out document.delete') — no 'rent out document' resource in config/permissions.php
+        abort_unless(Auth::user()?->can('rent out document.delete'), 403);
         try {
             DB::beginTransaction();
             $response = (new DeleteAction())->execute($id);
@@ -85,7 +107,7 @@ class DocumentsTab extends Component
 
     public function deleteSelected()
     {
-        // TODO(C7): unmapped (candidate: 'rent out document.delete') — no 'rent out document' resource in config/permissions.php
+        abort_unless(Auth::user()?->can('rent out document.delete'), 403);
         if (empty($this->selectedDocs)) {
             $this->dispatch('error', message: 'Please select at least one document to delete.');
 
@@ -124,14 +146,49 @@ class DocumentsTab extends Component
         return $query->latest()->get();
     }
 
+    /**
+     * The mandatory-document checklist for this booking, each flagged as
+     * fulfilled (a document of that type has been uploaded) or still pending.
+     */
+    protected function getMandatoryDocuments()
+    {
+        $rentOut = RentOut::find($this->rentOutId);
+        $typeIds = $rentOut ? $rentOut->mandatoryDocumentTypeIds() : [];
+
+        if (empty($typeIds)) {
+            return collect();
+        }
+
+        $uploadedTypeIds = RentOutDocument::where('rent_out_id', $this->rentOutId)
+            ->pluck('document_type_id')
+            ->filter()
+            ->unique();
+
+        $types = DocumentType::whereIn('id', $typeIds)->get(['id', 'name'])->keyBy('id');
+
+        return collect($typeIds)
+            ->map(fn ($id) => $types->get($id))
+            ->filter()
+            ->map(fn ($type) => (object) [
+                'id' => $type->id,
+                'name' => $type->name,
+                'done' => $uploadedTypeIds->contains($type->id),
+            ])
+            ->values();
+    }
+
     public function render()
     {
         $documents = $this->getFilteredDocuments();
         $documentTypes = DocumentType::orderBy('name')->get();
+        // The mandatory-document checklist belongs to the booking page only.
+        $mandatoryDocuments = $this->isBooking ? $this->getMandatoryDocuments() : collect();
 
         return view('livewire.rent-out.tabs.documents-tab', [
             'documents' => $documents,
             'documentTypes' => $documentTypes,
+            'mandatoryDocuments' => $mandatoryDocuments,
+            'mandatoryPendingCount' => $mandatoryDocuments->where('done', false)->count(),
         ]);
     }
 }

@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer View — Premium Redesign Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+    /* ============================================================
+       PREVIEW CHROME (not part of the app)
+       ============================================================ */
+    *{box-sizing:border-box;}
+    body{
+        margin:0;
+        font-family:'Segoe UI',system-ui,Arial,sans-serif;
+        padding:96px 18px 70px;
+        min-height:100vh;
+        transition:background .25s ease;
+    }
+    body[data-mode="light"]{ background:#eef1f5; background-image:radial-gradient(circle at 50% -10%, #f8fafc, #e5e9f0); }
+    body[data-mode="dark"]{ background:#0c0f15; background-image:radial-gradient(circle at 50% -10%, #171d27, #0a0c11); }
+
+    .toolbar{
+        position:fixed; top:0; left:0; right:0; z-index:80;
+        display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+        padding:10px 18px;
+        background:rgba(13,17,23,.93);
+        backdrop-filter:blur(10px);
+        border-bottom:1px solid rgba(255,255,255,.08);
+        box-shadow:0 6px 24px rgba(0,0,0,.3);
+    }
+    .toolbar .brand{ color:#fff; font-weight:700; font-size:13px; letter-spacing:.3px; }
+    .toolbar .brand small{ display:block; font-weight:400; font-size:10px; color:#9ca3af; }
+    .toolbar .group{ display:flex; gap:7px; align-items:center; }
+    .toolbar .label{ color:#8b93a1; font-size:9.5px; text-transform:uppercase; letter-spacing:1px; }
+    .toolbar .spacer{ flex:1; }
+    .swatch{ width:24px; height:24px; border-radius:7px; cursor:pointer; border:2px solid transparent; transition:transform .12s,border-color .12s; }
+    .swatch:hover{ transform:translateY(-2px); }
+    .swatch.active{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.22); }
+    .sw-royal{ background:#2563EB; } .sw-emerald{ background:#0E8A4F; } .sw-graphite{ background:#334155; } .sw-bronze{ background:#9A5B1E; }
+    .seg{ display:flex; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:9px; padding:3px; gap:2px; }
+    .seg button{ background:transparent; color:#cbd2dc; border:0; padding:5px 11px; border-radius:6px; font-size:11.5px; cursor:pointer; font-weight:600; letter-spacing:.2px; font-family:inherit; }
+    .seg button.active{ background:#fff; color:#111827; }
+    .btn-toggle{ background:rgba(255,255,255,.08); color:#e5e7eb; border:1px solid rgba(255,255,255,.12); padding:6px 12px; border-radius:8px; font-size:11.5px; cursor:pointer; font-family:inherit; }
+    .btn-toggle:hover{ background:rgba(255,255,255,.16); }
+    .stage{ max-width:1180px; margin:0 auto; }
+    .dirnote{ max-width:1180px; margin:0 auto 16px; padding:11px 15px; border-radius:11px; font-size:12px; line-height:1.55;
+              background:rgba(37,99,235,.09); border:1px solid rgba(37,99,235,.28); }
+    body[data-mode="light"] .dirnote{ color:#1e3a8a; }
+    body[data-mode="dark"] .dirnote{ color:#bfdbfe; background:rgba(37,99,235,.13); }
+    .dirnote b{ letter-spacing:.2px; }
+
+    /* ============================================================
+       CUSTOMER VIEW — PREMIUM   (scope: .cvx)  → goes into the blade
+       ============================================================ */
+    .cvx{
+        /* accent = settings theme primary (--bs-primary) in the real app */
+        --acc:#2563EB; --acc-d:#1D4ED8; --acc-deep:#172554; --acc-soft:#60A5FA;
+        --acc-tint:#EFF5FF; --acc-tint-2:#F7FAFF; --acc-rgb:37,99,235;
+
+        --surface:#ffffff; --surface-2:#f6f8fb; --surface-3:#eef1f6;
+        --ink:#0f1626; --ink-2:#3a465c; --muted:#6b7688; --faint:#98a2b3;
+        --line:#e5e9f0; --line-soft:#eff2f7;
+
+        --ok:#0F9D58; --ok-t:#E8F6EE; --warn:#C77700; --warn-t:#FDF3E3; --bad:#DC2626; --bad-t:#FDECEC;
+        --info:#0EA5E9; --info-t:#E7F6FE; --plum:#7C3AED; --plum-t:#F1EBFE;
+
+        --r-sm:7px; --r-md:10px; --r-lg:14px; --r-xl:20px;
+        --sh-sm:0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.04);
+        --sh-md:0 4px 14px -4px rgba(16,24,40,.12), 0 2px 6px -2px rgba(16,24,40,.06);
+        --sh-lg:0 18px 42px -18px rgba(16,24,40,.3), 0 8px 18px -12px rgba(16,24,40,.16);
+
+        color:var(--ink); font-size:12.5px; line-height:1.5;
+        -webkit-font-smoothing:antialiased; letter-spacing:-.004em;
+    }
+    body[data-mode="dark"] .cvx{
+        --surface:#252b34; --surface-2:#2c333c; --surface-3:#343c46;
+        --ink:#e8ecf2; --ink-2:#c2cad6; --muted:#8f9aab; --faint:#77828f;
+        --line:#3a424d; --line-soft:#333b45;
+        --acc-tint:#20293a; --acc-tint-2:#1c2431;
+        --ok-t:#12301f; --warn-t:#31240d; --bad-t:#331717; --info-t:#122a37; --plum-t:#241b3d;
+        --sh-sm:0 1px 2px rgba(0,0,0,.4);
+        --sh-md:0 6px 18px -6px rgba(0,0,0,.55);
+        --sh-lg:0 18px 42px -18px rgba(0,0,0,.65), 0 8px 18px -12px rgba(0,0,0,.5);
+    }
+    .cvx.acc-emerald{ --acc:#0E8A4F; --acc-d:#0A6B3C; --acc-deep:#053a22; --acc-soft:#34D399; --acc-tint:#EAF7F0; --acc-tint-2:#F4FBF7; --acc-rgb:14,138,79; }
+    .cvx.acc-graphite{ --acc:#334155; --acc-d:#1E293B; --acc-deep:#0B1220; --acc-soft:#94A3B8; --acc-tint:#F1F3F7; --acc-tint-2:#F8F9FB; --acc-rgb:51,65,85; }
+    .cvx.acc-bronze{ --acc:#9A5B1E; --acc-d:#7C4715; --acc-deep:#3A2109; --acc-soft:#D9A15C; --acc-tint:#FAF2E8; --acc-tint-2:#FDF9F3; --acc-rgb:154,91,30; }
+    body[data-mode="dark"] .cvx.acc-emerald{ --acc-tint:#16281f; --acc-tint-2:#132019; }
+    body[data-mode="dark"] .cvx.acc-graphite{ --acc-tint:#262d38; --acc-tint-2:#212832; }
+    body[data-mode="dark"] .cvx.acc-bronze{ --acc-tint:#2e2317; --acc-tint-2:#261d13; }
+
+    .cvx .num{ font-variant-numeric:tabular-nums; }
+    .cvx .shell{ display:none; }
+    .cvx .shell.on{ display:block; }
+
+    /* ─────────────────────────  A · PORTRAIT HERO  ───────────────────────── */
+    .cvx .hero{
+        position:relative; border-radius:var(--r-xl); overflow:hidden; isolation:isolate; color:#fff;
+        padding:18px clamp(16px,2.4vw,28px) 78px;
+        background:
+            radial-gradient(115% 150% at 10% -20%, rgba(255,255,255,.20), transparent 52%),
+            radial-gradient(85% 130% at 100% 0%, color-mix(in srgb, var(--acc), #fff 12%), transparent 58%),
+            linear-gradient(120deg, var(--acc-deep) 0%, var(--acc-d) 55%, var(--acc) 125%);
+        box-shadow:var(--sh-lg);
+    }
+    .cvx .hero::after{
+        content:""; position:absolute; inset:0; z-index:-1; opacity:.5;
+        background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.10) 1px, transparent 0);
+        background-size:22px 22px;
+        -webkit-mask-image:linear-gradient(180deg,#000,transparent 72%); mask-image:linear-gradient(180deg,#000,transparent 72%);
+    }
+    .cvx .glow{ position:absolute; z-index:-1; border-radius:50%; filter:blur(38px); }
+    .cvx .glow.a{ width:250px; height:250px; top:-90px; right:6%; background:rgba(255,255,255,.28); opacity:.55; }
+    .cvx .glow.b{ width:200px; height:200px; bottom:-80px; left:-40px; background:var(--acc-soft); opacity:.38; }
+
+    .cvx .crumb{ font-size:10.5px; color:rgba(255,255,255,.75); display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+    .cvx .crumb a{ color:rgba(255,255,255,.75); text-decoration:none; }
+    .cvx .crumb a:hover{ color:#fff; }
+    .cvx .crumb .here{ color:#fff; font-weight:600; }
+
+    .cvx .idrow{ display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap; }
+    .cvx .ava{ position:relative; flex:0 0 auto; }
+    .cvx .ava .disc{
+        width:74px; height:74px; border-radius:22px; display:grid; place-items:center;
+        font-size:25px; font-weight:800; letter-spacing:-.02em; color:var(--acc-deep);
+        background:linear-gradient(150deg,#fff,#e8eef9); box-shadow:0 10px 26px -12px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.7);
+    }
+    .cvx .ava .badge-dot{
+        position:absolute; right:-4px; bottom:-4px; width:24px; height:24px; border-radius:50%;
+        display:grid; place-items:center; font-size:10px; color:#fff; background:var(--ok);
+        box-shadow:0 0 0 3px var(--acc-deep), 0 2px 8px rgba(0,0,0,.3);
+    }
+    .cvx .hname{ font-size:clamp(19px,2.3vw,26px); font-weight:800; line-height:1.1; letter-spacing:-.022em; margin:0 0 7px; text-shadow:0 1px 14px rgba(0,0,0,.2); }
+    .cvx .hname .code{ color:rgba(255,255,255,.55); font-weight:700; }
+    .cvx .chips{ display:flex; gap:6px; flex-wrap:wrap; }
+    .cvx .chip{
+        display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+        padding:4px 9px; border-radius:999px; line-height:1;
+        background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.26); color:#fff; backdrop-filter:blur(6px);
+    }
+    .cvx .chip.solid{ background:#fff; border-color:#fff; color:var(--acc-deep); }
+    .cvx .chip .dot{ width:6px; height:6px; border-radius:50%; background:var(--ok); }
+    .cvx .hmeta{ display:flex; gap:16px; flex-wrap:wrap; margin-top:11px; font-size:11.5px; color:rgba(255,255,255,.85); }
+    .cvx .hmeta i{ opacity:.7; margin-right:5px; }
+
+    .cvx .hacts{ display:flex; gap:7px; flex-wrap:wrap; }
+    .cvx .hacts .b{
+        display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; padding:7px 12px; border-radius:9px;
+        cursor:pointer; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.14); color:#fff;
+        backdrop-filter:blur(8px); transition:transform .14s, background .14s, box-shadow .14s; font-family:inherit;
+    }
+    .cvx .hacts .b:hover{ background:rgba(255,255,255,.25); box-shadow:0 8px 20px -10px rgba(0,0,0,.5); }
+    .cvx .hacts .b:active{ transform:translateY(1px); }
+    .cvx .hacts .b.pri{ background:#fff; border-color:#fff; color:var(--acc-d); }
+    .cvx .hacts .b.pri:hover{ background:#eef3fd; }
+
+    /* KPI row (overlaps hero) */
+    .cvx .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:-58px 4px 0; position:relative; z-index:5; }
+    .cvx .kpi{
+        background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); padding:12px 14px;
+        box-shadow:var(--sh-md); position:relative; overflow:hidden;
+        transition:transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s;
+    }
+    .cvx .kpi::before{ content:""; position:absolute; inset:0 auto 0 0; width:3px; background:var(--k); }
+    .cvx .kpi:hover{ transform:translateY(-3px); box-shadow:var(--sh-lg); }
+    .cvx .kpi .top{ display:flex; align-items:center; gap:9px; }
+    .cvx .kpi .ic{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; font-size:14px; color:var(--k); background:var(--kt); flex:0 0 auto; }
+    .cvx .kpi .lab{ font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); }
+    .cvx .kpi .val{ font-size:19px; font-weight:800; letter-spacing:-.02em; line-height:1.1; }
+    .cvx .kpi .sub{ font-size:10.5px; color:var(--muted); margin-top:6px; }
+    .cvx .kpi.k1{ --k:var(--info); --kt:var(--info-t); }
+    .cvx .kpi.k2{ --k:var(--ok); --kt:var(--ok-t); }
+    .cvx .kpi.k3{ --k:var(--warn); --kt:var(--warn-t); }
+    .cvx .kpi.k4{ --k:var(--plum); --kt:var(--plum-t); }
+    .cvx .track{ height:5px; border-radius:999px; background:var(--surface-3); overflow:hidden; margin-top:8px; }
+    .cvx .track > i{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--k),color-mix(in srgb,var(--k),#fff 40%)); }
+
+    /* Pill tab rail (direction A) */
+    .cvx .rail-pill{
+        margin:16px 0 14px; padding:6px; display:flex; gap:4px; overflow-x:auto; scrollbar-width:thin;
+        background:var(--surface); border:1px solid var(--line); border-radius:13px; box-shadow:var(--sh-sm);
+    }
+    .cvx .rail-pill button{
+        flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; font-family:inherit;
+        font-size:12px; font-weight:600; color:var(--ink-2); background:transparent; border:0;
+        padding:8px 13px; border-radius:9px; cursor:pointer; white-space:nowrap; transition:background .15s, color .15s;
+    }
+    .cvx .rail-pill button i{ font-size:12.5px; opacity:.65; }
+    .cvx .rail-pill button:hover{ background:var(--surface-2); color:var(--ink); }
+    .cvx .rail-pill button.on{ background:var(--acc); color:#fff; box-shadow:0 6px 16px -8px rgba(var(--acc-rgb),.8); }
+    .cvx .rail-pill button.on i{ opacity:1; }
+    .cvx .rail-pill .cnt{ font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:999px; background:var(--surface-3); color:var(--muted); }
+    .cvx .rail-pill button.on .cnt{ background:rgba(255,255,255,.24); color:#fff; }
+
+    /* ─────────────────────────  B · DOSSIER  ───────────────────────── */
+    .cvx .dossier{ display:grid; grid-template-columns:298px minmax(0,1fr); gap:16px; align-items:start; }
+    .cvx .idcard{
+        position:sticky; top:96px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg);
+        box-shadow:var(--sh-md); overflow:hidden;
+    }
+    .cvx .idcard .cap{
+        padding:20px 16px 46px; position:relative; color:#fff; text-align:center;
+        background:linear-gradient(150deg,var(--acc-deep),var(--acc-d) 70%,var(--acc));
+    }
+    .cvx .idcard .cap::after{
+        content:""; position:absolute; inset:0; opacity:.45;
+        background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.12) 1px, transparent 0); background-size:18px 18px;
+    }
+    .cvx .idcard .cap .eyebrow{ font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; opacity:.75; position:relative; }
+    .cvx .idcard .body{ padding:0 16px 14px; margin-top:-34px; position:relative; }
+    .cvx .idcard .disc{
+        width:68px; height:68px; margin:0 auto; border-radius:20px; display:grid; place-items:center;
+        font-size:23px; font-weight:800; color:var(--acc-deep); background:linear-gradient(150deg,#fff,#e9eef8);
+        box-shadow:0 10px 24px -12px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.7); position:relative;
+    }
+    .cvx .idcard h3{ margin:11px 0 3px; font-size:15.5px; font-weight:800; letter-spacing:-.015em; text-align:center; }
+    .cvx .idcard .sub{ text-align:center; font-size:11px; color:var(--muted); }
+    .cvx .idcard .tags{ display:flex; gap:5px; justify-content:center; flex-wrap:wrap; margin:10px 0 4px; }
+    .cvx .idrows{ margin-top:12px; border-top:1px solid var(--line-soft); }
+    .cvx .idrows .r{ display:flex; align-items:center; gap:9px; padding:8px 2px; border-bottom:1px solid var(--line-soft); }
+    .cvx .idrows .r:last-child{ border-bottom:0; }
+    .cvx .idrows .r .ic{ width:26px; height:26px; border-radius:8px; display:grid; place-items:center; font-size:11px; background:var(--acc-tint); color:var(--acc); flex:0 0 auto; }
+    .cvx .idrows .r .k{ font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--faint); }
+    .cvx .idrows .r .v{ font-size:12px; font-weight:600; }
+    .cvx .meter{ margin-top:12px; padding:11px 12px; border-radius:var(--r-md); background:var(--surface-2); border:1px solid var(--line); }
+    .cvx .meter .hd{ display:flex; justify-content:space-between; font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+    .cvx .meter .bar{ height:6px; border-radius:999px; background:var(--surface-3); overflow:hidden; margin-top:8px; }
+    .cvx .meter .bar > i{ display:block; height:100%; background:linear-gradient(90deg,var(--acc),var(--acc-soft)); }
+    .cvx .idcard .foot{ padding:12px 16px 14px; border-top:1px solid var(--line-soft); display:grid; gap:6px; background:var(--surface-2); }
+    .cvx .btn{
+        display:inline-flex; align-items:center; justify-content:center; gap:7px; font-family:inherit; cursor:pointer;
+        font-size:11.5px; font-weight:600; padding:7px 12px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+        transition:transform .14s, background .14s, box-shadow .14s, border-color .14s;
+    }
+    .cvx .btn:hover{ background:var(--surface-2); border-color:var(--faint); color:var(--ink); }
+    .cvx .btn:active{ transform:translateY(1px); }
+    .cvx .btn.pri{ background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 8px 18px -10px rgba(var(--acc-rgb),.9); }
+    .cvx .btn.pri:hover{ background:var(--acc-d); border-color:var(--acc-d); color:#fff; }
+    .cvx .btn.ok{ background:var(--ok); border-color:var(--ok); color:#fff; }
+    .cvx .btn.ok:hover{ background:color-mix(in srgb,var(--ok),#000 14%); color:#fff; }
+    .cvx .btn.ghost-bad{ color:var(--bad); border-color:color-mix(in srgb,var(--bad),transparent 65%); background:var(--bad-t); }
+    .cvx .btn.sm{ font-size:11px; padding:5px 10px; }
+
+    /* vertical rail (direction B) */
+    .cvx .rail-list{ margin-top:14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--sh-sm); padding:6px; }
+    .cvx .rail-list button{
+        display:flex; align-items:center; gap:9px; width:100%; font-family:inherit; text-align:left;
+        font-size:12px; font-weight:600; color:var(--ink-2); background:transparent; border:0; cursor:pointer;
+        padding:8px 10px; border-radius:9px; position:relative; transition:background .15s,color .15s;
+    }
+    .cvx .rail-list button i.lead{ width:16px; text-align:center; opacity:.6; }
+    .cvx .rail-list button:hover{ background:var(--surface-2); color:var(--ink); }
+    .cvx .rail-list button.on{ background:var(--acc-tint); color:var(--acc-d); }
+    body[data-mode="dark"] .cvx .rail-list button.on{ color:#fff; }
+    .cvx .rail-list button.on::before{ content:""; position:absolute; left:0; top:7px; bottom:7px; width:3px; border-radius:999px; background:var(--acc); }
+    .cvx .rail-list button.on i.lead{ opacity:1; color:var(--acc); }
+    .cvx .rail-list .cnt{ margin-left:auto; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:999px; background:var(--surface-3); color:var(--muted); }
+
+    /* ─────────────────────────  C · CONSOLE  ───────────────────────── */
+    .cvx .strip{
+        background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--sh-sm);
+        padding:12px 14px; display:flex; align-items:center; gap:13px; flex-wrap:wrap;
+        position:relative; overflow:hidden;
+    }
+    .cvx .strip::before{ content:""; position:absolute; inset:0 auto 0 0; width:4px; background:linear-gradient(180deg,var(--acc),var(--acc-soft)); }
+    .cvx .strip .disc{
+        width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-size:17px; font-weight:800;
+        color:#fff; background:linear-gradient(150deg,var(--acc-d),var(--acc)); box-shadow:0 8px 18px -10px rgba(var(--acc-rgb),.9); flex:0 0 auto;
+    }
+    .cvx .strip h3{ margin:0; font-size:16px; font-weight:800; letter-spacing:-.02em; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+    .cvx .strip .inline{ display:flex; gap:12px; flex-wrap:wrap; margin-top:3px; font-size:11px; color:var(--muted); }
+    .cvx .strip .inline b{ color:var(--ink-2); font-weight:600; }
+    .cvx .tag{ display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:3px 8px; border-radius:999px; }
+    .cvx .tag.ok{ background:var(--ok-t); color:var(--ok); }
+    .cvx .tag.warn{ background:var(--warn-t); color:var(--warn); }
+    .cvx .tag.bad{ background:var(--bad-t); color:var(--bad); }
+    .cvx .tag.info{ background:var(--info-t); color:var(--info); }
+    .cvx .tag.acc{ background:var(--acc-tint); color:var(--acc); }
+    .cvx .tag.plum{ background:var(--plum-t); color:var(--plum); }
+    .cvx .tag.mute{ background:var(--surface-3); color:var(--muted); }
+
+    .cvx .flatkpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; margin-top:12px; background:var(--line); border:1px solid var(--line); border-radius:var(--r-lg); overflow:hidden; }
+    .cvx .flatkpis .c{ background:var(--surface); padding:11px 13px; }
+    .cvx .flatkpis .c .lab{ font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); display:flex; align-items:center; gap:6px; }
+    .cvx .flatkpis .c .lab i{ color:var(--k); }
+    .cvx .flatkpis .c .val{ font-size:18px; font-weight:800; letter-spacing:-.02em; margin-top:3px; }
+    .cvx .flatkpis .c.k1{ --k:var(--info); } .cvx .flatkpis .c.k2{ --k:var(--ok); }
+    .cvx .flatkpis .c.k3{ --k:var(--warn); } .cvx .flatkpis .c.k4{ --k:var(--plum); }
+
+    /* underline rail (direction C) */
+    .cvx .rail-under{
+        display:flex; gap:2px; overflow-x:auto; scrollbar-width:thin; margin:14px 0 0;
+        border-bottom:1px solid var(--line);
+    }
+    .cvx .rail-under button{
+        flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; font-family:inherit; cursor:pointer;
+        font-size:12px; font-weight:600; color:var(--muted); background:transparent; border:0; border-bottom:2px solid transparent;
+        padding:9px 13px; white-space:nowrap; transition:color .15s, border-color .15s, background .15s;
+    }
+    .cvx .rail-under button:hover{ color:var(--ink); background:var(--surface-2); }
+    .cvx .rail-under button.on{ color:var(--acc); border-bottom-color:var(--acc); }
+    .cvx .rail-under .cnt{ font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:999px; background:var(--surface-3); color:var(--muted); }
+    .cvx .rail-under button.on .cnt{ background:var(--acc-tint); color:var(--acc); }
+    .cvx .shell-c .slot{ padding-top:14px; }
+
+    /* ═══════════════════════  SHARED TAB CONTENT  ═══════════════════════ */
+    .cvx .panel{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--sh-sm); overflow:hidden; }
+    .cvx .panel + .panel{ margin-top:12px; }
+    .cvx .phead{ display:flex; align-items:center; gap:9px; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--surface-2); }
+    .cvx .phead .ic{ width:28px; height:28px; border-radius:9px; display:grid; place-items:center; font-size:12.5px; background:var(--pt,var(--acc-tint)); color:var(--pc,var(--acc)); }
+    .cvx .phead h4{ margin:0; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-2); }
+    .cvx .phead .hint{ font-size:10.5px; color:var(--faint); font-weight:500; letter-spacing:0; text-transform:none; }
+    .cvx .phead .right{ margin-left:auto; display:flex; gap:6px; align-items:center; }
+    .cvx .pbody{ padding:13px 14px; }
+    .cvx .pbody.tight{ padding:0; }
+    .cvx .p-ok{ --pt:var(--ok-t); --pc:var(--ok); } .cvx .p-info{ --pt:var(--info-t); --pc:var(--info); }
+    .cvx .p-warn{ --pt:var(--warn-t); --pc:var(--warn); } .cvx .p-plum{ --pt:var(--plum-t); --pc:var(--plum); }
+
+    .cvx .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:0 22px; }
+    .cvx .dl{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:7px 2px; border-bottom:1px dashed var(--line); }
+    .cvx .dl:last-child{ border-bottom:0; }
+    .cvx .dl dt{ font-size:11px; color:var(--muted); font-weight:500; margin:0; }
+    .cvx .dl dd{ margin:0; font-size:12px; font-weight:600; text-align:right; }
+    .cvx .dl dd.empty{ color:var(--faint); font-weight:500; }
+    .cvx .split{ display:grid; grid-template-columns:minmax(0,1.85fr) minmax(0,1fr); gap:12px; align-items:start; }
+
+    /* fields */
+    .cvx .flds{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px 12px; }
+    .cvx .fld label{ display:block; font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--faint); margin-bottom:4px; }
+    .cvx .fld input, .cvx .fld select, .cvx .fld textarea{
+        width:100%; font-family:inherit; font-size:12.5px; color:var(--ink); background:var(--surface);
+        border:1px solid var(--line); border-radius:9px; padding:7px 10px; transition:border-color .15s, box-shadow .15s, background .15s;
+    }
+    .cvx .fld textarea{ min-height:58px; resize:vertical; }
+    .cvx .fld input:hover, .cvx .fld select:hover{ border-color:var(--faint); }
+    .cvx .fld input:focus, .cvx .fld select:focus, .cvx .fld textarea:focus{
+        outline:0; border-color:var(--acc); box-shadow:0 0 0 3.5px rgba(var(--acc-rgb),.16); background:var(--surface);
+    }
+    .cvx .fld.w2{ grid-column:span 2; } .cvx .fld.w4{ grid-column:span 4; }
+    .cvx .fld .req{ color:var(--bad); }
+    .cvx .fld.locked input, .cvx .fld.locked select{ background:var(--surface-2); color:var(--muted); }
+    .cvx .expiry{ font-size:10px; margin-top:4px; font-weight:600; }
+    .cvx .expiry.soon{ color:var(--warn); } .cvx .expiry.gone{ color:var(--bad); } .cvx .expiry.fine{ color:var(--ok); }
+
+    .cvx .savebar{
+        position:sticky; bottom:0; z-index:6; margin-top:12px;
+        display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+        padding:10px 13px; border:1px solid var(--line); border-radius:var(--r-lg);
+        background:color-mix(in srgb, var(--surface), transparent 8%); backdrop-filter:blur(9px); box-shadow:var(--sh-md);
+    }
+    .cvx .savebar .note{ font-size:11px; color:var(--muted); margin-right:auto; }
+
+    /* toolbar/filters */
+    .cvx .filters{ display:flex; gap:9px; align-items:flex-end; flex-wrap:wrap; padding:11px 14px; background:var(--surface-2); border-bottom:1px solid var(--line); }
+    .cvx .filters .fld{ min-width:132px; }
+    .cvx .filters .fld input, .cvx .filters .fld select{ background:var(--surface); }
+    .cvx .filters .grow{ flex:1; }
+    .cvx .quick{ display:flex; gap:4px; }
+    .cvx .quick button{ font-family:inherit; cursor:pointer; font-size:10.5px; font-weight:700; padding:6px 9px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--muted); }
+    .cvx .quick button:hover{ color:var(--ink); border-color:var(--faint); }
+    .cvx .quick button.on{ background:var(--acc-tint); border-color:color-mix(in srgb,var(--acc),transparent 60%); color:var(--acc); }
+
+    /* tables */
+    .cvx .tw{ overflow-x:auto; scrollbar-width:thin; }
+    .cvx table.t{ width:100%; border-collapse:separate; border-spacing:0; font-size:12px; }
+    .cvx table.t th{
+        text-align:left; font-size:9.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted);
+        padding:9px 12px; background:var(--surface-2); border-bottom:1px solid var(--line); white-space:nowrap; position:sticky; top:0;
+    }
+    .cvx table.t td{ padding:9px 12px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+    .cvx table.t tbody tr:last-child td{ border-bottom:0; }
+    .cvx table.t tbody tr:hover td{ background:var(--acc-tint-2); }
+    .cvx table.t .r{ text-align:right; font-variant-numeric:tabular-nums; }
+    .cvx table.t .strong{ font-weight:700; }
+    .cvx table.t a{ color:var(--acc); font-weight:600; text-decoration:none; }
+    .cvx table.t a:hover{ text-decoration:underline; }
+    .cvx table.t tfoot td{ padding:9px 12px; background:var(--surface-2); font-weight:800; border-top:1px solid var(--line); font-variant-numeric:tabular-nums; }
+    .cvx .fb{ font-size:11px; color:var(--muted); background:var(--surface-2); border-left:2px solid var(--warn); padding:6px 10px; border-radius:0 7px 7px 0; }
+    .cvx .stars i{ font-size:11px; color:var(--line); } .cvx .stars i.f{ color:#F59E0B; }
+
+    /* mini stat tiles inside tabs */
+    .cvx .tiles{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .cvx .tile{ border:1px solid var(--line); border-radius:var(--r-md); padding:11px 12px; background:var(--surface); position:relative; overflow:hidden; }
+    .cvx .tile .lab{ font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); display:flex; align-items:center; gap:6px; }
+    .cvx .tile .lab i{ color:var(--k); }
+    .cvx .tile .val{ font-size:17px; font-weight:800; letter-spacing:-.02em; margin-top:2px; }
+    .cvx .tile .bar{ height:4px; border-radius:999px; background:var(--surface-3); overflow:hidden; margin-top:8px; }
+    .cvx .tile .bar > i{ display:block; height:100%; background:var(--k); }
+    .cvx .tile.k1{ --k:var(--info); } .cvx .tile.k2{ --k:var(--ok); } .cvx .tile.k3{ --k:var(--warn); }
+
+    /* agreement cards */
+    .cvx .agcards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:11px; }
+    .cvx .ag{ border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface); overflow:hidden; transition:transform .18s, box-shadow .18s, border-color .18s; }
+    .cvx .ag:hover{ transform:translateY(-2px); box-shadow:var(--sh-md); border-color:var(--faint); }
+    .cvx .ag .h{ display:flex; align-items:center; gap:9px; padding:10px 12px; border-bottom:1px solid var(--line); background:var(--surface-2); }
+    .cvx .ag .h .ic{ width:30px; height:30px; border-radius:9px; display:grid; place-items:center; font-size:13px; background:var(--acc-tint); color:var(--acc); }
+    .cvx .ag.sale .h .ic{ background:var(--plum-t); color:var(--plum); }
+    .cvx .ag .h .t{ font-weight:800; font-size:12.5px; line-height:1.2; }
+    .cvx .ag .h .s{ font-size:10.5px; color:var(--muted); }
+    .cvx .ag .b{ padding:4px 12px 8px; }
+    .cvx .ag .b .r{ display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px dashed var(--line); font-size:11.5px; }
+    .cvx .ag .b .r:last-child{ border-bottom:0; }
+    .cvx .ag .b .r span:first-child{ color:var(--muted); }
+    .cvx .ag .b .r span:last-child{ font-weight:600; text-align:right; }
+    .cvx .ag .f{ display:flex; gap:6px; padding:9px 12px; border-top:1px solid var(--line); background:var(--surface-2); }
+    .cvx .ag .f .btn{ flex:1; }
+
+    /* bar list (summary) */
+    .cvx .barlist .row{ display:grid; grid-template-columns:minmax(0,1fr) 62px; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--line-soft); }
+    .cvx .barlist .row:last-child{ border-bottom:0; }
+    .cvx .barlist .nm{ font-size:12px; font-weight:600; }
+    .cvx .barlist .bar{ height:5px; border-radius:999px; background:var(--surface-3); overflow:hidden; margin-top:5px; }
+    .cvx .barlist .bar > i{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--acc),var(--acc-soft)); }
+    .cvx .barlist .qt{ text-align:right; font-weight:800; font-variant-numeric:tabular-nums; }
+
+    .cvx .empty{ text-align:center; padding:34px 16px; color:var(--faint); }
+    .cvx .empty i{ font-size:26px; display:block; margin-bottom:9px; opacity:.5; }
+    .cvx .alert{ display:flex; gap:9px; align-items:flex-start; padding:9px 12px; border-radius:var(--r-md); font-size:11.5px; margin-bottom:11px; }
+    .cvx .alert.info{ background:var(--info-t); color:color-mix(in srgb,var(--info),#000 26%); }
+    body[data-mode="dark"] .cvx .alert.info{ color:#a5e2fb; }
+    .cvx .pane{ display:none; } .cvx .pane.on{ display:block; animation:cvxIn .28s cubic-bezier(.22,1,.36,1); }
+    @keyframes cvxIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
+
+    @media (max-width:991px){
+        .cvx .kpis, .cvx .flatkpis{ grid-template-columns:repeat(2,1fr); }
+        .cvx .dossier{ grid-template-columns:1fr; }
+        .cvx .idcard{ position:static; }
+        .cvx .split{ grid-template-columns:1fr; }
+        .cvx .flds{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+        .cvx .fld.w4{ grid-column:span 2; }
+        .cvx .tiles{ grid-template-columns:1fr; }
+        .cvx .grid2{ grid-template-columns:1fr; }
+        .cvx .rail-list{ display:flex; overflow-x:auto; }
+        .cvx .rail-list button{ width:auto; white-space:nowrap; }
+        .cvx .rail-list .cnt{ margin-left:4px; }
+    }
+    @media (max-width:575px){
+        body{ padding:120px 10px 50px; }
+        .cvx .kpis{ margin:-58px 0 0; grid-template-columns:1fr 1fr; }
+        .cvx .flds{ grid-template-columns:1fr; } .cvx .fld.w2,.cvx .fld.w4{ grid-column:span 1; }
+    }
+
+    /* structure note block */
+    .treecard{ max-width:1180px; margin:26px auto 0; border-radius:14px; overflow:hidden; border:1px solid rgba(148,163,184,.28); }
+    body[data-mode="light"] .treecard{ background:#fff; }
+    body[data-mode="dark"] .treecard{ background:#252b34; }
+    .treecard h4{ margin:0; padding:12px 16px; font-size:11px; letter-spacing:.09em; text-transform:uppercase;
+                  border-bottom:1px solid rgba(148,163,184,.24); }
+    body[data-mode="light"] .treecard h4{ background:#f6f8fb; color:#3a465c; }
+    body[data-mode="dark"] .treecard h4{ background:#2c333c; color:#c2cad6; }
+    .treecard pre{ margin:0; padding:14px 16px; font-size:12px; line-height:1.65; overflow-x:auto;
+                   font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    body[data-mode="light"] .treecard pre{ color:#334155; }
+    body[data-mode="dark"] .treecard pre{ color:#cbd5e1; }
+    .treecard pre b{ color:#2563EB; }
+    body[data-mode="dark"] .treecard pre b{ color:#7dabff; }
+    .treecard pre i{ color:#0F9D58; font-style:normal; }
+    .treecard pre s{ color:#DC2626; text-decoration:none; }
+</style>
+</head>
+
+<body data-mode="light">
+
+<div class="toolbar">
+    <div class="brand">Customer View — Premium Redesign<small>docs/customer-view-premium-preview.html · pick a direction</small></div>
+    <div class="spacer"></div>
+    <div class="group">
+        <span class="label">Direction</span>
+        <div class="seg" id="dirSeg">
+            <button data-dir="a" class="active">A · Portrait Hero</button>
+            <button data-dir="b">B · Dossier</button>
+            <button data-dir="c">C · Console</button>
+        </div>
+    </div>
+    <div class="group">
+        <span class="label">Theme accent</span>
+        <div class="swatch sw-royal active" data-acc="royal" title="Royal (app default)"></div>
+        <div class="swatch sw-emerald" data-acc="emerald" title="Emerald"></div>
+        <div class="swatch sw-graphite" data-acc="graphite" title="Graphite"></div>
+        <div class="swatch sw-bronze" data-acc="bronze" title="Bronze"></div>
+    </div>
+    <button class="btn-toggle" id="modeBtn"><i class="fa fa-moon-o"></i> Dark</button>
+</div>
+
+<div class="dirnote" id="dirNote"></div>
+
+<div class="stage">
+<div class="cvx acc-royal" id="cvx">
+
+    <!-- ═════════════════════ A · PORTRAIT HERO ═════════════════════ -->
+    <div class="shell shell-a on">
+        <header class="hero">
+            <span class="glow a"></span><span class="glow b"></span>
+            <nav class="crumb">
+                <a href="#">Home</a> <span>›</span> <a href="#">Accounts</a> <span>›</span> <a href="#">Customers</a> <span>›</span>
+                <span class="here">Abdulla Al Mansoori</span>
+            </nav>
+            <div class="idrow">
+                <div class="ava">
+                    <div class="disc">AM</div>
+                    <span class="badge-dot"><i class="fa fa-check"></i></span>
+                </div>
+                <div style="flex:1 1 320px; min-width:0;">
+                    <h1 class="hname">Abdulla Al Mansoori <span class="code">#1042</span></h1>
+                    <div class="chips">
+                        <span class="chip solid"><i class="fa fa-star"></i> Corporate</span>
+                        <span class="chip"><span class="dot"></span> Active</span>
+                        <span class="chip"><i class="fa fa-shield"></i> KYC Verified</span>
+                        <span class="chip"><i class="fa fa-clock-o"></i> 30 Days Credit</span>
+                    </div>
+                    <div class="hmeta">
+                        <span><i class="fa fa-mobile"></i> +974 5512 8890</span>
+                        <span><i class="fa fa-envelope-o"></i> abdulla@mansoori-tr.qa</span>
+                        <span><i class="fa fa-map-marker"></i> Doha, Qatar</span>
+                    </div>
+                </div>
+                <div style="margin-left:auto;">
+                    <div class="hacts">
+                        <button class="b"><i class="fa fa-file-pdf-o"></i> Statement</button>
+                        <button class="b"><i class="fa fa-print"></i> KYC Form</button>
+                        <button class="b pri"><i class="fa fa-pencil"></i> Edit Customer</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="kpis">
+            <div class="kpi k1">
+                <div class="top">
+                    <span class="ic"><i class="fa fa-line-chart"></i></span>
+                    <div><div class="lab">Lifetime Value</div><div class="val num">QAR 184,250</div></div>
+                </div>
+                <div class="sub">48 invoices · since Mar 2023</div>
+            </div>
+            <div class="kpi k2">
+                <div class="top">
+                    <span class="ic"><i class="fa fa-check-circle-o"></i></span>
+                    <div><div class="lab">Collected</div><div class="val num">QAR 161,900</div></div>
+                </div>
+                <div class="track"><i style="width:88%"></i></div>
+                <div class="sub">88% of billed value</div>
+            </div>
+            <div class="kpi k3">
+                <div class="top">
+                    <span class="ic"><i class="fa fa-exclamation-circle"></i></span>
+                    <div><div class="lab">Outstanding</div><div class="val num">QAR 22,350</div></div>
+                </div>
+                <div class="track"><i style="width:32%"></i></div>
+                <div class="sub">3 invoices overdue &gt; 30 days</div>
+            </div>
+            <div class="kpi k4">
+                <div class="top">
+                    <span class="ic"><i class="fa fa-key"></i></span>
+                    <div><div class="lab">Agreements</div><div class="val num">6</div></div>
+                </div>
+                <div class="sub">4 rentals · 2 sales · 3 active</div>
+            </div>
+        </div>
+
+        <div class="rail-pill rail" data-rail>
+            <button data-tab="basic" class="on"><i class="fa fa-user-o"></i> Basic Details</button>
+            <button data-tab="kyc"><i class="fa fa-shield"></i> KYC <span class="cnt">72%</span></button>
+            <button data-tab="agreements"><i class="fa fa-key"></i> Rentout / Sale <span class="cnt">6</span></button>
+            <button data-tab="sales"><i class="fa fa-shopping-cart"></i> Sales <span class="cnt">48</span></button>
+            <button data-tab="returns"><i class="fa fa-undo"></i> Returns <span class="cnt">3</span></button>
+            <button data-tab="items"><i class="fa fa-cube"></i> Sale Items <span class="cnt">126</span></button>
+            <button data-tab="summary"><i class="fa fa-bar-chart"></i> Item Summary</button>
+            <button data-tab="notes"><i class="fa fa-sticky-note-o"></i> Notes <span class="cnt">4</span></button>
+        </div>
+        <div class="slot"></div>
+    </div>
+
+    <!-- ═════════════════════ B · DOSSIER ═════════════════════ -->
+    <div class="shell shell-b">
+        <div class="dossier">
+            <aside>
+                <div class="idcard">
+                    <div class="cap"><span class="eyebrow">Customer Dossier · #1042</span></div>
+                    <div class="body">
+                        <div class="disc">AM</div>
+                        <h3>Abdulla Al Mansoori</h3>
+                        <div class="sub">Mansoori Trading W.L.L.</div>
+                        <div class="tags">
+                            <span class="tag acc"><i class="fa fa-star"></i> Corporate</span>
+                            <span class="tag ok"><i class="fa fa-check"></i> Verified</span>
+                        </div>
+                        <div class="idrows">
+                            <div class="r"><span class="ic"><i class="fa fa-mobile"></i></span><div><div class="k">Mobile</div><div class="v num">+974 5512 8890</div></div></div>
+                            <div class="r"><span class="ic"><i class="fa fa-whatsapp"></i></span><div><div class="k">WhatsApp</div><div class="v num">+974 5512 8890</div></div></div>
+                            <div class="r"><span class="ic"><i class="fa fa-envelope-o"></i></span><div style="min-width:0"><div class="k">Email</div><div class="v" style="word-break:break-all">abdulla@mansoori-tr.qa</div></div></div>
+                            <div class="r"><span class="ic"><i class="fa fa-calendar-o"></i></span><div><div class="k">Credit Period</div><div class="v">30 Days</div></div></div>
+                            <div class="r"><span class="ic"><i class="fa fa-map-marker"></i></span><div><div class="k">Address</div><div class="v">Al Sadd, Doha, Qatar</div></div></div>
+                        </div>
+                        <div class="meter">
+                            <div class="hd"><span>KYC Completeness</span><span class="num">72%</span></div>
+                            <div class="bar"><i style="width:72%"></i></div>
+                            <div style="font-size:10.5px;color:var(--muted);margin-top:7px;">8 of 29 fields still empty · ID expires in 46 days</div>
+                        </div>
+                    </div>
+                    <div class="foot">
+                        <button class="btn pri"><i class="fa fa-pencil"></i> Edit Customer</button>
+                        <button class="btn"><i class="fa fa-file-pdf-o"></i> Account Statement</button>
+                        <button class="btn"><i class="fa fa-print"></i> Print KYC Form</button>
+                    </div>
+                </div>
+
+                <div class="rail-list rail" data-rail>
+                    <button data-tab="basic" class="on"><i class="fa fa-user-o lead"></i> Basic Details</button>
+                    <button data-tab="kyc"><i class="fa fa-shield lead"></i> KYC Information <span class="cnt">72%</span></button>
+                    <button data-tab="agreements"><i class="fa fa-key lead"></i> Rentout / Sale <span class="cnt">6</span></button>
+                    <button data-tab="sales"><i class="fa fa-shopping-cart lead"></i> Sales <span class="cnt">48</span></button>
+                    <button data-tab="returns"><i class="fa fa-undo lead"></i> Sales Return <span class="cnt">3</span></button>
+                    <button data-tab="items"><i class="fa fa-cube lead"></i> Sale Items <span class="cnt">126</span></button>
+                    <button data-tab="summary"><i class="fa fa-bar-chart lead"></i> Item Summary</button>
+                    <button data-tab="notes"><i class="fa fa-sticky-note-o lead"></i> Notes <span class="cnt">4</span></button>
+                </div>
+            </aside>
+            <div class="slot"></div>
+        </div>
+    </div>
+
+    <!-- ═════════════════════ C · CONSOLE ═════════════════════ -->
+    <div class="shell shell-c">
+        <div class="strip">
+            <div class="disc">AM</div>
+            <div style="min-width:0;">
+                <h3>Abdulla Al Mansoori
+                    <span class="tag mute">#1042</span>
+                    <span class="tag acc">Corporate</span>
+                    <span class="tag ok"><i class="fa fa-check"></i> KYC Verified</span>
+                    <span class="tag warn">ID expires in 46d</span>
+                </h3>
+                <div class="inline">
+                    <span><i class="fa fa-mobile"></i> <b class="num">+974 5512 8890</b></span>
+                    <span><i class="fa fa-envelope-o"></i> <b>abdulla@mansoori-tr.qa</b></span>
+                    <span><i class="fa fa-clock-o"></i> <b>30 Days credit</b></span>
+                    <span><i class="fa fa-map-marker"></i> <b>Al Sadd, Doha</b></span>
+                </div>
+            </div>
+            <div style="margin-left:auto; display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn sm"><i class="fa fa-file-pdf-o"></i> Statement</button>
+                <button class="btn sm"><i class="fa fa-print"></i> KYC</button>
+                <button class="btn sm pri"><i class="fa fa-pencil"></i> Edit</button>
+            </div>
+        </div>
+
+        <div class="flatkpis">
+            <div class="c k1"><div class="lab"><i class="fa fa-line-chart"></i> Lifetime Value</div><div class="val num">QAR 184,250</div></div>
+            <div class="c k2"><div class="lab"><i class="fa fa-check-circle-o"></i> Collected</div><div class="val num">QAR 161,900</div></div>
+            <div class="c k3"><div class="lab"><i class="fa fa-exclamation-circle"></i> Outstanding</div><div class="val num">QAR 22,350</div></div>
+            <div class="c k4"><div class="lab"><i class="fa fa-key"></i> Agreements</div><div class="val num">6</div></div>
+        </div>
+
+        <div class="rail-under rail" data-rail>
+            <button data-tab="basic" class="on">Basic Details</button>
+            <button data-tab="kyc">KYC <span class="cnt">72%</span></button>
+            <button data-tab="agreements">Rentout / Sale <span class="cnt">6</span></button>
+            <button data-tab="sales">Sales <span class="cnt">48</span></button>
+            <button data-tab="returns">Returns <span class="cnt">3</span></button>
+            <button data-tab="items">Sale Items <span class="cnt">126</span></button>
+            <button data-tab="summary">Item Summary</button>
+            <button data-tab="notes">Notes <span class="cnt">4</span></button>
+        </div>
+        <div class="slot"></div>
+    </div>
+
+</div><!-- /.cvx -->
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SHARED TAB PANELS — moved into the active direction's .slot
+     Each pane = one Livewire component in the refactor
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="panels">
+
+    <!-- ─────────── Basic Details ─────────── -->
+    <div class="pane on" data-pane="basic">
+        <div class="split">
+            <div>
+                <div class="panel">
+                    <div class="phead">
+                        <span class="ic"><i class="fa fa-user-o"></i></span>
+                        <div><h4>Identity &amp; Contact</h4></div>
+                        <div class="right"><span class="tag mute">Read only</span></div>
+                    </div>
+                    <div class="pbody">
+                        <div class="grid2">
+                            <dl class="dl"><dt>Name</dt><dd>Abdulla Al Mansoori</dd></dl>
+                            <dl class="dl"><dt>Customer Type</dt><dd>Corporate</dd></dl>
+                            <dl class="dl"><dt>Mobile</dt><dd class="num">+974 5512 8890</dd></dl>
+                            <dl class="dl"><dt>WhatsApp</dt><dd class="num">+974 5512 8890</dd></dl>
+                            <dl class="dl"><dt>Emergency Contact</dt><dd class="num">+974 3390 1187</dd></dl>
+                            <dl class="dl"><dt>Email</dt><dd>abdulla@mansoori-tr.qa</dd></dl>
+                            <dl class="dl"><dt>Date of Birth</dt><dd>14 Aug 1986</dd></dl>
+                            <dl class="dl"><dt>Nationality</dt><dd>Qatar</dd></dl>
+                            <dl class="dl"><dt>ID No</dt><dd class="num">28634500912</dd></dl>
+                            <dl class="dl"><dt>Passport No</dt><dd class="num">QA4482910</dd></dl>
+                            <dl class="dl"><dt>Company</dt><dd>Mansoori Trading W.L.L.</dd></dl>
+                            <dl class="dl"><dt>Tax No</dt><dd class="empty">—</dd></dl>
+                            <dl class="dl"><dt>Credit Period</dt><dd>30 Days</dd></dl>
+                            <dl class="dl"><dt>Registered On</dt><dd>02 Mar 2023</dd></dl>
+                        </div>
+                        <dl class="dl" style="border-top:1px dashed var(--line); margin-top:4px;">
+                            <dt>Residential Address</dt><dd>Villa 27, Street 940, Al Sadd, Doha, Qatar</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="phead p-info">
+                        <span class="ic"><i class="fa fa-tachometer"></i></span>
+                        <div><h4>Account Snapshot</h4><span class="hint">Across sales, returns &amp; agreements</span></div>
+                    </div>
+                    <div class="pbody">
+                        <div class="tiles">
+                            <div class="tile k1"><div class="lab"><i class="fa fa-shopping-cart"></i> Sales</div><div class="val num">48</div><div class="bar"><i style="width:100%"></i></div></div>
+                            <div class="tile k2"><div class="lab"><i class="fa fa-money"></i> Avg. Invoice</div><div class="val num">QAR 3,838</div><div class="bar"><i style="width:64%"></i></div></div>
+                            <div class="tile k3"><div class="lab"><i class="fa fa-hourglass-half"></i> Avg. Days To Pay</div><div class="val num">24</div><div class="bar"><i style="width:80%"></i></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel">
+                    <div class="phead p-ok">
+                        <span class="ic"><i class="fa fa-check-circle-o"></i></span>
+                        <div><h4>Details Confirmation</h4></div>
+                    </div>
+                    <div class="pbody">
+                        <span class="tag ok"><i class="fa fa-check"></i> Confirmed</span>
+                        <p style="font-size:11.5px; color:var(--muted); margin:9px 0 12px;">
+                            18 Jul 2026 · 10:24 AM<br>by <b style="color:var(--ink-2)">Rahees C V</b>
+                        </p>
+                        <div class="alert info"><i class="fa fa-info-circle"></i>
+                            <span>Re-confirm whenever identity documents or contact details change.</span></div>
+                        <button class="btn ok" style="width:100%"><i class="fa fa-check"></i> Re-confirm Details</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="phead p-warn">
+                        <span class="ic"><i class="fa fa-bell-o"></i></span>
+                        <div><h4>Document Expiry</h4></div>
+                    </div>
+                    <div class="pbody" style="padding-top:6px;">
+                        <dl class="dl"><dt>National ID</dt><dd><span class="tag warn">46 days</span></dd></dl>
+                        <dl class="dl"><dt>Passport</dt><dd><span class="tag ok">2 yr 3 mo</span></dd></dl>
+                        <dl class="dl"><dt>CR</dt><dd><span class="tag bad">Expired 12 d</span></dd></dl>
+                        <dl class="dl"><dt>Tax Card</dt><dd><span class="tag mute">Not set</span></dd></dl>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="phead p-plum">
+                        <span class="ic"><i class="fa fa-bolt"></i></span>
+                        <div><h4>Quick Actions</h4></div>
+                    </div>
+                    <div class="pbody" style="display:grid; gap:6px;">
+                        <button class="btn"><i class="fa fa-plus"></i> New Sale</button>
+                        <button class="btn"><i class="fa fa-key"></i> New Agreement</button>
+                        <button class="btn"><i class="fa fa-sticky-note-o"></i> Add Note</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────── KYC ─────────── -->
+    <div class="pane" data-pane="kyc">
+        <div class="panel" style="margin-bottom:12px;">
+            <div class="phead">
+                <span class="ic"><i class="fa fa-shield"></i></span>
+                <div><h4>KYC Information</h4><span class="hint">Know Your Customer — 21 of 29 fields captured</span></div>
+                <div class="right">
+                    <span class="tag ok"><i class="fa fa-check-circle"></i> Verified</span>
+                    <button class="btn sm"><i class="fa fa-file-pdf-o"></i> Print KYC</button>
+                </div>
+            </div>
+            <div class="pbody" style="padding:11px 14px;">
+                <div class="meter" style="margin:0;">
+                    <div class="hd"><span>Completeness</span><span class="num">72%</span></div>
+                    <div class="bar"><i style="width:72%"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="phead"><span class="ic"><i class="fa fa-id-card-o"></i></span><div><h4>Identity Details</h4></div>
+                <div class="right"><span class="tag mute">6 fields</span></div></div>
+            <div class="pbody">
+                <div class="flds">
+                    <div class="fld"><label>Nationality</label><select><option>Qatar</option><option>India</option></select></div>
+                    <div class="fld"><label>Date of Birth</label><input type="date" value="1986-08-14"></div>
+                    <div class="fld"><label>Marital Status</label><select><option>Married</option><option>Single</option></select></div>
+                    <div class="fld"><label>ID No <span class="req">*</span></label><input value="28634500912"></div>
+                    <div class="fld"><label>ID Expiry Date</label><input type="date" value="2026-09-07">
+                        <div class="expiry soon"><i class="fa fa-exclamation-triangle"></i> Expires in 46 days</div></div>
+                    <div class="fld"><label>Passport No</label><input value="QA4482910"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="phead p-ok"><span class="ic"><i class="fa fa-address-book-o"></i></span><div><h4>Contact &amp; Address</h4></div></div>
+            <div class="pbody">
+                <div class="flds">
+                    <div class="fld"><label>Emergency Contact No</label><input value="+974 3390 1187"></div>
+                    <div class="fld"><label>P.O. Box</label><input value="22190"></div>
+                    <div class="fld"><label>Contact Person</label><input value="Saeed Al Mansoori"></div>
+                    <div class="fld"><label>Contact Person Mobile</label><input value="+974 5544 2201"></div>
+                    <div class="fld w4"><label>Residential Address</label><textarea>Villa 27, Street 940, Al Sadd, Doha, Qatar</textarea></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="phead p-info"><span class="ic"><i class="fa fa-briefcase"></i></span><div><h4>Employment / Business</h4></div></div>
+            <div class="pbody">
+                <div class="flds">
+                    <div class="fld"><label>Occupation</label><input value="Managing Director"></div>
+                    <div class="fld"><label>Job Title</label><input value="MD"></div>
+                    <div class="fld"><label>Company</label><input value="Mansoori Trading W.L.L."></div>
+                    <div class="fld"><label>Monthly Income</label><input value="45000.00"></div>
+                    <div class="fld"><label>Sponsor Name</label><input placeholder="—"></div>
+                    <div class="fld w2"><label>Position / Nature of Business</label><input value="General trading &amp; contracting"></div>
+                    <div class="fld w4"><label>Employer Address</label><textarea placeholder="Office address"></textarea></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="phead p-warn"><span class="ic"><i class="fa fa-folder-open-o"></i></span><div><h4>Company Documents</h4>
+                <span class="hint">CR · CP · EID · Tax Card</span></div></div>
+            <div class="pbody">
+                <div class="flds">
+                    <div class="fld"><label>CR Number</label><input value="CR-118472"></div>
+                    <div class="fld"><label>CR Issue Date</label><input type="date" value="2021-01-11"></div>
+                    <div class="fld"><label>CR Expiry Date</label><input type="date" value="2026-07-11">
+                        <div class="expiry gone"><i class="fa fa-times-circle"></i> Expired 12 days ago</div></div>
+                    <div class="fld"><label>CP Number</label><input value="CP-77120"></div>
+                    <div class="fld"><label>CP Issue Date</label><input type="date" value="2022-05-02"></div>
+                    <div class="fld"><label>CP Expiry Date</label><input type="date" value="2027-05-02">
+                        <div class="expiry fine"><i class="fa fa-check-circle"></i> Valid</div></div>
+                    <div class="fld"><label>EID Number</label><input placeholder="—"></div>
+                    <div class="fld"><label>EID Issue Date</label><input type="date"></div>
+                    <div class="fld"><label>EID Expiry Date</label><input type="date"></div>
+                    <div class="fld"><label>Tax Card No</label><input placeholder="—"></div>
+                    <div class="fld"><label>Tax Card Issue Date</label><input type="date"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="savebar">
+            <span class="note"><i class="fa fa-info-circle"></i> Saved directly to the customer record. Fields you cannot edit appear locked.</span>
+            <button class="btn"><i class="fa fa-refresh"></i> Reset</button>
+            <button class="btn pri"><i class="fa fa-floppy-o"></i> Save KYC Details</button>
+        </div>
+    </div>
+
+    <!-- ─────────── Agreements ─────────── -->
+    <div class="pane" data-pane="agreements">
+        <div class="panel">
+            <div class="filters">
+                <div class="fld"><label>Agreement Type</label><select><option>All Types</option><option>Rental</option><option>Lease / Sale</option></select></div>
+                <div class="fld"><label>Status</label><select><option>All</option><option>Occupied</option><option>Booked</option></select></div>
+                <div class="fld grow"><label>Search</label><input placeholder="Agreement no, building, unit…"></div>
+                <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+                    <span class="tag mute">6 agreements</span>
+                    <span class="tag ok">3 active</span>
+                </div>
+            </div>
+            <div class="pbody">
+                <div class="agcards">
+                    <div class="ag">
+                        <div class="h">
+                            <span class="ic"><i class="fa fa-home"></i></span>
+                            <div style="min-width:0"><div class="t">Unit 402</div><div class="s">Marina Heights Tower</div></div>
+                            <span class="tag acc" style="margin-left:auto">Rental</span>
+                        </div>
+                        <div class="b">
+                            <div class="r"><span><i class="fa fa-barcode"></i> Agreement</span><span><a href="#" style="color:var(--acc)">RA-2026-0184</a></span></div>
+                            <div class="r"><span><i class="fa fa-calendar"></i> Period</span><span class="num">01 Feb 26 → 31 Jan 27</span></div>
+                            <div class="r"><span><i class="fa fa-money"></i> Rent / mo</span><span class="num">QAR 6,500</span></div>
+                            <div class="r"><span><i class="fa fa-info-circle"></i> Status</span><span><span class="tag ok">Occupied</span></span></div>
+                        </div>
+                        <div class="f">
+                            <button class="btn sm"><i class="fa fa-eye"></i> View</button>
+                            <button class="btn sm"><i class="fa fa-file-pdf-o"></i> KYC</button>
+                        </div>
+                    </div>
+                    <div class="ag sale">
+                        <div class="h">
+                            <span class="ic"><i class="fa fa-key"></i></span>
+                            <div style="min-width:0"><div class="t">Villa 12</div><div class="s">Al Waab Compound</div></div>
+                            <span class="tag plum" style="margin-left:auto">Sale</span>
+                        </div>
+                        <div class="b">
+                            <div class="r"><span><i class="fa fa-barcode"></i> Agreement</span><span><a href="#" style="color:var(--acc)">SA-2025-0031</a></span></div>
+                            <div class="r"><span><i class="fa fa-calendar"></i> Period</span><span class="num">15 Nov 25 → 14 Nov 30</span></div>
+                            <div class="r"><span><i class="fa fa-money"></i> Value</span><span class="num">QAR 1,850,000</span></div>
+                            <div class="r"><span><i class="fa fa-info-circle"></i> Status</span><span><span class="tag info">Booked</span></span></div>
+                        </div>
+                        <div class="f">
+                            <button class="btn sm"><i class="fa fa-eye"></i> Booking</button>
+                            <button class="btn sm"><i class="fa fa-file-pdf-o"></i> KYC</button>
+                        </div>
+                    </div>
+                    <div class="ag">
+                        <div class="h">
+                            <span class="ic"><i class="fa fa-home"></i></span>
+                            <div style="min-width:0"><div class="t">Unit 118</div><div class="s">Pearl Residence</div></div>
+                            <span class="tag acc" style="margin-left:auto">Rental</span>
+                        </div>
+                        <div class="b">
+                            <div class="r"><span><i class="fa fa-barcode"></i> Agreement</span><span><a href="#" style="color:var(--acc)">RA-2024-0912</a></span></div>
+                            <div class="r"><span><i class="fa fa-calendar"></i> Period</span><span class="num">01 Jan 24 → 31 Dec 24</span></div>
+                            <div class="r"><span><i class="fa fa-money"></i> Rent / mo</span><span class="num">QAR 4,200</span></div>
+                            <div class="r"><span><i class="fa fa-info-circle"></i> Status</span><span><span class="tag warn">Vacated</span></span></div>
+                        </div>
+                        <div class="f">
+                            <button class="btn sm"><i class="fa fa-eye"></i> View</button>
+                            <button class="btn sm"><i class="fa fa-file-pdf-o"></i> KYC</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────── Sales ─────────── -->
+    <div class="pane" data-pane="sales">
+        <div class="panel">
+            <div class="phead p-info">
+                <span class="ic"><i class="fa fa-shopping-cart"></i></span>
+                <div><h4>Sales</h4><span class="hint">Invoices raised against this customer</span></div>
+                <div class="right"><button class="btn sm"><i class="fa fa-file-pdf-o"></i> Generate Statement</button></div>
+            </div>
+            <div class="pbody" style="padding-bottom:0;">
+                <div class="tiles">
+                    <div class="tile k1"><div class="lab"><i class="fa fa-file-text-o"></i> Total Billed</div><div class="val num">QAR 184,250</div><div class="bar"><i style="width:100%"></i></div></div>
+                    <div class="tile k2"><div class="lab"><i class="fa fa-check"></i> Paid</div><div class="val num">QAR 161,900</div><div class="bar"><i style="width:88%"></i></div></div>
+                    <div class="tile k3"><div class="lab"><i class="fa fa-hourglass-half"></i> Outstanding</div><div class="val num">QAR 22,350</div><div class="bar"><i style="width:12%"></i></div></div>
+                </div>
+            </div>
+            <div class="filters" style="margin-top:13px; border-top:1px solid var(--line);">
+                <div class="fld"><label>From Date</label><input type="date" value="2026-06-23"></div>
+                <div class="fld"><label>To Date</label><input type="date" value="2026-07-23"></div>
+                <div class="fld"><label>Rows</label><select><option>10</option><option>100</option><option>500</option></select></div>
+                <div class="quick" style="margin-bottom:1px;">
+                    <button>7d</button><button class="on">30d</button><button>90d</button><button>1y</button><button>All</button>
+                </div>
+            </div>
+            <div class="tw">
+                <table class="t">
+                    <thead>
+                        <tr><th>#</th><th>Date</th><th>Invoice No</th><th class="r">Grand Total</th><th class="r">Paid</th><th class="r">Balance</th><th>Rating</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="num">3184</td><td class="num">21 Jul 2026</td><td><a href="#">INV-2026-3184</a></td>
+                            <td class="r strong">12,450.00</td><td class="r">12,450.00</td><td class="r" style="color:var(--ok)">0.00</td>
+                            <td><span class="stars"><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i></span></td></tr>
+                        <tr><td class="num">3140</td><td class="num">12 Jul 2026</td><td><a href="#">INV-2026-3140</a></td>
+                            <td class="r strong">8,900.00</td><td class="r">4,000.00</td><td class="r" style="color:var(--warn)">4,900.00</td>
+                            <td><span class="stars"><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star"></i></span></td></tr>
+                        <tr><td colspan="7" style="padding:0 12px 9px 52px; border-bottom:1px solid var(--line-soft);">
+                            <div class="fb"><i class="fa fa-comment-o"></i> Delivery was two days late but the crew handled the install well.</div></td></tr>
+                        <tr><td class="num">3098</td><td class="num">02 Jul 2026</td><td><a href="#">INV-2026-3098</a></td>
+                            <td class="r strong">21,300.00</td><td class="r">3,850.00</td><td class="r" style="color:var(--bad)">17,450.00</td>
+                            <td><span class="stars"><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></span></td></tr>
+                        <tr><td class="num">3061</td><td class="num">27 Jun 2026</td><td><a href="#">INV-2026-3061</a></td>
+                            <td class="r strong">5,600.00</td><td class="r">5,600.00</td><td class="r" style="color:var(--ok)">0.00</td>
+                            <td><span class="stars"><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i><i class="fa fa-star f"></i></span></td></tr>
+                    </tbody>
+                    <tfoot><tr><td colspan="3">4 invoices shown</td><td class="r">48,250.00</td><td class="r">25,900.00</td><td class="r">22,350.00</td><td></td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────── Returns ─────────── -->
+    <div class="pane" data-pane="returns">
+        <div class="panel">
+            <div class="phead p-warn">
+                <span class="ic"><i class="fa fa-undo"></i></span>
+                <div><h4>Sales Return</h4><span class="hint">Goods returned by this customer</span></div>
+            </div>
+            <div class="pbody" style="padding-bottom:0;">
+                <div class="tiles">
+                    <div class="tile k1"><div class="lab"><i class="fa fa-file-text-o"></i> Total Returned</div><div class="val num">QAR 6,420</div><div class="bar"><i style="width:100%"></i></div></div>
+                    <div class="tile k2"><div class="lab"><i class="fa fa-check"></i> Refunded</div><div class="val num">QAR 5,120</div><div class="bar"><i style="width:80%"></i></div></div>
+                    <div class="tile k3"><div class="lab"><i class="fa fa-hourglass-half"></i> Pending</div><div class="val num">QAR 1,300</div><div class="bar"><i style="width:20%"></i></div></div>
+                </div>
+            </div>
+            <div class="filters" style="margin-top:13px; border-top:1px solid var(--line);">
+                <div class="fld"><label>From Date</label><input type="date" value="2026-06-23"></div>
+                <div class="fld"><label>To Date</label><input type="date" value="2026-07-23"></div>
+                <div class="fld"><label>Rows</label><select><option>10</option><option>100</option><option>500</option></select></div>
+            </div>
+            <div class="tw">
+                <table class="t">
+                    <thead><tr><th>#</th><th>Date</th><th>Reference No</th><th class="r">Grand Total</th><th class="r">Refunded</th><th class="r">Balance</th></tr></thead>
+                    <tbody>
+                        <tr><td class="num">214</td><td class="num">18 Jul 2026</td><td><a href="#">SR-2026-214</a></td><td class="r strong">3,120.00</td><td class="r">3,120.00</td><td class="r" style="color:var(--ok)">0.00</td></tr>
+                        <tr><td class="num">198</td><td class="num">05 Jul 2026</td><td><a href="#">SR-2026-198</a></td><td class="r strong">2,000.00</td><td class="r">2,000.00</td><td class="r" style="color:var(--ok)">0.00</td></tr>
+                        <tr><td class="num">176</td><td class="num">29 Jun 2026</td><td><a href="#">SR-2026-176</a></td><td class="r strong">1,300.00</td><td class="r">0.00</td><td class="r" style="color:var(--warn)">1,300.00</td></tr>
+                    </tbody>
+                    <tfoot><tr><td colspan="3">3 returns shown</td><td class="r">6,420.00</td><td class="r">5,120.00</td><td class="r">1,300.00</td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────── Sale Items ─────────── -->
+    <div class="pane" data-pane="items">
+        <div class="panel">
+            <div class="phead p-plum">
+                <span class="ic"><i class="fa fa-cube"></i></span>
+                <div><h4>Sale Items</h4><span class="hint">Line-level detail of everything sold</span></div>
+                <div class="right"><span class="tag mute">126 lines</span></div>
+            </div>
+            <div class="filters">
+                <div class="fld"><label>From Date</label><input type="date" value="2026-06-23"></div>
+                <div class="fld"><label>To Date</label><input type="date" value="2026-07-23"></div>
+                <div class="fld"><label>Rows</label><select><option>10</option><option>100</option><option>500</option></select></div>
+                <div class="fld grow"><label>Product</label><input placeholder="Filter by product…"></div>
+            </div>
+            <div class="tw">
+                <table class="t">
+                    <thead><tr><th>#</th><th>Date</th><th>Invoice</th><th>Employee</th><th>Product</th><th>Unit</th>
+                        <th class="r">Qty</th><th class="r">Base Qty</th><th class="r">Total</th><th class="r">Effective</th></tr></thead>
+                    <tbody>
+                        <tr><td class="num">88214</td><td class="num">21 Jul 26</td><td><a href="#">INV-3184</a></td><td>Nihal K</td><td>Portland Cement 50kg</td><td>Bag</td><td class="r">120</td><td class="r">120</td><td class="r strong">6,600.00</td><td class="r">6,600.00</td></tr>
+                        <tr><td class="num">88213</td><td class="num">21 Jul 26</td><td><a href="#">INV-3184</a></td><td>Nihal K</td><td>Steel Rebar 12mm</td><td>Ton</td><td class="r">2.5</td><td class="r">2,500</td><td class="r strong">5,850.00</td><td class="r">5,850.00</td></tr>
+                        <tr><td class="num">88190</td><td class="num">12 Jul 26</td><td><a href="#">INV-3140</a></td><td>Sameer P</td><td>Marine Plywood 18mm</td><td>Sheet</td><td class="r">40</td><td class="r">40</td><td class="r strong">4,800.00</td><td class="r">4,560.00</td></tr>
+                        <tr><td class="num">88189</td><td class="num">12 Jul 26</td><td><a href="#">INV-3140</a></td><td>Sameer P</td><td>Wall Putty 20kg</td><td>Bag</td><td class="r">35</td><td class="r">35</td><td class="r strong">4,100.00</td><td class="r">4,100.00</td></tr>
+                    </tbody>
+                    <tfoot><tr><td colspan="8">4 of 126 lines</td><td class="r">21,350.00</td><td class="r">21,110.00</td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────── Item Summary ─────────── -->
+    <div class="pane" data-pane="summary">
+        <div class="split">
+            <div class="panel">
+                <div class="phead"><span class="ic"><i class="fa fa-bar-chart"></i></span>
+                    <div><h4>Grouped Item Summary</h4><span class="hint">How often each product is bought</span></div></div>
+                <div class="pbody barlist">
+                    <div class="row"><div><div class="nm">Portland Cement 50kg</div><div class="bar"><i style="width:100%"></i></div></div><div class="qt">34</div></div>
+                    <div class="row"><div><div class="nm">Steel Rebar 12mm</div><div class="bar"><i style="width:76%"></i></div></div><div class="qt">26</div></div>
+                    <div class="row"><div><div class="nm">Marine Plywood 18mm</div><div class="bar"><i style="width:53%"></i></div></div><div class="qt">18</div></div>
+                    <div class="row"><div><div class="nm">Wall Putty 20kg</div><div class="bar"><i style="width:41%"></i></div></div><div class="qt">14</div></div>
+                    <div class="row"><div><div class="nm">White Sand (cu.m)</div><div class="bar"><i style="width:26%"></i></div></div><div class="qt">9</div></div>
+                    <div class="row"><div><div class="nm">Waterproof Membrane</div><div class="bar"><i style="width:15%"></i></div></div><div class="qt">5</div></div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="phead p-info"><span class="ic"><i class="fa fa-trophy"></i></span><div><h4>Top Highlights</h4></div></div>
+                <div class="pbody">
+                    <dl class="dl"><dt>Distinct products</dt><dd class="num">23</dd></dl>
+                    <dl class="dl"><dt>Most bought</dt><dd>Portland Cement</dd></dl>
+                    <dl class="dl"><dt>Last purchase</dt><dd class="num">21 Jul 2026</dd></dl>
+                    <dl class="dl"><dt>First purchase</dt><dd class="num">02 Mar 2023</dd></dl>
+                    <dl class="dl"><dt>Purchase frequency</dt><dd>~1.4 / month</dd></dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─────────── Notes ─────────── -->
+    <div class="pane" data-pane="notes">
+        <div class="panel">
+            <div class="phead p-warn">
+                <span class="ic"><i class="fa fa-sticky-note-o"></i></span>
+                <div><h4>Notes</h4><span class="hint">Existing <code>account.note.table</code> component, re-skinned</span></div>
+                <div class="right"><button class="btn sm pri"><i class="fa fa-plus"></i> Add Note</button></div>
+            </div>
+            <div class="tw">
+                <table class="t">
+                    <thead><tr><th>#</th><th>Date</th><th>Note</th><th>Added By</th><th class="r">Actions</th></tr></thead>
+                    <tbody>
+                        <tr><td class="num">4</td><td class="num">19 Jul 2026</td><td>Requested credit period extension to 45 days — pending MD approval.</td><td>Rahees C V</td>
+                            <td class="r"><button class="btn sm"><i class="fa fa-pencil"></i></button> <button class="btn sm ghost-bad"><i class="fa fa-trash-o"></i></button></td></tr>
+                        <tr><td class="num">3</td><td class="num">08 Jul 2026</td><td>Prefers delivery before 9 AM at the Al Sadd site.</td><td>Sameer P</td>
+                            <td class="r"><button class="btn sm"><i class="fa fa-pencil"></i></button> <button class="btn sm ghost-bad"><i class="fa fa-trash-o"></i></button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /#panels -->
+</div><!-- /.stage -->
+
+<div class="treecard">
+    <h4>Component split as built — flat in <code>app/Livewire/Account/Customer/</code> (direction A)</h4>
+<pre>app/Livewire/Account/Customer/
+├── View.php                      <i>shell only: hero + KPIs + tab rail (~100 lines, was 252)</i>
+├── Page.php   Table.php          (unchanged)
+├── <b>BasicDetails.php</b>              <i>read-only detail grid, snapshot, confirmBasicDetails()</i>
+├── <b>Kyc.php</b>                       <i>KYC_FIELDS, kycRules(), saveKyc(), completeness, countries</i>
+├── RentoutHistory.php            <i>+ status filter &amp; search</i>
+├── <b>Sales.php</b>                     <i>period totals + list + date/limit/preset filters</i>
+├── <b>SaleReturns.php</b>               <i>period totals + list + filters</i>
+├── <b>SaleItems.php</b>                 <i>line-level items + filters + product search</i>
+└── <b>SaleItemSummary.php</b>           <i>grouped product counts + highlights</i>
+
+app/Traits/
+└── <b>HasDocumentExpiryState.php</b>    <i>one expiry badge rule for ID / CR / CP / EID</i>
+
+resources/views/livewire/account/customer/
+├── view.blade.php                <i>hero + rail only (~195 lines, was 1188)</i>
+├── <b>basic-details.blade.php</b>       <b>kyc.blade.php</b>        <b>sales.blade.php</b>
+├── <b>sale-returns.blade.php</b>        <b>sale-items.blade.php</b>  <b>sale-item-summary.blade.php</b>
+└── rentout-history.blade.php     <i>re-skinned to .cvx</i>
+
+resources/views/components/account/customer/
+└── <b>premium.blade.php</b>             <i>the .cvx design system (@once &lt;style&gt;), like rent-out/view/premium</i>
+
+<i>Notes tab keeps using the existing</i> account.note.table <i>component.</i>
+<i>Tabs mount lazily and stay mounted once opened, so opening the page no longer
+runs every tab's queries (it used to run all six on every single render).</i></pre>
+</div>
+
+<script>
+    var body = document.body, cvx = document.getElementById('cvx'), panels = document.getElementById('panels');
+
+    var NOTES = {
+        a: '<b>A · Portrait Hero</b> — the same premium language as the RentOut agreement view (gradient hero, KPI cards overlapping it, pill tab rail). Most consistent with the rest of the app; the customer identity gets real presence. Tallest header, so the tables sit lower on the page.',
+        b: '<b>B · Dossier</b> — a sticky identity card in a left rail with a vertical tab list; content gets the full right column. Best when you jump between tabs a lot, because name / mobile / KYC state stay visible at all times. Narrower content area on laptops.',
+        c: '<b>C · Console</b> — one compact identity strip, a flat 4-up KPI band and underline tabs. Maximum data density, least chrome — most rows visible without scrolling, and it works best inside the Customer View modal (POS / sale screens).'
+    };
+
+    function setDir(d) {
+        cvx.querySelectorAll('.shell').forEach(function (s) { s.classList.remove('on'); });
+        var shell = cvx.querySelector('.shell-' + d);
+        shell.classList.add('on');
+        shell.querySelector('.slot').appendChild(panels);
+        document.getElementById('dirNote').innerHTML = NOTES[d];
+        document.querySelectorAll('#dirSeg button').forEach(function (b) { b.classList.toggle('active', b.dataset.dir === d); });
+    }
+
+    document.querySelectorAll('#dirSeg button').forEach(function (b) {
+        b.addEventListener('click', function () { setDir(b.dataset.dir); });
+    });
+
+    // tab rails (all three directions share the same panel set)
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-rail] button');
+        if (!btn) return;
+        var tab = btn.dataset.tab;
+        document.querySelectorAll('[data-rail] button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
+        panels.querySelectorAll('.pane').forEach(function (p) { p.classList.toggle('on', p.dataset.pane === tab); });
+    });
+
+    // accent swatches
+    document.querySelectorAll('.swatch').forEach(function (s) {
+        s.addEventListener('click', function () {
+            document.querySelectorAll('.swatch').forEach(function (x) { x.classList.remove('active'); });
+            s.classList.add('active');
+            cvx.className = 'cvx acc-' + s.dataset.acc;
+        });
+    });
+
+    // light / dark
+    document.getElementById('modeBtn').addEventListener('click', function () {
+        var dark = body.dataset.mode === 'dark';
+        body.dataset.mode = dark ? 'light' : 'dark';
+        this.innerHTML = dark ? '<i class="fa fa-moon-o"></i> Dark' : '<i class="fa fa-sun-o"></i> Light';
+    });
+
+    setDir('a');
+</script>
+</body>
+</html>

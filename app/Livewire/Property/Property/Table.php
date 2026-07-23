@@ -5,6 +5,7 @@ namespace App\Livewire\Property\Property;
 use App\Actions\Property\DeleteAction;
 use App\Exports\PropertyExport;
 use App\Models\Property;
+use App\Models\UserPreference;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -68,9 +69,46 @@ class Table extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    /** Per-user preference key holding this table's column visibility map. */
+    public const COLUMN_PREFERENCE_KEY = 'property.table.columns';
+
     protected $listeners = [
         'Property-Refresh-Component' => '$refresh',
     ];
+
+    public function mount(): void
+    {
+        $saved = UserPreference::getValue(self::COLUMN_PREFERENCE_KEY);
+        if (! is_array($saved)) {
+            return;
+        }
+
+        // Only honour keys we still ship, so adding or dropping a column later
+        // never leaves a stale preference deciding what renders.
+        $this->columns = array_merge(
+            $this->columns,
+            array_map(fn ($visible) => (bool) $visible, array_intersect_key($saved, $this->columns))
+        );
+    }
+
+    public function updatedColumns(): void
+    {
+        $this->persistColumns();
+    }
+
+    public function resetColumns(): void
+    {
+        $this->reset('columns');
+        $this->persistColumns();
+    }
+
+    private function persistColumns(): void
+    {
+        UserPreference::setValue(
+            self::COLUMN_PREFERENCE_KEY,
+            array_map(fn ($visible) => (bool) $visible, $this->columns)
+        );
+    }
 
     private function applyFilters($query, bool $includeStatus = true, bool $includeAvailability = true)
     {

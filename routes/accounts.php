@@ -17,6 +17,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('', 'customer')->name('index')->can('customer.view');
             Route::get('view/{id}', 'customer')->name('view')->can('customer.view');
             Route::get('statement/{id}', 'statement')->name('statement')->can('customer.view');
+            Route::get('kyc/{id}/{rentout?}', 'kyc')->name('kyc')->can('customer kyc.print');
         });
 
         // API route for customer details

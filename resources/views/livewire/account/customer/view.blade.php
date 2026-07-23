@@ -1,797 +1,209 @@
-<div class="customer-view-container">
-    <div class="customer-details-hero mb-2 mb-md-3">
-        <div class="card border-0 shadow-lg overflow-hidden">
-            <!-- Decorative Background -->
-            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-25">
-                <div class="bg-gradient-primary h-100 w-100"></div>
-                <div class="position-absolute top-0 end-0 w-50 h-100 bg-gradient-secondary opacity-50"></div>
+{{--
+    Customer View — shell only (hero + KPIs + tab rail).
+    Every tab is its own Livewire component under App\Livewire\Account\Customer
+    and mounts the first time its tab is opened.
+    Design system: <x-account.customer.premium /> (scope .cvx)
+--}}
+@php
+    $name = $accounts['name'] ?? 'Customer';
+    $photo = ! empty($accounts['image']) ? asset('storage/' . $accounts['image']) : null;
+    $initials = collect(explode(' ', trim($name)))->filter()->take(2)->map(fn ($word) => mb_substr($word, 0, 1))->implode('');
+    $initials = mb_strtoupper($initials !== '' ? $initials : '?');
+    $customerType = $accounts['customer_type']['name'] ?? '';
+    $confirmed = ! empty($accounts['kyc_confirmed_at']);
+    $collectedPercent = $kpi['billed'] > 0 ? min(round(($kpi['paid'] / $kpi['billed']) * 100), 100) : 0;
+    $outstandingPercent = $kpi['billed'] > 0 ? min(round(($kpi['balance'] / $kpi['billed']) * 100), 100) : 0;
+
+    $tabs = collect([
+        ['key' => 'BasicDetails', 'component' => 'account.customer.basic-details', 'icon' => 'fa-user', 'label' => 'Basic Details', 'count' => null, 'can' => null],
+        ['key' => 'Kyc', 'component' => 'account.customer.kyc', 'icon' => 'fa-shield', 'label' => 'KYC', 'count' => $kpi['kyc_percent'] . '%', 'can' => 'customer kyc.view'],
+        ['key' => 'RentoutHistory', 'component' => 'account.customer.rentout-history', 'icon' => 'fa-key', 'label' => 'Rentout / Sale', 'count' => $kpi['agreements'] ?: null, 'can' => 'rent out.view'],
+        ['key' => 'Sales', 'component' => 'account.customer.sales', 'icon' => 'fa-shopping-cart', 'label' => 'Sales', 'count' => $kpi['invoices'] ?: null, 'can' => 'report.sales overview'],
+        ['key' => 'SaleReturn', 'component' => 'account.customer.sale-returns', 'icon' => 'fa-undo', 'label' => 'Returns', 'count' => $kpi['returns'] ?: null, 'can' => 'report.sale return item'],
+        ['key' => 'SaleItems', 'component' => 'account.customer.sale-items', 'icon' => 'fa-cube', 'label' => 'Sale Items', 'count' => null, 'can' => 'report.sale item'],
+        ['key' => 'SaleProductSummary', 'component' => 'account.customer.sale-item-summary', 'icon' => 'fa-bar-chart', 'label' => 'Item Summary', 'count' => null, 'can' => 'report.sale item'],
+        ['key' => 'Notes', 'component' => 'account.customer.notes', 'icon' => 'fa-pencil-square-o', 'label' => 'Notes', 'count' => $kpi['notes'] ?: null, 'can' => 'account note.view'],
+    ])->filter(fn ($tab) => ! $tab['can'] || auth()->user()->can($tab['can']))->values();
+@endphp
+
+<x-account.customer.premium />
+
+<div class="cvx">
+
+    {{-- ══════════════════════════════  HERO  ══════════════════════════════ --}}
+    <header class="cv-hero">
+        <span class="glow a"></span><span class="glow b"></span>
+
+        <div class="row g-3 align-items-start">
+            <div class="col-auto ava">
+                <div class="disc">
+                    @if ($photo)
+                        <img src="{{ $photo }}" alt="{{ $name }}">
+                    @else
+                        {{ $initials }}
+                    @endif
+                </div>
+                @if ($confirmed)
+                    <span class="badge-dot" data-bs-toggle="tooltip" title="Details confirmed"><i class="fa fa-check"></i></span>
+                @endif
             </div>
 
-            <div class="card-body position-relative p-3 p-md-3" id="customer-details">
-                <!-- Action Buttons - Responsive positioning -->
-                <div class="action-buttons-wrapper mb-2 mb-md-2">
-                    <div class="d-flex flex-wrap gap-1 justify-content-end">
-                        @can('customer.view')
-                            @if ($accounts)
-                                <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}" target="_blank"
-                                    class="btn btn-info btn-sm d-flex align-items-center gap-1 shadow-lg hover-lift rounded-pill px-2 px-md-3 py-1" data-bs-toggle="tooltip" data-bs-placement="left"
-                                    title="Generate Customer Statement PDF">
-                                    <i class="fa fa-file-pdf-o"></i>
-                                    <span class="d-none d-md-inline fw-semibold">Statement</span>
-                                </a>
-                            @endif
-                        @endcan
-                        <button type="button" id="CustomerEdit" class="btn btn-premium btn-sm d-flex align-items-center gap-1 shadow-lg hover-lift rounded-pill px-2 px-md-3 py-1"
-                            data-bs-toggle="tooltip" data-bs-placement="left" title="Edit Customer Details">
-                            <i class="fa fa-edit"></i>
-                            <span class="d-none d-md-inline fw-semibold">Edit</span>
-                        </button>
+            <div class="col-12 col-md">
+                <h1 class="hname">{{ $name }} <span class="code">#{{ $accounts['id'] ?? '—' }}</span></h1>
+                <div class="d-flex flex-wrap gap-1">
+                    @if ($customerType)
+                        <span class="chip solid"><i class="fa fa-star"></i> {{ $customerType }}</span>
+                    @endif
+                    <span class="chip"><span class="dot"></span> Active</span>
+                    @can('customer kyc.view')
+                        <span class="chip"><i class="fa fa-shield"></i> KYC {{ $kpi['kyc_percent'] }}%</span>
+                    @endcan
+                    @if (! empty($accounts['credit_period_days']))
+                        <span class="chip"><i class="fa fa-clock-o"></i>
+                            {{ $accounts['credit_period_days'] }} {{ $accounts['credit_period_days'] == 1 ? 'Day' : 'Days' }} Credit
+                        </span>
+                    @endif
+                </div>
+                <div class="hmeta d-flex flex-wrap column-gap-4 row-gap-1 mt-2">
+                    @if (! empty($accounts['mobile']))
+                        <span><i class="fa fa-mobile"></i> <a href="tel:{{ $accounts['mobile'] }}">{{ $accounts['mobile'] }}</a></span>
+                    @endif
+                    @if (! empty($accounts['email']))
+                        <span><i class="fa fa-envelope-o"></i> <a href="mailto:{{ $accounts['email'] }}">{{ $accounts['email'] }}</a></span>
+                    @endif
+                    @if (! empty($accounts['place']))
+                        <span><i class="fa fa-map-marker"></i> {{ $accounts['place'] }}</span>
+                    @endif
+                    @if (! empty($kpi['since']))
+                        <span><i class="fa fa-calendar-o"></i> Customer since {{ systemDate($kpi['since']) }}</span>
+                    @endif
+                </div>
+            </div>
+
+            <div class="col-12 col-md-auto hacts d-flex flex-wrap gap-2 justify-content-md-end">
+                @can('customer.view')
+                    @if ($accounts)
+                        <a href="{{ route('account::customer::statement', $accounts['id']) }}" target="_blank" class="b"
+                            data-bs-toggle="tooltip" title="Generate Customer Statement PDF">
+                            <i class="fa fa-file-pdf-o"></i> <span class="d-none d-sm-inline">Statement</span>
+                        </a>
+                    @endif
+                @endcan
+                @can('customer kyc.print')
+                    @if ($accounts)
+                        <a href="{{ route('account::customer::kyc', $accounts['id']) }}" target="_blank" class="b"
+                            data-bs-toggle="tooltip" title="Print KYC Form PDF">
+                            <i class="fa fa-print"></i> <span class="d-none d-sm-inline">KYC Form</span>
+                        </a>
+                    @endif
+                @endcan
+                <button type="button" id="CustomerEdit" class="b pri" data-bs-toggle="tooltip" title="Edit Customer Details">
+                    <i class="fa fa-pencil"></i> <span class="d-none d-sm-inline">Edit</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    {{-- ══════════════════════════════  KPIs  ══════════════════════════════ --}}
+    <div class="kpi-row row g-2 g-md-3">
+        <div class="col-6 col-lg-3">
+            <div class="kpi k1">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="ic"><i class="fa fa-line-chart"></i></span>
+                    <div class="min-w-0">
+                        <div class="lab">Lifetime Value</div>
+                        <div class="val">{{ currency($kpi['billed']) }}</div>
                     </div>
                 </div>
-
-                <div class="row align-items-center g-2 g-md-2">
-                    <!-- Customer Profile Section -->
-                    <div class="col-12 col-lg-6">
-                        <div class="d-flex align-items-center flex-column flex-sm-row">
-                            <div class="flex-shrink-0 me-0 me-sm-3 mb-2 mb-sm-0">
-                                <div class="position-relative customer-avatar">
-                                    <div class="avatar-ring"></div>
-                                    @php
-                                        $customerPhoto = ! empty($accounts['image'])
-                                            ? asset('storage/' . $accounts['image'])
-                                            : secure_asset('assets/img/profile-photos/1.png');
-                                    @endphp
-                                    <img class="img-fluid rounded-circle shadow-lg customer-avatar-img" src="{{ $customerPhoto }}" alt="Profile Picture">
-
-                                    <!-- Status Indicator -->
-                                    <div class="position-absolute bottom-0 end-0 bg-success rounded-circle border-3 border-white shadow-sm pulse-animation status-indicator" data-bs-toggle="tooltip"
-                                        title="Active Customer">
-                                        <i class="fa fa-check text-white"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex-grow-1 text-center text-sm-start">
-                                <div class="customer-info">
-                                    <h2 class="customer-name mb-1 text-dark fw-bold" style="font-size: 1.5rem;">
-                                        {{ $accounts['name'] ?? 'Customer Name' }}
-                                    </h2>
-                                    <div class="customer-meta d-flex flex-wrap gap-1 gap-md-2 align-items-center justify-content-center justify-content-sm-start">
-                                        <span class="badge bg-light text-dark px-2 py-1 rounded-pill shadow-sm" style="font-size: 0.7rem;">
-                                            <i class="fa fa-id-card me-1 text-primary"></i>
-                                            ID: #{{ $accounts['id'] ?? '000' }}
-                                        </span>
-                                        @if ($accounts)
-                                            @php
-                                                $customer_type = $accounts['customer_type']['name'] ?? '';
-                                            @endphp
-                                            @if ($customer_type)
-                                                <span class="badge bg-success bg-gradient px-2 py-1 rounded-pill shadow-sm" style="font-size: 0.7rem;">
-                                                    <i class="fa fa-star me-1"></i>
-                                                    {{ $customer_type }}
-                                                </span>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Contact Information Cards -->
-                    <div class="col-12 col-lg-6">
-                        <div class="contact-cards">
-                            <div class="row g-1 g-md-2">
-                                <div class="col-6 col-sm-4 col-lg-6">
-                                    <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
-                                        <div class="contact-icon mb-1">
-                                            <div class="icon-circle bg-primary bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fa fa-mobile text-white" style="font-size: 0.9rem;"></i>
-                                            </div>
-                                        </div>
-                                        <div class="contact-info">
-                                            <h6 class="text-muted mb-0 fw-semibold" style="font-size: 0.7rem;">Mobile</h6>
-                                            <div class="fw-bold text-dark" style="font-size: 0.75rem;">{{ $accounts['mobile'] ?? 'N/A' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-6 col-sm-4 col-lg-6">
-                                    <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
-                                        <div class="contact-icon mb-1">
-                                            <div class="icon-circle bg-success bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fa fa-envelope text-white" style="font-size: 0.9rem;"></i>
-                                            </div>
-                                        </div>
-                                        <div class="contact-info">
-                                            <h6 class="text-muted mb-0 fw-semibold" style="font-size: 0.7rem;">Email</h6>
-                                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.75rem;">{{ $accounts['email'] ?? 'N/A' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-12 col-sm-4 col-lg-12">
-                                    <div class="contact-card text-center p-2 rounded-3 shadow-sm h-100 hover-card">
-                                        <div class="contact-icon mb-1">
-                                            <div class="icon-circle bg-warning bg-gradient d-inline-flex align-items-center justify-content-center rounded-circle shadow"
-                                                style="width: 40px; height: 40px;">
-                                                <i class="fa fa-calendar text-white" style="font-size: 0.9rem;"></i>
-                                            </div>
-                                        </div>
-                                        <div class="contact-info">
-                                            <h6 class="text-muted mb-0 fw-semibold" style="font-size: 0.7rem;">Credit Period</h6>
-                                            <div class="fw-bold text-dark" style="font-size: 0.75rem;">
-                                                @if (isset($accounts['credit_period_days']) && $accounts['credit_period_days'])
-                                                    {{ $accounts['credit_period_days'] }} {{ $accounts['credit_period_days'] == 1 ? 'Day' : 'Days' }}
-                                                @else
-                                                    Not set
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="sub">
+                    {{ $kpi['invoices'] }} {{ $kpi['invoices'] == 1 ? 'invoice' : 'invoices' }}
+                    @if ($kpi['returned'] > 0)
+                        · {{ currency($kpi['returned']) }} returned
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi k2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="ic"><i class="fa fa-check-circle-o"></i></span>
+                    <div class="min-w-0">
+                        <div class="lab">Collected</div>
+                        <div class="val">{{ currency($kpi['paid']) }}</div>
                     </div>
                 </div>
+                <div class="track"><i style="width: {{ $collectedPercent }}%"></i></div>
+                <div class="sub">{{ $collectedPercent }}% of billed value</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi k3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="ic"><i class="fa fa-exclamation-circle"></i></span>
+                    <div class="min-w-0">
+                        <div class="lab">Outstanding</div>
+                        <div class="val">{{ currency($kpi['balance']) }}</div>
+                    </div>
+                </div>
+                <div class="track"><i style="width: {{ $outstandingPercent }}%"></i></div>
+                <div class="sub">
+                    @if (! empty($accounts['credit_period_days']))
+                        {{ $accounts['credit_period_days'] }} day credit period
+                    @else
+                        No credit period set
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi k4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="ic"><i class="fa fa-key"></i></span>
+                    <div class="min-w-0">
+                        <div class="lab">Agreements</div>
+                        <div class="val">{{ $kpi['agreements'] }}</div>
+                    </div>
+                </div>
+                <div class="sub">{{ $kpi['rentals'] }} rental · {{ $kpi['agreement_sales'] }} sale</div>
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="tab-base">
-            <ul class="nav nav-underline nav-component border-bottom flex-nowrap overflow-x-auto" role="tablist" style="scrollbar-width: thin;">
-                <li class="nav-item flex-shrink-0" role="presentation">
-                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'Sales') active @endif" data-bs-toggle="tab" data-bs-target="#tab-Sales" type="button" role="tab"
-                        aria-controls="home" aria-selected="true" wire:click="$set('selected_tab', 'Sales')">
-                        <span class="d-none d-sm-inline">Sales</span>
-                        <span class="d-sm-none">Sales</span>
-                    </button>
-                </li>
-                <li class="nav-item flex-shrink-0" role="presentation">
-                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'SaleReturn') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleReturn" type="button" role="tab"
-                        aria-controls="home" aria-selected="true" wire:click="$set('selected_tab', 'SaleReturn')">
-                        <span class="d-none d-sm-inline">Sales Return</span>
-                        <span class="d-sm-none">Returns</span>
-                    </button>
-                </li>
-                <li class="nav-item flex-shrink-0" role="presentation">
-                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'SaleItems') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleItems" type="button" role="tab"
-                        aria-controls="home" aria-selected="true" wire:click="$set('selected_tab', 'SaleItems')">
-                        <span class="d-none d-sm-inline">Sale Items</span>
-                        <span class="d-sm-none">Items</span>
-                    </button>
-                </li>
-                <li class="nav-item flex-shrink-0" role="presentation">
-                    <button class="nav-link px-2 px-md-3 @if ($selected_tab === 'SaleProductSummary') active @endif" data-bs-toggle="tab" data-bs-target="#tab-SaleProductSummary" type="button"
-                        role="tab" aria-controls="profile" aria-selected="false" tabindex="-1" wire:click="$set('selected_tab', 'SaleProductSummary')">
-                        <span class="d-none d-md-inline">Sale Item Summary</span>
-                        <span class="d-md-none">Summary</span>
-                    </button>
-                </li>
-                @can('account note.view')
-                    <li class="nav-item flex-shrink-0" role="presentation">
-                        <button class="nav-link px-2 px-md-3" data-bs-toggle="tab" data-bs-target="#tab-Notes" type="button" role="tab" aria-controls="contact" aria-selected="false"
-                            tabindex="-1">
-                            Notes
-                        </button>
-                    </li>
-                @endcan
-            </ul>
-            <div class="tab-content">
-                <div id="tab-Sales" class="tab-pane fade @if ($selected_tab === 'Sales') active show @endif" role="tabpanel" aria-labelledby="home-tab">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card bg-info text-white mb-3 mb-xl-3">
-                                <div class="card-body py-3">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="flex-shrink-0">
-                                            <i class="d-flex align-items-center justify-content-center demo-pli-add-cart display-5"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($total_sales?->grand_total) }}</h5>
-                                            <p class="text-white text-opacity-75 mb-0">Total Sale</p>
-                                        </div>
-                                    </div>
-                                    @php
-                                        $percentage = (float) $total_sales?->grand_total != 0 ? round(($total_sales?->paid / $total_sales?->grand_total) * 100) : 0;
-                                    @endphp
-                                    <div class="progress progress-md mb-2">
-                                        <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-success text-white mb-3 mb-xl-3">
-                                <div class="card-body py-3">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="flex-shrink-0">
-                                            <i class="d-flex align-items-center justify-content-center pli-money-2 display-5"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($total_sales?->paid) }}</h5>
-                                            <p class="text-white text-opacity-75 mb-0">Paid</p>
-                                        </div>
-                                    </div>
-                                    <div class="progress progress-md mb-2">
-                                        <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-warning text-white mb-3 mb-xl-3">
-                                <div class="card-body py-3">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="flex-shrink-0">
-                                            <i class="d-flex align-items-center justify-content-center pli-money display-5"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($total_sales?->balance) }}</h5>
-                                            <p class="text-white text-opacity-75 mb-0">Outstanding</p>
-                                        </div>
-                                    </div>
-                                    <div class="progress progress-md mb-2">
-                                        @php
-                                            $percentage = (float) $total_sales?->grand_total != 0 ? round(($total_sales?->balance / $total_sales?->grand_total) * 100) : 0;
-                                        @endphp
-                                        <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <b><label for="from_date">From Date</label></b>
-                            {{ html()->date('from_date')->value('')->class('form-control')->attribute('wire:model.live', 'sale_from_date') }}
-                        </div>
-                        <div class="col-md-3">
-                            <b><label for="to_date">To Date</label></b>
-                            {{ html()->date('to_date')->value('')->class('form-control')->attribute('wire:model.live', 'sale_to_date') }}
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <b><label for="Limit">Limit</label></b>
-                                <select wire:model.live="sale_limit" class="form-control">
-                                    <option value="10">10</option>
-                                    <option value="100">100</option>
-                                    <option value="500">500</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            @can('customer.view')
-                                @if ($accounts)
-                                    <a href="{{ route('account::customer::statement', $accounts['id'] ?? '') }}@if ($sale_from_date || $sale_to_date) ?from_date={{ $sale_from_date }}&to_date={{ $sale_to_date }} @endif"
-                                        target="_blank" class="btn btn-info btn-sm d-flex align-items-center gap-2 shadow-sm" title="Generate Statement PDF">
-                                        <i class="fa fa-file-pdf-o"></i>
-                                        <span>Generate Statement</span>
-                                    </a>
-                                @endif
-                            @endcan
-                        </div>
-                    </div>
-                    <table class="table table-striped table-sm table-bordered">
-                        <thead>
-                            <tr class="bg-primary">
-                                <th class="text-white text-end">SL No</th>
-                                <th class="text-white">Date</th>
-                                <th class="text-white">Invoice No</th>
-                                <th class="text-white text-end">Grand Total</th>
-                                <th class="text-white text-end">Paid</th>
-                                <th class="text-white text-end">Balance</th>
-                                <th class="text-white">Rating</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if ($sales)
-                                @foreach ($sales as $value)
-                                    <tr>
-                                        <td class="text-end">{{ $value->id }}</td>
-                                        <td>{{ systemDate($value->date) }}</td>
-                                        <td><a href="{{ route('sale::view', $value->id) }}">{{ $value->invoice_no }}</a> </td>
-                                        <td class="text-end">{{ currency($value->grand_total) }}</td>
-                                        <td class="text-end">{{ currency($value->paid) }}</td>
-                                        <td class="text-end">{{ currency($value->balance) }}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center mb-2">
-                                                <div class="stars">
-                                                    @for ($i = 1; $i <= 5; $i++)
-                                                        <i class="fa fa-star fs-5 {{ $value->rating >= $i ? 'text-warning' : 'text-muted' }}"></i>
-                                                    @endfor
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    @if ($value->feedback)
-                                        <tr>
-                                            <td></td>
-                                            <td colspan="6">{{ $value->feedback }}</td>
-                                        </tr>
-                                    @endif
-                                @endforeach
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
-                <div id="tab-SaleReturn" class="tab-pane fade @if ($selected_tab === 'SaleReturn') active show @endif" role="tabpanel" aria-labelledby="home-tab">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card bg-info text-white mb-3 mb-xl-3">
-                                <div class="card-body py-3">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="flex-shrink-0">
-                                            <i class="d-flex align-items-center justify-content-center demo-pli-add-cart display-5"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($total_sale_returns?->grand_total) }}</h5>
-                                            <p class="text-white text-opacity-75 mb-0">Total Sales Return</p>
-                                        </div>
-                                    </div>
-                                    @php
-                                        $percentage = $total_sale_returns?->grand_total != 0 ? round(($total_sale_returns?->paid / $total_sale_returns?->grand_total) * 100) : 0;
-                                    @endphp
-                                    <div class="progress progress-md mb-2">
-                                        <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-success text-white mb-3 mb-xl-3">
-                                <div class="card-body py-3">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="flex-shrink-0">
-                                            <i class="d-flex align-items-center justify-content-center pli-money-2 display-5"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($total_sale_returns?->paid) }}</h5>
-                                            <p class="text-white text-opacity-75 mb-0">Paid</p>
-                                        </div>
-                                    </div>
-                                    <div class="progress progress-md mb-2">
-                                        <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-warning text-white mb-3 mb-xl-3">
-                                <div class="card-body py-3">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="flex-shrink-0">
-                                            <i class="d-flex align-items-center justify-content-center pli-money display-5"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-4">
-                                            <h5 class="h2 mb-0">{{ currency($total_sale_returns?->balance) }}</h5>
-                                            <p class="text-white text-opacity-75 mb-0">Pending</p>
-                                        </div>
-                                    </div>
-                                    <div class="progress progress-md mb-2">
-                                        @php
-                                            $percentage = $total_sale_returns?->grand_total != 0 ? round(($total_sale_returns?->balance / $total_sale_returns?->grand_total) * 100) : 0;
-                                        @endphp
-                                        <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percentage }}%;" aria-valuenow="{{ $percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <b><label for="from_date">From Date</label></b>
-                            {{ html()->date('from_date')->value('')->class('form-control')->attribute('wire:model.live', 'sale_return_from_date') }}
-                        </div>
-                        <div class="col-md-3">
-                            <b><label for="to_date">To Date</label></b>
-                            {{ html()->date('to_date')->value('')->class('form-control')->attribute('wire:model.live', 'sale_return_to_date') }}
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <b><label for="Limit">Limit</label></b>
-                                <select wire:model.live="sale_return_limit" class="form-control">
-                                    <option value="10">10</option>
-                                    <option value="100">100</option>
-                                    <option value="500">500</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <table class="table table-striped table-sm table-bordered">
-                        <thead>
-                            <tr class="bg-primary">
-                                <th class="text-white text-end">SL No</th>
-                                <th class="text-white">Date</th>
-                                <th class="text-white">Reference No</th>
-                                <th class="text-white text-end">Grand Total</th>
-                                <th class="text-white text-end">Paid</th>
-                                <th class="text-white text-end">Balance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if ($sale_returns)
-                                @foreach ($sale_returns as $value)
-                                    <tr>
-                                        <td>{{ $value->id }}</td>
-                                        <td>{{ systemDate($value->date) }}</td>
-                                        <td><a href="{{ route('sale_return::view', $value->id) }}">{{ $value->reference_no ? $value->reference_no : $value->id }}</a> </td>
-                                        <td class="text-end">{{ currency($value->grand_total) }}</td>
-                                        <td class="text-end">{{ currency($value->paid) }}</td>
-                                        <td class="text-end">{{ currency($value->balance) }}</td>
-                                    </tr>
-                                @endforeach
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
-                <div id="tab-SaleProductSummary" class="tab-pane fade @if ($selected_tab === 'SaleProductSummary') active show @endif" role="tabpanel" aria-labelledby="profile-tab">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="table-responsive">
-                                <p>Grouped Item Summary</p>
-                                <table class="table table-striped table-sm table-bordered">
-                                    <thead>
-                                        <tr class="bg-primary">
-                                            <th class="text-white"> Name</th>
-                                            <th class="text-white text-end">Count</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if ($item_count)
-                                            @foreach ($item_count as $sale_item)
-                                                <tr>
-                                                    <td> <a href="{{ route('inventory::product::view', $sale_item->product_id) }}">{{ $sale_item->product?->name }}</a> </td>
-                                                    <td class="text-end">{{ $sale_item->count }}</td>
-                                                </tr>
-                                            @endforeach
-                                        @endif
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="tab-SaleItems" class="tab-pane fade @if ($selected_tab === 'SaleItems') active show @endif" role="tabpanel" aria-labelledby="profile-tab">
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <b><label for="from_date">From Date</label></b>
-                            {{ html()->date('from_date')->value('')->class('form-control')->attribute('wire:model.live', 'sale_item_from_date') }}
-                        </div>
-                        <div class="col-md-3">
-                            <b><label for="to_date">To Date</label></b>
-                            {{ html()->date('to_date')->value('')->class('form-control')->attribute('wire:model.live', 'sale_item_to_date') }}
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <b><label for="Limit">Limit</label></b>
-                                <select wire:model.live="sale_item_limit" class="form-control">
-                                    <option value="10">10</option>
-                                    <option value="100">100</option>
-                                    <option value="500">500</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="table-responsive">
-                                <p>Sale Item Details</p>
-                                <table class="table table-striped table-sm table-bordered">
-                                    <thead>
-                                        <tr class="text-capitalize bg-primary">
-                                            <th class="text-white">id</th>
-                                            <th class="text-white">date</th>
-                                            <th class="text-white">invoice</th>
-                                            <th class="text-white">employee</th>
-                                            <th class="text-white">product</th>
-                                            <th class="text-white">unit</th>
-                                            <th class="text-white text-end">quantity</th>
-                                            <th class="text-white text-end">base unit quantity</th>
-                                            <th class="text-white text-end">total</th>
-                                            <th class="text-white text-end">effective</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($sale_items as $item)
-                                            <tr>
-                                                <td>{{ $item->id }}</td>
-                                                <td>{{ systemDate($item->sale?->date) }}</td>
-                                                <td> <a href="{{ route('sale::view', $item->sale_id) }}">{{ $item->sale?->invoice_no }}</a> </td>
-                                                <td>{{ $item->employee?->name }}</td>
-                                                <td>{{ $item->product?->name }}</td>
-                                                <td>{{ $item->unit?->name }}</td>
-                                                <td class="text-end">{{ currency($item->quantity) }}</td>
-                                                <td class="text-end">{{ currency($item->base_unit_quantity) }}</td>
-                                                <td class="text-end">{{ currency($item->total) }}</td>
-                                                <td class="text-end">{{ currency($item->effective_total) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="tab-Notes" class="tab-pane fade @if ($selected_tab === 'Notes') active show @endif" role="tabpanel" aria-labelledby="contact-tab">
-                    @livewire('account.note.table', ['account_id' => $account_id])
-                </div>
+
+    {{-- ══════════════════════════════  TABS  ══════════════════════════════ --}}
+    <div class="rail-pill" role="tablist">
+        @foreach ($tabs as $tab)
+            <button class="@if ($selected_tab === $tab['key']) active @endif" data-bs-toggle="tab" data-bs-target="#tab-{{ $tab['key'] }}"
+                type="button" role="tab" wire:click="selectTab('{{ $tab['key'] }}')">
+                <i class="fa {{ $tab['icon'] }}"></i>
+                {{ $tab['label'] }}
+                @if ($tab['count'])
+                    <span class="cnt">{{ $tab['count'] }}</span>
+                @endif
+            </button>
+        @endforeach
+    </div>
+
+    <div class="tab-content">
+        @foreach ($tabs as $tab)
+            <div id="tab-{{ $tab['key'] }}" class="tab-pane fade @if ($selected_tab === $tab['key']) active show @endif" role="tabpanel">
+                @if (isset($loaded_tabs[$tab['key']]))
+                    @livewire($tab['component'], ['account_id' => $account_id], key('cv-' . $tab['key'] . '-' . $account_id))
+                @else
+                    <div class="loading-tab"><i class="fa fa-circle-o-notch fa-spin"></i> Loading {{ $tab['label'] }}…</div>
+                @endif
             </div>
-        </div>
+        @endforeach
     </div>
 
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('#CustomerEdit').click(function() {
+                $(document).on('click', '#CustomerEdit', function() {
                     Livewire.dispatch("Customer-Page-Update-Component", {
-                        id: "{{ $accounts['id'] ?? '' }}"
+                        id: $(this).data('customer-id') || "{{ $accounts['id'] ?? '' }}"
                     });
                 });
             });
         </script>
-    @endpush
-    @push('styles')
-        <style>
-            .hover-lift {
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                position: relative;
-                z-index: 1;
-            }
-
-            .hover-lift:hover {
-                transform: translateY(-3px) scale(1.02);
-                box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4) !important;
-            }
-
-            .hover-lift:active {
-                transform: translateY(-1px) scale(0.98);
-            }
-
-            #CustomerEdit {
-                border: none;
-                background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-                border-radius: 25px;
-                font-weight: 600;
-                letter-spacing: 0.5px;
-                padding: 8px 16px;
-                box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-                position: relative;
-                overflow: hidden;
-            }
-
-            #CustomerEdit::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-                transition: left 0.5s;
-            }
-
-            #CustomerEdit:hover::before {
-                left: 100%;
-            }
-
-            #CustomerEdit:hover {
-                background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
-                transform: translateY(-3px);
-                box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
-            }
-
-            #CustomerEdit i {
-                font-size: 0.9rem;
-                transition: transform 0.3s ease;
-            }
-
-            #CustomerEdit:hover i {
-                transform: rotate(15deg);
-            }
-
-            .card {
-                transition: all 0.3s ease;
-                border-radius: 15px;
-            }
-
-            /* .card:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
-                    } */
-
-            .bg-light {
-                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-                transition: all 0.3s ease;
-            }
-
-            /* .bg-light:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-                    } */
-
-            /* Customer Details Hero Section */
-            .customer-details-hero .card {
-                border-radius: 20px;
-                overflow: hidden;
-                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            }
-
-            .bg-gradient-primary {
-                background: linear-gradient(45deg, rgba(0, 123, 255, 0.1), rgba(0, 86, 179, 0.05));
-            }
-
-            .bg-gradient-secondary {
-                background: linear-gradient(-45deg, rgba(40, 167, 69, 0.08), rgba(25, 135, 84, 0.05));
-            }
-
-            /* Premium Button Styles */
-            .btn-premium {
-                background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
-                border: none;
-                color: white;
-                font-weight: 600;
-                letter-spacing: 0.5px;
-                box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            /* .btn-premium:hover {
-                        background: linear-gradient(135deg, #5a2d91 0%, #d63384 100%);
-                        transform: translateY(-3px);
-                        box-shadow: 0 10px 30px rgba(111, 66, 193, 0.5);
-                        color: white;
-                    } */
-
-            /* Customer Avatar */
-            .customer-avatar {
-                position: relative;
-            }
-
-            .customer-avatar-img {
-                width: 96px;
-                height: 96px;
-                object-fit: cover;
-                background: #f1f3f5;
-            }
-
-            .avatar-ring {
-                position: absolute;
-                top: -8px;
-                left: -8px;
-                right: -8px;
-                bottom: -8px;
-                border: 2px solid transparent;
-                border-radius: 50%;
-                background: linear-gradient(45deg, #007bff, #28a745, #ffc107, #dc3545);
-                background-size: 400% 400%;
-                animation: gradient-rotate 3s ease infinite;
-                z-index: -1;
-            }
-
-            @keyframes gradient-rotate {
-
-                0%,
-                100% {
-                    background-position: 0% 50%;
-                }
-
-                50% {
-                    background-position: 100% 50%;
-                }
-            }
-
-            /* Pulse Animation for Status */
-            .pulse-animation {
-                animation: pulse 2s infinite;
-            }
-
-            @keyframes pulse {
-                0% {
-                    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
-                }
-
-                70% {
-                    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
-                }
-
-                100% {
-                    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
-                }
-            }
-
-            /* Customer Name Typography */
-            .customer-name {
-                background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                text-shadow: none;
-            }
-
-            /* Contact Cards */
-            .contact-card {
-                background: rgba(255, 255, 255, 0.9);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                backdrop-filter: blur(10px);
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            /*
-                    .hover-card:hover {
-                        transform: translateY(-8px) scale(1.02);
-                        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-                        background: rgba(255, 255, 255, 0.95);
-                    } */
-
-            /* Icon Circles */
-            .icon-circle {
-                width: 40px;
-                height: 40px;
-                transition: all 0.3s ease;
-            }
-
-            .contact-card:hover .icon-circle {
-                transform: scale(1.1) rotate(5deg);
-                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            }
-
-            /* Badge Enhancements */
-            .badge {
-                font-size: 0.75rem;
-                font-weight: 600;
-                transition: all 0.3s ease;
-            }
-
-            /* .badge:hover {
-                        transform: scale(1.05);
-                    } */
-
-            /* Responsive Enhancements */
-            @media (max-width: 768px) {
-                .customer-details-hero .card-body {
-                    padding: 1rem !important;
-                }
-
-                .customer-name {
-                    font-size: 1.5rem !important;
-                }
-
-                .contact-cards .col-sm-6 {
-                    margin-bottom: 0.5rem;
-                }
-            }
-
-            /* Verification Status */
-            .text-success {
-                animation: fadeInUp 0.5s ease-out;
-            }
-
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        </style>
     @endpush
 </div>
