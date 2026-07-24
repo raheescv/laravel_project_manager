@@ -15,7 +15,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class PaymentTable extends Component
 {
-    use HasRentOutReportFilters, WithPagination;
+    use HasRentOutReportFilters, WithPagination {
+        HasRentOutReportFilters::resetFilters as protected resetBaseFilters;
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -197,7 +199,7 @@ class PaymentTable extends Component
         $this->filterPaymentMode = '';
         $this->filterPaymentStatus = 'pending';
         $this->quickFilterMode = '';
-        parent::resetFilters();
+        $this->resetBaseFilters();
     }
 
     public function render()

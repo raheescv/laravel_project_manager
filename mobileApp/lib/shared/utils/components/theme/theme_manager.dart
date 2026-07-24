@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:invo/shared/domain/helpers/responsive.dart';
+
 import 'palette.dart';
 
 /// Theme extension that carries the live [AstraPalette] plus the shared design
@@ -110,6 +112,15 @@ ThemeData buildAstraTheme(AstraPalette p) {
     ),
     textTheme: textTheme,
     splashFactory: InkRipple.splashFactory,
+    // Every modal sheet in the app is phone-shaped (keypads, pickers, confirm
+    // prompts). Material 3 already centres them and caps them at 640 on a wide
+    // viewport; this tightens that to the same column width every other capped
+    // surface uses (MaxWidthBox), so a sheet lines up with the form behind it
+    // rather than sitting 80px wider. On a phone the viewport is narrower than
+    // the cap, so this changes nothing.
+    bottomSheetTheme: base.bottomSheetTheme.copyWith(
+      constraints: const BoxConstraints(maxWidth: Breakpoints.contentMaxWidth),
+    ),
     extensions: [AstraTheme(p)],
   );
 }

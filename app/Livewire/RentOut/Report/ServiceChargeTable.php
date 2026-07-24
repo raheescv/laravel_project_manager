@@ -12,7 +12,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ServiceChargeTable extends Component
 {
-    use HasRentOutReportFilters, WithPagination;
+    use HasRentOutReportFilters, WithPagination {
+        HasRentOutReportFilters::resetFilters as protected resetBaseFilters;
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -139,7 +141,7 @@ class ServiceChargeTable extends Component
 
     public function resetFilters(): void
     {
-        parent::resetFilters();
+        $this->resetBaseFilters();
         $this->js("
             ['svc_filterGroup', 'svc_filterBuilding', 'svc_filterProperty', 'svc_filterCustomer'].forEach(id => {
                 const el = document.getElementById(id);

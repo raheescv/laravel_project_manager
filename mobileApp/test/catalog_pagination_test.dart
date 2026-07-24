@@ -2,6 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
+import 'package:invo/shared/domain/constants/app_config.dart';
+import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
+import 'package:invo/shared/utils/router/http_utils/http_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/fake_lookup_repository.dart';
@@ -14,7 +18,17 @@ void main() {
   Future<({CatalogCubit cat, FakeLookupRepository repo})> makeController({int total = 55}) async {
     SharedPreferences.setMockInitialValues({});
     final repo = FakeLookupRepository(total: total);
-    serviceLocator.registerLazySingleton<LookupRepository>(() => repo);
+    // CatalogCubit scopes its queries to the active branch, and BranchCubit
+    // reaches for HttpService (which needs storage + config) to load branches.
+    final storage = await LocalStorageService.create();
+    serviceLocator
+      ..registerLazySingleton<LookupRepository>(() => repo)
+      ..registerSingleton<LocalStorageService>(storage)
+      ..registerSingleton<HttpService>(HttpService(
+        storage: storage,
+        config: AppConfig(baseUrl: 'http://test.local', tenant: ''),
+      ))
+      ..registerLazySingleton<BranchCubit>(() => BranchCubit(userBranchId: 3));
     return (cat: CatalogCubit(), repo: repo);
   }
 

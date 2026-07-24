@@ -5,6 +5,13 @@ import 'package:flutter/widgets.dart';
 class Breakpoints {
   static const double tablet = 820;
   static const double wide = 1200;
+
+  /// Width cap for phone-shaped content (forms, modal sheets, receipts) so it
+  /// stays a readable column instead of stretching across a tablet. Used by
+  /// [MaxWidthBox] and, via `bottomSheetTheme` in `buildAstraTheme`, by every
+  /// modal sheet — so a sheet is the same width as the form behind it. On a
+  /// phone the viewport is narrower than this, so the cap is a no-op there.
+  static const double contentMaxWidth = 560;
 }
 
 extension ResponsiveX on BuildContext {
@@ -19,7 +26,11 @@ extension ResponsiveX on BuildContext {
 /// Centers content and caps its width on large screens so phone-shaped layouts
 /// don't stretch awkwardly across a tablet/desktop.
 class MaxWidthBox extends StatelessWidget {
-  const MaxWidthBox({super.key, required this.child, this.maxWidth = 560});
+  const MaxWidthBox({
+    super.key,
+    required this.child,
+    this.maxWidth = Breakpoints.contentMaxWidth,
+  });
   final Widget child;
   final double maxWidth;
 

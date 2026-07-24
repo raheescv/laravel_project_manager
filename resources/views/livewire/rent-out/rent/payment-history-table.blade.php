@@ -103,37 +103,25 @@
                     <label class="form-label fw-medium">
                         <i class="fa fa-folder-open text-primary me-1 small"></i> Group/Project
                     </label>
-                    {{ html()->select('filterGroup', [])->value('')->class('select-property_group_id-list border-secondary-subtle shadow-sm')->id('paymentHistory_filterGroup')->placeholder('All Groups')->attribute('wire:model', 'filterGroup') }}
+                    {{ html()->select('filterGroup', [])->value('')->class('select-property_group_id-list border-secondary-subtle shadow-sm')->id('paymentHistory_filterGroup')->placeholder('All Groups') }}
                 </div>
                 <div class="col-md-4 col-lg" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-building text-primary me-1 small"></i> Building
                     </label>
-                    {{ html()->select('filterBuilding', [])->value('')->class('select-property_building_id-list border-secondary-subtle shadow-sm')->id('paymentHistory_filterBuilding')->placeholder('All Buildings')->attribute('wire:model', 'filterBuilding')->attribute('data-group-select', '#paymentHistory_filterGroup') }}
+                    {{ html()->select('filterBuilding', [])->value('')->class('select-property_building_id-list border-secondary-subtle shadow-sm')->id('paymentHistory_filterBuilding')->placeholder('All Buildings')->attribute('data-group-select', '#paymentHistory_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-md-6 col-lg" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-home text-primary me-1 small"></i> Property/Unit
                     </label>
-                    {{ html()->select('filterProperty', [])->value('')->class('select-property_id-list border-secondary-subtle shadow-sm')->id('paymentHistory_filterProperty')->placeholder('All Properties')->attribute('wire:model', 'filterProperty')->attribute('data-building-select', '#paymentHistory_filterBuilding')->attribute('data-group-select', '#paymentHistory_filterGroup') }}
+                    {{ html()->select('filterProperty', [])->value('')->class('select-property_id-list border-secondary-subtle shadow-sm')->id('paymentHistory_filterProperty')->placeholder('All Properties')->attribute('data-building-select', '#paymentHistory_filterBuilding')->attribute('data-group-select', '#paymentHistory_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-md-6 col-lg" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-user text-primary me-1 small"></i> Customer
                     </label>
-                    {{ html()->select('filterCustomer', [])->value('')->class('select-customer_id-list border-secondary-subtle shadow-sm')->id('paymentHistory_filterCustomer')->placeholder('All Customers')->attribute('wire:model', 'filterCustomer') }}
-                </div>
-                <div class="col-md-4 col-lg">
-                    <label class="form-label fw-medium">
-                        <i class="fa fa-credit-card text-primary me-1 small"></i> Payment Mode
-                    </label>
-                    <select wire:model.live="filterPaymentMode"
-                        class="form-select form-select-sm border-secondary-subtle shadow-sm">
-                        <option value="">All Modes</option>
-                        @foreach ($paymentModes as $mode)
-                            <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
-                        @endforeach
-                    </select>
+                    {{ html()->select('filterCustomer', [])->value('')->class('select-customer_id-list border-secondary-subtle shadow-sm')->id('paymentHistory_filterCustomer')->placeholder('All Customers') }}
                 </div>
             </div>
 
@@ -152,6 +140,18 @@
                     </label>
                     <input type="date" wire:model.live="dateTo"
                         class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                </div>
+                <div class="col-md-4 col-lg">
+                    <label class="form-label fw-medium">
+                        <i class="fa fa-credit-card text-primary me-1 small"></i> Payment Mode
+                    </label>
+                    <select wire:model.live="filterPaymentMode"
+                        class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                        <option value="">All Modes</option>
+                        @foreach ($paymentModes as $mode)
+                            <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 

@@ -33,12 +33,13 @@ class BackfillPropertyPaymentJournalEntriesAction
         $count = $query->count();
         $command?->info("Checking {$count} paid rent payment terms...");
 
-        $bar = $command?->output->createProgressBar($count);
+        $bar = $command?->getOutput()->createProgressBar($count);
         $created = 0;
 
         $query->chunkById(100, function ($terms) use ($tenantId, $dryRun, $command, $bar, &$created): void {
             foreach ($terms as $term) {
                 $missingAmount = $this->resolveMissingAmount($term, 'RentOutPaymentTerm');
+                $missingAmount = $this->capToAgreementShortfall($term, $missingAmount, 'rent');
 
                 if ($missingAmount > 0 && $term->rentOut) {
                     $created += $this->backfillRentTerm($term, $missingAmount, $tenantId, $dryRun, $command);
@@ -67,12 +68,13 @@ class BackfillPropertyPaymentJournalEntriesAction
         $count = $query->count();
         $command?->info("Checking {$count} paid utility terms...");
 
-        $bar = $command?->output->createProgressBar($count);
+        $bar = $command?->getOutput()->createProgressBar($count);
         $created = 0;
 
         $query->chunkById(100, function ($terms) use ($tenantId, $dryRun, $command, $bar, &$created): void {
             foreach ($terms as $term) {
                 $missingAmount = $this->resolveMissingAmount($term, 'RentOutUtilityTerm');
+                $missingAmount = $this->capToAgreementShortfall($term, $missingAmount, 'utility');
 
                 if ($missingAmount > 0 && $term->rentOut) {
                     $created += $this->backfillUtilityTerm($term, $missingAmount, $tenantId, $dryRun, $command);
@@ -174,6 +176,67 @@ class BackfillPropertyPaymentJournalEntriesAction
         }
 
         return 1;
+    }
+
+    /**
+     * How much this agreement may still be backfilled, per kind of term.
+     *
+     * A term looks unpaid whenever no receipt carries its id, but migrated
+     * payments often have no term link at all - the old system recorded the money
+     * without tying it to a schedule row - and others sit against a sibling term.
+     * Judging each term on its own therefore invents receipts for money the
+     * agreement has already received, and counts the payment twice.
+     *
+     * So the ceiling is set per agreement: what its terms say has been paid, less
+     * what it has actually received. An agreement already holding as much cash as
+     * its terms claim gets nothing, however the individual rows are attributed.
+     *
+     * @var array<string,float>
+     */
+    private array $agreementShortfall = [];
+
+    private function capToAgreementShortfall(object $term, float $missingAmount, string $kind): float
+    {
+        if ($missingAmount <= 0) {
+            return $missingAmount;
+        }
+
+        $rentOutId = (int) $term->rent_out_id;
+        $key = $kind.':'.$rentOutId;
+
+        if (! array_key_exists($key, $this->agreementShortfall)) {
+            $this->agreementShortfall[$key] = $this->shortfallFor($rentOutId, $kind);
+        }
+
+        $allowed = round(min($missingAmount, $this->agreementShortfall[$key]), 2);
+        $this->agreementShortfall[$key] -= $allowed;
+
+        return max($allowed, 0);
+    }
+
+    private function shortfallFor(int $rentOutId, string $kind): float
+    {
+        if ($kind === 'utility') {
+            $paid = (float) RentOutUtilityTerm::query()->where('rent_out_id', $rentOutId)->sum('paid');
+            $received = (float) RentOutTransaction::query()
+                ->where('rent_out_id', $rentOutId)
+                ->where('credit', '>', 0)
+                ->where('source', 'UtilityTerm')
+                ->sum('credit');
+
+            return round(max($paid - $received, 0), 2);
+        }
+
+        $paid = (float) RentOutPaymentTerm::query()->where('rent_out_id', $rentOutId)->sum('paid');
+        // Rent receipts are those booked against a term plus the unattributed
+        // ones, which in the source were rent collections with no schedule link.
+        $received = (float) RentOutTransaction::query()
+            ->where('rent_out_id', $rentOutId)
+            ->where('credit', '>', 0)
+            ->where(fn ($q) => $q->where('source', 'PaymentTerm')->orWhereNull('model'))
+            ->sum('credit');
+
+        return round(max($paid - $received, 0), 2);
     }
 
     private function resolveMissingAmount(object $term, string $model): float

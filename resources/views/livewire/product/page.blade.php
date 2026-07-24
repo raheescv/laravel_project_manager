@@ -613,6 +613,11 @@
                                         </h6>
                                         <div class="mb-2">
                                             <x-filepond::upload wire:model="images" multiple max-files="5"
+                                                max-file-size="20MB"
+                                                image-resize-target-width="1600"
+                                                image-resize-mode="contain"
+                                                image-resize-upscale="false"
+                                                image-transform-output-quality="82"
                                                 class="border border-dashed rounded-3" />
                                             <div class="text-muted small text-center mt-2">
                                                 <i class="fa fa-info-circle me-1"></i>
@@ -649,6 +654,11 @@
                                             </h6>
                                             <div class="mb-2">
                                                 <x-filepond::upload wire:model="angles_360" multiple max-files="36"
+                                                    max-file-size="20MB"
+                                                    image-resize-target-width="1600"
+                                                    image-resize-mode="contain"
+                                                    image-resize-upscale="false"
+                                                    image-transform-output-quality="82"
                                                     class="border border-dashed rounded-3" />
                                                 <div class="text-muted small text-center mt-2">
                                                     <i class="fa fa-info-circle me-1"></i>

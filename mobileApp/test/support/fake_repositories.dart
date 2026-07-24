@@ -39,6 +39,12 @@ class FakeSaleRepository implements SaleRepository {
     return _finishedSale();
   }
 
+  /// Ids passed to [deleteSale], so a test can assert the call went through.
+  final deletedIds = <String>[];
+
+  @override
+  Future<void> deleteSale(String id) async => deletedIds.add(id);
+
   @override
   Future<SalesPage> sales({
     String? status,
@@ -98,9 +104,9 @@ class FakeAdminRepository implements AdminRepository {
           Metric(title: "Today's Sales", value: 4200, type: 'currency'),
           Metric(title: "Today's Bills", value: 18, type: 'count'),
         ],
-        inventory: [
-          Metric(title: 'Active Employees', value: 6, type: 'count'),
-          Metric(title: 'Customers', value: 540, type: 'count'),
+        payments: [
+          Metric(title: 'Cash', value: 2600, type: 'currency'),
+          Metric(title: 'Card', value: 1600, type: 'currency'),
         ],
         business: [
           Metric(title: 'weekly sales', value: 21000, type: 'currency', percentage: '12%'),

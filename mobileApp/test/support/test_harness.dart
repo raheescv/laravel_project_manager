@@ -8,6 +8,8 @@ import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'package:invo/features/admin/logic/day_session_cubit/day_session_cubit.dart';
 import 'package:invo/features/auth/domain/repository/auth_repository.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/profile/domain/repository/profile_repository.dart';
+import 'package:invo/features/profile/domain/services/profile_service.dart';
 import 'package:invo/features/sale/domain/repository/sale_repository.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
@@ -15,12 +17,15 @@ import 'package:invo/features/sale/logic/stylist_cubit/stylist_cubit.dart';
 import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
+import 'package:invo/features/stock_check/domain/repository/stock_check_repository.dart';
+import 'package:invo/features/stock_check/domain/services/stock_check_service.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/logic/currency_cubit/currency_cubit.dart';
+import 'package:invo/shared/logic/haptics_cubit/haptics_cubit.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
@@ -46,6 +51,14 @@ class TestHarness {
   AuthCubit authCubit = AuthCubit();
   late CartCubit cart;
 
+  // App-wide cubits that lib/ resolves straight from the locator (not only via
+  // BlocProvider) — they must be the *same* instances in both places.
+  late ThemeCubit theme;
+  late HapticsCubit haptics;
+  late CurrencyCubit currency;
+  late BranchCubit branch;
+  late PrintSettingsCubit printSettings;
+
   /// Register everything and seed a signed-in admin user.
   Future<void> init({bool admin = true}) async {
     SharedPreferences.setMockInitialValues({});
@@ -69,7 +82,11 @@ class TestHarness {
       ..registerLazySingleton<SaleRepository>(() => sale)
       ..registerLazySingleton<AuthRepository>(() => auth)
       ..registerLazySingleton<AdminRepository>(() => this.admin)
-      ..registerLazySingleton<SaleReturnRepository>(() => saleReturn);
+      ..registerLazySingleton<SaleReturnRepository>(() => saleReturn)
+      // Not exercised by the layout tests, but resolved from the locator when
+      // the profile / stock-check screens build.
+      ..registerLazySingleton<ProfileRepository>(ProfileService.new)
+      ..registerLazySingleton<StockCheckRepository>(StockCheckService.new);
 
     authCubit = AuthCubit();
     authCubit.user = ApiUser(
@@ -80,6 +97,7 @@ class TestHarness {
       mobile: '+1 415 555 0142',
       isAdmin: admin,
       designation: 'Senior Stylist',
+      role: admin ? 'admin' : 'staff',
       branchId: '3',
       daySessionStatus: 'open',
       daySessionDate: '2026-06-14',
@@ -87,6 +105,18 @@ class TestHarness {
     authCubit.status = AuthStatus.signedIn;
     // DaySessionCubit resolves AuthCubit from the locator.
     serviceLocator.registerSingleton<AuthCubit>(authCubit);
+
+    theme = ThemeCubit();
+    haptics = HapticsCubit();
+    currency = CurrencyCubit();
+    branch = BranchCubit(userBranchId: 3);
+    printSettings = PrintSettingsCubit();
+    serviceLocator
+      ..registerSingleton<ThemeCubit>(theme)
+      ..registerSingleton<HapticsCubit>(haptics)
+      ..registerSingleton<CurrencyCubit>(currency)
+      ..registerSingleton<BranchCubit>(branch)
+      ..registerSingleton<PrintSettingsCubit>(printSettings);
 
     cart = CartCubit();
   }
@@ -102,10 +132,11 @@ class TestHarness {
   /// navigation targets resolve when pumped behind a router.
   List<BlocProvider> providers() => [
         BlocProvider<AuthCubit>.value(value: authCubit),
-        BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
-        BlocProvider<CurrencyCubit>(create: (_) => CurrencyCubit()),
-        BlocProvider<BranchCubit>(create: (_) => BranchCubit(userBranchId: 3)),
-        BlocProvider<PrintSettingsCubit>(create: (_) => PrintSettingsCubit()),
+        BlocProvider<ThemeCubit>.value(value: theme),
+        BlocProvider<HapticsCubit>.value(value: haptics),
+        BlocProvider<CurrencyCubit>.value(value: currency),
+        BlocProvider<BranchCubit>.value(value: branch),
+        BlocProvider<PrintSettingsCubit>.value(value: printSettings),
         BlocProvider<CartCubit>.value(value: cart),
         BlocProvider<ReturnDraftCubit>(create: (_) => ReturnDraftCubit()),
         BlocProvider<CatalogCubit>(create: (_) => CatalogCubit()),

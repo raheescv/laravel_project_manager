@@ -13,7 +13,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class UtilityPaymentTable extends Component
 {
-    use HasRentOutReportFilters, WithPagination;
+    use HasRentOutReportFilters, WithPagination {
+        HasRentOutReportFilters::resetFilters as protected resetBaseFilters;
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -127,7 +129,7 @@ class UtilityPaymentTable extends Component
     {
         $this->filterUtility = '';
         $this->filterPaidStatus = 'pending';
-        parent::resetFilters();
+        $this->resetBaseFilters();
         $this->js("
             ['utility_filterGroup', 'utility_filterBuilding', 'utility_filterProperty', 'utility_filterCustomer'].forEach(id => {
                 const el = document.getElementById(id);

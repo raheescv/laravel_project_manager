@@ -110,7 +110,7 @@
                                 'Group' => $rentOut->group?->name,
                                 'Building' => $rentOut->building?->name,
                                 'Unit Type' => $rentOut->type?->name,
-                                'Property/Unit' => $rentOut->property?->number,
+                                'Property/Unit' => '<a href="' . route('property::property::view', $rentOut->property->id) . '" class="text-decoration-underline">' . ($rentOut->property?->number ?? '—') . '</a>',
                                 'Customer' => '<a href="' . route('account::customer::view', $rentOut->customer->id) . '" class="text-decoration-underline">' . ($rentOut->customer?->name ?? '—') . '</a>',
                             ];
                         @endphp

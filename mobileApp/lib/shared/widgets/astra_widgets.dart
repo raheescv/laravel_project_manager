@@ -672,13 +672,26 @@ class EmptyState extends StatelessWidget {
         ],
       ),
     );
-    // Center vertically when the height is bounded (e.g. inside Expanded / a
-    // Scaffold body). When height is unbounded (e.g. a direct ListView child),
-    // skip the filling Center — it can't lay out under unbounded constraints and
-    // throws the shifted_box `hasSize` assertion, which also orphans siblings.
+    // When height is unbounded (e.g. a direct ListView child) hand back the
+    // content as-is: a filling Center can't lay out under unbounded constraints
+    // and throws the shifted_box `hasSize` assertion, which also orphans
+    // siblings.
+    //
+    // When it *is* bounded, centre it — but through a scroll view, because the
+    // illustration + title + message run ~200px tall and the box is not always
+    // that big: a landscape phone, or the tablet ticket panel with a summary
+    // card below it, can leave well under 100px. Centred when there's room,
+    // scrollable when there isn't, instead of overflowing.
     return LayoutBuilder(
-      builder: (context, constraints) =>
-          constraints.maxHeight.isFinite ? Center(child: content) : content,
+      builder: (context, constraints) {
+        if (!constraints.maxHeight.isFinite) return content;
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(child: content),
+          ),
+        );
+      },
     );
   }
 }

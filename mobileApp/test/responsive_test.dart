@@ -13,9 +13,17 @@ import 'package:invo/features/sale/screens/v3/cart_screen.dart';
 import 'package:invo/features/sale/screens/v3/invoice_screen.dart';
 import 'package:invo/features/sale/screens/v3/new_sale_screen.dart';
 import 'package:invo/features/sale/screens/v3/review_pay_screen.dart';
+import 'package:invo/features/admin/screens/v3/day_session_screen.dart';
+import 'package:invo/features/sale_return/screens/v3/new_sale_return_screen.dart';
+import 'package:invo/features/sale_return/screens/v3/return_pick_invoice_screen.dart';
 import 'package:invo/features/sales/screens/v3/sales_list_screen.dart';
+import 'package:invo/features/sales_returns/screens/v3/sales_returns_list_screen.dart';
+import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
+import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/settings/screens/v3/settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
+import 'package:invo/features/stock_check/screens/v3/new_stock_check_screen.dart';
+import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 
@@ -36,6 +44,20 @@ Sale _demoSale() => Sale.fromJson({
 const phone = Size(390, 844);
 const tablet = Size(1194, 834);
 
+/// The sizes every screen must survive. Beyond the phone/landscape-iPad pair we
+/// cover the shapes that actually shipped bugs: a *portrait* tablet (tall and
+/// wide enough to trip `isTablet`), a small 8" tablet that lands just under the
+/// 820 breakpoint (so it takes the phone layout at an unusual width), and a
+/// phone in landscape — which trips `isTablet` on width while having almost no
+/// height, the case that caught the EmptyState overflow.
+const _viewports = <String, Size>{
+  'phone': phone,
+  'phone landscape': Size(844, 390),
+  'small tablet portrait': Size(768, 1024),
+  'tablet portrait': Size(834, 1194),
+  'tablet landscape': tablet,
+};
+
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
@@ -50,7 +72,8 @@ void main() {
     expect(tester.takeException(), isNull);
   }
 
-  /// Each entry renders cleanly (no overflow / no thrown exception) at BOTH sizes.
+  /// Each entry renders cleanly (no overflow / no thrown exception) at EVERY
+  /// size in [_viewports].
   final screens = <String, Future<Widget> Function(TestHarness d)>{
     'Login': (d) async => const LoginScreen(),
     'New Sale': (d) async => const NewSaleScreen(),
@@ -73,6 +96,14 @@ void main() {
     'Change PIN': (d) async => const ChangePinScreen(),
     'Edit Profile': (d) async => const EditProfileScreen(),
     'Admin shell': (d) async => const HomeShell(),
+    'Sales returns list': (d) async => const SalesReturnListScreen(),
+    'Return pick invoice': (d) async => const ReturnPickInvoiceScreen(),
+    'New sale return': (d) async => const NewSaleReturnScreen(),
+    'Day session': (d) async => const DaySessionScreen(),
+    'Permissions': (d) async => const PermissionsScreen(),
+    'Print settings': (d) async => const PrintSettingsScreen(),
+    'Stock check list': (d) async => const StockCheckListScreen(),
+    'New stock check': (d) async => const NewStockCheckScreen(),
   };
 
   // The Reports screen defaults to the item-wise report, which renders an
@@ -87,22 +118,18 @@ void main() {
   const phoneOverflowSkip = <String>{'Reports'};
 
   for (final entry in screens.entries) {
-    testWidgets(
-      '${entry.key} renders without overflow on phone',
-      (tester) async {
-        final d = TestHarness();
-        await d.init(admin: true);
-        addTearDown(d.dispose);
-        await pumpAt(tester, phone, await entry.value(d), d);
-      },
-      skip: phoneOverflowSkip.contains(entry.key),
-    );
-    testWidgets('${entry.key} renders without overflow on tablet', (tester) async {
-      final d = TestHarness();
-      await d.init(admin: true);
-      addTearDown(d.dispose);
-      await pumpAt(tester, tablet, await entry.value(d), d);
-    });
+    for (final vp in _viewports.entries) {
+      testWidgets(
+        '${entry.key} renders without overflow on ${vp.key}',
+        (tester) async {
+          final d = TestHarness();
+          await d.init(admin: true);
+          addTearDown(d.dispose);
+          await pumpAt(tester, vp.value, await entry.value(d), d);
+        },
+        skip: vp.key == 'phone' && phoneOverflowSkip.contains(entry.key),
+      );
+    }
   }
 
   testWidgets('Cart line items render and Edit sheet opens', (tester) async {
@@ -174,6 +201,68 @@ void main() {
     // The cart bar shows (non-empty cart) but must NOT balloon and squeeze the body.
     expect(find.text('View Cart'), findsOneWidget);
     expect(find.text('Signature Cut'), findsOneWidget, reason: 'catalog must keep its space when the cart bar is shown');
+  });
+
+  // Modal sheets are phone-shaped, so on a tablet they must stay a centred
+  // column. Material 3 already caps them at 640; the app tightens that to
+  // `Breakpoints.contentMaxWidth` in `buildAstraTheme` so sheets match the width
+  // of every other capped surface. The cap is theme-level, so the two checks
+  // below (different sheets, different screens) cover all 20 call sites.
+  testWidgets('modal sheets stay a centred column on tablet', (tester) async {
+    final d = TestHarness();
+    await d.init();
+    addTearDown(d.dispose);
+    d.cart.add((await d.demoProducts()).first);
+    tester.view.physicalSize = tablet;
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(d.wrap(const CartScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('Edit details').first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(tester.takeException(), isNull);
+    expect(find.text('Save changes'), findsOneWidget);
+
+    // Measure the sheet's own content root, not `BottomSheet` — the latter still
+    // fills the width, because it is what builds the centring Align the cap
+    // acts through.
+    final sheet = tester.getRect(
+      find.byWidgetPredicate((w) => w.runtimeType.toString() == '_EditLineSheet'),
+    );
+    expect(sheet.width, lessThanOrEqualTo(Breakpoints.contentMaxWidth),
+        reason: 'sheet must stay a capped column on a tablet');
+    expect(sheet.left, closeTo(tablet.width - sheet.right, 1.0),
+        reason: 'sheet should be horizontally centred');
+  });
+
+  testWidgets('custom payment sheet is capped on tablet too', (tester) async {
+    final d = TestHarness();
+    await d.init();
+    addTearDown(d.dispose);
+    d.cart.add((await d.demoProducts()).first);
+    tester.view.physicalSize = tablet;
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(d.wrap(const ReviewPayScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.text('Custom'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.takeException(), isNull);
+    expect(find.text('Custom Payment'), findsOneWidget);
+
+    final sheet = tester.getRect(
+      find.byWidgetPredicate((w) => w.runtimeType.toString() == '_CustomPaymentSheet'),
+    );
+    expect(sheet.width, lessThanOrEqualTo(Breakpoints.contentMaxWidth));
+    expect(sheet.left, closeTo(tablet.width - sheet.right, 1.0));
   });
 
   // The Password tab (username/password form) must also render cleanly.

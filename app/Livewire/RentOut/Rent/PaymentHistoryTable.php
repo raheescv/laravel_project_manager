@@ -13,7 +13,9 @@ use Livewire\WithPagination;
 
 class PaymentHistoryTable extends Component
 {
-    use HasRentOutReportFilters, WithPagination;
+    use HasRentOutReportFilters, WithPagination {
+        HasRentOutReportFilters::resetFilters as protected resetBaseFilters;
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -112,7 +114,13 @@ class PaymentHistoryTable extends Component
     public function resetFilters(): void
     {
         $this->filterPaymentMode = '';
-        parent::resetFilters();
+        $this->resetBaseFilters();
+        $this->js("
+            ['paymentHistory_filterGroup', 'paymentHistory_filterBuilding', 'paymentHistory_filterProperty', 'paymentHistory_filterCustomer'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.tomSelect) { el.tomSelect.clear(); }
+            });
+        ");
     }
 
     public function render()

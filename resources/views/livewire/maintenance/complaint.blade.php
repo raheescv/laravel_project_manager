@@ -4,10 +4,16 @@
         <div class="card-body py-2 px-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <div class="d-flex flex-wrap align-items-center gap-3 small">
-                    <a href="{{ route('property::maintenance::edit', $propertyInfo['registration_id']) }}"
-                        class="text-primary fw-bold text-decoration-none">
-                        <i class="fa fa-hashtag"></i> REG-{{ $propertyInfo['registration_id'] }}
-                    </a>
+                    @if ($propertyInfo['registration_id'])
+                        <a href="{{ route('property::maintenance::edit', $propertyInfo['registration_id']) }}"
+                            class="text-primary fw-bold text-decoration-none">
+                            <i class="fa fa-hashtag"></i> REG-{{ $propertyInfo['registration_id'] }}
+                        </a>
+                    @else
+                        <span class="text-muted fw-bold">
+                            <i class="fa fa-hashtag"></i> REG-N/A
+                        </span>
+                    @endif
                     <span class="d-flex align-items-center gap-1 text-dark">
                         <i class="fa fa-folder-open text-muted" style="font-size: 0.7rem;"></i>
                         {{ $propertyInfo['group'] }}
@@ -235,7 +241,7 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body p-3">
             <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
-                <a href="{{ route('property::maintenance::edit', $propertyInfo['registration_id']) }}" class="btn btn-light btn-sm d-flex align-items-center gap-1 rounded-pill px-3">
+                <a href="{{ $propertyInfo['registration_id'] ? route('property::maintenance::edit', $propertyInfo['registration_id']) : route('property::maintenance::index') }}" class="btn btn-light btn-sm d-flex align-items-center gap-1 rounded-pill px-3">
                     <i class="fa fa-arrow-left"></i><span>Back</span>
                 </a>
                 <div class="d-flex flex-wrap gap-2 align-items-center">

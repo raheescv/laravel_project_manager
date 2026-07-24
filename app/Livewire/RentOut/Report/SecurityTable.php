@@ -14,7 +14,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class SecurityTable extends Component
 {
-    use HasRentOutReportFilters, WithPagination;
+    use HasRentOutReportFilters, WithPagination {
+        HasRentOutReportFilters::resetFilters as protected resetBaseFilters;
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -115,7 +117,7 @@ class SecurityTable extends Component
         $this->filterSecurityType = '';
         $this->filterPaymentMethod = '';
         $this->filterSecurityStatus = '';
-        parent::resetFilters();
+        $this->resetBaseFilters();
         $this->js("
             ['security_filterGroup', 'security_filterBuilding', 'security_filterProperty', 'security_filterCustomer'].forEach(id => {
                 const el = document.getElementById(id);

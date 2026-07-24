@@ -13,7 +13,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ServicePaymentTable extends Component
 {
-    use HasRentOutReportFilters, WithPagination;
+    use HasRentOutReportFilters, WithPagination {
+        HasRentOutReportFilters::resetFilters as protected resetBaseFilters;
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -195,7 +197,7 @@ class ServicePaymentTable extends Component
         $this->filterCategory = '';
         $this->filterSource = '';
         $this->filterDirection = '';
-        parent::resetFilters();
+        $this->resetBaseFilters();
         $this->dateFrom = \Carbon\Carbon::now()->startOfYear()->format('Y-m-d');
         $this->dateTo = \Carbon\Carbon::now()->endOfYear()->format('Y-m-d');
         $this->js("
