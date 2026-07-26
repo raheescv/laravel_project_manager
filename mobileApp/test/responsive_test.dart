@@ -26,30 +26,58 @@ import 'package:invo/features/stock_check/screens/v3/new_stock_check_screen.dart
 import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 
 import 'support/test_harness.dart';
 
 Sale _demoSale() => Sale.fromJson({
-      'id': '5001', 'invoice_no': 'INV-0001', 'date': '2026-06-14', 'status': 'completed', 'branch': 'Downtown',
-      'customer': {'name': 'Walk-in', 'mobile': ''},
-      'items': [
-        {'name': 'Signature Cut', 'type': 'service', 'employee': 'Maya', 'quantity': 1, 'unit_price': 45, 'discount': 0, 'total': 45},
-        {'name': 'Balayage', 'type': 'service', 'employee': 'Liam', 'quantity': 1, 'unit_price': 180, 'discount': 18, 'total': 162},
-      ],
-      'payments': [{'method': 'Card', 'amount': 207}],
-      'summary': {'gross_amount': 225, 'item_discount': 18, 'other_discount': 0, 'tax_amount': 0, 'grand_total': 207, 'paid': 207},
-      'created_by': 'Maya',
-    });
+  'id': '5001',
+  'invoice_no': 'INV-0001',
+  'date': '2026-06-14',
+  'status': 'completed',
+  'branch': 'Downtown',
+  'customer': {'name': 'Walk-in', 'mobile': ''},
+  'items': [
+    {
+      'name': 'Signature Cut',
+      'type': 'service',
+      'employee': 'Maya',
+      'quantity': 1,
+      'unit_price': 45,
+      'discount': 0,
+      'total': 45,
+    },
+    {
+      'name': 'Balayage',
+      'type': 'service',
+      'employee': 'Liam',
+      'quantity': 1,
+      'unit_price': 180,
+      'discount': 18,
+      'total': 162,
+    },
+  ],
+  'payments': [
+    {'method': 'Card', 'amount': 207},
+  ],
+  'summary': {
+    'gross_amount': 225,
+    'item_discount': 18,
+    'other_discount': 0,
+    'tax_amount': 0,
+    'grand_total': 207,
+    'paid': 207,
+  },
+  'created_by': 'Maya',
+});
 
 const phone = Size(390, 844);
 const tablet = Size(1194, 834);
 
 /// The sizes every screen must survive. Beyond the phone/landscape-iPad pair we
-/// cover the shapes that actually shipped bugs: a *portrait* tablet (tall and
-/// wide enough to trip `isTablet`), a small 8" tablet that lands just under the
-/// 820 breakpoint (so it takes the phone layout at an unusual width), and a
-/// phone in landscape — which trips `isTablet` on width while having almost no
-/// height, the case that caught the EmptyState overflow.
+/// cover the shapes that actually shipped bugs: portrait and landscape tablets,
+/// a small 8" tablet, and a phone in landscape. Tablet detection uses the
+/// shortest side, so rotation does not change a device's layout class.
 const _viewports = <String, Size>{
   'phone': phone,
   'phone landscape': Size(844, 390),
@@ -61,7 +89,12 @@ const _viewports = <String, Size>{
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
-  Future<void> pumpAt(WidgetTester tester, Size size, Widget child, TestHarness d) async {
+  Future<void> pumpAt(
+    WidgetTester tester,
+    Size size,
+    Widget child,
+    TestHarness d,
+  ) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -144,48 +177,69 @@ void main() {
     await tester.pumpWidget(d.wrap(const CartScreen()));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Edit details'), findsWidgets, reason: 'cart line should render');
+    expect(
+      find.text('Edit details'),
+      findsWidgets,
+      reason: 'cart line should render',
+    );
     await tester.tap(find.text('Edit details').first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 450));
-    expect(tester.takeException(), isNull, reason: 'opening the edit sheet must not throw');
-    expect(find.text('Save changes'), findsOneWidget, reason: 'edit sheet should be visible');
+    expect(
+      tester.takeException(),
+      isNull,
+      reason: 'opening the edit sheet must not throw',
+    );
+    expect(
+      find.text('Save changes'),
+      findsOneWidget,
+      reason: 'edit sheet should be visible',
+    );
     expect(find.text('LINE TOTAL'), findsOneWidget);
   });
 
-  testWidgets('Review & Pay: Credit zeroes the paid amount and Custom sheet opens', (tester) async {
-    final d = TestHarness();
-    await d.init();
-    addTearDown(d.dispose);
-    d.cart.add((await d.demoProducts()).first); // Signature Cut, $45
-    tester.view.physicalSize = const Size(430, 1100);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(d.wrap(const ReviewPayScreen()));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+  testWidgets(
+    'Review & Pay: Credit zeroes the paid amount and Custom sheet opens',
+    (tester) async {
+      final d = TestHarness();
+      await d.init();
+      addTearDown(d.dispose);
+      d.cart.add((await d.demoProducts()).first); // Signature Cut, $45
+      tester.view.physicalSize = const Size(430, 1100);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(d.wrap(const ReviewPayScreen()));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
-    // Cash is the default → fully paid, ready to submit.
-    expect(find.text('Ready to Submit'), findsOneWidget);
+      // Cash is the default → fully paid, ready to submit.
+      expect(find.text('Ready to Submit'), findsOneWidget);
 
-    // Credit records no payment → a remaining balance.
-    await tester.tap(find.text('Credit'));
-    await tester.pump();
-    expect(d.cart.payMode, PayMode.credit);
-    expect(d.cart.paidAmount, 0);
-    expect(find.text('Partial Payment'), findsOneWidget);
+      // Credit records no payment → a remaining balance.
+      await tester.tap(find.text('Credit'));
+      await tester.pump();
+      expect(d.cart.payMode, PayMode.credit);
+      expect(d.cart.paidAmount, 0);
+      expect(find.text('Partial Payment'), findsOneWidget);
 
-    // Custom opens the split-payment sheet.
-    await tester.tap(find.text('Custom'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(tester.takeException(), isNull, reason: 'opening the custom payment sheet must not throw');
-    expect(find.text('Custom Payment'), findsOneWidget);
-    expect(find.text('Save Payment'), findsOneWidget);
-  });
+      // Custom opens the split-payment sheet.
+      await tester.tap(find.text('Custom'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'opening the custom payment sheet must not throw',
+      );
+      expect(find.text('Custom Payment'), findsOneWidget);
+      expect(find.text('Save Payment'), findsOneWidget);
+    },
+  );
 
-  testWidgets('New Sale with a cart item keeps the catalog visible (phone)', (tester) async {
+  testWidgets('New Sale with a cart item keeps the catalog visible (phone)', (
+    tester,
+  ) async {
     final d = TestHarness();
     await d.init();
     addTearDown(d.dispose);
@@ -200,7 +254,46 @@ void main() {
     expect(tester.takeException(), isNull);
     // The cart bar shows (non-empty cart) but must NOT balloon and squeeze the body.
     expect(find.text('View Cart'), findsOneWidget);
-    expect(find.text('Signature Cut'), findsOneWidget, reason: 'catalog must keep its space when the cart bar is shown');
+    expect(
+      find.text('Signature Cut'),
+      findsOneWidget,
+      reason: 'catalog must keep its space when the cart bar is shown',
+    );
+  });
+
+  testWidgets('small portrait tablet uses the tablet navigation rail', (
+    tester,
+  ) async {
+    final d = TestHarness();
+    await d.init(admin: true);
+    addTearDown(d.dispose);
+    tester.view.physicalSize = const Size(768, 1024);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(d.wrap(const HomeShell()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(AstraNavBar), findsNothing);
+    expect(find.text('New'), findsOneWidget);
+  });
+
+  testWidgets('landscape phone keeps phone navigation', (tester) async {
+    final d = TestHarness();
+    await d.init(admin: true);
+    addTearDown(d.dispose);
+    tester.view.physicalSize = const Size(844, 390);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(d.wrap(const HomeShell()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(AstraNavBar), findsOneWidget);
   });
 
   // Modal sheets are phone-shaped, so on a tablet they must stay a centred
@@ -231,12 +324,20 @@ void main() {
     // fills the width, because it is what builds the centring Align the cap
     // acts through.
     final sheet = tester.getRect(
-      find.byWidgetPredicate((w) => w.runtimeType.toString() == '_EditLineSheet'),
+      find.byWidgetPredicate(
+        (w) => w.runtimeType.toString() == '_EditLineSheet',
+      ),
     );
-    expect(sheet.width, lessThanOrEqualTo(Breakpoints.contentMaxWidth),
-        reason: 'sheet must stay a capped column on a tablet');
-    expect(sheet.left, closeTo(tablet.width - sheet.right, 1.0),
-        reason: 'sheet should be horizontally centred');
+    expect(
+      sheet.width,
+      lessThanOrEqualTo(Breakpoints.contentMaxWidth),
+      reason: 'sheet must stay a capped column on a tablet',
+    );
+    expect(
+      sheet.left,
+      closeTo(tablet.width - sheet.right, 1.0),
+      reason: 'sheet should be horizontally centred',
+    );
   });
 
   testWidgets('custom payment sheet is capped on tablet too', (tester) async {
@@ -259,7 +360,9 @@ void main() {
     expect(find.text('Custom Payment'), findsOneWidget);
 
     final sheet = tester.getRect(
-      find.byWidgetPredicate((w) => w.runtimeType.toString() == '_CustomPaymentSheet'),
+      find.byWidgetPredicate(
+        (w) => w.runtimeType.toString() == '_CustomPaymentSheet',
+      ),
     );
     expect(sheet.width, lessThanOrEqualTo(Breakpoints.contentMaxWidth));
     expect(sheet.left, closeTo(tablet.width - sheet.right, 1.0));
@@ -268,7 +371,9 @@ void main() {
   // The Password tab (username/password form) must also render cleanly.
   for (final size in [phone, tablet]) {
     final label = size.width < Breakpoints.tablet ? 'phone' : 'tablet';
-    testWidgets('Login password tab renders without overflow on $label', (tester) async {
+    testWidgets('Login password tab renders without overflow on $label', (
+      tester,
+    ) async {
       final d = TestHarness();
       await d.init(admin: true);
       addTearDown(d.dispose);

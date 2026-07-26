@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 
-/// Layout breakpoints. The app is phone-first; at [tablet] and up we switch to
-/// split / master-detail layouts and nav rails that use the extra width.
+/// Layout breakpoints. Device class uses the shortest side so rotating a phone
+/// never turns it into a tablet, while 7–8" portrait tablets get tablet layouts.
 class Breakpoints {
-  static const double tablet = 820;
+  static const double tablet = 600;
   static const double wide = 1200;
 
   /// Width cap for phone-shaped content (forms, modal sheets, receipts) so it
@@ -18,9 +18,12 @@ extension ResponsiveX on BuildContext {
   Size get screenSize => MediaQuery.sizeOf(this);
   double get screenWidth => screenSize.width;
 
-  /// Tablet (or larger desktop) width — use split layouts.
-  bool get isTablet => screenWidth >= Breakpoints.tablet;
-  bool get isWide => screenWidth >= Breakpoints.wide;
+  /// Tablet device class in either orientation.
+  bool get isTablet => screenSize.shortestSide >= Breakpoints.tablet;
+
+  /// A wide tablet/desktop viewport with enough horizontal room for dense
+  /// multi-column content.
+  bool get isWide => isTablet && screenWidth >= Breakpoints.wide;
 }
 
 /// Centers content and caps its width on large screens so phone-shaped layouts
