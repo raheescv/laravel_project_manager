@@ -13,7 +13,7 @@ class GenerateKycFormAction
 {
     public function execute($customerId, $rentoutId = null)
     {
-        $customer = Account::customer() ->with('customerType') ->findOrFail($customerId);
+        $customer = Account::customer()->with('customerType')->findOrFail($customerId);
 
         $rentout = null;
         if ($rentoutId) {
@@ -55,7 +55,9 @@ class GenerateKycFormAction
         ]);
         $pdf->setPaper('a4', 'portrait');
 
-        $filename = 'customer_kyc_'.$customer->name.'_'.now()->format('Y-m-d').'.pdf';
+        // Names may contain "/" or "\" (eg. "Ahmed / Ali"), which Content-Disposition forbids.
+        $customerName = str_replace(['/', '\\'], '-', (string) $customer->name);
+        $filename = 'customer_kyc_'.$customerName.'_'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->stream($filename);
     }

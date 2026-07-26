@@ -215,7 +215,8 @@ class GeneratePackageStatementAction
         $pdf->setOption('margin-bottom', 10);
         $pdf->setOption('margin-left', 10);
 
-        $customerName = $this->package->account ? str_replace(' ', '_', $this->package->account->name) : 'Customer';
+        // Names may contain "/" or "\" (eg. "Ahmed / Ali"), which Content-Disposition forbids.
+        $customerName = $this->package->account ? str_replace([' ', '/', '\\'], ['_', '-', '-'], $this->package->account->name) : 'Customer';
         $filename = 'package_statement_'.$customerName.'_#'.$this->package->id.'_'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->stream($filename);

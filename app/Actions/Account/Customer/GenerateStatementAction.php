@@ -304,7 +304,9 @@ class GenerateStatementAction
         $pdf->setOption('margin-bottom', 10);
         $pdf->setOption('margin-left', 10);
 
-        $filename = 'customer_statement_'.$this->customer->name.'_'.now()->format('Y-m-d').'.pdf';
+        // Names may contain "/" or "\" (eg. "Ahmed / Ali"), which Content-Disposition forbids.
+        $customerName = str_replace(['/', '\\'], '-', (string) $this->customer->name);
+        $filename = 'customer_statement_'.$customerName.'_'.now()->format('Y-m-d').'.pdf';
 
         return $pdf->stream($filename);
     }
