@@ -5,6 +5,7 @@ namespace App\Livewire\RentOut\Tabs;
 use App\Models\RentOutPaymentTerm;
 use App\Models\RentOutTransaction;
 use App\Models\RentOutUtilityTerm;
+use App\Models\RentOut;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -89,8 +90,14 @@ class TransactionsTab extends Component
 
     protected function accruedRentCharges(): Collection
     {
+        $vacateDate = $this->vacateDate();
+
         return RentOutPaymentTerm::where('rent_out_id', $this->rentOutId)
             ->whereDate('due_date', '<=', today())
+            // Once the agreement is vacated it stops accruing rent, so terms
+            // scheduled after that date must not show as "Rent due" charges.
+            ->when($vacateDate, fn ($query) => $query->whereDate('due_date', '<=', $vacateDate))
+            ->where('total','!=', 0)
             ->get()
             ->map(fn (RentOutPaymentTerm $term): array => [
                 'date' => $term->due_date,
@@ -116,6 +123,15 @@ class TransactionsTab extends Component
                 'credit' => 0.0,
                 'remark' => $term->utility?->name ?: 'Utility due '.$term->date?->format('d-m-Y'),
             ]);
+    }
+
+    /**
+     * The date the tenant vacated, or null while the agreement is still running.
+     * Used to stop rent accruing past the vacate.
+     */
+    protected function vacateDate()
+    {
+        return RentOut::whereKey($this->rentOutId)->value('vacate_date');
     }
 
     protected function sortForDisplay(Collection $ledger): Collection

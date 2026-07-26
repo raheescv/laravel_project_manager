@@ -225,7 +225,6 @@ class CompareRentOutPopulationAction
             'Payment terms AR' => ['payment_terms_ar', 'payment_terms_ar', 'string'],
             'Mandatory documents' => ['mandatory_documents', 'mandatory_documents', 'csv'],
             'Created at' => ['created_at', 'created_at', 'datetime'],
-            'Updated at' => ['updated_at', 'updated_at', 'datetime'],
             'Deleted at' => ['deleted_at', 'deleted_at', 'datetime'],
         ];
         $result = [];
@@ -288,6 +287,103 @@ class CompareRentOutPopulationAction
                     $paymentModes,
                 );
             }
+        }
+
+        $result['Services'] = $this->loadServiceComparisons($old, $new, $ids, $paymentModes);
+
+        return $result;
+    }
+
+    /**
+     * @param  array<int>  $ids
+     * @param  array<int, string>  $paymentModes
+     * @return array<int, array<string, mixed>>
+     */
+    private function loadServiceComparisons(
+        ConnectionInterface $old,
+        ConnectionInterface $new,
+        array $ids,
+        array $paymentModes,
+    ): array {
+        if (! $old->getSchemaBuilder()->hasTable('journals')
+            || ! $new->getSchemaBuilder()->hasTable('rent_out_services')) {
+            return array_fill_keys($ids, [
+                'available' => false,
+                'old_count' => null,
+                'new_count' => null,
+                'difference_count' => 0,
+                'rows' => [],
+            ]);
+        }
+
+        $oldRows = $old->table('journals')
+            ->whereIn('rentout_id', $ids)
+            ->where('category', 'Service Charge')
+            ->where('payment_type', 'Services')
+            ->whereNotNull('more_details')
+            ->whereNull('deleted_at')
+            ->get()
+            ->map(function (object $row): object {
+                $details = json_decode((string) ($row->more_details ?? ''), true) ?: [];
+                $unitSize = is_numeric($details['unit_size'] ?? null) ? ($details['unit_size'] + 0) : null;
+                $rate = is_numeric($details['per_square_meter_price'] ?? null)
+                    ? ($details['per_square_meter_price'] + 0)
+                    : null;
+
+                return (object) [
+                    'id' => $row->id,
+                    'rentout_id' => $row->rentout_id,
+                    'branch_id' => $row->branch_id ?? null,
+                    'name' => 'Service Charge',
+                    'amount' => $row->amount ?? 0,
+                    'description' => null,
+                    'start_date' => $details['start_date'] ?? null,
+                    'end_date' => $details['end_date'] ?? null,
+                    'no_of_days' => $details['no_of_days'] ?? null,
+                    'no_of_months' => $details['no_of_months'] ?? null,
+                    'unit_size' => $unitSize,
+                    'per_square_meter_price' => $rate,
+                    'per_day_price' => ($unitSize && $rate) ? round($unitSize * $rate * 12 / 365, 2) : null,
+                    'reason' => $row->reason ?? null,
+                    'remark' => $row->remark ?? null,
+                    'created_by' => $row->user_id ?? null,
+                    'deleted_at' => null,
+                    'created_at' => $row->created_at ?? $row->date ?? null,
+                    'updated_at' => $row->updated_at ?? null,
+                ];
+            })
+            ->groupBy('rentout_id');
+        $newRows = $new->table('rent_out_services')
+            ->whereIn('rent_out_id', $ids)
+            ->get()
+            ->groupBy('rent_out_id');
+        $fields = [
+            'Branch' => ['branch_id', 'branch_id', 'integer'],
+            'Name' => ['name', 'name', 'string'],
+            'Amount' => ['amount', 'amount', 'decimal'],
+            'Description' => ['description', 'description', 'string'],
+            'Start date' => ['start_date', 'start_date', 'date'],
+            'End date' => ['end_date', 'end_date', 'date'],
+            'Number of days' => ['no_of_days', 'no_of_days', 'integer'],
+            'Number of months' => ['no_of_months', 'no_of_months', 'integer'],
+            'Unit size' => ['unit_size', 'unit_size', 'decimal'],
+            'Square metre price' => ['per_square_meter_price', 'per_square_meter_price', 'decimal'],
+            'Per-day price' => ['per_day_price', 'per_day_price', 'decimal'],
+            'Reason' => ['reason', 'reason', 'string'],
+            'Remark' => ['remark', 'remark', 'string'],
+            'Created by' => ['created_by', 'created_by', 'integer'],
+            'Deleted at' => ['deleted_at', 'deleted_at', 'datetime'],
+            'Created at' => ['created_at', 'created_at', 'datetime'],
+        ];
+        $result = [];
+
+        foreach ($ids as $id) {
+            $result[$id] = $this->compareChildRows(
+                $oldRows->get($id, collect()),
+                $newRows->get($id, collect()),
+                $fields,
+                $paymentModes,
+            );
         }
 
         return $result;
@@ -467,12 +563,11 @@ class CompareRentOutPopulationAction
                 $result[$id]['credit'] += (float) $row->credit;
             }
         }
-
         foreach ([['rent_out_payment_terms', 'due_date', 'total'], ['rent_out_utility_terms', 'date', 'amount']] as [$table, $dateColumn, $amountColumn]) {
             if (! $new->getSchemaBuilder()->hasTable($table)) {
                 continue;
             }
-            foreach ($new->table($table)->whereIn('rent_out_id', $ids)->whereNull('deleted_at')->whereDate($dateColumn, '<=', today())->get() as $row) {
+            foreach ($new->table($table)->whereIn('rent_out_id', $ids)->whereNull('deleted_at')->where($amountColumn, '!=', 0)->whereDate($dateColumn, '<=', today())->get() as $row) {
                 $id = (int) $row->rent_out_id;
                 $result[$id] ??= ['rows' => 0, 'debit' => 0.0, 'credit' => 0.0];
                 $result[$id]['rows']++;

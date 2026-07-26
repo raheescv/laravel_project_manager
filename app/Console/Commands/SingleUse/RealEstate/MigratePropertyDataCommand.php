@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\SingleUse\RealEstate;
 
-use App\Actions\RentOut\BackfillPropertyPaymentJournalEntriesAction;
+use App\Enums\RentOut\AgreementType;
 use App\Jobs\BranchProductCreationJob;
 use App\Models\Account;
 use App\Models\Branch;
@@ -174,8 +174,6 @@ class MigratePropertyDataCommand extends Command
 
             $this->migrateRentOutUtilityTerms();
 
-            // Must run before the backfill: it fills only what the real
-            // movements leave uncovered.
             $this->migrateRentOutTransactions();
 
             $this->migrateRentOutSecurities();
@@ -198,7 +196,6 @@ class MigratePropertyDataCommand extends Command
             $this->migrateComplaints();
             $this->migrateMaintenances();
             $this->migrateMaintenanceComplaints();
-            $this->backfillPropertyPaymentJournalEntries();
         } catch (\Exception $e) {
             $this->error("Migration failed: {$e->getMessage()}");
             Log::error('Property data migration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -767,8 +764,6 @@ class MigratePropertyDataCommand extends Command
      */
     private function migrateRentOutTransactions(): void
     {
-        $this->purgeSyntheticPropertyPayments();
-
         $records = DB::connection('mysql2')->table('journals')
             ->whereNull('deleted_at')
             ->where('rentout_id', '>', 0)
@@ -778,7 +773,7 @@ class MigratePropertyDataCommand extends Command
         $termDueDates = DB::connection('mysql2')->table('payment_terms')->pluck('date', 'id');
         $utilityDates = DB::connection('mysql2')->table('rentout_utility_terms')->pluck('date', 'id');
         $oldCheques = DB::connection('mysql2')->table('rentout_cheques')->get()->keyBy('id');
-        $rentOuts = DB::table('rent_outs')->get(['id', 'account_id', 'branch_id'])->keyBy('id');
+        $rentOuts = DB::table('rent_outs')->get(['id', 'account_id', 'branch_id', 'agreement_type'])->keyBy('id');
 
         $unmappedHeads = [];
         $journals = [];
@@ -796,9 +791,15 @@ class MigratePropertyDataCommand extends Command
 
                 $mode = $this->paymentHeadFor($row);
                 $isServiceCharge = in_array($row->payment_type, ['Services', 'Management Fee'], true);
+                $isTermAccrual = ((int) ($row->payment_term_id ?? 0)) > 0 || ((int) ($row->utility_term_id ?? 0)) > 0;
 
-                // Rent/utility accrual - derived from the terms, not migrated.
-                if ($mode === null && ! $isServiceCharge) {
+                // A non-cash journal tied to a term is a rent/utility accrual;
+                // TransactionsTab derives those from the term due dates, so
+                // migrating the journal too would double count - skip it. A
+                // non-cash journal with no term link, however, is a manual ledger
+                // charge or adjustment (e.g. a termination fee) that has no other
+                // representation in the new system, so it is kept as a debit row.
+                if ($mode === null && ! $isServiceCharge && $isTermAccrual) {
                     return null;
                 }
 
@@ -855,7 +856,7 @@ class MigratePropertyDataCommand extends Command
 
                 $transaction = array_merge(
                     $transaction,
-                    $this->transactionSourceFor($row, $mode, $termDueDates, $utilityDates, $oldCheques, $isServiceCharge, $isMoneyIn)
+                    $this->transactionSourceFor($row, $rentOut, $mode, $termDueDates, $utilityDates, $oldCheques, $isServiceCharge, $isMoneyIn)
                 );
 
                 $journals[] = [
@@ -919,6 +920,7 @@ class MigratePropertyDataCommand extends Command
      */
     private function transactionSourceFor(
         object $row,
+        object $rentOut,
         ?array $mode,
         Collection $termDueDates,
         Collection $utilityDates,
@@ -930,12 +932,16 @@ class MigratePropertyDataCommand extends Command
             $chequeId = is_numeric($row->rentout_cheque_id ?? null) ? (int) $row->rentout_cheque_id : 0;
             $cheque = $chequeId ? ($oldCheques[$chequeId] ?? null) : null;
 
+            // A lease (sale) settles installments, not rent - mirror the label the
+            // live app derives from agreement_type so ledgers read consistently.
+            $agreementType = AgreementType::tryFrom($rentOut->agreement_type ?? 'rental');
+
             return [
                 'source' => 'PaymentTerm',
                 'source_id' => $row->payment_term_id,
                 'model' => 'RentOutPaymentTerm',
                 'model_id' => $row->payment_term_id,
-                'group' => 'Rent Payment',
+                'group' => $agreementType?->config()->paymentGroupLabel ?? 'Rent Payment',
                 // A term can be settled off the cheque schedule - by card or cash -
                 // while still pointing at the cheque it replaced, so the head the
                 // money moved through decides what this is called.
@@ -1068,34 +1074,6 @@ class MigratePropertyDataCommand extends Command
         ');
 
         $this->info('Posted '.count($journals).' property journals with '.count($entries).' entries.');
-    }
-
-    /**
-     * Drop the receipts invented by the journal backfill. They stand in for
-     * payments the old system never recorded, and once the real movements are
-     * migrated they would double up against them.
-     */
-    private function purgeSyntheticPropertyPayments(): void
-    {
-        if ($this->dryRun) {
-            return;
-        }
-
-        $synthetic = DB::table('rent_out_transactions')
-            ->where('remark', 'like', 'Backfilled from existing paid%')
-            ->pluck('journal_id', 'id');
-
-        if ($synthetic->isEmpty()) {
-            return;
-        }
-
-        $journalIds = $synthetic->filter()->values()->all();
-
-        DB::table('journal_entries')->whereIn('journal_id', $journalIds)->delete();
-        DB::table('journals')->whereIn('id', $journalIds)->delete();
-        DB::table('rent_out_transactions')->whereIn('id', $synthetic->keys())->delete();
-
-        $this->warn('Removed '.$synthetic->count().' backfilled transactions from a previous run.');
     }
 
     private function migrateRentOutSecurities(): void
@@ -1824,19 +1802,6 @@ class MigratePropertyDataCommand extends Command
                 'deleted_at' => $row->deleted_at ?? null,
             ];
         });
-    }
-
-    private function backfillPropertyPaymentJournalEntries(): void
-    {
-        $this->newLine();
-        $this->line(str_repeat('-', 72));
-        $this->info('Property Payment Journal Backfill');
-        $this->line(str_repeat('-', 72));
-        $this->info('Backfilling property payment journal entries...');
-
-        $result = (new BackfillPropertyPaymentJournalEntriesAction())->execute($this->tenantId, $this->dryRun, $this);
-
-        $this->info("Backfill complete. Rent terms created: {$result['rent_terms_created']}. Utility terms created: {$result['utility_terms_created']}.");
     }
 
     private function tableExists(string $table): bool
