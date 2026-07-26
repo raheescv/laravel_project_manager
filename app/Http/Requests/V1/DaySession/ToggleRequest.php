@@ -22,9 +22,12 @@ class ToggleRequest extends FormRequest
      */
     public function rules(): array
     {
-        // `now` (not `today`) so a date *with a time-of-day* on the current day
-        // passes validation — the mobile app sends a full `Y-m-d H:i:s` datetime.
-        $rules = ['required', 'date', 'after_or_equal:now'];
+        // The session moment can't be in the future. Use `now` (not `today`) so a
+        // date *with a time-of-day* on the current day passes — the mobile app
+        // sends a full `Y-m-d H:i:s`. Add a small buffer so submitting the current
+        // time doesn't fail on the second or two of latency + clock skew between
+        // the phone stamping the time and the server validating it.
+        $rules = ['required', 'date', 'before_or_equal:'.now()->addMinutes(5)->toDateTimeString()];
 
         if ($this->isClosing()) {
             $openedAt = $this->openSession()?->opened_at;
