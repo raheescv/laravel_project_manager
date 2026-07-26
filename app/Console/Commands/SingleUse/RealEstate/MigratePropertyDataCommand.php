@@ -1204,13 +1204,65 @@ class MigratePropertyDataCommand extends Command
         });
     }
 
+    /**
+     * Service charges. The old project has no service charge table - `rentout_services`
+     * there is only a lookup of names. The charges themselves live as journals tagged
+     * 'Service Charge' / 'Services', with the billing basis (period, unit size, rate)
+     * kept as JSON in `more_details`. That JSON is exactly what the new
+     * rent_out_services table models, so the charges are rebuilt from those journals.
+     */
     private function migrateRentOutServices(): void
     {
-        // In old project, rentout_services is just a lookup table (id, name) with no rent_out FK.
-        // In new project, rent_out_services requires a rent_out_id FK.
-        // These schemas are incompatible — skipping to avoid FK violations.
-        $records = DB::connection('mysql2')->table('rentout_services')->get();
-        $this->warn("Skipped {$records->count()} rentout_services (old table is a lookup with no rent_out FK, incompatible with new schema).");
+        $rentOutIds = DB::table('rent_outs')->pluck('id')->flip();
+
+        $records = DB::connection('mysql2')
+            ->table('journals')
+            ->where('category', 'Service Charge')
+            ->where('payment_type', 'Services')
+            ->whereNotNull('more_details')
+            ->whereNull('deleted_at')
+            ->where('rentout_id', '>', 0)
+            ->orderBy('id')
+            ->get();
+
+        $this->migrateTable('rent out services', $records, 'rent_out_services', function ($row) use ($rentOutIds) {
+            if (! isset($rentOutIds[$row->rentout_id])) {
+                return; // journal points at an agreement that no longer exists
+            }
+
+            $details = json_decode($row->more_details ?? '', true) ?: [];
+            $unitSize = $this->numericOrNull($details['unit_size'] ?? null);
+            $rate = $this->numericOrNull($details['per_square_meter_price'] ?? null);
+
+            return [
+                'id' => $row->id,
+                'tenant_id' => $this->tenantId,
+                'branch_id' => $row->branch_id ?: $this->branchForRentout($row->rentout_id),
+                'rent_out_id' => $row->rentout_id,
+                'name' => 'Service Charge',
+                'amount' => $row->amount ?? 0,
+                'description' => null,
+                'start_date' => $this->normalizeDate($details['start_date'] ?? null),
+                'end_date' => $this->normalizeDate($details['end_date'] ?? null),
+                'no_of_days' => $this->numericOrNull($details['no_of_days'] ?? null),
+                'no_of_months' => $this->numericOrNull($details['no_of_months'] ?? null),
+                'unit_size' => $unitSize,
+                'per_square_meter_price' => $rate,
+                // The old report derived this on the fly; the new table stores it.
+                'per_day_price' => ($unitSize && $rate) ? round($unitSize * $rate * 12 / 365, 2) : null,
+                'reason' => $row->reason ?? null,
+                'remark' => $row->remark ?? null,
+                'created_by' => $row->user_id ?: null,
+                'deleted_at' => null,
+                'created_at' => $row->created_at ?? $row->date ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+        });
+    }
+
+    private function numericOrNull($value): int|float|null
+    {
+        return is_numeric($value) ? $value + 0 : null;
     }
 
     private function migrateRentOutNotes(): void

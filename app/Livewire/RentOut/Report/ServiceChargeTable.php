@@ -47,7 +47,9 @@ class ServiceChargeTable extends Component
         return RentOutService::query()
             ->whereHas('rentOut', fn ($r) => $r->where('agreement_type', 'lease'))
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
-            ->tap(fn ($q) => $this->applyDateFilter($q, 'rent_out_services.created_at'));
+            // Filter on the period the charge covers, not the day it was raised -
+            // a charge for next year is billed months ahead of its start date.
+            ->tap(fn ($q) => $this->applyDateFilter($q, 'rent_out_services.start_date'));
     }
 
     protected function buildQuery(): Builder
