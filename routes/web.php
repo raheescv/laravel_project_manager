@@ -20,6 +20,7 @@ use App\Http\Controllers\SupplyRequestController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorAnalyticsController;
+use App\Livewire\RentOut\Comparison\Dashboard as RentOutComparisonDashboard;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
@@ -69,6 +70,8 @@ Route::middleware('auth')->group(function (): void {
     Route::get('visitor-analytics', [VisitorAnalyticsController::class, 'index'])->name('visitor-analytics')->can('visitor analytics.view');
 
     Route::get('health', [HealthController::class, 'index'])->name('health')->can('system health.view');
+    Route::get('property/rentout-comparison', RentOutComparisonDashboard::class)
+        ->name('property::rentout-comparison');
 
     // Purchase Request Routes
     Route::name('purchase-request::')->prefix('purchase-requests')->controller(PurchaseRequestController::class)->group(function (): void {

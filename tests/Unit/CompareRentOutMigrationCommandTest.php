@@ -1,7 +1,7 @@
 <?php
 
 use App\Actions\RentOut\Comparison\CompareRentOutPopulationAction;
-use App\Actions\RentOut\Comparison\GenerateRentOutComparisonReportAction;
+use App\Actions\RentOut\Comparison\StoreRentOutComparisonAction;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
@@ -14,7 +14,7 @@ it('registers the comparison command', function () {
     expect(collect(Artisan::all())->keys())->toContain('property:compare-rentout-migration');
 });
 
-it('generates a comparison report for selected ids', function () {
+it('stores live comparison data for selected ids', function () {
     $comparison = comparisonCommandFixture();
     $compare = mock(CompareRentOutPopulationAction::class);
     $compare->shouldReceive('execute')
@@ -25,21 +25,22 @@ it('generates a comparison report for selected ids', function () {
             && $type === null
             && $chunk === 250)
         ->andReturn($comparison);
-    $report = mock(GenerateRentOutComparisonReportAction::class);
-    $report->shouldReceive('execute')
+    $store = mock(StoreRentOutComparisonAction::class);
+    $store->shouldReceive('execute')
         ->once()
-        ->with($comparison, 'project_notes/rentout-comparison', false)
-        ->andReturn(['index' => '/tmp/report/index.html']);
+        ->with($comparison)
+        ->andReturn(['stored' => 2, 'deleted' => 0]);
 
     $this->artisan('property:compare-rentout-migration', ['--ids' => '1887,1835'])
-        ->expectsOutputToContain('Comparison report generated successfully.')
+        ->expectsOutputToContain('Live comparison data refreshed successfully.')
+        ->expectsOutputToContain('Stored: 2 rows')
         ->assertSuccessful();
 });
 
 it('fails when differences are found and requested', function () {
     $comparison = comparisonCommandFixture(differing: 1);
     mock(CompareRentOutPopulationAction::class)->shouldReceive('execute')->once()->andReturn($comparison);
-    mock(GenerateRentOutComparisonReportAction::class)->shouldReceive('execute')->once()->andReturn(['index' => '/tmp/report/index.html']);
+    mock(StoreRentOutComparisonAction::class)->shouldReceive('execute')->once()->andReturn(['stored' => 2, 'deleted' => 0]);
 
     $this->artisan('property:compare-rentout-migration', ['--fail-on-difference' => true])
         ->assertExitCode(Command::FAILURE);
