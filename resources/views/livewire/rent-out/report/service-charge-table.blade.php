@@ -211,25 +211,25 @@
 
             {{-- Filters Row 1 --}}
             <div class="row g-3">
-                <div class="col-12 col-sm-6 col-lg-4 col-xl-3" wire:ignore>
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3" wire:ignore wire:key="svc-filter-group">
                     <label class="form-label fw-medium small mb-1">
                         <i class="fa fa-folder-open text-primary me-1"></i> Project/Group
                     </label>
                     {{ html()->select('filterGroup', [])->value('')->class('select-property_group_id-list border-secondary-subtle shadow-sm')->id('svc_filterGroup')->placeholder('All Groups')->attribute('wire:model', 'filterGroup') }}
                 </div>
-                <div class="col-12 col-sm-6 col-lg-4 col-xl-3" wire:ignore>
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3" wire:ignore wire:key="svc-filter-building">
                     <label class="form-label fw-medium small mb-1">
                         <i class="fa fa-building text-primary me-1"></i> Building
                     </label>
                     {{ html()->select('filterBuilding', [])->value('')->class('select-property_building_id-list border-secondary-subtle shadow-sm')->id('svc_filterBuilding')->placeholder('All Buildings')->attribute('wire:model', 'filterBuilding')->attribute('data-group-select', '#svc_filterGroup') }}
                 </div>
-                <div class="col-12 col-sm-6 col-lg-4 col-xl-3" wire:ignore>
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3" wire:ignore wire:key="svc-filter-property">
                     <label class="form-label fw-medium small mb-1">
                         <i class="fa fa-home text-primary me-1"></i> Property/Unit
                     </label>
                     {{ html()->select('filterProperty', [])->value('')->class('select-property_id-list border-secondary-subtle shadow-sm')->id('svc_filterProperty')->placeholder('All Properties')->attribute('wire:model', 'filterProperty')->attribute('data-building-select', '#svc_filterBuilding')->attribute('data-group-select', '#svc_filterGroup') }}
                 </div>
-                <div class="col-12 col-sm-6 col-lg-4 col-xl-3" wire:ignore>
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3" wire:ignore wire:key="svc-filter-customer">
                     <label class="form-label fw-medium small mb-1">
                         <i class="fa fa-user text-primary me-1"></i> Customer
                     </label>
