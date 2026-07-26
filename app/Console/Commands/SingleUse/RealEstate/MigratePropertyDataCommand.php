@@ -8,6 +8,7 @@ use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Configuration;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -156,7 +157,9 @@ class MigratePropertyDataCommand extends Command
 
         try {
             Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'active_module'], ['value' => 'Property Management Module']);
+            $this->rolesAndPermissions();
             $this->migrateUsers();
+            $this->assignUserRoles();
             $this->migrateAccountHeads();
             $this->migrateCustomers();
             $this->migrateVendors();
@@ -476,6 +479,152 @@ class MigratePropertyDataCommand extends Command
             'created_at' => $row->created_at ?? now(),
             'updated_at' => $row->updated_at ?? now(),
         ], ['tenant_id', 'email']);
+    }
+
+    /**
+     * Migrate roles and their permission grants.
+     *
+     * Old accounts DB models access as:
+     *   user_types              -> roles assigned to users     (has freeze=1 for built-in admin types)
+     *   designations            -> roles assigned to employees (no privilege source of their own)
+     *   project_modules         -> module / sub_module catalogue
+     *   user_type_privileges    -> (user_type_id, project_module_id, action) grants; action ∈ view/create/edit/delete
+     *
+     * New DB uses Spatie with a different, richer permission taxonomy (e.g. "sale.create",
+     * "account category.view"). The two vocabularies only partially overlap, so:
+     *   - Every old role name is created as a Spatie role (guard "web").
+     *   - freeze=1 user_types (Super Admin / Admin) are treated as full-access and get ALL permissions.
+     *   - Every other user_type gets a best-effort mapping: each old "<sub_module|module>.<action>"
+     *     slug that matches an existing new permission name (case-insensitive) is granted; the rest
+     *     are logged and skipped (they name features this app doesn't have).
+     *   - designation roles have no privilege source, so they are created without permissions.
+     */
+    private function rolesAndPermissions(): void
+    {
+        $this->info('Migrating roles and permissions...');
+
+        $old = DB::connection('mysql2');
+
+        // actualName keyed by lowercased name, so old slugs (always lowercased) can resolve to the
+        // real, correctly-cased new permission name that givePermissionTo() expects.
+        $newPermissionByLower = Permission::pluck('name')
+            ->mapWithKeys(fn ($name) => [strtolower($name) => $name])
+            ->all();
+        $allPermissionNames = array_values($newPermissionByLower);
+
+        $modules = $old->table('project_modules')->get()->keyBy('id');
+
+        // Pre-group every user_type's privileges into the set of new-permission names it should get.
+        $mappedByUserType = [];
+        $unmatchedSlugs = [];
+        $privileges = $old->table('user_type_privileges')->whereNull('deleted_at')->get();
+        foreach ($privileges as $privilege) {
+            $module = $modules[$privilege->project_module_id] ?? null;
+            if (! $module) {
+                continue;
+            }
+            $action = strtolower($privilege->action);
+            // Try the specific sub_module first, then the broader module, as the permission subject.
+            foreach ([$module->sub_module, $module->module] as $subject) {
+                $slug = strtolower($subject).'.'.$action;
+                if (isset($newPermissionByLower[$slug])) {
+                    $mappedByUserType[$privilege->user_type_id][$newPermissionByLower[$slug]] = true;
+
+                    continue 2;
+                }
+            }
+            $unmatchedSlugs[strtolower($module->sub_module).'.'.$action] = true;
+        }
+
+        // Roles from user_types (assigned to migrated users).
+        $userTypes = $old->table('user_types')->whereNull('deleted_at')->get();
+        foreach ($userTypes as $userType) {
+            $role = Role::firstOrCreate(['name' => $userType->name, 'guard_name' => 'web']);
+
+            if ($userType->freeze == 1) {
+                // Built-in admin type: full access.
+                $role->syncPermissions($allPermissionNames);
+                $this->info("Role '{$userType->name}': granted ALL ".count($allPermissionNames).' permissions (admin type).');
+            } else {
+                $names = array_keys($mappedByUserType[$userType->id] ?? []);
+                $role->syncPermissions($names);
+                $this->info("Role '{$userType->name}': granted ".count($names).' mapped permission(s).');
+            }
+        }
+
+        // Roles from designations (assigned to migrated employees). No privilege source to map from.
+        $designations = $old->table('designations')->whereNull('deleted_at')->get();
+        foreach ($designations as $designation) {
+            Role::firstOrCreate(['name' => $designation->name, 'guard_name' => 'web']);
+        }
+
+        if ($unmatchedSlugs) {
+            $this->warn(count($unmatchedSlugs).' old privilege slug(s) had no matching new permission and were skipped (see log).');
+            Log::info('Roles/permissions migration — unmatched old privilege slugs: '.implode(', ', array_keys($unmatchedSlugs)));
+        }
+
+        // Drop Spatie's cached permission map so the assignRole() calls that follow (and the
+        // rest of the app) see these fresh roles/grants.
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        $this->info('Roles and permissions migration completed.');
+    }
+
+    /**
+     * Attach the migrated roles to the migrated users/employees.
+     *
+     * rolesAndPermissions() only creates the roles; migrateUsers() writes user rows with raw
+     * inserts and cannot assignRole() inline, so the two are joined here:
+     *   - users:     users.user_role_id  -> user_types.name   (migrated user keeps its source id)
+     *   - employees: employees.designation_id -> designations.name (matched by second_reference_no)
+     */
+    private function assignUserRoles(): void
+    {
+        if ($this->dryRun) {
+            $this->info('Would assign roles to migrated users/employees.');
+
+            return;
+        }
+
+        $this->info('Assigning roles to migrated users/employees...');
+
+        $old = DB::connection('mysql2');
+        $userTypeNames = $old->table('user_types')->pluck('name', 'id');
+        $designationNames = $old->table('designations')->pluck('name', 'id');
+
+        $assigned = 0;
+
+        // Users keep their source id (migrateUsers uses id => row->id).
+        foreach ($old->table('users')->get(['id', 'user_role_id']) as $row) {
+            $roleName = $userTypeNames[$row->user_role_id] ?? null;
+            if (! $roleName) {
+                continue;
+            }
+
+            $user = User::find($row->id);
+            if ($user && ! $user->hasRole($roleName)) {
+                Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+                $user->assignRole($roleName);
+                $assigned++;
+            }
+        }
+
+        // Employees are keyed by second_reference_no = 'emp_'.<source id>.
+        foreach ($old->table('employees')->get(['id', 'designation_id']) as $row) {
+            $roleName = $designationNames[$row->designation_id] ?? null;
+            if (! $roleName) {
+                continue;
+            }
+
+            $user = User::where('second_reference_no', 'emp_'.$row->id)->first();
+            if ($user && ! $user->hasRole($roleName)) {
+                Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+                $user->assignRole($roleName);
+                $assigned++;
+            }
+        }
+
+        $this->info("Assigned roles to {$assigned} user(s)/employee(s).");
     }
 
     private function migrateAccountHeads(): void
