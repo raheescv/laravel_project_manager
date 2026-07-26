@@ -4,6 +4,7 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Payment\ReverseTransactionAction;
 use App\Enums\RentOut\AgreementType;
+use App\Livewire\Concerns\HasColumnPreferences;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class PaymentTab extends Component
 {
+    use HasColumnPreferences;
+
     public $rentOutId;
 
     // Filters
@@ -39,6 +42,49 @@ class PaymentTab extends Component
     public function mount($rentOutId)
     {
         $this->rentOutId = $rentOutId;
+        $this->initializeColumnPreferences();
+    }
+
+    protected function defaultColumns(): array
+    {
+        return [
+            'date' => true,
+            'due_date' => true,
+            'cheque_date' => true,
+            'source' => true,
+            'group' => true,
+            'category' => true,
+            'reason' => true,
+            'account_id' => true,
+            'cheque_no' => true,
+            'credit' => true,
+            'remark' => true,
+            'created_at' => false,
+        ];
+    }
+
+    protected function columnPreferenceKey(): string
+    {
+        return 'rent-out.payment-tab.columns';
+    }
+
+    /** @return array<string, string> */
+    public function columnLabels(): array
+    {
+        return [
+            'date' => 'Date',
+            'due_date' => 'Due Date',
+            'cheque_date' => 'Cheque Date',
+            'source' => 'Source',
+            'group' => 'Group',
+            'category' => 'Category',
+            'reason' => 'Reason',
+            'account_id' => 'Payment Mode',
+            'cheque_no' => 'Cheque No',
+            'credit' => 'Amount',
+            'remark' => 'Remark',
+            'created_at' => 'Created At',
+        ];
     }
 
     #[On('rent-out-updated')]

@@ -1,13 +1,13 @@
+{{-- Column visibility is seeded from (and written back to) this user's saved preference. --}}
 <div x-data="{
-    columns: {
-        date: true, due_date: true, cheque_date: true, source: true,
-        group: true, category: true, reason: true, account_id: true,
-        cheque_no: true, credit: true, remark: true, created_at: false
+    columns: @js($this->columns),
+    labels: @js($this->columnLabels()),
+    async setColumn(key, visible) {
+        this.columns[key] = visible;
+        this.columns = await $wire.setColumnVisibility(key, visible);
     },
-    labels: {
-        date: 'Date', due_date: 'Due Date', cheque_date: 'Cheque Date', source: 'Source',
-        group: 'Group', category: 'Category', reason: 'Reason', account_id: 'Payment Mode',
-        cheque_no: 'Cheque No', credit: 'Amount', remark: 'Remark', created_at: 'Created At'
+    async resetColumns() {
+        this.columns = await $wire.resetColumns();
     }
 }">
     <style>
@@ -266,10 +266,17 @@
                     <template x-for="(label, key) in labels" :key="key">
                         <label class="d-flex align-items-center gap-2 px-3 py-1 small"
                             style="cursor: pointer; white-space: nowrap;">
-                            <input type="checkbox" class="form-check-input mt-0" x-model="columns[key]">
+                            <input type="checkbox" class="form-check-input mt-0" :checked="columns[key]"
+                                @change="setColumn(key, $event.target.checked)">
                             <span x-text="label"></span>
                         </label>
                     </template>
+                    <div class="border-top mt-2 pt-2 px-3">
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small"
+                            @click="resetColumns()">
+                            <i class="fa fa-refresh me-1"></i> Reset to default
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

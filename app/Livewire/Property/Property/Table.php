@@ -4,8 +4,8 @@ namespace App\Livewire\Property\Property;
 
 use App\Actions\Property\DeleteAction;
 use App\Exports\PropertyExport;
+use App\Livewire\Concerns\HasColumnPreferences;
 use App\Models\Property;
-use App\Models\UserPreference;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class Table extends Component
 {
+    use HasColumnPreferences;
     use WithPagination;
 
     public $search = '';
@@ -41,19 +42,6 @@ class Table extends Component
 
     public $filterOwnership = '';
 
-    public $columns = [
-        'type' => true,
-        'group' => true,
-        'building' => true,
-        'floor' => true,
-        'rent' => true,
-        'ownership' => true,
-        'kahramaa' => true,
-        'parking' => true,
-        'status' => true,
-        'availability' => true,
-    ];
-
     public $columnLabels = [
         'type' => 'Type',
         'group' => 'Group',
@@ -69,45 +57,34 @@ class Table extends Component
 
     protected $paginationTheme = 'bootstrap';
 
-    /** Per-user preference key holding this table's column visibility map. */
-    public const COLUMN_PREFERENCE_KEY = 'property.table.columns';
-
     protected $listeners = [
         'Property-Refresh-Component' => '$refresh',
     ];
 
     public function mount(): void
     {
-        $saved = UserPreference::getValue(self::COLUMN_PREFERENCE_KEY);
-        if (! is_array($saved)) {
-            return;
-        }
-
-        // Only honour keys we still ship, so adding or dropping a column later
-        // never leaves a stale preference deciding what renders.
-        $this->columns = array_merge(
-            $this->columns,
-            array_map(fn ($visible) => (bool) $visible, array_intersect_key($saved, $this->columns))
-        );
+        $this->initializeColumnPreferences();
     }
 
-    public function updatedColumns(): void
+    protected function defaultColumns(): array
     {
-        $this->persistColumns();
+        return [
+            'type' => true,
+            'group' => true,
+            'building' => true,
+            'floor' => true,
+            'rent' => true,
+            'ownership' => true,
+            'kahramaa' => true,
+            'parking' => true,
+            'status' => true,
+            'availability' => true,
+        ];
     }
 
-    public function resetColumns(): void
+    protected function columnPreferenceKey(): string
     {
-        $this->reset('columns');
-        $this->persistColumns();
-    }
-
-    private function persistColumns(): void
-    {
-        UserPreference::setValue(
-            self::COLUMN_PREFERENCE_KEY,
-            array_map(fn ($visible) => (bool) $visible, $this->columns)
-        );
+        return 'property.table.columns';
     }
 
     private function applyFilters($query, bool $includeStatus = true, bool $includeAvailability = true)
