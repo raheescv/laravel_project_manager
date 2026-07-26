@@ -2,11 +2,12 @@
 
 namespace App\Exports\RentOut;
 
-use App\Models\RentOutService;
+use App\Actions\RentOut\Report\GetServiceChargeReportRowsAction;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -14,9 +15,19 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ServiceChargeExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithTitle
+/**
+ * The service charge report as the screen shows it: one row per agreement, with
+ * charged / paid / balance. Both read from the same action, so the workbook can
+ * never drift from the report it was exported from.
+ */
+class ServiceChargeExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison, WithStyles, WithTitle
 {
     use Exportable;
+
+    /** Last column letter — bump alongside headings(). */
+    private const LAST_COLUMN = 'V';
+
+    private int $rowNumber = 0;
 
     public function __construct(public array $filters = []) {}
 
@@ -25,50 +36,34 @@ class ServiceChargeExport implements FromQuery, WithHeadings, WithMapping, WithS
         return 'Sale Service Charges';
     }
 
-    public function query()
+    public function collection()
     {
-        return RentOutService::query()
-            ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'rentOut.type'])
-            ->whereHas('rentOut', fn ($r) => $r->where('agreement_type', 'lease'))
-            ->when($this->filters['filterGroup'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_group_id', $v)))
-            ->when($this->filters['filterBuilding'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_building_id', $v)))
-            ->when($this->filters['filterType'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_type_id', $v)))
-            ->when($this->filters['filterProperty'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('property_id', $v)))
-            ->when($this->filters['filterCustomer'] ?? '', fn ($q, $v) => $q->whereHas('rentOut', fn ($r) => $r->where('account_id', $v)))
-            ->when($this->filters['filterOwnership'] ?? '', fn ($q, $v) => $q->whereHas('rentOut.property', fn ($p) => $p->where('ownership', $v)))
-            ->when($this->filters['dateFrom'] ?? '', fn ($q, $v) => $q->where('rent_out_services.created_at', '>=', $v))
-            ->when($this->filters['dateTo'] ?? '', fn ($q, $v) => $q->where('rent_out_services.created_at', '<=', $v.' 23:59:59'))
-            ->when($this->filters['search'] ?? '', function ($q, $value) {
-                $q->where(function ($q) use ($value) {
-                    $q->where('rent_out_services.id', 'like', "%{$value}%")
-                        ->orWhere('remark', 'like', "%{$value}%")
-                        ->orWhere('reason', 'like', "%{$value}%")
-                        ->orWhere('description', 'like', "%{$value}%")
-                        ->orWhereHas('rentOut.customer', fn ($c) => $c->where('name', 'like', "%{$value}%"))
-                        ->orWhereHas('rentOut.property', fn ($p) => $p->where('number', 'like', "%{$value}%"));
-                });
-            })
-            ->orderBy('rent_out_services.created_at', 'desc')
-            ->orderBy('rent_out_services.id', 'desc');
+        return (new GetServiceChargeReportRowsAction())->rows($this->filters);
     }
 
     public function headings(): array
     {
         return [
             '#',
-            'Date',
+            'Last Charged',
             'Customer',
             'Group',
             'Building',
             'Property No',
-            'Start Date',
-            'End Date',
+            'Property Type',
+            'Ownership',
+            'Period From',
+            'Period To',
             'Months',
             'Days',
             'Unit Size',
             'Per Sq M Price',
             'Per Day Price',
-            'Amount',
+            'Charges',
+            'Charged',
+            'Paid',
+            'Balance',
+            'Status',
             'Remark',
             'Reason',
         ];
@@ -77,20 +72,26 @@ class ServiceChargeExport implements FromQuery, WithHeadings, WithMapping, WithS
     public function map($row): array
     {
         return [
-            $row->id,
-            $row->created_at?->format('d-m-Y'),
-            $row->rentOut?->customer?->name,
-            $row->rentOut?->group?->name,
-            $row->rentOut?->building?->name,
-            $row->rentOut?->property?->number,
-            $row->start_date?->format('d-m-Y'),
-            $row->end_date?->format('d-m-Y'),
-            $row->no_of_months,
-            $row->no_of_days,
-            $row->unit_size,
-            $row->per_square_meter_price,
-            $row->per_day_price,
+            ++$this->rowNumber,
+            $this->date($row->last_charged_at),
+            $row->customer_name,
+            $row->group_name,
+            $row->building_name,
+            $row->property_number,
+            $row->type_name,
+            $row->ownership ? ucfirst($row->ownership) : '',
+            $this->date($row->period_start),
+            $this->date($row->period_end),
+            (int) $row->no_of_months,
+            (int) $row->no_of_days,
+            $row->unit_size !== null ? (float) $row->unit_size : null,
+            $row->per_square_meter_price !== null ? (float) $row->per_square_meter_price : null,
+            $row->per_day_price !== null ? (float) $row->per_day_price : null,
+            (int) $row->charge_count,
             (float) $row->amount,
+            (float) $row->paid,
+            (float) $row->balance,
+            ucfirst((string) $row->status),
             $row->remark,
             $row->reason,
         ];
@@ -99,7 +100,7 @@ class ServiceChargeExport implements FromQuery, WithHeadings, WithMapping, WithS
     public function styles(Worksheet $sheet)
     {
         $highest = $sheet->getHighestRow();
-        $lastCol = 'P'; // 16 columns
+        $lastCol = self::LAST_COLUMN;
 
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
@@ -114,9 +115,26 @@ class ServiceChargeExport implements FromQuery, WithHeadings, WithMapping, WithS
                     'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D4D4D4']],
                 ],
             ]);
-            $sheet->getStyle("K2:N{$highest}")->getNumberFormat()->setFormatCode('#,##0.00');
-            $sheet->getStyle("K2:N{$highest}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-            $sheet->getStyle("I2:J{$highest}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            // Unit size / prices, then the money columns — the charge count (P) stays whole.
+            $sheet->getStyle("M2:O{$highest}")->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle("Q2:S{$highest}")->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle("K2:S{$highest}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle("Q2:S{$highest}")->getFont()->setBold(true);
+
+            // Totals row, so the workbook reconciles on its own.
+            $total = $highest + 1;
+            $sheet->setCellValue("A{$total}", 'Total');
+            $sheet->setCellValue("P{$total}", "=SUM(P2:P{$highest})");
+            $sheet->setCellValue("Q{$total}", "=SUM(Q2:Q{$highest})");
+            $sheet->setCellValue("R{$total}", "=SUM(R2:R{$highest})");
+            $sheet->setCellValue("S{$total}", "=SUM(S2:S{$highest})");
+            $sheet->getStyle("A{$total}:{$lastCol}{$total}")->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F1F3F5']],
+            ]);
+            $sheet->getStyle("Q{$total}:S{$total}")->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle("P{$total}:S{$total}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
         }
 
         foreach (range('A', $lastCol) as $col) {
@@ -126,5 +144,10 @@ class ServiceChargeExport implements FromQuery, WithHeadings, WithMapping, WithS
         $sheet->freezePane('A2');
 
         return [];
+    }
+
+    private function date($value): string
+    {
+        return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
     }
 }

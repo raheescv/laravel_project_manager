@@ -30,6 +30,10 @@ class LoginAction
         $guard = $user->is_admin ? 'admin' : 'mobile';
         $token = $user->createToken($guard, [$guard])->plainTextToken;
 
+        // Eager-load everything AuthUserResource reads so serialization doesn't
+        // fire lazy queries per field (permissions/roles/designation).
+        $user->load(['roles.permissions', 'permissions', 'designation']);
+
         return [
             'token' => $token,
             'token_type' => 'Bearer',
@@ -38,23 +42,25 @@ class LoginAction
     }
 
     /**
-     * PINs are stored hashed, so candidates are filtered by role/active state and
+     * PINs are stored hashed, so candidates are filtered by active state and
      * verified one-by-one. A login is only valid when exactly one user matches.
+     *
+     * Only id+pin are pulled for the scan so we don't hydrate every column (and the
+     * audit/cast overhead) for every candidate; the winner is then loaded in full.
      */
     private function byPin(string $pin): User
     {
-        $candidates = User::query()
+        $matched = User::query()
             ->where('is_active', true)
             ->whereNotNull('pin')
-            ->get();
-
-        $matched = $candidates->filter(fn (User $user) => Hash::check($pin, $user->pin));
+            ->get(['id', 'pin'])
+            ->filter(fn (User $user) => Hash::check($pin, $user->pin));
 
         if ($matched->count() !== 1) {
             throw new AuthenticationException('The provided PIN does not match our records.');
         }
 
-        return $matched->first();
+        return User::findOrFail($matched->first()->id);
     }
 
     /**

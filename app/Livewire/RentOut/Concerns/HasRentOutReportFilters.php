@@ -46,7 +46,14 @@ trait HasRentOutReportFilters
     // Column Visibility
     public $visibleColumns = [];
 
-    public function initializeHasRentOutReportFilters(): void
+    /**
+     * Seed the defaults once, on mount.
+     *
+     * This must not be an `initialize` hook: Livewire runs those on every
+     * hydration, so a filter the user deliberately cleared would be re-seeded
+     * on the next round trip and appear to "reset itself".
+     */
+    public function mountHasRentOutReportFilters(): void
     {
         $this->dateFrom = $this->dateFrom ?: Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->dateTo = $this->dateTo ?: Carbon::now()->endOfMonth()->format('Y-m-d');
