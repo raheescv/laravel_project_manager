@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/domain/repository/sale_repository.dart';
+import 'package:invo/features/sale/screens/v3/invoice_screen.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
@@ -15,9 +16,17 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 
 class SalesListScreen extends StatefulWidget {
-  const SalesListScreen({super.key});
+  const SalesListScreen({super.key, this.onSelectTab});
+
+  /// Switches the shell to a destination. Injected by [HomeShell] so the
+  /// Returns link switches tabs on a tablet (where Returns is a shell
+  /// destination) instead of pushing a second copy over the shell. Null when
+  /// this screen is opened as its own route.
+  final ValueChanged<int>? onSelectTab;
   @override
   State<SalesListScreen> createState() => _SalesListScreenState();
 }
@@ -64,6 +73,19 @@ class _SalesListScreenState extends State<SalesListScreen> {
   String _datePreset = 'today'; // today | 7d | 30d | month | custom
   DateTime? _startDate;
   DateTime? _endDate;
+
+  /// Returns is a shell destination on tablet — switch to it rather than
+  /// pushing, so this link behaves like every other tablet nav link.
+  void _openReturns() => context.isTablet && widget.onSelectTab != null
+      ? widget.onSelectTab!(kReturnsTab)
+      : context.push('/sales-returns');
+
+  // Tablet master–detail: the row whose invoice is shown in the right pane.
+  // Untouched on phones, which keep pushing the /invoice route on tap.
+  Map<String, dynamic>? _selectedRow;
+  Sale? _selectedSale;
+  bool _detailLoading = false;
+  String? _detailError;
 
   @override
   void initState() {
@@ -127,10 +149,32 @@ class _SalesListScreenState extends State<SalesListScreen> {
         _page = res.currentPage;
         _lastPage = res.lastPage;
       });
+      _syncSelection();
     } catch (e) {
       if (mounted && req == _reqId) setState(() => _error = 'Could not load sales.');
     }
     if (mounted && req == _reqId) setState(() => _loading = false);
+  }
+
+  /// Tablet only: keep the detail pane in step with the list — drop a selection
+  /// whose row no longer exists (e.g. after a filter change or a delete), and
+  /// preselect the first invoice so the pane is never awkwardly empty.
+  void _syncSelection() {
+    if (!mounted || !context.isTablet) return;
+    final selId = _selectedRow == null ? '' : asStr(_selectedRow!['id']);
+    final stillThere = selId.isNotEmpty && _rows.any((r) => asStr(r['id']) == selId);
+    if (!stillThere) {
+      if (_rows.isEmpty) {
+        setState(() {
+          _selectedRow = null;
+          _selectedSale = null;
+          _detailError = null;
+          _detailLoading = false;
+        });
+      } else {
+        _selectRow(_rows.first);
+      }
+    }
   }
 
   /// Fetch the next page and append it. No-op while a load is running or the
@@ -258,12 +302,17 @@ class _SalesListScreenState extends State<SalesListScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
-        child: Column(
-          children: [
-            EmeraldHeader(title: 'Sales', subtitle: sub, trailing: _returnsAction()),
-            Expanded(child: _body()),
-          ],
-        ),
+        // Tablet has no header band: the shell's side-rail is the chrome and the
+        // list pane names itself (the preview's `.lc-head`). A green band on top
+        // of a two-pane layout is the phone screen showing through.
+        child: context.isTablet
+            ? SafeArea(bottom: false, child: _tabletBody())
+            : Column(
+                children: [
+                  EmeraldHeader(title: 'Sales', subtitle: sub, trailing: _returnsAction()),
+                  Expanded(child: _body()),
+                ],
+              ),
       ),
     );
   }
@@ -277,7 +326,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     }
     final p = context.astra;
     return GestureDetector(
-      onTap: () => context.push('/sales-returns'),
+      onTap: _openReturns,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
@@ -327,6 +376,235 @@ class _SalesListScreenState extends State<SalesListScreen> {
         ),
       ),
     );
+  }
+
+  /// Tablet: a surfaced master pane — head (collected total + filter chips) over
+  /// flat hairline-separated rows — beside the selected invoice. This is the
+  /// `.listcol` / `.detail` split from the approved preview; the phone's bento
+  /// control card and floating row cards would read as cards-inside-a-card here.
+  Widget _tabletBody() {
+    // Sized from this screen's own width, not the window's — beside the shell's
+    // side-rail those differ by ~106pt, which matters on a small tablet.
+    return LayoutBuilder(
+      builder: (ctx, c) => Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TabletPane(
+            width: TabletMetrics.forWidth(c.maxWidth).listColumn,
+            child: Column(
+              children: [
+                _paneHead(),
+                Expanded(child: RefreshIndicator(onRefresh: _load, child: _tabletList())),
+              ],
+            ),
+          ),
+          Expanded(child: _detailPane()),
+        ],
+      ),
+    );
+  }
+
+  /// The master pane's head: the collected total as the headline, the invoice
+  /// count under it, then every filter the bento card holds — as chips, which
+  /// stay legible at pane width where stacked labelled boxes do not.
+  Widget _paneHead() {
+    const statuses = <(String, String?)>[
+      ('All', null),
+      ('Completed', 'completed'),
+      ('Draft', 'draft'),
+      ('Cancelled', 'cancelled'),
+    ];
+    final canSeeReturns = context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnView);
+    return TabletPaneHead(
+      title: 'Sales',
+      subtitle: _loading && _rows.isEmpty
+          ? 'Loading…'
+          : '${Money.of(_totalPaid)} collected · $_total invoice${_total == 1 ? '' : 's'}',
+      trailing: canSeeReturns
+          ? TabletActionButton(
+              label: 'Returns',
+              icon: Icons.assignment_return_outlined,
+              onTap: _openReturns)
+          : null,
+      children: [
+        const SizedBox(height: 13),
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          children: [
+            for (final (label, status) in statuses)
+              TabletFilterChip(label: label, active: _status == status, onTap: () => _setStatus(status)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          children: [
+            TabletFilterChip(
+                label: _dateLabel,
+                active: false,
+                icon: Icons.event_rounded,
+                trailingIcon: Icons.keyboard_arrow_down_rounded,
+                onTap: _openDateSheet),
+            TabletFilterChip(
+                label: _methodLabel,
+                active: false,
+                icon: Icons.account_balance_wallet_outlined,
+                trailingIcon: Icons.keyboard_arrow_down_rounded,
+                onTap: _openPaymentSheet),
+            TabletFilterChip(
+                label: _sortLabel,
+                active: false,
+                icon: Icons.swap_vert_rounded,
+                trailingIcon: Icons.keyboard_arrow_down_rounded,
+                onTap: _openSort),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _tabletList() {
+    return ListView(
+      controller: _scrollCtl,
+      padding: const EdgeInsets.only(bottom: 24),
+      children: [
+        if (_loading)
+          const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator()))
+        else if (_error != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
+            child: EmptyState(
+                icon: Icons.wifi_off,
+                title: 'Sales unavailable',
+                message: _error,
+                action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
+          )
+        else if (_rows.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 24),
+            child: EmptyState(
+                icon: Icons.receipt_long,
+                title: 'No sales found',
+                message: 'Try a wider date range or clearing the filters.'),
+          )
+        else ...[
+          for (final r in _rows) _tabletRow(r),
+          if (_loadingMore)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
+            ),
+        ],
+      ],
+    );
+  }
+
+  /// One flat pane row — invoice + amount on the first line, who/when/how and
+  /// the status badge on the second.
+  Widget _tabletRow(Map<String, dynamic> r) {
+    final p = context.astra;
+    final d = _rowData(r);
+    final selected = _selectedRow != null && asStr(_selectedRow!['id']) == asStr(r['id']);
+    final sub = [d.who, if (d.date.isNotEmpty) d.date, if (d.method.isNotEmpty) d.method].join(' · ');
+    return TabletListRow(
+      selected: selected,
+      onTap: () => _selectRow(r),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(d.invoice,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+              ),
+              const SizedBox(width: 8),
+              Text(Money.of(d.amount), style: serif(size: 15, color: p.ink)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
+                child: Text(sub,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+              ),
+              if (d.status.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                StatusPill(label: d.status.toUpperCase(), bg: d.bg, fg: d.fg),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tablet detail pane — the selected invoice, embedded (its close button
+  /// clears the selection; a delete drops the row and reloads the list).
+  Widget _detailPane() {
+    if (_selectedRow == null) {
+      return const EmptyState(
+        icon: Icons.receipt_long_outlined,
+        title: 'No invoice selected',
+        message: 'Pick an invoice from the list to see its details here.',
+      );
+    }
+    if (_detailLoading) return const Center(child: CircularProgressIndicator());
+    if (_detailError != null || _selectedSale == null) {
+      return EmptyState(
+        icon: Icons.wifi_off,
+        title: 'Invoice unavailable',
+        message: _detailError ?? 'Could not open invoice.',
+        action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: () => _selectRow(_selectedRow!)),
+      );
+    }
+    final sale = _selectedSale!;
+    return InvoiceScreen(
+      key: ValueKey('invoice-${sale.id}'),
+      sale: sale,
+      onClose: () {
+        setState(() {
+          _selectedRow = null;
+          _selectedSale = null;
+          _detailError = null;
+        });
+        _load();
+      },
+    );
+  }
+
+  /// Load a sale into the detail pane (tablet). Guarded so a fast succession of
+  /// taps only ever shows the last-tapped invoice.
+  Future<void> _selectRow(Map<String, dynamic> r) async {
+    final id = asStr(r['id']);
+    if (id.isEmpty) return;
+    setState(() {
+      _selectedRow = r;
+      _selectedSale = null;
+      _detailLoading = true;
+      _detailError = null;
+    });
+    try {
+      final sale = await serviceLocator<SaleRepository>().saleById(id);
+      if (!mounted || asStr(_selectedRow?['id']) != id) return;
+      setState(() {
+        _selectedSale = sale;
+        _detailLoading = false;
+      });
+    } catch (e) {
+      if (!mounted || asStr(_selectedRow?['id']) != id) return;
+      setState(() {
+        _detailError = 'Could not open invoice.';
+        _detailLoading = false;
+      });
+    }
   }
 
   // ---- Bento control card ----
@@ -470,22 +748,43 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
   // ---- sale row ----
 
-  Widget _row(Map<String, dynamic> r) {
+  /// The display fields of one list row, shared by the phone card and the
+  /// tablet pane row so both read the payload the same way.
+  ({String invoice, num amount, String who, String status, String date, String method, Color bg, Color fg}) _rowData(
+      Map<String, dynamic> r) {
     final p = context.astra;
     final invoice = asStr(r['invoice_no']).isEmpty ? '#${asStr(r['id'])}' : asStr(r['invoice_no']);
     // Amount lives under `summary` in SaleListResource; keep flat keys as a fallback.
     final summary = r['summary'] is Map ? r['summary'] as Map : const {};
-    final amount = asNum(summary['paid'] ?? summary['gross_amount'] ?? r['paid'] ?? r['gross_amount'] ?? r['amount']);
     final customer = r['customer'] is Map ? r['customer'] as Map : const {};
-    final who = asStr(customer['name']).isEmpty ? 'Walk-in' : asStr(customer['name']);
     final status = asStr(r['status']);
-    final date = Dates.human(asStr(r['date']));
-    final method = asStr(r['payment_methods']);
     final (bg, fg) = switch (status) {
       'completed' => (p.successTint, AstraPalette.success),
       'cancelled' => (p.dangerTint, AstraPalette.danger),
       _ => (p.warnTint, p.goldText),
     };
+    return (
+      invoice: invoice,
+      amount: asNum(summary['paid'] ?? summary['gross_amount'] ?? r['paid'] ?? r['gross_amount'] ?? r['amount']),
+      who: asStr(customer['name']).isEmpty ? 'Walk-in' : asStr(customer['name']),
+      status: status,
+      date: Dates.human(asStr(r['date'])),
+      method: asStr(r['payment_methods']),
+      bg: bg,
+      fg: fg,
+    );
+  }
+
+  Widget _row(Map<String, dynamic> r) {
+    final p = context.astra;
+    final d = _rowData(r);
+    final invoice = d.invoice;
+    final amount = d.amount;
+    final who = d.who;
+    final status = d.status;
+    final date = d.date;
+    final method = d.method;
+    final (bg, fg) = (d.bg, d.fg);
     return AstraCard(
       radius: 14,
       padding: const EdgeInsets.all(12),

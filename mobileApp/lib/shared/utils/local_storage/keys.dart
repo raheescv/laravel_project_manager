@@ -28,6 +28,13 @@ class LocalStorageKeys {
   static const String saleStylistId = 'astra.saleStylistId';
   static const String saleStylistName = 'astra.saleStylistName';
 
+  // Terminal lock: set while a session is alive but the till is locked, so a
+  // force-quit can't walk back in past the lock screen.
+  static const String authLocked = 'astra.auth.locked';
+
+  // Point-of-sale flow — device-local.
+  static const String posLockAfterSale = 'astra.pos.lockAfterSale';
+
   // Thermal print settings (mirror the web `thermal_printer_*` config).
   static const String printStyle = 'astra.print.style';
   static const String printWidth = 'astra.print.width';
@@ -42,4 +49,11 @@ class LocalStorageKeys {
   static const String printLogoData = 'astra.print.logoData';
   static const String printShowCompany = 'astra.print.showCompany';
   static const String printCompanyName = 'astra.print.companyName';
+
+  // Auto-print — device-local (every till is paired with its own printer, so
+  // these never sync to the shared web Sale Configuration).
+  static const String printAuto = 'astra.print.auto';
+  static const String printerUrl = 'astra.print.printerUrl';
+  static const String printerName = 'astra.print.printerName';
+  static const String printSkipInvoice = 'astra.print.skipInvoice';
 }

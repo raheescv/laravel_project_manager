@@ -23,6 +23,7 @@ import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dar
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/models/index.dart';
 
@@ -74,19 +75,35 @@ GoRouter createRouter(AuthCubit auth) {
       GoRoute(path: '/review', builder: (_, __) => const ReviewPayScreen()),
       GoRoute(
         path: '/invoice',
-        builder: (_, state) => InvoiceScreen(sale: state.extra as Sale),
+        builder: (_, state) =>
+            TabletRailScaffold(activeTab: 1, child: InvoiceScreen(sale: state.extra as Sale)),
       ),
       GoRoute(path: '/sales', builder: (_, __) => const SalesListScreen()),
+      // Pushed *destinations* keep the tablet side-rail (see [TabletRailScaffold])
+      // so navigation stays reachable — a full-bleed screen with no rail strands
+      // the user until they hit back. Task flows (New Sale, cart, review, the
+      // return wizard) deliberately don't get it: they're meant to be finished
+      // or cancelled, not navigated away from.
       GoRoute(
           path: '/sales-returns',
-          builder: (_, __) => const SalesReturnListScreen()),
+          builder: (_, __) => const TabletRailScaffold(
+              activeTab: kReturnsTab, child: SalesReturnListScreen())),
+      // On tablet Stock Check is a shell destination (`/home?tab=4`); this route
+      // still serves phones and any deep link, and keeps the rail so the two
+      // look the same.
       GoRoute(
-          path: '/stock-check', builder: (_, __) => const StockCheckListScreen()),
+          path: '/stock-check',
+          builder: (_, __) => const TabletRailScaffold(
+              activeTab: kStockCheckTab, child: StockCheckListScreen())),
       GoRoute(
-          path: '/stock-check/new', builder: (_, __) => const NewStockCheckScreen()),
+          path: '/stock-check/new',
+          builder: (_, __) => const TabletRailScaffold(
+              activeTab: kStockCheckTab, child: NewStockCheckScreen())),
       GoRoute(
           path: '/stock-check/count',
-          builder: (_, state) => StockCheckCountScreen(detail: state.extra as StockCheckDetail)),
+          builder: (_, state) => TabletRailScaffold(
+              activeTab: kStockCheckTab,
+              child: StockCheckCountScreen(detail: state.extra as StockCheckDetail))),
       GoRoute(
           path: '/sale-return', builder: (_, __) => const NewSaleReturnScreen()),
       GoRoute(
@@ -97,24 +114,36 @@ GoRouter createRouter(AuthCubit auth) {
           builder: (_, __) => const ReturnReviewScreen()),
       GoRoute(
         path: '/return-receipt',
-        builder: (_, state) =>
-            ReturnReceiptScreen(saleReturn: state.extra as SaleReturn),
+        builder: (_, state) => TabletRailScaffold(
+            activeTab: kReturnsTab, child: ReturnReceiptScreen(saleReturn: state.extra as SaleReturn)),
       ),
-      GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+      // The account screens are *destinations*, not a task flow, so they all
+      // keep the rail. On a tablet the last three normally never appear as
+      // routes: Profile hosts them in its detail pane (see [ProfileScreen]) so
+      // editing never takes the window. These entries still serve phones and
+      // deep links, hence the rail here too.
       GoRoute(
-          path: '/day-session', builder: (_, __) => const DaySessionScreen()),
-      GoRoute(path: '/change-pin', builder: (_, __) => const ChangePinScreen()),
+          path: '/profile',
+          builder: (_, __) => const TabletRailScaffold(child: ProfileScreen())),
+      GoRoute(
+          path: '/day-session',
+          builder: (_, __) => const TabletRailScaffold(
+              activeTab: kDaySessionTab, child: DaySessionScreen())),
+      GoRoute(
+          path: '/change-pin',
+          builder: (_, __) => const TabletRailScaffold(child: ChangePinScreen())),
       GoRoute(
           path: '/change-password',
-          builder: (_, __) => const ChangePasswordScreen()),
+          builder: (_, __) => const TabletRailScaffold(child: ChangePasswordScreen())),
       GoRoute(
           path: '/edit-profile',
-          builder: (_, __) => const EditProfileScreen()),
+          builder: (_, __) => const TabletRailScaffold(child: EditProfileScreen())),
       GoRoute(
           path: '/print-settings',
-          builder: (_, __) => const PrintSettingsScreen()),
+          builder: (_, __) => const TabletRailScaffold(child: PrintSettingsScreen())),
       GoRoute(
-          path: '/permissions', builder: (_, __) => const PermissionsScreen()),
+          path: '/permissions',
+          builder: (_, __) => const TabletRailScaffold(child: PermissionsScreen())),
     ],
   );
 }

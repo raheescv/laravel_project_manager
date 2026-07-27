@@ -13,6 +13,7 @@ import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/charts.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -50,6 +51,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ---- metric helpers ----
   Map<String, Metric> _byTitle(List<Metric>? list) => {for (final m in list ?? const <Metric>[]) m.title: m};
 
+  // On a tablet these three are shell destinations, so every way in — the rail,
+  // the drawer, these tiles, the day-status pill — has to switch to them the
+  // same instant way. Pushing the route from here instead would slide a second
+  // copy over the shell and leave the rail highlighting the wrong thing.
+  void _open(int tab, String route) =>
+      context.isTablet ? widget.onSelectTab?.call(tab) : context.push(route);
+
+  void _openDaySession() => _open(kDaySessionTab, '/day-session');
+  void _openReturns() => _open(kReturnsTab, '/sales-returns');
+  void _openStockCheck() => _open(kStockCheckTab, '/stock-check');
+  void _openProfile() => _open(kProfileTab, '/profile');
+
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminCubit>();
@@ -60,7 +73,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: AstraBackground(
         child: Column(
           children: [
-            _hero(admin, user),
+            // Phone: the hero is a full-bleed band under the status bar. Tablet:
+            // the preview makes it an inset rounded card at the top of the
+            // scroll, so it reads as a panel beside the rail, not a banner.
+            if (!context.isTablet) _hero(admin, user),
             Expanded(
               // Editorial "spotlight" layout: the hero owns the headline number,
               // then a Quick-actions launcher (always present — usable even for a
@@ -70,20 +86,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: MaxWidthBox(
                   maxWidth: 960,
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 120),
+                    padding: EdgeInsets.fromLTRB(16, context.isTablet ? 8 : 14, 16, context.isTablet ? 40 : 110),
                     children: [
+                      if (context.isTablet) ...[
+                        _hero(admin, user),
+                        const SizedBox(height: 20),
+                      ],
                       _quickActions(),
-                      const SizedBox(height: 20),
+                      SizedBox(height: context.isTablet ? 20 : 16),
                       if (admin.dashboard != null) ...[
                         Padding(
-                          padding: const EdgeInsets.only(left: 4, bottom: 10),
+                          padding: const EdgeInsets.only(left: 4, bottom: 8),
                           child: SectionLabel('Insights'),
                         ),
-                        _periodCards(admin),
-                        const SizedBox(height: 14),
-                        _topPerformers(admin),
-                        const SizedBox(height: 18),
-                        _paymentSplit(admin),
+                        if (context.isTablet)
+                          _tabletInsights(admin)
+                        else ...[
+                          _periodCards(admin),
+                          const SizedBox(height: 14),
+                          _topPerformers(admin),
+                          const SizedBox(height: 18),
+                          _paymentSplit(admin),
+                        ],
                       ] else if (admin.loading) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 48),
@@ -114,10 +138,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final billsVal = asNum(bills?.value).toInt();
     final avg = billsVal > 0 ? salesVal / billsVal : 0;
 
+    final tablet = context.isTablet;
     return Container(
+      clipBehavior: tablet ? Clip.antiAlias : Clip.none,
       decoration: BoxDecoration(
         gradient: p.heroGradient,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+        borderRadius: tablet
+            ? BorderRadius.circular(22)
+            : const BorderRadius.vertical(bottom: Radius.circular(30)),
+        boxShadow: tablet ? context.astraTheme.floatShadow(p.primary) : null,
       ),
       child: Stack(
         children: [
@@ -147,10 +176,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           SafeArea(
+            // Inset card on tablet — it no longer touches the status bar, so it
+            // must not reserve the notch inset either.
+            top: !tablet,
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
-              child: Column(
+              padding: EdgeInsets.fromLTRB(tablet ? 24 : 18, tablet ? 20 : 8, tablet ? 24 : 18, tablet ? 22 : 18),
+              child: tablet
+                  ? _heroTabletBody(admin, user)
+                  : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -170,7 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => context.push('/profile'),
+                        onTap: _openProfile,
                         child: ProfileAvatar(
                           letter: user?.initial ?? 'A',
                           imageUrl: (user?.hasPhoto ?? false) ? cfg.assetUrl(user!.photoUrl) : null,
@@ -214,6 +248,97 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Tablet hero: a two-column layout so the wide green band reads as designed
+  /// rather than a phone hero stretched across empty space — revenue headline on
+  /// the left, the day-status pill (and trend, if any) filling the right.
+  Widget _heroTabletBody(AdminCubit admin, ApiUser? user) {
+    final cfg = context.read<AuthCubit>().config;
+    final p = context.astra;
+    final today = _byTitle(admin.dashboard?.today);
+    final sales = today["Today's Sales"];
+    final bills = today["Today's Bills"];
+    final salesVal = asNum(sales?.value);
+    final billsVal = asNum(bills?.value).toInt();
+    final avg = billsVal > 0 ? salesVal / billsVal : 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _drawerButton(),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${_greeting().toUpperCase()},',
+                      style: ui(size: 10, weight: FontWeight.w700, color: p.accent, letterSpacing: 2)),
+                  const SizedBox(height: 3),
+                  Text(user?.name.split(' ').first ?? 'there', style: serif(size: 24, color: Colors.white)),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: _openProfile,
+              child: ProfileAvatar(
+                letter: user?.initial ?? 'A',
+                imageUrl: (user?.hasPhoto ?? false) ? cfg.assetUrl(user!.photoUrl) : null,
+                headers: cfg.assetHeaders,
+                size: 46,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("TODAY'S REVENUE",
+                      style: ui(size: 11, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 1.5)),
+                  const SizedBox(height: 6),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(sales == null ? '—' : Money.of(salesVal),
+                        style: serif(size: 50, color: Colors.white, height: 1)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('$billsVal ${billsVal == 1 ? 'bill' : 'bills'} today · avg ${Money.of(avg)}',
+                      style: ui(size: 12.5, weight: FontWeight.w600, color: Colors.white70)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 28),
+            Expanded(
+              flex: 2,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dayStatusPill(user),
+                  if (admin.trendPoints.length >= 2) ...[
+                    const SizedBox(height: 12),
+                    AreaTrendChart(
+                      values: admin.trendPoints,
+                      height: 50,
+                      stroke: Colors.white,
+                      fill: Colors.white.withValues(alpha: 0.22),
+                      dot: p.accent,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   /// Hamburger that opens the shell's [AstraDrawer]. The dashboard has its own
   /// (transparent) Scaffold, so the nearest Scaffold has no drawer — walk up to
   /// the root one, which is the HomeShell scaffold that hosts it.
@@ -251,7 +376,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final canManageDaySession = context.read<AuthCubit>().hasPermission(PermissionSlug.daySession);
 
     return GestureDetector(
-      onTap: canManageDaySession ? () => context.push('/day-session') : null,
+      onTap: canManageDaySession ? () => _openDaySession() : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
         decoration: BoxDecoration(
@@ -273,13 +398,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Both labels flex: in the tablet hero this pill sits in the
+                  // narrow right column, where the two fixed Texts overflowed.
                   Row(
                     children: [
-                      Text(open ? 'Day open' : 'Day closed',
-                          style: ui(size: 12, weight: FontWeight.w800, color: Colors.white)),
+                      Flexible(
+                        child: Text(open ? 'Day open' : 'Day closed',
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: ui(size: 12, weight: FontWeight.w800, color: Colors.white)),
+                      ),
                       const SizedBox(width: 6),
-                      Text(open ? '· tap to close' : '· tap to open',
-                          style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
+                      Flexible(
+                        child: Text(open ? '· tap to close' : '· tap to open',
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 2),
@@ -301,6 +434,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (h < 12) return 'Good morning';
     if (h < 17) return 'Good afternoon';
     return 'Good evening';
+  }
+
+  /// Tablet insights: the period KPIs and the session-payment breakdown stack in
+  /// a wide left column while the leaderboard sits alongside, so the width is
+  /// spent on content instead of on margin. Falls back to the phone stack when
+  /// there are no top performers to fill the second column.
+  Widget _tabletInsights(AdminCubit admin) {
+    final leaderboard = _topPerformers(admin);
+    // `stretch` matters: _paymentSplit is a Column, so under the default centre
+    // alignment it would shrink-wrap to its content and float in the middle of
+    // the column instead of filling it.
+    Widget mainColumn() => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _periodCards(admin),
+            const SizedBox(height: 18),
+            _paymentSplit(admin),
+          ],
+        );
+    if (admin.topStylists.isEmpty) return mainColumn();
+    return LayoutBuilder(
+      builder: (ctx, c) {
+        // Only go side-by-side once the narrower column still has room for the
+        // leaderboard's name + bar rows; a small tablet in portrait stacks.
+        if (c.maxWidth < 820) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [mainColumn(), const SizedBox(height: 18), leaderboard],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 3, child: mainColumn()),
+            const SizedBox(width: 16),
+            Expanded(flex: 2, child: leaderboard),
+          ],
+        );
+      },
+    );
   }
 
   // ---- WEEK / MONTH comparison ----
@@ -372,31 +545,83 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _launchTile('New Sale', Icons.add_shopping_cart, () => context.push('/sale'), gold: true),
       _launchTile('Sales', Icons.receipt_long, () => widget.onSelectTab?.call(1)),
       if (auth.hasPermission(PermissionSlug.saleReturnView))
-        _launchTile('Returns', Icons.assignment_return_outlined, () => context.push('/sales-returns')),
+        _launchTile('Returns', Icons.assignment_return_outlined, _openReturns),
       if (auth.hasPermission(PermissionSlug.stockCheck))
-        _launchTile('Stock Check', Icons.fact_check_outlined, () => context.push('/stock-check')),
+        _launchTile('Stock Check', Icons.fact_check_outlined, _openStockCheck),
       _launchTile('Reports', Icons.bar_chart, () => widget.onSelectTab?.call(2)),
       if (auth.hasPermission(PermissionSlug.daySession))
-        _launchTile('Day Session', Icons.schedule, () => context.push('/day-session')),
+        _launchTile('Day Session', Icons.schedule, _openDaySession),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: SectionLabel('Quick actions'),
         ),
-        GridView.count(
-          crossAxisCount: context.isTablet ? 6 : 3,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.92,
-          children: tiles,
-        ),
+        if (context.isTablet)
+          // Tablet: the launchers read best as one unbroken row (the preview's
+          // 5-across strip). Only fall back to a width-derived count when a
+          // single row would squeeze tiles below a comfortable touch size.
+          LayoutBuilder(
+            builder: (ctx, c) {
+              const gap = 12.0;
+              final n = tiles.length;
+              final single = (c.maxWidth - gap * (n - 1)) / n;
+              final cols = single >= 118 ? n : ((c.maxWidth + gap) / (150 + gap)).floor().clamp(2, n);
+              final tileW = (c.maxWidth - gap * (cols - 1)) / cols;
+              // Height is what the tile's content needs (chip + label + padding),
+              // not a share of its width: the phone's 0.92 ratio turns a 190px
+              // tablet tile into a 200px slab of empty card.
+              return GridView.count(
+                crossAxisCount: cols,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: gap,
+                crossAxisSpacing: gap,
+                childAspectRatio: tileW / 118,
+                children: tiles,
+              );
+            },
+          )
+        else
+          _launcherRows(tiles),
       ],
     );
+  }
+
+  /// Phone launcher layout. A plain 3-up grid leaves a dead cell whenever the
+  /// gated tile count isn't a multiple of three (five tiles → a card-sized hole
+  /// beside the last one), and a width-derived aspect ratio makes every tile
+  /// ~135pt tall for ~90pt of content. Balance the tiles across rows and let each
+  /// row stretch to the full width instead, at the height the content needs, so
+  /// the block always reads as a filled slab.
+  Widget _launcherRows(List<Widget> tiles) {
+    if (tiles.isEmpty) return const SizedBox.shrink();
+    const gap = 12.0;
+    final rows = (tiles.length / 3).ceil();
+    final base = tiles.length ~/ rows;
+    final extra = tiles.length % rows;
+    final children = <Widget>[];
+    var i = 0;
+    for (var r = 0; r < rows; r++) {
+      final count = base + (r < extra ? 1 : 0);
+      if (r > 0) children.add(const SizedBox(height: gap));
+      children.add(SizedBox(
+        height: 100,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var c = 0; c < count; c++) ...[
+              if (c > 0) const SizedBox(width: gap),
+              Expanded(child: tiles[i + c]),
+            ],
+          ],
+        ),
+      ));
+      i += count;
+    }
+    return Column(children: children);
   }
 
   /// One launcher tile. [gold] marks the primary CTA (New Sale) with the gold
@@ -407,14 +632,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final chipFg = gold ? p.goldText : p.primary;
     return AstraCard(
       radius: 20,
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       onTap: onTap,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(color: chipBg, borderRadius: BorderRadius.circular(15)),
             child: Icon(icon, size: 22, color: chipFg),
           ),

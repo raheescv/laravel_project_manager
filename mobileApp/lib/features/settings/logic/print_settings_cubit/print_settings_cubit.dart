@@ -19,8 +19,10 @@ export 'package:invo/shared/domain/models/print_settings.dart';
 /// down via [applyRemote] (New Sale open / [syncFromServer]) and are cached
 /// for offline. The set* methods edit that shared configuration from the app
 /// (PUT /settings/sale/print, needs `configuration.settings`): applied
-/// optimistically and rolled back when the server rejects the save. Only the
-/// paper width is a device-local choice.
+/// optimistically and rolled back when the server rejects the save. The paper
+/// width and the auto-print block (auto-print on/off, the paired printer, and
+/// whether to jump straight back to New Sale) are the device-local choices —
+/// each till has its own roll and its own printer.
 class PrintSettingsCubit extends HolderCubit {
   PrintSettingsCubit() {
     _style = PrintStyle.fromKey(_storage.printStyle);
@@ -41,6 +43,10 @@ class PrintSettingsCubit extends HolderCubit {
     } catch (_) {
       _logoBytes = null; // corrupt cache — re-downloaded on next sync
     }
+    _autoPrint = _storage.printAuto ?? false;
+    _printerUrl = _storage.printerUrl;
+    _printerName = _storage.printerName;
+    _skipInvoice = _storage.printSkipInvoice ?? false;
   }
 
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
@@ -58,6 +64,10 @@ class PrintSettingsCubit extends HolderCubit {
   Uint8List? _logoBytes;
   late bool _showCompanyName;
   late String _companyName;
+  late bool _autoPrint;
+  String? _printerUrl;
+  String? _printerName;
+  late bool _skipInvoice;
 
   PrintStyle get style => _style;
   PaperWidth get width => _width;
@@ -70,14 +80,56 @@ class PrintSettingsCubit extends HolderCubit {
   bool get showLogo => _showLogo;
   bool get showCompanyName => _showCompanyName;
   String get companyName => _companyName;
+  bool get autoPrint => _autoPrint;
+  String? get printerUrl => _printerUrl;
+  String? get printerName => _printerName;
+  bool get skipInvoice => _skipInvoice;
 
-  /// Paper width is the one device-local option (each till can hold a
-  /// different roll).
+  /// True once this till is paired with a printer we can drive without a
+  /// dialog.
+  bool get hasPrinter => (_printerUrl ?? '').isNotEmpty;
+
+  // ---- device-local options (never pushed to the web config) ----
+
+  /// Paper width — each till can hold a different roll.
   Future<void> setWidth(PaperWidth v) async {
     if (v == _width) return;
     _width = v;
     refresh();
     await _storage.setPrintWidth(v.key);
+  }
+
+  /// Print the receipt automatically the moment a sale is charged.
+  Future<void> setAutoPrint(bool v) async {
+    if (v == _autoPrint) return;
+    _autoPrint = v;
+    refresh();
+    await _storage.setPrintAuto(v);
+  }
+
+  /// Pair (or, with a null [url], un-pair) the printer this till prints to.
+  Future<void> setPrinter(String? url, String? name) async {
+    final u = (url ?? '').trim();
+    if (u.isEmpty) {
+      _printerUrl = null;
+      _printerName = null;
+      refresh();
+      await _storage.clearPrinter();
+      return;
+    }
+    _printerUrl = u;
+    _printerName = (name ?? '').trim().isEmpty ? u : name!.trim();
+    refresh();
+    await _storage.setPrinter(_printerUrl!, _printerName!);
+  }
+
+  /// After a successful auto-print, go straight back to a fresh ticket instead
+  /// of stopping on the invoice screen.
+  Future<void> setSkipInvoice(bool v) async {
+    if (v == _skipInvoice) return;
+    _skipInvoice = v;
+    refresh();
+    await _storage.setPrintSkipInvoice(v);
   }
 
   // ---- shared-config editors (write through to the web) ----

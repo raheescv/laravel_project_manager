@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>invo — Tablet Layouts Preview</title>
+<style>
+/* ============ Signature palette (mirrors palette.dart) ============ */
+:root{
+  --bg:#FBF8F1; --card:#ffffff; --ink:#16312A; --muted:#5D7269; --faint:#A8B3AB;
+  --line:#F0ECE1; --gold:#BF953F; --emerald:#15806C; --emerald-d:#0E5648;
+  --chip:#E6F0EC; --success:#1F9D63; --danger:#D4546A;
+  --warn-bg:#FBF3DF; --warn-ink:#9A6A00; --succ-bg:#E4F6EC; --dang-bg:#FBE9EC;
+  --hero-a:#2f5d4f; --hero-b:#1c4a3b; --rail:#0A1B17; --shadow:0 18px 40px -24px rgba(9,30,22,.45);
+}
+[data-theme="dark"]{
+  --bg:#07140F; --card:#15302A; --ink:#F3F1EA; --muted:#A9C2BA; --faint:#7C9189;
+  --line:rgba(255,255,255,.10); --gold:#D9B25E; --emerald:#2AA98C; --emerald-d:#0E5648;
+  --chip:rgba(42,169,140,.16); --success:#3FC585; --danger:#E06A7E;
+  --warn-bg:rgba(201,162,75,.18); --warn-ink:#E6C16B; --succ-bg:rgba(31,157,99,.16); --dang-bg:rgba(212,84,106,.18);
+  --hero-a:#123f33; --hero-b:#07140F; --rail:#050F0B; --shadow:0 22px 46px -26px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  transition:background .25s,color .25s}
+.serif{font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif}
+
+/* ============ Page chrome ============ */
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 22px;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:.3px;font-size:19px}
+.brand .i{color:var(--gold)}
+.sub{color:var(--muted);font-size:12.5px;margin-left:2px}
+.spacer{flex:1}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;gap:2px;box-shadow:var(--shadow)}
+.seg button{border:0;background:transparent;color:var(--muted);font-weight:700;font-size:12.5px;
+  padding:8px 14px;border-radius:9px;cursor:pointer;transition:.15s}
+.seg button.on{background:var(--emerald);color:#fff}
+.toggle{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:11px;
+  padding:9px 14px;font-weight:700;font-size:12.5px;cursor:pointer}
+.hint{max-width:1180px;margin:20px auto 0;padding:0 22px;color:var(--muted);font-size:13.5px;line-height:1.6}
+.hint b{color:var(--ink)}
+
+/* ============ Tablet device frame ============ */
+.stage{max-width:1180px;margin:16px auto 60px;padding:0 22px}
+.device{position:relative;background:var(--rail);border-radius:30px;padding:14px;
+  box-shadow:0 40px 90px -40px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06)}
+.device::after{content:"";position:absolute;right:-4px;top:50%;transform:translateY(-50%);
+  width:4px;height:64px;background:#0006;border-radius:3px}
+.screen{background:var(--bg);border-radius:18px;overflow:hidden;height:720px;display:flex}
+.tag{position:absolute;top:-11px;left:26px;background:var(--gold);color:#1c1608;font-size:11px;
+  font-weight:800;letter-spacing:.4px;padding:4px 12px;border-radius:20px}
+
+/* ============ Shared: side rail ============ */
+.rail{width:92px;background:linear-gradient(180deg,var(--hero-a),var(--rail));
+  display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px;color:#dfeee7}
+.rail .logo{width:40px;height:40px;border-radius:12px;border:1px solid #ffffff33;
+  display:grid;place-items:center;font-family:serif;font-size:20px;color:var(--gold);margin-bottom:14px}
+.ritem{width:64px;padding:11px 0;border-radius:14px;text-align:center;font-size:10.5px;font-weight:700;
+  color:#cfe4db;cursor:default;display:flex;flex-direction:column;align-items:center;gap:5px;opacity:.8}
+.ritem .ic{font-size:17px}
+.ritem.on{background:#ffffff1f;color:#fff;opacity:1}
+.rail .grow{flex:1}
+.fab{width:52px;height:52px;border-radius:50%;background:var(--gold);color:#241c08;
+  display:grid;place-items:center;font-size:24px;font-weight:800}
+
+/* ============ Panels ============ */
+.pane{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.scroll{overflow:auto;padding:22px 26px}
+.hero{background:linear-gradient(135deg,var(--hero-a),var(--hero-b));color:#eafaf3;
+  border-radius:20px;padding:22px 24px;margin-bottom:20px;position:relative;overflow:hidden}
+.hero .greet{font-size:11px;letter-spacing:1.5px;font-weight:800;color:var(--gold);text-transform:uppercase}
+.hero .name{font-size:26px;font-weight:700;margin-top:2px}
+.hero .rev-lbl{font-size:11px;letter-spacing:1px;color:#bfd8ce;margin-top:16px;text-transform:uppercase}
+.hero .rev{font-size:40px;font-weight:800;line-height:1.05;margin-top:2px}
+.hero .rev small{font-size:18px;opacity:.8}
+.hero .avatar{position:absolute;top:22px;right:24px;width:44px;height:44px;border-radius:50%;
+  border:1.5px solid var(--gold);display:grid;place-items:center;font-weight:700;color:#fff}
+.hero .meta{color:#bfd8ce;font-size:12.5px;margin-top:6px}
+.closed{margin-top:16px;display:flex;align-items:center;gap:12px;border:1px solid #ffffff2b;
+  border-radius:14px;padding:12px 16px;background:#0000001f}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 4px #d4546a33}
+.closed b{color:#fff}.closed span{color:#c9d9d1;font-size:12px}
+
+.sect{font-size:11px;letter-spacing:1.3px;font-weight:800;color:var(--emerald);text-transform:uppercase;margin:6px 2px 12px}
+[data-theme="dark"] .sect{color:var(--gold)}
+
+/* quick actions grid — wider on tablet */
+.qa{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+.qcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 12px;
+  text-align:center;box-shadow:var(--shadow)}
+.qcard .ic{width:46px;height:46px;border-radius:14px;background:var(--chip);color:var(--emerald);
+  display:grid;place-items:center;font-size:20px;margin:0 auto 10px}
+.qcard.gold .ic{background:#f6ecd4;color:var(--gold)}
+[data-theme="dark"] .qcard.gold .ic{background:rgba(217,178,94,.16)}
+.qcard b{font-size:13px}
+
+/* insight cards — multi-column */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.icard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.icard .row{display:flex;justify-content:space-between;align-items:center}
+.icard .chip{width:38px;height:38px;border-radius:12px;background:var(--chip);color:var(--emerald);display:grid;place-items:center}
+.pill{font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:20px}
+.pill.up{background:var(--succ-bg);color:var(--success)}
+.pill.down{background:var(--dang-bg);color:var(--danger)}
+.icard .val{font-size:28px;font-weight:800;margin-top:14px}
+.icard .cap{color:var(--faint);font-size:12px}
+
+/* ============ Master–detail (Sales) ============ */
+.listcol{width:340px;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--card)}
+.lc-head{padding:18px 18px 12px}
+.lc-title{font-size:20px;font-weight:800}
+.search{margin-top:12px;background:var(--bg);border:1px solid var(--line);border-radius:12px;
+  padding:10px 12px;color:var(--faint);font-size:13px}
+.filters{display:flex;gap:8px;margin-top:12px}
+.fchip{font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:20px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.fchip.on{background:var(--emerald);color:#fff;border-color:transparent}
+.rows{overflow:auto;flex:1}
+.lrow{padding:14px 18px;border-bottom:1px solid var(--line);cursor:default}
+.lrow.on{background:var(--chip)}
+.lrow .t{display:flex;justify-content:space-between}
+.lrow .inv{font-weight:700;font-size:14px}
+.lrow .amt{font-weight:800;font-size:14px}
+.lrow .s{color:var(--muted);font-size:12px;margin-top:3px;display:flex;justify-content:space-between}
+.badge{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:20px;background:var(--succ-bg);color:var(--success)}
+.badge.draft{background:var(--warn-bg);color:var(--warn-ink)}
+
+.detail{flex:1;overflow:auto;padding:26px 30px}
+.d-head{display:flex;justify-content:space-between;align-items:flex-start}
+.d-inv{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.5px}
+.d-amt{font-size:38px;font-weight:800;margin-top:4px}
+.d-sub{color:var(--muted);font-size:13px;margin-top:2px}
+.d-actions{display:flex;gap:10px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:10px 16px;font-weight:700;font-size:13px}
+.btn.pri{background:var(--emerald);color:#fff;border-color:transparent}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-top:20px;box-shadow:var(--shadow)}
+.panel h4{margin:0 0 12px;font-size:12px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.line{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.line:last-child{border-bottom:0}
+.line .q{color:var(--muted)}
+.tot{display:flex;justify-content:space-between;padding-top:12px;margin-top:6px;border-top:1px solid var(--line);font-weight:800;font-size:16px}
+
+/* ============ New Sale two-pane ============ */
+.catalog{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.cat-bar{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.cat-bar .search{flex:1;margin:0}
+.segtype{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:3px}
+.segtype span{font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:8px;color:var(--muted)}
+.segtype span.on{background:var(--emerald);color:#fff}
+.pgrid{overflow:auto;padding:20px 22px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.prod{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.prod .img{height:96px;background:linear-gradient(135deg,var(--chip),var(--bg));display:grid;place-items:center;color:var(--faint);font-size:22px}
+.prod .b{padding:10px 12px}
+.prod .nm{font-size:13px;font-weight:700;line-height:1.25}
+.prod .pr{font-size:13px;font-weight:800;color:var(--emerald);margin-top:4px}
+[data-theme="dark"] .prod .pr{color:var(--gold)}
+
+.cart{width:340px;background:var(--card);border-left:1px solid var(--line);display:flex;flex-direction:column}
+.cart-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.cart-head b{font-size:16px}
+.who{font-size:12px;color:var(--muted)}
+.cart-rows{flex:1;overflow:auto;padding:8px 12px}
+.crow{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px}
+.crow:hover{background:var(--bg)}
+.cthumb{width:40px;height:40px;border-radius:10px;background:var(--chip);display:grid;place-items:center;color:var(--emerald);font-size:15px}
+.crow .info{flex:1}
+.crow .nm{font-size:13px;font-weight:700}
+.crow .mx{font-size:11.5px;color:var(--muted)}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper b{width:24px;height:24px;border-radius:8px;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-size:14px;color:var(--emerald)}
+.cart-foot{border-top:1px solid var(--line);padding:16px 20px}
+.cart-foot .l{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:4px 0}
+.cart-foot .g{display:flex;justify-content:space-between;font-size:20px;font-weight:800;margin:8px 0 14px}
+.pay{width:100%;border:0;background:var(--gold);color:#241c08;font-weight:800;font-size:15px;padding:14px;border-radius:14px}
+
+.only-tablet{display:none}
+@media(max-width:820px){
+  .screen{height:auto;flex-direction:column}
+  .rail{width:100%;flex-direction:row;height:64px;padding:0 12px}
+  .rail .logo,.rail .grow{display:none}
+  .qa{grid-template-columns:repeat(3,1fr)}.grid3{grid-template-columns:1fr}
+  .listcol,.cart{width:100%}.pgrid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body data-theme="light">
+<div class="topbar">
+  <div class="brand"><span class="i">ı</span> invo</div>
+  <div class="sub">Tablet layouts — preview</div>
+  <div class="spacer"></div>
+  <div class="seg" id="screens">
+    <button class="on" data-s="dash">Dashboard</button>
+    <button data-s="sales">Sales · master–detail</button>
+    <button data-s="newsale">New Sale · two-pane</button>
+  </div>
+  <button class="toggle" id="tt">◐ Dark</button>
+</div>
+
+<div class="hint" id="hint"></div>
+
+<div class="stage">
+  <div class="device">
+    <div class="tag">iPad · landscape</div>
+    <div class="screen" id="screen"></div>
+  </div>
+</div>
+
+<script>
+const railHTML = (active)=>`
+  <div class="rail">
+    <div class="logo">ı</div>
+    ${[['home','⊞','Home'],['sales','🧾','Sales'],['reports','📊','Reports'],['settings','⚙','Settings']]
+      .map(([k,ic,l])=>`<div class="ritem ${k===active?'on':''}"><span class="ic">${ic}</span>${l}</div>`).join('')}
+    <div class="grow"></div>
+    <div class="fab">+</div>
+  </div>`;
+
+const dash = ()=>`
+  ${railHTML('home')}
+  <div class="pane"><div class="scroll">
+    <div class="hero">
+      <div class="avatar">H</div>
+      <div class="greet">Good evening,</div>
+      <div class="name serif">hasif</div>
+      <div class="rev-lbl">Today's revenue</div>
+      <div class="rev serif">QAR 3,990<small>.00</small></div>
+      <div class="meta">1 bill today · avg QAR 3,990.00</div>
+      <div class="closed"><span class="dot"></span><div><b>Day closed</b> · tap to open<br><span>Last closed 26 Jul 2026 · 2:56 PM</span></div></div>
+    </div>
+    <div class="sect">Quick Actions</div>
+    <div class="qa">
+      <div class="qcard gold"><div class="ic">🛒</div><b>New Sale</b></div>
+      <div class="qcard"><div class="ic">🧾</div><b>Sales</b></div>
+      <div class="qcard"><div class="ic">↩</div><b>Returns</b></div>
+      <div class="qcard"><div class="ic">📊</div><b>Reports</b></div>
+      <div class="qcard"><div class="ic">🕐</div><b>Day Session</b></div>
+    </div>
+    <div class="sect">Insights</div>
+    <div class="grid3">
+      <div class="icard"><div class="row"><div class="chip">▦</div><span class="pill up">↗ 100%</span></div>
+        <div class="val serif">QAR 3,990</div><div class="cap">This week</div></div>
+      <div class="icard"><div class="row"><div class="chip">📅</div><span class="pill down">↘ -93%</span></div>
+        <div class="val serif">QAR 3,990</div><div class="cap">This month</div></div>
+      <div class="icard"><div class="row"><div class="chip">💳</div><span class="pill up">↗ Cash</span></div>
+        <div class="val serif">QAR 3,990</div><div class="cap">Session payments</div></div>
+    </div>
+  </div></div>`;
+
+const sales = ()=>{
+  const rows=[
+    ['INV-1042','QAR 3,990.00','Walk-in · 4:12 PM','paid','on'],
+    ['INV-1041','QAR 640.00','Sara M. · 2:03 PM','paid',''],
+    ['INV-1040','QAR 210.00','Walk-in · 1:22 PM','draft','draft'],
+    ['INV-1039','QAR 1,180.00','Ahmed K. · 12:40 PM','paid',''],
+    ['INV-1038','QAR 75.00','Walk-in · 11:58 AM','paid',''],
+  ];
+  return `${railHTML('sales')}
+  <div class="listcol">
+    <div class="lc-head">
+      <div class="lc-title">Sales</div>
+      <div class="search">🔍  Search invoice, client…</div>
+      <div class="filters"><span class="fchip on">All</span><span class="fchip">Paid</span><span class="fchip">Draft</span><span class="fchip">Today ▾</span></div>
+    </div>
+    <div class="rows">
+      ${rows.map(([inv,amt,s,b,on])=>`<div class="lrow ${on}">
+        <div class="t"><span class="inv">${inv}</span><span class="amt">${amt}</span></div>
+        <div class="s"><span>${s}</span><span class="badge ${b==='draft'?'draft':''}">${b}</span></div></div>`).join('')}
+    </div>
+  </div>
+  <div class="detail">
+    <div class="d-head">
+      <div><div class="d-inv">INVOICE · INV-1042</div><div class="d-amt serif">QAR 3,990.00</div>
+        <div class="d-sub">Walk-in customer · 26 Jul 2026, 4:12 PM · Cash</div></div>
+      <div class="d-actions"><button class="btn">Print</button><button class="btn">Return</button><button class="btn pri">Edit</button></div>
+    </div>
+    <div class="panel"><h4>Items</h4>
+      <div class="line"><span><span class="q">2 ×</span> Silk Abaya — Onyx</span><span>QAR 3,600.00</span></div>
+      <div class="line"><span><span class="q">1 ×</span> Perfume Oil 12ml</span><span>QAR 390.00</span></div>
+      <div class="tot"><span>Grand total</span><span>QAR 3,990.00</span></div>
+    </div>
+    <div class="panel"><h4>Payment</h4>
+      <div class="line"><span class="q">Cash</span><span>QAR 3,990.00</span></div>
+      <div class="line"><span class="q">Change</span><span>QAR 0.00</span></div>
+    </div>
+  </div>`;
+};
+
+const newsale = ()=>{
+  const prods=[['Silk Abaya','1,800'],['Perfume Oil','390'],['Kaftan Set','950'],['Cotton Shayla','120'],
+    ['Prayer Set','260'],['Bakhoor Box','180'],['Gift Wrap','25'],['Hair Clip','40']];
+  return `${railHTML('home')}
+  <div class="catalog">
+    <div class="cat-bar">
+      <div class="search">🔍  Scan or search products…</div>
+      <div class="segtype"><span class="on">Retail</span><span>Service</span></div>
+    </div>
+    <div class="pgrid">
+      ${prods.map(([n,p])=>`<div class="prod"><div class="img">🖼</div><div class="b"><div class="nm">${n}</div><div class="pr">QAR ${p}</div></div></div>`).join('')}
+    </div>
+  </div>
+  <div class="cart">
+    <div class="cart-head"><div><b>Cart</b><div class="who">Walk-in · Stylist: Hasif</div></div><span class="badge">2 items</span></div>
+    <div class="cart-rows">
+      <div class="crow"><div class="cthumb">🖼</div><div class="info"><div class="nm">Silk Abaya — Onyx</div><div class="mx">QAR 1,800</div></div>
+        <div class="stepper"><b>−</b>2<b>+</b></div></div>
+      <div class="crow"><div class="cthumb">🖼</div><div class="info"><div class="nm">Perfume Oil 12ml</div><div class="mx">QAR 390</div></div>
+        <div class="stepper"><b>−</b>1<b>+</b></div></div>
+    </div>
+    <div class="cart-foot">
+      <div class="l"><span>Subtotal</span><span>QAR 3,990.00</span></div>
+      <div class="l"><span>Discount</span><span>QAR 0.00</span></div>
+      <div class="g"><span>Total</span><span>QAR 3,990.00</span></div>
+      <button class="pay">Review & Pay →</button>
+    </div>
+  </div>`;
+};
+
+const views={dash,sales,newsale};
+const hints={
+  dash:`<b>Dashboard.</b> Persistent left <b>side-rail</b> replaces the bottom nav; the hero stays a capped column while <b>Quick Actions</b> spread to 5-across and <b>Insights</b> become a 3-up grid — using the width instead of stretching phone cards.`,
+  sales:`<b>Sales — master–detail.</b> On wide tablets the list stays pinned on the left and the selected invoice opens in a right detail pane (no full-screen push). Narrow tablets keep single-pane. Same for Returns & Reports.`,
+  newsale:`<b>New Sale — two-pane.</b> Product grid (4-up) and the live <b>cart/summary</b> sit side-by-side; the cart no longer hides behind a bottom sheet. Grid column count grows with width.`
+};
+
+const screen=document.getElementById('screen');
+function render(s){screen.innerHTML=views[s]();document.getElementById('hint').innerHTML=hints[s];}
+document.getElementById('screens').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#screens button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');render(b.dataset.s);
+});
+const tt=document.getElementById('tt');
+tt.addEventListener('click',()=>{
+  const dark=document.body.dataset.theme==='dark';
+  document.body.dataset.theme=dark?'light':'dark';
+  tt.textContent=dark?'◐ Dark':'◑ Light';
+});
+render('dash');
+</script>
+</body>
+</html>

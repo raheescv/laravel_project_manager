@@ -10,6 +10,7 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/stock_check_models.dart';
 import '../../domain/repository/stock_check_repository.dart';
@@ -151,17 +152,45 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
-        child: Column(
-          children: [
-            EmeraldHeader(
-              title: 'Stock Check',
-              subtitle: sub,
-              leading: HeaderIconButton(icon: Icons.arrow_back_ios_new, onTap: () => context.pop()),
-              trailing: HeaderIconButton(icon: Icons.add, gold: true, onTap: _openCreate),
-            ),
-            Expanded(child: _body()),
-          ],
-        ),
+        // Tablet swaps the header band for a page-head toolbar, matching the
+        // other tablet screens.
+        child: context.isTablet
+            ? SafeArea(
+                bottom: false,
+                child: Column(
+                  children: [
+                    TabletPageHead(
+                      // Reachable two ways on a tablet: pushed (dashboard tile,
+                      // drawer) or as a top-level rail destination. Only offer a
+                      // back arrow when there is actually something to pop —
+                      // otherwise the rail's Stock Check would show a dead
+                      // control the other rail destinations don't have.
+                      leading: context.canPop()
+                          ? TabletIconButton(
+                              icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop())
+                          : null,
+                      title: 'Stock Check',
+                      subtitle: sub,
+                      actions: [
+                        TabletActionButton(
+                            label: 'New count', icon: Icons.add, primary: true, onTap: _openCreate),
+                      ],
+                    ),
+                    Expanded(child: _body()),
+                  ],
+                ),
+              )
+            : Column(
+                children: [
+                  EmeraldHeader(
+                    title: 'Stock Check',
+                    subtitle: sub,
+                    leading: HeaderIconButton(icon: Icons.arrow_back_ios_new, onTap: () => context.pop()),
+                    trailing: HeaderIconButton(icon: Icons.add, gold: true, onTap: _openCreate),
+                  ),
+                  Expanded(child: _body()),
+                ],
+              ),
       ),
     );
   }
@@ -170,12 +199,12 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
     return RefreshIndicator(
       onRefresh: _load,
       child: MaxWidthBox(
-        maxWidth: 720,
+        maxWidth: context.isTablet ? 1120 : 720,
         child: ListView(
           controller: _scrollCtl,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+          padding: EdgeInsets.fromLTRB(16, 14, 16, context.isTablet ? 32 : 120),
           children: [
-            _controls(),
+            if (context.isTablet) _tabletControls() else _controls(),
             const SizedBox(height: 4),
             if (_loading && _rows.isEmpty)
               const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator()))
@@ -194,8 +223,25 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
                 action: AstraButton(label: 'New count', icon: Icons.add, expand: false, onTap: _openCreate),
               )
             else ...[
-              for (final r in _rows)
-                Padding(padding: const EdgeInsets.only(bottom: 10), child: _card(r)),
+              // Tablet: count cards auto-fill by width instead of running as one
+              // long thin column down the middle of the sheet.
+              if (context.isTablet)
+                LayoutBuilder(
+                  builder: (ctx, c) {
+                    const gap = 12.0;
+                    const minTile = 420.0;
+                    final cols = ((c.maxWidth + gap) / (minTile + gap)).floor().clamp(1, 3);
+                    final colW = (c.maxWidth - gap * (cols - 1)) / cols;
+                    return Wrap(
+                      spacing: gap,
+                      runSpacing: gap,
+                      children: [for (final r in _rows) SizedBox(width: colW, child: _card(r))],
+                    );
+                  },
+                )
+              else
+                for (final r in _rows)
+                  Padding(padding: const EdgeInsets.only(bottom: 10), child: _card(r)),
               if (_loadingMore)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -208,8 +254,28 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
     );
   }
 
+  /// Tablet: the phone's stacked control card gives the status segment an
+  /// [Expanded] third each and the search the full width — at 1120pt that's
+  /// three slabs over a 1100pt-wide text field. Chips plus a fixed search box
+  /// keep both at a sane size.
+  Widget _tabletControls() {
+    const statuses = <(String, String?)>[('All', null), ('Pending', 'pending'), ('Completed', 'completed')];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          for (final (label, s) in statuses) ...[
+            TabletFilterChip(label: label, active: _status == s, onTap: () => _setStatus(s)),
+            const SizedBox(width: 7),
+          ],
+          const Spacer(),
+          SizedBox(width: 320, child: _searchBox()),
+        ],
+      ),
+    );
+  }
+
   Widget _controls() {
-    final p = context.astra;
     return AstraCard(
       radius: 20,
       padding: const EdgeInsets.all(14),
@@ -220,7 +286,15 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
           _statusSeg(),
           const SizedBox(height: 13),
           _label('SEARCH'),
-          Container(
+          _searchBox(),
+        ],
+      ),
+    );
+  }
+
+  Widget _searchBox() {
+    final p = context.astra;
+    return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(12)),
             child: Row(
@@ -250,10 +324,7 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
                   ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 
   Widget _label(String t) => Padding(

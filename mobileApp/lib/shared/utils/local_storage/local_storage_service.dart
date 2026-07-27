@@ -34,6 +34,13 @@ class LocalStorageService {
   Future<void> clearBiometric() =>
       _secure.delete(key: LocalStorageKeys.biometric);
 
+  // ---- terminal lock ----
+  // The session survives a lock, so this flag is what stops a force-quit and
+  // relaunch from landing straight back inside the app.
+  bool get authLocked => _prefs.getBool(LocalStorageKeys.authLocked) ?? false;
+  Future<void> setAuthLocked(bool v) =>
+      _prefs.setBool(LocalStorageKeys.authLocked, v);
+
   // ---- config ----
   String? get baseUrl => _prefs.getString(LocalStorageKeys.baseUrl);
   Future<void> setBaseUrl(String v) =>
@@ -109,6 +116,16 @@ class LocalStorageService {
   int? get branchId => _prefs.getInt(LocalStorageKeys.branch);
   Future<void> setBranchId(int v) =>
       _prefs.setInt(LocalStorageKeys.branch, v);
+
+  // ---- point-of-sale flow (device-local) ----
+  // Shared-till mode: lock the terminal after every completed sale so the next
+  // cashier has to identify themselves.
+  bool? get posLockAfterSale =>
+      _prefs.containsKey(LocalStorageKeys.posLockAfterSale)
+          ? _prefs.getBool(LocalStorageKeys.posLockAfterSale)
+          : null;
+  Future<void> setPosLockAfterSale(bool v) =>
+      _prefs.setBool(LocalStorageKeys.posLockAfterSale, v);
 
   // ---- thermal print settings ----
   String? get printStyle => _prefs.getString(LocalStorageKeys.printStyle);
@@ -186,6 +203,36 @@ class LocalStorageService {
       _prefs.getString(LocalStorageKeys.printCompanyName);
   Future<void> setPrintCompanyName(String v) =>
       _prefs.setString(LocalStorageKeys.printCompanyName, v);
+
+  // ---- auto-print (device-local) ----
+  // Print the receipt the moment a sale is charged, on the printer this till
+  // is paired with — so the cashier never taps Print.
+  bool? get printAuto => _prefs.containsKey(LocalStorageKeys.printAuto)
+      ? _prefs.getBool(LocalStorageKeys.printAuto)
+      : null;
+  Future<void> setPrintAuto(bool v) =>
+      _prefs.setBool(LocalStorageKeys.printAuto, v);
+
+  // The paired printer: `url` is the platform's identifier, `name` is what we
+  // show. Both cleared together when the pairing is removed.
+  String? get printerUrl => _prefs.getString(LocalStorageKeys.printerUrl);
+  String? get printerName => _prefs.getString(LocalStorageKeys.printerName);
+  Future<void> setPrinter(String url, String name) async {
+    await _prefs.setString(LocalStorageKeys.printerUrl, url);
+    await _prefs.setString(LocalStorageKeys.printerName, name);
+  }
+
+  Future<void> clearPrinter() async {
+    await _prefs.remove(LocalStorageKeys.printerUrl);
+    await _prefs.remove(LocalStorageKeys.printerName);
+  }
+
+  bool? get printSkipInvoice =>
+      _prefs.containsKey(LocalStorageKeys.printSkipInvoice)
+          ? _prefs.getBool(LocalStorageKeys.printSkipInvoice)
+          : null;
+  Future<void> setPrintSkipInvoice(bool v) =>
+      _prefs.setBool(LocalStorageKeys.printSkipInvoice, v);
 
   // ---- cached user json ----
   String? get userJson => _prefs.getString(LocalStorageKeys.user);

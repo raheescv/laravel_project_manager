@@ -460,6 +460,59 @@ pw.Widget _dashed() => pw.Padding(
       child: pw.Divider(height: 0.5, thickness: 0.7, color: PdfColors.black, borderStyle: pw.BorderStyle.dashed),
     );
 
+/// A short "does this till reach the printer?" slip, on the same roll as a real
+/// receipt. Used by Settings → Printer & Receipt → Test print so a cashier can
+/// verify the pairing without ringing a live sale.
+Future<Uint8List> buildTestReceiptPdf(PrintSettings settings) async {
+  await _loadArabicFonts();
+  final is58 = settings.width == PaperWidth.mm58;
+  final format = is58 ? PdfPageFormat.roll57 : PdfPageFormat.roll80;
+  final k = is58 ? 0.84 : 1.0;
+  final company = settings.companyName.trim();
+
+  final doc = pw.Document(title: 'Printer test');
+  doc.addPage(
+    pw.Page(
+      pageFormat: format,
+      theme: pw.ThemeData.withFont(
+        base: pw.Font.helvetica(),
+        bold: pw.Font.helveticaBold(),
+        fontFallback: [if (_arabicFont != null) _arabicFont!],
+      ),
+      margin: pw.EdgeInsets.all(is58 ? 6.0 : 10.0),
+      build: (context) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          if (company.isNotEmpty)
+            pw.Center(
+                child: pw.Text(company,
+                    style: pw.TextStyle(fontSize: 11 * k, fontWeight: pw.FontWeight.bold))),
+          pw.SizedBox(height: 4 * k),
+          pw.Center(
+              child: pw.Text('PRINTER TEST',
+                  style: pw.TextStyle(fontSize: 13 * k, fontWeight: pw.FontWeight.bold))),
+          _dashed(),
+          pw.Center(
+              child: pw.Text('Auto-print is working on this device.',
+                  textAlign: pw.TextAlign.center, style: pw.TextStyle(fontSize: 8.5 * k))),
+          pw.SizedBox(height: 5 * k),
+          pw.Center(
+              child: pw.Text('Roll: ${settings.width.label}   ·   ${settings.style.label}',
+                  style: pw.TextStyle(fontSize: 8 * k))),
+          _dashed(),
+          // A full-width rule doubles as an alignment check: if it stops short
+          // or wraps, the roll width is set wrong for this printer.
+          pw.Center(
+              child: pw.Text('|| 0123456789 ABCDEFGHIJKLM ||',
+                  style: pw.TextStyle(fontSize: 8 * k))),
+        ],
+      ),
+    ),
+  );
+  return doc.save();
+}
+
 String _num(double q) {
   if (q % 1 == 0) return q.toStringAsFixed(0);
   return q.toStringAsFixed(3).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');

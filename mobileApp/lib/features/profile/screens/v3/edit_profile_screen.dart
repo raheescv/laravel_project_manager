@@ -10,16 +10,29 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/profile/domain/repository/profile_repository.dart';
 import 'package:invo/features/profile/screens/v3/crop_photo_screen.dart';
-import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
+import 'package:invo/shared/domain/models/models.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 /// Edit Profile — the signed-in user updates their own name / phone / email and
 /// avatar. Wired to PUT /profile and POST /profile/photo; on success the cached
 /// [AuthCubit] user is replaced so every screen reflects the change live.
+///
+/// On a tablet this is normally *embedded* in the Profile screen's detail pane
+/// ([embedded] = true) rather than taking over the window: the identity pane
+/// stays put and only the right side changes, so editing never feels like
+/// leaving the profile. The route still exists for phones and deep links.
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({super.key});
+  const EditProfileScreen({super.key, this.embedded = false, this.onDone});
+
+  /// Render only the form body, for a host that supplies its own pane + head.
+  final bool embedded;
+
+  /// Where "done" goes when there is no route to pop — the host switches its
+  /// detail pane back. Ignored unless [embedded].
+  final VoidCallback? onDone;
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -80,7 +93,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await context.read<AuthCubit>().applyUser(updated);
       if (!mounted) return;
       _snack('Profile updated');
-      context.pop();
+      _close();
     } on ApiException catch (e) {
       _snack(e.message);
     } catch (_) {
@@ -170,13 +183,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final cfg = context.read<AuthCubit>().config;
     final photoUrl = user.hasPhoto ? cfg.assetUrl(user.photoUrl) : null;
 
-    // Resolve the branch id to its display name (mirrors profile_screen).
-    final branchCtrl = context.watch<BranchCubit>();
-    final match = branchCtrl.branches.where((b) => b.id.toString() == user.branchId);
-    final branchName = match.isNotEmpty
-        ? match.first.name
-        : (branchCtrl.selected?.name ?? '—');
-    final roleName = user.designation.isEmpty ? (user.isAdmin ? 'Administrator' : 'Staff') : user.designation;
+    // Embedded in the Profile screen's detail pane: the host owns the pane and
+    // its head, so render the form alone.
+    if (widget.embedded) return _formBody(context, user, photoUrl, cfg.assetHeaders);
+
+    if (context.isTablet) {
+      // Standalone on a tablet (deep link): same body, with a page head of its
+      // own. No header band — the side-rail is the chrome.
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AstraBackground(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                TabletPageHead(
+                  title: 'Edit Profile',
+                  subtitle: 'Your details & photo',
+                  leading: TabletIconButton(icon: Icons.close, onTap: () => context.pop()),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+                    child: MaxWidthBox(maxWidth: 620, child: _formBody(context, user, photoUrl, cfg.assetHeaders)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: AstraBackground(
@@ -246,14 +283,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     _editField('Phone', _phone, icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
                     const SizedBox(height: 12),
                     _editField('Email', _email, icon: Icons.mail_outline, keyboardType: TextInputType.emailAddress),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(child: _readOnly('Role', roleName)),
-                        const SizedBox(width: 11),
-                        Expanded(child: _readOnly('Branch', branchName)),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -264,22 +293,130 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _avatar(String initial, String? photoUrl, Map<String, String>? headers) {
+  // ---------------------------------------------------------------- tablet --
+
+  /// The tablet form: a photo block over the account fields, with Save where
+  /// the form is rather than in a top bar. Identical whether it is embedded in
+  /// the Profile screen's detail pane or shown standalone, so editing looks the
+  /// same however you got there.
+  Widget _formBody(BuildContext context, ApiUser user, String? photoUrl, Map<String, String>? headers) {
+    final p = context.astra;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AstraCard(
+          radius: 18,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: _photoBusy ? null : _changePhoto,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    _avatar(user.initial, photoUrl, headers, size: 92),
+                    Positioned(
+                      right: -1,
+                      bottom: -1,
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: p.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: p.cardSolid, width: 3),
+                        ),
+                        child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(user.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 19, color: p.ink)),
+                    const SizedBox(height: 4),
+                    Text(
+                      _photoBusy
+                          ? 'Uploading photo…'
+                          : 'A square photo works best — you can crop it after picking.',
+                      style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted, height: 1.35),
+                    ),
+                    const SizedBox(height: 11),
+                    TabletActionButton(
+                      label: _photoBusy ? 'Uploading…' : 'Change photo',
+                      icon: Icons.photo_camera_outlined,
+                      onTap: _photoBusy ? null : _changePhoto,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        TabletPanel(
+          title: 'Account details',
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          child: Column(
+            children: [
+              _editField('Full name', _name,
+                  icon: Icons.person_outline, textCapitalization: TextCapitalization.words),
+              const SizedBox(height: 14),
+              _editField('Phone', _phone, icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
+              const SizedBox(height: 14),
+              _editField('Email', _email, icon: Icons.mail_outline, keyboardType: TextInputType.emailAddress),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TabletActionButton(label: 'Cancel', onTap: _busy ? null : _close),
+            const SizedBox(width: 10),
+            TabletActionButton(
+              label: _busy ? 'Saving…' : 'Save changes',
+              icon: Icons.check,
+              primary: true,
+              onTap: _busy ? null : _save,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Leave the form: hand back to the host when embedded (there is no route to
+  /// pop — the detail pane just switches), otherwise pop the route.
+  void _close() {
+    if (widget.embedded) {
+      widget.onDone?.call();
+      return;
+    }
+    context.pop();
+  }
+
+  Widget _avatar(String initial, String? photoUrl, Map<String, String>? headers, {double size = 78}) {
     if (_preview != null) {
       // Instant local preview while the upload is in flight.
+      final inner = size - 4;
       return Container(
-        width: 78,
-        height: 78,
+        width: size,
+        height: size,
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(shape: BoxShape.circle, gradient: context.astra.accentGradient),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            ClipOval(child: Image.memory(_preview!, width: 74, height: 74, fit: BoxFit.cover)),
+            ClipOval(child: Image.memory(_preview!, width: inner, height: inner, fit: BoxFit.cover)),
             if (_photoBusy)
               Container(
-                width: 74,
-                height: 74,
+                width: inner,
+                height: inner,
                 decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black38),
                 alignment: Alignment.center,
                 child: const SizedBox(
@@ -292,7 +429,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       );
     }
-    return ProfileAvatar(letter: initial, imageUrl: photoUrl, headers: headers, size: 78, fontSize: 32);
+    return ProfileAvatar(
+        letter: initial, imageUrl: photoUrl, headers: headers, size: size, fontSize: size * 0.41);
   }
 
   Widget _editField(
@@ -324,22 +462,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _readOnly(String label, String value) {
-    final p = context.astra;
-    return AstraCard(
-      radius: 13,
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label.toUpperCase(), style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
-          const SizedBox(height: 4),
-          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
-        ],
-      ),
     );
   }
 }

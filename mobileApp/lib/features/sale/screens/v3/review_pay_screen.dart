@@ -9,10 +9,15 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
+import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/widgets/receipt_printer.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/custom_payment_sheet.dart';
 
 class ReviewPayScreen extends StatefulWidget {
@@ -48,12 +53,12 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     final service = serviceLocator<SaleRepository>();
     final editingId = cart.editingSaleId;
     setState(() => _busy = true);
+    Sale? saved;
     try {
-      final sale = editingId == null
+      saved = editingId == null
           ? await service.createSale(cart.toPayload())
           : await service.updateSale(editingId, cart.toPayload());
       cart.clear();
-      if (mounted) context.pushReplacement('/invoice', extra: sale);
     } on ApiException catch (e) {
       _error(e.message);
     } catch (e) {
@@ -61,7 +66,87 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           ? 'Could not save the sale. Please try again.'
           : 'Could not update the sale. Please try again.');
     }
-    if (mounted) setState(() => _busy = false);
+    if (!mounted) return;
+    // Everything past this point runs on a committed sale — kept out of the
+    // try above so a printing hiccup can never be reported as a failed charge.
+    if (saved == null) {
+      setState(() => _busy = false);
+      return;
+    }
+    await _afterCharge(saved);
+  }
+
+  /// Everything that happens once the sale is committed: print it on the till's
+  /// own printer, then either hand the terminal back to the next cashier
+  /// (sign-out mode), start a fresh ticket, or stop on the invoice.
+  ///
+  /// Printing is best-effort — the sale is already saved, so a printer that's
+  /// off costs a toast and the manual Print button, never the sale.
+  Future<void> _afterCharge(Sale sale) async {
+    final print = context.read<PrintSettingsCubit>();
+    final pos = context.read<PosSettingsCubit>();
+    final auth = context.read<AuthCubit>();
+    // Captured before we navigate: the router and the app-level messenger
+    // outlive this screen, `context` does not.
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final invoiceNo = sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo;
+
+    var printed = false;
+    var printFailed = false;
+    if (print.autoPrint) {
+      final result = await printReceipt(
+        sale,
+        print.snapshot,
+        printerUrl: print.printerUrl,
+        printerName: print.printerName,
+      );
+      printed = result == ReceiptPrintResult.printed;
+      // A cancelled dialog was a deliberate "don't print" — not a failure.
+      printFailed = !result.ok && result != ReceiptPrintResult.cancelled;
+    }
+
+    // Shared till: lock rather than sign out, so the next sale can't be rung
+    // under this cashier's name but coming back is a local PIN check instead of
+    // a fresh login. The router's auth redirect does the navigating, so we only
+    // announce what happened — printing has already finished by this point.
+    if (pos.lockAfterSale) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(
+          content: Text(printFailed ? '$invoiceNo saved — couldn\'t print' : '$invoiceNo saved'),
+          duration: const Duration(seconds: 3),
+        ));
+      await auth.lock();
+      return;
+    }
+
+    // Printed silently and set to move on: the ticket is done, so the next
+    // customer can be rung up with no further taps. The invoice stays one tap
+    // away in the snackbar.
+    if (printed && print.skipInvoice) {
+      router.go('/sale');
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(
+          content: Text('$invoiceNo printed'),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'View',
+            onPressed: () => router.push('/invoice', extra: sale),
+          ),
+        ));
+      return;
+    }
+
+    router.pushReplacement('/invoice', extra: sale);
+    if (printFailed) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(const SnackBar(
+          content: Text('Couldn\'t reach the printer — tap Print to try again.'),
+        ));
+    }
   }
 
   /// Parks the sale without completing it — no stock movement or journal entry
@@ -124,6 +209,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     final cart = context.watch<CartCubit>();
     final settled = cart.balance.abs() < 0.001;
 
+    if (context.isTablet) return _tabletScaffold(cart, settled);
     return Scaffold(
       body: AstraBackground(
         child: Column(
@@ -187,6 +273,101 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
                   ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ---- Tablet checkout: ticket left, payment rail right ---------------------
+
+  /// A 560pt column centred in a 1200pt window leaves the ticket unreadably far
+  /// from the payment controls. On a tablet the ticket takes the width and the
+  /// money side — tip, method, totals, CTA — docks into a right-hand pane, which
+  /// is how a counter POS is actually used.
+  Widget _tabletScaffold(CartCubit cart, bool settled) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: AstraBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              TabletPageHead(
+                leading: TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop()),
+                title: cart.isEditing ? 'Edit sale' : 'Review & Pay',
+                subtitle: '${cart.lines.length} item${cart.lines.length == 1 ? '' : 's'} on this ticket',
+              ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (ctx, c) => Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
+                          children: [_receiptCard(cart)],
+                        ),
+                      ),
+                      _payRail(cart, settled, (c.maxWidth * 0.38).clamp(340.0, 460.0)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _payRail(CartCubit cart, bool settled, double width) {
+    return TabletPane(
+      width: width,
+      edge: PaneEdge.left,
+      child: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
+              children: [
+                if (cart.tipEnabled) ...[
+                  _tipSelector(cart),
+                  const SizedBox(height: 16),
+                ],
+                _paymentSection(cart),
+                const SizedBox(height: 16),
+                _summaryCard(cart),
+                const SizedBox(height: 12),
+                _statusCard(cart),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 4, 18, 16),
+            child: cart.isEditing
+                ? AstraButton(
+                    label: 'Update ${Money.of(cart.total)}',
+                    gold: true,
+                    busy: _busy,
+                    onTap: cart.isEmpty ? null : _charge,
+                  )
+                : Row(
+                    children: [
+                      _draftButton(
+                        onTap: cart.isEmpty || _busy || _busyDraft ? null : _saveDraft,
+                        busy: _busyDraft,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AstraButton(
+                          label: settled ? 'Charge ${Money.of(cart.total)}' : 'Submit Anyway',
+                          gold: true,
+                          busy: _busy,
+                          onTap: cart.isEmpty || _busy || _busyDraft ? null : _charge,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }

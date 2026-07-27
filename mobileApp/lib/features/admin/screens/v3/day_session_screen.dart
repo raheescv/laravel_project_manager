@@ -47,34 +47,41 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
         ? c.session!.branch
         : (branchCtrl.selected?.name ?? '');
 
+    // Day Session is form-shaped, so the preview keeps it a centred, width-capped
+    // card stack. On a tablet the hero joins that stack as an inset card instead
+    // of a full-bleed band stretched across the whole sheet.
+    final tablet = context.isTablet;
+    final body = Stack(
+      children: [
+        ListView(
+          padding: EdgeInsets.fromLTRB(16, tablet ? 12 : 16, 16, 130),
+          children: [
+            if (tablet) ...[
+              _hero(c, user, branchName),
+              const SizedBox(height: 14),
+            ],
+            _dateTimeCard(c),
+            const SizedBox(height: 14),
+            _timelineCard(c, user),
+            const SizedBox(height: 14),
+            _notice(c),
+          ],
+        ),
+        Positioned(left: 0, right: 0, bottom: 0, child: _dock(c)),
+      ],
+    );
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
-        child: Column(
-          children: [
-            _hero(c, user, branchName),
-            Expanded(
-              child: MaxWidthBox(
-                maxWidth: 620,
-                child: Stack(
-                  children: [
-                    ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 130),
-                      children: [
-                        _dateTimeCard(c),
-                        const SizedBox(height: 14),
-                        _timelineCard(c, user),
-                        const SizedBox(height: 14),
-                        _notice(c),
-                      ],
-                    ),
-                    Positioned(left: 0, right: 0, bottom: 0, child: _dock(c)),
-                  ],
-                ),
+        child: tablet
+            ? SafeArea(bottom: false, child: MaxWidthBox(maxWidth: 620, child: body))
+            : Column(
+                children: [
+                  _hero(c, user, branchName),
+                  Expanded(child: MaxWidthBox(maxWidth: 620, child: body)),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -94,10 +101,15 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
         ? (openedAt.isEmpty ? 'Session is open' : 'Open since ${Dates.humanDateTime(openedAt)}')
         : (closedAt.isEmpty ? 'No open day right now' : 'Last closed ${Dates.humanDateTime(closedAt)}');
 
+    final tablet = context.isTablet;
     return Container(
+      clipBehavior: tablet ? Clip.antiAlias : Clip.none,
       decoration: BoxDecoration(
         gradient: p.heroGradient,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+        borderRadius: tablet
+            ? BorderRadius.circular(22)
+            : const BorderRadius.vertical(bottom: Radius.circular(30)),
+        boxShadow: tablet ? context.astraTheme.floatShadow(p.primary) : null,
       ),
       child: Stack(
         children: [
@@ -114,16 +126,21 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
             ),
           ),
           SafeArea(
+            // Inset card on tablet — it no longer meets the status bar, so it
+            // must not reserve the notch inset either.
+            top: !tablet,
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
+              padding: EdgeInsets.fromLTRB(16, tablet ? 16 : 6, 16, 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      HeaderIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
-                      const SizedBox(width: 11),
+                      if (context.canPop()) ...[
+                        HeaderIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
+                        const SizedBox(width: 11),
+                      ],
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

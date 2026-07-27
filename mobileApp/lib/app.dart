@@ -9,6 +9,7 @@ import 'features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'features/sale/logic/catalog_cubit/catalog_cubit.dart';
 import 'features/sale/logic/stylist_cubit/stylist_cubit.dart';
 import 'features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
+import 'features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'shared/domain/constants/global_variables.dart';
 import 'shared/logic/branch_cubit/branch_cubit.dart';
@@ -46,6 +47,7 @@ class _InvoAppState extends State<InvoApp> {
           BlocProvider.value(value: serviceLocator<CurrencyCubit>()),
           BlocProvider.value(value: serviceLocator<BranchCubit>()),
           BlocProvider.value(value: serviceLocator<PrintSettingsCubit>()),
+          BlocProvider.value(value: serviceLocator<PosSettingsCubit>()),
           // Per-session feature cubits.
           BlocProvider(create: (_) => CartCubit()),
           BlocProvider(create: (_) => ReturnDraftCubit()),

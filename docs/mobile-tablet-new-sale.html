@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>invo — New Sale (tablet, full screen)</title>
+<style>
+:root{
+  --bg:#FBF8F1; --card:#ffffff; --ink:#16312A; --muted:#5D7269; --faint:#A8B3AB;
+  --line:#F0ECE1; --gold:#BF953F; --emerald:#15806C; --emerald-d:#0E5648;
+  --chip:#E6F0EC; --success:#1F9D63; --danger:#D4546A;
+  --warn-bg:#FBF3DF; --warn-ink:#9A6A00;
+  --recess:#F4EFE6; --shadow:0 14px 34px -22px rgba(9,30,22,.4);
+}
+[data-theme="dark"]{
+  --bg:#07140F; --card:#15302A; --ink:#F3F1EA; --muted:#A9C2BA; --faint:#7C9189;
+  --line:rgba(255,255,255,.10); --gold:#D9B25E; --emerald:#2AA98C; --emerald-d:#0E5648;
+  --chip:rgba(42,169,140,.16); --success:#3FC585; --danger:#E06A7E;
+  --warn-bg:rgba(201,162,75,.18); --warn-ink:#E6C16B;
+  --recess:#0F231D; --shadow:0 18px 40px -24px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  display:flex;flex-direction:column;transition:background .25s,color .25s}
+.serif{font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif}
+
+/* dev control strip (not part of the app) */
+.dev{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.dev b{color:var(--ink)}
+.dev .sp{flex:1}
+.dev button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer}
+
+/* ============ full-screen sale ============ */
+.sale{flex:1;display:flex;min-height:0}
+
+/* ---- left: catalog ---- */
+.catalog{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{padding:16px 22px 14px;border-bottom:1px solid var(--line);background:var(--bg)}
+.tt-row{display:flex;align-items:center;gap:14px}
+.title{font-size:22px;font-weight:800}
+.title small{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:1px}
+.sp{flex:1}
+.iconbtn{width:42px;height:42px;border-radius:13px;border:1px solid var(--line);background:var(--card);
+  display:grid;place-items:center;color:var(--muted);font-size:18px}
+
+.searchrow{display:flex;gap:10px;margin-top:14px}
+.search{flex:1;display:flex;align-items:center;gap:10px;background:var(--recess);border:1px solid var(--line);
+  border-radius:14px;padding:12px 14px;color:var(--faint);font-size:14px}
+.scan{width:48px;border-radius:14px;background:var(--emerald);color:#fff;display:grid;place-items:center;font-size:20px}
+
+.controls{display:flex;align-items:center;gap:12px;margin-top:14px}
+.segment{display:inline-flex;background:var(--recess);border:1px solid var(--line);border-radius:12px;padding:4px}
+.segment span{font-size:12.5px;font-weight:700;padding:8px 16px;border-radius:9px;color:var(--muted);cursor:default}
+.segment span.on{background:var(--emerald);color:#fff}
+.viewtoggle{margin-left:auto;display:inline-flex;background:var(--recess);border:1px solid var(--line);border-radius:11px;padding:3px}
+.viewtoggle b{width:36px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:15px;color:var(--muted);cursor:pointer}
+.viewtoggle b.on{background:var(--card);color:var(--emerald);box-shadow:var(--shadow)}
+.count{font-size:12.5px;color:var(--faint);font-weight:600}
+
+.pgrid{flex:1;overflow:auto;padding:20px 22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;align-content:start}
+.prod{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .12s}
+.prod:hover{transform:translateY(-2px)}
+.prod .img{height:132px;background:linear-gradient(135deg,var(--chip),var(--recess));display:grid;place-items:center;color:var(--faint);font-size:30px;position:relative}
+.prod .pill{position:absolute;top:10px;left:10px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px;background:var(--card);color:var(--emerald);border:1px solid var(--line)}
+.prod .b{padding:12px 14px}
+.prod .nm{font-size:14px;font-weight:700;line-height:1.3}
+.prod .foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.prod .pr{font-size:14.5px;font-weight:800;color:var(--emerald)}
+[data-theme="dark"] .prod .pr{color:var(--gold)}
+.prod .add{width:30px;height:30px;border-radius:10px;background:var(--emerald);color:#fff;display:grid;place-items:center;font-size:18px;font-weight:700}
+
+/* ---- right: order panel (was the bottom cart bar) ---- */
+.order{width:380px;flex-shrink:0;background:var(--card);border-left:1px solid var(--line);display:flex;flex-direction:column}
+
+/* joined Client | Staff selector — full-width bar atop the catalog */
+.whobar{margin:14px 22px 0;border:1px solid var(--line);border-radius:16px;display:flex;overflow:hidden;background:var(--card);box-shadow:var(--shadow)}
+.who{margin:16px;border:1px solid var(--line);border-radius:16px;display:flex;overflow:hidden;background:var(--bg)}
+.whoseg{flex:1;padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer}
+.whoseg+.whoseg{border-left:1px solid var(--line)}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--chip);display:grid;place-items:center;color:var(--emerald);font-size:16px;flex-shrink:0}
+.avatar.g{background:#f6ecd4;color:var(--gold)}
+[data-theme="dark"] .avatar.g{background:rgba(217,178,94,.16)}
+.wlbl{font-size:9.5px;letter-spacing:1.2px;font-weight:800;color:var(--gold);text-transform:uppercase}
+.wval{font-size:14px;font-weight:700;margin-top:2px}
+
+.ordhead{padding:0 18px 6px;display:flex;justify-content:space-between;align-items:center}
+.ordhead b{font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.clear{font-size:12px;color:var(--danger);font-weight:700;cursor:pointer}
+
+.items{flex:1;overflow:auto;padding:4px 12px}
+.item{display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px}
+.item:hover{background:var(--bg)}
+.ithumb{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--chip),var(--recess));display:grid;place-items:center;color:var(--faint);font-size:18px;flex-shrink:0}
+.iinfo{flex:1;min-width:0}
+.inm{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iea{font-size:12px;color:var(--muted);margin-top:2px}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper b{width:28px;height:28px;border-radius:9px;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-size:16px;color:var(--emerald);cursor:pointer}
+.stepper .q{min-width:16px;text-align:center;font-weight:800;font-size:14px}
+.iamt{font-weight:800;font-size:14px;width:78px;text-align:right}
+
+.empty{flex:1;display:grid;place-items:center;color:var(--faint);text-align:center;padding:30px;font-size:13.5px}
+
+.summary{border-top:1px solid var(--line);padding:16px 20px}
+.srow{display:flex;justify-content:space-between;font-size:13.5px;color:var(--muted);padding:5px 0}
+.srow.disc{color:var(--emerald)}
+.grand{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 14px}
+.grand span{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.grand b{font-size:26px;font-weight:800}
+.payrow{display:flex;gap:10px}
+.hold{width:56px;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:14px;display:grid;place-items:center;font-size:20px;cursor:pointer}
+.pay{flex:1;border:0;background:var(--gold);color:#241c08;font-weight:800;font-size:15.5px;padding:15px;border-radius:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+
+@media(max-width:900px){.pgrid{grid-template-columns:repeat(2,1fr)}.order{width:320px}}
+</style>
+</head>
+<body data-theme="light">
+
+<div class="dev">
+  <b>invo · New Sale</b> — tablet full screen · <span>only this screen changes; Review & Pay / Invoice untouched</span>
+  <span class="sp"></span>
+  <button id="tt">◐ Dark</button>
+</div>
+
+<div class="sale">
+  <!-- LEFT: catalog -->
+  <div class="catalog">
+    <div class="topbar">
+      <div class="tt-row">
+        <div class="iconbtn">✕</div>
+        <div class="title">New Sale<small>Day open · Cash drawer #2</small></div>
+        <div class="sp"></div>
+        <div class="iconbtn">☰</div>
+      </div>
+      <div class="searchrow">
+        <div class="search">🔍  Search name or code</div>
+        <div class="scan">▣</div>
+      </div>
+      <div class="controls">
+        <div class="segment"><span class="on">Products</span><span>Services</span></div>
+        <div class="viewtoggle"><b class="on">▦</b><b>☰</b></div>
+      </div>
+      <div style="margin-top:10px" class="count">128 products</div>
+    </div>
+
+    <div class="whobar">
+      <div class="whoseg"><div class="avatar">👤</div><div><div class="wlbl">Client</div><div class="wval">Walk-in</div></div></div>
+      <div class="whoseg"><div class="avatar g">H</div><div><div class="wlbl">Staff</div><div class="wval">Hasif</div></div></div>
+    </div>
+
+    <div class="pgrid" id="pgrid"></div>
+  </div>
+
+  <!-- RIGHT: order panel -->
+  <div class="order">
+    <div class="ordhead" style="padding-top:16px"><b>Order · 2 items</b><span class="clear">Clear</span></div>
+    <div class="items" id="items"></div>
+
+    <div class="summary">
+      <div class="srow"><span>Subtotal</span><span>QAR 3,990.00</span></div>
+      <div class="srow disc"><span>Discount</span><span>− QAR 0.00</span></div>
+      <div class="srow"><span>Tax</span><span>QAR 0.00</span></div>
+      <div class="grand"><span>Total</span><b class="serif">QAR 3,990.00</b></div>
+      <div class="payrow">
+        <div class="hold">⏸</div>
+        <button class="pay">Review &amp; Pay  →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const prods=[
+  ['Silk Abaya — Onyx','1,800','New'],['Pleated Kaftan','950',''],['Perfume Oil 12ml','390',''],
+  ['Cotton Shayla','120',''],['Prayer Set — Ivory','260',''],['Bakhoor Gift Box','180','New'],
+  ['Beaded Clutch','340',''],['Cashmere Wrap','620',''],['Hair Clip Set','40',''],
+  ['Incense Burner','210',''],['Velvet Scrunchie','25',''],['Linen Jalabiya','780',''],
+];
+document.getElementById('pgrid').innerHTML = prods.map(([n,p,tag])=>`
+  <div class="prod">
+    <div class="img">🖼${tag?`<span class="pill">${tag}</span>`:''}</div>
+    <div class="b"><div class="nm">${n}</div>
+      <div class="foot"><div class="pr">QAR ${p}</div><div class="add">+</div></div></div>
+  </div>`).join('');
+
+const items=[
+  ['Silk Abaya — Onyx','QAR 1,800 ea',2,'QAR 3,600.00'],
+  ['Perfume Oil 12ml','QAR 390 ea',1,'QAR 390.00'],
+];
+document.getElementById('items').innerHTML = items.map(([n,ea,q,amt])=>`
+  <div class="item">
+    <div class="ithumb">🖼</div>
+    <div class="iinfo"><div class="inm">${n}</div><div class="iea">${ea}</div></div>
+    <div class="stepper"><b>−</b><span class="q">${q}</span><b>+</b></div>
+    <div class="iamt">${amt}</div>
+  </div>`).join('');
+
+const tt=document.getElementById('tt');
+tt.onclick=()=>{const d=document.body.dataset.theme==='dark';
+  document.body.dataset.theme=d?'light':'dark';tt.textContent=d?'◐ Dark':'◑ Light';};
+</script>
+</body>
+</html>

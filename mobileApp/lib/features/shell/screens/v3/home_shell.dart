@@ -3,14 +3,21 @@ import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:go_router/go_router.dart';
 
 import 'package:invo/shared/domain/helpers/responsive.dart';
-import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/widgets/astra_drawer.dart';
-import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/features/admin/screens/v3/dashboard_screen.dart';
 import 'package:invo/features/admin/screens/v3/reports_screen.dart';
 import 'package:invo/features/sales/screens/v3/sales_list_screen.dart';
 import 'package:invo/features/settings/screens/v3/settings_screen.dart';
+import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
+import 'package:invo/features/sales_returns/screens/v3/sales_returns_list_screen.dart';
+import 'package:invo/features/admin/screens/v3/day_session_screen.dart';
+import 'package:invo/features/profile/screens/v3/profile_screen.dart';
+import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
+import 'package:provider/provider.dart';
 
 /// Adaptive admin shell: a glossy floating bottom nav on phones (Instagram-style:
 /// hides on scroll-down, returns on scroll-up), a left side-rail on tablets.
@@ -25,17 +32,53 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  late int _index = widget.initialTab.clamp(0, _pages.length - 1);
+  late int _index = widget.initialTab;
   bool _navVisible = true;
 
-  late final List<Widget> _pages = [
-    DashboardScreen(onSelectTab: _goToTab),
-    const SalesListScreen(),
-    const ReportsScreen(),
-    const SettingsScreen(),
-  ];
+  /// Tablet-only destinations that have actually been opened. They stay in the
+  /// stack afterwards (so their state survives switching away), but an unvisited
+  /// one renders as an empty box — [IndexedStack] builds every child eagerly,
+  /// and three extra screens fetching on launch is a cost nobody asked for.
+  /// The four phone tabs are always built, exactly as before.
+  late final Set<int> _visited = {widget.initialTab};
 
-  void _goToTab(int i) => setState(() => _index = i);
+  /// The shell's destinations. Returns / Stock Check / Day Session are real
+  /// tablet destinations (indices [kReturnsTab], [kStockCheckTab],
+  /// [kDaySessionTab]) so the rail switches to them with the same instant swap
+  /// as the four tabs — routing to them instead makes those links slide in as
+  /// pages while the others don't.
+  ///
+  /// Indices must stay stable, so an unpermitted destination becomes a
+  /// placeholder rather than shrinking the list. The rail never offers it.
+  List<Widget> _pagesFor(BuildContext context) {
+    final auth = context.read<AuthCubit>();
+    Widget extra(int tab, String slug, Widget Function() build) =>
+        context.isTablet && auth.hasPermission(slug) && _visited.contains(tab)
+            ? build()
+            : const SizedBox.shrink();
+    return [
+      DashboardScreen(onSelectTab: _goToTab),
+      SalesListScreen(onSelectTab: _goToTab),
+      const ReportsScreen(),
+      SettingsScreen(onSelectTab: _goToTab),
+      extra(kReturnsTab, PermissionSlug.saleReturnView, () => const SalesReturnListScreen()),
+      extra(kStockCheckTab, PermissionSlug.stockCheck, () => const StockCheckListScreen()),
+      extra(kDaySessionTab, PermissionSlug.daySession, () => const DaySessionScreen()),
+      // No permission gate on either — everyone has a profile and a permission
+      // list of their own.
+      context.isTablet && _visited.contains(kProfileTab)
+          ? ProfileScreen(onSelectTab: _goToTab)
+          : const SizedBox.shrink(),
+      context.isTablet && _visited.contains(kPermissionsTab)
+          ? const PermissionsScreen()
+          : const SizedBox.shrink(),
+    ];
+  }
+
+  void _goToTab(int i) => setState(() {
+        _index = i;
+        _visited.add(i);
+      });
 
   /// Shared by the phone and tablet scaffolds — the frosted drawer that holds
   /// every module link (tab items switch the shell, the rest push routes).
@@ -56,7 +99,10 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.astra;
+    final pages = _pagesFor(context);
+    // Clamped here, not in initState: whether index 4 exists depends on the size
+    // class and the Stock Check permission, neither of which is safe to read there.
+    final index = _index.clamp(0, pages.length - 1);
 
     if (context.isTablet) {
       return Scaffold(
@@ -65,8 +111,8 @@ class _HomeShellState extends State<HomeShell> {
         body: SafeArea(
           child: Row(
             children: [
-              _sideRail(p),
-              Expanded(child: IndexedStack(index: _index, children: _pages)),
+              AstraSideRail(activeIndex: index, onSelect: _goToTab),
+              Expanded(child: IndexedStack(index: index, children: pages)),
             ],
           ),
         ),
@@ -79,7 +125,7 @@ class _HomeShellState extends State<HomeShell> {
       drawerScrimColor: _drawerScrim,
       body: NotificationListener<UserScrollNotification>(
         onNotification: _onScroll,
-        child: IndexedStack(index: _index, children: _pages),
+        child: IndexedStack(index: index, children: pages),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: AnimatedSlide(
@@ -98,81 +144,9 @@ class _HomeShellState extends State<HomeShell> {
         offset: _navVisible ? Offset.zero : const Offset(0, 1.8),
         duration: const Duration(milliseconds: 260),
         curve: Curves.easeOutCubic,
-        child: AstraNavBar(activeIndex: _index, onTap: (i) => setState(() => _index = i)),
+        child: AstraNavBar(activeIndex: index, onTap: _goToTab),
       ),
     );
   }
 
-  Widget _sideRail(AstraPalette p) {
-    return Container(
-      width: 92,
-      margin: const EdgeInsets.fromLTRB(14, 14, 0, 14),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: p.darkSurface,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 36, offset: const Offset(0, 14))],
-      ),
-      // In landscape on a phone the width still trips `isTablet`, but the height
-      // collapses — so the rail must scroll when short and still push "New" to
-      // the bottom when there's room. minHeight + IntrinsicHeight keeps the
-      // Spacer working inside the scroll view.
-      child: LayoutBuilder(
-        builder: (context, c) => SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: c.maxHeight),
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  const SizedBox(height: 4),
-                  const InvoLogomark(height: 38),
-                  const SizedBox(height: 24),
-                  for (var i = 0; i < astraNavTabs.length; i++) _railItem(p, i),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => context.push('/sale'),
-                    child: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(gradient: p.accentGradient, shape: BoxShape.circle),
-                      child: Icon(Icons.add, color: p.primaryDark, size: 24),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text('New', style: ui(size: 9, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.7))),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _railItem(AstraPalette p, int i) {
-    final active = i == _index;
-    return GestureDetector(
-      onTap: () => setState(() => _index = i),
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 9),
-        child: Column(
-          children: [
-            Container(
-              width: 46,
-              height: 40,
-              decoration: BoxDecoration(
-                color: active ? Colors.white.withValues(alpha: 0.12) : Colors.transparent,
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(astraNavTabs[i].icon, size: 20, color: active ? p.accent : Colors.white.withValues(alpha: 0.55)),
-            ),
-            const SizedBox(height: 4),
-            Text(astraNavTabs[i].label,
-                style: ui(size: 8.5, weight: active ? FontWeight.w700 : FontWeight.w600, color: active ? p.accent : Colors.white.withValues(alpha: 0.55))),
-          ],
-        ),
-      ),
-    );
-  }
 }

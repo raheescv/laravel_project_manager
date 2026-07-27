@@ -20,14 +20,22 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
 import 'package:invo/shared/widgets/receipt_pdf.dart';
+import 'package:invo/shared/widgets/receipt_printer.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 /// Single-sale view — "Fintech" premium layout: a gradient total hero, a
 /// Created → Paid → Receipt status timeline, an itemized card with per-line
 /// icon avatars, a summary card and a payment/customer card. Everything is
 /// palette-driven so each [AstraSkin] re-skins it.
 class InvoiceScreen extends StatelessWidget {
-  const InvoiceScreen({super.key, required this.sale});
+  const InvoiceScreen({super.key, required this.sale, this.onClose});
   final Sale sale;
+
+  /// When set, this screen is embedded in a tablet master–detail pane rather
+  /// than pushed as its own route: the header shows a "clear selection" button
+  /// instead of a back arrow, and deleting the sale calls this (to drop the row
+  /// and reload the list) rather than popping a route. Null on phones.
+  final VoidCallback? onClose;
 
   // Net payable on this ticket and how much of it is still outstanding. Both come
   // straight from the sale's own columns (grand_total / balance); we fall back to
@@ -54,6 +62,11 @@ class InvoiceScreen extends StatelessWidget {
     final auth = context.read<AuthCubit>();
     final canEdit = auth.hasPermission(PermissionSlug.saleEdit);
     final canDelete = auth.hasPermission(PermissionSlug.saleDelete);
+    // Tablet renders the flat detail layout from the approved preview instead of
+    // the phone receipt (gradient hero, timeline, docked action bar) — both when
+    // embedded in a master–detail pane and when pushed as the last step of a
+    // sale, so an invoice looks the same however you arrived at it.
+    if (context.isTablet || onClose != null) return _tabletDetail(context, p, canEdit, canDelete);
     return Scaffold(
       body: AstraBackground(
         child: SafeArea(
@@ -93,7 +106,7 @@ class InvoiceScreen extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _utilityButton(context, p, Icons.print_outlined, 'Print', () => _preview(context)),
+                          _utilityButton(context, p, Icons.print_outlined, 'Print', () => _print(context)),
                           const SizedBox(width: 9),
                           Expanded(
                             child: AstraButton(
@@ -117,6 +130,143 @@ class InvoiceScreen extends StatelessWidget {
     );
   }
 
+  // ---- Tablet detail pane --------------------------------------------------
+
+  /// The preview's `.detail`: caption + amount + context line with the record's
+  /// actions on the right, then plain Items / Summary / Payment panels. Same
+  /// data and same actions as the phone receipt — only the presentation differs.
+  Widget _tabletDetail(BuildContext context, AstraPalette p, bool canEdit, bool canDelete) {
+    final embedded = onClose != null;
+    final (label, bg, fg, icon) = _statusBadge(p);
+    final methods = sale.payments.map((e) => _titleCase(e.method.trim())).where((e) => e.isNotEmpty).toSet();
+    final subtitle = [
+      sale.customerName.trim().isEmpty ? 'Walk-in' : sale.customerName.trim(),
+      if (sale.date.isNotEmpty) Dates.human(sale.date),
+      if (methods.isNotEmpty) methods.join(', '),
+    ].join('  ·  ');
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: AstraBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (ctx, c) {
+              final m = TabletMetrics.forWidth(c.maxWidth);
+              return ListView(
+                padding: m.detailPadding,
+                children: [
+                  TabletDetailHead(
+                    label: 'Invoice · ${sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo}',
+                    amount: Money.of(_payable),
+                    subtitle: subtitle,
+                    badge: StatusPill(label: label, bg: bg, fg: fg, icon: icon),
+                    // Pushed route (e.g. straight after charging) gets a back
+                    // arrow; a master–detail pane gets a close that clears the
+                    // selection instead.
+                    leading: embedded || !context.canPop()
+                        ? null
+                        : TabletIconButton(
+                            icon: Icons.chevron_left, tooltip: 'Back', onTap: () => _tap(() => context.pop())),
+                    actions: [
+                      TabletActionButton(
+                          label: 'Print', icon: Icons.print_outlined, onTap: () => _tap(() => _print(context))),
+                      if (_returnable)
+                        TabletActionButton(
+                            label: 'Return',
+                            icon: Icons.assignment_return_outlined,
+                            onTap: () => _tap(() => _return(context))),
+                      if (canEdit && _editable)
+                        TabletActionButton(
+                            label: 'Edit', icon: Icons.edit_outlined, onTap: () => _tap(() => _edit(context))),
+                      // Pushed: the dominant next action is starting the next
+                      // ticket. Embedded: the list is right there, so it isn't.
+                      if (!embedded)
+                        TabletActionButton(
+                            label: 'New Sale', icon: Icons.add, primary: true, onTap: () => _tap(() => context.go('/sale'))),
+                      TabletIconButton(
+                          icon: Icons.more_horiz,
+                          tooltip: 'More',
+                          onTap: () => _tap(() => _moreSheet(context, canEdit, canDelete))),
+                      if (embedded)
+                        TabletIconButton(
+                            icon: Icons.close_rounded, tooltip: 'Close', onTap: () => _tap(onClose!)),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  if (sale.customerMobile.trim().isNotEmpty) ...[
+                    TabletPanel(title: 'Billed to', padding: const EdgeInsets.fromLTRB(16, 12, 16, 12), child: _customerLine(p)),
+                    const SizedBox(height: 18),
+                  ],
+                  TabletPanel(title: 'Items', child: _itemLines(p)),
+                  const SizedBox(height: 18),
+                  TabletPanel(
+                    title: 'Summary',
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    child: _summaryLines(p),
+                  ),
+                  const SizedBox(height: 18),
+                  TabletPanel(title: 'Payment', child: _paymentLines(p)),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _customerLine(AstraPalette p) => Row(
+        children: [
+          const IconChip(icon: Icons.person_outline, size: 34, radius: 10),
+          const SizedBox(width: 11),
+          Expanded(child: Text(sale.customerName, style: ui(size: 13, weight: FontWeight.w700, color: p.ink))),
+          Text(sale.customerMobile, style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary)),
+        ],
+      );
+
+  Widget _itemLines(AstraPalette p) {
+    final lines = sale.lines;
+    return Column(
+      children: [
+        for (int i = 0; i < lines.length; i++) ...[
+          _lineRow(p, lines[i]),
+          if (i != lines.length - 1) Container(height: 1, color: p.hairline),
+        ],
+      ],
+    );
+  }
+
+  Widget _summaryLines(AstraPalette p) => Column(
+        children: [
+          _sumRow(p, 'Subtotal', Money.of(sale.grossAmount), p.textSecondary),
+          if (sale.discount > 0) _sumRow(p, 'Discount', '− ${Money.of(sale.discount)}', p.goldText),
+          if (sale.taxAmount > 0) _sumRow(p, 'Tax', Money.of(sale.taxAmount), p.textSecondary),
+          if (sale.tip > 0) _sumRow(p, 'Tip', Money.of(sale.tip), p.goldText),
+          Padding(padding: const EdgeInsets.only(top: 8), child: DottedDivider(color: p.hairline)),
+          const SizedBox(height: 12),
+          if (_balance > 0.5) ...[
+            _sumRow(p, 'Paid', Money.of(sale.paid), p.textSecondary),
+            const SizedBox(height: 4),
+            _totalRow(p, 'Balance Due', _balance, p.warnText),
+          ] else
+            _totalRow(p, 'Total Paid', sale.paid, p.primaryDark),
+        ],
+      );
+
+  Widget _paymentLines(AstraPalette p) {
+    final rows = <Widget>[];
+    if (sale.payments.isNotEmpty) {
+      for (int i = 0; i < sale.payments.length; i++) {
+        final pay = sale.payments[i];
+        rows.add(_payRow(p, pay.method, Money.of(pay.amount)));
+        if (i != sale.payments.length - 1) rows.add(Container(height: 1, color: p.hairline));
+      }
+    } else {
+      rows.add(_payRow(p, _paidUp ? 'Paid' : 'Pending', Money.of(sale.paid)));
+    }
+    return Column(children: rows);
+  }
+
   // ---- Header --------------------------------------------------------------
 
   Widget _header(BuildContext context, AstraPalette p) {
@@ -125,7 +275,22 @@ class InvoiceScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 18, 4),
       child: Row(
         children: [
-          if (context.canPop()) ...[
+          if (onClose != null) ...[
+            GestureDetector(
+              onTap: () => _tap(onClose!),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: p.card,
+                  borderRadius: BorderRadius.circular(11),
+                  boxShadow: context.astraTheme.softShadow,
+                ),
+                child: Icon(Icons.close_rounded, size: 17, color: p.ink),
+              ),
+            ),
+            const SizedBox(width: 11),
+          ] else if (context.canPop()) ...[
             GestureDetector(
               onTap: () => _tap(() => context.pop()),
               child: Container(
@@ -499,6 +664,35 @@ class InvoiceScreen extends StatelessWidget {
     }
   }
 
+  /// The Print button. Once this till is paired with a printer, printing is the
+  /// point — send the receipt straight there (one tap, no preview). Without a
+  /// pairing we keep the preview-then-print path, which is the only way to
+  /// choose a printer on that device. The preview stays reachable either way
+  /// from the "•••" sheet.
+  Future<void> _print(BuildContext context) async {
+    final print = context.read<PrintSettingsCubit>();
+    if (!print.hasPrinter) {
+      _preview(context);
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await printReceipt(
+      sale,
+      print.snapshot,
+      printerUrl: print.printerUrl,
+      printerName: print.printerName,
+    );
+    if (result == ReceiptPrintResult.cancelled) return;
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(result.ok
+            ? 'Sent to ${print.printerName}'
+            : 'Couldn\'t reach the printer — check it\'s on and paired.'),
+        duration: const Duration(milliseconds: 1400),
+      ));
+  }
+
   /// Preview-before-print: a full-screen preview of the actual thermal receipt,
   /// filling the screen width in its native thermal style (header included,
   /// nothing cropped). The user reviews it, then prints/shares from the preview's
@@ -518,25 +712,35 @@ class InvoiceScreen extends StatelessWidget {
           backgroundColor: p.primary,
           foregroundColor: Colors.white,
         ),
-        body: PdfPreview(
-          // Always render the native thermal roll; the preview scales it to fill
-          // the screen width so the receipt occupies the page edge-to-edge.
-          build: (_) => buildReceiptPdf(sale, settings),
-          useActions: true,
-          canChangePageFormat: false,
-          canChangeOrientation: false,
-          canDebug: false,
-          pdfFileName: _fileName,
-          padding: EdgeInsets.zero,
-          previewPageMargin: EdgeInsets.zero,
-          scrollViewDecoration: const BoxDecoration(color: Colors.white),
-          // The PdfPreview action bar (print/share/format icons) otherwise falls
-          // back to the platform Theme.primaryColor — pin it to the selected
-          // preset so the whole preview matches the chosen theme.
-          actionBarTheme: PdfActionBarTheme(
-            backgroundColor: p.primary,
-            iconColor: Colors.white,
-          ),
+        body: LayoutBuilder(
+          builder: (ctx, c) {
+            // The preview scales the page to the width it is given. A phone is
+            // about a receipt wide, so edge-to-edge is right there — but a
+            // tablet would blow an 80mm roll up ~5×, soft and absurd. Cap it to
+            // a paper-like column and centre it on the sheet.
+            const rollWidth = 420.0;
+            final side = c.maxWidth <= rollWidth + 40 ? 0.0 : (c.maxWidth - rollWidth) / 2;
+            return PdfPreview(
+              // Always render the native thermal roll; only the on-screen
+              // presentation width changes.
+              build: (_) => buildReceiptPdf(sale, settings),
+              useActions: true,
+              canChangePageFormat: false,
+              canChangeOrientation: false,
+              canDebug: false,
+              pdfFileName: _fileName,
+              padding: EdgeInsets.symmetric(horizontal: side),
+              previewPageMargin: EdgeInsets.zero,
+              scrollViewDecoration: const BoxDecoration(color: Colors.white),
+              // The PdfPreview action bar (print/share/format icons) otherwise
+              // falls back to the platform Theme.primaryColor — pin it to the
+              // selected preset so the whole preview matches the chosen theme.
+              actionBarTheme: PdfActionBarTheme(
+                backgroundColor: p.primary,
+                iconColor: Colors.white,
+              ),
+            );
+          },
         ),
       ),
     ));
@@ -615,7 +819,9 @@ class InvoiceScreen extends StatelessWidget {
       if (!context.mounted) return;
       Navigator.pop(context); // dismiss the loader
       _toast(context, 'Sale deleted.');
-      if (context.canPop()) {
+      if (onClose != null) {
+        onClose!(); // embedded: drop the row + reload the list, keep the pane
+      } else if (context.canPop()) {
         context.pop(true); // signal the sales list to reload
       } else {
         context.go('/sales');
@@ -729,6 +935,8 @@ class InvoiceScreen extends StatelessWidget {
                       if (_returnable)
                         _sheetAction(ctx, p, Icons.assignment_return_outlined, p.goldText, 'Return',
                             'Start a return against this invoice', () => _return(context)),
+                      _sheetAction(ctx, p, Icons.visibility_outlined, p.ink, 'Preview receipt',
+                          'See the thermal receipt before printing', () => _preview(context)),
                       _sheetAction(ctx, p, Icons.ios_share, p.ink, 'Share',
                           'Send the receipt as a PDF', () => _share(context)),
                       if (canDelete)

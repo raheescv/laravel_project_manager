@@ -24,15 +24,29 @@ class StorefrontController extends Controller
      * the web app header uses). The Vue storefront reads this at boot: the color
      * drives its theme (falling back to the SIZE RUN blue), the logo replaces
      * the monogram mark. `logo` is null when the tenant hasn't uploaded one.
+     *
+     * The `company` block carries the contact details from Settings → Company
+     * Profile — name, mobile, email — plus `google_review_url`, the link the
+     * storefront's rate-us prompt sends customers to. Each is null when unset.
      */
     public function branding(): JsonResponse
     {
-        $color = Configuration::where('key', 'storefront_primary_color')->value('value');
-        $logo = Configuration::where('key', 'logo')->value('value');
+        $keys = ['storefront_primary_color', 'logo', 'company_name', 'mobile', 'email', 'google_review_url'];
+        $config = Configuration::whereIn('key', $keys)->pluck('value', 'key');
+
+        $value = fn (string $key) => filled($config[$key] ?? null) ? $config[$key] : null;
+
+        $logo = $value('logo');
 
         return $this->sendSuccess([
-            'primary_color' => $color ?: self::DEFAULT_COLOR,
+            'primary_color' => $value('storefront_primary_color') ?: self::DEFAULT_COLOR,
             'logo' => $logo ? asset($logo) : null,
+            'company' => [
+                'name' => $value('company_name'),
+                'mobile' => $value('mobile'),
+                'email' => $value('email'),
+                'google_review_url' => $value('google_review_url'),
+            ],
         ], 'Branding retrieved successfully');
     }
 }

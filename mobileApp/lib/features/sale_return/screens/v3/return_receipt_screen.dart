@@ -14,6 +14,7 @@ import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/features/sale/screens/v3/invoice_screen.dart'
     show DottedDivider;
 
@@ -21,8 +22,13 @@ import 'package:invo/features/sale/screens/v3/invoice_screen.dart'
 /// the returned items, a summary and a refund-payment card. Palette-driven so
 /// every [AstraSkin] re-skins it.
 class ReturnReceiptScreen extends StatelessWidget {
-  const ReturnReceiptScreen({super.key, required this.saleReturn});
+  const ReturnReceiptScreen({super.key, required this.saleReturn, this.onClose});
   final SaleReturn saleReturn;
+
+  /// When set, this screen is embedded in a tablet master–detail pane: the
+  /// header shows a "clear selection" button and Done clears the pane instead of
+  /// navigating a route. Null on phones (normal pushed-route behaviour).
+  final VoidCallback? onClose;
 
   double get _refunded => saleReturn.paid;
   // Outstanding refund still owed to the customer. Uses the return's own balance
@@ -46,6 +52,10 @@ class ReturnReceiptScreen extends StatelessWidget {
     final auth = context.read<AuthCubit>();
     final canEdit = auth.hasPermission(PermissionSlug.saleReturnEdit);
     final canCreate = auth.hasPermission(PermissionSlug.saleReturnCreate);
+    // Tablet gets the flat detail layout from the approved preview — both in a
+    // master–detail pane and pushed after a return — not the phone receipt
+    // (gradient hero + docked bar).
+    if (context.isTablet || onClose != null) return _tabletDetail(context, p, canEdit, canCreate);
     return Scaffold(
       body: AstraBackground(
         child: SafeArea(
@@ -91,7 +101,7 @@ class ReturnReceiptScreen extends StatelessWidget {
                             ],
                             Expanded(
                               flex: 2,
-                              child: AstraButton(label: 'Done', onTap: () => context.go('/sales-returns')),
+                              child: AstraButton(label: 'Done', onTap: onClose ?? () => context.go('/sales-returns')),
                             ),
                           ],
                         ),
@@ -107,6 +117,129 @@ class ReturnReceiptScreen extends StatelessWidget {
     );
   }
 
+  // ---- Tablet detail pane --------------------------------------------------
+
+  /// The preview's `.detail`: caption + refund headline + context line with the
+  /// return's actions on the right, then plain panels. Same data and actions as
+  /// the phone receipt — only the presentation differs.
+  Widget _tabletDetail(BuildContext context, AstraPalette p, bool canEdit, bool canCreate) {
+    final embedded = onClose != null;
+    final (label, bg, fg, icon) = _statusBadge(p);
+    final ref = saleReturn.referenceNo.isEmpty ? '#${saleReturn.id}' : saleReturn.referenceNo;
+    final methods = saleReturn.payments.map((e) => _titleCase(e.method.trim())).where((e) => e.isNotEmpty).toSet();
+    final subtitle = [
+      saleReturn.customerName.trim().isEmpty ? 'Walk-in' : saleReturn.customerName.trim(),
+      if (saleReturn.date.isNotEmpty) Dates.human(saleReturn.date),
+      if (methods.isNotEmpty) 'Refund to ${methods.join(', ')}',
+    ].join('  ·  ');
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: AstraBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (ctx, c) {
+              final m = TabletMetrics.forWidth(c.maxWidth);
+              return ListView(
+                padding: m.detailPadding,
+                children: [
+                  TabletDetailHead(
+                    label: 'Return · $ref',
+                    amount: '− ${Money.of(saleReturn.grandTotal)}',
+                    amountColor: AstraPalette.danger,
+                    subtitle: subtitle,
+                    badge: StatusPill(label: label, bg: bg, fg: fg, icon: icon),
+                    leading: embedded || !context.canPop()
+                        ? null
+                        : TabletIconButton(
+                            icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop()),
+                    actions: [
+                      if (_editable && canEdit)
+                        TabletActionButton(label: 'Edit', icon: Icons.edit_outlined, onTap: () => _edit(context)),
+                      if (!embedded && canCreate)
+                        TabletActionButton(
+                            label: 'New Return',
+                            icon: Icons.assignment_return_outlined,
+                            primary: true,
+                            onTap: () => context.go('/sale-return/pick')),
+                      if (embedded)
+                        TabletIconButton(icon: Icons.close_rounded, tooltip: 'Close', onTap: onClose),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  if (saleReturn.customerMobile.trim().isNotEmpty) ...[
+                    TabletPanel(
+                        title: 'Refunded to',
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                        child: _customerLine(p)),
+                    const SizedBox(height: 18),
+                  ],
+                  TabletPanel(title: 'Returned items', child: _itemLines(p)),
+                  const SizedBox(height: 18),
+                  TabletPanel(
+                      title: 'Summary', padding: const EdgeInsets.fromLTRB(16, 14, 16, 14), child: _summaryLines(p)),
+                  const SizedBox(height: 18),
+                  TabletPanel(title: 'Refund', child: _paymentLines(p)),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _customerLine(AstraPalette p) => Row(
+        children: [
+          const IconChip(icon: Icons.person_outline, size: 34, radius: 10),
+          const SizedBox(width: 11),
+          Expanded(child: Text(saleReturn.customerName, style: ui(size: 13, weight: FontWeight.w700, color: p.ink))),
+          Text(saleReturn.customerMobile, style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary)),
+        ],
+      );
+
+  Widget _itemLines(AstraPalette p) {
+    final lines = saleReturn.lines;
+    return Column(
+      children: [
+        for (int i = 0; i < lines.length; i++) ...[
+          _lineRow(p, lines[i]),
+          if (i != lines.length - 1) Container(height: 1, color: p.hairline),
+        ],
+      ],
+    );
+  }
+
+  Widget _summaryLines(AstraPalette p) => Column(
+        children: [
+          _sumRow(p, 'Subtotal', Money.of(saleReturn.grossAmount), p.textSecondary),
+          if (saleReturn.discount > 0) _sumRow(p, 'Discount', '− ${Money.of(saleReturn.discount)}', p.goldText),
+          if (saleReturn.taxAmount > 0) _sumRow(p, 'Tax', Money.of(saleReturn.taxAmount), p.textSecondary),
+          Padding(padding: const EdgeInsets.only(top: 8), child: DottedDivider(color: p.hairline)),
+          const SizedBox(height: 12),
+          if (_balance > 0.5) ...[
+            _sumRow(p, 'Refunded', Money.of(_refunded), p.textSecondary),
+            const SizedBox(height: 4),
+            _totalRow(p, 'Refund Due', _balance, p.warnText),
+          ] else
+            _totalRow(p, 'Total Refunded', _refunded, p.primaryDark),
+        ],
+      );
+
+  Widget _paymentLines(AstraPalette p) {
+    final rows = <Widget>[];
+    if (saleReturn.payments.isNotEmpty) {
+      for (int i = 0; i < saleReturn.payments.length; i++) {
+        final pay = saleReturn.payments[i];
+        rows.add(_payRow(p, pay.method, Money.of(pay.amount)));
+        if (i != saleReturn.payments.length - 1) rows.add(Container(height: 1, color: p.hairline));
+      }
+    } else {
+      rows.add(_payRow(p, _fullyRefunded ? 'Refunded' : 'Pending', Money.of(saleReturn.paid)));
+    }
+    return Column(children: rows);
+  }
+
   // ---- Header --------------------------------------------------------------
 
   Widget _header(BuildContext context, AstraPalette p) {
@@ -115,7 +248,22 @@ class ReturnReceiptScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 18, 4),
       child: Row(
         children: [
-          if (context.canPop()) ...[
+          if (onClose != null) ...[
+            GestureDetector(
+              onTap: onClose,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: p.card,
+                  borderRadius: BorderRadius.circular(11),
+                  boxShadow: context.astraTheme.softShadow,
+                ),
+                child: Icon(Icons.close_rounded, size: 17, color: p.ink),
+              ),
+            ),
+            const SizedBox(width: 11),
+          ] else if (context.canPop()) ...[
             GestureDetector(
               onTap: () => context.pop(),
               child: Container(

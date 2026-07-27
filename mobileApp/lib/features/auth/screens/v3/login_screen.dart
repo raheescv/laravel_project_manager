@@ -50,7 +50,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   Future<void> _submit() async {
     final auth = context.read<AuthCubit>();
-    final ok = await auth.login(_pin);
+    // Locked till: the cashier who locked it is matched locally and comes
+    // straight back in. Anyone else falls through to a real login inside
+    // `unlock`, so taking over the terminal still just works.
+    final ok = auth.isLocked ? await auth.unlock(_pin) : await auth.login(_pin);
     if (!ok && mounted) {
       HapticFeedback.heavyImpact();
       _shake.forward(from: 0);
@@ -59,6 +62,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ..clearSnackBars()
         ..showSnackBar(SnackBar(content: Text(auth.error ?? 'Login failed')));
     }
+  }
+
+  /// First name of whoever locked the till — enough to confirm whose session is
+  /// waiting, without putting the full record on a counter-facing screen.
+  String _firstName(AuthCubit auth) {
+    final name = (auth.user?.name ?? '').trim();
+    if (name.isEmpty) return 'This till';
+    return name.split(RegExp(r'\s+')).first;
   }
 
   void _tap(String d) {
@@ -77,6 +88,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final p = context.astra;
     final auth = context.watch<AuthCubit>();
+    // Locked = a live session waiting behind the lock screen, not a signed-out
+    // device. Same screen, because it's the same keypad and the same shake —
+    // only the wording and where the PIN is checked differ.
+    final locked = auth.isLocked;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -140,9 +155,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     Text('Astra POS',
                         style: ui(size: 9, weight: FontWeight.w700, color: Colors.white54, letterSpacing: 4)),
                     const SizedBox(height: 12),
-                    Text('Welcome back', style: serif(size: 29, color: Colors.white)),
+                    Text(locked ? 'Locked' : 'Welcome back',
+                        style: serif(size: 29, color: Colors.white)),
                     const SizedBox(height: 4),
-                    Text(_mode == 'pin' ? 'Enter your MPIN to continue' : 'Sign in with your username & password',
+                    Text(
+                        locked
+                            ? '${_firstName(auth)} · enter your MPIN to carry on'
+                            : _mode == 'pin'
+                                ? 'Enter your MPIN to continue'
+                                : 'Sign in with your username & password',
                         style: ui(size: 12.5, weight: FontWeight.w500, color: Colors.white70)),
                     const SizedBox(height: 22),
                     if (_mode == 'pin') ...[
@@ -165,6 +186,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     ],
                     const SizedBox(height: 16),
                     _footerToggle(p.accent),
+                    // Ending the session is the slow path, so it stays a
+                    // deliberate choice rather than something a sale does.
+                    if (locked)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: GestureDetector(
+                          onTap: () => context.read<AuthCubit>().logout(),
+                          child: Text('Sign out completely',
+                              style: ui(size: 11.5, weight: FontWeight.w700, color: Colors.white60)),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -431,7 +463,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   Future<void> _biometric() async {
     final auth = context.read<AuthCubit>();
-    final msg = await auth.loginWithBiometric();
+    // Locked: the local prompt is the whole check, so this never touches the API.
+    final msg = await auth.unlockWithBiometric();
     if (msg != null && mounted) _toast(msg);
     // Refresh readiness in case a fresh credential was just stored elsewhere.
     if (mounted) {

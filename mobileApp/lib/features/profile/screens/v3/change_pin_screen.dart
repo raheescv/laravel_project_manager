@@ -8,11 +8,22 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 /// Wired to POST /change-pin. The backend auth is PIN-based, so this is the
 /// real "Change Password" equivalent from the design.
+///
+/// On a tablet this normally runs *embedded* in the Profile screen's detail
+/// pane, so changing a PIN never takes the window away from the profile; the
+/// route stays for phones and deep links.
 class ChangePinScreen extends StatefulWidget {
-  const ChangePinScreen({super.key});
+  const ChangePinScreen({super.key, this.embedded = false, this.onDone});
+
+  /// Render only the form body — the host supplies the pane and its head.
+  final bool embedded;
+
+  /// Where "done" goes when there is no route to pop. Ignored unless [embedded].
+  final VoidCallback? onDone;
   @override
   State<ChangePinScreen> createState() => _ChangePinScreenState();
 }
@@ -45,7 +56,7 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
       await serviceLocator<AuthRepository>().changePin(_current.text, _next.text);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN updated')));
-        context.pop();
+        _close();
       }
     } on ApiException catch (e) {
       _snack(e.message);
@@ -59,9 +70,48 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
     ..clearSnackBars()
     ..showSnackBar(SnackBar(content: Text(m)));
 
+  /// Leave the form: hand back to the host when embedded (no route to pop —
+  /// the detail pane just switches), otherwise pop the route.
+  void _close() {
+    if (widget.embedded) {
+      widget.onDone?.call();
+      return;
+    }
+    context.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
+
+    if (widget.embedded) return _tabletBody(context);
+
+    if (context.isTablet) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AstraBackground(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                TabletPageHead(
+                  title: 'Change MPIN',
+                  subtitle: 'Your 4–6 digit login PIN',
+                  leading: TabletIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+                    child: MaxWidthBox(maxWidth: 620, child: _tabletBody(context)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: AstraBackground(
         child: Column(
@@ -112,7 +162,7 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                 child: Row(
                   children: [
-                    AstraButton(label: 'Cancel', expand: false, gold: false, onTap: () => context.pop()),
+                    AstraButton(label: 'Cancel', expand: false, gold: false, onTap: _close),
                     const SizedBox(width: 11),
                     Expanded(child: AstraButton(label: 'Update PIN', busy: _busy, onTap: _save)),
                   ],
@@ -123,6 +173,62 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// The tablet form — identical embedded in the profile pane or standalone.
+  Widget _tabletBody(BuildContext context) {
+    final p = context.astra;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: p.tint,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: p.primary.withValues(alpha: 0.18)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.shield_outlined, size: 17, color: p.primary),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Text('Choose a 4–6 digit PIN you don’t use elsewhere.',
+                    style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary, height: 1.35)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        TabletPanel(
+          title: 'MPIN',
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          child: Column(
+            children: [
+              _pinField('Current PIN', _current),
+              const SizedBox(height: 14),
+              _pinField('New PIN', _next),
+              const SizedBox(height: 14),
+              _pinField('Confirm new PIN', _confirm),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TabletActionButton(label: 'Cancel', onTap: _busy ? null : _close),
+            const SizedBox(width: 10),
+            TabletActionButton(
+              label: _busy ? 'Updating…' : 'Update PIN',
+              icon: Icons.check,
+              primary: true,
+              onTap: _busy ? null : _save,
+            ),
+          ],
+        ),
+      ],
     );
   }
 

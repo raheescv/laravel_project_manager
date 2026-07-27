@@ -12,7 +12,11 @@ import 'package:local_auth/local_auth.dart';
 
 import '../../domain/repository/auth_repository.dart';
 
-enum AuthStatus { unknown, signedOut, signedIn }
+/// [locked] is a live session behind the lock screen: the token, the cached
+/// user and every warm cubit are still there, so coming back is a local PIN
+/// check rather than a fresh sign-in. Everything outside this file treats it
+/// as "not signed in", which is what keeps the router honest.
+enum AuthStatus { unknown, signedOut, locked, signedIn }
 
 /// Owns the session: PIN login, token, current user, and connection config.
 class AuthCubit extends HolderCubit {
@@ -47,7 +51,9 @@ class AuthCubit extends HolderCubit {
     if (token != null && cached != null) {
       try {
         user = ApiUser.fromJson(Map<String, dynamic>.from(jsonDecode(cached)));
-        status = AuthStatus.signedIn;
+        // A till locked when the app was last closed comes back locked —
+        // otherwise force-quitting would be a way around the lock screen.
+        status = _storage.authLocked ? AuthStatus.locked : AuthStatus.signedIn;
       } catch (_) {
         status = AuthStatus.signedOut;
       }
@@ -86,6 +92,7 @@ class AuthCubit extends HolderCubit {
       await _storage.writeToken(res.token);
       await _storage.setUserJson(jsonEncode(res.user.toJson()));
       await _storage.writeBiometric(jsonEncode(biometric));
+      await _storage.setAuthLocked(false);
       user = res.user;
       status = AuthStatus.signedIn;
       busy = false;
@@ -104,6 +111,61 @@ class AuthCubit extends HolderCubit {
     busy = false;
     refresh();
     return false;
+  }
+
+  // ---- Terminal lock ----
+  //
+  // A shared till hands over between cashiers constantly, so the handover has
+  // to be cheap. Signing out and back in is not: it costs a login round-trip
+  // plus everything that hangs off `onAuthenticated` — the branch default, and
+  // through it a full catalog refetch. Locking keeps the session and every warm
+  // cubit exactly where they are, so the only work an unlock does is comparing
+  // a PIN in memory.
+
+  bool get isLocked => status == AuthStatus.locked;
+
+  /// Locks the till without ending the session. Falls back to a real sign-out
+  /// if there's somehow no session to come back to.
+  Future<void> lock() async {
+    if (user == null) return logout();
+    status = AuthStatus.locked;
+    error = null;
+    refresh();
+    await _storage.setAuthLocked(true);
+  }
+
+  /// Unlocks with [pin]. The cashier who locked the till is matched locally
+  /// against the credential already kept for biometric sign-in — no API call,
+  /// no re-bootstrap, no catalog refetch.
+  ///
+  /// Anything the fast path doesn't recognise falls through to a normal login:
+  /// a different cashier taking over the till, or a PIN changed on the web
+  /// since this session started. So the slow path still always works, and it
+  /// only costs a round-trip when the fast one genuinely can't answer.
+  Future<bool> unlock(String pin) async {
+    if (await _matchesCachedPin(pin)) {
+      status = AuthStatus.signedIn;
+      error = null;
+      refresh();
+      await _storage.setAuthLocked(false);
+      return true;
+    }
+    return login(pin);
+  }
+
+  /// Whether [pin] is the one this session signed in with. Compared against
+  /// the secure-storage credential written by [_runLogin] — the same blob the
+  /// biometric shortcut already relies on, so this stores no new secret.
+  Future<bool> _matchesCachedPin(String pin) async {
+    if (user == null || pin.isEmpty) return false;
+    try {
+      final saved = await _storage.readBiometric();
+      if (saved == null) return false;
+      final cred = Map<String, dynamic>.from(jsonDecode(saved));
+      return cred['mode'] == 'pin' && cred['pin'].toString() == pin;
+    } catch (_) {
+      return false;
+    }
   }
 
   // ---- Biometric (Touch ID / Face ID / fingerprint) ----
@@ -128,6 +190,30 @@ class AuthCubit extends HolderCubit {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Biometric unlock. The session is still alive, so a successful local prompt
+  /// is the whole check — nothing to re-authenticate against the server. Falls
+  /// back to a full biometric *login* when there's no live session (e.g. after
+  /// a real sign-out).
+  Future<String?> unlockWithBiometric() async {
+    if (!isLocked || user == null) return loginWithBiometric();
+    bool ok;
+    try {
+      ok = await _localAuth.authenticate(
+        localizedReason: 'Authenticate to unlock Invo',
+        options: const AuthenticationOptions(
+            biometricOnly: false, stickyAuth: true),
+      );
+    } catch (_) {
+      return 'Biometric authentication is unavailable on this device.';
+    }
+    if (!ok) return null; // cancelled — no error toast
+    status = AuthStatus.signedIn;
+    error = null;
+    refresh();
+    await _storage.setAuthLocked(false);
+    return null;
   }
 
   Future<String?> loginWithBiometric() async {
@@ -201,6 +287,7 @@ class AuthCubit extends HolderCubit {
   Future<void> _clear() async {
     await _storage.clearToken();
     await _storage.clearUser();
+    await _storage.setAuthLocked(false);
     user = null;
     status = AuthStatus.signedOut;
     refresh();

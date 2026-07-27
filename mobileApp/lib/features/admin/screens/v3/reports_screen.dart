@@ -13,6 +13,7 @@ import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -23,6 +24,11 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   final _scrollCtl = ScrollController();
   StreamSubscription<int>? _branchSub;
+
+  /// The two reports this page holds: 0 = Sales Overview (performance,
+  /// payments, per-day trend), 1 = Breakdown (By Item / By Stylist ranking).
+  /// The date range is shared, so it stays on top of both.
+  int _tab = 0;
 
   @override
   void initState() {
@@ -53,8 +59,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
     super.dispose();
   }
 
+  /// Switch report. The two reports have unrelated lengths, so the shared
+  /// scroll position is reset instead of carrying over.
+  void _setTab(int i) {
+    if (_tab == i) return;
+    setState(() => _tab = i);
+    if (_scrollCtl.hasClients) _scrollCtl.jumpTo(0);
+  }
+
   /// Infinite scroll: pull the next page of the breakdown once near the bottom.
+  /// Only the breakdown report paginates.
   void _onScroll() {
+    if (_tab != 1) return;
     if (!context.read<AuthCubit>().hasPermission(PermissionSlug.report)) return;
     if (!_scrollCtl.hasClients) return;
     final pos = _scrollCtl.position;
@@ -68,6 +84,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final admin = context.watch<AdminCubit>();
     final canView = context.read<AuthCubit>().hasPermission(PermissionSlug.report);
 
+    // Tablet has no header band — the page head carries the title and the range
+    // controls in one toolbar row (the preview's `.pagehead`).
+    if (context.isTablet) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AstraBackground(
+          child: SafeArea(
+            bottom: false,
+            child: canView
+                ? Column(
+                    children: [
+                      _reportsPageHead(admin),
+                      Expanded(child: MaxWidthBox(maxWidth: 1120, child: _tabletReports(admin))),
+                    ],
+                  )
+                : _restricted(),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
@@ -90,31 +126,152 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     // null sections (e.g. the trend on a single-day range) drop out
                     // entirely so they don't leave an empty gap.
                     for (final section in <Widget?>[
+                      _reportTabs(),
                       _dateFilter(admin),
-                      _salesPerformance(admin),
-                      _paymentOverview(admin),
-                      _byDay(admin),
-                      _breakdownCard(admin),
+                      ..._tabSections(admin),
                     ])
                       if (section != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: section),
                   ],
                 ),
               )
-                  : const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: EmptyState(
-                          icon: Icons.lock_outline,
-                          title: 'Reports restricted',
-                          message: "You don't have permission to view sales reports. "
-                              'Ask an administrator to grant access.',
-                        ),
-                      ),
-                    ),
+                  : _restricted(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Sections of the currently selected report (the date range is rendered
+  /// separately, above the switcher's output, since both reports share it).
+  List<Widget?> _tabSections(AdminCubit admin) => _tab == 0
+      ? [_salesPerformance(admin), _paymentOverview(admin), _byDay(admin)]
+      : [_breakdownCard(admin)];
+
+  /// Report switcher — picks which of the two reports the page shows.
+  Widget _reportTabs() {
+    final p = context.astra;
+    Widget tab(String label, int index, IconData icon) {
+      final active = _tab == index;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => _setTab(index),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: active ? p.primaryGradient : null,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: active ? context.astraTheme.floatShadow(p.primary) : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 15, color: active ? Colors.white : p.textSecondary),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 12.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(15)),
+      child: Row(children: [
+        tab('Overview', 0, Icons.insights_rounded),
+        tab('Breakdown', 1, Icons.leaderboard_rounded),
+      ]),
+    );
+  }
+
+  Widget _restricted() => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: EmptyState(
+            icon: Icons.lock_outline,
+            title: 'Reports restricted',
+            message: "You don't have permission to view sales reports. "
+                'Ask an administrator to grant access.',
+          ),
+        ),
+      );
+
+  /// Tablet page head — the title plus the whole range control in one toolbar
+  /// row, replacing both the header band and the phone's stacked filter card.
+  Widget _reportsPageHead(AdminCubit admin) {
+    final p = context.astra;
+    final custom = admin.rangePreset == 'custom';
+    const presets = [('Today', 'today'), ('7 Days', '7d'), ('30 Days', '30d'), ('Month', 'month')];
+    return TabletPageHead(
+      title: 'Reports',
+      subtitle: Dates.range(admin.startDate, admin.endDate),
+      actions: [
+        for (final (label, id) in presets)
+          TabletFilterChip(label: label, active: admin.rangePreset == id, onTap: () => admin.setPreset(id)),
+        GestureDetector(
+          onTap: () => _pickCustom(admin),
+          child: Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: custom ? p.accentGradient : null,
+              color: custom ? null : p.tint,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(Icons.edit_calendar, size: 17, color: custom ? p.primaryDark : p.primary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Tablet: the date filter spans the top as a toolbar (the page head); the
+  /// switcher picks the report and the Overview's sections split into two
+  /// columns to use the width. The split only kicks in once each column would
+  /// still be at least phone-width — on a small tablet in portrait two columns
+  /// would squeeze every chart and donut, so those stack instead. The Breakdown
+  /// report is a single ranked table, so it stays one column.
+  Widget _tabletReports(AdminCubit admin) {
+    Widget col(List<Widget?> items) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final s in items)
+              if (s != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: s),
+          ],
+        );
+    final left = <Widget?>[_salesPerformance(admin)];
+    final right = <Widget?>[_paymentOverview(admin), _byDay(admin)];
+    return ListView(
+      controller: _scrollCtl,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+      children: [
+        Padding(padding: const EdgeInsets.only(bottom: 14), child: _reportTabs()),
+        if (_tab == 1)
+          col([_breakdownCard(admin)])
+        else
+          LayoutBuilder(
+            builder: (ctx, c) {
+              if (c.maxWidth < 820) return col([...left, ...right]);
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: col(left)),
+                  const SizedBox(width: 16),
+                  Expanded(child: col(right)),
+                ],
+              );
+            },
+          ),
+      ],
     );
   }
 
@@ -345,16 +502,39 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _finTile(Icons.shopping_cart_rounded, 'Products', s.productSale, const [Color(0xFF06B6D4), Color(0xFF0E7490)]),
       _finTile(Icons.star_rounded, 'Services', s.serviceSale, const [Color(0xFF8B5CF6), Color(0xFF6D28D9)]),
     ];
-    return GridView.count(
-      crossAxisCount: context.isTablet ? 3 : 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 9,
-      crossAxisSpacing: 9,
+    const spacing = 9.0;
+    if (!context.isTablet) {
       // Phone tiles were borderline-short for the label+value at 1× and could
       // clip once text-scale grows; a little more height gives headroom.
-      childAspectRatio: context.isTablet ? 3.3 : 2.3,
-      children: tiles,
+      return GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
+        childAspectRatio: 2.3,
+        children: tiles,
+      );
+    }
+    // Tablet: derive the ratio from the ACTUAL tile width rather than a fixed
+    // value — in the two-column report layout this card is only ~half width, so
+    // a blanket 3.3 made tiles too short and they overflowed. Sizing to a target
+    // pixel height keeps them fitted whether the card is full or half width.
+    return LayoutBuilder(
+      builder: (ctx, c) {
+        const cols = 3;
+        final tileW = (c.maxWidth - spacing * (cols - 1)) / cols;
+        // Enough height for the icon + label + value at 1× with text-scale headroom.
+        return GridView.count(
+          crossAxisCount: cols,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          childAspectRatio: tileW / 58,
+          children: tiles,
+        );
+      },
     );
   }
 

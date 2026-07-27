@@ -12,6 +12,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/stock_check_models.dart';
 import '../../domain/repository/stock_check_repository.dart';
@@ -357,21 +358,52 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
       body: AstraBackground(
         child: Column(
           children: [
-            _hero(),
+            // Tablet swaps the gradient hero for a page-head toolbar — the
+            // counted/variance recap it carries is already docked in the side
+            // panel, so on a tablet the hero was only repeating itself.
+            if (context.isTablet) SafeArea(bottom: false, child: _tabletPageHead()) else _hero(),
             Expanded(
               child: MaxWidthBox(
-                maxWidth: 720,
-                child: Stack(
-                  children: [
-                    _list(),
-                    Positioned(left: 0, right: 0, bottom: 0, child: _dock()),
-                  ],
-                ),
+                maxWidth: context.isTablet ? 1120 : 720,
+                // Tablet: the item grid sits on the left with a persistent
+                // progress + Scan/Save panel docked on the right. Phones keep the
+                // overlay dock floating above the list.
+                child: context.isTablet
+                    ? LayoutBuilder(
+                        builder: (ctx, c) => Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: _list()),
+                            _sidePanel(TabletMetrics.forWidth(c.maxWidth).sidePanel),
+                          ],
+                        ),
+                      )
+                    : Stack(
+                        children: [
+                          _list(),
+                          Positioned(left: 0, right: 0, bottom: 0, child: _dock()),
+                        ],
+                      ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Tablet head — identity and back only; progress lives in the side panel.
+  Widget _tabletPageHead() {
+    final s = _stats;
+    return TabletPageHead(
+      leading: context.canPop()
+          ? TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop())
+          : null,
+      title: s.title,
+      subtitle: 'STOCK CHECK · #${s.id}',
+      actions: [
+        TabletActionButton(label: 'Scan', icon: Icons.qr_code_scanner, onTap: _openScan),
+      ],
     );
   }
 
@@ -486,7 +518,9 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
       },
       child: ListView(
         controller: _scrollCtl,
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 150),
+        // On tablet the Scan/Save actions live in the side panel, so the list
+        // doesn't need the tall bottom gap the phone's overlay dock requires.
+        padding: EdgeInsets.fromLTRB(14, 14, 14, context.isTablet ? 24 : 150),
         children: [
           _searchBox(),
           const SizedBox(height: 12),
@@ -499,7 +533,25 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
           else if (_items.isEmpty)
             EmptyState(icon: Icons.inventory_2_outlined, title: 'No items', message: 'No items match this filter or search.')
           else ...[
-            for (final it in _items) Padding(padding: const EdgeInsets.only(bottom: 10), child: _itemCard(it)),
+            // Tablet: count tiles auto-fill by width (the preview's
+            // `repeat(auto-fill, minmax(…))`), so an 11" portrait gets two
+            // columns and a 13" landscape three or four — never a stretched row.
+            if (context.isTablet)
+              LayoutBuilder(
+                builder: (ctx, c) {
+                  const gap = 12.0;
+                  const minTile = 300.0;
+                  final cols = ((c.maxWidth + gap) / (minTile + gap)).floor().clamp(1, 4);
+                  final colW = (c.maxWidth - gap * (cols - 1)) / cols;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: [for (final it in _items) SizedBox(width: colW, child: _itemCard(it))],
+                  );
+                },
+              )
+            else
+              for (final it in _items) Padding(padding: const EdgeInsets.only(bottom: 10), child: _itemCard(it)),
             if (_loadingMore)
               const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4)))),
           ],
@@ -720,6 +772,105 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
         const SizedBox(width: 9),
         btn(Icons.add, p.primary, Colors.white, () => _adjust(it, 1)),
       ],
+    );
+  }
+
+  // ---- tablet side panel (progress recap + persistent Scan / Save) ----
+
+  Widget _sidePanel(double width) {
+    final p = context.astra;
+    final s = _stats;
+    final pct = (s.progress * 100).round();
+    final net = s.netDifference;
+    final netColor = net < 0 ? AstraPalette.danger : (net > 0 ? p.primary : p.textSecondary);
+    Widget stat(String label, String value, Color color) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label.toUpperCase(), style: ui(size: 8.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
+            const SizedBox(height: 2),
+            Text(value, style: serif(size: 18, color: color)),
+          ],
+        );
+    return TabletPane(
+      width: width,
+      edge: PaneEdge.left,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 2, bottom: 10),
+              child: SectionLabel('Progress'),
+            ),
+            AstraCard(
+              radius: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      RichText(
+                        text: TextSpan(children: [
+                          TextSpan(text: '${s.itemsCounted}', style: serif(size: 26, color: p.ink)),
+                          TextSpan(text: ' / ${s.itemsTotal}', style: serif(size: 15, color: p.textMuted)),
+                        ]),
+                      ),
+                      Text('$pct%', style: ui(size: 12, weight: FontWeight.w800, color: p.primary)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: s.progress.clamp(0, 1),
+                      minHeight: 8,
+                      backgroundColor: p.tint,
+                      valueColor: AlwaysStoppedAnimation(p.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(child: stat('Counted', '${s.itemsCounted}', p.ink)),
+                      Expanded(child: stat('Variances', '${s.varianceCount}', p.ink)),
+                      Expanded(child: stat('Net diff', net == 0 ? '0' : '${net > 0 ? '+' : ''}${qtyLabel(net)}', netColor)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            if (_dirty.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text('${_dirty.length} unsaved change${_dirty.length == 1 ? '' : 's'}',
+                    style: ui(size: 11, weight: FontWeight.w800, color: p.warnText)),
+              ),
+            GestureDetector(
+              onTap: _openScan,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(gradient: p.accentGradient, borderRadius: BorderRadius.circular(15), boxShadow: context.astraTheme.floatShadow(p.accent)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.qr_code_scanner, size: 17, color: p.primaryDark),
+                    const SizedBox(width: 8),
+                    Text('Scan', style: ui(size: 14, weight: FontWeight.w800, color: p.primaryDark)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            AstraButton(label: 'Save count', icon: Icons.check_rounded, busy: _saving, onTap: _save),
+          ],
+        ),
+      ),
     );
   }
 

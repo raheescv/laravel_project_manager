@@ -11,6 +11,7 @@ import 'package:invo/features/sale_return/domain/repository/sale_return_reposito
 import 'package:invo/features/sale_return/domain/services/sale_return_service.dart';
 import 'package:invo/features/stock_check/domain/repository/stock_check_repository.dart';
 import 'package:invo/features/stock_check/domain/services/stock_check_service.dart';
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
@@ -53,5 +54,6 @@ Future<void> setUpServiceLocator() async {
           userBranchId:
               int.tryParse(serviceLocator<AuthCubit>().user?.branchId ?? ''),
         ))
-    ..registerLazySingleton<PrintSettingsCubit>(PrintSettingsCubit.new);
+    ..registerLazySingleton<PrintSettingsCubit>(PrintSettingsCubit.new)
+    ..registerLazySingleton<PosSettingsCubit>(PosSettingsCubit.new);
 }

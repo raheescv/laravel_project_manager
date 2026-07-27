@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/domain/helpers/responsive.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
@@ -87,7 +89,10 @@ class AstraDrawer extends StatelessWidget {
                             icon: Icons.schedule,
                             label: 'Day Session',
                             subtitle: 'Open / close the branch day',
-                            onTap: () => _toRoute(context, '/day-session')),
+                            active: context.isTablet && activeTab == kDaySessionTab,
+                            onTap: () => context.isTablet
+                                ? _toTab(context, kDaySessionTab)
+                                : _toRoute(context, '/day-session')),
                       _section(p, 'SALES'),
                       _item(context, p,
                           icon: Icons.add,
@@ -104,20 +109,32 @@ class AstraDrawer extends StatelessWidget {
                             icon: Icons.assignment_return_outlined,
                             label: 'Sales Returns',
                             subtitle: 'Returns list · new return',
-                            onTap: () => _toRoute(context, '/sales-returns')),
+                            active: context.isTablet && activeTab == kReturnsTab,
+                            onTap: () => context.isTablet
+                                ? _toTab(context, kReturnsTab)
+                                : _toRoute(context, '/sales-returns')),
                       if (auth.hasPermission(PermissionSlug.stockCheck)) ...[
                         _section(p, 'INVENTORY'),
                         _item(context, p,
                             icon: Icons.fact_check_outlined,
                             label: 'Stock Check',
                             subtitle: 'Count physical stock & reconcile',
-                            onTap: () => _toRoute(context, '/stock-check')),
+                            // Tablet: a shell destination like the tab items, so
+                            // the drawer, the rail and the dashboard tile all
+                            // land in the same place. Phone: a pushed route.
+                            active: context.isTablet && activeTab == kStockCheckTab,
+                            onTap: () => context.isTablet
+                                ? _toTab(context, kStockCheckTab)
+                                : _toRoute(context, '/stock-check')),
                       ],
                       _section(p, 'ACCOUNT'),
                       _item(context, p,
                           icon: Icons.person_outline,
                           label: 'Profile',
-                          onTap: () => _toRoute(context, '/profile')),
+                          active: context.isTablet && activeTab == kProfileTab,
+                          onTap: () => context.isTablet
+                              ? _toTab(context, kProfileTab)
+                              : _toRoute(context, '/profile')),
                       _item(context, p,
                           icon: Icons.print_outlined,
                           label: 'Print Settings',

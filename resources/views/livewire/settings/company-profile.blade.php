@@ -18,10 +18,29 @@
                     {{ html()->input('mobile')->value('')->class('form-control form-control-sm')->placeholder('Enter your company contact number')->attribute('wire:model', 'mobile') }}
                 </div>
                 <div class="col-12 col-md-4">
+                    <label class="form-label fw-medium small mb-1" for="email">
+                        <i class="fa fa-envelope me-1"></i>Email
+                    </label>
+                    {{ html()->input('email', 'email')->value('')->class('form-control form-control-sm')->placeholder('Enter your company email')->attribute('wire:model', 'email') }}
+                    @error('email')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="col-12 col-md-4">
                     <label class="form-label fw-medium small mb-1" for="gst">
                         <i class="fa fa-receipt me-1"></i>GST Number
                     </label>
                     {{ html()->input('gst_no')->value('')->class('form-control form-control-sm')->placeholder('Enter your GST number')->attribute('wire:model', 'gst_no') }}
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-medium small mb-1" for="google_review_url">
+                        <i class="fa fa-star me-1"></i>Google Review Link
+                    </label>
+                    {{ html()->input('google_review_url')->value('')->class('form-control form-control-sm')->placeholder('https://g.page/r/xxxxxxxx/review')->attribute('wire:model', 'google_review_url') }}
+                    <div class="form-text small">Customers are sent here when asked to rate you.</div>
+                    @error('google_review_url')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="col-12 col-md-12">
                     <label class="form-label fw-medium small mb-1" for="company_name">

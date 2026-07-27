@@ -43,6 +43,15 @@ post_install do |installer|
       # Keep every pod at the app's minimum so the scanner pod links cleanly.
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
 
+      # Silence compiler warnings from third-party plugin pods (e.g. mobile_scanner's
+      # deprecated AVCaptureDevice.devices(for:) call and the objc_ownership warning in
+      # its generated Swift header). Their sources live in ~/.pub-cache, so they are not
+      # ours to fix and only add noise to every build. `inhibit_all_warnings!` in the
+      # target block does NOT cover these: CocoaPods skips path-based ("development")
+      # pods, which is what every Flutter plugin is.
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+      config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+
       # permission_handler: compile ONLY the camera permission (the scanner is the
       # only OS permission the app requests). Defining any PERMISSION_* macro makes
       # permission_handler_apple strip every other permission API, so App Store

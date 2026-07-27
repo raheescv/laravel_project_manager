@@ -10,6 +10,7 @@ import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/stock_check_models.dart';
 import '../../domain/repository/stock_check_repository.dart';
@@ -177,11 +178,27 @@ class _NewStockCheckScreenState extends State<NewStockCheckScreen> {
       body: AstraBackground(
         child: Column(
           children: [
-            EmeraldHeader(
-              title: 'New Stock Check',
-              subtitle: 'Snapshot this branch’s stock',
-              leading: HeaderIconButton(icon: Icons.arrow_back_ios_new, onTap: () => context.pop()),
-            ),
+            // Tablet: a page-head toolbar instead of the header band, matching
+            // the rest of the tablet chrome. The form itself stays a capped,
+            // centred column either way.
+            if (context.isTablet)
+              SafeArea(
+                bottom: false,
+                child: TabletPageHead(
+                  leading: context.canPop()
+                      ? TabletIconButton(
+                          icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop())
+                      : null,
+                  title: 'New Stock Check',
+                  subtitle: 'Snapshot this branch’s stock',
+                ),
+              )
+            else
+              EmeraldHeader(
+                title: 'New Stock Check',
+                subtitle: 'Snapshot this branch’s stock',
+                leading: HeaderIconButton(icon: Icons.arrow_back_ios_new, onTap: () => context.pop()),
+              ),
             Expanded(
               child: MaxWidthBox(
                 maxWidth: 620,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
@@ -8,13 +9,15 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/receipt_printer.dart';
 
 /// Thermal-printer configuration. The receipt options (language, footers,
 /// the show-on-receipt toggles, Qty vs Weight label) live in the shared web
 /// Settings → Sale Configuration: they sync down on open, and users holding
 /// `configuration.settings` (the web Settings page gate) can edit them here —
 /// click-and-go, written straight back to the web config. Everyone else sees
-/// them read-only. Only the paper width is a device-local choice.
+/// them read-only. The "This device" block (paper width, auto-print and the
+/// paired printer) is local to the till.
 class PrintSettingsScreen extends StatefulWidget {
   const PrintSettingsScreen({super.key});
 
@@ -23,12 +26,21 @@ class PrintSettingsScreen extends StatefulWidget {
 }
 
 class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
+  /// Whether this platform lets us pick a printer and print to it without a
+  /// dialog. False on Android, whose print framework always shows its own
+  /// sheet — auto-print there still saves the preview screen, but not the tap.
+  bool _canPair = false;
+  bool _testing = false;
+
   @override
   void initState() {
     super.initState();
     // Pull the latest web configuration so changes made in Settings → Sale
     // Configuration show up immediately; offline keeps the cached values.
     context.read<PrintSettingsCubit>().syncFromServer();
+    canDirectPrint().then((v) {
+      if (mounted) setState(() => _canPair = v);
+    });
   }
 
   /// Awaits a cubit save and toasts when it was rolled back (offline / server
@@ -64,7 +76,9 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                   children: [
-                    SectionLabel('Paper width'),
+                    SectionLabel('This device'),
+                    const SizedBox(height: 8),
+                    _label(context, 'Paper width'),
                     const SizedBox(height: 8),
                     _segment<PaperWidth>(
                       context,
@@ -73,6 +87,33 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
                       labelOf: (w) => w.label,
                       onSelect: (w) => context.read<PrintSettingsCubit>().setWidth(w),
                     ),
+                    const SizedBox(height: 14),
+                    _flagRow(context,
+                        icon: Icons.bolt_outlined,
+                        title: 'Auto-print after charge',
+                        subtitle: 'Print the receipt the moment a sale is charged',
+                        value: c.autoPrint,
+                        onChanged: (v) => context.read<PrintSettingsCubit>().setAutoPrint(v)),
+                    if (c.autoPrint) ...[
+                      const SizedBox(height: 9),
+                      _printerRow(context, c),
+                      const SizedBox(height: 9),
+                      _testPrintRow(context, c),
+                      const SizedBox(height: 9),
+                      _flagRow(context,
+                          icon: Icons.replay_outlined,
+                          title: 'Back to New Sale',
+                          subtitle: c.hasPrinter
+                              ? 'Skip the invoice screen once the receipt prints'
+                              : 'Choose a printer first',
+                          value: c.skipInvoice,
+                          // Only meaningful when the receipt actually prints on
+                          // its own — with the system dialog in the way there is
+                          // no silent print to skip ahead from.
+                          onChanged: c.hasPrinter
+                              ? (v) => context.read<PrintSettingsCubit>().setSkipInvoice(v)
+                              : null),
+                    ],
                     const SizedBox(height: 20),
                     SectionLabel('Receipt options'),
                     Padding(
@@ -196,6 +237,75 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
   }
 
   Widget _label(BuildContext context, String text) => SectionLabel(text);
+
+  /// The printer this till is paired with. Tapping opens the platform picker;
+  /// the trailing ✕ un-pairs. On a platform that can't pair (Android) the row
+  /// explains that the system print dialog handles the choice instead.
+  Widget _printerRow(BuildContext context, PrintSettingsCubit c) {
+    final p = context.astra;
+    final paired = c.hasPrinter;
+    return _row(
+      context,
+      icon: Icons.print_outlined,
+      title: 'Printer',
+      subtitle: !_canPair
+          ? 'This device prints through the system print dialog'
+          : paired
+              ? c.printerName!
+              : 'Tap to choose the printer at this till',
+      onTap: _canPair ? () => _pickPrinter(context, c) : null,
+      trailing: paired
+          ? GestureDetector(
+              onTap: () => c.setPrinter(null, null),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Icon(Icons.close_rounded, size: 17, color: p.textMuted),
+              ),
+            )
+          : _pill(context, _canPair ? 'Choose' : 'Dialog', on: false),
+    );
+  }
+
+  Widget _testPrintRow(BuildContext context, PrintSettingsCubit c) => _row(
+        context,
+        icon: Icons.receipt_long_outlined,
+        title: 'Test print',
+        subtitle: 'Print a sample slip to check the pairing',
+        onTap: _testing ? null : () => _testPrint(c),
+        trailing: _pill(context, _testing ? 'Printing…' : 'Print', on: !_testing),
+      );
+
+  Future<void> _pickPrinter(BuildContext context, PrintSettingsCubit c) async {
+    try {
+      final printer = await Printing.pickPrinter(context: context, title: 'Select printer');
+      if (printer == null) return; // cancelled — keep the current pairing
+      await c.setPrinter(printer.url, printer.name);
+    } catch (_) {
+      if (mounted) _toast('Couldn\'t list printers on this device.');
+    }
+  }
+
+  /// Prints the sample slip down the same path a real receipt takes, so a
+  /// success here means charging a sale will print too.
+  Future<void> _testPrint(PrintSettingsCubit c) async {
+    setState(() => _testing = true);
+    final result = await printTestReceipt(
+      c.snapshot,
+      printerUrl: c.printerUrl,
+      printerName: c.printerName,
+    );
+    if (!mounted) return;
+    setState(() => _testing = false);
+    if (result == ReceiptPrintResult.cancelled) return;
+    _toast(result.ok ? 'Test slip sent to the printer.' : 'Couldn\'t reach the printer.');
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
 
   /// A two/three-way pill selector. Tapping applies instantly.
   Widget _segment<T>(

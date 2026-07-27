@@ -95,6 +95,15 @@ class AppServiceProvider extends ServiceProvider
             Cache::remember('mobile', now()->addYear(), function () {
                 return Configuration::where('key', 'mobile')->value('value');
             });
+            Cache::remember('email', now()->addYear(), function () {
+                return Configuration::where('key', 'email')->value('value');
+            });
+            Cache::remember('company_name', now()->addYear(), function () {
+                return Configuration::where('key', 'company_name')->value('value');
+            });
+            Cache::remember('google_review_url', now()->addYear(), function () {
+                return Configuration::where('key', 'google_review_url')->value('value');
+            });
             Cache::remember('country_id', now()->addYear(), function () {
                 return Configuration::where('key', 'country_id')->value('value');
             });

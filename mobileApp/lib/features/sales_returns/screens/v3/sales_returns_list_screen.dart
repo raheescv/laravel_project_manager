@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
+import 'package:invo/features/sale_return/screens/v3/return_receipt_screen.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
@@ -16,6 +17,7 @@ import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 class SalesReturnListScreen extends StatefulWidget {
   const SalesReturnListScreen({super.key});
@@ -65,6 +67,13 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   String _datePreset = 'today'; // today | 7d | 30d | month | custom
   DateTime? _startDate;
   DateTime? _endDate;
+
+  // Tablet master–detail: the row whose return is shown in the right pane.
+  // Untouched on phones, which keep pushing the /return-receipt route on tap.
+  Map<String, dynamic>? _selectedRow;
+  SaleReturn? _selectedReturn;
+  bool _detailLoading = false;
+  String? _detailError;
 
   @override
   void initState() {
@@ -127,6 +136,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
         _page = res.currentPage;
         _lastPage = res.lastPage;
       });
+      _syncSelection();
     } catch (e) {
       if (mounted && req == _reqId) setState(() => _error = 'Could not load returns.');
     }
@@ -275,23 +285,30 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       backgroundColor: Colors.transparent,
       extendBody: true,
       body: AstraBackground(
-        child: Column(
-          children: [
-            EmeraldHeader(
-              leading: HeaderIconButton(icon: Icons.chevron_left, onTap: _back),
-              title: 'Sales Returns',
-              subtitle: sub,
-              trailing: canCreate
-                  ? HeaderIconButton(icon: Icons.add, gold: true, onTap: () => context.push('/sale-return/pick'))
-                  : null,
-            ),
-            Expanded(child: _body(canCreate)),
-          ],
-        ),
+        // Tablet drops the header band (see the preview): the pane names itself
+        // and carries the back + new-return actions, since this is a pushed
+        // route with no side-rail of its own to navigate from.
+        child: context.isTablet
+            ? SafeArea(bottom: false, child: _tabletBody(canCreate))
+            : Column(
+                children: [
+                  EmeraldHeader(
+                    leading: HeaderIconButton(icon: Icons.chevron_left, onTap: _back),
+                    title: 'Sales Returns',
+                    subtitle: sub,
+                    trailing: canCreate
+                        ? HeaderIconButton(icon: Icons.add, gold: true, onTap: () => context.push('/sale-return/pick'))
+                        : null,
+                  ),
+                  Expanded(child: _body(canCreate)),
+                ],
+              ),
       ),
+      // Tablet routes navigate via the shell side-rail + the header back button,
+      // so the bottom nav + docked FAB are phone-only.
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: canCreate ? AstraNavFab(onTap: () => context.push('/sale-return/pick')) : null,
-      bottomNavigationBar: AstraNavBar(activeIndex: 1, onTap: _onNavTap),
+      floatingActionButton: (canCreate && !context.isTablet) ? AstraNavFab(onTap: () => context.push('/sale-return/pick')) : null,
+      bottomNavigationBar: context.isTablet ? null : AstraNavBar(activeIndex: 1, onTap: _onNavTap),
     );
   }
 
@@ -300,40 +317,293 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       onRefresh: _load,
       child: MaxWidthBox(
         maxWidth: 720,
-        child: ListView(
-          controller: _scrollCtl,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
-          children: [
-            _bento(),
-            _resultLine(),
-            if (_loading)
-              const Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator()))
-            else if (_error != null)
-              EmptyState(icon: Icons.wifi_off, title: 'Returns unavailable', message: _error, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load))
-            else if (_rows.isEmpty)
-              EmptyState(
-                icon: Icons.assignment_return_outlined,
-                title: 'No returns found',
-                message: canCreate
-                    ? 'Try a wider date range, or start a return from a paid invoice.'
-                    : 'Try a wider date range.',
-                action: canCreate
-                    ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push('/sale-return/pick'))
-                    : null,
-              )
-            else ...[
-              for (final r in _rows)
-                Padding(padding: const EdgeInsets.only(bottom: 9), child: _row(r)),
-              if (_loadingMore)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
-                ),
-            ],
-          ],
-        ),
+        child: _list(canCreate, const EdgeInsets.fromLTRB(16, 14, 16, 120)),
       ),
     );
+  }
+
+  /// Tablet: a surfaced master pane (head + flat rows) beside the selected
+  /// return — the same `.listcol` / `.detail` split Sales uses.
+  Widget _tabletBody(bool canCreate) {
+    return LayoutBuilder(
+      builder: (ctx, c) => Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TabletPane(
+            width: TabletMetrics.forWidth(c.maxWidth).listColumn,
+            child: Column(
+              children: [
+                _paneHead(canCreate),
+                Expanded(child: RefreshIndicator(onRefresh: _load, child: _tabletList(canCreate))),
+              ],
+            ),
+          ),
+          Expanded(child: _detailPane()),
+        ],
+      ),
+    );
+  }
+
+  /// The master pane's head: refunded total as the headline, then the bento's
+  /// filters as chips (a control card inside a pane reads as a card-in-a-card).
+  Widget _paneHead(bool canCreate) {
+    const statuses = <(String, String?)>[
+      ('All', null),
+      ('Completed', 'completed'),
+      ('Draft', 'draft'),
+    ];
+    return TabletPaneHead(
+      title: 'Sales Returns',
+      subtitle: _loading && _rows.isEmpty
+          ? 'Loading…'
+          : '${Money.of(_totalPaid)} refunded · $_total return${_total == 1 ? '' : 's'}',
+      leading: context.canPop()
+          ? TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: _back)
+          : null,
+      trailing: canCreate
+          ? TabletActionButton(
+              label: 'New', icon: Icons.add, primary: true, onTap: () => context.push('/sale-return/pick'))
+          : null,
+      children: [
+        const SizedBox(height: 13),
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          children: [
+            for (final (label, status) in statuses)
+              TabletFilterChip(label: label, active: _status == status, onTap: () => _setStatus(status)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          children: [
+            TabletFilterChip(
+                label: _dateLabel,
+                active: false,
+                icon: Icons.event_rounded,
+                trailingIcon: Icons.keyboard_arrow_down_rounded,
+                onTap: _openDateSheet),
+            TabletFilterChip(
+                label: _methodLabel,
+                active: false,
+                icon: Icons.account_balance_wallet_outlined,
+                trailingIcon: Icons.keyboard_arrow_down_rounded,
+                onTap: _openPaymentSheet),
+            TabletFilterChip(
+                label: _sortLabel,
+                active: false,
+                icon: Icons.swap_vert_rounded,
+                trailingIcon: Icons.keyboard_arrow_down_rounded,
+                onTap: _openSort),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _tabletList(bool canCreate) {
+    return ListView(
+      controller: _scrollCtl,
+      padding: const EdgeInsets.only(bottom: 24),
+      children: [
+        if (_loading)
+          const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator()))
+        else if (_error != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
+            child: EmptyState(
+                icon: Icons.wifi_off,
+                title: 'Returns unavailable',
+                message: _error,
+                action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
+          )
+        else if (_rows.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
+            child: EmptyState(
+              icon: Icons.assignment_return_outlined,
+              title: 'No returns found',
+              message: canCreate
+                  ? 'Try a wider date range, or start a return from a paid invoice.'
+                  : 'Try a wider date range.',
+              action: canCreate
+                  ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push('/sale-return/pick'))
+                  : null,
+            ),
+          )
+        else ...[
+          for (final r in _rows) _tabletRow(r),
+          if (_loadingMore)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
+            ),
+        ],
+      ],
+    );
+  }
+
+  /// One flat pane row — reference + refund on the first line, who/when/how and
+  /// the status badge on the second.
+  Widget _tabletRow(Map<String, dynamic> r) {
+    final p = context.astra;
+    final d = _rowData(r);
+    final selected = _selectedRow != null && asStr(_selectedRow!['id']) == asStr(r['id']);
+    final sub = [d.who, if (d.date.isNotEmpty) d.date, if (d.method.isNotEmpty) d.method].join(' · ');
+    return TabletListRow(
+      selected: selected,
+      onTap: () => _selectRow(r),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(d.ref,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+              ),
+              const SizedBox(width: 8),
+              Text('− ${Money.of(d.amount)}', style: serif(size: 15, color: AstraPalette.danger)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
+                child: Text(sub,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+              ),
+              if (d.status.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                StatusPill(label: d.status.toUpperCase(), bg: d.bg, fg: d.fg),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _list(bool canCreate, EdgeInsets padding) {
+    return ListView(
+      controller: _scrollCtl,
+      padding: padding,
+      children: [
+        _bento(),
+        _resultLine(),
+        if (_loading)
+          const Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator()))
+        else if (_error != null)
+          EmptyState(icon: Icons.wifi_off, title: 'Returns unavailable', message: _error, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load))
+        else if (_rows.isEmpty)
+          EmptyState(
+            icon: Icons.assignment_return_outlined,
+            title: 'No returns found',
+            message: canCreate
+                ? 'Try a wider date range, or start a return from a paid invoice.'
+                : 'Try a wider date range.',
+            action: canCreate
+                ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push('/sale-return/pick'))
+                : null,
+          )
+        else ...[
+          for (final r in _rows)
+            Padding(padding: const EdgeInsets.only(bottom: 9), child: _row(r)),
+          if (_loadingMore)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
+            ),
+        ],
+      ],
+    );
+  }
+
+  /// Tablet detail pane — the selected return, embedded (its close button clears
+  /// the selection).
+  Widget _detailPane() {
+    if (_selectedRow == null) {
+      return const EmptyState(
+        icon: Icons.assignment_return_outlined,
+        title: 'No return selected',
+        message: 'Pick a return from the list to see its details here.',
+      );
+    }
+    if (_detailLoading) return const Center(child: CircularProgressIndicator());
+    if (_detailError != null || _selectedReturn == null) {
+      return EmptyState(
+        icon: Icons.wifi_off,
+        title: 'Return unavailable',
+        message: _detailError ?? 'Could not open return.',
+        action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: () => _selectRow(_selectedRow!)),
+      );
+    }
+    final ret = _selectedReturn!;
+    return ReturnReceiptScreen(
+      key: ValueKey('return-${ret.id}'),
+      saleReturn: ret,
+      onClose: () {
+        setState(() {
+          _selectedRow = null;
+          _selectedReturn = null;
+          _detailError = null;
+        });
+        _load();
+      },
+    );
+  }
+
+  /// Load a return into the detail pane (tablet). Guarded against out-of-order
+  /// taps so only the last-tapped return is shown.
+  Future<void> _selectRow(Map<String, dynamic> r) async {
+    final id = asStr(r['id']);
+    if (id.isEmpty) return;
+    setState(() {
+      _selectedRow = r;
+      _selectedReturn = null;
+      _detailLoading = true;
+      _detailError = null;
+    });
+    try {
+      final ret = await serviceLocator<SaleReturnRepository>().saleReturnById(id);
+      if (!mounted || asStr(_selectedRow?['id']) != id) return;
+      setState(() {
+        _selectedReturn = ret;
+        _detailLoading = false;
+      });
+    } catch (e) {
+      if (!mounted || asStr(_selectedRow?['id']) != id) return;
+      setState(() {
+        _detailError = 'Could not open return.';
+        _detailLoading = false;
+      });
+    }
+  }
+
+  /// Tablet only: keep the detail pane in step with the list — drop a stale
+  /// selection and preselect the first return so the pane is never empty.
+  void _syncSelection() {
+    if (!mounted || !context.isTablet) return;
+    final selId = _selectedRow == null ? '' : asStr(_selectedRow!['id']);
+    final stillThere = selId.isNotEmpty && _rows.any((r) => asStr(r['id']) == selId);
+    if (!stillThere) {
+      if (_rows.isEmpty) {
+        setState(() {
+          _selectedRow = null;
+          _selectedReturn = null;
+          _detailError = null;
+          _detailLoading = false;
+        });
+      } else {
+        _selectRow(_rows.first);
+      }
+    }
   }
 
   // ---- Bento control card ----
@@ -476,22 +746,42 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
 
   // ---- return row ----
 
-  Widget _row(Map<String, dynamic> r) {
+  /// The display fields of one list row, shared by the phone card and the
+  /// tablet pane row so both read the payload the same way.
+  ({String ref, num amount, String who, String status, String date, String method, Color bg, Color fg}) _rowData(
+      Map<String, dynamic> r) {
     final p = context.astra;
-    final ref = asStr(r['reference_no']).isEmpty
-        ? (asStr(r['invoice_no']).isEmpty ? '#${asStr(r['id'])}' : asStr(r['invoice_no']))
-        : asStr(r['reference_no']);
     final summary = r['summary'] is Map ? r['summary'] as Map : const {};
-    final amount = asNum(summary['paid'] ?? summary['grand_total'] ?? summary['total'] ?? r['paid']);
     final customer = r['customer'] is Map ? r['customer'] as Map : const {};
-    final who = asStr(customer['name']).isEmpty ? 'Walk-in' : asStr(customer['name']);
     final status = asStr(r['status']);
-    final date = Dates.human(asStr(r['date']));
-    final method = asStr(r['payment_methods']);
     final (bg, fg) = switch (status) {
       'completed' => (p.successTint, AstraPalette.success),
       _ => (p.warnTint, p.goldText),
     };
+    return (
+      ref: asStr(r['reference_no']).isEmpty
+          ? (asStr(r['invoice_no']).isEmpty ? '#${asStr(r['id'])}' : asStr(r['invoice_no']))
+          : asStr(r['reference_no']),
+      amount: asNum(summary['paid'] ?? summary['grand_total'] ?? summary['total'] ?? r['paid']),
+      who: asStr(customer['name']).isEmpty ? 'Walk-in' : asStr(customer['name']),
+      status: status,
+      date: Dates.human(asStr(r['date'])),
+      method: asStr(r['payment_methods']),
+      bg: bg,
+      fg: fg,
+    );
+  }
+
+  Widget _row(Map<String, dynamic> r) {
+    final p = context.astra;
+    final d = _rowData(r);
+    final ref = d.ref;
+    final amount = d.amount;
+    final who = d.who;
+    final status = d.status;
+    final date = d.date;
+    final method = d.method;
+    final (bg, fg) = (d.bg, d.fg);
     return AstraCard(
       radius: 14,
       padding: const EdgeInsets.all(12),

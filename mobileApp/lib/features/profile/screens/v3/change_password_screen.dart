@@ -7,11 +7,22 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 /// Wired to POST /change-password — the account password used for
 /// username/password (credential) login, alongside the PIN.
+///
+/// On a tablet this normally runs *embedded* in the Profile screen's detail
+/// pane, so the profile stays on screen; the route stays for phones and deep
+/// links.
 class ChangePasswordScreen extends StatefulWidget {
-  const ChangePasswordScreen({super.key});
+  const ChangePasswordScreen({super.key, this.embedded = false, this.onDone});
+
+  /// Render only the form body — the host supplies the pane and its head.
+  final bool embedded;
+
+  /// Where "done" goes when there is no route to pop. Ignored unless [embedded].
+  final VoidCallback? onDone;
   @override
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
@@ -45,7 +56,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       await serviceLocator<AuthRepository>().changePassword(_current.text, _next.text);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated')));
-        context.pop();
+        _close();
       }
     } on ApiException catch (e) {
       _snack(e.message);
@@ -59,9 +70,48 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     ..clearSnackBars()
     ..showSnackBar(SnackBar(content: Text(m)));
 
+  /// Leave the form: hand back to the host when embedded (no route to pop —
+  /// the detail pane just switches), otherwise pop the route.
+  void _close() {
+    if (widget.embedded) {
+      widget.onDone?.call();
+      return;
+    }
+    context.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
+
+    if (widget.embedded) return _tabletBody(context);
+
+    if (context.isTablet) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AstraBackground(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                TabletPageHead(
+                  title: 'Change Password',
+                  subtitle: 'Your account login password',
+                  leading: TabletIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+                    child: MaxWidthBox(maxWidth: 620, child: _tabletBody(context)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: AstraBackground(
         child: Column(
@@ -112,7 +162,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                   child: Row(
                     children: [
-                      AstraButton(label: 'Cancel', expand: false, gold: false, onTap: () => context.pop()),
+                      AstraButton(label: 'Cancel', expand: false, gold: false, onTap: _close),
                       const SizedBox(width: 11),
                       Expanded(child: AstraButton(label: 'Update password', busy: _busy, onTap: _save)),
                     ],
@@ -123,6 +173,62 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// The tablet form — identical embedded in the profile pane or standalone.
+  Widget _tabletBody(BuildContext context) {
+    final p = context.astra;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: p.tint,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: p.primary.withValues(alpha: 0.18)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.shield_outlined, size: 17, color: p.primary),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Text('Use at least 8 characters you don’t use elsewhere.',
+                    style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary, height: 1.35)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        TabletPanel(
+          title: 'Password',
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          child: Column(
+            children: [
+              _passwordField('Current password', _current),
+              const SizedBox(height: 14),
+              _passwordField('New password', _next),
+              const SizedBox(height: 14),
+              _passwordField('Confirm new password', _confirm),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TabletActionButton(label: 'Cancel', onTap: _busy ? null : _close),
+            const SizedBox(width: 10),
+            TabletActionButton(
+              label: _busy ? 'Updating…' : 'Update password',
+              icon: Icons.check,
+              primary: true,
+              onTap: _busy ? null : _save,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
