@@ -364,7 +364,7 @@
                                         @endif
 
                                         {{-- Organization --}}
-                                        @if(auth()->user()->canAny(['branch.view', 'country.view', 'account category.view', 'document type.view', 'rent out checklist item.view']))
+                                        @if(auth()->user()->canAny(['branch.view', 'country.view', 'account category.view', 'document type.view']))
                                             <div class="header-mega-section">
                                                 <div class="header-mega-title">
                                                     <i class="fa fa-building"></i>
@@ -390,16 +390,11 @@
                                                         <i class="fa fa-file-text-o fs-5 me-2"></i>Document Types
                                                     </a>
                                                 @endcan
-                                                @can('rent out checklist item.view')
-                                                    <a href="{{ route('settings::checklist_item::index') }}" class="list-group-item list-group-item-action header-mega-child">
-                                                        <i class="fa fa-list-alt fs-5 me-2"></i>Checklist Items
-                                                    </a>
-                                                @endcan
                                             </div>
                                         @endif
 
                                         {{-- Property + Maintenance --}}
-                                        @if(auth()->user()->canAny(['property.view', 'property group.view', 'property building.view', 'property type.view', 'utility.view', 'complaint category.view', 'complaint.view']))
+                                        @if(auth()->user()->canAny(['property.view', 'property group.view', 'property building.view', 'property type.view', 'utility.view', 'complaint category.view', 'complaint.view', 'rent out checklist item.view']))
                                             <div class="header-mega-section">
                                                 <div class="header-mega-title">
                                                     <i class="fa fa-building-o"></i>
@@ -428,6 +423,11 @@
                                                 @can('utility.view')
                                                     <a href="{{ route('property::utility::index') }}" class="list-group-item list-group-item-action header-mega-child">
                                                         <i class="fa fa-bolt fs-5 me-2"></i>Utilities
+                                                    </a>
+                                                @endcan
+                                                @can('rent out checklist item.view')
+                                                    <a href="{{ route('settings::checklist_item::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                        <i class="fa fa-list-alt fs-5 me-2"></i>Checklist Items
                                                     </a>
                                                 @endcan
                                                 @if(auth()->user()->canAny(['complaint category.view', 'complaint.view']))
