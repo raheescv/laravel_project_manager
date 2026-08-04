@@ -1,3 +1,16 @@
+@php
+    // Warranty / handover clauses written on this booking's Checklist tab — an
+    // annex printed on its own page after the signatures. Empty ([]) on a rental,
+    // and on any booking that has none. Resolved up here because the page-body
+    // height in <style> below depends on it.
+    $terms = \App\Support\RentOutHandoverTerms::forPrint($rentOut);
+    // The stretched body has to cover every page EXCEPT the clause page, otherwise
+    // it runs a page long and PrintController throws the stretched pass away.
+    // Clauses longer than one page do exactly that, and the honest unstretched
+    // first pass is printed instead: correct, just without the acknowledgment
+    // glued to the foot of its page.
+    $bodyPages = max(1, (int) ($pages ?? 1) - (empty($terms) ? 0 : 1));
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +32,7 @@
            included, and would spill onto an extra page. 2mm is shaved off so rounding
            can't do the same. */
         .wrap { padding: 0; display: flex; flex-direction: column;
-                min-height: calc({{ max(1, (int) ($pages ?? 1)) }} * 277mm - 2mm); }
+                min-height: calc({{ $bodyPages }} * 277mm - 2mm); }
         .accept-group { margin-top: auto; }
         .title-band { background: #7a6a2f; color: #fff; border-radius: 4px; width: 100%; }
         .title-band td { vertical-align: middle; padding: 8px 10px; }
@@ -49,9 +62,13 @@
         .no { color: #bf2f2f; font-weight: bold; }
         .total td { background: #efe9d6; font-weight: bold; }
         /* Handover terms — bilingual clauses written on the booking's Checklist tab.
-           Two columns so a clause's English and Arabic wording sit side by side on
-           the same line; the pair never splits across a page break. The bodies are
-           the same rich text as the declaration, so they borrow .decl. */
+           They are an annex to the signed form, so they open a page of their own
+           after the acknowledgment. Two columns so a clause's English and Arabic
+           wording sit side by side on the same line; the pair never splits across a
+           page break. The bodies are the same rich text as the declaration, so they
+           borrow .decl. */
+        .terms-page { page-break-before: always; break-before: page; }
+        .terms-page .sec-split { margin-top: 0; }
         .sec-split { margin: 12px 0 6px; background: #7a6a2f; color: #fff; border-radius: 3px; table-layout: fixed; }
         .sec-split td { padding: 4px 8px; font-size: 10px; font-weight: bold; letter-spacing: .4px; text-transform: uppercase; }
         .sec-split .ar { text-align: right; direction: rtl; text-transform: none; letter-spacing: 0; }
@@ -136,7 +153,9 @@
     // Headings + declarations are editable per agreement type in
     // Settings → Rent Out Settings → Checklist Notes.
     $phases = \App\Support\RentOutChecklistNotes::phasesFor($ro);
-    $roles = ['lessee' => 'Lessee', 'facility_coordinator' => 'Facility Coordinator', 'leasing_coordinator' => 'Leasing Coordinator'];
+    $roles = collect(\App\Enums\RentOut\ChecklistSignatoryRole::cases())
+        ->mapWithKeys(fn ($role) => [$role->value => $role->labelFor($ro?->agreement_type)])
+        ->all();
     $nameFor = fn ($role) => match ($role) {
         'lessee' => $tenant?->name,
         'facility_coordinator' => $ro->facilityCoordinator?->name,

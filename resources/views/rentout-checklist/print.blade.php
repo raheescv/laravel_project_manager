@@ -324,7 +324,7 @@
                                     @if ($sig && $sig->signature_path)
                                         <p class="section-title mb-1">
                                             {{ $resolvedName ?: '-' }}
-                                            <small class="text-muted">({{ $role->label() }})</small>
+                                            <small class="text-muted">({{ $role->labelFor($rentOut->agreement_type) }})</small>
                                         </p>
                                         <div class="signed-box">
                                             <img src="{{ asset('storage/' . $sig->signature_path) }}"

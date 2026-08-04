@@ -1,5 +1,6 @@
 @php
     use App\Enums\RentOut\AgreementType;
+    use App\Enums\RentOut\ChecklistSignatoryRole;
     // Move-Out / damage tracking only applies to rentals — a lease/sale never hands the unit back.
     $showMoveOut = $agreement_type == AgreementType::Rental;
     $colCount = $showMoveOut ? 10 : 7;
@@ -346,7 +347,7 @@
             <input type="date" class="form-control form-control-sm" wire:model="actualMoveOutDate">
         </div>
         <div class="col-lg-4 col-md-6 col-12" wire:ignore>
-            <label class="form-label small mb-1 text-muted">Facility Coordinator</label>
+            <label class="form-label small mb-1 text-muted">{{ ChecklistSignatoryRole::FacilityCoordinator->labelFor($agreement_type) }}</label>
             <select id="facilityCoord" class="select-employee_id-list" style="width:100%" placeholder="Select Employee">
                 @if ($facilityCoordinatorId)
                     <option value="{{ $facilityCoordinatorId }}" selected>{{ $facilityCoordinatorName }}</option>
@@ -354,7 +355,7 @@
             </select>
         </div>
         <div class="col-lg-4 col-md-6 col-12" wire:ignore>
-            <label class="form-label small mb-1 text-muted">Leasing Coordinator</label>
+            <label class="form-label small mb-1 text-muted">{{ ChecklistSignatoryRole::LeasingCoordinator->labelFor($agreement_type) }}</label>
             <select id="leasingCoord" class="select-employee_id-list" style="width:100%" placeholder="Select Employee">
                 @if ($leasingCoordinatorId)
                     <option value="{{ $leasingCoordinatorId }}" selected>{{ $leasingCoordinatorName }}</option>

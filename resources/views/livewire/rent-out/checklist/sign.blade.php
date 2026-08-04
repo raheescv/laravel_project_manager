@@ -30,7 +30,7 @@
     <div class="sigpad-block">
         <p class="section-title mb-1">
             {{ $signerName ?: '-' }}
-            <small class="text-muted">({{ \App\Enums\RentOut\ChecklistSignatoryRole::from($role)->label() }})</small>
+            <small class="text-muted">({{ \App\Enums\RentOut\ChecklistSignatoryRole::from($role)->labelFor($rentOut->agreement_type) }})</small>
         </p>
         <div class="sigpad-container-{{ $uid }}" wire:ignore>
             <canvas id="sigpad_{{ $uid }}"></canvas>
