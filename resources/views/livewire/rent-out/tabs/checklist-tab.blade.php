@@ -27,7 +27,10 @@
     $weightTotal = array_sum($weights) ?: 1;
     $pct = fn ($k) => round($freeWidth * $weights[$k] / $weightTotal, 1) . '%';
 @endphp
-<div class="cl-wrap {{ $showMoveOut ? '' : 'cl-no-mo' }}">
+{{-- `sub` splits this screen in two on a lease/sale: the inventory grid, and the
+     bilingual clauses printed under it on the handover form. A rental has no
+     handover terms, so it never sees the rail and the screen is unchanged. --}}
+<div class="cl-wrap {{ $showMoveOut ? '' : 'cl-no-mo' }}" x-data="{ sub: 'items' }">
     <style>
         .cl-table {
             border: 1px solid #e6e8ec;
@@ -219,6 +222,41 @@
             color: #495057;
         }
 
+        /* Rail that splits this screen into Items / Handover Terms (lease & sale only). */
+        /* There is no global x-cloak rule, so the hidden pane needs its own. */
+        .cl-wrap [x-cloak] {
+            display: none !important;
+        }
+
+        .cl-sub {
+            display: flex;
+            gap: .3rem;
+            flex-wrap: wrap;
+        }
+
+        .cl-sub-btn {
+            border: 1px solid #e3e6ea;
+            background: #fff;
+            color: #6c757d;
+            border-radius: 999px;
+            padding: .25rem .8rem;
+            font-size: .72rem;
+            font-weight: 600;
+            line-height: 1.4;
+            transition: color .14s ease, border-color .14s ease, background-color .14s ease;
+        }
+
+        .cl-sub-btn:hover {
+            border-color: var(--bs-primary, #0d6efd);
+            color: var(--bs-primary, #0d6efd);
+        }
+
+        .cl-sub-btn.is-active {
+            background: var(--bs-primary, #0d6efd);
+            border-color: var(--bs-primary, #0d6efd);
+            color: #fff;
+        }
+
         /* Keep the grid usable on small screens: scroll instead of crushing the inputs. */
         .cl-table>table {
             min-width: 680px;
@@ -258,6 +296,18 @@
         }
     </style>
 
+    @if (! $showMoveOut)
+        <div class="cl-sub mb-2">
+            <button type="button" class="cl-sub-btn" :class="{ 'is-active': sub === 'items' }" x-on:click="sub = 'items'">
+                <i class="fa fa-list-alt me-1"></i>Items
+            </button>
+            <button type="button" class="cl-sub-btn" :class="{ 'is-active': sub === 'terms' }" x-on:click="sub = 'terms'">
+                <i class="fa fa-balance-scale me-1"></i>Handover Terms
+            </button>
+        </div>
+    @endif
+
+    <div x-show="sub === 'items'">
     {{-- Header: count summary + actions --}}
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
         <div class="small text-muted">
@@ -501,6 +551,13 @@
             <span wire:loading wire:target="save"><i class="fa fa-spinner fa-spin me-1"></i> Saving…</span>
         </button>
     </div>
+    </div>{{-- /Items --}}
+
+    @if (! $showMoveOut)
+        <div x-show="sub === 'terms'" x-cloak>
+            @livewire('rent-out.tabs.handover-terms-tab', ['rentOutId' => $rentOutId], key('handover-terms-tab-' . $rentOutId))
+        </div>
+    @endif
 </div>
 
 

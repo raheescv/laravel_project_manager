@@ -48,6 +48,21 @@
         .ok { color: #1d7a45; font-weight: bold; }
         .no { color: #bf2f2f; font-weight: bold; }
         .total td { background: #efe9d6; font-weight: bold; }
+        /* Handover terms — bilingual clauses written on the booking's Checklist tab.
+           Two columns so a clause's English and Arabic wording sit side by side on
+           the same line; the pair never splits across a page break. The bodies are
+           the same rich text as the declaration, so they borrow .decl. */
+        .sec-split { margin: 12px 0 6px; background: #7a6a2f; color: #fff; border-radius: 3px; table-layout: fixed; }
+        .sec-split td { padding: 4px 8px; font-size: 10px; font-weight: bold; letter-spacing: .4px; text-transform: uppercase; }
+        .sec-split .ar { text-align: right; direction: rtl; text-transform: none; letter-spacing: 0; }
+        .terms { table-layout: fixed; }
+        .terms td { border: 1px solid #ddd; padding: 5px 7px; vertical-align: top;
+                    word-wrap: break-word; overflow-wrap: break-word; }
+        .terms tr:nth-child(even) td { background: #fcfbf7; }
+        .terms tr { page-break-inside: avoid; break-inside: avoid; }
+        .terms-t { font-size: 9.4px; font-weight: bold; color: #7a6a2f; margin-bottom: 2px; }
+        .terms .ar, .terms .ar .decl { direction: rtl; text-align: right; }
+        .terms .decl { margin: 0; }
         .accept { border: 1px solid #d8d4c4; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; }
         .accept .ph { font-size: 11px; font-weight: bold; color: #7a6a2f; text-transform: uppercase; margin-bottom: 4px; }
         /* The declaration is rich text edited in Settings → Rent Out Settings →
@@ -301,5 +316,40 @@
     @endforeach
     </div>
 </div>
+
+{{-- The warranty / handover clauses are an annex to the signed form, so they follow
+     the signatures on a page of their own rather than pushing them down the sheet. --}}
+@if (! empty($terms))
+    @php $bilingual = $terms['has_arabic']; @endphp
+    <div class="terms-page">
+        <table class="sec-split">
+            <tr>
+                <td @if ($bilingual) style="width:50%" @endif>{{ $terms['heading_en'] }}</td>
+                @if ($bilingual)
+                    <td class="ar" style="width:50%" dir="rtl">{{ $terms['heading_ar'] }}</td>
+                @endif
+            </tr>
+        </table>
+        <table class="terms">
+            <tbody>
+                @foreach ($terms['clauses'] as $clause)
+                    <tr>
+                        <td @if ($bilingual) style="width:50%" @endif>
+                            <div class="terms-t">{{ trim($clause['no_en'].' '.$clause['title_en']) }}</div>
+                            {{-- Sanitised in App\Support\RichText before it ever reaches here. --}}
+                            <div class="decl">{!! $clause['body_en'] !!}</div>
+                        </td>
+                        @if ($bilingual)
+                            <td class="ar" style="width:50%" dir="rtl">
+                                <div class="terms-t">{{ trim($clause['no_ar'].' '.$clause['title_ar']) }}</div>
+                                <div class="decl">{!! $clause['body_ar'] !!}</div>
+                            </td>
+                        @endif
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
 </body>
 </html>

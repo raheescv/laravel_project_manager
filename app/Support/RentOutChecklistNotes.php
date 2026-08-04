@@ -137,18 +137,14 @@ class RentOutChecklistNotes
         return $resolved;
     }
 
-    /**
-     * Token values escaped for an HTML body. Public because every other block
-     * printed on the same checklist — the handover terms, for one — has to
-     * resolve the same tokens against the same booking.
-     */
-    public static function tokens(?RentOut $rentOut): array
+    /** Token values escaped for the HTML declaration body. */
+    private static function tokens(?RentOut $rentOut): array
     {
         return array_map(fn ($value) => e($value), self::rawTokens($rentOut));
     }
 
     /** Token values for plain-text contexts (headings). */
-    public static function plainTokens(array $tokens): array
+    private static function plainTokens(array $tokens): array
     {
         return array_map(fn ($value) => html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'), $tokens);
     }
