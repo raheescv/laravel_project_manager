@@ -126,7 +126,7 @@
                     </div>
                 </div>
 
-                {{-- Row 5: Ownership, Kahramaa, Parking --}}
+                {{-- Row 5: Ownership, Kahramaa, Gas Meter Number --}}
                 <div class="col-md-4">
                     <div class="form-floating">
                         <input type="text" class="form-control @error('formData.ownership') is-invalid @enderror" id="ownership" placeholder="Enter the Ownership" wire:model="formData.ownership">
@@ -147,6 +147,17 @@
                 </div>
                 <div class="col-md-4">
                     <div class="form-floating">
+                        <input type="text" class="form-control @error('formData.gas_meter_number') is-invalid @enderror" id="gas_meter_number" placeholder="Enter Gas Meter Number" wire:model="formData.gas_meter_number">
+                        <label for="gas_meter_number">Gas Meter Number</label>
+                        @error('formData.gas_meter_number')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Row 6: Parking, Kitchen, Toilet --}}
+                <div class="col-md-4">
+                    <div class="form-floating">
                         <input type="text" class="form-control @error('formData.parking') is-invalid @enderror" id="parking" placeholder="Enter Parking" wire:model="formData.parking">
                         <label for="parking">Parking</label>
                         @error('formData.parking')
@@ -154,8 +165,6 @@
                         @enderror
                     </div>
                 </div>
-
-                {{-- Row 6: Kitchen, Toilet, Flag* --}}
                 <div class="col-md-4">
                     <div class="form-floating">
                         <input type="text" class="form-control @error('formData.kitchen') is-invalid @enderror" id="kitchen" placeholder="Enter no of Kitchen" wire:model="formData.kitchen">
@@ -174,6 +183,8 @@
                         @enderror
                     </div>
                 </div>
+
+                {{-- Row 7: Flag* --}}
                 <div class="col-md-4">
                     <div class="form-floating">
                         <select class="form-select @error('formData.flag') is-invalid @enderror" id="flag" wire:model="formData.flag" required>
@@ -187,7 +198,7 @@
                     </div>
                 </div>
 
-                {{-- Row 7: Remark --}}
+                {{-- Row 8: Remark --}}
                 <div class="col-md-12">
                     <div class="form-floating">
                         <input type="text" class="form-control @error('formData.remark') is-invalid @enderror" id="remark" placeholder="Enter Remark" wire:model="formData.remark">
@@ -198,7 +209,7 @@
                     </div>
                 </div>
 
-                {{-- Row 8: Floor Plan Image --}}
+                {{-- Row 9: Floor Plan Image --}}
                 <div class="col-md-12">
                     <label class="form-label fw-semibold">Floor Plan Image</label>
                     <input type="file" class="form-control @error('floor_plan') is-invalid @enderror" wire:model="floor_plan" accept="image/*">

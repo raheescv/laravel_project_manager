@@ -283,7 +283,6 @@
                             @if($columns['floor'])<th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="floor" label="Floor" /></th>@endif
                             @if($columns['rent'])<th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="rent" label="Rent" /></th>@endif
                             @if($columns['ownership'])<th>Ownership</th>@endif
-                            @if($columns['kahramaa'])<th>Kahramaa</th>@endif
                             @if($columns['parking'])<th>Parking</th>@endif
                             @if($columns['status'])<th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" /></th>@endif
                             @if($columns['availability'])<th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="availability_status" label="Availability" /></th>@endif
@@ -336,9 +335,6 @@
                                         <span class="faint">—</span>
                                     @endif
                                 </td>
-                                @endif
-                                @if($columns['kahramaa'])
-                                <td>@if($item->kahramaa){{ $item->kahramaa }}@else<span class="faint">—</span>@endif</td>
                                 @endif
                                 @if($columns['parking'])
                                 <td>

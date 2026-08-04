@@ -49,7 +49,6 @@ class Table extends Component
         'floor' => 'Floor',
         'rent' => 'Rent',
         'ownership' => 'Ownership',
-        'kahramaa' => 'Kahramaa',
         'parking' => 'Parking',
         'status' => 'Status',
         'availability' => 'Availability',
@@ -75,7 +74,6 @@ class Table extends Component
             'floor' => true,
             'rent' => true,
             'ownership' => true,
-            'kahramaa' => true,
             'parking' => true,
             'status' => true,
             'availability' => true,
@@ -94,6 +92,7 @@ class Table extends Component
                 return $query->where(function ($q) use ($value) {
                     $q->where('number', 'like', "%{$value}%")
                         ->orWhere('floor', 'like', "%{$value}%")
+                        ->orWhere('gas_meter_number', 'like', "%{$value}%")
                         ->orWhereHas('building', function ($q) use ($value) {
                             $q->where('name', 'like', "%{$value}%");
                         })

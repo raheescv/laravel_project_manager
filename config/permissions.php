@@ -216,7 +216,7 @@ return [
     'rent out note' => ['create', 'view', 'delete'],
     'rent out document' => ['create', 'view', 'edit', 'delete'],
     'rent out checklist' => ['view', 'create', 'edit', 'delete', 'print'],
-    'rent out checklist item' => ['create', 'view', 'edit', 'delete'],
+    'rent out checklist item' => ['create', 'view', 'edit', 'delete', 'import'],
 
     // RentOut - Lease/Sale Module
     'rent out lease' => [

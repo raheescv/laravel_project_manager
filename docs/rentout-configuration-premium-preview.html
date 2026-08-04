@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rent Out Configuration — Premium Tabs Preview</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        /* ============================================================
+           .roc  = Rent Out Configuration premium namespace
+           Accent follows the app theme colour (--bs-primary) exactly
+           like .settings-page / .rvx do.
+           ============================================================ */
+        .roc {
+            --roc-brand: var(--bs-primary);
+            --roc-brand-rgb: var(--bs-primary-rgb);
+            --roc-radius: 14px;
+            --roc-radius-sm: 10px;
+            --roc-soft: color-mix(in srgb, var(--roc-brand), transparent 92%);
+            --roc-line: color-mix(in srgb, var(--roc-brand), transparent 78%);
+            --roc-shadow: 0 10px 30px -18px rgba(var(--roc-brand-rgb), .45);
+            min-width: 0;
+        }
+
+        .preview-canvas {
+            background:
+                radial-gradient(1200px 420px at 82% -12%, rgba(var(--bs-primary-rgb), .10), transparent 60%),
+                var(--bs-tertiary-bg);
+            min-height: 100vh;
+        }
+
+        /* ---------- Shell ---------- */
+        .roc-shell {
+            border: 1px solid var(--bs-border-color);
+            border-radius: var(--roc-radius);
+            background: var(--bs-body-bg);
+            box-shadow: 0 2px 10px -4px rgba(var(--bs-emphasis-color-rgb), .12);
+            overflow: hidden;
+        }
+
+        .roc-head {
+            position: relative;
+            isolation: isolate;
+            padding: .95rem 1.15rem;
+            border-bottom: 1px solid var(--bs-border-color-translucent);
+            background:
+                radial-gradient(70% 160% at 100% 0%, color-mix(in srgb, var(--roc-brand), transparent 86%), transparent 62%),
+                linear-gradient(135deg, color-mix(in srgb, var(--roc-brand), transparent 93%), transparent 70%);
+        }
+
+        .roc-head::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            opacity: .55;
+            background-image: radial-gradient(circle at 1px 1px, rgba(var(--roc-brand-rgb), .07) 1px, transparent 0);
+            background-size: 20px 20px;
+            -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%);
+            mask-image: linear-gradient(180deg, #000, transparent 85%);
+        }
+
+        .roc-head-ic {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 auto;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            color: var(--roc-brand);
+            background: color-mix(in srgb, var(--roc-brand), transparent 86%);
+            border: 1px solid var(--roc-line);
+        }
+
+        .roc-eyebrow {
+            font-size: .66rem;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--roc-brand);
+        }
+
+        .roc-head h5 {
+            font-size: 1.02rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -.01em;
+        }
+
+        .roc-head p {
+            margin: .1rem 0 0;
+            font-size: .8rem;
+            color: var(--bs-secondary-color);
+        }
+
+        /* ---------- Rails (shared bits) ---------- */
+        .roc-rail-wrap {
+            padding: .7rem 1.15rem 0;
+            border-bottom: 1px solid var(--bs-border-color-translucent);
+            background: linear-gradient(180deg, var(--bs-tertiary-bg), transparent);
+        }
+
+        .roc-rail {
+            display: flex;
+            gap: .4rem;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            padding-bottom: .7rem;
+        }
+
+        .roc-rail::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .roc-rail::-webkit-scrollbar-thumb {
+            background: var(--bs-border-color);
+            border-radius: 4px;
+        }
+
+        .roc-tab {
+            all: unset;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .roc-badge {
+            font-size: .62rem;
+            font-weight: 700;
+            padding: .1rem .38rem;
+            border-radius: 20px;
+            background: color-mix(in srgb, var(--roc-brand), transparent 86%);
+            color: var(--roc-brand);
+            line-height: 1.35;
+        }
+
+        /* ---------- Direction A · Pill rail ---------- */
+        .roc-rail.a .roc-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .45rem .8rem;
+            border-radius: 999px;
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--bs-secondary-color);
+            border: 1px solid transparent;
+            white-space: nowrap;
+            transition: all .16s ease;
+        }
+
+        .roc-rail.a .roc-tab i {
+            font-size: .9rem;
+            opacity: .85;
+        }
+
+        .roc-rail.a .roc-tab:hover {
+            color: var(--bs-body-color);
+            background: var(--bs-secondary-bg);
+        }
+
+        .roc-rail.a .roc-tab.is-active {
+            color: #fff;
+            background: linear-gradient(135deg, var(--roc-brand), color-mix(in srgb, var(--roc-brand), #000 22%));
+            border-color: color-mix(in srgb, var(--roc-brand), #000 12%);
+            box-shadow: var(--roc-shadow);
+        }
+
+        .roc-rail.a .roc-tab.is-active .roc-badge {
+            background: rgba(255, 255, 255, .22);
+            color: #fff;
+        }
+
+        /* ---------- Direction B · Underline rail ---------- */
+        .roc-rail.b {
+            gap: .1rem;
+        }
+
+        .roc-rail.b .roc-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .5rem .9rem .6rem;
+            font-size: .84rem;
+            font-weight: 600;
+            color: var(--bs-secondary-color);
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            border-radius: var(--roc-radius-sm) var(--roc-radius-sm) 0 0;
+            transition: all .16s ease;
+        }
+
+        .roc-rail.b .roc-tab i {
+            font-size: .92rem;
+            opacity: .7;
+        }
+
+        .roc-rail.b .roc-tab:hover {
+            color: var(--bs-body-color);
+            background: color-mix(in srgb, var(--roc-brand), transparent 95%);
+        }
+
+        .roc-rail.b .roc-tab.is-active {
+            color: var(--roc-brand);
+            border-bottom-color: var(--roc-brand);
+            background: color-mix(in srgb, var(--roc-brand), transparent 93%);
+        }
+
+        .roc-rail.b .roc-tab.is-active i {
+            opacity: 1;
+        }
+
+        /* ---------- Direction C · Status tiles ---------- */
+        .roc-rail.c {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(150px, 1fr));
+            gap: .5rem;
+            overflow-x: auto;
+        }
+
+        .roc-rail.c .roc-tab {
+            display: flex;
+            align-items: flex-start;
+            gap: .55rem;
+            padding: .6rem .7rem;
+            border-radius: var(--roc-radius-sm);
+            border: 1px solid var(--bs-border-color);
+            background: var(--bs-body-bg);
+            transition: all .16s ease;
+            min-width: 150px;
+        }
+
+        .roc-rail.c .roc-tab .tile-ic {
+            width: 30px;
+            height: 30px;
+            flex: 0 0 auto;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85rem;
+            color: var(--bs-secondary-color);
+            background: var(--bs-secondary-bg);
+        }
+
+        .roc-rail.c .roc-tab .tile-t {
+            font-size: .8rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--bs-body-color);
+        }
+
+        .roc-rail.c .roc-tab .tile-s {
+            font-size: .68rem;
+            color: var(--bs-secondary-color);
+        }
+
+        .roc-rail.c .roc-tab:hover {
+            border-color: var(--roc-line);
+            transform: translateY(-1px);
+        }
+
+        .roc-rail.c .roc-tab.is-active {
+            border-color: var(--roc-brand);
+            background: color-mix(in srgb, var(--roc-brand), transparent 94%);
+            box-shadow: var(--roc-shadow);
+        }
+
+        .roc-rail.c .roc-tab.is-active .tile-ic {
+            color: #fff;
+            background: linear-gradient(135deg, var(--roc-brand), color-mix(in srgb, var(--roc-brand), #000 22%));
+        }
+
+        .roc-rail.c .roc-tab.is-active .tile-t {
+            color: var(--roc-brand);
+        }
+
+        /* ---------- Panels ---------- */
+        .roc-body {
+            padding: 1.05rem 1.15rem 1.15rem;
+        }
+
+        .roc-pane {
+            display: none;
+            animation: rocIn .22s ease both;
+        }
+
+        .roc-pane.is-active {
+            display: block;
+        }
+
+        @keyframes rocIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+        }
+
+        .roc-pane-head {
+            display: flex;
+            align-items: flex-start;
+            gap: .6rem;
+            margin-bottom: .9rem;
+        }
+
+        .roc-pane-head h6 {
+            font-size: .95rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .roc-pane-head p {
+            margin: .12rem 0 0;
+            font-size: .8rem;
+            color: var(--bs-secondary-color);
+            max-width: 70ch;
+        }
+
+        .roc-panel {
+            border: 1px solid var(--bs-border-color-translucent);
+            border-radius: var(--roc-radius-sm);
+            background: var(--bs-body-bg);
+            padding: .85rem .9rem;
+        }
+
+        .roc-panel + .roc-panel {
+            margin-top: .75rem;
+        }
+
+        .roc-panel-t {
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color);
+            margin-bottom: .6rem;
+        }
+
+        /* ---------- Upload card ---------- */
+        .roc-up {
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+            border: 1px dashed var(--bs-border-color);
+            border-radius: var(--roc-radius-sm);
+            padding: .6rem .7rem;
+            background: var(--bs-tertiary-bg);
+            transition: all .16s ease;
+            height: 100%;
+        }
+
+        .roc-up:hover {
+            border-color: var(--roc-brand);
+            background: color-mix(in srgb, var(--roc-brand), transparent 95%);
+        }
+
+        .roc-up-thumb {
+            width: 74px;
+            height: 52px;
+            flex: 0 0 auto;
+            border-radius: 8px;
+            border: 1px solid var(--bs-border-color);
+            background: var(--bs-body-bg);
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            color: var(--bs-secondary-color);
+        }
+
+        .roc-up-thumb img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .roc-up-name {
+            font-size: .82rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .roc-up-meta {
+            font-size: .68rem;
+            color: var(--bs-secondary-color);
+        }
+
+        .roc-chip-ok {
+            font-size: .62rem;
+            font-weight: 700;
+            color: var(--bs-success);
+            background: color-mix(in srgb, var(--bs-success), transparent 88%);
+            border-radius: 20px;
+            padding: .05rem .4rem;
+        }
+
+        .roc-chip-none {
+            font-size: .62rem;
+            font-weight: 700;
+            color: var(--bs-secondary-color);
+            background: var(--bs-secondary-bg);
+            border-radius: 20px;
+            padding: .05rem .4rem;
+        }
+
+        /* ---------- Bond paper mini page preview ---------- */
+        .roc-page {
+            width: 118px;
+            aspect-ratio: 1 / 1.414;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 6px;
+            background: var(--bs-body-bg);
+            display: flex;
+            flex-direction: column;
+            padding: 6px;
+            gap: 5px;
+            box-shadow: 0 6px 18px -12px rgba(var(--bs-emphasis-color-rgb), .5);
+        }
+
+        .roc-page .zone {
+            border-radius: 3px;
+            background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--roc-brand), transparent 88%) 0 4px, transparent 4px 8px);
+            border: 1px dashed var(--roc-line);
+            font-size: .5rem;
+            color: var(--roc-brand);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+        }
+
+        .roc-page .lines {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 2px 0;
+        }
+
+        .roc-page .lines span {
+            height: 3px;
+            border-radius: 2px;
+            background: var(--bs-secondary-bg);
+        }
+
+        .roc-page .lines span:nth-child(3n) {
+            width: 70%;
+        }
+
+        /* ---------- Gallery ---------- */
+        .roc-gal {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+
+        .roc-gal figure {
+            position: relative;
+            width: 92px;
+            height: 66px;
+            margin: 0;
+            border-radius: 8px;
+            border: 1px solid var(--bs-border-color);
+            background: var(--bs-tertiary-bg);
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        .roc-gal figure figcaption {
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            font-size: .58rem;
+            font-weight: 700;
+            background: rgba(0, 0, 0, .55);
+            color: #fff;
+            border-radius: 20px;
+            padding: 0 .3rem;
+        }
+
+        /* ---------- Sticky footer ---------- */
+        .roc-foot {
+            position: sticky;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            flex-wrap: wrap;
+            padding: .7rem 1.15rem;
+            border-top: 1px solid var(--bs-border-color-translucent);
+            background: color-mix(in srgb, var(--bs-body-bg), transparent 8%);
+            backdrop-filter: blur(8px);
+        }
+
+        .roc-foot .hint {
+            font-size: .74rem;
+            color: var(--bs-secondary-color);
+        }
+
+        .roc-save {
+            border-radius: 999px;
+            padding: .42rem 1.15rem;
+            font-size: .82rem;
+            font-weight: 600;
+            box-shadow: var(--roc-shadow);
+        }
+
+        /* ---------- preview harness ---------- */
+        .harness {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: var(--bs-body-bg);
+            border-bottom: 1px solid var(--bs-border-color);
+        }
+
+        .harness .btn-group .btn {
+            font-size: .78rem;
+        }
+
+        [data-dir] .dir-a,
+        [data-dir] .dir-b,
+        [data-dir] .dir-c {
+            display: none;
+        }
+
+        [data-dir="a"] .dir-a,
+        [data-dir="b"] .dir-b,
+        [data-dir="c"] .dir-c {
+            display: block;
+        }
+
+        @media (max-width: 767.98px) {
+            .roc-rail.c {
+                grid-template-columns: repeat(5, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="harness py-2">
+        <div class="container-fluid d-flex flex-wrap align-items-center gap-2">
+            <strong class="me-2 small">Rent Out Configuration — premium tabs</strong>
+            <div class="btn-group btn-group-sm" role="group" id="dirSwitch">
+                <button class="btn btn-primary" data-set-dir="a">A · Pill rail</button>
+                <button class="btn btn-outline-primary" data-set-dir="b">B · Underline rail</button>
+                <button class="btn btn-outline-primary" data-set-dir="c">C · Status tiles</button>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary ms-auto" id="themeBtn"><i class="fa fa-moon-o me-1"></i>Dark</button>
+        </div>
+    </div>
+
+    <div class="preview-canvas py-4">
+        <div class="container-fluid" style="max-width: 1100px;">
+            <div class="roc" data-dir="a" id="roc">
+
+                <div class="roc-shell">
+                    {{-- head --}}
+                    <div class="roc-head d-flex align-items-center gap-3">
+                        <span class="roc-head-ic"><i class="fa fa-key"></i></span>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="roc-eyebrow">Module settings</div>
+                            <h5>Rent Out Configuration</h5>
+                            <p>Defaults for bookings, agreement print layout and PDF branding.</p>
+                        </div>
+                        <span class="badge rounded-pill text-bg-light border d-none d-md-inline">5 sections</span>
+                    </div>
+
+                    {{-- rails --}}
+                    <div class="roc-rail-wrap">
+                        <!-- A -->
+                        <div class="dir-a">
+                            <div class="roc-rail a">
+                                <button class="roc-tab is-active" data-pane="docs"><i class="fa fa-check-square-o"></i>Mandatory Documents<span
+                                        class="roc-badge">3</span></button>
+                                <button class="roc-tab" data-pane="print"><i class="fa fa-print"></i>Print Layout</button>
+                                <button class="roc-tab" data-pane="logos"><i class="fa fa-picture-o"></i>Agreement Logos<span class="roc-badge">4/5</span></button>
+                                <button class="roc-tab" data-pane="images"><i class="fa fa-clone"></i>Agreement Images<span class="roc-badge">3</span></button>
+                                <button class="roc-tab" data-pane="lpo"><i class="fa fa-file-image-o"></i>LPO Header</button>
+                            </div>
+                        </div>
+                        <!-- B -->
+                        <div class="dir-b">
+                            <div class="roc-rail b">
+                                <button class="roc-tab is-active" data-pane="docs"><i class="fa fa-check-square-o"></i>Mandatory Documents<span
+                                        class="roc-badge">3</span></button>
+                                <button class="roc-tab" data-pane="print"><i class="fa fa-print"></i>Print Layout</button>
+                                <button class="roc-tab" data-pane="logos"><i class="fa fa-picture-o"></i>Agreement Logos<span class="roc-badge">4/5</span></button>
+                                <button class="roc-tab" data-pane="images"><i class="fa fa-clone"></i>Agreement Images<span class="roc-badge">3</span></button>
+                                <button class="roc-tab" data-pane="lpo"><i class="fa fa-file-image-o"></i>LPO Header</button>
+                            </div>
+                        </div>
+                        <!-- C -->
+                        <div class="dir-c">
+                            <div class="roc-rail c">
+                                <button class="roc-tab is-active" data-pane="docs">
+                                    <span class="tile-ic"><i class="fa fa-check-square-o"></i></span>
+                                    <span><span class="tile-t d-block">Mandatory Documents</span><span class="tile-s">3 required</span></span>
+                                </button>
+                                <button class="roc-tab" data-pane="print">
+                                    <span class="tile-ic"><i class="fa fa-print"></i></span>
+                                    <span><span class="tile-t d-block">Print Layout</span><span class="tile-s">Bond paper off</span></span>
+                                </button>
+                                <button class="roc-tab" data-pane="logos">
+                                    <span class="tile-ic"><i class="fa fa-picture-o"></i></span>
+                                    <span><span class="tile-t d-block">Agreement Logos</span><span class="tile-s">4 of 5 set</span></span>
+                                </button>
+                                <button class="roc-tab" data-pane="images">
+                                    <span class="tile-ic"><i class="fa fa-clone"></i></span>
+                                    <span><span class="tile-t d-block">Agreement Images</span><span class="tile-s">3 uploaded</span></span>
+                                </button>
+                                <button class="roc-tab" data-pane="lpo">
+                                    <span class="tile-ic"><i class="fa fa-file-image-o"></i></span>
+                                    <span><span class="tile-t d-block">LPO Header</span><span class="tile-s">Not set</span></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- panes --}}
+                    <div class="roc-body">
+
+                        <!-- ============ DOCS ============ -->
+                        <section class="roc-pane is-active" data-pane="docs">
+                            <div class="roc-pane-head">
+                                <div>
+                                    <h6>Mandatory Documents</h6>
+                                    <p>Document types selected here become the default required checklist on every new rent-out / lease booking. Each booking can
+                                        still fine-tune its own list from the Documents tab.</p>
+                                </div>
+                            </div>
+
+                            <div class="roc-panel">
+                                <div class="roc-panel-t">Required on every booking</div>
+                                <label class="form-label fw-medium small mb-1">Select Document Types</label>
+                                <select class="form-select form-select-sm" multiple size="1" disabled>
+                                    <option selected>Emirates ID</option>
+                                </select>
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    <span class="badge rounded-pill text-bg-primary fw-semibold">Emirates ID <i class="fa fa-times ms-1 opacity-75"></i></span>
+                                    <span class="badge rounded-pill text-bg-primary fw-semibold">Passport Copy <i class="fa fa-times ms-1 opacity-75"></i></span>
+                                    <span class="badge rounded-pill text-bg-primary fw-semibold">Visa Page <i class="fa fa-times ms-1 opacity-75"></i></span>
+                                </div>
+                                <div class="form-text mt-2"><i class="fa fa-info-circle me-1"></i>Bookings missing these will show as incomplete on the Documents
+                                    tab.</div>
+                            </div>
+                        </section>
+
+                        <!-- ============ PRINT ============ -->
+                        <section class="roc-pane" data-pane="print">
+                            <div class="roc-pane-head">
+                                <div>
+                                    <h6>Print Layout · Bond Paper / Letterhead</h6>
+                                    <p>When enabled, logos and footer images are hidden during PDF generation but their space is preserved (blank area). Use this
+                                        when printing on pre-printed bond paper / letterhead stationery.</p>
+                                </div>
+                            </div>
+
+                            <div class="roc-panel">
+                                <div class="row g-3 align-items-start">
+                                    <div class="col-lg-8">
+                                        <div class="roc-panel-t">Mode</div>
+                                        <div class="row g-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-medium small mb-1">Bond Paper Mode</label>
+                                                <select class="form-select form-select-sm">
+                                                    <option>Disabled (Show Logos)</option>
+                                                    <option>Enabled (Hide Logos, Reserve Space)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-medium small mb-1">Header Logo Height (px)</label>
+                                                <input type="number" class="form-control form-control-sm" value="80">
+                                                <small class="form-text text-muted">Reserved blank space at the top.</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-medium small mb-1">Footer Reserved Height (px)</label>
+                                                <input type="number" class="form-control form-control-sm" value="30">
+                                                <small class="form-text text-muted">Blank space for footer / signature.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="roc-panel-t">Page preview</div>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="roc-page">
+                                                <div class="zone" style="height:26px">HEADER 80px</div>
+                                                <div class="lines"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                                                <div class="zone" style="height:12px">FOOTER 30px</div>
+                                            </div>
+                                            <p class="small text-secondary mb-0">Hatched areas are left blank so your pre-printed stationery shows through.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============ LOGOS ============ -->
+                        <section class="roc-pane" data-pane="logos">
+                            <div class="roc-pane-head">
+                                <div>
+                                    <h6>Reservation / Agreement Logos</h6>
+                                    <p>Logos printed on the reservation and lease agreement PDFs. Max 2&nbsp;MB each, max 800×400&nbsp;px. JPG, PNG or GIF.</p>
+                                </div>
+                            </div>
+
+                            <div class="roc-panel">
+                                <div class="roc-panel-t">Reservation forms</div>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="roc-up">
+                                            <div class="roc-up-thumb"><i class="fa fa-picture-o"></i></div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="roc-up-name">Rental Reservation Logo <span class="roc-chip-ok ms-1">Set</span></div>
+                                                <div class="roc-up-meta mb-1">PNG · replaces on save</div>
+                                                <input type="file" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="roc-up">
+                                            <div class="roc-up-thumb"><i class="fa fa-picture-o"></i></div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="roc-up-name">Lease Reservation Logo <span class="roc-chip-ok ms-1">Set</span></div>
+                                                <div class="roc-up-meta mb-1">PNG · replaces on save</div>
+                                                <input type="file" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="roc-panel">
+                                <div class="roc-panel-t">Residential lease</div>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="roc-up">
+                                            <div class="roc-up-thumb"><i class="fa fa-picture-o"></i></div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="roc-up-name">Lease Residential Logo <span class="roc-chip-ok ms-1">Set</span></div>
+                                                <div class="roc-up-meta mb-1">PNG · replaces on save</div>
+                                                <input type="file" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="roc-up">
+                                            <div class="roc-up-thumb"><i class="fa fa-image"></i></div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="roc-up-name">Rental Residential Logo <span class="roc-chip-none ms-1">Not set</span></div>
+                                                <div class="roc-up-meta mb-1">Max 2 MB</div>
+                                                <input type="file" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="roc-up">
+                                            <div class="roc-up-thumb"><i class="fa fa-minus-square-o"></i></div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="roc-up-name">Agreement Footer Image <span class="roc-chip-ok ms-1">Set</span></div>
+                                                <div class="roc-up-meta mb-1">Bottom band of the agreement PDF</div>
+                                                <input type="file" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============ IMAGES ============ -->
+                        <section class="roc-pane" data-pane="images">
+                            <div class="roc-pane-head">
+                                <div>
+                                    <h6>Agreement Images <span class="text-secondary fw-normal">· Rental Residential Lease</span></h6>
+                                    <p>Extra pages appended at the end of the rental residential lease PDF — terms, annexures, stamps. Order follows upload order.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="roc-panel">
+                                <div class="roc-panel-t">Current images (3)</div>
+                                <div class="roc-gal mb-3">
+                                    <figure><figcaption>1</figcaption><i class="fa fa-file-image-o fa-lg text-secondary"></i></figure>
+                                    <figure><figcaption>2</figcaption><i class="fa fa-file-image-o fa-lg text-secondary"></i></figure>
+                                    <figure><figcaption>3</figcaption><i class="fa fa-file-image-o fa-lg text-secondary"></i></figure>
+                                </div>
+                                <label class="form-label fw-medium small mb-1">Upload replacement set</label>
+                                <input type="file" class="form-control form-control-sm" multiple>
+                                <small class="form-text text-muted">Max 2 MB each. A new upload replaces the whole set.</small>
+                                <div class="form-check mt-2">
+                                    <input type="checkbox" class="form-check-input" id="clr">
+                                    <label class="form-check-label small" for="clr">Clear existing agreement images on save</label>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ============ LPO ============ -->
+                        <section class="roc-pane" data-pane="lpo">
+                            <div class="roc-pane-head">
+                                <div>
+                                    <h6>LPO Header Image</h6>
+                                    <p>Header artwork for the Local Purchase Order PDF. Replaces the default company logo. Max 2&nbsp;MB, JPG or PNG.</p>
+                                </div>
+                            </div>
+                            <div class="roc-panel">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="roc-up">
+                                            <div class="roc-up-thumb" style="width:104px;height:60px"><i class="fa fa-file-image-o"></i></div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="roc-up-name">LPO Header Image <span class="roc-chip-none ms-1">Not set</span></div>
+                                                <div class="roc-up-meta mb-1">Replaces existing image on save</div>
+                                                <input type="file" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    {{-- footer --}}
+                    <div class="roc-foot">
+                        <span class="hint"><i class="fa fa-info-circle me-1"></i>One Save applies changes across all sections.</span>
+                        <button class="btn btn-primary roc-save"><i class="fa fa-save me-1"></i>Save Changes</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const roc = document.getElementById('roc');
+
+        // tab switching, synced across all three rails
+        roc.addEventListener('click', (e) => {
+            const btn = e.target.closest('.roc-tab');
+            if (!btn) return;
+            const pane = btn.dataset.pane;
+            roc.querySelectorAll('.roc-tab').forEach(t => t.classList.toggle('is-active', t.dataset.pane === pane));
+            roc.querySelectorAll('.roc-pane').forEach(p => p.classList.toggle('is-active', p.dataset.pane === pane));
+        });
+
+        // direction switcher
+        document.getElementById('dirSwitch').addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-set-dir]');
+            if (!btn) return;
+            roc.dataset.dir = btn.dataset.setDir;
+            document.querySelectorAll('#dirSwitch .btn').forEach(b => {
+                b.classList.toggle('btn-primary', b === btn);
+                b.classList.toggle('btn-outline-primary', b !== btn);
+            });
+        });
+
+        // light / dark
+        document.getElementById('themeBtn').addEventListener('click', function() {
+            const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            document.documentElement.setAttribute('data-bs-theme', dark ? 'light' : 'dark');
+            this.innerHTML = dark ? '<i class="fa fa-moon-o me-1"></i>Dark' : '<i class="fa fa-sun-o me-1"></i>Light';
+        });
+    </script>
+</body>
+
+</html>

@@ -10,6 +10,12 @@
                             <i class="fa fa-plus-circle me-2"></i>Add New Item
                         </button>
                     @endcan
+                    @can('rent out checklist item.import')
+                        <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center shadow-sm"
+                            href="{{ route('settings::checklist_item::import') }}" title="Advanced Import" data-bs-toggle="tooltip">
+                            <i class="fa fa-cloud-upload me-md-1"></i><span class="d-none d-sm-inline">Import</span>
+                        </a>
+                    @endcan
                     @can('rent out checklist item.delete')
                         <button class="btn btn-danger btn-sm d-inline-flex align-items-center shadow-sm" title="Delete Selected"
                             data-bs-toggle="tooltip" wire:click="delete()"

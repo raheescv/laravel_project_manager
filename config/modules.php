@@ -262,6 +262,7 @@ return [
                 'rent out payment term',
                 'rent out note',
                 'rent out document',
+                'rent out checklist item',
             ],
         ],
 

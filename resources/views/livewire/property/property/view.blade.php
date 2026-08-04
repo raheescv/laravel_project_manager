@@ -126,6 +126,9 @@
                         @if ($property->kahramaa)
                             <span><i class="fa fa-bolt"></i> Kahramaa {{ $property->kahramaa }}</span>
                         @endif
+                        @if ($property->gas_meter_number)
+                            <span><i class="fa fa-fire"></i> Gas {{ $property->gas_meter_number }}</span>
+                        @endif
                     </div>
                 </div>
 
@@ -318,6 +321,7 @@
                                     ['fa-car', 'Parking', $property->parking],
                                     ['fa-bolt', 'Kahramaa', $property->kahramaa],
                                     ['fa-plug', 'Electricity', $property->electricity],
+                                    ['fa-fire', 'Gas Meter No', $property->gas_meter_number],
                                     ['fa-briefcase', 'Furniture', $property->furniture],
                                 ] as [$icon, $label, $value])
                                     <li class="list-group-item d-flex justify-content-between align-items-center gap-2 bg-transparent">

@@ -6,6 +6,8 @@ use App\Actions\RentOut\Checklist\SaveAction;
 use App\Models\Checklist;
 use App\Models\RentOut;
 use App\Models\RentOutChecklistLine;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -15,6 +17,8 @@ class ChecklistTab extends Component
     use WithFileUploads;
 
     public $rentOutId;
+
+    public $agreement_type;
 
     /** Property type of this rent-out's unit — seeds the Add-Items filter. */
     public $propertyTypeId = null;
@@ -51,6 +55,8 @@ class ChecklistTab extends Component
         $this->rentOutId = $rentOutId;
 
         $rentOut = RentOut::with(['facilityCoordinator', 'leasingCoordinator', 'account'])->findOrFail($rentOutId);
+
+        $this->agreement_type = $rentOut->agreement_type;
 
         $this->propertyTypeId = $rentOut->property_type_id;
         $this->actualMoveInDate = optional($rentOut->actual_move_in_date)->format('Y-m-d');
@@ -273,7 +279,7 @@ class ChecklistTab extends Component
 
     public function save(): void
     {
-        abort_unless(auth()->user()?->can('rent out checklist.edit'), 403);
+        abort_unless(Auth::user()?->can('rent out checklist.edit'), 403);
         $header = [
             'actual_move_in_date' => $this->actualMoveInDate,
             'actual_move_out_date' => $this->actualMoveOutDate,

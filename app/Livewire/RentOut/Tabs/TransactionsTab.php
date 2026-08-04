@@ -2,10 +2,10 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
 use App\Models\RentOutTransaction;
 use App\Models\RentOutUtilityTerm;
-use App\Models\RentOut;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -97,7 +97,7 @@ class TransactionsTab extends Component
             // Once the agreement is vacated it stops accruing rent, so terms
             // scheduled after that date must not show as "Rent due" charges.
             ->when($vacateDate, fn ($query) => $query->whereDate('due_date', '<=', $vacateDate))
-            ->where('total','!=', 0)
+            ->where('total', '!=', 0)
             ->get()
             ->map(fn (RentOutPaymentTerm $term): array => [
                 'date' => $term->due_date,

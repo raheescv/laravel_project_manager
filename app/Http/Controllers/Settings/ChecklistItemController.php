@@ -13,6 +13,11 @@ class ChecklistItemController extends Controller
         return view('settings.checklist-item.index');
     }
 
+    public function import()
+    {
+        return view('settings.checklist-item.import');
+    }
+
     public function get(Request $request)
     {
         $list = (new Checklist())->getDropDownList($request->all());

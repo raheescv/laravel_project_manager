@@ -82,6 +82,25 @@
             text-align: center;
         }
 
+        @media (max-width: 767.98px) {
+            body {
+                padding: .75rem;
+            }
+
+            .checklist-card {
+                padding: 1.25rem;
+            }
+
+            .form-heading {
+                font-size: 1.35rem;
+            }
+
+            .table th,
+            .table td {
+                font-size: .82rem;
+            }
+        }
+
         @media print {
             body {
                 background-color: #ffffff;
@@ -115,6 +134,31 @@
 
         @php
             $tenant = $rentOut?->account;
+            // Move-Out / damage tracking only applies to rentals — a lease/sale never hands the unit back.
+            $showMoveOut = $rentOut?->agreement_type === \App\Enums\RentOut\AgreementType::Rental;
+            $colCount = $showMoveOut ? 9 : 6;
+
+            // Split the free width between Item and Comments in proportion to the text
+            // they actually hold — see the PDF view for the same sizing rationale.
+            $lengthOf = function ($values) {
+                $lengths = collect($values)->map(fn ($v) => mb_strlen(trim((string) $v)))->filter()->sort()->values();
+                if ($lengths->isEmpty()) {
+                    return 0;
+                }
+                return (int) $lengths[(int) floor(($lengths->count() - 1) * 0.9)];
+            };
+            $checklistLines = $rentOut->checklistLines;
+            $freeWidth = $showMoveOut ? 60.0 : 76.0;
+            $weigh = fn ($len) => $len <= 0 ? 0.45 : max(0.8, min(3.2, $len / 26));
+            $weights = [
+                'desc' => $weigh($lengthOf($checklistLines->map(fn ($l) => $l->item?->name))) * 1.15,
+                'in' => $weigh($lengthOf($checklistLines->map(fn ($l) => $l->move_in_comment))),
+            ];
+            if ($showMoveOut) {
+                $weights['out'] = $weigh($lengthOf($checklistLines->map(fn ($l) => $l->move_out_comment)));
+            }
+            $weightTotal = array_sum($weights) ?: 1;
+            $pct = fn ($k) => round($freeWidth * $weights[$k] / $weightTotal, 1) . '%';
         @endphp
 
         {{-- (a) Property Details --}}
@@ -138,41 +182,60 @@
                     <th>Type</th>
                     <td>{{ $rentOut?->type?->name ?? '-' }}</td>
                 </tr>
-                <tr>
-                    <th>Actual Move-In Date</th>
-                    <td>{{ $rentOut->actual_move_in_date ? systemDate($rentOut->actual_move_in_date) : '-' }}</td>
-                    <th>Actual Move-Out Date</th>
-                    <td>{{ $rentOut->actual_move_out_date ? systemDate($rentOut->actual_move_out_date) : '-' }}</td>
-                </tr>
-                <tr>
-                    <th>Electricity &amp; Water</th>
-                    <td>{{ $rentOut?->include_electricity_water ? 'Included' : 'Not Included' }}</td>
-                    <th>Air Conditioning</th>
-                    <td>{{ $rentOut?->include_ac ? 'Included' : 'Not Included' }}</td>
-                </tr>
-                <tr>
-                    <th>Internet / WiFi</th>
-                    <td>{{ $rentOut?->include_wifi ? 'Included' : 'Not Included' }}</td>
-                    <th></th>
-                    <td></td>
-                </tr>
+                @if ($showMoveOut)
+                    <tr>
+                        <th>Actual Move-In Date</th>
+                        <td>{{ $rentOut->actual_move_in_date ? systemDate($rentOut->actual_move_in_date) : '-' }}</td>
+                        <th>Actual Move-Out Date</th>
+                        <td>{{ $rentOut->actual_move_out_date ? systemDate($rentOut->actual_move_out_date) : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Electricity &amp; Water</th>
+                        <td>{{ $rentOut?->include_electricity_water ? 'Included' : 'Not Included' }}</td>
+                        <th>Air Conditioning</th>
+                        <td>{{ $rentOut?->include_ac ? 'Included' : 'Not Included' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Internet / WiFi</th>
+                        <td>{{ $rentOut?->include_wifi ? 'Included' : 'Not Included' }}</td>
+                        <th></th>
+                        <td></td>
+                    </tr>
+                @else
+                    {{-- A lease/sale reports handover milestones and meter references. --}}
+                    <tr>
+                        <th>Inspection Date</th>
+                        <td>{{ $rentOut->start_date ? systemDate($rentOut->start_date) : '-' }}</td>
+                        <th>Hand Over Date</th>
+                        <td>{{ $rentOut->actual_move_in_date ? systemDate($rentOut->actual_move_in_date) : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Kahrama Number</th>
+                        <td>{{ $rentOut?->property?->kahramaa ?: '-' }}</td>
+                        <th>Gas Meter Number</th>
+                        <td>{{ $rentOut?->property?->gas_meter_number ?: '-' }}</td>
+                    </tr>
+                @endif
             </tbody>
         </table>
 
         {{-- (b) Inventory & Condition --}}
         <p class="section-title">Inventory &amp; Condition</p>
+        <div class="table-responsive">
         <table class="table table-sm table-bordered">
             <thead class="table-light">
                 <tr>
-                    <th>Sn</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-center">Image</th>
-                    <th>Item</th>
-                    <th class="text-center">Move-In</th>
-                    <th>Comments</th>
-                    <th class="text-center">Move-Out</th>
-                    <th>Move-Out Comments</th>
-                    <th class="text-end">Damage</th>
+                    <th style="width:40px;">Sn</th>
+                    <th class="text-center" style="width:50px;">Qty</th>
+                    <th class="text-center" style="width:60px;">Image</th>
+                    <th style="width:{{ $pct('desc') }}; min-width:140px;">Item</th>
+                    <th class="text-center" style="width:70px;">Move-In</th>
+                    <th style="width:{{ $pct('in') }}; min-width:140px;">Comments</th>
+                    @if ($showMoveOut)
+                        <th class="text-center" style="width:70px;">Move-Out</th>
+                        <th style="width:{{ $pct('out') }}; min-width:140px;">Move-Out Comments</th>
+                        <th class="text-end" style="width:80px;">Damage</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -182,7 +245,7 @@
                 @endphp
                 @forelse ($grouped as $category => $lines)
                     <tr class="category-row">
-                        <th colspan="9">{{ $category ?: 'Uncategorized' }}</th>
+                        <th colspan="{{ $colCount }}">{{ $category ?: 'Uncategorized' }}</th>
                     </tr>
                     @foreach ($lines as $line)
                         @php $sn++; @endphp
@@ -200,28 +263,35 @@
                             <td>{{ $line->item?->name }}</td>
                             <td class="text-center">{{ $line->move_in_status?->symbol() }}</td>
                             <td>{{ $line->move_in_comment }}</td>
-                            <td class="text-center">{{ $line->move_out_status?->symbol() }}</td>
-                            <td>{{ $line->move_out_comment }}</td>
-                            <td class="text-end">{{ number_format((float) $line->damage_cost, 2) }}</td>
+                            @if ($showMoveOut)
+                                <td class="text-center">{{ $line->move_out_status?->symbol() }}</td>
+                                <td>{{ $line->move_out_comment }}</td>
+                                <td class="text-end">{{ number_format((float) $line->damage_cost, 2) }}</td>
+                            @endif
                         </tr>
                     @endforeach
                 @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted">No items recorded.</td>
+                        <td colspan="{{ $colCount }}" class="text-center text-muted">No items recorded.</td>
                     </tr>
                 @endforelse
             </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="8" class="text-end">Total Damage</th>
-                    <th class="text-end"><b>{{ number_format($rentOut->checklistDamageTotal(), 2) }}</b></th>
-                </tr>
-            </tfoot>
+            @if ($showMoveOut)
+                <tfoot>
+                    <tr>
+                        <th colspan="8" class="text-end">Total Damage</th>
+                        <th class="text-end"><b>{{ number_format($rentOut->checklistDamageTotal(), 2) }}</b></th>
+                    </tr>
+                </tfoot>
+            @endif
         </table>
+        </div>
 
         {{-- (c) Acceptance Blocks: Move-In then Move-Out --}}
         @php
-            $phases = [\App\Enums\RentOut\ChecklistPhase::MoveIn, \App\Enums\RentOut\ChecklistPhase::MoveOut];
+            $phases = $showMoveOut
+                ? [\App\Enums\RentOut\ChecklistPhase::MoveIn, \App\Enums\RentOut\ChecklistPhase::MoveOut]
+                : [\App\Enums\RentOut\ChecklistPhase::MoveIn];
             $roles = [
                 \App\Enums\RentOut\ChecklistSignatoryRole::Lessee,
                 \App\Enums\RentOut\ChecklistSignatoryRole::FacilityCoordinator,
@@ -231,7 +301,7 @@
 
         <div class="row mt-4">
             @foreach ($phases as $phase)
-                <div class="col-md-6">
+                <div class="{{ count($phases) > 1 ? 'col-md-6' : 'col-12' }}">
                     <div class="acceptance-block mb-4">
                         <div class="phase-heading">{{ $phase->label() }} Acceptance</div>
                         <div class="row">
