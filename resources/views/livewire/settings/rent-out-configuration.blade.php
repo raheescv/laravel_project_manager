@@ -212,6 +212,88 @@
             margin-bottom: .6rem;
         }
 
+        /* ---- Checklist notes ---- */
+        .roc-note {
+            border: 1px solid var(--bs-border-color);
+            border-radius: var(--roc-radius-sm);
+            background: var(--bs-tertiary-bg);
+            padding: .7rem .75rem;
+            height: 100%;
+        }
+
+        .roc-note-t {
+            font-size: .8rem;
+            font-weight: 700;
+        }
+
+        .roc-note-preview {
+            border-left: 3px solid var(--roc-brand);
+            border-radius: 0 6px 6px 0;
+            background: var(--bs-body-bg);
+            padding: .45rem .6rem;
+        }
+
+        .roc-note-preview-t {
+            display: block;
+            font-size: .62rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color);
+            margin-bottom: .15rem;
+        }
+
+        /* Mirrors the printed declaration block, so the preview reads like the PDF. */
+        .roc-note-preview-body {
+            font-size: .74rem;
+            line-height: 1.5;
+            color: var(--bs-body-color);
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .roc-note-preview-body> :first-child {
+            margin-top: 0;
+        }
+
+        .roc-note-preview-body> :last-child {
+            margin-bottom: 0;
+        }
+
+        .roc-note-preview-body p {
+            margin: 0 0 .4rem;
+        }
+
+        .roc-note-preview-body h2,
+        .roc-note-preview-body h3,
+        .roc-note-preview-body h4 {
+            font-size: .78rem;
+            font-weight: 700;
+            margin: .5rem 0 .25rem;
+            color: var(--roc-brand);
+        }
+
+        .roc-note-preview-body ul,
+        .roc-note-preview-body ol {
+            margin: 0 0 .4rem;
+            padding-inline-start: 1.1rem;
+        }
+
+        .roc-note-preview-body [dir="rtl"] {
+            text-align: right;
+        }
+
+        .roc-note-preview-body blockquote {
+            margin: 0 0 .4rem;
+            padding-inline-start: 1.1rem;
+        }
+
+        .roc-note-preview-body p:empty,
+        .roc-note-preview-body p:has(> br:only-child) {
+            margin: 0;
+            height: .3rem;
+        }
+
         /* ---- Upload card ---- */
         .roc-up {
             display: flex;
@@ -398,7 +480,7 @@
                     <h5>Rent Out Configuration</h5>
                     <p>Defaults for bookings, agreement print layout and PDF branding.</p>
                 </div>
-                <span class="badge rounded-pill text-bg-light border d-none d-md-inline">5 sections</span>
+                <span class="badge rounded-pill text-bg-light border d-none d-md-inline">6 sections</span>
             </div>
 
             {{-- Tab rail --}}
@@ -409,6 +491,9 @@
                         @if ($mandatoryCount)
                             <span class="roc-badge">{{ $mandatoryCount }}</span>
                         @endif
+                    </button>
+                    <button type="button" class="roc-tab" :class="{ 'is-active': tab === 'checklist' }" x-on:click="tab = 'checklist'">
+                        <i class="fa fa-list-alt"></i>Checklist Notes
                     </button>
                     <button type="button" class="roc-tab" :class="{ 'is-active': tab === 'print' }" x-on:click="tab = 'print'">
                         <i class="fa fa-print"></i>Print Layout
@@ -459,6 +544,65 @@
                             </div>
                         </div>
                     @endif
+                </section>
+
+                {{-- ============ CHECKLIST NOTES ============ --}}
+                <section x-show="tab === 'checklist'" x-cloak>
+                    <div class="roc-pane-head">
+                        <h6>Handover Checklist Notes</h6>
+                        <p>
+                            Heading and declaration printed above the signature block of the Unit Handover &amp; Snagging checklist —
+                            the Move-In block on a rental, the Handover block on a lease / sale.
+                            A rental's Move-Out block keeps its own fixed hand-back wording.
+                        </p>
+                    </div>
+
+                    @php
+                        $checklistGroups = [
+                            'rental' => ['label' => 'Rental agreements', 'icon' => 'fa-refresh', 'phase' => 'Move-In block'],
+                            'lease' => ['label' => 'Lease / Sale agreements', 'icon' => 'fa-home', 'phase' => 'Handover block'],
+                        ];
+                    @endphp
+
+                    <div class="row g-3">
+                        @foreach ($checklistGroups as $typeKey => $group)
+                            @php $declModel = "checklist_notes.{$typeKey}.declaration"; @endphp
+                            <div class="col-lg-12">
+                                <div class="roc-note h-100"
+                                    x-data="{ txt: @js($checklist_notes[$typeKey]['declaration'] ?? '') }"
+                                    x-on:rich-text-input="if ($event.detail.model === @js($declModel)) txt = $event.detail.value">
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                        <span class="roc-note-t">
+                                            <i class="fa {{ $group['icon'] }} me-1 text-secondary"></i>{{ $group['label'] }}
+                                            <span class="text-secondary fw-normal">&middot; {{ $group['phase'] }}</span>
+                                        </span>
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-nowrap"
+                                            wire:click="resetChecklistNote('{{ $typeKey }}')">
+                                            <i class="fa fa-undo me-1"></i>Reset
+                                        </button>
+                                    </div>
+
+                                    <label class="form-label fw-medium small mb-1">Heading</label>
+                                    <input type="text" class="form-control form-control-sm" wire:model="checklist_notes.{{ $typeKey }}.title"
+                                        placeholder="{{ $checklistDefaults[$typeKey]['title'] }}">
+
+                                    <x-rich-text-editor class="mt-2" wire:model="{{ $declModel }}" label="Declaration"
+                                        :tokens="$checklistTokens" :height="$typeKey === 'lease' ? 320 : 200"
+                                        placeholder="I, {tenant_name}, hereby confirm ..." />
+
+                                    <div class="roc-note-preview mt-2">
+                                        <span class="roc-note-preview-t">Prints as</span>
+                                        <div class="roc-note-preview-body" x-html="window.rocChecklistPreview(txt)"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <p class="small text-secondary mt-2 mb-0">
+                        <i class="fa fa-info-circle me-1"></i>Clear a field to fall back to the built-in default text.
+                        Use <strong>RTL</strong> on a paragraph for Arabic clauses, and <strong>HTML</strong> to edit the markup directly.
+                    </p>
                 </section>
 
                 {{-- ============ PRINT LAYOUT ============ --}}
@@ -749,6 +893,32 @@
 @push('scripts')
     <x-select.documentTypeSelect />
     <script>
+        // Fills the checklist-note placeholders with sample data so the settings
+        // screen shows the sentence the way the PDF will print it.
+        window.rocChecklistPreview = function(text) {
+            const sample = {
+                '{tenant_name}': 'Owner Unit / Ibrahim Abdalla Ibrahim Ahmed 709m',
+                '{property}': '709',
+                '{building}': 'Al Muntazah Tower',
+                '{group}': 'Marina Project',
+                '{type}': 'Apartment',
+                '{company}': @js(\App\Models\Configuration::where('key', 'company_name')->value('value') ?: 'Your Company'),
+                '{today}': @js(now()->format('d M Y')),
+            };
+
+            const filled = Object.entries(sample).reduce((t, [token, value]) => t.split(token).join(value), text || '');
+
+            // Notes saved before the declaration became rich text are plain strings —
+            // show them escaped with their line breaks kept, the way they print.
+            if (!/<\/?[a-z][^>]*>/i.test(filled)) {
+                const holder = document.createElement('div');
+                holder.textContent = filled;
+                return holder.innerHTML.split('\n').join('<br>');
+            }
+
+            return filled;
+        };
+
         $(document).ready(function() {
             $('#mandatory_document_types').on('change', function() {
                 @this.set('mandatory_document_types', $(this).val() || []);

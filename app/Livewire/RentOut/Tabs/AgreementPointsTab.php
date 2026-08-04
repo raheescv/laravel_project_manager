@@ -4,6 +4,7 @@ namespace App\Livewire\RentOut\Tabs;
 
 use App\Enums\RentOut\AgreementType;
 use App\Models\RentOut;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -71,7 +72,7 @@ class AgreementPointsTab extends Component
     public function save(): void
     {
         $authRentOut = RentOut::withTrashed()->find($this->rentOutId);
-        abort_unless(auth()->user()?->can($authRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.edit' : 'rent out.edit'), 403);
+        abort_unless(Auth::user()?->can($authRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.edit' : 'rent out.edit'), 403);
         try {
             DB::beginTransaction();
 

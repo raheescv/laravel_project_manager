@@ -27,5 +27,6 @@
         <x-select.documentTypeSelect />
         <x-select.paymentMethodSelect />
         <x-select.accountSelect />
+        <x-select.employeeSelect />
     @endpush
 </x-app-layout>

@@ -284,22 +284,18 @@
     </div>
 
     {{-- Handover dates + signatories --}}
-    @php $metaCol = $showMoveOut ? 'col-lg-3 col-md-6' : 'col-lg-4 col-md-6'; @endphp
     <div class="row g-2 mb-2">
-        <div class="{{ $metaCol }} col-12">
+        <div class="col-lg-2 col-md-6 col-12">
             {{-- On a lease/sale the inspection and the handover are the same visit, so one date
                  drives both the Inspection Date and Hand Over Date lines on the printed form. --}}
             <label class="form-label small mb-1 text-muted">{{ $showMoveOut ? 'Actual Move-In Date' : 'Inspection Date' }}</label>
             <input type="date" class="form-control form-control-sm" wire:model="actualMoveInDate">
-            @unless ($showMoveOut)
-                <div class="form-text small">Prints as both Inspection Date and Hand Over Date.</div>
-            @endunless
         </div>
-        <div class="{{ $metaCol }} col-12">
+        <div class="col-lg-2 col-md-6 col-12">
             <label class="form-label small mb-1 text-muted">{{ $showMoveOut ? 'Actual Move-Out Date' : 'Handover Date' }}</label>
             <input type="date" class="form-control form-control-sm" wire:model="actualMoveOutDate">
         </div>
-        <div class="{{ $metaCol }} col-12" wire:ignore>
+        <div class="col-lg-4 col-md-6 col-12" wire:ignore>
             <label class="form-label small mb-1 text-muted">Facility Coordinator</label>
             <select id="facilityCoord" class="select-employee_id-list" style="width:100%" placeholder="Select Employee">
                 @if ($facilityCoordinatorId)
@@ -307,7 +303,7 @@
                 @endif
             </select>
         </div>
-        <div class="{{ $metaCol }} col-12" wire:ignore>
+        <div class="col-lg-4 col-md-6 col-12" wire:ignore>
             <label class="form-label small mb-1 text-muted">Leasing Coordinator</label>
             <select id="leasingCoord" class="select-employee_id-list" style="width:100%" placeholder="Select Employee">
                 @if ($leasingCoordinatorId)

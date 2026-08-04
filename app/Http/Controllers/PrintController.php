@@ -12,6 +12,7 @@ use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use App\Services\CompanyLogoResolver;
+use App\Traits\UsesBrowsershot;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -19,6 +20,8 @@ use Illuminate\Support\Str;
 
 class PrintController extends Controller
 {
+    use UsesBrowsershot;
+
     public function saleInvoice($id)
     {
         return SaleHelper::saleInvoice($id);
@@ -38,14 +41,39 @@ class PrintController extends Controller
             'leasingCoordinator',
         ])->findOrFail($id);
 
-        // Resolve the company logo to a LOCAL file path — dompdf renders file paths reliably
-        // (it drops data-URIs and can't always fetch remote URLs).
-        $companyLogo = CompanyLogoResolver::path();
+        // Rendered by Chrome rather than dompdf: the handover declaration is rich text
+        // edited in Settings and may hold Arabic clauses, which dompdf prints
+        // unshaped and back-to-front. Browsershot embeds data URIs, so the logo
+        // travels with the HTML.
+        $companyLogo = CompanyLogoResolver::dataUri();
 
-        $pdf = Pdf::loadView('print.rentout.checklist', compact('rentOut', 'companyLogo'));
-        $pdf->setPaper('a4', 'portrait');
+        $render = function (int $pages) use ($rentOut, $companyLogo) {
+            $html = view('print.rentout.checklist', compact('rentOut', 'companyLogo', 'pages'))->render();
 
-        return $pdf->stream('move_in_out_checklist.pdf');
+            return $this->makeBrowsershot($html)
+                ->format('A4')
+                ->margins(10, 10, 10, 10)
+                ->showBackground()
+                ->pdf();
+        };
+
+        // The acknowledgment has to sit at the foot of the LAST page, which the page
+        // body can only be stretched to once the page count is known — so lay it out
+        // once to count, then lay it out again at that height. If the taller body
+        // spills onto one more page (rounding), the first pass is the honest answer.
+        $pdf = $render(1);
+        $pages = $this->pdfPageCount($pdf);
+
+        if ($pages > 1) {
+            $stretched = $render($pages);
+            if ($this->pdfPageCount($stretched) === $pages) {
+                $pdf = $stretched;
+            }
+        }
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="move_in_out_checklist.pdf"');
     }
 
     public function daySessionReport($id)
@@ -330,6 +358,12 @@ class PrintController extends Controller
     }
 
     // ─── Private helpers ─────────────────────────────────────────────
+
+    /** Pages in a rendered PDF, read from the page tree; 1 when it can't be told. */
+    private function pdfPageCount(string $pdf): int
+    {
+        return preg_match('/\/Count (\d+)/', $pdf, $matches) ? max(1, (int) $matches[1]) : 1;
+    }
 
     private function getCompanyInfo(): array
     {

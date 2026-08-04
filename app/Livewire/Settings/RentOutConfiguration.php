@@ -5,6 +5,7 @@ namespace App\Livewire\Settings;
 use App\Models\Configuration;
 use App\Models\DocumentType;
 use App\Models\RentOut;
+use App\Support\RentOutChecklistNotes;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -55,6 +56,9 @@ class RentOutConfiguration extends Component
     // Mandatory documents (default required checklist for new rent-out / lease bookings)
     public array $mandatory_document_types = [];
 
+    // Handover checklist print headings + declarations, per agreement type / phase
+    public array $checklist_notes = [];
+
     private array $configKeys = [
         'reservation_bond_paper_mode',
         'reservation_logo_height',
@@ -99,6 +103,23 @@ class RentOutConfiguration extends Component
             ->map(fn ($id) => (int) $id)
             ->values()
             ->toArray();
+
+        // Load checklist print headings / declarations
+        $this->checklist_notes = RentOutChecklistNotes::all();
+    }
+
+    /** Restore one agreement type's heading + declaration to the shipped default. */
+    public function resetChecklistNote(string $type): void
+    {
+        $defaults = RentOutChecklistNotes::defaults();
+        if (! isset($defaults[$type])) {
+            return;
+        }
+
+        $this->checklist_notes[$type] = $defaults[$type];
+
+        // The declaration editor is wire:ignore'd, so it has to be told to re-read.
+        $this->dispatch('rich-text:refresh', model: "checklist_notes.{$type}.declaration");
     }
 
     public function save()
@@ -129,6 +150,10 @@ class RentOutConfiguration extends Component
             ['key' => RentOut::MANDATORY_DOCUMENTS_CONFIG_KEY],
             ['value' => $mandatory]
         );
+
+        // Save checklist print headings / declarations (blanks fall back to defaults)
+        RentOutChecklistNotes::save($this->checklist_notes);
+        $this->checklist_notes = RentOutChecklistNotes::all();
 
         // Save logo uploads
         foreach ($this->logoKeys as $property => $configKey) {
@@ -181,6 +206,8 @@ class RentOutConfiguration extends Component
     {
         return view('livewire.settings.rent-out-configuration', [
             'documentTypes' => DocumentType::orderBy('name')->pluck('name', 'id'),
+            'checklistTokens' => RentOutChecklistNotes::tokenHelp(),
+            'checklistDefaults' => RentOutChecklistNotes::defaults(),
         ]);
     }
 }

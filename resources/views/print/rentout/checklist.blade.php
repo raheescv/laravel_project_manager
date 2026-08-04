@@ -5,8 +5,22 @@
     <title>Unit Handover & Snagging</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #2b2b2b; margin: 0; }
-        .wrap { padding: 0; }
+        /* Rendered by Chrome (Browsershot) — the Arabic faces are what shape and
+           order RTL clauses in the declaration correctly. */
+        body { font-family: 'DejaVu Sans', 'Noto Naskh Arabic', 'Noto Sans Arabic', 'Geeza Pro', Arial, sans-serif;
+               font-size: 10px; color: #2b2b2b; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        /* The acknowledgment signs off the document, so it sits at the FOOT of the last
+           page rather than trailing the inventory table. Chrome has no "footer on the
+           last page" rule, so the page body is stretched to a whole number of pages
+           (counted by PrintController from a first pass) and the block is pushed down
+           by the auto margin.
+           277mm = A4's 297mm less the 10mm top and bottom margins PrintController
+           prints with — vh can't be used here, it measures the whole page, margins
+           included, and would spill onto an extra page. 2mm is shaved off so rounding
+           can't do the same. */
+        .wrap { padding: 0; display: flex; flex-direction: column;
+                min-height: calc({{ max(1, (int) ($pages ?? 1)) }} * 277mm - 2mm); }
+        .accept-group { margin-top: auto; }
         .title-band { background: #7a6a2f; color: #fff; border-radius: 4px; width: 100%; }
         .title-band td { vertical-align: middle; padding: 8px 10px; }
         .title-band .tb-logo { width: 110px; }
@@ -36,9 +50,44 @@
         .total td { background: #efe9d6; font-weight: bold; }
         .accept { border: 1px solid #d8d4c4; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; }
         .accept .ph { font-size: 11px; font-weight: bold; color: #7a6a2f; text-transform: uppercase; margin-bottom: 4px; }
-        .accept .decl { font-size: 8.7px; color: #444; margin: 0 0 8px; line-height: 1.45; }
-        .sign-cell { width: 33.33%; vertical-align: bottom; padding: 4px 6px; text-align: center; }
-        .sign-img { height: 46px; margin-bottom: 2px; }
+        /* The declaration is rich text edited in Settings → Rent Out Settings →
+           Checklist Notes, so it can carry headings, clause lists and RTL (Arabic)
+           paragraphs. These rules keep whatever it holds inside the printed block. */
+        .decl { font-size: 8.7px; color: #444; margin: 0 0 8px; line-height: 1.5; }
+        .decl > *:first-child { margin-top: 0; }
+        .decl > *:last-child { margin-bottom: 0; }
+        .decl p { margin: 0 0 5px; }
+        /* A blank line the author left stays a breather, not a whole empty line box. */
+        .decl p:empty, .decl p:has(> br:only-child) { margin: 0; height: 4px; }
+        .decl h1, .decl h2, .decl h3, .decl h4, .decl h5, .decl h6 {
+            font-size: 9.4px; font-weight: bold; color: #7a6a2f; margin: 7px 0 3px; text-transform: none; }
+        .decl h1, .decl h2 { font-size: 10px; text-transform: uppercase; letter-spacing: .3px; }
+        .decl ul, .decl ol { margin: 0 0 5px; padding-left: 14px; }
+        .decl ul[dir="rtl"], .decl ol[dir="rtl"] { padding-left: 0; padding-right: 14px; }
+        .decl li { margin-bottom: 1px; }
+        /* Indented, not quoted: a browser's indent command wraps the line in a
+           blockquote, so a quote bar here would mark text the author only indented. */
+        .decl blockquote { margin: 0 0 5px; padding-inline-start: 18px; }
+        .decl a { color: #444; text-decoration: none; }
+        .decl [dir="rtl"] { direction: rtl; text-align: right; }
+        .decl table { margin-bottom: 5px; }
+        .decl td, .decl th { border: 1px solid #ddd; padding: 2px 4px; }
+        /* Fixed layout keeps the three signature cells at a third each — otherwise a long
+           signer name widens its cell and pushes the table past the page edge, clipping
+           the last signatory. break-word wraps the name inside its third instead. */
+        /* The acknowledgment reads as one statement: its declaration and the signatures
+           under it move to the next page together rather than splitting across the
+           break. (A declaration taller than a whole page still has to break — nothing
+           can keep that together.) */
+        .accept { page-break-inside: avoid; break-inside: avoid; }
+        .items tr, .decl li { page-break-inside: avoid; }
+        .decl h1, .decl h2, .decl h3, .decl h4 { page-break-after: avoid; }
+        .sign-table { table-layout: fixed; width: 100%; page-break-inside: avoid; }
+        /* Top-aligned so every signature rule sits on the same line — a name that wraps
+           to two lines grows downwards instead of lifting its own rule. */
+        .sign-cell { width: 33.33%; vertical-align: top; padding: 4px 6px; text-align: center;
+                     word-wrap: break-word; overflow-wrap: break-word; }
+        .sign-img { max-width: 100%; height: 46px; margin-bottom: 2px; }
         .sign-line { border-top: 1px solid #555; padding-top: 3px; font-size: 8.5px; }
         .sign-name { font-weight: bold; font-size: 9px; }
         .muted { color: #8a8575; }
@@ -48,38 +97,30 @@
 @php
     $ro = $rentOut;
     $tenant = $ro?->account;
-    $sigSrc = function ($sig) {
-        if ($sig && $sig->signature_path) {
-            $p = public_path('storage/' . $sig->signature_path);
-            if (is_file($p)) {
-                return $p; // dompdf renders local file paths reliably (data-URIs are dropped)
-            }
+    // Browsershot renders the page from a temp file, so images have to travel with
+    // it — every stored path is inlined as a data URI.
+    $dataUri = function (?string $relative) {
+        if (! $relative) {
+            return null;
         }
-        return null;
-    };
-    // Line image with master-item fallback, resolved to a local path for dompdf.
-    $imgSrc = function ($line) {
-        $path = $line->image_path ?: $line->item?->image_path;
-        if ($path) {
-            $p = public_path('storage/' . $path);
-            if (is_file($p)) {
-                return $p;
-            }
+        $path = public_path('storage/' . $relative);
+        if (! is_file($path)) {
+            return null;
         }
-        return null;
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION)) ?: 'png';
+
+        return 'data:image/' . ($ext === 'svg' ? 'svg+xml' : $ext) . ';base64,' . base64_encode(file_get_contents($path));
     };
+    $sigSrc = fn ($sig) => $dataUri($sig?->signature_path);
+    // Line image with master-item fallback.
+    $imgSrc = fn ($line) => $dataUri($line->image_path ?: $line->item?->image_path);
     $fmt = fn ($d) => $d ? $d->format('d M Y') : '—';
     // Move-Out / damage tracking only applies to rentals — a lease/sale never hands the unit back.
     $showMoveOut = $ro?->agreement_type === \App\Enums\RentOut\AgreementType::Rental;
     $colCount = $showMoveOut ? 9 : 6;
-    $phases = [
-        'move_in' => ['label' => 'To be accomplished during Move-In',
-            'decl' => 'I, ' . ($tenant?->name ?? 'the Lessee') . ', hereby confirm that the above mentioned furniture, kitchen appliances & accessories were physically checked and received by me in good condition.'],
-    ];
-    if ($showMoveOut) {
-        $phases['move_out'] = ['label' => 'To be accomplished during Move-Out',
-            'decl' => 'We hereby confirm that the above mentioned items were physically checked and received from ' . ($tenant?->name ?? 'the Lessee') . '. The Lessee confirms no further claim once the access card/s are returned.'];
-    }
+    // Headings + declarations are editable per agreement type in
+    // Settings → Rent Out Settings → Checklist Notes.
+    $phases = \App\Support\RentOutChecklistNotes::phasesFor($ro);
     $roles = ['lessee' => 'Lessee', 'facility_coordinator' => 'Facility Coordinator', 'leasing_coordinator' => 'Leasing Coordinator'];
     $nameFor = fn ($role) => match ($role) {
         'lessee' => $tenant?->name,
@@ -229,11 +270,13 @@
         </tbody>
     </table>
 
+    <div class="accept-group">
     @foreach ($phases as $phaseKey => $phase)
         <div class="accept">
             <div class="ph">{{ $phase['label'] }}</div>
-            <p class="decl">{{ $phase['decl'] }}</p>
-            <table>
+            {{-- Sanitised in App\Support\RichText before it ever reaches here. --}}
+            <div class="decl">{!! $phase['decl'] !!}</div>
+            <table class="sign-table">
                 <tr>
                     @foreach ($roles as $roleKey => $roleLabel)
                         @php $sig = $ro->checklistSignatureFor($phaseKey, $roleKey); $src = $sigSrc($sig); @endphp
@@ -256,6 +299,7 @@
             </table>
         </div>
     @endforeach
+    </div>
 </div>
 </body>
 </html>
