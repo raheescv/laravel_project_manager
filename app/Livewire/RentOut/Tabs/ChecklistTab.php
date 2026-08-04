@@ -26,6 +26,8 @@ class ChecklistTab extends Component
     /** Pending per-line image uploads, keyed by line index. */
     public array $newImages = [];
 
+    public ?string $inspectionDate = null;
+
     public ?string $actualMoveInDate = null;
 
     public ?string $actualMoveOutDate = null;
@@ -59,6 +61,7 @@ class ChecklistTab extends Component
         $this->agreement_type = $rentOut->agreement_type;
 
         $this->propertyTypeId = $rentOut->property_type_id;
+        $this->inspectionDate = optional($rentOut->inspection_date)->format('Y-m-d');
         $this->actualMoveInDate = optional($rentOut->actual_move_in_date)->format('Y-m-d');
         $this->actualMoveOutDate = optional($rentOut->actual_move_out_date)->format('Y-m-d');
         $this->facilityCoordinatorId = $rentOut->facility_coordinator_id;
@@ -281,6 +284,7 @@ class ChecklistTab extends Component
     {
         abort_unless(Auth::user()?->can('rent out checklist.edit'), 403);
         $header = [
+            'inspection_date' => $this->inspectionDate,
             'actual_move_in_date' => $this->actualMoveInDate,
             'actual_move_out_date' => $this->actualMoveOutDate,
             'facility_coordinator_id' => $this->facilityCoordinatorId,

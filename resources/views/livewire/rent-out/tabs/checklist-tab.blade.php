@@ -284,8 +284,12 @@
     </div>
 
     {{-- Handover dates + signatories --}}
-    @php $metaCol = $showMoveOut ? 'col-lg-3 col-md-6' : 'col-lg-4 col-md-6'; @endphp
+    @php $metaCol = 'col-lg-3 col-md-6'; @endphp
     <div class="row g-2 mb-2">
+        <div class="{{ $metaCol }} col-12">
+            <label class="form-label small mb-1 text-muted">Inspection Date</label>
+            <input type="date" class="form-control form-control-sm" wire:model="inspectionDate">
+        </div>
         <div class="{{ $metaCol }} col-12">
             <label class="form-label small mb-1 text-muted">{{ $showMoveOut ? 'Actual Move-In Date' : 'Hand Over Date' }}</label>
             <input type="date" class="form-control form-control-sm" wire:model="actualMoveInDate">

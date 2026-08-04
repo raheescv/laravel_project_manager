@@ -24,6 +24,7 @@ class SaveAction
 
             $rentOut = RentOut::findOrFail($rentOutId);
             $rentOut->update([
+                'inspection_date' => ($header['inspection_date'] ?? null) ?: null,
                 'actual_move_in_date' => $header['actual_move_in_date'] ?: null,
                 'actual_move_out_date' => $header['actual_move_out_date'] ?: null,
                 'facility_coordinator_id' => $header['facility_coordinator_id'] ?: null,
