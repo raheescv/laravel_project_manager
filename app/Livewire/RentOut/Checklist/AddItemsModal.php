@@ -13,7 +13,7 @@ class AddItemsModal extends Component
 
     public string $filterCategory = '';
 
-    /** Selected property type id (string for select binding), '' = all. */
+    /** Selected property type id (string for select binding), '' = all, 'none' = universal items only. */
     public string $filterPropertyType = '';
 
     /** @var int[] ids already on the checklist — shown disabled */
@@ -31,10 +31,21 @@ class AddItemsModal extends Component
         $this->selectedIds = [];
         $this->search = '';
         $this->filterCategory = '';
-        // Default the filter to the unit's property type; user can clear it.
-        $this->filterPropertyType = $propertyTypeId ? (string) $propertyTypeId : '';
+        // Default the filter to the unit's property type, but only when items are
+        // actually tagged with it — otherwise the modal would open empty on
+        // libraries whose items are all universal. User can change it either way.
+        $this->filterPropertyType = $propertyTypeId && $this->typeHasItems((int) $propertyTypeId)
+            ? (string) $propertyTypeId
+            : '';
         $this->loaded = true;
         $this->dispatch('ToggleChecklistAddItemsModal');
+    }
+
+    protected function typeHasItems(int $propertyTypeId): bool
+    {
+        return Checklist::where('is_active', true)
+            ->where('property_type_id', $propertyTypeId)
+            ->exists();
     }
 
     protected function baseQuery()
@@ -47,10 +58,10 @@ class AddItemsModal extends Component
                 });
             })
             ->when($this->filterCategory, fn ($q, $v) => $q->where('category', $v))
-            ->when($this->filterPropertyType, fn ($q, $v) => $q->where(function ($w) use ($v): void {
-                // Items for this type, plus universal items (no property type set).
-                $w->where('property_type_id', $v)->orWhereNull('property_type_id');
-            }))
+            ->when($this->filterPropertyType, fn ($q, $v) => $v === 'none'
+                // "none" isolates universal items; an id matches that specific type.
+                ? $q->whereNull('property_type_id')
+                : $q->where('property_type_id', $v))
             ->orderBy('sort_order')
             ->orderBy('name');
     }
@@ -117,7 +128,15 @@ class AddItemsModal extends Component
             ->orderBy('category')
             ->pluck('category');
 
+        // Item counts per property type (plus universal) so the picker shows what
+        // each option will actually yield.
+        $typeCounts = Checklist::where('is_active', true)
+            ->selectRaw('property_type_id, count(*) as total')
+            ->groupBy('property_type_id')
+            ->pluck('total', 'property_type_id');
+
         $propertyTypes = PropertyType::orderBy('name')->get(['id', 'name']);
+        $universalCount = (int) ($typeCounts[null] ?? $typeCounts[''] ?? 0);
 
         // Counts for the summary / toggle-button label.
         $visibleSelectable = $items
@@ -133,6 +152,8 @@ class AddItemsModal extends Component
             'items' => $items,
             'categories' => $categories,
             'propertyTypes' => $propertyTypes,
+            'typeCounts' => $typeCounts,
+            'universalCount' => $universalCount,
             'shownCount' => $items->sum(fn ($g) => $g->count()),
             'categoryCount' => $items->count(),
             'allShownSelected' => $allShownSelected,

@@ -223,10 +223,12 @@
                     <option value="{{ $c }}">{{ $c }}</option>
                 @endforeach
             </select>
-            <select class="form-select form-select-sm cam-filter" style="width:180px;" wire:model.live="filterPropertyType">
+            <select class="form-select form-select-sm cam-filter" style="width:200px;" wire:model.live="filterPropertyType">
                 <option value="">All property types</option>
+                <option value="none">— Universal (no type) — ({{ $universalCount }})</option>
                 @foreach ($propertyTypes as $pt)
-                    <option value="{{ $pt->id }}">{{ $pt->name }}</option>
+                    @php $ptCount = (int) ($typeCounts[$pt->id] ?? 0); @endphp
+                    <option value="{{ $pt->id }}" @disabled($ptCount === 0)>{{ $pt->name }} ({{ $ptCount }})</option>
                 @endforeach
             </select>
             <button type="button" class="btn btn-sm btn-toggle" wire:click="toggleVisible" @disabled($shownCount === 0)>
