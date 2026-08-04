@@ -44,7 +44,9 @@ class CompanyProfile extends Component
         $rules = [
             'logo.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
             'email' => 'nullable|email|max:255',
-            'google_review_url' => 'nullable|url|max:500',
+            // Google Maps place/review links carry long `data=!4m...` payloads, so the
+            // only real ceiling is the configurations.value TEXT column.
+            'google_review_url' => 'nullable|url|max:5000',
         ];
 
         return $rules;
