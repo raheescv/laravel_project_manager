@@ -198,16 +198,16 @@
                     <tr>
                         <th>Internet / WiFi</th>
                         <td>{{ $rentOut?->include_wifi ? 'Included' : 'Not Included' }}</td>
-                        <th>Inspection Date</th>
-                        <td>{{ $rentOut->inspection_date ? systemDate($rentOut->inspection_date) : '-' }}</td>
+                        <th></th>
+                        <td></td>
                     </tr>
                 @else
                     {{-- A lease/sale reports handover milestones and meter references. --}}
                     <tr>
                         <th>Inspection Date</th>
-                        <td>{{ $rentOut->inspection_date ? systemDate($rentOut->inspection_date) : '-' }}</td>
-                        <th>Hand Over Date</th>
                         <td>{{ $rentOut->actual_move_in_date ? systemDate($rentOut->actual_move_in_date) : '-' }}</td>
+                        <th>Hand Over Date</th>
+                        <td>{{ $rentOut->actual_move_in_date ? systemDate($rentOut->actual_move_out_date) : '-' }}</td>
                     </tr>
                     <tr>
                         <th>Kahrama Number</th>

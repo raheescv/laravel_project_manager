@@ -156,27 +156,26 @@
                 ['Actual Move-In', $fmt($ro->actual_move_in_date)],
                 ['Lease End', $fmt($ro?->end_date)],
                 ['Actual Move-Out', $fmt($ro->actual_move_out_date)],
-                ['Inspection Date', $fmt($ro->inspection_date)],
                 ['Utilities', $ro?->include_electricity_water ?: '—'],
                 ['Internet', $ro?->include_wifi ?: '—'],
             ]
             : [
-                ['Inspection Date', $fmt($ro->inspection_date)],
-                ['Hand Over Date', $fmt($ro->actual_move_in_date)],
+                // The lease/sale inspection and handover are one and the same visit — both
+                // lines report the single date captured on the checklist.
+                ['Inspection Date', $fmt($ro->actual_move_in_date)],
+                ['Hand Over Date', $fmt($ro->actual_move_out_date)],
                 ['Kahrama Number', $ro?->property?->kahramaa ?: '—'],
                 ['Gas Meter Number', $ro?->property?->gas_meter_number ?: '—'],
             ];
-        // Either column may be the longer one — walk the taller of the two.
-        $metaRows = max(count($metaLeft), count($metaRight));
     @endphp
     <table class="meta">
-        @for ($r = 0; $r < $metaRows; $r++)
-            @php $left = $metaLeft[$r] ?? null; $right = $metaRight[$r] ?? null; @endphp
+        @foreach ($metaLeft as $r => $left)
+            @php $right = $metaRight[$r] ?? null; @endphp
             <tr>
-                <td class="lbl">{{ $left[0] ?? '' }}</td><td class="val">{{ $left[1] ?? '' }}</td>
+                <td class="lbl">{{ $left[0] }}</td><td class="val">{{ $left[1] }}</td>
                 <td class="lbl">{{ $right[0] ?? '' }}</td><td class="val">{{ $right[1] ?? '' }}</td>
             </tr>
-        @endfor
+        @endforeach
     </table>
 
     <div class="sec">Inventory &amp; Condition</div>
