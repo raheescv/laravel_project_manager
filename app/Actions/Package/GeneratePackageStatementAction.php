@@ -6,11 +6,15 @@ use App\Models\Configuration;
 use App\Models\Package;
 use App\Models\PackageItem;
 use App\Models\PackagePayment;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\UsesBrowsershot;
 use Illuminate\Support\Collection;
 
 class GeneratePackageStatementAction
 {
+    // The statement is headed by the customer's own name and the tenant's
+    // company details, routinely Arabic here — Chrome, not DomPDF.
+    use UsesBrowsershot;
+
     protected $packageId;
 
     protected $fromDate;
@@ -208,17 +212,18 @@ class GeneratePackageStatementAction
 
         $html = view('package.statement', $data)->render();
 
-        $pdf = Pdf::loadHTML($html);
-        $pdf->setPaper('a4', 'portrait');
-        $pdf->setOption('margin-top', 10);
-        $pdf->setOption('margin-right', 10);
-        $pdf->setOption('margin-bottom', 10);
-        $pdf->setOption('margin-left', 10);
+        $pdf = $this->makeBrowsershot($html)
+            ->format('A4')
+            ->margins(10, 10, 10, 10)
+            ->showBackground()
+            ->pdf();
 
         // Names may contain "/" or "\" (eg. "Ahmed / Ali"), which Content-Disposition forbids.
         $customerName = $this->package->account ? str_replace([' ', '/', '\\'], ['_', '-', '-'], $this->package->account->name) : 'Customer';
         $filename = 'package_statement_'.$customerName.'_#'.$this->package->id.'_'.now()->format('Y-m-d').'.pdf';
 
-        return $pdf->stream($filename);
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
     }
 }

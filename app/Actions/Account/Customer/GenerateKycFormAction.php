@@ -7,10 +7,20 @@ use App\Models\Configuration;
 use App\Models\DocumentType;
 use App\Models\RentOut;
 use App\Services\CompanyLogoResolver;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\UsesBrowsershot;
 
 class GenerateKycFormAction
 {
+    use UsesBrowsershot;
+
+    /**
+     * Render the customer KYC form.
+     *
+     * Rendered through Browsershot (Chrome), not DomPDF: the form is almost
+     * entirely tenant-entered free text — customer name, nationality, address,
+     * company details — which in this market is routinely Arabic, and DomPDF
+     * renders Arabic unshaped and right-to-left reversed.
+     */
     public function execute($customerId, $rentoutId = null)
     {
         $customer = Account::customer()->with('customerType')->findOrFail($customerId);
@@ -45,20 +55,29 @@ class GenerateKycFormAction
                 ->groupBy('document_type_id');
         }
 
-        $pdf = Pdf::loadView('accounts.customer_kyc', [
+        // Browsershot blocks external requests, so the logo must be embedded.
+        $html = view('accounts.customer_kyc', [
             'customer' => $customer,
             'rentout' => $rentout,
             'companyInfo' => $companyInfo,
-            'companyLogo' => CompanyLogoResolver::path(),
+            'companyLogo' => CompanyLogoResolver::dataUri(),
             'documentTypes' => $documentTypes,
             'submittedDocuments' => $submittedDocuments,
-        ]);
-        $pdf->setPaper('a4', 'portrait');
+        ])->render();
+
+        // The view sets `@page { margin: 0 }` and pads itself, so keep Chrome's
+        // margins at the trait default of zero.
+        $pdf = $this->makeBrowsershot($html)
+            ->format('A4')
+            ->showBackground()
+            ->pdf();
 
         // Names may contain "/" or "\" (eg. "Ahmed / Ali"), which Content-Disposition forbids.
         $customerName = str_replace(['/', '\\'], '-', (string) $customer->name);
         $filename = 'customer_kyc_'.$customerName.'_'.now()->format('Y-m-d').'.pdf';
 
-        return $pdf->stream($filename);
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
     }
 }

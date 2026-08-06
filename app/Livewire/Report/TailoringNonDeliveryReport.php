@@ -9,7 +9,7 @@ use App\Models\Configuration;
 use App\Models\Product;
 use App\Models\TailoringCategory;
 use App\Traits\Report\BuildsTailoringNonDeliveryQuery;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\UsesBrowsershot;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -18,6 +18,10 @@ use Maatwebsite\Excel\Facades\Excel;
 class TailoringNonDeliveryReport extends Component
 {
     use BuildsTailoringNonDeliveryQuery;
+
+    // Rows carry tenant-entered customer and product names, routinely Arabic
+    // here — rendered through Chrome rather than DomPDF.
+    use UsesBrowsershot;
     use WithPagination;
 
     public $search = '';
@@ -130,17 +134,24 @@ class TailoringNonDeliveryReport extends Component
 
         $totals = $this->nonDeliveryTotals($filters, $allowedBranchIds);
 
-        $pdf = Pdf::loadView('report.tailoring-non-delivery-report-pdf', [
+        $html = view('report.tailoring-non-delivery-report-pdf', [
             'rows' => $rows,
             'totals' => $totals,
             'filters' => $filters,
             'statusOptions' => tailoringOrderStatuses(),
-        ])->setPaper('a4', 'landscape');
+        ])->render();
+
+        $pdf = $this->makeBrowsershot($html)
+            ->format('A4')
+            ->landscape()
+            ->margins(10, 10, 10, 10)
+            ->showBackground()
+            ->pdf();
 
         $fileName = 'TailoringNonDeliveryReport_'.now()->format('Ymd_His').'.pdf';
 
         return response()->streamDownload(function () use ($pdf): void {
-            echo $pdf->output();
+            echo $pdf;
         }, $fileName);
     }
 

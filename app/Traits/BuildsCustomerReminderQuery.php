@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\Account;
 use App\Models\Product;
+use App\Models\Sale;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection as SupportCollection;
@@ -38,21 +39,27 @@ trait BuildsCustomerReminderQuery
         $branchId = $filters['branch_id'] ?? null;
         $reminderCutoffDate = $filters['reminder_cutoff_date'] ?? Carbon::now()->subDays(30)->toDateString();
 
+        // These all start from the Sale model rather than DB::table('sales') so that
+        // TenantScope and AssignedBranchScope stay applied — a raw builder aggregates
+        // across every tenant and every branch, including ones the user cannot see.
+        // Both scopes qualify their column with the table name, so the joins below
+        // are unambiguous.
+
         // Subquery for sales totals
-        $salesSubQuery = DB::table('sales')
+        $salesSubQuery = Sale::query()
             ->select([
-                'account_id',
+                'sales.account_id',
                 DB::raw('COUNT(*) as total_purchases'),
-                DB::raw('SUM(grand_total) as total_spent'),
-                DB::raw('MAX(date) as last_purchase_date'),
+                DB::raw('SUM(sales.grand_total) as total_spent'),
+                DB::raw('MAX(sales.date) as last_purchase_date'),
             ])
-            ->where('status', 'completed')
-            ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
-            ->groupBy('account_id');
+            ->where('sales.status', 'completed')
+            ->when($branchId, fn ($q) => $q->where('sales.branch_id', $branchId))
+            ->groupBy('sales.account_id');
 
         // Get customers who purchased sale items BEFORE the cutoff date
-        $customersWithPastPurchases = DB::table('sale_items')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+        $customersWithPastPurchases = Sale::query()
+            ->join('sale_items', 'sale_items.sale_id', '=', 'sales.id')
             ->where('sales.status', 'completed')
             ->whereIn('sale_items.product_id', $saleProductIds->all())
             ->when($branchId, fn ($q) => $q->where('sales.branch_id', $branchId))
@@ -61,8 +68,8 @@ trait BuildsCustomerReminderQuery
             ->pluck('sales.account_id');
 
         // Get customers who purchased sale items AFTER the cutoff date
-        $customersWithRecentSalePurchases = DB::table('sale_items')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+        $customersWithRecentSalePurchases = Sale::query()
+            ->join('sale_items', 'sale_items.sale_id', '=', 'sales.id')
             ->where('sales.status', 'completed')
             ->whereIn('sale_items.product_id', $saleProductIds->all())
             ->when($branchId, fn ($q) => $q->where('sales.branch_id', $branchId))

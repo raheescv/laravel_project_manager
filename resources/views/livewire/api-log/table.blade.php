@@ -3,7 +3,7 @@
         <div class="card-header bg-light py-3">
             <div class="row g-3 align-items-center">
                 <div class="col-md-4 d-flex flex-wrap gap-2">
-                    @can('apilog.delete')
+                    @can('api_log.delete')
                         <button class="btn btn-danger btn-sm d-flex align-items-center gap-1" title="Delete Selected" data-bs-toggle="tooltip" wire:click="delete()"
                             wire:confirm="Are you sure you want to delete the selected items?">
                             <i class="fa fa-trash"></i>

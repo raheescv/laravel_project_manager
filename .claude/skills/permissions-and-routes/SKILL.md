@@ -22,7 +22,9 @@ return [
 
 - The permission name is `"{$group}.{$action}"` — `sale.delete`, `rent out checklist.print`, `day session.create`. **Groups and actions are lowercase and may contain spaces.** Match the existing phrasing; don't introduce kebab-case or camelCase variants.
 - Standard verbs are `create`, `view`, `edit`, `delete`, plus `import`/`export`/`print` where relevant. Non-CRUD capabilities get a descriptive action (`payment reverse`, `post depreciation`, `permissions`).
-- After editing the config, run `php artisan db:seed --class=PermissionSeeder`. It `firstOrCreate`s each entry, so it is safe to re-run and is how permissions reach existing tenants.
+- After editing the config, run `php artisan db:seed --class=PermissionSeeder`. It `firstOrCreate`s each entry, so it is safe to re-run. **It hardcodes `'tenant_id' => 1`**, so it seeds one tenant only — rolling a new permission out to the others is a separate step, not something the seeder does for you.
+- A permission referenced in code but missing from the config is **permanently denied**, not merely unseeded: `can()` returns false for an unknown ability and the `Gate::before` super-admin bypass in `AppServiceProvider` is commented out. The symptom is a button that never appears or a route that 403s for everyone including the owner. When a `@can` or `->can()` guard seems to do nothing, check the config before checking the roles.
+- Fail-open is the nastier variant: a *negative* guard such as `if ($user->can('grn.view own') && ! $user->can('grn.view'))` silently stops narrowing when the ability is undeclared, so users see more than intended rather than less. Any new `view own`-style permission must land in the config in the same change.
 
 ## Enforce in three places
 

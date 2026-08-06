@@ -16,6 +16,11 @@ use RuntimeException;
 class CreateAction
 {
     /**
+     * How recent an identical return must be to be treated as an accidental duplicate.
+     */
+    private const DUPLICATE_WINDOW_MINUTES = 2;
+
+    /**
      * Create a sale return from the final data sent by the mobile app.
      *
      * Persistence is delegated to the existing App\Actions\SaleReturn\CreateAction
@@ -56,6 +61,10 @@ class CreateAction
             }
 
             $status = $request->validated('status') ?: 'completed';
+
+            if ($status === 'completed') {
+                $this->guardAgainstDuplicate((int) $accountId, (int) $user->id, $items);
+            }
 
             $data = [
                 'status' => $status,
@@ -169,6 +178,69 @@ class CreateAction
         }
 
         return $items;
+    }
+
+    /**
+     * Reject a return that is identical to one this user has just created against
+     * the same sale, guarding against double taps and network retries from the app.
+     *
+     * The buildItems() quantity cap already stops a *second, separate* return from
+     * over-returning, but it cannot see a retry of the request currently in flight.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    private function guardAgainstDuplicate(int $accountId, int $userId, array $items): void
+    {
+        $signature = $this->itemsSignature($items);
+
+        // sale_returns carries no sale_id — the link to the sale lives on
+        // sale_return_items.sale_item_id, and those ids are what the signature
+        // compares, so matching on the account plus the signature is exact.
+        $recentReturns = SaleReturn::query()
+            ->where('account_id', $accountId)
+            ->where('created_by', $userId)
+            ->where('status', 'completed')
+            ->where('created_at', '>=', now()->subMinutes(self::DUPLICATE_WINDOW_MINUTES))
+            ->with('items:id,sale_return_id,sale_item_id,quantity,unit_price,discount')
+            ->latest('id')
+            ->get();
+
+        foreach ($recentReturns as $saleReturn) {
+            $existing = $saleReturn->items
+                ->map(fn ($item) => [
+                    'sale_item_id' => $item->sale_item_id,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'discount' => $item->discount ?? 0,
+                ])
+                ->all();
+
+            if ($this->itemsSignature($existing) === $signature) {
+                throw new RuntimeException("This return was already saved a moment ago (matches return #{$saleReturn->id}). Please refresh before trying again.");
+            }
+        }
+    }
+
+    /**
+     * Build an order-independent fingerprint of the return line items.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    private function itemsSignature(array $items): string
+    {
+        $rows = array_map(
+            fn ($item) => [
+                'sale_item_id' => (int) $item['sale_item_id'],
+                'quantity' => (float) $item['quantity'],
+                'unit_price' => (float) $item['unit_price'],
+                'discount' => (float) ($item['discount'] ?? 0),
+            ],
+            $items,
+        );
+
+        usort($rows, fn ($a, $b) => $a['sale_item_id'] <=> $b['sale_item_id']);
+
+        return md5((string) json_encode($rows));
     }
 
     /**

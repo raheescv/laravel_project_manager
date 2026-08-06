@@ -8,11 +8,15 @@ use App\Models\Sale;
 use App\Models\SalePayment;
 use App\Models\SaleReturn;
 use App\Models\SaleReturnPayment;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\UsesBrowsershot;
 use Illuminate\Support\Collection;
 
 class GenerateStatementAction
 {
+    // The statement is headed by the customer's own name and the tenant's
+    // company details, routinely Arabic here — Chrome, not DomPDF.
+    use UsesBrowsershot;
+
     protected $customerId;
 
     protected $fromDate;
@@ -297,17 +301,18 @@ class GenerateStatementAction
 
         $html = view('accounts.customer_statement', $data)->render();
 
-        $pdf = Pdf::loadHTML($html);
-        $pdf->setPaper('a4', 'portrait');
-        $pdf->setOption('margin-top', 10);
-        $pdf->setOption('margin-right', 10);
-        $pdf->setOption('margin-bottom', 10);
-        $pdf->setOption('margin-left', 10);
+        $pdf = $this->makeBrowsershot($html)
+            ->format('A4')
+            ->margins(10, 10, 10, 10)
+            ->showBackground()
+            ->pdf();
 
         // Names may contain "/" or "\" (eg. "Ahmed / Ali"), which Content-Disposition forbids.
         $customerName = str_replace(['/', '\\'], '-', (string) $this->customer->name);
         $filename = 'customer_statement_'.$customerName.'_'.now()->format('Y-m-d').'.pdf';
 
-        return $pdf->stream($filename);
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
     }
 }

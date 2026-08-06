@@ -57,10 +57,14 @@ class CreateAction
 
 Rules that hold everywhere:
 
-- **Signature is `execute($data, $userId)`** for create, `execute($data, $id, $userId)` for update, `execute($id, $userId)` for delete. Pass `Auth::id()` explicitly — actions do not read the authenticated user themselves, so jobs and API callers can drive them.
-- **Return `['success' => bool, 'message' => string, 'data' => mixed]`.** `message` is user-facing; it is what the caller toasts. Write it as a sentence a tenant would understand, not a stack trace.
-- **`catch (\Throwable $th)`** and convert to `success => false`. Never rethrow out of `execute()`.
-- **Validate with `validationHelper(Model::rules($id), $data)`** (`app/Helpers/helper.php:504`). It throws on the first failure, which the catch block turns into the failure message. Validation rules live on the model as `public static function rules($id = 0, $merge = [])`, not in a Form Request — Form Requests are only used on the V1 API.
+- **Return `['success' => bool, 'message' => string, 'data' => mixed]`.** This one is universal — all 216 CRUD actions do it. `message` is user-facing; it is what the caller toasts. Write it as a sentence a tenant would understand, not a stack trace.
+- **The `$userId` parameter depends on whether the table records an actor.** Two shapes coexist and you must match the module you are in, not a single rule:
+  - Transactional modules whose tables carry `created_by`/`updated_by`/`deleted_by` (Sale, Purchase, SaleReturn, RentOut, Journal entries…) take it explicitly: `execute($data, $userId)` / `execute($data, $id, $userId)` / `execute($id, $userId)`.
+  - Settings and lookup modules whose tables have no actor columns (Unit, Brand, Category, Role, Branch, Designation, the whole of `app/Actions/Settings/`) take `execute($data)` / `execute($data, $id)` / `execute($id)`. This is the **majority** — 169 of 216. Do not add a `$userId` a table has nowhere to put.
+
+  Check the migration before choosing. Whichever shape applies, the actor is **passed in, never read inside** — no `Auth::id()` in an action body, so jobs, console commands and API callers can drive it. Roughly 14 CRUD actions still violate this (`app/Actions/Package/*` is the worst cluster); they are bugs to fix when you touch them, not a pattern to copy.
+- **`catch (\Throwable $th)`** and convert to `success => false`. Never rethrow out of `execute()`. Read-only query actions (`GetAction`, `GetListAction`, `Generate*Action`) are the documented exception — they may throw and return a value directly.
+- **Validate with `validationHelper(Model::rules($id), $data)`** (`app/Helpers/helper.php:517`). It throws on the first failure, which the catch block turns into the failure message. Validation rules live on the model as `public static function rules($id = 0, $merge = [])`, not in a Form Request — Form Requests are only used on the V1 API.
 - **Stamp the actor**: `created_by` on create, `updated_by` on update, `deleted_by` on delete (set it *before* the soft delete so the column survives).
 
 ## Composing child actions

@@ -33,8 +33,9 @@ use App\Models\TailoringMeasurementOption;
 use App\Models\TailoringOrder;
 use App\Models\TailoringOrderMeasurement;
 use App\Models\User;
+use App\Services\CompanyLogoResolver;
 use App\Traits\ApiResponseTrait;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\UsesBrowsershot;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -44,6 +45,10 @@ use Inertia\Inertia;
 class OrderController extends Controller
 {
     use ApiResponseTrait;
+
+    // The order receipt carries tenant-entered customer and company names,
+    // which are routinely Arabic here — Chrome, not DomPDF.
+    use UsesBrowsershot;
 
     // Web Routes
     public function index(Request $request)
@@ -840,9 +845,11 @@ class OrderController extends Controller
         $companyEmail = Configuration::where('key', 'company_email')->value('value') ?? '';
         $gstNo = Configuration::where('key', 'gst_no')->value('value') ?? '';
         $enableLogoInPrint = Configuration::where('key', 'enable_logo_in_print')->value('value') ?? 'no';
-        $companyLogo = tenant_cache('logo');
+        // Browsershot blocks external requests, so the logo must be embedded —
+        // tenant_cache('logo') is a URL and would render blank.
+        $companyLogo = CompanyLogoResolver::dataUri();
 
-        $pdf = Pdf::loadView('print.tailoring.order-receipt-pdf', [
+        $html = view('print.tailoring.order-receipt-pdf', [
             'order' => $order,
             'companyName' => $companyName,
             'companyAddress' => $companyAddress,
@@ -851,16 +858,19 @@ class OrderController extends Controller
             'gstNo' => $gstNo,
             'enableLogoInPrint' => $enableLogoInPrint,
             'companyLogo' => $companyLogo,
-        ]);
-        $pdf->setPaper('a4', 'portrait');
-        $pdf->setOption('margin-top', 8);
-        $pdf->setOption('margin-right', 8);
-        $pdf->setOption('margin-bottom', 8);
-        $pdf->setOption('margin-left', 8);
+        ])->render();
+
+        $pdf = $this->makeBrowsershot($html)
+            ->format('A4')
+            ->margins(8, 8, 8, 8)
+            ->showBackground()
+            ->pdf();
 
         $filename = 'order-receipt-'.str_replace('/', '-', $order->order_no).'.pdf';
 
-        return $pdf->stream($filename);
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
     }
 
     public function printOrderReceiptThermal($id)

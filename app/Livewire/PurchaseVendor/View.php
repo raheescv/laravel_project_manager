@@ -68,9 +68,10 @@ class View extends Component
         $vendorModel = Account::vendor()->find($this->vendor_id);
         $this->vendor = $vendorModel?->toArray();
 
-        $total_purchases = DB::table('purchases')
+        // Start from the model so TenantScope and AssignedBranchScope stay applied —
+        // a raw DB::table() here totalled branches the user is not assigned to.
+        $total_purchases = Purchase::query()
             ->where('account_id', $this->vendor_id)
-            ->whereNull('deleted_at')
             ->selectRaw('SUM(grand_total) AS grand_total, SUM(paid) AS paid, SUM(balance) AS balance')
             ->first();
 

@@ -4,15 +4,15 @@ return [
     'account' => ['create', 'view', 'edit', 'delete', 'export'],
     'account category' => ['create', 'view', 'edit', 'delete', 'export'],
     'account note' => ['create', 'view', 'edit', 'delete'],
-    'expense' => ['create', 'view', 'edit', 'delete', 'export'],
-    'income' => ['create', 'view', 'edit', 'delete', 'export'],
+    'expense' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
+    'income' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'general voucher' => ['create', 'view', 'edit', 'delete', 'export'],
     'cheque' => ['create', 'view', 'edit', 'delete', 'print'],
-    'customer' => ['create', 'view', 'edit', 'delete', 'export'],
+    'customer' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'customer kyc' => ['view', 'edit', 'confirm', 'print'],
     'customer type' => ['create', 'view', 'edit', 'delete'],
     'country' => ['create', 'view', 'edit', 'delete'],
-    'vendor' => ['create', 'view', 'edit', 'delete', 'export', 'payment reverse'],
+    'vendor' => ['create', 'view', 'edit', 'delete', 'import', 'export', 'print', 'payment reverse'],
     'user' => ['create', 'view', 'edit', 'delete', 'impersonate'],
     'employee' => ['create', 'view', 'edit', 'delete', 'export'],
     'employee attendance' => ['create', 'view', 'modify', 'export'],
@@ -72,7 +72,7 @@ return [
         'feedback',
         'change day session',
     ],
-    'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'export', 'payments', 'view journal entries'],
+    'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'receipts', 'view journal entries'],
     'purchase' => [
         'create',
         'view',
@@ -88,7 +88,7 @@ return [
         'barcode print',
         'purchase note print',
     ],
-    'purchase return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'view journal entries'],
+    'purchase return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'view journal entries'],
     'unit' => ['create', 'view', 'edit', 'delete'],
     'designation' => ['create', 'view', 'edit', 'delete'],
     'rack' => ['create', 'view', 'edit', 'delete'],
@@ -100,6 +100,7 @@ return [
         'income vs expense dashboard bar chart',
         'sale item',
         'sale return item',
+        'purchase return item',
         'day book',
         'day book export',
         'daily sales insights',
@@ -132,7 +133,7 @@ return [
     ],
     'log' => ['inventory', 'log viewer'],
     'day close' => ['sync amount'],
-    'api_log' => ['view', 'moq settings'],
+    'api_log' => ['view', 'delete', 'moq settings'],
     'backup' => ['create', 'view', 'download'],
     'system health' => ['view'],
     'visitor analytics' => ['view'],
@@ -192,6 +193,11 @@ return [
         'view journal entries',
         'payment',
         'transfer payment',
+        // Gates every rent-out print document (statement, utilities statement,
+        // payment receipt/voucher). Deliberately one permission across both the
+        // 'rent out' and 'rent out lease' agreement types, since the print
+        // routes are shared and a route can only check a single ability.
+        'print',
     ],
     'rent out booking' => [
         'create',
@@ -252,10 +258,12 @@ return [
         'residential lease',
     ],
 
-    'purchase request' => ['create', 'view', 'edit', 'view', 'delete', 'decide'],
-    'local purchase order' => ['create', 'edit', 'view', 'delete', 'decide', 'confirm', 'print', 'payments'],
-    'grn' => ['create', 'view', 'edit', 'delete', 'decide', 'reverse'],
-    'lpo-purchase' => ['create', 'view', 'edit', 'delete', 'decide', 'reverse'],
+    // 'view own' narrows a table to the records the user created; the Table
+    // components grant it only when the broader 'view' is absent.
+    'purchase request' => ['create', 'view', 'view own', 'edit', 'delete', 'decide'],
+    'local purchase order' => ['create', 'edit', 'view', 'view own', 'delete', 'decide', 'confirm', 'print', 'payments'],
+    'grn' => ['create', 'view', 'view own', 'edit', 'delete', 'decide', 'reverse'],
+    'lpo-purchase' => ['create', 'view', 'view own', 'edit', 'delete', 'decide', 'reverse'],
 
     // Maintenance Module
     'maintenance' => ['create', 'view', 'edit', 'delete', 'export', 'assign', 'complete', 'technician view'],
@@ -276,5 +284,8 @@ return [
 
     // Trading Platform (FlatTrade) — 'view' gates the screens, 'trade' gates
     // order execution and privileged controls (kill switch, strategies, alerts).
-    'flat_trade' => ['view', 'trade'],
+    'flat_trade' => ['view', 'trade', 'connect', 'disconnect'],
+
+    // Task Management Module
+    'task-management' => ['view', 'create', 'edit', 'delete', 'add-note'],
 ];

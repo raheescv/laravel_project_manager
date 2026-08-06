@@ -59,7 +59,7 @@ class Table extends Component
 
         $query->filter($filters);
 
-        if (Auth::user()->can('local purchase request.view own') && ! Auth::user()->can('local purchase request.view')) {
+        if (Auth::user()->can('local purchase order.view own') && ! Auth::user()->can('local purchase order.view')) {
             $query->ownedBy(Auth::id());
         }
 

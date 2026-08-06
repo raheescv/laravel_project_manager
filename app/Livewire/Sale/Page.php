@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\User;
+use App\Support\TenantCache;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -546,8 +547,12 @@ class Page extends Component
 
     public function getCategories()
     {
-        // Cache categories for 1 hour
-        $this->categories = Cache::remember('categories_with_products', 3600, function () {
+        // Cache categories for 1 hour, keyed per tenant AND per search term.
+        // Category carries TenantScope, so a global key would serve whichever
+        // tenant warmed it to every other tenant; leaving the search term out
+        // of the key would cache a filtered list as the full one.
+        $cacheKey = TenantCache::key('categories_with_products:'.md5((string) $this->category_key));
+        $this->categories = Cache::remember($cacheKey, 3600, function () {
             return Category::withCount('products')
                 ->having('products_count', '>', 0)
                 ->when($this->category_key, function ($query, $value) {
