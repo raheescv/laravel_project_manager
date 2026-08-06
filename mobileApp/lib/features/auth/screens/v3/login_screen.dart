@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -55,8 +57,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     // `unlock`, so taking over the terminal still just works.
     final ok = auth.isLocked ? await auth.unlock(_pin) : await auth.login(_pin);
     if (!ok && mounted) {
-      HapticFeedback.heavyImpact();
-      _shake.forward(from: 0);
+      unawaited(HapticFeedback.heavyImpact());
+      unawaited(_shake.forward(from: 0));
       setState(() => _pin = '');
       ScaffoldMessenger.of(context)
         ..clearSnackBars()

@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:go_router/go_router.dart';
 
 import 'package:invo/shared/domain/helpers/responsive.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/widgets/astra_drawer.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
@@ -137,7 +138,7 @@ class _HomeShellState extends State<HomeShell> {
           duration: const Duration(milliseconds: 200),
           // Centred square "+" that docks into the gap in the middle of the bar
           // (matches the preview). Tap = New Sale.
-          child: AstraNavFab(onTap: () => context.push('/sale')),
+          child: AstraNavFab(onTap: () => context.push(Routes.sale)),
         ),
       ),
       bottomNavigationBar: AnimatedSlide(

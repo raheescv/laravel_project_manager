@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 
@@ -13,10 +14,13 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.watch<CartCubit>();
+    // BlocBuilder rather than a plain watch so this rebuilds on the ticket
+    // only — Equatable already drops emits that changed nothing.
+    return BlocBuilder<CartCubit, CartState>(builder: (context, _) {
+      final cart = context.read<CartCubit>();
 
-    return Scaffold(
-      body: AstraBackground(
+      return Scaffold(
+        body: AstraBackground(
         child: Column(
           children: [
             EmeraldHeader(
@@ -67,10 +71,11 @@ class CartScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                 child: MaxWidthBox(
                   maxWidth: 640,
-                  child: cartSummaryCard(context, cart, onCharge: () => context.push('/review')),
+                  child: cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review)),
                 ),
               ),
             ),
-    );
+      );
+    });
   }
 }

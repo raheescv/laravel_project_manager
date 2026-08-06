@@ -496,8 +496,6 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
   /// Bottom sheet with the two footer messages; saves both in one go.
   void _editFooters(BuildContext context, PrintSettingsCubit c) {
     final p = context.astra;
-    final enCtrl = TextEditingController(text: c.footerEnglish);
-    final arCtrl = TextEditingController(text: c.footerArabic);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -505,48 +503,88 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(sheetContext).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Receipt footer', style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
-            const SizedBox(height: 2),
-            Text('Printed at the bottom of every receipt — web invoices too.',
-                style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-            const SizedBox(height: 14),
-            _footerField(sheetContext, controller: enCtrl, label: 'English'),
-            const SizedBox(height: 10),
-            _footerField(sheetContext, controller: arCtrl, label: 'Arabic', rtl: true),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  _apply(c.setFooters(english: enCtrl.text.trim(), arabic: arCtrl.text.trim()));
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    gradient: p.primaryGradient,
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Text('Save footer',
-                      style: ui(size: 13, weight: FontWeight.w800, color: Colors.white)),
+      builder: (sheetContext) => _FooterSheet(
+        english: c.footerEnglish,
+        arabic: c.footerArabic,
+        onSave: (en, ar) => _apply(c.setFooters(english: en, arabic: ar)),
+      ),
+    );
+  }
+}
+
+/// Stateful so the controllers live exactly as long as the sheet's own element.
+/// Disposing them from `showModalBottomSheet(...).whenComplete` instead fires
+/// while the dismissal animation is still rebuilding the fields, which throws
+/// "A TextEditingController was used after being disposed".
+class _FooterSheet extends StatefulWidget {
+  const _FooterSheet({required this.english, required this.arabic, required this.onSave});
+
+  final String english;
+  final String arabic;
+  final void Function(String english, String arabic) onSave;
+
+  @override
+  State<_FooterSheet> createState() => _FooterSheetState();
+}
+
+class _FooterSheetState extends State<_FooterSheet> {
+  late final _enCtrl = TextEditingController(text: widget.english);
+  late final _arCtrl = TextEditingController(text: widget.arabic);
+
+  @override
+  void dispose() {
+    _enCtrl.dispose();
+    _arCtrl.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final en = _enCtrl.text.trim();
+    final ar = _arCtrl.text.trim();
+    Navigator.of(context).pop();
+    widget.onSave(en, ar);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Receipt footer', style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
+          const SizedBox(height: 2),
+          Text('Printed at the bottom of every receipt — web invoices too.',
+              style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+          const SizedBox(height: 14),
+          _footerField(controller: _enCtrl, label: 'English'),
+          const SizedBox(height: 10),
+          _footerField(controller: _arCtrl, label: 'Arabic', rtl: true),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: GestureDetector(
+              onTap: _save,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: p.primaryGradient,
+                  borderRadius: BorderRadius.circular(13),
                 ),
+                child: Text('Save footer',
+                    style: ui(size: 13, weight: FontWeight.w800, color: Colors.white)),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _footerField(
-    BuildContext context, {
+  Widget _footerField({
     required TextEditingController controller,
     required String label,
     bool rtl = false,

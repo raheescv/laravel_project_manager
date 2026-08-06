@@ -4,13 +4,17 @@ import 'package:invo/flavors.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:flutter/foundation.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/utils/router/http_utils/http_service.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../../domain/repository/auth_repository.dart';
+
+part 'auth_state.dart';
 
 /// [locked] is a live session behind the lock screen: the token, the cached
 /// user and every warm cubit are still there, so coming back is a local PIN
@@ -19,17 +23,19 @@ import '../../domain/repository/auth_repository.dart';
 enum AuthStatus { unknown, signedOut, locked, signedIn }
 
 /// Owns the session: PIN login, token, current user, and connection config.
-class AuthCubit extends HolderCubit {
-  AuthCubit();
+class AuthCubit extends Cubit<AuthState> {
+  AuthCubit() : super(const AuthState());
 
   HttpService get _http => serviceLocator<HttpService>();
   AuthRepository get _repo => serviceLocator<AuthRepository>();
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
 
-  AuthStatus status = AuthStatus.unknown;
-  ApiUser? user;
-  String? error;
-  bool busy = false;
+  // Read facade over `state` — existing call sites (including the router's
+  // redirect, which reads `auth.status`) were left untouched.
+  AuthStatus get status => state.status;
+  ApiUser? get user => state.user;
+  String? get error => state.errorMessage;
+  bool get busy => state.busy;
 
   /// Fired after a successful sign-in (used to default the active branch to the
   /// freshly-authenticated user's home branch).
@@ -42,7 +48,13 @@ class AuthCubit extends HolderCubit {
   /// Whether the signed-in user holds the given Spatie permission slug.
   /// Mirrors the backend's EnsureMobilePermission gate so UI stays in sync
   /// with what the API will actually allow.
-  bool hasPermission(String permission) => user?.hasPermission(permission) ?? false;
+  bool hasPermission(String permission) => state.hasPermission(permission);
+
+  /// Test seam: establish a session without a round-trip. Production code goes
+  /// through [bootstrap] or [login] — the state is otherwise read-only.
+  @visibleForTesting
+  void seedSession(ApiUser user, {AuthStatus status = AuthStatus.signedIn}) =>
+      emit(state.copyWith(user: user, status: status));
 
   Future<void> bootstrap() async {
     _http.onUnauthorized = _forceSignOut;
@@ -50,17 +62,18 @@ class AuthCubit extends HolderCubit {
     final cached = _storage.userJson;
     if (token != null && cached != null) {
       try {
-        user = ApiUser.fromJson(Map<String, dynamic>.from(jsonDecode(cached)));
-        // A till locked when the app was last closed comes back locked —
-        // otherwise force-quitting would be a way around the lock screen.
-        status = _storage.authLocked ? AuthStatus.locked : AuthStatus.signedIn;
+        emit(state.copyWith(
+          user: ApiUser.fromJson(Map<String, dynamic>.from(jsonDecode(cached))),
+          // A till locked when the app was last closed comes back locked —
+          // otherwise force-quitting would be a way around the lock screen.
+          status: _storage.authLocked ? AuthStatus.locked : AuthStatus.signedIn,
+        ));
       } catch (_) {
-        status = AuthStatus.signedOut;
+        emit(state.copyWith(status: AuthStatus.signedOut, clearUser: true));
       }
     } else {
-      status = AuthStatus.signedOut;
+      emit(state.copyWith(status: AuthStatus.signedOut));
     }
-    refresh();
   }
 
   Future<void> updateConnection(
@@ -68,7 +81,9 @@ class AuthCubit extends HolderCubit {
     _http.config = AppConfig(baseUrl: baseUrl.trim(), tenant: tenant.trim());
     await _storage.setBaseUrl(baseUrl.trim());
     await _storage.setTenant(tenant.trim());
-    refresh();
+    // The connection lives on HttpService, not in the state — emit so screens
+    // showing the base URL / tenant repaint.
+    emit(state.copyWith());
   }
 
   Future<bool> login(String pin) =>
@@ -84,32 +99,25 @@ class AuthCubit extends HolderCubit {
     Future<({String token, ApiUser user})> Function() attempt, {
     required Map<String, String> biometric,
   }) async {
-    busy = true;
-    error = null;
-    refresh();
+    emit(state.copyWith(busy: true, clearError: true));
     try {
       final res = await attempt();
       await _storage.writeToken(res.token);
       await _storage.setUserJson(jsonEncode(res.user.toJson()));
       await _storage.writeBiometric(jsonEncode(biometric));
       await _storage.setAuthLocked(false);
-      user = res.user;
-      status = AuthStatus.signedIn;
-      busy = false;
-      refresh();
+      emit(state.copyWith(
+          user: res.user, status: AuthStatus.signedIn, busy: false));
       onAuthenticated?.call(res.user);
       return true;
     } on ApiException catch (e) {
-      error = e.message;
+      emit(state.copyWith(busy: false, errorMessage: e.message));
     } catch (e) {
-      error = 'Could not reach ${config.baseUrl}. Check the Base URL & tenant '
+      var message = 'Could not reach ${config.baseUrl}. Check the Base URL & tenant '
           '(gear icon) and that the server is running.';
-      if (F.isDev) {
-        error = '$error\n\n[debug] $e';
-      }
+      if (F.isDev) message = '$message\n\n[debug] $e';
+      emit(state.copyWith(busy: false, errorMessage: message));
     }
-    busy = false;
-    refresh();
     return false;
   }
 
@@ -127,10 +135,8 @@ class AuthCubit extends HolderCubit {
   /// Locks the till without ending the session. Falls back to a real sign-out
   /// if there's somehow no session to come back to.
   Future<void> lock() async {
-    if (user == null) return logout();
-    status = AuthStatus.locked;
-    error = null;
-    refresh();
+    if (state.user == null) return logout();
+    emit(state.copyWith(status: AuthStatus.locked, clearError: true));
     await _storage.setAuthLocked(true);
   }
 
@@ -144,9 +150,7 @@ class AuthCubit extends HolderCubit {
   /// only costs a round-trip when the fast one genuinely can't answer.
   Future<bool> unlock(String pin) async {
     if (await _matchesCachedPin(pin)) {
-      status = AuthStatus.signedIn;
-      error = null;
-      refresh();
+      emit(state.copyWith(status: AuthStatus.signedIn, clearError: true));
       await _storage.setAuthLocked(false);
       return true;
     }
@@ -209,9 +213,7 @@ class AuthCubit extends HolderCubit {
       return 'Biometric authentication is unavailable on this device.';
     }
     if (!ok) return null; // cancelled — no error toast
-    status = AuthStatus.signedIn;
-    error = null;
-    refresh();
+    emit(state.copyWith(status: AuthStatus.signedIn, clearError: true));
     await _storage.setAuthLocked(false);
     return null;
   }
@@ -247,8 +249,7 @@ class AuthCubit extends HolderCubit {
   /// or avatar update) so every screen watching [AuthCubit] reflects it live,
   /// and re-persists it for the next launch.
   Future<void> applyUser(ApiUser updated) async {
-    user = updated;
-    refresh();
+    emit(state.copyWith(user: updated));
     await _storage.setUserJson(jsonEncode(updated.toJson()));
   }
 
@@ -258,17 +259,17 @@ class AuthCubit extends HolderCubit {
     String? date,
     String? lastClosedAt,
   }) async {
-    final u = user;
+    final u = state.user;
     if (u == null) return;
-    user = u.copyWith(
+    final next = u.copyWith(
       daySessionStatus: status,
       daySessionDate: date,
       daySessionOpenedAt:
           status == 'open' ? (openedAt ?? u.daySessionOpenedAt) : '',
       lastClosedSessionAt: lastClosedAt,
     );
-    refresh();
-    await _storage.setUserJson(jsonEncode(user!.toJson()));
+    emit(state.copyWith(user: next));
+    await _storage.setUserJson(jsonEncode(next.toJson()));
   }
 
   Future<void> logout() async {
@@ -288,8 +289,6 @@ class AuthCubit extends HolderCubit {
     await _storage.clearToken();
     await _storage.clearUser();
     await _storage.setAuthLocked(false);
-    user = null;
-    status = AuthStatus.signedOut;
-    refresh();
+    emit(state.copyWith(status: AuthStatus.signedOut, clearUser: true));
   }
 }

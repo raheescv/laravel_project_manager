@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 
 /// Step 2 of a return: pick which sold lines (and how many) to return. Each
@@ -17,7 +20,7 @@ class NewSaleReturnScreen extends StatelessWidget {
   const NewSaleReturnScreen({super.key});
 
   Future<void> _close(BuildContext context) async {
-    HapticFeedback.selectionClick();
+    unawaited(HapticFeedback.selectionClick());
     final draft = context.read<ReturnDraftCubit>();
     if (!draft.isEmpty) {
       final discard = await showDialog<bool>(
@@ -35,7 +38,7 @@ class NewSaleReturnScreen extends StatelessWidget {
     }
     if (!context.mounted) return;
     draft.clear();
-    context.go('/sales-returns');
+    context.go(Routes.salesReturns);
   }
 
   @override
@@ -50,7 +53,7 @@ class NewSaleReturnScreen extends StatelessWidget {
               EmeraldHeader(
                 leading: HeaderIconButton(
                   icon: Icons.chevron_left,
-                  onTap: () => context.canPop() ? context.pop() : context.go('/sale-return/pick'),
+                  onTap: () => context.canPop() ? context.pop() : context.go(Routes.saleReturnPick),
                 ),
                 title: 'New Return',
               ),
@@ -59,7 +62,7 @@ class NewSaleReturnScreen extends StatelessWidget {
                   icon: Icons.assignment_return_outlined,
                   title: 'No invoice selected',
                   message: 'Choose a paid invoice to return against.',
-                  action: AstraButton(label: 'Pick invoice', icon: Icons.search, expand: false, onTap: () => context.pushReplacement('/sale-return/pick')),
+                  action: AstraButton(label: 'Pick invoice', icon: Icons.search, expand: false, onTap: () => context.pushReplacement(Routes.saleReturnPick)),
                 ),
               ),
             ],
@@ -75,7 +78,7 @@ class NewSaleReturnScreen extends StatelessWidget {
             EmeraldHeader(
               leading: HeaderIconButton(
                 icon: Icons.chevron_left,
-                onTap: () => context.canPop() ? context.pop() : context.go('/sale-return/pick'),
+                onTap: () => context.canPop() ? context.pop() : context.go(Routes.saleReturnPick),
               ),
               titleWidget: Row(
                 children: [
@@ -243,7 +246,7 @@ class NewSaleReturnScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        context.push('/sale-return/review');
+        context.push(Routes.saleReturnReview);
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),

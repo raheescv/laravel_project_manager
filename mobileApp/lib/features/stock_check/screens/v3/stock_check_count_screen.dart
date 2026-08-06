@@ -1,21 +1,21 @@
+import 'package:invo/features/stock_check/logic/stock_check_cubit/stock_check_cubit.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/camera_permission.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
-import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/stock_check_models.dart';
-import '../../domain/repository/stock_check_repository.dart';
+
+part 'stock_check_count_views.dart';
 
 /// One filter chip → the API `status` / `difference_condition` it maps to.
 class _Filter {
@@ -67,7 +67,8 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
   bool get _hasMore => _page < _lastPage;
   _Filter get _activeFilter => _filters.firstWhere((f) => f.key == _filter);
 
-  StockCheckRepository get _repo => serviceLocator<StockCheckRepository>();
+  /// Owns the repository and its error handling (§10).
+  final _stock = StockCheckCubit();
 
   @override
   void initState() {
@@ -81,6 +82,7 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
 
   @override
   void dispose() {
+    unawaited(_stock.close());
     _debounce?.cancel();
     _searchCtl.dispose();
     _scrollCtl.dispose();
@@ -94,10 +96,9 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
   }
 
   Future<void> _refreshStats() async {
-    try {
-      final d = await _repo.show(widget.detail.id);
-      if (mounted) setState(() => _stats = d);
-    } catch (_) {/* keep last stats */}
+    final d = await _stock.show(widget.detail.id);
+    if (d != null && mounted) setState(() => _stats = d);
+    // A null result keeps the last stats — the reason is on the cubit state.
   }
 
   Future<void> _reload() async {
@@ -106,37 +107,41 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
       _loading = true;
       _error = null;
     });
-    try {
-      final f = _activeFilter;
-      final res = await _repo.items(widget.detail.id, status: f.status, differenceCondition: f.diff, search: _search, page: 1);
-      if (!mounted || req != _reqId) return;
+    final f = _activeFilter;
+    final res = await _stock.items(widget.detail.id,
+        status: f.status, differenceCondition: f.diff, search: _search, page: 1);
+    if (!mounted || req != _reqId) return;
+    if (res != null) {
       setState(() {
         _items = res.rows;
         _dirty.clear();
         _page = res.currentPage;
         _lastPage = res.lastPage;
       });
-    } catch (_) {
-      if (mounted && req == _reqId) setState(() => _error = 'Could not load items.');
+    } else {
+      setState(() => _error = _stock.state.errorMessage ?? 'Could not load items.');
     }
-    if (mounted && req == _reqId) setState(() => _loading = false);
+    setState(() => _loading = false);
   }
 
   Future<void> _loadMore() async {
     if (_loadingMore || _loading || !_hasMore) return;
     final req = _reqId;
     setState(() => _loadingMore = true);
-    try {
-      final f = _activeFilter;
-      final res = await _repo.items(widget.detail.id, status: f.status, differenceCondition: f.diff, search: _search, page: _page + 1);
-      if (!mounted || req != _reqId) return;
+    final f = _activeFilter;
+    final res = await _stock.items(widget.detail.id,
+        status: f.status, differenceCondition: f.diff, search: _search, page: _page + 1);
+    if (!mounted) return;
+    if (res != null && req == _reqId) {
       setState(() {
         _items = [..._items, ...res.rows];
         _page = res.currentPage;
         _lastPage = res.lastPage;
       });
-    } catch (_) {/* retry on next scroll */}
-    if (mounted && req == _reqId) setState(() => _loadingMore = false);
+    }
+    // Always clear the flag, even for a discarded page, or the guard on entry
+    // blocks every later page for the life of the screen.
+    setState(() => _loadingMore = false);
   }
 
   // ---- edits ----
@@ -183,6 +188,7 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
         ],
       ),
     );
+    ctl.dispose(); // owned by this method, not by the State
     if (v != null && v >= 0) _mutate(it.id, physical: v);
   }
 
@@ -199,7 +205,7 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
     setState(() => _saving = true);
     var ok = false;
     try {
-      await _repo.saveCounts(widget.detail.id, payload);
+      await _stock.saveCounts(widget.detail.id, payload);
       _dirty.clear();
       ok = true;
       if (feedback && mounted) {
@@ -304,32 +310,27 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
   /// Count one scanned barcode server-side (+1) and describe the result for the
   /// scanner's feed. Over-counts warn; the returned `undo` reverts the +1.
   Future<ScanFeedback> _scanOne(String code) async {
-    try {
-      final res = await _repo.scan(widget.detail.id, code);
-      final name = res.productName.isEmpty ? code : res.productName;
-      // Revert target: physical before the +1, keeping the post-scan status so
-      // nothing reconciles from an undo.
-      final undoTarget = (res.physical - 1).clamp(0, double.infinity).toDouble();
-      return ScanFeedback(
-        title: name,
-        detail: 'now ${qtyLabel(res.physical)} · system ${qtyLabel(res.recorded)}${res.isOver ? '  ·  OVER' : ''}',
-        status: res.isOver ? ScanStatus.warn : ScanStatus.ok,
-        undo: () async {
-          try {
-            await _repo.saveCounts(widget.detail.id, [
-              {'id': res.id, 'physical_quantity': undoTarget, 'status': res.status},
-            ]);
-            return ScanFeedback(title: name, detail: 'Undone · −1 → ${qtyLabel(undoTarget)}');
-          } catch (_) {
-            return null;
-          }
-        },
-      );
-    } on ApiException catch (e) {
-      return ScanFeedback.error(code, e.message);
-    } catch (_) {
-      return ScanFeedback.error(code, 'Scan failed — check your connection.');
+    final res = await _stock.scan(widget.detail.id, code);
+    if (res == null) {
+      return ScanFeedback.error(
+          code, _stock.state.errorMessage ?? 'Scan failed — check your connection.');
     }
+    final name = res.productName.isEmpty ? code : res.productName;
+    // Revert target: physical before the +1, keeping the post-scan status so
+    // nothing reconciles from an undo.
+    final undoTarget = (res.physical - 1).clamp(0, double.infinity).toDouble();
+    return ScanFeedback(
+      title: name,
+      detail: 'now ${qtyLabel(res.physical)} · system ${qtyLabel(res.recorded)}${res.isOver ? '  ·  OVER' : ''}',
+      status: res.isOver ? ScanStatus.warn : ScanStatus.ok,
+      undo: () async {
+        final ok = await _stock.saveCounts(widget.detail.id, [
+          {'id': res.id, 'physical_quantity': undoTarget, 'status': res.status},
+        ]);
+        if (!ok) return null;
+        return ScanFeedback(title: name, detail: 'Undone · −1 → ${qtyLabel(undoTarget)}');
+      },
+    );
   }
 
   void _onSearch(String v) {
@@ -339,7 +340,7 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
       if (!await _ensureSaved()) return;
       if (!mounted) return;
       setState(() => _search = v.trim());
-      _reload();
+      unawaited(_reload());
     });
   }
 
@@ -348,7 +349,7 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
     if (!await _ensureSaved()) return;
     if (!mounted) return;
     setState(() => _filter = key);
-    _reload();
+    unawaited(_reload());
   }
 
   @override
@@ -392,258 +393,111 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
     );
   }
 
-  /// Tablet head — identity and back only; progress lives in the side panel.
-  Widget _tabletPageHead() {
-    final s = _stats;
-    return TabletPageHead(
-      leading: context.canPop()
-          ? TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop())
-          : null,
-      title: s.title,
-      subtitle: 'STOCK CHECK · #${s.id}',
-      actions: [
-        TabletActionButton(label: 'Scan', icon: Icons.qr_code_scanner, onTap: _openScan),
-      ],
-    );
-  }
-
   // ---- hero with progress ----
-
-  Widget _hero() {
-    final p = context.astra;
-    final s = _stats;
-    final pct = (s.progress * 100).round();
-    final net = s.netDifference;
-    final netColor = net < 0 ? const Color(0xFFFFC2CC) : (net > 0 ? p.accent : Colors.white);
-    return Container(
-      decoration: BoxDecoration(gradient: p.heroGradient, borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30))),
-      child: Stack(
-        children: [
-          Positioned(right: -40, top: -46, child: Container(width: 180, height: 180, decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [p.accent.withValues(alpha: 0.20), Colors.transparent])))),
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      HeaderIconButton(icon: Icons.arrow_back_ios_new, onTap: () => context.pop()),
-                      const SizedBox(width: 11),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('STOCK CHECK · #${s.id}', style: ui(size: 9.5, weight: FontWeight.w800, color: p.accent, letterSpacing: 1.6)),
-                            const SizedBox(height: 2),
-                            Text(s.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 21, color: Colors.white)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      RichText(
-                        text: TextSpan(children: [
-                          TextSpan(text: '${s.itemsCounted}', style: serif(size: 25, color: Colors.white)),
-                          TextSpan(text: ' / ${s.itemsTotal}', style: serif(size: 14, color: Colors.white.withValues(alpha: 0.7))),
-                        ]),
-                      ),
-                      Text('$pct% counted', style: ui(size: 12, weight: FontWeight.w800, color: p.accent)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: s.progress.clamp(0, 1),
-                      minHeight: 8,
-                      backgroundColor: Colors.white.withValues(alpha: 0.18),
-                      valueColor: AlwaysStoppedAnimation(p.accent),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      _heroStat('Counted', '${s.itemsCounted}', Colors.white),
-                      const SizedBox(width: 9),
-                      _heroStat('Variances', '${s.varianceCount}', p.accent),
-                      const SizedBox(width: 9),
-                      _heroStat('Net diff', net == 0 ? '0' : '${net > 0 ? '+' : ''}${qtyLabel(net)}', netColor),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _heroStat(String label, String value, Color valueColor) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label.toUpperCase(), style: ui(size: 8.5, weight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.66), letterSpacing: 0.6)),
-            const SizedBox(height: 3),
-            Text(value, style: serif(size: 17, color: valueColor)),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ---- list ----
 
+  /// Slivers, not `ListView(children:)` — `_items` accumulates a page per scroll
+  /// and a count run can hold the whole branch. Eager children rebuilt every card
+  /// on every scan and every stepper tap; lazy ones build only what's on screen.
   Widget _list() {
+    const hPad = EdgeInsets.symmetric(horizontal: 14);
+    final empty = _items.isEmpty;
+
     return RefreshIndicator(
       onRefresh: () async {
         await _ensureSaved();
         await _reload();
         await _refreshStats();
       },
-      child: ListView(
+      child: CustomScrollView(
         controller: _scrollCtl,
-        // On tablet the Scan/Save actions live in the side panel, so the list
-        // doesn't need the tall bottom gap the phone's overlay dock requires.
-        padding: EdgeInsets.fromLTRB(14, 14, 14, context.isTablet ? 24 : 150),
-        children: [
-          _searchBox(),
-          const SizedBox(height: 12),
-          _filterChips(),
-          const SizedBox(height: 12),
-          if (_loading && _items.isEmpty)
-            const Padding(padding: EdgeInsets.symmetric(vertical: 50), child: Center(child: CircularProgressIndicator()))
-          else if (_error != null && _items.isEmpty)
-            EmptyState(icon: Icons.wifi_off, title: 'Unavailable', message: _error, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _reload))
-          else if (_items.isEmpty)
-            EmptyState(icon: Icons.inventory_2_outlined, title: 'No items', message: 'No items match this filter or search.')
-          else ...[
-            // Tablet: count tiles auto-fill by width (the preview's
-            // `repeat(auto-fill, minmax(…))`), so an 11" portrait gets two
-            // columns and a 13" landscape three or four — never a stretched row.
-            if (context.isTablet)
-              LayoutBuilder(
-                builder: (ctx, c) {
-                  const gap = 12.0;
-                  const minTile = 300.0;
-                  final cols = ((c.maxWidth + gap) / (minTile + gap)).floor().clamp(1, 4);
-                  final colW = (c.maxWidth - gap * (cols - 1)) / cols;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: [for (final it in _items) SizedBox(width: colW, child: _itemCard(it))],
-                  );
-                },
-              )
-            else
-              for (final it in _items) Padding(padding: const EdgeInsets.only(bottom: 10), child: _itemCard(it)),
-            if (_loadingMore)
-              const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4)))),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _searchBox() {
-    final p = context.astra;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      decoration: BoxDecoration(color: p.card, borderRadius: BorderRadius.circular(13), boxShadow: context.astraTheme.softShadow, border: Border.all(color: p.cardBorder)),
-      child: Row(
-        children: [
-          Icon(Icons.search, size: 16, color: p.textMuted),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _searchCtl,
-              onChanged: _onSearch,
-              style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink),
-              decoration: InputDecoration(isDense: true, border: InputBorder.none, hintText: 'Product, code or barcode…', hintStyle: ui(size: 12.5, weight: FontWeight.w500, color: p.textMuted)),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  _searchBox(),
+                  const SizedBox(height: 12),
+                  _filterChips(),
+                  const SizedBox(height: 12),
+                ],
+              ),
             ),
           ),
-          if (_searchCtl.text.isNotEmpty)
-            GestureDetector(
-              onTap: () {
-                _searchCtl.clear();
-                _onSearch('');
-              },
-              child: Icon(Icons.close, size: 16, color: p.textMuted),
+          if (_loading && empty)
+            const SliverToBoxAdapter(
+              child: Padding(padding: EdgeInsets.symmetric(vertical: 50), child: Center(child: CircularProgressIndicator())),
+            )
+          else if (_error != null && empty)
+            SliverPadding(
+              padding: hPad,
+              sliver: SliverToBoxAdapter(
+                child: EmptyState(icon: Icons.wifi_off, title: 'Unavailable', message: _error, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _reload)),
+              ),
+            )
+          else if (empty)
+            SliverPadding(
+              padding: hPad,
+              sliver: const SliverToBoxAdapter(
+                child: EmptyState(icon: Icons.inventory_2_outlined, title: 'No items', message: 'No items match this filter or search.'),
+              ),
+            )
+          else
+            SliverPadding(padding: hPad, sliver: context.isTablet ? _tabletRows() : _phoneRows()),
+          if (_loadingMore)
+            const SliverToBoxAdapter(
+              child: Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4)))),
             ),
+          // On tablet the Scan/Save actions live in the side panel, so the list
+          // doesn't need the tall bottom gap the phone's overlay dock requires.
+          SliverToBoxAdapter(child: SizedBox(height: context.isTablet ? 24 : 150)),
         ],
       ),
     );
   }
 
-  Widget _filterChips() {
-    final s = _stats;
-    int? badge(String key) => switch (key) {
-          'all' => s.itemsTotal,
-          'pending' => s.itemsTotal - s.itemsCounted,
-          'counted' => s.itemsCounted,
-          'variance' => s.varianceCount,
-          _ => null,
-        };
-    return SizedBox(
-      height: 34,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 7),
-        itemBuilder: (_, i) {
-          final f = _filters[i];
-          return _chip(f.label, badge(f.key), _filter == f.key, () => _setFilter(f.key));
-        },
-      ),
-    );
-  }
+  Widget _phoneRows() => SliverList.separated(
+        itemCount: _items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (_, i) => _itemCard(_items[i]),
+      );
 
-  Widget _chip(String label, int? badge, bool active, VoidCallback onTap) {
-    final p = context.astra;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          gradient: active ? p.heroGradient : null,
-          color: active ? null : p.card,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: active ? null : context.astraTheme.softShadow,
-          border: Border.all(color: active ? Colors.transparent : p.cardBorder),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: ui(size: 11.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
-            if (badge != null) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(color: active ? Colors.white.withValues(alpha: 0.22) : p.tint, borderRadius: BorderRadius.circular(10)),
-                child: Text('$badge', style: ui(size: 9.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
+  /// Tablet: count tiles auto-fill by width (the preview's
+  /// `repeat(auto-fill, minmax(…))`), so an 11" portrait gets two columns and a
+  /// 13" landscape three or four — never a stretched row.
+  ///
+  /// Chunked into rows rather than a SliverGrid: the cards are content-sized and
+  /// a grid would force one aspect ratio on all of them. A Row per line keeps the
+  /// old Wrap's look (run height = tallest tile) and still builds lazily.
+  Widget _tabletRows() => SliverLayoutBuilder(
+        builder: (_, constraints) {
+          const gap = 12.0;
+          const minTile = 300.0;
+          final width = constraints.crossAxisExtent;
+          final cols = ((width + gap) / (minTile + gap)).floor().clamp(1, 4);
+          final colW = (width - gap * (cols - 1)) / cols;
+
+          return SliverList.separated(
+            itemCount: (_items.length / cols).ceil(),
+            separatorBuilder: (_, __) => const SizedBox(height: gap),
+            itemBuilder: (_, row) {
+              final start = row * cols;
+              final end = (start + cols) > _items.length ? _items.length : start + cols;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = start; i < end; i++) ...[
+                    if (i > start) const SizedBox(width: gap),
+                    SizedBox(width: colW, child: _itemCard(_items[i])),
+                  ],
+                ],
+              );
+            },
+          );
+        },
+      );
 
   Widget _itemCard(StockCheckItem it) {
     final p = context.astra;
@@ -776,103 +630,6 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
   }
 
   // ---- tablet side panel (progress recap + persistent Scan / Save) ----
-
-  Widget _sidePanel(double width) {
-    final p = context.astra;
-    final s = _stats;
-    final pct = (s.progress * 100).round();
-    final net = s.netDifference;
-    final netColor = net < 0 ? AstraPalette.danger : (net > 0 ? p.primary : p.textSecondary);
-    Widget stat(String label, String value, Color color) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label.toUpperCase(), style: ui(size: 8.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
-            const SizedBox(height: 2),
-            Text(value, style: serif(size: 18, color: color)),
-          ],
-        );
-    return TabletPane(
-      width: width,
-      edge: PaneEdge.left,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 2, bottom: 10),
-              child: SectionLabel('Progress'),
-            ),
-            AstraCard(
-              radius: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      RichText(
-                        text: TextSpan(children: [
-                          TextSpan(text: '${s.itemsCounted}', style: serif(size: 26, color: p.ink)),
-                          TextSpan(text: ' / ${s.itemsTotal}', style: serif(size: 15, color: p.textMuted)),
-                        ]),
-                      ),
-                      Text('$pct%', style: ui(size: 12, weight: FontWeight.w800, color: p.primary)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: s.progress.clamp(0, 1),
-                      minHeight: 8,
-                      backgroundColor: p.tint,
-                      valueColor: AlwaysStoppedAnimation(p.primary),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(child: stat('Counted', '${s.itemsCounted}', p.ink)),
-                      Expanded(child: stat('Variances', '${s.varianceCount}', p.ink)),
-                      Expanded(child: stat('Net diff', net == 0 ? '0' : '${net > 0 ? '+' : ''}${qtyLabel(net)}', netColor)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            if (_dirty.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text('${_dirty.length} unsaved change${_dirty.length == 1 ? '' : 's'}',
-                    style: ui(size: 11, weight: FontWeight.w800, color: p.warnText)),
-              ),
-            GestureDetector(
-              onTap: _openScan,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(gradient: p.accentGradient, borderRadius: BorderRadius.circular(15), boxShadow: context.astraTheme.floatShadow(p.accent)),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.qr_code_scanner, size: 17, color: p.primaryDark),
-                    const SizedBox(width: 8),
-                    Text('Scan', style: ui(size: 14, weight: FontWeight.w800, color: p.primaryDark)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            AstraButton(label: 'Save count', icon: Icons.check_rounded, busy: _saving, onTap: _save),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ---- dock ----
 

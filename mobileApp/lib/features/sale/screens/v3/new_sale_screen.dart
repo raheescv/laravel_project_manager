@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
@@ -17,11 +19,24 @@ import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
 import 'package:invo/features/sale/logic/stylist_cubit/stylist_cubit.dart';
 import 'package:invo/shared/utils/camera_permission.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
+import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
+
+part 'new_sale_catalog_views.dart';
+
+/// Mobile number the backend's default walk-in customer carries. Treated as
+/// "no number given" in the client form so the cashier isn't editing a
+/// placeholder — see [_NewSaleScreenState._pickClient].
+///
+/// TODO: this is tenant data, not code. It belongs in the sale settings the app
+/// already syncs from the web (`/settings/sale`), or the API should return an
+/// empty mobile for walk-in sales.
+const String _walkInPlaceholderMobile = '9633155669';
 
 /// How the catalog renders on the New Sale screen — a full-image tile grid or a
 /// compact row list. Persisted per device (LocalStorageService.saleView).
@@ -76,7 +91,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       }
       // Prompt for the client up front so the ticket starts with who's in the
       // chair. Only on a fresh ticket (still the default Walk-in, no items).
-      if (cart.customerName == 'Walk-in' && cart.isEmpty) {
+      if (cart.customerName == AppStrings.walkInCustomer && cart.isEmpty) {
         _pickClient();
       }
     });
@@ -103,7 +118,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   /// when there's a back stack, otherwise land on a sensible home so the
   /// buttons are never a dead-end.
   Future<void> _close() async {
-    HapticFeedback.selectionClick();
+    unawaited(HapticFeedback.selectionClick());
     final cart = context.read<CartCubit>();
     if (!cart.isEmpty) {
       final discard = await showDialog<bool>(
@@ -132,14 +147,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     } else {
       final canViewAdmin =
           context.read<AuthCubit>().hasPermission(PermissionSlug.salesOverview);
-      context.go(canViewAdmin ? '/home' : '/sale');
+      context.go(canViewAdmin ? Routes.home : Routes.sale);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cat = context.watch<CatalogCubit>();
-    final cart = context.watch<CartCubit>();
     final tablet = context.isTablet;
     final p = context.astra;
     // Flat "Clean Boutique" surface — a calm near-white (the preset canvas
@@ -147,33 +160,45 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     // app-wide aurora, so the product photos read on a clean ground.
     final surface = p.isDark ? p.canvas : Color.lerp(p.canvas, Colors.white, 0.5)!;
 
+    // Scoped rather than one `context.watch` per cubit at the top: paging the
+    // catalog appends 20 products and would otherwise rebuild the cart header
+    // and bar, and editing the ticket would rebuild the whole product grid.
+    Widget cartPart(Widget Function(CartCubit) build) =>
+        BlocBuilder<CartCubit, CartState>(builder: (context, _) => build(context.read<CartCubit>()));
+
     return Scaffold(
       backgroundColor: surface,
       body: Column(
         children: [
-          _header(cart),
+          cartPart(_header),
           Expanded(
-            child: tablet
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: _body(cat)),
-                      _tabletCartPanel(cart),
-                    ],
-                  )
-                : _body(cat),
+            child: BlocBuilder<CatalogCubit, CatalogState>(
+              builder: (context, _) {
+                final cat = context.read<CatalogCubit>();
+                if (!tablet) return _body(cat);
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: _body(cat)),
+                    cartPart(_tabletCartPanel),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
       // Phone keeps the floating cart bar; tablet has the persistent panel.
-      bottomNavigationBar: (tablet || cart.isEmpty)
+      bottomNavigationBar: tablet
           ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                child: _cartBar(cart),
-              ),
-            ),
+          : cartPart((cart) => cart.isEmpty
+              ? const SizedBox.shrink()
+              : SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                    child: _cartBar(cart),
+                  ),
+                )),
     );
   }
 
@@ -285,6 +310,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               headers: avatarHeaders,
               width: 38,
               height: 38,
+              cacheWidth: decodeWidthFor(context, 38),
               fit: BoxFit.cover,
               gaplessPlayback: true,
               errorBuilder: (_, __, ___) => fallback,
@@ -372,7 +398,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           ),
           if (!cart.isEmpty) ...[
             const SizedBox(height: 12),
-            cartSummaryCard(context, cart, onCharge: () => context.push('/review')),
+            cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review)),
           ],
         ],
       ),
@@ -437,148 +463,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  /// Two-up boutique tile grid (more columns on tablet/desktop — ≈200px each).
-  /// Lazily built so long catalogs stay smooth as pages stream in.
-  Widget _productGrid(CatalogCubit cat) => SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-        sliver: SliverLayoutBuilder(
-          builder: (context, constraints) {
-            final cols = (constraints.crossAxisExtent / 200).floor().clamp(2, 5);
-            return SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: cols,
-                crossAxisSpacing: 13,
-                mainAxisSpacing: 13,
-                childAspectRatio: 0.72,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, i) => _serviceTile(cat.products[i]),
-                childCount: cat.products.length,
-              ),
-            );
-          },
-        ),
-      );
-
-  /// Single-column list mode — a premium row with a full-height image on the
-  /// left, name + meta, and a serif price with the add button.
-  Widget _productList(CatalogCubit cat) => SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, i) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _serviceListRow(cat.products[i]),
-            ),
-            childCount: cat.products.length,
-          ),
-        ),
-      );
-
-  /// Compact grid / list switcher — a small segmented control pinned to the
-  /// right of the category row. The choice is remembered per device.
-  Widget _viewToggle() {
-    final p = context.astra;
-    Widget btn(IconData icon, _ProductView mode) {
-      final active = _view == mode;
-      return GestureDetector(
-        onTap: () => _setView(mode),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          width: 34,
-          height: 30,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            gradient: active ? p.primaryGradient : null,
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: Icon(icon, size: 17, color: active ? Colors.white : p.textMuted),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: p.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: p.hairline),
-        boxShadow: context.astraTheme.softShadow,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          btn(Icons.grid_view_rounded, _ProductView.grid),
-          const SizedBox(width: 2),
-          btn(Icons.view_agenda_outlined, _ProductView.list),
-        ],
-      ),
-    );
-  }
-
   void _setView(_ProductView mode) {
     if (_view == mode) return;
     HapticFeedback.selectionClick();
     setState(() => _view = mode);
     serviceLocator<LocalStorageService>()
         .setSaleView(mode == _ProductView.list ? 'list' : 'grid');
-  }
-
-  Widget _serviceListRow(Product s) {
-    final p = context.astra;
-    final cart = context.read<CartCubit>();
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        cart.add(s);
-      },
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: p.hairline),
-          boxShadow: context.astraTheme.softShadow,
-        ),
-        child: Row(
-          children: [
-            SizedBox(width: 84, height: 84, child: _tileImage(s)),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(s.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 13.5, weight: FontWeight.w800, color: p.ink, height: 1.2)),
-                  const SizedBox(height: 4),
-                  Text(_metaLine(s),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Flexible(child: _priceText(s.mrp)),
-            const SizedBox(width: 12),
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                gradient: p.primaryGradient,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: context.astraTheme.floatShadow(p.primary),
-              ),
-              child: const Icon(Icons.add, color: Colors.white, size: 18),
-            ),
-            const SizedBox(width: 12),
-          ],
-        ),
-      ),
-    );
   }
 
   /// Bottom of the list: a spinner while the next page loads, otherwise just
@@ -595,283 +485,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return const SizedBox(height: 120);
   }
 
-  /// Recessed soft search field with the barcode scanner tucked inside it.
-  Widget _searchRow(CatalogCubit cat) {
-    final p = context.astra;
-    return Container(
-      height: 54,
-      padding: const EdgeInsets.only(left: 16, right: 8),
-      decoration: BoxDecoration(
-        color: _soft,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: p.textSecondary, size: 21),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _searchCtl,
-              onChanged: cat.setSearch,
-              style: ui(size: 13.5, weight: FontWeight.w600, color: p.ink),
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: 'Search name or code',
-                hintStyle: ui(size: 13, weight: FontWeight.w500, color: p.textMuted),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              _scanBarcode(cat);
-            },
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: p.card,
-                borderRadius: BorderRadius.circular(11),
-                boxShadow: context.astraTheme.softShadow,
-              ),
-              child: Icon(Icons.qr_code_scanner, color: p.primary, size: 19),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Product / Service filter (segmented control) + the grid/list switcher, on
-  /// one neat row. Default type comes from Settings → Sale Configuration.
-  Widget _typeFilterRow(CatalogCubit cat) {
-    return Row(
-      children: [
-        Expanded(child: _typeSegmented(cat)),
-        const SizedBox(width: 10),
-        _viewToggle(),
-      ],
-    );
-  }
-
-  Widget _typeSegmented(CatalogCubit cat) {
-    final p = context.astra;
-    const options = <(String?, String)>[
-      (null, 'All Types'),
-      ('product', 'Products'),
-      ('service', 'Services'),
-    ];
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: _soft,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          for (final (value, label) in options)
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  cat.selectType(value);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: cat.selectedType == value ? p.card : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: cat.selectedType == value ? context.astraTheme.softShadow : null,
-                  ),
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(
-                        size: 12.5,
-                        weight: FontWeight.w700,
-                        color: cat.selectedType == value ? p.primary : p.textSecondary),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _categoryChips(CatalogCubit cat) {
-    return SizedBox(
-      height: 36,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          _catChip('All', cat.selectedCategoryId == null, () => cat.selectCategory(null)),
-          for (final c in cat.categories) ...[
-            const SizedBox(width: 8),
-            _catChip(c.name, cat.selectedCategoryId == c.id, () => cat.selectCategory(c.id)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// Pill category chip — filled ink when active, hairline outline otherwise.
-  Widget _catChip(String label, bool active, VoidCallback onTap) {
-    final p = context.astra;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: active ? p.ink : p.card,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: active ? p.ink : p.hairline),
-        ),
-        child: Text(label,
-            style: ui(
-                size: 12.5,
-                weight: FontWeight.w700,
-                color: active ? p.canvas : p.textSecondary)),
-      ),
-    );
-  }
-
-  /// Boutique product tile: a full-bleed image (or a tinted category panel when
-  /// there's no photo) crowning the card, then name, meta and a serif price with
-  /// a corner add-button.
-  Widget _serviceTile(Product s) {
-    final p = context.astra;
-    final cart = context.read<CartCubit>();
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        cart.add(s);
-      },
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: p.hairline),
-          boxShadow: context.astraTheme.softShadow,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: _tileImage(s)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 10, 11),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(s.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink, height: 1.2)),
-                  const SizedBox(height: 3),
-                  Text(_metaLine(s),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-                  const SizedBox(height: 9),
-                  Row(
-                    children: [
-                      Flexible(child: _priceText(s.mrp)),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          gradient: p.primaryGradient,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: context.astraTheme.floatShadow(p.primary),
-                        ),
-                        child: const Icon(Icons.add, color: Colors.white, size: 18),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// The tile's crowning image — cover-fills the whole slot when the product has
-  /// a photo, otherwise a tinted panel with a large category icon so the frame
-  /// is never empty. Storage paths are resolved onto the reachable base URL with
-  /// the same host header the API uses (mirrors [ProductThumb]).
-  Widget _tileImage(Product s) {
-    if (s.thumbnail.isEmpty) return _tileFallback(s);
-    final cfg = context.read<AuthCubit>().config;
-    return Image.network(
-      cfg.assetUrl(s.thumbnail),
-      headers: cfg.assetHeaders,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: double.infinity,
-      gaplessPlayback: true,
-      errorBuilder: (_, __, ___) => _tileFallback(s),
-      loadingBuilder: (context, child, progress) =>
-          progress == null ? child : _tileFallback(s, loading: true),
-    );
-  }
-
-  Widget _tileFallback(Product s, {bool loading = false}) {
-    final p = context.astra;
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [p.tint, p.tint.withValues(alpha: p.isDark ? 0.35 : 0.55)],
-        ),
-      ),
-      alignment: Alignment.center,
-      child: loading
-          ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: p.primary))
-          : Icon(iconForName('${s.categoryName} ${s.name}'), size: 40, color: p.primary.withValues(alpha: 0.85)),
-    );
-  }
-
   String _metaLine(Product s) => [
         s.code,
         if (s.duration.isNotEmpty && s.duration != '0') '${s.duration} min',
       ].where((e) => e.isNotEmpty).join(' · ');
-
-  /// Two-tone serif price: gold currency mark + ink amount.
-  Widget _priceText(double v) {
-    final p = context.astra;
-    return RichText(
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      text: TextSpan(children: [
-        TextSpan(text: '${Money.symbol.trim()} ', style: serif(size: 12, color: p.goldText)),
-        TextSpan(text: Money.plain(v), style: serif(size: 17, color: p.ink)),
-      ]),
-    );
-  }
 
   Widget _cartBar(CartCubit cart) {
     final p = context.astra;
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        context.push('/cart');
+        context.push(Routes.cart);
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
@@ -958,7 +582,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     // for new ones. Per-line overrides can still be set in the edit sheet.
     cart.setStylist(chosen.id, chosen.name);
     // Remember this employee so the next new sale preselects them.
-    serviceLocator<LocalStorageService>().setSaleStylist(chosen.id, chosen.name);
+    unawaited(serviceLocator<LocalStorageService>().setSaleStylist(chosen.id, chosen.name));
   }
 
   /// Absolute avatar URL for the ticket's selected staff (or null). Resolves the
@@ -984,9 +608,18 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   Future<void> _pickClient() async {
     final cart = context.read<CartCubit>();
-    final nameCtl = TextEditingController(text: cart.customerName == 'Walk-in' ? '' : cart.customerName);
-    final mobileCtl = TextEditingController(text: cart.customerMobile == '9633155669' ? '' : cart.customerMobile);
+    // An unnamed ticket carries the walk-in name and, from the server's default
+    // customer record, the placeholder mobile. Blank both so the cashier types
+    // into empty fields — but only together: a real customer who happens to have
+    // the placeholder number must keep it rather than have it silently wiped.
+    final isWalkIn = cart.customerName == AppStrings.walkInCustomer;
+    final nameCtl = TextEditingController(text: isWalkIn ? '' : cart.customerName);
+    final mobileCtl = TextEditingController(
+        text: isWalkIn && cart.customerMobile == _walkInPlaceholderMobile
+            ? ''
+            : cart.customerMobile);
     final p = context.astra;
+    try {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1007,7 +640,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               const SizedBox(height: 4),
               Text('Client Details?', style: serif(size: 22, color: p.ink)),
               const SizedBox(height: 16),
-              _sheetField(ctx, 'Name', nameCtl, hint: 'Walk-in'),
+              _sheetField(ctx, 'Name', nameCtl, hint: AppStrings.walkInCustomer),
               const SizedBox(height: 12),
               _sheetField(ctx, 'Mobile', mobileCtl, hint: 'Optional', number: true),
               const SizedBox(height: 18),
@@ -1026,6 +659,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
       ),
     );
+    } finally {
+      // Owned by this method, not by a State — release them when the sheet closes.
+      nameCtl.dispose();
+      mobileCtl.dispose();
+    }
   }
 
   Widget _sheetField(BuildContext ctx, String label, TextEditingController c, {String? hint, bool number = false}) {

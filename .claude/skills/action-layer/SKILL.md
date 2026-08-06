@@ -97,9 +97,9 @@ There are two legitimate conventions in this codebase, and which one applies is 
 | Queued job / console command | **The action** | Same reason; no interactive caller exists |
 | Another action | **Neither — inherit** | Nesting creates savepoints; let the outermost boundary win |
 
-The original core (Sale, Purchase, Journal, SaleReturn) follows the first row: those actions do **not** open transactions and rely on the Livewire caller. The newer modules (all V1 actions, Maintenance/Complaint, StockCheck, Asset, several RentOut sub-actions, Issue, Tailoring, EmployeeCommission — ~33 classes) self-transact with `DB::transaction()`, correctly, because their callers are controllers or jobs. Do **not** "fix" either group onto the other convention; do not open a transaction in a caller *and* in the action it calls.
+The original core (Sale, Purchase, Journal, SaleReturn) follows the first row: those actions do **not** open transactions and rely on the Livewire caller. The newer modules (all V1 actions, Maintenance/Complaint, StockCheck, Asset, several RentOut sub-actions, Issue, Tailoring, EmployeeCommission — **32 classes**) self-transact, correctly, because their callers are controllers or jobs. Two idioms are in use and both are fine: 21 wrap the body in a `DB::transaction(fn () => …)` closure, 11 open a manual `DB::beginTransaction()` / `commit()` / `rollback()` pair. (Counting these by grep overshoots twice: `Account/BankReconciliation/UpdateDeliveredDateAction` calls `beginTransaction()` on two separate lines, and `RentOut/DeleteAction` only mentions it in a comment explaining that its *caller* owns the boundary. Count distinct files, excluding comments.) Do **not** "fix" either group onto the other convention; do not open a transaction in a caller *and* in the action it calls.
 
-Child failures throw rather than return so the owning boundary can roll back. See `app/Livewire/Sale/Page.php:1039` for the canonical Livewire shape:
+Child failures throw rather than return so the owning boundary can roll back. See `app/Livewire/Sale/Page.php:1044` for the canonical Livewire shape:
 
 ```php
 try {

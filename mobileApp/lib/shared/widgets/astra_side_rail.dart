@@ -6,6 +6,7 @@ import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
 
@@ -109,7 +110,7 @@ class AstraSideRail extends StatelessWidget {
                         onTap: () => onSelect(d.tab)),
                   const Spacer(),
                   GestureDetector(
-                    onTap: onNew ?? () => context.push('/sale'),
+                    onTap: onNew ?? () => context.push(Routes.sale),
                     child: Container(
                       width: 52,
                       height: 52,
@@ -191,7 +192,7 @@ class TabletRailScaffold extends StatelessWidget {
           children: [
             AstraSideRail(
               activeIndex: activeTab,
-              onSelect: (i) => context.go('/home?tab=$i'),
+              onSelect: (i) => context.go(Routes.homeTab(i)),
             ),
             Expanded(child: child),
           ],

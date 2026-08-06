@@ -4,12 +4,15 @@ import 'dart:typed_data';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 
 // Re-export the print value objects so screens importing the cubit also get
 // PrintStyle / PaperWidth / PrintSettings (they used to live together).
 export 'package:invo/shared/domain/models/print_settings.dart';
+
+part 'print_settings_state.dart';
 
 /// Holds the active thermal-print configuration and persists every change.
 /// Read by `buildReceiptPdf` (via [snapshot]) when laying out a receipt.
@@ -23,87 +26,75 @@ export 'package:invo/shared/domain/models/print_settings.dart';
 /// width and the auto-print block (auto-print on/off, the paired printer, and
 /// whether to jump straight back to New Sale) are the device-local choices —
 /// each till has its own roll and its own printer.
-class PrintSettingsCubit extends HolderCubit {
-  PrintSettingsCubit() {
-    _style = PrintStyle.fromKey(_storage.printStyle);
-    _width = PaperWidth.fromKey(_storage.printWidth);
-    _showDiscount = _storage.printDiscount ?? true;
-    _showTotalQty = _storage.printTotalQty ?? true;
-    _showBarcode = _storage.printBarcode ?? true;
-    _footerEnglish = _storage.printFooterEnglish ?? defaultPrintFooterEn;
-    _footerArabic = _storage.printFooterArabic ?? defaultPrintFooterAr;
-    _quantityLabel = QuantityLabel.fromKey(_storage.printQuantityLabel);
-    // Off until the first sync says otherwise — matches the web defaults.
-    _showLogo = _storage.printLogo ?? false;
-    _showCompanyName = _storage.printShowCompany ?? false;
-    _companyName = _storage.printCompanyName ?? '';
+class PrintSettingsCubit extends Cubit<PrintSettingsState> {
+  PrintSettingsCubit() : super(_initialState());
+
+  /// Built before `super`, so it cannot touch instance members.
+  static PrintSettingsState _initialState() {
+    final st = serviceLocator<LocalStorageService>();
+    Uint8List? logo;
     try {
-      final data = _storage.printLogoData;
-      _logoBytes = data == null ? null : base64Decode(data);
+      final data = st.printLogoData;
+      logo = data == null ? null : base64Decode(data);
     } catch (_) {
-      _logoBytes = null; // corrupt cache — re-downloaded on next sync
+      logo = null; // corrupt cache — re-downloaded on next sync
     }
-    _autoPrint = _storage.printAuto ?? false;
-    _printerUrl = _storage.printerUrl;
-    _printerName = _storage.printerName;
-    _skipInvoice = _storage.printSkipInvoice ?? false;
+    return PrintSettingsState(
+      style: PrintStyle.fromKey(st.printStyle),
+      width: PaperWidth.fromKey(st.printWidth),
+      quantityLabel: QuantityLabel.fromKey(st.printQuantityLabel),
+      showDiscount: st.printDiscount ?? true,
+      showTotalQty: st.printTotalQty ?? true,
+      showBarcode: st.printBarcode ?? true,
+      footerEnglish: st.printFooterEnglish ?? defaultPrintFooterEn,
+      footerArabic: st.printFooterArabic ?? defaultPrintFooterAr,
+      // Off until the first sync says otherwise — matches the web defaults.
+      showLogo: st.printLogo ?? false,
+      logoBytes: logo,
+      showCompanyName: st.printShowCompany ?? false,
+      companyName: st.printCompanyName ?? '',
+      autoPrint: st.printAuto ?? false,
+      printerUrl: st.printerUrl,
+      printerName: st.printerName,
+      skipInvoice: st.printSkipInvoice ?? false,
+    );
   }
 
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
   LookupRepository get _lookup => serviceLocator<LookupRepository>();
 
-  late PrintStyle _style;
-  late PaperWidth _width;
-  late bool _showDiscount;
-  late bool _showTotalQty;
-  late bool _showBarcode;
-  late String _footerEnglish;
-  late String _footerArabic;
-  late QuantityLabel _quantityLabel;
-  late bool _showLogo;
-  Uint8List? _logoBytes;
-  late bool _showCompanyName;
-  late String _companyName;
-  late bool _autoPrint;
-  String? _printerUrl;
-  String? _printerName;
-  late bool _skipInvoice;
-
-  PrintStyle get style => _style;
-  PaperWidth get width => _width;
-  bool get showDiscount => _showDiscount;
-  bool get showTotalQty => _showTotalQty;
-  bool get showBarcode => _showBarcode;
-  String get footerEnglish => _footerEnglish;
-  String get footerArabic => _footerArabic;
-  QuantityLabel get quantityLabel => _quantityLabel;
-  bool get showLogo => _showLogo;
-  bool get showCompanyName => _showCompanyName;
-  String get companyName => _companyName;
-  bool get autoPrint => _autoPrint;
-  String? get printerUrl => _printerUrl;
-  String? get printerName => _printerName;
-  bool get skipInvoice => _skipInvoice;
-
-  /// True once this till is paired with a printer we can drive without a
-  /// dialog.
-  bool get hasPrinter => (_printerUrl ?? '').isNotEmpty;
+  // Read facade over `state`.
+  PrintStyle get style => state.style;
+  PaperWidth get width => state.width;
+  bool get showDiscount => state.showDiscount;
+  bool get showTotalQty => state.showTotalQty;
+  bool get showBarcode => state.showBarcode;
+  String get footerEnglish => state.footerEnglish;
+  String get footerArabic => state.footerArabic;
+  QuantityLabel get quantityLabel => state.quantityLabel;
+  bool get showLogo => state.showLogo;
+  bool get showCompanyName => state.showCompanyName;
+  String get companyName => state.companyName;
+  bool get autoPrint => state.autoPrint;
+  String? get printerUrl => state.printerUrl;
+  String? get printerName => state.printerName;
+  bool get skipInvoice => state.skipInvoice;
+  bool get hasPrinter => state.hasPrinter;
+  PrintSettings get snapshot => state.snapshot;
 
   // ---- device-local options (never pushed to the web config) ----
 
   /// Paper width — each till can hold a different roll.
   Future<void> setWidth(PaperWidth v) async {
-    if (v == _width) return;
-    _width = v;
-    refresh();
+    if (v == state.width) return;
+    emit(state.copyWith(width: v));
     await _storage.setPrintWidth(v.key);
   }
 
   /// Print the receipt automatically the moment a sale is charged.
   Future<void> setAutoPrint(bool v) async {
-    if (v == _autoPrint) return;
-    _autoPrint = v;
-    refresh();
+    if (v == state.autoPrint) return;
+    emit(state.copyWith(autoPrint: v));
     await _storage.setPrintAuto(v);
   }
 
@@ -111,24 +102,20 @@ class PrintSettingsCubit extends HolderCubit {
   Future<void> setPrinter(String? url, String? name) async {
     final u = (url ?? '').trim();
     if (u.isEmpty) {
-      _printerUrl = null;
-      _printerName = null;
-      refresh();
+      emit(state.copyWith(clearPrinter: true));
       await _storage.clearPrinter();
       return;
     }
-    _printerUrl = u;
-    _printerName = (name ?? '').trim().isEmpty ? u : name!.trim();
-    refresh();
-    await _storage.setPrinter(_printerUrl!, _printerName!);
+    final label = (name ?? '').trim().isEmpty ? u : name!.trim();
+    emit(state.copyWith(printerUrl: u, printerName: label));
+    await _storage.setPrinter(u, label);
   }
 
   /// After a successful auto-print, go straight back to a fresh ticket instead
   /// of stopping on the invoice screen.
   Future<void> setSkipInvoice(bool v) async {
-    if (v == _skipInvoice) return;
-    _skipInvoice = v;
-    refresh();
+    if (v == state.skipInvoice) return;
+    emit(state.copyWith(skipInvoice: v));
     await _storage.setPrintSkipInvoice(v);
   }
 
@@ -140,21 +127,19 @@ class PrintSettingsCubit extends HolderCubit {
   Future<bool> _set<T>({
     required T value,
     required T current,
-    required void Function(T) assign,
+    required PrintSettingsState Function(PrintSettingsState, T) apply,
     required Future<void> Function(T) store,
     required Map<String, dynamic> body,
   }) async {
     if (value == current) return true;
-    assign(value);
-    refresh();
+    emit(apply(state, value));
     await store(value);
     try {
       final echo = await _lookup.savePrintSettings(body);
       await applyRemote(echo); // server-normalised values, usually a no-op
       return true;
     } catch (_) {
-      assign(current);
-      refresh();
+      emit(apply(state, current));
       await store(current);
       return false;
     }
@@ -162,56 +147,55 @@ class PrintSettingsCubit extends HolderCubit {
 
   Future<bool> setStyle(PrintStyle v) => _set(
       value: v,
-      current: _style,
-      assign: (x) => _style = x,
+      current: state.style,
+      apply: (s, x) => s.copyWith(style: x),
       store: (x) => _storage.setPrintStyle(x.key),
       body: {'style': v.key});
 
   Future<bool> setQuantityLabel(QuantityLabel v) => _set(
       value: v,
-      current: _quantityLabel,
-      assign: (x) => _quantityLabel = x,
+      current: state.quantityLabel,
+      apply: (s, x) => s.copyWith(quantityLabel: x),
       store: (x) => _storage.setPrintQuantityLabel(x.key),
       body: {'quantity_label': v.key});
 
   Future<bool> setShowDiscount(bool v) => _set(
       value: v,
-      current: _showDiscount,
-      assign: (x) => _showDiscount = x,
+      current: state.showDiscount,
+      apply: (s, x) => s.copyWith(showDiscount: x),
       store: _storage.setPrintDiscount,
       body: {'show_discount': v});
 
   Future<bool> setShowTotalQty(bool v) => _set(
       value: v,
-      current: _showTotalQty,
-      assign: (x) => _showTotalQty = x,
+      current: state.showTotalQty,
+      apply: (s, x) => s.copyWith(showTotalQty: x),
       store: _storage.setPrintTotalQty,
       body: {'show_total_quantity': v});
 
   Future<bool> setShowBarcode(bool v) => _set(
       value: v,
-      current: _showBarcode,
-      assign: (x) => _showBarcode = x,
+      current: state.showBarcode,
+      apply: (s, x) => s.copyWith(showBarcode: x),
       store: _storage.setPrintBarcode,
       body: {'show_barcode': v});
 
   Future<bool> setShowLogo(bool v) async {
     final ok = await _set(
         value: v,
-        current: _showLogo,
-        assign: (x) => _showLogo = x,
+        current: state.showLogo,
+        apply: (s, x) => s.copyWith(showLogo: x),
         store: _storage.setPrintLogo,
         body: {'show_logo': v});
     // Just enabled with no cached image yet — fetch it so the very next
     // receipt already carries the logo (applyRemote above only downloads
     // when the version changes).
-    if (ok && v && _logoBytes == null) {
+    if (ok && v && state.logoBytes == null) {
       try {
         final bytes = await _lookup.logo();
         if (bytes.isNotEmpty) {
-          _logoBytes = bytes;
+          emit(state.copyWith(logoBytes: bytes));
           await _storage.setPrintLogoData(base64Encode(bytes));
-          refresh();
         }
       } catch (_) {
         // Offline — picked up by the next sync.
@@ -222,19 +206,17 @@ class PrintSettingsCubit extends HolderCubit {
 
   Future<bool> setShowCompanyName(bool v) => _set(
       value: v,
-      current: _showCompanyName,
-      assign: (x) => _showCompanyName = x,
+      current: state.showCompanyName,
+      apply: (s, x) => s.copyWith(showCompanyName: x),
       store: _storage.setPrintShowCompany,
       body: {'show_company_name': v});
 
   /// Saves both footer messages in one round-trip (the edit sheet submits
   /// them together).
   Future<bool> setFooters({required String english, required String arabic}) async {
-    if (english == _footerEnglish && arabic == _footerArabic) return true;
-    final prevEn = _footerEnglish, prevAr = _footerArabic;
-    _footerEnglish = english;
-    _footerArabic = arabic;
-    refresh();
+    if (english == state.footerEnglish && arabic == state.footerArabic) return true;
+    final prevEn = state.footerEnglish, prevAr = state.footerArabic;
+    emit(state.copyWith(footerEnglish: english, footerArabic: arabic));
     await _storage.setPrintFooterEnglish(english);
     await _storage.setPrintFooterArabic(arabic);
     try {
@@ -242,9 +224,7 @@ class PrintSettingsCubit extends HolderCubit {
       await applyRemote(echo);
       return true;
     } catch (_) {
-      _footerEnglish = prevEn;
-      _footerArabic = prevAr;
-      refresh();
+      emit(state.copyWith(footerEnglish: prevEn, footerArabic: prevAr));
       await _storage.setPrintFooterEnglish(prevEn);
       await _storage.setPrintFooterArabic(prevAr);
       return false;
@@ -256,89 +236,79 @@ class PrintSettingsCubit extends HolderCubit {
   /// the response) keep the cached value.
   Future<void> applyRemote(RemotePrintConfig? r) async {
     if (r == null) return;
-    var changed = false;
+    var next = state;
 
     if (r.styleKey != null) {
       final v = PrintStyle.fromKey(r.styleKey);
-      if (v != _style) {
-        _style = v;
+      if (v != next.style) {
+        next = next.copyWith(style: v);
         await _storage.setPrintStyle(v.key);
-        changed = true;
       }
     }
-    if (r.showDiscount != null && r.showDiscount != _showDiscount) {
-      _showDiscount = r.showDiscount!;
-      await _storage.setPrintDiscount(_showDiscount);
-      changed = true;
+    if (r.showDiscount != null && r.showDiscount != next.showDiscount) {
+      next = next.copyWith(showDiscount: r.showDiscount);
+      await _storage.setPrintDiscount(r.showDiscount!);
     }
-    if (r.showTotalQty != null && r.showTotalQty != _showTotalQty) {
-      _showTotalQty = r.showTotalQty!;
-      await _storage.setPrintTotalQty(_showTotalQty);
-      changed = true;
+    if (r.showTotalQty != null && r.showTotalQty != next.showTotalQty) {
+      next = next.copyWith(showTotalQty: r.showTotalQty);
+      await _storage.setPrintTotalQty(r.showTotalQty!);
     }
-    if (r.showBarcode != null && r.showBarcode != _showBarcode) {
-      _showBarcode = r.showBarcode!;
-      await _storage.setPrintBarcode(_showBarcode);
-      changed = true;
+    if (r.showBarcode != null && r.showBarcode != next.showBarcode) {
+      next = next.copyWith(showBarcode: r.showBarcode);
+      await _storage.setPrintBarcode(r.showBarcode!);
     }
     // An empty string is a deliberate blank footer on the web — apply it;
     // only a missing key keeps the cache/default.
     final fe = r.footerEnglish;
-    if (fe != null && fe != _footerEnglish) {
-      _footerEnglish = fe;
+    if (fe != null && fe != next.footerEnglish) {
+      next = next.copyWith(footerEnglish: fe);
       await _storage.setPrintFooterEnglish(fe);
-      changed = true;
     }
     final fa = r.footerArabic;
-    if (fa != null && fa != _footerArabic) {
-      _footerArabic = fa;
+    if (fa != null && fa != next.footerArabic) {
+      next = next.copyWith(footerArabic: fa);
       await _storage.setPrintFooterArabic(fa);
-      changed = true;
     }
     if (r.quantityLabelKey != null) {
       final v = QuantityLabel.fromKey(r.quantityLabelKey);
-      if (v != _quantityLabel) {
-        _quantityLabel = v;
+      if (v != next.quantityLabel) {
+        next = next.copyWith(quantityLabel: v);
         await _storage.setPrintQuantityLabel(v.key);
-        changed = true;
       }
     }
-    if (r.showLogo != null && r.showLogo != _showLogo) {
-      _showLogo = r.showLogo!;
-      await _storage.setPrintLogo(_showLogo);
-      changed = true;
+    if (r.showLogo != null && r.showLogo != next.showLogo) {
+      next = next.copyWith(showLogo: r.showLogo);
+      await _storage.setPrintLogo(r.showLogo!);
     }
-    if (r.showCompanyName != null && r.showCompanyName != _showCompanyName) {
-      _showCompanyName = r.showCompanyName!;
-      await _storage.setPrintShowCompany(_showCompanyName);
-      changed = true;
+    if (r.showCompanyName != null && r.showCompanyName != next.showCompanyName) {
+      next = next.copyWith(showCompanyName: r.showCompanyName);
+      await _storage.setPrintShowCompany(r.showCompanyName!);
     }
     final company = r.companyName;
-    if (company != null && company != _companyName) {
-      _companyName = company;
+    if (company != null && company != next.companyName) {
+      next = next.copyWith(companyName: company);
       await _storage.setPrintCompanyName(company);
-      changed = true;
     }
     // (Re-)download the logo image when the web one changed or the cache is
     // empty; the version is only stored on success so a failed download is
     // retried on the next sync.
     final version = r.logoVersion;
-    if (_showLogo &&
+    if (next.showLogo &&
         version != null &&
-        (version != _storage.printLogoVersion || _logoBytes == null)) {
+        (version != _storage.printLogoVersion || next.logoBytes == null)) {
       try {
         final bytes = await _lookup.logo();
         if (bytes.isNotEmpty) {
-          _logoBytes = bytes;
+          next = next.copyWith(logoBytes: bytes);
           await _storage.setPrintLogoData(base64Encode(bytes));
           await _storage.setPrintLogoVersion(version);
-          changed = true;
         }
       } catch (_) {
         // Offline or server error — keep the cached image.
       }
     }
-    if (changed) refresh();
+    // Equatable makes this a no-op when nothing actually changed.
+    if (!isClosed) emit(next);
   }
 
   /// Pulls the latest print configuration from the server. Called when the
@@ -352,16 +322,4 @@ class PrintSettingsCubit extends HolderCubit {
     }
   }
 
-  PrintSettings get snapshot => PrintSettings(
-        style: _style,
-        width: _width,
-        showDiscount: _showDiscount,
-        showTotalQty: _showTotalQty,
-        showBarcode: _showBarcode,
-        footerEnglish: _footerEnglish,
-        footerArabic: _footerArabic,
-        quantityLabel: _quantityLabel,
-        logo: _showLogo ? _logoBytes : null,
-        companyName: _showCompanyName ? _companyName : '',
-      );
 }

@@ -3,3 +3,4 @@ export 'appearance_sheet.dart';
 export 'branch_sheet.dart';
 export 'currency_sheet.dart';
 export 'theme_sheet.dart';
+export 'typography_sheet.dart';

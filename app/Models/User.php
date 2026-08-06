@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Events\BranchUpdated;
 use App\Traits\BelongsToTenant;
 use Exception;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Auditable;
@@ -56,6 +58,8 @@ class User extends Authenticatable implements AuditableContracts
 
     protected $hidden = [
         'password',
+        'pin',
+        'pin_lookup',
         'remember_token',
     ];
 
@@ -137,8 +141,51 @@ class User extends Authenticatable implements AuditableContracts
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'pin' => 'hashed',
         ];
+    }
+
+    /**
+     * Replaces the `hashed` cast on `pin` so the write also derives the indexed
+     * lookup digest login needs — the two must never drift apart, so they are set
+     * together or not at all.
+     *
+     * Already-hashed input is passed through untouched, matching what the `hashed`
+     * cast did (the single-use data-migration commands copy stored hashes across).
+     * The plaintext isn't available in that case, so the digest is left NULL and
+     * that user takes the fallback path until their next successful sign-in.
+     */
+    protected function pin(): Attribute
+    {
+        return Attribute::set(function ($value) {
+            if ($value === null || $value === '') {
+                return ['pin' => null, 'pin_lookup' => null];
+            }
+
+            $value = (string) $value;
+
+            if (filled(password_get_info($value)['algo'])) {
+                return ['pin' => $value, 'pin_lookup' => null];
+            }
+
+            return [
+                'pin' => Hash::make($value),
+                'pin_lookup' => static::pinLookup($value),
+            ];
+        });
+    }
+
+    /**
+     * Deterministic keyed digest of a plaintext PIN, used only to locate the
+     * candidate row before the real bcrypt verification. Keyed with the app key so
+     * a leaked database on its own doesn't reduce a 4-digit PIN to a lookup table.
+     *
+     * Rotating APP_KEY invalidates every stored digest. Recover the same way you
+     * would for any keyed blind index — clear them and let sign-ins repopulate:
+     * `UPDATE users SET pin_lookup = NULL;`
+     */
+    public static function pinLookup(string $pin): string
+    {
+        return hash_hmac('sha256', $pin, (string) config('app.key'));
     }
 
     public function scopeEmployee($query)

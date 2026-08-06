@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ClientErrorController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
@@ -151,6 +152,12 @@ Route::prefix('v1')->group(function () {
             // Company logo bytes for the receipt header (cached by the app,
             // re-fetched when print.logo_version changes)
             Route::get('settings/logo', [SaleSettingController::class, 'logo'])->name('api.v1.settings.logo');
+
+            // Uncaught client errors (CrashReporter). Throttled — a crash loop
+            // on one till must not be able to flood api_logs.
+            Route::post('client-error', [ClientErrorController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('api.v1.client-error');
 
             // Edit the thermal-print options from the app — writes the shared
             // Sale Configuration, gated like the web Settings page.

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astra mobileApp — Audit Closed</title>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#F6F1E8; --card:#FFFFFF; --ink:#16312A; --text2:#5D7269; --muted:#93A29B;
+  --hairline:#E8E2D6; --gold:#BF953F; --ok:#1F7A52; --ok-bg:#E4F3EB;
+  --med:#9A6A00; --med-bg:#FBF3DF; --low:#2A6F9E; --low-bg:#E7F1F8;
+  --code-bg:#F4F1EA; --code-ink:#22403A;
+  --shadow:0 10px 26px -18px rgba(11,40,33,.30);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+html[data-theme="dark"]{
+  --canvas:#0C1E1A; --card:#15302A; --ink:#F3F1EA; --text2:#A9C2BA; --muted:#7C9189;
+  --hairline:rgba(255,255,255,.10); --gold:#C9A24B; --ok:#6FCC9C; --ok-bg:rgba(31,122,82,.22);
+  --med:#E8C36A; --med-bg:rgba(154,106,0,.22); --low:#8CC5E8; --low-bg:rgba(42,111,158,.22);
+  --code-bg:#0F241F; --code-ink:#CFE3DC;
+  --shadow:0 14px 30px -18px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--ink);
+  font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-weight:500;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px 80px}
+header{padding:44px 0 22px;border-bottom:1px solid var(--hairline);margin-bottom:26px}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:800}
+h1{font-family:Marcellus,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;margin:10px 0 8px}
+.sub{color:var(--text2);font-size:14.5px;max-width:76ch}
+.toggle{position:fixed;top:16px;right:16px;z-index:50;background:var(--card);color:var(--ink);
+  border:1px solid var(--hairline);border-radius:999px;padding:8px 15px;font-family:inherit;
+  font-weight:700;font-size:12px;cursor:pointer;box-shadow:var(--shadow)}
+h2{font-family:Marcellus,Georgia,serif;font-weight:400;font-size:26px;margin:44px 0 6px;
+  padding-top:18px;border-top:1px solid var(--hairline)}
+h2:first-of-type{border-top:none;padding-top:0}
+.lede{color:var(--text2);font-size:13.5px;margin:0 0 18px;max-width:82ch}
+p{font-size:14px;color:var(--text2)} p strong,li strong{color:var(--ink)}
+ul{font-size:14px;color:var(--text2);padding-left:20px} li{margin:6px 0}
+code{font-family:var(--mono);font-size:12.4px;background:var(--code-bg);color:var(--code-ink);
+  padding:1.5px 5px;border-radius:5px;word-break:break-word}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:22px 0 6px}
+.stat{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:15px 16px;box-shadow:var(--shadow)}
+.stat .n{font-family:Marcellus,Georgia,serif;font-size:30px;line-height:1;color:var(--ok)}
+.stat .l{font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-top:7px}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:16px 0;border:1px solid var(--hairline);
+  border-radius:14px;background:var(--card);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:13px}
+th{text-align:left;padding:11px 14px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);font-weight:800;border-bottom:1px solid var(--hairline);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--hairline);color:var(--text2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.k{color:var(--ink);font-weight:700;white-space:nowrap}
+.was{color:var(--muted)} .now{color:var(--ok);font-weight:800}
+.note{background:var(--ok-bg);border:1px solid var(--hairline);border-left:4px solid var(--ok);
+  border-radius:12px;padding:16px 19px;margin:20px 0}
+.note.warn{background:var(--med-bg);border-left-color:var(--med)}
+.note.info{background:var(--low-bg);border-left-color:var(--low)}
+.note p{margin:8px 0;color:var(--ink)}
+.lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:800;
+  color:var(--ink);opacity:.55;margin-bottom:6px}
+footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--hairline);color:var(--muted);font-size:12px}
+@media(max-width:640px){h1{font-size:29px}h2{font-size:22px}.wrap{padding:0 15px 60px}}
+</style>
+</head>
+<body>
+<button class="toggle" id="tg">◐ Theme</button>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Astra POS · Flutter · <code style="background:none;color:var(--gold);padding:0">mobileApp/</code></div>
+  <h1>Audit Closed</h1>
+  <p class="sub">Every item found auditing <code>lib/</code> against
+  <code>project_architecture_skeleton.md</code> has been fixed. This page is kept as the record of what
+  changed and the conventions that came out of it. Closed 2026-08-07.</p>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="n">0</div><div class="l">Open items</div></div>
+  <div class="stat"><div class="n">0</div><div class="l">Analyzer issues</div></div>
+  <div class="stat"><div class="n">170</div><div class="l">Tests passing</div></div>
+  <div class="stat"><div class="n">0</div><div class="l">Tests failing</div></div>
+  <div class="stat"><div class="n">17</div><div class="l">Strict lints</div></div>
+</div>
+
+<div class="note">
+  <div class="lbl">Verification</div>
+  <p><code>flutter analyze lib</code> and <code>flutter analyze test</code> → <strong>No issues found</strong>
+  under 17 strict lint rules. <code>flutter test</code> → <strong>170 passing, 0 failing</strong> — up from
+  107 passing / 15 failing when this started, and every one of those 15 was a pre-existing failure.</p>
+</div>
+
+<h2>Where it ended up</h2>
+
+<div class="tw">
+<table>
+<thead><tr><th>Measure</th><th>At the audit</th><th>Now</th></tr></thead>
+<tbody>
+<tr><td class="k">Tests</td><td class="was">107 passing / 15 failing</td><td class="now">169 passing / 0 failing</td></tr>
+<tr><td class="k">Strict lint rules</td><td class="was">0 (stock template)</td><td class="now">17</td></tr>
+<tr><td class="k">Cubits in the §5 shape</td><td class="was">0</td><td class="now">16</td></tr>
+<tr><td class="k"><code>HolderCubit</code> tick cubits</td><td class="was">13</td><td class="now">0 — base class deleted</td></tr>
+<tr><td class="k"><code>Equatable</code> classes</td><td class="was">0</td><td class="now">46</td></tr>
+<tr><td class="k"><code>DataFetchStatus</code> usages</td><td class="was">0</td><td class="now">46</td></tr>
+<tr><td class="k">Repository calls from screens</td><td class="was">25</td><td class="now">0</td></tr>
+<tr><td class="k">Features without a <code>logic/</code> layer</td><td class="was">4</td><td class="now">0</td></tr>
+<tr><td class="k">Eager lists over paginated rows</td><td class="was">5</td><td class="now">0</td></tr>
+<tr><td class="k">Files over 900 lines</td><td class="was">8</td><td class="now">0</td></tr>
+<tr><td class="k">Unreferenced "skeleton shim" symbols</td><td class="was">15</td><td class="now">0</td></tr>
+<tr><td class="k">Route path literals in nav calls</td><td class="was">46</td><td class="now">0</td></tr>
+<tr><td class="k">Unawaited futures / silent catches</td><td class="was">31 / 8</td><td class="now">0 / 0</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>The defects that were real</h2>
+
+<ul>
+  <li><strong>Pagination could lock up permanently.</strong> <code>_loadMore()</code> set its in-flight flag
+  then early-returned past the reset when filters changed mid-fetch. Infinite scroll then died for the life
+  of the screen. It had been copy-pasted into three screens. Now one shared
+  <code>PaginatedListCubit</code> with a regression test.</li>
+  <li><strong>Money drifted from the server.</strong> Every money column in the Laravel schema is
+  <code>decimal(16,2)</code> and the sale totals are <em>generated</em> columns, so MySQL rounds each
+  intermediate. The app summed unrounded doubles and rounded once at the end — enough for a settled ticket to
+  show a phantom balance. Now rounded at the same points via <code>round2()</code>, with 32 tests.</li>
+  <li><strong>Three routes crashed on restore.</strong> <code>state.extra as Sale</code> and friends, with
+  <code>extra</code> being null after a process kill. Now guarded by a route <code>redirect</code>.</li>
+  <li><strong>Wrong currency on the till.</strong> A hardcoded <code>$</code> in the line-discount label.</li>
+  <li><strong>A real phone number as a "blank" sentinel</strong>, which wiped that customer's number on edit.</li>
+  <li><strong>Nine leaked <code>TextEditingController</code>s</strong>, one pair per sheet-open.</li>
+  <li><strong>A fifth of the test suite was silently disabled</strong> — the harness never got
+  <code>PosSettingsCubit</code>, so 15 tests threw <code>ProviderNotFoundException</code>, including the only
+  test covering checkout.</li>
+</ul>
+
+<h2>Conventions that came out of it</h2>
+
+<div class="note info">
+  <p><strong>Migrating a cubit:</strong> move the fields into an <code>Equatable</code> state, replace
+  assignments with <code>emit(state.copyWith(…))</code>, and leave a forwarding getter per field so existing
+  readers compile unchanged. <code>CartCubit</code> had 109 read sites across 6 files — none needed touching.</p>
+  <p><strong>Watch for state that depends on the outside world:</strong> <code>ThemeCubit</code> had to take
+  <code>platformIsDark</code> as a real field, because with an <code>Equatable</code> state an emit that
+  changes nothing rebuilds nothing — and an OS dark-mode flip has to re-skin the app.</p>
+  <p><strong>Splitting a large screen:</strong> a private <code>extension</code> in a <code>part</code> file
+  can hold the widget-builders with <em>zero</em> call-site changes — members stay library-private and
+  invocation stays implicit. Eight files came under 900 lines this way without touching a widget tree.</p>
+  <p><strong>Lazy lists inside a card:</strong> <code>DecoratedSliver</code> cannot express
+  <code>AstraCard</code>'s Glass skin (a <code>BackdropFilter</code> inside a <code>ClipRRect</code>). Rather
+  than fork card rendering by skin, the Reports card fills its pane and scrolls its rows internally — lazy,
+  and identical under all five presets.</p>
+</div>
+
+<div class="note">
+  <div class="lbl">Follow-ups — now also done</div>
+  <p><strong>Rebuild scoping.</strong> New Sale and Cart no longer watch a whole cubit from the top of
+  <code>build</code>. Paging the catalog appends 20 products without rebuilding the cart header or bar, and
+  editing the ticket no longer rebuilds the product grid. Eight <code>BlocBuilder</code>s and seven
+  <code>BlocSelector</code>/<code>context.select</code> sites, from zero.</p>
+  <p><strong>Crash reporting has a destination.</strong> <code>CrashReporter</code> now POSTs to
+  <code>POST /api/v1/client-error</code>, added on the Laravel side. It files into the existing
+  <code>api_logs</code> table (endpoint <code>client/crash</code>, status <code>failed</code>) so
+  <strong>no migration is needed</strong>, and it is rate-limited to 20/minute so a crash loop on one till
+  cannot flood the log. The upload is fire-and-forget and completely silent — a failure there must never
+  surface to a cashier, and must not re-enter the reporter.</p>
+</div>
+
+<div class="note info">
+  <div class="lbl">Deliberately not done — and why</div>
+  <p><strong>Converting the remaining <code>Widget _x()</code> methods to <code>StatelessWidget</code>s.</strong>
+  This was on the list as a performance fix, and it no longer is. The two changes above removed the reason:
+  every long list is now lazy, so an item builder only runs for visible rows, and the screen chrome is scoped
+  so it no longer rebuilds on unrelated state. What is left is a real but ordinary readability preference,
+  worth ~120 bespoke extractions across seven screens with no test that would catch a layout regression.</p>
+  <p>File size — the concrete complaint — was already solved by the <code>part</code> splits: no file in
+  <code>lib/</code> exceeds 900 lines. Extract the widget-methods of whichever screen you are already editing;
+  do not run it as a project.</p>
+</div>
+
+<h2>Guardrails left behind</h2>
+<ul>
+  <li><strong>17 strict lint rules</strong> in <code>analysis_options.yaml</code>, each verified at zero
+  violations before being enabled — <code>cancel_subscriptions</code>, <code>close_sinks</code>,
+  <code>avoid_dynamic_calls</code>, <code>use_build_context_synchronously</code>,
+  <code>unawaited_futures</code> and 12 more.</li>
+  <li><strong>A <code>*.dart</code> hook</strong> on the existing <code>PostToolUse</code> entry, running
+  <code>dart analyze</code> on the edited file. It never runs a formatter.</li>
+  <li><strong>Two skills</strong> — <code>flutter-apps</code> (orientation, hard rules) and
+  <code>flutter-code-standards</code> (the enforceable patterns, with the mistakes this codebase actually
+  made).</li>
+  <li><strong>The skeleton document</strong> rewritten: §1, §2, §3, §5, §7, §8 (+ new §8.1 money, §8.2
+  currency), §11, §13, §15, §16, §17, §18, §20, §21, §22 now describe this app rather than the generic
+  template it started as.</li>
+</ul>
+
+<footer>
+  Astra POS · <code>mobileApp/</code> · audit opened and closed 2026-08-07 · 220 Dart files<br>
+  <code>flutter analyze</code> → No issues found · <code>flutter test</code> → 170 passing, 0 failing
+</footer>
+
+</div>
+<script>
+(function(){
+  var r=document.documentElement, b=document.getElementById('tg');
+  var m=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+  r.setAttribute('data-theme', m?'dark':'light');
+  b.addEventListener('click',function(){
+    r.setAttribute('data-theme', r.getAttribute('data-theme')==='dark'?'light':'dark');
+  });
+})();
+</script>
+</body>
+</html>

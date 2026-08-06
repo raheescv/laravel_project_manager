@@ -75,9 +75,12 @@ class GetAction
      */
     private function todaySummary(string $today, ?int $branchId): array
     {
+        // `date` is a DATE column, so compare it directly. whereDate() would wrap
+        // it in CAST(date AS DATE) and make sale_date_branch_id_status_index
+        // unusable — measured at ~1,235× the cost of the indexed lookup.
         $base = Sale::query()
             ->completed()
-            ->whereDate('date', $today)
+            ->where('date', $today)
             ->when($branchId, fn ($q, $value) => $q->where('branch_id', $value))
             ->when($this->restrictToUserId, fn ($q, $id) => $q->where('created_by', $id));
 
@@ -163,8 +166,9 @@ class GetAction
     {
         return (float) Sale::query()
             ->completed()
-            ->whereDate('date', '>=', $from)
-            ->whereDate('date', '<=', $to)
+            // Range on the raw DATE column so the date index is used — see
+            // todaySummary(). This runs four times per dashboard request.
+            ->whereBetween('date', [$from, $to])
             ->when($branchId, fn ($q, $value) => $q->where('branch_id', $value))
             ->when($this->restrictToUserId, fn ($q, $id) => $q->where('created_by', $id))
             ->sum('paid');

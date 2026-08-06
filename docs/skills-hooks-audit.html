@@ -1,0 +1,592 @@
+<title>Hooks &amp; Skills — project_manager</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#fff; --surface-2:#f0f2f5; --border:#e2e6ec; --border-strong:#cfd6df;
+    --text:#16202c; --text-2:#54606f; --text-3:#828e9c;
+    --crit:#b42318; --crit-bg:#fef3f2; --high:#b54708; --high-bg:#fffaeb;
+    --med:#175cd3; --med-bg:#eff8ff; --low:#475467; --low-bg:#f2f4f7; --ok:#067647; --ok-bg:#ecfdf3;
+    --code-bg:#f7f8fa; --kw:#8250df; --str:#0a7d33; --com:#6e7781;
+    --r:10px; --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#14181d; --surface:#1c2127; --surface-2:#232931; --border:#2e353e; --border-strong:#3d4650;
+      --text:#e6e9ed; --text-2:#a4aeba; --text-3:#7c8794;
+      --crit:#ff8a80; --crit-bg:#2a1716; --high:#f5b544; --high-bg:#2a2113;
+      --med:#7cb7ff; --med-bg:#132234; --low:#a4aeba; --low-bg:#232931; --ok:#5ddb9b; --ok-bg:#132a1f;
+      --code-bg:#171c22; --kw:#d2a8ff; --str:#7ee787; --com:#8b949e;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14181d; --surface:#1c2127; --surface-2:#232931; --border:#2e353e; --border-strong:#3d4650;
+    --text:#e6e9ed; --text-2:#a4aeba; --text-3:#7c8794;
+    --crit:#ff8a80; --crit-bg:#2a1716; --high:#f5b544; --high-bg:#2a2113;
+    --med:#7cb7ff; --med-bg:#132234; --low:#a4aeba; --low-bg:#232931; --ok:#5ddb9b; --ok-bg:#132a1f;
+    --code-bg:#171c22; --kw:#d2a8ff; --str:#7ee787; --com:#8b949e;
+  }
+  :root[data-theme="light"]{
+    --bg:#f6f7f9; --surface:#fff; --surface-2:#f0f2f5; --border:#e2e6ec; --border-strong:#cfd6df;
+    --text:#16202c; --text-2:#54606f; --text-3:#828e9c;
+    --crit:#b42318; --crit-bg:#fef3f2; --high:#b54708; --high-bg:#fffaeb;
+    --med:#175cd3; --med-bg:#eff8ff; --low:#475467; --low-bg:#f2f4f7; --ok:#067647; --ok-bg:#ecfdf3;
+    --code-bg:#f7f8fa; --kw:#8250df; --str:#0a7d33; --com:#6e7781;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px 96px}
+
+  header.top{padding:44px 0 28px;border-bottom:1px solid var(--border);margin-bottom:32px}
+  .eyebrow{font:600 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px}
+  h1{font-size:31px;line-height:1.15;margin:0 0 10px;letter-spacing:-.02em}
+  .sub{color:var(--text-2);margin:0;max-width:70ch}
+  .toggle{position:fixed;top:16px;right:16px;z-index:20;background:var(--surface);color:var(--text);
+    border:1px solid var(--border-strong);border-radius:999px;padding:7px 14px;font-size:12px;cursor:pointer;
+    box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .toggle:hover{background:var(--surface-2)}
+
+  h2{font-size:21px;margin:44px 0 6px;letter-spacing:-.01em;scroll-margin-top:20px}
+  h2 .n{font:600 12px/1 var(--mono);color:var(--text-3);margin-right:10px}
+  h3{font-size:15px;margin:26px 0 8px;color:var(--text-2)}
+  .lead{color:var(--text-2);margin:0 0 18px;max-width:76ch}
+  p{max-width:78ch}
+
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:22px 0}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+  .stat .v{font-size:26px;font-weight:650;letter-spacing:-.02em;line-height:1.1}
+  .stat .l{font-size:11.5px;color:var(--text-3);margin-top:5px;text-transform:uppercase;letter-spacing:.06em}
+  .stat.c .v{color:var(--crit)} .stat.h .v{color:var(--high)}
+  .stat.m .v{color:var(--med)} .stat.o .v{color:var(--ok)}
+
+  .callout{border:1px solid var(--border);border-left:3px solid var(--text-3);background:var(--surface);
+    border-radius:var(--r);padding:14px 18px;margin:20px 0}
+  .callout.crit{border-left-color:var(--crit);background:var(--crit-bg)}
+  .callout.ok{border-left-color:var(--ok);background:var(--ok-bg)}
+  .callout h4{margin:0 0 6px;font-size:14px}
+  .callout p{margin:0;font-size:14px;color:var(--text-2)}
+  .callout p+p{margin-top:8px}
+
+  details.f{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin:10px 0;overflow:hidden}
+  details.f[open]{border-color:var(--border-strong)}
+  details.f>summary{cursor:pointer;padding:13px 16px;list-style:none;display:flex;gap:10px;align-items:flex-start;
+    font-weight:550;font-size:14.5px}
+  details.f>summary::-webkit-details-marker{display:none}
+  details.f>summary:hover{background:var(--surface-2)}
+  summary .arrow{color:var(--text-3);font-size:11px;margin-top:4px;transition:transform .15s}
+  details.f[open] summary .arrow{transform:rotate(90deg)}
+  summary .ttl{flex:1;min-width:0}
+  .body{padding:2px 16px 18px;border-top:1px solid var(--border)}
+
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+  .b{font:600 10.5px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;
+    padding:4px 7px;border-radius:5px;white-space:nowrap}
+  .b.crit{background:var(--crit-bg);color:var(--crit)} .b.high{background:var(--high-bg);color:var(--high)}
+  .b.med{background:var(--med-bg);color:var(--med)} .b.low{background:var(--low-bg);color:var(--low)}
+  .b.conf{background:var(--crit-bg);color:var(--crit)} .b.susp{background:var(--low-bg);color:var(--low)}
+  .b.ok{background:var(--ok-bg);color:var(--ok)}
+
+  .step{margin:16px 0 0}
+  .step .h{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px}
+  .step p{margin:0 0 8px;font-size:14.2px;color:var(--text-2)}
+  .step p strong{color:var(--text);font-weight:600}
+
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;
+    overflow-x:auto;margin:8px 0;font:13px/1.55 var(--mono)}
+  code{font:inherit;font-family:var(--mono)}
+  p code,li code,td code{background:var(--surface-2);border:1px solid var(--border);border-radius:4px;
+    padding:1px 5px;font-size:12.5px}
+  .kw{color:var(--kw)} .str{color:var(--str)} .com{color:var(--com);font-style:italic}
+  .loc{font:12px/1 var(--mono);color:var(--text-3);margin:0 0 4px}
+
+  .tw{overflow-x:auto;margin:14px 0;border:1px solid var(--border);border-radius:var(--r);background:var(--surface)}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:13.5px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:var(--surface-2);font-weight:600;font-size:11.5px;text-transform:uppercase;
+    letter-spacing:.05em;color:var(--text-2);white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  td strong{font-weight:600}
+
+  ul{padding-left:20px;max-width:78ch} li{margin:5px 0;color:var(--text-2)}
+  li strong{color:var(--text)}
+  .foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-3);font-size:12.5px}
+  a{color:var(--med)}
+</style>
+
+<button class="toggle" onclick="var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark')">◐ Theme</button>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Harness audit · 2026-08-06</div>
+  <h1>Hooks &amp; skills — alignment report</h1>
+  <p class="sub">Audits the <strong>harness</strong> rather than the application: the one hook in
+  <code>.claude/settings.local.json</code> and the 12 skills in <code>.claude/skills/</code>. Every
+  factual claim a skill makes was checked against the codebase. A skill is a description of this
+  codebase, so a wrong skill is a finding in its own right — and a more dangerous one than a wrong
+  line of code, because it propagates into everything written next.</p>
+  <p class="sub" style="margin-top:10px">Companion to <code>docs/code-audit.html</code>, which covers
+  defects in the application itself. This report covers the standard those defects were measured
+  against.</p>
+</header>
+
+<h2 id="summary"><span class="n">01</span>Summary</h2>
+
+<div class="grid">
+  <div class="stat o"><div class="v">1</div><div class="l">Hook · working</div></div>
+  <div class="stat o"><div class="v">12</div><div class="l">Skills · verified</div></div>
+  <div class="stat h"><div class="v">3</div><div class="l">Skills inaccurate</div></div>
+  <div class="stat m"><div class="v">2</div><div class="l">New code findings</div></div>
+  <div class="stat"><div class="v">3</div><div class="l">Coverage gaps</div></div>
+</div>
+
+<div class="callout ok">
+  <h4>The headline: the skills are unusually accurate on structure</h4>
+  <p>Every count asserted across the twelve skills was checked and <strong>every one matches exactly</strong>
+  — 383 actions, 355 Livewire components, 60 exports, 13 imports, 38 jobs, 134 models with 91 on
+  <code>BelongsToTenant</code>, 32 self-transacting actions (21 closure + 11 manual), 28 shared select
+  components. Every file path and helper they name exists. That is rare, and it means the skills can be
+  trusted as a map. One count in an earlier draft of <em>this report</em> was wrong where the skill was
+  right — recorded in §04d, because how it went wrong applies to every other figure here.</p>
+  <p>The failures are all in <strong>prose that went stale</strong> as the code moved underneath it —
+  not in invented detail. Three skills describe an architecture the codebase has since left behind.</p>
+</div>
+
+<div class="callout crit">
+  <h4>The one that would actively cause damage</h4>
+  <p><code>blade-ui-conventions</code> says Vite "only build[s] the POS, React, and Vue bundles — do not
+  reach for them when working on an ordinary admin screen." That is wrong in a way an agent will act on:
+  the <strong>Purchase page</strong> and the <strong>General Voucher / Journal Entry modal</strong> are
+  Vue apps built by Vite and mounted inside Livewire Blade views. An agent following this skill would
+  hand-write a Blade+Alpine replacement for a screen that already has a Vue implementation, and never
+  find the real one.</p>
+</div>
+
+<!-- ═══════════════ HOOK ═══════════════ -->
+<h2 id="hook"><span class="n">02</span>The hook</h2>
+<p class="lead">One hook is configured, in <code>.claude/settings.local.json</code>. It is correct. The
+notes below are refinements, not defects.</p>
+
+<pre><code><span class="com">// PostToolUse · matcher: Write|Edit · timeout 30s</span>
+f=$(cat | jq -r <span class="str">'.tool_input.file_path // .tool_response.filePath'</span>) \
+  &amp;&amp; <span class="kw">case</span> <span class="str">"$f"</span> <span class="kw">in</span> *.php) ./vendor/bin/pint <span class="str">"$f"</span> ;; <span class="kw">esac</span> || <span class="kw">true</span></code></pre>
+
+<div class="tw"><table>
+<thead><tr><th>Check</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td><code>jq</code> available</td><td><span class="b ok">Yes</span> <code>/usr/bin/jq</code></td></tr>
+<tr><td><code>pint</code> runs</td><td><span class="b ok">Yes</span> Pint 1.27.1, <code>preset: laravel</code> with three rule overrides</td></tr>
+<tr><td>Does <code>*.php</code> also catch <code>*.blade.php</code>, and would Pint mangle it?</td><td><span class="b ok">Safe</span> The glob does match, but Pint is a no-op on Blade — PHP-CS-Fixer's finder skips templates. <strong>Tested</strong> on a deliberately messy Blade file with an unformatted <code>@php</code> block: reported <code>pass</code>, byte-identical output.</td></tr>
+<tr><td>Failure handling</td><td><span class="b ok">Correct</span> <code>|| true</code> means a Pint failure never blocks the edit — right choice for a formatter</td></tr>
+<tr><td>Path resolution</td><td><span class="b low">Refinement</span> <code>./vendor/bin/pint</code> is relative to the cwd. It silently no-ops if the harness is started anywhere but the repo root — relevant given this project uses git worktrees. <code>"$CLAUDE_PROJECT_DIR/vendor/bin/pint"</code> is exact.</td></tr>
+<tr><td>Coverage</td><td><span class="b low">Gap</span> PHP only. Nothing equivalent guards the Flutter packages, where the project rule is stricter (see §05).</td></tr>
+</tbody></table></div>
+
+<div class="callout">
+  <h4>Known behaviour worth designing around, not fixing</h4>
+  <p>Pint's <code>laravel</code> preset removes unused <code>use</code> imports. When an import is added
+  in one edit and its usage in the next, the hook fires in between and strips the import — leaving code
+  that passes <code>php -l</code> but fails at runtime on an unresolved class. <strong>This happened three
+  times during this session's work</strong> and was caught each time by re-checking imports afterwards.</p>
+  <p>The mitigation is ordering, not configuration: introduce the <em>usage</em> first and add the
+  <code>use</code> statement last, or make both in a single edit. Worth keeping in the memory file it is
+  already recorded in.</p>
+</div>
+
+<!-- ═══════════════ VERIFICATION ═══════════════ -->
+<h2 id="verify"><span class="n">03</span>Skill-by-skill verification</h2>
+<p class="lead">What each skill asserts, and whether the codebase agrees. "Verified" means the specific
+claims were executed or read, not that the skill was skimmed.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Skill</th><th>Verdict</th><th>What was checked</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>multi-tenancy-and-branches</code></td><td><span class="b ok">Accurate</span></td>
+  <td>91 of 134 models carry <code>BelongsToTenant</code> — exact. <code>TenantScope</code> and
+  <code>AssignedBranchScope</code> both qualify their column with the table name, as claimed (which is
+  what makes joins safe). The cache-key warning it gained after the last audit is the most valuable
+  line in the whole skill set — it predicted the <code>categories_with_products</code> leak found this pass.</td>
+</tr>
+<tr>
+  <td><code>action-layer</code></td><td><span class="b ok">Accurate</span></td>
+  <td>383 files, 216 CRUD actions, and the transaction split of <strong>32 = 21 closure + 11 manual</strong>
+  — all exact, confirmed with PHP's tokenizer. One stale line reference fixed:
+  <code>Sale/Page.php:1039</code> → <strong>:1044</strong>. See §04.</td>
+</tr>
+<tr>
+  <td><code>permissions-and-routes</code></td><td><span class="b ok">Corrected earlier</span></td>
+  <td>Group/action naming, the three enforcement layers and the <code>module::</code> route prefix all
+  hold. Its <code>PermissionSeeder</code> claim was corrected in the previous pass
+  (<code>tenant_id => 1</code> only).</td>
+</tr>
+<tr>
+  <td><code>accounting-journals</code></td><td><span class="b ok">Accurate</span></td>
+  <td><code>makeEntryPair()</code>, the source/model/model_id linkage, and the
+  <code>Account::slugIdMap()</code> / <code>idBySlug()</code> resolution path all match — the latter now
+  used in 29 files. <code>App\Models\Models\Views\Ledger</code> exists as described.</td>
+</tr>
+<tr>
+  <td><code>livewire-components</code></td><td><span class="b ok">Accurate</span></td>
+  <td><strong>113 of 114</strong> paginated components declare <code>protected $paginationTheme = 'bootstrap'</code>
+  (the one exception is <code>Analytics/VisitorAnalytics</code>). The toast listener really is at
+  <code>layouts/app.blade.php:272</code>. The transaction-in-the-component pattern holds across all 116
+  files that open one.</td>
+</tr>
+<tr>
+  <td><code>mobile-api-v1</code></td><td><span class="b ok">Accurate</span></td>
+  <td>The load-bearing claim — "there is no session on API paths" — verified by grep:
+  <strong>zero</strong> <code>session(</code> calls across <code>app/Actions/V1/</code> and
+  <code>app/Http/Controllers/Api/V1/</code>. 21 controllers use <code>ApiResponseTrait</code>. 46 V1
+  action files; all 5 that transact do so inside the action, as the skill says they should.</td>
+</tr>
+<tr>
+  <td><code>flutter-apps</code></td><td><span class="b ok">Accurate</span></td>
+  <td>All six named paths exist exactly as written, including
+  <code>shared/utils/components/haptics.dart</code>. All four pre-restructure directories
+  (<code>lib/state</code>, <code>lib/core</code>, <code>lib/models</code>, <code>lib/theme</code>) are
+  confirmed gone. Feature list matches. Both hard rules verified as still-correct policy.</td>
+</tr>
+<tr>
+  <td><code>print-and-pdf</code></td><td><span class="b crit">Was badly stale</span></td>
+  <td>Described DomPDF documents that had already moved to Browsershot, and prescribed DomPDF's CSS
+  constraints for them. Rewritten in the previous pass — see §04.</td>
+</tr>
+<tr>
+  <td><code>blade-ui-conventions</code></td><td><span class="b high">Inaccurate</span></td>
+  <td>Font Awesome 4.3-only rule <strong>holds perfectly</strong> — 0 FA5/6 prefixes in all of
+  <code>resources/</code>. 28 shared select components exist as described. But its claim about Vite's
+  scope is wrong and misleading — see §04.</td>
+</tr>
+<tr>
+  <td><code>imports-exports-and-jobs</code></td><td><span class="b high">Partly wrong</span></td>
+  <td>Counts exact (60 / 13 / 38). But the <code>FromQuery</code> rule is stated too absolutely, and its
+  retry-duplication warning points at the wrong risk for this deployment — see §04. It also surfaced two
+  genuine code defects — see §05.</td>
+</tr>
+<tr>
+  <td><code>laravel-best-practices</code></td><td><span class="b ok">N/A — generic</span></td>
+  <td>Vendored Laravel skill (MIT, 20 rule files). Not project-specific, so there is nothing to verify
+  against this codebase. Its "consistency first" preamble is the right posture for a codebase this
+  established.</td>
+</tr>
+<tr>
+  <td><code>pest-testing</code></td><td><span class="b low">Generic, and unused</span></td>
+  <td>Vendored Pest 5 skill. The repository has 43 test files, mostly <code>tests/Unit</code>. Nothing
+  in the skill is project-specific — see the coverage gap in §06.</td>
+</tr>
+</tbody></table></div>
+
+<!-- ═══════════════ SKILL DEFECTS ═══════════════ -->
+<h2 id="defects"><span class="n">04</span>Where the skills were wrong</h2>
+<p class="lead">Ordered by how much damage following the skill would do.</p>
+
+<details class="f" open>
+<summary><span class="arrow">▶</span><span class="ttl"><code>blade-ui-conventions</code> — misstates what Vite builds
+<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span><span class="b low">Open</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">What the skill says</div>
+<p>"Vite/Tailwind exist in the repo but only build the POS, React, and Vue bundles — do not reach for
+them when working on an ordinary admin screen."</p>
+</div>
+
+<div class="step"><div class="h">What the code does</div>
+<p class="loc">vite.config.js:8–17</p>
+<pre><code>input: [
+    <span class="str">'resources/css/app.css'</span>,
+    <span class="str">'resources/js/app.js'</span>,
+    <span class="str">'resources/js/inventory-stock-adjustment.js'</span>,
+    <span class="str">'resources/js/stock-check.js'</span>,
+    <span class="str">'resources/js/general-voucher-modal.js'</span>,   <span class="com">// ← Vue, mounted in a Livewire Blade view</span>
+    <span class="str">'resources/js/journal-entries-modal.js'</span>,
+    <span class="str">'resources/js/purchase-page.js'</span>,            <span class="com">// ← Vue, the Purchase screen itself</span>
+    <span class="str">'resources/js/barcode-template-config.js'</span>
+]</code></pre>
+<p><code>purchase-page.js</code> mounts <code>PurchasePage.vue</code> into
+<code>resources/views/livewire/purchase/page.blade.php</code>. <code>general-voucher-modal.js</code>
+mounts <code>GeneralVoucherPage.vue</code> into the account views. These are ordinary admin screens by
+any definition.</p>
+</div>
+
+<div class="step"><div class="h">Why it matters</div>
+<p>This is the one skill error that would cause an agent to <em>write the wrong thing</em> rather than
+merely describe the wrong thing. Asked to change the Purchase page or the Journal Entry modal, an agent
+following this skill would look only at Blade and Alpine, conclude the screen needs building, and produce
+a parallel implementation — leaving two Purchase pages, one of them dead.</p>
+</div>
+
+<div class="step"><div class="h">Suggested wording</div>
+<p>Replace the exclusion with the actual split: Blade + Bootstrap + Livewire is the default for admin
+screens, <em>except</em> the handful listed in <code>vite.config.js</code>, which are Vue islands mounted
+inside a Livewire view. Check <code>vite.config.js</code> before assuming a screen is pure Blade. Left
+unfixed here because the right replacement wording is a judgement about where the project intends the
+Vue/Blade boundary to sit.</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl"><code>imports-exports-and-jobs</code> — the <code>FromQuery</code> rule is too absolute
+<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b low">Open</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">What the skill says</div>
+<p>"<code>FromQuery</code> (not <code>FromCollection</code>) so large exports stream."</p>
+</div>
+
+<div class="step"><div class="h">What the code does</div>
+<p>36 exports use <code>FromQuery</code>; <strong>14 use <code>FromCollection</code></strong>. Read
+individually, all 14 are aggregate reports whose rows are <em>computed</em> rather than selected:
+trial balance, balance sheet, profit &amp; loss, P&amp;L statement, customer and vendor aging, tax report,
+monthly and day-wise sale summaries, productivity and employee reports, product-wise inventory log,
+rent-out service charge.</p>
+</div>
+
+<div class="step"><div class="h">Verdict: the code is right and the skill is wrong</div>
+<p>There is no query that returns a trial balance row — it is assembled in PHP from ledger aggregates.
+<code>FromQuery</code> is not applicable, and forcing it would mean inventing a query that does not exist.
+An agent applying the rule literally would "fix" 14 correct exports into worse ones.</p>
+</div>
+
+<div class="step"><div class="h">Suggested wording</div>
+<p>"<code>FromQuery</code> for anything that maps onto a table query, so large exports stream.
+<code>FromCollection</code> is correct — and used by 14 exports — where rows are computed rather than
+selected: trial balance, P&amp;L, aging and period summaries. If you can write the query, use
+<code>FromQuery</code>."</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl"><code>imports-exports-and-jobs</code> — the retry warning points at the wrong risk
+<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b low">Open</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">What the skill says</div>
+<p>Sets <code>$tries = 1</code> and <code>$timeout = 3600</code> as the pattern, and warns: "keep below
+the queue <code>retry_after</code> (<code>DB_QUEUE_RETRY_AFTER</code>) or a running job is re-picked …
+the classic double-import."</p>
+</div>
+
+<div class="step"><div class="h">What the deployment actually does</div>
+<div class="tw"><table>
+<thead><tr><th>Setting</th><th>Value</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td><code>DB_QUEUE_RETRY_AFTER</code> (<code>.env</code>)</td><td>3700</td><td>Deliberately raised from the 90 default</td></tr>
+<tr><td>Horizon <code>supervisor-1.tries</code></td><td><strong>1</strong></td><td>Retries are already off <em>globally</em>, for every job</td></tr>
+<tr><td>Horizon <code>supervisor-1.timeout</code></td><td><strong>60</strong></td><td>Any job without its own <code>$timeout</code> is killed at 60 seconds</td></tr>
+<tr><td>Jobs setting <code>$tries = 1</code></td><td>2 of 12 imports</td><td>Redundant with the Horizon setting, but harmless</td></tr>
+</tbody></table></div>
+<p>Because Horizon sets <code>tries = 1</code> for the whole supervisor, the double-import the skill warns
+about <strong>cannot happen</strong> regardless of what individual jobs declare. The skill's emphasis is
+misplaced.</p>
+</div>
+
+<div class="step"><div class="h">The risk that is real instead</div>
+<p>A job-level <code>$timeout</code> overrides the worker's. Ten of the twelve import jobs declare none,
+so they inherit Horizon's <strong>60 seconds</strong> — a large customer or property import is killed
+mid-file, having already written part of it. The two that declare <code>$timeout = 3600</code>
+(<code>ImportProductJob</code>, <code>MigrateSalesChunkJob</code>) are the only ones that can finish a big
+file. The number to check is not <code>retry_after</code>; it is <strong>Horizon's <code>timeout</code></strong>.</p>
+</div>
+
+<div class="step"><div class="h">Suggested wording</div>
+<p>"Horizon's <code>supervisor-1</code> already sets <code>tries = 1</code>, so retries are off globally —
+a per-job <code>$tries</code> is belt-and-braces. What you <em>must</em> set is <code>$timeout</code>:
+the supervisor's default is 60 seconds, and any import that can exceed it will be killed part-written.
+Set it explicitly and keep it under <code>DB_QUEUE_RETRY_AFTER</code> (currently 3700)."</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl"><code>action-layer</code> — one stale line reference, and an audit error worth recording
+<div class="badges"><span class="b low">Low</span><span class="b conf">Confirmed</span><span class="b ok">Fixed</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">The real defect: a line reference this session broke</div>
+<p>The canonical Livewire shape was cited at <code>app/Livewire/Sale/Page.php:1039</code>. It is now at
+<strong>:1044</strong> — the tenant-cache fix made earlier in this session added five lines above it.
+Self-inflicted staleness, and a clean illustration of why line-number citations decay.</p>
+</div>
+
+<div class="step"><div class="h">The transaction counts are correct — an earlier draft of this audit was not</div>
+<p>The skill states <strong>32 self-transacting classes = 21 closure + 11 manual</strong>. A first pass of
+this audit reported that as wrong (claiming 33 = 21 + 12) and "corrected" the skill. <strong>The skill was
+right.</strong></p>
+<p>The error came from counting with <code>grep -rl</code>, which matches inside comments.
+<code>app/Actions/RentOut/DeleteAction.php:23</code> contains:</p>
+<pre><code><span class="com">// BookingTable.php both wrap this call in DB::beginTransaction());</span></code></pre>
+<p>— a comment explaining that its <em>caller</em> owns the boundary. Grep counted it as a self-transacting
+action; it is the opposite. Re-counted with PHP's own tokenizer, discarding
+<code>T_COMMENT</code>/<code>T_DOC_COMMENT</code>, the split is exactly 21 + 11 = 32, with no file using
+both idioms.</p>
+</div>
+
+<div class="step"><div class="h">Why this is worth a paragraph rather than a quiet fix</div>
+<p>Every count in this report and its companion was produced by grep or a grep-like script. This is the
+one case where a claim was checked against a second, stricter method — and the stricter method disagreed.
+Counts of a <em>pattern</em> (<code>DB::beginTransaction</code>, <code>Auth::id()</code>,
+<code>abort_unless</code>) are inflated wherever that pattern appears in a comment discussing it, and
+comments discussing a convention cluster precisely in the files that deliberately depart from it.</p>
+<p>Treat every "N files do X" figure in these reports as an upper bound unless it says otherwise. The
+figures re-derived by tokenizer or by reading are marked as such.</p>
+</div>
+
+<div class="step"><div class="h">Line references across the skill set</div>
+<p>All three remaining citations are correct: <code>helper.php:517</code>,
+<code>Sale/Page.php:1044</code>, <code>app.blade.php:272</code>. Useful enough to keep, but they need
+re-checking whenever the file they point into is edited.</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl"><code>print-and-pdf</code> — described an architecture the code had left
+<div class="badges"><span class="b crit">Critical</span><span class="b conf">Confirmed</span><span class="b ok">Fixed</span></div></span></summary>
+<div class="body">
+<div class="step"><div class="h">Recap</div>
+<p>Fixed in the previous pass and recorded in <code>docs/code-audit.html</code> §07. Summarised here
+because it is the clearest example of the failure mode this report exists to catch: the skill named the
+rent-out and vendor statements as "the DomPDF working idiom" and prescribed DomPDF's CSS restrictions for
+them, while <code>PrintController</code> had already moved every document to Browsershot. Following it
+would have produced needlessly crippled CSS — or a new DomPDF document that garbles Arabic.</p>
+</div>
+</div>
+</details>
+
+<!-- ═══════════════ CODE FINDINGS ═══════════════ -->
+<h2 id="code"><span class="n">05</span>Code defects this audit surfaced</h2>
+<p class="lead">Reading <code>imports-exports-and-jobs</code> against the code turned up two defects that
+neither previous pass covered. Both are in queued imports — the area the skill itself calls "the
+non-obvious hazard".</p>
+
+<details class="f" open>
+<summary><span class="arrow">▶</span><span class="ttl"><code>ImportSaleJob</code> never establishes tenant context
+<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span><span class="b low">Open</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">What the code does now</div>
+<p class="loc">app/Jobs/Sale/ImportSaleJob.php</p>
+<pre><code><span class="kw">public function</span> __construct(
+    <span class="kw">protected</span> $user_id, <span class="kw">protected</span> $filePath, <span class="kw">protected</span> $branchId = <span class="kw">null</span>
+) {}   <span class="com">// ← no $tenantId</span>
+
+<span class="kw">public function</span> handle()
+{
+    $file = storage_path(<span class="str">'app/public/'</span>.$this-&gt;filePath);
+    <span class="com">// … no setCurrentTenant() anywhere in the class</span>
+    Excel::import(<span class="kw">new</span> SaleImport($this-&gt;user_id, $totalRows, $this-&gt;branchId), $file);
+}</code></pre>
+<p>Its siblings do it correctly — <code>ImportAccountsJob</code> and <code>ImportPropertyJob</code> both
+take a tenant id and call <code>setCurrentTenant()</code>.</p>
+</div>
+
+<div class="step"><div class="h">Why it is a problem</div>
+<p><code>TenantService</code> resolves in this order: subdomain or tenant header → authenticated user →
+the <code>TENANT_ID</code> config fallback. A queued job has no request and no authenticated user, so a
+sale import falls all the way through to <strong><code>TENANT_ID</code></strong>.</p>
+<p>The failure is silent and directional: every imported sale lands in whichever tenant that env var
+names, regardless of who uploaded the spreadsheet. On a single-tenant install it happens to be right.
+On a multi-tenant install, tenant B uploading a sales file writes rows into tenant A — and because
+<code>BelongsToTenant</code> auto-fills on create, nothing errors.</p>
+</div>
+
+<div class="step"><div class="h">The fix</div>
+<p>Follow the sibling jobs: take <code>$tenantId</code> in the constructor, call
+<code>setCurrentTenant()</code> at the top of <code>handle()</code>, and clear it in a
+<code>finally</code> so a long-lived worker does not carry the tenant into the next job it picks up.
+Not applied here because it needs a matching change at the dispatch site, which is outside what was
+agreed for this pass.</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl">Ten of twelve import jobs will be killed at 60 seconds
+<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b low">Open</span></div></span></summary>
+<div class="body">
+<div class="step"><div class="h">What the code does now</div>
+<p>Only <code>ImportProductJob</code> and <code>MigrateSalesChunkJob</code> declare
+<code>$timeout = 3600</code>. The other ten — accounts, general voucher, checklist items, property,
+sale, category, dropbox product images, stock-check items, rent-out, services — declare none and inherit
+Horizon <code>supervisor-1</code>'s <code>timeout: 60</code>.</p>
+</div>
+<div class="step"><div class="h">Why it is a problem</div>
+<p>The skill's own chunked-import pattern exists precisely because these files are large. A 5,000-row
+property import that takes longer than a minute is terminated by the worker part-written; because
+<code>tries = 1</code>, it is not retried, so the user sees a job that simply stopped with half the rows
+loaded and no error surfaced to them.</p>
+<p>Rated medium rather than high because it fails <em>closed</em> — partial data and a visible stall,
+not silent corruption — and because whether 60 seconds is actually exceeded depends on file sizes this
+audit cannot see.</p>
+</div>
+<div class="step"><div class="h">The fix</div>
+<p>Declare <code>$timeout</code> explicitly on every import job, sized to the largest file the module
+realistically accepts and kept below <code>DB_QUEUE_RETRY_AFTER</code> (3700). Copy the
+<code>ImportProductJob</code> shape.</p>
+</div>
+</div>
+</details>
+
+<!-- ═══════════════ GAPS ═══════════════ -->
+<h2 id="gaps"><span class="n">06</span>Coverage gaps in the skill set</h2>
+<p class="lead">Not errors — areas of the codebase no skill describes, where an agent has no map and will
+invent conventions.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Gap</th><th>Why it matters</th><th>Suggestion</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>The Vue layer</strong><br>9 Vite entry points, <code>resources/js/components/</code></td>
+  <td>The only skill that mentions it does so to say <em>don't go there</em> (§04a). Yet the Purchase page
+  and Journal Entry modal live there. There is no documented convention for adding a Vue island, how it
+  talks to Livewire, or where its state lives.</td>
+  <td>Either a short <code>vue-islands</code> skill, or a corrected section in
+  <code>blade-ui-conventions</code> naming the boundary explicitly.</td>
+</tr>
+<tr>
+  <td><strong>Testing this project</strong><br>43 files, mostly <code>tests/Unit</code></td>
+  <td><code>pest-testing</code> is the vendored generic skill — it teaches Pest 5 syntax but says nothing
+  about <em>this</em> codebase: how to get a tenant into a test, how to exercise an action, what a
+  Livewire component test needs here. An agent asked to add a test has syntax but no fixtures.</td>
+  <td>A thin project layer: tenant setup, the action-testing shape, and what the existing 43 tests cover.</td>
+</tr>
+<tr>
+  <td><strong>Queue and Horizon operations</strong></td>
+  <td>The settings that decide whether a job survives (<code>supervisor-1.timeout</code>,
+  <code>tries</code>, <code>DB_QUEUE_RETRY_AFTER</code>) live in config no skill points at — which is
+  exactly why <code>imports-exports-and-jobs</code> ended up warning about the wrong number (§04c).</td>
+  <td>A short subsection in <code>imports-exports-and-jobs</code> stating the effective values and which
+  one binds.</td>
+</tr>
+</tbody></table></div>
+
+<!-- ═══════════════ NEXT ═══════════════ -->
+<h2 id="next"><span class="n">07</span>Suggested order of work</h2>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Work</th><th>Effort</th><th>Why this order</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Fix the Vite claim in <code>blade-ui-conventions</code> (§04a)</td><td>Minutes</td><td>The only error that makes an agent write the wrong code. Cheapest high-value fix here.</td></tr>
+<tr><td>2</td><td>Give <code>ImportSaleJob</code> tenant context (§05a)</td><td>An hour</td><td>Silent cross-tenant writes on a multi-tenant install; the sibling jobs already show the shape.</td></tr>
+<tr><td>3</td><td>Declare <code>$timeout</code> on the ten import jobs (§05b)</td><td>An hour</td><td>Mechanical, and it stops half-loaded imports.</td></tr>
+<tr><td>4</td><td>Correct the two <code>imports-exports-and-jobs</code> rules (§04b, §04c)</td><td>Minutes</td><td>Do it with #3 while the queue behaviour is fresh.</td></tr>
+<tr><td>5</td><td>Point the hook at <code>$CLAUDE_PROJECT_DIR</code> (§02)</td><td>Minutes</td><td>Silent no-op today, not a live failure.</td></tr>
+<tr><td>6</td><td>Close a coverage gap — Vue islands first (§06)</td><td>Half a day each</td><td>Highest-traffic undocumented area; follows naturally from #1.</td></tr>
+</tbody></table></div>
+
+<div class="foot">
+Audited 2026-08-06 against branch <code>main</code>. Skill claims were verified by executing scripts over
+the codebase (counts, path existence, grep-based rule checks) and by reading the cited files; the Pint
+Blade-safety question was settled by running Pint on a Blade file and diffing. Counts are exhaustive over
+their directories; the judgement on whether an individual hit is genuinely wrong was spot-checked.
+Companion report: <code>docs/code-audit.html</code>.
+</div>
+
+</div>

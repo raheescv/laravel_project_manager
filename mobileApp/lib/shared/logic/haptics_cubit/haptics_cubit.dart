@@ -1,30 +1,30 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:invo/shared/domain/constants/global_variables.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
 import 'package:invo/shared/utils/components/haptics.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 
 /// Owns the app-wide haptic-feedback preference (Settings → Haptics) and keeps
 /// the static [Haptics.enabled] flag — read on every tap by [HapticTapDetector]
 /// — in sync. Constructed at boot so the flag is correct from the first frame.
-class HapticsCubit extends HolderCubit {
-  HapticsCubit() {
-    _enabled = _storage.hapticsEnabled ?? true;
-    Haptics.enabled = _enabled;
+///
+/// State is the preference itself, so a rebuild only happens when it actually
+/// changes (§5).
+class HapticsCubit extends Cubit<bool> {
+  HapticsCubit() : super(serviceLocator<LocalStorageService>().hapticsEnabled ?? true) {
+    Haptics.enabled = state;
   }
 
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
 
-  late bool _enabled;
-
-  bool get enabled => _enabled;
+  bool get enabled => state;
 
   Future<void> setEnabled(bool v) async {
-    if (v == _enabled) return;
-    _enabled = v;
+    if (v == state) return;
     Haptics.enabled = v;
-    refresh();
+    emit(v);
     await _storage.setHapticsEnabled(v);
   }
 
-  Future<void> toggle() => setEnabled(!_enabled);
+  Future<void> toggle() => setEnabled(!state);
 }

@@ -1,6 +1,6 @@
 ---
 name: flutter-apps
-description: "Use when working in mobileApp/ (the Astra POS/admin app) or technicianApp/ — adding a screen, cubit, repository, model, or endpoint call, wiring dependencies, or debugging state, storage, offline behaviour, printing, scanning, or auth/lock flows. Covers the flutter_bloc + get_it three-layer architecture, feature folder anatomy, HolderCubit, EndPoints, the service_locator setup, and the hard project rules (never run dart format; never blind-tap the live POS simulator). Read before editing any .dart file in this repo."
+description: "Use when working in mobileApp/ (the Astra POS/admin app) or technicianApp/ — adding a screen, cubit, repository, model, or endpoint call, wiring dependencies, or debugging state, storage, offline behaviour, printing, scanning, or auth/lock flows. Covers the flutter_bloc + get_it three-layer architecture, feature folder anatomy, cubit state shape, EndPoints, the service_locator setup, and the hard project rules (never run dart format; never blind-tap the live POS simulator). Read before editing any .dart file in this repo."
 ---
 
 # Flutter Apps
@@ -11,6 +11,8 @@ Two Flutter apps live in this repo and talk to `/api/v1` (see the mobile-api-v1 
 - `technicianApp/` — standalone maintenance-technician app, scoped to `technician_id = auth id`
 
 Both follow the same architecture, adopted in the 2026-06-30 restructure. Paths from before that (`lib/state`, `lib/core`, `lib/models`, `lib/theme`, `ApiService`, `Storage`, `ApiClient`) no longer exist — do not follow older references.
+
+This skill covers layout, cross-cutting behaviour, and the hard rules. For the code patterns themselves — cubit state shape, repository/service templates, model parsing, paginated lists, controller disposal, constants — read the **flutter-code-standards** skill alongside it.
 
 ## Two hard rules
 
@@ -72,10 +74,11 @@ serviceLocator
 
 Adding a feature means adding all four pieces plus its registration — a screen that news up a service directly is a bug.
 
-## State: two cubit shapes
+## State: one cubit shape
 
-- **Ordinary `Cubit<State>`** with an immutable state class for new, well-bounded state.
-- **`HolderCubit`** (`shared/logic/base/holder_cubit.dart`) for the screens migrated from `ChangeNotifier`: it owns mutable fields directly and emits a monotonically increasing tick. Call `refresh()` where the old code called `notifyListeners()`, and watch with `context.watch<XCubit>()`. `CartCubit` is the reference. Don't convert one to the other opportunistically — match the file you're in.
+Every cubit is a `Cubit<State>` with an immutable `Equatable` state, `copyWith`, and `DataFetchStatus` for anything async. The old `HolderCubit` tick base class is gone. `PaginatedListCubit` (shared, for filter+paginate+append lists) and `CartCubit` (the ticket) are the references.
+
+Cubits commonly keep a forwarding getter per field (`double get total => state.total`) so screens can read `context.watch<XCubit>().total` without a builder — that is the migration residue, and it is fine. Prefer `BlocBuilder` / `BlocSelector` in new screens so a rebuild can be scoped to the field that changed.
 
 ## Cross-cutting behaviour already handled
 

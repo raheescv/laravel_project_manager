@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../api/end_points.dart';
 import '../../utils/router/http_utils/http_service.dart';
 import '../constants/global_variables.dart';
 import '../models/index.dart';
@@ -17,7 +18,7 @@ class LookupService implements LookupRepository {
     int page = 1,
     int perPage = 50,
   }) async {
-    final data = await _http.get('/products', auth: false, query: {
+    final data = await _http.get(EndPoints.products, auth: false, query: {
       if (search != null && search.isNotEmpty) 'search': search,
       if (mainCategoryId != null) 'main_category_id': mainCategoryId,
       if (type != null) 'type': type,
@@ -30,7 +31,7 @@ class LookupService implements LookupRepository {
 
   @override
   Future<Product?> productByBarcode(String barcode) async {
-    final data = await _http.get('/products', auth: false, query: {
+    final data = await _http.get(EndPoints.products, auth: false, query: {
       'barcode': barcode,
       'in_stock_only': false,
       'per_page': 1,
@@ -41,7 +42,7 @@ class LookupService implements LookupRepository {
 
   @override
   Future<List<Category>> categories({String? type}) async {
-    final data = await _http.get('/categories', auth: false, query: {
+    final data = await _http.get(EndPoints.categories, auth: false, query: {
       if (type != null) 'type': type,
     });
     return ((data as List?) ?? const [])
@@ -51,7 +52,7 @@ class LookupService implements LookupRepository {
 
   @override
   Future<List<Branch>> branches() async {
-    final data = await _http.get('/branches', auth: false);
+    final data = await _http.get(EndPoints.branches, auth: false);
     return ((data as List?) ?? const [])
         .map((e) => Branch.fromJson(Map<String, dynamic>.from(e)))
         .toList();
@@ -59,7 +60,7 @@ class LookupService implements LookupRepository {
 
   @override
   Future<List<Customer>> customers({String? mobile, String? search}) async {
-    final data = await _http.get('/customers', query: {
+    final data = await _http.get(EndPoints.customers, query: {
       if (mobile != null && mobile.isNotEmpty) 'mobile': mobile,
       if (search != null && search.isNotEmpty) 'search': search,
       'per_page': 20,
@@ -69,7 +70,7 @@ class LookupService implements LookupRepository {
 
   @override
   Future<List<Employee>> employees({String? search, int? branchId}) async {
-    final data = await _http.get('/employees', query: {
+    final data = await _http.get(EndPoints.employees, query: {
       if (search != null && search.isNotEmpty) 'search': search,
       if (branchId != null) 'branch_id': branchId,
       'per_page': 100,
@@ -79,7 +80,7 @@ class LookupService implements LookupRepository {
 
   @override
   Future<List<PaymentMethod>> paymentMethods() async {
-    final data = await _http.get('/payment-methods');
+    final data = await _http.get(EndPoints.paymentMethods);
     return ((data as List?) ?? const [])
         .map((e) => PaymentMethod.fromJson(Map<String, dynamic>.from(e)))
         .toList();
@@ -87,7 +88,7 @@ class LookupService implements LookupRepository {
 
   @override
   Future<({String? baseCode, List<Currency> currencies})> currencies() async {
-    final data = await _http.get('/settings/currencies');
+    final data = await _http.get(EndPoints.currencies);
     final map = Map<String, dynamic>.from(data as Map);
     final list = ((map['currencies'] as List?) ?? const [])
         .map((e) => Currency.fromJson(Map<String, dynamic>.from(e)))
@@ -97,7 +98,7 @@ class LookupService implements LookupRepository {
 
   @override
   Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, RemotePrintConfig? print})> saleSettings() async {
-    final data = await _http.get('/settings/sale');
+    final data = await _http.get(EndPoints.saleSettings);
     final map = Map<String, dynamic>.from(data as Map);
     return (
       defaultQuantity: double.tryParse(map['default_quantity']?.toString() ?? ''),
@@ -108,11 +109,11 @@ class LookupService implements LookupRepository {
   }
 
   @override
-  Future<Uint8List> logo() => _http.getBytes('/settings/logo');
+  Future<Uint8List> logo() => _http.getBytes(EndPoints.logo);
 
   @override
   Future<RemotePrintConfig?> savePrintSettings(Map<String, dynamic> body) async {
-    final data = await _http.put('/settings/sale/print', body: body);
+    final data = await _http.put(EndPoints.printSettings, body: body);
     final map = Map<String, dynamic>.from(data as Map);
     return map['print'] is Map ? RemotePrintConfig.fromJson(Map<String, dynamic>.from(map['print'] as Map)) : null;
   }

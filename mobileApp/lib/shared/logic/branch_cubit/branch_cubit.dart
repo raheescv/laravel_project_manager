@@ -3,16 +3,20 @@ import 'dart:async';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/domain/constants/data_fetching_status.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/utils/router/http_utils/http_service.dart';
 
+part 'branch_state.dart';
+
 /// Holds the [Branch] the user is operating as and persists the choice. The
 /// selected branch id is pushed onto [HttpService.activeBranchId] so every
 /// request carries `branch_id` app-wide.
-class BranchCubit extends HolderCubit {
-  BranchCubit({this.userBranchId}) {
+class BranchCubit extends Cubit<BranchState> {
+  BranchCubit({this.userBranchId}) : super(const BranchState()) {
     // Apply the persisted (or the user's home) branch immediately so requests
     // made before the branch list returns already carry branch_id.
     _http.activeBranchId = _storage.branchId ?? userBranchId;
@@ -25,10 +29,11 @@ class BranchCubit extends HolderCubit {
   LookupRepository get _repo => serviceLocator<LookupRepository>();
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
 
-  List<Branch> branches = const [];
-  Branch? _selected;
-  bool loading = false;
-  String? error;
+  // Read facade over `state`, so existing `branch.branches` / `.loading`
+  // call sites keep working while the data itself is immutable.
+  List<Branch> get branches => state.branches;
+  bool get loading => state.loading;
+  String? get error => state.errorMessage;
 
   // Broadcasts the newly-selected branch id whenever the active branch actually
   // changes. Branch-scoped screens/cubits (dashboard, reports, sales & returns
@@ -37,30 +42,27 @@ class BranchCubit extends HolderCubit {
   final StreamController<int> _branchChanged = StreamController<int>.broadcast();
   Stream<int> get onBranchChanged => _branchChanged.stream;
 
-  Branch? get selected => _selected;
-  int? get selectedId => _selected?.id ?? _http.activeBranchId;
+  Branch? get selected => state.selected;
+  int? get selectedId => state.selected?.id ?? _http.activeBranchId;
 
   Future<void> _load() async {
-    loading = true;
-    error = null;
-    refresh();
+    emit(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
     try {
-      branches = await _repo.branches();
-      if (branches.isNotEmpty) {
+      final rows = await _repo.branches();
+      Branch? pick = state.selected;
+      if (rows.isNotEmpty) {
         final targetId = _storage.branchId ?? userBranchId;
-        _selected = branches.firstWhere(
-          (b) => b.id == targetId,
-          orElse: () => branches.first,
-        );
-        _http.activeBranchId = _selected!.id;
+        pick = rows.firstWhere((b) => b.id == targetId, orElse: () => rows.first);
+        _http.activeBranchId = pick.id;
       }
+      emit(state.copyWith(
+          status: DataFetchStatus.success, branches: rows, selected: pick));
     } on ApiException catch (e) {
-      error = e.message;
+      emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
     } catch (_) {
-      error = 'Could not load branches.';
+      emit(state.copyWith(
+          status: DataFetchStatus.failed, errorMessage: 'Could not load branches.'));
     }
-    loading = false;
-    refresh();
   }
 
   Future<void> refreshBranches() => _load();
@@ -69,18 +71,16 @@ class BranchCubit extends HolderCubit {
     if (_storage.branchId != null) return; // respect an explicit pick
     if (branches.isEmpty) await _load();
     if (homeBranchId == null) return;
-    final match = branches.where((b) => b.id == homeBranchId);
+    final match = state.branches.where((b) => b.id == homeBranchId);
     if (match.isEmpty) return;
-    _selected = match.first;
-    _http.activeBranchId = _selected!.id;
-    refresh();
+    _http.activeBranchId = match.first.id;
+    emit(state.copyWith(selected: match.first));
   }
 
   Future<void> setBranch(Branch b) async {
-    if (_selected?.id == b.id) return;
-    _selected = b;
+    if (state.selected?.id == b.id) return;
     _http.activeBranchId = b.id;
-    refresh();
+    emit(state.copyWith(selected: b));
     await _storage.setBranchId(b.id);
     // Fan out to every branch-scoped screen/cubit so they reload for this branch.
     _branchChanged.add(b.id);

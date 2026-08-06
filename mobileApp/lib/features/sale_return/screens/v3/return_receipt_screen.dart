@@ -1,17 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
+import 'package:invo/features/sale_return/logic/return_ops_cubit/return_ops_cubit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
@@ -96,12 +99,12 @@ class ReturnReceiptScreen extends StatelessWidget {
                         Row(
                           children: [
                             if (canCreate) ...[
-                              Expanded(child: _action(context, Icons.assignment_return_outlined, 'New Return', () => context.go('/sale-return/pick'))),
+                              Expanded(child: _action(context, Icons.assignment_return_outlined, 'New Return', () => context.go(Routes.saleReturnPick))),
                               const SizedBox(width: 9),
                             ],
                             Expanded(
                               flex: 2,
-                              child: AstraButton(label: 'Done', onTap: onClose ?? () => context.go('/sales-returns')),
+                              child: AstraButton(label: 'Done', onTap: onClose ?? () => context.go(Routes.salesReturns)),
                             ),
                           ],
                         ),
@@ -128,7 +131,7 @@ class ReturnReceiptScreen extends StatelessWidget {
     final ref = saleReturn.referenceNo.isEmpty ? '#${saleReturn.id}' : saleReturn.referenceNo;
     final methods = saleReturn.payments.map((e) => _titleCase(e.method.trim())).where((e) => e.isNotEmpty).toSet();
     final subtitle = [
-      saleReturn.customerName.trim().isEmpty ? 'Walk-in' : saleReturn.customerName.trim(),
+      saleReturn.customerName.trim().isEmpty ? AppStrings.walkInCustomer : saleReturn.customerName.trim(),
       if (saleReturn.date.isNotEmpty) Dates.human(saleReturn.date),
       if (methods.isNotEmpty) 'Refund to ${methods.join(', ')}',
     ].join('  ·  ');
@@ -161,7 +164,7 @@ class ReturnReceiptScreen extends StatelessWidget {
                             label: 'New Return',
                             icon: Icons.assignment_return_outlined,
                             primary: true,
-                            onTap: () => context.go('/sale-return/pick')),
+                            onTap: () => context.go(Routes.saleReturnPick)),
                       if (embedded)
                         TabletIconButton(icon: Icons.close_rounded, tooltip: 'Close', onTap: onClose),
                     ],
@@ -595,13 +598,14 @@ class ReturnReceiptScreen extends StatelessWidget {
   /// Re-open this return for editing: re-fetch the source sale's returnable lines,
   /// overlay this return's quantities, and open the return flow in edit mode.
   Future<void> _edit(BuildContext context) async {
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    final ops = ReturnOpsCubit(); // repository access for this flow (§10)
+    unawaited(showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator())));
     try {
-      final returnable = await serviceLocator<SaleReturnRepository>().returnableSale(saleReturn.saleId);
+      final returnable = await ops.returnableSale(saleReturn.saleId);
       if (!context.mounted) return;
       Navigator.pop(context); // close the loader
       context.read<ReturnDraftCubit>().seedForEdit(returnable, saleReturn);
-      context.push('/sale-return');
+      unawaited(context.push(Routes.saleReturn));
     } on ApiException catch (e) {
       if (context.mounted) Navigator.pop(context);
       if (context.mounted) _toast(context, e.message);

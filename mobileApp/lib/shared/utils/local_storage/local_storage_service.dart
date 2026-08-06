@@ -58,6 +58,10 @@ class LocalStorageService {
   Future<void> setThemeMode(String v) =>
       _prefs.setString(LocalStorageKeys.themeMode, v);
 
+  String? get typefaceId => _prefs.getString(LocalStorageKeys.typeface);
+  Future<void> setTypefaceId(String v) =>
+      _prefs.setString(LocalStorageKeys.typeface, v);
+
   String? get currencyCode => _prefs.getString(LocalStorageKeys.currency);
   Future<void> setCurrencyCode(String v) =>
       _prefs.setString(LocalStorageKeys.currency, v);

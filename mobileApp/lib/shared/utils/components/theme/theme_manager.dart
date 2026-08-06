@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:invo/shared/domain/helpers/responsive.dart';
 
 import 'palette.dart';
+import 'typeface.dart';
 
 /// Theme extension that carries the live [AstraPalette] plus the shared design
 /// tokens (radii, shadows) so any widget can read them via `context.astra`.
@@ -91,14 +91,17 @@ extension AstraThemeX on BuildContext {
   AstraPalette get astra => astraTheme.palette;
 }
 
-/// Build the single [ThemeData] for the given [AstraPalette].
-ThemeData buildAstraTheme(AstraPalette p) {
+/// Build the single [ThemeData] for the given [AstraPalette] and type pairing.
+/// [typeface] defaults to the live choice so a caller that only cares about
+/// colour can keep passing a palette alone.
+ThemeData buildAstraTheme(AstraPalette p, [AstraTypeface? typeface]) {
   final base = p.isDark ? ThemeData.dark() : ThemeData.light();
 
-  final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
-    bodyColor: p.ink,
-    displayColor: p.ink,
-  );
+  final textTheme =
+      (typeface ?? AstraTypefaces.current).textTheme(base.textTheme).apply(
+            bodyColor: p.ink,
+            displayColor: p.ink,
+          );
 
   return base.copyWith(
     scaffoldBackgroundColor: p.canvas,

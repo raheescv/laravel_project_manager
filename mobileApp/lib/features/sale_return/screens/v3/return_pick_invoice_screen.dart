@@ -1,17 +1,17 @@
 import 'dart:async';
-import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
-import 'package:invo/features/sale/domain/repository/sale_repository.dart';
+import 'package:invo/features/sale_return/logic/return_ops_cubit/return_ops_cubit.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
-import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/logic/paginated_list_cubit/paginated_list_cubit.dart';
+import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 
 /// Step 1 of a return: find and select the paid invoice to return against.
@@ -23,31 +23,30 @@ class ReturnPickInvoiceScreen extends StatefulWidget {
 }
 
 class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
+  /// Repository access for this flow (§10).
+  final _ops = ReturnOpsCubit();
   final _searchCtl = TextEditingController();
   final _scrollCtl = ScrollController();
   Timer? _debounce;
 
-  bool _loading = true;
-  bool _loadingMore = false;
-  String? _error;
-  List<Map<String, dynamic>> _rows = [];
-  int _page = 1;
-  int _lastPage = 1;
-  int _reqId = 0;
+  /// Owns fetch/pagination/error state — see [PaginatedListCubit]. The screen
+  /// keeps only the filter values it drives the fetcher with.
+  late final PaginatedListCubit _list = PaginatedListCubit(
+    fetch: _fetchPage,
+    errorMessage: 'Could not load invoices.',
+  );
 
   String _search = '';
   String _datePreset = '30d'; // 30d | month | all
   DateTime? _startDate;
   DateTime? _endDate;
 
-  bool get _hasMore => _page < _lastPage;
-
   @override
   void initState() {
     super.initState();
     _applyPreset('30d', reload: false);
     _scrollCtl.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_list.load()));
   }
 
   @override
@@ -55,13 +54,14 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
     _debounce?.cancel();
     _searchCtl.dispose();
     _scrollCtl.dispose();
+    unawaited(_list.close());
     super.dispose();
   }
 
   void _onScroll() {
     if (!_scrollCtl.hasClients) return;
     final pos = _scrollCtl.position;
-    if (pos.pixels >= pos.maxScrollExtent - 500) _loadMore();
+    if (pos.pixels >= pos.maxScrollExtent - 500) unawaited(_list.loadMore());
   }
 
   void _applyPreset(String id, {bool reload = true}) {
@@ -81,7 +81,7 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
     }
     if (reload) {
       setState(() {});
-      _load();
+      unawaited(_list.load());
     }
   }
 
@@ -89,61 +89,24 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
       _search = v.trim();
-      _load();
+      unawaited(_list.load());
     });
   }
 
-  Future<SalesPage> _fetch(int page) => serviceLocator<SaleRepository>().sales(
-        status: 'completed',
+  Future<PageResult> _fetchPage(int page) => _ops.fetchPaidInvoices(
+        page: page,
         search: _search.isEmpty ? null : _search,
         fromDate: _startDate == null ? null : Dates.iso(_startDate!),
         toDate: _endDate == null ? null : Dates.iso(_endDate!),
-        page: page,
       );
-
-  Future<void> _load() async {
-    final req = ++_reqId;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final res = await _fetch(1);
-      if (!mounted || req != _reqId) return;
-      setState(() {
-        _rows = res.rows;
-        _page = res.currentPage;
-        _lastPage = res.lastPage;
-      });
-    } catch (e) {
-      if (mounted && req == _reqId) setState(() => _error = 'Could not load invoices.');
-    }
-    if (mounted && req == _reqId) setState(() => _loading = false);
-  }
-
-  Future<void> _loadMore() async {
-    if (_loadingMore || _loading || !_hasMore) return;
-    final req = _reqId;
-    setState(() => _loadingMore = true);
-    try {
-      final res = await _fetch(_page + 1);
-      if (!mounted || req != _reqId) return;
-      setState(() {
-        _rows = [..._rows, ...res.rows];
-        _page = res.currentPage;
-        _lastPage = res.lastPage;
-      });
-    } catch (_) {}
-    if (mounted && req == _reqId) setState(() => _loadingMore = false);
-  }
 
   /// Load the returnable lines for the chosen sale, seed the draft, and move on
   /// to the New Return screen.
   Future<void> _pick(String id) async {
     if (id.isEmpty) return;
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    unawaited(showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator())));
     try {
-      final returnable = await serviceLocator<SaleReturnRepository>().returnableSale(id);
+      final returnable = await _ops.returnableSale(id);
       if (!mounted) return;
       Navigator.pop(context); // close the loader
       final hasReturnable = returnable.lines.any((l) => l.returnableQuantity > 0);
@@ -154,7 +117,7 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
         return;
       }
       context.read<ReturnDraftCubit>().seed(returnable);
-      context.push('/sale-return');
+      unawaited(context.push(Routes.saleReturn));
     } catch (e) {
       if (mounted) Navigator.pop(context);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open invoice')));
@@ -171,7 +134,7 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
             EmeraldHeader(
               leading: HeaderIconButton(
                 icon: Icons.chevron_left,
-                onTap: () => context.canPop() ? context.pop() : context.go('/sales-returns'),
+                onTap: () => context.canPop() ? context.pop() : context.go(Routes.salesReturns),
               ),
               title: 'Return against',
               subtitle: 'Select a paid invoice',
@@ -198,7 +161,7 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
               ],
             ),
           ),
-          Expanded(child: _list()),
+          Expanded(child: _listView()),
         ],
       ),
     );
@@ -257,31 +220,49 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
     );
   }
 
-  Widget _list() {
-    if (_loading && _rows.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null && _rows.isEmpty) {
-      return EmptyState(icon: Icons.wifi_off, title: 'Invoices unavailable', message: _error, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load));
-    }
-    if (_rows.isEmpty) {
-      return EmptyState(icon: Icons.receipt_long, title: 'No paid invoices', message: 'Try a wider date range or a different search.');
-    }
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        controller: _scrollCtl,
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 120),
-        children: [
-          for (final r in _rows)
-            Padding(padding: const EdgeInsets.only(bottom: 9), child: _row(r)),
-          if (_loadingMore)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
-            ),
-        ],
-      ),
+  Widget _listView() {
+    return BlocBuilder<PaginatedListCubit, PaginatedListState>(
+      bloc: _list,
+      builder: (context, state) {
+        if (state.isLoading && state.items.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state.hasFailed && state.items.isEmpty) {
+          return EmptyState(
+              icon: Icons.wifi_off,
+              title: 'Invoices unavailable',
+              message: state.errorMessage,
+              action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: () => unawaited(_list.load())));
+        }
+        if (state.items.isEmpty) {
+          return const EmptyState(icon: Icons.receipt_long, title: 'No paid invoices', message: 'Try a wider date range or a different search.');
+        }
+        // Slivers, not ListView(children:) — the rows accumulate a page per scroll.
+        return RefreshIndicator(
+          onRefresh: _list.load,
+          child: CustomScrollView(
+            controller: _scrollCtl,
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                sliver: SliverList.separated(
+                  itemCount: state.items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 9),
+                  itemBuilder: (_, i) => _row(state.items[i]),
+                ),
+              ),
+              if (state.loadingMore)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
+                  ),
+                ),
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -291,7 +272,7 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
     final summary = r['summary'] is Map ? r['summary'] as Map : const {};
     final amount = asNum(summary['paid'] ?? summary['gross_amount'] ?? r['paid']);
     final customer = r['customer'] is Map ? r['customer'] as Map : const {};
-    final who = asStr(customer['name']).isEmpty ? 'Walk-in' : asStr(customer['name']);
+    final who = asStr(customer['name']).isEmpty ? AppStrings.walkInCustomer : asStr(customer['name']);
     final date = Dates.human(asStr(r['date']));
     final items = asNum(r['items_count']).toInt();
     return AstraCard(

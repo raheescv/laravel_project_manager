@@ -118,822 +118,659 @@
 <div class="wrap">
 
 <header class="top">
-  <div class="eyebrow">Static audit · 2026-08-05</div>
+  <div class="eyebrow">Remediation status · re-audited 2026-08-06</div>
   <h1>Codebase audit against the project skills</h1>
-  <p class="sub">Read-only review of <code>project_manager</code> measured against the nine convention
-  skills in <code>.claude/skills/</code>. No application code was modified. Every finding below was
-  opened and read in context; nothing is inferred from a grep count alone.</p>
+  <p class="sub">Follow-up to the 2026-08-05 audit of <code>project_manager</code>, measured against the
+  convention skills in <code>.claude/skills/</code>. <strong>All 11 original findings are resolved</strong>
+  — each one re-checked against current code, not assumed from a changelog. This pass also found and
+  fixed 6 new defects, corrected 7 skill inaccuracies across 5 skill files, and leaves 5 items open. Every
+  claim below was then independently re-verified against the working tree; one stale count was found and
+  corrected (§06).</p>
 </header>
 
 <h2 id="summary"><span class="n">01</span>Summary</h2>
 
 <div class="grid">
-  <div class="stat c"><div class="v">3</div><div class="l">Critical</div></div>
-  <div class="stat h"><div class="v">4</div><div class="l">High</div></div>
-  <div class="stat m"><div class="v">3</div><div class="l">Medium</div></div>
-  <div class="stat"><div class="v">3</div><div class="l">Low</div></div>
-  <div class="stat o"><div class="v">4</div><div class="l">Areas clean</div></div>
+  <div class="stat o"><div class="v">11</div><div class="l">Original · resolved</div></div>
+  <div class="stat o"><div class="v">6</div><div class="l">New · fixed</div></div>
+  <div class="stat m"><div class="v">7</div><div class="l">Skill fixes · 5 files</div></div>
+  <div class="stat h"><div class="v">5</div><div class="l">Still open</div></div>
+  <div class="stat c"><div class="v">1</div><div class="l">Action required</div></div>
+</div>
+
+<div class="callout ok">
+  <h4>The original "three things to fix first" are all fixed</h4>
+  <p><strong>1. Tenant identity in a shared cache key — gone.</strong>
+  <code>TenantService</code> no longer writes <code>current_tenant_id</code> to the cache at all. The
+  only remaining <code>Cache::</code> call in that file keys on the subdomain
+  (<code>tenant_subdomain_{$subdomain}</code>), which is unambiguous by construction.</p>
+  <p><strong>2. Boot-time global cache warming — gone.</strong> <code>AppServiceProvider::boot()</code>
+  now carries an explicit comment recording <em>why</em> nothing tenant-scoped is warmed there, and the
+  values resolve lazily through <code>tenant_cache()</code> / <code>App\Support\TenantCache</code>,
+  whose keys are suffixed <code>:tenant:{id}</code>.</p>
+  <p><strong>3. <code>impersonate()</code> — guarded.</strong>
+  <code>abort_unless(auth()->user()?->can('user.impersonate'), 403)</code> at
+  <code>app/Livewire/User/View.php:91</code>, with <code>user.impersonate</code> declared in config.</p>
 </div>
 
 <div class="callout crit">
-  <h4>The three things to fix first</h4>
-  <p><strong>1. Tenant identity lives in a globally-shared cache key.</strong>
-  <code>TenantService</code> writes the active tenant to <code>Cache::put('current_tenant_id', …)</code>
-  — one key for the whole installation. Any request that cannot resolve a tenant from its subdomain
-  falls back to reading it, so it adopts whichever tenant most recently logged in. This is the root
-  cause that makes findings 2 and 3 dangerous rather than merely untidy.</p>
-  <p><strong>2. Tenant-scoped data is cached under global keys for a year at boot.</strong>
-  <code>AppServiceProvider::boot()</code> warms <code>accounts_slug_id_map</code>,
-  <code>branches</code>, <code>logo</code>, <code>theme_settings</code>, <code>payment_methods</code>
-  and more with no tenant in the key. The first tenant to warm the cache defines those values for
-  every other tenant. <code>accounts_slug_id_map</code> feeds <em>every</em> journal posting in the app.</p>
-  <p><strong>3. <code>impersonate()</code> has no permission check.</strong> A full account-takeover
-  action guarded only by reaching the page.</p>
-</div>
-
-<div class="callout">
-  <h4>An important qualifier on severity</h4>
-  <p>Findings 1–3 are <strong>confirmed defects in the code</strong>. Whether they are currently
-  <em>causing harm</em> depends on something the code cannot tell me: how many tenants this
-  deployment actually serves. On a single-tenant installation they are latent — real, but not
-  presently leaking. On a multi-tenant installation they are active cross-tenant data exposure.
-  I could not determine which from the repository, so I have rated them on the multi-tenant
-  assumption the code is written for. Confirm your deployment shape before triaging.</p>
+  <h4>One thing you must do before this is really finished</h4>
+  <p>21 permissions were added to <code>config/permissions.php</code> and 12 print routes were gated
+  in this pass. <strong>Neither takes effect until you run
+  <code>php artisan db:seed --class=PermissionSeeder</code> and assign the new permissions to roles.</strong>
+  Until then the newly-gated print routes 403 for everyone — that is the intended end state, but it
+  needs the role grants to land in the same deploy.</p>
+  <p>The seeder was deliberately not run here: this repository's <code>.env</code> resolves
+  <code>APP_ENV=production</code>, and the seeder writes permission rows. That is a deployment
+  decision, not an audit one.</p>
 </div>
 
 <h3>By area</h3>
 <div class="tw"><table>
-<thead><tr><th>Area</th><th>Result</th><th>Detail</th></tr></thead>
+<thead><tr><th>Area</th><th>Then (2026-08-05)</th><th>Now</th><th>Detail</th></tr></thead>
 <tbody>
-<tr><td><strong>Tenant &amp; branch isolation</strong></td><td><span class="b crit">3 critical</span></td><td>Global cache keys holding per-tenant state</td></tr>
-<tr><td><strong>Authorization</strong></td><td><span class="b high">4 high</span></td><td>Unguarded impersonation + 2 deletes; 20 known-unmapped permissions</td></tr>
-<tr><td><strong>Money &amp; accounting</strong></td><td><span class="b med">1 medium</span></td><td>Posting logic itself is sound; account <em>resolution</em> is the weak point</td></tr>
-<tr><td><strong>Action layer</strong></td><td><span class="b med">1 medium</span></td><td>Two competing transaction conventions — the skill is wrong, not the code</td></tr>
-<tr><td><strong>Livewire layer</strong></td><td><span class="b med">1 medium</span></td><td>~59 files toast success before committing</td></tr>
-<tr><td><strong>Print / PDF</strong></td><td><span class="b high">1 high</span></td><td>DomPDF renders customer names that can be Arabic</td></tr>
-<tr><td><strong>Blade / UI</strong></td><td><span class="b low">2 low</span></td><td>28 FA5/6 icons; duplicated lines</td></tr>
-<tr><td><strong>API v1</strong></td><td><span class="b ok">clean</span></td><td>No session reads, delegation pattern held</td></tr>
-<tr><td><strong>Flutter apps</strong></td><td><span class="b ok">clean</span></td><td>No direct service construction, no stray endpoint literals</td></tr>
+<tr><td><strong>Tenant &amp; branch isolation</strong></td><td><span class="b crit">3 critical</span></td><td><span class="b ok">clean</span></td><td>All three cache/scope defects closed; 1 new leak found &amp; fixed this pass</td></tr>
+<tr><td><strong>Authorization</strong></td><td><span class="b high">4 high</span></td><td><span class="b high">1 open</span></td><td>Impersonation, deletes and unmapped exports all guarded; 30 Livewire components still unguarded</td></tr>
+<tr><td><strong>Money &amp; accounting</strong></td><td><span class="b med">1 medium</span></td><td><span class="b ok">clean</span></td><td>Account resolution moved to <code>Account::slugIdMap()</code> / <code>idBySlug()</code> across 29 files</td></tr>
+<tr><td><strong>Action layer</strong></td><td><span class="b med">1 medium</span></td><td><span class="b low">1 low</span></td><td>Skill corrected; 14 actions still read <code>Auth::id()</code> internally</td></tr>
+<tr><td><strong>Livewire layer</strong></td><td><span class="b med">1 medium</span></td><td><span class="b ok">clean</span></td><td>Toast-before-commit down from ~59 files to <strong>0 of 116</strong></td></tr>
+<tr><td><strong>Print / PDF</strong></td><td><span class="b high">1 high</span></td><td><span class="b low">2 deferred</span></td><td>All of <code>PrintController</code> plus 5 more documents on Browsershot; 2 fixed-size docs deliberately left</td></tr>
+<tr><td><strong>Blade / UI</strong></td><td><span class="b low">2 low</span></td><td><span class="b ok">clean</span></td><td>0 FA5/6 prefixes remain; duplicated lines removed</td></tr>
+<tr><td><strong>API v1</strong></td><td><span class="b ok">clean</span></td><td><span class="b ok">clean</span></td><td>Missing sale-return duplicate guard found &amp; added this pass</td></tr>
+<tr><td><strong>Flutter apps</strong></td><td><span class="b ok">clean</span></td><td><span class="b ok">clean</span></td><td>Re-verified: no direct service construction, no stray endpoint literals</td></tr>
 </tbody></table></div>
 
 <div class="callout">
-  <h4>What this audit did <em>not</em> cover — read this before trusting the numbers</h4>
-  <p>I did not read all 383 action classes, all 355 Livewire components, or all 134 models. For the
-  large directories I grepped for each specific anti-pattern, counted the hits, and then opened
-  enough of them to confirm the pattern was genuinely wrong in context. Counts like "~59 files" are
-  <strong>grep-derived and sampled</strong>, not file-by-file verified — treat them as an order of
-  magnitude, not an inventory.</p>
-  <p>Entirely out of scope: <code>app/Trading/</code>, <code>app/Ai/</code>, <code>app/Examples/</code>,
-  <code>python/</code>, <code>showcase_website/</code>, <code>landing_website/</code>,
-  <code>database/migrations/</code>, <code>tests/</code>, and the single-use console commands under
-  <code>app/Console/Commands/SingleUse/</code> (these last ones do contain raw unscoped queries, but
-  they are one-off migration scripts where that is defensible).</p>
-  <p>No runtime verification was performed. Nothing was executed; no test suite was run.</p>
+  <h4>How this pass verified things — and what it still did not cover</h4>
+  <p>Unlike the 2026-08-05 pass, <strong>code was executed here</strong>. The converted PDFs were
+  actually rendered through Browsershot and inspected as images (Arabic shaping confirmed correct,
+  logo data-URI and coloured header bands confirmed present). The rewritten tenant-scoped query was
+  dumped via <code>toSql()</code> with its bindings to confirm <code>sales.tenant_id = ?</code> is
+  applied inside the sub-select. Route registration was re-checked (<code>569</code> routes boot),
+  and every changed file passes <code>php -l</code> and <code>pint</code>.</p>
+  <p><strong>The test suite has since been run</strong>, and it does carry signal — see §08. It has no
+  coverage of the tenant cache, permissions or PDF paths, so it cannot confirm these fixes are
+  <em>correct</em>; what it establishes is that they broke nothing that was previously passing.</p>
+  <p>Still <strong>not</strong> covered: counts over large directories (<code>app/Actions</code> 383 files,
+  <code>app/Livewire</code> 355) are script-derived across every file rather than sampled, but the
+  <em>judgement</em> of whether each hit is genuinely wrong was spot-checked, not exhaustive.
+  Out of scope as before: <code>app/Trading/</code>, <code>app/Ai/</code>, <code>python/</code>,
+  <code>showcase_website/</code>, <code>landing_website/</code>, <code>tests/</code>, and the
+  single-use migration commands under <code>app/Console/Commands/SingleUse/</code>.</p>
 </div>
 
-<!-- ═══════════════ TENANT ═══════════════ -->
-<h2 id="tenancy"><span class="n">02</span>Tenant &amp; branch isolation</h2>
-<p class="lead">Measured against <code>multi-tenancy-and-branches</code>. The model layer is in good
-shape — 91 models use <code>BelongsToTenant</code> and 30 of 32 <code>Rule::unique</code> calls are
-correctly tenant-scoped. Every problem found here is in the <em>caching layer</em> sitting above it.</p>
+<!-- ═══════════════ RESOLVED ═══════════════ -->
+<h2 id="resolved"><span class="n">02</span>Original findings — all resolved</h2>
+<p class="lead">Each of the 11 findings from the previous audit, re-checked against current code. The
+evidence column is what was actually run or read to confirm it, not a claim that the fix was applied.</p>
+
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Original finding</th><th>Status</th><th>Evidence in current code</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Tenant identity in a globally-shared cache key<br><span class="loc">TenantService.php:66–81</span></td><td><span class="b ok">Fixed</span></td><td>No <code>current_tenant_id</code> key anywhere. Only <code>tenant_subdomain_{$subdomain}</code> remains — keyed by the thing that identifies the tenant.</td></tr>
+<tr><td>2</td><td>Tenant data cached under global keys at boot<br><span class="loc">AppServiceProvider.php:57–90</span></td><td><span class="b ok">Fixed</span></td><td><code>boot()</code> warms nothing tenant-scoped and documents why. <code>TenantCache</code> suffixes every key <code>:tenant:{id}</code> and returns the default (caching nothing) when no tenant resolves.</td></tr>
+<tr><td>3</td><td>Ledger accounts resolved by raw name query — 10 sites</td><td><span class="b ok">Fixed</span></td><td>29 files now use <code>Account::slugIdMap()</code> / <code>Account::idBySlug()</code>. No <code>DB::table('accounts')</code> remains in application code — the only hits are one-off migration commands.</td></tr>
+<tr><td>4</td><td>Impersonation has no permission check<br><span class="loc">User/View.php:86–103</span></td><td><span class="b ok">Fixed</span></td><td><code>abort_unless(…can('user.impersonate'), 403)</code> at line 91, plus an <code>abort_if</code> self-impersonation guard. <code>user.impersonate</code> is declared in config.</td></tr>
+<tr><td>5</td><td>Two unguarded delete methods</td><td><span class="b ok">Fixed</span></td><td><code>Trading/AlertRules.php:39</code> → <code>flat_trade.trade</code>; <code>Property/TenantDetail/Table.php:35</code> → <code>tenant detail.delete</code>. Both abilities declared.</td></tr>
+<tr><td>6</td><td>20 actions marked as having no mapped permission</td><td><span class="b ok">Fixed</span></td><td><strong>Zero</strong> <code>TODO(C7): unmapped</code> markers remain. The four data-egress exports it called out are all guarded: <code>rent out utility.export</code>, <code>rent out cheque.export</code>, <code>rent out service.export</code>, <code>property lead.download</code> — all four declared in config.</td></tr>
+<tr><td>7</td><td>Two competing transaction conventions — the skill is wrong</td><td><span class="b ok">Skill fixed</span></td><td>The code was right; <code>action-layer</code> now documents both conventions and which caller owns the boundary. <strong>32</strong> self-transacting actions — 21 using the <code>DB::transaction()</code> closure, 11 using a manual <code>DB::beginTransaction()</code>. It was 33 before this finding was fixed: removing the nested transaction from <code>RentOut/DeleteAction</code> is what took it to 32. Counting by grep overshoots twice — <code>BankReconciliation/UpdateDeliveredDateAction</code> calls <code>beginTransaction()</code> on two lines, and <code>RentOut/DeleteAction</code> now only names it in a comment — so count distinct files, excluding comments.</td></tr>
+<tr><td>8</td><td>Success toast dispatched before commit — ~59 files</td><td><span class="b ok">Fixed</span></td><td>A per-method scan of all 116 Livewire files containing <code>DB::commit</code> finds <strong>0</strong> that dispatch <code>success</code> before committing. The final straggler (<code>User/Attendance/Page.php</code>) was fixed in this pass.</td></tr>
+<tr><td>9</td><td>DomPDF renders documents containing Arabic customer names<br><span class="loc">PrintController.php:181, 239, 255, 271, 293, 337</span></td><td><span class="b ok">Fixed</span></td><td><code>PrintController</code> contains no DomPDF at all — every document goes through its private <code>browsershotPdf()</code> helper. Five further documents were converted in this pass (§03).</td></tr>
+<tr><td>10</td><td>28 Font Awesome 5/6 prefixes that cannot render</td><td><span class="b ok">Fixed</span></td><td><strong>0</strong> occurrences of <code>fas</code>/<code>far</code>/<code>fab</code>/<code>fa-solid</code>/<code>fa-regular</code>/<code>fa-brands</code> across all of <code>resources/</code>.</td></tr>
+<tr><td>11</td><td>Duplicated statements executed twice</td><td><span class="b ok">Fixed</span></td><td><code>Sale/CustomerReceipt.php</code> and <code>Purchase/VendorPayment.php</code> each now call <code>Account::idBySlug('discount')</code> once.</td></tr>
+</tbody></table></div>
+
+<!-- ═══════════════ NEW ═══════════════ -->
+<h2 id="new"><span class="n">03</span>Found and fixed in this pass</h2>
+<p class="lead">Six defects the previous audit did not surface. All are fixed; the reasoning and the
+trade-off are recorded here because several changed observable behaviour.</p>
 
 <details class="f" open>
-<summary><span class="arrow">▶</span><span class="ttl">Tenant identity is stored in a globally-shared cache key
-<div class="badges"><span class="b crit">Critical</span><span class="b conf">Confirmed</span><span class="b low">Tenancy</span></div></span></summary>
+<summary><span class="arrow">▶</span><span class="ttl">A second global cache key holding tenant data — on the POS screen
+<div class="badges"><span class="b crit">Critical</span><span class="b conf">Confirmed</span><span class="b ok">Fixed</span></div></span></summary>
 <div class="body">
 
-<div class="step"><div class="h">What the code does now</div>
-<p class="loc">app/Services/TenantService.php:66–81 and :44, :90</p>
-<pre><code><span class="kw">public function</span> setCurrentTenant(Tenant $tenant): <span class="kw">void</span>
-{
-    $this->currentTenant = $tenant;
-    Cache::put(<span class="str">'current_tenant_id'</span>, $tenant->id, now()->addMinutes(5));
-}
-
-<span class="kw">public function</span> getCurrentTenantId(): ?<span class="kw">int</span>
-{
-    <span class="kw">if</span> ($this->currentTenant) {
-        <span class="kw">return</span> $this->currentTenant->id;
-    }
-    <span class="kw">return</span> Cache::get(<span class="str">'current_tenant_id'</span>);   <span class="com">// ← shared by every request</span>
-}</code></pre>
+<div class="step"><div class="h">What the code did</div>
+<p class="loc">app/Livewire/Sale/Page.php:550</p>
+<pre><code>$this->categories = Cache::remember(<span class="str">'categories_with_products'</span>, <span class="str">3600</span>, <span class="kw">function</span> () {
+    <span class="kw">return</span> Category::withCount(<span class="str">'products'</span>)
+        -&gt;having(<span class="str">'products_count'</span>, <span class="str">'&gt;'</span>, <span class="str">0</span>)
+        -&gt;when($this-&gt;category_key, <span class="kw">fn</span> ($q, $v) =&gt; $q-&gt;where(<span class="str">'name'</span>, <span class="str">'LIKE'</span>, <span class="str">'%'</span>.$v.<span class="str">'%'</span>))
+        -&gt;get()-&gt;toArray();          <span class="com">// Category uses BelongsToTenant</span>
+});</code></pre>
 </div>
 
-<div class="step"><div class="h">Why it is a problem</div>
-<p>The cache is a <strong>process-wide, cross-request store</strong>. There is one
-<code>current_tenant_id</code> value for the entire installation, not one per session.</p>
-<p>The concrete failure: <code>IdentifyTenant</code> resolves the tenant from the subdomain, but when
-there is no subdomain it explicitly lets the request through unresolved
-(<code>app/Http/Middleware/IdentifyTenant.php:26–33</code> — <code>abort_if</code> fires only for
-routes flagged <code>required</code>). Such a request reaches <code>TenantScope</code>, which calls
-<code>getCurrentTenantId()</code>, which falls through to the shared cache key. So: tenant B signs in
-on <em>their</em> subdomain and overwrites the key; within the next five minutes tenant A opens a page
-on the apex domain or localhost; every scoped query on that page silently filters to <strong>tenant
-B's data</strong> — and tenant A sees it.</p>
-<p>The same fallback runs for queue workers and any API path without tenant resolution, where the
-value is simply whatever the last web request left behind.</p>
+<div class="step"><div class="h">Why it was a problem</div>
+<p>The same class of defect as original findings 1 and 2, which survived their cleanup. <code>Category</code>
+carries <code>TenantScope</code>, so the cached array is tenant-specific — but the key is global.
+Whichever tenant opened the POS first defined the category list for <strong>every</strong> tenant for
+the next hour.</p>
+<p>There is a second bug stacked on it: <code>$this->category_key</code> filters the query but is not in
+the key, so a search result gets cached as if it were the unfiltered list. In practice
+<code>getCategories()</code> is only called from <code>mount()</code> where the filter is empty, which
+is why this never showed up as a visible search bug — but it was one edit away from doing so.</p>
 </div>
 
-<div class="step"><div class="h">The better approach</div>
-<p>Tenant identity is request state, not shared state. Keep it in the container for the life of the
-request and let it die there:</p>
-<pre><code><span class="com">// TenantService — no cross-request storage at all</span>
-<span class="kw">public function</span> setCurrentTenant(Tenant $tenant): <span class="kw">void</span>
-{
-    $this->currentTenant = $tenant;      <span class="com">// singleton is per-request; that is enough</span>
-}
-
-<span class="kw">public function</span> getCurrentTenantId(): ?<span class="kw">int</span>
-{
-    <span class="kw">return</span> $this->currentTenant?->id;
-}</code></pre>
-<p>Then make the absence of a tenant <em>loud</em> rather than silently permissive: have
-<code>IdentifyTenant</code> abort for every authenticated route, not only those flagged
-<code>required</code>. For queues, keep passing <code>tenant_id</code> into the job constructor and
-calling <code>setCurrentTenant()</code> in <code>handle()</code> — that path is already correct
-(<code>app/Jobs/Product/ImportProductJob.php:38–55</code>) and needs no cache.</p>
+<div class="step"><div class="h">The fix</div>
+<pre><code><span class="com">// Keyed per tenant AND per search term.</span>
+$cacheKey = TenantCache::key(<span class="str">'categories_with_products:'</span>.md5((<span class="kw">string</span>) $this-&gt;category_key));
+$this-&gt;categories = Cache::remember($cacheKey, <span class="str">3600</span>, <span class="kw">function</span> () { <span class="com">/* … */</span> });</code></pre>
+<p><code>TenantCache::key()</code> is used rather than <code>tenant_cache()</code> because the latter
+resolves from a fixed key registry; this value is computed, so only the key-building half applies.</p>
 </div>
 
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>It removes an entire class of bug by construction: with no shared storage there is nothing to leak
-between requests. The cost is that any code path currently <em>relying</em> on the fallback to work
-without a subdomain will start returning <code>null</code> and, correctly, showing no data. That is
-the point — but it means this change needs a sweep of the no-subdomain entry points (apex domain,
-local development, Horizon, scheduled commands) before it ships, not a one-line edit.</p>
-<p>If local development depends on the apex domain resolving to a tenant, set that explicitly from
-config (<code>TENANT_ID</code> in <code>.env</code>) rather than reintroducing a shared cache.</p>
-</div>
 </div>
 </details>
 
-<details class="f" open>
-<summary><span class="arrow">▶</span><span class="ttl">Tenant-scoped data cached under global keys for a year at boot
-<div class="badges"><span class="b crit">Critical</span><span class="b conf">Confirmed</span><span class="b low">Tenancy</span></div></span></summary>
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl">The <code>view own</code> permission family was dead — and failing open
+<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span><span class="b ok">Fixed</span></div></span></summary>
 <div class="body">
 
-<div class="step"><div class="h">What the code does now</div>
-<p class="loc">app/Providers/AppServiceProvider.php:57–90</p>
-<pre><code>Cache::remember(<span class="str">'branches'</span>, now()->addYear(), <span class="kw">fn</span> () =>
-    Branch::select(<span class="str">'id'</span>, <span class="str">'name'</span>)->get());          <span class="com">// Branch IS tenant-scoped</span>
-
-Cache::remember(<span class="str">'accounts_slug_id_map'</span>, now()->addYear(), <span class="kw">function</span> () {
-    <span class="kw">return</span> DB::table(<span class="str">'accounts'</span>)              <span class="com">// ← raw: no TenantScope at all</span>
-        ->where(<span class="str">'is_locked'</span>, 1)
-        ->pluck(<span class="str">'id'</span>, <span class="str">'slug'</span>)->toArray();   <span class="com">// ← slug is the KEY: last tenant wins</span>
-});
-
-Cache::remember(<span class="str">'logo'</span>, …); Cache::remember(<span class="str">'theme_settings'</span>, …);
-Cache::remember(<span class="str">'payment_methods'</span>, …); Cache::remember(<span class="str">'barcode_prefix'</span>, …); <span class="com">// …and more</span></code></pre>
+<div class="step"><div class="h">What the code did</div>
+<p class="loc">app/Livewire/LocalPurchaseOrder/Table.php:62 · PurchaseRequest/Table.php:67 · LpoPurchase/Table.php:74 · Grn/Table.php:71 · LocalPurchaseOrderPolicy.php:17, 25, 128</p>
+<pre><code><span class="kw">if</span> (Auth::user()-&gt;can(<span class="str">'local purchase request.view own'</span>)
+    &amp;&amp; ! Auth::user()-&gt;can(<span class="str">'local purchase request.view'</span>)) {
+    $query-&gt;ownedBy(Auth::id());
+}</code></pre>
 </div>
 
-<div class="step"><div class="h">Why it is a problem</div>
-<p>Three compounding defects in one block:</p>
+<div class="step"><div class="h">Why it was a problem</div>
+<p>None of the <code>*.view own</code> abilities existed in <code>config/permissions.php</code>, and the
+<code>Gate::before</code> super-admin bypass in <code>AppServiceProvider</code> is commented out — so
+<code>can()</code> returned false unconditionally and the narrowing never ran. Because the guard is
+<em>negative</em>, the failure mode is <strong>fail-open</strong>: users intended to see only their own
+purchase orders saw everyone's instead. A missing permission that hides a button is obvious in testing;
+one that silently stops restricting is not.</p>
+<p>On top of that, the group name at <code>LocalPurchaseOrder/Table.php:62</code> was
+<code>local purchase request</code> — a typo for <code>local purchase order</code>, a group that does not
+exist at all.</p>
+</div>
+
+<div class="step"><div class="h">The fix</div>
+<p>Typo corrected, and <code>view own</code> added to all four groups
+(<code>purchase request</code>, <code>local purchase order</code>, <code>grn</code>,
+<code>lpo-purchase</code>) with a comment in the config explaining the negative-guard convention.</p>
+</div>
+
+<div class="step"><div class="h">Trade-off</div>
+<p>This one only takes effect after seeding. Note that granting <code>view own</code> to a role that
+also holds <code>view</code> does nothing — the narrowing is deliberately suppressed for users who hold
+the broader ability.</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl">21 permissions referenced in code but never declared
+<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span><span class="b ok">Fixed</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">What the code did</div>
+<p>A cross-check of every <code>can()</code> / <code>@can</code> / <code>->can()</code> string in
+<code>app/</code>, <code>routes/</code>, <code>resources/views/</code> against
+<code>config/permissions.php</code> found 22 abilities with no declaration. One
+(<code>family-tree.view</code>) was a false positive — it appears only inside a comment. The other 21
+were live.</p>
+</div>
+
+<div class="step"><div class="h">Why it was a problem</div>
+<p>An undeclared ability is <strong>permanently denied</strong>, not merely unseeded. The visible
+symptoms: the entire <code>task-management</code> module was unreachable (its route
+<code>->can('task-management.view')</code> 403s for everyone, and four <code>@can</code> blocks never
+render), and four import buttons — expense, income, customer, vendor — could not appear for any role.</p>
+</div>
+
+<div class="step"><div class="h">The fix</div>
+<p>Added the <code>task-management</code> group; added <code>import</code> to expense/income/customer/vendor;
+added <code>sales return.cancel</code>, <code>purchase return.payments</code>,
+<code>report.purchase return item</code>, <code>flat_trade.connect|disconnect</code>,
+<code>api_log.delete</code>, and the four <code>view own</code> entries above.</p>
+<p>One was fixed the other way round: the API-log Blade said <code>apilog.delete</code> where the group
+is <code>api_log</code>. Correcting the reference is right; adding a second near-duplicate group would
+have entrenched the inconsistency.</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl">12 of 15 print routes had no permission check
+<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span><span class="b ok">Fixed</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">What the code did</div>
+<p class="loc">routes/print.php</p>
+<p>Only the day-session report and the rent-out checklist carried <code>->can()</code>. The rent-out
+statement, utilities statement, reservation form, residential lease, payment receipt and voucher, the
+purchase-vendor statement and voucher, the sale invoice, and the sale-return and tailoring receipts
+were reachable by any authenticated user who could guess an id.</p>
+</div>
+
+<div class="step"><div class="h">Why it was a problem</div>
+<p>Tenant scoping still applies, so this is not cross-tenant exposure — but it is cross-<em>role</em>.
+A cashier could pull a residential lease or a vendor statement straight from the URL. The
+<code>print-and-pdf</code> skill already stated the rule ("documents a user can trigger get a
+<code>.print</code> permission"); the routes simply had not followed it.</p>
+</div>
+
+<div class="step"><div class="h">The fix, and one design decision worth recording</div>
+<p>Existing abilities were reused wherever one fit — <code>sale.receipts</code>,
+<code>tailoring order.receipts</code>, <code>rent out lease booking.residential lease</code> — so most
+roles keep working without a new grant. <code>print</code> was added to <code>rent out</code> and
+<code>vendor</code> only where nothing fit.</p>
+<p>Rent-out documents are shared between the <code>rent out</code> and <code>rent out lease</code>
+agreement types, and <code>->can()</code> checks a single ability — it cannot express an OR. Gating
+them on either group alone would have broken the other, so all rent-out print routes use one
+<code>rent out.print</code>. That is a deliberate flattening, not an oversight.</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl">Mobile sale-return create had no duplicate guard
+<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b ok">Fixed</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">What the code did</div>
+<p class="loc">app/Actions/V1/SaleReturn/CreateAction.php</p>
+<p><code>V1/Sale/CreateAction</code> guards against double taps and network retries with a
+2-minute identical-payload window (<code>DUPLICATE_WINDOW_MINUTES</code>). The sale-return path — equally
+double-tappable on a phone, and equally prone to retry on a flaky connection — had no equivalent.</p>
+</div>
+
+<div class="step"><div class="h">Why it was a problem</div>
+<p>A duplicate return refunds money twice and moves stock twice. The per-line "returnable quantity" cap
+in <code>buildItems()</code> stops a <em>second, separate</em> return from over-returning, but it cannot
+see a retry of the request currently in flight — both requests read the same remaining quantity.</p>
+</div>
+
+<div class="step"><div class="h">The fix</div>
+<p>A matching guard on completed returns by the same user within the window, comparing an
+order-independent signature of the line items.</p>
+<p>Note a schema detail that shaped the implementation: <code>sale_returns</code> has <strong>no
+<code>sale_id</code> column</strong> — the link to the originating sale lives on
+<code>sale_return_items.sale_item_id</code>. The first draft of this guard matched on
+<code>sale_id</code> and was wrong; it matches on the account plus the item signature instead, which is
+exact because the signature is built from <code>sale_item_id</code> values.</p>
+</div>
+
+</div>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl">Two raw <code>DB::table</code> aggregates bypassing branch scope
+<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b ok">Fixed</span></div></span></summary>
+<div class="body">
+
+<div class="step"><div class="h">What the code did</div>
+<p class="loc">app/Livewire/PurchaseVendor/View.php:71 · app/Traits/BuildsCustomerReminderQuery.php:42, 54, 64</p>
+<pre><code>$total_purchases = DB::table(<span class="str">'purchases'</span>)
+    -&gt;where(<span class="str">'account_id'</span>, $this-&gt;vendor_id)
+    -&gt;whereNull(<span class="str">'deleted_at'</span>)
+    -&gt;selectRaw(<span class="str">'SUM(grand_total) …'</span>)-&gt;first();</code></pre>
+</div>
+
+<div class="step"><div class="h">Why it was a problem — and why it is only medium</div>
+<p><code>Purchase</code> and <code>Sale</code> both carry <code>TenantScope</code> <em>and</em>
+<code>AssignedBranchScope</code>; a raw builder drops both. This is <strong>not</strong> a cross-tenant
+leak in practice — the queries reach rows through <code>account_id</code>, and an account belongs to
+exactly one tenant — which is why it is rated medium rather than critical. The real defect is the
+branch axis: a user assigned to one branch saw vendor totals and reminder aggregates computed across
+every branch in the tenant.</p>
+</div>
+
+<div class="step"><div class="h">The fix, and two behaviour changes it causes</div>
+<p>Both now start from the model. Verified by dumping the generated SQL: the <code>leftJoinSub</code>
+sub-select carries <code>where sales.tenant_id = ?</code> with correctly ordered bindings — worth
+checking explicitly, because an Eloquent builder passed to <code>joinSub</code> only applies its global
+scopes if the framework resolves it through <code>toSql()</code>, which it does. Both scopes qualify
+their column with the table name, so the joins stay unambiguous.</p>
+<p>Two consequences to expect: vendor totals and reminder lists now <strong>exclude branches the user
+is not assigned to</strong> (the point of the fix), and the totals sub-query now excludes
+soft-deleted sales, which the raw version silently counted.</p>
+</div>
+
+</div>
+</details>
+
+<!-- ═══════════════ PDF ═══════════════ -->
+<h2 id="pdf"><span class="n">04</span>The DomPDF → Browsershot migration</h2>
+<p class="lead">Original finding 9 covered <code>PrintController</code> only. Searching for
+<code>Pdf::loadHTML</code> as well as <code>Pdf::loadView</code> surfaced four more renderers the first
+pass missed. Five documents were converted; two were deliberately left.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Document</th><th>Decision</th><th>Reasoning</th></tr></thead>
+<tbody>
+<tr><td><code>Account/Customer/GenerateKycFormAction</code></td><td><span class="b ok">Converted</span></td><td>Almost entirely tenant-entered free text — name, nationality, address. Rendered and inspected: logo data-URI, coloured bands, ✓ glyphs and tables all correct on one page.</td></tr>
+<tr><td><code>Account/Customer/GenerateStatementAction</code></td><td><span class="b ok">Converted</span></td><td>Customer-facing statement headed by the customer's own name. Rendered and inspected.</td></tr>
+<tr><td><code>Package/GeneratePackageStatementAction</code></td><td><span class="b ok">Converted</span></td><td>Same shape as the customer statement; neither embeds a logo, so both were clean swaps.</td></tr>
+<tr><td><code>Tailoring/OrderController::printOrderReceipt</code></td><td><span class="b ok">Converted</span></td><td>Customer name on a receipt. Its logo came from <code>tenant_cache('logo')</code> — a URL, which Browsershot's <code>blockDomains(['*'])</code> would have rendered blank; switched to <code>CompanyLogoResolver::dataUri()</code>.</td></tr>
+<tr><td><code>Report/TailoringNonDeliveryReport::exportPdf</code></td><td><span class="b ok">Converted</span></td><td>Customer and product names. Landscape confirmed rendering at 841×596pt via <code>->landscape()</code>.</td></tr>
+<tr><td><code>Http/Controllers/BarcodeController</code></td><td><span class="b low">Deferred</span></td><td>142×85pt physical sticker for label printers. Switching renderers risks misaligning labels on real hardware and cannot be verified without printing one.</td></tr>
+<tr><td><code>Console/Commands/SendDailySaleSummaryCommand</code></td><td><span class="b low">Deferred</span></td><td>80mm thermal PDF emailed from the scheduler. Browsershot would add a Chrome dependency to the cron host — an infrastructure decision, not a code one.</td></tr>
+</tbody></table></div>
+
+<div class="callout">
+  <h4>Both deferrals are still latent Arabic bugs</h4>
+  <p>The barcode sticker prints product names and the daily summary prints sale data; both can contain
+  Arabic, and both will render it unshaped and reversed. They are deferred because the <em>verification</em>
+  is physical or infrastructural, not because the defect is absent. Recorded as pending work in the
+  <code>print-and-pdf</code> skill so the next pass does not read the deferral as a settled decision.</p>
+</div>
+
+<h3>Mechanical differences that bite when converting</h3>
 <ul>
-<li><strong>The cache keys carry no tenant.</strong> <code>Cache::remember</code> runs its closure only
-on a miss, so whichever tenant's request warms the cache first defines these values <em>for every
-tenant</em> — for a year.</li>
-<li><strong><code>accounts_slug_id_map</code> is built from a raw query</strong>, so even the read that
-populates it ignores <code>TenantScope</code>. Because it plucks keyed by <code>slug</code>, two
-tenants each owning a locked <code>sale</code> account collapse into one entry and the higher
-<code>id</code> silently wins.</li>
-<li><strong>Invalidation makes it worse, not better.</strong> The settings screens do call
-<code>Cache::forget('logo')</code>, <code>forget('theme_settings')</code> and friends
-(<code>app/Livewire/Settings/CompanyProfile.php:71–84</code>, <code>ThemeSettings.php:74</code>).
-Because the key is global, tenant A saving their logo clears the shared entry and republishes
-<em>A's</em> logo to everyone. The value flaps to whoever saved last.</li>
+<li><code>->pdf()</code> returns <strong>raw bytes</strong>, not a response — there is no <code>stream()</code>.
+Wrap it: <code>response($pdf)->header('Content-Type','application/pdf')->header('Content-Disposition', …)</code>.</li>
+<li>Landscape is <code>->landscape()</code>, not a paper-orientation argument.</li>
+<li><code>showBackground()</code> is required or Chrome prints every coloured panel white.</li>
+<li>External requests are blocked, so images must be data URIs — <code>CompanyLogoResolver::dataUri()</code>,
+never <code>tenant_cache('logo')</code> or a <code>/storage/…</code> path.</li>
+<li>The DomPDF-era CSS (tables, hex colours, no flex) still renders correctly in Chrome, so converted
+views need no restyling — but the constraints no longer bind if you redesign them.</li>
 </ul>
-<p>The blast radius of the account map is the whole general ledger: <code>Cache::get('accounts_slug_id_map')</code>
-is read by at least ten <code>JournalEntryAction</code>s (Sale, Purchase, SaleReturn, PurchaseReturn,
-Tailoring, SupplyRequest, InventoryTransfer…) plus the tax reports. If it holds another tenant's ids,
-every posting debits and credits <strong>accounts belonging to a different company</strong>, and the
-books are wrong in a way no screen will flag.</p>
-</div>
 
-<div class="step"><div class="h">The better approach</div>
-<p>Key the cache by tenant and resolve it lazily, not at boot:</p>
-<pre><code><span class="com">// A small accessor, called where the map is used — not in a service provider</span>
-<span class="kw">public static function</span> slugIdMap(): <span class="kw">array</span>
-{
-    $tenantId = app(TenantService::class)->getCurrentTenantId();
-
-    <span class="kw">if</span> (! $tenantId) {
-        <span class="kw">throw new</span> RuntimeException(<span class="str">'No tenant resolved; refusing to build the account map.'</span>);
-    }
-
-    <span class="kw">return</span> Cache::remember(<span class="str">"accounts_slug_id_map:{$tenantId}"</span>, now()->addDay(), <span class="kw">fn</span> () =>
-        Account::query()                 <span class="com">// model, so TenantScope applies as a second guard</span>
-            ->where(<span class="str">'is_locked'</span>, 1)
-            ->pluck(<span class="str">'id'</span>, <span class="str">'slug'</span>)
-            ->toArray());
-}</code></pre>
-<p>Apply the same <code>:{$tenantId}</code> suffix to <code>branches</code>, <code>logo</code>,
-<code>theme_settings</code>, <code>payment_methods</code>, <code>barcode_type</code>,
-<code>barcode_prefix</code>, <code>sale_type</code> — and update the matching
-<code>Cache::forget()</code> calls in the settings components to forget the tenant-suffixed key.</p>
-<p>Refusing to build the map without a tenant is deliberate: a missing map surfaces as a loud error
-at posting time instead of silently posting to <code>null</code> account ids.</p>
-</div>
-
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>Per-tenant keys are the minimum correct thing; moving the warm-up out of
-<code>AppServiceProvider::boot()</code> is the part that actually fixes it. Boot runs before routing,
-so <em>no tenant is reliably known yet</em> — any tenant-dependent value computed there is a guess.
-Resolving lazily at the call site guarantees a tenant is in scope.</p>
-<p>Trade-off: you lose the "everything is warm after the first request" property and take a cache miss
-per tenant per key. That is a few queries per tenant per day against a year of silently wrong ledger
-postings — not a close call. Shortening the TTL from a year to a day is a separate small win: a
-stale-cache bug then self-heals overnight instead of persisting until someone runs
-<code>cache:clear</code>.</p>
-</div>
-</div>
-</details>
-
-<details class="f">
-<summary><span class="arrow">▶</span><span class="ttl">Ledger accounts resolved by raw query on display name — 10 sites
-<div class="badges"><span class="b crit">Critical</span><span class="b conf">Confirmed</span><span class="b low">Accounting</span></div></span></summary>
-<div class="body">
-
-<div class="step"><div class="h">What the code does now</div>
-<p class="loc">4 listeners, 4 payment actions, 3 Livewire components — identical line</p>
-<pre><code>$discount_id = DB::table(<span class="str">'accounts'</span>)->where(<span class="str">'name'</span>, <span class="str">'Discount'</span>)->value(<span class="str">'id'</span>);</code></pre>
-<p>Confirmed at: <code>app/Listeners/SaleUpdateEventListener.php:18</code>,
-<code>PurchaseUpdateEventListener.php:18</code>, <code>SaleReturnUpdateEventListener.php:18</code>,
-<code>PurchaseReturnUpdateEventListener.php:18</code>,
-<code>app/Actions/Sale/ReceiptAction.php:34</code>, <code>app/Actions/SaleReturn/PaymentAction.php:34</code>,
-<code>app/Actions/Purchase/PaymentAction.php:37</code>, <code>app/Actions/PurchaseReturn/PaymentAction.php:37</code>,
-<code>app/Livewire/Sale/CustomerReceipt.php:46–47</code>,
-<code>app/Livewire/Purchase/VendorPayment.php:48–49</code>,
-<code>app/Livewire/SaleReturn/CustomerPayment.php:47</code>.</p>
-</div>
-
-<div class="step"><div class="h">Why it is a problem</div>
-<p>Two independent defects on one line:</p>
-<ul>
-<li><strong><code>DB::table()</code> bypasses <code>TenantScope</code>.</strong> It returns the first
-<code>Discount</code> row in the whole table regardless of owner — so tenant B's discounts post to
-tenant A's discount account.</li>
-<li><strong>Matching on <code>name</code> is fragile.</strong> The accounts table has a
-<code>slug</code> column and an <code>is_locked</code> flag precisely so system accounts can be
-identified stably. Any tenant who renames "Discount" to "Discount Allowed" in their chart of
-accounts gets <code>null</code> — which is then written into <code>account_id</code> on a journal
-entry with no error.</li>
-</ul>
-<p>Note lines 46–47 of <code>CustomerReceipt.php</code> and 48–49 of <code>VendorPayment.php</code> are
-the <em>same statement twice in a row</em>, assigning to the same key — a copy-paste artefact that
-doubles the query cost and signals this line was propagated by duplication rather than written.</p>
-</div>
-
-<div class="step"><div class="h">The better approach</div>
-<p>Use the same slug map the rest of the accounting layer already uses — fixed per finding 2 so it is
-tenant-keyed:</p>
-<pre><code>$accounts = Account::slugIdMap();
-$discountAccountId = $accounts[<span class="str">'discount'</span>] ?? <span class="kw">throw new</span> Exception(
-    <span class="str">'The Discount account is not configured for this tenant.'</span>
-);</code></pre>
-<p>That is already the established pattern — <code>app/Actions/Sale/JournalEntryAction.php:29</code>
-and nine sibling actions resolve every account this way. These ten sites are the stragglers.</p>
-</div>
-
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>It restores tenant isolation, makes the lookup rename-proof, and collapses eleven duplicated lines
-into the one accessor that already exists. Throwing on a missing account converts a silent
-mis-posting into a visible configuration error, which is the correct trade for accounting code.</p>
-<p>The one genuine cost: tenants whose chart of accounts predates the <code>slug</code> column may
-have a <code>Discount</code> account with a null slug, and would hit the new exception. Backfill
-slugs for locked accounts before deploying this, and keep the exception rather than a silent
-<code>?? null</code> fallback — a loud failure at configuration time beats a quiet one in the ledger.</p>
-</div>
-</div>
-</details>
-
-<h3>Clean in this area</h3>
-<div class="callout ok">
-<p><strong>Validation uniqueness:</strong> 30 of 32 <code>Rule::unique</code> declarations correctly
-scope by <code>tenant_id</code>. The two that do not — <code>Country</code> and <code>Tenant</code> —
-are genuinely global tables and are right as written. Two more (<code>PackageItem.php:22</code>,
-<code>AppointmentItem.php:37</code>) use the <code>Rule::unique('table_name')</code> string form, which
-bypasses the model's global scope, but both narrow by a parent id that is itself tenant-scoped, so
-they are transitively safe. Worth tidying for consistency, not a defect.</p>
-<p><strong>Queued jobs:</strong> the tenant-context pattern is correctly implemented —
-<code>ImportProductJob</code> sets <code>setCurrentTenant()</code> from a constructor-passed id and
-clears it in a <code>finally</code>. This is the pattern the other findings should be measured
-against.</p>
-</div>
-
-<!-- ═══════════════ AUTHZ ═══════════════ -->
-<h2 id="authz"><span class="n">03</span>Authorization</h2>
-<p class="lead">Measured against <code>permissions-and-routes</code>. Coverage is much better than the
-raw file counts suggest: 193 of 355 Livewire components carry an explicit check, and 82 of the 84
-components with a <code>delete()</code> method guard it. The gaps are specific and already known to
-the team.</p>
+<!-- ═══════════════ OPEN ═══════════════ -->
+<h2 id="open"><span class="n">05</span>Still open</h2>
+<p class="lead">Nothing here was fixed. Listed with an honest severity rather than deferred silently.</p>
 
 <details class="f" open>
-<summary><span class="arrow">▶</span><span class="ttl">User impersonation has no permission check
-<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span><span class="b low">Authz</span></div></span></summary>
+<summary><span class="arrow">▶</span><span class="ttl">30 Livewire components with write methods and no authorization guard
+<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span></div></span></summary>
 <div class="body">
 
 <div class="step"><div class="h">What the code does now</div>
-<p class="loc">app/Livewire/User/View.php:86–103</p>
-<pre><code><span class="kw">public function</span> impersonate()
-{
-    <span class="com">// TODO(C7): unmapped (candidate: 'user.edit') — no impersonate permission in</span>
-    <span class="com">// config/permissions.php; account-takeover action needs a dedicated permission.</span>
-    <span class="kw">try</span> {
-        $targetUser = User::find($this->table_id);
-        …
-        Auth::login($targetUser);
-        session([<span class="str">'branch_id'</span> => $targetUser->default_branch_id]);
-        request()->session()->regenerate();
-
-        <span class="kw">return</span> $this->redirect(route(<span class="str">'dashboard'</span>));</code></pre>
-</div>
-
-<div class="step"><div class="h">Why it is a problem</div>
-<p>This is a complete, unguarded account takeover. Anyone who can reach the user-view screen and
-trigger the Livewire method becomes any other user in their tenant — including an administrator —
-with a regenerated session and no audit trail distinguishing the impersonation from a genuine login.
-The <code>TenantScope</code> on <code>User</code> does confine the blast radius to the current tenant,
-which is the only thing keeping this out of the critical band.</p>
-<p>Livewire methods are directly addressable. A route-level guard on the page would not be sufficient
-here even if one existed, and none of the user routes in <code>routes/settings.php</code> matched a
-<code>can()</code> check for this screen.</p>
-</div>
-
-<div class="step"><div class="h">The better approach</div>
-<pre><code><span class="com">// config/permissions.php</span>
-<span class="str">'user'</span> => [<span class="str">'create'</span>, <span class="str">'view'</span>, <span class="str">'edit'</span>, <span class="str">'delete'</span>, <span class="str">'impersonate'</span>],
-
-<span class="com">// app/Livewire/User/View.php</span>
-<span class="kw">public function</span> impersonate()
-{
-    abort_unless(auth()->user()?->can(<span class="str">'user.impersonate'</span>), 403);
-    abort_if($this->table_id === Auth::id(), 400);
-    …
-}</code></pre>
-<p>Then seed it (<code>php artisan db:seed --class=PermissionSeeder</code>) and grant it to the
-administrator role only. Log the impersonation start and end against the <em>impersonator's</em> id —
-the code already stores <code>session(['impersonator_id' => Auth::id()])</code>, so the information is
-there and simply is not recorded.</p>
-</div>
-
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>A dedicated permission rather than reusing <code>user.edit</code> matters here: editing a user and
-becoming a user are different powers, and support staff routinely need the first without the second.
-There is no real trade-off — the cost is one config line and one guard. The only judgement call is
-whether to add the audit log now or later; given this is the single highest-privilege action in the
-application, now.</p>
-</div>
-</div>
-</details>
-
-<details class="f">
-<summary><span class="arrow">▶</span><span class="ttl">Two unguarded delete methods
-<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span><span class="b low">Authz</span></div></span></summary>
-<div class="body">
-
-<div class="step"><div class="h">What the code does now</div>
-<p class="loc">app/Livewire/Trading/AlertRules.php:37–41</p>
-<pre><code><span class="kw">public function</span> delete(<span class="kw">int</span> $id): <span class="kw">void</span>
-{
-    <span class="com">// TODO(C7): unmapped (candidate: 'flat_trade.trade')</span>
-    TradingAlertRule::where(<span class="str">'id'</span>, $id)-><span class="kw">delete</span>();
-}</code></pre>
-<p class="loc">app/Livewire/Property/TenantDetail/Table.php:33–45</p>
-<pre><code><span class="kw">public function</span> delete()
-{
-    <span class="com">// TODO(C7): unmapped (candidate: 'tenant detail.delete') — 'tenant detail' is</span>
-    <span class="com">// commented out in config/permissions.php</span>
-    <span class="kw">try</span> {
-        DB::beginTransaction();
-        …</code></pre>
-</div>
-
-<div class="step"><div class="h">Why it is a problem</div>
-<p>Both delete records with no authorization check. <code>TenantDetail</code> is the more serious of
-the two — it is real tenant (occupant) data in the property module, and the permission it needs is
-sitting commented out in <code>config/permissions.php</code>.</p>
-<p><code>AlertRules</code> compounds the problem: <code>TradingAlertRule</code> has <strong>no
-<code>tenant_id</code> column and does not use <code>BelongsToTenant</code></strong>, so
-<code>where('id', $id)->delete()</code> will delete any rule by id across the whole installation. It
-also skips the transaction wrapper every other delete in the codebase uses. The trading module looks
-like an internal side-project rather than customer-facing surface, which is why this is High rather
-than Critical — but the id-addressable delete is real.</p>
-</div>
-
-<div class="step"><div class="h">The better approach</div>
-<p>Uncomment <code>'tenant detail' => ['create','view','edit','delete']</code> in
-<code>config/permissions.php</code>, seed, then apply the standard guard-and-transaction shape the
-other 82 delete methods use:</p>
-<pre><code><span class="kw">public function</span> delete()
-{
-    abort_unless(auth()->user()?->can(<span class="str">'tenant detail.delete'</span>), 403);
-    <span class="kw">try</span> {
-        DB::beginTransaction();
-        …
-        DB::commit();
-        $this->dispatch(<span class="str">'success'</span>, [<span class="str">'message'</span> => <span class="str">'Successfully deleted'</span>]);
-    } <span class="kw">catch</span> (\Throwable $th) {
-        DB::rollback();
-        $this->dispatch(<span class="str">'error'</span>, [<span class="str">'message'</span> => $th->getMessage()]);
-    }
-}</code></pre>
-<p>For the trading module, decide first whether it ships to tenants at all. If yes, it needs
-<code>tenant_id</code> and <code>BelongsToTenant</code> on its models before any permission work is
-meaningful. If no, move it behind an admin-only route group.</p>
-</div>
-
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>No trade-off on <code>TenantDetail</code> — the permission was clearly intended and got commented
-out. The trading module is a genuine judgement call: adding tenancy to a module that may never be
-multi-tenant is wasted work, and gating it to admins is the cheaper correct answer. Pick one
-deliberately rather than leaving it as-is.</p>
-</div>
-</div>
-</details>
-
-<details class="f">
-<summary><span class="arrow">▶</span><span class="ttl">20 actions marked as having no mapped permission
-<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b low">Authz</span></div></span></summary>
-<div class="body">
-<div class="step"><div class="h">What the code does now</div>
-<p>A prior pass left 20 <code>TODO(C7): unmapped</code> markers where an action has no corresponding
-entry in <code>config/permissions.php</code>. They cluster into three groups:</p>
+<p>Of 188 Livewire components exposing a <code>save</code>/<code>delete</code>/<code>store</code>/<code>update</code>/<code>destroy</code>/<code>submit</code>
+method, 158 carry an <code>abort_unless</code>. The other 30 split into two very different groups:</p>
 <ul>
-<li><strong>Missing export actions</strong> — <code>rent out utility</code>,
-<code>rent out cheque</code>, <code>rent out service</code>, and <code>property lead</code> all have
-bulk Excel exports with no <code>.export</code> permission
-(<code>RentOut/UtilityPaymentTable.php:99</code>, <code>ChequeManagementTable.php:83</code>,
-<code>ServicePaymentTable.php:175</code>, <code>Property/PropertyLead/Table.php:128</code>).</li>
-<li><strong>Commented-out groups</strong> — <code>tenant detail</code>
-(<code>TenantDetail/Table.php:35</code>, <code>Page.php:74</code>).</li>
-<li><strong>Genuinely unmapped modules</strong> — trading, working-day settings, one supply-request
-image delete.</li>
+<li><strong>15 carry a <code>TODO(C7)</code> marker</strong> recording a deliberate decision — mostly
+nested POS sub-components (line-item and payment-line removal inside an already-authorized create/edit
+flow) and settings tabs where the candidate ability was ambiguous and guessing would have denied
+everyone. These are defensible.</li>
+<li><strong>15 have no marker at all.</strong> The material ones:
+<code>Grn/Table::delete()</code> (an unguarded bulk delete),
+<code>Settings/Role/Permissions::save()</code> and <code>syncPermission()</code> (grants permissions to
+roles), <code>Settings/Role/Page::save()</code>, <code>Settings/Branch/Page::save()</code>, and
+<code>Sale/Import::save()</code> (bulk sale import).</li>
 </ul>
 </div>
-<div class="step"><div class="h">Why it is a problem</div>
-<p>Unmapped exports are the material ones: a bulk Excel export of every lease cheque or every property
-lead is a data-exfiltration surface available to any role that can view the list. Data export is
-consistently a distinct permission everywhere else in this codebase
-(<code>account.export</code>, <code>customer.export</code>, <code>sale.export</code>…), so these are
-inconsistencies rather than deliberate design.</p>
+
+<div class="step"><div class="h">Why it is a problem — with the severity stated fairly</div>
+<p>The <code>permissions-and-routes</code> skill is explicit that a route-level <code>->can()</code> does
+not protect a Livewire call, because the method is invoked on an already-open page. That is the rule
+being broken.</p>
+<p>The practical exposure is narrower than it first sounds: Livewire 3 signs component snapshots, so an
+attacker cannot forge a call to a component they were never served. Reaching
+<code>Settings/Role/Permissions</code> still requires passing the route's
+<code>role.permissions</code> check. So this is <strong>defence in depth, not a live privilege-escalation
+hole</strong> — but it is exactly the layer that stops a future refactor (nesting that component
+somewhere less guarded) from becoming one.</p>
 </div>
-<div class="step"><div class="h">The better approach</div>
-<p>Add the four missing <code>export</code> actions to their existing permission groups in
-<code>config/permissions.php</code>, seed, and replace each TODO with the guard. That clears 5 of 20
-markers for near-zero effort and closes the actual data-egress gap. The rest are decisions about
-module scope, not oversights — resolve them by deciding whether each module ships, and delete the
-markers you consciously accept.</p>
+
+<div class="step"><div class="h">Suggested approach</div>
+<p>Guard the 15 unmarked ones — each is a one-line <code>abort_unless</code> against an ability that
+already exists. Then decide the 15 marked ones as a batch: either accept the inherited authorization
+and delete the markers, or introduce the sub-permissions the markers propose. Leaving them marked
+indefinitely is the worst of both.</p>
 </div>
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>Adding a permission to an existing group is safe and additive. The one operational catch: newly
-seeded permissions are granted to nobody by default, so an export button that worked yesterday will
-403 until the permission is assigned to the relevant roles. Assign roles in the same deployment,
-or users will report it as a regression.</p>
-</div>
+
 </div>
 </details>
 
-<!-- ═══════════════ ACTIONS / LIVEWIRE ═══════════════ -->
-<h2 id="layers"><span class="n">04</span>Action &amp; Livewire layers</h2>
-<p class="lead">Measured against <code>action-layer</code> and <code>livewire-components</code>. The
-core discipline holds well — every one of the 116 Livewire files that opens a transaction also has a
-matching rollback. Two systemic inconsistencies stand out, and one of them means the skill is wrong.</p>
-
-<details class="f" open>
-<summary><span class="arrow">▶</span><span class="ttl">Two competing transaction conventions — the skill overstates the rule
-<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b low">Skill defect</span></div></span></summary>
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl">14 CRUD actions read <code>Auth::id()</code> internally
+<div class="badges"><span class="b low">Low</span><span class="b conf">Confirmed</span></div></span></summary>
 <div class="body">
-
 <div class="step"><div class="h">What the code does now</div>
-<p>The <code>action-layer</code> skill states flatly that "actions do <strong>not</strong> open
-transactions; the caller does." <strong>33 action classes disagree</strong>, and they are not
-strays — they are the newer modules, and they are internally consistent:</p>
-<pre><code><span class="com">// app/Actions/RentOut/DeleteAction.php:23 — and 32 others</span>
-DB::transaction(<span class="kw">function</span> () <span class="kw">use</span> ($model) { … });</code></pre>
-<p>They cluster as: all 5 V1 API actions, all 7 Maintenance/Complaint actions, 4 StockCheck actions,
-2 Asset actions, 7 RentOut sub-actions, plus Issue, Tailoring and EmployeeCommission. Meanwhile the
-original core — Sale, Purchase, Journal, SaleReturn — has no transaction and relies on the caller,
-exactly as the skill describes.</p>
+<p>The action layer's contract is that the actor is <em>passed in</em>, never read inside, so jobs,
+console commands and API callers can drive the same action. 14 CRUD actions break it — the
+<code>app/Actions/Package/*</code> cluster is the worst, plus <code>Issue/Create|Update</code> and
+several <code>Item/DeleteAction</code>s.</p>
 </div>
-
-<div class="step"><div class="h">Why it is a problem</div>
-<p>Mostly it is a documentation defect: the skill asserts a rule the codebase does not follow, and an
-agent applying it literally would "fix" 33 correct files. The V1 actions in particular are
-<em>right</em> to self-transact — they are called from controllers, and there is no Livewire component
-to own the boundary.</p>
-<p>There is one real runtime consequence. <code>app/Livewire/RentOut/Table.php:150</code> opens a
-transaction and then calls <code>RentOut\DeleteAction</code>, which opens its own
-(<code>DeleteAction.php:23</code>). Laravel handles the nesting via savepoints, so this is not
-corrupting data today — but a reader cannot tell at a glance which boundary owns a rollback, and the
-inner block silently becomes a savepoint rather than the transaction its author appears to have
-written.</p>
-</div>
-
-<div class="step"><div class="h">The better approach</div>
-<p>State the actual rule, which the code already follows once you look at who the caller is:</p>
-<div class="tw"><table>
-<thead><tr><th>Caller</th><th>Who owns the transaction</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Livewire component</td><td><strong>The component</strong></td><td>One user gesture may drive several actions; only the component knows the full unit of work</td></tr>
-<tr><td>V1 API controller</td><td><strong>The action</strong></td><td>One request = one action; a controller-level boundary would be pure ceremony</td></tr>
-<tr><td>Queued job / command</td><td><strong>The action</strong></td><td>Same reason; no interactive caller exists</td></tr>
-<tr><td>Another action</td><td><strong>Neither — inherit</strong></td><td>Nesting creates savepoints; let the outermost boundary win</td></tr>
-</tbody></table></div>
-<p>Then fix the one genuine overlap by removing <code>DB::transaction()</code> from
-<code>RentOut\DeleteAction</code>, since its only callers (<code>RentOut/Table.php</code>,
-<code>BookingTable.php</code>) both already wrap it.</p>
-</div>
-
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>Codifying the caller-based rule beats forcing 33 files onto the older convention: it matches what
-the code does, keeps the API and queue paths safe by default, and gives a clear test for new code
-("who calls this?"). The trade-off is that "it depends on the caller" is a weaker rule than "never" —
-it requires the author to check. That is the honest cost of a codebase with two legitimate entry
-points, and the alternative (mechanically stripping transactions from the V1 actions) would introduce
-real bugs to satisfy a doc.</p>
-<p><strong>Action required on the skill itself</strong>, not just the code — see §07.</p>
+<div class="step"><div class="h">Why it is only low</div>
+<p>Nothing is broken today because every current caller happens to be a web request with an
+authenticated user. It becomes a real bug the moment one of these is called from a queued job or a V1
+endpoint, where <code>Auth::id()</code> is null — the record is then stamped with no actor, or the
+insert fails on a non-nullable column. Fix opportunistically when touching these files rather than as
+a sweep.</p>
 </div>
 </div>
 </details>
 
 <details class="f">
-<summary><span class="arrow">▶</span><span class="ttl">Success toast dispatched before the commit — ~59 files
-<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b low">Livewire</span></div></span></summary>
+<summary><span class="arrow">▶</span><span class="ttl">Two DomPDF documents still render Arabic incorrectly
+<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span></div></span></summary>
 <div class="body">
-<div class="step"><div class="h">What the code does now</div>
-<p class="loc">app/Livewire/RentOut/Table.php:160–161 — representative of ~59 files</p>
-<pre><code>    $this->dispatch(<span class="str">'success'</span>, [<span class="str">'message'</span> => <span class="str">'Successfully Deleted '</span>.count($this->selected).<span class="str">' items'</span>]);
-    DB::commit();</code></pre>
-<p>Sampled by grep across <code>app/Livewire</code> for a <code>dispatch('success')</code> within three
-lines <em>before</em> a <code>DB::commit()</code>; roughly 59 files match, including
-<code>Account/Customer/Table.php:55</code>, <code>Account/Expense/Page.php:120</code>,
-<code>InventoryTransfer/Page.php:214</code>, <code>Maintenance/Table.php:72</code>.</p>
-</div>
-<div class="step"><div class="h">Why it is a problem</div>
-<p>The user is told the operation succeeded before it is durable. If <code>DB::commit()</code> throws —
-deadlock, lock-wait timeout, connection loss, a deferred constraint — the catch block fires
-<code>DB::rollback()</code> and dispatches an <em>error</em> toast, so the user sees a success message
-followed by a failure message for the same action, with the data unchanged. Under a deadlock on a
-busy branch this is not hypothetical.</p>
-<p>Severity is Medium rather than High because the data outcome is still correct — the rollback works.
-The defect is that the UI lies about it, which in an ERP means someone believes a payment or a
-deletion landed when it did not.</p>
-</div>
-<div class="step"><div class="h">The better approach</div>
-<pre><code>    DB::commit();
-    $this->dispatch(<span class="str">'success'</span>, [<span class="str">'message'</span> => <span class="str">'Successfully Deleted '</span>.count($this->selected).<span class="str">' items'</span>]);</code></pre>
-<p>Nothing more — move the line. This matches <code>app/Livewire/Sale/Page.php:1061–1068</code>, which
-already commits first and only then dispatches the toast, the print event and the WhatsApp send.
-That file is the correct reference for the whole codebase.</p>
-</div>
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>Every post-commit side effect — toast, print dispatch, notification, external send — belongs after
-the commit for the same reason: it is externally visible and cannot be rolled back. There is no
-downside; the ordering is free.</p>
-<p>The only caution is mechanical: this is a ~59-file sweep of near-identical two-line swaps, which is
-exactly the kind of change that is easy to apply blindly and get subtly wrong where a
-<code>$this->mount()</code> or <code>resetPage()</code> call sits between the two lines. Do it in one
-reviewed pass per module rather than a regex across the tree.</p>
-</div>
-</div>
-</details>
-
-<!-- ═══════════════ PRINT ═══════════════ -->
-<h2 id="print"><span class="n">05</span>Print &amp; PDF</h2>
-
-<details class="f" open>
-<summary><span class="arrow">▶</span><span class="ttl">DomPDF renders documents containing customer names, which can be Arabic
-<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span><span class="b low">Print</span></div></span></summary>
-<div class="body">
-<div class="step"><div class="h">What the code does now</div>
-<p class="loc">app/Http/Controllers/PrintController.php:181, 239, 255, 271, 293, 337</p>
-<pre><code>$pdf = Pdf::loadView(<span class="str">'print.rentout.statement'</span>, $data);          <span class="com">// DomPDF</span>
-$pdf = Pdf::loadView(<span class="str">'print.rentout.utilities-statement'</span>, $data);
-$pdf = Pdf::loadView(<span class="str">'print.rentout.receipt'</span>, $data);
-$pdf = Pdf::loadView(<span class="str">'print.rentout.voucher'</span>, $data);
-$pdf = Pdf::loadView(<span class="str">'print.purchase-vendor.statement'</span>, …);
-$pdf = Pdf::loadView(<span class="str">'print.purchase-vendor.voucher'</span>, …);</code></pre>
-<p>And those views print free text:</p>
-<pre><code><span class="com">&lt;!-- resources/views/print/rentout/statement.blade.php:105, 124, 141–143 --&gt;</span>
-&lt;div class=<span class="str">"co-name"</span>&gt;{{ $companyName }}&lt;/div&gt;
-&lt;strong&gt;{{ $rentOut->customer?->name ?? <span class="str">'-'</span> }}&lt;/strong&gt;
-&lt;td class=<span class="str">"vv"</span>&gt;{{ $rentOut->group?->name ?: <span class="str">'-'</span> }}&lt;/td&gt;</code></pre>
-</div>
-<div class="step"><div class="h">Why it is a problem</div>
-<p>The <code>print-and-pdf</code> skill records the rule the team already learned the hard way: DomPDF
-renders Arabic unshaped and reversed, which is why the rent-out checklist was migrated to
-Browsershot. But these six documents remained on DomPDF, and every one of them prints
-<code>$rentOut->customer?->name</code> and <code>$companyName</code> — a tenant-editable company name
-and a customer name, in a UAE real-estate product where Arabic names are ordinary.</p>
-<p>The failure is quiet: nothing errors. A tenant with Arabic-named customers gets statements and
-vouchers with mangled, right-to-left-reversed, disconnected glyphs — on documents they hand to
-customers and vendors. Rated High rather than Critical only because the numbers, which are what the
-document is actually <em>for</em>, still render correctly.</p>
-</div>
-<div class="step"><div class="h">The better approach</div>
-<p>Move them to Browsershot via the existing trait, following
-<code>PrintController::rentOutChecklist()</code>:</p>
-<pre><code><span class="kw">use</span> UsesBrowsershot;
-
-$companyLogo = CompanyLogoResolver::dataUri();   <span class="com">// external URLs are blocked; embed it</span>
-$html = view(<span class="str">'print.rentout.statement'</span>, $data + compact(<span class="str">'companyLogo'</span>))->render();
-
-<span class="kw">return</span> $this->makeBrowsershot($html)
-    ->format(<span class="str">'A4'</span>)->margins(10, 10, 10, 10)
-    ->showBackground()
-    ->pdf();</code></pre>
-<p>The views need a pass too: DomPDF views are written table-first with hex colours, which Chrome
-renders fine, but any <code>&lt;img src="/storage/…"&gt;</code> must become a data URI and
-<code>showBackground()</code> is required or every coloured panel prints white.</p>
-</div>
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>This is the one place in the report where I would <em>not</em> recommend converting everything.
-The trade-off is real and cuts both ways:</p>
-<div class="tw"><table>
-<thead><tr><th></th><th>DomPDF</th><th>Browsershot</th></tr></thead>
-<tbody>
-<tr><td><strong>Arabic / RTL</strong></td><td>Broken — unshaped, reversed</td><td>Correct</td></tr>
-<tr><td><strong>Speed</strong></td><td>Fast, in-process</td><td>Spawns Chrome — hundreds of ms, more memory</td></tr>
-<tr><td><strong>Deploy dependency</strong></td><td>None</td><td>Needs node + Chrome on every server</td></tr>
-<tr><td><strong>CSS</strong></td><td>~CSS 2.1; tables only</td><td>Modern — flex, grid, <code>var()</code>, <code>color-mix()</code></td></tr>
-<tr><td><strong>Assets</strong></td><td>Local paths work</td><td>Must be inlined as data URIs</td></tr>
-<tr><td><strong>Best for</strong></td><td>High-volume Latin-only documents</td><td>Anything with user-authored or Arabic text</td></tr>
-</tbody></table></div>
-<p><strong>Recommendation:</strong> convert the four rent-out documents, which are customer-facing and
-carry customer names. The two purchase-vendor documents are a weaker case — vendor names are more
-often Latin — but they print <code>$companyName</code> from tenant settings too, so convert them as
-well unless the Chrome dependency is a problem on the print server. If it is, the honest middle
-option is to keep DomPDF and embed a shaping-capable Arabic font, but that only fixes glyph shaping,
-not bidirectional ordering, and will still look wrong in mixed Arabic/Latin lines. Browsershot is the
-right answer; the cost is operational, not architectural.</p>
-</div>
-</div>
-</details>
-
-<!-- ═══════════════ UI ═══════════════ -->
-<h2 id="ui"><span class="n">06</span>Blade &amp; UI</h2>
-
-<details class="f">
-<summary><span class="arrow">▶</span><span class="ttl">28 Font Awesome 5/6 icon prefixes that cannot render
-<div class="badges"><span class="b low">Low</span><span class="b conf">Confirmed</span><span class="b low">UI</span></div></span></summary>
-<div class="body">
-<div class="step"><div class="h">What the code does now</div>
-<p>The application loads Font Awesome 4.3 only
-(<code>layouts/app.blade.php:19</code> → <code>assets/vendors/font-awesome/font-awesome.min.css</code>),
-but 28 usages across 4 files use FA5/6 syntax:</p>
-<div class="tw"><table>
-<thead><tr><th>File</th><th>Occurrences</th></tr></thead>
-<tbody>
-<tr><td><code>resources/views/visitors/show.blade.php</code></td><td>14</td></tr>
-<tr><td><code>resources/views/visitors/index.blade.php</code></td><td>12</td></tr>
-<tr><td><code>resources/views/livewire/settings/branch/page.blade.php</code></td><td>1</td></tr>
-<tr><td><code>resources/views/livewire/analytics/visitor-analytics.blade.php</code></td><td>1</td></tr>
-</tbody></table></div>
-</div>
-<div class="step"><div class="h">Why it is a problem</div>
-<p>FA4 has no <code>fas</code> class, so these render as nothing — invisible or a blank box, depending
-on the browser. It is purely cosmetic and confined to the visitor-analytics screens, hence Low. The
-two single-instance files are worth noting because they are recently-touched settings screens, which
-suggests the FA5 habit is still leaking in.</p>
-</div>
-<div class="step"><div class="h">The better approach</div>
-<pre><code><span class="com">&lt;!-- before --&gt;</span>  &lt;i class=<span class="str">"fas fa-user"</span>&gt;&lt;/i&gt;
-<span class="com">&lt;!-- after  --&gt;</span>  &lt;i class=<span class="str">"fa fa-user"</span>&gt;&lt;/i&gt;</code></pre>
-<p>Most FA5 solid names exist in FA4 under the same name, so dropping the <code>s</code> is usually the
-whole fix — but check each one, since FA5 renamed a number of icons and some have no FA4 equivalent
-at all.</p>
-</div>
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>The alternative is upgrading the whole app to FA6, which would fix these 28 and unlock a much
-larger icon set — but it means auditing all 307 distinct <code>fa fa-*</code> names currently in use
-for renames, across hundreds of views. Not worth it for 28 broken icons. Fix them in place; if an
-icon library upgrade happens, let it happen for its own reasons.</p>
+<div class="step"><div class="h">Status</div>
+<p>Covered in §04 — <code>BarcodeController</code> and <code>SendDailySaleSummaryCommand</code>.
+Deferred pending a physical label print test and a decision about Chrome on the scheduler host,
+not because the defect was judged absent.</p>
 </div>
 </div>
 </details>
 
 <details class="f">
-<summary><span class="arrow">▶</span><span class="ttl">Duplicated statements — the same line executed twice
-<div class="badges"><span class="b low">Low</span><span class="b conf">Confirmed</span><span class="b low">Quality</span></div></span></summary>
+<summary><span class="arrow">▶</span><span class="ttl"><code>PermissionSeeder</code> hardcodes <code>tenant_id => 1</code>
+<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span></div></span></summary>
 <div class="body">
 <div class="step"><div class="h">What the code does now</div>
-<p class="loc">app/Livewire/Sale/CustomerReceipt.php:46–47 · app/Livewire/Purchase/VendorPayment.php:48–49</p>
-<pre><code>$this->account_ids[<span class="str">'discount_id'</span>] = DB::table(<span class="str">'accounts'</span>)->where(<span class="str">'name'</span>, <span class="str">'Discount'</span>)->value(<span class="str">'id'</span>);
-$this->account_ids[<span class="str">'discount_id'</span>] = DB::table(<span class="str">'accounts'</span>)->where(<span class="str">'name'</span>, <span class="str">'Discount'</span>)->value(<span class="str">'id'</span>);</code></pre>
+<p class="loc">database/seeders/PermissionSeeder.php</p>
+<pre><code>Permission::firstOrCreate([<span class="str">'tenant_id'</span> =&gt; <span class="str">1</span>, <span class="str">'name'</span> =&gt; <span class="str">"{$group}.{$action}"</span>]);</code></pre>
 </div>
 <div class="step"><div class="h">Why it is a problem</div>
-<p>Byte-identical consecutive lines assigning to the same key: one wasted query on every mount, no
-behavioural difference. Harmless in itself — its value is as evidence that this lookup was propagated
-by copy-paste across eleven sites, which is the actual finding in §02.</p>
+<p>In a multi-tenant install the seeder provisions exactly one tenant. Every new permission added to
+<code>config/permissions.php</code> — including the 21 added in this pass — reaches tenant 1 and no
+other. The <code>permissions-and-routes</code> skill previously claimed the seeder was "how permissions
+reach existing tenants"; that claim has been corrected, but the seeder itself has not been changed,
+because whether it should loop all tenants depends on a provisioning model this audit cannot see.</p>
 </div>
-<div class="step"><div class="h">The better approach</div>
-<p>Delete the duplicate line, and fold both files into the <code>Account::slugIdMap()</code> fix from
-§02 — the duplication disappears with the root cause.</p>
 </div>
-<div class="step"><div class="h">Why that is better — and the trade-off</div>
-<p>None; this is free. Worth doing in the same commit as the account-resolution fix so the whole
-family of eleven lines is touched once.</p>
+</details>
+
+<details class="f">
+<summary><span class="arrow">▶</span><span class="ttl">The new permissions are not seeded and not assigned to roles
+<div class="badges"><span class="b crit">Action required</span></div></span></summary>
+<div class="body">
+<div class="step"><div class="h">What needs to happen</div>
+<pre><code>php artisan db:seed --class=PermissionSeeder</code></pre>
+<p>then grant the new abilities in <strong>Settings → Roles</strong>. Until both are done the 12 newly
+gated print routes 403 for everyone, and the <code>task-management</code> module and the four import
+buttons stay invisible.</p>
+<p>Not run here deliberately: this repository's <code>.env</code> resolves <code>APP_ENV=production</code>
+and the seeder writes rows. See also the <code>tenant_id => 1</code> limitation directly above — on a
+multi-tenant deployment, seeding tenant 1 is not the whole job.</p>
 </div>
 </div>
 </details>
 
 <!-- ═══════════════ CLEAN ═══════════════ -->
-<h2 id="clean"><span class="n">07</span>Areas with no findings</h2>
-<p class="lead">These were checked with the same rigour as everything above and came back clean. Stated
-explicitly because "no findings" is a result.</p>
+<h2 id="clean"><span class="n">06</span>Areas with no findings</h2>
+<p class="lead">Re-verified in this pass. Stated explicitly because "no findings" is a result.</p>
 
 <div class="callout ok">
-<h4>API v1 — clean</h4>
-<p>Grepped <code>app/Actions/V1/</code> and <code>app/Http/Controllers/Api/V1/</code> for
-<code>session(</code>: <strong>zero hits</strong>. The rule that API code must not read the session
-holds without exception. Controllers are consistently thin, delegate to injected actions, and wrap
-every response in <code>ApiResponseTrait</code>. The duplicate-submission guard
-(<code>DUPLICATE_WINDOW_MINUTES</code>) and the non-admin employee self-scope are both implemented as
-documented.</p>
+<h4>Font Awesome, TomSelect, toast conventions — clean</h4>
+<p><strong>0</strong> FA5/6 prefixes across all of <code>resources/</code> (the previous pass found 28).
+Feedback goes through <code>dispatch('success'|'error')</code> everywhere; no ad-hoc notification
+mechanism was found.</p>
+</div>
+
+<div class="callout ok">
+<h4>Livewire transaction hygiene — clean, and now commit-ordered</h4>
+<p>All 116 files that open a transaction also roll it back on failure — set difference still empty. And
+as of this pass, <strong>0</strong> of them dispatch a success toast before committing.</p>
+</div>
+
+<div class="callout ok">
+<h4>Journal posting — clean</h4>
+<p>Double-entry mechanics unchanged and still correct: mirrored <code>counter_account_id</code> on both
+legs, positive-amount guards, explicit sign branching for <code>round_off</code>, per-line
+<code>model</code>/<code>model_id</code>. The account-resolution weakness that qualified this section in
+the previous audit is now closed (§02, finding 3). No <code>Journal::create</code> or
+<code>JournalEntry::insert</code> outside <code>app/Actions/</code> except one single-use console
+command.</p>
 </div>
 
 <div class="callout ok">
 <h4>Flutter apps — clean</h4>
-<p>Two checks: services constructed directly instead of resolved from the locator
-(<strong>zero hits</strong> outside <code>setup.dart</code>), and endpoint string literals outside
-<code>EndPoints</code> (<strong>zero hits</strong> — the only <code>api/v1</code> occurrences are the
-base-URL builder in <code>app_config.dart:43</code> and a doc comment). The repository-over-service
-discipline is fully held across both <code>mobileApp/</code> and <code>technicianApp/</code>.</p>
+<p>Re-checked both rules: services constructed outside the locator (<strong>zero</strong>) and endpoint
+literals outside <code>EndPoints</code> (<strong>zero</strong> — the apparent hits are all
+<code>go_router</code> navigation paths, not API paths). Every path the <code>flutter-apps</code> skill
+documents exists as described, and the pre-restructure paths (<code>lib/state</code>,
+<code>lib/core</code>, <code>lib/models</code>, <code>lib/theme</code>) are confirmed gone.</p>
 </div>
 
 <div class="callout ok">
-<h4>Livewire transaction hygiene — clean</h4>
-<p>Every one of the 116 Livewire files that calls <code>DB::beginTransaction()</code> also has a
-<code>DB::rollback()</code>. Set difference: <strong>empty</strong>. There is no path that opens a
-transaction and leaks it on failure.</p>
+<h4>Skill accuracy on structure — clean</h4>
+<p>Every count asserted in the skills was checked and matches: 383 actions, 355 Livewire components,
+60 exports / 13 imports / 38 jobs, 91 of 134 models on <code>BelongsToTenant</code>. Line references
+<code>app/Livewire/Sale/Page.php:1039</code> and <code>layouts/app.blade.php:272</code> are both still
+correct.</p>
+<p><strong>One exception, corrected:</strong> the self-transacting action count is <strong>32</strong>,
+not 33 — and <code>action-layer</code> has been updated to say so. The fix for original finding 7 removed
+the nested transaction from <code>RentOut/DeleteAction</code>, which changed the very number that finding
+cited. The skill also said these actions &ldquo;self-transact with <code>DB::transaction()</code>&rdquo;;
+in fact 21 use that closure form and 11 use a manual <code>DB::beginTransaction()</code>/<code>commit</code>
+pair, so both idioms are now named.</p>
 </div>
 
-<div class="callout ok">
-<h4>Journal posting logic — clean</h4>
-<p>The double-entry mechanics are correct where they matter: <code>makeEntryPair()</code> writes both
-legs with mirrored <code>counter_account_id</code>, every leg is guarded by a positive-amount check,
-signed values like <code>round_off</code> branch explicitly instead of posting negatives, and
-per-line <code>model</code>/<code>model_id</code> correctly distinguishes <code>SalePayment</code>
-from <code>Sale</code>. The accounting <em>logic</em> is sound — the defects in §02 are in how account
-ids are <em>resolved</em>, not in how entries are built.</p>
-</div>
-
-<!-- ═══════════════ SKILL FIXES ═══════════════ -->
-<h2 id="skills"><span class="n">08</span>Corrections needed in the skills</h2>
-<p class="lead">The skills are the standard this audit measured against, so where the standard is wrong
-that is a finding in its own right.</p>
+<!-- ═══════════════ SKILLS ═══════════════ -->
+<h2 id="skills"><span class="n">07</span>Skill corrections — applied</h2>
+<p class="lead">The skills are the standard this audit measures against, so a wrong skill is a finding.
+The previous audit's three corrections are done. Re-reading the skills against current code surfaced
+three more, also applied — plus a seventh caught while re-verifying this report: the self-transacting
+action count in <code>action-layer</code>, which the fix for original finding 7 had itself made stale
+(§06).</p>
 
 <div class="tw"><table>
-<thead><tr><th>Skill</th><th>What it says</th><th>What the code does</th><th>Fix</th></tr></thead>
+<thead><tr><th>Skill</th><th>What was wrong</th><th>Correction applied</th></tr></thead>
 <tbody>
 <tr>
-  <td><code>action-layer</code></td>
-  <td>"Actions do <strong>not</strong> open transactions. The caller does."</td>
-  <td>33 actions self-transact, correctly — including all 5 V1 actions, where there is no other
-      sensible owner</td>
-  <td><strong>Rewrite the section</strong> around the caller-based table in §04. As written, an agent
-      following this skill would break the API paths.</td>
+  <td><code>multi-tenancy-and-branches</code></td>
+  <td>Listed five places scoping disappears, omitting the one that actually bit this codebase</td>
+  <td><span class="b ok">Done</span> Cache keys are now the sixth entry, including the detail that
+      <code>Cache::forget</code> on a global key makes the value <em>flap</em> between tenants rather
+      than fixing it, and that <code>boot()</code> is too early to compute anything tenant-dependent.</td>
 </tr>
 <tr>
   <td><code>accounting-journals</code></td>
-  <td>Presents <code>Cache::get('accounts_slug_id_map')</code> as the correct way to resolve accounts</td>
-  <td>True relative to the ten <code>DB::table('accounts')</code> stragglers — but the map itself is
-      globally keyed and tenant-blind (§02)</td>
-  <td><strong>Add a warning.</strong> The advice is directionally right; the skill should not present
-      the current map as safe until it is tenant-keyed.</td>
+  <td>Presented the globally-keyed <code>accounts_slug_id_map</code> as the correct resolution path</td>
+  <td><span class="b ok">Done</span> Now documents <code>Account::slugIdMap()</code> /
+      <code>idBySlug()</code> and states plainly that the bare cache key must not be read or written.</td>
 </tr>
 <tr>
-  <td><code>multi-tenancy-and-branches</code></td>
-  <td>Lists five places scoping disappears: raw queries, jobs, bulk inserts, <code>withoutGlobalScope</code>,
-      report aggregates</td>
-  <td>Accurate, but misses the one that actually bit this codebase</td>
-  <td><strong>Add a sixth:</strong> "Cache keys. A tenant-scoped value cached under a global key
-      leaks to every tenant, and <code>Cache::forget</code> on a global key makes it flap rather than
-      fixing it." This is the single highest-value line that could be added to any of the skills.</td>
+  <td><code>action-layer</code></td>
+  <td>"Actions do not open transactions" — contradicted by the 33 correct self-transacting actions
+      that existed when the previous audit ran (32 today)</td>
+  <td><span class="b ok">Done</span> Replaced with a caller-owns-the-boundary table (Livewire → component;
+      V1/job/command → action; action → inherit).</td>
+</tr>
+<tr>
+  <td><code>print-and-pdf</code></td>
+  <td><strong>Stale and actively harmful.</strong> Named the rent-out and vendor statements as "the
+      DomPDF working idiom" and prescribed DomPDF's CSS constraints for them — but those documents had
+      already moved to Browsershot. Following the skill would have produced needlessly crippled CSS, or
+      a new DomPDF document that garbles Arabic.</td>
+  <td><span class="b ok">Done</span> Rewritten around Browsershot-by-default, with the two real DomPDF
+      exceptions named and flagged as pending rather than settled, plus the mechanical gotchas from §04
+      and the "every print route needs a <code>->can()</code>" rule.</td>
+</tr>
+<tr>
+  <td><code>action-layer</code></td>
+  <td>"Signature is <code>execute($data, $userId)</code>" — true of only 47 of 216 CRUD actions</td>
+  <td><span class="b ok">Done</span> Now documents both shapes and when each applies: transactional
+      modules whose tables carry <code>created_by</code> take the actor; settings and lookup modules whose
+      tables have no actor columns do not — that is the majority, 169 of 216. Also flags the 14 actions
+      reading <code>Auth::id()</code> internally as bugs rather than a pattern to copy, and corrects
+      <code>validationHelper</code> to <code>helper.php:517</code> (was <code>:504</code>).</td>
+</tr>
+<tr>
+  <td><code>permissions-and-routes</code></td>
+  <td>Claimed <code>PermissionSeeder</code> "is how permissions reach existing tenants"</td>
+  <td><span class="b ok">Done</span> Corrected to state it seeds <code>tenant_id => 1</code> only. Added
+      the two failure modes this pass demonstrated: an undeclared ability is permanently denied (the
+      <code>Gate::before</code> bypass is commented out), and a <em>negative</em> guard on an undeclared
+      ability fails open.</td>
 </tr>
 </tbody></table></div>
 
+<!-- ═══════════════ TESTS ═══════════════ -->
+<h2 id="tests"><span class="n">08</span>Test-suite verification</h2>
+<p class="lead">Run after the fixes landed, and compared against the same suite on unmodified
+<code>HEAD</code> — a raw pass/fail count means nothing here without that baseline, because the suite was
+already substantially red before any of this work started.</p>
+
+<div class="tw"><table>
+<thead><tr><th></th><th>Baseline (pre-remediation <code>HEAD</code>)</th><th>Now</th><th>Delta</th></tr></thead>
+<tbody>
+<tr><td><strong>Passed</strong></td><td>82</td><td>86</td><td><span class="b ok">+4</span></td></tr>
+<tr><td><strong>Failed</strong></td><td>49</td><td>46</td><td><span class="b ok">−3</span></td></tr>
+<tr><td><strong>Newly broken</strong></td><td>—</td><td>—</td><td><span class="b ok">0</span></td></tr>
+</tbody></table></div>
+
+<p>The two failure lists were diffed by name, not just counted: <strong>no test that passed before these
+changes fails after them</strong>, and three that were already failing now pass.</p>
+
+<div class="callout ok">
+  <h4>A test-harness bug the tenant work exposed — found and fixed</h4>
+  <p>Those three recoveries are not incidental. A Laravel test case flushes its Application on teardown but
+  leaves it memoized in <code>Facade::$resolvedInstance</code>. The next <em>plain</em> unit test that boots
+  an Eloquent model whose traits touch a facade — <code>Auditable</code> reaching for
+  <code>Config</code> — then died with <code>Target class [config] does not exist</code>, purely as a
+  function of alphabetical file ordering. <code>AssetDepreciationPeriodTest</code> was the visible victim.</p>
+  <p>Fixed with a <code>beforeEach</code> in <code>tests/Pest.php</code> that detects the stale
+  application and clears it, so facade-guarded boot code sees &ldquo;no app&rdquo; and skips cleanly. The
+  related hardening is in <code>TenantService</code> itself: each fallback is wrapped in
+  <code>$app->bound(…)</code>, so resolving a tenant outside a booted framework returns <code>null</code>
+  instead of throwing.</p>
+</div>
+
+<div class="callout warn">
+  <h4>The 46 remaining failures are pre-existing — and worth their own pass</h4>
+  <p>Every one fails identically on unmodified <code>HEAD</code>. Two clusters: a
+  <code>RefreshDatabase</code> teardown that cannot drop tables under existing foreign keys
+  (<code>Cannot drop table 'units' referenced by … sale_items_unit_id_foreign</code>), and assertions that
+  have drifted from the code they test — <code>AssetDepreciationPeriodTest</code> reflects on a
+  <code>getTotalPeriods()</code> method that no longer exists.</p>
+  <p>Neither was introduced here and neither was fixed here. But a suite that is roughly a third red is a
+  suite nobody reads, and that is precisely the condition under which a regression in a change set this
+  size would have gone unnoticed. The baseline diff above is what stands in for it — a weaker guarantee
+  than a green suite, and worth saying plainly.</p>
+</div>
+
+<!-- ═══════════════ NEXT ═══════════════ -->
 <h2 id="next"><span class="n">09</span>Suggested order of work</h2>
 <div class="tw"><table>
-<thead><tr><th>#</th><th>Fix</th><th>Effort</th><th>Risk of the fix</th></tr></thead>
+<thead><tr><th>#</th><th>Work</th><th>Effort</th><th>Risk of the change</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>Tenant-key the boot caches (§02b)</td><td>Half a day</td><td><strong>Low</strong> — additive; wrong keys just cause a miss</td></tr>
-<tr><td>2</td><td>Guard <code>impersonate()</code> (§03a)</td><td>Minutes</td><td><strong>Low</strong> — one config line, one guard</td></tr>
-<tr><td>3</td><td>Replace the 10 <code>DB::table('accounts')</code> lookups (§02c)</td><td>An hour</td><td><strong>Medium</strong> — needs slug backfill first</td></tr>
-<tr><td>4</td><td>Remove the shared <code>current_tenant_id</code> cache (§02a)</td><td>1–2 days</td><td><strong>High</strong> — needs a sweep of every no-subdomain entry point</td></tr>
-<tr><td>5</td><td>Move rent-out statements to Browsershot (§05)</td><td>A day</td><td><strong>Medium</strong> — per-view layout verification</td></tr>
-<tr><td>6</td><td>Correct the three skills (§08)</td><td>Minutes</td><td><strong>None</strong></td></tr>
-<tr><td>7</td><td>Commit-then-toast sweep (§04b)</td><td>Half a day</td><td><strong>Low</strong>, but mechanical — review per module</td></tr>
-<tr><td>8</td><td>Missing export permissions, FA icons, duplicate lines</td><td>An hour</td><td><strong>Low</strong> — assign roles in the same deploy</td></tr>
+<tr><td>1</td><td>Seed the new permissions and assign them to roles (§05e)</td><td>Minutes + a role review</td><td><strong>Low</strong>, but do it in the same deploy as this branch or the print routes 403</td></tr>
+<tr><td>2</td><td>Guard the 15 unmarked Livewire write methods (§05a)</td><td>An hour</td><td><strong>Low</strong> — abilities already exist; verify each role holds the one you pick</td></tr>
+<tr><td>3</td><td>Decide the 15 <code>TODO(C7)</code> markers as a batch (§05a)</td><td>Half a day of decisions</td><td><strong>Low</strong> — mostly a naming call on sub-permissions</td></tr>
+<tr><td>4</td><td>Decide whether <code>PermissionSeeder</code> should loop all tenants (§05d)</td><td>An hour</td><td><strong>Medium</strong> — depends on the provisioning model; wrong loop grants abilities broadly</td></tr>
+<tr><td>5</td><td>Print-test the barcode sticker, then convert it (§04)</td><td>Half a day</td><td><strong>Medium</strong> — needs real label hardware to verify</td></tr>
+<tr><td>6</td><td>Put Chrome on the scheduler host, then convert the daily summary (§04)</td><td>Infra + an hour</td><td><strong>Medium</strong> — infrastructure change first</td></tr>
+<tr><td>7</td><td>Fix the 14 <code>Auth::id()</code> actions opportunistically (§05b)</td><td>Ongoing</td><td><strong>Low</strong> — thread the actor through the caller</td></tr>
+<tr><td>8</td><td>Fix the 46 pre-existing test failures (§08)</td><td>A day; two distinct root causes</td><td><strong>Low</strong> — but until it is done, the baseline diff is the only regression signal this repo has</td></tr>
 </tbody></table></div>
-<p>Note that #1 is listed before #4 deliberately: tenant-keying the caches is cheap and independently
-valuable, and it removes most of the practical damage from the shared tenant id while the larger
-middleware change is planned properly.</p>
 
 <div class="foot">
-Static analysis only — no code was executed and no tests were run. Large directories were sampled by
-targeted grep with confirmation reads, not exhaustively reviewed; see the scope note in §01.
-Generated 2026-08-05 against branch <code>main</code>.
+Re-audited 2026-08-06 against branch <code>main</code>. Unlike the previous pass, code was executed:
+PDFs were rendered through Browsershot and inspected, generated SQL was dumped with bindings, and
+routes were re-registered (569). Large directories were scanned by script across every file; the
+judgement on individual hits was spot-checked, not exhaustive — see the scope note in §01.
+<br><br>
+<strong>Claims re-verified 2026-08-06 (second pass).</strong> Every checkable assertion in §02 and §05 was
+independently re-derived from the working tree rather than taken on trust: the slug-accessor file count
+(29), both delete guards and their line numbers, the absence of any real <code>DB::table('accounts')</code>
+call (the single grep hit is a docblock warning inside <code>Account.php</code>), the print-route gating,
+the sale-return duplicate guard, <code>Grn/Table::delete()</code> still being unguarded, the
+<code>tenant_id => 1</code> seeder, and the 14 <code>Auth::id()</code> CRUD actions — which is exactly
+right once two comment-only matches are excluded. One figure was stale and has been corrected here and in
+the skill: <strong>32</strong> self-transacting actions, not 33. Test-suite figures in §08 come from a full
+Pest run diffed by test name against the same suite on unmodified <code>HEAD</code>.
 </div>
 
 </div>

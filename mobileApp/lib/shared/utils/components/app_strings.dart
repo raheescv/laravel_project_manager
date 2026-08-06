@@ -21,6 +21,10 @@ class AppStrings {
   static const String biometricReason = 'Authenticate to sign in to Invo';
 
   // Catalog / sale.
+  /// Shown (and stored) as the customer name when a ticket has no named client.
+  /// Both the display label and the "is this an anonymous sale" sentinel, so it
+  /// must stay a single shared constant.
+  static const String walkInCustomer = 'Walk-in';
   static const String couldNotLoadCatalog = 'Could not load the catalog.';
   static const String couldNotLoadStylists = 'Could not load stylists.';
   static const String couldNotLoadBranches = 'Could not load branches.';

@@ -1,194 +1,143 @@
 <template>
-  <div class="barcode-template-app" v-if="ready">
-    <div class="barcode-topbar">
-      <div>
-        <div class="barcode-topbar__eyebrow">Barcode Template Designer</div>
-        <div class="barcode-topbar__title-row">
-          <input
-            v-model="templateName"
-            class="barcode-topbar__title"
-            type="text"
-            placeholder="Template name"
-            @input="scheduleAutoSave"
-          />
-          <span v-if="templateKey === defaultTemplateKey" class="barcode-topbar__badge">Default Print</span>
-        </div>
-      </div>
-      <div class="barcode-topbar__actions">
-        <a :href="listUrl" class="barcode-btn barcode-btn--ghost">Back</a>
-        <button class="barcode-btn barcode-btn--ghost" :disabled="saving" @click="resetTemplate">Reset</button>
-        <button class="barcode-btn barcode-btn--primary" :disabled="saving" @click="saveTemplate">
-          {{ saving ? 'Saving...' : 'Save' }}
-        </button>
-      </div>
+  <div class="bcx bcx-shell bcx-designer" v-if="ready">
+    <!-- command bar -->
+    <div class="bcx-bar">
+      <a :href="listUrl" class="bcx-btn bcx-back" title="Back to templates">
+        <i class="fa fa-angle-left"></i><span class="bcx-back__label">Templates</span>
+      </a>
+      <input v-model="templateName" class="bcx-name" type="text" placeholder="Template name" @input="scheduleAutoSave" />
+      <span class="bcx-chip bcx-chip--brand" :title="typeDescription">{{ typeLabel }}</span>
+      <span v-if="templateKey === defaultTemplateKey" class="bcx-chip">Default</span>
+
+      <div class="bcx-spacer"></div>
+
+      <button class="bcx-btn" :disabled="saving" @click="resetTemplate">
+        <i class="fa fa-refresh"></i> Reset
+      </button>
+      <a :href="printUrl" target="_blank" class="bcx-btn"><i class="fa fa-print"></i> Print</a>
+      <button class="bcx-btn bcx-btn--primary" :disabled="saving" @click="saveTemplate">
+        <i class="fa fa-check"></i> {{ saving ? 'Saving…' : 'Save' }}
+      </button>
     </div>
 
-    <div class="barcode-layout">
-      <aside class="barcode-sidebar barcode-sidebar--left">
-        <div class="barcode-panel">
-          <div class="barcode-panel__title">Elements</div>
-          <button
-            v-for="item in elementItems"
-            :key="item.key"
-            class="barcode-element-row"
-            :class="{ 'is-active': selectedElementKey === item.key }"
-            @click="selectedElementKey = item.key"
-          >
-            <div>
-              <div class="barcode-element-row__label">{{ item.label }}</div>
-              <div class="barcode-element-row__meta">{{ item.key }}</div>
-            </div>
-            <label class="barcode-switch" @click.stop>
-              <input type="checkbox" v-model="settings[item.key].visible" @change="scheduleAutoSave" />
-              <span />
-            </label>
-          </button>
-        </div>
+    <div class="bcx-designer__body">
+      <!-- icon rail: one control group at a time -->
+      <nav class="bcx-rail">
+        <button
+          v-for="section in sections"
+          :key="section.key"
+          type="button"
+          class="bcx-rail__btn"
+          :class="{ 'is-active': activeSection === section.key }"
+          :title="section.label"
+          @click="activeSection = section.key"
+        >
+          <i class="fa" :class="section.icon"></i>
+        </button>
+      </nav>
 
-        <div class="barcode-panel">
-          <div class="barcode-panel__title">Template Size</div>
-          <div class="barcode-dimension-card">
-            <label class="barcode-field barcode-field--dimension">
-              <span>Width</span>
-              <div class="barcode-input-wrap">
-                <input v-model.number="settings.width" type="number" min="10" step="0.5" @input="scheduleAutoSave" />
-                <em>mm</em>
-              </div>
-            </label>
-            <label class="barcode-field barcode-field--dimension">
-              <span>Height</span>
-              <div class="barcode-input-wrap">
-                <input v-model.number="settings.height" type="number" min="10" step="0.5" @input="scheduleAutoSave" />
-                <em>mm</em>
-              </div>
-            </label>
-          </div>
-          <div class="barcode-template-note">Template size still controls the actual barcode label size.</div>
-          <div class="barcode-canvas-meta">{{ settings.width }} x {{ settings.height }} mm</div>
-        </div>
-
-        <div class="barcode-panel">
-          <div class="barcode-panel__title">Preview Product</div>
-          <label class="barcode-field">
-            <span>Select Product</span>
-            <select v-model="selectedProductId" @change="applySelectedProduct">
-              <option v-for="product in productOptions" :key="product.id" :value="String(product.id)">
-                {{ product.name }}{{ product.size ? ` (${product.size})` : '' }}
-              </option>
-            </select>
-          </label>
-          <div v-if="selectedProduct" class="barcode-product-card">
-            <div class="barcode-product-card__name">{{ selectedProduct.name }}</div>
-            <div class="barcode-product-card__meta">{{ selectedProduct.name_arabic || '-' }}</div>
-            <div class="barcode-product-card__meta">Barcode: {{ selectedProduct.barcode || '-' }}</div>
-            <div class="barcode-product-card__meta">Size: {{ selectedProduct.size || '-' }}</div>
-            <div class="barcode-product-card__meta">Price: QR {{ formatPrice(selectedProduct.mrp) }}</div>
-          </div>
-        </div>
+      <!-- the drawer the rail swaps -->
+      <aside class="bcx-drawer">
+        <component
+          :is="activeSectionComponent"
+          :settings="settings"
+          :barcode-types="barcodeTypes"
+          :qty-sources="qtySources"
+          :fonts="fonts"
+          :font-weights="fontWeights"
+          :products="productOptions"
+          :product="selectedProduct"
+          :model-value="selectedProductId"
+          v-model:selected="selectedElementKey"
+          @update:modelValue="applySelectedProduct"
+          @change="scheduleAutoSave"
+        />
       </aside>
 
-      <section class="barcode-preview-wrap">
-        <div class="barcode-preview-wrap__header">
-          <div>
-            <div class="barcode-panel__title barcode-panel__title--inline">Large Preview</div>
-            <div class="barcode-preview-wrap__note">Preview only. Use the controls on the right to adjust the selected element.</div>
-          </div>
-          <a :href="printUrl" target="_blank" class="barcode-btn barcode-btn--ghost">Print</a>
-        </div>
-
-        <div class="barcode-preview-chips">
-          <button
-            v-for="item in visibleElementItems"
-            :key="`chip-${item.key}`"
-            type="button"
-            class="barcode-chip"
-            :class="{ 'is-active': selectedElementKey === item.key }"
-            @click="selectedElementKey = item.key"
-          >
-            {{ item.label }}
-          </button>
-        </div>
-
-        <div class="barcode-preview-stage">
-          <div class="barcode-preview-stage__sheet" :style="previewSheetStyle">
-            <iframe
-              :src="previewUrl"
-              class="barcode-preview-stage__frame"
-              scrolling="no"
-            ></iframe>
-          </div>
+      <!-- stage -->
+      <section class="bcx-stage" ref="stageEl">
+        <div class="bcx-stage__sheet" :style="sheetStyle">
+          <iframe :src="previewUrl" class="bcx-stage__frame" :style="frameStyle" scrolling="no"></iframe>
         </div>
       </section>
 
-      <aside class="barcode-sidebar barcode-sidebar--right">
-        <div class="barcode-panel" v-if="selectedElement">
-          <div class="barcode-panel__title">{{ selectedElement.label }}</div>
-
-          <div class="barcode-field-grid">
-            <label class="barcode-field">
-              <span>Top</span>
-              <input v-model.number="selectedElementBox.top" type="number" @input="scheduleAutoSave" />
-            </label>
-            <label class="barcode-field">
-              <span>Left</span>
-              <input v-model.number="selectedElementBox.left" type="number" @input="scheduleAutoSave" />
-            </label>
-            <label class="barcode-field">
-              <span>Width</span>
-              <input v-model.number="selectedElementBox.width" type="number" min="20" @input="scheduleAutoSave" />
-            </label>
-            <label class="barcode-field">
-              <span>Height</span>
-              <input v-model.number="selectedElementBox.height" type="number" min="12" @input="scheduleAutoSave" />
-            </label>
-          </div>
-
-          <div v-if="selectedElement.key !== 'logo'" class="barcode-field-grid">
-            <label class="barcode-field">
-              <span>Font Size</span>
-              <input v-model.number="settings[selectedElement.key].font_size" type="number" min="6" @input="scheduleAutoSave" />
-            </label>
-            <label class="barcode-field">
-              <span>Align</span>
-              <select v-model="settings[selectedElement.key].align" @change="scheduleAutoSave">
-                <option value="left">Left</option>
-                <option value="center">Center</option>
-                <option value="right">Right</option>
-              </select>
-            </label>
-          </div>
-
-          <div v-if="['product_name', 'product_name_arabic', 'company_name'].includes(selectedElement.key)" class="barcode-field-grid">
-            <label class="barcode-field">
-              <span>Character Limit</span>
-              <input v-model.number="settings[selectedElement.key].char_limit" type="number" min="5" @input="scheduleAutoSave" />
-            </label>
-          </div>
-
-          <div v-if="selectedElement.key === 'barcode'" class="barcode-field-grid">
-            <label class="barcode-field">
-              <span>Barcode Type</span>
-              <select v-model="settings.barcode.type" @change="scheduleAutoSave">
-                <option v-for="(label, key) in barcodeTypes" :key="key" :value="key">{{ label }}</option>
-              </select>
-            </label>
-            <label class="barcode-field">
-              <span>Scale</span>
-              <input v-model.number="settings.barcode.scale" type="number" min="1" step="0.1" @input="scheduleAutoSave" />
-            </label>
-          </div>
-
-          <div class="barcode-panel__actions">
-            <a :href="printUrl" target="_blank" class="barcode-btn barcode-btn--ghost">Print</a>
-          </div>
-        </div>
+      <!-- inspector for whatever is selected -->
+      <aside class="bcx-drawer bcx-drawer--end">
+        <component
+          :is="typeUi.inspector"
+          :settings="settings"
+          :barcode-types="barcodeTypes"
+          :qty-sources="qtySources"
+          :fonts="fonts"
+          :font-weights="fontWeights"
+          :selected="selectedElementKey"
+          @change="scheduleAutoSave"
+        />
       </aside>
+    </div>
+
+    <!-- status bar -->
+    <div class="bcx-status">
+      <span>LABEL <b>{{ settings.width }} × {{ settings.height }} mm</b></span>
+      <span v-if="isJewellery">WINGS <b>{{ settings.wing_width }} / {{ settings.neck_width }} / {{ settings.wing_width }}</b></span>
+      <span>SYMBOLOGY <b>{{ settings.barcode?.type }}</b></span>
+      <span class="bcx-status__zoom">
+        ZOOM
+        <button class="bcx-ord" title="Zoom out" @click="nudgeZoom(-0.15)"><i class="fa fa-search-minus"></i></button>
+        <b>{{ Math.round(preview.scale * 100) }}%</b>
+        <button class="bcx-ord" title="Zoom in" @click="nudgeZoom(0.15)"><i class="fa fa-search-plus"></i></button>
+        <button class="bcx-ord" title="Fit to stage" @click="zoom = 1"><i class="fa fa-expand"></i></button>
+      </span>
+      <span class="bcx-spacer"></span>
+      <span>
+        <i class="bcx-dot" :class="{ 'bcx-dot--idle': saving }"></i>
+        {{ saving ? 'SAVING…' : 'SAVED' }}
+      </span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import InspJewellery from './panels/inspectors/InspJewellery.vue'
+import InspStandard from './panels/inspectors/InspStandard.vue'
+import SecJewelleryBarcode from './panels/sections/SecJewelleryBarcode.vue'
+import SecJewelleryFields from './panels/sections/SecJewelleryFields.vue'
+import SecJewellerySize from './panels/sections/SecJewellerySize.vue'
+import SecProduct from './panels/sections/SecProduct.vue'
+import SecStandardElements from './panels/sections/SecStandardElements.vue'
+import SecStandardSize from './panels/sections/SecStandardSize.vue'
+import SecTypography from './panels/sections/SecTypography.vue'
+
+// One entry per label type: the groups its rail offers and the inspector that
+// edits whatever is selected. A new type is a new entry here plus its defaults
+// in config/barcode_default_configuration.php - nothing else.
+const TYPE_UI = {
+  standard: {
+    sections: [
+      { key: 'elements', icon: 'fa-th-large', label: 'Elements', comp: SecStandardElements },
+      { key: 'size', icon: 'fa-arrows-alt', label: 'Label size', comp: SecStandardSize },
+      { key: 'typography', icon: 'fa-font', label: 'Typography', comp: SecTypography },
+      { key: 'product', icon: 'fa-cube', label: 'Preview product', comp: SecProduct },
+    ],
+    inspector: InspStandard,
+    fallbackSelection: 'product_name',
+  },
+  jewellery_tag: {
+    sections: [
+      { key: 'size', icon: 'fa-arrows-h', label: 'Tag size', comp: SecJewellerySize },
+      { key: 'fields', icon: 'fa-list-ul', label: 'Text wing', comp: SecJewelleryFields },
+      { key: 'barcode', icon: 'fa-barcode', label: 'Barcode wing', comp: SecJewelleryBarcode },
+      { key: 'typography', icon: 'fa-font', label: 'Typography', comp: SecTypography },
+      { key: 'product', icon: 'fa-cube', label: 'Preview product', comp: SecProduct },
+    ],
+    inspector: InspJewellery,
+    fallbackSelection: 'product_name',
+  },
+}
+
+// Only used until the stage has been measured for the first time.
+const STAGE_FALLBACK = { width: 640, height: 420 }
 
 const props = defineProps({
   templateKey: { type: String, required: true },
@@ -203,64 +152,71 @@ const ready = ref(false)
 const saving = ref(false)
 const settings = ref({})
 const barcodeTypes = ref({})
+const qtySources = ref({})
+const fonts = ref({})
+const fontWeights = ref({})
+const templateType = ref('standard')
+const types = ref({})
 const templateName = ref('')
 const defaultTemplateKey = ref('')
 const previewUrl = ref('')
 const printUrl = ref('')
 const previewBaseUrl = ref('')
 const selectedElementKey = ref('product_name')
+const activeSection = ref('')
+const zoom = ref(1)
 const productSearchUrl = ref('')
 const productOptions = ref([])
 const selectedProductId = ref('')
 const selectedProduct = ref(null)
 const suppressAutoSave = ref(true)
+const stageEl = ref(null)
+const stageBox = ref({ ...STAGE_FALLBACK })
 let autoSaveTimer = null
+let stageObserver = null
 
-const elementItems = [
-  { key: 'product_name', label: 'Product Name' },
-  { key: 'product_name_arabic', label: 'Product Name Arabic' },
-  { key: 'barcode', label: 'Barcode' },
-  { key: 'company_name', label: 'Company Name' },
-  { key: 'logo', label: 'Logo' },
-  { key: 'price', label: 'Price' },
-  { key: 'price_arabic', label: 'Price Arabic' },
-  { key: 'size', label: 'Size' },
-]
+const typeUi = computed(() => TYPE_UI[templateType.value] || TYPE_UI.standard)
+const sections = computed(() => typeUi.value.sections)
+const isJewellery = computed(() => templateType.value === 'jewellery_tag')
+const typeLabel = computed(() => types.value[templateType.value]?.label || templateType.value)
+const typeDescription = computed(() => types.value[templateType.value]?.description || '')
 
-const visibleElementItems = computed(() => elementItems.filter((item) => settings.value[item.key]?.visible))
-const selectedElement = computed(() => elementItems.find((item) => item.key === selectedElementKey.value) || null)
-const selectedElementBox = computed(() => {
-  const key = selectedElementKey.value
-  if (!key) {
-    return { top: 0, left: 0, width: 0, height: 0 }
-  }
+const activeSectionComponent = computed(
+  () => sections.value.find((s) => s.key === activeSection.value)?.comp || sections.value[0].comp
+)
 
-  if (!settings.value.elements) {
-    settings.value.elements = {}
-  }
+// The preview renders the label at its true millimetre size, so the iframe is
+// sized to that natural pixel size and the whole frame is scaled to fill the
+// stage. Fit both axes: a jewellery strip is far wider than it is tall, and
+// scaling on the longer side alone leaves it a hairline.
+const MM_PER_PX = 25.4 / 96
 
-  if (!settings.value.elements[key]) {
-    settings.value.elements[key] = { top: 0, left: 0, width: 120, height: 32 }
-  }
+const preview = computed(() => {
+  const naturalWidth = Math.max(1, Number(settings.value.width || 50) / MM_PER_PX)
+  const naturalHeight = Math.max(1, Number(settings.value.height || 30) / MM_PER_PX)
+  const fit = Math.min(stageBox.value.width / naturalWidth, stageBox.value.height / naturalHeight)
+  const scale = Math.max(0.15, Math.min(12, fit * zoom.value))
 
-  return settings.value.elements[key]
+  return { naturalWidth, naturalHeight, scale }
 })
-const previewSheetStyle = computed(() => {
-  const width = Number(settings.value.width || 50)
-  const height = Number(settings.value.height || 30)
-  const longerSide = Math.max(width, height)
-  const scale = Math.max(12, Math.min(22, 900 / longerSide))
-  const renderedWidth = Math.round(width * scale)
-  const renderedHeight = Math.round(height * scale)
 
-  return {
-    width: `${renderedWidth}px`,
-    height: `${renderedHeight}px`,
-    aspectRatio: `${width} / ${height}`,
-    maxWidth: '100%',
-    maxHeight: '100%',
-  }
-})
+// Sheet takes the scaled footprint; the frame keeps its natural size and is
+// scaled into it, so the label fills the paper instead of floating in it.
+const sheetStyle = computed(() => ({
+  width: `${Math.round(preview.value.naturalWidth * preview.value.scale)}px`,
+  height: `${Math.round(preview.value.naturalHeight * preview.value.scale)}px`,
+}))
+
+const frameStyle = computed(() => ({
+  width: `${preview.value.naturalWidth}px`,
+  height: `${preview.value.naturalHeight}px`,
+  transform: `scale(${preview.value.scale})`,
+  transformOrigin: 'top left',
+}))
+
+function nudgeZoom(step) {
+  zoom.value = Math.min(3, Math.max(0.35, Math.round((zoom.value + step) * 100) / 100))
+}
 
 async function loadData() {
   const response = await fetch(props.dataUrl, { headers: { Accept: 'application/json' } })
@@ -268,6 +224,12 @@ async function loadData() {
   suppressAutoSave.value = true
   settings.value = data.settings
   barcodeTypes.value = data.barcodeTypes
+  qtySources.value = data.qtySources || {}
+  fonts.value = data.fonts || {}
+  fontWeights.value = data.fontWeights || {}
+  installFontFaces(data.fontFaceCss)
+  types.value = data.types || {}
+  templateType.value = data.type || 'standard'
   templateName.value = data.templateName
   defaultTemplateKey.value = data.defaultTemplateKey
   previewBaseUrl.value = data.previewUrl
@@ -276,11 +238,23 @@ async function loadData() {
   productOptions.value = data.sampleProduct ? [data.sampleProduct] : []
   selectedProduct.value = data.sampleProduct
   selectedProductId.value = data.sampleProduct ? String(data.sampleProduct.id) : ''
-  selectedElementKey.value = visibleElementItems.value[0]?.key || 'product_name'
+  activeSection.value = sections.value[0].key
+  selectedElementKey.value = firstSelectableField()
   ready.value = true
   await loadProducts()
   suppressAutoSave.value = false
   refreshPreview()
+}
+
+// The designer draws every font option in its own face, which means the faces
+// have to exist on this page too, not only inside the print view.
+function installFontFaces(css) {
+  if (!css) return
+  const id = 'bcx-font-faces'
+  const style = document.getElementById(id) || document.createElement('style')
+  style.id = id
+  style.textContent = css
+  if (!style.parentNode) document.head.appendChild(style)
 }
 
 async function saveTemplate() {
@@ -322,6 +296,7 @@ async function resetTemplate() {
   })
   const data = await response.json()
   settings.value = data.settings
+  selectedElementKey.value = firstSelectableField()
   suppressAutoSave.value = false
   refreshPreview()
 }
@@ -348,8 +323,9 @@ async function loadProducts() {
   }
 }
 
-function applySelectedProduct() {
-  selectedProduct.value = productOptions.value.find((item) => String(item.id) === String(selectedProductId.value)) || null
+function applySelectedProduct(id) {
+  selectedProductId.value = String(id)
+  selectedProduct.value = productOptions.value.find((item) => String(item.id) === String(id)) || null
   refreshPreview()
 }
 
@@ -368,386 +344,206 @@ function scheduleAutoSave() {
   }, 400)
 }
 
-function formatPrice(value) {
-  return Number(value || 0).toFixed(2)
-}
+// The right hand inspector edits whatever is selected on the left, and the two
+// types keep their selectable things in different places.
+function firstSelectableField() {
+  if (templateType.value === 'standard') {
+    const visible = ['product_name', 'product_name_arabic', 'barcode', 'company_name', 'logo', 'price', 'price_arabic', 'size']
+      .filter((key) => settings.value[key]?.visible)
 
-function elementBox(key) {
-  if (!settings.value.elements) {
-    settings.value.elements = {}
+    return visible[0] || typeUi.value.fallbackSelection
   }
 
-  if (!settings.value.elements[key]) {
-    settings.value.elements[key] = { top: 0, left: 0, width: 120, height: 32 }
-  }
+  const fields = Object.entries(settings.value.fields || {})
+    .filter(([, field]) => field?.visible)
+    .sort((a, b) => Number(a[1].order ?? 99) - Number(b[1].order ?? 99))
 
-  return settings.value.elements[key]
+  return fields[0]?.[0] || typeUi.value.fallbackSelection
 }
+
+// The proof is scaled to whatever room the stage actually has. Measuring beats
+// assuming: a fixed guess overflows the moment the window, the sidebar or a
+// drawer takes the space away, and drags the whole grid off the page with it.
+watch(ready, async (isReady) => {
+  if (!isReady) return
+  await nextTick()
+  if (!stageEl.value) return
+
+  stageObserver = new ResizeObserver(([entry]) => {
+    const box = entry?.contentRect
+    if (box?.width > 0 && box?.height > 0) {
+      stageBox.value = { width: box.width, height: box.height }
+    }
+  })
+  stageObserver.observe(stageEl.value)
+})
 
 onMounted(loadData)
-onBeforeUnmount(clearAutoSaveTimer)
+onBeforeUnmount(() => {
+  clearAutoSaveTimer()
+  stageObserver?.disconnect()
+})
 </script>
 
-<style scoped>
-.barcode-template-app {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+<style>
+/*
+  Layout only. Every visual token lives in the shared .bcx system
+  (resources/views/components/barcode/premium.blade.php) so the designer, the
+  template list and the print cart stay one design.
+*/
+.bcx-designer {
+    display: flex;
+    flex-direction: column;
+    min-height: 560px;
+    max-width: 100%;
+    /* Containment is the point: children can no longer widen the shell, and the
+       breakpoints below measure this box instead of the window. */
+    container: bcx-designer / inline-size;
 }
 
-.barcode-topbar {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  padding: 18px 22px;
-  background: linear-gradient(135deg, #f8fbff, #eef4fb);
-  border: 1px solid #d8e3f0;
-  border-radius: 20px;
+.bcx-designer__body {
+    display: grid;
+    /* Container query units so the columns react to the space the page actually
+       gives the shell, not to the window - the app sidebar can collapse or
+       expand underneath us and the window width never changes. */
+    grid-template-columns: 54px clamp(230px, 22cqw, 300px) minmax(0, 1fr) clamp(230px, 22cqw, 304px);
+    flex: 1;
+    min-height: 0;
 }
 
-.barcode-topbar__eyebrow {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: #6b7c93;
+/* Every track is allowed to shrink; nothing inside may push the grid wider. */
+.bcx-designer__body>* {
+    min-width: 0;
+    min-height: 0;
 }
 
-.barcode-topbar__title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 6px;
+.bcx-designer .bcx-drawer {
+    max-height: 72vh;
 }
 
-.barcode-topbar__title {
-  border: 0;
-  background: transparent;
-  font-size: 28px;
-  font-weight: 800;
-  color: #172554;
-  padding: 0;
-  min-width: 320px;
+/* A proof zoomed past the fit scale scrolls inside the stage rather than
+   dragging the whole layout sideways. */
+.bcx-designer .bcx-stage {
+    overflow: auto;
+    padding: 20px;
 }
 
-.barcode-topbar__badge {
-  border-radius: 999px;
-  background: #dcfce7;
-  color: #166534;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 700;
+/* The label is the affordance; on a cramped bar the arrow alone still reads. */
+@container bcx-designer (max-width: 560px) {
+    .bcx-back__label {
+        display: none;
+    }
+
+    .bcx-back {
+        padding-inline: 9px;
+    }
 }
 
-.barcode-topbar__actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.bcx-status__zoom {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.barcode-layout {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr) 340px;
-  gap: 20px;
-  min-height: 720px;
+/* Breakpoints are on the shell, not the viewport, for the same reason.
+   A drawer that has moved under the stage is far too wide for one field per
+   row, so its contents flow into columns instead of stretching. Each section
+   renders a single wrapper div, which is the element that becomes the grid. */
+@container bcx-designer (max-width: 1180px) {
+    .bcx-designer__body {
+        grid-template-columns: 54px minmax(0, 1fr) clamp(230px, 26cqw, 290px);
+    }
+
+    .bcx-designer__body>.bcx-drawer:not(.bcx-drawer--end) {
+        grid-row: 2;
+        grid-column: 1 / -1;
+        border-inline-end: 0;
+        border-top: 1px solid var(--bcx-line);
+        max-height: 40vh;
+    }
+
+    .bcx-designer__body>.bcx-drawer:not(.bcx-drawer--end)>div {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 0 22px;
+        align-content: start;
+    }
+
+    .bcx-designer__body>.bcx-drawer:not(.bcx-drawer--end)>div>.bcx-drawer__title,
+    .bcx-designer__body>.bcx-drawer:not(.bcx-drawer--end)>div>.bcx-note {
+        grid-column: 1 / -1;
+    }
 }
 
-.barcode-sidebar,
-.barcode-preview-wrap {
-  min-width: 0;
+@container bcx-designer (max-width: 820px) {
+    .bcx-designer__body {
+        grid-template-columns: 54px minmax(0, 1fr);
+    }
+
+    .bcx-designer__body>.bcx-drawer--end {
+        grid-row: 3;
+        grid-column: 1 / -1;
+        border-inline-start: 0;
+        border-top: 1px solid var(--bcx-line);
+        max-height: 40vh;
+    }
+
+    .bcx-designer__body>.bcx-drawer--end>div {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 0 22px;
+        align-content: start;
+    }
+
+    .bcx-designer__body>.bcx-drawer--end>div>.bcx-drawer__title,
+    .bcx-designer__body>.bcx-drawer--end>div>.bcx-note {
+        grid-column: 1 / -1;
+    }
 }
 
-.barcode-panel,
-.barcode-preview-wrap {
-  background: #fff;
-  border: 1px solid #dbe4f0;
-  border-radius: 20px;
-  padding: 18px;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.05);
-}
+@container bcx-designer (max-width: 560px) {
+    .bcx-designer__body {
+        grid-template-columns: 1fr;
+    }
 
-.barcode-sidebar .barcode-panel {
-  margin-bottom: 16px;
-}
+    /* Single column: drop the row pinning so the panes fall in source order —
+       rail, the group being edited, the proof, then its inspector. Selectors
+       mirror the wider breakpoints so they win on order, not specificity. */
+    .bcx-designer__body>.bcx-drawer:not(.bcx-drawer--end),
+    .bcx-designer__body>.bcx-drawer--end,
+    .bcx-designer__body>.bcx-rail,
+    .bcx-designer__body>.bcx-stage {
+        grid-row: auto;
+        grid-column: 1;
+    }
 
-.barcode-panel__title {
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #64748b;
-  margin-bottom: 14px;
-}
+    /* One field per row again at this width. */
+    .bcx-designer__body>.bcx-drawer>div {
+        display: block;
+    }
 
-.barcode-panel__title--inline {
-  margin-bottom: 4px;
-}
+    .bcx-designer .bcx-rail {
+        flex-direction: row;
+        justify-content: center;
+        border-inline-end: 0;
+        border-bottom: 1px solid var(--bcx-line);
+    }
 
-.barcode-panel__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
+    .bcx-designer .bcx-rail__btn.is-active::before {
+        inset-inline-start: 9px;
+        inset-inline-end: 9px;
+        top: auto;
+        bottom: -8px;
+        width: auto;
+        height: 3px;
+        border-radius: 3px 3px 0 0;
+    }
 
-.barcode-element-row {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
-  border-radius: 16px;
-  border: 1px solid #d9e5f4;
-  background: #f8fbff;
-  text-align: left;
-}
-
-.barcode-element-row.is-active {
-  border-color: #2563eb;
-  background: #eff6ff;
-}
-
-.barcode-element-row__label {
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.barcode-element-row__meta,
-.barcode-canvas-meta,
-.barcode-preview-wrap__note {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.barcode-switch {
-  position: relative;
-  width: 42px;
-  height: 24px;
-}
-
-.barcode-switch input { display: none; }
-.barcode-switch span {
-  position: absolute;
-  inset: 0;
-  background: #cbd5e1;
-  border-radius: 999px;
-}
-.barcode-switch span::after {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  left: 3px;
-  top: 3px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform .2s ease;
-}
-.barcode-switch input:checked + span { background: #2563eb; }
-.barcode-switch input:checked + span::after { transform: translateX(18px); }
-
-.barcode-dimension-card {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid #d9e5f4;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #f8fbff, #f1f6fd);
-  margin-bottom: 12px;
-}
-
-.barcode-field--dimension {
-  margin-bottom: 0;
-}
-
-.barcode-input-wrap {
-  display: flex;
-  align-items: center;
-  border: 1px solid #cfd9e6;
-  border-radius: 14px;
-  background: #fff;
-  overflow: hidden;
-}
-
-.barcode-input-wrap input {
-  border: 0;
-  border-radius: 0;
-}
-
-.barcode-input-wrap em {
-  font-style: normal;
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  padding: 0 12px;
-}
-
-.barcode-template-note {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #64748b;
-  margin-bottom: 12px;
-}
-
-.barcode-product-card {
-  padding: 14px;
-  border: 1px solid #d9e5f4;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #f8fbff, #f2f7fd);
-}
-
-.barcode-product-card__name {
-  font-weight: 800;
-  color: #1e293b;
-  margin-bottom: 6px;
-}
-
-.barcode-product-card__meta {
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.barcode-preview-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  background: linear-gradient(180deg, #f8fbff, #edf4fb);
-}
-
-.barcode-preview-wrap__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.barcode-preview-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.barcode-chip {
-  border: 1px solid #c9d7ea;
-  background: #fff;
-  color: #334155;
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.barcode-chip.is-active {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #fff;
-  box-shadow: 0 10px 20px rgba(29, 78, 216, 0.22);
-}
-
-.barcode-preview-stage {
-  flex: 1;
-  min-height: 760px;
-  padding: 28px;
-  overflow: hidden;
-  border-radius: 24px;
-  border: 1px solid #dbe4f0;
-  background:
-    radial-gradient(circle at 1px 1px, rgba(37, 99, 235, 0.14) 1px, transparent 0),
-    linear-gradient(180deg, #f7faff, #edf3fa);
-  background-size: 20px 20px, auto;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.barcode-preview-stage__sheet {
-  flex: 0 1 auto;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  border-radius: 24px;
-  border: 2px solid #bfdbfe;
-  background: #fff;
-  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
-  overflow: hidden;
-}
-
-.barcode-preview-stage__frame {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border: 0;
-  background: #fff;
-  display: block;
-}
-
-.barcode-field-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.barcode-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.barcode-field span {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-}
-
-.barcode-field input,
-.barcode-field select {
-  border: 1px solid #d1d9e6;
-  border-radius: 12px;
-  padding: 10px 12px;
-  background: #fff;
-}
-
-.barcode-btn {
-  border-radius: 14px;
-  padding: 10px 16px;
-  font-weight: 700;
-  text-decoration: none;
-  border: 1px solid #c9d7ea;
-  background: #fff;
-  color: #1e3a8a;
-}
-
-.barcode-btn--primary {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #fff;
-}
-
-.barcode-btn:disabled {
-  opacity: .6;
-}
-
-@media (max-width: 1400px) {
-  .barcode-layout {
-    grid-template-columns: 240px minmax(0, 1fr);
-  }
-
-  .barcode-sidebar--right {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 900px) {
-  .barcode-layout,
-  .barcode-dimension-card,
-  .barcode-field-grid {
-    grid-template-columns: 1fr;
-  }
+    .bcx-designer .bcx-drawer,
+    .bcx-designer .bcx-drawer--end {
+        grid-column: 1;
+        border-inline: 0;
+        border-bottom: 1px solid var(--bcx-line);
+    }
 }
 </style>

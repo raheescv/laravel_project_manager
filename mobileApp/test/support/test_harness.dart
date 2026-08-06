@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:invo/features/admin/domain/repository/admin_repository.dart';
@@ -16,6 +15,7 @@ import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
 import 'package:invo/features/sale/logic/stylist_cubit/stylist_cubit.dart';
 import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/features/stock_check/domain/repository/stock_check_repository.dart';
 import 'package:invo/features/stock_check/domain/services/stock_check_service.dart';
@@ -58,6 +58,7 @@ class TestHarness {
   late CurrencyCubit currency;
   late BranchCubit branch;
   late PrintSettingsCubit printSettings;
+  late PosSettingsCubit posSettings;
 
   /// Register everything and seed a signed-in admin user.
   Future<void> init({bool admin = true}) async {
@@ -89,7 +90,7 @@ class TestHarness {
       ..registerLazySingleton<StockCheckRepository>(StockCheckService.new);
 
     authCubit = AuthCubit();
-    authCubit.user = ApiUser(
+    authCubit.seedSession(ApiUser(
       id: '14',
       name: 'Maya Chen',
       code: 'EMP-014',
@@ -101,8 +102,7 @@ class TestHarness {
       branchId: '3',
       daySessionStatus: 'open',
       daySessionDate: '2026-06-14',
-    );
-    authCubit.status = AuthStatus.signedIn;
+    ));
     // DaySessionCubit resolves AuthCubit from the locator.
     serviceLocator.registerSingleton<AuthCubit>(authCubit);
 
@@ -111,12 +111,14 @@ class TestHarness {
     currency = CurrencyCubit();
     branch = BranchCubit(userBranchId: 3);
     printSettings = PrintSettingsCubit();
+    posSettings = PosSettingsCubit();
     serviceLocator
       ..registerSingleton<ThemeCubit>(theme)
       ..registerSingleton<HapticsCubit>(haptics)
       ..registerSingleton<CurrencyCubit>(currency)
       ..registerSingleton<BranchCubit>(branch)
-      ..registerSingleton<PrintSettingsCubit>(printSettings);
+      ..registerSingleton<PrintSettingsCubit>(printSettings)
+      ..registerSingleton<PosSettingsCubit>(posSettings);
 
     cart = CartCubit();
   }
@@ -137,6 +139,7 @@ class TestHarness {
         BlocProvider<CurrencyCubit>.value(value: currency),
         BlocProvider<BranchCubit>.value(value: branch),
         BlocProvider<PrintSettingsCubit>.value(value: printSettings),
+        BlocProvider<PosSettingsCubit>.value(value: posSettings),
         BlocProvider<CartCubit>.value(value: cart),
         BlocProvider<ReturnDraftCubit>(create: (_) => ReturnDraftCubit()),
         BlocProvider<CatalogCubit>(create: (_) => CatalogCubit()),
@@ -158,14 +161,11 @@ class TestHarness {
         GoRoute(path: '/login', builder: (_, __) => const Scaffold()),
       ],
     );
-    return ScreenUtilInit(
-      designSize: const Size(393, 865),
-      builder: (_, __) => MultiBlocProvider(
-        providers: providers(),
-        child: MaterialApp.router(
-          theme: buildAstraTheme(AstraPresets.emeraldGold),
-          routerConfig: router,
-        ),
+    return MultiBlocProvider(
+      providers: providers(),
+      child: MaterialApp.router(
+        theme: buildAstraTheme(AstraPresets.emeraldGold),
+        routerConfig: router,
       ),
     );
   }

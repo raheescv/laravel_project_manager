@@ -1,9 +1,8 @@
+import 'dart:async';
+import 'package:invo/features/profile/logic/profile_cubit/profile_cubit.dart';
 import 'package:flutter/material.dart';
-import 'package:invo/features/auth/domain/repository/auth_repository.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
@@ -28,6 +27,7 @@ class ChangePasswordScreen extends StatefulWidget {
 }
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+  final _profile = ProfileCubit();
   final _current = TextEditingController();
   final _next = TextEditingController();
   final _confirm = TextEditingController();
@@ -36,6 +36,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   void dispose() {
+    unawaited(_profile.close());
     _current.dispose();
     _next.dispose();
     _confirm.dispose();
@@ -52,16 +53,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       return;
     }
     setState(() => _busy = true);
-    try {
-      await serviceLocator<AuthRepository>().changePassword(_current.text, _next.text);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated')));
-        _close();
-      }
-    } on ApiException catch (e) {
-      _snack(e.message);
-    } catch (e) {
-      _snack('Could not update password.');
+    // The repository call, and its error handling, live in the cubit (§10).
+    final ok = await _profile.changePassword(_current.text, _next.text);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated')));
+      _close();
+    } else {
+      _snack(_profile.state.errorMessage ?? 'Could not update password.');
     }
     if (mounted) setState(() => _busy = false);
   }

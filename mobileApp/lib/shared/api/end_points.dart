@@ -22,8 +22,15 @@ class EndPoints {
   static const String employees = '/employees';
   static const String paymentMethods = '/payment-methods';
 
-  // ---- Currencies ----
+  // ---- Settings ----
   static const String currencies = '/settings/currencies';
+  static const String saleSettings = '/settings/sale';
+  static const String printSettings = '/settings/sale/print';
+  static const String logo = '/settings/logo';
+
+  // ---- Diagnostics ----
+  /// Where CrashReporter posts uncaught client errors.
+  static const String clientError = '/client-error';
 
   // ---- Sales ----
   static const String sale = '/sale';

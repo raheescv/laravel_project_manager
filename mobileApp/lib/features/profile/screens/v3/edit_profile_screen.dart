@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:invo/features/profile/logic/profile_cubit/profile_cubit.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -5,14 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
-import 'package:invo/features/profile/domain/repository/profile_repository.dart';
 import 'package:invo/features/profile/screens/v3/crop_photo_screen.dart';
-import 'package:invo/shared/domain/models/models.dart';
+import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
-import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
@@ -39,6 +38,7 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+  final _profile = ProfileCubit();
   final _name = TextEditingController();
   final _phone = TextEditingController();
   final _email = TextEditingController();
@@ -63,6 +63,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   void dispose() {
+    unawaited(_profile.close());
     _name.dispose();
     _phone.dispose();
     _email.dispose();
@@ -83,21 +84,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
     setState(() => _busy = true);
-    try {
-      final updated = await serviceLocator<ProfileRepository>().updateProfile(
-        name: _name.text.trim(),
-        email: _email.text.trim(),
-        mobile: _phone.text.trim(),
-      );
-      if (!mounted) return;
+    // The repository call, and its error handling, live in the cubit (§10).
+    final updated = await _profile.updateProfile(
+      name: _name.text.trim(),
+      email: _email.text.trim(),
+      mobile: _phone.text.trim(),
+    );
+    if (!mounted) return;
+    if (updated != null) {
       await context.read<AuthCubit>().applyUser(updated);
       if (!mounted) return;
       _snack('Profile updated');
       _close();
-    } on ApiException catch (e) {
-      _snack(e.message);
-    } catch (_) {
-      _snack('Could not update profile.');
+    } else {
+      _snack(_profile.state.errorMessage ?? 'Could not update profile.');
     }
     if (mounted) setState(() => _busy = false);
   }
@@ -126,17 +126,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _preview = cropped;
       _photoBusy = true;
     });
-    try {
-      final updated = await serviceLocator<ProfileRepository>().updatePhoto(cropped);
-      if (!mounted) return;
+    final updated = await _profile.updatePhoto(cropped);
+    if (!mounted) return;
+    if (updated != null) {
       await context.read<AuthCubit>().applyUser(updated);
       if (mounted) _snack('Profile photo updated');
-    } on ApiException catch (e) {
-      if (mounted) setState(() => _preview = null);
-      _snack(e.message);
-    } catch (_) {
-      if (mounted) setState(() => _preview = null);
-      _snack('Could not update photo.');
+    } else {
+      setState(() => _preview = null); // roll the optimistic preview back
+      _snack(_profile.state.errorMessage ?? 'Could not update photo.');
     }
     if (mounted) setState(() => _photoBusy = false);
   }
@@ -177,7 +174,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    final user = context.watch<AuthCubit>().user;
+    final user = context.select<AuthCubit, ApiUser?>((c) => c.state.user);
     if (user == null) return const Scaffold(body: SizedBox());
 
     final cfg = context.read<AuthCubit>().config;

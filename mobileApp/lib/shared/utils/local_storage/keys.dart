@@ -13,6 +13,7 @@ class LocalStorageKeys {
   static const String tenant = 'astra.tenant';
   static const String preset = 'astra.preset';
   static const String themeMode = 'astra.themeMode';
+  static const String typeface = 'astra.typeface';
   static const String currency = 'astra.currency';
   static const String currencies = 'astra.currencies';
   static const String baseCurrency = 'astra.baseCurrency';

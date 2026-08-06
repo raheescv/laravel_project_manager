@@ -6,6 +6,18 @@ import 'package:provider/provider.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 
+/// Decode target, in pixels, for a network image painted [logicalWidth] wide.
+///
+/// Pass to `Image.network(cacheWidth:)`. Without it every photo is decoded at
+/// its source resolution no matter how small it's drawn: a 2000px product shot
+/// costs ~16MB of RAM to fill a 200px tile, so one screen of catalog tiles
+/// overruns Flutter's 100MB ImageCache and the list re-decodes as it scrolls.
+///
+/// Height is left alone — `fit: BoxFit.cover` needs the aspect ratio, and
+/// constraining one axis is enough to bound the decode.
+int decodeWidthFor(BuildContext context, double logicalWidth) =>
+    (logicalWidth * MediaQuery.devicePixelRatioOf(context)).round();
+
 /// Page background — skin-aware. Glass gets a soft aurora *mesh*; editorial a
 /// gold glow on near-black; clean a faint brand radial; signature the original
 /// warm cream aurora.
@@ -310,6 +322,7 @@ class ProductThumb extends StatelessWidget {
         headers: cfg.assetHeaders,
         width: size,
         height: size,
+        cacheWidth: decodeWidthFor(context, size),
         fit: BoxFit.cover,
         gaplessPlayback: true,
         errorBuilder: (_, __, ___) => fallback,
@@ -360,66 +373,6 @@ class SectionLabel extends StatelessWidget {
   }
 }
 
-/// Pill filter chip (category filter row).
-class AstraChip extends StatelessWidget {
-  const AstraChip(
-      {super.key,
-      required this.label,
-      required this.active,
-      this.onTap,
-      this.icon,
-      this.expand = false});
-  final String label;
-  final bool active;
-  final VoidCallback? onTap;
-  final IconData? icon;
-
-  /// When true the chip fills the width given by its parent (e.g. an
-  /// [Expanded] slot in a full-width segmented row) and centers its content.
-  final bool expand;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.astra;
-    final t = context.astraTheme;
-    final labelText = Text(label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        softWrap: false,
-        style: ui(
-            size: 12.5,
-            weight: FontWeight.w700,
-            color: active ? Colors.white : p.textSecondary));
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: expand ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        decoration: BoxDecoration(
-          gradient: active ? p.primaryGradient : null,
-          color: active ? null : p.card,
-          borderRadius: BorderRadius.circular(t.rChip),
-          boxShadow: active ? t.floatShadow(p.primary) : t.softShadow,
-        ),
-        child: Row(
-          mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-          mainAxisAlignment:
-              expand ? MainAxisAlignment.center : MainAxisAlignment.start,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 12, color: active ? Colors.white : p.textSecondary),
-              const SizedBox(width: 6),
-            ],
-            // In expand mode the chip width is bounded (fills its slot), so the
-            // label can flex + ellipsize; in hug mode it sizes to content, where
-            // a Flexible would fault on the unbounded scroll row.
-            if (expand) Flexible(child: labelText) else labelText,
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 /// Full-width gradient primary button (emerald) or gold CTA.
 class AstraButton extends StatelessWidget {
@@ -462,10 +415,12 @@ class AstraButton extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2.4, color: fg),
           )
         else ...[
-          // Full-width (expand) buttons have bounded width, so a long label —
-          // e.g. "Charge AED 1,234,567.00" — can flex + ellipsize; hug-width
-          // buttons size to content, where a Flexible would fault.
-          if (expand) Flexible(child: labelText) else labelText,
+          // Always flexible: a long label — e.g. "Charge AED 1,234,567.00" —
+          // must be able to ellipsize whenever the button has a bounded width,
+          // which includes hug-width buttons in a narrow pane (the tablet
+          // master column). Flexible is loose-fit, so a hug-width button still
+          // sizes to its content when there is room.
+          Flexible(child: labelText),
           if (icon != null) ...[const SizedBox(width: 8), Icon(icon, size: 16, color: fg)],
         ],
       ],
@@ -485,28 +440,6 @@ class AstraButton extends StatelessWidget {
   }
 }
 
-/// Gold-ringed circular monogram (avatar / brand emblem).
-class Monogram extends StatelessWidget {
-  const Monogram({super.key, required this.letter, this.size = 42, this.fontSize});
-  final String letter;
-  final double size;
-  final double? fontSize;
-  @override
-  Widget build(BuildContext context) {
-    final p = context.astra;
-    return Container(
-      width: size,
-      height: size,
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(shape: BoxShape.circle, gradient: p.accentGradient),
-      child: Container(
-        decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF0E5347)),
-        alignment: Alignment.center,
-        child: Text(letter, style: serif(size: fontSize ?? size * 0.42, color: Colors.white)),
-      ),
-    );
-  }
-}
 
 /// Circular avatar: shows the user's uploaded photo (gold-ringed, clipped to a
 /// circle) when [imageUrl] is an absolute URL, otherwise falls back to the
@@ -539,6 +472,7 @@ class ProfileAvatar extends StatelessWidget {
       inner = Image.network(
         url,
         headers: headers,
+        cacheWidth: decodeWidthFor(context, size),
         fit: BoxFit.cover,
         gaplessPlayback: true,
         errorBuilder: (_, __, ___) => Center(child: letterChild),

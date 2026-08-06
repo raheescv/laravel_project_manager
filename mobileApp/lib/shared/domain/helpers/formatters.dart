@@ -91,6 +91,18 @@ String qtyLabel(num v) {
   return s;
 }
 
+/// Round to 2 decimals the way the server's `decimal(16,2)` columns do.
+///
+/// Every money column in the Laravel schema is `decimal(16,2)`, and the sale
+/// totals are *generated* columns — so MySQL rounds each intermediate
+/// (`gross_amount`, `net_amount`, `tax_amount`) to 2 places before the next one
+/// is derived. Money maths on the device has to round at the same points or the
+/// ticket total and the stored `grand_total` drift apart by a cent.
+///
+/// Goes via the decimal string rather than `(v * 100).round() / 100` so the
+/// result matches what is sent in the payload exactly.
+double round2(num v) => double.parse(v.toStringAsFixed(2));
+
 num asNum(dynamic v) {
   if (v == null) return 0;
   if (v is num) return v;

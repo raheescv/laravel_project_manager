@@ -53,7 +53,7 @@ SPEC CHECKSUMS:
   local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
   mobile_scanner: 9157936403f5a0644ca3779a38ff8404c5434a93
   permission_handler_apple: 92d754bbaa7361d436db2d6c3c1c2a0fdcec462e
-  printing: 54ff03f28fe9ba3aa93358afb80a8595a071dd07
+  printing: a8960104e6c1a2b4bd3483a2f79c69be60830d08
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
 
 PODFILE CHECKSUM: fffbbe8a12dcd7e00418aa7ef46ec7aa8781c429

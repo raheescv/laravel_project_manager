@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'app.dart';
@@ -8,6 +10,7 @@ import 'shared/logic/branch_cubit/branch_cubit.dart';
 import 'shared/logic/currency_cubit/currency_cubit.dart';
 import 'shared/utils/router/http_utils/dev_http_stub.dart'
     if (dart.library.io) 'shared/utils/router/http_utils/dev_http_io.dart';
+import 'shared/utils/crash_reporter.dart';
 import 'shared/utils/service_locator_setup/setup.dart';
 
 /// Shared boot sequence. The flavor entry points (`main_dev.dart` /
@@ -16,6 +19,9 @@ import 'shared/utils/service_locator_setup/setup.dart';
 Future<void> main() async {
   F.appFlavor ??= Flavor.dev;
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Before anything else, so a failure during boot is captured too.
+  CrashReporter.install();
 
   // Let Image.network / NetworkImage reach local `.test` HTTPS hosts on a
   // physical device (dev only) — same self-signed-cert bypass Dio already uses.
@@ -31,7 +37,7 @@ Future<void> main() async {
 
   // Refresh the cached currency list when already signed in (authenticated
   // endpoint; no-ops offline and the cache is used).
-  if (auth.user != null) currency.refreshCurrencies();
+  if (auth.user != null) unawaited(currency.refreshCurrencies());
 
   // After a fresh sign-in, default the active branch to that user's home branch
   // and pull the latest currency list to cache for offline use.

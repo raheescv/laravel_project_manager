@@ -14,8 +14,14 @@ class BarcodeTemplateList extends Component
 
     public string $newTemplateName = '';
 
+    public string $newTemplateType = BarcodeTemplateConfiguration::DEFAULT_TYPE;
+
+    public array $availableTypes = [];
+
     public function mount(): void
     {
+        $this->availableTypes = BarcodeTemplateConfiguration::types();
+        $this->newTemplateType = BarcodeTemplateConfiguration::defaultType();
         $this->loadConfiguration();
     }
 
@@ -69,12 +75,19 @@ class BarcodeTemplateList extends Component
             $suffix++;
         }
 
-        $sourceSettings = $this->templates[$this->defaultPrintTemplateKey]['settings']
-            ?? BarcodeTemplateConfiguration::defaultSettings();
+        $type = BarcodeTemplateConfiguration::typeExists($this->newTemplateType)
+            ? $this->newTemplateType
+            : BarcodeTemplateConfiguration::defaultType();
+
+        // Always seed from the chosen type's own defaults. Cloning the current
+        // default template would hand a jewellery tag's settings to a standard
+        // sticker (and the other way round) the moment both types are in use.
+        $sourceSettings = BarcodeTemplateConfiguration::defaultSettings($type);
 
         $this->templates[$key] = [
             'name' => $name,
-            'settings' => BarcodeTemplateConfiguration::normalizeSettings($sourceSettings),
+            'type' => $type,
+            'settings' => BarcodeTemplateConfiguration::normalizeSettings($sourceSettings, $type),
         ];
 
         $this->newTemplateName = '';

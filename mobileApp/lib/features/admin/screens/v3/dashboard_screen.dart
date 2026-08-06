@@ -12,6 +12,7 @@ import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/charts.dart';
@@ -58,15 +59,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _open(int tab, String route) =>
       context.isTablet ? widget.onSelectTab?.call(tab) : context.push(route);
 
-  void _openDaySession() => _open(kDaySessionTab, '/day-session');
-  void _openReturns() => _open(kReturnsTab, '/sales-returns');
-  void _openStockCheck() => _open(kStockCheckTab, '/stock-check');
-  void _openProfile() => _open(kProfileTab, '/profile');
+  void _openDaySession() => _open(kDaySessionTab, Routes.daySession);
+  void _openReturns() => _open(kReturnsTab, Routes.salesReturns);
+  void _openStockCheck() => _open(kStockCheckTab, Routes.stockCheck);
+  void _openProfile() => _open(kProfileTab, Routes.profile);
 
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminCubit>();
-    final user = context.watch<AuthCubit>().user;
+    final user = context.select<AuthCubit, ApiUser?>((c) => c.state.user);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -542,7 +543,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _quickActions() {
     final auth = context.read<AuthCubit>();
     final tiles = <Widget>[
-      _launchTile('New Sale', Icons.add_shopping_cart, () => context.push('/sale'), gold: true),
+      _launchTile('New Sale', Icons.add_shopping_cart, () => context.push(Routes.sale), gold: true),
       _launchTile('Sales', Icons.receipt_long, () => widget.onSelectTab?.call(1)),
       if (auth.hasPermission(PermissionSlug.saleReturnView))
         _launchTile('Returns', Icons.assignment_return_outlined, _openReturns),

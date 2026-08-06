@@ -101,13 +101,17 @@ class Page extends Component
                 throw new \Exception($response['message']);
             }
 
+            DB::commit();
+
+            // Everything below is a post-commit side effect: toasting success or
+            // refreshing the table before the commit would report a save that a
+            // later rollback then discards.
             $this->dispatch('success', ['message' => $response['message']]);
             $this->getList();
             $this->calculateStats();
 
             $this->dispatch('ToggleAttendanceModal');
             $this->dispatch('RefreshAttendanceTable');
-            DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
             $this->dispatch('error', ['message' => $e->getMessage()]);

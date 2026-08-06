@@ -9,7 +9,7 @@
 5. [State Management — BLoC / Cubit](#5-state-management--bloc--cubit)
 6. [Dependency Injection — get_it](#6-dependency-injection--get_it)
 7. [Network / API Layer](#7-network--api-layer)
-8. [Data Models — Manual vs json_serializable](#8-data-models--manual-vs-json_serializable)
+8. [Data Models — hand-written, defensively](#8-data-models--hand-written-defensively)
 9. [Local Storage Layer](#9-local-storage-layer)
 10. [Data Flow — End to End](#10-data-flow--end-to-end)
 11. [Routing and Navigation](#11-routing-and-navigation)
@@ -27,48 +27,62 @@
 
 ---
 
+> **Status note (2026-08-07).** This document began as a generic template and
+> parts of it still describe an app this is not. The sections below have been
+> corrected against the real codebase; where a rule is *aspirational* rather
+> than current practice it now says so explicitly. For the enforceable
+> day-to-day patterns, the `flutter-code-standards` skill is authoritative, and
+> outstanding gaps are tracked in `docs/mobile-app-architecture-audit.html`.
+
 ## 1. Project Overview
 
 | Property | Value |
 |----------|-------|
-| State management | `flutter_bloc` (Cubits + Blocs) |
+| Dart package | `invo` |
+| State management | `flutter_bloc` — see §5 for the two cubit shapes actually in use |
 | DI framework | `get_it` |
-| HTTP client | `dio` (wrapped in custom helpers) |
-| Primary font | Poppins via `google_fonts` |
-| Design base size | 393×865 (`flutter_screenutil`) |
+| HTTP client | `dio`, wrapped by `HttpService` |
+| Routing | `go_router`, declarative, with permission-gated redirects (§11) |
+| Typography | `AstraTypefaces` — 5 user-selectable pairings, via `ui()` / `serif()` (§13) |
+| Colour | `context.astra` palette — 5 presets × light/dark (§13) |
+| Serialization | hand-written `fromJson` / `toJson` with coercion helpers (§8) |
 | Flavors | `dev`, `prod` |
+| Verification | `flutter analyze lib` (zero issues, 17 strict lints) + `flutter test` |
+
+**Not used, despite what a generic Flutter skeleton would assume:** Firebase in
+any form (no Analytics, Crashlytics, Messaging or Remote Config),
+`json_serializable` / `build_runner`, and named-route or imperative
+`GlobalKey<NavigatorState>` navigation. `flutter_screenutil` is initialised in
+`app.dart` but currently read by no widget — see the audit for that decision.
 
 ---
 
 ## 2. Top-Level Directory Structure
 
 ```
-project_root/
-├── android/                  # Android native project
-├── ios/                      # iOS native project
+mobileApp/
+├── android/  ios/  macos/  web/   # Native projects
 ├── assets/
-│   ├── fonts/
-│   ├── gifs/
-│   │   └── v3/
-│   ├── icons/
-│   │   └── v3/
-│   └── images/
-│       └── v3/
-├── config/
-│   ├── dev/                  # Dev signing keys + Firebase config
-│   └── prod/                 # Prod signing keys + Firebase config
-├── doc/                      # Architecture docs
+│   ├── fonts/                     # IBM Plex Sans Arabic (receipt printing)
+│   └── icon/                      # Launcher icon source
+├── docs/                          # Design previews + the architecture audit
+├── test/                          # Widget + unit tests, with fakes in support/
 ├── lib/
-│   ├── app.dart              # Root widget, MultiBlocProvider, MaterialApp
+│   ├── app.dart              # Root widget, MultiBlocProvider, MaterialApp.router
 │   ├── main.dart             # Boot sequence, DI setup, runApp
 │   ├── main_dev.dart         # Flavor entry point (sets F.appFlavor = dev)
 │   ├── main_prod.dart        # Flavor entry point (sets F.appFlavor = prod)
 │   ├── flavors.dart          # Flavor enum + F helper class
-│   ├── firebase_options_dev.dart
-│   ├── firebase_options_prod.dart
 │   ├── features/             # One directory per feature
 │   └── shared/               # Cross-feature code
+├── env.json / gen_env.sh          # Build-time environment
+└── project_architecture_skeleton.md
 ```
+
+There is no `config/` or `doc/` directory, and no `firebase_options_*.dart` —
+this app has no Firebase dependency. Assets are limited to fonts and the
+launcher icon; there is no `assets/images|icons|gifs/v3/` tree, so §14's asset
+manager classes describe a convention that does not yet have any content.
 
 ---
 
@@ -78,21 +92,22 @@ Every product domain has its own directory under `lib/features/`. Each feature i
 
 ```
 lib/features/
-├── splash/
-├── login/
-├── signup/
-├── main/         ← App shell (bottom nav + global providers)
-├── dash_board/
-├── contacts/
-├── calls/
-├── sms/
-├── email/
-├── settings/
-├── profile/
-└── ...           ← One folder per product domain
+├── auth/          ← Login (credential / PIN / biometric), lock, connection
+├── shell/         ← App shell: bottom nav on phone, side rail on tablet
+├── admin/         ← Dashboard, reports, day session
+├── sale/          ← New Sale, cart, review & pay, invoice
+├── sales/         ← Sales list (screens only — no logic layer yet)
+├── sale_return/   ← Return authoring: pick invoice → compose → review → receipt
+├── sales_returns/ ← Returns list (screens only — no logic layer yet)
+├── stock_check/   ← Physical inventory count
+├── profile/       ← Profile, edit, change PIN / password
+└── settings/      ← Appearance, typography, branch, currency, print, permissions
 ```
 
-Features do not cross-import each other's internals. Shared logic and types live in `lib/shared/`.
+Features should not cross-import each other's internals; shared logic and types
+live in `lib/shared/`. **Currently 45 imports break this rule** — `shell`
+legitimately reaches every feature it hosts, but the rest (e.g. `sale`'s cart
+cubit importing `settings`' print cubit) are real coupling. See the audit.
 
 ---
 
@@ -140,7 +155,7 @@ abstract class ExampleRepository {
 }
 ```
 
-**`services/`** — Concrete classes that `implement` the repository. These import `HttpHelper`, `EndPoints`, `serviceLocator`, etc.
+**`services/`** — Concrete classes that `implement` the repository. These import `HttpService` (via `serviceLocator`), `EndPoints`, etc.
 
 ```dart
 class ExampleService implements ExampleRepository {
@@ -189,6 +204,34 @@ widgets/
 ---
 
 ## 5. State Management — BLoC / Cubit
+
+> **Status (2026-08-07): adopted.** Every cubit in the app is now a real
+> `Cubit<State>` with an `Equatable` state, `copyWith` and `DataFetchStatus` —
+> 16 of them. The old `HolderCubit` migration bridge (a `Cubit<int>` that owned
+> mutable fields and emitted a tick) has been deleted along with its last
+> subclass. `PaginatedListCubit` and `CartCubit` are the reference
+> implementations.
+>
+> Two things are still outstanding: `buildWhen` / `BlocSelector` are unused, so
+> rebuilds are not yet filtered per field (now *possible* — the tick made it
+> impossible); and 125 `setState` calls remain for genuinely screen-local view
+> state, which is fine.
+
+### Migrating a cubit (the method that worked)
+
+1. Move the fields into an `Equatable` state class with `copyWith`, as a
+   `part` file.
+2. Replace each mutator's assignments with `emit(state.copyWith(…))`.
+3. Leave a forwarding getter per field on the cubit
+   (`double get total => state.total`) so existing readers compile unchanged —
+   `CartCubit` had 109 read sites across 6 files and none needed touching.
+4. Adopt `BlocBuilder` / `BlocSelector` in the hot screens afterwards, at
+   leisure.
+
+Watch for state that depends on something outside the cubit: `ThemeCubit` had
+to take `platformIsDark` as a *field*, because with an `Equatable` state an
+emit that changes nothing rebuilds nothing — and an OS dark-mode flip has to
+re-skin the app.
 
 ### Cubit vs Bloc — When to Use Each
 
@@ -390,7 +433,7 @@ Two registration patterns:
 
 | Pattern | When to use |
 |---------|-------------|
-| `registerSingleton<T>(impl)` | Always-alive services needed immediately at boot (auth, Firebase, local storage) |
+| `registerSingleton<T>(impl)` | Always-alive services needed immediately at boot (local storage, `HttpService`) |
 | `registerLazySingleton<T>(impl.new)` | Services needed only when first accessed |
 
 **Register an abstract type against its implementation:**
@@ -398,18 +441,9 @@ Two registration patterns:
 serviceLocator.registerLazySingleton<MyRepository>(MyService.new);
 ```
 
-**Named instances** (for `GlobalKey`, `PageController` instances):
-```dart
-serviceLocator.registerSingleton<GlobalKey<NavigatorState>>(
-  GlobalKey<NavigatorState>(),
-  instanceName: NavigationKeys.mainScreen,
-);
-```
-
-Retrieve a named instance:
-```dart
-serviceLocator<GlobalKey<NavigatorState>>(instanceName: NavigationKeys.mainScreen);
-```
+**Named instances** are supported by `get_it` but are not currently used —
+routing is declarative (§11), so there are no registered navigator keys. If you
+need one, register it with an `instanceName` and retrieve it the same way.
 
 ### Adding a New Service Registration
 
@@ -427,18 +461,22 @@ serviceLocator<GlobalKey<NavigatorState>>(instanceName: NavigationKeys.mainScree
 ### Stack
 
 ```
-Cubit / Bloc
+Cubit / Screen
    ↓
-Service (calls HttpHelper)
+Repository (abstract) → Service (concrete)
    ↓
-HttpHelper.getDataFromServer()   ← unified API call entry point
+HttpService            ← the single API entry point: injects the auth token,
+   ↓                     tenant/host headers and active branch_id, and unwraps
+Dio HTTP client          the {success,data,message} envelope
    ↓
-HttpService (Dio wrapper)         ← injects auth token, handles refresh
-   ↓
-Dio HTTP client
-   ↓
-REST API
+Laravel /api/v1
 ```
+
+> **Changed 2026-08-07.** An earlier `HttpHelper.getDataFromServer()` facade and
+> its `ResponseData` wrapper were removed: no service ever used them, and they
+> flattened `ApiException` (losing `fieldErrors` on a 422). `HttpService` is the
+> entry point. Services hold
+> `HttpService get _http => serviceLocator<HttpService>();`.
 
 ### EndPoints
 
@@ -463,158 +501,132 @@ class EndPoints {
 }
 ```
 
-### HttpHelper
+### Calling an endpoint
 
-`lib/shared/utils/router/http utils/http_helper.dart` — the single call site for all API requests:
+`lib/shared/utils/router/http_utils/http_service.dart` exposes
+`get` / `post` / `put` / `delete`, plus `getBytes` (PDFs) and `postFileBytes`
+(multipart upload). Each returns the already-unwrapped `data` payload, or throws
+`ApiException`:
 
 ```dart
-final response = await HttpHelper.getDataFromServer(
-  EndPoints.someEndpoint,
-  requestType: RequestType.post,   // default is post
-  data: {'key': value},
-  authenticationRequired: true,    // default is true
-);
+class ExampleService implements ExampleRepository {
+  HttpService get _http => serviceLocator<HttpService>();
 
-if (!response.success) {
-  throw ApiException(response.message, response.responseCode);
+  @override
+  Future<List<ExampleModel>> list({int page = 1}) async {
+    final data = await _http.get(EndPoints.examples, query: {'page': page});
+    return (data as List<dynamic>? ?? [])
+        .map((e) => ExampleModel.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
 }
-
-final model = MyModel.fromJson(response.responseBody);
 ```
 
-`RequestType` values: `post`, `get`, `delete`, `put`, `patch`.
+Never inline a path string — every path lives on `EndPoints`.
 
 ### HttpService
 
-`lib/shared/utils/router/http utils/http_service.dart`
+`lib/shared/utils/router/http_utils/http_service.dart`
 
 Wraps Dio. Handles:
 - Injecting Bearer token from the stored auth token
 - Silent token refresh when the access token is near expiry
 - Broadcasting `UserTokenState` (active / expired / refreshFailed) on a stream
 
-### ResponseData
+### Unauthorized handling
 
-```dart
-class ResponseData {
-  final bool success;
-  final String message;
-  final int responseCode;
-  final Map<String, dynamic> responseBody;
-}
-```
-
-### Token State Stream
-
-When a token expires and refresh fails, the `tokenState` stream emits `UserTokenState.expired`. The app shell listens and navigates to login.
+`HttpService.onUnauthorized` is a callback, not a stream. `AuthCubit` sets it at
+boot (`_http.onUnauthorized = _forceSignOut`), so a 401 from any endpoint drops
+the session and the router's redirect sends the user to `/login`.
 
 ---
 
-## 8. Data Models — Manual vs json_serializable
+## 8. Data Models — hand-written, defensively
 
-The project currently writes `fromJson` / `toJson` by hand. For new models, **`json_serializable`** is the recommended approach — it eliminates boilerplate and keeps serialization in sync with the class definition automatically.
+Models write `fromJson` / `toJson` **by hand**, and should continue to.
 
-### Current Manual Pattern
+> **Reversed 2026-08-07.** This section previously recommended
+> `json_serializable`. It is the wrong tool here: the generator emits strict
+> `as`-cast parsers, and this API returns numbers as strings in several places —
+> exactly what the `asStr` / `asNum` coercion helpers absorb. Migrating 29
+> working parsers would trade a maintained convention for new crash surfaces and
+> add `build_runner` to every checkout. There is no `json_serializable` or
+> `build_runner` dependency in `pubspec.yaml`.
+
+### The pattern
 
 ```dart
-class ExampleModel with EquatableMixin {
-  ExampleModel({this.id, this.name});
+class ExampleModel extends Equatable {
+  const ExampleModel({required this.id, required this.name, this.total = 0});
 
-  ExampleModel.fromJson(Map<String, dynamic> json) {
-    id   = json['id'];
-    name = json['name'];
-  }
+  factory ExampleModel.fromJson(Map<String, dynamic> j) => ExampleModel(
+        id: asStr(j['id']),                 // never `j['id'] as String`
+        name: asStr(j['name']),
+        total: asNum(j['total']).toDouble(),
+      );
 
-  String? id;
-  String? name;
+  final String id;
+  final String name;
+  final double total;
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name};
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'total': total};
+
+  ExampleModel copyWith({String? name, double? total}) =>
+      ExampleModel(id: id, name: name ?? this.name, total: total ?? this.total);
 
   @override
-  List<Object?> get props => [id, name];
+  List<Object?> get props => [id, name, total];
 }
 ```
 
-### Recommended: json_serializable
+Rules:
 
-Add to `pubspec.yaml`:
-```yaml
-dependencies:
-  json_annotation: ^4.9.0
+- **Coerce, never cast.** `asStr` / `asNum` from
+  `shared/domain/helpers/formatters.dart` handle nulls and string-encoded
+  numbers. A bare `as String` on API data is a crash waiting for a backend tweak.
+- **Nested lists:**
+  `(j['items'] as List<dynamic>? ?? []).map((e) => X.fromJson(Map<String, dynamic>.from(e))).toList()`
+- **Fields `final`, plus `Equatable` + `props`** so models compare by value.
+  `CartLine` is the reference implementation; most models in
+  `shared/domain/models/models.dart` still lack `props` and compare by identity
+  — tracked in the audit.
+- **Money:** round at the same points the server's `decimal(16,2)` columns do,
+  using `round2()`. See §8.1.
 
-dev_dependencies:
-  build_runner: ^2.4.0
-  json_serializable: ^6.8.0
+### 8.1 Money
+
+Every money column in the Laravel schema is `decimal(16,2)`, and the sale totals
+are *generated* columns — so MySQL rounds each intermediate before deriving the
+next:
+
+```
+sale_items.gross_amount = unit_price * quantity
+sale_items.net_amount   = gross_amount - discount
+sale_items.tax_amount   = (net_amount * tax) / 100
+sale_items.total        = net_amount + tax_amount
+sales.total             = SUM(gross_amount) - item_discount + SUM(tax_amount)
+sales.grand_total       = (total - other_discount + freight) + round_off
 ```
 
-Then write the model once and let the generator produce `fromJson` / `toJson`:
+Dart `double` is binary, so summing unrounded values drifts from that by a cent
+on percentage discounts and tax — enough for a settled ticket to show a phantom
+balance. Every money getter therefore wraps its result in `round2()`, at the
+same points, including the aggregates (adding two 2dp doubles is not 2dp).
+`CartCubit` and `ReturnDraftCubit` are the worked examples, and
+`test/cart_totals_test.dart` locks the behaviour down.
 
-```dart
-import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
+### 8.2 Currency formatting
 
-part 'example_model.g.dart';
+`Money.of(v)` / `Money.compact(v)` / `Money.plain(v)` from
+`shared/domain/helpers/formatters.dart`. Never hardcode a currency symbol — the
+active one is user-configurable and applies app-wide.
 
-@JsonSerializable()
-class ExampleModel with EquatableMixin {
-  const ExampleModel({this.id, this.name});
-
-  factory ExampleModel.fromJson(Map<String, dynamic> json) =>
-      _$ExampleModelFromJson(json);
-
-  @JsonKey(name: 'id')
-  final String? id;
-
-  @JsonKey(name: 'name')
-  final String? name;
-
-  Map<String, dynamic> toJson() => _$ExampleModelToJson(this);
-
-  @override
-  List<Object?> get props => [id, name];
-}
-```
-
-Generate the `.g.dart` file:
-```bash
-dart run build_runner build --delete-conflicting-outputs
-```
-
-Or watch during development:
-```bash
-dart run build_runner watch --delete-conflicting-outputs
-```
-
-### Useful json_annotation Options
-
-| Annotation | Purpose |
-|-----------|---------|
-| `@JsonKey(name: 'snake_case_key')` | Map a JSON key to a differently-named Dart field |
-| `@JsonKey(defaultValue: [])` | Provide a fallback when the key is absent |
-| `@JsonKey(includeIfNull: false)` | Omit null fields from `toJson` output |
-| `@JsonSerializable(explicitToJson: true)` | Serialize nested objects (not just top-level) |
-
-### Nested Model Example
-
-```dart
-@JsonSerializable(explicitToJson: true)
-class ParentModel with EquatableMixin {
-  const ParentModel({this.id, this.child});
-
-  factory ParentModel.fromJson(Map<String, dynamic> json) =>
-      _$ParentModelFromJson(json);
-
-  final String? id;
-  final ChildModel? child;
-
-  Map<String, dynamic> toJson() => _$ParentModelToJson(this);
-
-  @override
-  List<Object?> get props => [id, child];
-}
-```
-
-> **Note:** Commit the generated `.g.dart` files so CI doesn't require a build step.
+`Money.symbol` and `Money.decimals` are deliberately **mutable statics**, set
+once by `CurrencyCubit` from the cached web settings. This is an accepted
+trade-off, not an oversight: threading a currency object through 315+ call
+sites would be a large change for no user-visible gain. The cost is that
+`app.dart` watches `CurrencyCubit` at the root so a currency change re-renders
+the app, and that currency-dependent tests must set the value they expect.
 
 ---
 
@@ -676,11 +688,11 @@ BlocBuilder rebuilds → shows loading indicator
       ↓
 Cubit calls serviceLocator<ExampleRepository>().apiMethod()
       ↓
-Service calls HttpHelper.getDataFromServer(EndPoints.example, data: {...})
+Service calls _http.get(EndPoints.example, query: {...})
       ↓
 HttpService sends Dio request with Bearer token
       ↓
-Response arrives → ResponseData parsed
+Response arrives → envelope unwrapped by HttpService
       ↓
 Service returns typed Model
       ↓
@@ -705,52 +717,61 @@ UI shows error snackbar or inline message
 
 ## 11. Routing and Navigation
 
-The project does **not** use `go_router`, `auto_route`, or named routes. Navigation is imperative using `Navigator` + `GlobalKey<NavigatorState>`.
+The app uses **`go_router`**, declaratively, configured in
+`lib/shared/utils/router/app_router.dart`.
 
-### Navigator Keys
+> **Corrected 2026-08-07.** This section previously said the project does *not*
+> use `go_router` and navigates imperatively with `Navigator` +
+> `GlobalKey<NavigatorState>`. That was never true here. The unused
+> `NavigationKeys` constants have been deleted.
 
-Named keys are registered in DI so services can navigate without a `BuildContext`:
+### Route constants
 
-```dart
-serviceLocator.registerSingleton<GlobalKey<NavigatorState>>(
-  GlobalKey<NavigatorState>(),
-  instanceName: NavigationKeys.global,
-);
-```
-
-Key name constants live in `lib/shared/domain/constants/navigation_keys.dart`.
-
-### App Flow
-
-```
-SplashScreen (home)
-      ↓
-SplashCubit.checkLoginStatus()
-      ├─ not logged in → LoginScreen
-      └─ logged in → (optional gate screen) → MainScreen
-
-MainScreen
-  └── Custom bottom nav bar
-       └── LazyIndexedStack (one tab per feature)
-```
-
-### Navigating Between Screens
+Every path is a constant on `Routes`
+(`lib/shared/utils/router/routes.dart`). The router declares its `GoRoute`s from
+them and every call site navigates by constant, so renaming a path is one edit
+the compiler checks:
 
 ```dart
-// Push from within widget tree
-Navigator.of(context).push(
-  MaterialPageRoute(builder: (_) => const SomeScreen()),
-);
-
-// Push from outside widget tree (e.g. service layer)
-serviceLocator<GlobalKey<NavigatorState>>(instanceName: NavigationKeys.global)
-  .currentState
-  ?.push(MaterialPageRoute(builder: (_) => const SomeScreen()));
+context.push(Routes.saleReturnPick);
+context.go(Routes.homeTab(kReturnsTab));
 ```
 
-### Tab Navigation
+Never write a raw path string in a `context.go` / `context.push` call.
 
-The main screen uses a custom bottom nav bar widget. Active tab index is tracked by a dedicated Cubit (`ActiveIndexObserverCubit`) registered at app startup so any component can switch tabs programmatically.
+### Auth and permission gating
+
+The top-level `redirect` is the single gate — screens do not check permissions
+for routing. It sends signed-out users to `/login`, routes users without
+`salesOverview` away from the admin home, and gates the sale-return, day-session
+and stock-check routes on their `PermissionSlug`. `GoRouterRefreshStream`
+re-evaluates it whenever `AuthCubit` emits.
+
+### Passing objects between routes
+
+`state.extra` is `Object?`, is **not** preserved across a platform restore, and
+is absent on a deep link. Every route that carries a model therefore guards the
+cast in its own `redirect` and falls back to its list:
+
+```dart
+GoRoute(
+  path: Routes.invoice,
+  redirect: (_, state) => state.extra is Sale ? null : Routes.sales,
+  builder: (_, state) => InvoiceScreen(sale: state.extra as Sale),
+),
+```
+
+A bare `state.extra as Sale` is a crash with no way back — do not add one.
+
+### App flow
+
+```
+/login  ──(AuthCubit.status == signedIn)──▶  /home  (admin)  or  /sale  (cashier)
+
+HomeShell
+  └── phone: AstraBottomNav · tablet: AstraSideRail (TabletRailScaffold)
+       └── one destination per feature
+```
 
 ---
 
@@ -775,10 +796,10 @@ class F {
 
 | File | Purpose |
 |------|---------|
-| `lib/main_dev.dart` | Sets `F.appFlavor = Flavor.dev`, uses dev Firebase options |
-| `lib/main_prod.dart` | Sets `F.appFlavor = Flavor.prod`, uses prod Firebase options |
+| `lib/main_dev.dart` | Sets `F.appFlavor = Flavor.dev` |
+| `lib/main_prod.dart` | Sets `F.appFlavor = Flavor.prod` |
 
-Both call `await runner.main()` (`lib/main.dart`) after Firebase initialization.
+Both call `await runner.main()` (`lib/main.dart`). A plain `flutter run` lands in `main.dart` directly and defaults to the dev flavor.
 
 ### Using Flavor in Code
 
@@ -815,65 +836,66 @@ flutter build apk -t lib/main_dev.dart --flavor dev --release
 
 ## 13. Theme and Styling System
 
-### Theme Entry Point
+> **Corrected 2026-08-07.** This section previously described a single light
+> `ThemeData`, a `ColorManager.primary` palette and `getRegularStyle()`-style
+> helpers over Poppins. None of that matches the app.
 
-`lib/shared/utils/components/theme/theme_manager.dart` → `getApplicationThemeLight(BuildContext context)` returns the single `ThemeData`. Only a light theme exists.
+### Palette — `context.astra`
 
-Applied in `app.dart`:
-```dart
-theme: getApplicationThemeLight(context),
-```
-
-### Color System
-
-`lib/shared/utils/components/theme/color_manager.dart`
-
-All colors are `static const Color` on `ColorManager`:
+`lib/shared/utils/components/theme/palette.dart` +
+`theme_manager.dart`. The app ships **5 presets × light/dark**, chosen by the
+user in Settings → Appearance and applied by `buildAstraTheme(palette, typeface)`
+in `app.dart`. Widgets read the active palette off the context:
 
 ```dart
-ColorManager.primary
-ColorManager.secondary
-ColorManager.background
-ColorManager.whiteColor
-ColorManager.greyTextColor
-// ...
+final p = context.astra;
+Container(color: p.card, child: Text('…', style: ui(size: 13, color: p.ink)));
 ```
 
-Never use raw `Color(0xFF...)` in widget files — always reference `ColorManager`.
+Common tokens: `canvas`, `card`, `cardSolid`, `sheet`, `ink`, `textSecondary`,
+`textMuted`, `hairline`, `primary`, `accent`, `primaryGradient`, `heroGradient`.
 
-### Typography
+`ColorManager` holds only the few preset-independent constants (`success`,
+`danger`, black/white/transparent). Never write `Color(0xFF…)` or
+`Colors.grey[600]` in a feature file — a hardcoded grey breaks dark mode.
 
-`lib/shared/utils/components/theme/styles_manager.dart`
+### Typography — `ui()` and `serif()`
 
-All text styles built from helper functions backed by `GoogleFonts.poppins()`:
+`styles_manager.dart`, backed by `AstraTypefaces` (`typeface.dart`) — 5
+user-selectable pairings, device-local, kept in sync by `ThemeCubit`:
 
 ```dart
-getRegularStyle(color: ColorManager.secondary, fontSize: KFontSize.f14)
-getMediumStyle(color: ColorManager.secondary, fontSize: KFontSize.f16)
-getSemiBoldStyle(color: ColorManager.secondary, fontSize: KFontSize.f18)
-getBoldStyle(color: ColorManager.secondary, fontSize: KFontSize.f20)
-getLightStyle(color: ColorManager.secondary, fontSize: KFontSize.f12)
+ui(size: 13, weight: FontWeight.w700, color: p.ink)   // rows, labels, buttons
+serif(size: 22, color: p.ink)                          // titles, prices, KPIs
 ```
 
-Never create `TextStyle(...)` directly in a widget. Use these helpers.
+Never construct a `TextStyle` directly — it will not follow the Typography
+setting.
 
-### Responsive Dimensions
+### Responsive layout
 
-`lib/shared/utils/components/size_manager.dart` — backed by `flutter_screenutil`. Design size is **393×865**.
+`lib/shared/domain/helpers/responsive.dart`:
 
 ```dart
-KFontSize.f14    // font sizes  → .sp
-KRadius.r10      // radii       → .r
-KPadding.v15     // padding     → .h / .w
-KHeight.h20      // heights     → .h
-KWidth.w10       // widths      → .w
+context.isTablet   // shortestSide >= 600, so rotation never reclassifies a phone
+context.isWide     // tablet AND width >= 1200
+MaxWidthBox(...)   // caps phone-shaped content at 560 on large screens
 ```
 
-Initialized in `app.dart` via `ScreenUtilInit(designSize: const Size(393, 865), ...)`. All references scale automatically.
+Tablet layouts are gated on `context.isTablet`; the phone UI must not change.
+`app.dart` also clamps the OS text scale to 0.85–1.3 so an accessibility setting
+cannot overflow fixed-height rows.
 
-### Theme Getters
+**Sizing is raw literals** — `ui(size: 13)`, `SizedBox(height: 14)`,
+`EdgeInsets.fromLTRB(20, 14, 20, 24)` — combined with the breakpoint helpers
+above and the text-scale clamp.
 
-`lib/shared/utils/components/theme/theme_getters.dart` — convenience wrappers for accessing `ThemeData` properties without a `BuildContext`.
+> **Removed 2026-08-07.** `flutter_screenutil`, its `ScreenUtilInit` wrapper and
+> `size_manager.dart`'s `KFontSize` / `KRadius` / `KPadding` / `KHeight` /
+> `KWidth` tokens are gone. The framework was initialised app-wide but read by
+> no widget, and the breakpoint approach is the one the app actually uses.
+> `ColorManager` went the same way — `context.astra` and `AstraPalette` cover
+> everything it held.
 
 ---
 
@@ -921,7 +943,7 @@ The `v3/` subdirectory marks assets belonging to the current design generation. 
 
 ### ApiException
 
-`lib/shared/utils/router/http utils/common_exception.dart`
+`lib/shared/utils/router/http_utils/common_exception.dart`
 
 ```dart
 class ApiException implements Exception {
@@ -966,19 +988,19 @@ Catch the specific exception first, then the base:
 }
 ```
 
-### Firebase Crashlytics Integration
+### Crash reporting
 
-`lib/main.dart` installs crash handlers at boot:
+**There is none.** `lib/main.dart` installs neither `FlutterError.onError` nor
+`PlatformDispatcher.instance.onError`, and there is no Firebase dependency, so
+an uncaught error on a shop-floor device leaves no trace. Known gap — see the
+audit; it needs a destination (a Laravel endpoint alongside the existing API
+logging is the lighter option) before handlers are worth adding.
 
-```dart
-FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-PlatformDispatcher.instance.onError = (error, stack) {
-  FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-  return true;
-};
-```
+### Silent catches
 
-Network errors (`SocketException`, `ClientException`, etc.) are recorded as non-fatal.
+`catch (_) {}` with an empty body swallows `TypeError` and `NoSuchMethodError`
+too, so programming bugs disappear. Narrow to the expected type, or leave a
+one-line comment naming what is being ignored and why.
 
 ### Token Expiry
 
@@ -993,53 +1015,53 @@ Network errors (`SocketException`, `ClientException`, etc.) are recorded as non-
 ```
 shared/
 ├── api/
-│   ├── end_points.dart         → All API endpoint constants
-│   └── urls.dart               → External web URL constants
+│   └── end_points.dart             → Every /api/v1 path, one place
 ├── domain/
 │   ├── constants/
-│   │   ├── data_fetching_status.dart
-│   │   ├── global_variables.dart   → serviceLocator instance + app-wide constants
-│   │   ├── navigation_keys.dart    → Named navigator key string constants
-│   │   └── page_controllers.dart   → Named PageController string constants
+│   │   ├── app_config.dart         → Base URL + tenant resolution
+│   │   ├── data_fetching_status.dart  → (defined; unused until §5 migration)
+│   │   ├── global_variables.dart   → serviceLocator instance
+│   │   └── mobile_permissions.dart → PermissionSlug constants
 │   ├── helpers/
-│   │   ├── extensions/             → on_string, on_json, on_list, etc.
-│   │   ├── validators.dart
-│   │   ├── format_phone.dart
-│   │   ├── snack_bar.dart
-│   │   └── global_setters.dart     → Post-login data persistence helpers
-│   ├── models/                     → Shared models (e.g. token response)
-│   ├── repository/                 → Shared abstract repos
-│   └── services/                   → Shared service implementations
+│   │   ├── formatters.dart         → Money, Dates, qtyLabel, asStr/asNum, round2
+│   │   ├── icons.dart
+│   │   └── responsive.dart         → Breakpoints, context.isTablet, MaxWidthBox
+│   ├── models/                     → models.dart (29 classes), currency, print_settings
+│   ├── repository/lookup_repository.dart
+│   └── services/lookup_service.dart
 ├── logic/
-│   ├── active_index_observer_cubit/
-│   ├── app_update_checker_bloc/
-│   └── global_functional_cubit/
-├── screens/                        → Shared full-page screens
+│   ├── base/holder_cubit.dart
+│   ├── branch_cubit/  currency_cubit/  haptics_cubit/  theme_cubit/
 ├── utils/
+│   ├── camera_permission.dart
 │   ├── components/
-│   │   ├── app_strings.dart        → All user-facing strings
-│   │   ├── assets_manager.dart     → Asset path constants
-│   │   ├── size_manager.dart       → KFontSize, KRadius, KPadding, etc.
+│   │   ├── app_strings.dart        → User-facing copy
+│   │   ├── haptics.dart            → HapticTapDetector
+│   │   ├── size_manager.dart       → K* tokens (defined; currently unused)
 │   │   └── theme/
-│   │       ├── color_manager.dart
-│   │       ├── styles_manager.dart
-│   │       ├── theme_getters.dart
-│   │       └── theme_manager.dart
-│   ├── local_storage/
-│   │   ├── keys.dart
-│   │   └── local_storage_service.dart
+│   │       ├── color_manager.dart  → Preset-independent constants only
+│   │       ├── palette.dart        → AstraPalette, the 5 presets
+│   │       ├── styles_manager.dart → ui() / serif()
+│   │       ├── theme_manager.dart  → buildAstraTheme, context.astra
+│   │       └── typeface.dart       → AstraTypefaces
+│   ├── local_storage/{keys,local_storage_service}.dart
 │   ├── router/
-│   │   └── http utils/
-│   │       ├── common_exception.dart
-│   │       ├── http_helper.dart
-│   │       ├── http_service.dart
-│   │       └── model/
-│   └── service_locator_setup/
-│       └── setup.dart
-└── widgets/
-    ├── v3/                          → Current-generation shared widgets
-    └── *.dart                       → Common widgets
+│   │   ├── app_router.dart         → createRouter + permission redirects
+│   │   ├── routes.dart             → Route path constants
+│   │   ├── go_router_refresh_stream.dart
+│   │   └── http_utils/
+│   │       ├── common_exception.dart  → ApiException
+│   │       ├── http_service.dart      → The API entry point
+│   │       └── dev_http_{io,stub}.dart
+│   └── service_locator_setup/setup.dart
+└── widgets/                        → astra_widgets, astra_drawer, astra_bottom_nav,
+                                       astra_side_rail, tablet_widgets, charts,
+                                       receipt_pdf, receipt_printer, qty_input_sheet,
+                                       continuous_scanner_screen, invo_logo
 ```
+
+> `shared/widgets/` has no `index.dart` and no `v3/` subfolder, unlike the
+> feature layers — an inconsistency, not a rule.
 
 ### Shared Widgets (Commonly Used)
 
@@ -1094,10 +1116,21 @@ features/{name}/
                                    export 'widgets/index.dart';
 ```
 
-**Rule:** Import a feature via its top-level `index.dart` to get its full public API:
+**Decided 2026-08-07 — barrels are a convenience, not a rule.** All 132
+`package:invo/features/...` imports are direct paths to the file they need, and
+that is fine: a deep import states its dependency precisely, and importing a
+feature's top-level `index.dart` would pull that feature's whole surface
+(including its screens) into the importer for one model. Barrels exist and are
+kept complete so a folder *can* be re-exported, but there is no requirement to
+import through them, and no cleanup task to convert existing imports.
+
 ```dart
-import 'package:{app_name}/features/{name}/index.dart';
+// Preferred — says exactly what is used.
+import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 ```
+
+What *does* still apply is §3: a cross-feature import should be rare and
+deliberate. If two features need the same type, it belongs in `lib/shared/`.
 
 Cubit state files declared as `part` of the cubit are **not** exported — they are only accessible through the cubit file.
 
@@ -1105,20 +1138,22 @@ Cubit state files declared as `part` of the cubit are **not** exported — they 
 
 ## 18. Key Integrations
 
-### Firebase
+> **Rewritten 2026-08-07.** This section previously documented Firebase
+> Analytics, Crashlytics, Messaging and Remote Config. **There is no Firebase
+> dependency in this app** and none of those integrations exist.
 
-- `FirebaseAnalytics` — registered as singleton, accessed via `serviceLocator<FirebaseAnalytics>()`
-- Analytics are wrapped behind `FirebaseAnalyticsRepository` → `FirebaseAnalyticsService` (log events through this interface, not directly)
-- `FirebaseCrashlytics` — accessed directly (not via DI); error handlers set at boot in `main.dart`
-- `FirebaseMessaging` — background handler registered in `main.dart`; FCM token fetched during login
+| Concern | How it works |
+|---|---|
+| Barcode scanning | `mobile_scanner` behind the shared `ContinuousScannerScreen` — permission-first via `permission_handler`, with a serialized camera op-queue. Never let `mobile_scanner` request permission itself. |
+| Receipt printing | On-device via `printing` + `pdf` (`buildReceiptPdf`) — instant and offline. Arabic shapes correctly **only** when IBM Plex Sans Arabic is the *base* font. Options come from the web Sale Configuration (`/settings/sale`); only paper width is device-local. |
+| Biometrics | `local_auth` for Touch ID / Face ID / fingerprint sign-in. |
+| Secure storage | `flutter_secure_storage` for the token and user; `shared_preferences` for device-local flags. |
+| Haptics | App-wide via `HapticTapDetector` in `app.dart`'s builder — do not add per-tap `selectionClick()`. |
+| Photos | `image_picker` + `crop_your_image` for the profile avatar. |
 
-### Firebase Remote Config
-
-`RemoteConfigService.instance.init()` called at boot. Used to gate features by version or roll out flags without an app update.
-
-### Local Notifications
-
-`LocalNotificationRepository` → `LocalNotificationService`, registered as a **singleton** (must be ready before the first push arrives).
+**Crash reporting: none.** `main()` installs neither `FlutterError.onError` nor
+`PlatformDispatcher.instance.onError`, so shop-floor crashes are invisible. This
+is a known gap, not a decision — see the audit.
 
 ---
 
@@ -1208,7 +1243,7 @@ Never use `kDebugMode` for environment-specific logic. Always use `F.isDev`.
 
 ### HTTP Calls
 
-- All HTTP calls go through `HttpHelper.getDataFromServer()`
+- All HTTP calls go through `HttpService` (resolved from `serviceLocator`)
 - Never use `Dio` directly inside feature services
 - Always check `response.success` before parsing
 - Throw `ApiException` on non-success responses
@@ -1249,9 +1284,16 @@ Never use `kDebugMode` for environment-specific logic. Always use `F.isDev`.
 
 New screens and widgets go under `v3/`. Older design-revision files at earlier paths are kept but not extended.
 
-### json_serializable
+### Serialization
 
-For any new model added to the project, prefer `json_serializable` over manual `fromJson`/`toJson`. Run `dart run build_runner build --delete-conflicting-outputs` after model changes and commit the `.g.dart` file.
+Hand-written `fromJson` / `toJson` with `asStr` / `asNum` coercion — never a bare
+`as` on API data, and never `json_serializable` (§8). Give new models `final`
+fields plus `Equatable` `props`.
+
+### Money
+
+Round with `round2()` at the same points the server's `decimal(16,2)` columns
+do, aggregates included (§8.1).
 
 ---
 
@@ -1283,32 +1325,29 @@ lib/features/{name}/
 
 ### Step 2 — Define the model
 
-`features/{name}/domain/models/{name}_model.dart` (using `json_serializable`):
+`features/{name}/domain/models/{name}_model.dart`:
 
 ```dart
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:invo/shared/domain/helpers/formatters.dart';
 
-part '{name}_model.g.dart';
+class ExampleModel extends Equatable {
+  const ExampleModel({required this.id, this.title = ''});
 
-@JsonSerializable()
-class ExampleModel with EquatableMixin {
-  const ExampleModel({this.id, this.title});
+  factory ExampleModel.fromJson(Map<String, dynamic> j) => ExampleModel(
+        id: asStr(j['id']),
+        title: asStr(j['title']),
+      );
 
-  factory ExampleModel.fromJson(Map<String, dynamic> json) =>
-      _$ExampleModelFromJson(json);
+  final String id;
+  final String title;
 
-  final String? id;
-  final String? title;
-
-  Map<String, dynamic> toJson() => _$ExampleModelToJson(this);
+  Map<String, dynamic> toJson() => {'id': id, 'title': title};
 
   @override
   List<Object?> get props => [id, title];
 }
 ```
-
-Run `dart run build_runner build --delete-conflicting-outputs` to generate `{name}_model.g.dart`.
 
 ### Step 3 — Define the repository
 
@@ -1325,26 +1364,24 @@ abstract class ExampleRepository {
 `features/{name}/domain/services/{name}_service.dart`:
 
 ```dart
-import 'package:{app_name}/features/{name}/domain/index.dart';
-import 'package:{app_name}/shared/api/end_points.dart';
-import 'package:{app_name}/shared/utils/router/http%20utils/common_exception.dart';
-import 'package:{app_name}/shared/utils/router/http%20utils/http_helper.dart';
+import 'package:invo/features/{name}/domain/index.dart';
+import 'package:invo/shared/api/end_points.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/utils/router/http_utils/http_service.dart';
 
 class ExampleService implements ExampleRepository {
+  HttpService get _http => serviceLocator<HttpService>();
+
   @override
   Future<ExampleModel> getItem({required String id}) async {
-    final response = await HttpHelper.getDataFromServer(
-      EndPoints.exampleGet,
-      requestType: RequestType.get,
-      data: {'id': id},
-    );
-    if (!response.success) {
-      throw ApiException(response.message, response.responseCode);
-    }
-    return ExampleModel.fromJson(response.responseBody);
+    final data = await _http.get(EndPoints.exampleById(id));
+    return ExampleModel.fromJson(Map<String, dynamic>.from(data as Map));
   }
 }
 ```
+
+`HttpService` unwraps the envelope and throws `ApiException` on failure — the
+cubit catches it (§5).
 
 ### Step 5 — Register in DI
 
@@ -1587,26 +1624,29 @@ class {Name}State extends Equatable {
 }
 ```
 
-### Model (json_serializable)
+### Model
 
 ```dart
 import 'package:equatable/equatable.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:invo/shared/domain/helpers/formatters.dart';
 
-part '{name}_model.g.dart';
+class {Name}Model extends Equatable {
+  const {Name}Model({required this.id, this.name = '', this.child});
 
-@JsonSerializable(explicitToJson: true)
-class {Name}Model with EquatableMixin {
-  const {Name}Model({this.id, this.name, this.child});
+  factory {Name}Model.fromJson(Map<String, dynamic> j) => {Name}Model(
+        id: asStr(j['id']),
+        name: asStr(j['name']),
+        child: j['child'] is Map
+            ? {Child}Model.fromJson(Map<String, dynamic>.from(j['child'] as Map))
+            : null,
+      );
 
-  factory {Name}Model.fromJson(Map<String, dynamic> json) =>
-      _${Name}ModelFromJson(json);
-
-  final String? id;
-  final String? name;
+  final String id;
+  final String name;
   final {Child}Model? child;
 
-  Map<String, dynamic> toJson() => _${Name}ModelToJson(this);
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'name': name, 'child': child?.toJson()};
 
   @override
   List<Object?> get props => [id, name, child];
@@ -1624,28 +1664,17 @@ abstract class {Name}Repository {
 
 // {name}_service.dart
 class {Name}Service implements {Name}Repository {
+  HttpService get _http => serviceLocator<HttpService>();
+
   @override
   Future<{Name}ResponseModel> getItem({required String id}) async {
-    final response = await HttpHelper.getDataFromServer(
-      EndPoints.{name}Get,
-      requestType: RequestType.get,
-      data: {'id': id},
-    );
-    if (!response.success) {
-      throw ApiException(response.message, response.responseCode);
-    }
-    return {Name}ResponseModel.fromJson(response.responseBody);
+    final data = await _http.get(EndPoints.{name}ById(id));
+    return {Name}ResponseModel.fromJson(Map<String, dynamic>.from(data as Map));
   }
 
   @override
   Future<void> createItem({required {Name}Model body}) async {
-    final response = await HttpHelper.getDataFromServer(
-      EndPoints.{name}Create,
-      data: body.toJson(),
-    );
-    if (!response.success) {
-      throw ApiException(response.message, response.responseCode);
-    }
+    await _http.post(EndPoints.{name}, body: body.toJson());
   }
 }
 ```

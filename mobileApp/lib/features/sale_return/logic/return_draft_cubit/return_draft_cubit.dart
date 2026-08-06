@@ -1,19 +1,38 @@
+import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart'
     show CustomPayment, PayMode, PayModeX;
 import 'package:invo/shared/domain/models/index.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/utils/components/app_strings.dart';
+
+part 'return_draft_state.dart';
 
 /// One editable return line: a returnable sale line plus the quantity being
 /// returned (0..returnableQuantity). The line discount is prorated to the
 /// returned quantity, matching the backend (V1\SaleReturn\CreateAction).
-class ReturnLine {
-  ReturnLine(this.source);
+class ReturnLine extends Equatable {
+  const ReturnLine(this.source,
+      {this.returnQty = 0, this.returnItemId, this.editBonus = 0});
 
   final ReturnableSaleLine source;
-  double returnQty = 0;
+  final double returnQty;
 
-  int? returnItemId;
-  double editBonus = 0;
+  /// The existing sale_return_item id when editing; null for a fresh line.
+  final int? returnItemId;
+
+  /// Quantity already on the return being edited — added back to the
+  /// returnable allowance so an edit can keep what it previously returned.
+  final double editBonus;
+
+  ReturnLine copyWith({double? returnQty, int? returnItemId, double? editBonus}) =>
+      ReturnLine(source,
+          returnQty: returnQty ?? this.returnQty,
+          returnItemId: returnItemId ?? this.returnItemId,
+          editBonus: editBonus ?? this.editBonus);
+
+  @override
+  List<Object?> get props => [source, returnQty, returnItemId, editBonus];
 
   int get saleItemId => source.saleItemId;
   String get name => source.name;
@@ -25,13 +44,16 @@ class ReturnLine {
   double get returnable => source.returnableQuantity + editBonus;
   double get tax => source.tax;
 
-  double get discount => source.soldQuantity > 0
+  // Rounded at the same points as the server's decimal(16,2) generated columns
+  // on sale_return_items — see the note on CartLine. Pro-rating the original
+  // line discount is exactly the kind of division that leaves 3+ decimals.
+  double get discount => round2(source.soldQuantity > 0
       ? source.discount * returnQty / source.soldQuantity
-      : 0;
+      : 0);
 
-  double get base => unitPrice * returnQty;
-  double get net => (base - discount).clamp(0, double.infinity);
-  double get taxAmount => net * tax / 100.0;
+  double get base => round2(unitPrice * returnQty);
+  double get net => round2((base - discount).clamp(0, double.infinity));
+  double get taxAmount => round2(net * tax / 100.0);
   double get total => net + taxAmount;
 
   bool get isReturning => returnQty > 0;
@@ -40,86 +62,78 @@ class ReturnLine {
 
 /// The live sale-return draft: the source invoice, per-line return quantities,
 /// and the refund payment selection — modelled on [CartCubit].
-class ReturnDraftCubit extends HolderCubit {
-  ReturnDraftCubit();
+class ReturnDraftCubit extends Cubit<ReturnDraftState> {
+  ReturnDraftCubit() : super(const ReturnDraftState());
 
-  String saleId = '';
-  String invoiceNo = '';
-  String saleDate = '';
-  String customerName = 'Walk-in';
-  String customerMobile = '';
-  int? accountId;
+  // Read facade over `state`, so existing call sites were untouched.
+  String get saleId => state.saleId;
+  String get invoiceNo => state.invoiceNo;
+  String get saleDate => state.saleDate;
+  String get customerName => state.customerName;
+  String get customerMobile => state.customerMobile;
+  int? get accountId => state.accountId;
+  String get editingReturnId => state.editingReturnId;
+  bool get isEditing => state.isEditing;
+  List<ReturnLine> get lines => state.lines;
+  PayMode get payMode => state.payMode;
+  List<CustomPayment> get customPayments => state.customPayments;
+  bool get isSeeded => state.isSeeded;
+  bool get isEmpty => state.isEmpty;
+  List<ReturnLine> get returningLines => state.returningLines;
+  int get count => state.count;
+  double get subtotal => state.subtotal;
+  double get totalDiscount => state.totalDiscount;
+  double get taxTotal => state.taxTotal;
+  double get total => state.total;
+  double get refundAmount => state.refundAmount;
+  double get balance => state.balance;
 
-  String editingReturnId = '';
-  bool get isEditing => editingReturnId.isNotEmpty;
-
-  final List<ReturnLine> _lines = [];
-  List<ReturnLine> get lines => List.unmodifiable(_lines);
-
-  PayMode payMode = PayMode.cash;
-  List<CustomPayment> customPayments = [];
-
-  bool get isSeeded => saleId.isNotEmpty;
-  bool get isEmpty => !_lines.any((l) => l.isReturning);
-  List<ReturnLine> get returningLines =>
-      _lines.where((l) => l.isReturning).toList();
-  int get count => _lines.fold(0, (a, l) => a + l.returnQty.round());
-
-  void seed(ReturnableSale sale) {
-    saleId = sale.saleId;
-    invoiceNo = sale.invoiceNo.isNotEmpty ? sale.invoiceNo : sale.referenceNo;
-    saleDate = sale.date;
-    customerName = sale.customerName.isEmpty ? 'Walk-in' : sale.customerName;
-    customerMobile = sale.customerMobile;
-    accountId = sale.accountId;
-    editingReturnId = '';
-    _lines
-      ..clear()
-      ..addAll(sale.lines.map(ReturnLine.new));
-    payMode = PayMode.cash;
-    customPayments = [];
-    refresh();
-  }
+  void seed(ReturnableSale sale) => emit(ReturnDraftState(
+        saleId: sale.saleId,
+        invoiceNo: sale.invoiceNo.isNotEmpty ? sale.invoiceNo : sale.referenceNo,
+        saleDate: sale.date,
+        customerName: sale.customerName.isEmpty
+            ? AppStrings.walkInCustomer
+            : sale.customerName,
+        customerMobile: sale.customerMobile,
+        accountId: sale.accountId,
+        lines: sale.lines.map(ReturnLine.new).toList(),
+      ));
 
   void seedForEdit(ReturnableSale sale, SaleReturn existing) {
     seed(sale);
-    editingReturnId = existing.id;
-    if (existing.accountId != null) accountId = existing.accountId;
-
     final bySaleItem = <int, SaleReturnLine>{};
     for (final l in existing.lines) {
       if (l.saleItemId != null) bySaleItem[l.saleItemId!] = l;
     }
-    for (final line in _lines) {
-      final prior = bySaleItem[line.saleItemId];
-      if (prior != null) {
-        line.editBonus = prior.quantity;
-        line.returnQty = prior.quantity;
-        line.returnItemId = prior.itemId;
-      }
-    }
-    _seedPayments(existing.payments, existing.paid);
-    refresh();
+    final payment = _seedPayments(existing.payments, existing.paid);
+    emit(state.copyWith(
+      editingReturnId: existing.id,
+      accountId: existing.accountId ?? state.accountId,
+      lines: [
+        for (final line in state.lines)
+          if (bySaleItem[line.saleItemId] case final prior?)
+            line.copyWith(
+                editBonus: prior.quantity,
+                returnQty: prior.quantity,
+                returnItemId: prior.itemId)
+          else
+            line,
+      ],
+      payMode: payment.mode,
+      customPayments: payment.rows,
+    ));
   }
 
-  void _seedPayments(List<SaleReturnPayment> payments, double paid) {
+  ({PayMode mode, List<CustomPayment> rows}) _seedPayments(
+      List<SaleReturnPayment> payments, double paid) {
     if (payments.isEmpty) {
-      payMode = paid > 0 ? PayMode.cash : PayMode.credit;
-      customPayments = [];
-      return;
+      return (mode: paid > 0 ? PayMode.cash : PayMode.credit, rows: const []);
     }
     if (payments.length == 1 && payments.first.paymentMethodId == null) {
       final name = payments.first.method.toLowerCase();
-      if (name.contains('cash')) {
-        payMode = PayMode.cash;
-        customPayments = [];
-        return;
-      }
-      if (name.contains('card')) {
-        payMode = PayMode.card;
-        customPayments = [];
-        return;
-      }
+      if (name.contains('cash')) return (mode: PayMode.cash, rows: const []);
+      if (name.contains('card')) return (mode: PayMode.card, rows: const []);
     }
     final rows = payments
         .where((p) => p.paymentMethodId != null)
@@ -127,83 +141,54 @@ class ReturnDraftCubit extends HolderCubit {
             methodId: p.paymentMethodId!, methodName: p.method, amount: p.amount))
         .toList();
     if (rows.isEmpty) {
-      payMode = paid > 0 ? PayMode.cash : PayMode.credit;
-      customPayments = [];
-      return;
+      return (mode: paid > 0 ? PayMode.cash : PayMode.credit, rows: const []);
     }
-    payMode = PayMode.custom;
-    customPayments = rows;
+    return (mode: PayMode.custom, rows: rows);
   }
 
   void setQty(ReturnLine line, double qty) {
-    line.returnQty = qty.clamp(0, line.returnable);
-    refresh();
+    final i = state.lines.indexOf(line);
+    if (i == -1) return;
+    final rows = [...state.lines];
+    rows[i] = line.copyWith(returnQty: qty.clamp(0, line.returnable).toDouble());
+    emit(state.copyWith(lines: rows));
   }
 
   void changeQty(ReturnLine line, double delta) =>
       setQty(line, line.returnQty + delta);
 
-  void setPayMode(PayMode mode) {
-    payMode = mode;
-    if (mode != PayMode.custom) customPayments = [];
-    refresh();
-  }
+  void setPayMode(PayMode mode) => emit(state.copyWith(
+        payMode: mode,
+        customPayments: mode == PayMode.custom ? null : const [],
+      ));
 
-  void setCustomPayments(List<CustomPayment> payments) {
-    customPayments = payments;
-    payMode = PayMode.custom;
-    refresh();
-  }
+  void setCustomPayments(List<CustomPayment> payments) => emit(state.copyWith(
+        customPayments: payments,
+        payMode: PayMode.custom,
+      ));
 
-  // ---- totals (only the returning lines count) ----
-  double get subtotal => returningLines.fold(0.0, (a, l) => a + l.base);
-  double get totalDiscount =>
-      returningLines.fold(0.0, (a, l) => a + l.discount);
-  double get taxTotal => returningLines.fold(0.0, (a, l) => a + l.taxAmount);
-  double get total => returningLines.fold(0.0, (a, l) => a + l.total);
-
-  double get refundAmount => switch (payMode) {
-        PayMode.credit => 0,
-        PayMode.custom => customPayments.fold(0.0, (a, p) => a + p.amount),
-        _ => total,
-      };
-
-  double get balance => total - refundAmount;
-
-  void clear() {
-    saleId = '';
-    invoiceNo = '';
-    saleDate = '';
-    customerName = 'Walk-in';
-    customerMobile = '';
-    accountId = null;
-    editingReturnId = '';
-    _lines.clear();
-    payMode = PayMode.cash;
-    customPayments = [];
-    refresh();
-  }
+  void clear() => emit(const ReturnDraftState());
 
   /// Build the POST /sale-return payload (matches SaleReturn StoreRequest).
   Map<String, dynamic> toPayload() => {
-        'sale_id': int.tryParse(saleId) ?? saleId,
-        if (accountId != null) 'account_id': accountId,
-        'items': returningLines
+        'sale_id': int.tryParse(state.saleId) ?? state.saleId,
+        if (state.accountId != null) 'account_id': state.accountId,
+        'items': state.returningLines
             .map((l) => {
                   if (l.returnItemId != null) 'id': l.returnItemId,
                   'sale_item_id': l.saleItemId,
                   'quantity': l.returnQty,
                   'unitPrice': l.unitPrice,
-                  'discount': double.parse(l.discount.toStringAsFixed(2)),
+                  'discount': l.discount,
                 })
             .toList(),
-        'paymentMethod': payMode.apiValue,
-        'totalPayment': double.parse(total.toStringAsFixed(2)),
-        if (payMode == PayMode.custom)
-          'payments': customPayments
+        'paymentMethod': state.payMode.apiValue,
+        'totalPayment': state.total,
+        if (state.payMode == PayMode.custom)
+          'payments': state.customPayments
               .map((p) => {
                     'payment_method_id': p.methodId,
-                    'amount': double.parse(p.amount.toStringAsFixed(2)),
+                    'amount': round2(p.amount),
                   })
               .toList(),
       };

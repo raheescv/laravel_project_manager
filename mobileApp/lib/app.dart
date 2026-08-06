@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'features/admin/logic/day_session_cubit/day_session_cubit.dart';
@@ -21,8 +20,9 @@ import 'shared/utils/components/theme/theme_manager.dart';
 import 'shared/utils/router/app_router.dart';
 
 /// Root widget: provides every app-wide cubit, builds the themed
-/// `MaterialApp.router`, and wraps the app in the screen-util responsive frame
-/// plus the global haptic / keyboard-dismiss chrome.
+/// `MaterialApp.router`, and wraps the app in the global haptic /
+/// keyboard-dismiss chrome. Responsive layout is handled per screen through
+/// `context.isTablet` / `MaxWidthBox`, not a global scaling frame.
 class InvoApp extends StatefulWidget {
   const InvoApp({super.key});
 
@@ -35,10 +35,7 @@ class _InvoAppState extends State<InvoApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(393, 865),
-      minTextAdapt: true,
-      builder: (context, _) => MultiBlocProvider(
+    return MultiBlocProvider(
         providers: [
           // App-wide singletons (resolved from get_it).
           BlocProvider.value(value: serviceLocator<AuthCubit>()),
@@ -56,15 +53,22 @@ class _InvoAppState extends State<InvoApp> {
           BlocProvider(create: (_) => AdminCubit()),
           BlocProvider(create: (_) => DaySessionCubit()),
         ],
-        // Depend on theme + currency so a change re-skins / reformats everything.
-        child: Builder(
-          builder: (context) {
-            context.watch<CurrencyCubit>();
-            final palette = context.watch<ThemeCubit>().palette;
+        // Re-skin on a theme change, and re-render on a currency change so the
+        // Money formatter's new symbol reaches every already-built label.
+        //
+        // Both are selectors, not watches: `refreshCurrencies()` runs at every
+        // boot and sign-in and emits a new currency *list*, which would rebuild
+        // the whole app under a plain watch even though the active currency —
+        // the only part the formatter reads — is unchanged.
+        child: BlocSelector<CurrencyCubit, CurrencyState, String>(
+          selector: (s) => s.currency.code,
+          builder: (context, _) => BlocSelector<ThemeCubit, ThemeState, ThemeState>(
+            selector: (s) => s,
+            builder: (context, theme) {
             return MaterialApp.router(
               title: 'Invo',
               debugShowCheckedModeBanner: false,
-              theme: buildAstraTheme(palette),
+              theme: buildAstraTheme(theme.palette, theme.typeface),
               routerConfig: _router,
               builder: (context, child) {
                 // Clamp the OS text-scale so a large accessibility setting can't
@@ -90,9 +94,9 @@ class _InvoAppState extends State<InvoApp> {
                 );
               },
             );
-          },
+            },
+          ),
         ),
-      ),
     );
   }
 }

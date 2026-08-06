@@ -1,4 +1,6 @@
 <x-app-layout>
+    <x-barcode.premium />
+
     <div class="content__header content__boxed overlapping">
         <div class="content__wrap">
             <nav aria-label="breadcrumb">

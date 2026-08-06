@@ -16,8 +16,9 @@ typedef OnUnauthorized = void Function();
 /// tenant/host headers and the active `branch_id`, and unwraps the Laravel
 /// `{success,data,message}` envelope (throwing [ApiException] on failure).
 ///
-/// Registered as a singleton in the service locator; feature services reach it
-/// through [HttpHelper] or directly via `serviceLocator<HttpService>()`.
+/// Registered as a singleton in the service locator; this is the single entry
+/// point for API calls — feature services reach it via
+/// `serviceLocator<HttpService>()` and pull their paths from [EndPoints].
 class HttpService {
   HttpService({required this.storage, required this.config}) {
     _dio = Dio(BaseOptions(

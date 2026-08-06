@@ -4,39 +4,51 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
+
+part 'currency_state.dart';
 
 /// Holds the active [Currency] and the list configured on the web
 /// (Settings → Currencies). The list is fetched once, cached and used offline;
 /// changing the active currency updates the app-wide [Money] formatter.
-class CurrencyCubit extends HolderCubit {
-  CurrencyCubit() {
-    _currencies = _loadCached();
-    _baseCode = _storage.baseCurrencyCode;
-    _currency = _resolveActive();
-    _apply();
+class CurrencyCubit extends Cubit<CurrencyState> {
+  CurrencyCubit() : super(_initialState()) {
+    _apply(state.currency);
+  }
+
+  /// Built before `super`, so it cannot touch instance members.
+  static CurrencyState _initialState() {
+    final storage = serviceLocator<LocalStorageService>();
+    final list = _cachedOrBuiltIn(storage.currenciesJson);
+    final baseCode = storage.baseCurrencyCode;
+    Currency? byCode(String? code) =>
+        code == null ? null : list.where((c) => c.code == code).firstOrNull;
+    final active = byCode(storage.currencyCode) ??
+        byCode(baseCode) ??
+        (list.isNotEmpty ? list.first : Currencies.qar);
+    return CurrencyState(currency: active, currencies: list, baseCode: baseCode);
   }
 
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
   LookupRepository get _repo => serviceLocator<LookupRepository>();
 
-  late List<Currency> _currencies;
-  late Currency _currency;
-  String? _baseCode;
-
-  Currency get currency => _currency;
-  List<Currency> get available => _currencies.where((c) => c.active).toList();
-  Currency? get base => _byCode(_baseCode) ?? _firstWhereOrNull((c) => c.isBase);
+  // Read facade over `state`.
+  Currency get currency => state.currency;
+  List<Currency> get available => state.available;
+  Currency? get base =>
+      _byCode(state.baseCode) ?? _firstWhereOrNull((c) => c.isBase);
   bool get isCached => (_storage.currenciesJson ?? '').isNotEmpty;
 
-  void _apply() {
-    Money.symbol = _currency.symbol;
-    Money.decimals = _currency.decimals;
+  /// [Money] is an app-wide static (see §8.2), so it is re-pointed whenever the
+  /// active currency changes.
+  void _apply(Currency c) {
+    Money.symbol = c.symbol;
+    Money.decimals = c.decimals;
   }
 
-  List<Currency> _loadCached() {
-    final raw = _storage.currenciesJson;
+  static List<Currency> _cachedOrBuiltIn(String? raw) {
     if (raw != null && raw.isNotEmpty) {
       try {
         final decoded = jsonDecode(raw);
@@ -54,29 +66,20 @@ class CurrencyCubit extends HolderCubit {
     return Currencies.all;
   }
 
-  Currency _resolveActive() {
-    return _byCode(_storage.currencyCode) ??
-        _byCode(_baseCode) ??
-        (_currencies.isNotEmpty ? _currencies.first : Currencies.qar);
-  }
-
-  Currency? _byCode(String? code) {
-    if (code == null) return null;
-    return _firstWhereOrNull((c) => c.code == code);
-  }
+  Currency? _byCode(String? code) =>
+      code == null ? null : _firstWhereOrNull((c) => c.code == code);
 
   Currency? _firstWhereOrNull(bool Function(Currency) test) {
-    for (final c in _currencies) {
+    for (final c in state.currencies) {
       if (test(c)) return c;
     }
     return null;
   }
 
   Future<void> setCurrency(Currency c) async {
-    if (c.code == _currency.code) return;
-    _currency = c;
-    _apply();
-    refresh();
+    if (c.code == state.currency.code) return;
+    _apply(c);
+    emit(state.copyWith(currency: c));
     await _storage.setCurrencyCode(c.code);
   }
 
@@ -85,19 +88,21 @@ class CurrencyCubit extends HolderCubit {
       final result = await _repo.currencies();
       if (result.currencies.isEmpty) return;
 
-      _currencies = result.currencies;
-      _baseCode = result.baseCode ?? _baseCode;
+      final rows = result.currencies;
+      final baseCode = result.baseCode ?? state.baseCode;
 
       await _storage.setCurrenciesJson(
-        jsonEncode(_currencies.map((c) => c.toJson()).toList()),
+        jsonEncode(rows.map((c) => c.toJson()).toList()),
       );
       if (result.baseCode != null && result.baseCode!.isNotEmpty) {
         await _storage.setBaseCurrencyCode(result.baseCode!);
       }
 
-      _currency = _byCode(_currency.code) ?? _resolveActive();
-      _apply();
-      refresh();
+      final active = rows.where((c) => c.code == state.currency.code).firstOrNull ??
+          rows.where((c) => c.code == baseCode).firstOrNull ??
+          rows.first;
+      _apply(active);
+      emit(CurrencyState(currency: active, currencies: rows, baseCode: baseCode));
     } catch (_) {
       // Offline or server error — keep the cached list.
     }

@@ -2,22 +2,25 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
-import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
 import 'package:invo/features/sale_return/screens/v3/return_receipt_screen.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
-import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/logic/paginated_list_cubit/paginated_list_cubit.dart';
+import 'package:invo/features/sales_returns/logic/sales_returns_cubit/sales_returns_cubit.dart';
+import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+
+part 'sales_returns_list_controls.dart';
 
 class SalesReturnListScreen extends StatefulWidget {
   const SalesReturnListScreen({super.key});
@@ -43,19 +46,18 @@ const _sortOptions = <_SortOption>[
 ];
 
 class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
-  bool _loading = true;
-  bool _loadingMore = false;
-  String? _error;
-  List<Map<String, dynamic>> _rows = [];
-  int _total = 0;
-  double _totalPaid = 0;
-  int _page = 1;
-  int _lastPage = 1;
-  int _reqId = 0; // guards against out-of-order / superseded responses
+  /// Owns the repositories (§10) — the screen never resolves one itself.
+  final _returns = SalesReturnsCubit();
+
+  /// Owns fetch/pagination/error state — see [PaginatedListCubit]. The screen
+  /// keeps only the filter values it drives the fetcher with, plus the tablet
+  /// master-detail selection.
+  late final PaginatedListCubit _list = PaginatedListCubit(
+    fetch: _fetchPage,
+    errorMessage: 'Could not load returns.',
+  );
   final _scrollCtl = ScrollController();
   StreamSubscription<int>? _branchSub;
-
-  bool get _hasMore => _page < _lastPage;
 
   String? _status; // null = all
   int? _methodId; // null = all payment methods
@@ -98,6 +100,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   void dispose() {
     _scrollCtl.dispose();
     _branchSub?.cancel();
+    unawaited(_list.close());
     super.dispose();
   }
 
@@ -105,71 +108,31 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   void _onScroll() {
     if (!_scrollCtl.hasClients) return;
     final pos = _scrollCtl.position;
-    if (pos.pixels >= pos.maxScrollExtent - 500) _loadMore();
+    if (pos.pixels >= pos.maxScrollExtent - 500) unawaited(_list.loadMore());
   }
 
-  Future<SaleReturnsPage> _fetch(int page) => serviceLocator<SaleReturnRepository>().saleReturns(
+  Future<PageResult> _fetchPage(int page) => _returns.fetchPage(
+        page: page,
         status: _status,
         paymentMethodId: _methodId,
         fromDate: _startDate == null ? null : Dates.iso(_startDate!),
         toDate: _endDate == null ? null : Dates.iso(_endDate!),
         sortBy: _sortBy,
         sortDirection: _sortDir,
-        page: page,
       );
 
-  /// (Re)load from page 1 for the current filters — any in-flight loadMore for
-  /// an older filter set is voided by the request id.
+  /// (Re)load from page 1 for the current filters, then re-sync the tablet
+  /// detail pane against the new rows.
   Future<void> _load() async {
-    final req = ++_reqId;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final res = await _fetch(1);
-      if (!mounted || req != _reqId) return;
-      setState(() {
-        _rows = res.rows;
-        _total = res.total;
-        _totalPaid = res.totalPaid;
-        _page = res.currentPage;
-        _lastPage = res.lastPage;
-      });
-      _syncSelection();
-    } catch (e) {
-      if (mounted && req == _reqId) setState(() => _error = 'Could not load returns.');
-    }
-    if (mounted && req == _reqId) setState(() => _loading = false);
-  }
-
-  /// Fetch the next page and append it. No-op while a load is running or the
-  /// last page has been reached.
-  Future<void> _loadMore() async {
-    if (_loadingMore || _loading || !_hasMore) return;
-    final req = _reqId; // tie to the current filters; bail if they change
-    setState(() => _loadingMore = true);
-    try {
-      final res = await _fetch(_page + 1);
-      if (!mounted || req != _reqId) return;
-      setState(() {
-        _rows = [..._rows, ...res.rows];
-        _page = res.currentPage;
-        _lastPage = res.lastPage;
-        _total = res.total;
-        _totalPaid = res.totalPaid;
-      });
-    } catch (_) {
-      // Keep what we have; the next scroll can retry the same page.
-    }
-    if (mounted && req == _reqId) setState(() => _loadingMore = false);
+    await _list.load();
+    if (mounted) _syncSelection();
   }
 
   /// Payment methods power the in-card payment selector; a failure just leaves
   /// it showing "All methods".
   Future<void> _loadMethods() async {
     try {
-      final m = await serviceLocator<LookupRepository>().paymentMethods();
+      final m = await _returns.paymentMethods();
       if (mounted) setState(() => _methods = m);
     } catch (_) {/* keep the list usable without the method filter */}
   }
@@ -241,7 +204,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
         _startDate = DateTime(picked.start.year, picked.start.month, picked.start.day);
         _endDate = DateTime(picked.end.year, picked.end.month, picked.end.day);
       });
-      _load();
+      unawaited(_load());
     }
   }
 
@@ -269,17 +232,18 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/sales');
+      context.go(Routes.sales);
     }
   }
 
   /// Returns lives under the Sales section, so the bottom-nav tabs re-enter the
   /// home shell at the tapped section (Sales shows highlighted here).
-  void _onNavTap(int i) => context.go('/home?tab=$i');
+  void _onNavTap(int i) => context.go(Routes.homeTab(i));
 
   @override
   Widget build(BuildContext context) {
-    final sub = _loading && _rows.isEmpty ? 'Loading…' : '$_total return${_total == 1 ? '' : 's'} found';
+    final st = _list.state;
+    final sub = st.isLoading && st.items.isEmpty ? 'Loading…' : '${st.total} return${st.total == 1 ? '' : 's'} found';
     final canCreate = context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnCreate);
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -297,7 +261,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
                     title: 'Sales Returns',
                     subtitle: sub,
                     trailing: canCreate
-                        ? HeaderIconButton(icon: Icons.add, gold: true, onTap: () => context.push('/sale-return/pick'))
+                        ? HeaderIconButton(icon: Icons.add, gold: true, onTap: () => context.push(Routes.saleReturnPick))
                         : null,
                   ),
                   Expanded(child: _body(canCreate)),
@@ -307,7 +271,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       // Tablet routes navigate via the shell side-rail + the header back button,
       // so the bottom nav + docked FAB are phone-only.
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: (canCreate && !context.isTablet) ? AstraNavFab(onTap: () => context.push('/sale-return/pick')) : null,
+      floatingActionButton: (canCreate && !context.isTablet) ? AstraNavFab(onTap: () => context.push(Routes.saleReturnPick)) : null,
       bottomNavigationBar: context.isTablet ? null : AstraNavBar(activeIndex: 1, onTap: _onNavTap),
     );
   }
@@ -317,7 +281,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       onRefresh: _load,
       child: MaxWidthBox(
         maxWidth: 720,
-        child: _list(canCreate, const EdgeInsets.fromLTRB(16, 14, 16, 120)),
+        child: _listView(canCreate, const EdgeInsets.fromLTRB(16, 14, 16, 120)),
       ),
     );
   }
@@ -354,15 +318,15 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     ];
     return TabletPaneHead(
       title: 'Sales Returns',
-      subtitle: _loading && _rows.isEmpty
+      subtitle: _list.state.isLoading && _list.state.items.isEmpty
           ? 'Loading…'
-          : '${Money.of(_totalPaid)} refunded · $_total return${_total == 1 ? '' : 's'}',
+          : '${Money.of(_list.state.totalPaid)} refunded · ${_list.state.total} return${_list.state.total == 1 ? '' : 's'}',
       leading: context.canPop()
           ? TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: _back)
           : null,
       trailing: canCreate
           ? TabletActionButton(
-              label: 'New', icon: Icons.add, primary: true, onTap: () => context.push('/sale-return/pick'))
+              label: 'New', icon: Icons.add, primary: true, onTap: () => context.push(Routes.saleReturnPick))
           : null,
       children: [
         const SizedBox(height: 13),
@@ -404,44 +368,59 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   }
 
   Widget _tabletList(bool canCreate) {
-    return ListView(
-      controller: _scrollCtl,
-      padding: const EdgeInsets.only(bottom: 24),
-      children: [
-        if (_loading)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator()))
-        else if (_error != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
-            child: EmptyState(
-                icon: Icons.wifi_off,
-                title: 'Returns unavailable',
-                message: _error,
-                action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
-          )
-        else if (_rows.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
-            child: EmptyState(
-              icon: Icons.assignment_return_outlined,
-              title: 'No returns found',
-              message: canCreate
-                  ? 'Try a wider date range, or start a return from a paid invoice.'
-                  : 'Try a wider date range.',
-              action: canCreate
-                  ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push('/sale-return/pick'))
-                  : null,
-            ),
-          )
-        else ...[
-          for (final r in _rows) _tabletRow(r),
-          if (_loadingMore)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
-            ),
-        ],
-      ],
+    return BlocBuilder<PaginatedListCubit, PaginatedListState>(
+      bloc: _list,
+      builder: (context, state) {
+        return CustomScrollView(
+          controller: _scrollCtl,
+          slivers: [
+            if (state.isLoading)
+              const SliverToBoxAdapter(
+                child: Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator())),
+              )
+            else if (state.hasFailed)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
+                  child: EmptyState(
+                      icon: Icons.wifi_off,
+                      title: 'Returns unavailable',
+                      message: state.errorMessage,
+                      action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
+                ),
+              )
+            else if (state.items.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
+                  child: EmptyState(
+                    icon: Icons.assignment_return_outlined,
+                    title: 'No returns found',
+                    message: canCreate
+                        ? 'Try a wider date range, or start a return from a paid invoice.'
+                        : 'Try a wider date range.',
+                    action: canCreate
+                        ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push(Routes.saleReturnPick))
+                        : null,
+                  ),
+                ),
+              )
+            else
+              SliverList.builder(
+                itemCount: state.items.length,
+                itemBuilder: (_, i) => _tabletRow(state.items[i]),
+              ),
+            if (state.loadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
+                ),
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        );
+      },
     );
   }
 
@@ -490,38 +469,59 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     );
   }
 
-  Widget _list(bool canCreate, EdgeInsets padding) {
-    return ListView(
-      controller: _scrollCtl,
-      padding: padding,
-      children: [
-        _bento(),
-        _resultLine(),
-        if (_loading)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator()))
-        else if (_error != null)
-          EmptyState(icon: Icons.wifi_off, title: 'Returns unavailable', message: _error, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load))
-        else if (_rows.isEmpty)
-          EmptyState(
-            icon: Icons.assignment_return_outlined,
-            title: 'No returns found',
-            message: canCreate
-                ? 'Try a wider date range, or start a return from a paid invoice.'
-                : 'Try a wider date range.',
-            action: canCreate
-                ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push('/sale-return/pick'))
-                : null,
-          )
-        else ...[
-          for (final r in _rows)
-            Padding(padding: const EdgeInsets.only(bottom: 9), child: _row(r)),
-          if (_loadingMore)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
+  Widget _listView(bool canCreate, EdgeInsets padding) {
+    return BlocBuilder<PaginatedListCubit, PaginatedListState>(
+      bloc: _list,
+      builder: (context, state) {
+        // Slivers, not ListView(children:) — the rows grow by a page on every
+        // scroll, so the eager form would rebuild every accumulated row.
+        return CustomScrollView(
+          controller: _scrollCtl,
+          slivers: [
+            SliverPadding(
+              padding: padding.copyWith(bottom: 0),
+              sliver: SliverList.list(children: [_bento(), _resultLine()]),
             ),
-        ],
-      ],
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: padding.left),
+              sliver: state.isLoading
+                  ? const SliverToBoxAdapter(
+                      child: Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator())),
+                    )
+                  : state.hasFailed
+                      ? SliverToBoxAdapter(
+                          child: EmptyState(icon: Icons.wifi_off, title: 'Returns unavailable', message: state.errorMessage, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
+                        )
+                      : state.items.isEmpty
+                          ? SliverToBoxAdapter(
+                              child: EmptyState(
+                                icon: Icons.assignment_return_outlined,
+                                title: 'No returns found',
+                                message: canCreate
+                                    ? 'Try a wider date range, or start a return from a paid invoice.'
+                                    : 'Try a wider date range.',
+                                action: canCreate
+                                    ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push(Routes.saleReturnPick))
+                                    : null,
+                              ),
+                            )
+                          : SliverList.separated(
+                              itemCount: state.items.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 9),
+                              itemBuilder: (_, i) => _row(state.items[i]),
+                            ),
+            ),
+            if (state.loadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
+                ),
+              ),
+            SliverToBoxAdapter(child: SizedBox(height: padding.bottom)),
+          ],
+        );
+      },
     );
   }
 
@@ -571,7 +571,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       _detailError = null;
     });
     try {
-      final ret = await serviceLocator<SaleReturnRepository>().saleReturnById(id);
+      final ret = await _returns.saleReturnById(id);
       if (!mounted || asStr(_selectedRow?['id']) != id) return;
       setState(() {
         _selectedReturn = ret;
@@ -590,10 +590,11 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   /// selection and preselect the first return so the pane is never empty.
   void _syncSelection() {
     if (!mounted || !context.isTablet) return;
+    final rows = _list.state.items;
     final selId = _selectedRow == null ? '' : asStr(_selectedRow!['id']);
-    final stillThere = selId.isNotEmpty && _rows.any((r) => asStr(r['id']) == selId);
+    final stillThere = selId.isNotEmpty && rows.any((r) => asStr(r['id']) == selId);
     if (!stillThere) {
-      if (_rows.isEmpty) {
+      if (rows.isEmpty) {
         setState(() {
           _selectedRow = null;
           _selectedReturn = null;
@@ -601,148 +602,12 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
           _detailLoading = false;
         });
       } else {
-        _selectRow(_rows.first);
+        _selectRow(rows.first);
       }
     }
   }
 
   // ---- Bento control card ----
-
-  Widget _bento() {
-    return AstraCard(
-      radius: 20,
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _fieldLabel('DATE RANGE'),
-          _dateBox(),
-          const SizedBox(height: 13),
-          _fieldLabel('STATUS'),
-          _statusSeg(),
-          const SizedBox(height: 13),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _field('PAYMENT', _selBox(_methodLabel, Icons.account_balance_wallet_outlined, _openPaymentSheet))),
-              const SizedBox(width: 10),
-              Expanded(child: _field('SORT', _selBox(_sortLabel, Icons.swap_vert_rounded, _openSort))),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _field(String label, Widget child) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [_fieldLabel(label), child],
-      );
-
-  Widget _fieldLabel(String t) => Padding(
-        padding: const EdgeInsets.only(left: 2, bottom: 6),
-        child: Text(t, style: ui(size: 8.5, weight: FontWeight.w800, color: context.astra.textMuted, letterSpacing: 1.1)),
-      );
-
-  Widget _dateBox() {
-    final p = context.astra;
-    return GestureDetector(
-      onTap: _openDateSheet,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
-        decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(13)),
-        child: Row(
-          children: [
-            Icon(Icons.event_rounded, size: 17, color: p.primary),
-            const SizedBox(width: 10),
-            Expanded(child: Text(_dateLabel, maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 15, color: p.ink))),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: p.textMuted),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statusSeg() {
-    final p = context.astra;
-    Widget seg(String label, String? status) {
-      final active = _status == status;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => _setStatus(status),
-          behavior: HitTestBehavior.opaque,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: active ? p.card : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: active ? context.astraTheme.softShadow : null,
-            ),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(label,
-                  style: ui(size: 11, weight: active ? FontWeight.w800 : FontWeight.w700, color: active ? p.primary : p.textSecondary)),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(13)),
-      child: Row(children: [
-        seg('All', null),
-        seg('Completed', 'completed'),
-        seg('Draft', 'draft'),
-      ]),
-    );
-  }
-
-  Widget _selBox(String value, IconData icon, VoidCallback onTap) {
-    final p = context.astra;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(12)),
-        child: Row(
-          children: [
-            Icon(icon, size: 15, color: p.primary),
-            const SizedBox(width: 8),
-            Expanded(child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12, weight: FontWeight.w700, color: p.ink))),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: p.textMuted),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _resultLine() {
-    final p = context.astra;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: Text('$_total return${_total == 1 ? '' : 's'}',
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Text('− ${Money.of(_totalPaid)}', style: serif(size: 16, color: p.goldText)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ---- return row ----
 
@@ -763,7 +628,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
           ? (asStr(r['invoice_no']).isEmpty ? '#${asStr(r['id'])}' : asStr(r['invoice_no']))
           : asStr(r['reference_no']),
       amount: asNum(summary['paid'] ?? summary['grand_total'] ?? summary['total'] ?? r['paid']),
-      who: asStr(customer['name']).isEmpty ? 'Walk-in' : asStr(customer['name']),
+      who: asStr(customer['name']).isEmpty ? AppStrings.walkInCustomer : asStr(customer['name']),
       status: status,
       date: Dates.human(asStr(r['date'])),
       method: asStr(r['payment_methods']),
@@ -883,40 +748,6 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     );
   }
 
-  Widget _optTile({
-    required String label,
-    required IconData icon,
-    required bool active,
-    required VoidCallback onTap,
-    String? trailing,
-  }) {
-    final p = context.astra;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(color: active ? p.tint : Colors.transparent, borderRadius: BorderRadius.circular(13)),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: active ? p.primary : p.textSecondary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(label, style: ui(size: 13, weight: active ? FontWeight.w800 : FontWeight.w600, color: active ? p.ink : p.textSecondary)),
-            ),
-            if (trailing != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Text(trailing, style: ui(size: 10.5, weight: FontWeight.w700, color: p.textMuted)),
-              ),
-            if (active) Icon(Icons.check_circle_rounded, size: 18, color: p.primary),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _openDateSheet() {
     const presets = [
       ('Today', 'today', Icons.today),
@@ -994,11 +825,11 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
 
   Future<void> _open(String id) async {
     if (id.isEmpty) return;
-    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    unawaited(showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator())));
     try {
-      final ret = await serviceLocator<SaleReturnRepository>().saleReturnById(id);
+      final ret = await _returns.saleReturnById(id);
       if (mounted) Navigator.pop(context);
-      if (mounted) context.push('/return-receipt', extra: ret);
+      if (mounted) unawaited(context.push(Routes.returnReceipt, extra: ret));
     } catch (e) {
       if (mounted) Navigator.pop(context);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open return')));

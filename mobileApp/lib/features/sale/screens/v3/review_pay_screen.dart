@@ -1,11 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:invo/features/sale/domain/repository/sale_repository.dart';
-import 'package:invo/shared/domain/repository/lookup_repository.dart';
+import 'package:invo/features/sale/logic/sale_ops_cubit/sale_ops_cubit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -14,6 +14,7 @@ import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
 import 'package:invo/shared/widgets/receipt_printer.dart';
@@ -27,6 +28,8 @@ class ReviewPayScreen extends StatefulWidget {
 }
 
 class _ReviewPayScreenState extends State<ReviewPayScreen> {
+  /// Repository access for this flow (§10).
+  final _ops = SaleOpsCubit();
   bool _busy = false;
   bool _busyDraft = false;
   List<PaymentMethod> _methods = [];
@@ -41,7 +44,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   /// A failure here is non-fatal — Cash/Card/Credit still work without it.
   Future<void> _loadMethods() async {
     try {
-      final methods = await serviceLocator<LookupRepository>().paymentMethods();
+      final methods = await _ops.paymentMethods();
       if (mounted) setState(() => _methods = methods);
     } catch (_) {
       // Leave _methods empty; the custom sheet surfaces the "none configured" state.
@@ -50,14 +53,13 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
 
   Future<void> _charge() async {
     final cart = context.read<CartCubit>();
-    final service = serviceLocator<SaleRepository>();
     final editingId = cart.editingSaleId;
     setState(() => _busy = true);
     Sale? saved;
     try {
       saved = editingId == null
-          ? await service.createSale(cart.toPayload())
-          : await service.updateSale(editingId, cart.toPayload());
+          ? await _ops.createSale(cart.toPayload())
+          : await _ops.updateSale(editingId, cart.toPayload());
       cart.clear();
     } on ApiException catch (e) {
       _error(e.message);
@@ -125,7 +127,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     // customer can be rung up with no further taps. The invoice stays one tap
     // away in the snackbar.
     if (printed && print.skipInvoice) {
-      router.go('/sale');
+      router.go(Routes.sale);
       messenger
         ..clearSnackBars()
         ..showSnackBar(SnackBar(
@@ -133,13 +135,13 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           duration: const Duration(seconds: 4),
           action: SnackBarAction(
             label: 'View',
-            onPressed: () => router.push('/invoice', extra: sale),
+            onPressed: () => router.push(Routes.invoice, extra: sale),
           ),
         ));
       return;
     }
 
-    router.pushReplacement('/invoice', extra: sale);
+    unawaited(router.pushReplacement(Routes.invoice, extra: sale));
     if (printFailed) {
       messenger
         ..clearSnackBars()
@@ -153,10 +155,9 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   /// is posted until the draft is later reopened and charged.
   Future<void> _saveDraft() async {
     final cart = context.read<CartCubit>();
-    final service = serviceLocator<SaleRepository>();
     setState(() => _busyDraft = true);
     try {
-      await service.createSale(cart.toPayload(status: 'draft'));
+      await _ops.createSale(cart.toPayload(status: 'draft'));
       cart.clear();
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -166,7 +167,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
             duration: Duration(milliseconds: 900),
           ));
         await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) context.go('/sale');
+        if (mounted) context.go(Routes.sale);
       }
     } on ApiException catch (e) {
       _error(e.message);

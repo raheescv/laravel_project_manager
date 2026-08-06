@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-/// Marcellus serif text style — used for brand, prices, totals, KPI numbers.
+import 'typeface.dart';
+
+/// Display text style — brand, screen titles, prices, totals, KPI numbers.
+/// The face comes from the Typography setting, not from this file.
 TextStyle serif({
   required double size,
   Color? color,
   double height = 1.1,
   double letterSpacing = 0,
 }) =>
-    GoogleFonts.marcellus(
-      fontSize: size,
+    AstraTypefaces.current.displayStyle(
+      size: size,
       color: color,
       height: height,
       letterSpacing: letterSpacing,
     );
 
-/// Manrope UI text style.
+/// UI text style — rows, labels, fields, buttons. Follows the same setting.
 TextStyle ui({
   required double size,
   FontWeight weight = FontWeight.w600,
@@ -23,9 +25,9 @@ TextStyle ui({
   double height = 1.2,
   double letterSpacing = 0,
 }) =>
-    GoogleFonts.manrope(
-      fontSize: size,
-      fontWeight: weight,
+    AstraTypefaces.current.uiStyle(
+      size: size,
+      weight: weight,
       color: color,
       height: height,
       letterSpacing: letterSpacing,

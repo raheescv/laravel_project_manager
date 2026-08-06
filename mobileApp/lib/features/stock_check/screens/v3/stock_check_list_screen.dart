@@ -1,19 +1,19 @@
+import 'package:invo/features/stock_check/logic/stock_check_cubit/stock_check_cubit.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/stock_check_models.dart';
-import '../../domain/repository/stock_check_repository.dart';
 
 /// Lists the branch's stock checks with per-check progress. The active branch is
 /// app-wide (BranchCubit) — the header shows it and the list reloads on switch.
@@ -54,6 +54,7 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
 
   @override
   void dispose() {
+    unawaited(_stock.close());
     _debounce?.cancel();
     _searchCtl.dispose();
     _scrollCtl.dispose();
@@ -67,7 +68,8 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
     if (pos.pixels >= pos.maxScrollExtent - 400) _loadMore();
   }
 
-  StockCheckRepository get _repo => serviceLocator<StockCheckRepository>();
+  /// Owns the repository and its error handling (§10).
+  final _stock = StockCheckCubit();
 
   Future<void> _load() async {
     final req = ++_reqId;
@@ -75,36 +77,38 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
       _loading = true;
       _error = null;
     });
-    try {
-      final res = await _repo.list(status: _status, search: _search, page: 1);
-      if (!mounted || req != _reqId) return;
+    final res = await _stock.list(status: _status, search: _search, page: 1);
+    if (!mounted || req != _reqId) return;
+    if (res != null) {
       setState(() {
         _rows = res.rows;
         _total = res.total;
         _page = res.currentPage;
         _lastPage = res.lastPage;
       });
-    } catch (_) {
-      if (mounted && req == _reqId) setState(() => _error = 'Could not load stock checks.');
+    } else {
+      setState(() => _error = _stock.state.errorMessage ?? 'Could not load stock checks.');
     }
-    if (mounted && req == _reqId) setState(() => _loading = false);
+    setState(() => _loading = false);
   }
 
   Future<void> _loadMore() async {
     if (_loadingMore || _loading || !_hasMore) return;
     final req = _reqId;
     setState(() => _loadingMore = true);
-    try {
-      final res = await _repo.list(status: _status, search: _search, page: _page + 1);
-      if (!mounted || req != _reqId) return;
+    final res = await _stock.list(status: _status, search: _search, page: _page + 1);
+    if (!mounted) return;
+    if (res != null && req == _reqId) {
       setState(() {
         _rows = [..._rows, ...res.rows];
         _page = res.currentPage;
         _lastPage = res.lastPage;
         _total = res.total;
       });
-    } catch (_) {/* keep what we have */}
-    if (mounted && req == _reqId) setState(() => _loadingMore = false);
+    }
+    // Always clear the flag, even for a discarded page, or the guard on entry
+    // blocks every later page for the life of the screen.
+    setState(() => _loadingMore = false);
   }
 
   void _setStatus(String? s) {
@@ -123,10 +127,10 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
   }
 
   Future<void> _openCreate() async {
-    final detail = await context.push<StockCheckDetail>('/stock-check/new');
+    final detail = await context.push<StockCheckDetail>(Routes.stockCheckNew);
     if (!mounted || detail == null) return;
-    _load();
-    _pushCount(detail);
+    unawaited(_load());
+    unawaited(_pushCount(detail));
   }
 
   void _openCount(StockCheckSummary s) {
@@ -141,8 +145,8 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
   }
 
   Future<void> _pushCount(StockCheckDetail d) async {
-    await context.push('/stock-check/count', extra: d);
-    if (mounted) _load(); // reflect progress/status changes on return
+    await context.push(Routes.stockCheckCount, extra: d);
+    if (mounted) unawaited(_load()); // reflect progress/status changes on return
   }
 
   @override
@@ -196,61 +200,104 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
   }
 
   Widget _body() {
+    // Slivers, not ListView(children:) — the rows accumulate a page per scroll.
     return RefreshIndicator(
       onRefresh: _load,
       child: MaxWidthBox(
         maxWidth: context.isTablet ? 1120 : 720,
-        child: ListView(
+        child: CustomScrollView(
           controller: _scrollCtl,
-          padding: EdgeInsets.fromLTRB(16, 14, 16, context.isTablet ? 32 : 120),
-          children: [
-            if (context.isTablet) _tabletControls() else _controls(),
-            const SizedBox(height: 4),
-            if (_loading && _rows.isEmpty)
-              const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator()))
-            else if (_error != null && _rows.isEmpty)
-              EmptyState(
-                icon: Icons.wifi_off,
-                title: 'Unavailable',
-                message: _error,
-                action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load),
-              )
-            else if (_rows.isEmpty)
-              EmptyState(
-                icon: Icons.fact_check_outlined,
-                title: 'No stock checks',
-                message: 'Start a new count to snapshot this branch’s stock.',
-                action: AstraButton(label: 'New count', icon: Icons.add, expand: false, onTap: _openCreate),
-              )
-            else ...[
-              // Tablet: count cards auto-fill by width instead of running as one
-              // long thin column down the middle of the sheet.
-              if (context.isTablet)
-                LayoutBuilder(
-                  builder: (ctx, c) {
-                    const gap = 12.0;
-                    const minTile = 420.0;
-                    final cols = ((c.maxWidth + gap) / (minTile + gap)).floor().clamp(1, 3);
-                    final colW = (c.maxWidth - gap * (cols - 1)) / cols;
-                    return Wrap(
-                      spacing: gap,
-                      runSpacing: gap,
-                      children: [for (final r in _rows) SizedBox(width: colW, child: _card(r))],
-                    );
-                  },
-                )
-              else
-                for (final r in _rows)
-                  Padding(padding: const EdgeInsets.only(bottom: 10), child: _card(r)),
-              if (_loadingMore)
-                const Padding(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              sliver: SliverList.list(children: [
+                if (context.isTablet) _tabletControls() else _controls(),
+                const SizedBox(height: 4),
+              ]),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: _rowsSliver(),
+            ),
+            if (_loadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
                 ),
-            ],
+              ),
+            SliverToBoxAdapter(child: SizedBox(height: context.isTablet ? 32 : 120)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _rowsSliver() {
+    if (_loading && _rows.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator())),
+      );
+    }
+    if (_error != null && _rows.isEmpty) {
+      return SliverToBoxAdapter(
+        child: EmptyState(
+          icon: Icons.wifi_off,
+          title: 'Unavailable',
+          message: _error,
+          action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load),
+        ),
+      );
+    }
+    if (_rows.isEmpty) {
+      return SliverToBoxAdapter(
+        child: EmptyState(
+          icon: Icons.fact_check_outlined,
+          title: 'No stock checks',
+          message: 'Start a new count to snapshot this branch\u2019s stock.',
+          action: AstraButton(label: 'New count', icon: Icons.add, expand: false, onTap: _openCreate),
+        ),
+      );
+    }
+    if (!context.isTablet) {
+      return SliverList.separated(
+        itemCount: _rows.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (_, i) => _card(_rows[i]),
+      );
+    }
+    // Tablet: count cards auto-fill by width instead of running as one long
+    // thin column. Built as lazy rows-of-N rather than a Wrap — a Wrap has to
+    // lay out every child, and these accumulate a page per scroll. Each row
+    // still sizes to its tallest card, which is what a Wrap run did.
+    return SliverLayoutBuilder(
+      builder: (ctx, constraints) {
+        const gap = 12.0;
+        const minTile = 420.0;
+        final width = constraints.crossAxisExtent;
+        final cols = ((width + gap) / (minTile + gap)).floor().clamp(1, 3);
+        final colW = (width - gap * (cols - 1)) / cols;
+        final rowCount = (_rows.length + cols - 1) ~/ cols;
+        return SliverList.separated(
+          itemCount: rowCount,
+          separatorBuilder: (_, __) => const SizedBox(height: gap),
+          itemBuilder: (_, r) {
+            final start = r * cols;
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < cols; i++) ...[
+                  if (i > 0) const SizedBox(width: gap),
+                  SizedBox(
+                    width: colW,
+                    child: start + i < _rows.length ? _card(_rows[start + i]) : null,
+                  ),
+                ],
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

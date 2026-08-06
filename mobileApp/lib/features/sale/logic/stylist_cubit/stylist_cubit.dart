@@ -1,23 +1,25 @@
 import 'dart:async';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:invo/shared/domain/constants/data_fetching_status.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:invo/shared/logic/base/list_fetch_state.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 
 /// Loads the assignable stylists (active employees) for the New Sale / Edit Line
 /// pickers. Fetched once and filtered client-side.
-class StylistCubit extends HolderCubit {
-  StylistCubit() {
+class StylistCubit extends Cubit<ListFetchState<Employee>> {
+  StylistCubit() : super(const ListFetchState<Employee>()) {
     // Employees are branch-scoped — drop the cache and refetch (if it had
     // loaded) when the active branch changes so pickers show the new branch's
     // staff, not the previous branch's.
     _branchSub = serviceLocator<BranchCubit>().onBranchChanged.listen((_) {
-      if (!_loaded) return;
-      _loaded = false;
-      load();
+      if (!state.loaded) return;
+      unawaited(load());
     });
   }
 
@@ -25,32 +27,27 @@ class StylistCubit extends HolderCubit {
 
   LookupRepository get _repo => serviceLocator<LookupRepository>();
 
-  bool loading = false;
-  String? error;
-  List<Employee> _all = [];
-  bool _loaded = false;
-
-  List<Employee> get all => List.unmodifiable(_all);
+  // Read facade over `state`.
+  bool get loading => state.loading;
+  String? get error => state.errorMessage;
+  List<Employee> get all => state.items;
 
   Future<void> loadIfNeeded() async {
-    if (_loaded) return;
+    if (state.loaded) return;
     await load();
   }
 
   Future<void> load() async {
-    loading = true;
-    error = null;
-    refresh();
+    emit(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
     try {
-      _all = await _repo.employees();
-      _loaded = true;
+      emit(state.copyWith(
+          status: DataFetchStatus.success, items: await _repo.employees()));
     } on ApiException catch (e) {
-      error = e.message;
-    } catch (e) {
-      error = 'Could not load stylists.';
+      emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
+    } catch (_) {
+      emit(state.copyWith(
+          status: DataFetchStatus.failed, errorMessage: 'Could not load stylists.'));
     }
-    loading = false;
-    refresh();
   }
 
   @override
@@ -62,7 +59,7 @@ class StylistCubit extends HolderCubit {
   List<Employee> search(String term) {
     final q = term.trim().toLowerCase();
     if (q.isEmpty) return all;
-    return _all
+    return all
         .where((e) =>
             e.name.toLowerCase().contains(q) ||
             e.code.toLowerCase().contains(q) ||

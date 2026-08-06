@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
@@ -92,12 +93,12 @@ class AstraDrawer extends StatelessWidget {
                             active: context.isTablet && activeTab == kDaySessionTab,
                             onTap: () => context.isTablet
                                 ? _toTab(context, kDaySessionTab)
-                                : _toRoute(context, '/day-session')),
+                                : _toRoute(context, Routes.daySession)),
                       _section(p, 'SALES'),
                       _item(context, p,
                           icon: Icons.add,
                           label: 'New Sale',
-                          onTap: () => _toRoute(context, '/sale')),
+                          onTap: () => _toRoute(context, Routes.sale)),
                       _item(context, p,
                           icon: Icons.receipt_long,
                           label: 'Sales',
@@ -112,7 +113,7 @@ class AstraDrawer extends StatelessWidget {
                             active: context.isTablet && activeTab == kReturnsTab,
                             onTap: () => context.isTablet
                                 ? _toTab(context, kReturnsTab)
-                                : _toRoute(context, '/sales-returns')),
+                                : _toRoute(context, Routes.salesReturns)),
                       if (auth.hasPermission(PermissionSlug.stockCheck)) ...[
                         _section(p, 'INVENTORY'),
                         _item(context, p,
@@ -125,7 +126,7 @@ class AstraDrawer extends StatelessWidget {
                             active: context.isTablet && activeTab == kStockCheckTab,
                             onTap: () => context.isTablet
                                 ? _toTab(context, kStockCheckTab)
-                                : _toRoute(context, '/stock-check')),
+                                : _toRoute(context, Routes.stockCheck)),
                       ],
                       _section(p, 'ACCOUNT'),
                       _item(context, p,
@@ -134,11 +135,11 @@ class AstraDrawer extends StatelessWidget {
                           active: context.isTablet && activeTab == kProfileTab,
                           onTap: () => context.isTablet
                               ? _toTab(context, kProfileTab)
-                              : _toRoute(context, '/profile')),
+                              : _toRoute(context, Routes.profile)),
                       _item(context, p,
                           icon: Icons.print_outlined,
                           label: 'Print Settings',
-                          onTap: () => _toRoute(context, '/print-settings')),
+                          onTap: () => _toRoute(context, Routes.printSettings)),
                       _item(context, p,
                           icon: Icons.settings_outlined,
                           label: 'Settings',

@@ -3,13 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/helpers/responsive.dart';
-import 'package:invo/shared/domain/models/models.dart';
+import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/profile/screens/v3/change_password_screen.dart';
 import 'package:invo/features/profile/screens/v3/change_pin_screen.dart';
 import 'package:invo/features/profile/screens/v3/edit_profile_screen.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
@@ -45,11 +46,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// from inside the shell would stack a second copy over it.
   void _openPermissions() => context.isTablet && widget.onSelectTab != null
       ? widget.onSelectTab!(kPermissionsTab)
-      : context.push('/permissions');
+      : context.push(Routes.permissions);
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthCubit>().user;
+    final user = context.select<AuthCubit, ApiUser?>((c) => c.state.user);
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     final cfg = context.read<AuthCubit>().config;
@@ -343,7 +344,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         HeaderIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
                         Expanded(child: Center(child: Text('My Profile', style: serif(size: 18, color: Colors.white)))),
-                        HeaderIconButton(icon: Icons.edit_outlined, gold: true, onTap: () => context.push('/edit-profile')),
+                        HeaderIconButton(icon: Icons.edit_outlined, gold: true, onTap: () => context.push(Routes.editProfile)),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -409,9 +410,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       _sectionHeader('MPIN & security'),
                       _securityRow(context, Icons.lock_outline, 'Change MPIN',
-                          'Update your 4–6 digit login PIN', () => context.push('/change-pin')),
+                          'Update your 4–6 digit login PIN', () => context.push(Routes.changePin)),
                       _securityRow(context, Icons.password_outlined, 'Change password',
-                          'Update your account password', () => context.push('/change-password'),
+                          'Update your account password', () => context.push(Routes.changePassword),
                           topBorder: true),
                     ],
                   ),

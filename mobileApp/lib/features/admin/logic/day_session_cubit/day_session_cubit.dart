@@ -2,83 +2,75 @@ import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 
 import '../../domain/repository/admin_repository.dart';
 
+part 'day_session_state.dart';
+
 /// Backs the Day Session screen: the open/closed state, the selected open/close
 /// date-&-time, and the toggle. Seeded from the signed-in user and mirrored back
 /// into [AuthCubit] so the profile row and dashboard pill stay in sync.
-class DaySessionCubit extends HolderCubit {
-  DaySessionCubit() {
-    seedFromUser(_auth.user);
+class DaySessionCubit extends Cubit<DaySessionState> {
+  DaySessionCubit() : super(DaySessionState(selected: _nowToMinute())) {
+    seedFromUser(serviceLocator<AuthCubit>().user);
   }
 
   AdminRepository get _repo => serviceLocator<AdminRepository>();
   AuthCubit get _auth => serviceLocator<AuthCubit>();
 
-  String status = 'closed';
-  DateTime selected = _nowToMinute();
-  DaySession? session;
+  // Read facade over `state`.
+  String get status => state.status;
+  DateTime get selected => state.selected;
+  DaySession? get session => state.session;
+  bool get busy => state.busy;
+  String? get error => state.errorMessage;
+  bool get isOpen => state.isOpen;
 
-  bool busy = false;
-  String? error;
+  void seedFromUser(ApiUser? user) => emit(DaySessionState(
+        status: user?.daySessionStatus == 'open' ? 'open' : 'closed',
+        selected: _nowToMinute(),
+      ));
 
-  bool get isOpen => status == 'open';
+  void setDate(DateTime date) => emit(state.copyWith(
+        selected: DateTime(date.year, date.month, date.day,
+            state.selected.hour, state.selected.minute),
+      ));
 
-  void seedFromUser(ApiUser? user) {
-    status = user?.daySessionStatus == 'open' ? 'open' : 'closed';
-    selected = _nowToMinute();
-    error = null;
-  }
+  void setTime(int hour, int minute) => emit(state.copyWith(
+        selected: DateTime(state.selected.year, state.selected.month,
+            state.selected.day, hour, minute),
+      ));
 
-  void setDate(DateTime date) {
-    selected = DateTime(
-        date.year, date.month, date.day, selected.hour, selected.minute);
-    refresh();
-  }
-
-  void setTime(int hour, int minute) {
-    selected =
-        DateTime(selected.year, selected.month, selected.day, hour, minute);
-    refresh();
-  }
-
-  void setNow() {
-    selected = _nowToMinute();
-    refresh();
-  }
+  void setNow() => emit(state.copyWith(selected: _nowToMinute()));
 
   Future<DaySessionToggleResult?> toggle() async {
-    busy = true;
-    error = null;
-    refresh();
+    final at = state.selected;
+    emit(state.copyWith(busy: true, clearError: true));
     try {
-      final res = await _repo.toggleDay(Dates.isoDateTime(selected));
-      status = res.isOpen ? 'open' : 'closed';
-      session = res.session;
+      final res = await _repo.toggleDay(Dates.isoDateTime(at));
+      final next = res.isOpen ? 'open' : 'closed';
       await _auth.syncDaySession(
-        status: status,
+        status: next,
         openedAt: res.session?.openedAt,
         date: res.session?.openedAt.isNotEmpty == true
             ? res.session!.openedAt.split(' ').first
-            : Dates.iso(selected),
-        lastClosedAt: status == 'closed'
-            ? (res.session?.closedAt ?? Dates.isoDateTime(selected))
-            : null,
+            : Dates.iso(at),
+        lastClosedAt:
+            next == 'closed' ? (res.session?.closedAt ?? Dates.isoDateTime(at)) : null,
       );
-      busy = false;
-      refresh();
+      emit(state.copyWith(status: next, session: res.session, busy: false));
       return res;
     } on ApiException catch (e) {
-      error = e.message;
+      emit(state.copyWith(busy: false, errorMessage: e.message));
     } catch (_) {
-      error =
-          'Could not update the day session. Check your connection and try again.';
+      emit(state.copyWith(
+          busy: false,
+          errorMessage:
+              'Could not update the day session. Check your connection and try again.'));
     }
-    busy = false;
-    refresh();
     return null;
   }
 

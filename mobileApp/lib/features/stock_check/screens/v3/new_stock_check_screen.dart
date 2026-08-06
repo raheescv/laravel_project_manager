@@ -1,19 +1,18 @@
+import 'dart:async';
+import 'package:invo/features/stock_check/logic/stock_check_cubit/stock_check_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
-import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/stock_check_models.dart';
-import '../../domain/repository/stock_check_repository.dart';
 
 /// Create form for a new stock check. The item list is auto-snapshotted from the
 /// selected branch's live stock server-side, so there is no product picking. On
@@ -43,13 +42,15 @@ class _NewStockCheckScreenState extends State<NewStockCheckScreen> {
 
   @override
   void dispose() {
+    unawaited(_stock.close());
     _titleCtl.dispose();
     _descCtl.dispose();
     _titleFocus.dispose();
     super.dispose();
   }
 
-  StockCheckRepository get _repo => serviceLocator<StockCheckRepository>();
+  /// Owns the repository and its error handling (§10).
+  final _stock = StockCheckCubit();
 
   Future<void> _pickDate() async {
     final p = context.astra;
@@ -143,14 +144,16 @@ class _NewStockCheckScreenState extends State<NewStockCheckScreen> {
       return;
     }
     setState(() => _busy = true);
-    try {
-      final res = await _repo.create(
-        branchId: _branch!.id,
-        date: Dates.iso(_date),
-        title: title,
-        description: _descCtl.text.trim(),
-      );
-      if (!mounted) return;
+    final res = await _stock.create(
+      branchId: _branch!.id,
+      date: Dates.iso(_date),
+      title: title,
+      description: _descCtl.text.trim(),
+    );
+    if (!mounted) return;
+    if (res == null) {
+      _snack(_stock.state.errorMessage ?? 'Could not create the stock check.');
+    } else {
       final detail = StockCheckDetail(
         id: res.id,
         title: title,
@@ -160,10 +163,6 @@ class _NewStockCheckScreenState extends State<NewStockCheckScreen> {
         branchName: _branch!.name,
       );
       context.pop(detail);
-    } on ApiException catch (e) {
-      if (mounted) _snack(e.message);
-    } catch (_) {
-      if (mounted) _snack('Could not create the stock check.');
     }
     if (mounted) setState(() => _busy = false);
   }

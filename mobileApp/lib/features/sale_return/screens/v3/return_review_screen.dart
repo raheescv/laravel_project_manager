@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
-import 'package:invo/shared/domain/repository/lookup_repository.dart';
+import 'package:invo/features/sale_return/logic/return_ops_cubit/return_ops_cubit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
-import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart' show PayMode, PayModeX;
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/invo_logo.dart';
 import 'package:invo/features/sale/widgets/v3/custom_payment_sheet.dart';
@@ -25,6 +24,8 @@ class ReturnReviewScreen extends StatefulWidget {
 }
 
 class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
+  /// Repository access for this flow (§10).
+  final _ops = ReturnOpsCubit();
   bool _busy = false;
   List<PaymentMethod> _methods = [];
 
@@ -36,7 +37,7 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
 
   Future<void> _loadMethods() async {
     try {
-      final methods = await serviceLocator<LookupRepository>().paymentMethods();
+      final methods = await _ops.paymentMethods();
       if (mounted) setState(() => _methods = methods);
     } catch (_) {
       // Cash/Card/Credit still work without the configured list.
@@ -45,15 +46,15 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
 
   Future<void> _refund() async {
     final draft = context.read<ReturnDraftCubit>();
-    final service = serviceLocator<SaleReturnRepository>();
+
     final editingId = draft.editingReturnId;
     setState(() => _busy = true);
     try {
       final saleReturn = editingId.isEmpty
-          ? await service.createSaleReturn(draft.toPayload())
-          : await service.updateSaleReturn(editingId, draft.toPayload());
+          ? await _ops.createSaleReturn(draft.toPayload())
+          : await _ops.updateSaleReturn(editingId, draft.toPayload());
       draft.clear();
-      if (mounted) context.pushReplacement('/return-receipt', extra: saleReturn);
+      if (mounted) context.pushReplacement(Routes.returnReceipt, extra: saleReturn);
     } on ApiException catch (e) {
       _error(e.message);
     } catch (e) {
@@ -104,7 +105,7 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
             EmeraldHeader(
               leading: HeaderIconButton(
                 icon: Icons.chevron_left,
-                onTap: () => context.canPop() ? context.pop() : context.go('/sales-returns'),
+                onTap: () => context.canPop() ? context.pop() : context.go(Routes.salesReturns),
               ),
               title: 'Review & Refund',
             ),

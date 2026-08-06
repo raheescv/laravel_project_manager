@@ -15,6 +15,10 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'package:invo/shared/utils/components/theme/index.dart';
 
+part 'continuous_scanner_states.dart';
+
+part 'continuous_scanner_views.dart';
+
 /// The kind of outcome a single scan produced — drives the feed line colour.
 enum ScanStatus { ok, warn, error }
 
@@ -225,7 +229,9 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
     _ops = _ops.then((_) async {
       try {
         await c?.dispose();
-      } catch (_) {}
+      } catch (_) {
+        // Disposing an already-dead platform camera throws; nothing to do.
+      }
     });
     super.dispose();
   }
@@ -348,7 +354,9 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
     if (existing != null) {
       try {
         await existing.dispose().timeout(const Duration(seconds: 4));
-      } catch (_) {}
+      } catch (_) {
+        // Disposing an already-dead platform camera throws; nothing to do.
+      }
     }
     await _forceStopPlatform();
 
@@ -360,7 +368,9 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
       _attaching = false;
       try {
         await controller.dispose();
-      } catch (_) {}
+      } catch (_) {
+        // Disposing an already-dead platform camera throws; nothing to do.
+      }
       return;
     }
     _controller = controller;
@@ -374,7 +384,9 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
         if (!mounted || !identical(_controller, controller)) {
           try {
             await controller.dispose();
-          } catch (_) {}
+          } catch (_) {
+        // Disposing an already-dead platform camera throws; nothing to do.
+      }
           return;
         }
         setState(() {
@@ -403,7 +415,9 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
         _attaching = false;
         try {
           await controller.dispose();
-        } catch (_) {}
+        } catch (_) {
+        // Disposing an already-dead platform camera throws; nothing to do.
+      }
         return;
       }
     }
@@ -419,7 +433,9 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
     if (identical(_controller, controller)) _controller = null;
     try {
       await controller.dispose().timeout(const Duration(seconds: 4));
-    } catch (_) {}
+    } catch (_) {
+        // Disposing an already-dead platform camera throws; nothing to do.
+      }
     if (!mounted) return;
     setState(() {
       _phase = phase;
@@ -467,9 +483,9 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
       fb = ScanFeedback.error(code, 'Scan failed — check connection');
     }
     if (!mounted) return;
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     if (fb.isError) {
-      HapticFeedback.vibrate();
+      unawaited(HapticFeedback.vibrate());
     }
     // Flash the viewfinder in the result colour — the "it registered" moment
     // the user sees without looking down at the feed.
@@ -478,7 +494,7 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
       ScanStatus.warn => const Color(0xFFE6C16B),
       ScanStatus.error => AstraPalette.danger,
     };
-    _pulse.forward(from: 0);
+    unawaited(_pulse.forward(from: 0));
     setState(() {
       if (!fb.isError) {
         _count++;
@@ -508,7 +524,7 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
       );
       return;
     }
-    HapticFeedback.selectionClick();
+    unawaited(HapticFeedback.selectionClick());
     setState(() {
       if (_count > 0) _count--;
       _pushFeed(_FeedLine(confirm!, undone: true));
@@ -547,9 +563,10 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
         ],
       ),
     );
+    ctl.dispose(); // owned by this method, not by the State
     if (code != null && code.isNotEmpty) {
       _lastCode = null; // manual entry is intentional — never blocked by cooldown
-      _handle(code);
+      unawaited(_handle(code));
     }
   }
 
@@ -681,66 +698,6 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
 
   // ── Camera-area states ─────────────────────────────────────────────────────
 
-  Widget _primerState(AstraPalette p) {
-    return _CameraStateView(
-      p: p,
-      icon: Icons.qr_code_scanner_rounded,
-      title: 'Allow camera access',
-      message:
-          'The camera is used only while this screen is open, to read product barcodes. Nothing is photographed or recorded.',
-      primary: _StateAction(Icons.photo_camera_outlined, 'Enable camera', _requestPermission),
-      links: [
-        _StateAction(null, 'Type codes manually instead', _manualEntry),
-        _StateAction(null, 'Go back', _close),
-      ],
-    );
-  }
-
-  Widget _settingsState(AstraPalette p) {
-    return _CameraStateView(
-      p: p,
-      icon: Icons.no_photography_outlined,
-      title: 'Camera access is off',
-      message:
-          'Barcode scanning needs the camera. Turn it on in Settings — this screen will pick it up the moment you come back.',
-      steps: _permissionSteps(),
-      primary: _StateAction(Icons.settings_outlined, 'Open Settings', () async => openAppSettings()),
-      links: [
-        _StateAction(null, "I've allowed it — check again", _boot),
-        _StateAction(null, 'Type codes manually instead', _manualEntry),
-        _StateAction(null, 'Go back', _close),
-      ],
-    );
-  }
-
-  Widget _failedState(AstraPalette p) {
-    return _CameraStateView(
-      p: p,
-      icon: Icons.videocam_off_outlined,
-      title: 'Couldn’t start the camera',
-      message:
-          'This is usually temporary — another app may be using the camera. Close other camera apps and try again, or type the code instead.',
-      technical: _lastErrorDetail,
-      primary: _StateAction(Icons.refresh_rounded, 'Try again', _attach),
-      links: [
-        _StateAction(null, 'Type the code instead', _manualEntry),
-        _StateAction(null, 'Go back', _close),
-      ],
-    );
-  }
-
-  Widget _unsupportedState(AstraPalette p) {
-    return _CameraStateView(
-      p: p,
-      icon: Icons.keyboard_alt_outlined,
-      title: 'Scanning not supported',
-      message:
-          'This device can’t scan barcodes with the camera. You can still add items by typing their codes.',
-      primary: _StateAction(Icons.keyboard_alt_outlined, 'Enter code', _manualEntry),
-      links: [_StateAction(null, 'Go back', _close)],
-    );
-  }
-
   /// OS-specific, numbered steps to turn the camera permission back on.
   List<(int, String)> _permissionSteps() {
     switch (defaultTargetPlatform) {
@@ -785,554 +742,6 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
     };
   }
 
-  Widget _feedPanel(AstraPalette p) {
-    return Container(
-      color: const Color(0xFF0F0F0F),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              height: 132,
-              child: _feed.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          widget.emptyHint,
-                          textAlign: TextAlign.center,
-                          style: ui(size: 11.5, weight: FontWeight.w600, color: Colors.white54, height: 1.5),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: _feed.length,
-                      itemBuilder: (_, i) {
-                        final l = _feed[i];
-                        final top = i == 0;
-                        final c = _lineColor(l);
-                        final showPlus = l.fb.isOk && !l.undone;
-                        return Container(
-                          margin: EdgeInsets.only(bottom: top ? 10 : 0),
-                          padding: EdgeInsets.symmetric(vertical: top ? 11 : 8, horizontal: top ? 12 : 2),
-                          decoration: top
-                              ? BoxDecoration(
-                                  gradient: LinearGradient(colors: [p.primaryDark, Color.lerp(Colors.black, p.primaryDark, 0.6)!]),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: c.withValues(alpha: 0.4)),
-                                )
-                              : BoxDecoration(border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06)))),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: top ? 36 : 22,
-                                height: top ? 36 : 22,
-                                decoration: BoxDecoration(color: c.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(top ? 11 : 7)),
-                                child: Icon(_lineIcon(l), size: top ? 18 : 12, color: c),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(l.fb.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: top ? 12.5 : 11.5, weight: FontWeight.w800, color: Colors.white)),
-                                    if (top && l.fb.detail != null) ...[const SizedBox(height: 2), Text(l.fb.detail!, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 10, weight: FontWeight.w600, color: Colors.white70))],
-                                  ],
-                                ),
-                              ),
-                              if (showPlus && !top) Text('+1', style: ui(size: 11, weight: FontWeight.w800, color: c)),
-                              if (showPlus && top) Text('+1', style: serif(size: 20, color: c)),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  _panelBtn(icon: Icons.undo, label: 'Undo', enabled: _undoable != null && !_busy, onTap: _undo),
-                  const SizedBox(width: 9),
-                  _panelBtn(icon: Icons.keyboard_alt_outlined, label: 'Type', enabled: !_busy, onTap: _manualEntry),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Semantics(
-                      button: true,
-                      label: 'Done — finish scanning',
-                      child: GestureDetector(
-                        onTap: _close,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(gradient: p.primaryGradient, borderRadius: BorderRadius.circular(15)),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.check_rounded, size: 17, color: Colors.white),
-                              const SizedBox(width: 8),
-                              Text('Done', style: ui(size: 14, weight: FontWeight.w800, color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _panelBtn({required IconData icon, required String label, required bool enabled, required VoidCallback onTap}) {
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      label: label,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.4,
-        child: GestureDetector(
-          onTap: enabled ? onTap : null,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 18, color: Colors.white),
-                const SizedBox(height: 3),
-                Text(label, style: ui(size: 9.5, weight: FontWeight.w800, color: Colors.white70)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _circleBtn(IconData icon, VoidCallback onTap, {bool gold = false, String? semantic}) {
-    final p = context.astra;
-    return Semantics(
-      button: true,
-      label: semantic,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(color: gold ? p.accent : Colors.white.withValues(alpha: 0.16), shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.22))),
-          child: Icon(icon, color: gold ? p.primaryDark : Colors.white, size: 19),
-        ),
-      ),
-    );
-  }
 }
 
 // ── STATE VIEWS ───────────────────────────────────────────────────────────────
-
-class _StateAction {
-  const _StateAction(this.icon, this.label, this.onTap);
-  final IconData? icon;
-  final String label;
-  final VoidCallback onTap;
-}
-
-/// Shared layout for every full-area camera state (permission primer, settings
-/// guidance, start failure, unsupported): icon in a ring, serif title, calm
-/// copy, optional numbered steps, one gradient primary action and quiet links.
-class _CameraStateView extends StatelessWidget {
-  const _CameraStateView({
-    required this.p,
-    required this.icon,
-    required this.title,
-    required this.message,
-    required this.primary,
-    this.steps,
-    this.technical,
-    this.links = const [],
-  });
-
-  final AstraPalette p;
-  final IconData icon;
-  final String title;
-  final String message;
-  final String? technical;
-  final List<(int, String)>? steps;
-  final _StateAction primary;
-  final List<_StateAction> links;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF111111),
-      alignment: Alignment.center,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(32, 110, 32, 32),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 340),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: p.accent.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: p.accent.withValues(alpha: 0.35), width: 1.2),
-                ),
-                child: Icon(icon, color: p.accent, size: 32),
-              ),
-              const SizedBox(height: 18),
-              Text(title, style: serif(size: 21, color: Colors.white), textAlign: TextAlign.center),
-              const SizedBox(height: 8),
-              Text(message, textAlign: TextAlign.center, style: ui(size: 13, weight: FontWeight.w500, color: Colors.white60, height: 1.5)),
-              // The raw platform reason ("Camera in use", "No available
-              // camera"…) — small and muted, but it turns a screenshot of
-              // this card into a diagnosable report.
-              if (technical != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  technical!,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: ui(size: 10.5, weight: FontWeight.w600, color: Colors.white38),
-                ),
-              ],
-              // Permission needs concrete, OS-specific guidance — a wall of
-              // prose isn't actionable, a numbered checklist is.
-              if (steps != null) ...[
-                const SizedBox(height: 18),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (final step in steps!) ...[
-                        _stepRow(step.$1, step.$2),
-                        if (step.$1 != steps!.length) const SizedBox(height: 10),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 22),
-              Semantics(
-                button: true,
-                label: primary.label,
-                child: GestureDetector(
-                  onTap: primary.onTap,
-                  child: Container(
-                    width: double.infinity,
-                    constraints: const BoxConstraints(minHeight: 50),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(gradient: p.accentGradient, borderRadius: BorderRadius.circular(15)),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (primary.icon != null) ...[
-                          Icon(primary.icon, size: 17, color: p.primaryDark),
-                          const SizedBox(width: 8),
-                        ],
-                        Text(primary.label, style: ui(size: 14, weight: FontWeight.w800, color: p.primaryDark)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              for (final link in links)
-                Semantics(
-                  button: true,
-                  label: link.label,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: link.onTap,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        link.label,
-                        style: ui(
-                          size: 13,
-                          weight: FontWeight.w700,
-                          color: link == links.last ? Colors.white70 : p.accent,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _stepRow(int n, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 22,
-          height: 22,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: p.accent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(7)),
-          child: Text('$n', style: ui(size: 11, weight: FontWeight.w800, color: p.accent)),
-        ),
-        const SizedBox(width: 10),
-        Expanded(child: Text(text, style: ui(size: 12.5, weight: FontWeight.w600, color: Colors.white, height: 1.4))),
-      ],
-    );
-  }
-}
-
-/// Calm placeholder while the camera is coming up — a spinner ring around a
-/// camera glyph, no alarming copy.
-class _StartingVeil extends StatelessWidget {
-  const _StartingVeil();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 64,
-            height: 64,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                const SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: CircularProgressIndicator(strokeWidth: 1.6, color: Colors.white38),
-                ),
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
-                  child: const Icon(Icons.photo_camera_outlined, color: Colors.white70, size: 20),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text('Starting camera…', style: ui(size: 12.5, weight: FontWeight.w600, color: Colors.white60, letterSpacing: 0.2)),
-        ],
-      ),
-    );
-  }
-}
-
-// ── VIEWFINDER ────────────────────────────────────────────────────────────────
-
-/// Dark scrim with a transparent window, premium corner brackets, a sweeping
-/// scan line, a helper caption — and a colour pulse on every scan result so
-/// the user never has to look away from the shelf to know it registered.
-class _ReticleOverlay extends StatelessWidget {
-  const _ReticleOverlay({
-    required this.accent,
-    required this.scanLine,
-    required this.pulse,
-    required this.pulseColor,
-  });
-
-  final Color accent;
-  final Animation<double> scanLine;
-  final Animation<double> pulse;
-  final Color pulseColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, c) {
-        // Wide and short — the right window for 1D retail barcodes.
-        final w = c.maxWidth * 0.8;
-        final h = w * 0.52;
-        final centerY = c.maxHeight * 0.42;
-        final top = centerY - h / 2;
-        final left = (c.maxWidth - w) / 2;
-        return IgnorePointer(
-          child: AnimatedBuilder(
-            animation: Listenable.merge([scanLine, pulse]),
-            builder: (_, __) {
-              // pulse rests at 1; forward(from: 0) plays a decaying flash.
-              final flash = Curves.easeOutCubic.transform(1 - pulse.value);
-              final frameColor = Color.lerp(accent, pulseColor, flash)!;
-              return Stack(
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _ScrimPainter(windowWidth: w, windowHeight: h, centerYFraction: 0.42),
-                    ),
-                  ),
-                  Positioned(
-                    left: left,
-                    top: top,
-                    width: w,
-                    height: h,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // Result-flash glow around the window.
-                        if (flash > 0.01)
-                          Positioned.fill(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(22),
-                                boxShadow: [
-                                  BoxShadow(color: frameColor.withValues(alpha: 0.55 * flash), blurRadius: 34, spreadRadius: 3),
-                                ],
-                              ),
-                            ),
-                          ),
-                        // Hairline window edge + corner brackets.
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.18), width: 1),
-                            ),
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: CustomPaint(painter: _BracketsPainter(color: frameColor)),
-                        ),
-                        // Sweeping scan line.
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
-                          child: SizedBox(
-                            width: w,
-                            height: h,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  left: 12,
-                                  right: 12,
-                                  top: 10 + scanLine.value * (h - 22),
-                                  child: Container(
-                                    height: 2.5,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(colors: [Colors.transparent, frameColor, Colors.transparent]),
-                                      boxShadow: [BoxShadow(color: frameColor.withValues(alpha: 0.7), blurRadius: 14)],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Helper caption under the window.
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: top + h + 16,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.45),
-                          borderRadius: BorderRadius.circular(99),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 0.5),
-                        ),
-                        child: Text(
-                          'Align the barcode inside the frame',
-                          style: ui(size: 11.5, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.85)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Four rounded corner brackets — reads "viewfinder" without boxing the whole
-/// window in a heavy border.
-class _BracketsPainter extends CustomPainter {
-  _BracketsPainter({required this.color});
-  final Color color;
-
-  static const _len = 26.0;
-  static const _radius = 22.0;
-  static const _stroke = 3.4;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _stroke
-      ..strokeCap = StrokeCap.round;
-
-    Path corner() => Path()
-      ..moveTo(0, _radius + _len)
-      ..lineTo(0, _radius)
-      ..quadraticBezierTo(0, 0, _radius, 0)
-      ..lineTo(_radius + _len, 0);
-
-    void draw(double dx, double dy, double rotation) {
-      canvas.save();
-      canvas.translate(dx, dy);
-      canvas.rotate(rotation);
-      canvas.drawPath(corner(), paint);
-      canvas.restore();
-    }
-
-    const quarter = 1.5707963267948966; // pi / 2
-    draw(0, 0, 0); // top-left
-    draw(size.width, 0, quarter); // top-right
-    draw(size.width, size.height, 2 * quarter); // bottom-right
-    draw(0, size.height, 3 * quarter); // bottom-left
-  }
-
-  @override
-  bool shouldRepaint(covariant _BracketsPainter old) => old.color != color;
-}
-
-class _ScrimPainter extends CustomPainter {
-  _ScrimPainter({required this.windowWidth, required this.windowHeight, required this.centerYFraction});
-  final double windowWidth;
-  final double windowHeight;
-  final double centerYFraction;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromCenter(center: Offset(size.width / 2, size.height * centerYFraction), width: windowWidth, height: windowHeight);
-    final window = RRect.fromRectAndRadius(rect, const Radius.circular(22));
-    final scrim = Path()..addRect(Offset.zero & size);
-    final hole = Path()..addRRect(window);
-    final cut = Path.combine(PathOperation.difference, scrim, hole);
-    canvas.drawPath(cut, Paint()..color = Colors.black.withValues(alpha: 0.55));
-  }
-
-  @override
-  bool shouldRepaint(covariant _ScrimPainter old) =>
-      old.windowWidth != windowWidth || old.windowHeight != windowHeight || old.centerYFraction != centerYFraction;
-}

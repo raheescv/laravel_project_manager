@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +11,7 @@ import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/screens/v3/invoice_screen.dart';
 import 'package:invo/features/sale/screens/v3/review_pay_screen.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
@@ -47,7 +47,20 @@ void main() {
       ..registerLazySingleton<AuthRepository>(() => FakeAuthRepository())
       ..registerLazySingleton<SaleRepository>(() => sale);
 
-    final authCubit = AuthCubit()..status = AuthStatus.signedIn;
+    final authCubit = AuthCubit()
+      ..seedSession(ApiUser(
+        id: '1',
+        name: 'Test',
+        code: 'T-1',
+        email: 't@astra.co',
+        mobile: '',
+        isAdmin: true,
+        designation: '',
+        role: 'admin',
+        branchId: '3',
+        daySessionStatus: 'open',
+        daySessionDate: '2026-06-14',
+      ));
     final cart = CartCubit()
       ..add(Product(
         id: 1,
@@ -76,21 +89,19 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(ScreenUtilInit(
-      designSize: const Size(393, 865),
-      builder: (_, __) => MultiBlocProvider(
+    await tester.pumpWidget(MultiBlocProvider(
         providers: [
           BlocProvider<AuthCubit>.value(value: authCubit),
           BlocProvider<CartCubit>.value(value: cart),
           BlocProvider<PrintSettingsCubit>(create: (_) => PrintSettingsCubit()),
+          BlocProvider<PosSettingsCubit>(create: (_) => PosSettingsCubit()),
           BlocProvider<ReturnDraftCubit>(create: (_) => ReturnDraftCubit()),
         ],
         child: MaterialApp.router(
           theme: buildAstraTheme(AstraPresets.emeraldGold),
           routerConfig: router,
         ),
-      ),
-    ));
+      ));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(tester.takeException(), isNull, reason: 'Review & Pay must render');

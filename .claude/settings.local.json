@@ -58,7 +58,8 @@
       "Bash(file IBMPlexSansArabic-*.ttf)",
       "Bash(sips -s format png /tmp/invo_receipt_arabic_ibmplex.pdf --out /tmp/invo_receipt_arabic_ibmplex.png)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(php -l app/Livewire/LocalPurchaseOrder/View.php)"
+      "Bash(php -l app/Livewire/LocalPurchaseOrder/View.php)",
+      "Bash(cd /Users/Shared/sites/personal/main_projects/project_manager && grep -rn -i \"font\" config/barcode_default_configuration.php app/Support/BarcodeTemplateConfiguration.php app/Support/BarcodeLabel.php | head -50)"
     ]
   },
   "hooks": {
@@ -68,9 +69,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "f=$(cat | jq -r '.tool_input.file_path // .tool_response.filePath') && case \"$f\" in *.php) ./vendor/bin/pint \"$f\" ;; esac || true",
-            "timeout": 30,
-            "statusMessage": "Running Pint..."
+            "command": "f=$(cat | jq -r '.tool_input.file_path // .tool_response.filePath'); case \"$f\" in *.php) ./vendor/bin/pint \"$f\" ;; *.dart) d=$(dirname \"$f\"); while [ \"$d\" != \"/\" ] && [ ! -f \"$d/pubspec.yaml\" ]; do d=$(dirname \"$d\"); done; if [ -f \"$d/pubspec.yaml\" ]; then out=$(cd \"$d\" && dart analyze \"$f\" 2>&1 | grep -v -e '^Analyzing' -e '^$'); case \"$out\" in *\"No issues found\"*) ;; *) [ -n \"$out\" ] && printf 'dart analyze %s\\n%s\\n' \"${f##*/}\" \"$out\" >&2 ;; esac; fi ;; esac; exit 0",
+            "timeout": 60,
+            "statusMessage": "Checking edited file..."
           }
         ]
       }

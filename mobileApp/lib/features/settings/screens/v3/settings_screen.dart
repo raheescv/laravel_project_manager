@@ -11,6 +11,7 @@ import 'package:invo/features/settings/logic/print_settings_cubit/print_settings
 import 'package:invo/shared/logic/haptics_cubit/haptics_cubit.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
@@ -19,6 +20,7 @@ import 'package:invo/features/settings/widgets/v3/appearance_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/branch_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/currency_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/theme_sheet.dart';
+import 'package:invo/features/settings/widgets/v3/typography_sheet.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, this.onSelectTab});
@@ -40,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// would slide a second copy over the shell.
   void _openPermissions() => context.isTablet && widget.onSelectTab != null
       ? widget.onSelectTab!(kPermissionsTab)
-      : context.push('/permissions');
+      : context.push(Routes.permissions);
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: _phoneList(context, <Widget>[
                         _presetCard(context, theme),
                         _appearanceCard(context, theme),
+                        _typographyCard(context, theme),
                         _hapticsCard(context),
                         _currencyCard(context, currencyCtl),
                         _branchCard(context, branch),
@@ -107,6 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return [
       (Icons.palette_outlined, 'Colour preset', theme.preset.name),
       (_modeIcon(theme.mode), 'Appearance', theme.mode == AstraMode.system ? 'System · ${theme.isDark ? 'Dark' : 'Light'}' : theme.mode.label),
+      (Icons.text_fields_outlined, 'Typography', theme.typeface.name),
       (haptics.enabled ? Icons.vibration : Icons.smartphone_outlined, 'Haptics', haptics.enabled ? 'On' : 'Off'),
       (Icons.payments_outlined, 'Currency', currency.currency.code),
       (Icons.business, 'Branch', sel == null ? 'Not set' : sel.name),
@@ -226,30 +230,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
           for (final m in AstraMode.values) _modeRow(context, theme, m),
         ]);
       case 2:
+        return _panelShell(context, Icons.text_fields_outlined, 'Typography', 'The typeface the whole app is set in.', [
+          _typographyCard(context, theme),
+          const SizedBox(height: 12),
+          AstraButton(label: 'Choose a typeface', icon: Icons.text_fields_outlined, onTap: () => showTypographySheet(context)),
+        ]);
+      case 3:
         final haptics = context.watch<HapticsCubit>();
         return _panelShell(context, haptics.enabled ? Icons.vibration : Icons.smartphone_outlined, 'Haptics', 'Vibration feedback on every tap.', [
           _toggleRow(context, 'Haptic feedback', haptics.enabled ? 'On — a tick on each tap' : 'Off', haptics.enabled,
               () => context.read<HapticsCubit>().toggle()),
         ]);
-      case 3:
+      case 4:
         return _panelShell(context, Icons.payments_outlined, 'Currency', 'Base currency and the rates used for conversion.', [
           _currencyCard(context, currency),
           const SizedBox(height: 12),
           AstraButton(label: 'Manage currencies', icon: Icons.tune, onTap: () => showCurrencySheet(context)),
         ]);
-      case 4:
+      case 5:
         return _panelShell(context, Icons.business, 'Branch', 'The branch this device bills against.', [
           _branchCard(context, branch),
           const SizedBox(height: 12),
           AstraButton(label: 'Switch branch', icon: Icons.swap_horiz, onTap: () => showBranchSheet(context)),
         ]);
-      case 5:
+      case 6:
         return _panelShell(context, Icons.receipt_long_outlined, 'Printer & receipt', 'Receipt style, paper width and print options.', [
           _printerCard(context),
           const SizedBox(height: 12),
-          AstraButton(label: 'Open printer settings', icon: Icons.print_outlined, onTap: () => context.push('/print-settings')),
+          AstraButton(label: 'Open printer settings', icon: Icons.print_outlined, onTap: () => context.push(Routes.printSettings)),
         ]);
-      case 6:
+      case 7:
         final pos = context.watch<PosSettingsCubit>();
         return _panelShell(context, pos.lockAfterSale ? Icons.lock_clock_outlined : Icons.lock_open_outlined,
             'Shared till', 'For a counter more than one cashier serves from.', [
@@ -262,7 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               pos.lockAfterSale,
               () => context.read<PosSettingsCubit>().toggleLockAfterSale()),
         ]);
-      case 7:
+      case 8:
         return _panelShell(context, Icons.verified_user_outlined, 'My permissions', 'What this account is allowed to do.', [
           _permissionsCard(context),
           const SizedBox(height: 12),
@@ -479,6 +489,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _typographyCard(BuildContext context, ThemeCubit theme) {
+    final p = context.astra;
+    final face = theme.typeface;
+    return AstraCard(
+      radius: 14,
+      onTap: () => showTypographySheet(context),
+      child: Row(
+        children: [
+          // The "Aa" is set in the live display face, so the card shows the
+          // choice rather than describing it.
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(9)),
+            child: Text('Aa', style: face.displayStyle(size: 15, color: p.primary)),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Typography', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text('${face.name} · ${face.tagline}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+        ],
+      ),
+    );
+  }
+
   Widget _hapticsCard(BuildContext context) {
     final p = context.astra;
     final haptics = context.watch<HapticsCubit>();
@@ -649,7 +695,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final print = context.watch<PrintSettingsCubit>();
     return AstraCard(
       radius: 14,
-      onTap: () => context.push('/print-settings'),
+      onTap: () => context.push(Routes.printSettings),
       child: Row(
         children: [
           IconChip(icon: Icons.receipt_long_outlined, size: 34, radius: 9, bg: p.tint),

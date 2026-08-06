@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -102,7 +104,7 @@ Widget cartLineCard(BuildContext context, CartLine line) {
                   cart.changeQty(line, cart.defaultQty);
                 },
                 onTapValue: () async {
-                  HapticFeedback.selectionClick();
+                  unawaited(HapticFeedback.selectionClick());
                   final v = await showQtyInputSheet(
                     context,
                     current: line.qty,

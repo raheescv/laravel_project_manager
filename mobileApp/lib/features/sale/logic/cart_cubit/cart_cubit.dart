@@ -1,14 +1,25 @@
+import 'package:equatable/equatable.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
-import 'package:invo/shared/logic/base/holder_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 
-/// One editable line on the ticket. Discount can be a percentage or a flat
-/// amount; tax is a percentage. Mirrors the "Edit line item" sheet fields.
-class CartLine {
-  CartLine({
+part 'cart_state.dart';
+
+/// One line on the ticket. Discount can be a percentage or a flat amount; tax
+/// is a percentage. Mirrors the "Edit line item" sheet fields.
+///
+/// Immutable: [CartCubit] hands these out through `lines`, so a settable field
+/// would let a widget change the total that gets posted to the server without
+/// the cubit emitting a tick — the UI would keep showing the old figures while
+/// the payload disagreed. Edits go through [CartCubit.updateLine] and friends,
+/// which replace the element and then `refresh()`.
+class CartLine extends Equatable {
+  const CartLine({
     required this.productId,
     required this.name,
     required this.code,
@@ -32,26 +43,108 @@ class CartLine {
   final String code;
   final String type;
   final String thumbnail;
-  double unitPrice;
-  double qty;
-  double discountValue;
-  bool discountIsPercent;
-  double taxPercent;
-  int? employeeId;
-  String employeeName;
+  final double unitPrice;
+  final double qty;
+  final double discountValue;
+  final bool discountIsPercent;
+  final double taxPercent;
+  final int? employeeId;
+  final String employeeName;
 
-  double get base => unitPrice * qty;
-  double get discountAmount =>
-      discountIsPercent ? base * discountValue / 100.0 : discountValue;
-  double get taxable => (base - discountAmount).clamp(0, double.infinity);
-  double get taxAmount => taxable * taxPercent / 100.0;
+  /// Copy with the editable fields replaced. A null argument means "leave as
+  /// is" — to *clear* the assigned employee use [withEmployee].
+  CartLine copyWith({
+    double? unitPrice,
+    double? qty,
+    double? discountValue,
+    bool? discountIsPercent,
+    double? taxPercent,
+    int? employeeId,
+    String? employeeName,
+  }) =>
+      CartLine(
+        productId: productId,
+        saleItemId: saleItemId,
+        name: name,
+        code: code,
+        type: type,
+        thumbnail: thumbnail,
+        unitPrice: unitPrice ?? this.unitPrice,
+        qty: qty ?? this.qty,
+        discountValue: discountValue ?? this.discountValue,
+        discountIsPercent: discountIsPercent ?? this.discountIsPercent,
+        taxPercent: taxPercent ?? this.taxPercent,
+        employeeId: employeeId ?? this.employeeId,
+        employeeName: employeeName ?? this.employeeName,
+      );
+
+  /// Copy with the assigned employee replaced, including clearing it — the one
+  /// case [copyWith]'s null-means-unchanged rule can't express.
+  CartLine withEmployee(int? id, String name) => CartLine(
+        productId: productId,
+        saleItemId: saleItemId,
+        name: this.name,
+        code: code,
+        type: type,
+        thumbnail: thumbnail,
+        unitPrice: unitPrice,
+        qty: qty,
+        discountValue: discountValue,
+        discountIsPercent: discountIsPercent,
+        taxPercent: taxPercent,
+        employeeId: id,
+        employeeName: name,
+      );
+
+  @override
+  List<Object?> get props => [
+        productId,
+        saleItemId,
+        name,
+        code,
+        type,
+        thumbnail,
+        unitPrice,
+        qty,
+        discountValue,
+        discountIsPercent,
+        taxPercent,
+        employeeId,
+        employeeName,
+      ];
+
+  // Rounded at exactly the points the server's generated columns are, so the
+  // figures on the ticket are the figures MySQL will store:
+  //   sale_items.gross_amount = unit_price * quantity
+  //   sale_items.net_amount   = gross_amount - discount
+  //   sale_items.tax_amount   = (net_amount * tax) / 100
+  //   sale_items.total        = net_amount + tax_amount
+  // — each of them decimal(16,2). Summing unrounded doubles and rounding once
+  // at the end drifts from that by a cent on percentage discounts and tax.
+
+  /// `gross_amount`.
+  double get base => round2(unitPrice * qty);
+
+  /// The `discount` column — also what [CartCubit.toPayload] sends.
+  double get discountAmount => round2(
+      discountIsPercent ? base * discountValue / 100.0 : discountValue);
+
+  /// `net_amount`.
+  double get taxable => round2((base - discountAmount).clamp(0, double.infinity));
+
+  /// `tax_amount`.
+  double get taxAmount => round2(taxable * taxPercent / 100.0);
+
+  /// `total` — both operands are already 2dp, so the sum is exact.
   double get total => taxable + taxAmount;
 
   String get discountLabel => discountValue <= 0
       ? ''
       : discountIsPercent
           ? '${discountValue.toStringAsFixed(discountValue.truncateToDouble() == discountValue ? 0 : 1)}% off'
-          : '\$${discountValue.toStringAsFixed(2)} off';
+          // Flat discounts are money, so they follow the configured currency —
+          // never a hardcoded symbol.
+          : '${Money.of(discountValue)} off';
 }
 
 /// How the ticket is being settled. Mirrors the web POS "Confirm Sale" modes.
@@ -83,31 +176,46 @@ class CustomPayment {
   final double amount;
 }
 
-/// The live ticket: lines, client, default stylist, order discount, tip & payment.
-class CartCubit extends HolderCubit {
-  CartCubit();
-
-  final List<CartLine> _lines = [];
-  List<CartLine> get lines => List.unmodifiable(_lines);
-
-  String customerName = 'Walk-in';
-  String customerMobile = '';
-  int? stylistId;
-  String stylistName = '';
-
-  String? editingSaleId;
-  bool get isEditing => editingSaleId != null;
-
-  double orderDiscount = 0;
-  bool orderDiscountIsPercent = false;
-  double tipPercent = 0;
-
-  PayMode payMode = PayMode.cash;
-  List<CustomPayment> customPayments = [];
-  bool sendToWhatsapp = false;
+/// The live ticket. Holds a [CartState] and replaces it on every edit — no
+/// mutable field is ever handed out, so a widget cannot change the total that
+/// gets posted without the cubit emitting.
+///
+/// The plain getters below forward to `state` so existing
+/// `context.watch<CartCubit>().total` call sites keep working; new code can use
+/// `BlocSelector<CartCubit, CartState, T>` to rebuild on one field instead of
+/// the whole ticket — which the old tick-based base class made impossible.
+class CartCubit extends Cubit<CartState> {
+  CartCubit() : super(const CartState());
 
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
   LookupRepository get _lookup => serviceLocator<LookupRepository>();
+
+  // ---- read facade (delegates to state) ----
+  List<CartLine> get lines => state.lines;
+  String get customerName => state.customerName;
+  String get customerMobile => state.customerMobile;
+  int? get stylistId => state.stylistId;
+  String get stylistName => state.stylistName;
+  String? get editingSaleId => state.editingSaleId;
+  bool get isEditing => state.isEditing;
+  double get orderDiscount => state.orderDiscount;
+  bool get orderDiscountIsPercent => state.orderDiscountIsPercent;
+  double get tipPercent => state.tipPercent;
+  PayMode get payMode => state.payMode;
+  List<CustomPayment> get customPayments => state.customPayments;
+  bool get sendToWhatsapp => state.sendToWhatsapp;
+  bool get isEmpty => state.isEmpty;
+  int get count => state.count;
+  double get subtotal => state.subtotal;
+  double get lineDiscounts => state.lineDiscounts;
+  double get orderDiscountAmount => state.orderDiscountAmount;
+  double get totalDiscount => state.totalDiscount;
+  double get taxTotal => state.taxTotal;
+  double get netBeforeTip => state.netBeforeTip;
+  double get tipAmount => state.tipAmount;
+  double get total => state.total;
+  double get paidAmount => state.paidAmount;
+  double get balance => state.balance;
 
   /// The store's configured default quantity (Settings → Sale Configuration
   /// → Default Quantity), used both as a new line's starting qty and as the
@@ -125,20 +233,17 @@ class CartCubit extends HolderCubit {
   Future<void> syncSaleSettings() async {
     try {
       final settings = await _lookup.saleSettings();
-      var changed = false;
       final qty = settings.defaultQuantity;
       if (qty != null && qty != _storage.defaultQuantity) {
         await _storage.setDefaultQuantity(qty);
-        changed = true;
       }
       final tip = settings.tipEnabled;
       if (tip != null && tip != _storage.tipEnabled) {
         await _storage.setTipEnabled(tip);
-        if (!tip) tipPercent = 0;
-        changed = true;
+        if (!tip) emit(state.copyWith(tipPercent: 0));
       }
       // Cache the default Product/Service filter so the catalog can preselect
-      // it. Read by CatalogCubit — no cart refresh needed here.
+      // it. Read by CatalogCubit.
       final type = settings.defaultProductType;
       if (type != null && type != _storage.defaultProductType) {
         await _storage.setDefaultProductType(type);
@@ -146,39 +251,34 @@ class CartCubit extends HolderCubit {
       // Thermal-print options ride along on the same response — hand them to
       // the print cubit so receipts follow the web Sale Configuration.
       await serviceLocator<PrintSettingsCubit>().applyRemote(settings.print);
-      if (changed) refresh();
     } catch (_) {
       // Offline or server error — keep the cached values.
     }
   }
 
-  bool get isEmpty => _lines.isEmpty;
-  int get count => _lines.fold(0, (a, l) => a + l.qty.round());
-
-  void setClient(String name, String mobile) {
-    customerName = name.isEmpty ? 'Walk-in' : name;
-    customerMobile = mobile;
-    refresh();
-  }
+  void setClient(String name, String mobile) => emit(state.copyWith(
+        customerName: name.isEmpty ? AppStrings.walkInCustomer : name,
+        customerMobile: mobile,
+      ));
 
   void setStylist(int? id, String name, {bool applyToLines = true}) {
-    stylistId = id;
-    stylistName = name;
-    if (applyToLines) {
-      for (final l in _lines) {
-        l.employeeId = id;
-        l.employeeName = name;
-      }
-    }
-    refresh();
+    emit(state.copyWith(
+      stylistId: id,
+      stylistName: name,
+      clearStylist: id == null,
+      lines: applyToLines
+          ? [for (final l in state.lines) l.withEmployee(id, name)]
+          : null,
+    ));
   }
 
   void add(Product p) {
-    final existing = _lines.where((l) => l.productId == p.id).firstOrNull;
-    if (existing != null) {
-      existing.qty += defaultQty;
+    final index = state.lines.indexWhere((l) => l.productId == p.id);
+    final next = [...state.lines];
+    if (index != -1) {
+      next[index] = next[index].copyWith(qty: next[index].qty + defaultQty);
     } else {
-      _lines.add(CartLine(
+      next.add(CartLine(
         productId: p.id,
         name: p.name,
         code: p.code,
@@ -187,34 +287,39 @@ class CartCubit extends HolderCubit {
         qty: defaultQty,
         taxPercent: p.tax,
         thumbnail: p.thumbnail,
-        employeeId: stylistId,
-        employeeName: stylistName,
+        employeeId: state.stylistId,
+        employeeName: state.stylistName,
       ));
     }
-    refresh();
+    emit(state.copyWith(lines: next));
+  }
+
+  /// Replace [line] with [next], or drop it when [next] is null. Lines carry
+  /// value equality and [add] merges by product, so `indexOf` resolves to
+  /// exactly the intended row.
+  void _replace(CartLine line, CartLine? next) {
+    final i = state.lines.indexOf(line);
+    if (i == -1) return;
+    final rows = [...state.lines];
+    if (next == null) {
+      rows.removeAt(i);
+    } else {
+      rows[i] = next;
+    }
+    emit(state.copyWith(lines: rows));
   }
 
   void changeQty(CartLine line, double delta) {
-    line.qty = (line.qty + delta).clamp(0, 999999);
-    if (line.qty <= 0) _lines.remove(line);
-    refresh();
+    final next = (line.qty + delta).clamp(0, 999999).toDouble();
+    _replace(line, next <= 0 ? null : line.copyWith(qty: next));
   }
 
   /// Sets an exact (typed) quantity on a line. A value of 0 or less removes the
   /// line, matching the stepper's behaviour.
-  void setQty(CartLine line, double qty) {
-    if (qty <= 0) {
-      _lines.remove(line);
-    } else {
-      line.qty = qty.clamp(0.001, 999999);
-    }
-    refresh();
-  }
+  void setQty(CartLine line, double qty) => _replace(
+      line, qty <= 0 ? null : line.copyWith(qty: qty.clamp(0.001, 999999).toDouble()));
 
-  void removeLine(CartLine line) {
-    _lines.remove(line);
-    refresh();
-  }
+  void removeLine(CartLine line) => _replace(line, null);
 
   void updateLine(
     CartLine line, {
@@ -225,144 +330,87 @@ class CartCubit extends HolderCubit {
     double? taxPercent,
     int? employeeId,
     String? employeeName,
-  }) {
-    if (unitPrice != null) line.unitPrice = unitPrice;
-    if (qty != null) line.qty = qty.clamp(0.001, 999);
-    if (discountValue != null) line.discountValue = discountValue;
-    if (discountIsPercent != null) line.discountIsPercent = discountIsPercent;
-    if (taxPercent != null) line.taxPercent = taxPercent;
-    if (employeeId != null) line.employeeId = employeeId;
-    if (employeeName != null) line.employeeName = employeeName;
-    refresh();
-  }
-
-  void setOrderDiscount(double v) {
-    orderDiscount = v;
-    refresh();
-  }
-
-  void setOrderDiscountIsPercent(bool v) {
-    orderDiscountIsPercent = v;
-    refresh();
-  }
-
-  void setTip(double percent) {
-    tipPercent = percent;
-    refresh();
-  }
-
-  void setPayMode(PayMode mode) {
-    payMode = mode;
-    if (mode != PayMode.custom) customPayments = [];
-    refresh();
-  }
-
-  void setCustomPayments(List<CustomPayment> payments) {
-    customPayments = payments;
-    payMode = PayMode.custom;
-    refresh();
-  }
-
-  void setSendToWhatsapp(bool value) {
-    sendToWhatsapp = value;
-    refresh();
-  }
-
-  // ---- totals ----
-  double get subtotal => _lines.fold(0, (a, l) => a + l.base);
-  double get lineDiscounts => _lines.fold(0, (a, l) => a + l.discountAmount);
-
-  double get orderDiscountAmount {
-    if (!orderDiscountIsPercent) return orderDiscount;
-    final base = (subtotal - lineDiscounts).clamp(0, double.infinity);
-    return base * orderDiscount / 100.0;
-  }
-
-  double get totalDiscount => lineDiscounts + orderDiscountAmount;
-  double get taxTotal => _lines.fold(0, (a, l) => a + l.taxAmount);
-  double get netBeforeTip =>
-      (subtotal - totalDiscount + taxTotal).clamp(0, double.infinity);
-  double get tipAmount => netBeforeTip * tipPercent / 100.0;
-  double get total => netBeforeTip + tipAmount;
-
-  double get paidAmount => switch (payMode) {
-        PayMode.credit => 0,
-        PayMode.custom => customPayments.fold(0.0, (a, p) => a + p.amount),
-        _ => total,
-      };
-
-  double get balance => total - paidAmount;
-
-  void clear() {
-    _lines.clear();
-    customerName = 'Walk-in';
-    customerMobile = '';
-    orderDiscount = 0;
-    orderDiscountIsPercent = false;
-    tipPercent = 0;
-    payMode = PayMode.cash;
-    customPayments = [];
-    sendToWhatsapp = false;
-    editingSaleId = null;
-    refresh();
-  }
-
-  void seedFromSale(Sale sale) {
-    _lines
-      ..clear()
-      ..addAll(
-        sale.lines.where((l) => l.productId != null).map(
-              (l) => CartLine(
-                productId: l.productId!,
-                saleItemId: l.itemId,
-                name: l.name,
-                code: l.code,
-                type: l.type,
-                unitPrice: l.unitPrice,
-                qty: l.quantity,
-                discountValue: l.discount,
-                discountIsPercent: false,
-                taxPercent: l.tax,
-                employeeId: l.employeeId,
-                employeeName: l.employee,
-              ),
-            ),
+  }) =>
+      _replace(
+        line,
+        line.copyWith(
+          unitPrice: unitPrice,
+          qty: qty?.clamp(0.001, 999).toDouble(),
+          discountValue: discountValue,
+          discountIsPercent: discountIsPercent,
+          taxPercent: taxPercent,
+          employeeId: employeeId,
+          employeeName: employeeName,
+        ),
       );
 
-    editingSaleId = sale.id;
-    customerName =
-        sale.customerName.trim().isEmpty ? 'Walk-in' : sale.customerName;
-    customerMobile = sale.customerMobile;
-    final firstWithEmployee =
-        _lines.where((l) => l.employeeId != null).firstOrNull;
-    stylistId = firstWithEmployee?.employeeId;
-    stylistName = firstWithEmployee?.employeeName ?? '';
-    orderDiscount = sale.otherDiscount;
-    orderDiscountIsPercent = false;
-    tipPercent = 0;
-    sendToWhatsapp = false;
-    _seedPayments(sale.payments, sale.paid);
-    refresh();
+  void setOrderDiscount(double v) => emit(state.copyWith(orderDiscount: v));
+
+  void setOrderDiscountIsPercent(bool v) =>
+      emit(state.copyWith(orderDiscountIsPercent: v));
+
+  void setTip(double percent) => emit(state.copyWith(tipPercent: percent));
+
+  void setPayMode(PayMode mode) => emit(state.copyWith(
+        payMode: mode,
+        customPayments: mode == PayMode.custom ? null : const [],
+      ));
+
+  void setCustomPayments(List<CustomPayment> payments) => emit(state.copyWith(
+        customPayments: payments,
+        payMode: PayMode.custom,
+      ));
+
+  void setSendToWhatsapp(bool value) => emit(state.copyWith(sendToWhatsapp: value));
+
+  void clear() => emit(const CartState());
+
+  void seedFromSale(Sale sale) {
+    final lines = sale.lines
+        .where((l) => l.productId != null)
+        .map((l) => CartLine(
+              productId: l.productId!,
+              saleItemId: l.itemId,
+              name: l.name,
+              code: l.code,
+              type: l.type,
+              unitPrice: l.unitPrice,
+              qty: l.quantity,
+              discountValue: l.discount,
+              discountIsPercent: false,
+              taxPercent: l.tax,
+              employeeId: l.employeeId,
+              employeeName: l.employee,
+            ))
+        .toList();
+    final firstWithEmployee = lines.where((l) => l.employeeId != null).firstOrNull;
+    final payment = _seedPayments(sale.payments, sale.paid);
+
+    emit(CartState(
+      lines: lines,
+      editingSaleId: sale.id,
+      customerName: sale.customerName.trim().isEmpty
+          ? AppStrings.walkInCustomer
+          : sale.customerName,
+      customerMobile: sale.customerMobile,
+      stylistId: firstWithEmployee?.employeeId,
+      stylistName: firstWithEmployee?.employeeName ?? '',
+      orderDiscount: sale.otherDiscount,
+      payMode: payment.mode,
+      customPayments: payment.rows,
+    ));
   }
 
-  void _seedPayments(List<SalePayment> payments, double paid) {
+  /// Derives the payment selection from an existing sale's payment rows.
+  ({PayMode mode, List<CustomPayment> rows}) _seedPayments(
+      List<SalePayment> payments, double paid) {
     if (payments.isEmpty) {
-      payMode = paid > 0 ? PayMode.cash : PayMode.credit;
-      customPayments = [];
-      return;
+      return (mode: paid > 0 ? PayMode.cash : PayMode.credit, rows: const []);
     }
     if (payments.length == 1 && payments.first.paymentMethodId == null) {
       final name = payments.first.method.toLowerCase();
-      if (name.contains('cash')) {
-        payMode = PayMode.cash;
-        customPayments = [];
-        return;
-      }
-      if (name.contains('card')) {
-        payMode = PayMode.card;
-        customPayments = [];
-        return;
-      }
+      if (name.contains('cash')) return (mode: PayMode.cash, rows: const []);
+      if (name.contains('card')) return (mode: PayMode.card, rows: const []);
     }
     final rows = payments
         .where((p) => p.paymentMethodId != null)
@@ -370,42 +418,41 @@ class CartCubit extends HolderCubit {
             methodId: p.paymentMethodId!, methodName: p.method, amount: p.amount))
         .toList();
     if (rows.isEmpty) {
-      payMode = paid > 0 ? PayMode.cash : PayMode.credit;
-      customPayments = [];
-      return;
+      return (mode: paid > 0 ? PayMode.cash : PayMode.credit, rows: const []);
     }
-    payMode = PayMode.custom;
-    customPayments = rows;
+    return (mode: PayMode.custom, rows: rows);
   }
 
   /// Build the POST /sale payload (matches Sale StoreRequest exactly).
   /// Pass status: 'draft' to park the sale without completing it.
   Map<String, dynamic> toPayload({String? status}) => {
         if (status != null) 'status': status,
-        'customerName': customerName,
-        if (customerMobile.isNotEmpty) 'phoneNumber': customerMobile,
-        'items': _lines
+        'customerName': state.customerName,
+        if (state.customerMobile.isNotEmpty) 'phoneNumber': state.customerMobile,
+        'items': state.lines
             .map((l) => {
                   if (l.saleItemId != null) 'id': l.saleItemId,
                   'productId': l.productId,
                   if (l.employeeId != null) 'employeeId': l.employeeId,
                   'quantity': l.qty,
                   'unitPrice': l.unitPrice,
-                  'discount': double.parse(l.discountAmount.toStringAsFixed(2)),
+                  // Already 2dp — the getters round where the server's columns
+                  // do, so what is displayed is exactly what is sent.
+                  'discount': l.discountAmount,
                 })
             .toList(),
-        'discount': double.parse(orderDiscountAmount.toStringAsFixed(2)),
-        'tip': double.parse(tipAmount.toStringAsFixed(2)),
-        'paymentMethod': payMode.apiValue,
-        'totalPayment': double.parse(total.toStringAsFixed(2)),
-        if (payMode == PayMode.custom)
-          'payments': customPayments
+        'discount': state.orderDiscountAmount,
+        'tip': state.tipAmount,
+        'paymentMethod': state.payMode.apiValue,
+        'totalPayment': state.total,
+        if (state.payMode == PayMode.custom)
+          'payments': state.customPayments
               .map((p) => {
                     'payment_method_id': p.methodId,
-                    'amount': double.parse(p.amount.toStringAsFixed(2)),
+                    'amount': round2(p.amount),
                   })
               .toList(),
-        'sendToWhatsapp': sendToWhatsapp,
+        'sendToWhatsapp': state.sendToWhatsapp,
       };
 }
 
