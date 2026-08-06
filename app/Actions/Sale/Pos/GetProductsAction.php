@@ -58,7 +58,7 @@ class GetProductsAction
             'category_id' => $product->main_category_id,
             'product_id' => $inventory->product_id,
             'branch_id' => $inventory->branch_id,
-            'image' => $product->thumbnail ?? cache('logo'),
+            'image' => $product->thumbnail ?? tenant_cache('logo'),
             'unit_id' => $product->unit_id,
             'unit_name' => $product->unit->name ?? '',
             'conversion_factor' => 1,

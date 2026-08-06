@@ -3,16 +3,28 @@
 namespace App\Services;
 
 use App\Models\Tenant;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Throwable;
 
 class TenantService
 {
     protected ?Tenant $currentTenant = null;
 
     /**
-     * Get the current tenant
+     * Re-entrancy guard: resolving the authenticated user runs a User query,
+     * whose TenantScope calls back into getCurrentTenantId(). Without this
+     * flag that inner call would try to resolve the user again, forever.
+     */
+    protected bool $resolvingFromAuth = false;
+
+    /**
+     * Get the current tenant.
+     *
+     * Tenant identity is REQUEST state. It is resolved from the subdomain (or
+     * tenant header) by IdentifyTenant, from the authenticated user, or from
+     * an explicit TENANT_ID config for tenantless entry points — never from a
+     * cross-request store: a cache key shared by every request would hand one
+     * tenant's identity to another tenant's request.
      */
     public function getCurrentTenant(): ?Tenant
     {
@@ -21,9 +33,23 @@ class TenantService
             return $this->currentTenant;
         }
 
+        // Every fallback below needs the framework container (request, auth,
+        // config). Bare-container contexts (isolated unit tests) have none —
+        // there the only source of truth is setCurrentTenant().
+        $app = app();
+
         // Fallback: Try to get tenant from request attributes (set by middleware)
-        if (request()->has('tenant')) {
-            $tenant = request()->get('tenant');
+        if ($app->bound('request')) {
+            if (request()->has('tenant')) {
+                $tenant = request()->get('tenant');
+                if ($tenant instanceof Tenant) {
+                    $this->currentTenant = $tenant;
+
+                    return $tenant;
+                }
+            }
+
+            $tenant = request()->attributes->get('tenant');
             if ($tenant instanceof Tenant) {
                 $this->currentTenant = $tenant;
 
@@ -31,50 +57,38 @@ class TenantService
             }
         }
 
-        // Fallback: Try to get tenant from request attributes
-        $tenant = request()->attributes->get('tenant');
-        if ($tenant instanceof Tenant) {
+        // Fallback: an authenticated user belongs to exactly one tenant.
+        if ($app->bound('auth') && ! $this->resolvingFromAuth) {
+            $this->resolvingFromAuth = true;
+            try {
+                $tenantId = Auth::user()?->tenant_id;
+            } finally {
+                $this->resolvingFromAuth = false;
+            }
+            if ($tenantId && ($tenant = Tenant::find($tenantId))) {
+                $this->currentTenant = $tenant;
+
+                return $tenant;
+            }
+        }
+
+        // Fallback: explicit TENANT_ID (local development / console commands).
+        $configuredId = $app->bound('config') ? config('constants.tenant_id') : null;
+        if ($configuredId && ($tenant = Tenant::find($configuredId))) {
             $this->currentTenant = $tenant;
 
             return $tenant;
-        }
-
-        // Fallback: Try to get tenant ID from cache and load it
-        try {
-            $tenantId = Cache::get('current_tenant_id');
-            if ($tenantId) {
-                /** @var Tenant|null $tenant */
-                $tenant = Tenant::find($tenantId);
-                if ($tenant) {
-                    $this->currentTenant = $tenant;
-
-                    return $tenant;
-                }
-            }
-        } catch (Throwable $exception) {
-            Log::warning('Unable to read current tenant from cache.', [
-                'message' => $exception->getMessage(),
-            ]);
         }
 
         return null;
     }
 
     /**
-     * Set the current tenant
+     * Set the current tenant (for the lifetime of this request/process only).
      */
     public function setCurrentTenant(Tenant $tenant): void
     {
         $this->currentTenant = $tenant;
-
-        try {
-            Cache::put('current_tenant_id', $tenant->id, now()->addMinutes(5));
-        } catch (Throwable $exception) {
-            Log::warning('Unable to cache current tenant.', [
-                'tenant_id' => $tenant->id,
-                'message' => $exception->getMessage(),
-            ]);
-        }
     }
 
     /**
@@ -82,19 +96,7 @@ class TenantService
      */
     public function getCurrentTenantId(): ?int
     {
-        if ($this->currentTenant) {
-            return $this->currentTenant->id;
-        }
-
-        try {
-            return Cache::get('current_tenant_id');
-        } catch (Throwable $exception) {
-            Log::warning('Unable to read current tenant id from cache.', [
-                'message' => $exception->getMessage(),
-            ]);
-
-            return null;
-        }
+        return $this->getCurrentTenant()?->id;
     }
 
     /**
@@ -103,13 +105,6 @@ class TenantService
     public function clearCurrentTenant(): void
     {
         $this->currentTenant = null;
-        try {
-            Cache::forget('current_tenant_id');
-        } catch (Throwable $exception) {
-            Log::warning('Unable to clear current tenant from cache.', [
-                'message' => $exception->getMessage(),
-            ]);
-        }
     }
 
     /**

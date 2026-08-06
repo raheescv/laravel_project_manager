@@ -2,12 +2,25 @@
 
 use App\Models\Country;
 use App\Services\TenantService;
+use App\Support\TenantCache;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+
+if (! function_exists('tenant_cache')) {
+    /**
+     * Read a tenant-scoped cached setting/lookup (lazily resolved, keyed by
+     * the current tenant — see App\Support\TenantCache). Returns $default
+     * when no tenant is resolved.
+     */
+    function tenant_cache(string $key, mixed $default = null): mixed
+    {
+        return TenantCache::get($key, $default);
+    }
+}
 
 if (! function_exists('writeToEnv')) {
     function writeToEnv($key, $value)
@@ -405,7 +418,7 @@ if (! function_exists('currencies')) {
      */
     function currencies()
     {
-        $list = cache('currencies', []);
+        $list = tenant_cache('currencies', []);
 
         return is_array($list) ? $list : [];
     }
@@ -417,7 +430,7 @@ if (! function_exists('base_currency')) {
      */
     function base_currency()
     {
-        $code = cache('base_currency_code');
+        $code = tenant_cache('base_currency_code');
         $list = currencies();
         foreach ($list as $c) {
             if ($code && ($c['code'] ?? null) === $code) {
@@ -577,7 +590,7 @@ if (! function_exists('barcodeTypes')) {
 if (! function_exists('barcodePrefix')) {
     function barcodePrefix(): string
     {
-        return cache('barcode_prefix', '') ?? '';
+        return tenant_cache('barcode_prefix', '') ?? '';
     }
 }
 
@@ -739,7 +752,7 @@ if (! function_exists('getNextSaleInvoiceNo')) {
             $prefix .= $branchCode.'-';
         }
 
-        $country_id = cache('country_id', Country::QATAR);
+        $country_id = tenant_cache('country_id', Country::QATAR);
 
         if ($country_id == Country::INDIA) {
             $year = now()->format('y').'/'.now()->addYear()->format('y');
@@ -805,7 +818,7 @@ if (! function_exists('getNextUniqueNumber')) {
     function getNextUniqueNumber($segment = 'Sale')
     {
         $branchCode = session('branch_code', 'M');
-        $country_id = cache('country_id', Country::QATAR);
+        $country_id = tenant_cache('country_id', Country::QATAR);
 
         // Get tenant_id from session or TenantService (e.g. when running inside a job)
         $tenantId = session('tenant_id') ?? app(TenantService::class)->getCurrentTenantId();
@@ -1137,7 +1150,7 @@ if (! function_exists('paymentModeOptions')) {
 if (! function_exists('paymentMethodsOptions')) {
     function paymentMethodsOptions(): array
     {
-        return \App\Models\Account::whereIn('id', cache('payment_methods', []))->pluck('name', 'id')->toArray();
+        return \App\Models\Account::whereIn('id', tenant_cache('payment_methods', []))->pluck('name', 'id')->toArray();
     }
 }
 

@@ -45,7 +45,7 @@ class PurchaseController extends Controller
 
         $settings = BarcodeTemplateConfiguration::resolveSettings(request('template'))['settings'];
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
-        $company_logo = cache('logo', asset('assets/img/logo.svg'));
+        $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
         // Generate HTML using Blade view
         $html = view('purchase.barcode-print', compact('purchaseItems', 'settings', 'company_name', 'company_logo'))->render();

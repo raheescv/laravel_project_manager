@@ -32,7 +32,7 @@ class GeneralVoucherController extends Controller
 
         // Determine voucher type based on Payment Methods
         $voucherType = 'general'; // Default
-        $paymentMethodIds = cache('payment_methods', []);
+        $paymentMethodIds = tenant_cache('payment_methods', []);
 
         foreach ($journal->entries as $entry) {
             if ($entry->account && in_array($entry->account_id, $paymentMethodIds)) {
@@ -54,7 +54,7 @@ class GeneralVoucherController extends Controller
         $companyPhone = Configuration::where('key', 'company_phone')->value('value') ?? '';
         $companyEmail = Configuration::where('key', 'company_email')->value('value') ?? '';
         $enableLogoInPrint = Configuration::where('key', 'enable_logo_in_print')->value('value') ?? 'yes';
-        $companyLogo = cache('logo', asset('assets/img/logo.svg'));
+        $companyLogo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
         return view('accounts.general-voucher.print', compact('journal', 'companyName', 'companyAddress', 'companyPhone', 'companyEmail', 'enableLogoInPrint', 'companyLogo', 'voucherType'));
     }

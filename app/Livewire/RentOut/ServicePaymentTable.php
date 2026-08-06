@@ -172,7 +172,7 @@ class ServicePaymentTable extends Component
 
     public function download()
     {
-        // TODO(C7): unmapped (candidate: 'rent out service.export') — 'rent out service' has no export action in config/permissions.php
+        abort_unless(auth()->user()?->can('rent out service.export'), 403);
         $filters = [
             'agreementType' => $this->agreementType,
             'filterGroup' => $this->filterGroup,

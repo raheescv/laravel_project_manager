@@ -3,7 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
-use Illuminate\Support\Facades\Cache;
+use App\Support\TenantCache;
 use Livewire\Component;
 
 class StorefrontBranding extends Component
@@ -44,7 +44,7 @@ class StorefrontBranding extends Component
         }
 
         Configuration::updateOrCreate(['key' => 'storefront_primary_color'], ['value' => $color]);
-        Cache::forget('storefront_primary_color');
+        TenantCache::forget('storefront_primary_color');
 
         $this->primary_color = $color;
         $this->dispatch('success', ['message' => 'Storefront color updated']);

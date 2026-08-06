@@ -336,7 +336,7 @@ class UpdateAction
     private function configuredPaymentMethods()
     {
         return Account::query()
-            ->whereIn('id', cache('payment_methods', []))
+            ->whereIn('id', tenant_cache('payment_methods', []))
             ->get(['id', 'name']);
     }
 

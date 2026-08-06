@@ -4,7 +4,7 @@ namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
 use App\Services\NavigationService;
-use Illuminate\Support\Facades\Cache;
+use App\Support\TenantCache;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -86,7 +86,7 @@ class NavigationOrder extends Component
             ['value' => json_encode($orderData)]
         );
 
-        Cache::forget('nav_order');
+        TenantCache::forget('nav_order');
         $this->dispatch('success', ['message' => 'Navigation order saved successfully']);
     }
 
@@ -94,7 +94,7 @@ class NavigationOrder extends Component
     {
         abort_unless(auth()->user()?->can('configuration.settings'), 403);
         Configuration::where('key', 'nav_order')->delete();
-        Cache::forget('nav_order');
+        TenantCache::forget('nav_order');
         $this->items = NavigationService::filterByActiveModule(NavigationService::defaultItems());
         $this->dispatch('success', ['message' => 'Navigation reset to default order']);
     }

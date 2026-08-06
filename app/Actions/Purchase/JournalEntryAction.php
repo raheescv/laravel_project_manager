@@ -3,8 +3,8 @@
 namespace App\Actions\Purchase;
 
 use App\Actions\Journal\CreateAction;
+use App\Models\Account;
 use App\Models\Product;
-use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
 {
@@ -27,7 +27,7 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = Cache::get('accounts_slug_id_map', []);
+            $accounts = Account::slugIdMap();
 
             if (empty($accounts['tax_amount']) || empty($accounts['discount']) || empty($accounts['freight'])) {
                 throw new \Exception('Required account heads are missing for purchase journal posting.');

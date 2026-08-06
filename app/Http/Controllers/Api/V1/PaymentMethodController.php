@@ -24,7 +24,7 @@ class PaymentMethodController extends Controller
     {
         try {
             $methods = Account::query()
-                ->whereIn('id', cache('payment_methods', []))
+                ->whereIn('id', tenant_cache('payment_methods', []))
                 ->orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn (Account $account) => [

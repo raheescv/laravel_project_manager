@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\SingleUse;
 
+use App\Models\Account;
 use App\Models\Inventory;
 use App\Models\InventoryLog;
 use App\Models\JournalEntry;
@@ -11,7 +12,6 @@ use App\Models\PurchaseReturnItem;
 use App\Models\SaleItem;
 use App\Models\SaleReturnItem;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -32,11 +32,11 @@ class RecalculateCostCommand extends Command
         $branchFilter = $this->option('branch') ? (int) $this->option('branch') : null;
         $dryRun = (bool) $this->option('dry-run');
 
-        $accounts = Cache::get('accounts_slug_id_map', []);
+        $accounts = Account::slugIdMap();
         $cogsId = $accounts['cost_of_goods_sold'] ?? null;
         $inventoryAccountId = $accounts['inventory'] ?? null;
         if (! $cogsId || ! $inventoryAccountId) {
-            $this->error('Missing accounts cache (cost_of_goods_sold / inventory). Run app boot to warm Cache::get(accounts_slug_id_map).');
+            $this->error('Locked accounts (cost_of_goods_sold / inventory) are missing for this tenant. Seed the default chart of accounts first.');
 
             return self::FAILURE;
         }

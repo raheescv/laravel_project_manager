@@ -47,10 +47,10 @@ class Page extends Component
                 throw new Exception($response['message'], 1);
             }
             $this->purchase_request = $response['data'];
+            DB::commit();
             $this->dispatch('success', ['message' => $response['message']]);
 
             $this->redirectRoute('purchase-request::index');
-            DB::commit();
 
         } catch (Exception $e) {
             DB::rollback();

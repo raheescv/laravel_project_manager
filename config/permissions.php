@@ -13,7 +13,7 @@ return [
     'customer type' => ['create', 'view', 'edit', 'delete'],
     'country' => ['create', 'view', 'edit', 'delete'],
     'vendor' => ['create', 'view', 'edit', 'delete', 'export', 'payment reverse'],
-    'user' => ['create', 'view', 'edit', 'delete'],
+    'user' => ['create', 'view', 'edit', 'delete', 'impersonate'],
     'employee' => ['create', 'view', 'edit', 'delete', 'export'],
     'employee attendance' => ['create', 'view', 'modify', 'export'],
     'employee commission' => ['create', 'view', 'edit', 'delete'],
@@ -158,7 +158,7 @@ return [
     'document type' => ['create', 'view', 'edit', 'delete'],
     'complaint category' => ['create', 'view', 'edit', 'delete'],
     'complaint' => ['create', 'view', 'edit', 'delete'],
-    // 'tenant detail' => ['create', 'view', 'edit', 'delete'],
+    'tenant detail' => ['create', 'view', 'edit', 'delete'],
 
     // Property Lead Module
     'property lead' => [
@@ -207,12 +207,12 @@ return [
         'reservation form',
         'residential lease',
     ],
-    'rent out security' => ['create', 'view', 'edit', 'delete'],
-    'rent out cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
+    'rent out security' => ['create', 'view', 'edit', 'delete', 'export'],
+    'rent out cheque' => ['create', 'view', 'edit', 'delete', 'update status', 'export'],
     'rent out lease cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
-    'rent out utility' => ['create', 'view', 'edit', 'delete'],
-    'rent out service' => ['create', 'view', 'edit', 'delete'],
-    'rent out payment term' => ['create', 'view', 'edit', 'delete'],
+    'rent out utility' => ['create', 'view', 'edit', 'delete', 'export'],
+    'rent out service' => ['create', 'view', 'edit', 'delete', 'export'],
+    'rent out payment term' => ['create', 'view', 'edit', 'delete', 'export'],
     'rent out note' => ['create', 'view', 'delete'],
     'rent out document' => ['create', 'view', 'edit', 'delete'],
     'rent out checklist' => ['view', 'create', 'edit', 'delete', 'print'],
@@ -273,4 +273,8 @@ return [
         'complete',
         'print',
     ],
+
+    // Trading Platform (FlatTrade) — 'view' gates the screens, 'trade' gates
+    // order execution and privileged controls (kill switch, strategies, alerts).
+    'flat_trade' => ['view', 'trade'],
 ];

@@ -525,7 +525,7 @@ class DailySalesInsightsReport extends Component
 
     private function buildPaymentMethodColumns(): array
     {
-        $paymentMethodNames = Account::whereIn('id', cache('payment_methods', []))
+        $paymentMethodNames = Account::whereIn('id', tenant_cache('payment_methods', []))
             ->pluck('name', 'id')
             ->values()
             ->map(fn ($name) => $this->normalizePaymentMethodName($name))

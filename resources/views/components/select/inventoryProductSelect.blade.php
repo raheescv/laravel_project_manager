@@ -138,7 +138,7 @@
                     var option = `
                         <div class="dropdown-item d-flex align-items-center">
                             <div class="item-icon">
-                                <img src="${escape(item.image || '{{ cache('logo') }}')}" width="100%" height="100%" alt="${escape(item.name)}" class="item-image">
+                                <img src="${escape(item.image || '{{ tenant_cache('logo') }}')}" width="100%" height="100%" alt="${escape(item.name)}" class="item-image">
                             </div>
                             <div class="item-content">
                                 <div class="item-name">${escape(item.name)}</div>`;
@@ -204,7 +204,7 @@
                     var option = `
                         <div class="dropdown-item d-flex align-items-center">
                             <div class="item-icon">
-                                <img src="${escape(item.image || '{{ cache('logo') }}')}" width="100%" height="100%" alt="${escape(item.name)}" class="item-image">
+                                <img src="${escape(item.image || '{{ tenant_cache('logo') }}')}" width="100%" height="100%" alt="${escape(item.name)}" class="item-image">
                             </div>
                             <div class="item-content">
                                 <div class="item-name">${escape(item.name)}</div>`;

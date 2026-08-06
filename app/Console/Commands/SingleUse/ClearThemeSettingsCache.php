@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\SingleUse;
 
+use App\Support\TenantCache;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 
 class ClearThemeSettingsCache extends Command
 {
@@ -13,7 +13,7 @@ class ClearThemeSettingsCache extends Command
 
     public function handle()
     {
-        Cache::forget('theme_settings');
+        TenantCache::forget('theme_settings');
         $this->info('Theme settings cache cleared successfully');
     }
 }

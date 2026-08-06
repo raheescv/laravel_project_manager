@@ -111,7 +111,7 @@ class OrderController extends Controller
                 $orderData = $result['data'];
             }
         }
-        $paymentMethodIds = cache('payment_methods', []);
+        $paymentMethodIds = tenant_cache('payment_methods', []);
         $paymentMethods = Account::whereIn('id', $paymentMethodIds)->get(['id', 'name'])->toArray();
 
         // Get customer types and countries for CustomerModal
@@ -840,7 +840,7 @@ class OrderController extends Controller
         $companyEmail = Configuration::where('key', 'company_email')->value('value') ?? '';
         $gstNo = Configuration::where('key', 'gst_no')->value('value') ?? '';
         $enableLogoInPrint = Configuration::where('key', 'enable_logo_in_print')->value('value') ?? 'no';
-        $companyLogo = cache('logo');
+        $companyLogo = tenant_cache('logo');
 
         $pdf = Pdf::loadView('print.tailoring.order-receipt-pdf', [
             'order' => $order,

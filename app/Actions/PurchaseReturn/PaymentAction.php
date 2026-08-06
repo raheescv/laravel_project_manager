@@ -7,7 +7,6 @@ use App\Actions\PurchaseReturn\Payment\CreateAction as PurchasePaymentCreateActi
 use App\Events\PurchaseReturnUpdatedEvent;
 use App\Models\Account;
 use App\Models\PurchaseReturn;
-use Illuminate\Support\Facades\DB;
 
 class PaymentAction
 {
@@ -34,7 +33,7 @@ class PaymentAction
 
             if ($discount > 0) {
                 $remarks = 'Additional Discount granted on PurchaseReturn';
-                $discountAccountId = DB::table('accounts')->where('name', 'Discount')->value('id');
+                $discountAccountId = Account::idBySlug('discount');
 
                 $entries[] = [
                     'account_id' => $discountAccountId,

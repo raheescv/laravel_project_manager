@@ -17,7 +17,7 @@ class AlertRules extends Component
 
     public function save(): void
     {
-        // TODO(C7): unmapped (candidate: 'flat_trade.trade') — no trading permission in config/permissions.php.
+        abort_unless(auth()->user()?->can('flat_trade.trade'), 403);
         $data = $this->form;
         $data['channels'] = array_filter(array_map('trim', explode(',', $data['channels'])));
         TradingAlertRule::create($data + ['is_active' => true]);
@@ -26,7 +26,7 @@ class AlertRules extends Component
 
     public function toggle(int $id): void
     {
-        // TODO(C7): unmapped (candidate: 'flat_trade.trade') — no trading permission in config/permissions.php.
+        abort_unless(auth()->user()?->can('flat_trade.trade'), 403);
         $r = TradingAlertRule::find($id);
         if ($r) {
             $r->is_active = ! $r->is_active;
@@ -36,7 +36,7 @@ class AlertRules extends Component
 
     public function delete(int $id): void
     {
-        // TODO(C7): unmapped (candidate: 'flat_trade.trade') — no trading/alert delete permission in config/permissions.php.
+        abort_unless(auth()->user()?->can('flat_trade.trade'), 403);
         TradingAlertRule::where('id', $id)->delete();
     }
 

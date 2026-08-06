@@ -20,7 +20,7 @@
                     </div>
                 @endif
                 <div class="product-image">
-                    <img src="{{ $item['thumbnail'] ?? cache('logo') }}" alt="{{ $item['name'] }}" loading="lazy" onerror="this.onerror=null; this.src='{{ cache('logo') }}';">
+                    <img src="{{ $item['thumbnail'] ?? tenant_cache('logo') }}" alt="{{ $item['name'] }}" loading="lazy" onerror="this.onerror=null; this.src='{{ tenant_cache('logo') }}';">
                 </div>
                 <div class="product-content">
                     <h5 class="product-name">{{ $item['name'] }}</h5>

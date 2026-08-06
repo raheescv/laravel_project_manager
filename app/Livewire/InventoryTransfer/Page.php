@@ -211,8 +211,8 @@ class Page extends Component
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
-            $this->dispatch('success', ['message' => $response['message']]);
             DB::commit();
+            $this->dispatch('success', ['message' => $response['message']]);
             if ($status == 'completed') {
                 if ($this->table_id) {
                     return redirect(route('inventory::transfer::view', $this->table_id));

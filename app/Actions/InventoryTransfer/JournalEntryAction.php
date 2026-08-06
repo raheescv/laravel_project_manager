@@ -4,9 +4,9 @@ namespace App\Actions\InventoryTransfer;
 
 use App\Actions\Journal\CreateAction;
 use App\Actions\Journal\UpdateAction;
+use App\Models\Account;
 use App\Models\InventoryTransfer;
 use App\Models\Journal;
-use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
 {
@@ -18,7 +18,7 @@ class JournalEntryAction
             $this->userId = $userId;
             $inventoryTransfer->loadMissing('items.inventory', 'fromBranch', 'toBranch');
 
-            $accounts = Cache::get('accounts_slug_id_map', []);
+            $accounts = Account::slugIdMap();
             if (empty($accounts['inventory'])) {
                 throw new \Exception('Required account head is missing: inventory.');
             }

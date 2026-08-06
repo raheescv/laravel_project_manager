@@ -4,7 +4,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="h3 mb-0 text-gray-800">
-                    <i class="fas fa-user me-2"></i>Visitor Details
+                    <i class="fa fa-user me-2"></i>Visitor Details
                 </h2>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
@@ -16,13 +16,13 @@
             </div>
             <div class="d-flex gap-2">
                 <a href="{{ route('visitors.index') }}" class="btn btn-light">
-                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                    <i class="fa fa-arrow-left me-2"></i>Back to List
                 </a>
                 @if ($visitor->status === 'checked_in')
                     <form action="{{ route('visitors.checkout', $visitor) }}" method="POST" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to check out this visitor?')">
-                            <i class="fas fa-sign-out-alt me-2"></i>Check Out
+                            <i class="fa fa-sign-out me-2"></i>Check Out
                         </button>
                     </form>
                 @endif
@@ -39,7 +39,7 @@
                             <div>
                                 <span
                                     class="badge {{ $visitor->status === 'checked_in' ? 'bg-success' : 'bg-secondary' }} bg-opacity-10 text-{{ $visitor->status === 'checked_in' ? 'success' : 'secondary' }}">
-                                    <i class="fas fa-circle me-1"></i>{{ ucfirst($visitor->status) }}
+                                    <i class="fa fa-circle me-1"></i>{{ ucfirst($visitor->status) }}
                                 </span>
                                 <span class="ms-2 text-muted">
                                     {{ $visitor->check_in_time->format('M d, Y h:i A') }}
@@ -49,7 +49,7 @@
                                 </span>
                             </div>
                             <div class="text-muted">
-                                <i class="fas fa-clock me-1"></i>Duration: {{ $visitor->duration }}
+                                <i class="fa fa-clock-o me-1"></i>Duration: {{ $visitor->duration }}
                             </div>
                         </div>
                     </div>
@@ -61,7 +61,7 @@
                                 <div class="card bg-light bg-opacity-50 border-0">
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">
-                                            <i class="fas fa-user-circle me-2 text-primary"></i>Personal Information
+                                            <i class="fa fa-user me-2 text-primary"></i>Personal Information
                                         </h5>
                                         <dl class="row mb-0">
                                             <dt class="col-sm-4 text-muted">Name</dt>
@@ -85,7 +85,7 @@
                                 <div class="card bg-light bg-opacity-50 border-0">
                                     <div class="card-body">
                                         <h5 class="card-title mb-4">
-                                            <i class="fas fa-clipboard-list me-2 text-primary"></i>Visit Information
+                                            <i class="fa fa-clipboard me-2 text-primary"></i>Visit Information
                                         </h5>
                                         <dl class="row mb-0">
                                             <dt class="col-sm-4 text-muted">Purpose</dt>
@@ -126,7 +126,7 @@
                                     <div class="card bg-light bg-opacity-50 border-0">
                                         <div class="card-body">
                                             <h5 class="card-title mb-4">
-                                                <i class="fas fa-id-card me-2 text-primary"></i>ID Card Image
+                                                <i class="fa fa-credit-card me-2 text-primary"></i>ID Card Image
                                             </h5>
                                             <div class="text-center">
                                                 <img src="{{ Storage::url($visitor->id_card_image_path) }}" alt="ID Card" class="img-fluid rounded shadow-sm" style="max-height: 300px;">
@@ -142,7 +142,7 @@
                                     <div class="card bg-light bg-opacity-50 border-0">
                                         <div class="card-body">
                                             <h5 class="card-title mb-4">
-                                                <i class="fas fa-sticky-note me-2 text-primary"></i>Additional Notes
+                                                <i class="fa fa-file-text-o me-2 text-primary"></i>Additional Notes
                                             </h5>
                                             <p class="card-text mb-0">{{ $visitor->notes }}</p>
                                         </div>
@@ -160,22 +160,22 @@
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-transparent border-0 py-3">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+                            <i class="fa fa-bolt me-2 text-warning"></i>Quick Actions
                         </h5>
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
                             <a href="{{ route('visitors.create') }}" class="btn btn-primary">
-                                <i class="fas fa-user-plus me-2"></i>Register New Visitor
+                                <i class="fa fa-user-plus me-2"></i>Register New Visitor
                             </a>
                             <a href="{{ route('visitors.index') }}" class="btn btn-light">
-                                <i class="fas fa-list me-2"></i>View All Visitors
+                                <i class="fa fa-list me-2"></i>View All Visitors
                             </a>
                             @if ($visitor->status === 'checked_in')
                                 <form action="{{ route('visitors.checkout', $visitor) }}" method="POST">
                                     @csrf
                                     <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to check out this visitor?')">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Check Out Visitor
+                                        <i class="fa fa-sign-out me-2"></i>Check Out Visitor
                                     </button>
                                 </form>
                             @endif
@@ -187,7 +187,7 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-transparent border-0 py-3">
                         <h5 class="card-title mb-0">
-                            <i class="fas fa-history me-2 text-info"></i>Visit Timeline
+                            <i class="fa fa-history me-2 text-info"></i>Visit Timeline
                         </h5>
                     </div>
                     <div class="card-body">

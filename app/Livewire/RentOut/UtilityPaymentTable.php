@@ -96,7 +96,7 @@ class UtilityPaymentTable extends Component
 
     public function download()
     {
-        // TODO(C7): unmapped (candidate: 'rent out utility.export') — 'rent out utility' has no export action in config/permissions.php
+        abort_unless(auth()->user()?->can('rent out utility.export'), 403);
         $filters = [
             'filterGroup' => $this->filterGroup,
             'filterBuilding' => $this->filterBuilding,

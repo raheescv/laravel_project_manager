@@ -1,5 +1,5 @@
 <x-app-layout>
-    @if (cache('sale_type') != 'pos')
+    @if (tenant_cache('sale_type') != 'pos')
         <div class="content__boxed overlapping">
             <div class="content__wrap">
                 <nav aria-label="breadcrumb">
@@ -21,7 +21,7 @@
     <x-account.customer-view-modal />
     <x-sale.feedback-modal />
     <x-sale.combo-offer-modal :id="$id" />
-    @if (cache('sale_type') == 'pos')
+    @if (tenant_cache('sale_type') == 'pos')
         <x-sale.custom-payment-modal />
         <x-sale.edit-item-modal />
         <x-sale.view-items-modal />
@@ -71,7 +71,7 @@
                 border-color: var(--bs-border-color);
             }
         </style>
-        @if (cache('sale_type') == 'pos')
+        @if (tenant_cache('sale_type') == 'pos')
             {{-- <link rel="stylesheet" href="{{ asset('assets/pos/pos.css?v=3') }}"> --}}
             <style>
                 :root {

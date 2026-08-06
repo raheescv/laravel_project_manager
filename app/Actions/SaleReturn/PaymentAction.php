@@ -7,7 +7,6 @@ use App\Actions\SaleReturn\Payment\CreateAction as SaleReturnPaymentCreateAction
 use App\Events\SaleReturnUpdatedEvent;
 use App\Models\Account;
 use App\Models\SaleReturn;
-use Illuminate\Support\Facades\DB;
 
 class PaymentAction
 {
@@ -31,7 +30,7 @@ class PaymentAction
 
             if ($discount > 0) {
                 $remarks = SaleReturn::ADDITIONAL_DISCOUNT_DESCRIPTION;
-                $discountAccountId = DB::table('accounts')->where('name', 'Discount')->value('id');
+                $discountAccountId = Account::idBySlug('discount');
                 $entries[] = [
                     'account_id' => $discountAccountId,
                     'counter_account_id' => $account_id,

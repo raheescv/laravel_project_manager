@@ -66,7 +66,7 @@ class Create extends Component
         $this->table_id = $id;
         $this->type = $type;
         $this->branches = Branch::pluck('name', 'id');
-        $this->paymentMethods = Account::whereIn('id', cache('payment_methods', []))->pluck('name', 'id');
+        $this->paymentMethods = Account::whereIn('id', tenant_cache('payment_methods', []))->pluck('name', 'id');
         $this->preFilledDropDowns = ['group' => [], 'building' => [], 'type' => [], 'property' => []];
         $this->initItem();
         $this->items = [];
@@ -271,8 +271,8 @@ class Create extends Component
             unset($this->items[$key]);
             $this->items = array_values($this->items);
             $this->mainCalculator();
-            $this->dispatch('success', ['message' => 'Successfully deleted item']);
             DB::commit();
+            $this->dispatch('success', ['message' => 'Successfully deleted item']);
         } catch (Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
@@ -281,7 +281,7 @@ class Create extends Component
 
     public function deleteImage($key): void
     {
-        // TODO(C7): unmapped (candidate: 'supply request.delete item') — no 'supply request.delete image' in catalog
+        abort_unless(auth()->user()?->can('supply request.delete item'), 403);
         try {
             DB::beginTransaction();
             if (isset($this->imageList[$key]['id'])) {
@@ -293,8 +293,8 @@ class Create extends Component
             }
             unset($this->imageList[$key]);
             $this->imageList = array_values($this->imageList);
-            $this->dispatch('success', ['message' => 'Successfully deleted image']);
             DB::commit();
+            $this->dispatch('success', ['message' => 'Successfully deleted image']);
         } catch (Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);

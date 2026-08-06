@@ -180,9 +180,8 @@ class Page extends Component
                 throw new \Exception($response['message'], 1);
             }
             $saleId = $response['data']['id'];
-            $this->dispatch('success', ['message' => $response['message']]);
-
             DB::commit();
+            $this->dispatch('success', ['message' => $response['message']]);
 
             return redirect()->route('sale::edit', $saleId);
         } catch (\Throwable $e) {
@@ -242,8 +241,8 @@ class Page extends Component
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
-            $this->dispatch('success', ['message' => $response['message']]);
             DB::commit();
+            $this->dispatch('success', ['message' => $response['message']]);
             if (! $close) {
                 $this->dispatch('CloseAppointmentBookingModal');
             }

@@ -3,7 +3,7 @@
 namespace App\Actions\Grn;
 
 use App\Actions\Journal\CreateAction;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Account;
 
 class JournalEntryAction
 {
@@ -31,7 +31,7 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = Cache::get('accounts_slug_id_map', []);
+            $accounts = Account::slugIdMap();
 
             if (empty($accounts['inventory']) || empty($accounts['unbilled_payables'])) {
                 throw new \Exception('Required account heads are missing: inventory or unbilled_payables.');

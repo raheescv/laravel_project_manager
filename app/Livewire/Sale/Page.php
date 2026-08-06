@@ -1086,7 +1086,7 @@ class Page extends Component
 
     public function render()
     {
-        switch (cache('sale_type')) {
+        switch (tenant_cache('sale_type')) {
             case 'pos':
                 return view('livewire.sale.pos');
             case 'version_1':

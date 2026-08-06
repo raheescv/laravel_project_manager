@@ -22,7 +22,7 @@ class SaleController extends Controller
 
     public function page($id = null)
     {
-        if (cache('sale_type') == 'pos') {
+        if (tenant_cache('sale_type') == 'pos') {
             return redirect()->route('sale::pos', $id);
         }
 

@@ -13,7 +13,6 @@ use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use App\Services\CompanyLogoResolver;
 use App\Traits\UsesBrowsershot;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -178,10 +177,7 @@ class PrintController extends Controller
             $this->getCompanyInfo()
         );
 
-        $pdf = Pdf::loadView('print.rentout.statement', $data);
-        $pdf->setPaper('a4', 'portrait');
-
-        return $pdf->stream('rentout_statement.pdf');
+        return $this->browsershotPdf('print.rentout.statement', $data, 'rentout_statement.pdf');
     }
 
     public function rentoutUtilitiesStatement($id, $fromDate = null, $toDate = null)
@@ -236,10 +232,7 @@ class PrintController extends Controller
             $this->getCompanyInfo()
         );
 
-        $pdf = Pdf::loadView('print.rentout.utilities-statement', $data);
-        $pdf->setPaper('a4', 'portrait');
-
-        return $pdf->stream('rentout_utilities_statement.pdf');
+        return $this->browsershotPdf('print.rentout.utilities-statement', $data, 'rentout_utilities_statement.pdf');
     }
 
     public function rentOutPaymentReceipt($id)
@@ -252,10 +245,7 @@ class PrintController extends Controller
             $this->getCompanyInfo()
         );
 
-        $pdf = Pdf::loadView('print.rentout.receipt', $data);
-        $pdf->setPaper('a4', 'portrait');
-
-        return $pdf->stream("receipt_{$payment->id}.pdf");
+        return $this->browsershotPdf('print.rentout.receipt', $data, "receipt_{$payment->id}.pdf");
     }
 
     public function rentOutPaymentVoucher($id)
@@ -268,10 +258,7 @@ class PrintController extends Controller
             $this->getCompanyInfo()
         );
 
-        $pdf = Pdf::loadView('print.rentout.voucher', $data);
-        $pdf->setPaper('a4', 'portrait');
-
-        return $pdf->stream("voucher_{$payment->id}.pdf");
+        return $this->browsershotPdf('print.rentout.voucher', $data, "voucher_{$payment->id}.pdf");
     }
 
     public function purchaseVendorStatement(int $id, ?string $fromDate = null, ?string $toDate = null)
@@ -290,7 +277,7 @@ class PrintController extends Controller
             return (object) $row;
         });
 
-        $pdf = Pdf::loadView('print.purchase-vendor.statement', array_merge(
+        $data = array_merge(
             compact(
                 'vendor',
                 'statementRows',
@@ -308,15 +295,15 @@ class PrintController extends Controller
                 'totalCredit' => $summary['total_credit'],
                 'closingBalanceLabel' => $summary['closing_balance_label'],
             ],
-        ));
-        $pdf->setPaper('a4', 'portrait');
+        );
 
-        return $pdf->stream(sprintf(
+        // The view declares "@page { margin: 0 }" and manages its own padding.
+        return $this->browsershotPdf('print.purchase-vendor.statement', $data, sprintf(
             'vendor-statement-%s-%s-to-%s.pdf',
             Str::slug($vendor->name ?: 'vendor'),
             $fromDate,
             $toDate,
-        ));
+        ), ['top' => 0, 'right' => 0, 'bottom' => 0, 'left' => 0]);
     }
 
     public function purchaseVendorPaymentVoucher(int $vendorId, int $journalId)
@@ -334,13 +321,10 @@ class PrintController extends Controller
 
         abort_unless($hasPurchasePaymentEntry, 404);
 
-        $pdf = Pdf::loadView('print.purchase-vendor.voucher', array_merge(
+        return $this->browsershotPdf('print.purchase-vendor.voucher', array_merge(
             compact('journal', 'vendor'),
             $this->getCompanyInfo()
-        ));
-        $pdf->setPaper('a4', 'portrait');
-
-        return $pdf->stream(sprintf(
+        ), sprintf(
             'payment-voucher-%s-%s.pdf',
             Str::slug($vendor->name ?: 'vendor'),
             $journal->reference_number ?: $journal->id,
@@ -358,6 +342,35 @@ class PrintController extends Controller
     }
 
     // ─── Private helpers ─────────────────────────────────────────────
+
+    /**
+     * Render a print view to PDF through Browsershot (Chrome).
+     *
+     * These documents print tenant-editable company names and customer names,
+     * which in this market are routinely Arabic — dompdf renders Arabic
+     * unshaped and back-to-front, so anything carrying free text must go
+     * through Chrome. Browsershot blocks external requests, so the logo is
+     * swapped to an embedded data URI before rendering.
+     *
+     * @param  array{top: int, right: int, bottom: int, left: int}|null  $margins  mm; null = 10mm all round
+     */
+    private function browsershotPdf(string $view, array $data, string $filename, ?array $margins = null)
+    {
+        $data['companyLogo'] = CompanyLogoResolver::dataUri();
+        $html = view($view, $data)->render();
+
+        $margins ??= ['top' => 10, 'right' => 10, 'bottom' => 10, 'left' => 10];
+
+        $pdf = $this->makeBrowsershot($html)
+            ->format('A4')
+            ->margins($margins['top'], $margins['right'], $margins['bottom'], $margins['left'])
+            ->showBackground()
+            ->pdf();
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
+    }
 
     /** Pages in a rendered PDF, read from the page tree; 1 when it can't be told. */
     private function pdfPageCount(string $pdf): int

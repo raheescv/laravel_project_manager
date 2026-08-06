@@ -73,7 +73,7 @@ class CompanyLogoResolver
         $candidates = array_merge($candidates, self::pathsFor(Configuration::where('key', 'logo')->value('value')));
 
         // 3. Cached logo URL (may be stale, but a useful fallback).
-        $candidates = array_merge($candidates, self::pathsFor(cache('logo')));
+        $candidates = array_merge($candidates, self::pathsFor(tenant_cache('logo')));
 
         // 4. Bundled fallback shipped with the app.
         $candidates[] = public_path('assets/img/logo.svg');

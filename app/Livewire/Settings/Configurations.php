@@ -5,9 +5,9 @@ namespace App\Livewire\Settings;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Country;
+use App\Support\TenantCache;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class Configurations extends Component
@@ -70,10 +70,10 @@ class Configurations extends Component
             Configuration::updateOrCreate(['key' => 'currency_symbol'], ['value' => $country->currency_symbol]);
         }
         Configuration::updateOrCreate(['key' => 'country_id'], ['value' => $this->country_id]);
-        Cache::forget('payment_methods');
-        Cache::forget('country_id');
-        Cache::forget('currency_code');
-        Cache::forget('currency_symbol');
+        TenantCache::forget('payment_methods');
+        TenantCache::forget('country_id');
+        TenantCache::forget('currency_code');
+        TenantCache::forget('currency_symbol');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }
 

@@ -2,6 +2,12 @@
 
 return [
     'force_https' => env('FORCE_HTTPS', false),
+
+    // Explicit tenant for entry points that cannot resolve one from the request
+    // (local development on the apex domain, artisan commands, tinker). Leave
+    // unset in multi-tenant production — there the tenant must always come from
+    // the subdomain, the mobile tenant header, or the authenticated user.
+    'tenant_id' => env('TENANT_ID'),
     'auto_pull_enabled' => env('AUTO_PULL_ENABLED', false),
     'auto_pull_branch' => env('AUTO_PULL_BRANCH', 'main'),
     'whatsapp_port' => env('WHATSAPP_PORT'),

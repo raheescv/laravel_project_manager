@@ -1,5 +1,5 @@
 <x-app-layout>
-    @if (cache('purchase_type') != 'pos')
+    @if (tenant_cache('purchase_type') != 'pos')
         <div class="content__header content__boxed overlapping">
             <div class="content__wrap">
                 <nav aria-label="breadcrumb">

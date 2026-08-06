@@ -54,7 +54,7 @@
                                 {{ html()->checkbox('moq_sync')->class('form-check-input moq-sync-checkbox')->attribute('wire:model', 'branches.moq_sync')->id('moq_sync') }}
                                 <label for="moq_sync" class="form-check-label moq-sync-label">
                                     <span class="checkbox-icon">
-                                        <i class="fas fa-sync-alt"></i>
+                                        <i class="fa fa-refresh"></i>
                                     </span>
                                     <span class="checkbox-text">
                                         <strong>MOQ Sync</strong>

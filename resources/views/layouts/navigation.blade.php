@@ -791,7 +791,7 @@
                 <a href="{{ route('dashboard') }}" class="mainnav__brand mininav-toggle hv-oc"
                     aria-label="{{ config('app.name', 'Astra') }} — go to dashboard">
                     <span class="mainnav__brand-circle">
-                        <img src="{{ cache('logo', asset('assets/img/logo.svg')) }}"
+                        <img src="{{ tenant_cache('logo', asset('assets/img/logo.svg')) }}"
                             alt="{{ config('app.name', 'Astra') }} logo">
                     </span>
                     <span class="mainnav__brand-text">

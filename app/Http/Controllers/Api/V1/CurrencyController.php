@@ -35,7 +35,7 @@ class CurrencyController extends Controller
             ], $active);
 
             return $this->sendSuccess([
-                'base_currency_code' => cache('base_currency_code'),
+                'base_currency_code' => tenant_cache('base_currency_code'),
                 'currencies' => $currencies,
             ], 'Currencies retrieved successfully');
         } catch (\Exception $e) {

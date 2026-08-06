@@ -134,8 +134,8 @@ class Table extends Component
                 throw new \Exception('Please select items to delete');
             }
             SupplyRequest::whereIn('id', $this->selected)->delete();
-            $this->dispatch('success', ['message' => 'Successfully deleted '.count($this->selected).' items']);
             DB::commit();
+            $this->dispatch('success', ['message' => 'Successfully deleted '.count($this->selected).' items']);
             $this->selected = [];
             $this->selectAll = false;
         } catch (\Exception $e) {

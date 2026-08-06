@@ -7,7 +7,6 @@ use App\Actions\Purchase\Payment\CreateAction as PurchasePaymentCreateAction;
 use App\Events\PurchaseUpdatedEvent;
 use App\Models\Account;
 use App\Models\Purchase;
-use Illuminate\Support\Facades\DB;
 
 class PaymentAction
 {
@@ -34,7 +33,7 @@ class PaymentAction
 
             if ($discount > 0) {
                 $remarks = 'Additional Discount granted on Purchase';
-                $discountAccountId = DB::table('accounts')->where('name', 'Discount')->value('id');
+                $discountAccountId = Account::idBySlug('discount');
 
                 $entries[] = [
                     'account_id' => $discountAccountId,

@@ -31,7 +31,7 @@ class BarcodeController extends Controller
 
         $settings = BarcodeTemplateConfiguration::resolveSettings(request('template'))['settings'];
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
-        $company_logo = cache('logo', asset('assets/img/logo.svg'));
+        $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
         $html = view('inventory.barcode', compact('settings', 'inventory', 'company_name', 'company_logo'))->render();
 
@@ -67,7 +67,7 @@ class BarcodeController extends Controller
 
         $settings = BarcodeTemplateConfiguration::resolveSettings(request('template'))['settings'];
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
-        $company_logo = cache('logo', asset('assets/img/logo.svg'));
+        $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
         $html = view('inventory.barcode', compact('settings', 'product', 'conversionFactor', 'barcode', 'company_name', 'company_logo'))->render();
         putenv('HOME=/tmp');
@@ -94,7 +94,7 @@ class BarcodeController extends Controller
         }
         $settings = BarcodeTemplateConfiguration::resolveSettings($request->query('template'))['settings'];
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
-        $company_logo = cache('logo', asset('assets/img/logo.svg'));
+        $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
         // Generate HTML using Blade view
         $html = view('inventory.barcode-cart-print', compact('cartItems', 'settings', 'company_name', 'company_logo'))->render();
@@ -165,7 +165,7 @@ class BarcodeController extends Controller
         $conversionFactor = 1;
         $settings = BarcodeTemplateConfiguration::resolveSettings($request->query('template'))['settings'];
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
-        $company_logo = cache('logo', asset('assets/img/logo.svg'));
+        $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
         $isPreview = true;
 
         return view('inventory.barcode', compact('settings', 'product', 'conversionFactor', 'barcode', 'company_name', 'company_logo', 'isPreview'));

@@ -104,8 +104,8 @@ class Inventory extends Model implements AuditableContracts
 
     public static function selfCreateByProduct($product, $userId, $quantity = 0, $currentBranch = 1)
     {
-        $barcode_type = cache('barcode_type', '');
-        $branches = cache('branches', []);
+        $barcode_type = tenant_cache('barcode_type', '');
+        $branches = tenant_cache('branches', []);
         foreach ($branches as $branch) {
             $data['product_id'] = $product->id;
             $data['cost'] = $product->cost;

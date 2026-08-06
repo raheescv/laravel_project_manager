@@ -16,6 +16,23 @@ pest()->extend(Tests\TestCase::class)
     ->in('Feature');
 
 /*
+| Plain (non-Laravel) unit tests run in the same process as app-booting tests.
+| When a Laravel test case tears down, it flushes its Application but leaves it
+| memoized in Facade::$resolvedInstance — so the next plain test that boots an
+| Eloquent model whose traits touch a facade (e.g. Auditable -> Config) blows up
+| with "Target class [config] does not exist", depending purely on file order.
+| Detect that stale state and clear it so facade-guarded boot code (like
+| bootAuditable) sees "no app" and skips cleanly.
+*/
+pest()->beforeEach(function (): void {
+    $app = Illuminate\Support\Facades\Facade::getFacadeApplication();
+    if ($app && ! $app->bound('config')) {
+        Illuminate\Support\Facades\Facade::clearResolvedInstances();
+        Illuminate\Support\Facades\Facade::setFacadeApplication(null);
+    }
+})->in('Unit');
+
+/*
 |--------------------------------------------------------------------------
 | Expectations
 |--------------------------------------------------------------------------

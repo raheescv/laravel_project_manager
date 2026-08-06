@@ -25,7 +25,7 @@ class StrategyManager extends Component
 
     public function toggle(int $id): void
     {
-        // TODO(C7): unmapped (candidate: 'flat_trade.trade') — no trading permission in config/permissions.php.
+        abort_unless(auth()->user()?->can('flat_trade.trade'), 403);
         $row = TradingStrategy::find($id);
         if ($row) {
             $row->is_active = ! $row->is_active;
@@ -36,7 +36,7 @@ class StrategyManager extends Component
 
     public function togglePaper(int $id): void
     {
-        // TODO(C7): unmapped (candidate: 'flat_trade.trade') — no trading permission in config/permissions.php.
+        abort_unless(auth()->user()?->can('flat_trade.trade'), 403);
         $row = TradingStrategy::find($id);
         if ($row) {
             $row->paper_mode = ! $row->paper_mode;
@@ -47,7 +47,7 @@ class StrategyManager extends Component
 
     public function bootstrap(): void
     {
-        // TODO(C7): unmapped (candidate: 'flat_trade.trade') — no trading permission in config/permissions.php.
+        abort_unless(auth()->user()?->can('flat_trade.trade'), 403);
         foreach ($this->registered as $r) {
             TradingStrategy::firstOrCreate(
                 ['code' => $r['code']],

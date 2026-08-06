@@ -3,9 +3,9 @@
 namespace App\Actions\RentOut;
 
 use App\Actions\Journal\CreateAction;
+use App\Models\Account;
 use App\Models\Journal;
 use App\Models\RentOut;
-use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
 {
@@ -32,7 +32,7 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = Cache::get('accounts_slug_id_map', []);
+            $accounts = Account::slugIdMap();
             $entries = [];
 
             // Rent Income Entry
@@ -84,7 +84,7 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = Cache::get('accounts_slug_id_map', []);
+            $accounts = Account::slugIdMap();
             $entries = [];
 
             // Management Fee: Dr Customer, Cr Service Charge

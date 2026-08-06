@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\PurchaseReturnUpdatedEvent;
-use Illuminate\Support\Facades\DB;
+use App\Models\Account;
 
 class PurchaseReturnUpdateEventListener
 {
@@ -15,7 +15,7 @@ class PurchaseReturnUpdateEventListener
                 $model->update(['paid' => $model->payments->sum('amount')]);
                 break;
             case 'discount':
-                $discount_id = DB::table('accounts')->where('name', 'Discount')->value('id');
+                $discount_id = Account::idBySlug('discount');
                 $other_discount = $model->ledgers->where('account_id', $discount_id)->sum('credit');
                 $other_discount -= $model->item_discount;
                 $model->update(['other_discount' => $other_discount]);

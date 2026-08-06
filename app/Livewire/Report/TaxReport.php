@@ -3,9 +3,9 @@
 namespace App\Livewire\Report;
 
 use App\Exports\TaxReportExport;
+use App\Models\Account;
 use App\Models\JournalEntry;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -54,7 +54,7 @@ class TaxReport extends Component
 
     private function getTaxAccountId()
     {
-        $accounts = Cache::get('accounts_slug_id_map', []);
+        $accounts = Account::slugIdMap();
 
         return $accounts['tax_amount'] ?? null;
     }

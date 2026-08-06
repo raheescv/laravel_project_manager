@@ -41,7 +41,7 @@ class PackageController extends Controller
         $companyPhone = Configuration::where('key', 'company_phone')->value('value') ?? '';
         $companyEmail = Configuration::where('key', 'company_email')->value('value') ?? '';
         $enableLogoInPrint = Configuration::where('key', 'enable_logo_in_print')->value('value') ?? 'yes';
-        $companyLogo = cache('logo', asset('assets/img/logo.svg'));
+        $companyLogo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
         return view('package.payment-print', compact('payment', 'companyName', 'companyAddress', 'companyPhone', 'companyEmail', 'enableLogoInPrint', 'companyLogo'));
     }

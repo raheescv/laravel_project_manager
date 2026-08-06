@@ -321,8 +321,8 @@ class Page extends Component
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
-            $this->dispatch('success', ['message' => $response['message']]);
             DB::commit();
+            $this->dispatch('success', ['message' => $response['message']]);
             if ($edit) {
                 if ($this->type == 'product') {
                     return redirect()->route('product::edit', $response['data']['id']);
@@ -488,8 +488,8 @@ class Page extends Component
                 throw new \Exception($response['message'], 1);
             }
             $this->mount($this->type, $this->table_id);
-            $this->dispatch('success', ['message' => 'Deleted Successfully']);
             DB::commit();
+            $this->dispatch('success', ['message' => 'Deleted Successfully']);
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);

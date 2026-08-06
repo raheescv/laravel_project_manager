@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\TenantCache;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,17 @@ class Branch extends Model
     protected $casts = [
         'moq_sync' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        // The id/name list is cached per tenant (tenant_cache('branches'));
+        // drop it whenever a branch changes.
+        $invalidate = function (): void {
+            TenantCache::forget('branches');
+        };
+        static::saved($invalidate);
+        static::deleted($invalidate);
+    }
 
     public static function rules($id = 0, $merge = [])
     {

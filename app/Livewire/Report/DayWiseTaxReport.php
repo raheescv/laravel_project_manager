@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Report;
 
+use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\Purchase;
 use App\Models\PurchaseReturn;
 use App\Models\Sale;
 use App\Models\SaleReturn;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -57,7 +57,7 @@ class DayWiseTaxReport extends Component
 
     private function getTaxAccountId()
     {
-        $accounts = Cache::get('accounts_slug_id_map', []);
+        $accounts = Account::slugIdMap();
 
         return $accounts['tax_amount'] ?? null;
     }

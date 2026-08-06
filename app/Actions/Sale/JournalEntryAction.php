@@ -3,8 +3,8 @@
 namespace App\Actions\Sale;
 
 use App\Actions\Journal\CreateAction;
+use App\Models\Account;
 use App\Models\Sale;
-use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
 {
@@ -26,7 +26,7 @@ class JournalEntryAction
                 'created_by' => $this->userId,
             ];
 
-            $accounts = Cache::get('accounts_slug_id_map', []);
+            $accounts = Account::slugIdMap();
 
             $entries = [];
 

@@ -92,7 +92,7 @@ class SecurityTable extends Component
 
     public function download()
     {
-        // TODO(C7): unmapped (candidate: 'rent out security.export') — 'rent out security' has no export action in config/permissions.php
+        abort_unless(auth()->user()?->can('rent out security.export'), 403);
         $filters = [
             'agreementType' => $this->agreementType,
             'filterGroup' => $this->filterGroup,

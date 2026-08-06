@@ -45,8 +45,7 @@ class VendorPayment extends Component
 
     public function mount($name = null, $vendor_id = null)
     {
-        $this->account_ids['discount_id'] = DB::table('accounts')->where('name', 'Discount')->value('id');
-        $this->account_ids['discount_id'] = DB::table('accounts')->where('name', 'Discount')->value('id');
+        $this->account_ids['discount_id'] = Account::idBySlug('discount');
         $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
         $this->name = $name;
         $this->vendor_id = $vendor_id;

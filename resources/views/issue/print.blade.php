@@ -331,10 +331,10 @@
     <div class="print-page">
         <div class="company-header">
             <div>
-                @if (cache('logo'))
-                    <img src="{{ cache('logo') }}" alt="Logo">
+                @if (tenant_cache('logo'))
+                    <img src="{{ tenant_cache('logo') }}" alt="Logo">
                 @endif
-                <div class="company-name">{{ cache('company_name') ?? config('app.name') }}</div>
+                <div class="company-name">{{ tenant_cache('company_name') ?? config('app.name') }}</div>
             </div>
             <div>
                 <div class="doc-heading">Delivery Note</div>
@@ -352,7 +352,7 @@
         <table class="doc-table">
             <tr>
                 <td class="doc-label">FROM:</td>
-                <td class="doc-value">{{ cache('company_name') ?? config('app.name') }}</td>
+                <td class="doc-value">{{ tenant_cache('company_name') ?? config('app.name') }}</td>
             </tr>
             <tr>
                 <td class="doc-label">TO:</td>

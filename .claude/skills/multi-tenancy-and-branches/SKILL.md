@@ -80,6 +80,7 @@ These are the real failure modes in this codebase:
 - **`insert()` bulk writes.** `JournalEntry::insert()` bypasses model events, so `tenant_id` is *not* auto-filled. `app/Actions/Journal/CreateAction.php` copies it onto every row by hand — do the same for any bulk insert you add.
 - **Relationship queries via `withoutGlobalScope`.** If you disable one scope, you disable it for that query only; be explicit about which one.
 - **Aggregates in reports.** `sum()`/`count()` over a raw builder is the most common leak. Start from the model, not `DB::table`.
+- **Cache keys.** A tenant-scoped value cached under a global key leaks to every tenant — whoever warms it first defines it for everyone — and `Cache::forget` on a global key makes the value *flap* between tenants rather than fixing it. Cache per-tenant values through `tenant_cache('key')` / `App\Support\TenantCache` (keys are suffixed `:tenant:{id}` and resolved lazily), never at boot: `AppServiceProvider::boot()` runs before any tenant is resolved, so anything tenant-dependent computed there is a guess.
 
 ## Branch handling in writes
 

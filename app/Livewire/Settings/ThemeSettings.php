@@ -3,7 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
-use Illuminate\Support\Facades\Cache;
+use App\Support\TenantCache;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -71,7 +71,7 @@ class ThemeSettings extends Component
     public function saveThemeSettings()
     {
         Configuration::updateOrCreate(['key' => 'theme_settings'], ['value' => json_encode($this->theme)]);
-        Cache::forget('theme_settings');
+        TenantCache::forget('theme_settings');
         $this->dispatch('themeSaved', themeData: $this->theme);
     }
 

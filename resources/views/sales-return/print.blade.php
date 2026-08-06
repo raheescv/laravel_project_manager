@@ -129,7 +129,7 @@
     <div class="receipt-container">
         <h1>
             @if ($enable_logo_in_print == 'yes')
-                <img src="{{ cache('logo') }}" alt="Logo" style="width: 100%;">
+                <img src="{{ tenant_cache('logo') }}" alt="Logo" style="width: 100%;">
             @endif
         </h1>
         <h3 class="divider">

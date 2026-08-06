@@ -73,7 +73,7 @@ class GetProductByBarcodeAction
             $price = $basePrice * $selectedConversionFactor;
 
             // Get product image URL
-            $imageUrl = cache('logo');
+            $imageUrl = tenant_cache('logo');
             if ($inventory->product->thumbnail) {
                 $imageUrl = $inventory->product->thumbnail;
             }

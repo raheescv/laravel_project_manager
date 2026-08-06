@@ -3,9 +3,9 @@
 namespace App\Actions\Tailoring;
 
 use App\Actions\Journal\CreateAction as JournalCreateAction;
+use App\Models\Account;
 use App\Models\Journal;
 use App\Models\TailoringOrder;
-use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
 {
@@ -32,7 +32,7 @@ class JournalEntryAction
     {
         try {
             $order->loadMissing(['account', 'payments.paymentMethod']);
-            $accounts = Cache::get('accounts_slug_id_map', []);
+            $accounts = Account::slugIdMap();
             $saleAccountId = $accounts['sale'] ?? null;
             if (! $saleAccountId || ! $order->account_id) {
                 return ['success' => true, 'message' => 'Journal skipped (missing sale or customer account).'];

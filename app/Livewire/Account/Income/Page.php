@@ -117,10 +117,10 @@ class Page extends Component
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
             }
+            DB::commit();
             $this->dispatch('success', ['message' => $response['message']]);
             $this->mount($this->table_id);
             $this->dispatch('SelectDropDownValues', $journals);
-            DB::commit();
             if (! $close) {
                 $this->dispatch('ToggleIncomeModal');
             } else {

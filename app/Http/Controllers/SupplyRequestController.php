@@ -53,8 +53,8 @@ class SupplyRequestController extends Controller
                 ->first();
         }
 
-        $companyLogo = cache('logo', asset('assets/img/logo.svg'));
-        $companyName = cache('company_name', config('app.name'));
+        $companyLogo = tenant_cache('logo', asset('assets/img/logo.svg'));
+        $companyName = tenant_cache('company_name', config('app.name'));
 
         $html = view('supply-request.print', compact(
             'supplyRequest',

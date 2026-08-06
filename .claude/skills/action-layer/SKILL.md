@@ -82,9 +82,20 @@ private function items($data)
 
 Check `success` on **every** nested action call and throw its message. Silently ignoring a child failure leaves a half-written aggregate, because the transaction is not the action's to roll back.
 
-## Transactions belong to the caller
+## Who owns the transaction depends on the caller
 
-Actions do **not** open transactions. The caller does — that is why child failures throw rather than return. See `app/Livewire/Sale/Page.php:1039` for the canonical shape:
+There are two legitimate conventions in this codebase, and which one applies is decided by **who calls the action**:
+
+| Caller | Who owns the transaction | Why |
+| --- | --- | --- |
+| Livewire component | **The component** | One user gesture may drive several actions; only the component knows the full unit of work |
+| V1 API controller | **The action** (`DB::transaction(...)` inside `execute()`) | One request = one action; a controller-level boundary would be pure ceremony |
+| Queued job / console command | **The action** | Same reason; no interactive caller exists |
+| Another action | **Neither — inherit** | Nesting creates savepoints; let the outermost boundary win |
+
+The original core (Sale, Purchase, Journal, SaleReturn) follows the first row: those actions do **not** open transactions and rely on the Livewire caller. The newer modules (all V1 actions, Maintenance/Complaint, StockCheck, Asset, several RentOut sub-actions, Issue, Tailoring, EmployeeCommission — ~33 classes) self-transact with `DB::transaction()`, correctly, because their callers are controllers or jobs. Do **not** "fix" either group onto the other convention; do not open a transaction in a caller *and* in the action it calls.
+
+Child failures throw rather than return so the owning boundary can roll back. See `app/Livewire/Sale/Page.php:1039` for the canonical Livewire shape:
 
 ```php
 try {

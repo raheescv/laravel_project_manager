@@ -3,7 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
-use Illuminate\Support\Facades\Cache;
+use App\Support\TenantCache;
 use Livewire\Component;
 
 class CurrencyConfiguration extends Component
@@ -158,10 +158,10 @@ class CurrencyConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'currency_code'], ['value' => $base['code']]);
         Configuration::updateOrCreate(['key' => 'currency_symbol'], ['value' => $base['symbol']]);
 
-        Cache::forget('currencies');
-        Cache::forget('base_currency_code');
-        Cache::forget('currency_code');
-        Cache::forget('currency_symbol');
+        TenantCache::forget('currencies');
+        TenantCache::forget('base_currency_code');
+        TenantCache::forget('currency_code');
+        TenantCache::forget('currency_symbol');
 
         $this->dispatch('success', ['message' => 'Currencies updated successfully']);
     }

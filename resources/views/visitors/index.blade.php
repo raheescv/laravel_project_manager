@@ -4,7 +4,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="h3 mb-0 text-gray-800">
-                    <i class="fas fa-users me-2"></i>Visitor Management
+                    <i class="fa fa-users me-2"></i>Visitor Management
                 </h2>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
@@ -14,7 +14,7 @@
                 </nav>
             </div>
             <a href="{{ route('visitors.create') }}" class="btn btn-primary">
-                <i class="fas fa-user-plus me-2"></i>Register New Visitor
+                <i class="fa fa-user-plus me-2"></i>Register New Visitor
             </a>
         </div>
 
@@ -26,7 +26,7 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
                                 <div class="bg-primary bg-opacity-10 p-3 rounded">
-                                    <i class="fas fa-users text-primary fa-2x"></i>
+                                    <i class="fa fa-users text-primary fa-2x"></i>
                                 </div>
                             </div>
                             <div class="flex-grow-1 ms-3">
@@ -43,7 +43,7 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
                                 <div class="bg-success bg-opacity-10 p-3 rounded">
-                                    <i class="fas fa-user-check text-success fa-2x"></i>
+                                    <i class="fa fa-check text-success fa-2x"></i>
                                 </div>
                             </div>
                             <div class="flex-grow-1 ms-3">
@@ -60,7 +60,7 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
                                 <div class="bg-info bg-opacity-10 p-3 rounded">
-                                    <i class="fas fa-user-clock text-info fa-2x"></i>
+                                    <i class="fa fa-clock-o text-info fa-2x"></i>
                                 </div>
                             </div>
                             <div class="flex-grow-1 ms-3">
@@ -102,7 +102,7 @@
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-filter me-2"></i>Apply Filters
+                            <i class="fa fa-filter me-2"></i>Apply Filters
                         </button>
                     </div>
                 </form>
@@ -131,7 +131,7 @@
                                         <div class="d-flex align-items-center">
                                             <div class="flex-shrink-0">
                                                 <div class="avatar avatar-sm bg-primary bg-opacity-10 rounded-circle">
-                                                    <i class="fas fa-user text-primary"></i>
+                                                    <i class="fa fa-user text-primary"></i>
                                                 </div>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
@@ -159,25 +159,25 @@
                                     <td>
                                         @if ($visitor->status === 'checked_in')
                                             <span class="badge bg-success bg-opacity-10 text-success">
-                                                <i class="fas fa-circle me-1"></i>Checked In
+                                                <i class="fa fa-circle me-1"></i>Checked In
                                             </span>
                                         @else
                                             <span class="badge bg-secondary bg-opacity-10 text-secondary">
-                                                <i class="fas fa-circle me-1"></i>Checked Out
+                                                <i class="fa fa-circle me-1"></i>Checked Out
                                             </span>
                                         @endif
                                     </td>
                                     <td class="text-end">
                                         <div class="btn-group">
                                             <a href="{{ route('visitors.show', $visitor) }}" class="btn btn-sm btn-light" data-bs-toggle="tooltip" title="View Details">
-                                                <i class="fas fa-eye"></i>
+                                                <i class="fa fa-eye"></i>
                                             </a>
                                             @if ($visitor->status === 'checked_in')
                                                 <form action="{{ route('visitors.checkout', $visitor) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     <button type="submit" class="btn btn-sm btn-light text-danger" data-bs-toggle="tooltip" title="Check Out"
                                                         onclick="return confirm('Are you sure you want to check out this visitor?')">
-                                                        <i class="fas fa-sign-out-alt"></i>
+                                                        <i class="fa fa-sign-out"></i>
                                                     </button>
                                                 </form>
                                             @endif
@@ -188,7 +188,7 @@
                                 <tr>
                                     <td colspan="6" class="text-center py-4">
                                         <div class="text-muted">
-                                            <i class="fas fa-users fa-2x mb-3"></i>
+                                            <i class="fa fa-users fa-2x mb-3"></i>
                                             <p class="mb-0">No visitors found</p>
                                         </div>
                                     </td>

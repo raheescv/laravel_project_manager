@@ -59,8 +59,8 @@ class Table extends Component
                 }
             }
             $count = count($this->selected);
-            $this->dispatch('success', ['message' => 'Successfully deleted '.$count.' issue(s).']);
             DB::commit();
+            $this->dispatch('success', ['message' => 'Successfully deleted '.$count.' issue(s).']);
             $this->selected = [];
             $this->selectAll = false;
             if ($count > 10) {

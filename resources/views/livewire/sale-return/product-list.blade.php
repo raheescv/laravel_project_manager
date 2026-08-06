@@ -111,7 +111,7 @@
         @foreach ($products as $item)
             <div wire:key="product-{{ $item['id'] }}" class="product-card" wire:click="selectItem('{{ $item['id'] }}','{{ $item['sale_item_id'] }}')">
                 <div class="product-image">
-                    <img src="{{ $item['thumbnail'] ?? cache('logo') }}" alt="{{ $item['name'] }}" class="img-fluid">
+                    <img src="{{ $item['thumbnail'] ?? tenant_cache('logo') }}" alt="{{ $item['name'] }}" class="img-fluid">
                 </div>
                 <div class="product-content">
                     <h6 class="product-name">{{ $item['name'] }}</h6>

@@ -75,8 +75,8 @@ class Table extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' Lead(s)']);
             DB::commit();
+            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' Lead(s)']);
             $this->selected = [];
             $this->selectAll = false;
             $this->dispatch('PropertyLead-Refresh-Component');
@@ -125,7 +125,7 @@ class Table extends Component
 
     public function export()
     {
-        // TODO(C7): unmapped (candidate: 'property lead.download') — no 'property lead.export' in catalog; bulk Excel export of leads
+        abort_unless(auth()->user()?->can('property lead.download'), 403);
         $payload = [
             'status' => $this->filterStatus,
             'source' => $this->filterSource,

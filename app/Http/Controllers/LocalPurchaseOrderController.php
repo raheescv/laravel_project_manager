@@ -73,7 +73,7 @@ class LocalPurchaseOrderController extends BaseController
         // company logo. Browsershot embeds data URIs reliably.
         $companyLogo = CompanyLogoResolver::dataUri('lpo_header_image');
 
-        $companyName = Configuration::where('key', 'company_name')->value('value') ?? cache('company_name', config('app.name'));
+        $companyName = Configuration::where('key', 'company_name')->value('value') ?? tenant_cache('company_name', config('app.name'));
         $companyAddress = Configuration::where('key', 'company_address')->value('value') ?? '';
         $companyPhone = Configuration::where('key', 'company_phone')->value('value') ?? '';
 

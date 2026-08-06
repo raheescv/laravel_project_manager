@@ -14,7 +14,7 @@ class AiChat extends Component
 
     public function ask(TradeAnalyst $analyst): void
     {
-        // TODO(C7): unmapped (candidate: 'flat_trade.view') — no trading permission in config/permissions.php; AI analyst is gated by 'flat_trade.view' at the route.
+        abort_unless(auth()->user()?->can('flat_trade.view'), 403);
         if (trim($this->question) === '') {
             return;
         }

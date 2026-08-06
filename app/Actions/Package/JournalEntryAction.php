@@ -3,9 +3,9 @@
 namespace App\Actions\Package;
 
 use App\Actions\Journal\CreateAction;
+use App\Models\Account;
 use App\Models\Package;
 use App\Models\PackagePayment;
-use Illuminate\Support\Facades\Cache;
 
 class JournalEntryAction
 {
@@ -161,7 +161,7 @@ class JournalEntryAction
 
     protected function getAccounts(): array
     {
-        return Cache::get('accounts_slug_id_map', []);
+        return Account::slugIdMap();
     }
 
     protected function validateAccountExists(array $accounts, string $accountKey): void

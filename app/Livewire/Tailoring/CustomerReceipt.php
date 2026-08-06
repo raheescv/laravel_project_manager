@@ -40,7 +40,7 @@ class CustomerReceipt extends Component
 
     public function mount(): void
     {
-        $ids = cache('payment_methods', []);
+        $ids = tenant_cache('payment_methods', []);
         $this->paymentMethods = $ids
             ? Account::whereIn('id', $ids)->pluck('name', 'id')->toArray()
             : Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();

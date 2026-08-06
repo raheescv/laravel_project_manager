@@ -17,7 +17,6 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -86,10 +85,9 @@ class MigrateSalesChunkJob implements ShouldQueue
         // runs in a separate session, so disable them here too to match the inline replay's behaviour.
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        // The journal-entry actions read branch/account ids from long-lived caches primed by the
-        // command. File cache is shared across processes so they normally already exist, but prime
-        // them defensively in case this worker started before the command primed them.
-        $this->ensureLookupCaches();
+        // The journal-entry actions resolve branch/account ids through the tenant-keyed
+        // lazy caches (tenant_cache('branches') / Account::slugIdMap()); with the tenant
+        // pinned above they self-populate on first use, so no manual priming is needed.
 
         [$accountMap, $userMap, $employeeMap, $productMap, $serviceMap, $inventoryMap] = $this->maps();
 
@@ -353,19 +351,5 @@ class MigrateSalesChunkJob implements ShouldQueue
         $inventoryMap = Inventory::orderByDesc('id')->pluck('id', 'product_id');
 
         return self::$maps[$this->tenantId] = [$accountMap, $userMap, $employeeMap, $productMap, $serviceMap, $inventoryMap];
-    }
-
-    /**
-     * Prime the branch/account lookup caches the journal actions depend on, if a worker started
-     * before MigrateDataCommand primed them. Mirrors MigrateDataCommand::refreshLookupCaches().
-     */
-    protected function ensureLookupCaches(): void
-    {
-        if (Cache::has('accounts_slug_id_map') && Cache::has('branches')) {
-            return;
-        }
-
-        Cache::put('branches', Branch::select('id', 'name')->get(), now()->addYear());
-        Cache::put('accounts_slug_id_map', DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray(), now()->addYear());
     }
 }

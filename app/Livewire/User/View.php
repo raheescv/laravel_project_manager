@@ -8,6 +8,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
@@ -85,7 +86,10 @@ class View extends Component
 
     public function impersonate()
     {
-        // TODO(C7): unmapped (candidate: 'user.edit') — no impersonate permission in config/permissions.php; account-takeover action needs a dedicated permission.
+        // Becoming another user is a full account takeover: it needs its own
+        // dedicated permission, not a ride-along on 'user.edit'.
+        abort_unless(auth()->user()?->can('user.impersonate'), 403);
+        abort_if($this->table_id == Auth::id(), 400, 'You are already signed in as this user.');
         try {
             $targetUser = User::find($this->table_id);
 
@@ -99,6 +103,13 @@ class View extends Component
 
             // Store original user ID in session for later restoration
             session(['impersonator_id' => Auth::id()]);
+
+            // Audit trail: record who became whom — the regenerated session
+            // otherwise makes the impersonation indistinguishable from a login.
+            Log::info('User impersonation started', [
+                'impersonator_id' => Auth::id(),
+                'target_user_id' => $targetUser->id,
+            ]);
 
             // Log in as the target user
             Auth::login($targetUser);

@@ -10,7 +10,6 @@ use App\Models\RentOutPaymentTerm;
 use App\Models\RentOutSecurity;
 use App\Models\RentOutUtilityTerm;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 
 class RentOutTransactionHelper
 {
@@ -51,7 +50,7 @@ class RentOutTransactionHelper
 
     public function storeManagementFee(RentOut $rentOut, int $userId): array
     {
-        $accounts = Cache::get('accounts_slug_id_map', []);
+        $accounts = Account::slugIdMap();
 
         return $this->chargeAndPay($rentOut->id, [
             'date' => now()->format('Y-m-d'),
@@ -275,7 +274,7 @@ class RentOutTransactionHelper
      */
     protected function securityDepositAccountId(RentOutSecurity $security): ?int
     {
-        $accounts = Cache::get('accounts_slug_id_map', []);
+        $accounts = Account::slugIdMap();
 
         return $accounts['security_deposit']
             ?? Account::where('tenant_id', $security->tenant_id)

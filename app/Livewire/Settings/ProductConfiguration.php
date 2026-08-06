@@ -3,7 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
-use Illuminate\Support\Facades\Cache;
+use App\Support\TenantCache;
 use Livewire\Component;
 
 class ProductConfiguration extends Component
@@ -31,7 +31,7 @@ class ProductConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'barcode_prefix'], ['value' => $this->barcode_prefix ?? '']);
         Configuration::updateOrCreate(['key' => 'sync_barcode_to_code'], ['value' => $this->sync_barcode_to_code ?? 'no']);
         Configuration::updateOrCreate(['key' => 'hide_out_of_stock_sale_items'], ['value' => $this->hide_out_of_stock_sale_items ?? 'yes']);
-        Cache::forget('barcode_prefix');
+        TenantCache::forget('barcode_prefix');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }
 

@@ -32,7 +32,7 @@ class Table extends Component
 
     public function delete()
     {
-        // TODO(C7): unmapped (candidate: 'tenant detail.delete') — 'tenant detail' is commented out in config/permissions.php; no verbatim catalog entry
+        abort_unless(auth()->user()?->can('tenant detail.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -44,8 +44,8 @@ class Table extends Component
                     throw new \Exception($response['message'], 1);
                 }
             }
-            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
             DB::commit();
+            $this->dispatch('success', ['message' => 'Successfully Deleted '.count($this->selected).' items']);
             if (count($this->selected) > 10) {
                 $this->resetPage();
             }

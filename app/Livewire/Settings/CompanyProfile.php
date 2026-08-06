@@ -3,7 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
-use Illuminate\Support\Facades\Cache;
+use App\Support\TenantCache;
 use Livewire\Component;
 use Spatie\LivewireFilepond\WithFilePond;
 
@@ -68,7 +68,7 @@ class CompanyProfile extends Component
                 // throw new \Exception('Please wait for the loading to complete', 1);
                 $logo = url('storage/'.$this->logo->store('company_image', 'public'));
                 Configuration::updateOrCreate(['key' => 'logo'], ['value' => $logo]);
-                Cache::forget('logo');
+                TenantCache::forget('logo');
             }
             Configuration::updateOrCreate(['key' => 'mobile'], ['value' => $this->mobile]);
             Configuration::updateOrCreate(['key' => 'email'], ['value' => $this->email]);
@@ -76,12 +76,12 @@ class CompanyProfile extends Component
             Configuration::updateOrCreate(['key' => 'company_name'], ['value' => $this->company_name]);
             Configuration::updateOrCreate(['key' => 'gst_no'], ['value' => $this->gst_no]);
             Configuration::updateOrCreate(['key' => 'company_description'], ['value' => $this->company_description]);
-            Cache::forget('company_description');
-            Cache::forget('company_name');
-            Cache::forget('mobile');
-            Cache::forget('email');
-            Cache::forget('google_review_url');
-            Cache::forget('gst_no');
+            TenantCache::forget('company_description');
+            TenantCache::forget('company_name');
+            TenantCache::forget('mobile');
+            TenantCache::forget('email');
+            TenantCache::forget('google_review_url');
+            TenantCache::forget('gst_no');
             $this->dispatch('success', ['message' => 'Updated Successfully']);
             $this->dispatch('filepond-reset-images');
         } catch (\Throwable $e) {

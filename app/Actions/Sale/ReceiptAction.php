@@ -7,7 +7,6 @@ use App\Actions\Sale\Payment\CreateAction as SalePaymentCreateAction;
 use App\Events\SaleUpdatedEvent;
 use App\Models\Account;
 use App\Models\Sale;
-use Illuminate\Support\Facades\DB;
 
 class ReceiptAction
 {
@@ -31,7 +30,7 @@ class ReceiptAction
 
             if ($discount > 0) {
                 $remarks = Sale::ADDITIONAL_DISCOUNT_DESCRIPTION;
-                $discountAccountId = DB::table('accounts')->where('name', 'Discount')->value('id');
+                $discountAccountId = Account::idBySlug('discount');
                 $entries[] = [
                     'account_id' => $discountAccountId,
                     'counter_account_id' => $account_id,

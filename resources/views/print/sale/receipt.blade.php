@@ -243,8 +243,8 @@
     <div class="receipt-container">
         <!-- Header -->
         <div class="header-info">
-            @if (($enable_logo_in_print ?? '') == 'yes' && cache('logo'))
-                <img src="{{ cache('logo') }}" alt="Logo" style="max-width: 26mm; max-height: 14mm; margin-bottom: 1mm;">
+            @if (($enable_logo_in_print ?? '') == 'yes' && tenant_cache('logo'))
+                <img src="{{ tenant_cache('logo') }}" alt="Logo" style="max-width: 26mm; max-height: 14mm; margin-bottom: 1mm;">
             @endif
             <h1>{{ $companyName }}</h1>
             @if ($companyAddress)

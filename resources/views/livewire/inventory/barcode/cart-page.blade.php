@@ -116,7 +116,7 @@
                                     <div class="col-6 col-md-4 col-lg-3 col-xl-2">
                                         <div class="card h-100 border shadow-sm bc-product-tile" wire:click="selectProduct({{ $product['id'] }}, '{{ $product['item_type'] ?? 'inventory' }}')">
                                             <div class="bg-light text-center py-2 position-relative border-bottom">
-                                                <img src="{{ $product['thumbnail'] ?? cache('logo') }}" alt="{{ $product['name'] }}" class="rounded" style="width:36px;height:36px;object-fit:cover;">
+                                                <img src="{{ $product['thumbnail'] ?? tenant_cache('logo') }}" alt="{{ $product['name'] }}" class="rounded" style="width:36px;height:36px;object-fit:cover;">
                                                 @if (isset($product['item_type']) && $product['item_type'] === 'product_unit')
                                                     <span class="badge bg-info text-white position-absolute top-0 end-0 m-1" style="font-size:8px;">UNIT</span>
                                                 @else
@@ -183,7 +183,7 @@
                         <div class="bc-cart-items-list">
                             @foreach ($cartItems as $cartKey => $item)
                                 <div class="d-flex align-items-center gap-2 px-3 py-2 border-bottom bc-cart-row" wire:key="cart-{{ $cartKey }}">
-                                    <img src="{{ $item['thumbnail'] ?? $item['image'] ?? cache('logo') }}" alt="{{ $item['name'] }}" class="rounded border" style="width:32px;height:32px;object-fit:cover;flex-shrink:0;">
+                                    <img src="{{ $item['thumbnail'] ?? $item['image'] ?? tenant_cache('logo') }}" alt="{{ $item['name'] }}" class="rounded border" style="width:32px;height:32px;object-fit:cover;flex-shrink:0;">
                                     <div class="flex-grow-1" style="min-width:0;">
                                         <div class="fw-medium text-dark text-truncate" style="font-size:12px;" title="{{ $item['name'] }}">{{ $item['name'] }}</div>
                                         <div class="d-flex gap-1 flex-wrap mt-1">

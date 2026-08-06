@@ -3,8 +3,6 @@
 namespace App\Providers;
 
 use App\Ai\Providers\FixedOpenAiProvider;
-use App\Models\Branch;
-use App\Models\Configuration;
 use App\Notifications\DatabaseChannel;
 use App\Services\TenantService;
 use Dedoc\Scramble\Scramble;
@@ -13,10 +11,7 @@ use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
@@ -54,74 +49,13 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        if (Schema::hasTable('branches')) {
-            Cache::remember('branches', now()->addYear(), function () {
-                return Branch::select('id', 'name')->get();
-            });
-        }
-        if (Schema::hasTable('accounts')) {
-            Cache::remember('accounts_slug_id_map', now()->addYear(), function () {
-                if (Schema::hasColumn('accounts', 'slug')) {
-                    return DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
-                }
-            });
-        }
-        if (Schema::hasTable('configurations')) {
-            Cache::remember('barcode_type', now()->addYear(), function () {
-                return Configuration::where('key', 'barcode_type')->value('value');
-            });
-            Cache::remember('barcode_prefix', now()->addYear(), function () {
-                return Configuration::where('key', 'barcode_prefix')->value('value') ?? '';
-            });
-            Cache::remember('payment_methods', now()->addYear(), function () {
-                $list = Configuration::where('key', 'payment_methods')->value('value');
+        // Tenant-scoped settings and lookup maps (branches, accounts_slug_id_map,
+        // logo, theme_settings, payment_methods, …) are NOT warmed here: boot()
+        // runs before the tenant is resolved, so any value computed here would
+        // belong to whichever tenant happened to warm it first and would then be
+        // served to every other tenant. They are resolved lazily, keyed by the
+        // current tenant, via tenant_cache() / App\Support\TenantCache.
 
-                return json_decode($list, 1);
-            });
-            Cache::remember('sale_type', now()->addYear(), function () {
-                return Configuration::where('key', 'sale_type')->value('value');
-            });
-
-            Cache::remember('theme_settings', now()->addYear(), function () {
-                $themeSettings = Configuration::where('key', 'theme_settings')->value('value');
-
-                return $themeSettings ? json_decode($themeSettings, true) : null;
-            });
-            Cache::remember('logo', now()->addYear(), function () {
-                $logo = Configuration::where('key', 'logo')->value('value');
-
-                return $logo ? asset($logo) : asset('assets/img/logo.svg');
-            });
-            Cache::remember('mobile', now()->addYear(), function () {
-                return Configuration::where('key', 'mobile')->value('value');
-            });
-            Cache::remember('email', now()->addYear(), function () {
-                return Configuration::where('key', 'email')->value('value');
-            });
-            Cache::remember('company_name', now()->addYear(), function () {
-                return Configuration::where('key', 'company_name')->value('value');
-            });
-            Cache::remember('google_review_url', now()->addYear(), function () {
-                return Configuration::where('key', 'google_review_url')->value('value');
-            });
-            Cache::remember('country_id', now()->addYear(), function () {
-                return Configuration::where('key', 'country_id')->value('value');
-            });
-            Cache::remember('currency_code', now()->addYear(), function () {
-                return Configuration::where('key', 'currency_code')->value('value');
-            });
-            Cache::remember('currency_symbol', now()->addYear(), function () {
-                return Configuration::where('key', 'currency_symbol')->value('value');
-            });
-            Cache::remember('currencies', now()->addYear(), function () {
-                $list = Configuration::where('key', 'currencies')->value('value');
-
-                return $list ? json_decode($list, true) : [];
-            });
-            Cache::remember('base_currency_code', now()->addYear(), function () {
-                return Configuration::where('key', 'base_currency_code')->value('value');
-            });
-        }
         // Gate::after(function ($user, $ability) {
         //     return $user->hasRole('Super Admin') || $user->hasPermissionTo($ability);
         // });

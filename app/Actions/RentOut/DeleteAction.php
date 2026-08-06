@@ -6,7 +6,6 @@ use App\Enums\Property\PropertyStatus;
 use App\Models\Journal;
 use App\Models\JournalEntry;
 use App\Models\RentOut;
-use Illuminate\Support\Facades\DB;
 
 class DeleteAction
 {
@@ -20,43 +19,46 @@ class DeleteAction
 
             // Everything below must succeed or fail as a unit — a half-deleted
             // agreement leaves orphaned ledger/journal rows and corrupts the books.
-            DB::transaction(function () use ($model) {
-                // Cascade delete related records
-                $model->paymentTerms()->delete();
-                $model->securities()->delete();
-                $model->extends()->delete();
-                $model->cheques()->delete();
-                $model->utilityTerms()->delete();
-                $model->services()->delete();
-                $model->notes()->delete();
+            // The transaction is owned by the CALLER (RentOut/Table.php and
+            // BookingTable.php both wrap this call in DB::beginTransaction());
+            // opening another one here would only create a savepoint and hide
+            // which boundary actually owns the rollback.
 
-                // Remove the ledger rows and their journals. Journal *entries* must
-                // go too — account balances are derived from entries, so deleting
-                // only the journal header would leave balances permanently inflated.
-                $journalIds = Journal::where('model', 'RentOut')
-                    ->where('model_id', $model->id)
-                    ->pluck('id');
+            // Cascade delete related records
+            $model->paymentTerms()->delete();
+            $model->securities()->delete();
+            $model->extends()->delete();
+            $model->cheques()->delete();
+            $model->utilityTerms()->delete();
+            $model->services()->delete();
+            $model->notes()->delete();
 
-                if ($journalIds->isNotEmpty()) {
-                    JournalEntry::whereIn('journal_id', $journalIds)->delete();
-                    Journal::whereIn('id', $journalIds)->delete();
-                }
+            // Remove the ledger rows and their journals. Journal *entries* must
+            // go too — account balances are derived from entries, so deleting
+            // only the journal header would leave balances permanently inflated.
+            $journalIds = Journal::where('model', 'RentOut')
+                ->where('model_id', $model->id)
+                ->pluck('id');
 
-                $model->rentOutTransactions()->delete();
+            if ($journalIds->isNotEmpty()) {
+                JournalEntry::whereIn('journal_id', $journalIds)->delete();
+                Journal::whereIn('id', $journalIds)->delete();
+            }
 
-                // Free up the property
-                $property = $model->property;
-                if ($property) {
-                    $property->update([
-                        'status' => PropertyStatus::Vacant->value,
-                        'availability_status' => 'available',
-                    ]);
-                }
+            $model->rentOutTransactions()->delete();
 
-                if (! $model->delete()) {
-                    throw new \Exception('Oops! Something went wrong while deleting the RentOut Agreement. Please try again.', 1);
-                }
-            });
+            // Free up the property
+            $property = $model->property;
+            if ($property) {
+                $property->update([
+                    'status' => PropertyStatus::Vacant->value,
+                    'availability_status' => 'available',
+                ]);
+            }
+
+            if (! $model->delete()) {
+                throw new \Exception('Oops! Something went wrong while deleting the RentOut Agreement. Please try again.', 1);
+            }
 
             $return['success'] = true;
             $return['message'] = 'Successfully Deleted RentOut Agreement';

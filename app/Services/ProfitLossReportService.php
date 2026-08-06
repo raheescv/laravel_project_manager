@@ -6,7 +6,6 @@ use App\Models\Account;
 use App\Models\AccountCategory;
 use App\Models\JournalEntry;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Builds the full Profit & Loss report payload for a given period and
@@ -108,7 +107,7 @@ class ProfitLossReportService
      */
     private function tradingAccountIds(): array
     {
-        $map = Cache::get('accounts_slug_id_map', []);
+        $map = Account::slugIdMap();
 
         $ids = [];
         foreach (self::ACCOUNT_SLUGS as $slug) {

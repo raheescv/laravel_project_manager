@@ -13,8 +13,8 @@
 <body onload="window.print();">
     <font face="Tahoma, Arial, sans-serif" style="font-size: 12px;">
         <center>
-            @if (($enable_logo_in_print ?? '') == 'yes' && cache('logo'))
-                <img src="{{ cache('logo') }}" alt="Logo" width="120">
+            @if (($enable_logo_in_print ?? '') == 'yes' && tenant_cache('logo'))
+                <img src="{{ tenant_cache('logo') }}" alt="Logo" width="120">
             @endif
 
             @if (!empty($companyName))

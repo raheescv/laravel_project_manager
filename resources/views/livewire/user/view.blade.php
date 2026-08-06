@@ -28,11 +28,13 @@
                                     <button class="btn btn-primary btn-sm text-nowrap" id="EmployeeEdit"><i class="fa fa-edit me-1"></i>Edit Profile</button>
                                 @endif
                                 @if ($user->id != auth()->id())
+                                    @can('user.impersonate')
                                     <button class="btn btn-warning btn-sm text-nowrap" wire:click="impersonate" wire:loading.attr="disabled">
                                         <i class="fa fa-user-secret me-1"></i>
                                         <span wire:loading.remove>Impersonate</span>
                                         <span wire:loading>Logging in...</span>
                                     </button>
+                                    @endcan
                                 @endif
                             </div>
                         </div>

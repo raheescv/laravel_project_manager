@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Models\Views\Ledger;
+use App\Services\TenantService;
+use App\Support\TenantCache;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
+use RuntimeException;
 
 class Account extends Model implements AuditableContracts
 {
@@ -78,6 +81,50 @@ class Account extends Model implements AuditableContracts
         'is_cheque' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        // The slug->id map and payment-method list are cached per tenant;
+        // drop them whenever an account changes so postings never resolve
+        // against a stale chart of accounts.
+        $invalidate = function (): void {
+            TenantCache::forget('accounts_slug_id_map');
+        };
+        static::saved($invalidate);
+        static::deleted($invalidate);
+        static::restored($invalidate);
+    }
+
+    /**
+     * The current tenant's locked (system) accounts as slug => id.
+     *
+     * This is THE way to resolve a system account for journal postings —
+     * never by display name, which is tenant-editable, and never via a raw
+     * DB::table('accounts') query, which ignores TenantScope.
+     *
+     * Throws when no tenant is resolved: a missing map must surface as a loud
+     * configuration error, not as journal entries posted to null account ids.
+     */
+    public static function slugIdMap(): array
+    {
+        if (! app(TenantService::class)->getCurrentTenantId()) {
+            throw new RuntimeException('No tenant resolved; refusing to build the account slug map.');
+        }
+
+        return TenantCache::get('accounts_slug_id_map', []);
+    }
+
+    /**
+     * The current tenant's system-account id for a slug, or a loud failure.
+     *
+     * A missing system account is a configuration error and must surface here,
+     * not as a journal entry silently posted to a null account id.
+     */
+    public static function idBySlug(string $slug): int
+    {
+        return self::slugIdMap()[$slug]
+            ?? throw new RuntimeException("The '{$slug}' system account is not configured for this tenant.");
+    }
+
     public static function rules($id = 0, $merge = [])
     {
         $tenantId = self::getCurrentTenantId();
@@ -124,7 +171,7 @@ class Account extends Model implements AuditableContracts
             return $query->where('account_category_id', $value);
         });
         $self = $self->when($request['is_payment_method'] ?? '', function ($query, $value) {
-            return $query->whereIn('id', cache('payment_methods', []));
+            return $query->whereIn('id', tenant_cache('payment_methods', []));
         });
         $self = $self->when($request['model'] ?? '', function ($query, $value) {
             return $query->where('model', $value);

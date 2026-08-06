@@ -17,10 +17,10 @@ use App\Models\SaleItem;
 use App\Models\User;
 use App\Models\UserHasBranch;
 use App\Services\TenantService;
+use App\Support\TenantCache;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -115,10 +115,10 @@ class MigrateDataCommand extends Command
             $this->users();
             $this->employeeCommissions();
             // The journal-entry actions replayed by sales()/salesReturns()/purchases() read
-            // account + branch ids from long-lived (1-year) caches that AppServiceProvider primes
-            // at boot. On a freshly wiped/migrated DB those caches were primed empty, so rebuild
-            // them now that branches and the seeded locked accounts exist — otherwise
-            // JournalEntryAction fails with "Undefined array key 'sale'".
+            // account + branch ids from the tenant-keyed lazy caches. If those were resolved
+            // earlier in this process (before the locked accounts existed) they hold empty
+            // maps, so drop them now that branches and the seeded locked accounts exist —
+            // otherwise JournalEntryAction fails with "Undefined array key 'sale'".
             $this->refreshLookupCaches();
             $this->purchases();
             $this->appointments();
@@ -150,10 +150,13 @@ class MigrateDataCommand extends Command
 
     private function refreshLookupCaches(): void
     {
-        Cache::put('branches', Branch::select('id', 'name')->get(), now()->addYear());
+        // The lookup caches are tenant-keyed and lazily resolved; dropping them here
+        // makes the next read (the journal actions, via the pinned tenant) rebuild
+        // them from the freshly migrated rows.
+        TenantCache::forget('branches');
+        TenantCache::forget('accounts_slug_id_map');
 
-        $accountSlugMap = DB::table('accounts')->where('is_locked', 1)->pluck('id', 'slug')->toArray();
-        Cache::put('accounts_slug_id_map', $accountSlugMap, now()->addYear());
+        $accountSlugMap = Account::slugIdMap();
 
         if (! isset($accountSlugMap['sale'])) {
             $this->warn('Locked default accounts (slug "sale", "inventory", ...) are missing. Seed the default chart of accounts before running this command, or completed sales will fail their journal entries.');

@@ -158,7 +158,7 @@
                 <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Active Users & Top Pages</h5>
                     <button wire:click="refreshActiveUsers" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-sync-alt"></i> Refresh
+                        <i class="fa fa-refresh"></i> Refresh
                     </button>
                 </div>
                 <div class="card-body">

@@ -53,13 +53,17 @@ $data = [
 
 ## Writing entries — always in pairs
 
-Accounts are resolved from a cached slug map, not by name lookup:
+Accounts are resolved from the tenant-keyed slug map, not by name lookup and never via a raw `DB::table('accounts')` query (both would cross tenants and break when a tenant renames an account):
 
 ```php
-$accounts = Cache::get('accounts_slug_id_map', []);
+$accounts = Account::slugIdMap();   // lazily cached per tenant; throws if no tenant is resolved
 $accounts['sale'], $accounts['cost_of_goods_sold'], $accounts['inventory'],
 $accounts['tax_amount'], $accounts['discount'], $accounts['freight'], $accounts['round_off']
+
+$discountId = Account::idBySlug('discount');  // single account, throws when unconfigured
 ```
+
+The map lives in `App\Support\TenantCache` under `accounts_slug_id_map:tenant:{id}` and is invalidated automatically when any Account row changes. Do not read or write the bare `accounts_slug_id_map` cache key — a global key serves one tenant's chart of accounts to every other tenant.
 
 Each economic event produces **two rows** via `makeEntryPair()`, which mirrors debit/credit and sets `counter_account_id` on both sides:
 

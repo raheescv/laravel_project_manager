@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands\SingleUse;
 
+use App\Models\Account;
 use App\Models\Journal;
 use App\Models\JournalEntry;
 use App\Models\Sale;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 
 class AddMissingInventoryCostJournalEntriesCommand extends Command
 {
@@ -24,7 +24,7 @@ class AddMissingInventoryCostJournalEntriesCommand extends Command
         $this->info('Finding sales with missing Cost of Goods Sold journal entries...');
 
         // Get account IDs
-        $accounts = Cache::get('accounts_slug_id_map', []);
+        $accounts = Account::slugIdMap();
 
         if (empty($accounts['inventory']) || empty($accounts['cost_of_goods_sold'])) {
             $this->error('Required accounts (Inventory, Cost of Goods Sold) not found in database.');

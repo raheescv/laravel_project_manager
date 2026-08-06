@@ -22,7 +22,7 @@ class WorkingDay extends Component
 
     public function updateSettings()
     {
-        // TODO(C7): unmapped (candidate: 'configuration.settings') — no dedicated 'working day' permission in config/permissions.php; tab currently hidden (@if(false)) and component rendered outside any @can in settings/index.blade.
+        abort_unless(auth()->user()?->can('configuration.settings'), 403);
         foreach ($this->days as $dayData) {
             WorkingDayModel::where('id', $dayData['id'])->update([
                 'is_working' => $dayData['is_working'],
