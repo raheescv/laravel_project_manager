@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
@@ -104,8 +105,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final print = context.watch<PrintSettingsCubit>();
     final pos = context.watch<PosSettingsCubit>();
     final haptics = context.watch<HapticsCubit>();
-    final user = context.watch<AuthCubit>().user;
-    final permCount = user?.permissions.length ?? 0;
+    final auth = context.watch<AuthCubit>();
+    final user = auth.user;
+    // Count only what the permissions screen lists — the app's own gates —
+    // not every backend permission the account happens to hold.
+    final permCount = mobilePermissions.where((m) => auth.hasPermission(m.slug)).length;
     final sel = branch.selected;
     return [
       (Icons.palette_outlined, 'Colour preset', theme.preset.name),
@@ -718,11 +722,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _permissionsCard(BuildContext context) {
     final p = context.astra;
-    final user = context.watch<AuthCubit>().user;
-    final count = user?.permissions.length ?? 0;
+    final auth = context.watch<AuthCubit>();
+    final user = auth.user;
+    final count = mobilePermissions.where((m) => auth.hasPermission(m.slug)).length;
     final subtitle = (user?.isAdmin ?? false)
         ? 'Administrator · full access'
-        : '$count ${count == 1 ? 'permission' : 'permissions'} granted';
+        : '$count of ${mobilePermissions.length} ${count == 1 ? 'permission' : 'permissions'} granted';
     return AstraCard(
       radius: 14,
       onTap: _openPermissions,

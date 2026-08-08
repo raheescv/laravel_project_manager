@@ -41,15 +41,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (!context.read<AuthCubit>().hasPermission(PermissionSlug.report)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AdminCubit>()
-        ..loadReports()
+        ..loadReports(force: true)
         ..loadOverview();
     });
     // The shell keeps this screen alive, so reload the current range for the
-    // new branch when the active branch changes.
+    // new branch when the active branch changes. `force` because the range is
+    // the same but nothing cached for the old branch survives it.
     _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
       if (!mounted) return;
       context.read<AdminCubit>()
-        ..loadReports()
+        ..loadReports(force: true)
         ..loadOverview();
     });
   }
@@ -477,14 +478,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
       for (var i = 0; i < pts.length; i++)
         BarDatum(_dayLabel(labels.length > i ? labels[i] : '', pts.length), pts[i], peak: pts[i] == maxV),
     ];
+    // The trend rides on loadReports (via _applyRangeSummary), not the overview
+    // call, so it reports that request's progress.
+    final busy = admin.reportLoading;
     return AstraCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _cardHeader(Icons.bar_chart_rounded, 'Gross sales by day',
+              busy: busy,
               trailing: _pill('Peak ${Money.compact(maxV)}', p.accent.withValues(alpha: 0.16), p.goldText)),
           const SizedBox(height: 14),
-          BarChart(data: data),
+          _refreshing(busy, BarChart(data: data)),
         ],
       ),
     );
@@ -536,7 +541,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final active = admin.reportType == type;
       return Expanded(
         child: GestureDetector(
-          onTap: () => admin.loadReports(type: type),
+          onTap: () => admin.setReportType(type),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 9),
             alignment: Alignment.center,
