@@ -11,6 +11,8 @@ use App\Models\ApiLog;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\Scopes\AssignedBranchScope;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -32,11 +34,44 @@ class CreateAction
         $apiLog = $this->startApiLog($request);
 
         try {
-            $user = $request->user();
+            $poster = $request->user();
+
+            // A sale queued offline carries the cashier who took it, because a
+            // shared till is very often signed in as somebody else by the time
+            // the queue drains. Without this the takings would be filed under
+            // the wrong person — and refusing to drain them instead would strand
+            // real money on the device until that cashier came back.
+            //
+            // The branch always follows that cashier's own assignment; it is
+            // never taken from the request, so this cannot be used to post a
+            // sale into someone else's branch.
+            $user = $this->resolveCashier($poster, $request->validated('clientUserId'));
             $branchId = $user->default_branch_id;
 
             if (! $branchId) {
                 throw new RuntimeException('Your account is not assigned to a branch.');
+            }
+
+            $clientUuid = $request->validated('clientUuid');
+
+            // A sale queued offline is replayed until the device sees a success,
+            // so the same key can arrive more than once. Hand back the committed
+            // sale rather than ringing it up twice.
+            if ($clientUuid && $existing = $this->findByClientUuid($clientUuid)) {
+                // Already recorded and then voided. Re-creating it would undo a
+                // deliberate deletion, and the unique index would refuse anyway,
+                // so this has to reach a person.
+                if ($existing->trashed()) {
+                    throw new RuntimeException('This sale was already recorded on this device and has since been voided. It cannot be synced again.');
+                }
+
+                $this->completeApiLog($apiLog, 'success', [
+                    'sale_id' => $existing->id,
+                    'invoice_no' => $existing->invoice_no,
+                    'replayed' => true,
+                ]);
+
+                return $existing;
             }
 
             $customer = $this->resolveCustomer($request->validated('customerName'), $request->validated('phoneNumber'));
@@ -48,11 +83,20 @@ class CreateAction
                 $totalPayment,
             );
 
-            $this->guardAgainstDuplicate($branchId, (int) $customer->id, (int) $user->id, $items, $payment['paid']);
+            // The heuristic guard only exists because an online sale has no
+            // idempotency key. When one is supplied it is not merely redundant
+            // but wrong: syncing a backlog posts many sales within seconds, and
+            // two customers who each bought the same single item would look
+            // identical to it — one of them would be refused.
+            if (! $clientUuid) {
+                $this->guardAgainstDuplicate($branchId, (int) $customer->id, (int) $user->id, $items, $payment['paid']);
+            }
 
             $data = [
                 'status' => $request->validated('status') ?: 'completed',
                 'branch_id' => $branchId,
+                'client_uuid' => $clientUuid,
+                'client_created_at' => $request->validated('clientCreatedAt'),
                 'account_id' => $customer->id,
                 'customer_name' => $customer->name,
                 'customer_mobile' => $customer->mobile,
@@ -101,9 +145,80 @@ class CreateAction
 
             return $sale;
         } catch (\Throwable $e) {
+            // Two replays of the same queued sale can race: one commits, the
+            // other loses the unique index. Resolving the winner here rather
+            // than in a typed catch is deliberate — App\Actions\Sale\CreateAction
+            // catches \Throwable and returns ['success' => false], so the PDO
+            // UniqueConstraintViolationException never escapes it and arrives as
+            // a plain RuntimeException carrying its message. Type-matching on it
+            // would be dead code; asking the database is not.
+            $uuid = $request->validated('clientUuid');
+            $existing = $uuid ? $this->findByClientUuid($uuid) : null;
+
+            if ($existing && ! $existing->trashed()) {
+                $this->completeApiLog($apiLog, 'success', [
+                    'sale_id' => $existing->id,
+                    'invoice_no' => $existing->invoice_no,
+                    'replayed' => true,
+                ]);
+
+                return $existing;
+            }
+
             $this->completeApiLog($apiLog, 'failed', null, $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Whose sale this is.
+     *
+     * Defaults to the authenticated poster. A [$claimedUserId] is honoured only
+     * when it names an ACTIVE user on this tenant — the tenant scope on the
+     * lookup is what stops one business claiming another's staff. Anything else
+     * silently falls back to the poster: an unrecognised claim must not cost the
+     * sale, and mis-attributing it to a stranger would be worse than recording
+     * the person who synced it.
+     */
+    private function resolveCashier(User $poster, ?int $claimedUserId): User
+    {
+        if (! $claimedUserId || (int) $claimedUserId === (int) $poster->id) {
+            return $poster;
+        }
+
+        $claimed = User::query()->where('id', $claimedUserId)->where('is_active', 1)->first();
+
+        return $claimed ?: $poster;
+    }
+
+    /**
+     * Resolve a previously committed sale by its device-generated idempotency
+     * key, loaded exactly like a freshly created one so the Resource renders the
+     * same shape either way.
+     */
+    private function findByClientUuid(string $clientUuid): ?Sale
+    {
+        // The tenant scope stays on; only the assigned-branch scope is dropped.
+        // If a branch reassignment hid the earlier sale, the lookup would miss
+        // and we would ring it up a second time — the exact duplicate this key
+        // exists to prevent.
+        // `withTrashed` so the lookup sees exactly what the unique index sees:
+        // the index counts soft-deleted rows, so a replay of a voided sale would
+        // otherwise miss here, insert, and fail on the constraint with nothing
+        // to explain it.
+        return Sale::query()
+            ->withoutGlobalScope(AssignedBranchScope::class)
+            ->withTrashed()
+            ->where('client_uuid', $clientUuid)
+            ->with([
+                'items.product:id,name,type',
+                'items.employee:id,name',
+                'payments.paymentMethod:id,name',
+                'account:id,name,mobile',
+                'createdUser:id,name',
+                'branch',
+            ])
+            ->first();
     }
 
     /**

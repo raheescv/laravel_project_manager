@@ -18,6 +18,10 @@ class SaleResource extends JsonResource
             'id' => (string) $this->id,
             'invoice_no' => $this->invoice_no,
             'reference_no' => $this->reference_no,
+            // Echoed back so the app can retire the matching row from its
+            // offline outbox — including when this response is a replay of a
+            // sale an earlier attempt already committed.
+            'client_uuid' => $this->client_uuid,
             'date' => $this->date,
             'status' => $this->status,
             'branch' => $this->branch?->name,

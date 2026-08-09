@@ -29,6 +29,10 @@ class Sale extends Model implements AuditableContracts
         'tenant_id',
         'invoice_no',
         'reference_no',
+        // Device-generated idempotency key for sales queued offline on the
+        // mobile POS, plus the till clock at the moment it was rung up.
+        'client_uuid',
+        'client_created_at',
         'sale_type',
 
         'branch_id',

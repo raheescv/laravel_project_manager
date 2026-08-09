@@ -45,6 +45,25 @@ class StoreRequest extends FormRequest
             // Omitted (or "completed") finalizes the sale; "draft" parks it without
             // touching stock or posting a journal entry.
             'status' => ['nullable', 'string', 'in:draft,completed'],
+            // Idempotency key generated on the device when Charge was tapped. A
+            // sale queued offline is replayed until the server acknowledges it,
+            // so the same uuid may arrive several times — the second and later
+            // arrivals return the sale that already exists rather than creating
+            // another. No `unique` rule here: a repeat is a legitimate retry,
+            // not a validation failure.
+            'clientUuid' => ['nullable', 'uuid'],
+            // The till's own clock when the sale was rung up. Audit and queue
+            // ordering only — never trusted for the accounting date.
+            'clientCreatedAt' => ['nullable', 'date'],
+            // Who actually took the sale, when it was rung up offline. A shared
+            // till may be signed in as a different cashier by the time the queue
+            // drains, and the sale belongs to whoever served the customer — not
+            // to whoever happened to be standing there later.
+            //
+            // Only the cashier is claimed. The branch is never sent: it follows
+            // that cashier's own assigned branch, which removes any way to post
+            // a sale into a branch you have no business in.
+            'clientUserId' => ['nullable', 'integer'],
         ];
     }
 

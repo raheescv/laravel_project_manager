@@ -39,21 +39,16 @@ class UpdateAction
             // and stamp Auth::id(); make sure the guard resolves to the API user.
             Auth::setUser($user);
 
-            $branchId = $user->default_branch_id;
-
-            if (! $branchId) {
-                throw new RuntimeException('Your account is not assigned to a branch.');
-            }
-
             // findOrFail respects Sale's AssignedBranchScope, so a sale outside the
             // user's branches simply isn't found.
             $sale = Sale::query()
-                ->with(['items:id,sale_id,product_id', 'payments:id,sale_id'])
+                ->with(['items:id,sale_id,product_id', 'payments:id,sale_id,payment_method_id'])
                 ->findOrFail($saleId);
 
             if ($sale->status === 'cancelled') {
                 throw new RuntimeException('A cancelled sale can no longer be edited.');
             }
+            $branchId = (int) $sale->branch_id;
 
             $customer = $this->resolveCustomer($request->validated('customerName'), $request->validated('phoneNumber'));
             $items = $this->buildItems($request->validated('items'), $sale, $branchId, (int) $user->id);
@@ -62,14 +57,19 @@ class UpdateAction
                 $request->validated('paymentMethod'),
                 $request->validated('payments') ?? [],
                 $totalPayment,
+                // Read before the transaction replaces the rows, so a re-save can
+                // keep the exact account the sale is settled against.
+                $sale->payments->pluck('payment_method_id')->filter()->map(fn ($id) => (int) $id)->all(),
             );
 
             $totals = $this->totals($items, (float) ($request->validated('discount') ?? 0));
+            $status = $this->resolveStatus($sale, $request->validated('status'));
 
             $data = [
-                // An edit preserves the document's status — it does not complete a
-                // draft or cancel a sale (those are separate flows).
-                'status' => $sale->status,
+                // An edit preserves the document's status unless the app asked to
+                // complete a parked draft — see resolveStatus(). Cancelling is
+                // still a separate flow.
+                'status' => $status,
                 'branch_id' => $branchId,
                 'account_id' => $customer->id,
                 'customer_name' => $customer->name,
@@ -147,6 +147,32 @@ class UpdateAction
             $this->completeApiLog($apiLog, 'failed', null, $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * The status the sale carries once this edit is applied.
+     *
+     * Only one transition is offered: draft → completed, the "finish this parked
+     * ticket" flow the web POS runs through the same delegated action (its
+     * save('completed') on a loaded draft). App\Actions\Sale\UpdateAction posts
+     * the stock movement and the journal entry when it sees the sale land on
+     * 'completed', so nothing else is needed here.
+     *
+     * Completed → draft is refused rather than quietly ignored: it would reverse
+     * the stock and the ledger while leaving an ordinary-looking document behind,
+     * and nothing in the app asks for it.
+     */
+    private function resolveStatus(Sale $sale, ?string $requested): string
+    {
+        if (! $requested || $requested === $sale->status) {
+            return $sale->status;
+        }
+
+        if ($sale->status === 'draft' && $requested === 'completed') {
+            return 'completed';
+        }
+
+        throw new RuntimeException("A {$sale->status} sale cannot be changed to {$requested}.");
     }
 
     /**
@@ -286,9 +312,10 @@ class UpdateAction
      *   - any other value → treated as a method NAME, paid in full to that one account.
      *
      * @param  array<int, array<string, mixed>>  $customPayments
+     * @param  array<int, int>  $currentIds  Accounts this sale is already settled against.
      * @return array{payments: array<int, array{payment_method_id: int, amount: float}>, paid: float, ids: string, names: string}
      */
-    private function resolvePayments(string $method, array $customPayments, float $totalPayment): array
+    private function resolvePayments(string $method, array $customPayments, float $totalPayment, array $currentIds = []): array
     {
         $method = trim($method);
 
@@ -306,7 +333,17 @@ class UpdateAction
             return $this->buildCustomPayments($customPayments, $configured);
         }
 
-        $account = $configured->first(fn (Account $a) => stripos($a->name, $method) !== false);
+        $matches = fn (Account $a) => stripos($a->name, $method) !== false;
+
+        // A name is ambiguous whenever a business has more than one account
+        // containing it — "Visa Card" and "Mastercard", "Cash" and "Petty Cash".
+        // Taking the first match on an EDIT would move a settled payment (and the
+        // ledger entry behind it) onto a sibling account, purely because the app
+        // sends the mode the cashier sees rather than the account id. When the
+        // sale is already settled against an account the name fits, that account
+        // is the answer; a genuinely changed method still falls through.
+        $account = $configured->whereIn('id', $currentIds)->first($matches)
+            ?? $configured->first($matches);
 
         if (! $account) {
             throw new RuntimeException("Payment method '{$method}' was not found among the configured payment methods.");
