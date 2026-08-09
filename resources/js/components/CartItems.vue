@@ -41,8 +41,7 @@
         <!-- Cart Items Scrollable Container -->
         <div class="flex-1 relative overflow-hidden min-h-0">
             <!-- Product Wrap with improved scrolling and padding -->
-            <div class="h-full overflow-y-auto custom-scrollbar px-1 sm:px-2 pb-2 pt-1"
-                :style="{ 'height': cartHeight, 'min-height': '140px', 'max-height': maxHeight ? maxHeight : '300px' }">
+            <div class="posx-cart-body h-full overflow-y-auto custom-scrollbar px-1 sm:px-2 pb-2 pt-1">
 
                 <!-- Compact Empty Cart State -->
                 <div v-if="Object.keys(items).length === 0" class="text-center py-6">
@@ -164,14 +163,6 @@ export default {
             type: Boolean,
             default: false
         },
-        cartHeight: {
-            type: String,
-            default: 'calc(40vh - 100px)'
-        },
-        maxHeight: {
-            type: String,
-            default: null
-        }
     },
     emits: [
         'view-cart-items',

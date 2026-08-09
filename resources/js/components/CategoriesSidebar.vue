@@ -7,7 +7,7 @@
                 <div class="flex items-center justify-between gap-2">
                     <h6 class="font-bold text-xs sm:text-sm flex items-center gap-2 mb-0">
                         <i class="fa fa-th-large text-xs"></i>
-                        Categories
+                        <span class="posx-head-label">Categories</span>
                     </h6>
                     <div class="flex items-center gap-1">
                         <a href="/sale" class="posx-htool d-print-none" aria-label="Open sale list" title="Sale list">
@@ -24,7 +24,7 @@
             <!-- Fixed Categories (Favorites & All Products) -->
             <div class="fixed-categories posx-side-pin posx-panel-2 flex-shrink-0 border-b posx-divide flex flex-col w-full">
                 <!-- Favorites -->
-                <button type="button" @click="handleCategorySelect('favorite')" :class="[
+                <button type="button" @click="handleCategorySelect('favorite')" title="Favorites" :class="[
                     'category-btn fixed-category-btn posx-cat fav',
                     selectedCategory === 'favorite' ? 'is-active' : ''
                 ]">
@@ -33,7 +33,7 @@
                 </button>
 
                 <!-- All Products -->
-                <button type="button" @click="handleCategorySelect('')" :class="[
+                <button type="button" @click="handleCategorySelect('')" title="All Products" :class="[
                     'category-btn fixed-category-btn posx-cat',
                     selectedCategory === '' ? 'is-active' : ''
                 ]">
@@ -46,7 +46,7 @@
             <div ref="scrollContainer"
                 class="posx-side-scroll flex flex-col custom-scrollbar flex-1 min-h-0 overflow-y-auto scroll-smooth categories-scroll-container"
                 style="scroll-behavior:smooth;-webkit-overflow-scrolling:touch">
-                <div class="flex flex-col w-full">
+                <div class="posx-side-track flex flex-col w-full">
                 <!-- Category Items -->
                 <button v-for="category in categories" :key="category.id" type="button"
                     @click="handleCategorySelect(category.id)" :class="[

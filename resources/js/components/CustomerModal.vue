@@ -596,15 +596,6 @@ export default {
             status: 'active'
         })
 
-        // Watch for initial customer changes
-        watch(() => props.initialCustomer, (newCustomer) => {
-            if (newCustomer && Object.keys(newCustomer).length > 0) {
-                Object.assign(customer.value, newCustomer)
-            } else {
-                resetCustomer()
-            }
-        }, { immediate: true, deep: true })
-
         const resetCustomer = () => {
             customer.value = {
                 id: null,
@@ -625,6 +616,15 @@ export default {
             existingCustomers.value = []
             errors.value = []
         }
+
+        // Watch for initial customer changes
+        watch(() => props.initialCustomer, (newCustomer) => {
+            if (newCustomer && Object.keys(newCustomer).length > 0) {
+                Object.assign(customer.value, newCustomer)
+            } else {
+                resetCustomer()
+            }
+        }, { immediate: true, deep: true })
 
         const closeModal = () => {
             resetCustomer()

@@ -126,11 +126,7 @@
 
                             <!-- Products Grid -->
                             <div class="posx-panel flex-1 p-2 min-h-0 flex flex-col">
-                                <div class="h-full overflow-y-auto products-container custom-scrollbar" :style="{
-                                    'height': windowWidth >= 1024 ? 'calc(100vh - 220px)' : windowWidth >= 768 ? 'calc(70vh - 120px)' : 'auto',
-                                    'min-height': windowWidth >= 768 ? '300px' : '250px',
-                                    'max-height': windowWidth < 768 ? 'none' : undefined
-                                }">
+                                <div class="posx-prods-scroll products-container custom-scrollbar">
                                     <div v-if="loading" class="flex items-center justify-center h-full">
                                         <div class="text-center">
                                             <div class="posx-spinner animate-spin h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4"></div>
@@ -147,8 +143,7 @@
                         <div class="posx-col posx-col-cart mobile-cart-container">
                             <div class="posx-panel h-full flex flex-col min-h-0 mobile-cart-wrapper">
                                 <!-- Cart Items Component -->
-                                <CartItems :items="form.items" :total-quantity="totalQuantity" :cart-height="cartHeight"
-                                    :max-height="windowWidth >= 1024 ? '100%' : windowWidth >= 768 ? '500px' : '350px'"
+                                <CartItems :items="form.items" :total-quantity="totalQuantity"
                                     :can-feedback="canFeedback"
                                     @view-cart-items="viewCartItems" @clear-cart="clearCart"
                                     @update-item-quantity="updateItemQuantity" @edit-cart-item="editCartItem"
@@ -423,6 +418,14 @@ export default {
         const showConfirmationModal = ref(false)
         const submitting = ref(false)
         const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+
+        // --vh is consumed by the legacy mobile stylesheets; layout itself is
+        // driven by container queries, not by this value.
+        const setVH = () => {
+            const vh = window.innerHeight * 0.01
+            document.documentElement.style.setProperty('--vh', `${vh}px`)
+            windowWidth.value = window.innerWidth
+        }
         const customPaymentData = ref({
             payments: [],
             totalPaid: 0,
@@ -1499,40 +1502,14 @@ export default {
             loadProducts()
             fetchCustomers()
 
-            // Handle viewport height and window width tracking
-            const setVH = () => {
-                const vh = window.innerHeight * 0.01
-                document.documentElement.style.setProperty('--vh', `${vh}px`)
-                windowWidth.value = window.innerWidth
-            }
-
             setVH()
             window.addEventListener('resize', setVH)
             window.addEventListener('orientationchange', setVH)
         })
 
         onUnmounted(() => {
-            const setVH = () => {
-                const vh = window.innerHeight * 0.01
-                document.documentElement.style.setProperty('--vh', `${vh}px`)
-                windowWidth.value = window.innerWidth
-            }
-
             window.removeEventListener('resize', setVH)
             window.removeEventListener('orientationchange', setVH)
-        })
-
-        const cartHeight = computed(() => {
-            if (windowWidth.value >= 1024) {
-                // Desktop: Take full height minus header, footer and padding
-                return 'calc(100vh - 150px)'
-            } else if (windowWidth.value >= 768) {
-                // Tablet: Medium height
-                return 'calc(60vh - 120px)'
-            } else {
-                // Mobile: Optimized height for better visibility
-                return 'calc(380px - 140px)'
-            }
         })
 
         const formattedCustomers = computed(() => {
@@ -1587,7 +1564,6 @@ export default {
             discountPercentage,
             daySessionTitle,
             cartItemsByEmployee,
-            cartHeight,
             formattedCustomers,
 
             // Methods
