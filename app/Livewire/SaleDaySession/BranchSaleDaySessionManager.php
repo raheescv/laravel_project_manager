@@ -163,21 +163,23 @@ class BranchSaleDaySessionManager extends Component
     {
         try {
             DB::beginTransaction();
-            $this->validate([
-                'closing_amount' => 'required|numeric|min:0',
-                'sync_amount' => 'required|numeric|min:0',
-            ]);
-
             if (! $this->currentSession) {
                 session()->flash('error', 'No open day session found for this branch.');
 
                 return;
             }
 
+            $moqSync = (bool) $this->currentSession->branch?->moq_sync;
+
+            $this->validate([
+                'closing_amount' => 'required|numeric|min:0',
+                'sync_amount' => $moqSync ? 'required|numeric|min:0' : 'nullable|numeric|min:0',
+            ]);
+
             // Close the day session
             $this->currentSession->close($this->closing_amount, $this->sync_amount, Auth::id(), $this->notes);
 
-            if ($this->currentSession->branch->moq_sync) {
+            if ($moqSync) {
                 $syncData = [
                     'Date' => $this->currentSession->opened_at->format('Y-m-d'),
                     'Revenue' => floatval($this->sync_amount),

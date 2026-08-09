@@ -1,66 +1,43 @@
 <template>
-    <div class="card h-100 shadow-sm transition-hover border-light position-relative overflow-hidden" 
-         :class="{ 'border-danger border-2': isLowStock }" 
-         @click="handleClick">
+    <div class="posx-card" :class="{ 'is-out': isOutOfStock }" @click="handleClick">
 
-        <!-- Type Badge -->
-        <span class="badge position-absolute top-0 start-0 m-2 z-1" 
-              :class="isProduct ? 'bg-success' : 'bg-purple'">
-            {{ isProduct ? 'P' : 'S' }}
-        </span>
+        <div class="posx-card-media">
+            <img v-if="product.image" :src="product.image" :alt="product.name" class="hover-scale"
+                 @error="handleImageError">
+            <div v-else class="posx-card-empty"><i class="fa fa-cube"></i></div>
 
-        <!-- Low Stock Indicator -->
-        <span v-if="isProduct && isLowStock" 
-              class="badge bg-danger rounded-circle position-absolute top-0 end-0 m-2 z-1 d-flex align-items-center justify-content-center p-0" 
-              style="width: 20px; height: 20px;">
-            <i class="fa fa-exclamation-circle" style="font-size: 0.65rem;"></i>
-        </span>
+            <!-- Product / Service -->
+            <span class="posx-card-tag type" :title="isProduct ? 'Product' : 'Service'">
+                {{ isProduct ? 'P' : 'S' }}
+            </span>
 
-        <div class="card-img-container ratio ratio-16x9 bg-light overflow-hidden border-bottom border-light">
-            <img v-if="product.image" :src="product.image" :alt="product.name"
-                 class="card-img-top object-fit-cover hover-scale" @error="handleImageError">
-            <div v-else class="d-flex align-items-center justify-content-center bg-gradient-light">
-                <i class="fa fa-cube fa-2x text-primary opacity-25"></i>
-            </div>
+
         </div>
 
-        <div class="card-body p-2 d-flex flex-column">
-            <h6 class="card-title product-name mb-1 fw-bold text-dark" :title="product.name">
+        <div class="posx-card-body">
+            <h6 class="posx-card-name product-name" :title="product.name">
                 {{ product.name }}
             </h6>
 
-            <!-- Product Details Row -->
-            <div class="product-details d-flex flex-wrap gap-2 mb-2 pb-2 border-bottom border-light-subtle extra-small text-muted">
-                <div v-if="product.code" class="d-flex align-items-center">
-                    <span class="fw-medium me-1">SKU:</span>
-                    <span class="text-secondary">{{ product.code }}</span>
-                </div>
-                <div v-if="product.size" class="d-flex align-items-center">
-                    <span class="fw-medium me-1">Size:</span>
-                    <span class="text-secondary">{{ product.size }}</span>
-                </div>
-                <div v-if="isProduct && product.barcode" class="d-flex align-items-center">
-                    <span class="fw-medium me-1">BC:</span>
-                    <span class="text-secondary text-truncate" style="max-width: 50px;">{{ product.barcode }}</span>
-                </div>
+            <div class="posx-card-meta">
+                <span v-if="product.code"><b>SKU</b> {{ product.code }}</span>
+                <span v-if="product.size"><b>Size</b> {{ product.size }}</span>
+                <span v-if="isProduct && product.barcode" class="text-truncate" style="max-width: 60px;">
+                    <b>BC</b> {{ product.barcode }}
+                </span>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-auto">
-                <div v-if="isProduct" class="badge rounded-1 fw-semibold px-2 py-1" 
-                     :class="isLowStock ? 'bg-danger-subtle text-danger' : 'bg-light text-secondary'">
-                    Stock: {{ product.stock }}
-                </div>
-                <div v-else></div>
-                
-                <div class="text-success fw-bold">
-                    {{ formatPrice(product.mrp) }}
-                    <span v-if="product.unit_name" class="unit-text text-muted fw-normal">/{{ product.unit_name }}</span>
-                </div>
+            <div class="posx-card-foot">
+                <span v-if="isProduct" class="posx-stock" :class="stockState.cls" :title="stockState.title">
+                    {{ stockState.label }}
+                </span>
+                <span v-else></span>
+
+                <span class="posx-price">
+                    {{ formatPrice(product.mrp) }}<em v-if="product.unit_name">/{{ product.unit_name }}</em>
+                </span>
             </div>
         </div>
-
-        <!-- Touch feedback ripple container -->
-        <div class="ripple-container"></div>
     </div>
 </template>
 
@@ -84,8 +61,21 @@ export default {
         isProduct() {
             return this.product.type === 'product';
         },
+        isOutOfStock() {
+            return this.isProduct && Number(this.product.stock) <= 0;
+        },
         isLowStock() {
-            return this.isProduct && this.product.stock < this.lowStockThreshold;
+            const s = Number(this.product.stock);
+            return this.isProduct && s > 0 && s <= this.lowStockThreshold;
+        },
+        // Three states, not two. A shop whose normal stock is 0-3 must not read
+        // as an error page, so only <=0 is alarming; low stock is a soft amber
+        // chip and healthy stock is plain neutral.
+        stockState() {
+            const s = Number(this.product.stock) || 0;
+            if (s <= 0) return { cls: 'is-out', label: s < 0 ? `Out ${s}` : 'Out', title: 'Out of stock' };
+            if (s <= this.lowStockThreshold) return { cls: 'is-low', label: String(s), title: 'Low stock' };
+            return { cls: '', label: String(s), title: 'In stock' };
         }
     },
 
@@ -113,8 +103,8 @@ export default {
             if (!parent.querySelector('[data-fallback]')) {
                 const fallback = document.createElement('div');
                 fallback.setAttribute('data-fallback', '');
-                fallback.className = 'w-100 h-100 bg-gradient-light d-flex align-items-center justify-content-center';
-                fallback.innerHTML = '<i class="fa fa-cube fa-2x text-secondary opacity-50"></i>';
+                fallback.className = 'posx-card-empty';
+                fallback.innerHTML = '<i class="fa fa-cube"></i>';
                 parent.appendChild(fallback);
             }
         }
@@ -123,64 +113,29 @@ export default {
 </script>
 
 <style scoped>
-.transition-hover {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    cursor: pointer;
-    min-height: 160px;
-    background-color: var(--bs-card-bg, #fff);
-}
+/* Colours all come from the .posx token layer (resources/css/pos-premium.css).
+   Only card-local geometry and motion live here. */
 
-.transition-hover:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
-    z-index: 5;
-}
-
-.transition-hover:active {
-    transform: scale(0.97);
+.posx-card:active {
+    transform: scale(.97);
 }
 
 .hover-scale {
-    transition: transform 0.5s ease;
+    transition: transform .5s ease;
 }
 
-.transition-hover:hover .hover-scale {
-    transform: scale(1.1);
+.posx-card:hover .hover-scale {
+    transform: scale(1.06);
 }
 
-.object-fit-cover {
-    object-fit: cover;
+.posx-card-meta b {
+    font-weight: 700;
+    opacity: .75;
 }
 
-.bg-purple {
-    background-color: #6f42c1;
-    color: white;
-}
-
-.extra-small {
-    font-size: 0.7rem;
-}
-
-.unit-text {
-    font-size: 0.65rem;
-}
-
-.bg-gradient-light {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-}
-
-.ripple-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-/* Multi-line clamp for product name */
-.product-name {
+/* Two-line clamp for the product name — needs to outrank the single-line
+   default in `.posx .posx-card-name`, hence the doubled class */
+.posx-card-name.product-name {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -188,19 +143,13 @@ export default {
     overflow: hidden;
     height: 2.4em;
     line-height: 1.2em;
-    font-size: 0.85rem;
+    white-space: normal;
+    font-size: 11px;
 }
 
-/* Mobile optimizations */
 @media (max-width: 576px) {
-    .transition-hover {
-        min-height: 140px;
-    }
-    .product-name {
-        font-size: 0.75rem;
-    }
-    .extra-small {
-        font-size: 0.65rem;
+    .posx-card-name.product-name {
+        font-size: 10.5px;
     }
 }
 </style>

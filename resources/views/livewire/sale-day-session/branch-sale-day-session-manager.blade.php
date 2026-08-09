@@ -239,7 +239,7 @@
                                 <span class="pill pill--green"><span class="pulse"></span> Session #{{ $currentSession->id }} · Live</span>
                             </div>
                             <div class="hero__sub">
-                                <span><i class="fa fa-clock-o"></i> Opened {{ systemDateTime($sessionStats['opened_at']) }}</span>
+                                <span title="{{ systemDateTime($sessionStats['opened_at']) }}"><i class="fa fa-clock-o"></i> Opened {{ Carbon\Carbon::parse($sessionStats['opened_at'])->diffForHumans() }}</span>
                                 <span><i class="fa fa-user"></i> by {{ $sessionStats['opened_by'] }}</span>
                             </div>
                         </div>
@@ -332,13 +332,15 @@
                                 <div class="control"><span class="cur"><i class="fa fa-money"></i></span><input type="number" step="0.01" wire:model.live="closing_amount" placeholder="0.00"></div>
                                 @error('closing_amount') <div class="err-text">{{ $message }}</div> @enderror
                             </div>
-                            @can('day close.sync amount')
-                                <div class="field">
-                                    <label><i class="fa fa-refresh"></i> Sync amount <span class="req">*</span></label>
-                                    <div class="control"><span class="cur"><i class="fa fa-money"></i></span><input type="number" step="0.01" wire:model="sync_amount" placeholder="0.00"></div>
-                                    @error('sync_amount') <div class="err-text">{{ $message }}</div> @enderror
-                                </div>
-                            @endcan
+                            @if ($currentSession?->branch?->moq_sync)
+                                @can('day close.sync amount')
+                                    <div class="field">
+                                        <label><i class="fa fa-refresh"></i> Sync amount <span class="req">*</span></label>
+                                        <div class="control"><span class="cur"><i class="fa fa-money"></i></span><input type="number" step="0.01" wire:model="sync_amount" placeholder="0.00"></div>
+                                        @error('sync_amount') <div class="err-text">{{ $message }}</div> @enderror
+                                    </div>
+                                @endcan
+                            @endif
                             <div class="field">
                                 <label><i class="fa fa-comment-o" style="color:var(--dsx-muted)"></i> Notes <span class="opt">(optional)</span></label>
                                 <textarea class="ctl" wire:model="notes" rows="2" placeholder="Anything worth noting about today's session…"></textarea>
@@ -437,8 +439,8 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="br-name">{{ $session->opened_at->format('M d, Y') }}</div>
-                                        <div class="muted-line">{{ $session->opened_at->format('h:i A') }}</div>
+                                        <div class="br-name">{{ SystemDate($session->opened_at) }}</div>
+                                        <div class="muted-line">{{ $session->opened_at->format('M d, Y · h:i A') }}</div>
                                     </td>
                                     <td>
                                         <span class="who">

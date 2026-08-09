@@ -3,6 +3,7 @@
 namespace App\Http\Requests\V1\DaySession;
 
 use App\Models\SaleDaySession;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ToggleRequest extends FormRequest
@@ -13,6 +14,35 @@ class ToggleRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Normalise the submitted moment into the application timezone.
+     *
+     * The mobile app stamps the time from the *device's* clock. If the phone sits
+     * in a different timezone from the server, its "now" is not the server's now —
+     * far enough ahead and closing the day fails as a future date. So accept an
+     * absolute instant (ISO-8601 carrying `Z` or a `+05:30` style offset) and
+     * convert it here. A bare `Y-m-d H:i:s` from an older build has no offset to
+     * honour, so Carbon reads it as app-timezone wall clock exactly as before.
+     */
+    protected function prepareForValidation(): void
+    {
+        $date = $this->input('date');
+
+        if (! is_string($date) || trim($date) === '') {
+            return;
+        }
+
+        try {
+            $this->merge([
+                'date' => Carbon::parse($date)
+                    ->setTimezone(config('app.timezone'))
+                    ->format('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable) {
+            // Unparseable — leave it untouched so the `date` rule reports it.
+        }
     }
 
     /**

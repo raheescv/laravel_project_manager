@@ -1,149 +1,99 @@
 <template>
-    <div v-if="show" class="modal-overlay">
-        <div class="payment-modal bg-white rounded-lg p-4 shadow-xl w-full max-w-md border border-slate-200">
-            <!-- Compact Header -->
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center">
-                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-1.5 rounded mr-2">
-                        <i class="fa fa-edit text-white text-xs"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800">Edit Item</h3>
-                </div>
-                <button @click="$emit('close')" class="text-slate-400 hover:text-slate-600 transition-colors">
+    <div v-if="show" class="posx-modal-backdrop" role="dialog" aria-modal="true" @click.self="$emit('close')">
+        <div class="posx-modal payment-modal" style="max-width: 30rem" @click.stop>
+
+            <div class="posx-modal-head">
+                <h4 class="posx-modal-title">
+                    <i class="fa fa-pencil"></i>
+                    <span>
+                        Edit Item
+                        <span v-if="item" class="posx-modal-sub">{{ item.name }}</span>
+                    </span>
+                </h4>
+                <button type="button" class="posx-modal-close" @click="$emit('close')" aria-label="Close">
                     <i class="fa fa-times"></i>
                 </button>
             </div>
 
-            <div v-if="item" class="space-y-2">
-                <!-- Compact Product Info -->
-                <div class="grid grid-cols-1">
-                    <div class="bg-slate-60 rounded p-2 border border-slate-200">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                            <i class="fa fa-box text-blue-500 mr-1 text-xs"></i>
-                            Product
-                        </label>
-                        <div class="text-xs font-medium text-slate-800 bg-white px-2 py-1 rounded border truncate" :title="item.name">
-                            {{ item.name }}
+            <div v-if="item" class="posx-modal-body space-y-3">
+                <!-- Product + unit -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="posx-label mb-1"><i class="fa fa-cube"></i> Product</label>
+                        <div class="posx-field flex items-center truncate" :title="item.name">{{ item.name }}</div>
+                    </div>
+                    <div>
+                        <label class="posx-label mb-1"><i class="fa fa-exchange"></i> Unit</label>
+                        <div class="relative">
+                            <select v-model="localItem.unit_id" @change="handleUnitChange" class="posx-field">
+                                <option v-for="u in availableUnits" :key="u.id" :value="u.id">{{ u.name }}</option>
+                            </select>
+                            <i class="fa fa-angle-down posx-caret"></i>
                         </div>
                     </div>
                 </div>
-                <div class="grid grid-cols-1">
-                    <div class="bg-slate-40 rounded p-2 border border-slate-200">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                            <i class="fa fa-exchange text-orange-500 mr-1 text-xs"></i>
-                            Unit
-                        </label>
-                        <select v-model="localItem.unit_id" @change="handleUnitChange"
-                            class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-orange-500 focus:ring-orange-500/20 transition-all duration-200 bg-white">
-                            <option v-for="u in availableUnits" :key="u.id" :value="u.id">
-                                {{ u.name }}
-                            </option>
-                        </select>
-                    </div>
-                </div>
 
-                <!-- Compact Employee Selection -->
-                <div class="grid grid-cols-2 gap-2">
+                <!-- Staff -->
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                            <i class="fa fa-user text-emerald-500 mr-1 text-xs"></i>
-                            Employee
-                        </label>
+                        <label class="posx-label mb-1"><i class="fa fa-user"></i> Employee</label>
                         <SearchableSelect v-model="localItem.employee_id" :options="employees"
                             placeholder="Select Employee" filter-placeholder="Search employees..." :visibleItems="6"
-                            input-class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 bg-white" />
+                            input-class="posx-field posx-field-select" />
                     </div>
-
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                            <i class="fa fa-user-plus text-purple-500 mr-1 text-xs"></i>
-                            Assistant
-                        </label>
+                        <label class="posx-label mb-1"><i class="fa fa-user-plus"></i> Assistant</label>
                         <SearchableSelect v-model="localItem.assistant_id" :options="employees"
                             placeholder="Select Assistant" filter-placeholder="Search assistants..." :visibleItems="6"
-                            input-class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200 bg-white" />
+                            input-class="posx-field posx-field-select" />
                     </div>
                 </div>
 
-                <!-- Compact Pricing Section -->
-                <div class="bg-green-50 rounded p-3 border border-green-200">
-                    <h4 class="text-xs font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fa fa-calculator text-green-500 mr-1 text-xs"></i>
-                        Pricing
-                    </h4>
-
-                    <div class="grid grid-cols-2 gap-2">
+                <!-- Pricing -->
+                <div class="posx-section">
+                    <h4 class="posx-section-title">Pricing</h4>
+                    <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Qty</label>
-                            <input v-model.number="localItem.quantity" type="number" min="0.001"
-                                class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
+                            <label class="posx-label mb-1">Qty</label>
+                            <input v-model.number="localItem.quantity" type="number" min="0.001" class="posx-field"
                                 @input="updateItemField('quantity', $event.target.value)" />
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Price</label>
+                            <label class="posx-label mb-1">Price</label>
                             <input v-model.number="localItem.unit_price" type="number" min="0" step="0.01"
-                                :disabled="!canEditItemPrice" :class="[
-                                    'w-full border rounded px-2 py-1 text-xs transition-all duration-200',
-                                    canEditItemPrice
-                                        ? 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'
-                                        : 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'
-                                ]" @input="updateItemField('unit_price', $event.target.value)" />
+                                :disabled="!canEditItemPrice" class="posx-field"
+                                @input="updateItemField('unit_price', $event.target.value)" />
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Discount</label>
-                            <input v-model.number="localItem.discount" type="number" min="0" step="1"
-                                class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-red-500 focus:ring-red-500/20 transition-all duration-200"
+                            <label class="posx-label mb-1">Discount</label>
+                            <input v-model.number="localItem.discount" type="number" min="0" step="1" class="posx-field"
                                 @input="updateItemField('discount', $event.target.value)" />
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Tax %</label>
-                            <input v-model.number="localItem.tax" type="number" min="0" step="0.01"
-                                class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200"
+                            <label class="posx-label mb-1">Tax %</label>
+                            <input v-model.number="localItem.tax" type="number" min="0" step="0.01" class="posx-field"
                                 @input="updateItemField('tax', $event.target.value)" />
                         </div>
                     </div>
                 </div>
 
-                <!-- Compact Totals -->
-                <div class="bg-slate-50 rounded p-3 border border-slate-200">
-                    <h4 class="text-xs font-bold text-slate-800 mb-2 flex items-center">
-                        <i class="fa fa-receipt text-blue-500 mr-1 text-xs"></i>
-                        Totals
-                    </h4>
-
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-600">Gross:</span>
-                            <span class="font-bold text-slate-800">{{ formatNumber(localItem.gross_amount || 0) }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-600">Net:</span>
-                            <span class="font-bold text-slate-800">{{ formatNumber(localItem.net_amount || 0) }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-600">Tax:</span>
-                            <span class="font-bold text-purple-600">{{ formatNumber(localItem.tax_amount || 0) }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-600">Total:</span>
-                            <span class="font-bold text-emerald-600">{{ formatNumber(localItem.total || 0) }}</span>
-                        </div>
-                    </div>
+                <!-- Totals -->
+                <div class="posx-section">
+                    <h4 class="posx-section-title">Totals</h4>
+                    <div class="posx-kv"><span>Gross</span><span class="posx-amount-muted font-bold">{{ formatNumber(localItem.gross_amount || 0) }}</span></div>
+                    <div class="posx-kv"><span>Net</span><span class="posx-amount-muted font-bold">{{ formatNumber(localItem.net_amount || 0) }}</span></div>
+                    <div class="posx-kv"><span>Tax</span><span class="posx-amount-muted font-bold">{{ formatNumber(localItem.tax_amount || 0) }}</span></div>
+                    <div class="posx-kv"><span class="posx-ink font-extrabold">Total</span><span class="posx-amount">{{ formatNumber(localItem.total || 0) }}</span></div>
                 </div>
+            </div>
 
-                <!-- Compact Action Buttons -->
-                <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
-                    <button type="button" @click="$emit('close')"
-                        class="px-4 py-1.5 bg-slate-200 text-slate-700 rounded font-semibold hover:bg-slate-300 transition-all duration-200 flex items-center text-xs">
-                        <i class="fa fa-times mr-1"></i>
-                        Cancel
-                    </button>
-                    <button type="button" @click="save"
-                        class="px-4 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow hover:shadow-md transform hover:-translate-y-0.5 flex items-center text-xs">
-                        <i class="fa fa-save mr-1"></i>
-                        Save
-                    </button>
-                </div>
+            <div class="posx-modal-foot">
+                <button type="button" class="posx-btn posx-btn-ghost" @click="$emit('close')">
+                    <i class="fa fa-times"></i> Cancel
+                </button>
+                <button type="button" class="posx-btn posx-btn-primary" @click="save">
+                    <i class="fa fa-save"></i> Save
+                </button>
             </div>
         </div>
     </div>
@@ -315,18 +265,7 @@ export default {
 
 
 <style scoped>
-.payment-modal {
-    position: fixed;
-    z-index: 50;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.modal-overlay {
-    position: fixed;
-    z-index: 40;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-}
+/* Positioning and colour now come from .posx-modal-backdrop / .posx-modal
+   in resources/css/pos-premium.css — the old fixed/translate centering would
+   fight the flex-centred backdrop. */
 </style>
