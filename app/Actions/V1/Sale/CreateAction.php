@@ -97,6 +97,12 @@ class CreateAction
                 'branch_id' => $branchId,
                 'client_uuid' => $clientUuid,
                 'client_created_at' => $request->validated('clientCreatedAt'),
+                // The provisional reference the device printed on the customer's
+                // receipt, kept in the sale's own reference field. Only ever
+                // present on a sale that was queued offline, which is exactly when
+                // such a receipt was printed — an online sale leaves this null and
+                // the field stays free for whatever the back office types in it.
+                'reference_no' => $request->validated('offlineRef'),
                 'account_id' => $customer->id,
                 'customer_name' => $customer->name,
                 'customer_mobile' => $customer->mobile,

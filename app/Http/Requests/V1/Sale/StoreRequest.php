@@ -55,6 +55,13 @@ class StoreRequest extends FormRequest
             // The till's own clock when the sale was rung up. Audit and queue
             // ordering only — never trusted for the accounting date.
             'clientCreatedAt' => ['nullable', 'date'],
+            // The reference the device printed on the customer's receipt while it
+            // was offline (e.g. "OFF-7K2-0042"). It is not an invoice number and is
+            // never used as one — but it is the only number that customer holds, so
+            // it is stored in the sale's `reference_no` (already displayed and
+            // already searchable) and the sale can be traced from the receipt long
+            // after the device has dropped its copy of it.
+            'offlineRef' => ['nullable', 'string', 'max:40'],
             // Who actually took the sale, when it was rung up offline. A shared
             // till may be signed in as a different cashier by the time the queue
             // drains, and the sale belongs to whoever served the customer — not

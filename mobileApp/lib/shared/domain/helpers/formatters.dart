@@ -26,8 +26,15 @@ class Money {
   static NumberFormat _plain(int dec) => _plainCache.putIfAbsent(
       dec, () => NumberFormat.decimalPatternDigits(decimalDigits: dec));
 
+  // Short number with no symbol (`1.2K`) — for chart labels, where the currency
+  // is already stated once by the surrounding card.
+  static final NumberFormat _compactPlain = NumberFormat.compact();
+
   static String of(num? v) => _full.format(v ?? 0);
   static String compact(num? v) => _compact.format(v ?? 0);
+
+  /// Short number without the currency symbol, e.g. `1.2K`, `860`.
+  static String compactPlain(num? v) => _compactPlain.format(v ?? 0);
 
   /// Grouped number without the currency symbol, e.g. `15,626.00`.
   static String plain(num? v, {int? decimals}) =>
@@ -47,9 +54,15 @@ class Dates {
   /// `yyyy-MM-dd` for a given date — the format the report API expects.
   static String iso(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
-  /// `yyyy-MM-dd HH:mm:ss` — the datetime format the day-session API expects.
+  /// `yyyy-MM-dd HH:mm:ss` — a plain wall-clock datetime, no timezone attached.
   static String isoDateTime(DateTime d) =>
       DateFormat('yyyy-MM-dd HH:mm:ss').format(d);
+
+  /// `2026-08-09T07:40:00.000Z` — an absolute instant. Use this for APIs that
+  /// compare the value against the server's clock (the day session): a bare wall
+  /// clock leaves the server guessing which timezone the device stamped it in,
+  /// and a phone ahead of the server reads as the future.
+  static String instant(DateTime d) => d.toUtc().toIso8601String();
 
   /// `Sat, 21 Jun 2026` — the weekday-prefixed date used on the day-session screen.
   static String weekday(DateTime d) => DateFormat('EEE, d MMM yyyy').format(d);

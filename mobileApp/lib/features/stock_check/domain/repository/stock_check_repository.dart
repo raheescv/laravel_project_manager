@@ -25,4 +25,8 @@ abstract class StockCheckRepository {
   /// Bulk-save counted quantities + per-item status. Completed items reconcile
   /// real inventory server-side.
   Future<void> saveCounts(int id, List<Map<String, dynamic>> items);
+
+  /// Move the count's own status (pending / completed / cancelled). Item counts
+  /// and real inventory are untouched.
+  Future<void> updateStatus(int id, String status);
 }

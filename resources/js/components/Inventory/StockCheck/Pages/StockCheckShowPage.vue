@@ -3,7 +3,8 @@
         <LoadingOverlay :show="loading" :text="loadingText" />
 
         <div class="page-container">
-            <StockCheckHeader :stock-check="stockCheck" />
+            <StockCheckHeader :stock-check="stockCheck" :status-updating="statusUpdating"
+                @status-change="handleHeaderStatusRequest" />
 
             <section class="section-card section-filters" aria-label="Filters">
                 <StockCheckFilters :filters="filters" :categories="categories" :brands="brands"
@@ -50,6 +51,12 @@
             :current-status="statusChangeData?.currentStatus || 'pending'"
             :new-status="statusChangeData?.newStatus || 'completed'" @confirm="handleConfirmStatusChange"
             @cancel="handleCancelStatusChange" />
+
+        <StatusChangeConfirmationModal :show="showHeaderStatusModal"
+            :product-name="stockCheck.title || 'This stock check'"
+            :current-status="stockCheck.status || 'pending'"
+            :new-status="pendingHeaderStatus || 'completed'" @confirm="handleConfirmHeaderStatusChange"
+            @cancel="handleCancelHeaderStatusChange" />
     </div>
 </template>
 
@@ -66,11 +73,13 @@ import StatusChangeConfirmationModal from '../Components/StatusChangeConfirmatio
 import GetStockCheckAction from '../Apis/GetStockCheckAction.js'
 import GetStockCheckItemsAction from '../Apis/GetStockCheckItemsAction.js'
 import UpdateStockCheckAction from '../Apis/UpdateStockCheckAction.js'
+import UpdateStockCheckStatusAction from '../Apis/UpdateStockCheckStatusAction.js'
 
 const toast = useToast()
 const getStockCheckAction = new GetStockCheckAction()
 const getStockCheckItemsAction = new GetStockCheckItemsAction()
 const updateStockCheckAction = new UpdateStockCheckAction()
+const updateStockCheckStatusAction = new UpdateStockCheckStatusAction()
 
 const stockCheckId = ref(null)
 const stockCheck = ref({})
@@ -83,6 +92,9 @@ const saving = ref(false)
 const loadingText = ref('Loading...')
 const showStatusConfirmModal = ref(false)
 const statusChangeData = ref(null)
+const showHeaderStatusModal = ref(false)
+const pendingHeaderStatus = ref(null)
+const statusUpdating = ref(false)
 const exporting = ref(false)
 const importing = ref(false)
 const importFileInput = ref(null)
@@ -285,6 +297,39 @@ const handleConfirmStatusChange = async () => {
 const handleCancelStatusChange = () => {
     showStatusConfirmModal.value = false
     statusChangeData.value = null
+}
+
+const handleHeaderStatusRequest = (status) => {
+    pendingHeaderStatus.value = status
+    showHeaderStatusModal.value = true
+}
+
+const handleConfirmHeaderStatusChange = async () => {
+    const status = pendingHeaderStatus.value
+    showHeaderStatusModal.value = false
+    pendingHeaderStatus.value = null
+    if (!status || !stockCheckId.value) return
+
+    statusUpdating.value = true
+    try {
+        const result = await updateStockCheckStatusAction.execute(stockCheckId.value, status)
+        if (result.success) {
+            stockCheck.value = { ...stockCheck.value, status }
+            toast.success(result.message)
+        } else {
+            toast.error(result.message || 'Failed to update status')
+        }
+    } catch (error) {
+        toast.error(error.message || 'Failed to update status')
+        console.error(error)
+    } finally {
+        statusUpdating.value = false
+    }
+}
+
+const handleCancelHeaderStatusChange = () => {
+    showHeaderStatusModal.value = false
+    pendingHeaderStatus.value = null
 }
 
 const handleScanSuccess = (item) => {

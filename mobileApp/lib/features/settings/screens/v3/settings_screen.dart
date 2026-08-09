@@ -73,6 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _branchCard(context, branch),
                         _printerCard(context),
                         _lockAfterSaleCard(context),
+                        _gridColumnsCard(context),
                         _permissionsCard(context),
                         _serverCard(context),
                       ]),
@@ -121,6 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       (Icons.receipt_long_outlined, 'Printer & receipt', '${print.style.label} · ${print.width.label}'),
       (pos.lockAfterSale ? Icons.lock_clock_outlined : Icons.lock_open_outlined, 'Shared till',
           pos.lockAfterSale ? 'Locks after each sale' : 'Stays unlocked'),
+      (Icons.grid_view_rounded, 'Catalog grid', '${pos.gridColumns} products per row'),
       (Icons.verified_user_outlined, 'My permissions', (user?.isAdmin ?? false) ? 'Administrator' : '$permCount granted'),
       (Icons.cloud_outlined, 'Server connection', 'Base URL & tenant'),
     ];
@@ -277,6 +279,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               () => context.read<PosSettingsCubit>().toggleLockAfterSale()),
         ]);
       case 8:
+        return _panelShell(context, Icons.grid_view_rounded, 'Catalog grid',
+            'How many products New Sale fits across in grid view.', [
+          _gridColumnsCard(context),
+          const SizedBox(height: 10),
+          Text('A wider screen fits more — this is the least a row will hold.',
+              style: ui(size: 11, weight: FontWeight.w600, color: context.astra.textMuted)),
+        ]);
+      case 9:
         return _panelShell(context, Icons.verified_user_outlined, 'My permissions', 'What this account is allowed to do.', [
           _permissionsCard(context),
           const SizedBox(height: 12),
@@ -600,6 +610,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           _switch(context, on),
+        ],
+      ),
+    );
+  }
+
+  /// How densely New Sale lays the catalog out. A shop whose products carry no
+  /// photos wants three or four across; two-up is for a catalog of images.
+  /// Applies on tap — there's nothing to confirm.
+  Widget _gridColumnsCard(BuildContext context) {
+    final p = context.astra;
+    final pos = context.watch<PosSettingsCubit>();
+    return AstraCard(
+      radius: 14,
+      child: Row(
+        children: [
+          IconChip(icon: Icons.grid_view_rounded, size: 34, radius: 9, bg: p.tint),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Products per row',
+                    style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text('New Sale grid view · ${pos.gridColumns} across',
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(11)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final n in PosSettingsState.gridColumnOptions)
+                  GestureDetector(
+                    onTap: () => context.read<PosSettingsCubit>().setGridColumns(n),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      width: 32,
+                      height: 28,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        gradient: pos.gridColumns == n ? p.primaryGradient : null,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Text('$n',
+                          style: ui(
+                              size: 12.5,
+                              weight: FontWeight.w800,
+                              color: pos.gridColumns == n ? Colors.white : p.textSecondary)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -14,6 +14,12 @@ extension _CountViews on _StockCheckCountScreenState {
       title: s.title,
       subtitle: 'STOCK CHECK · #${s.id}',
       actions: [
+        TabletActionButton(
+          label: StockCheckStatus.label(s.status),
+          icon: stockCheckStatusStyle(context, s.status).icon,
+          trailingIcon: Icons.expand_more,
+          onTap: _changeStatus,
+        ),
         TabletActionButton(label: 'Scan', icon: Icons.qr_code_scanner, onTap: _openScan),
       ],
     );
@@ -51,6 +57,10 @@ extension _CountViews on _StockCheckCountScreenState {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      // The count's own status — tap to move it (pending /
+                      // completed / cancelled).
+                      StockCheckStatusPill(status: s.status, onDark: true, onTap: _changeStatus),
                     ],
                   ),
                   const SizedBox(height: 16),

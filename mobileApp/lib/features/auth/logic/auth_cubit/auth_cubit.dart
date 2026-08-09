@@ -1,18 +1,22 @@
 import 'dart:convert';
 
-import 'package:invo/flavors.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:flutter/foundation.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
+import 'package:invo/shared/utils/local_storage/offline_db.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/utils/router/http_utils/http_service.dart';
+import 'package:invo/shared/utils/router/http_utils/reachability.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../../domain/models/device_account.dart';
 import '../../domain/repository/auth_repository.dart';
+import '../../domain/services/device_account_store.dart';
 
 part 'auth_state.dart';
 
@@ -29,6 +33,8 @@ class AuthCubit extends Cubit<AuthState> {
   HttpService get _http => serviceLocator<HttpService>();
   AuthRepository get _repo => serviceLocator<AuthRepository>();
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
+
+  final DeviceAccountStore _accounts = DeviceAccountStore();
 
   // Read facade over `state` — existing call sites (including the router's
   // redirect, which reads `auth.status`) were left untouched.
@@ -78,6 +84,10 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> updateConnection(
       {required String baseUrl, required String tenant}) async {
+    // Repointing the device at a different business invalidates the whole roster:
+    // a PIN remembered for one tenant must never open a session against another.
+    final changed = baseUrl.trim() != config.baseUrl || tenant.trim() != config.tenant;
+    if (changed) await _accounts.clear();
     _http.config = AppConfig(baseUrl: baseUrl.trim(), tenant: tenant.trim());
     await _storage.setBaseUrl(baseUrl.trim());
     await _storage.setTenant(tenant.trim());
@@ -86,18 +96,24 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith());
   }
 
-  Future<bool> login(String pin) =>
-      _runLogin(() => _repo.login(pin), biometric: {'mode': 'pin', 'pin': pin});
-
-  Future<bool> loginWithCredential(String username, String password) =>
-      _runLogin(
-        () => _repo.loginCredential(username, password),
-        biometric: {'mode': 'cred', 'username': username, 'password': password},
+  Future<bool> login(String pin) => _runLogin(
+        () => _repo.login(pin),
+        biometric: {'mode': 'pin', 'pin': pin},
+        offline: () => _accounts.byPin(pin),
       );
 
+  Future<bool> loginWithCredential(String username, String password) => _runLogin(
+        () => _repo.loginCredential(username, password),
+        biometric: {'mode': 'cred', 'username': username, 'password': password},
+        offline: () => _accounts.byCredential(username, password),
+      );
+
+  /// [offline] resolves the same person from the device's own roster, and is used
+  /// only when the server could not be reached at all. See [_signInOffline].
   Future<bool> _runLogin(
     Future<({String token, ApiUser user})> Function() attempt, {
     required Map<String, String> biometric,
+    required Future<DeviceAccount?> Function() offline,
   }) async {
     emit(state.copyWith(busy: true, clearError: true));
     try {
@@ -106,20 +122,105 @@ class AuthCubit extends Cubit<AuthState> {
       await _storage.setUserJson(jsonEncode(res.user.toJson()));
       await _storage.writeBiometric(jsonEncode(biometric));
       await _storage.setAuthLocked(false);
+      // Remember them as a user of this till, so the next outage does not lock
+      // them out of it.
+      await _remember(res, biometric);
       emit(state.copyWith(
           user: res.user, status: AuthStatus.signedIn, busy: false));
       onAuthenticated?.call(res.user);
       return true;
     } on ApiException catch (e) {
+      // The server answered and refused. That is a real verdict — a wrong PIN, a
+      // deactivated account — and must never be second-guessed from a local cache.
       emit(state.copyWith(busy: false, errorMessage: e.message));
     } catch (e) {
-      var message = 'Could not reach ${config.baseUrl}. Check the Base URL & tenant '
-          '(gear icon) and that the server is running.';
-      if (F.isDev) message = '$message\n\n[debug] $e';
-      emit(state.copyWith(busy: false, errorMessage: message));
+      // Never reached the server. Whether this person may work the till is a
+      // question this device has answered before, so it can answer it again.
+      if (isServerUnreachable(e) && await _signInOffline(await offline())) return true;
+
+      // The exception itself goes to the console, never to the person signing in.
+      // A cashier at a till cannot act on a DioException, and a stack trace in a
+      // snackbar reads as a broken app rather than as a network they can fix.
+      debugPrint('[auth] sign-in could not reach ${config.baseUrl}: $e');
+      emit(state.copyWith(busy: false, errorMessage: _connectionMessage()));
     }
     return false;
   }
+
+  /// What to tell someone whose sign-in never reached the server.
+  ///
+  /// Split on whether the device has a network at all, because the two have
+  /// different fixes and only one of them is the user's to make: no interface means
+  /// turn wifi or data on, while a live interface that cannot reach the server means
+  /// the connection or the server itself needs looking at.
+  String _connectionMessage() {
+    final connectivity = serviceLocator.isRegistered<ConnectivityCubit>()
+        ? serviceLocator<ConnectivityCubit>()
+        : null;
+    // Null-safe on purpose: before the first signal nothing is known, and the
+    // no-network wording is the likelier and more actionable of the two.
+    final hasInterface = connectivity?.state.hasInterface ?? false;
+
+    return hasInterface
+        ? 'Can’t reach the server. Please check your connection and try again.'
+        : 'No internet connection. Please connect and try again.';
+  }
+
+  /// Restore [account]'s session without a round-trip.
+  ///
+  /// The session restored is exactly the one their last **online** sign-in cached,
+  /// permissions and all — this grants nothing the server had not already granted,
+  /// and the server re-checks every request regardless. A user who has since been
+  /// deactivated gets in far enough to keep selling into the outbox, and their first
+  /// request on reconnect 401s onto the normal forced-sign-out path.
+  ///
+  /// Returns false when there is no such account, which lets the caller fall through
+  /// to the ordinary "could not reach the server" error.
+  Future<bool> _signInOffline(DeviceAccount? account) async {
+    if (account == null) return false;
+    try {
+      final user = ApiUser.fromJson(Map<String, dynamic>.from(jsonDecode(account.userJson)));
+      // The stored token is what lets the outbox drain post under this user once
+      // the network is back.
+      await _storage.writeToken(account.token);
+      await _storage.setUserJson(account.userJson);
+      await _storage.setAuthLocked(false);
+      emit(state.copyWith(user: user, status: AuthStatus.signedIn, busy: false));
+      // Fired as on any sign-in: a different cashier may work a different branch,
+      // and the branch is what scopes the cached catalog they are about to sell from.
+      onAuthenticated?.call(user);
+      return true;
+    } catch (_) {
+      // A corrupt cached payload is not something to sign anybody in on.
+      return false;
+    }
+  }
+
+  /// Record this sign-in against the device, keyed on the user.
+  Future<void> _remember(
+    ({String token, ApiUser user}) res,
+    Map<String, String> biometric,
+  ) async {
+    try {
+      await _accounts.remember(DeviceAccount(
+        userId: res.user.id,
+        name: res.user.name,
+        token: res.token,
+        userJson: jsonEncode(res.user.toJson()),
+        lastSignInAt: DateTime.now(),
+        pin: biometric['pin'] ?? '',
+        username: biometric['username'] ?? '',
+        password: biometric['password'] ?? '',
+      ));
+    } catch (_) {
+      // Best-effort: failing to remember costs an offline sign-in later, never
+      // this one.
+    }
+  }
+
+  /// Users who have signed in on this device — for a "not you?" style picker, and
+  /// for tests.
+  Future<List<DeviceAccount>> deviceAccounts() => _accounts.all();
 
   // ---- Terminal lock ----
   //
@@ -147,7 +248,9 @@ class AuthCubit extends Cubit<AuthState> {
   /// Anything the fast path doesn't recognise falls through to a normal login:
   /// a different cashier taking over the till, or a PIN changed on the web
   /// since this session started. So the slow path still always works, and it
-  /// only costs a round-trip when the fast one genuinely can't answer.
+  /// only costs a round-trip when the fast one genuinely can't answer — and when
+  /// even that can't (no network), [login] falls back to this device's own roster,
+  /// so a handover to another cashier works through an outage too.
   Future<bool> unlock(String pin) async {
     if (await _matchesCachedPin(pin)) {
       emit(state.copyWith(status: AuthStatus.signedIn, clearError: true));
@@ -285,10 +388,18 @@ class AuthCubit extends Cubit<AuthState> {
     _clear();
   }
 
+  /// Ends the session. The device roster is deliberately **kept**: signing out is
+  /// how a shared till is handed over, and forgetting who uses it would mean the
+  /// next cashier could not get in at all while the network is down.
   Future<void> _clear() async {
     await _storage.clearToken();
     await _storage.clearUser();
     await _storage.setAuthLocked(false);
+    // Drop the cached catalog so the next user of a shared till never browses
+    // the previous tenant's products. The offline outbox is deliberately left
+    // alone: an unsynced sale is money that was taken, and it has to outlive
+    // the session that rang it up — including a forced sign-out on a 401.
+    await OfflineDb.clearCatalog();
     emit(state.copyWith(status: AuthStatus.signedOut, clearUser: true));
   }
 }

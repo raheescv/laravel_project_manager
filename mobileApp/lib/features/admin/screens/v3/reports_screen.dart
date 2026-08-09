@@ -474,10 +474,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final labels = admin.reportTrendLabels;
     if (pts.length < 2) return null;
     final maxV = pts.reduce((a, b) => a > b ? a : b);
-    final data = [
-      for (var i = 0; i < pts.length; i++)
-        BarDatum(_dayLabel(labels.length > i ? labels[i] : '', pts.length), pts[i], peak: pts[i] == maxV),
-    ];
+    final total = pts.fold<double>(0, (a, b) => a + b);
+    var peakTaken = false; // one peak only, even when two days tie
+    final data = <BarDatum>[];
+    for (var i = 0; i < pts.length; i++) {
+      final iso = labels.length > i ? labels[i] : '';
+      final isPeak = maxV > 0 && pts[i] == maxV && !peakTaken;
+      if (isPeak) peakTaken = true;
+      data.add(BarDatum(_dayLabel(iso, pts.length), pts[i], peak: isPeak, detail: _dayDetail(iso)));
+    }
     // The trend rides on loadReports (via _applyRangeSummary), not the overview
     // call, so it reports that request's progress.
     final busy = admin.reportLoading;
@@ -486,10 +491,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _cardHeader(Icons.bar_chart_rounded, 'Gross sales by day',
-              busy: busy,
-              trailing: _pill('Peak ${Money.compact(maxV)}', p.accent.withValues(alpha: 0.16), p.goldText)),
-          const SizedBox(height: 14),
-          _refreshing(busy, BarChart(data: data)),
+              busy: busy, trailing: _pill('Total ${Money.compact(total)}', p.tint, p.primary)),
+          const SizedBox(height: 12),
+          _refreshing(
+            busy,
+            BarChart(
+              data: data,
+              // Tall enough for the value labels to clear the bars; long ranges
+              // scroll sideways rather than shrink (see BarChart.minSlot).
+              height: 150,
+              showReadout: true,
+            ),
+          ),
         ],
       ),
     );
@@ -503,6 +516,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
       return days[d.weekday - 1];
     }
     return '${d.day}/${d.month}';
+  }
+
+  /// Full date for the chart readout, e.g. `Sat, 21 Jun 2026`.
+  String _dayDetail(String iso) {
+    final d = DateTime.tryParse(iso);
+    return d == null ? '' : Dates.weekday(d);
   }
 
   // ---- By Item / By Stylist breakdown (toggle + metric + ranked table) -------

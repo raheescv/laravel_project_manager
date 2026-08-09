@@ -22,6 +22,9 @@ class Routes {
   static const String invoice = '/invoice';
   static const String sales = '/sales';
 
+  /// Sales taken while offline that the server has not acknowledged yet.
+  static const String pendingSales = '/pending-sales';
+
   // ---- Sale returns ----
   static const String salesReturns = '/sales-returns';
   static const String saleReturn = '/sale-return';

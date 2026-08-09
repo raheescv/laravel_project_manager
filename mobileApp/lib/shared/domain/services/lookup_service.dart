@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../../api/end_points.dart';
 import '../../utils/router/http_utils/http_service.dart';
 import '../constants/global_variables.dart';
+import '../helpers/formatters.dart';
 import '../models/index.dart';
 import '../repository/lookup_repository.dart';
 
@@ -27,6 +28,28 @@ class LookupService implements LookupRepository {
       'page': page,
     });
     return Paginated.from(data, Product.fromJson);
+  }
+
+  @override
+  Future<({List<Map<String, dynamic>> rows, int currentPage, int lastPage})> productsRaw({
+    String? type,
+    int page = 1,
+    // The server validates `per_page` at max:100 and 422s above it.
+    int perPage = 100,
+  }) async {
+    final data = await _http.get(EndPoints.products, auth: false, query: {
+      if (type != null && type.isNotEmpty) 'type': type,
+      'in_stock_only': false,
+      'per_page': perPage,
+      'page': page,
+    });
+    final list = (data is Map ? data['data'] : data) as List? ?? const [];
+    final pag = (data is Map ? data['pagination'] : null) as Map? ?? const {};
+    return (
+      rows: list.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+      currentPage: asNum(pag['current_page'] ?? page).toInt(),
+      lastPage: asNum(pag['last_page'] ?? 1).toInt(),
+    );
   }
 
   @override
@@ -69,6 +92,21 @@ class LookupService implements LookupRepository {
   }
 
   @override
+  Future<Paginated<Customer>> customersPage({
+    int page = 1,
+    // The server validates `per_page` at max:100 and 422s above it.
+    int perPage = 100,
+    String? search,
+  }) async {
+    final data = await _http.get(EndPoints.customers, query: {
+      if (search != null && search.isNotEmpty) 'search': search,
+      'per_page': perPage,
+      'page': page,
+    });
+    return Paginated.from(data, Customer.fromJson);
+  }
+
+  @override
   Future<List<Employee>> employees({String? search, int? branchId}) async {
     final data = await _http.get(EndPoints.employees, query: {
       if (search != null && search.isNotEmpty) 'search': search,
@@ -76,6 +114,20 @@ class LookupService implements LookupRepository {
       'per_page': 100,
     });
     return Paginated.from(data, Employee.fromJson).items;
+  }
+
+  @override
+  Future<Paginated<Employee>> employeesPage({
+    int page = 1,
+    int perPage = 100,
+    int? branchId,
+  }) async {
+    final data = await _http.get(EndPoints.employees, query: {
+      if (branchId != null) 'branch_id': branchId,
+      'per_page': perPage,
+      'page': page,
+    });
+    return Paginated.from(data, Employee.fromJson);
   }
 
   @override

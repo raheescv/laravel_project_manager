@@ -16,6 +16,9 @@ class CartState extends Equatable {
     this.stylistId,
     this.stylistName = '',
     this.editingSaleId,
+    this.editingStatus = '',
+    this.editingPendingUuid,
+    this.editingPendingSold = const {},
     this.orderDiscount = 0,
     this.orderDiscountIsPercent = false,
     this.tipPercent = 0,
@@ -33,6 +36,21 @@ class CartState extends Equatable {
   /// Set when this ticket is an edit of an existing sale.
   final String? editingSaleId;
 
+  /// The status that sale is currently stored under ('draft', 'completed'), so
+  /// checkout can offer to finish a parked draft rather than only re-saving it.
+  final String editingStatus;
+
+  /// Set when this ticket is a correction to a sale still sitting in the outbox.
+  ///
+  /// Distinct from [editingSaleId] because there is nothing on the server to
+  /// patch: the write goes to the outbox row, under this same key, so the server
+  /// still only ever hears about one sale.
+  final String? editingPendingUuid;
+
+  /// What the queued version had already taken off the cached shelf, so the edit
+  /// can hand it back before taking the corrected quantities.
+  final Map<int, double> editingPendingSold;
+
   final double orderDiscount;
   final bool orderDiscountIsPercent;
   final double tipPercent;
@@ -42,6 +60,17 @@ class CartState extends Equatable {
   final bool sendToWhatsapp;
 
   bool get isEditing => editingSaleId != null;
+
+  /// True while correcting a sale that has not reached the server yet.
+  bool get isEditingPending => editingPendingUuid != null;
+
+  /// True while editing a sale that is still parked as a draft — the only case
+  /// where "complete this sale" is on offer alongside a plain re-save.
+  ///
+  /// Normalised like every other read of a status off the wire: getting this
+  /// wrong doesn't error, it silently drops the Complete button.
+  bool get isEditingDraft => isEditing && editingStatus.trim().toLowerCase() == 'draft';
+
   bool get isEmpty => lines.isEmpty;
   int get count => lines.fold(0, (a, l) => a + l.qty.round());
 
@@ -90,6 +119,9 @@ class CartState extends Equatable {
     int? stylistId,
     String? stylistName,
     String? editingSaleId,
+    String? editingStatus,
+    String? editingPendingUuid,
+    Map<int, double>? editingPendingSold,
     double? orderDiscount,
     bool? orderDiscountIsPercent,
     double? tipPercent,
@@ -107,6 +139,11 @@ class CartState extends Equatable {
         stylistName: clearStylist ? '' : (stylistName ?? this.stylistName),
         editingSaleId:
             clearEditingSaleId ? null : (editingSaleId ?? this.editingSaleId),
+        // The status describes the sale being edited, so it goes with the id.
+        editingStatus:
+            clearEditingSaleId ? '' : (editingStatus ?? this.editingStatus),
+        editingPendingUuid: editingPendingUuid ?? this.editingPendingUuid,
+        editingPendingSold: editingPendingSold ?? this.editingPendingSold,
         orderDiscount: orderDiscount ?? this.orderDiscount,
         orderDiscountIsPercent:
             orderDiscountIsPercent ?? this.orderDiscountIsPercent,
@@ -124,6 +161,8 @@ class CartState extends Equatable {
         stylistId,
         stylistName,
         editingSaleId,
+        editingStatus,
+        editingPendingUuid,
         orderDiscount,
         orderDiscountIsPercent,
         tipPercent,

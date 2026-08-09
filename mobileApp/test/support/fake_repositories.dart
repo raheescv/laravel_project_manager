@@ -27,9 +27,19 @@ class FakeSaleRepository implements SaleRepository {
         'created_by': 'Maya',
       });
 
+  /// The receipt-ready snapshot the caller offered for offline capture, if any.
+  /// This fake always "reaches the server", so it is recorded rather than used.
+  Map<String, dynamic>? lastOfflineSale;
+
+  /// How many sales this fake has been asked to post — what a test asserting that
+  /// something did NOT re-post has to look at.
+  int postedCount = 0;
+
   @override
-  Future<Sale> createSale(Map<String, dynamic> payload) async {
+  Future<Sale> createSale(Map<String, dynamic> payload, {Map<String, dynamic>? offlineSale}) async {
     lastPayload = payload;
+    lastOfflineSale = offlineSale;
+    postedCount++;
     return _finishedSale();
   }
 

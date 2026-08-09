@@ -14,6 +14,7 @@ import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/stock_check_models.dart';
+import 'stock_check_status_sheet.dart';
 
 part 'stock_check_count_views.dart';
 
@@ -229,6 +230,25 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
     if (await _ensureSaved(feedback: true)) {
       await _reload();
       await _refreshStats();
+    }
+  }
+
+  /// Move the count's own status (pending / completed / cancelled). Applies on
+  /// tap in the sheet; the header stats are re-read so the pill reflects what the
+  /// server stored.
+  Future<void> _changeStatus() async {
+    final next = await pickStockCheckStatus(context, current: _stats.status);
+    if (next == null || !mounted) return;
+    final ok = await _stock.updateStatus(widget.detail.id, next);
+    if (!mounted) return;
+    if (ok) {
+      await _refreshStats();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Status changed to ${StockCheckStatus.label(next)}')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_stock.state.errorMessage ?? 'Could not change the status.')));
     }
   }
 

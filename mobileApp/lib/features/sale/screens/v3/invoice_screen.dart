@@ -7,12 +7,15 @@ import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
+import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
 import 'package:invo/shared/utils/components/app_strings.dart';
@@ -52,10 +55,35 @@ class InvoiceScreen extends StatelessWidget {
   bool get _paidUp => _balance <= 0.5;
 
   // Only completed invoices can be returned (matches the returns flow).
-  bool get _returnable => sale.status.toLowerCase() == 'completed';
+  // A sale still sitting in the offline outbox has no server id, so every
+  // action that addresses it by id — edit, return, delete — has nothing to
+  // address yet. It becomes a normal sale the moment it syncs.
+  bool get _serverBacked => !sale.pending;
+
+  bool get _returnable => _serverBacked && sale.status.toLowerCase() == 'completed';
 
   // A cancelled sale is view-only; completed or draft sales can be edited.
-  bool get _editable => sale.status.toLowerCase() != 'cancelled';
+  //
+  // A queued sale IS editable, but not by id — the correction is written back to
+  // the outbox row it is captured in, under the same idempotency key, so the
+  // server still only ever hears about one sale. See [_edit].
+  bool get _editable =>
+      (_serverBacked || _correctable) && sale.status.toLowerCase() != 'cancelled';
+
+  /// Whether this queued sale can still be corrected on the device.
+  ///
+  /// False once a request is in flight or the server has it: the outbox row would
+  /// be describing a sale that is already committed differently. The row's real
+  /// status is checked again inside the write, which is the check that counts —
+  /// this one only decides whether to offer the button.
+  bool get _correctable =>
+      sale.pending &&
+      sale.clientUuid.isNotEmpty &&
+      serviceLocator.isRegistered<OfflineSyncCubit>();
+
+  // A parked ticket: re-opening it offers to complete the sale, not just to
+  // save the changes back, so the action reads differently.
+  bool get _isDraft => sale.status.toLowerCase() == 'draft';
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +175,9 @@ class InvoiceScreen extends StatelessWidget {
       sale.customerName.trim().isEmpty ? AppStrings.walkInCustomer : sale.customerName.trim(),
       if (sale.date.isNotEmpty) Dates.human(sale.date),
       if (methods.isNotEmpty) methods.join(', '),
+      // The reference the customer's receipt was printed under, once this sale has
+      // synced and gained an invoice number of its own.
+      if (sale.offlineRef.isNotEmpty && sale.offlineRef != sale.invoiceNo) 'receipt ${sale.offlineRef}',
     ].join('  ·  ');
 
     return Scaffold(
@@ -181,7 +212,12 @@ class InvoiceScreen extends StatelessWidget {
                             onTap: () => _tap(() => _return(context))),
                       if (canEdit && _editable)
                         TabletActionButton(
-                            label: 'Edit', icon: Icons.edit_outlined, onTap: () => _tap(() => _edit(context))),
+                            // The tablet's docked button is the primary way in on
+                            // the form factor this POS is used on, so it carries
+                            // the draft wording too.
+                            label: _isDraft ? 'Complete' : 'Edit',
+                            icon: _isDraft ? Icons.check_circle_outline : Icons.edit_outlined,
+                            onTap: () => _tap(() => _edit(context))),
                       // Pushed: the dominant next action is starting the next
                       // ticket. Embedded: the list is right there, so it isn't.
                       if (!embedded)
@@ -496,9 +532,25 @@ class InvoiceScreen extends StatelessWidget {
 
   /// Re-open this sale in the New Sale flow for editing: load it into the ticket
   /// (each line keeps its sale_item id) and push the edit screen.
-  void _edit(BuildContext context) {
-    context.read<CartCubit>().seedFromSale(sale);
-    context.push(Routes.sale);
+  ///
+  /// A sale still sitting in the outbox is seeded from its queued row instead, so
+  /// the correction is written back to that row rather than PUT to a server record
+  /// that does not exist yet.
+  Future<void> _edit(BuildContext context) async {
+    final cart = context.read<CartCubit>();
+    if (_correctable) {
+      final row = await serviceLocator<OutboxRepository>().byUuid(sale.clientUuid);
+      if (row == null) {
+        // Gone from the queue between the tap and here means it synced, which is
+        // the good outcome — it is an ordinary sale now, editable from Sales.
+        if (context.mounted) _toast(context, 'This sale has synced. Open it from Sales to edit it.');
+        return;
+      }
+      cart.seedFromPendingSale(row);
+    } else {
+      cart.seedFromSale(sale);
+    }
+    if (context.mounted) unawaited(context.push(Routes.sale));
   }
 
   // ---- Delete --------------------------------------------------------------
@@ -650,8 +702,16 @@ class InvoiceScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (_editable && canEdit)
-                        _sheetAction(ctx, p, Icons.edit_outlined, p.primary, 'Edit',
-                            'Re-open this sale to change items', () => _edit(context)),
+                        _sheetAction(
+                            ctx,
+                            p,
+                            Icons.edit_outlined,
+                            p.primary,
+                            _isDraft ? 'Edit or complete' : 'Edit',
+                            _isDraft
+                                ? 'Re-open this draft to change it or complete the sale'
+                                : 'Re-open this sale to change items',
+                            () => _edit(context)),
                       if (_returnable)
                         _sheetAction(ctx, p, Icons.assignment_return_outlined, p.goldText, 'Return',
                             'Start a return against this invoice', () => _return(context)),
@@ -659,7 +719,7 @@ class InvoiceScreen extends StatelessWidget {
                           'See the thermal receipt before printing', () => _preview(context)),
                       _sheetAction(ctx, p, Icons.ios_share, p.ink, 'Share',
                           'Send the receipt as a PDF', () => _share(context)),
-                      if (canDelete)
+                      if (canDelete && _serverBacked)
                         _sheetAction(ctx, p, Icons.delete_outline, AstraPalette.danger, 'Delete',
                             'Permanently remove this sale', () => _delete(context)),
                     ],

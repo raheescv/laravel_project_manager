@@ -50,11 +50,13 @@
                     :loading="loading"
                     :selected="selected"
                     :select-all="selectAll"
+                    :updating-status-id="updatingStatusId"
                     @view="handleView"
                     @edit="handleEdit"
                     @delete="handleDelete"
                     @select="handleSelect"
                     @select-all="handleSelectAll"
+                    @status-change="handleStatusChangeRequest"
                 />
             </div>
             <div v-if="!loading && stockChecks.length > 0" class="p-3 border-top bg-light">
@@ -70,6 +72,12 @@
 
         <CreateStockCheckModal :show="showModal" :branch-id="branchId" :stock-check-id="editingStockCheckId"
             @close="handleCloseModal" @created="handleStockCheckCreated" @updated="handleStockCheckUpdated" />
+
+        <StatusChangeConfirmationModal :show="showStatusModal"
+            :product-name="statusChangeTarget?.title || 'This stock check'"
+            :current-status="statusChangeTarget?.status || 'pending'"
+            :new-status="pendingStatus || 'completed'" @confirm="handleConfirmStatusChange"
+            @cancel="handleCancelStatusChange" />
     </div>
 </template>
 
@@ -78,12 +86,15 @@ import { ref, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import StockCheckListTable from '../Components/StockCheckListTable.vue'
 import CreateStockCheckModal from '../Form/CreateStockCheckModal.vue'
+import StatusChangeConfirmationModal from '../Components/StatusChangeConfirmationModal.vue'
 import GetStockChecksAction from '../Apis/GetStockChecksAction.js'
 import DeleteStockCheckAction from '../Apis/DeleteStockCheckAction.js'
+import UpdateStockCheckStatusAction from '../Apis/UpdateStockCheckStatusAction.js'
 
 const toast = useToast()
 const getStockChecksAction = new GetStockChecksAction()
 const deleteStockCheckAction = new DeleteStockCheckAction()
+const updateStockCheckStatusAction = new UpdateStockCheckStatusAction()
 
 const stockChecks = ref([])
 const loading = ref(false)
@@ -94,6 +105,10 @@ const branchId = ref(null)
 const limit = ref(100)
 const selected = ref([])
 const selectAll = ref(false)
+const showStatusModal = ref(false)
+const statusChangeTarget = ref(null)
+const pendingStatus = ref(null)
+const updatingStatusId = ref(null)
 let searchDebounceTimer = null
 
 const fetchStockChecks = async () => {
@@ -212,6 +227,50 @@ const handleStockCheckUpdated = (stockCheck) => {
     showModal.value = false
     editingStockCheckId.value = null
     fetchStockChecks()
+}
+
+const handleStatusChangeRequest = (stockCheck, status) => {
+    statusChangeTarget.value = stockCheck
+    pendingStatus.value = status
+    showStatusModal.value = true
+}
+
+const handleConfirmStatusChange = async () => {
+    const target = statusChangeTarget.value
+    const status = pendingStatus.value
+    showStatusModal.value = false
+    if (!target || !status) {
+        statusChangeTarget.value = null
+        pendingStatus.value = null
+        return
+    }
+
+    updatingStatusId.value = target.id
+    try {
+        const result = await updateStockCheckStatusAction.execute(target.id, status)
+        if (result.success) {
+            // Patch the row in place — a full refetch would drop the current
+            // selection and scroll position.
+            const row = stockChecks.value.find(s => s.id === target.id)
+            if (row) row.status = status
+            toast.success(result.message)
+        } else {
+            toast.error(result.message || 'Failed to update status')
+        }
+    } catch (error) {
+        toast.error('Failed to update status')
+        console.error(error)
+    } finally {
+        updatingStatusId.value = null
+        statusChangeTarget.value = null
+        pendingStatus.value = null
+    }
+}
+
+const handleCancelStatusChange = () => {
+    showStatusModal.value = false
+    statusChangeTarget.value = null
+    pendingStatus.value = null
 }
 
 const handleDelete = async (id) => {

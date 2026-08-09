@@ -5,6 +5,7 @@ import 'package:invo/shared/domain/constants/data_fetching_status.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
+import 'package:invo/shared/utils/router/http_utils/reachability.dart';
 
 import '../../domain/models/stock_check_models.dart';
 import '../../domain/repository/stock_check_repository.dart';
@@ -38,9 +39,10 @@ class StockCheckCubit extends Cubit<StockCheckState> {
     } on ApiException catch (e) {
       emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
       return null;
-    } catch (_) {
+    } catch (e) {
       emit(state.copyWith(
-          status: DataFetchStatus.failed, errorMessage: AppStrings.somethingWentWrong));
+          status: DataFetchStatus.failed,
+          errorMessage: networkErrorMessage(e, AppStrings.somethingWentWrong)));
       return null;
     }
   }
@@ -82,6 +84,13 @@ class StockCheckCubit extends Cubit<StockCheckState> {
   /// server-side, so a false here means the working copy is still unsaved.
   Future<bool> saveCounts(int id, List<Map<String, dynamic>> items) async {
     await _run<void>(() => _repo.saveCounts(id, items));
+    return state.status == DataFetchStatus.success;
+  }
+
+  /// True when the count's own status was moved. The reason for a false is on
+  /// [StockCheckState.errorMessage].
+  Future<bool> updateStatus(int id, String status) async {
+    await _run<void>(() => _repo.updateStatus(id, status));
     return state.status == DataFetchStatus.success;
   }
 }

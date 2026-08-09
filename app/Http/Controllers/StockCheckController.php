@@ -137,6 +137,20 @@ class StockCheckController extends Controller
         }
     }
 
+    public function updateStatus($id, UpdateStockCheckStatusRequest $request, UpdateStockCheckStatusAction $action)
+    {
+        try {
+            $response = $action->execute($id, $request->validated()['status'], Auth::id());
+            if (! $response['success']) {
+                throw new Exception($response['message']);
+            }
+
+            return $this->sendSuccess($response['data'], $response['message']);
+        } catch (Exception $e) {
+            return $this->sendError($e->getMessage(), []);
+        }
+    }
+
     public function getItems($id, Request $request, GetStockCheckItemsAction $action)
     {
         try {

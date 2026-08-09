@@ -165,6 +165,9 @@ class Sale extends Model implements AuditableContracts
                 return $q->where(function ($q) use ($search): void {
                     $q->where('sales.id', 'like', "%{$search}%")
                         ->orWhere('sales.invoice_no', 'like', "%{$search}%")
+                        // Also finds a sale by the provisional reference printed on
+                        // the customer's receipt during an outage — the mobile POS
+                        // stores that in reference_no when the sale syncs.
                         ->orWhere('sales.reference_no', 'like', "%{$search}%")
                         ->orWhere('sales.customer_name', 'like', "%{$search}%")
                         ->orWhere('sales.customer_mobile', 'like', "%{$search}%");

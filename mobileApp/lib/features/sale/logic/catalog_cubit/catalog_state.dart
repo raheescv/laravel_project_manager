@@ -13,6 +13,8 @@ class CatalogState extends Equatable {
     this.lastPage = 1,
     this.loadingMore = false,
     this.errorMessage,
+    this.servingCached = false,
+    this.cachedAt,
   });
 
   final DataFetchStatus status;
@@ -27,6 +29,12 @@ class CatalogState extends Equatable {
   final int lastPage;
   final bool loadingMore;
   final String? errorMessage;
+
+  /// These rows came off the local snapshot, not the server — prices and stock
+  /// are as of [cachedAt], which the grid says out loud so nobody sells against
+  /// a figure they think is live.
+  final bool servingCached;
+  final DateTime? cachedAt;
 
   bool get loading => status == DataFetchStatus.waiting;
 
@@ -46,9 +54,12 @@ class CatalogState extends Equatable {
     int? lastPage,
     bool? loadingMore,
     String? errorMessage,
+    bool? servingCached,
+    DateTime? cachedAt,
     bool clearError = false,
     bool clearCategory = false,
     bool clearType = false,
+    bool clearCached = false,
   }) =>
       CatalogState(
         status: status ?? this.status,
@@ -62,11 +73,13 @@ class CatalogState extends Equatable {
         lastPage: lastPage ?? this.lastPage,
         loadingMore: loadingMore ?? this.loadingMore,
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+        servingCached: clearCached ? false : (servingCached ?? this.servingCached),
+        cachedAt: clearCached ? null : (cachedAt ?? this.cachedAt),
       );
 
   @override
   List<Object?> get props => [
         status, products, categories, selectedCategoryId, selectedType,
-        search, page, lastPage, loadingMore, errorMessage,
+        search, page, lastPage, loadingMore, errorMessage, servingCached, cachedAt,
       ];
 }
