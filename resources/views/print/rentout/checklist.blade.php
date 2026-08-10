@@ -80,6 +80,9 @@
         .terms-t { font-size: 9.4px; font-weight: bold; color: #7a6a2f; margin-bottom: 2px; }
         .terms .ar, .terms .ar .decl { direction: rtl; text-align: right; }
         .terms .decl { margin: 0; }
+        /* Signatures repeated under the clauses. Kept whole so a signature never
+           lands on a page of its own away from the terms it signs. */
+        .terms-sign { margin-top: 14px; page-break-inside: avoid; break-inside: avoid; }
         .accept { border: 1px solid #d8d4c4; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; }
         .accept .ph { font-size: 11px; font-weight: bold; color: #7a6a2f; text-transform: uppercase; margin-bottom: 4px; }
         /* The declaration is rich text edited in Settings → Rent Out Settings →
@@ -310,27 +313,7 @@
             <div class="ph">{{ $phase['label'] }}</div>
             {{-- Sanitised in App\Support\RichText before it ever reaches here. --}}
             <div class="decl">{!! $phase['decl'] !!}</div>
-            <table class="sign-table">
-                <tr>
-                    @foreach ($roles as $roleKey => $roleLabel)
-                        @php $sig = $ro->checklistSignatureFor($phaseKey, $roleKey); $src = $sigSrc($sig); @endphp
-                        <td class="sign-cell">
-                            @if ($src)
-                                <img class="sign-img" src="{{ $src }}" alt="signature">
-                            @else
-                                <div style="height:46px;"></div>
-                            @endif
-                            <div class="sign-line">
-                                <span class="sign-name">{{ $sig?->signer_name ?: ($nameFor($roleKey) ?: '________________') }}</span><br>
-                                {{ $roleLabel }}
-                                @if ($sig?->signed_at)
-                                    <br><span class="muted">{{ $sig->signed_at->format('d M Y') }}</span>
-                                @endif
-                            </div>
-                        </td>
-                    @endforeach
-                </tr>
-            </table>
+            @include('print.rentout.partials.checklist-signatures', ['phaseKey' => $phaseKey])
         </div>
     @endforeach
     </div>
@@ -368,6 +351,13 @@
                 @endforeach
             </tbody>
         </table>
+        {{-- The annex is signed against the same signatures as the handover block it
+             annexes, so they are printed again under the clauses rather than leaving
+             the page unsigned. Terms only print on a lease/sale, which has the single
+             handover phase — hence the first (and only) phase key. --}}
+        <div class="terms-sign">
+            @include('print.rentout.partials.checklist-signatures', ['phaseKey' => array_key_first($phases)])
+        </div>
     </div>
 @endif
 </body>
