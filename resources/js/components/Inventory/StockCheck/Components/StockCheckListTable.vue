@@ -86,9 +86,9 @@
                             <span class="text-secondary">{{ formatDate(stockCheck.date) }}</span>
                         </td>
                         <td>
-                            <span :class="getStatusClass(stockCheck.status)">
-                                {{ formatStatus(stockCheck.status) }}
-                            </span>
+                            <StockCheckStatusSelect :model-value="stockCheck.status || 'pending'"
+                                :disabled="updatingStatusId === stockCheck.id"
+                                @select="$emit('status-change', stockCheck, $event)" />
                         </td>
                         <td>
                             <span class="text-secondary">{{ stockCheck.created_by?.name || '-' }}</span>
@@ -128,6 +128,7 @@
 
 <script setup>
 import { formatDate } from '../../../../utils/createVueApp.js'
+import StockCheckStatusSelect from './StockCheckStatusSelect.vue'
 
 defineProps({
     stockChecks: {
@@ -145,24 +146,14 @@ defineProps({
     selectAll: {
         type: Boolean,
         default: false
+    },
+    updatingStatusId: {
+        type: Number,
+        default: null
     }
 })
 
-defineEmits(['view', 'edit', 'delete', 'select', 'select-all'])
-
-const getStatusClass = (status) => {
-    const classes = {
-        pending: 'badge bg-warning',
-        completed: 'badge bg-success',
-        cancelled: 'badge bg-danger'
-    }
-    return classes[status] || 'badge bg-secondary'
-}
-
-const formatStatus = (status) => {
-    if (!status) return '-'
-    return status.charAt(0).toUpperCase() + status.slice(1)
-}
+defineEmits(['view', 'edit', 'delete', 'select', 'select-all', 'status-change'])
 </script>
 
 <style scoped>

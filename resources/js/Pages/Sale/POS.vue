@@ -1,175 +1,136 @@
 <template>
-    <div
-        class="min-h-screen md:max-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 relative md:overflow-hidden">
-        <!-- Optimized floating background elements for mobile -->
+    <div class="posx min-h-screen md:max-h-screen relative md:overflow-hidden" :data-pos-preset="colorPreset">
+        <!-- Two soft ambient glows from the preset, nothing more -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
-            <div
-                class="absolute -top-20 sm:-top-40 -right-20 sm:-right-40 w-48 h-48 sm:w-96 sm:h-96 bg-gradient-to-br from-blue-100/30 to-indigo-100/30 rounded-full blur-2xl sm:blur-3xl opacity-40 sm:opacity-60">
-            </div>
-            <div
-                class="absolute -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 w-48 h-48 sm:w-96 sm:h-96 bg-gradient-to-tr from-slate-100/30 to-gray-100/30 rounded-full blur-2xl sm:blur-3xl opacity-40 sm:opacity-60">
-            </div>
-            <div
-                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 sm:w-64 sm:h-64 bg-gradient-to-r from-blue-50/40 to-indigo-50/40 rounded-full blur-2xl sm:blur-3xl opacity-30 sm:opacity-50">
-            </div>
+            <div class="posx-glow -top-20 sm:-top-40 -right-20 sm:-right-40 w-48 h-48 sm:w-96 sm:h-96"></div>
+            <div class="posx-glow accent -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 w-48 h-48 sm:w-96 sm:h-96"></div>
         </div>
 
         <div class="container-fluid min-h-screen md:h-screen relative z-10 flex flex-col md:overflow-hidden">
             <form class="flex-1 flex flex-col min-h-0 md:overflow-hidden">
-                <!-- Enhanced Mobile-first responsive layout -->
-                <div
-                    class="flex flex-col md:flex-row lg:flex-row flex-1 gap-1 sm:gap-2 md:gap-3 lg:gap-4 xl:gap-6 p-1 sm:p-2 md:p-3 lg:p-4 xl:p-6 min-h-0 md:overflow-hidden md:items-stretch">
-                    <!-- Categories Sidebar Component - Mobile: Collapsible, Tablet: Sidebar, Desktop: Always visible -->
-                    <div class="order-1 md:order-1 w-full md:w-72 lg:w-auto flex flex-col flex-shrink-0 md:h-full md:min-h-0">
-                        <CategoriesSidebar :categories="categories" :selected-category="selectedCategory"
-                            @category-selected="selectCategory" />
-                    </div>
+                <!-- Three-column shell. Responsive on the shell's OWN width via
+                     container queries, not the viewport — see pos-premium.css. -->
+                <div class="posx-shell flex-1 min-h-0">
+                    <div class="posx-grid">
+                        <!-- Categories -->
+                        <div class="posx-col posx-col-side">
+                            <CategoriesSidebar :categories="categories" :selected-category="selectedCategory"
+                                @category-selected="selectCategory" />
+                        </div>
 
-                    <!-- Main Content Area - Products and Cart -->
-                    <div
-                        class="flex-1 flex flex-col md:flex-row lg:flex-row gap-1 sm:gap-2 md:gap-3 lg:gap-4 order-2 md:order-2 min-h-0 md:h-full md:overflow-hidden">
-                        <!-- Products Section - Enhanced responsive layout -->
-                        <div
-                            class="flex-1 md:flex-[0.7] lg:flex-[0.6] xl:flex-[0.55] flex flex-col order-1 md:order-1 min-h-0 md:overflow-hidden pb-0 md:pb-0">
+                        <!-- Products -->
+                        <div class="posx-col posx-col-main">
                                 <!-- Compact customer - employee-product search area -->
-                            <div
-                                class="bg-gradient-to-br from-white via-indigo-50/40 to-purple-50/30 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-indigo-200/50 mb-2 sm:mb-2 p-2.5 sm:p-3 md:p-2.5 relative overflow-hidden flex-shrink-0 mobile-search-area">
-                                <!-- Enhanced background elements -->
-                                <div class="absolute inset-0 overflow-hidden">
-                                    <div
-                                        class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-300/30 to-indigo-400/30 rounded-full blur-2xl">
+                            <div class="posx-panel mb-2 sm:mb-2 p-2.5 sm:p-3 md:p-2.5 relative flex-shrink-0 mobile-search-area">
+
+                                <!-- Ticket context: which sale day this books into -->
+                                <div class="posx-ctx">
+                                    <div v-if="daySession"
+                                        :title="daySessionTitle || ('Session: ' + daySession.label)"
+                                        :class="['posx-session', daySession.is_today ? '' : 'is-warn']">
+                                        <i :class="daySession.is_today ? 'fa fa-calendar-o' : 'fa fa-exclamation-triangle'"></i>
+                                        <span class="posx-session-key">Session</span>
+                                        <span class="posx-session-date">{{ daySession.label }}</span>
                                     </div>
-                                    <div
-                                        class="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-emerald-300/30 to-teal-400/30 rounded-full blur-xl">
-                                    </div>
-                                    <div
-                                        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-r from-purple-200/20 to-pink-200/20 rounded-full blur-2xl">
-                                    </div>
+                                    <span v-else></span>
+
+                                    <button type="button" @click="viewDraftSales"
+                                        class="posx-btn posx-btn-ghost posx-btn-sm" title="Open draft sales">
+                                        <i class="fa fa-file-text-o"></i>
+                                        <span>Drafts</span>
+                                    </button>
                                 </div>
 
-                                <!-- Customer and Mobile - Enhanced responsive grid -->
-                                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-2.5 mb-2 sm:mb-2.5">
+                                <!-- Customer · Mobile · Employee · Sale Type — one row -->
+                                <div class="posx-ctrl-grid">
                                     <div class="space-y-1.5">
-                                        <!-- Mobile: Buttons below label, Tablet+: Buttons next to label -->
-                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-1.5">
-                                            <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center">
-                                                <i class="fa fa-user-circle text-indigo-600 mr-2 text-base"></i>
+                                        <div class="posx-label-row">
+                                            <label class="posx-label mb-0">
+                                                <i class="fa fa-user"></i>
                                                 <span>Customer</span>
                                             </label>
-                                            <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-none sm:gap-1.5 sm:flex sm:flex-row">
-                                                <button type="button" @click="viewCustomerDetails"
-                                                    :disabled="!form.account_id || form.account_id === 3" :class="[
-                                                        'w-full sm:w-auto px-2.5 py-2 sm:py-1 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[40px] sm:min-h-[28px] touch-manipulation border-2 relative',
-                                                        (!form.account_id || form.account_id === 3) ?
-                                                            'bg-gray-200 text-gray-500 cursor-not-allowed border-gray-300/50' :
-                                                            hasCustomerFeedbacks ?
-                                                                'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30 button-glow' :
-                                                                'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border-purple-400/30'
-                                                    ]">
-                                                    <i class="fa fa-eye text-sm mr-1.5 sm:mr-1"></i>
-                                                    <span class="text-sm sm:text-xs">View</span>
-                                                </button>
-                                                <button type="button" @click="addNewCustomer"
-                                                    class="w-full sm:w-auto bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white px-2.5 py-2 sm:py-1 rounded-lg hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-xs sm:text-xs flex items-center justify-center min-h-[40px] sm:min-h-[28px] touch-manipulation border-2 border-blue-400/30">
-                                                    <i class="fa fa-plus text-sm mr-1.5 sm:mr-1"></i>
-                                                    <span class="text-sm sm:text-xs">Add</span>
-                                                </button>
-                                            </div>
                                         </div>
-                                        <SearchableSelect v-model="form.account_id" :options="formattedCustomers"
-                                            placeholder="Select Customer"
-                                            filter-placeholder="Search by name or mobile..." :visibleItems="8"
-                                            @search="searchCustomers" @change="handleCustomerChange"
-                                            input-class="w-full rounded-lg border-2 border-indigo-200/60 shadow-md focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-indigo-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
+                                        <div class="posx-group">
+                                            <SearchableSelect v-model="form.account_id" :options="formattedCustomers"
+                                                placeholder="Select Customer"
+                                                filter-placeholder="Search by name or mobile..." :visibleItems="8"
+                                                @search="searchCustomers" @change="handleCustomerChange"
+                                                input-class="posx-field posx-field-select" />
+                                            <button type="button" class="posx-gbtn" @click="viewCustomerDetails"
+                                                :disabled="!form.account_id || form.account_id === 3"
+                                                :class="{ 'has-flag': hasCustomerFeedbacks }"
+                                                :title="hasCustomerFeedbacks ? 'View customer details — has feedback' : 'View customer details'">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="posx-gbtn add" @click="addNewCustomer"
+                                                title="Add new customer">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="space-y-1.5">
-                                        <!-- Mobile: Label aligned, Tablet+: Same alignment as Customer section -->
-                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-1.5">
-                                            <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center">
-                                                <span> <i class="fa fa-phone text-emerald-600 mr-2 text-sm"></i> Mobile</span>
+                                        <div class="posx-label-row">
+                                            <label class="posx-label mb-0">
+                                                <i class="fa fa-phone"></i>
+                                                <span>Mobile</span>
                                             </label>
                                         </div>
-                                        <input v-model="form.customer_mobile" type="tel"
-                                            class="w-full rounded-lg border-2 border-emerald-200/60 shadow-md focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-emerald-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium placeholder:text-slate-400"
+                                        <input v-model="form.customer_mobile" type="tel" class="posx-field"
                                             placeholder="Enter mobile number">
                                     </div>
-                                </div>
 
-                                <!-- Employee and Sale Type - Enhanced responsive grid -->
-                                <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-2.5 mb-2 sm:mb-2.5">
                                     <div class="space-y-1.5">
-                                        <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center mb-1.5">
-                                            <i class="fa fa-user-tie text-purple-600 mr-2 text-sm"></i>
+                                        <label class="posx-label mb-1.5">
+                                            <i class="fa fa-user"></i>
                                             <span>Employee</span>
                                         </label>
                                         <SearchableSelect ref="employeeSelectRef" v-model="form.employee_id" :options="employees"
                                             placeholder="Select employee..." filter-placeholder="Search employees..."
                                             :visibleItems="8"
                                             data-employee-select="true"
-                                            input-class="w-full rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-purple-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium" />
-                                    </div>
-                                    <div class="space-y-1.5">
-                                        <label class="text-sm sm:text-sm font-bold text-slate-800 flex items-center mb-1.5">
-                                            <span> <i class="fa fa-tags text-orange-600 mr-2 text-sm"></i> Sale Type</span>
-                                        </label>
-                                        <SearchableSelect v-model="form.sale_type" :options="priceTypes"
-                                            placeholder="Select type..." filter-placeholder="Search sale types..."
-                                            :visibleItems="8"
-                                            input-class="w-full rounded-lg border-2 border-orange-200/60 shadow-md focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-orange-300 text-sm sm:text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium"
-                                            @change="loadProducts" />
+                                            input-class="posx-field posx-field-select" />
                                     </div>
                                 </div>
 
-                                <!-- Search Section - Enhanced responsive grid -->
-                                <div class="relative">
-                                    <div
-                                        class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-2">
-                                        <div class="space-y-1">
+                                <!-- Products · Barcode · Search · Drafts -->
+                                <div class="posx-search-row mt-2">
+                                        <div class="posx-f">
                                             <select v-model="selectedProductType" @change="filterByProductType"
-                                                class="w-full rounded-lg border-2 border-indigo-200/60 shadow-md focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm hover:shadow-lg hover:border-indigo-300 text-sm py-2 sm:py-2 px-3 min-h-[40px] sm:min-h-[36px] font-medium">
+                                                class="posx-field">
                                                 <option v-for="option in productTypeOptions" :key="option.value"
                                                     :value="option.value">
                                                     {{ option.label }}
                                                 </option>
                                             </select>
+                                            <i class="fa fa-angle-down posx-caret"></i>
                                         </div>
-                                        <div class="space-y-1">
-                                            <div class="relative group">
-                                                <input v-model="barcodeKey" @input="searchByBarcode" type="text"
-                                                    class="w-full pl-9 pr-3 py-2 sm:py-2 rounded-lg border-2 border-purple-200/60 shadow-md focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm group-hover:shadow-lg group-hover:border-purple-300 text-sm min-h-[40px] sm:min-h-[36px] font-medium placeholder:text-slate-400"
-                                                    placeholder="Scan barcode" autocomplete="off">
-                                            </div>
+                                        <div class="posx-f has-ico">
+                                            <i class="fa fa-barcode posx-field-ico"></i>
+                                            <input v-model="barcodeKey" @input="searchByBarcode" type="text"
+                                                class="posx-field"
+                                                placeholder="Scan barcode" autocomplete="off">
                                         </div>
-                                        <div class="space-y-1">
-                                            <div class="relative group">
-                                                <input v-model="productKey" @input="searchProducts" type="text"
-                                                    class="w-full pl-9 pr-3 py-2 sm:py-2 rounded-lg border-2 border-orange-200/60 shadow-md focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30 transition-all duration-200 bg-white/95 backdrop-blur-sm group-hover:shadow-lg group-hover:border-orange-300 text-sm min-h-[40px] sm:min-h-[36px] font-medium placeholder:text-slate-400"
-                                                    placeholder="Search products" autocomplete="off">
-                                            </div>
+                                        <div class="posx-f has-ico">
+                                            <i class="fa fa-search posx-field-ico"></i>
+                                            <input v-model="productKey" @input="searchProducts" type="text"
+                                                class="posx-field"
+                                                placeholder="Search products" autocomplete="off">
                                         </div>
-                                        <button type="button" @click="viewDraftSales"
-                                            class="bg-gradient-to-r from-slate-500 via-slate-600 to-gray-600 text-white py-2 sm:py-2 px-3 sm:px-3 rounded-lg hover:from-slate-600 hover:via-slate-700 hover:to-gray-700 transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 font-semibold text-sm sm:text-sm flex items-center justify-center min-h-[40px] sm:min-h-[36px] border-2 border-slate-400/30">
-                                            <i class="fa fa-file-alt mr-1.5 text-sm"></i>
-                                            <span>Drafts</span>
-                                        </button>
-                                    </div>
+                                        <SearchableSelect v-model="form.sale_type" :options="priceTypes"
+                                            placeholder="Sale type" filter-placeholder="Search sale types..."
+                                            :visibleItems="8"
+                                            input-class="posx-field posx-field-select"
+                                            @change="loadProducts" />
                                 </div>
                             </div>
 
                             <!-- Products Grid -->
-                            <div
-                                class="bg-white rounded-lg shadow-md border border-slate-200 flex-1 p-2 sm:p-3 min-h-0">
-                                <div class="h-full overflow-y-auto products-container custom-scrollbar" :style="{
-                                    'height': windowWidth >= 1024 ? 'calc(100vh - 220px)' : windowWidth >= 768 ? 'calc(70vh - 120px)' : 'auto',
-                                    'min-height': windowWidth >= 768 ? '300px' : '250px',
-                                    'max-height': windowWidth < 768 ? 'none' : undefined
-                                }">
+                            <div class="posx-panel flex-1 p-2 min-h-0 flex flex-col">
+                                <div class="posx-prods-scroll products-container custom-scrollbar">
                                     <div v-if="loading" class="flex items-center justify-center h-full">
                                         <div class="text-center">
-                                            <div
-                                                class="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-blue-500 mx-auto mb-4">
-                                            </div>
-                                            <p class="text-slate-600 text-sm sm:text-base">Loading products...</p>
+                                            <div class="posx-spinner animate-spin h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4"></div>
+                                            <p class="posx-ink-2 text-sm sm:text-base">Loading products...</p>
                                         </div>
                                     </div>
                                     <products-grid v-else :products="products" :lowStockThreshold="10"
@@ -178,14 +139,11 @@
                             </div>
                         </div>
 
-                        <!-- Cart Section - Enhanced responsive layout -->
-                        <div
-                            class="w-full md:w-80 lg:w-96 xl:w-[30rem] md:flex-[0.3] lg:flex-[0.4] xl:flex-[0.45] flex flex-col order-3 md:order-3 md:h-full mobile-cart-container">
-                            <div
-                                class="bg-white rounded-xl shadow-lg border border-slate-200 md:h-full flex flex-col min-h-0 mobile-cart-wrapper">
+                        <!-- Cart -->
+                        <div class="posx-col posx-col-cart mobile-cart-container">
+                            <div class="posx-panel h-full flex flex-col min-h-0 mobile-cart-wrapper">
                                 <!-- Cart Items Component -->
-                                <CartItems :items="form.items" :total-quantity="totalQuantity" :cart-height="cartHeight"
-                                    :max-height="windowWidth >= 1024 ? '100%' : windowWidth >= 768 ? '500px' : '350px'"
+                                <CartItems :items="form.items" :total-quantity="totalQuantity"
                                     :can-feedback="canFeedback"
                                     @view-cart-items="viewCartItems" @clear-cart="clearCart"
                                     @update-item-quantity="updateItemQuantity" @edit-cart-item="editCartItem"
@@ -197,86 +155,56 @@
 
 
                                 <!-- Discount Only (full width) -->
-                                <div class="p-1.5 sm:p-2 border-t border-slate-200">
+                                <div class="p-1.5 sm:p-2 border-t posx-divide">
                                     <div class="mb-1.5 sm:mb-2">
-                                        <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                            <i class="fa fa-tag mr-1 text-blue-500"></i>
-                                            Discount
+                                        <label class="posx-label mb-1">
+                                            <i class="fa fa-tag"></i>
+                                            <span>Discount</span>
                                         </label>
-                                        <div
-                                            class="flex items-stretch rounded-xl border-2 border-blue-400/60 bg-blue-50/50 shadow-sm overflow-hidden discount-input-shell">
-                                            <input v-model.number="form.other_discount" @input="calculateTotals"
-                                                type="number" step="0.01" min="0"
-                                                class="w-full border-0 bg-transparent text-sm sm:text-sm py-2.5 sm:py-2.5 px-3 focus:ring-0 focus:outline-none min-h-[44px] sm:min-h-[40px]"
-                                                placeholder="0">
+                                        <div class="flex items-stretch gap-1.5 discount-input-shell">
+                                            <div class="posx-f has-ico flex-1">
+                                                <i class="fa fa-tag posx-field-ico"></i>
+                                                <input v-model.number="form.other_discount" @input="calculateTotals"
+                                                    type="number" step="0.01" min="0" class="posx-field"
+                                                    placeholder="0">
+                                            </div>
                                             <button type="button" @click="convertDiscountToPercentage"
-                                                class="shrink-0 m-1.5 px-3 sm:px-3 py-1.5 sm:py-1 rounded-lg bg-blue-500 text-white text-xs font-semibold hover:bg-blue-600 transition-colors min-w-[48px] sm:min-w-[44px]">
+                                                class="posx-btn posx-btn-ghost shrink-0" style="width:40px;padding:0">
                                                 %
                                             </button>
                                         </div>
                                     </div>
 
-                                    <!-- Enhanced Order Total - Mobile optimized -->
-                                    <div
-                                        class="bg-gradient-to-br from-white via-indigo-50/40 to-purple-50/30 rounded-2xl p-1 sm:p-1.5 mb-1 sm:mb-1.5 border border-indigo-200/50 shadow-xl relative overflow-hidden mobile-summary-card">
-                                        <!-- Decorative background elements -->
-                                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                                        <div class="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-emerald-200/20 to-teal-200/20 rounded-full blur-xl -ml-12 -mb-12"></div>
-
-                                        <div class="relative z-10 space-y-1">
-                                            <div class="flex justify-between items-center py-0.5 px-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-100 min-h-[44px] sm:min-h-[42px]">
-                                                <span class="text-slate-700 font-semibold flex items-center text-sm">
-                                                    <span class="hidden sm:inline"><i class="fa fa-calculator text-indigo-600 mr-2 text-sm"></i> Sub Total</span>
-                                                    <span class="sm:hidden"><i class="fa fa-calculator text-indigo-600 mr-2 text-sm"></i> Subtotal</span>
-                                                </span>
-                                                <span
-                                                    class="font-bold text-slate-900 bg-gradient-to-r from-indigo-50 to-blue-50 px-2 py-0.5 rounded-lg shadow-md text-sm border border-indigo-100 min-w-[104px] text-center">
-                                                    {{ formatNumber(form.total) }}
-                                                </span>
-                                            </div>
-                                            <div class="flex justify-between items-center py-0.5 px-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-red-100 min-h-[44px] sm:min-h-[42px]" v-if="form.other_discount > 0">
-                                                <span class="font-semibold flex items-center text-sm text-red-700">
-
-                                                    <span class="hidden sm:inline">
-                                                        <i class="fa fa-tag text-red-600 mr-2 text-sm"></i>
-                                                        Discount
-                                                        <span v-if="!isNaN(discountPercentage) && isFinite(discountPercentage)">({{ discountPercentage }}%)</span>
-                                                    </span>
-                                                    <span class="sm:hidden">
-                                                        <i class="fa fa-tag text-red-600 mr-2 text-sm"></i>
-                                                        Disc<span v-if="!isNaN(discountPercentage) && isFinite(discountPercentage)"> ({{ discountPercentage }}%)</span>
-                                                    </span>
-                                                </span>
-                                                <span
-                                                    class="font-bold bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-2 py-0.5 rounded-lg shadow-md text-sm border border-red-100 min-w-[104px] text-center">
-                                                    -{{ formatNumber(form.other_discount) }}
-                                                </span>
-                                            </div>
-                                            <div class="flex justify-between items-center py-0.5 px-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-blue-100 min-h-[44px] sm:min-h-[42px]" v-if="Math.abs(form.round_off) > 0.01">
-                                                <span class="font-semibold flex items-center text-sm text-blue-700">
-                                                    <i class="fa fa-adjust text-blue-600 mr-2 text-sm"></i>
-                                                    <span class="hidden sm:inline">Round Off</span>
-                                                    <span class="sm:hidden">Round</span>
-                                                </span>
-                                                <span
-                                                    class="font-bold bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 px-2 py-0.5 rounded-lg shadow-md text-sm border border-blue-100 min-w-[104px] text-center">{{
-                                                        Number(form.round_off).toFixed(2) }}</span>
-                                            </div>
-                                            <div
-                                                class="border-t-2 border-indigo-200/60 pt-0.5 flex justify-between items-center bg-gradient-to-r from-emerald-50/50 to-green-50/50 -mx-1 sm:-mx-1.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-b-2xl min-h-[68px] sm:min-h-[64px]">
-                                                <span
-                                                    class="font-bold text-base sm:text-lg text-slate-800 flex items-center leading-none">
-                                                    <i class="fa fa-receipt text-emerald-600 mr-2 text-lg"></i>
-                                                    <span class="hidden sm:inline">Total</span>
-                                                    <span class="sm:hidden">Total</span>
-                                                </span>
-                                                <div
-                                                    class="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 text-white px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-xl shadow-2xl transform hover:scale-105 transition-transform duration-200 border-2 border-emerald-400/30 min-w-[120px] sm:min-w-[132px] text-center">
-                                                    <span class="text-base sm:text-lg font-black tracking-tight leading-none">
-                                                        {{ formatNumber(form.grand_total) }}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                    <!-- Order Total -->
+                                    <div class="posx-panel-2 rounded-xl px-2 py-1.5 mb-1 sm:mb-1.5 border posx-divide mobile-summary-card">
+                                        <div class="posx-total-row">
+                                            <span class="flex items-center gap-2">
+                                                <i class="fa fa-calculator posx-muted"></i>
+                                                <span class="hidden sm:inline">Sub Total</span>
+                                                <span class="sm:hidden">Subtotal</span>
+                                            </span>
+                                            <span class="posx-amount-muted">{{ formatNumber(form.total) }}</span>
+                                        </div>
+                                        <div class="posx-total-row" v-if="form.other_discount > 0">
+                                            <span class="flex items-center gap-2">
+                                                <i class="fa fa-tag posx-muted"></i>
+                                                <span class="hidden sm:inline">Discount</span>
+                                                <span class="sm:hidden">Disc</span>
+                                                <span v-if="!isNaN(discountPercentage) && isFinite(discountPercentage)">({{ discountPercentage }}%)</span>
+                                            </span>
+                                            <span class="posx-amount-danger">-{{ formatNumber(form.other_discount) }}</span>
+                                        </div>
+                                        <div class="posx-total-row" v-if="Math.abs(form.round_off) > 0.01">
+                                            <span class="flex items-center gap-2">
+                                                <i class="fa fa-adjust posx-muted"></i>
+                                                <span class="hidden sm:inline">Round Off</span>
+                                                <span class="sm:hidden">Round</span>
+                                            </span>
+                                            <span class="posx-amount-muted">{{ Number(form.round_off).toFixed(2) }}</span>
+                                        </div>
+                                        <div class="posx-total-row posx-total-grand">
+                                            <span>Total</span>
+                                            <span class="posx-amount">{{ formatNumber(form.grand_total) }}</span>
                                         </div>
                                     </div>
 
@@ -284,43 +212,24 @@
                                     <div class="space-y-2 sm:space-y-2 mobile-action-buttons">
                                         <div class="grid grid-cols-2 gap-2 sm:gap-2">
                                             <button type="button" @click="saveDraft"
-                                                class="bg-gradient-to-r from-slate-500 via-slate-600 to-gray-600 text-white py-2.5 sm:py-2.5 md:py-2 px-3 sm:px-4 rounded-xl text-sm sm:text-sm font-bold hover:from-slate-600 hover:via-slate-700 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform active:scale-95 relative overflow-hidden group min-h-[44px] sm:min-h-[42px] border-2 border-slate-400/30">
-                                                <div
-                                                    class="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-200">
-                                                </div>
-                                                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                                                <div class="relative z-10 flex items-center justify-center">
-                                                    <i class="fa fa-save mr-2 text-sm"></i>
-                                                    <span class="text-sm">Draft</span>
-                                                </div>
+                                                class="posx-btn posx-btn-ghost min-h-[44px] sm:min-h-[42px]">
+                                                <i class="fa fa-save"></i>
+                                                <span>Draft</span>
                                             </button>
                                             <button type="button" @click="submitSale"
-                                                :disabled="Object.keys(form.items).length === 0" :class="[
-                                                    'py-2.5 sm:py-2.5 md:py-2 px-3 sm:px-4 rounded-xl text-sm sm:text-sm font-bold transition-all duration-300 shadow-lg relative overflow-hidden group min-h-[44px] sm:min-h-[42px] border-2',
-                                                    Object.keys(form.items).length === 0 ?
-                                                        'bg-gray-400 text-gray-500 cursor-not-allowed border-gray-300/30' :
-                                                        'bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 hover:shadow-xl transform active:scale-95 border-green-400/30 btn-pulse'
-                                                ]">
-                                                <div v-if="Object.keys(form.items).length > 0"
-                                                    class="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-200">
-                                                </div>
-                                                <div v-if="Object.keys(form.items).length > 0"
-                                                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                                                <div class="relative z-10 flex items-center justify-center">
-                                                    <i class="fa fa-check-circle mr-2 text-sm"></i>
-                                                    <span class="text-sm font-extrabold">Submit</span>
-                                                </div>
+                                                :disabled="Object.keys(form.items).length === 0"
+                                                class="posx-btn posx-btn-primary min-h-[44px] sm:min-h-[42px]">
+                                                <i class="fa fa-check-circle"></i>
+                                                <span class="font-extrabold">Submit</span>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- End Cart Section -->
+                        <!-- End cart -->
                     </div>
-                    <!-- End Main Content Area - Products and Cart -->
                 </div>
-                <!-- End Mobile-first responsive layout -->
             </form>
         </div>
 
@@ -461,6 +370,19 @@ export default {
         canFeedback: {
             type: Boolean,
             default: false
+        },
+        // The open sale-day session this ticket books into: { id, date, label,
+        // opened_at, is_today }. The sale takes its date from the session rather
+        // than from today, so the header shows it.
+        daySession: {
+            type: Object,
+            default: null
+        },
+        // POS colour preset from Settings → Sale Settings (`pos_color_preset`):
+        // 'theme' follows the app theme colour, the rest are fixed palettes.
+        colorPreset: {
+            type: String,
+            default: 'theme'
         }
     },
 
@@ -496,6 +418,14 @@ export default {
         const showConfirmationModal = ref(false)
         const submitting = ref(false)
         const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+
+        // --vh is consumed by the legacy mobile stylesheets; layout itself is
+        // driven by container queries, not by this value.
+        const setVH = () => {
+            const vh = window.innerHeight * 0.01
+            document.documentElement.style.setProperty('--vh', `${vh}px`)
+            windowWidth.value = window.innerWidth
+        }
         const customPaymentData = ref({
             payments: [],
             totalPaid: 0,
@@ -624,6 +554,17 @@ export default {
 
         const discountPercentage = computed(() => {
             return form.total ? Math.round((form.other_discount / form.total) * 100 * 100) / 100 : 0
+        })
+
+        // Spells out what the session chip means on hover — mainly for the
+        // backdated case, where every sale rung up now is filed under an
+        // earlier date because that day was never closed.
+        const daySessionTitle = computed(() => {
+            if (!props.daySession) return ''
+            const opened = `opened ${props.daySession.opened_at}`
+            return props.daySession.is_today
+                ? `Today's day session (${opened}) — sales are dated ${props.daySession.date}`
+                : `The open day session is from ${props.daySession.label} (${opened}) — sales are dated ${props.daySession.date}, not today`
         })
 
         const cartItemsByEmployee = computed(() => {
@@ -1561,40 +1502,14 @@ export default {
             loadProducts()
             fetchCustomers()
 
-            // Handle viewport height and window width tracking
-            const setVH = () => {
-                const vh = window.innerHeight * 0.01
-                document.documentElement.style.setProperty('--vh', `${vh}px`)
-                windowWidth.value = window.innerWidth
-            }
-
             setVH()
             window.addEventListener('resize', setVH)
             window.addEventListener('orientationchange', setVH)
         })
 
         onUnmounted(() => {
-            const setVH = () => {
-                const vh = window.innerHeight * 0.01
-                document.documentElement.style.setProperty('--vh', `${vh}px`)
-                windowWidth.value = window.innerWidth
-            }
-
             window.removeEventListener('resize', setVH)
             window.removeEventListener('orientationchange', setVH)
-        })
-
-        const cartHeight = computed(() => {
-            if (windowWidth.value >= 1024) {
-                // Desktop: Take full height minus header, footer and padding
-                return 'calc(100vh - 150px)'
-            } else if (windowWidth.value >= 768) {
-                // Tablet: Medium height
-                return 'calc(60vh - 120px)'
-            } else {
-                // Mobile: Optimized height for better visibility
-                return 'calc(380px - 140px)'
-            }
         })
 
         const formattedCustomers = computed(() => {
@@ -1647,8 +1562,8 @@ export default {
             // Computed
             totalQuantity,
             discountPercentage,
+            daySessionTitle,
             cartItemsByEmployee,
-            cartHeight,
             formattedCustomers,
 
             // Methods
@@ -1726,17 +1641,4 @@ export default {
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-.button-glow {
-    animation: glow-pulse 2s ease-in-out infinite;
-    box-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(236, 72, 153, 0.4), 0 0 30px rgba(244, 63, 94, 0.3);
-}
-
-@keyframes glow-pulse {
-    0%, 100% {
-        box-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(236, 72, 153, 0.4), 0 0 30px rgba(244, 63, 94, 0.3);
-    }
-    50% {
-        box-shadow: 0 0 15px rgba(168, 85, 247, 0.8), 0 0 30px rgba(236, 72, 153, 0.6), 0 0 45px rgba(244, 63, 94, 0.5);
-    }
-}
 </style>

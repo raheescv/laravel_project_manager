@@ -6,11 +6,16 @@ import 'package:dio/dio.dart';
 import '../../../domain/constants/app_config.dart';
 import '../../local_storage/local_storage_service.dart';
 import 'common_exception.dart';
+import 'reachability.dart';
 // Native-only dev TLS handling; no-op on web.
 import 'dev_http_stub.dart' if (dart.library.io) 'dev_http_io.dart';
 
 /// Called when the server rejects the token (401) so the app can force re-login.
 typedef OnUnauthorized = void Function();
+
+/// Called with whether a request reached the server, so the app can show an
+/// offline banner without any screen having to ask.
+typedef OnReachability = void Function(bool reachable);
 
 /// The Dio wrapper. Owns the connection [config], injects the auth token,
 /// tenant/host headers and the active `branch_id`, and unwraps the Laravel
@@ -30,12 +35,28 @@ class HttpService {
     ));
     // Allow self-signed certs for local .test hosts in dev (native only).
     configureDevHttp(_dio);
+    // One place to observe reachability for the whole app. Every verb below goes
+    // through Dio, so the offline banner is driven by what requests actually did
+    // rather than by each call site remembering to report.
+    _dio.interceptors.add(InterceptorsWrapper(
+      onResponse: (response, handler) {
+        // Any response at all — including a 4xx or 5xx — proves the server was
+        // reached. `validateStatus` is permissive, so this covers those too.
+        onReachability?.call(true);
+        handler.next(response);
+      },
+      onError: (error, handler) {
+        if (isServerUnreachable(error)) onReachability?.call(false);
+        handler.next(error);
+      },
+    ));
   }
 
   final LocalStorageService storage;
   AppConfig config;
   late final Dio _dio;
   OnUnauthorized? onUnauthorized;
+  OnReachability? onReachability;
 
   /// The branch the user is operating as (set by BranchCubit). When set it is
   /// attached as `branch_id` to every request so branch-aware endpoints filter

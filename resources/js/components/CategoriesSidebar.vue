@@ -1,137 +1,69 @@
 <template>
     <!-- Categories Sidebar - Mobile: top bar, Desktop: left sidebar -->
-    <div class="w-full lg:w-60 flex flex-col order-1 lg:order-1 h-full md:h-full categories-container">
-        <div class="bg-white/95 backdrop-blur-lg rounded-xl shadow-xl border border-emerald-100/60 h-full flex flex-col overflow-hidden min-h-0 rounded-b-none md:rounded-b-xl md:justify-start"
-            style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 50%, rgba(255,255,255,0.95) 100%);">
+    <div class="flex flex-col h-full min-h-0 categories-container">
+        <div class="posx-panel posx-panel-flush h-full flex flex-col min-h-0">
             <!-- Categories Header -->
-            <div
-                class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 p-2 sm:p-2.5 relative overflow-hidden flex-shrink-0">
-                <div class="absolute inset-0 bg-gradient-to-r from-white/15 to-transparent"></div>
-                <div class="absolute inset-0 opacity-20 bg-gradient-to-r from-yellow-300 via-transparent to-pink-300">
-                </div>
-                <div class="relative flex items-center justify-between z-10">
-                    <h6 class="text-white font-bold text-xs sm:text-sm flex items-center drop-shadow-sm">
-                        <div class="bg-white/25 p-1 rounded-md mr-1.5 border border-white/20 backdrop-blur-sm">
-                            <i class="fa fa-th-large text-white text-xs drop-shadow-sm"></i>
-                        </div>
-                        Categories
+            <div class="posx-head px-2.5 py-2 flex-shrink-0">
+                <div class="flex items-center justify-between gap-2">
+                    <h6 class="font-bold text-xs sm:text-sm flex items-center gap-2 mb-0">
+                        <i class="fa fa-th-large text-xs"></i>
+                        <span class="posx-head-label">Categories</span>
                     </h6>
                     <div class="flex items-center gap-1">
-                        <a href="/sale"
-                            class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-1.5 py-0.5 rounded-full text-xs font-semibold shadow-md border border-white/20 flex items-center gap-1 d-print-none"
-                            aria-label="Open sale list" title="Sale list">
-                            <i class="fa fa-list-ul text-xs"></i>
-                            Sale List
+                        <a href="/sale" class="posx-htool d-print-none" aria-label="Open sale list" title="Sale list">
+                            <i class="fa fa-list-ul"></i>
                         </a>
-                        <button type="button" @click="toggleFullscreen"
-                            class="bg-white/25 hover:bg-white/35 backdrop-blur text-white px-1.5 py-0.5 rounded-full text-xs font-semibold shadow-md border border-white/20 flex items-center gap-1 d-print-none"
+                        <button type="button" @click="toggleFullscreen" class="posx-htool d-print-none"
                             aria-label="Toggle fullscreen" title="Toggle fullscreen">
-                            <i class="fa fa-arrows text-xs"></i>
+                            <i class="fa fa-arrows"></i>
                         </button>
                     </div>
                 </div>
-                <!-- Subtle decorative elements -->
-                <div class="absolute -right-2 -top-2 w-16 h-16 bg-white/5 rounded-full"></div>
-                <div class="absolute -left-4 -bottom-4 w-20 h-20 bg-white/5 rounded-full"></div>
             </div>
 
             <!-- Fixed Categories (Favorites & All Products) -->
-            <div
-                class="fixed-categories flex-shrink-0 bg-gradient-to-b from-emerald-50/40 via-white/60 to-rose-50/40 backdrop-blur-sm border-b border-emerald-200/60 flex flex-row md:flex-col w-full">
+            <div class="fixed-categories posx-side-pin posx-panel-2 flex-shrink-0 border-b posx-divide flex flex-col w-full">
                 <!-- Favorites -->
-                <button type="button" @click="handleCategorySelect('favorite')" :class="[
-                    'category-btn fixed-category-btn flex-1 md:w-full md:flex-shrink-0 flex items-center justify-center md:justify-start px-2 sm:px-2 md:px-2.5 py-2 md:py-2 border-r md:border-r-0 md:border-b border-white/20 transition-all duration-300 group relative',
-                    selectedCategory === 'favorite'
-                        ? 'bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500 text-white shadow-md transform scale-[1.01] ring-1 ring-white/30'
-                        : 'bg-white/70 hover:bg-gradient-to-r hover:from-rose-50 hover:via-pink-50 hover:to-purple-50 text-slate-700 hover:text-rose-600 hover:shadow-sm backdrop-blur-sm border border-rose-100/50'
+                <button type="button" @click="handleCategorySelect('favorite')" title="Favorites" :class="[
+                    'category-btn fixed-category-btn posx-cat fav',
+                    selectedCategory === 'favorite' ? 'is-active' : ''
                 ]">
-                    <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        v-if="selectedCategory !== 'favorite'"></div>
-                    <div :class="[
-                        'p-1 rounded-md mr-1 sm:mr-1 md:mr-1.5 lg:mr-2 transition-all duration-300 relative z-10 flex-shrink-0',
-                        selectedCategory === 'favorite' ? 'bg-white/25 shadow-sm backdrop-blur-sm border border-white/20' : 'bg-rose-100 group-hover:bg-rose-200 group-hover:shadow-sm'
-                    ]">
-                        <i :class="[
-                            'fa fa-star text-xs drop-shadow-sm',
-                            selectedCategory === 'favorite' ? 'text-white' : 'text-rose-600'
-                        ]"></i>
-                    </div>
-                    <span class="font-semibold relative z-10 text-xs md:text-sm text-center md:text-left whitespace-nowrap">Favorites</span>
-                    <div v-if="selectedCategory === 'favorite'"
-                        class="w-1 h-1 bg-white rounded-full animate-pulse shadow-sm ml-1 sm:ml-1.5 lg:ml-auto flex-shrink-0"></div>
+                    <span class="posx-cat-ico"><i class="fa fa-star"></i></span>
+                        <span class="posx-cat-name">Favorites</span>
                 </button>
 
                 <!-- All Products -->
-                <button type="button" @click="handleCategorySelect('')" :class="[
-                    'category-btn fixed-category-btn flex-1 md:w-full md:flex-shrink-0 flex items-center justify-center md:justify-start px-2 sm:px-2 md:px-2.5 py-2 md:py-2 border-r-0 md:border-r-0 md:border-b border-white/20 transition-all duration-300 group relative',
-                    selectedCategory === ''
-                        ? 'bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 text-white shadow-md transform scale-[1.01] ring-1 ring-white/30'
-                        : 'bg-white/70 hover:bg-gradient-to-r hover:from-emerald-50 hover:via-teal-50 hover:to-cyan-50 text-slate-700 hover:text-emerald-600 hover:shadow-sm backdrop-blur-sm border border-emerald-100/50'
+                <button type="button" @click="handleCategorySelect('')" title="All Products" :class="[
+                    'category-btn fixed-category-btn posx-cat',
+                    selectedCategory === '' ? 'is-active' : ''
                 ]">
-                    <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        v-if="selectedCategory !== ''"></div>
-                    <div :class="[
-                        'p-1 rounded-md mr-1 sm:mr-1 md:mr-1.5 lg:mr-2 transition-all duration-300 relative z-10 flex-shrink-0',
-                        selectedCategory === '' ? 'bg-white/25 shadow-sm backdrop-blur-sm border border-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200 group-hover:shadow-sm'
-                    ]">
-                        <i :class="[
-                            'fa fa-th-large text-xs drop-shadow-sm',
-                            selectedCategory === '' ? 'text-white' : 'text-emerald-600'
-                        ]"></i>
-                    </div>
-                    <span class="font-semibold relative z-10 text-xs md:text-sm text-center md:text-left whitespace-nowrap">All Products</span>
-                    <div v-if="selectedCategory === ''"
-                        class="w-1 h-1 bg-white rounded-full animate-pulse shadow-sm ml-1 sm:ml-1.5 lg:ml-auto flex-shrink-0"></div>
+                    <span class="posx-cat-ico"><i class="fa fa-th-large"></i></span>
+                        <span class="posx-cat-name">All Products</span>
                 </button>
             </div>
 
             <!-- Scrollable Categories List -->
             <div ref="scrollContainer"
-                class="flex md:flex-col md:items-start overflow-x-auto md:overflow-x-hidden md:overflow-y-auto custom-scrollbar flex-1 min-h-0 scroll-smooth categories-scroll-container"
-                :style="{
-                    scrollBehavior: 'smooth',
-                    WebkitOverflowScrolling: 'touch',
-                    maxHeight: windowWidth >= 768 ? categoriesHeight : '120px'
-                }">
-                <div class="flex md:flex-col bg-gradient-to-b from-violet-50/30 via-white/60 to-indigo-50/40 backdrop-blur-sm w-full">
+                class="posx-side-scroll flex flex-col custom-scrollbar flex-1 min-h-0 overflow-y-auto scroll-smooth categories-scroll-container"
+                style="scroll-behavior:smooth;-webkit-overflow-scrolling:touch">
+                <div class="posx-side-track flex flex-col w-full">
                 <!-- Category Items -->
-                <button v-for="(category, index) in categories" :key="category.id" type="button"
+                <button v-for="category in categories" :key="category.id" type="button"
                     @click="handleCategorySelect(category.id)" :class="[
-                        'category-btn flex-shrink-0 md:w-full flex items-center px-2.5 py-2 transition-all duration-300 group relative whitespace-nowrap md:whitespace-normal',
-                        index < categories.length - 1 ? 'border-b border-white/20' : '',
-                        selectedCategory === category.id
-                            ? 'bg-gradient-to-r from-violet-400 via-purple-500 to-indigo-500 text-white shadow-md transform scale-[1.01] ring-1 ring-white/30'
-                            : 'bg-white/60 hover:bg-gradient-to-r hover:from-violet-50 hover:via-purple-50 hover:to-indigo-50 text-slate-700 hover:text-violet-600 hover:shadow-sm backdrop-blur-sm border border-violet-100/50'
+                        'category-btn posx-cat',
+                        selectedCategory === category.id ? 'is-active' : ''
                     ]">
-                    <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        v-if="selectedCategory !== category.id"></div>
-                    <div :class="[
-                        'p-1 rounded-md mr-2 transition-all duration-300 relative z-10',
-                        selectedCategory === category.id ? 'bg-white/25 shadow-sm backdrop-blur-sm border border-white/20' : 'bg-violet-100/80 group-hover:bg-violet-200 group-hover:shadow-sm'
-                    ]">
-                        <i :class="[
-                            'fa fa-tag text-xs drop-shadow-sm',
-                            selectedCategory === category.id ? 'text-white' : 'text-violet-600'
-                        ]"></i>
-                    </div>
-                    <div class="flex-1 text-left relative z-10 min-w-0 overflow-visible">
-                        <span class="font-semibold block text-xs md:text-sm" :title="category.name">{{
-                            category.name }}</span>
-                    </div>
-                    <div class="flex items-center gap-1 relative z-10">
-                        <span :class="[
-                            'px-1.5 py-0.5 rounded-full text-xs font-bold shadow-sm',
-                            selectedCategory === category.id
-                                ? 'bg-white/20 text-white'
-                                : 'bg-slate-100/80 text-slate-600 group-hover:bg-cyan-100 group-hover:text-cyan-800'
-                        ]">
-                            {{ category.products_count || 0 }}
-                        </span>
-                        <div v-if="selectedCategory === category.id"
-                            class="w-1 h-1 bg-white rounded-full animate-pulse shadow-sm"></div>
-                    </div>
+                    <span class="posx-cat-ico"><i class="fa fa-tag"></i></span>
+                    <span class="posx-cat-name text-left" :title="category.name">{{ category.name }}</span>
+                    <span class="posx-cat-count">{{ category.products_count || 0 }}</span>
                 </button>
                 </div>
+            </div>
+
+            <!-- closes the column so it never ends in dead white space -->
+            <div class="posx-side-foot">
+                <span>Catalogue</span>
+                <b>{{ totalProductCount }} items</b>
             </div>
         </div>
     </div>
@@ -155,61 +87,27 @@ export default {
     },
     emits: ['category-selected'],
     setup(props, { emit }) {
-        const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
-        const windowHeight = ref(typeof window !== 'undefined' ? window.innerHeight : 768)
-        const containerHeight = ref('auto')
         const scrollContainer = ref(null)
 
-        const categoriesHeight = computed(() => {
-            if (windowWidth.value >= 768) {
-                // Tablet and Desktop: Calculate height based on actual screen height
-                // Account for: header (~50px), fixed categories (~90px), container padding (~24px), and some buffer
-                const headerHeight = 50
-                const fixedCategoriesHeight = 90
-                const containerPadding = 24
-                const buffer = 20
-                const totalReserved = headerHeight + fixedCategoriesHeight + containerPadding + buffer
-                const availableHeight = windowHeight.value - totalReserved
-                // Ensure minimum height of 200px for usability
-                return `${Math.max(200, availableHeight)}px`
-            } else {
-                // Mobile: Fixed height for horizontal scroll
-                return '120px'
-            }
-        })
-
-        const updateDimensions = () => {
-            windowWidth.value = window.innerWidth
-            windowHeight.value = window.innerHeight
-
-            // Update container height on next tick
-            nextTick(() => {
-                if (windowWidth.value >= 768) {
-                    // Tablet and Desktop: Calculate based on actual screen height
-                    const headerHeight = 50
-                    const fixedCategoriesHeight = 90
-                    const containerPadding = 24
-                    const buffer = 20
-                    const totalReserved = headerHeight + fixedCategoriesHeight + containerPadding + buffer
-                    const availableHeight = windowHeight.value - totalReserved
-                    const maxHeight = Math.max(200, availableHeight)
-                    containerHeight.value = `${maxHeight}px`
-                } else {
-                    // Mobile: Auto height for content
-                    containerHeight.value = 'auto'
-                }
-            })
+        // The sidebar becomes a horizontal strip on a CONTAINER query, not a
+        // viewport one, so orientation is read off the element itself — a
+        // window-width test would be wrong whenever the shell is narrower
+        // than the window (collapsed nav, split view).
+        const isHorizontal = () => {
+            const el = scrollContainer.value
+            if (!el) return false
+            return getComputedStyle(el).flexDirection.startsWith('row')
         }
 
         const scrollToActiveCategory = () => {
             nextTick(() => {
                 if (!scrollContainer.value) return
 
-                // Look for active category button with updated color selectors
-                const activeButton = scrollContainer.value.querySelector('.category-btn[class*="from-purple-500"], .category-btn[class*="from-indigo-500"], .category-btn[class*="from-cyan-500"]')
+                // Active state is a stable class now, not a gradient utility
+                const activeButton = scrollContainer.value.querySelector('.category-btn.is-active')
                 if (activeButton) {
-                    if (windowWidth.value >= 768) {
-                        // Tablet and Desktop: vertical scroll
+                    if (!isHorizontal()) {
+                        // Column: scroll vertically
                         activeButton.scrollIntoView({
                             behavior: 'smooth',
                             block: 'center',
@@ -270,44 +168,28 @@ export default {
             scrollToActiveCategory()
         }, { flush: 'post' })
 
+        // Height is CSS now (flex:1 + own scroll), so the only thing left to do
+        // on a resize is keep the active chip in view when the strip flips
+        // between row and column.
+        const onResize = () => scrollToActiveCategory()
+
         onMounted(() => {
-            updateDimensions()
             scrollToActiveCategory()
-
-            window.addEventListener('resize', updateDimensions)
-            window.addEventListener('orientationchange', () => {
-                // Delay to account for orientation change
-                setTimeout(() => {
-                    updateDimensions()
-                    scrollToActiveCategory()
-                }, 100)
-            })
-
-            // Initial height setup
-            nextTick(() => {
-                if (windowWidth.value >= 768) {
-                    const headerHeight = 50
-                    const fixedCategoriesHeight = 90
-                    const containerPadding = 24
-                    const buffer = 20
-                    const totalReserved = headerHeight + fixedCategoriesHeight + containerPadding + buffer
-                    const availableHeight = windowHeight.value - totalReserved
-                    const maxHeight = Math.max(200, availableHeight)
-                    containerHeight.value = `${maxHeight}px`
-                }
-            })
+            window.addEventListener('resize', onResize)
+            window.addEventListener('orientationchange', onResize)
         })
 
         onUnmounted(() => {
-            window.removeEventListener('resize', updateDimensions)
-            window.removeEventListener('orientationchange', updateDimensions)
+            window.removeEventListener('resize', onResize)
+            window.removeEventListener('orientationchange', onResize)
         })
 
+        const totalProductCount = computed(() =>
+            props.categories.reduce((n, c) => n + (Number(c.products_count) || 0), 0).toLocaleString()
+        )
+
         return {
-            windowWidth,
-            windowHeight,
-            categoriesHeight,
-            containerHeight,
+            totalProductCount,
             scrollContainer,
             handleCategorySelect,
             toggleFullscreen

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -21,9 +22,19 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    /**
+     * `users.tenant_id` is NOT NULL with a foreign key to `tenants`, and the
+     * BelongsToTenant trait can only auto-fill it when a tenant is already
+     * resolved for the request — which is never true in a bare test. Without an
+     * explicit tenant here every `User::factory()` call dies on the constraint,
+     * so a tenant is created alongside unless the caller supplies one
+     * (`->create(['tenant_id' => $t->id])` or `->for($tenant)` both override it
+     * without creating a second tenant).
+     */
     public function definition(): array
     {
         return [
+            'tenant_id' => Tenant::factory(),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),

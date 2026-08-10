@@ -82,6 +82,7 @@ export default {
 <style scoped>
 .products-grid-container {
     width: 100%;
+    height: 100%;
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
@@ -91,7 +92,7 @@ export default {
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
     gap: 8px;
     width: 100%;
     max-width: 100%;
@@ -113,7 +114,7 @@ export default {
 /* Responsive grid layouts for different screen sizes */
 @media (min-width: 1536px) {
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
         gap: 10px;
     }
 }

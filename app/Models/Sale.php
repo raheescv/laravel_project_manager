@@ -29,6 +29,10 @@ class Sale extends Model implements AuditableContracts
         'tenant_id',
         'invoice_no',
         'reference_no',
+        // Device-generated idempotency key for sales queued offline on the
+        // mobile POS, plus the till clock at the moment it was rung up.
+        'client_uuid',
+        'client_created_at',
         'sale_type',
 
         'branch_id',
@@ -161,6 +165,9 @@ class Sale extends Model implements AuditableContracts
                 return $q->where(function ($q) use ($search): void {
                     $q->where('sales.id', 'like', "%{$search}%")
                         ->orWhere('sales.invoice_no', 'like', "%{$search}%")
+                        // Also finds a sale by the provisional reference printed on
+                        // the customer's receipt during an outage — the mobile POS
+                        // stores that in reference_no when the sale syncs.
                         ->orWhere('sales.reference_no', 'like', "%{$search}%")
                         ->orWhere('sales.customer_name', 'like', "%{$search}%")
                         ->orWhere('sales.customer_mobile', 'like', "%{$search}%");

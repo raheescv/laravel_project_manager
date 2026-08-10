@@ -11,6 +11,11 @@ extension _SalesListControls on _SalesListScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // First, because it is what someone with a receipt in their hand reaches
+          // for — the other controls are for browsing, this one is for finding.
+          _fieldLabel('SEARCH'),
+          _searchBox(),
+          const SizedBox(height: 13),
           _fieldLabel('DATE RANGE'),
           _dateBox(),
           const SizedBox(height: 13),
@@ -39,6 +44,50 @@ extension _SalesListControls on _SalesListScreenState {
         padding: const EdgeInsets.only(left: 2, bottom: 6),
         child: Text(t, style: ui(size: 8.5, weight: FontWeight.w800, color: context.astra.textMuted, letterSpacing: 1.1)),
       );
+
+  /// Invoice number or customer. Debounced, because the list refetches on every
+  /// change and a per-keystroke request would queue a page load for each letter of
+  /// a customer's name.
+  Widget _searchBox() {
+    final p = context.astra;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11),
+      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(13)),
+      child: Row(
+        children: [
+          Icon(Icons.search_rounded, size: 17, color: p.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _searchCtl,
+              onChanged: _setSearch,
+              textInputAction: TextInputAction.search,
+              style: ui(size: 13.5, weight: FontWeight.w600, color: p.ink),
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                hintText: 'Invoice no. or customer',
+                hintStyle: ui(size: 13, weight: FontWeight.w500, color: p.textMuted),
+              ),
+            ),
+          ),
+          if (_search.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                _searchCtl.clear();
+                _setSearch('');
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                child: Icon(Icons.close_rounded, size: 16, color: p.textMuted),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _dateBox() {
     final p = context.astra;

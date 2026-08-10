@@ -18,6 +18,7 @@ import 'package:invo/features/sale_return/screens/v3/new_sale_return_screen.dart
 import 'package:invo/features/sale_return/screens/v3/return_pick_invoice_screen.dart';
 import 'package:invo/features/sales/screens/v3/sales_list_screen.dart';
 import 'package:invo/features/sales_returns/screens/v3/sales_returns_list_screen.dart';
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/settings/screens/v3/settings_screen.dart';
@@ -260,6 +261,38 @@ void main() {
       reason: 'catalog must keep its space when the cart bar is shown',
     );
   });
+
+  // Catalog density is a till setting (Settings → Catalog grid). Three and four
+  // up leave a phone tile roughly 110px and 80px wide, where the two-up type and
+  // add button would overflow — the tile chrome scales, so check every option.
+  for (final cols in PosSettingsState.gridColumnOptions) {
+    testWidgets('New Sale catalog lays out $cols products per row (phone)', (
+      tester,
+    ) async {
+      final d = TestHarness();
+      await d.init();
+      addTearDown(d.dispose);
+      await d.posSettings.setGridColumns(cols);
+      tester.view.physicalSize = const Size(390, 760);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(d.wrap(const NewSaleScreen()));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'a $cols-up product tile must not overflow',
+      );
+      final delegate =
+          tester.widget<SliverGrid>(find.byType(SliverGrid)).gridDelegate
+              as SliverGridDelegateWithFixedCrossAxisCount;
+      expect(delegate.crossAxisCount, cols);
+      expect(find.text('Signature Cut'), findsOneWidget);
+    });
+  }
 
   testWidgets('small portrait tablet uses the tablet navigation rail', (
     tester,

@@ -14,6 +14,7 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/stock_check_models.dart';
+import 'stock_check_status_sheet.dart';
 
 /// Lists the branch's stock checks with per-check progress. The active branch is
 /// app-wide (BranchCubit) — the header shows it and the list reloads on switch.
@@ -142,6 +143,23 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
       branchId: s.branchId,
       branchName: s.branchName,
     ));
+  }
+
+  /// Move a count's own status straight from its card — the same click-and-go
+  /// sheet the counting screen uses.
+  Future<void> _changeStatus(StockCheckSummary r) async {
+    final next = await pickStockCheckStatus(context, current: r.status);
+    if (next == null || !mounted) return;
+    final ok = await _stock.updateStatus(r.id, next);
+    if (!mounted) return;
+    if (ok) {
+      unawaited(_load());
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Status changed to ${StockCheckStatus.label(next)}')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_stock.state.errorMessage ?? 'Could not change the status.')));
+    }
   }
 
   Future<void> _pushCount(StockCheckDetail d) async {
@@ -306,7 +324,10 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
   /// three slabs over a 1100pt-wide text field. Chips plus a fixed search box
   /// keep both at a sane size.
   Widget _tabletControls() {
-    const statuses = <(String, String?)>[('All', null), ('Pending', 'pending'), ('Completed', 'completed')];
+    final statuses = <(String, String?)>[
+      ('All', null),
+      for (final s in StockCheckStatus.all) (StockCheckStatus.label(s), s),
+    ];
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -395,8 +416,13 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
               borderRadius: BorderRadius.circular(10),
               boxShadow: active ? context.astraTheme.softShadow : null,
             ),
-            child: Text(label,
-                style: ui(size: 11, weight: active ? FontWeight.w800 : FontWeight.w700, color: active ? p.primary : p.textSecondary)),
+            // Four segments on a narrow phone leave ~65pt each — scale the
+            // longest labels down rather than letting them overflow.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label,
+                  style: ui(size: 11, weight: active ? FontWeight.w800 : FontWeight.w700, color: active ? p.primary : p.textSecondary)),
+            ),
           ),
         ),
       );
@@ -405,14 +431,16 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(13)),
-      child: Row(children: [seg('All', null), seg('Pending', 'pending'), seg('Completed', 'completed')]),
+      child: Row(children: [
+        seg('All', null),
+        for (final s in StockCheckStatus.all) seg(StockCheckStatus.label(s), s),
+      ]),
     );
   }
 
   Widget _card(StockCheckSummary r) {
     final p = context.astra;
     final done = r.isCompleted;
-    final (bg, fg) = done ? (p.successTint, AstraPalette.success) : (p.warnTint, p.warnText);
     final net = r.netDifference;
     final netColor = net < 0 ? AstraPalette.danger : (net > 0 ? p.warnText : AstraPalette.success);
     final netLabel = net == 0 ? 'balanced' : '${net > 0 ? '+' : ''}${qtyLabel(net)} net';
@@ -455,12 +483,9 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              StatusPill(
-                label: (done ? 'Completed' : 'Pending').toUpperCase(),
-                bg: bg,
-                fg: fg,
-                icon: done ? Icons.check : Icons.schedule,
-              ),
+              // Tap the pill to move the count's own status; tapping anywhere
+              // else on the card still opens it for counting.
+              StockCheckStatusPill(status: r.status, onTap: () => _changeStatus(r)),
             ],
           ),
           const SizedBox(height: 12),

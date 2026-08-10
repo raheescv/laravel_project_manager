@@ -11,8 +11,10 @@ import '../repository/sale_repository.dart';
 class SaleService implements SaleRepository {
   HttpService get _http => serviceLocator<HttpService>();
 
+  /// [offlineSale] is ignored here — this is the online path, and the snapshot
+  /// only matters to [OfflineFirstSaleService], which wraps this one.
   @override
-  Future<Sale> createSale(Map<String, dynamic> payload) async {
+  Future<Sale> createSale(Map<String, dynamic> payload, {Map<String, dynamic>? offlineSale}) async {
     final data = await _http.post(EndPoints.sale, body: payload);
     return Sale.fromJson(Map<String, dynamic>.from(data));
   }

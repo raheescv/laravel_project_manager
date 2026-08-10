@@ -50,7 +50,9 @@ class DaySessionCubit extends Cubit<DaySessionState> {
     final at = state.selected;
     emit(state.copyWith(busy: true, clearError: true));
     try {
-      final res = await _repo.toggleDay(Dates.isoDateTime(at));
+      // Absolute instant, not a wall clock — the server validates this against
+      // its own `now`, so it must not have to guess the device's timezone.
+      final res = await _repo.toggleDay(Dates.instant(at));
       final next = res.isOpen ? 'open' : 'closed';
       await _auth.syncDaySession(
         status: next,

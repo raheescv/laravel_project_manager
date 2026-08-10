@@ -3,7 +3,14 @@ import 'dart:typed_data';
 import 'package:invo/shared/domain/models/index.dart';
 
 abstract class SaleRepository {
-  Future<Sale> createSale(Map<String, dynamic> payload);
+  /// Post a completed (or draft) sale.
+  ///
+  /// [offlineSale] is the same ticket in `SaleResource` shape. Supplying it is
+  /// how a caller opts into offline capture: if the server cannot be reached,
+  /// the sale is queued and this snapshot is what the invoice screen and the
+  /// receipt render from. Omit it and an unreachable server is an error, which
+  /// is what drafts and edits want — neither can be replayed safely.
+  Future<Sale> createSale(Map<String, dynamic> payload, {Map<String, dynamic>? offlineSale});
 
   Future<SalesPage> sales({
     String? status,

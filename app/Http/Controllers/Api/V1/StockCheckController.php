@@ -121,6 +121,22 @@ class StockCheckController extends Controller
     }
 
     /**
+     * Change status.
+     *
+     * Moves the count's own status between `pending`, `completed` and
+     * `cancelled`. Item counts and real inventory are untouched — only marking
+     * an item completed reconciles stock.
+     */
+    public function updateStatus(int $id, UpdateStockCheckStatusRequest $request, UpdateStockCheckStatusAction $action): JsonResponse
+    {
+        $response = $action->execute($id, $request->validated()['status'], Auth::id());
+
+        return $response['success']
+            ? $this->sendSuccess($response['data'], $response['message'])
+            : $this->sendError($response['message'], [], 422);
+    }
+
+    /**
      * Delete stock check.
      */
     public function destroy(int $id, DeleteStockCheckAction $action): JsonResponse

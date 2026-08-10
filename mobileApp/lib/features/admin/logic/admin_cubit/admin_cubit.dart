@@ -6,6 +6,7 @@ import 'package:invo/shared/domain/models/index.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
+import 'package:invo/shared/utils/router/http_utils/reachability.dart';
 
 import '../../domain/repository/admin_repository.dart';
 
@@ -155,9 +156,10 @@ class AdminCubit extends Cubit<AdminState> {
       emit(state.copyWith(overview: SalesOverview.fromJson(data)));
     } on ApiException catch (e) {
       if (reqId == _overviewReq) emit(state.copyWith(overviewError: e.message));
-    } catch (_) {
+    } catch (e) {
       if (reqId == _overviewReq) {
-        emit(state.copyWith(overviewError: 'Could not load the overview.'));
+        emit(state.copyWith(
+            overviewError: networkErrorMessage(e, 'Could not load the overview.')));
       }
     } finally {
       if (reqId == _overviewReq && !isClosed) {
@@ -192,8 +194,11 @@ class AdminCubit extends Cubit<AdminState> {
       if (!isClosed) emit(state.copyWith(dashboard: data));
     } on ApiException catch (e) {
       if (!isClosed) emit(state.copyWith(errorMessage: e.message));
-    } catch (_) {
-      if (!isClosed) emit(state.copyWith(errorMessage: 'Could not load the dashboard.'));
+    } catch (e) {
+      if (!isClosed) {
+        emit(state.copyWith(
+            errorMessage: networkErrorMessage(e, 'Could not load the dashboard.')));
+      }
     }
   }
 
@@ -306,9 +311,10 @@ class AdminCubit extends Cubit<AdminState> {
       _applyReportPage(data, append: false);
     } on ApiException catch (e) {
       if (req == _reportReq) emit(state.copyWith(reportError: e.message));
-    } catch (_) {
+    } catch (e) {
       if (req == _reportReq) {
-        emit(state.copyWith(reportError: 'Could not load the report.'));
+        emit(state.copyWith(
+            reportError: networkErrorMessage(e, 'Could not load the report.')));
       }
     }
     if (req == _reportReq && !isClosed) {

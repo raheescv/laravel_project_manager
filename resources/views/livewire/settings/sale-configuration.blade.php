@@ -131,6 +131,39 @@
                     </div>
                 </div>
                 <div class="col-12">
+                    <hr class="my-2">
+                    <label class="form-label fw-medium d-block mb-1">POS Colour Preset</label>
+                    <small class="form-text text-muted d-block mb-2">
+                        Sets the palette of the POS screen and all of its modals. Each preset is a complete
+                        combination &mdash; one primary for structure, one accent for favourites and money.
+                        &ldquo;Follow App Theme&rdquo; uses the colour picked in Settings &rarr; Theme.
+                    </small>
+                    <div class="row g-2 pos-preset-picker">
+                        @foreach (posColorPresets() as $key => $preset)
+                            <div class="col-6 col-md-4 col-xl-3">
+                                <label class="pos-preset {{ $pos_color_preset === $key ? 'active' : '' }}">
+                                    <input type="radio" class="d-none" value="{{ $key }}" wire:model.live="pos_color_preset">
+                                    <span class="pos-preset-swatch">
+                                        <span class="pos-preset-bar" style="background: {{ $preset['primary'] }}"></span>
+                                        <span class="pos-preset-body" style="background: {{ $preset['canvas'] }}">
+                                            <span class="pos-preset-card" style="background: {{ $preset['panel'] }}; border-color: {{ $preset['line'] }}">
+                                                <span class="pos-preset-dot" style="background: {{ $preset['accent'] }}"></span>
+                                                <span class="pos-preset-line" style="background: {{ $preset['line'] }}"></span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                    <span class="pos-preset-meta">
+                                        <span class="pos-preset-name">{{ $preset['name'] }}</span>
+                                        <span class="pos-preset-note">{{ $preset['note'] }}</span>
+                                    </span>
+                                    <i class="fa fa-check-circle pos-preset-check"></i>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                    <hr class="my-2">
+                </div>
+                <div class="col-12">
                     <div class="form-group">
                         <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>
                         {{ html()->input('thermal_printer_footer_english')->value('')->class('form-control')->placeholder('Enter your printer footer message')->attribute('wire:model', 'thermal_printer_footer_english') }}
@@ -150,4 +183,106 @@
             </button>
         </div>
     </form>
+
+    @push('styles')
+        <style>
+            .pos-preset-picker .pos-preset {
+                position: relative;
+                display: flex;
+                align-items: center;
+                gap: .625rem;
+                width: 100%;
+                margin: 0;
+                padding: .5rem;
+                border: 1px solid var(--bs-border-color);
+                border-radius: .625rem;
+                background: var(--bs-body-bg);
+                cursor: pointer;
+                transition: border-color .15s ease, box-shadow .15s ease;
+            }
+
+            .pos-preset-picker .pos-preset:hover {
+                border-color: var(--bs-primary);
+            }
+
+            .pos-preset-picker .pos-preset.active {
+                border-color: var(--bs-primary);
+                box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), .15);
+            }
+
+            .pos-preset-swatch {
+                flex: 0 0 auto;
+                width: 54px;
+                height: 40px;
+                overflow: hidden;
+                border: 1px solid var(--bs-border-color);
+                border-radius: .375rem;
+            }
+
+            .pos-preset-bar {
+                display: block;
+                height: 11px;
+            }
+
+            .pos-preset-body {
+                display: block;
+                height: 29px;
+                padding: 4px;
+            }
+
+            .pos-preset-card {
+                display: flex;
+                align-items: center;
+                gap: 3px;
+                height: 100%;
+                padding: 0 4px;
+                border: 1px solid;
+                border-radius: 3px;
+            }
+
+            .pos-preset-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+            }
+
+            .pos-preset-line {
+                flex: 1;
+                height: 3px;
+                border-radius: 2px;
+                opacity: .8;
+            }
+
+            .pos-preset-meta {
+                min-width: 0;
+                line-height: 1.25;
+            }
+
+            .pos-preset-name {
+                display: block;
+                font-size: .8125rem;
+                font-weight: 600;
+                color: var(--bs-emphasis-color);
+            }
+
+            .pos-preset-note {
+                display: block;
+                font-size: .6875rem;
+                color: var(--bs-secondary-color);
+            }
+
+            .pos-preset-check {
+                position: absolute;
+                top: .375rem;
+                inset-inline-end: .5rem;
+                color: var(--bs-primary);
+                opacity: 0;
+                transition: opacity .15s ease;
+            }
+
+            .pos-preset.active .pos-preset-check {
+                opacity: 1;
+            }
+        </style>
+    @endpush
 </div>

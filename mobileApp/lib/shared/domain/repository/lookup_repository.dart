@@ -17,6 +17,16 @@ abstract class LookupRepository {
 
   Future<Product?> productByBarcode(String barcode);
 
+  /// One page of `/products` left as the server's own JSON, for the offline
+  /// snapshot to store verbatim. Parsing to [Product] here and re-encoding would
+  /// drop everything the model doesn't carry — the category id the local filter
+  /// needs among it — so the raw maps go to disk instead.
+  Future<({List<Map<String, dynamic>> rows, int currentPage, int lastPage})> productsRaw({
+    String? type,
+    int page,
+    int perPage,
+  });
+
   /// [type] narrows the list to categories that hold at least one product of
   /// that type ('product' / 'service'); null returns every visible category.
   Future<List<Category>> categories({String? type});
@@ -25,7 +35,19 @@ abstract class LookupRepository {
 
   Future<List<Customer>> customers({String? mobile, String? search});
 
+  /// One page of customers, with the pagination the caller needs to keep going.
+  ///
+  /// Separate from [customers] because that one backs the search-as-you-type client
+  /// sheet, where a small page is the right answer and a full download would fire on
+  /// every keystroke. This is for the offline snapshot, which needs *all* of them:
+  /// a till that has cached 20 of a shop's 2,000 customers will create a duplicate
+  /// account for almost every returning client it sells to offline.
+  Future<Paginated<Customer>> customersPage({int page, int perPage, String? search});
+
   Future<List<Employee>> employees({String? search, int? branchId});
+
+  /// One page of staff, for the same reason as [customersPage].
+  Future<Paginated<Employee>> employeesPage({int page, int perPage, int? branchId});
 
   Future<List<PaymentMethod>> paymentMethods();
 

@@ -10,7 +10,10 @@ import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
+import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
@@ -31,6 +34,9 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   /// Repository access for this flow (§10).
   final _ops = SaleOpsCubit();
   bool _busy = false;
+  // The ghost button beside the primary call to action — "Save Draft" on a new
+  // ticket, "Update Draft" when a parked draft is open. Kept separate so the
+  // spinner appears on the button that was actually pressed.
   bool _busyDraft = false;
   List<PaymentMethod> _methods = [];
 
@@ -51,31 +57,107 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     }
   }
 
-  Future<void> _charge() async {
+  /// Commits the ticket: a new sale is created, an open sale is written back.
+  ///
+  /// [status] moves the sale's status as part of the same write — the checkout
+  /// bar sends `completed` to finish a parked draft, which is what makes the
+  /// server post its stock movement and journal entry. Omitted, the sale keeps
+  /// the status it already has.
+  ///
+  /// [secondary] spins the ghost button rather than the primary one, so
+  /// "Update Draft" reports its own progress next to "Complete".
+  Future<void> _charge({String? status, bool secondary = false}) async {
+    // The buttons are disabled while a save is in flight, but "disabled" is a
+    // build-time decision: two thumbs landing in the same frame both read the
+    // state as it was. Completing a sale posts stock and a journal entry, so the
+    // guard is repeated here, where it is checked against the live flags.
+    if (_busy || _busyDraft) return;
     final cart = context.read<CartCubit>();
     final editingId = cart.editingSaleId;
-    setState(() => _busy = true);
+    setState(() {
+      if (secondary) {
+        _busyDraft = true;
+      } else {
+        _busy = true;
+      }
+    });
+    final pendingUuid = cart.state.editingPendingUuid;
     Sale? saved;
     try {
-      saved = editingId == null
-          ? await _ops.createSale(cart.toPayload())
-          : await _ops.updateSale(editingId, cart.toPayload());
-      cart.clear();
+      if (pendingUuid != null) {
+        // A sale still in the queue has no server record to patch — the write
+        // goes to the outbox row it is already captured in, under the same key.
+        saved = await _saveQueuedCorrection(cart, pendingUuid);
+      } else if (editingId == null) {
+        // One call mints the idempotency key and both shapes of the ticket, so
+        // what is queued offline is exactly what would have been posted.
+        final ticket = cart.beginCharge();
+        saved = await _ops.createSale(ticket.payload, offlineSale: ticket.offlineSale);
+      } else {
+        // Editing a committed sale needs a server id on both ends, so it stays
+        // online-only.
+        saved = await _ops.updateSale(editingId, cart.toPayload(status: status));
+      }
+      if (saved != null) cart.clear();
     } on ApiException catch (e) {
       _error(e.message);
     } catch (e) {
-      _error(editingId == null
-          ? 'Could not save the sale. Please try again.'
-          : 'Could not update the sale. Please try again.');
+      _error(switch ((pendingUuid, editingId, status)) {
+        (String _, _, _) => 'Could not update the held sale. Please try again.',
+        (_, null, _) => 'Could not save the sale. Please try again.',
+        (_, _, 'completed') => 'Could not complete the sale. Please try again.',
+        _ => 'Could not update the sale. Please try again.',
+      });
     }
     if (!mounted) return;
     // Everything past this point runs on a committed sale — kept out of the
     // try above so a printing hiccup can never be reported as a failed charge.
     if (saved == null) {
-      setState(() => _busy = false);
+      setState(() {
+        _busy = false;
+        _busyDraft = false;
+      });
       return;
     }
     await _afterCharge(saved);
+  }
+
+  /// Write a correction back onto the outbox row it belongs to.
+  ///
+  /// Returns the corrected ticket as a `pending` sale so the invoice screen and
+  /// the receipt render it exactly as they did when it was first captured, or null
+  /// when the row has already synced — at which point the honest thing is to say
+  /// so rather than silently create a second sale.
+  Future<Sale?> _saveQueuedCorrection(CartCubit cart, String pendingUuid) async {
+    if (!serviceLocator.isRegistered<OfflineSyncCubit>()) {
+      _error('Held sales are unavailable on this device.');
+      return null;
+    }
+    final ticket = cart.beginCharge();
+    final applied = await serviceLocator<OfflineSyncCubit>().editPending(
+      pendingUuid,
+      payload: ticket.payload,
+      saleJson: ticket.offlineSale,
+      soldBefore: cart.state.editingPendingSold,
+    );
+    if (!applied) {
+      _error('This sale has already synced — open it from Sales to edit it.');
+      return null;
+    }
+    // The provisional reference the customer already has is unchanged, so it is
+    // read back off the row rather than reprinted as something new.
+    final row = await serviceLocator<OutboxRepository>().byUuid(pendingUuid);
+    return Sale.fromJson({
+      ...ticket.offlineSale,
+      'invoice_no': row?.displayRef ?? '',
+    });
+  }
+
+  /// What the primary call to action does on this ticket. A parked draft is
+  /// finished off; anything else is saved as it stands.
+  void _submit() {
+    final completing = context.read<CartCubit>().isEditingDraft;
+    _charge(status: completing ? 'completed' : null);
   }
 
   /// Everything that happens once the sale is committed: print it on the till's
@@ -93,6 +175,9 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final invoiceNo = sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo;
+    // A queued sale is captured, not committed. Say so everywhere the committed
+    // wording would otherwise appear, so nobody goes looking for it on the web.
+    final savedWord = sale.pending ? 'held offline' : 'saved';
 
     var printed = false;
     var printFailed = false;
@@ -116,7 +201,9 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       messenger
         ..clearSnackBars()
         ..showSnackBar(SnackBar(
-          content: Text(printFailed ? '$invoiceNo saved — couldn\'t print' : '$invoiceNo saved'),
+          content: Text(printFailed
+              ? '$invoiceNo $savedWord — couldn\'t print'
+              : '$invoiceNo $savedWord'),
           duration: const Duration(seconds: 3),
         ));
       await auth.lock();
@@ -153,18 +240,27 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
 
   /// Parks the sale without completing it — no stock movement or journal entry
   /// is posted until the draft is later reopened and charged.
+  ///
+  /// Held on the device when the server can't be reached, like a completed sale:
+  /// a draft is usually a customer standing at the counter deciding, and losing it
+  /// to a dropped connection means retyping the whole ticket in front of them. It
+  /// carries an idempotency key for the same reason a sale does — the replay must
+  /// not park two copies — but it takes no money and moves no stock, so nothing
+  /// downstream treats it as takings.
   Future<void> _saveDraft() async {
+    if (_busy || _busyDraft) return; // same-frame double tap — see _charge
     final cart = context.read<CartCubit>();
     setState(() => _busyDraft = true);
     try {
-      await _ops.createSale(cart.toPayload(status: 'draft'));
+      final ticket = cart.beginCharge(status: 'draft');
+      final saved = await _ops.createSale(ticket.payload, offlineSale: ticket.offlineSale);
       cart.clear();
       if (mounted) {
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
-          ..showSnackBar(const SnackBar(
-            content: Text('Saved as draft'),
-            duration: Duration(milliseconds: 900),
+          ..showSnackBar(SnackBar(
+            content: Text(saved.pending ? 'Draft held on this device' : 'Saved as draft'),
+            duration: const Duration(milliseconds: 900),
           ));
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) context.go(Routes.sale);
@@ -217,7 +313,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           children: [
             EmeraldHeader(
               leading: HeaderIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
-              title: 'Review & Pay',
+              title: _headline(cart),
             ),
             Expanded(
               child: MaxWidthBox(
@@ -248,33 +344,81 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           maxWidth: 560,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child: cart.isEditing
-                ? AstraButton(
-                    label: 'Update ${Money.of(cart.total)}',
-                    gold: true,
-                    busy: _busy,
-                    onTap: cart.isEmpty ? null : _charge,
-                  )
-                : Row(
-                    children: [
-                      _draftButton(
-                        onTap: cart.isEmpty || _busy || _busyDraft ? null : _saveDraft,
-                        busy: _busyDraft,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: AstraButton(
-                          label: settled ? 'Charge ${Money.of(cart.total)}' : 'Submit Anyway',
-                          gold: true,
-                          busy: _busy,
-                          onTap: cart.isEmpty || _busy || _busyDraft ? null : _charge,
-                        ),
-                      ),
-                    ],
-                  ),
+            child: _checkoutBar(cart, settled),
           ),
         ),
       ),
+    );
+  }
+
+  /// What this screen is doing, so a parked draft doesn't look like an ordinary
+  /// edit — the buttons underneath differ.
+  String _headline(CartCubit cart) => cart.isEditingDraft
+      ? 'Complete Draft'
+      : cart.isEditing
+          ? 'Edit sale'
+          : 'Review & Pay';
+
+  // ---- Checkout call to action ---------------------------------------------
+
+  /// The bottom bar, in its three shapes:
+  ///
+  /// * a new ticket — park it as a draft, or charge it;
+  /// * a parked draft — save the changes and leave it parked, or complete it
+  ///   (which is what posts the stock movement and the journal entry);
+  /// * an already-completed sale — save the changes, nothing else to decide.
+  ///
+  /// Shared by the phone and tablet layouts so the two can't drift apart.
+  Widget _checkoutBar(CartCubit cart, bool settled) {
+    final blocked = cart.isEmpty || _busy || _busyDraft;
+
+    if (cart.isEditingDraft) {
+      return Row(
+        children: [
+          _ghostButton(
+            label: 'Update Draft',
+            onTap: blocked ? null : () => _charge(secondary: true),
+            busy: _busyDraft,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: AstraButton(
+              label: settled ? 'Complete ${Money.of(cart.total)}' : 'Complete Anyway',
+              gold: true,
+              busy: _busy,
+              onTap: blocked ? null : _submit,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (cart.isEditing) {
+      return AstraButton(
+        label: 'Update ${Money.of(cart.total)}',
+        gold: true,
+        busy: _busy,
+        onTap: blocked ? null : _submit,
+      );
+    }
+
+    return Row(
+      children: [
+        _ghostButton(
+          label: 'Save Draft',
+          onTap: blocked ? null : _saveDraft,
+          busy: _busyDraft,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: AstraButton(
+            label: settled ? 'Charge ${Money.of(cart.total)}' : 'Submit Anyway',
+            gold: true,
+            busy: _busy,
+            onTap: blocked ? null : _submit,
+          ),
+        ),
+      ],
     );
   }
 
@@ -293,7 +437,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
             children: [
               TabletPageHead(
                 leading: TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop()),
-                title: cart.isEditing ? 'Edit sale' : 'Review & Pay',
+                title: _headline(cart),
                 subtitle: '${cart.lines.length} item${cart.lines.length == 1 ? '' : 's'} on this ticket',
               ),
               Expanded(
@@ -343,37 +487,15 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 4, 18, 16),
-            child: cart.isEditing
-                ? AstraButton(
-                    label: 'Update ${Money.of(cart.total)}',
-                    gold: true,
-                    busy: _busy,
-                    onTap: cart.isEmpty ? null : _charge,
-                  )
-                : Row(
-                    children: [
-                      _draftButton(
-                        onTap: cart.isEmpty || _busy || _busyDraft ? null : _saveDraft,
-                        busy: _busyDraft,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: AstraButton(
-                          label: settled ? 'Charge ${Money.of(cart.total)}' : 'Submit Anyway',
-                          gold: true,
-                          busy: _busy,
-                          onTap: cart.isEmpty || _busy || _busyDraft ? null : _charge,
-                        ),
-                      ),
-                    ],
-                  ),
+            child: _checkoutBar(cart, settled),
           ),
         ],
       ),
     );
   }
 
-  Widget _draftButton({required VoidCallback? onTap, required bool busy}) {
+  /// The quiet outlined button that sits beside the primary call to action.
+  Widget _ghostButton({required String label, required VoidCallback? onTap, required bool busy}) {
     final p = context.astra;
     final t = context.astraTheme;
     return GestureDetector(
@@ -391,7 +513,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2.4, color: p.primaryDark),
               )
-            : Text('Save Draft', style: ui(size: 14.5, weight: FontWeight.w800, color: p.primaryDark)),
+            : Text(label, style: ui(size: 14.5, weight: FontWeight.w800, color: p.primaryDark)),
       ),
     );
   }
@@ -628,6 +750,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     final p = context.astra;
     final bal = cart.balance;
     final settled = bal.abs() < 0.001;
+    final tappable = settled && !_busy && !_busyDraft;
 
     final (Color tint, Color color, IconData icon, String title, String desc) = settled
         ? (p.successTint, AstraPalette.success, Icons.check_circle, 'Ready to Submit', 'Transaction is fully paid and ready to submit')
@@ -636,7 +759,9 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
             : (p.tint, p.primaryDark, Icons.south, 'Overpaid Transaction', 'Transaction amount exceeds payment');
 
     return GestureDetector(
-      onTap: settled && !_busy ? _charge : null,
+      // The shortcut for the primary button, so on a draft it completes the sale
+      // rather than quietly re-saving it as a draft.
+      onTap: tappable ? _submit : null,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
@@ -657,9 +782,10 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
             Text(title, style: ui(size: 13, weight: FontWeight.w800, color: color)),
             const SizedBox(height: 3),
             Text(desc, textAlign: TextAlign.center, style: ui(size: 11, weight: FontWeight.w600, color: color.withValues(alpha: 0.85))),
-            if (settled && !_busy) ...[
+            if (tappable) ...[
               const SizedBox(height: 5),
-              Text('Tap to submit', style: ui(size: 10.5, weight: FontWeight.w700, color: color.withValues(alpha: 0.7))),
+              Text(cart.isEditingDraft ? 'Tap to complete' : 'Tap to submit',
+                  style: ui(size: 10.5, weight: FontWeight.w700, color: color.withValues(alpha: 0.7))),
             ],
           ],
         ),

@@ -49,6 +49,36 @@ class FakeLookupRepository implements LookupRepository {
   }
 
   @override
+  Future<({List<Map<String, dynamic>> rows, int currentPage, int lastPage})> productsRaw({
+    String? type,
+    int page = 1,
+    int perPage = 100,
+  }) async {
+    productCalls++;
+    requestedPages.add(page);
+    final last = (total / perPage).ceil().clamp(1, 1 << 30);
+    final start = (page - 1) * perPage;
+    final count = (total - start).clamp(0, perPage);
+    return (
+      rows: List.generate(count, (i) {
+        final id = start + i + 1;
+        return <String, dynamic>{
+          'id': id,
+          'name': 'Service $id',
+          'code': 'S$id',
+          'barcode': '',
+          'type': 'service',
+          'mrp': 45.0,
+          'tax': 0,
+          'total_stock': 5,
+        };
+      }),
+      currentPage: page,
+      lastPage: last,
+    );
+  }
+
+  @override
   Future<Product?> productByBarcode(String barcode) async => null;
 
   @override
@@ -90,6 +120,14 @@ class FakeLookupRepository implements LookupRepository {
 
   @override
   Future<RemotePrintConfig?> savePrintSettings(Map<String, dynamic> body) async => null;
+
+  @override
+  Future<Paginated<Customer>> customersPage({int page = 1, int perPage = 100, String? search}) async =>
+      Paginated(items: await customers(search: search), currentPage: 1, lastPage: 1, total: 0);
+
+  @override
+  Future<Paginated<Employee>> employeesPage({int page = 1, int perPage = 100, int? branchId}) async =>
+      Paginated(items: await employees(branchId: branchId), currentPage: 1, lastPage: 1, total: 0);
 }
 
 /// A [FakeLookupRepository] preset with the four demo catalog items the widget

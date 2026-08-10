@@ -114,6 +114,7 @@ class SaleController extends Controller
                     'updatedUser:id,name',
                     'cancelledUser:id,name',
                     'payments.paymentMethod:id,name',
+                    'saleDaySession:id,opened_at,status',
                 ])->findOrFail($id);
 
                 // Add the sale's customer to the customers array if it exists
@@ -273,6 +274,14 @@ class SaleController extends Controller
             }
         }
 
+        // The sale day this ticket books into. A sale takes its date from the
+        // branch's open session, not from today (see Sale::booted()), so the POS
+        // shows that date rather than leaving the cashier to assume it is today —
+        // a day left open overnight files this morning's sales under yesterday.
+        // An existing ticket keeps its own session; a new one uses the open one,
+        // which the sale::pos route guarantees exists (RequireOpenDaySession).
+        $session = ($sale ?? null)?->saleDaySession ?: SaleDaySession::getOpenSessionForBranch(session('branch_id'));
+
         $data = [
             'categories' => $categories,
             'employees' => $employees,
@@ -282,12 +291,22 @@ class SaleController extends Controller
             'countries' => $countries,
             'paymentMethods' => $paymentMethods,
             'saleData' => $saleData,
+            'daySession' => $session ? [
+                'id' => $session->id,
+                'date' => $session->opened_at->format('Y-m-d'),
+                'label' => $session->opened_at->format('D, d M Y'),
+                'opened_at' => $session->opened_at->format('h:i A'),
+                'is_today' => $session->opened_at->isToday(),
+            ] : null,
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultQuantity' => $defaultQuantity,
             'saleItemRowMode' => $saleItemRowMode,
             'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
             'canFeedback' => Auth::user()->can('sale.feedback'),
+            // Premium colour preset for the POS screen and its modals. 'theme'
+            // follows the app theme colour; the rest are fixed palettes.
+            'colorPreset' => Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme',
         ];
 
         return inertia('Sale/POS', $data);

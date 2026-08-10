@@ -1,12 +1,15 @@
 import 'package:equatable/equatable.dart';
-import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/sale/domain/models/pending_sale.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
-import 'package:invo/shared/domain/repository/lookup_repository.dart';
+import 'package:invo/shared/domain/services/sale_settings_sync.dart';
+import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
+import 'package:uuid/uuid.dart';
 
 part 'cart_state.dart';
 
@@ -188,7 +191,6 @@ class CartCubit extends Cubit<CartState> {
   CartCubit() : super(const CartState());
 
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
-  LookupRepository get _lookup => serviceLocator<LookupRepository>();
 
   // ---- read facade (delegates to state) ----
   List<CartLine> get lines => state.lines;
@@ -198,6 +200,7 @@ class CartCubit extends Cubit<CartState> {
   String get stylistName => state.stylistName;
   String? get editingSaleId => state.editingSaleId;
   bool get isEditing => state.isEditing;
+  bool get isEditingDraft => state.isEditingDraft;
   double get orderDiscount => state.orderDiscount;
   bool get orderDiscountIsPercent => state.orderDiscountIsPercent;
   double get tipPercent => state.tipPercent;
@@ -232,25 +235,10 @@ class CartCubit extends Cubit<CartState> {
   /// kept).
   Future<void> syncSaleSettings() async {
     try {
-      final settings = await _lookup.saleSettings();
-      final qty = settings.defaultQuantity;
-      if (qty != null && qty != _storage.defaultQuantity) {
-        await _storage.setDefaultQuantity(qty);
-      }
-      final tip = settings.tipEnabled;
-      if (tip != null && tip != _storage.tipEnabled) {
-        await _storage.setTipEnabled(tip);
-        if (!tip) emit(state.copyWith(tipPercent: 0));
-      }
-      // Cache the default Product/Service filter so the catalog can preselect
-      // it. Read by CatalogCubit.
-      final type = settings.defaultProductType;
-      if (type != null && type != _storage.defaultProductType) {
-        await _storage.setDefaultProductType(type);
-      }
-      // Thermal-print options ride along on the same response — hand them to
-      // the print cubit so receipts follow the web Sale Configuration.
-      await serviceLocator<PrintSettingsCubit>().applyRemote(settings.print);
+      // The caching itself is shared with first-run provisioning; the only part
+      // that belongs to the ticket is clearing a tip that has been switched off.
+      final settings = await pullAndCacheSaleSettings();
+      if (settings.tipEnabled == false) emit(state.copyWith(tipPercent: 0));
     } catch (_) {
       // Offline or server error — keep the cached values.
     }
@@ -384,11 +372,12 @@ class CartCubit extends Cubit<CartState> {
             ))
         .toList();
     final firstWithEmployee = lines.where((l) => l.employeeId != null).firstOrNull;
-    final payment = _seedPayments(sale.payments, sale.paid);
+    final payment = _seedPayments(sale);
 
     emit(CartState(
       lines: lines,
       editingSaleId: sale.id,
+      editingStatus: sale.status,
       customerName: sale.customerName.trim().isEmpty
           ? AppStrings.walkInCustomer
           : sale.customerName,
@@ -396,18 +385,61 @@ class CartCubit extends Cubit<CartState> {
       stylistId: firstWithEmployee?.employeeId,
       stylistName: firstWithEmployee?.employeeName ?? '',
       orderDiscount: sale.otherDiscount,
+      // The ticket holds a tip as a percentage of the net; the sale stores the
+      // amount it worked out to. Re-deriving it keeps a gratuity that was
+      // already collected on the sale — sending the ticket back with tip 0 would
+      // wipe it off the record, and the totals would still look settled because
+      // the payment was reduced by the same amount.
+      tipPercent: sale.grandTotal > 0 ? round2(sale.tip / sale.grandTotal * 100) : 0,
       payMode: payment.mode,
       customPayments: payment.rows,
     ));
   }
 
+  /// Load a sale that is still queued on this device, for correction.
+  ///
+  /// Seeds from the row's own receipt snapshot rather than from the server, because
+  /// the server has never seen this sale — the snapshot IS the sale. The line ids
+  /// are dropped for the same reason: `saleItemId` addresses rows in a `sale_items`
+  /// table that has nothing in it for this ticket yet.
+  ///
+  /// The captured quantities are carried on the state so the correction can hand
+  /// back what the queued version took off the cached shelf.
+  void seedFromPendingSale(PendingSale row) {
+    seedFromSale(row.sale);
+    emit(state.copyWith(
+      // Not an edit of a server record — clear the id the seeding above set from
+      // the snapshot's blank `id`, or checkout would try to PUT to nothing.
+      clearEditingSaleId: true,
+      editingPendingUuid: row.clientUuid,
+      editingPendingSold: row.soldQuantities,
+    ));
+  }
+
   /// Derives the payment selection from an existing sale's payment rows.
-  ({PayMode mode, List<CustomPayment> rows}) _seedPayments(
-      List<SalePayment> payments, double paid) {
+  ///
+  /// Cash and Card are not stored as modes: the server settles them against the
+  /// configured cash/card account, so they come back as an ordinary payment row
+  /// carrying a `payment_method_id` exactly like a split payment does. Treating
+  /// that id as the mark of a custom payment reopened every single-method sale
+  /// as "Custom" — so a lone row that covers the whole ticket is read back as
+  /// the button the cashier actually pressed.
+  ///
+  /// The row has to settle the ticket exactly for that to hold, because the
+  /// buttons can't express anything else: they always pay the total. A part
+  /// payment collapsed to Cash would quietly clear the outstanding balance on
+  /// the next save, and an overpayment would quietly lose the excess — both are
+  /// custom-sheet amounts, so both stay on the custom sheet. Every figure
+  /// involved is a 2dp column, so the tolerance is float noise, not a cent.
+  ({PayMode mode, List<CustomPayment> rows}) _seedPayments(Sale sale) {
+    final payments = sale.payments;
+    final paid = sale.paid;
     if (payments.isEmpty) {
       return (mode: paid > 0 ? PayMode.cash : PayMode.credit, rows: const []);
     }
-    if (payments.length == 1 && payments.first.paymentMethodId == null) {
+    // The tip is an extra on top of `grand_total`, and it is paid along with it.
+    final ticket = sale.grandTotal + sale.tip;
+    if (payments.length == 1 && (paid - ticket).abs() < 0.005) {
       final name = payments.first.method.toLowerCase();
       if (name.contains('cash')) return (mode: PayMode.cash, rows: const []);
       if (name.contains('card')) return (mode: PayMode.card, rows: const []);
@@ -423,10 +455,135 @@ class CartCubit extends Cubit<CartState> {
     return (mode: PayMode.custom, rows: rows);
   }
 
+  /// The idempotency key for the ticket as it currently stands.
+  ///
+  /// Deliberately NOT regenerated per press of Charge. Supplying a key makes the
+  /// server skip its duplicate heuristic, so a fresh key on every press would
+  /// turn a second press into a second sale — exactly the double charge that
+  /// heuristic exists to stop. A press that fails visibly (a 500, a rejected
+  /// payment method) is retried with the SAME key, so if the first attempt did
+  /// commit, the server recognises the replay and hands back the one sale.
+  ///
+  /// It is cleared by [emit] whenever the ticket actually changes, because a
+  /// changed ticket is a different sale and must not be mistaken for a replay.
+  String? _chargeUuid;
+
+  @override
+  void emit(CartState state) {
+    // Any real change to the ticket retires the key. Guarded on equality so a
+    // no-op emit (several setters re-emit an unchanged value) doesn't silently
+    // hand the next press a new identity.
+    //
+    // A ticket correcting a queued sale is the exception, and pins the key
+    // instead of clearing it: that sale has already been captured under it, the
+    // outbox row is addressed by it, and letting an edit mint a new one would put
+    // both the wrong version and the corrected one on the server.
+    if (state != this.state) _chargeUuid = state.editingPendingUuid;
+    super.emit(state);
+  }
+
+  /// Everything one press of Charge needs: the idempotency key, the payload to
+  /// post, and a receipt-ready snapshot to fall back on if the post can't land.
+  ///
+  /// All three are produced together so the key on the wire is the key stored in
+  /// the outbox — generating it in two places would queue a sale under an id the
+  /// server never saw, and the retry would ring it up twice.
+  /// [status] parks the ticket instead of completing it ('draft'). A draft is
+  /// captured through exactly the same key-and-snapshot machinery as a sale: it
+  /// still must not be replayed into two rows, and the outbox is the only durable
+  /// place a device has to hold one. What differs is that a draft has taken no
+  /// money and moved no goods — see [PendingSale.isDraft].
+  ({String clientUuid, Map<String, dynamic> payload, Map<String, dynamic> offlineSale}) beginCharge({
+    String? status,
+  }) {
+    final clientUuid = _chargeUuid ??= const Uuid().v4();
+    final chargedAt = DateTime.now();
+    return (
+      clientUuid: clientUuid,
+      payload: toPayload(status: status, clientUuid: clientUuid, clientCreatedAt: chargedAt),
+      offlineSale: _offlineSaleJson(
+        clientUuid: clientUuid,
+        chargedAt: chargedAt,
+        status: status ?? 'completed',
+      ),
+    );
+  }
+
+  /// The ticket in the shape `SaleResource` would have returned, so the invoice
+  /// screen and [buildReceiptPdf] can render a queued sale through exactly the
+  /// same [Sale] model as a committed one.
+  ///
+  /// `id` and `invoice_no` are deliberately blank — they belong to the server,
+  /// and the provisional reference shown in their place is assigned by the
+  /// outbox, which is the only thing that knows the device's own sequence.
+  Map<String, dynamic> _offlineSaleJson({
+    required String clientUuid,
+    required DateTime chargedAt,
+    String status = 'completed',
+  }) =>
+      {
+        'id': '',
+        'invoice_no': '',
+        'client_uuid': clientUuid,
+        'pending': true,
+        'date': chargedAt.toIso8601String().substring(0, 10),
+        'status': status,
+        // The receipt header falls back to a generic mark on an empty branch, so
+        // the active branch is carried over rather than left for the server to
+        // fill in on a response that isn't coming yet.
+        'branch': _resolve<BranchCubit>()?.selected?.name ?? '',
+        'customer': {'name': state.customerName, 'mobile': state.customerMobile},
+        'items': [
+          for (final l in state.lines)
+            {
+              'product_id': l.productId,
+              'employee_id': l.employeeId,
+              'code': l.code,
+              'name': l.name,
+              'type': l.type,
+              'employee': l.employeeName,
+              'quantity': l.qty,
+              'unit_price': l.unitPrice,
+              'discount': l.discountAmount,
+              'tax': l.taxPercent,
+              'total': l.total,
+            },
+        ],
+        'payments': [
+          if (state.payMode == PayMode.custom)
+            for (final p in state.customPayments)
+              {'payment_method_id': p.methodId, 'method': p.methodName, 'amount': round2(p.amount)}
+          else if (state.payMode != PayMode.credit)
+            {'payment_method_id': null, 'method': state.payMode.label, 'amount': state.total},
+        ],
+        'summary': {
+          'gross_amount': state.subtotal,
+          'item_discount': state.lineDiscounts,
+          'other_discount': state.orderDiscountAmount,
+          'tax_amount': state.taxTotal,
+          'tip': state.tipAmount,
+          'grand_total': state.total,
+          'paid': state.paidAmount,
+          'balance': state.balance,
+        },
+        'created_by': _resolve<AuthCubit>()?.user?.name ?? '',
+      };
+
+  /// Look up an app-wide cubit without insisting it exists.
+  ///
+  /// The two call sites above only want display copy for the offline receipt —
+  /// a branch name and a cashier name. Letting an unregistered dependency throw
+  /// here would abort the charge itself, and `_charge()` would report a sale
+  /// that was never attempted as "could not save".
+  T? _resolve<T extends Object>() =>
+      serviceLocator.isRegistered<T>() ? serviceLocator<T>() : null;
+
   /// Build the POST /sale payload (matches Sale StoreRequest exactly).
   /// Pass status: 'draft' to park the sale without completing it.
-  Map<String, dynamic> toPayload({String? status}) => {
+  Map<String, dynamic> toPayload({String? status, String? clientUuid, DateTime? clientCreatedAt}) => {
         if (status != null) 'status': status,
+        if (clientUuid != null) 'clientUuid': clientUuid,
+        if (clientCreatedAt != null) 'clientCreatedAt': clientCreatedAt.toIso8601String(),
         'customerName': state.customerName,
         if (state.customerMobile.isNotEmpty) 'phoneNumber': state.customerMobile,
         'items': state.lines
@@ -439,6 +596,12 @@ class CartCubit extends Cubit<CartState> {
                   // Already 2dp — the getters round where the server's columns
                   // do, so what is displayed is exactly what is sent.
                   'discount': l.discountAmount,
+                  // The rate the customer was actually charged. The server used to
+                  // re-derive this from the product row at save time, which is fine
+                  // for a live charge and wrong for a queued one: a rate edited
+                  // while the sale sat in the outbox committed a total that no
+                  // longer matched the cash in the drawer.
+                  'tax': l.taxPercent,
                 })
             .toList(),
         'discount': state.orderDiscountAmount,

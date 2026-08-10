@@ -59,7 +59,9 @@
       "Bash(sips -s format png /tmp/invo_receipt_arabic_ibmplex.pdf --out /tmp/invo_receipt_arabic_ibmplex.png)",
       "mcp__Claude_Preview__preview_start",
       "Bash(php -l app/Livewire/LocalPurchaseOrder/View.php)",
-      "Bash(cd /Users/Shared/sites/personal/main_projects/project_manager && grep -rn -i \"font\" config/barcode_default_configuration.php app/Support/BarcodeTemplateConfiguration.php app/Support/BarcodeLabel.php | head -50)"
+      "Bash(cd /Users/Shared/sites/personal/main_projects/project_manager && grep -rn -i \"font\" config/barcode_default_configuration.php app/Support/BarcodeTemplateConfiguration.php app/Support/BarcodeLabel.php | head -50)",
+      "Bash(python3 -)",
+      "Bash(grep -vE \"sqflite warning|You are changing|Be aware|will have this|^$|available\\\\\\)|Unicode support\")"
     ]
   },
   "hooks": {

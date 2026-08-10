@@ -1,10 +1,24 @@
+> **Superseded in places (2026-08-09).** This file is the original design. Two decisions since have
+> moved it: offline is a matter of **minutes or hours, never days**, and offline behaviour lives in
+> the **app** — Laravel only recognises a replayed `client_uuid` and honours `clientUserId`. Anything
+> here or elsewhere proposing server-side date/day-session handling, an oversell allowance, or a
+> cross-device register of what each till holds was built and then reverted. Read
+> [mobile-offline-sale-knowledge-base.md](mobile-offline-sale-knowledge-base.md) §1 and §7.12 before
+> acting on this document.
+
 # Offline New Sale — implementation guide (mobileApp)
 
 **Goal:** ring up a sale on the New Sale screen with no network, print the receipt, and
 have the sale land on the server exactly once when connectivity returns.
 
-**Status:** plan only — no code written yet.
+**Status:** implemented, reviewed and tested (2026-08-09). See §6 for what was built and what
+changed from this plan. Task-by-task state, the review findings, and the open decisions live in
+[mobile-offline-sale-tasks.md](mobile-offline-sale-tasks.md).
 **Date:** 2026-08-09
+
+**Continuing this work in a new conversation?** Start with
+[mobile-offline-sale-knowledge-base.md](mobile-offline-sale-knowledge-base.md) — decisions, invariants,
+repo traps and what is/isn't verified.
 
 ---
 
@@ -255,3 +269,88 @@ mid-drain → nothing duplicates or vanishes.
 2. Should offline selling be **blocked** past a staleness threshold (e.g. catalog > 24 h old)?
 3. Should an offline sale that **oversells** be allowed to commit at sync (negative stock), or
    held for manual resolution?
+
+---
+
+## 6. What was actually built
+
+### Backend
+
+| File | Change |
+|---|---|
+| `database/migrations/2026_08_09_000001_add_client_uuid_to_sales_table.php` | `sales.client_uuid` + `client_created_at`, unique on `(tenant_id, client_uuid)` |
+| `app/Models/Sale.php` | both columns fillable |
+| `app/Http/Requests/V1/Sale/StoreRequest.php` | accepts `clientUuid`, `clientCreatedAt` |
+| `app/Actions/V1/Sale/CreateAction.php` | replay lookup by uuid; duplicate-guard bypass when a uuid is present; `UniqueConstraintViolationException` resolves to the winning row |
+| `app/Http/Resources/V1/Sale/SaleResource.php` | emits `client_uuid` |
+
+The replay lookup drops `AssignedBranchScope` (keeping `TenantScope`) — a branch reassignment
+would otherwise hide the earlier sale and cause the exact duplicate the key exists to prevent.
+
+### Mobile
+
+**New files**
+
+- `shared/utils/local_storage/offline_db.dart` — one sqflite database, schema v1
+- `shared/domain/repository/catalog_snapshot_repository.dart` + `services/catalog_snapshot_service.dart`
+- `features/sale/domain/models/pending_sale.dart`
+- `features/sale/domain/repository/outbox_repository.dart` + `services/outbox_service.dart`
+- `features/sale/domain/services/offline_sale_service.dart` — the `SaleRepository` decorator
+- `features/sale/logic/offline_sync_cubit/` — drains the outbox and pulls the catalog
+- `features/sale/screens/v3/pending_sales_screen.dart` — the list plus `PendingSalesBadge`
+
+**Modified** — `pubspec.yaml` (sqflite, path, uuid, connectivity_plus), `app.dart` (starts the
+sync engine on sign-in, drains on resume), `setup.dart`, `cart_cubit.dart` (`beginCharge()`),
+`catalog_cubit.dart` + state (snapshot fallback, `servingCached`), `lookup_repository/service`
+(`productsRaw`), `sale_repository/service`, `sale_ops_cubit.dart`, `review_pay_screen.dart`,
+`invoice_screen.dart`, `new_sale_screen.dart` + `new_sale_catalog_views.dart`,
+`day_session_screen.dart`, `auth_cubit.dart`, `receipt_pdf.dart`, `sale.dart`,
+`local_storage_service.dart` + `keys.dart`, `routes.dart`, `app_router.dart`.
+
+### Changed from the plan
+
+- **`SaleRepository.createSale` gained an `offlineSale` parameter.** The POST body has no product
+  names, employee names or tax rates, so it cannot render a receipt on its own. `CartCubit.beginCharge()`
+  now returns the uuid, the payload and a `SaleResource`-shaped snapshot together — minting the key
+  in two places would queue a sale under an id the server never saw. Passing the snapshot is also
+  how a caller *opts into* offline capture: drafts and edits omit it and stay online-only.
+- **Only an unreachable server queues a sale.** `5xx` and every `ApiException` are surfaced as
+  before. A server that answered may have committed the sale, so queuing it would risk a duplicate
+  that the cashier never sees.
+- **No server-side day-close guard.** The server cannot see a device's outbox, and relaying the
+  count from the client would only restate the client's own check. The guard in
+  `day_session_screen.dart` is client-side, and it does not know about *other* tills' queues.
+- **`Sale` gained `clientUuid` and `pending`.** `pending` is set only by the locally-built map;
+  the server never sends that key, so a sale off the wire is never pending.
+
+### Not covered
+
+- **Not exercised against a running server.** Everything is covered by automated tests; the replay
+  path has not been driven end-to-end against a live backend, and no one has taken the app through
+  airplane mode by hand. Do both before shipping.
+- Offline **sale returns**, drafts, and editing a queued sale.
+- **Cross-day offline.** Sales still take the date of whichever session is open when they arrive;
+  the day-close guard is what keeps that from happening, not a fix for it.
+- **Line tax is re-derived at sync time** from the current product row, so a queued sale's committed
+  total can drift from the cash collected if someone edits the tax rate meanwhile (task E6).
+
+### Tests
+
+A harness now exists where there was none. `tests/Support/PosWorld.php` builds the world a sale
+needs; `database/factories/TenantFactory.php` plus a fixed `UserFactory` make `User::factory()` work
+at all — it never set `tenant_id`, which is NOT NULL with a foreign key, so every call died on the
+constraint. **That one fix repaired 14 pre-existing failures.**
+
+- `tests/Feature/Api/V1/SaleIdempotencyTest.php` — 12 tests on the replay contract
+- `mobileApp/test/` — 4 new files (39 tests): outbox durability, catalog snapshot, the decorator's
+  queue-vs-rethrow rule, and charge-key stability
+
+PHP Feature suite: **16 failed / 70 passed** against a **30 / 44** baseline; the 16 are a strict
+subset of the original 30, all in files this work never touched. Mobile: 208 passing.
+
+### Reviewed
+
+An adversarial review across four lenses, each finding refuted by an independent verifier, found a
+**critical** bug (snapshot page size 200 vs the server's `max:100` — offline mode would have
+silently never worked) and several high-severity ones, including a double-charge regression. All
+fixed; the full table is in [mobile-offline-sale-tasks.md](mobile-offline-sale-tasks.md).

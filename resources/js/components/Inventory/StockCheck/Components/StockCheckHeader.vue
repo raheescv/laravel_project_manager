@@ -24,9 +24,11 @@
                         </div>
                         <div class="text-md-end">
                             <div class="text-muted small text-uppercase mb-2 fw-normal">Status</div>
-                            <span :class="getStatusClass(stockCheck.status)" class="px-3 py-2 text-uppercase">
-                                {{ stockCheck.status }}
-                            </span>
+                            <StockCheckStatusSelect :model-value="stockCheck.status || 'pending'" size="lg"
+                                :disabled="statusUpdating" @select="$emit('status-change', $event)" />
+                            <div v-if="statusUpdating" class="text-muted small mt-1">
+                                <i class="fa fa-spinner fa-spin me-1"></i>Updating…
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -36,12 +38,20 @@
 </template>
 
 <script setup>
+import StockCheckStatusSelect from './StockCheckStatusSelect.vue'
+
 defineProps({
     stockCheck: {
         type: Object,
         default: () => ({})
+    },
+    statusUpdating: {
+        type: Boolean,
+        default: false
     }
 })
+
+defineEmits(['status-change'])
 
 const formatDate = (date) => {
     if (!date) return 'N/A'
@@ -50,15 +60,6 @@ const formatDate = (date) => {
         month: 'short',
         day: 'numeric'
     })
-}
-
-const getStatusClass = (status) => {
-    const classes = {
-        pending: 'badge bg-warning text-dark',
-        completed: 'badge bg-success',
-        cancelled: 'badge bg-danger'
-    }
-    return classes[status] || 'badge bg-secondary'
 }
 </script>
 

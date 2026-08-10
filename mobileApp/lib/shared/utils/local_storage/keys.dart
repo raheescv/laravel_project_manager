@@ -35,6 +35,17 @@ class LocalStorageKeys {
 
   // Point-of-sale flow — device-local.
   static const String posLockAfterSale = 'astra.pos.lockAfterSale';
+  // How many product tiles the New Sale catalog grid fits across (2 | 3 | 4).
+  static const String posGridColumns = 'astra.pos.gridColumns';
+
+  // Offline selling — device-local. The tag identifies this till in the
+  // provisional references it prints; the sequence numbers them.
+  static const String offlineDeviceTag = 'astra.offline.deviceTag';
+  static const String offlineSequence = 'astra.offline.sequence';
+
+  /// Roster of users who have signed in on this device, so an offline till can
+  /// authenticate a cashier who has used it before. SECURE storage only.
+  static const String deviceAccounts = 'astra.auth.deviceAccounts';
 
   // Thermal print settings (mirror the web `thermal_printer_*` config).
   static const String printStyle = 'astra.print.style';
