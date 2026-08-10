@@ -112,6 +112,183 @@
             padding: .1rem .3rem;
         }
 
+        /* A textarea sized by rows can't also be locked to the 28px input height. */
+        textarea.cl-inp,
+        .cl-fx-photo-cell .cl-inp {
+            height: auto;
+        }
+
+        /* ---- Fixture Comments: one block per area, printed under that area's items ---- */
+        .cl-fx-row td {
+            background: #fbfcfe !important;
+            border-top: 2px solid #e6e8ec;
+        }
+
+        .cl-fx-standalone .cl-fx {
+            border: 1px solid #e6e8ec;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .cl-fx-head {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            flex-wrap: wrap;
+            padding: .45rem .7rem;
+            background: #f4f7fb;
+            border-bottom: 1px solid #e6e8ec;
+        }
+
+        .cl-fx-title {
+            font-weight: 700;
+            font-size: 11.5px;
+            letter-spacing: .3px;
+            color: #3a4250;
+        }
+
+        .cl-fx-ar {
+            font-weight: 400;
+            color: #8a929b;
+            margin-inline-start: .35rem;
+        }
+
+        .cl-fx-entry {
+            display: grid;
+            grid-template-columns: 104px 104px minmax(180px, 1fr) 132px 128px 34px;
+            gap: .6rem;
+            align-items: start;
+            padding: .6rem .7rem;
+            border-bottom: 1px solid #eef0f3;
+        }
+
+        .cl-fx-entry:last-of-type {
+            border-bottom: 0;
+        }
+
+        .cl-fx-lbl {
+            display: block;
+            font-size: 9.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #98a0aa;
+            margin-bottom: .15rem;
+        }
+
+        .cl-fx-photo {
+            position: relative;
+            width: 104px;
+            height: 76px;
+            border-radius: 7px;
+            border: 1px solid #e3e6ea;
+            background: #f6f8fb;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccd2d9;
+        }
+
+        .cl-fx-photo.is-empty {
+            border-style: dashed;
+        }
+
+        .cl-fx-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cl-fx-btn {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            width: 21px;
+            height: 21px;
+            border-radius: 6px;
+            border: 1px solid #e3e6ea;
+            background: #fff;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .cl-fx-btn:hover {
+            color: var(--bs-primary, #0d6efd);
+            border-color: var(--bs-primary, #0d6efd);
+        }
+
+        .cl-fx-btn-del {
+            right: 27px;
+        }
+
+        .cl-fx-btn-del:hover {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .cl-fx-del {
+            padding-top: 1.1rem;
+        }
+
+        .cl-fx-empty {
+            padding: .7rem;
+            font-size: 12px;
+            font-style: italic;
+            color: #98a0aa;
+        }
+
+        .cl-fx-foot {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            flex-wrap: wrap;
+            padding: .4rem .7rem;
+            background: #f8fafc;
+            border-top: 1px solid #eef0f3;
+        }
+
+        .cl-fx-add {
+            font-size: .72rem;
+            padding: .15rem .55rem;
+            color: var(--bs-primary, #0d6efd);
+            border: 1px solid #dbe3ee;
+            background: #fff;
+        }
+
+        .cl-fx-add:hover {
+            background: var(--bs-primary, #0d6efd);
+            border-color: var(--bs-primary, #0d6efd);
+            color: #fff;
+        }
+
+        .cl-fx-addarea {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            flex-wrap: wrap;
+            padding: .55rem .7rem;
+            border: 1px dashed #dbe0e6;
+            border-radius: 10px;
+            background: #fafbfc;
+            color: #6c757d;
+        }
+
+        @media (max-width: 900px) {
+            .cl-fx-entry {
+                grid-template-columns: 104px 104px 1fr;
+            }
+
+            .cl-fx-cmt {
+                grid-column: 1 / -1;
+            }
+        }
+
         .cl-inp[type=number] {
             -moz-appearance: textfield;
             appearance: textfield;
@@ -510,6 +687,18 @@
                             </td>
                         </tr>
                     @endforeach
+                    {{-- Fixture Comments for this area, directly under its items. --}}
+                    @if (isset($fixtureIndex[$category]))
+                        <tr class="cl-fx-row">
+                            <td colspan="{{ $colCount }}" class="p-0">
+                                @include('livewire.rent-out.partials.fixture-block', [
+                                    'a' => $fixtureIndex[$category],
+                                    'area' => $fixtureAreas[$fixtureIndex[$category]],
+                                    'canRemoveArea' => false,
+                                ])
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr>
                         <td colspan="{{ $colCount }}" class="text-center text-muted py-5">
@@ -530,6 +719,38 @@
                 </tfoot>
             @endif
         </table>
+    </div>
+
+    {{-- Areas added by hand — they have no items, so nothing above put them on screen. --}}
+    @foreach ($fixtureAreas as $a => $area)
+        @if (! isset($grouped[$area['category']]))
+            <div class="cl-fx-standalone mt-3">
+                @include('livewire.rent-out.partials.fixture-block', [
+                    'a' => $a,
+                    'area' => $area,
+                    'canRemoveArea' => true,
+                ])
+            </div>
+        @endif
+    @endforeach
+
+    {{-- Add an area for work done somewhere with no inventory items of its own. --}}
+    <div class="cl-fx-addarea mt-3">
+        <i class="fa fa-plus-circle me-1 opacity-75"></i>
+        <span class="small">Work done in an area with no checklist items?</span>
+        @if (count($availableCategories))
+            {{-- Click-and-go: picking an area adds it, no separate confirm step. --}}
+            <select class="form-select form-select-sm cl-inp" style="max-width:190px;" wire:change="addFixtureArea($event.target.value)">
+                <option value="">Choose an area…</option>
+                @foreach ($availableCategories as $category)
+                    <option value="{{ $category }}">{{ $category }}</option>
+                @endforeach
+            </select>
+            <span class="small text-muted">or</span>
+        @endif
+        <input class="form-control form-control-sm cl-inp" style="max-width:190px;" placeholder="Type a new area…"
+            wire:model="newAreaCategory" wire:keydown.enter.prevent="addFixtureArea">
+        <button type="button" class="btn btn-sm cl-fx-add" wire:click="addFixtureArea"><i class="fa fa-plus me-1"></i>Add area</button>
     </div>
 
     {{-- Remarks --}}

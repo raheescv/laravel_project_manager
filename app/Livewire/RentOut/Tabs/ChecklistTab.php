@@ -3,9 +3,12 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Checklist\SaveAction;
+use App\Actions\RentOut\Checklist\SaveFixtureAction;
+use App\Enums\RentOut\FixtureStatus;
 use App\Models\Checklist;
 use App\Models\RentOut;
 use App\Models\RentOutChecklistLine;
+use App\Models\RentOutFixtureArea;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
@@ -45,6 +48,19 @@ class ChecklistTab extends Component
     public ?string $leasingCoordinatorName = null;
 
     public array $lines = [];
+
+    /**
+     * Fixture Comments blocks — one per area shown on this checklist, each holding its
+     * own rectification entries. Rebuilt by loadFixtures() from the checklist's
+     * categories plus any area saved earlier.
+     */
+    public array $fixtureAreas = [];
+
+    /** Pending before/after uploads, keyed "areaIndex.entryIndex.before|after". */
+    public array $newFixtureImages = [];
+
+    /** Free-text box for adding an area that has no checklist items of its own. */
+    public ?string $newAreaCategory = null;
 
     public array $selected = [];
 
@@ -100,6 +116,192 @@ class ChecklistTab extends Component
         $this->newImages = [];
         $this->selected = [];
         $this->selectAll = false;
+
+        $this->loadFixtures();
+    }
+
+    /**
+     * Rebuild the Fixture Comments blocks. Every category on the checklist gets one, in
+     * the order the item rows group; areas saved earlier follow, which is how a
+     * hand-added area (one with no inventory items) survives a reload.
+     */
+    protected function loadFixtures(): void
+    {
+        $stored = RentOutFixtureArea::with('entries')
+            ->where('rent_out_id', $this->rentOutId)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->keyBy('category');
+
+        $categories = collect($this->lines)
+            ->map(fn ($l) => $l['category'] ?: 'Others')
+            ->merge($stored->keys())
+            ->unique()
+            ->values();
+
+        $this->fixtureAreas = $categories->map(function ($category, $i) use ($stored) {
+            $area = $stored->get($category);
+
+            return [
+                'id' => $area?->id,
+                'category' => $category,
+                'sort_order' => $i + 1,
+                'owner_name' => $area?->owner_name,
+                'owner_signed_at' => $area?->owner_signed_at?->format('d M Y, H:i'),
+                'signature_url' => $area?->owner_signature_url,
+                'entries' => collect($area?->entries ?? [])->map(fn ($e) => [
+                    'id' => $e->id,
+                    'before_image_path' => $e->before_image_path,
+                    'before_image_url' => $e->before_image_url,
+                    'after_image_path' => $e->after_image_path,
+                    'after_image_url' => $e->after_image_url,
+                    'comments' => $e->comments,
+                    'status' => $e->status?->value ?? FixtureStatus::Pending->value,
+                    'completed_date' => $e->completed_date?->format('Y-m-d'),
+                    'sort_order' => $e->sort_order,
+                ])->values()->toArray(),
+            ];
+        })->values()->toArray();
+
+        $this->newFixtureImages = [];
+    }
+
+    public function addFixtureEntry($areaIndex): void
+    {
+        if (! isset($this->fixtureAreas[$areaIndex])) {
+            return;
+        }
+
+        $this->fixtureAreas[$areaIndex]['entries'][] = [
+            'id' => null,
+            'before_image_path' => null,
+            'before_image_url' => null,
+            'after_image_path' => null,
+            'after_image_url' => null,
+            'comments' => null,
+            'status' => FixtureStatus::Pending->value,
+            'completed_date' => null,
+            'sort_order' => count($this->fixtureAreas[$areaIndex]['entries']) + 1,
+        ];
+    }
+
+    public function removeFixtureEntry($areaIndex, $entryIndex): void
+    {
+        if (! isset($this->fixtureAreas[$areaIndex]['entries'][$entryIndex])) {
+            return;
+        }
+
+        // The entry owns its photos — drop the files with it rather than orphaning them.
+        $entry = $this->fixtureAreas[$areaIndex]['entries'][$entryIndex];
+        foreach (['before_image_path', 'after_image_path'] as $field) {
+            if (! empty($entry[$field]) && Storage::disk('public')->exists($entry[$field])) {
+                Storage::disk('public')->delete($entry[$field]);
+            }
+        }
+
+        array_splice($this->fixtureAreas[$areaIndex]['entries'], $entryIndex, 1);
+        unset($this->newFixtureImages[$areaIndex]);
+    }
+
+    /** A before/after photo was picked — store it and point the entry at it. */
+    public function updatedNewFixtureImages($value, $key): void
+    {
+        [$a, $e, $which] = array_pad(explode('.', (string) $key), 3, null);
+        $a = (int) $a;
+        $e = (int) $e;
+
+        if (! $value || ! in_array($which, ['before', 'after'], true) || ! isset($this->fixtureAreas[$a]['entries'][$e])) {
+            return;
+        }
+
+        $this->validate([
+            "newFixtureImages.$key" => 'image|max:2048',
+        ], [
+            "newFixtureImages.$key.image" => 'The file must be an image',
+            "newFixtureImages.$key.max" => 'The image size must not exceed 2MB',
+        ]);
+
+        $field = $which.'_image_path';
+        $old = $this->fixtureAreas[$a]['entries'][$e][$field] ?? null;
+        if ($old && Storage::disk('public')->exists($old)) {
+            Storage::disk('public')->delete($old);
+        }
+
+        $path = $value->store('rent-out-fixtures/'.$this->rentOutId, 'public');
+        $this->fixtureAreas[$a]['entries'][$e][$field] = $path;
+        $this->fixtureAreas[$a]['entries'][$e][$which.'_image_url'] = asset('storage/'.$path);
+
+        unset($this->newFixtureImages[$a][$e][$which]);
+    }
+
+    public function removeFixtureImage($areaIndex, $entryIndex, $which): void
+    {
+        if (! in_array($which, ['before', 'after'], true) || ! isset($this->fixtureAreas[$areaIndex]['entries'][$entryIndex])) {
+            return;
+        }
+
+        $field = $which.'_image_path';
+        $path = $this->fixtureAreas[$areaIndex]['entries'][$entryIndex][$field] ?? null;
+        if ($path && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+
+        $this->fixtureAreas[$areaIndex]['entries'][$entryIndex][$field] = null;
+        $this->fixtureAreas[$areaIndex]['entries'][$entryIndex][$which.'_image_url'] = null;
+    }
+
+    /**
+     * Add a block for an area that has no checklist items — picked from the master
+     * category list or typed in. Existing areas are left alone, matched case-insensitively
+     * so "Balcony" and "balcony" can't both open a block.
+     */
+    public function addFixtureArea($category = null): void
+    {
+        $category = trim((string) ($category ?? $this->newAreaCategory));
+        $this->newAreaCategory = null;
+
+        if ($category === '') {
+            return;
+        }
+
+        if (collect($this->fixtureAreas)->contains(fn ($a) => strcasecmp((string) $a['category'], $category) === 0)) {
+            return;
+        }
+
+        $this->fixtureAreas[] = [
+            'id' => null,
+            'category' => $category,
+            'sort_order' => count($this->fixtureAreas) + 1,
+            'owner_name' => null,
+            'owner_signed_at' => null,
+            'signature_url' => null,
+            'entries' => [],
+        ];
+
+        $this->addFixtureEntry(count($this->fixtureAreas) - 1);
+    }
+
+    /**
+     * Drop a hand-added area. Areas backed by checklist items aren't removable — they
+     * would simply reappear on the next reload, since the item rows put them there.
+     */
+    public function removeFixtureArea($areaIndex): void
+    {
+        if (! isset($this->fixtureAreas[$areaIndex])) {
+            return;
+        }
+
+        foreach ($this->fixtureAreas[$areaIndex]['entries'] as $entry) {
+            foreach (['before_image_path', 'after_image_path'] as $field) {
+                if (! empty($entry[$field]) && Storage::disk('public')->exists($entry[$field])) {
+                    Storage::disk('public')->delete($entry[$field]);
+                }
+            }
+        }
+
+        array_splice($this->fixtureAreas, $areaIndex, 1);
+        $this->newFixtureImages = [];
     }
 
     /** Resolved preview URL for a line array: own upload first, else the master image. */
@@ -291,12 +493,31 @@ class ChecklistTab extends Component
 
         $response = (new SaveAction())->execute($this->rentOutId, $header, $this->lines);
 
-        if ($response['success']) {
-            $this->loadLines();
-            $this->dispatch('success', ['message' => $response['message']]);
-        } else {
+        if (! $response['success']) {
             $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
         }
+
+        // An area with nothing recorded in it isn't persisted — the block is offered for
+        // every category regardless, so saving them all would fill the table with empties.
+        // An already-signed area is kept even if its entries were cleared, so the owner's
+        // acceptance isn't silently thrown away.
+        $fixtures = collect($this->fixtureAreas)
+            ->filter(fn ($a) => ! empty($a['entries']) || ! empty($a['signature_url']))
+            ->values()
+            ->all();
+
+        $fixtureResponse = (new SaveFixtureAction())->execute($this->rentOutId, $fixtures);
+
+        if (! $fixtureResponse['success']) {
+            $this->dispatch('error', ['message' => $fixtureResponse['message']]);
+
+            return;
+        }
+
+        $this->loadLines();
+        $this->dispatch('success', ['message' => $response['message']]);
     }
 
     public function render()
@@ -309,9 +530,32 @@ class ChecklistTab extends Component
 
         $damageTotal = array_sum(array_map(fn ($l) => (float) ($l['damage_cost'] ?? 0), $this->lines));
 
+        // Where each area's block lives in $fixtureAreas, so the item table can drop it
+        // in under the matching category without searching the array in the view.
+        $fixtureIndex = [];
+        foreach ($this->fixtureAreas as $i => $area) {
+            $fixtureIndex[$area['category']] = $i;
+        }
+
+        // Areas the user can still add by hand: master categories not already on show.
+        $shown = array_map(fn ($a) => mb_strtolower((string) $a['category']), $this->fixtureAreas);
+        $availableCategories = Checklist::query()
+            ->where('is_active', true)
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category')
+            ->reject(fn ($c) => in_array(mb_strtolower($c), $shown, true))
+            ->values()
+            ->all();
+
         return view('livewire.rent-out.tabs.checklist-tab', [
             'grouped' => $grouped,
             'damageTotal' => $damageTotal,
+            'fixtureIndex' => $fixtureIndex,
+            'availableCategories' => $availableCategories,
+            'statusOptions' => FixtureStatus::options(),
         ]);
     }
 }

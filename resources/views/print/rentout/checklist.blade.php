@@ -56,6 +56,27 @@
                     word-wrap: break-word; overflow-wrap: break-word; }
         .items tr.cat td { background: #f3efe2; color: #6a5f33; font-weight: bold; text-transform: uppercase; font-size: 9px; letter-spacing: .3px; }
         .items tr:nth-child(even) td { background: #fcfbf7; }
+        /* Fixture Comments — the rectification record for one area. Printed as a table of
+           its own inside a full-width cell rather than threaded through the inventory
+           columns above: before/after photos and an owner signature need room the item
+           grid can't spare, and its column count doesn't match. */
+        .items tr.fx > td { padding: 0; border-top: 2px solid #d8d0b4; }
+        .fx-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .fx-table td { border: 1px solid #e4e0d2; padding: 3px 6px; font-size: 9px; vertical-align: middle;
+                       background: #fdfcf8; word-wrap: break-word; overflow-wrap: break-word; }
+        .fx-table tr.fx-head td { background: #f2eddd; color: #7a6a2f; font-weight: bold; font-size: 8.8px;
+                                  text-transform: uppercase; letter-spacing: .3px; }
+        .fx-table tr.fx-head .ar { float: right; text-transform: none; letter-spacing: 0; font-weight: normal; direction: rtl; }
+        .fx-table tr.fx-cols td { background: #f9f6ee; color: #8a8060; font-weight: bold; font-size: 8px;
+                                  text-transform: uppercase; letter-spacing: .3px; text-align: center; }
+        .fx-table tr.fx-sign td { background: #f9f6ee; color: #7a6a2f; font-weight: bold; font-size: 8.4px;
+                                  text-transform: uppercase; letter-spacing: .3px; }
+        .fx-table tr { page-break-inside: avoid; break-inside: avoid; }
+        .fx-img { width: 54px; height: 40px; object-fit: cover; border: 1px solid #ccc6b0; border-radius: 2px; display: block; margin: 0 auto; }
+        .fx-noimg { color: #b3ac93; }
+        .fx-sig-img { max-height: 30px; max-width: 100%; }
+        .fx-sig-line { border-top: 1px solid #555; font-size: 7.5px; padding-top: 2px; color: #8a8575;
+                       text-transform: none; letter-spacing: 0; font-weight: normal; margin: 0 auto; max-width: 130px; }
         .c { text-align: center; }
         .r { text-align: right; }
         .ok { color: #1d7a45; font-weight: bold; }
@@ -295,6 +316,11 @@
                         @endif
                     </tr>
                 @endforeach
+                {{-- Fixture Comments for this area, directly under its items. --}}
+                @php $fxArea = $ro->fixtureAreaFor($category); @endphp
+                @if ($fxArea && ($fxArea->entries->isNotEmpty() || $fxArea->isSigned()))
+                    @include('print.rentout.partials.fixture-block', ['area' => $fxArea])
+                @endif
             @empty
                 <tr><td colspan="{{ $colCount }}" class="c muted" style="padding:10px;">No items recorded.</td></tr>
             @endforelse
@@ -304,6 +330,14 @@
                     <td class="r">{{ number_format($ro->checklistDamageTotal(), 2) }}</td>
                 </tr>
             @endif
+            {{-- Areas recorded by hand — no items, so the grouping above never reached them.
+                 They follow the inventory totals rather than interrupting them. --}}
+            @foreach ($ro->fixtureAreas as $fxArea)
+                @if (! $grouped->has($fxArea->category) && ($fxArea->entries->isNotEmpty() || $fxArea->isSigned()))
+                    <tr class="cat"><td colspan="{{ $colCount }}">{{ $fxArea->category }}</td></tr>
+                    @include('print.rentout.partials.fixture-block', ['area' => $fxArea])
+                @endif
+            @endforeach
         </tbody>
     </table>
 

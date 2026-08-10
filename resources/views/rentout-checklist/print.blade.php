@@ -61,6 +61,111 @@
             letter-spacing: 0.03em;
         }
 
+        /* ---- Fixture Comments: one read-only block per area, under that area's items ---- */
+        .fixture-row>td {
+            background: #fbfcfe;
+            border-top: 2px solid #e0e3e7 !important;
+        }
+
+        .fx-standalone .fx-block {
+            border: 1px solid #e0e3e7;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .fx-head {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            flex-wrap: wrap;
+            padding: .45rem .75rem;
+            background: #eef1f4;
+            border-bottom: 1px solid #e0e3e7;
+        }
+
+        .fx-title {
+            font-weight: 700;
+            font-size: .8rem;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            color: #495057;
+        }
+
+        .fx-ar {
+            font-weight: 400;
+            text-transform: none;
+            color: #8a929b;
+            margin-inline-start: .35rem;
+        }
+
+        .fx-entry {
+            display: grid;
+            grid-template-columns: 104px 104px minmax(180px, 1fr) 130px;
+            gap: .75rem;
+            align-items: start;
+            padding: .6rem .75rem;
+            border-bottom: 1px solid #eef0f3;
+        }
+
+        .fx-lbl {
+            display: block;
+            font-size: .62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: #98a0aa;
+            margin-bottom: .15rem;
+        }
+
+        .fx-photo {
+            width: 104px;
+            height: 76px;
+            border-radius: 7px;
+            border: 1px solid #e0e3e7;
+            background: #f6f8fb;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccd2d9;
+        }
+
+        .fx-photo.is-empty {
+            border-style: dashed;
+        }
+
+        .fx-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .fx-cmt {
+            font-size: .85rem;
+        }
+
+        .fx-date {
+            color: #8a929b;
+            font-size: .72rem;
+            margin-top: .15rem;
+        }
+
+        .fx-sign {
+            padding: .75rem;
+            background: #f8fafc;
+            border-top: 1px solid #eef0f3;
+        }
+
+        @media (max-width: 767.98px) {
+            .fx-entry {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .fx-cmt {
+                grid-column: 1 / -1;
+            }
+        }
+
         .acceptance-block {
             border: 1px solid #e0e3e7;
             border-radius: 10px;
@@ -240,12 +345,12 @@
             </thead>
             <tbody>
                 @php
-                    $grouped = $rentOut->checklistLines->groupBy(fn ($l) => $l->item?->category ?: 'Uncategorized');
+                    $grouped = $rentOut->checklistLines->groupBy(fn ($l) => $l->item?->category ?: 'Others');
                     $sn = 0;
                 @endphp
                 @forelse ($grouped as $category => $lines)
                     <tr class="category-row">
-                        <th colspan="{{ $colCount }}">{{ $category ?: 'Uncategorized' }}</th>
+                        <th colspan="{{ $colCount }}">{{ $category ?: 'Others' }}</th>
                     </tr>
                     @foreach ($lines as $line)
                         @php $sn++; @endphp
@@ -270,6 +375,15 @@
                             @endif
                         </tr>
                     @endforeach
+                    {{-- Fixture Comments for this area, directly under its items. --}}
+                    @php $fxArea = $rentOut->fixtureAreaFor($category); @endphp
+                    @if ($fxArea && ($fxArea->entries->isNotEmpty() || $fxArea->isSigned()))
+                        <tr class="fixture-row">
+                            <td colspan="{{ $colCount }}" class="p-0">
+                                @include('rentout-checklist.partials.fixture-block', ['area' => $fxArea])
+                            </td>
+                        </tr>
+                    @endif
                 @empty
                     <tr>
                         <td colspan="{{ $colCount }}" class="text-center text-muted">No items recorded.</td>
@@ -286,6 +400,15 @@
             @endif
         </table>
         </div>
+
+        {{-- Areas recorded by hand — they have no items, so the table above never showed them. --}}
+        @foreach ($rentOut->fixtureAreas as $fxArea)
+            @if (! $grouped->has($fxArea->category) && ($fxArea->entries->isNotEmpty() || $fxArea->isSigned()))
+                <div class="fx-standalone mt-3">
+                    @include('rentout-checklist.partials.fixture-block', ['area' => $fxArea])
+                </div>
+            @endif
+        @endforeach
 
         {{-- (c) Acceptance Blocks: Move-In then Move-Out --}}
         @php

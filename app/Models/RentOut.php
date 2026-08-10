@@ -360,6 +360,12 @@ class RentOut extends Model implements AuditableContracts
         return $this->hasMany(RentOutChecklistSignature::class, 'rent_out_id');
     }
 
+    /** Fixture Comments blocks — one per area of the unit, each holding its own entries. */
+    public function fixtureAreas(): HasMany
+    {
+        return $this->hasMany(RentOutFixtureArea::class, 'rent_out_id')->orderBy('sort_order')->orderBy('id');
+    }
+
     public function facilityCoordinator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'facility_coordinator_id');
@@ -403,6 +409,16 @@ class RentOut extends Model implements AuditableContracts
         return $this->checklistSignatures->first(function ($s) use ($phase, $role) {
             return $s->phase?->value === $phase && $s->role?->value === $role;
         });
+    }
+
+    /**
+     * The Fixture Comments block for a checklist category, or null when that area has
+     * none. Reads the loaded collection so a print view can call it per category
+     * without firing a query each time.
+     */
+    public function fixtureAreaFor(?string $category): ?RentOutFixtureArea
+    {
+        return $this->fixtureAreas->first(fn ($a) => $a->category === $category);
     }
 
     public function checklistDamageTotal(): float

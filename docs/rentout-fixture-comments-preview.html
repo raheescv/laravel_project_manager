@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixture Comments — Rent-Out Checklist Preview</title>
+<style>
+:root{
+  --bg:#f0f2f5; --card:#ffffff; --ink:#212529; --muted:#6c757d; --line:#e0e3e7;
+  --soft:#f8f9fa; --primary:#0d6efd; --primary-soft:#e7f0ff;
+  --ok:#1d7a45; --ok-soft:#e6f4ec; --warn:#b7791f; --warn-soft:#fdf3e2;
+  --prog:#2563eb; --prog-soft:#e8effe; --danger:#bf2f2f;
+  --olive:#7a6a2f; --olive-head:#efe9d6; --olive-cat:#f3efe2; --olive-ink:#4a432b;
+  --shadow:0 10px 25px rgba(0,0,0,.05);
+}
+html[data-theme="dark"]{
+  --bg:#12151a; --card:#1a1e25; --ink:#e6e9ee; --muted:#8f98a6; --line:#2b313b;
+  --soft:#20252d; --primary:#4d8bff; --primary-soft:#1b2740;
+  --ok:#4ade80; --ok-soft:#132a1e; --warn:#facc15; --warn-soft:#2d2412;
+  --prog:#7aa5ff; --prog-soft:#16233d; --danger:#f87171;
+  --olive:#9c8a45; --olive-head:#2a2721; --olive-cat:#23211c; --olive-ink:#d8cfa8;
+  --shadow:0 10px 25px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;
+  transition:background .2s,color .2s}
+.bar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);
+  padding:.7rem 1.25rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.bar h1{font-size:.95rem;margin:0;font-weight:700;letter-spacing:.2px}
+.bar .sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:7px;
+  padding:.35rem .7rem;font-size:.78rem;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.wrap{max-width:1180px;margin:0 auto;padding:1.5rem 1.25rem 5rem}
+.panel{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:1.5rem;margin-bottom:1.75rem;
+  border:1px solid var(--line)}
+.panel > h2{margin:0 0 .15rem;font-size:1.15rem;font-weight:700}
+.panel > .sub{color:var(--muted);font-size:.85rem;margin-bottom:1.15rem}
+.tag{display:inline-block;background:var(--primary-soft);color:var(--primary);border-radius:20px;
+  padding:.1rem .55rem;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;vertical-align:2px}
+
+/* ---------- shared: area block ---------- */
+.area{border:1px solid var(--line);border-radius:12px;margin-bottom:1rem;overflow:hidden;background:var(--card)}
+.area-head{display:flex;align-items:center;gap:.6rem;padding:.6rem .85rem;background:var(--soft);
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+.area-name{font-weight:700;font-size:.86rem;letter-spacing:.2px}
+.area-name .ar{font-weight:400;color:var(--muted);font-size:.8rem;margin-inline-start:.4rem}
+.count{background:var(--line);color:var(--muted);border-radius:20px;padding:.05rem .5rem;font-size:.7rem;font-weight:700}
+.area-head .sp{flex:1}
+.pill{border-radius:20px;padding:.12rem .55rem;font-size:.7rem;font-weight:700;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:.3rem}
+.p-pend{background:var(--warn-soft);color:var(--warn)}
+.p-prog{background:var(--prog-soft);color:var(--prog)}
+.p-done{background:var(--ok-soft);color:var(--ok)}
+.entry{display:grid;grid-template-columns:96px 96px 1fr 132px 118px 32px;gap:.7rem;align-items:start;
+  padding:.75rem .85rem;border-bottom:1px solid var(--line)}
+.entry:last-child{border-bottom:0}
+.entry.head{padding-top:.5rem;padding-bottom:.5rem;background:var(--soft);font-size:.68rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.photo{width:96px;height:72px;border-radius:8px;border:1px solid var(--line);background:var(--soft);
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.photo svg{width:22px;height:22px;opacity:.3}
+.photo.filled{border-style:solid;background:linear-gradient(135deg,#c9d2dd,#93a3b8)}
+.photo.filled.after{background:linear-gradient(135deg,#bcd9c4,#7fae8d)}
+.photo.empty{border-style:dashed}
+.photo .cam{position:absolute;right:3px;bottom:3px;background:var(--card);border:1px solid var(--line);
+  border-radius:6px;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+.photo .cam svg{width:11px;height:11px;opacity:.65}
+.inp{width:100%;border:1px solid var(--line);border-radius:7px;padding:.35rem .5rem;font-size:.8rem;
+  background:var(--card);color:var(--ink);font-family:inherit}
+textarea.inp{resize:vertical;min-height:72px;line-height:1.45}
+.sel{width:100%;border:1px solid var(--line);border-radius:7px;padding:.35rem .4rem;font-size:.78rem;
+  background:var(--card);color:var(--ink);font-family:inherit}
+.lbl{font-size:.64rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;
+  margin-bottom:.2rem;display:block}
+.trash{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:.3rem;border-radius:6px;font-size:.9rem}
+.trash:hover{color:var(--danger);background:var(--soft)}
+.area-foot{padding:.5rem .85rem;display:flex;gap:.5rem;align-items:center;background:var(--soft);
+  border-top:1px solid var(--line)}
+.link{border:0;background:transparent;color:var(--primary);font-size:.76rem;font-weight:600;cursor:pointer;
+  padding:.2rem .1rem;font-family:inherit}
+.addarea{border:1px dashed var(--line);border-radius:12px;padding:.8rem;text-align:center;color:var(--muted);
+  font-size:.8rem;background:var(--soft)}
+.addarea .link{font-size:.8rem}
+
+/* ---------- context: the item table above each fixture block ---------- */
+.items{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:0}
+.items th{background:var(--soft);color:var(--muted);text-align:start;padding:.4rem .6rem;font-size:.68rem;
+  text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+.items td{padding:.4rem .6rem;border-bottom:1px solid var(--line)}
+.items tr.cat td{background:var(--olive-cat);color:var(--olive);font-weight:700;text-transform:uppercase;
+  font-size:.7rem;letter-spacing:.4px}
+html[data-theme="dark"] .items tr.cat td{color:var(--olive-ink)}
+.ghost{color:var(--muted);font-style:italic;font-size:.78rem;padding:.5rem .85rem}
+
+/* ---------- sign page ---------- */
+.ro-entry{display:grid;grid-template-columns:96px 96px 1fr 130px;gap:.7rem;align-items:start;
+  padding:.7rem .85rem;border-bottom:1px solid var(--line)}
+.ro-entry:last-child{border-bottom:0}
+.cmt{font-size:.82rem}
+.cmt .date{color:var(--muted);font-size:.72rem;margin-top:.2rem}
+.sigwrap{padding:.85rem;border-top:1px solid var(--line);background:var(--soft)}
+.sigrow{display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap}
+.sigpad{flex:1;min-width:240px;height:110px;background:var(--card);border:1px solid var(--line);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.75rem}
+.sigdone{flex:1;min-width:240px;border:1px dashed var(--line);border-radius:8px;padding:.5rem;text-align:center;background:var(--card)}
+.sigdone .scr{font-family:'Segoe Script','Bradley Hand',cursive;font-size:1.5rem;color:var(--ink);line-height:1.1}
+.sigdone .who{border-top:1px solid var(--line);margin-top:.3rem;padding-top:.25rem;font-size:.72rem;color:var(--muted)}
+.sigbtns{display:flex;gap:.4rem}
+
+/* ---------- pdf ---------- */
+.paper{background:#fff;color:#2b2b2b;border-radius:6px;padding:1.4rem;font-size:11px;
+  box-shadow:0 4px 18px rgba(0,0,0,.12);border:1px solid #ddd;overflow-x:auto}
+html[data-theme="dark"] .paper{filter:none}
+.paper .band{background:#7a6a2f;color:#fff;font-size:10px;font-weight:bold;letter-spacing:.4px;
+  padding:4px 8px;margin:10px 0 6px;text-transform:uppercase;border-radius:3px;display:flex;justify-content:space-between}
+.paper .band .ar{text-transform:none;letter-spacing:0;direction:rtl}
+.ptable{width:100%;border-collapse:collapse;table-layout:fixed}
+.ptable th{background:#efe9d6;color:#4a432b;border:1px solid #ccc6b0;padding:4px 6px;font-size:9.5px}
+.ptable td{border:1px solid #ddd;padding:3px 6px;font-size:9.5px;vertical-align:top;word-wrap:break-word}
+.ptable tr.cat td{background:#f3efe2;color:#6a5f33;font-weight:bold;text-transform:uppercase;font-size:9px;letter-spacing:.3px}
+.ptable tr.fx > td{background:#fdfcf8;border-top:2px solid #d8d0b4}
+.fxtable{width:100%;border-collapse:collapse;table-layout:fixed}
+.fxtable td{border:1px solid #e4e0d2;padding:3px 6px;font-size:9px;vertical-align:middle;
+  word-wrap:break-word;background:#fdfcf8}
+.fxtable tr.fx-head td{background:#f2eddd;color:#7a6a2f;font-weight:bold;font-size:8.8px;
+  text-transform:uppercase;letter-spacing:.3px;border:1px solid #e4e0d2}
+.fxtable tr.fx-head .ar{float:right;text-transform:none;letter-spacing:0;direction:rtl;font-weight:normal}
+.fxtable tr.fx-cols td{background:#f9f6ee;color:#8a8060;font-weight:bold;font-size:8px;
+  text-transform:uppercase;letter-spacing:.3px;text-align:center}
+.fxtable tr.fx-cols td:nth-child(4){text-align:left}
+.fxtable tr.fx-sign td{background:#f9f6ee;font-size:8.4px;color:#7a6a2f;font-weight:bold;
+  text-transform:uppercase;letter-spacing:.3px}
+.sigline{border-top:1px solid #555;font-size:7.5px;padding-top:2px;color:#8a8575;
+  text-transform:none;letter-spacing:0;font-weight:normal;margin:0 auto;max-width:120px}
+.paper-scroll{overflow-x:auto}
+.pimg{width:52px;height:38px;object-fit:cover;border:1px solid #ccc6b0;border-radius:2px;display:block;margin:auto;
+  background:linear-gradient(135deg,#c9d2dd,#93a3b8)}
+.pimg.after{background:linear-gradient(135deg,#bcd9c4,#7fae8d)}
+.pimg.none{background:#f4f2ea;display:flex;align-items:center;justify-content:center;color:#b3ac93;font-size:14px}
+.psig{height:26px;font-family:'Segoe Script','Bradley Hand',cursive;font-size:15px;color:#2b2b2b;text-align:center}
+.pst{font-weight:bold}
+.pst.done{color:#1d7a45}.pst.prog{color:#2563eb}.pst.pend{color:#b7791f}
+.c{text-align:center}.r{text-align:right}
+
+.note{background:var(--primary-soft);border-inline-start:3px solid var(--primary);border-radius:0 8px 8px 0;
+  padding:.7rem .9rem;font-size:.82rem;margin-bottom:1.1rem;color:var(--ink)}
+.note b{font-weight:700}
+.legend{display:flex;gap:1.1rem;flex-wrap:wrap;font-size:.75rem;color:var(--muted);margin-bottom:.9rem}
+
+/* RTL */
+html[dir="rtl"] body{font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,sans-serif}
+html[dir="rtl"] .entry,html[dir="rtl"] .ro-entry{direction:rtl}
+
+@media (max-width:820px){
+  .entry{grid-template-columns:1fr 1fr;gap:.55rem}
+  .entry.head{display:none}
+  .entry > .trash{justify-self:end}
+  .ro-entry{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>Fixture Comments — Rent-Out Checklist</h1>
+  <span class="sp"></span>
+  <button class="btn on" id="tLight">Light</button>
+  <button class="btn" id="tDark">Dark</button>
+  <button class="btn" id="dLtr">LTR</button>
+  <button class="btn" id="dRtl">RTL</button>
+</div>
+
+<div class="wrap">
+
+  <div class="note">
+    <b>What this is.</b> A per-area <b>Fixture Comments</b> block that sits directly below each category's items —
+    on the Checklist tab (editable), on the checklist print/sign page (read-only + owner signature), and in the PDF.
+    Each area holds <b>multiple entries</b>; each entry carries a before photo, an after photo, comments, a completion
+    status and an optional completion date. The <b>owner signs once per area</b> to accept that area's work.
+  </div>
+
+  <!-- ============ 1. CHECKLIST TAB (EDIT) ============ -->
+  <div class="panel">
+    <h2>1 · Checklist tab <span class="tag">editable</span></h2>
+    <div class="sub">Rent-Out view → Checklist tab. The block is appended under each category's item rows, inside the same card.</div>
+
+    <table class="items">
+      <thead>
+        <tr><th style="width:44px">Qty</th><th style="width:64px">Image</th><th>Item Description</th>
+            <th style="width:70px" class="c">Move-In</th><th style="width:30%">Comments</th></tr>
+      </thead>
+      <tbody>
+        <tr class="cat"><td colspan="5">Living Room <span class="count">3</span></td></tr>
+        <tr><td>1</td><td class="c">▢</td><td>Ceiling light fitting</td><td class="c">✓</td><td>—</td></tr>
+        <tr><td>1</td><td class="c">▢</td><td>Wall switch — double</td><td class="c">✓</td><td>Loose plate</td></tr>
+        <tr><td>4</td><td class="c">▢</td><td>Floor tiles (spare)</td><td class="c">✓</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="area" style="border-top-left-radius:0;border-top-right-radius:0;border-top:0">
+      <div class="area-head">
+        <span class="area-name">Fixture Comments — Living Room<span class="ar">ملاحظات التشطيبات</span></span>
+        <span class="count">2 entries</span>
+        <span class="sp"></span>
+        <span class="pill p-prog">● 1 in progress</span>
+        <span class="pill p-done">✓ 1 completed</span>
+      </div>
+
+      <div class="entry">
+        <div><span class="lbl">Before</span>
+          <div class="photo filled"><span class="cam">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3l-1.5 2H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.5L15 3H9zm3 5a5 5 0 110 10 5 5 0 010-10z"/></svg>
+          </span></div>
+        </div>
+        <div><span class="lbl">After</span>
+          <div class="photo empty"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg>
+            <span class="cam"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3l-1.5 2H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.5L15 3H9zm3 5a5 5 0 110 10 5 5 0 010-10z"/></svg></span>
+          </div>
+        </div>
+        <div><span class="lbl">Comments</span>
+          <textarea class="inp">Floor tiles need to fit near the balcony door — 4 tiles cracked. Wall switch plate needs replacing.</textarea>
+        </div>
+        <div><span class="lbl">Status</span>
+          <select class="sel"><option>Pending</option><option selected>In Progress</option><option>Completed</option></select>
+        </div>
+        <div><span class="lbl">Completed date</span>
+          <input class="inp" type="date" value="">
+        </div>
+        <div><span class="lbl">&nbsp;</span><button class="trash" title="Remove entry">🗑</button></div>
+      </div>
+
+      <div class="entry">
+        <div><span class="lbl">Before</span><div class="photo filled"><span class="cam"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3l-1.5 2H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.5L15 3H9zm3 5a5 5 0 110 10 5 5 0 010-10z"/></svg></span></div></div>
+        <div><span class="lbl">After</span><div class="photo filled after"><span class="cam"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3l-1.5 2H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.5L15 3H9zm3 5a5 5 0 110 10 5 5 0 010-10z"/></svg></span></div></div>
+        <div><span class="lbl">Comments</span><textarea class="inp">Paint damage on the east wall — patched and repainted to match.</textarea></div>
+        <div><span class="lbl">Status</span><select class="sel"><option>Pending</option><option>In Progress</option><option selected>Completed</option></select></div>
+        <div><span class="lbl">Completed date</span><input class="inp" type="date" value="2026-08-06"></div>
+        <div><span class="lbl">&nbsp;</span><button class="trash" title="Remove entry">🗑</button></div>
+      </div>
+
+      <div class="area-foot">
+        <button class="link">+ Add entry</button>
+        <span class="sp" style="flex:1"></span>
+        <span style="font-size:.72rem;color:var(--muted)">Owner signs on the checklist print page</span>
+      </div>
+    </div>
+
+    <table class="items" style="margin-top:1.25rem">
+      <tbody>
+        <tr class="cat"><td colspan="5">Master Bathroom <span class="count">2</span></td></tr>
+        <tr><td>1</td><td class="c">▢</td><td>Mixer tap</td><td class="c">✓</td><td>—</td></tr>
+        <tr><td>1</td><td class="c">▢</td><td>Mirror cabinet</td><td class="c">✓</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <div class="area" style="border-top-left-radius:0;border-top-right-radius:0;border-top:0">
+      <div class="area-head">
+        <span class="area-name">Fixture Comments — Master Bathroom<span class="ar">ملاحظات التشطيبات</span></span>
+        <span class="sp"></span>
+        <span class="pill p-pend">no entries</span>
+      </div>
+      <div class="ghost">No fixture comments recorded for this area.</div>
+      <div class="area-foot"><button class="link">+ Add entry</button></div>
+    </div>
+
+    <div style="margin-top:1rem" class="addarea">
+      No items for an area but work was done there?
+      <button class="link">+ Add area</button>
+      <div style="font-size:.72rem;margin-top:.2rem">Pick from the master category list (Balcony, Store Room, Other Areas…) or type a new one.</div>
+    </div>
+  </div>
+
+  <!-- ============ 2. SIGN PAGE ============ -->
+  <div class="panel">
+    <h2>2 · Checklist print / sign page <span class="tag">read-only + owner signs here</span></h2>
+    <div class="sub">/property/rent-out/checklist/print/{id} — the page you linked. Same block, read-only, with a signature pad per area.</div>
+
+    <div class="legend">
+      <span><span class="pill p-pend">Pending</span> work not started</span>
+      <span><span class="pill p-prog">In Progress</span> under way</span>
+      <span><span class="pill p-done">Completed</span> ready for owner acceptance</span>
+    </div>
+
+    <div class="area">
+      <div class="area-head">
+        <span class="area-name">Living Room<span class="ar">غرفة المعيشة</span></span>
+        <span class="sp"></span>
+        <span class="pill p-prog">1 in progress</span><span class="pill p-done">1 completed</span>
+      </div>
+
+      <div class="ro-entry">
+        <div><span class="lbl">Before</span><div class="photo filled"></div></div>
+        <div><span class="lbl">After</span><div class="photo empty"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5z"/></svg></div></div>
+        <div class="cmt">Floor tiles need to fit near the balcony door — 4 tiles cracked. Wall switch plate needs replacing.
+          <div class="date">Completion date — not set</div></div>
+        <div><span class="pill p-prog">In Progress</span></div>
+      </div>
+
+      <div class="ro-entry">
+        <div><span class="lbl">Before</span><div class="photo filled"></div></div>
+        <div><span class="lbl">After</span><div class="photo filled after"></div></div>
+        <div class="cmt">Paint damage on the east wall — patched and repainted to match.
+          <div class="date">Completed 06 Aug 2026</div></div>
+        <div><span class="pill p-done">Completed</span></div>
+      </div>
+
+      <div class="sigwrap">
+        <div class="lbl">Owner acceptance — Living Room</div>
+        <div class="sigrow">
+          <div class="sigpad">Sign here (SignaturePad canvas)</div>
+          <div class="sigbtns">
+            <button class="btn">Clear</button>
+            <button class="btn on">Sign &amp; Submit</button>
+          </div>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.4rem">
+          Enabled once every entry in this area is <b>Completed</b>.
+        </div>
+      </div>
+    </div>
+
+    <div class="area">
+      <div class="area-head">
+        <span class="area-name">Kitchen<span class="ar">المطبخ</span></span>
+        <span class="sp"></span><span class="pill p-done">accepted</span>
+      </div>
+      <div class="ro-entry">
+        <div><span class="lbl">Before</span><div class="photo filled"></div></div>
+        <div><span class="lbl">After</span><div class="photo filled after"></div></div>
+        <div class="cmt">Extractor hood filter replaced; cabinet door realigned.
+          <div class="date">Completed 02 Aug 2026</div></div>
+        <div><span class="pill p-done">Completed</span></div>
+      </div>
+      <div class="sigwrap">
+        <div class="lbl">Owner acceptance — Kitchen</div>
+        <div class="sigrow">
+          <div class="sigdone">
+            <div class="scr">A. Al Mansoori</div>
+            <div class="who">Owner · signed 04 Aug 2026, 11:20</div>
+          </div>
+          <div class="sigbtns"><button class="btn">Re-sign</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 3. PDF ============ -->
+  <div class="panel">
+    <h2>3 · PDF <span class="tag">Browsershot</span></h2>
+    <div class="sub">The printed handover form. Fixture rows print under their category, in the existing olive palette.</div>
+
+    <div class="paper">
+      <div class="band"><span>Inventory &amp; Condition</span></div>
+      <table class="ptable">
+        <thead>
+          <tr>
+            <th style="width:26px">Sn.</th><th style="width:24px">Qty</th><th style="width:36px">Image</th>
+            <th>Item Description</th><th style="width:40px">Move-In</th><th style="width:20%">Comments</th>
+            <th style="width:40px">Move-Out</th><th style="width:16%">Comments</th><th style="width:56px">Damage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="cat"><td colspan="9">Living Room</td></tr>
+          <tr><td class="c">1</td><td class="c">1</td><td class="c"><div class="pimg none">▢</div></td>
+              <td>Ceiling light fitting</td><td class="c" style="color:#1d7a45;font-weight:bold">✓</td><td></td>
+              <td class="c" style="color:#1d7a45;font-weight:bold">✓</td><td></td><td class="r"></td></tr>
+          <tr><td class="c">2</td><td class="c">1</td><td class="c"><div class="pimg none">▢</div></td>
+              <td>Wall switch — double</td><td class="c" style="color:#1d7a45;font-weight:bold">✓</td><td>Loose plate</td>
+              <td class="c" style="color:#bf2f2f;font-weight:bold">✗</td><td>Plate replaced</td><td class="r">40.00</td></tr>
+
+          <tr class="fx"><td colspan="9" style="padding:0">
+            <table class="fxtable">
+              <tr class="fx-head">
+                <td colspan="6">Fixture Comments — Living Room <span class="ar">ملاحظات التشطيبات</span></td>
+              </tr>
+              <tr class="fx-cols">
+                <td style="width:22px">#</td><td style="width:60px">Before</td><td style="width:60px">After</td>
+                <td>Comments</td><td style="width:64px">Status</td><td style="width:60px">Completed</td>
+              </tr>
+              <tr>
+                <td class="c">1</td>
+                <td class="c"><div class="pimg"></div></td>
+                <td class="c"><div class="pimg none">—</div></td>
+                <td>Floor tiles need to fit near the balcony door — 4 tiles cracked. Wall switch plate needs replacing.</td>
+                <td class="c"><span class="pst prog">In Progress</span></td>
+                <td class="c" style="color:#8a8575">—</td>
+              </tr>
+              <tr>
+                <td class="c">2</td>
+                <td class="c"><div class="pimg"></div></td>
+                <td class="c"><div class="pimg after"></div></td>
+                <td>Paint damage on the east wall — patched and repainted to match.</td>
+                <td class="c"><span class="pst done">Completed</span></td>
+                <td class="c">06 Aug 2026</td>
+              </tr>
+              <tr class="fx-sign">
+                <td colspan="4">Owner acceptance — Living Room</td>
+                <td colspan="2" class="c">
+                  <div class="psig">A. Al Mansoori</div>
+                  <div class="sigline">Signed 04 Aug 2026</div>
+                </td>
+              </tr>
+            </table>
+          </td></tr>
+
+          <tr class="cat"><td colspan="9">Master Bathroom</td></tr>
+          <tr><td class="c">3</td><td class="c">1</td><td class="c"><div class="pimg none">▢</div></td>
+              <td>Mixer tap</td><td class="c" style="color:#1d7a45;font-weight:bold">✓</td><td></td>
+              <td class="c" style="color:#1d7a45;font-weight:bold">✓</td><td></td><td class="r"></td></tr>
+          <tr class="fx"><td colspan="9" style="padding:0">
+            <table class="fxtable">
+              <tr class="fx-head">
+                <td colspan="6">Fixture Comments — Master Bathroom <span class="ar">ملاحظات التشطيبات</span></td>
+              </tr>
+              <tr class="fx-cols">
+                <td style="width:22px">#</td><td style="width:60px">Before</td><td style="width:60px">After</td>
+                <td>Comments</td><td style="width:64px">Status</td><td style="width:60px">Completed</td>
+              </tr>
+              <tr>
+                <td class="c">1</td>
+                <td class="c"><div class="pimg"></div></td>
+                <td class="c"><div class="pimg after"></div></td>
+                <td>Silicone around the bath re-sealed.</td>
+                <td class="c"><span class="pst done">Completed</span></td>
+                <td class="c">05 Aug 2026</td>
+              </tr>
+              <tr class="fx-sign">
+                <td colspan="4">Owner acceptance — Master Bathroom</td>
+                <td colspan="2" class="c"><div class="sigline" style="border-top:1px solid #999;margin-top:16px">Not signed</div></td>
+              </tr>
+            </table>
+          </td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:8px;color:#8a8575;margin-top:6px">
+        Areas with no fixture entries print nothing — the category shows its items only.
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Open questions I've assumed my way through</b> — say the word and I'll change any of them.
+    The owner signature is <b>per area</b>, not per entry (one acceptance covers that area's work).
+    "Add area" offers the master category list plus free text.
+    An area's signature button unlocks only when all its entries read <b>Completed</b>.
+    Completion date is free — it isn't auto-filled when status flips to Completed.
+  </div>
+
+</div>
+
+<script>
+const root = document.documentElement;
+function theme(t){
+  root.dataset.theme = t;
+  tLight.classList.toggle('on', t === 'light');
+  tDark.classList.toggle('on', t === 'dark');
+}
+function dir(d){
+  root.setAttribute('dir', d);
+  dLtr.classList.toggle('on', d === 'ltr');
+  dRtl.classList.toggle('on', d === 'rtl');
+}
+tLight.onclick = () => theme('light');
+tDark.onclick  = () => theme('dark');
+dLtr.onclick   = () => dir('ltr');
+dRtl.onclick   = () => dir('rtl');
+theme('light'); dir('ltr');
+</script>
+</body>
+</html>

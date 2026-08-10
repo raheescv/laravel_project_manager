@@ -36,6 +36,7 @@ class PrintController extends Controller
             'type',
             'checklistLines.item',
             'checklistSignatures',
+            'fixtureAreas.entries',
             'facilityCoordinator',
             'leasingCoordinator',
         ])->findOrFail($id);
