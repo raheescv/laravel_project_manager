@@ -69,4 +69,9 @@ class StockCheckService implements StockCheckRepository {
   Future<void> saveCounts(int id, List<Map<String, dynamic>> items) async {
     await _http.put(EndPoints.stockCheckById(id), body: {'items': items});
   }
+
+  @override
+  Future<void> updateStatus(int id, String status) async {
+    await _http.put(EndPoints.stockCheckStatus(id), body: {'status': status});
+  }
 }

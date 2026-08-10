@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,6 +31,7 @@ class CatalogCubit extends Cubit<CatalogState> {
   StreamSubscription<int>? _branchSub;
 
   LookupRepository get _repo => serviceLocator<LookupRepository>();
+  CatalogSnapshotRepository get _snapshot => serviceLocator<CatalogSnapshotRepository>();
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
 
   static const int _pageSize = 20;
@@ -132,12 +134,22 @@ class CatalogCubit extends Cubit<CatalogState> {
         page: paged.currentPage,
         lastPage: paged.lastPage,
         categories: needCategories ? results[1] as List<Category> : null,
+        servingCached: false,
       ));
     } on ApiException catch (e) {
+      // The server answered and refused. That is a real answer, so it is shown
+      // rather than papered over with a snapshot — falling back here would hide
+      // an expired token behind a catalog that quietly stops updating.
       if (req == _reqId) {
-        emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
+        // The server was reachable, so whatever is on screen is no longer a
+        // cached copy — clearing the flag stops the "Offline · catalog from …"
+        // notice lingering, and stops loadMore() paging the snapshot.
+        emit(state.copyWith(
+            status: DataFetchStatus.failed, errorMessage: e.message, clearCached: true));
       }
     } catch (_) {
+      if (req != _reqId) return;
+      if (await _loadFromSnapshot(req, needCategories: needCategories)) return;
       if (req == _reqId) {
         emit(state.copyWith(
             status: DataFetchStatus.failed,
@@ -146,18 +158,75 @@ class CatalogCubit extends Cubit<CatalogState> {
     }
   }
 
-  Future<void> loadMore() async {
-    if (state.loadingMore || state.loading || !state.hasMore) return;
-    final req = _reqId;
-    emit(state.copyWith(loadingMore: true));
+  /// Serve the current filters out of the local snapshot. Returns false when
+  /// there is nothing cached for this branch, so the caller can fall through to
+  /// the normal error state.
+  Future<bool> _loadFromSnapshot(int req, {required bool needCategories}) async {
+    final branchId = serviceLocator<BranchCubit>().selectedId;
+    if (branchId == null) return false;
     try {
-      final paged = await _repo.products(
+      final meta = await _snapshot.meta(branchId);
+      if (meta == null) return false;
+      final paged = await _snapshot.products(
+        branchId: branchId,
         search: _searchParam,
         mainCategoryId: state.selectedCategoryId,
         type: state.selectedType,
-        page: state.page + 1,
+        page: 1,
         perPage: _pageSize,
       );
+      final categories = needCategories
+          ? await _snapshot.categories(branchId: branchId, type: state.selectedType)
+          : null;
+      if (req != _reqId || isClosed) return true;
+      if (needCategories) {
+        _categoriesCached = true;
+        _categoriesFor = state.selectedType;
+      }
+      emit(state.copyWith(
+        status: DataFetchStatus.success,
+        products: paged.items,
+        page: paged.currentPage,
+        lastPage: paged.lastPage,
+        categories: categories,
+        servingCached: true,
+        cachedAt: meta.syncedAt,
+        clearError: true,
+      ));
+      return true;
+    } catch (_) {
+      // This already runs inside the network failure path, so anything thrown
+      // here — an unreadable database, a payload written by an older build —
+      // must not escape and become an unhandled async error on top of it. The
+      // caller surfaces the original failure instead.
+      return false;
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (state.loadingMore || state.loading || !state.hasMore) return;
+    final req = _reqId;
+    final branchId = serviceLocator<BranchCubit>().selectedId;
+    emit(state.copyWith(loadingMore: true));
+    try {
+      // Already paging a snapshot: keep paging it. Reaching for the network here
+      // would splice live rows into a cached list and page them out of order.
+      final paged = state.servingCached && branchId != null
+          ? await _snapshot.products(
+              branchId: branchId,
+              search: _searchParam,
+              mainCategoryId: state.selectedCategoryId,
+              type: state.selectedType,
+              page: state.page + 1,
+              perPage: _pageSize,
+            )
+          : await _repo.products(
+              search: _searchParam,
+              mainCategoryId: state.selectedCategoryId,
+              type: state.selectedType,
+              page: state.page + 1,
+              perPage: _pageSize,
+            );
       if (req != _reqId) return;
       emit(state.copyWith(
         products: [...state.products, ...paged.items],
@@ -199,7 +268,20 @@ class CatalogCubit extends Cubit<CatalogState> {
     unawaited(load());
   }
 
-  Future<Product?> findByBarcode(String code) => _repo.productByBarcode(code);
+  /// Resolve a scanned barcode, falling back to the snapshot so scanning keeps
+  /// working offline — the one interaction a cashier repeats hundreds of times
+  /// a day and cannot work around.
+  Future<Product?> findByBarcode(String code) async {
+    try {
+      return await _repo.productByBarcode(code);
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      final branchId = serviceLocator<BranchCubit>().selectedId;
+      if (branchId == null) rethrow;
+      return _snapshot.productByBarcode(branchId: branchId, barcode: code);
+    }
+  }
 
   @override
   Future<void> close() {

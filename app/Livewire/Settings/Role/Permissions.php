@@ -72,6 +72,9 @@ class Permissions extends Component
 
     public function syncPermission()
     {
+        // Re-seeds every ability in config/permissions.php. Same power as editing
+        // the permission matrix, so it takes the same ability.
+        abort_unless(auth()->user()?->can('role.permissions'), 403);
         try {
             $seeder = new PermissionSeeder();
             $seeder->run();
@@ -102,6 +105,9 @@ class Permissions extends Component
 
     public function save()
     {
+        // Granting abilities to a role is privilege escalation if left open: it is
+        // the one screen that can hand out every other permission in the system.
+        abort_unless(auth()->user()?->can('role.permissions'), 403);
         try {
             if ($this->role['id'] == 1 && Auth::user()->id != 3) {
                 throw new Exception('You cant edit Super Admin privileges', 1);

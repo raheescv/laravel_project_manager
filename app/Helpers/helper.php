@@ -730,6 +730,66 @@ if (! function_exists('thermalPrinterStyle')) {
         ];
     }
 }
+if (! function_exists('posColorPresets')) {
+    /**
+     * Colour presets for the POS screen and its modals.
+     *
+     * The keys are written to Configuration `pos_color_preset` and land on the
+     * POS root as [data-pos-preset]; the real palettes live in
+     * resources/css/pos-premium.css. The hexes below are swatch previews for
+     * the settings picker only — keep them in step with that stylesheet.
+     */
+    function posColorPresets()
+    {
+        return [
+            'theme' => [
+                'name' => 'Follow App Theme',
+                'note' => 'Uses Settings → Theme colour',
+                'primary' => 'var(--bs-primary)',
+                'accent' => 'var(--bs-primary)',
+                'canvas' => '#edf1f6',
+                'panel' => '#ffffff',
+                'line' => 'rgba(26,29,33,.12)',
+            ],
+            'graphite' => [
+                'name' => 'Graphite & Brass',
+                'note' => 'Near-black on ivory, brass accent',
+                'primary' => '#24272c',
+                'accent' => '#a8813e',
+                'canvas' => '#f5f3ef',
+                'panel' => '#ffffff',
+                'line' => '#e7e3dc',
+            ],
+            'sapphire' => [
+                'name' => 'Midnight Sapphire',
+                'note' => 'Deep navy with gold',
+                'primary' => '#1c3e73',
+                'accent' => '#c2933d',
+                'canvas' => '#f1f4fa',
+                'panel' => '#ffffff',
+                'line' => '#e3e8f1',
+            ],
+            'emerald' => [
+                'name' => 'Atelier Emerald',
+                'note' => 'Matches the Astra mobile app',
+                'primary' => '#15806c',
+                'accent' => '#bf953f',
+                'canvas' => '#f6f1e8',
+                'panel' => '#ffffff',
+                'line' => '#eae4d8',
+            ],
+            'indigo' => [
+                'name' => 'Refined Indigo',
+                'note' => 'Closest to the previous POS',
+                'primary' => '#4338ca',
+                'accent' => '#b07c2a',
+                'canvas' => '#f3f5fb',
+                'panel' => '#ffffff',
+                'line' => '#e5e8f3',
+            ],
+        ];
+    }
+}
 if (! function_exists('packageFrequency')) {
     function packageFrequency()
     {

@@ -1,22 +1,24 @@
 <template>
-    <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" @click="$emit('close')"></div>
+    <div v-if="show" class="posx-modal-backdrop" role="dialog" aria-modal="true" @click.self="$emit('close')">
+        <div class="posx-modal" style="max-width: 28rem" @click.stop>
 
-        <!-- Modal Content -->
-        <div
-            class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all relative z-10 overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-slate-200">
-                <div class="text-center">
-                    <h2 class="text-xl font-bold text-slate-800">Your Feedback</h2>
-                    <p class="text-slate-600 text-sm">We value your opinion! Please rate your experience.</p>
-                </div>
+            <div class="posx-modal-head">
+                <h4 class="posx-modal-title">
+                    <i class="fa fa-comment-o"></i>
+                    <span>
+                        Your Feedback
+                        <span class="posx-modal-sub">Rate your experience</span>
+                    </span>
+                </h4>
+                <button type="button" class="posx-modal-close" @click="$emit('close')" aria-label="Close">
+                    <i class="fa fa-times"></i>
+                </button>
             </div>
 
-            <form @submit.prevent="submitFeedback">
-                <div class="p-4">
-                    <!-- Star Rating -->
-                    <div class="star-rating mb-6">
+            <form @submit.prevent="submitFeedback" class="contents">
+                <div class="posx-modal-body">
+                    <!-- Stars -->
+                    <div class="star-rating mb-4">
                         <div class="flex justify-center">
                             <template v-for="i in [1, 2, 3, 4, 5]" :key="i">
                                 <input type="radio" :id="`star${i}`" name="rating" :value="i"
@@ -27,38 +29,34 @@
                                 </label>
                             </template>
                         </div>
-                        <div class="text-center mt-2 text-sm text-slate-600">
-                            {{ ratingDescription }}
+                        <div class="text-center mt-2 posx-muted text-xs font-semibold">{{ ratingDescription }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="feedback_type" class="posx-label mb-1"><i class="fa fa-tags"></i> Feedback Type</label>
+                        <div class="relative">
+                            <select v-model="feedbackData.feedback_type" id="feedback_type" class="posx-field">
+                                <option value="" disabled>Select Type</option>
+                                <option v-for="(type, key) in feedbackTypes" :key="key" :value="key">{{ type }}</option>
+                            </select>
+                            <i class="fa fa-angle-down posx-caret"></i>
                         </div>
                     </div>
 
-                    <!-- Feedback Type -->
-                    <div class="mb-4">
-                        <label for="feedback_type" class="block font-semibold text-slate-700 mb-1">Feedback Type</label>
-                        <select v-model="feedbackData.feedback_type" id="feedback_type"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-2 py-1">
-                            <option value="" disabled>Select Type</option>
-                            <option v-for="(type, key) in feedbackTypes" :key="key" :value="key">{{ type }}</option>
-                        </select>
-                    </div>
-
-                    <!-- Comments -->
-                    <div class="mb-4">
-                        <label for="comment" class="block font-semibold text-slate-700 mb-1">Your Comments</label>
+                    <div>
+                        <label for="comment" class="posx-label mb-1"><i class="fa fa-pencil"></i> Your Comments</label>
                         <textarea v-model="feedbackData.feedback" id="comment" rows="4"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-2 py-1"
+                            class="posx-field" style="min-height: 88px; padding-top: 8px; padding-bottom: 8px"
                             placeholder="Please share your thoughts..."></textarea>
                     </div>
                 </div>
 
-                <div class="bg-slate-50 p-4 flex justify-end gap-2 border-t border-slate-200">
-                    <button type="button" @click="$emit('close')"
-                        class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
-                        Cancel
+                <div class="posx-modal-foot">
+                    <button type="button" class="posx-btn posx-btn-ghost" @click="$emit('close')">
+                        <i class="fa fa-times"></i> Cancel
                     </button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                        Submit Feedback
+                    <button type="submit" class="posx-btn posx-btn-primary">
+                        <i class="fa fa-paper-plane"></i> Submit Feedback
                     </button>
                 </div>
             </form>
@@ -151,26 +149,26 @@ export default {
 
 <style scoped>
 .star-icon {
-    color: #e4e4e4;
+    color: var(--pos-line-strong);
     transition: all 0.2s ease-in-out;
     filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
     cursor: pointer;
 }
 
 .star-label:hover .star-icon {
-    color: #ffc800;
+    color: var(--pos-acc);
     transform: scale(1.2);
     filter: drop-shadow(0 0 6px rgba(255, 200, 0, 0.6));
 }
 
 /* Highlight stars to the left of hovered star */
 .star-label:hover~.star-label .star-icon {
-    color: #e4e4e4;
+    color: var(--pos-line-strong);
     transform: scale(1);
 }
 
 .star-icon.active {
-    color: #ffd700;
+    color: var(--pos-acc);
     transform: scale(1.1);
     filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
 }

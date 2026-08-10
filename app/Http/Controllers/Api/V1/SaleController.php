@@ -131,6 +131,10 @@ class SaleController extends Controller
      * Reconciles an existing sale against the data sent by the app — updating,
      * adding and removing lines and payments — and (for a completed sale) re-runs
      * the stock and journal postings.
+     *
+     * Passing `status: completed` for a sale currently parked as a draft finalizes
+     * it in the same call, posting its stock movement and journal entry. Omitting
+     * `status` leaves the sale on the status it already has.
      */
     public function update(UpdateAction $action, UpdateRequest $request, int $sale): JsonResponse
     {

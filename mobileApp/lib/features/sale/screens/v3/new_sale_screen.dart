@@ -13,10 +13,12 @@ import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/icons.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
 import 'package:invo/features/sale/logic/stylist_cubit/stylist_cubit.dart';
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/shared/utils/camera_permission.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/components/app_strings.dart';
@@ -24,6 +26,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
+import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
 
@@ -102,6 +105,30 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     _searchCtl.dispose();
     _scrollCtl.dispose();
     super.dispose();
+  }
+
+  /// Add [product] to the ticket, warning when the cached catalog says there is
+  /// none left.
+  ///
+  /// Only a warning, never a block. Offline the figure is as of the last
+  /// snapshot less whatever queued sales have taken, so it is an estimate — and
+  /// refusing a sale on an estimate, with the customer standing there, is worse
+  /// than the server refusing it later. Services have no stock to check.
+  void _addToCart(Product product) {
+    final cart = context.read<CartCubit>();
+    final cat = context.read<CatalogCubit>();
+    final onTicket = cart.lines
+        .where((l) => l.productId == product.id)
+        .fold<double>(0, (sum, l) => sum + l.qty);
+    cart.add(product);
+    if (!cat.state.servingCached || product.isService) return;
+    if (product.totalStock > onTicket) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 3),
+        content: Text('${product.name} may be out of stock — the catalog is offline'),
+      ));
   }
 
   /// Infinite scroll: pull the next page in once the user nears the bottom.
@@ -234,11 +261,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     style: serif(size: 23, color: p.ink),
                   ),
                 ),
+                const PendingSalesBadge(),
                 _ghostBtn(Icons.close, _close),
               ],
             ),
-            const SizedBox(height: 16),
+            const _SessionDateLine(),
+            const SizedBox(height: 14),
             _whoRow(cart),
+            const _CachedCatalogNotice(),
           ],
         ),
       ),
@@ -454,7 +484,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               ),
             )
           else if (_view == _ProductView.grid)
-            _productGrid(cat)
+            // Watched, so changing the density in Settings reflows the catalog
+            // without the till having to leave and come back.
+            _productGrid(cat, context.watch<PosSettingsCubit>().gridColumns)
           else
             _productList(cat),
           SliverToBoxAdapter(child: _footer(cat)),
@@ -704,17 +736,143 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       onScan: (code) async {
         final product = await cat.findByBarcode(code);
         if (product == null) return ScanFeedback.error(code, 'No product for this code');
+        final onTicket = cart.lines
+            .where((l) => l.productId == product.id)
+            .fold<double>(0, (sum, l) => sum + l.qty);
         cart.add(product);
         final qty = cart.defaultQty;
+        // The scanner owns the whole screen, so the low-stock warning rides on
+        // its own feedback line rather than a snackbar nobody would see.
+        final lowStock = cat.state.servingCached &&
+            !product.isService &&
+            product.totalStock <= onTicket;
         return ScanFeedback(
           title: product.name,
-          detail: 'Added ${qtyLabel(qty)}${product.code.isEmpty ? '' : ' · ${product.code}'}',
+          detail: lowStock
+              ? 'Added ${qtyLabel(qty)} · may be out of stock'
+              : 'Added ${qtyLabel(qty)}${product.code.isEmpty ? '' : ' · ${product.code}'}',
           undo: () async {
             final matches = cart.lines.where((l) => l.productId == product.id);
             if (matches.isEmpty) return null;
             cart.changeQty(matches.first, -qty);
             return ScanFeedback(title: product.name, detail: 'Removed from sale');
           },
+        );
+      },
+    );
+  }
+}
+
+/// Says out loud that the grid is showing a stored copy of the catalog rather
+/// than live data, and how old it is.
+///
+/// Prices and stock move on the web; a cashier selling from a snapshot is
+/// selling from figures that were true at [CatalogState.cachedAt] and no later,
+/// which is exactly the sort of thing that has to be on screen rather than in a
+/// release note.
+/// The sale day this ticket lands on, as a quiet pill under the title: the
+/// business date the cashier is selling into, and whether a day is open at all.
+///
+/// Reads [AuthCubit] rather than [DaySessionCubit] — the signed-in user carries
+/// the branch's session date, and [AuthCubit.syncDaySession] refreshes it the
+/// moment the day is opened or closed, so this line follows without the POS
+/// having to own a day-session cubit.
+///
+/// While the day is closed the cached date is only "today as of the last
+/// sign-in", so the device's own date is shown instead; an open session keeps
+/// its real date, which is the case worth seeing (a day opened yesterday and
+/// never closed still books today's sales under yesterday).
+class _SessionDateLine extends StatelessWidget {
+  const _SessionDateLine();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocSelector<AuthCubit, AuthState, ApiUser?>(
+      selector: (state) => state.user,
+      builder: (context, user) {
+        final p = context.astra;
+        final open = user?.dayOpen ?? false;
+        final date = open ? DateTime.tryParse(user?.daySessionDate ?? '') : DateTime.now();
+        if (date == null) return const SizedBox.shrink();
+        final accent = open ? AstraPalette.success : AstraPalette.danger;
+        return Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(9, 5, 11, 5),
+            decoration: BoxDecoration(
+              color: open ? p.tint : accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 7),
+                Text(open ? 'SESSION' : 'DAY CLOSED',
+                    style: ui(
+                        size: 9.5,
+                        weight: FontWeight.w800,
+                        color: open ? p.goldText : accent,
+                        letterSpacing: 1.2)),
+                const SizedBox(width: 7),
+                Text(Dates.weekday(date),
+                    style: ui(size: 11.5, weight: FontWeight.w700, color: p.ink)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CachedCatalogNotice extends StatelessWidget {
+  const _CachedCatalogNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<CatalogCubit, CatalogState>(
+      buildWhen: (a, b) => a.servingCached != b.servingCached || a.cachedAt != b.cachedAt,
+      builder: (context, state) {
+        if (!state.servingCached) return const SizedBox.shrink();
+        final p = context.astra;
+        final freshness = CatalogFreshness.of(
+            state.cachedAt == null ? null : DateTime.now().difference(state.cachedAt!));
+        // Past the staleness thresholds the notice stops being a quiet aside and
+        // takes the warning colour, because by then the figures in the grid — not
+        // the connection — are the thing to be careful about. It never stops the
+        // cashier selling; see [CatalogFreshness].
+        final stale = freshness == CatalogFreshness.stale;
+        final colour = stale ? const Color(0xFFB4441F) : p.goldText;
+        return Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+            decoration: BoxDecoration(
+              color: stale ? colour.withValues(alpha: 0.12) : p.tint,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Row(
+              children: [
+                Icon(stale ? Icons.warning_amber_rounded : Icons.cloud_off_outlined,
+                    size: 14, color: colour),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    freshness.needsSaying
+                        ? 'Catalog is ${catalogAgeLabel(state.cachedAt)} — verify prices'
+                        : 'Offline · catalog from ${catalogAgeLabel(state.cachedAt)}',
+                    style: ui(size: 11, weight: FontWeight.w700, color: colour),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

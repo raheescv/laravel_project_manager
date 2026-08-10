@@ -33,7 +33,10 @@ class SaleOpsCubit {
   /// Configured split-payment methods for the Custom payment sheet.
   Future<List<PaymentMethod>> paymentMethods() => _lookup.paymentMethods();
 
-  Future<Sale> createSale(Map<String, dynamic> payload) => _sales.createSale(payload);
+  /// Pass [offlineSale] (from [CartCubit.beginCharge]) to allow the sale to be
+  /// queued when the server is unreachable; omit it to keep the call online-only.
+  Future<Sale> createSale(Map<String, dynamic> payload, {Map<String, dynamic>? offlineSale}) =>
+      _sales.createSale(payload, offlineSale: offlineSale);
 
   Future<Sale> updateSale(String id, Map<String, dynamic> payload) =>
       _sales.updateSale(id, payload);

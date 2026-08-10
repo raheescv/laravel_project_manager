@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\V1\ClientErrorController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\ClientErrorController;
 use App\Http\Controllers\Api\V1\ColorController;
 use App\Http\Controllers\Api\V1\CurrencyController;
 use App\Http\Controllers\Api\V1\CustomerController;
@@ -178,6 +178,7 @@ Route::prefix('v1')->group(function () {
                     Route::get('/{id}/items', [StockCheckController::class, 'items'])->whereNumber('id')->name('api.v1.stock-check.items');
                     Route::post('/{id}/scan', [StockCheckController::class, 'scan'])->whereNumber('id')->name('api.v1.stock-check.scan');
                     Route::match(['put', 'patch'], '/{id}', [StockCheckController::class, 'update'])->whereNumber('id')->name('api.v1.stock-check.update');
+                    Route::match(['put', 'patch'], '/{id}/status', [StockCheckController::class, 'updateStatus'])->whereNumber('id')->name('api.v1.stock-check.update-status');
                     Route::delete('/{id}', [StockCheckController::class, 'destroy'])->whereNumber('id')->name('api.v1.stock-check.destroy');
                 });
 

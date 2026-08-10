@@ -46,6 +46,7 @@ import {
     computed,
     watch
 } from 'vue'
+import { statusLabel } from '../statusOptions.js'
 
 const props = defineProps({
     show: {
@@ -68,13 +69,9 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm', 'cancel'])
 
-const currentStatusLabel = computed(() => {
-    return props.currentStatus === 'pending' ? 'Pending' : 'Completed'
-})
+const currentStatusLabel = computed(() => statusLabel(props.currentStatus))
 
-const newStatusLabel = computed(() => {
-    return props.newStatus === 'pending' ? 'Pending' : 'Completed'
-})
+const newStatusLabel = computed(() => statusLabel(props.newStatus))
 
 const handleConfirm = () => {
     emit('confirm')

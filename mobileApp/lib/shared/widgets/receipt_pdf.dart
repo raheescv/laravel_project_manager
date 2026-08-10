@@ -14,6 +14,9 @@ import 'package:invo/shared/domain/models/index.dart';
 const _ar = {
   'invoice': 'فاتورة',
   'invoice_no': 'رقم الفاتورة',
+  // Matches the wording of `provisional` below, which the customer's original
+  // offline copy was printed under.
+  'offline_ref': 'المرجع المؤقت',
   'date': 'التاريخ',
   'customer': 'العميل',
   'payment_mode': 'طريقة الدفع',
@@ -29,6 +32,7 @@ const _ar = {
   'paid': 'المدفوع',
   'balance': 'الرصيد',
   'served_by': 'خدم بواسطة',
+  'provisional': 'إيصال مؤقت — رقم الفاتورة الضريبية لاحقاً',
 };
 
 // Bundled IBM Plex Sans Arabic (assets/fonts) — loaded once and reused. Lets
@@ -156,6 +160,33 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
             ),
           ),
           pw.SizedBox(height: 6),
+          // A sale taken while the till was offline has no tax invoice number
+          // yet — what is printed above it is a device reference. Say so on the
+          // receipt itself, boxed so it cannot be mistaken for a footer note.
+          // if (sale.pending) ...[
+          //   pw.Container(
+          //     width: double.infinity,
+          //     padding: const pw.EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+          //     decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.8)),
+          //     child: pw.Column(children: [
+          //       pw.Text('PROVISIONAL RECEIPT',
+          //           textAlign: pw.TextAlign.center,
+          //           style: pw.TextStyle(fontSize: s(9), fontWeight: pw.FontWeight.bold)),
+          //       pw.SizedBox(height: 1),
+          //       pw.Text('Tax invoice number to follow',
+          //           textAlign: pw.TextAlign.center,
+          //           style: pw.TextStyle(fontSize: s(7))),
+          //       if (ar) ...[
+          //         pw.SizedBox(height: 1),
+          //         pw.Text(_ar['provisional']!,
+          //             textAlign: pw.TextAlign.center,
+          //             textDirection: pw.TextDirection.rtl,
+          //             style: pw.TextStyle(fontSize: s(7))),
+          //       ],
+          //     ]),
+          //   ),
+          //   pw.SizedBox(height: 4),
+          // ],
           // ---- meta ----
           _metaTable(sale, invoiceNo, ar, s),
           _dashed(),
@@ -239,6 +270,13 @@ pw.Widget? _logoWidget(Uint8List? bytes, double Function(double) s) {
 pw.Widget _metaTable(Sale sale, String invoiceNo, bool ar, double Function(double) s) {
   final rows = <List<String>>[
     ['Invoice No', invoiceNo, _ar['invoice_no']!],
+    // A sale rung up offline was already receipted under its provisional
+    // reference. Once it syncs it has a real invoice number, and a reprint that
+    // showed only that number would not match the copy the customer is holding —
+    // so both appear. Skipped while the sale is still pending, when the
+    // provisional reference IS the invoice number above.
+    if (sale.offlineRef.isNotEmpty && sale.offlineRef != invoiceNo)
+      ['Offline Ref', sale.offlineRef, _ar['offline_ref']!],
     ['Date', Dates.human(sale.date), _ar['date']!],
     if (sale.customerName.isNotEmpty) ['Customer', sale.customerName, _ar['customer']!],
     if (sale.payments.isNotEmpty)
@@ -265,52 +303,59 @@ pw.Widget _metaTable(Sale sale, String invoiceNo, bool ar, double Function(doubl
 
 // ---- items table ---------------------------------------------------------
 
+/// Item lines laid out exactly like the web receipt
+/// (resources/views/sale/print.blade.php): the product name gets a row of its
+/// own spanning the full roll width — a `colspan="4"` there — with the Arabic
+/// name on the row beneath it, and the numbers follow on a `# | Price | Qty |
+/// Amount` row. A name column would be too narrow to print anything but a
+/// truncated word on a 58/80mm roll.
+///
+/// The pdf package has no colspan, so the frame is an outer single-column table
+/// (it draws the border and the horizontal rules) and every numeric row is a
+/// nested table supplying the vertical rules — which therefore stop at the
+/// numbers instead of cutting through the name rows.
 pw.Widget _itemsTable(Sale sale, bool ar, double Function(double) s, QuantityLabel qtyLabel) {
+  final rows = <pw.Widget>[
+    _itemGridRow([
+      _hcell('#', null, s(8), align: pw.Alignment.center),
+      _hcell('Price', ar ? _ar['price'] : null, s(8), align: pw.Alignment.centerRight),
+      _hcell(qtyLabel.column, ar ? _ar['quantity'] : null, s(8), align: pw.Alignment.centerRight),
+      _hcell('Amount', ar ? _ar['amount'] : null, s(8), align: pw.Alignment.centerRight),
+    ]),
+  ];
+
+  for (var i = 0; i < sale.lines.length; i++) {
+    final line = sale.lines[i];
+    rows.add(_cell(line.name, s(8)));
+    if (ar && line.nameArabic.isNotEmpty) {
+      rows.add(_cell(line.nameArabic, s(8), align: pw.Alignment.centerRight, rtl: true));
+    }
+    rows.add(_itemGridRow([
+      _cell('${i + 1}', s(8), align: pw.Alignment.center),
+      _cell(_amt(line.unitPrice), s(8), align: pw.Alignment.centerRight),
+      _cell(_num(line.quantity), s(8), align: pw.Alignment.centerRight),
+      _cell(_amt(line.total), s(8), align: pw.Alignment.centerRight),
+    ]));
+  }
+
   return pw.Table(
     border: pw.TableBorder.all(width: 0.5, color: PdfColors.black),
-    columnWidths: {
-      0: const pw.FlexColumnWidth(2.7),
-      1: const pw.FlexColumnWidth(0.8),
-      2: const pw.FlexColumnWidth(1.1),
-      3: const pw.FlexColumnWidth(1.2),
-    },
-    children: [
-      // header
-      pw.TableRow(
-        children: [
-          _hcell('Item', ar ? _ar['item'] : null, s(8)),
-          _hcell(qtyLabel.column, ar ? _ar['quantity'] : null, s(8), align: pw.Alignment.center),
-          _hcell('Price', ar ? _ar['price'] : null, s(8), align: pw.Alignment.centerRight),
-          _hcell('Amount', ar ? _ar['amount'] : null, s(8), align: pw.Alignment.centerRight),
-        ],
-      ),
-      for (var i = 0; i < sale.lines.length; i++)
-        pw.TableRow(
-          children: [
-            // item name (+ Arabic name beneath, right-aligned)
-            pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 2),
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-                children: [
-                  pw.Text('${i + 1}. ${sale.lines[i].name}',
-                      style: pw.TextStyle(fontSize: s(8), fontWeight: pw.FontWeight.bold)),
-                  if (ar && sale.lines[i].nameArabic.isNotEmpty)
-                    pw.Text(sale.lines[i].nameArabic,
-                        textAlign: pw.TextAlign.right,
-                        textDirection: pw.TextDirection.rtl,
-                        style: pw.TextStyle(fontSize: s(8), fontWeight: pw.FontWeight.bold)),
-                ],
-              ),
-            ),
-            _cell(_num(sale.lines[i].quantity), s(8), align: pw.Alignment.center),
-            _cell(_amt(sale.lines[i].unitPrice), s(8), align: pw.Alignment.centerRight),
-            _cell(_amt(sale.lines[i].total), s(8), align: pw.Alignment.centerRight),
-          ],
-        ),
-    ],
+    columnWidths: {0: const pw.FlexColumnWidth(1)},
+    children: [for (final row in rows) pw.TableRow(children: [row])],
   );
 }
+
+/// One `# | Price | Qty | Amount` row of the items table.
+pw.Widget _itemGridRow(List<pw.Widget> cells) => pw.Table(
+      border: const pw.TableBorder(verticalInside: pw.BorderSide(width: 0.5, color: PdfColors.black)),
+      columnWidths: const {
+        0: pw.FlexColumnWidth(0.5),
+        1: pw.FlexColumnWidth(1.5),
+        2: pw.FlexColumnWidth(1.2),
+        3: pw.FlexColumnWidth(1.5),
+      },
+      children: [pw.TableRow(children: cells)],
+    );
 
 // ---- totals table --------------------------------------------------------
 

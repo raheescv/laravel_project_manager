@@ -9,6 +9,7 @@ import 'package:invo/features/profile/screens/v3/profile_screen.dart';
 import 'package:invo/features/sale/screens/v3/cart_screen.dart';
 import 'package:invo/features/sale/screens/v3/invoice_screen.dart';
 import 'package:invo/features/sale/screens/v3/new_sale_screen.dart';
+import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/screens/v3/review_pay_screen.dart';
 import 'package:invo/features/sale_return/screens/v3/new_sale_return_screen.dart';
 import 'package:invo/features/sale_return/screens/v3/return_pick_invoice_screen.dart';
@@ -84,6 +85,10 @@ GoRouter createRouter(AuthCubit auth) {
             TabletRailScaffold(activeTab: 1, child: InvoiceScreen(sale: state.extra as Sale)),
       ),
       GoRoute(path: Routes.sales, builder: (_, __) => const SalesListScreen()),
+      GoRoute(
+          path: Routes.pendingSales,
+          builder: (_, __) => const TabletRailScaffold(
+              activeTab: 1, child: PendingSalesScreen())),
       // Pushed *destinations* keep the tablet side-rail (see [TabletRailScaffold])
       // so navigation stays reachable — a full-bleed screen with no rail strands
       // the user until they hit back. Task flows (New Sale, cart, review, the

@@ -6,6 +6,7 @@ import 'package:invo/shared/domain/models/index.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
+import 'package:invo/shared/utils/router/http_utils/reachability.dart';
 
 import '../../domain/repository/admin_repository.dart';
 
@@ -26,6 +27,24 @@ class ReportRow extends Equatable {
   List<Object?> get props => [title, subtitle, value, amount];
 }
 
+/// The loaded breakdown for one report type, held so the By Item / By Stylist
+/// toggle can restore it without another round-trip. Carries the pagination
+/// cursor too, so a list you had already scrolled comes back as you left it.
+class _ReportCache {
+  const _ReportCache({
+    required this.rows,
+    required this.total,
+    required this.rowCount,
+    required this.page,
+    required this.lastPage,
+  });
+  final List<ReportRow> rows;
+  final double total;
+  final int rowCount;
+  final int page;
+  final int lastPage;
+}
+
 /// Backs the Dashboard and the Reports suite (bill-wise / employee-wise).
 class AdminCubit extends Cubit<AdminState> {
   AdminCubit() : super(_initialState());
@@ -44,6 +63,21 @@ class AdminCubit extends Cubit<AdminState> {
   static const int _reportPageSize = 20;
   int _reportReq = 0;
   int _overviewReq = 0;
+
+  /// Last loaded breakdown per report type, for the filters in force when it
+  /// was fetched. Only the By Item / By Stylist toggle reads it; each input
+  /// invalidates exactly what it can have moved on the way past, so an entry
+  /// can never outlive the filters behind it:
+  ///
+  ///  * date range, branch — both entries (every figure is range-scoped)
+  ///  * Rank By, Type      — the `itemwise` entry only; neither is sent with
+  ///                         the `employeewise` request, so By Stylist stands.
+  final Map<String, _ReportCache> _reportCache = {};
+
+  /// Date range the per-day trend was fetched for. The trend depends on the
+  /// range alone, so a report-type or Rank By change reuses it instead of
+  /// pulling 100 bill-wise rows again for a chart that cannot have moved.
+  String? _trendKey;
 
   // Read facade over `state`.
   bool get loading => state.loading;
@@ -90,6 +124,10 @@ class AdminCubit extends Cubit<AdminState> {
         to = today;
     }
     emit(state.copyWith(startDate: from, endDate: to, rangePreset: id));
+    // The range is the one input both breakdowns are built on, so it is the
+    // one that empties the cache for both. Re-tapping the active preset is
+    // deliberately not short-circuited — it doubles as the manual refresh.
+    _reportCache.clear();
     unawaited(loadReports());
     unawaited(loadOverview());
   }
@@ -100,6 +138,7 @@ class AdminCubit extends Cubit<AdminState> {
       endDate: DateTime(end.year, end.month, end.day),
       rangePreset: 'custom',
     ));
+    _reportCache.clear();
     unawaited(loadReports());
     unawaited(loadOverview());
   }
@@ -117,9 +156,10 @@ class AdminCubit extends Cubit<AdminState> {
       emit(state.copyWith(overview: SalesOverview.fromJson(data)));
     } on ApiException catch (e) {
       if (reqId == _overviewReq) emit(state.copyWith(overviewError: e.message));
-    } catch (_) {
+    } catch (e) {
       if (reqId == _overviewReq) {
-        emit(state.copyWith(overviewError: 'Could not load the overview.'));
+        emit(state.copyWith(
+            overviewError: networkErrorMessage(e, 'Could not load the overview.')));
       }
     } finally {
       if (reqId == _overviewReq && !isClosed) {
@@ -154,8 +194,11 @@ class AdminCubit extends Cubit<AdminState> {
       if (!isClosed) emit(state.copyWith(dashboard: data));
     } on ApiException catch (e) {
       if (!isClosed) emit(state.copyWith(errorMessage: e.message));
-    } catch (_) {
-      if (!isClosed) emit(state.copyWith(errorMessage: 'Could not load the dashboard.'));
+    } catch (e) {
+      if (!isClosed) {
+        emit(state.copyWith(
+            errorMessage: networkErrorMessage(e, 'Could not load the dashboard.')));
+      }
     }
   }
 
@@ -204,7 +247,44 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
-  Future<void> loadReports({String? type, String? metric}) async {
+  /// Switch the breakdown between By Item and By Stylist. Both sides are held
+  /// in [_reportCache] for as long as the filters behind them hold, so the
+  /// toggle is instant — the API is hit again only for a side that hasn't been
+  /// loaded under the current Rank By / Type / date / branch selection.
+  void setReportType(String type) {
+    // Re-tapping the active segment is a no-op, unless its load failed — then
+    // it's the only retry the user has.
+    if (state.reportType == type && state.reportError == null) return;
+    final cached = _reportCache[type];
+    if (cached == null) {
+      unawaited(loadReports(type: type));
+      return;
+    }
+    // Discard anything still in flight for the type we're leaving, or its page
+    // would land on top of the restored rows.
+    ++_reportReq;
+    emit(state.copyWith(
+      reportType: type,
+      reportLoading: false,
+      reportLoadingMore: false,
+      clearReportError: true,
+      reportRows: cached.rows,
+      reportTotal: cached.total,
+      reportRowCount: cached.rowCount,
+      reportPage: cached.page,
+      reportLastPage: cached.lastPage,
+    ));
+  }
+
+  /// [force] throws away everything cached — for a branch switch, where the
+  /// range is unchanged but every figure behind it belongs to someone else.
+  /// Every other caller invalidates only what its own input can have moved.
+  Future<void> loadReports({String? type, String? metric, bool force = false}) async {
+    if (force) {
+      _reportCache.clear();
+      _trendKey = null;
+    }
+
     final req = ++_reportReq;
     emit(state.copyWith(
       reportType: type,
@@ -216,20 +296,25 @@ class AdminCubit extends Cubit<AdminState> {
 
     final start = Dates.iso(state.startDate);
     final end = Dates.iso(state.endDate);
+    final rangeKey = '$start|$end';
     try {
-      final bill = await _repo.report(
-          type: 'billwise', startDate: start, endDate: end, perPage: 100);
-      if (req != _reportReq) return;
-      _applyRangeSummary(bill);
+      if (_trendKey != rangeKey) {
+        final bill = await _repo.report(
+            type: 'billwise', startDate: start, endDate: end, perPage: 100);
+        if (req != _reportReq) return;
+        _applyRangeSummary(bill);
+        _trendKey = rangeKey;
+      }
 
       final data = await _fetchReportPage(1);
       if (req != _reportReq) return;
       _applyReportPage(data, append: false);
     } on ApiException catch (e) {
       if (req == _reportReq) emit(state.copyWith(reportError: e.message));
-    } catch (_) {
+    } catch (e) {
       if (req == _reportReq) {
-        emit(state.copyWith(reportError: 'Could not load the report.'));
+        emit(state.copyWith(
+            reportError: networkErrorMessage(e, 'Could not load the report.')));
       }
     }
     if (req == _reportReq && !isClosed) {
@@ -290,6 +375,15 @@ class AdminCubit extends Cubit<AdminState> {
       reportTotal: total,
       reportRows: append ? [...state.reportRows, ...mapped] : mapped,
     ));
+
+    // Keep the toggle's copy in step, including pages added by infinite scroll.
+    _reportCache[state.reportType] = _ReportCache(
+      rows: state.reportRows,
+      total: state.reportTotal,
+      rowCount: state.reportRowCount,
+      page: state.reportPage,
+      lastPage: state.reportLastPage,
+    );
   }
 
   ReportRow _itemRow(dynamic e) {
@@ -321,8 +415,13 @@ class AdminCubit extends Cubit<AdminState> {
     );
   }
 
+  /// Rank By and Type ride on the item request alone — [_fetchReportPage] sends
+  /// `sort` and `product_type` only for `itemwise` — so they invalidate that
+  /// side and leave By Stylist's cached rows standing. Only the date range (and
+  /// a branch switch) can move those.
   void setItemMetric(String metric) {
     if (state.itemMetric == metric) return;
+    _reportCache.remove('itemwise');
     unawaited(loadReports(metric: metric));
   }
 
@@ -330,6 +429,7 @@ class AdminCubit extends Cubit<AdminState> {
     if (state.itemProductType == productType) return;
     emit(state.copyWith(
         itemProductType: productType, clearItemProductType: productType == null));
+    _reportCache.remove('itemwise');
     unawaited(loadReports());
   }
 

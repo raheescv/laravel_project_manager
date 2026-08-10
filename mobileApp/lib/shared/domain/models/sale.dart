@@ -143,6 +143,9 @@ class Sale extends Equatable {
     required this.paid,
     required this.balance,
     required this.createdBy,
+    this.clientUuid = '',
+    this.referenceNo = '',
+    this.pending = false,
   });
 
   final String id;
@@ -166,8 +169,32 @@ class Sale extends Equatable {
   // Outstanding amount straight from the sale's `balance` column (grand_total − paid).
   final double balance;
   final String createdBy;
+  // Device-generated idempotency key. Set on a sale rung up offline and echoed
+  // back by the server, so a synced sale can be matched to its outbox row.
+  final String clientUuid;
+  // The sale's reference field. Free text for a sale entered in the back office,
+  // but for one synced from an offline till it holds the provisional reference
+  // that was printed on the customer's receipt — see [offlineRef].
+  final String referenceNo;
+  // True only for a sale held in the offline outbox: it has no server id and no
+  // real invoice number yet, so Edit/Return are unavailable and the receipt
+  // prints as provisional.
+  final bool pending;
 
   double get discount => itemDiscount + otherDiscount;
+
+  /// The reference this sale's receipt was printed under while the till was
+  /// offline, or empty if it never was.
+  ///
+  /// It is [referenceNo], but only when [clientUuid] proves the sale came from a
+  /// queued offline ticket. Reading `reference_no` alone would label a reference
+  /// somebody typed in the back office as an offline receipt number and print it
+  /// on their receipts as one.
+  ///
+  /// Survives syncing on purpose: the sale gets a real [invoiceNo] and the device
+  /// deletes its outbox row, and after that this is the only trace of the number
+  /// the customer walked out with.
+  String get offlineRef => clientUuid.isEmpty ? '' : referenceNo;
 
   factory Sale.fromJson(Map<String, dynamic> j) {
     final customer = (j['customer'] as Map?) ?? const {};
@@ -195,6 +222,11 @@ class Sale extends Equatable {
       paid: asNum(summary['paid']).toDouble(),
       balance: asNum(summary['balance']).toDouble(),
       createdBy: asStr(j['created_by']),
+      clientUuid: asStr(j['client_uuid']),
+      referenceNo: asStr(j['reference_no']),
+      // The server never sends this key, so a sale off the wire is never
+      // pending — only one rebuilt from the outbox is.
+      pending: j['pending'] == true,
     );
   }
 
@@ -219,5 +251,8 @@ class Sale extends Equatable {
         paid,
         balance,
         createdBy,
+        clientUuid,
+        referenceNo,
+        pending,
       ];
 }

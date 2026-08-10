@@ -36,7 +36,13 @@
                                     </div>
                                     <div class="col-6">
                                         <div class="info-item p-1 px-2 rounded bg-light bg-opacity-50">
-                                            <small class="text-muted d-block"><i class="fa fa-file-text-o text-info me-1"></i>Reference</small>
+                                            {{-- A sale synced from a till that was offline keeps the reference
+                                                 printed on the customer's copy here, so say so: that is the only
+                                                 number they can quote, and it is not an invoice number. --}}
+                                            <small class="text-muted d-block">
+                                                <i class="fa {{ $sale->client_uuid ? 'fa-mobile text-warning' : 'fa-file-text-o text-info' }} me-1"></i>
+                                                {{ $sale->client_uuid ? 'Offline receipt no' : 'Reference' }}
+                                            </small>
                                             <span class="fw-medium">{{ $sale->reference_no ?: 'N/A' }}</span>
                                         </div>
                                     </div>

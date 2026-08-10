@@ -18,6 +18,11 @@ class SaleListResource extends JsonResource
             'id' => (string) $this->id,
             'invoice_no' => $this->invoice_no,
             'reference_no' => $this->reference_no,
+            // Present when the sale was rung up offline, which is what makes the
+            // reference above the provisional receipt number rather than something
+            // the back office typed. The list shows it so that a search for the
+            // number on a customer's receipt visibly matches the row it returns.
+            'client_uuid' => $this->client_uuid,
             'date' => $this->date,
             'status' => $this->status,
             'sale_type' => $this->sale_type,

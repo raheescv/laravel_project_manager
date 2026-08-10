@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-scheme="navy">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS sidebar — real CSS check</title>
+<link rel="stylesheet" href="../public/assets/vendors/font-awesome/font-awesome.min.css">
+<!-- resolved from the build manifest at runtime; the bundle name is content-hashed
+     and a baked-in filename goes stale on the very next build (that mistake made
+     an earlier run of this page measure completely unstyled markup). -->
+<link rel="stylesheet" id="appcss">
+<style>
+  body{margin:0;background:#0f1115;color:#e8eaee;font-family:system-ui,sans-serif}
+  h2{font-size:13px;margin:22px 16px 8px;color:#98a0b0;font-weight:700}
+  .rig{margin:0 16px 26px;border:1px solid #2a2f3a;border-radius:10px;overflow:hidden}
+  .rig > .cap{padding:6px 10px;background:#181c24;font:700 11px system-ui;color:#c3cad6;border-bottom:1px solid #2a2f3a}
+  .verdict{margin:16px;padding:12px 14px;border:1px solid #2a2f3a;border-radius:10px;font:13px/1.7 system-ui;color:#a7b0c0}
+  .verdict b{color:#e8eaee}
+  .ok{color:#7ee0a8;font-weight:700}
+  .bad{color:#f0a9a2;font-weight:700}
+  code{background:#1d222b;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="verdict" id="intro">
+  Loads the <b>real built stylesheet</b> against the <b>real CategoriesSidebar markup</b>.
+  Resolving stylesheet…
+</div>
+
+<h2>Desktop container — 1400px (sidebar is a column)</h2>
+<div class="rig" style="width:1400px;max-width:100%">
+  <div class="cap">container 1400px</div>
+  <div class="posx" data-pos-preset="emerald">
+    <div class="posx-shell" style="height:340px"><div class="posx-grid" id="g1"></div></div>
+  </div>
+</div>
+
+<h2>Tablet container — 900px (sidebar must be ONE ~40px row)</h2>
+<div class="rig" style="width:900px;max-width:100%">
+  <div class="cap">container 900px</div>
+  <div class="posx" data-pos-preset="emerald">
+    <div class="posx-shell" style="height:340px"><div class="posx-grid" id="g2"></div></div>
+  </div>
+</div>
+
+<div class="verdict" id="report">Measuring…</div>
+
+<script>
+const CATS = [['T',4],['Other',92],['General',1],['shoes',8219],['Apparel',205],['Toys',118],['d',6]];
+
+/* markup mirrors resources/js/components/CategoriesSidebar.vue */
+const SIDEBAR = `
+<div class="posx-col posx-col-side">
+  <div class="flex flex-col h-full min-h-0 categories-container">
+    <div class="posx-panel posx-panel-flush h-full flex flex-col min-h-0">
+      <div class="posx-head px-2.5 py-2 flex-shrink-0">
+        <div class="flex items-center justify-between gap-2">
+          <h6 class="font-bold text-xs sm:text-sm flex items-center gap-2 mb-0">
+            <i class="fa fa-th-large text-xs"></i> <span class="posx-head-label">Categories</span>
+          </h6>
+          <div class="flex items-center gap-1">
+            <a href="#" class="posx-htool"><i class="fa fa-list-ul"></i></a>
+            <button type="button" class="posx-htool"><i class="fa fa-arrows"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="fixed-categories posx-side-pin posx-panel-2 flex-shrink-0 border-b posx-divide flex flex-col w-full">
+        <button type="button" title="Favorites" class="category-btn fixed-category-btn posx-cat fav is-active">
+          <span class="posx-cat-ico"><i class="fa fa-star"></i></span>
+          <span class="posx-cat-name">Favorites</span>
+        </button>
+        <button type="button" title="All Products" class="category-btn fixed-category-btn posx-cat">
+          <span class="posx-cat-ico"><i class="fa fa-th-large"></i></span>
+          <span class="posx-cat-name">All Products</span>
+        </button>
+      </div>
+      <div class="posx-side-scroll flex flex-col custom-scrollbar flex-1 min-h-0 overflow-y-auto categories-scroll-container">
+        <div class="posx-side-track flex flex-col w-full">
+          ${CATS.map(([n,c]) => `
+          <button type="button" class="category-btn posx-cat">
+            <span class="posx-cat-ico"><i class="fa fa-tag"></i></span>
+            <span class="posx-cat-name text-left">${n}</span>
+            <span class="posx-cat-count">${c}</span>
+          </button>`).join('')}
+        </div>
+      </div>
+      <div class="posx-side-foot"><span>Catalogue</span><b>8,645 items</b></div>
+    </div>
+  </div>
+</div>
+<div class="posx-col posx-col-main"><div class="posx-panel" style="flex:1"></div></div>
+<div class="posx-col posx-col-cart"><div class="posx-panel" style="flex:1"></div></div>`;
+
+document.getElementById('g1').innerHTML = SIDEBAR;
+document.getElementById('g2').innerHTML = SIDEBAR;
+
+function measure() {
+  const g = document.getElementById('g2');
+  const box = s => { const el = g.querySelector(s); if (!el) return null;
+    const r = el.getBoundingClientRect(); return {w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.x)}; };
+  const track  = g.querySelector('.posx-side-track');
+  const chips  = [...g.querySelectorAll('.posx-side-track .posx-cat')];
+  const panel  = box('.posx-panel');
+  const pin    = box('.posx-side-pin');
+  const scroll = box('.posx-side-scroll');
+  const dir    = track ? getComputedStyle(track).flexDirection : 'n/a';
+  const stripW = g.getBoundingClientRect().width;
+  const onscreen = chips.filter(c => { const r = c.getBoundingClientRect();
+    return r.width > 0 && r.x < g.getBoundingClientRect().right; }).length;
+
+  const pass = (c, t) => `<span class="${c ? 'ok' : 'bad'}">${t}</span>`;
+  document.getElementById('report').innerHTML = `
+    <b>Measured at 900px</b><br>
+    track flex-direction &nbsp;<code>${dir}</code> ${pass(dir === 'row', dir === 'row' ? '✓ row' : '✗ must be row')}<br>
+    strip height &nbsp;<code>${panel ? panel.h : '?'}px</code> ${pass(panel && panel.h < 60, panel && panel.h < 60 ? '✓ one row' : '✗ should be ~40px')}<br>
+    pinned block width &nbsp;<code>${pin ? pin.w : '?'}px</code> ${pass(pin && pin.w < stripW * 0.5, pin && pin.w < stripW * 0.5 ? '✓ content-sized' : '✗ eating the strip (w-full not reset)')}<br>
+    scroll region width &nbsp;<code>${scroll ? scroll.w : '?'}px</code> ${pass(scroll && scroll.w > 100, scroll && scroll.w > 100 ? '✓ has room' : '✗ collapsed')}<br>
+    category chips on screen &nbsp;<code>${onscreen} / ${chips.length}</code> ${pass(onscreen > 0, onscreen > 0 ? '✓ visible' : '✗ pushed off the edge')}`;
+}
+
+(async () => {
+  const link = document.getElementById('appcss');
+  try {
+    const m = await (await fetch('../public/build/manifest.json')).json();
+    const e = m['resources/css/app.css'] || Object.values(m).find(v => v.file && v.file.endsWith('.css'));
+    link.href = '../public/build/' + (e.file || e.css[0]);
+    document.getElementById('intro').innerHTML =
+      'Loaded <b>' + link.getAttribute('href').split('/').pop() + '</b> against the real CategoriesSidebar markup.';
+    await new Promise(r => { link.addEventListener('load', r, {once: true}); setTimeout(r, 2000); });
+  } catch (err) {
+    document.getElementById('intro').innerHTML =
+      '<span class="bad">Could not resolve the built stylesheet (' + err.message +
+      '). Serve this over http, or run <code>npm run build</code> first.</span>';
+  }
+  requestAnimationFrame(measure);
+})();
+</script>
+</body>
+</html>

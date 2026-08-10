@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
+import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/screens/v3/invoice_screen.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:go_router/go_router.dart';
@@ -66,6 +69,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
   StreamSubscription<int>? _branchSub;
 
   String? _status; // null = all
+  String _search = '';
+  final _searchCtl = TextEditingController();
+  Timer? _searchDebounce;
   int? _methodId; // null = all payment methods
   List<PaymentMethod> _methods = [];
   String _sortBy = 'date';
@@ -111,6 +117,8 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchCtl.dispose();
     _scrollCtl.dispose();
     _branchSub?.cancel();
     unawaited(_list.close());
@@ -127,6 +135,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
   Future<PageResult> _fetchPage(int page) => _sales.fetchPage(
         page: page,
         status: _status,
+        search: _search.isEmpty ? null : _search,
         paymentMethodId: _methodId,
         fromDate: _startDate == null ? null : Dates.iso(_startDate!),
         toDate: _endDate == null ? null : Dates.iso(_endDate!),
@@ -178,6 +187,18 @@ class _SalesListScreenState extends State<SalesListScreen> {
     if (_status == status) return;
     setState(() => _status = status);
     _load();
+  }
+
+  /// Debounced: the list reloads from page 1 on every change, and firing per
+  /// keystroke would queue a page request for each letter of a customer's name.
+  void _setSearch(String value) {
+    final term = value.trim();
+    // setState regardless, so the clear button appears as soon as there is text.
+    setState(() => _search = term);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) _load();
+    });
   }
 
   void _setMethod(int? id) {
@@ -422,6 +443,10 @@ class _SalesListScreenState extends State<SalesListScreen> {
           : null,
       children: [
         const SizedBox(height: 13),
+        // Same search as the phone card — a tablet till has the same person with
+        // the same receipt standing at it.
+        _searchBox(),
+        const SizedBox(height: 10),
         Wrap(
           spacing: 7,
           runSpacing: 7,
@@ -516,7 +541,12 @@ class _SalesListScreenState extends State<SalesListScreen> {
     final p = context.astra;
     final d = _rowData(r);
     final selected = _selectedRow != null && asStr(_selectedRow!['id']) == asStr(r['id']);
-    final sub = [d.who, if (d.date.isNotEmpty) d.date, if (d.method.isNotEmpty) d.method].join(' · ');
+    final sub = [
+      d.who,
+      if (d.date.isNotEmpty) d.date,
+      if (d.method.isNotEmpty) d.method,
+      if (d.offlineRef.isNotEmpty) d.offlineRef,
+    ].join(' · ');
     return TabletListRow(
       selected: selected,
       onTap: () => _selectRow(r),
@@ -592,6 +622,17 @@ class _SalesListScreenState extends State<SalesListScreen> {
   /// Load a sale into the detail pane (tablet). Guarded so a fast succession of
   /// taps only ever shows the last-tapped invoice.
   Future<void> _selectRow(Map<String, dynamic> r) async {
+    // A held row is its own detail — no fetch, and none possible.
+    if (_isHeld(r)) {
+      setState(() {
+        _selectedRow = r;
+        _selectedSale = Sale.fromJson(r);
+        _detailLoading = false;
+        _detailError = null;
+      });
+      return;
+    }
+
     final id = asStr(r['id']);
     if (id.isEmpty) return;
     setState(() {
@@ -622,10 +663,25 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
   /// The display fields of one list row, shared by the phone card and the
   /// tablet pane row so both read the payload the same way.
-  ({String invoice, num amount, String who, String status, String date, String method, Color bg, Color fg}) _rowData(
-      Map<String, dynamic> r) {
+  ({
+    String invoice,
+    String offlineRef,
+    num amount,
+    String who,
+    String status,
+    String date,
+    String method,
+    Color bg,
+    Color fg
+  }) _rowData(Map<String, dynamic> r) {
     final p = context.astra;
     final invoice = asStr(r['invoice_no']).isEmpty ? '#${asStr(r['id'])}' : asStr(r['invoice_no']);
+    // `reference_no` holds the reference printed on the receipt when the sale was
+    // rung up offline — but only when `client_uuid` proves it came from a queued
+    // ticket, since the same field holds free text typed in the back office.
+    // Shown so that searching the number on a customer's receipt returns a row
+    // that visibly carries it, rather than an invoice number they've never seen.
+    final offlineRef = asStr(r['client_uuid']).isEmpty ? '' : asStr(r['reference_no']);
     // Amount lives under `summary` in SaleListResource; keep flat keys as a fallback.
     final summary = r['summary'] is Map ? r['summary'] as Map : const {};
     final customer = r['customer'] is Map ? r['customer'] as Map : const {};
@@ -637,6 +693,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     };
     return (
       invoice: invoice,
+      offlineRef: offlineRef == invoice ? '' : offlineRef,
       amount: asNum(summary['paid'] ?? summary['gross_amount'] ?? r['paid'] ?? r['gross_amount'] ?? r['amount']),
       who: asStr(customer['name']).isEmpty ? AppStrings.walkInCustomer : asStr(customer['name']),
       status: status,
@@ -657,13 +714,21 @@ class _SalesListScreenState extends State<SalesListScreen> {
     final date = d.date;
     final method = d.method;
     final (bg, fg) = (d.bg, d.fg);
+    final held = _isHeld(r);
     return AstraCard(
       radius: 14,
       padding: const EdgeInsets.all(12),
-      onTap: () => _open(asStr(r['id'])),
+      onTap: () => _open(r),
       child: Row(
         children: [
-          IconChip(icon: Icons.shopping_bag_outlined, size: 40, radius: 12),
+          // A held sale reads as a different kind of thing at a glance, because it
+          // is one: it has not reached the server, so its reference is provisional
+          // and its actions are different.
+          IconChip(
+            icon: held ? Icons.cloud_off_rounded : Icons.shopping_bag_outlined,
+            size: 40,
+            radius: 12,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -677,7 +742,10 @@ class _SalesListScreenState extends State<SalesListScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
                     ),
-                    if (status.isNotEmpty) ...[
+                    if (held) ...[
+                      const SizedBox(width: 7),
+                      StatusPill(label: 'HELD', bg: p.warnTint, fg: p.goldText),
+                    ] else if (status.isNotEmpty) ...[
                       const SizedBox(width: 7),
                       StatusPill(label: status.toUpperCase(), bg: bg, fg: fg),
                     ],
@@ -687,7 +755,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
                 Row(
                   children: [
                     Flexible(
-                      child: Text('$who${date.isEmpty ? '' : ' · $date'}',
+                      child: Text(
+                          '$who${date.isEmpty ? '' : ' · $date'}'
+                          '${d.offlineRef.isEmpty ? '' : ' · ${d.offlineRef}'}',
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                           style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
                     ),
@@ -710,6 +780,21 @@ class _SalesListScreenState extends State<SalesListScreen> {
           ),
           const SizedBox(width: 10),
           Text(Money.of(amount), style: serif(size: 15, color: p.ink)),
+          // Edit sits on the row only for a held sale. A committed one is edited
+          // from its invoice, where the permission gate and the Return/Delete
+          // actions live; a held one has none of those, so there is nothing to go
+          // to the receipt for.
+          if (held) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: () => _editHeld(r),
+              icon: Icon(Icons.edit_outlined, size: 18, color: p.goldText),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              tooltip: 'Edit held sale',
+            ),
+          ],
         ],
       ),
     );
@@ -838,7 +923,17 @@ class _SalesListScreenState extends State<SalesListScreen> {
     ]);
   }
 
-  Future<void> _open(String id) async {
+  Future<void> _open(Map<String, dynamic> r) async {
+    // A held row needs no fetch — and could not do one. It has no server id yet,
+    // and the row itself IS the receipt: the outbox stores the sale in exactly the
+    // shape the invoice screen renders.
+    if (_isHeld(r)) {
+      final reloaded = await context.push<bool>(Routes.invoice, extra: Sale.fromJson(r));
+      if (reloaded == true && mounted) unawaited(_load());
+      return;
+    }
+
+    final id = asStr(r['id']);
     if (id.isEmpty) return;
     unawaited(showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator())));
     try {
@@ -853,5 +948,41 @@ class _SalesListScreenState extends State<SalesListScreen> {
       if (mounted) Navigator.pop(context);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open invoice')));
     }
+  }
+
+  /// Whether this row is a sale still held on this device.
+  ///
+  /// Held rows come off the outbox rather than the server (see `SalesCubit`), so
+  /// they have no id, cannot be fetched, and are edited through the queue.
+  bool _isHeld(Map<String, dynamic> r) => r['pending'] == true;
+
+  /// Correct a held sale straight from the list.
+  ///
+  /// Offered here as well as on the invoice screen because this is where a cashier
+  /// goes looking for the sale they have just rung up — making them open the receipt
+  /// first to fix a wrong quantity is a step for nothing.
+  ///
+  /// The correction rewrites the outbox row it is already captured in, under the
+  /// same idempotency key, so the server still only ever hears about one sale.
+  Future<void> _editHeld(Map<String, dynamic> r) async {
+    final uuid = asStr(r['client_uuid']);
+    if (uuid.isEmpty || !serviceLocator.isRegistered<OutboxRepository>()) return;
+
+    final row = await serviceLocator<OutboxRepository>().byUuid(uuid);
+    if (!mounted) return;
+    if (row == null) {
+      // Gone from the queue between the tap and here means it synced, which is the
+      // good outcome — it is an ordinary sale now. Reload so the row shows as one.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This sale has synced — reopen it to edit.')),
+      );
+      unawaited(_load());
+      return;
+    }
+
+    context.read<CartCubit>().seedFromPendingSale(row);
+    await context.push(Routes.sale);
+    // The correction may have changed the figures, or synced the row away.
+    if (mounted) unawaited(_load());
   }
 }

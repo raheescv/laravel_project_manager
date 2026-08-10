@@ -23,6 +23,18 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Release builds MUST use --split-per-abi, otherwise the APK ships every
+        // native lib for all three ABIs and lands at ~113MB instead of ~41MB:
+        //   flutter build apk --release --split-per-abi --target-platform android-arm64
+        //
+        // Do NOT try to do this with ndk.abiFilters. Measured on AGP 8 / Gradle
+        // 9.1, it does not filter AAR-provided native libs (ML Kit's
+        // libbarhopper_v3, CameraX, dartjni) from either defaultConfig or
+        // buildTypes — output was byte-identical with and without it — and it
+        // makes AGP reject --split-per-abi outright. --target-platform alone only
+        // trims Flutter's own libs (libapp/libflutter), leaving ~9.6MB of
+        // duplicated AAR libs. Only the splits path filters both.
     }
 
     buildTypes {
@@ -37,19 +49,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // No retail Android device is x86_64 — it only exists for emulators,
-            // which run debug builds anyway. Shipping it tripled the native libs
-            // (libapp/libflutter/libbarhopper are ~35MB per ABI). Release only, so
-            // `flutter run` on an x86_64 emulator still works.
-            //
-            // AGP rejects ndk.abiFilters when --split-per-abi is in play, and
-            // Flutter signals that mode with -Psplit-per-abi=true, so skip the
-            // filter there — the split build already emits one APK per ABI.
-            if (project.findProperty("split-per-abi")?.toString().toBoolean().not()) {
-                ndk {
-                    abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-                }
-            }
         }
     }
 }

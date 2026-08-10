@@ -1,5 +1,25 @@
 import 'package:invo/shared/domain/helpers/formatters.dart';
 
+/// The count's own (header) status — mirrors `stockCheckStatuses()` server-side
+/// and the values the `status` column's enum accepts. Item status is a separate,
+/// two-state thing (pending / completed); only that one reconciles inventory.
+class StockCheckStatus {
+  const StockCheckStatus._();
+
+  static const String pending = 'pending';
+  static const String completed = 'completed';
+  static const String cancelled = 'cancelled';
+
+  static const List<String> all = [pending, completed, cancelled];
+
+  static String label(String status) => switch (status) {
+        pending => 'Pending',
+        completed => 'Completed',
+        cancelled => 'Cancelled',
+        _ => status.isEmpty ? '—' : status,
+      };
+}
+
 /// A stock check summary row on the list screen — carries the per-check
 /// progress the API computes (counted / total items, variance, net difference).
 class StockCheckSummary {

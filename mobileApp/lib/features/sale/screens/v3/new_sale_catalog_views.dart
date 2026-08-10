@@ -5,26 +5,33 @@ part of 'new_sale_screen.dart';
 // as a `part` these stay library-private and no call site changed.
 
 extension _CatalogViews on _NewSaleScreenState {
-  /// Two-up boutique tile grid (more columns on tablet/desktop — ≈200px each).
+  /// Boutique tile grid. How many tiles fit across is the till's own choice
+  /// (Settings → Catalog grid, two-up by default) — a catalog carrying no
+  /// photos reads better three or four up, where a tile is just a name and a
+  /// price. A screen wide enough for more than the preference asks for still
+  /// gets more, so a tablet is never left with two enormous tiles.
   /// Lazily built so long catalogs stay smooth as pages stream in.
-  Widget _productGrid(CatalogCubit cat) => SliverPadding(
+  Widget _productGrid(CatalogCubit cat, int preferredCols) => SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
         sliver: SliverLayoutBuilder(
           builder: (context, constraints) {
             const gap = 13.0;
-            final cols = (constraints.crossAxisExtent / 200).floor().clamp(2, 5);
+            final fits = (constraints.crossAxisExtent / 200).floor();
+            final cols = (fits > preferredCols ? fits : preferredCols).clamp(2, 6);
             // Actual painted tile width, so the photo is decoded to the size it
-            // is drawn at rather than at full source resolution.
+            // is drawn at rather than at full source resolution — and so the
+            // tile's own chrome can shrink along with it.
             final tileW = (constraints.crossAxisExtent - gap * (cols - 1)) / cols;
+            final scale = _TileScale.forWidth(tileW);
             return SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: cols,
                 crossAxisSpacing: gap,
                 mainAxisSpacing: gap,
-                childAspectRatio: 0.72,
+                childAspectRatio: tileW / (tileW * 0.75 + scale.captionHeight),
               ),
               delegate: SliverChildBuilderDelegate(
-                (context, i) => _serviceTile(cat.products[i], tileW),
+                (context, i) => _serviceTile(cat.products[i], tileW, scale),
                 childCount: cat.products.length,
               ),
             );
@@ -90,11 +97,10 @@ extension _CatalogViews on _NewSaleScreenState {
 
   Widget _serviceListRow(Product s) {
     final p = context.astra;
-    final cart = context.read<CartCubit>();
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        cart.add(s);
+        _addToCart(s);
       },
       child: Container(
         clipBehavior: Clip.antiAlias,
@@ -299,59 +305,66 @@ extension _CatalogViews on _NewSaleScreenState {
 
   /// Boutique product tile: a full-bleed image (or a tinted category panel when
   /// there's no photo) crowning the card, then name, meta and a serif price with
-  /// a corner add-button.
-  Widget _serviceTile(Product s, double width) {
+  /// a corner add-button. [k] trims that chrome down as the grid gets denser.
+  Widget _serviceTile(Product s, double width, _TileScale k) {
     final p = context.astra;
-    final cart = context.read<CartCubit>();
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        cart.add(s);
+        _addToCart(s);
       },
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: p.card,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(k.radius),
           border: Border.all(color: p.hairline),
           boxShadow: context.astraTheme.softShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: _tileImage(s, width)),
+            Expanded(child: _tileImage(s, width, iconSize: k.icon)),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 10, 11),
+              padding: EdgeInsets.fromLTRB(k.padH, k.padTop, k.padH - 2, k.padBottom),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(s.name,
-                      maxLines: 2,
+                      maxLines: k.nameLines,
                       overflow: TextOverflow.ellipsis,
-                      style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink, height: 1.2)),
-                  const SizedBox(height: 3),
-                  Text(_metaLine(s),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-                  const SizedBox(height: 9),
-                  Row(
-                    children: [
-                      Flexible(child: _priceText(s.mrp)),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          gradient: p.primaryGradient,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: context.astraTheme.floatShadow(p.primary),
+                      style: ui(size: k.name, weight: FontWeight.w800, color: p.ink, height: 1.2)),
+                  if (k.showMeta) ...[
+                    const SizedBox(height: 3),
+                    Text(_metaLine(s),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ui(size: k.meta, weight: FontWeight.w600, color: p.textMuted)),
+                  ],
+                  SizedBox(height: k.gapAbovePrice),
+                  // Below ~110px the price and the button can't share a row
+                  // without the amount ellipsing away — the whole tile adds to
+                  // the cart on tap anyway, so the button is what gives.
+                  if (k.showAdd)
+                    Row(
+                      children: [
+                        Flexible(child: _priceText(s.mrp, currency: k.currency, amount: k.price)),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: k.add,
+                          height: k.add,
+                          decoration: BoxDecoration(
+                            gradient: p.primaryGradient,
+                            borderRadius: BorderRadius.circular(k.add * 0.35),
+                            boxShadow: context.astraTheme.floatShadow(p.primary),
+                          ),
+                          child: Icon(Icons.add, color: Colors.white, size: k.add * 0.53),
                         ),
-                        child: const Icon(Icons.add, color: Colors.white, size: 18),
-                      ),
-                    ],
-                  ),
+                      ],
+                    )
+                  else
+                    _priceText(s.mrp, currency: k.currency, amount: k.price),
                 ],
               ),
             ),
@@ -365,8 +378,8 @@ extension _CatalogViews on _NewSaleScreenState {
   /// a photo, otherwise a tinted panel with a large category icon so the frame
   /// is never empty. Storage paths are resolved onto the reachable base URL with
   /// the same host header the API uses (mirrors [ProductThumb]).
-  Widget _tileImage(Product s, double width) {
-    if (s.thumbnail.isEmpty) return _tileFallback(s);
+  Widget _tileImage(Product s, double width, {double iconSize = 40}) {
+    if (s.thumbnail.isEmpty) return _tileFallback(s, iconSize: iconSize);
     final cfg = context.read<AuthCubit>().config;
     return Image.network(
       cfg.assetUrl(s.thumbnail),
@@ -376,13 +389,13 @@ extension _CatalogViews on _NewSaleScreenState {
       width: double.infinity,
       height: double.infinity,
       gaplessPlayback: true,
-      errorBuilder: (_, __, ___) => _tileFallback(s),
+      errorBuilder: (_, __, ___) => _tileFallback(s, iconSize: iconSize),
       loadingBuilder: (context, child, progress) =>
-          progress == null ? child : _tileFallback(s, loading: true),
+          progress == null ? child : _tileFallback(s, loading: true, iconSize: iconSize),
     );
   }
 
-  Widget _tileFallback(Product s, {bool loading = false}) {
+  Widget _tileFallback(Product s, {bool loading = false, double iconSize = 40}) {
     final p = context.astra;
     return Container(
       decoration: BoxDecoration(
@@ -395,20 +408,75 @@ extension _CatalogViews on _NewSaleScreenState {
       alignment: Alignment.center,
       child: loading
           ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: p.primary))
-          : Icon(iconForName('${s.categoryName} ${s.name}'), size: 40, color: p.primary.withValues(alpha: 0.85)),
+          : Icon(iconForName('${s.categoryName} ${s.name}'), size: iconSize, color: p.primary.withValues(alpha: 0.85)),
     );
   }
 
   /// Two-tone serif price: gold currency mark + ink amount.
-  Widget _priceText(double v) {
+  Widget _priceText(double v, {double currency = 12, double amount = 17}) {
     final p = context.astra;
     return RichText(
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       text: TextSpan(children: [
-        TextSpan(text: '${Money.symbol.trim()} ', style: serif(size: 12, color: p.goldText)),
-        TextSpan(text: Money.plain(v), style: serif(size: 17, color: p.ink)),
+        TextSpan(text: '${Money.symbol.trim()} ', style: serif(size: currency, color: p.goldText)),
+        TextSpan(text: Money.plain(v), style: serif(size: amount, color: p.ink)),
       ]),
     );
   }
+}
+
+/// The product tile's chrome, sized to the width it is actually painted at.
+/// A four-up grid on a phone leaves each tile barely 80px across, where the
+/// two-up type, the meta line and the 34px add button have nowhere to go.
+class _TileScale {
+  const _TileScale._({
+    required this.padH,
+    required this.padTop,
+    required this.padBottom,
+    required this.radius,
+    required this.name,
+    required this.nameLines,
+    required this.meta,
+    required this.currency,
+    required this.price,
+    required this.add,
+    required this.icon,
+  });
+
+  /// Roomy above ~150px (two-up on a phone, and most tablet grids), trimmed
+  /// through the middle band, stripped back to name + price under ~108px.
+  factory _TileScale.forWidth(double w) {
+    if (w >= 150) {
+      return const _TileScale._(
+          padH: 12, padTop: 10, padBottom: 11, radius: 20,
+          name: 12.5, nameLines: 2, meta: 10.5, currency: 12, price: 17, add: 34, icon: 40);
+    }
+    if (w >= 108) {
+      return const _TileScale._(
+          padH: 9, padTop: 8, padBottom: 9, radius: 16,
+          name: 11.5, nameLines: 2, meta: 0, currency: 10.5, price: 14, add: 26, icon: 32);
+    }
+    return const _TileScale._(
+        padH: 8, padTop: 7, padBottom: 8, radius: 13,
+        name: 10.5, nameLines: 1, meta: 0, currency: 9.5, price: 12.5, add: 0, icon: 24);
+  }
+
+  final double padH, padTop, padBottom, radius, name, meta, currency, price, add, icon;
+  final int nameLines;
+
+  bool get showMeta => meta > 0;
+  bool get showAdd => add > 0;
+  double get gapAbovePrice => showMeta ? 9 : 7;
+
+  /// Height of the caption under the photo. The grid takes its aspect ratio
+  /// from this, so the text is always given the room it asks for and a dense
+  /// tile can't overflow.
+  double get captionHeight =>
+      padTop +
+      padBottom +
+      name * 1.2 * nameLines +
+      (showMeta ? meta * 1.35 + 3 : 0) +
+      gapAbovePrice +
+      (showAdd ? add : price * 1.35);
 }

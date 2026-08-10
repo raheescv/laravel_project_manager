@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/constants/data_fetching_status.dart';
 import '../../utils/components/app_strings.dart';
 import '../../utils/router/http_utils/common_exception.dart';
+import '../../utils/router/http_utils/reachability.dart';
 
 part 'paginated_list_state.dart';
 
@@ -83,11 +84,14 @@ class PaginatedListCubit extends Cubit<PaginatedListState> {
         errorMessage: e.message,
         loadingMore: false,
       ));
-    } catch (_) {
+    } catch (e) {
       if (isClosed || req != _reqId) return;
       emit(state.copyWith(
         status: DataFetchStatus.failed,
-        errorMessage: errorMessage,
+        // "Could not load sales" reads as a server problem. When the request
+        // never left the device, say that instead — it is the one failure the
+        // person holding it can do something about.
+        errorMessage: networkErrorMessage(e, errorMessage),
         loadingMore: false,
       ));
     }

@@ -59,6 +59,15 @@ extension _ReceiptSections on InvoiceScreen {
                   const SizedBox(height: 6),
                   Text('Invoice  $invLine',
                       style: ui(size: 11.5, weight: FontWeight.w600, color: faint)),
+                  // Shown once this sale has synced and taken a real invoice
+                  // number: the customer is holding a receipt printed under the
+                  // provisional one, and this is what lets whoever is looking at
+                  // the screen confirm the two are the same sale.
+                  if (sale.offlineRef.isNotEmpty && sale.offlineRef != sale.invoiceNo) ...[
+                    const SizedBox(height: 3),
+                    Text('Offline receipt  ${sale.offlineRef}',
+                        style: ui(size: 10.5, weight: FontWeight.w600, color: faint)),
+                  ],
                 ],
               ),
             ),

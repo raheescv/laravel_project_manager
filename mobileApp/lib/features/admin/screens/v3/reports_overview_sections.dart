@@ -12,6 +12,7 @@ extension _OverviewSections on _ReportsScreenState {
     final ov = admin.overview;
     if (ov == null) return _overviewPlaceholder(admin, 'Sales Performance', Icons.insights_rounded);
     final s = ov.summary;
+    final busy = admin.overviewLoading;
 
     return AstraCard(
       padding: const EdgeInsets.all(12),
@@ -19,20 +20,26 @@ extension _OverviewSections on _ReportsScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _cardHeader(Icons.insights_rounded, 'Sales Performance',
+              busy: busy,
               trailing: _pill('Disc ${Money.compact(s.discount)}', p.tint, p.textSecondary)),
           const SizedBox(height: 12),
-          _miniStatsRow(s),
-          const SizedBox(height: 12),
-          Container(height: 1, color: p.hairline),
-          const SizedBox(height: 12),
-          _rateBar('Sales Success Rate', s.successRate, [p.primary, p.accent]),
-          const SizedBox(height: 10),
-          for (final m in ov.payments.methods) ...[
-            _methodCard(m),
-            const SizedBox(height: 8),
-          ],
-          const SizedBox(height: 2),
-          _finTiles(s),
+          _refreshing(busy, Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _miniStatsRow(s),
+              const SizedBox(height: 12),
+              Container(height: 1, color: p.hairline),
+              const SizedBox(height: 12),
+              _rateBar('Sales Success Rate', s.successRate, [p.primary, p.accent]),
+              const SizedBox(height: 10),
+              for (final m in ov.payments.methods) ...[
+                _methodCard(m),
+                const SizedBox(height: 8),
+              ],
+              const SizedBox(height: 2),
+              _finTiles(s),
+            ],
+          )),
         ],
       ),
     );
@@ -206,6 +213,7 @@ extension _OverviewSections on _ReportsScreenState {
     if (ov == null) return _overviewPlaceholder(admin, 'Payment Overview', Icons.account_balance_wallet_rounded);
     final pay = ov.payments;
     final net = pay.netPayment;
+    final busy = admin.overviewLoading;
 
     final listMethods = pay.methods.where((m) => m.method.toLowerCase() != 'credit' && m.sales > 0).take(4).toList();
     final slices = <DonutSlice>[];
@@ -220,62 +228,67 @@ extension _OverviewSections on _ReportsScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cardHeader(Icons.account_balance_wallet_rounded, 'Payment Overview'),
+          _cardHeader(Icons.account_balance_wallet_rounded, 'Payment Overview', busy: busy),
           const SizedBox(height: 12),
-          Row(
+          _refreshing(busy, Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _payTile('Sales Payments', pay.salesTotal, '${pay.salesTransactions} transactions', _ReportsScreenState._good),
-              const SizedBox(width: 10),
-              _payTile('Returns Payments', pay.returnsTotal, '${pay.returnsTransactions} returns', _ReportsScreenState._warn),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Center(
-            child: Column(
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(Money.of(net), style: serif(size: 30, color: net < 0 ? _ReportsScreenState._bad : _ReportsScreenState._good)),
+              Row(
+                children: [
+                  _payTile('Sales Payments', pay.salesTotal, '${pay.salesTransactions} transactions', _ReportsScreenState._good),
+                  const SizedBox(width: 10),
+                  _payTile('Returns Payments', pay.returnsTotal, '${pay.returnsTransactions} returns', _ReportsScreenState._warn),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Center(
+                child: Column(
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(Money.of(net), style: serif(size: 30, color: net < 0 ? _ReportsScreenState._bad : _ReportsScreenState._good)),
+                    ),
+                    const SizedBox(height: 3),
+                    Text('Net Payments', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textSecondary)),
+                    Text('${pay.totalTransactions} total transactions',
+                        style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+                  ],
                 ),
-                const SizedBox(height: 3),
-                Text('Net Payments', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textSecondary)),
-                Text('${pay.totalTransactions} total transactions',
-                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ),
+              const SizedBox(height: 13),
+              _rateBar('Collection Rate', ov.summary.collectionRate, const [_ReportsScreenState._good, Color(0xFF3FC07E)]),
+              if (listMethods.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                SectionLabel('Payment Methods'),
+                const SizedBox(height: 8),
+                for (final m in listMethods) ...[
+                  _payMethodRow(m),
+                  const SizedBox(height: 7),
+                ],
               ],
-            ),
-          ),
-          const SizedBox(height: 13),
-          _rateBar('Collection Rate', ov.summary.collectionRate, const [_ReportsScreenState._good, Color(0xFF3FC07E)]),
-          if (listMethods.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            SectionLabel('Payment Methods'),
-            const SizedBox(height: 8),
-            for (final m in listMethods) ...[
-              _payMethodRow(m),
-              const SizedBox(height: 7),
-            ],
-          ],
-          if (slices.isNotEmpty) ...[
-            Container(height: 1, color: p.hairline, margin: const EdgeInsets.symmetric(vertical: 14)),
-            Row(
-              children: [
-                DonutChart(
-                  slices: slices,
-                  centerTop: Money.compact(chartTotal),
-                  centerBottom: 'PAID',
-                  size: 116,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    children: [
-                      for (final sl in slices) _legendRow(sl),
-                    ],
-                  ),
+              if (slices.isNotEmpty) ...[
+                Container(height: 1, color: p.hairline, margin: const EdgeInsets.symmetric(vertical: 14)),
+                Row(
+                  children: [
+                    DonutChart(
+                      slices: slices,
+                      centerTop: Money.compact(chartTotal),
+                      centerBottom: 'PAID',
+                      size: 116,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          for (final sl in slices) _legendRow(sl),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            ],
+          )),
         ],
       ),
     );
@@ -389,17 +402,39 @@ extension _OverviewSections on _ReportsScreenState {
   }
 
   /// Shared card header: tinted icon chip + title + optional trailing widget.
-  Widget _cardHeader(IconData icon, String title, {Widget? trailing}) {
+  /// While [busy] the icon chip becomes a spinner, so a refetch reads as
+  /// loading from the top of the card — see [_refreshing].
+  Widget _cardHeader(IconData icon, String title, {Widget? trailing, bool busy = false}) {
     final p = context.astra;
     return Row(
       children: [
-        IconChip(icon: icon, size: 30, radius: 9),
+        if (busy)
+          SizedBox(
+            width: 30,
+            height: 30,
+            child: Center(
+              child: SizedBox(
+                width: 17,
+                height: 17,
+                child: CircularProgressIndicator(strokeWidth: 2.4, color: p.primary),
+              ),
+            ),
+          )
+        else
+          IconChip(icon: icon, size: 30, radius: 9),
         const SizedBox(width: 10),
         Expanded(child: Text(title, style: ui(size: 13, weight: FontWeight.w800, color: p.ink))),
         if (trailing != null) trailing,
       ],
     );
   }
+
+  /// A range change refetches while the previous figures are still on screen,
+  /// so without this the Overview looked frozen and only the Breakdown tab
+  /// (which swaps its whole body for a spinner) read as loading. Fade the stale
+  /// body back — the header spinner above it carries the progress.
+  Widget _refreshing(bool busy, Widget child) =>
+      busy ? IgnorePointer(child: Opacity(opacity: 0.4, child: child)) : child;
 
   /// Compact 3-up stat strip (Invoices · Avg Ticket · Returns) — lives inside the
   /// Sales Performance card header area, not a separate card, to save space.

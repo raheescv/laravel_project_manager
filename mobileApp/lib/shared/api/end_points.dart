@@ -37,6 +37,10 @@ class EndPoints {
   static String saleById(String id) => '/sale/$id';
   static String saleReceipt(String id) => '/sale/$id/receipt';
 
+  /// This till reports its offline queue and reads the rest of the branch's, so
+  /// day close can see sales held on a device other than the one cashing up.
+  static const String offlineTillState = '/offline-till-state';
+
   // ---- Sale Returns ----
   static const String saleReturn = '/sale-return';
   static String saleReturnById(String id) => '/sale-return/$id';
@@ -52,4 +56,5 @@ class EndPoints {
   static String stockCheckById(int id) => '/stock-check/$id';
   static String stockCheckItems(int id) => '/stock-check/$id/items';
   static String stockCheckScan(int id) => '/stock-check/$id/scan';
+  static String stockCheckStatus(int id) => '/stock-check/$id/status';
 }

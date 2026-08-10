@@ -17,7 +17,14 @@ class SaleResource extends JsonResource
         return [
             'id' => (string) $this->id,
             'invoice_no' => $this->invoice_no,
+            // Doubles as the provisional reference printed on the receipt when the
+            // sale was rung up offline; `client_uuid` below is what tells the app
+            // which of the two this is.
             'reference_no' => $this->reference_no,
+            // Echoed back so the app can retire the matching row from its
+            // offline outbox — including when this response is a replay of a
+            // sale an earlier attempt already committed.
+            'client_uuid' => $this->client_uuid,
             'date' => $this->date,
             'status' => $this->status,
             'branch' => $this->branch?->name,

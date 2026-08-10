@@ -82,7 +82,8 @@ class _ConnectionSheetBodyState extends State<_ConnectionSheetBody> {
             const SizedBox(height: 4),
             Text('Server', style: serif(size: 22, color: p.ink)),
             const SizedBox(height: 16),
-            _field('Base URL', _urlCtl, hint: 'https://your-salon.com'),
+            _field('Base URL', _urlCtl,
+                hint: 'https://your-salon.com', keyboard: TextInputType.url),
             const SizedBox(height: 12),
             _field('Tenant subdomain', _tenantCtl, hint: 'demo (optional)'),
             const SizedBox(height: 20),
@@ -93,7 +94,11 @@ class _ConnectionSheetBodyState extends State<_ConnectionSheetBody> {
     );
   }
 
-  Widget _field(String label, TextEditingController c, {String? hint}) {
+  /// [keyboard] is `TextInputType.url` for the Base URL so the OS keypad puts
+  /// `.` `/` `:` (and `.com`) on the primary layer. Autocorrect/capitalisation
+  /// are off on every field here — both mangle a hand-typed host.
+  Widget _field(String label, TextEditingController c,
+      {String? hint, TextInputType? keyboard}) {
     final p = context.astra;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,6 +108,10 @@ class _ConnectionSheetBodyState extends State<_ConnectionSheetBody> {
         const SizedBox(height: 6),
         TextField(
           controller: c,
+          keyboardType: keyboard ?? TextInputType.text,
+          autocorrect: false,
+          enableSuggestions: false,
+          textCapitalization: TextCapitalization.none,
           style: ui(size: 14, weight: FontWeight.w600, color: p.ink),
           decoration: InputDecoration(
             hintText: hint,

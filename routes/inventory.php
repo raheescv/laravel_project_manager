@@ -53,6 +53,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('{id}', [StockCheckController::class, 'show'])->name('show');
             Route::put('{id}', [StockCheckController::class, 'update'])->name('update');
             Route::put('{id}/metadata', [StockCheckController::class, 'updateMetadata'])->name('update-metadata');
+            Route::put('{id}/status', [StockCheckController::class, 'updateStatus'])->name('update-status');
             Route::delete('{id}', [StockCheckController::class, 'delete'])->name('delete');
             Route::post('{id}/scan-barcode', [StockCheckController::class, 'scanBarcode'])->name('scan-barcode');
             Route::get('{id}/items', [StockCheckController::class, 'getItems'])->name('items');

@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/features/admin/logic/day_session_cubit/day_session_cubit.dart';
+import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 
 part 'day_session_views.dart';
@@ -373,6 +376,10 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
   Future<void> _act(DaySessionCubit c) async {
     if (c.busy) return;
     if (c.isOpen) {
+      // Closing over a queued sale would strand it: the server stamps a sale
+      // into whichever session is open when it arrives, so one synced after the
+      // close lands in tomorrow's takings and this day's cash-up is wrong.
+      if (!await _guardPendingSales()) return;
       final ok = await _confirmClose(c);
       if (ok != true) return;
     }
@@ -395,6 +402,51 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
       ));
     }
   }
+
+  /// Refuse to close while this till still owes the server money, offering the
+  /// one action that resolves it. Returns true when the day may be closed.
+  ///
+  /// Parked drafts do not count — a draft is not unbanked takings, and blocking a
+  /// close over one teaches people to force past the guard that protects the money.
+  ///
+  /// This device only. A till cannot see another till's queue, and there is
+  /// deliberately no server-side register of what each device is holding.
+  Future<bool> _guardPendingSales() async {
+    final sync = serviceLocator<OfflineSyncCubit>();
+    await sync.refresh();
+    // One attempt to clear the queue before troubling anyone — the connection is
+    // usually back by the time someone is cashing up.
+    if (sync.state.hasUnbankedTakings) await sync.drain();
+    if (!mounted || !sync.state.hasUnbankedTakings) return true;
+
+    final p = context.astra;
+    final count = sync.state.unbankedCount;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$count ${count == 1 ? 'sale' : 'sales'} not synced',
+            style: serif(size: 19, color: p.ink)),
+        content: Text(
+          'This till is still holding takings the server has not got. Close the day '
+          'now and they will be missing from this day’s report. Get this till back '
+          'on the network first.',
+          style: ui(size: 13, color: p.textSecondary, height: 1.45),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Not now')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.push(Routes.pendingSales);
+            },
+            child: const Text('Review'),
+          ),
+        ],
+      ),
+    );
+    return false;
+  }
+
 
   Future<bool?> _confirmClose(DaySessionCubit c) {
     final p = context.astra;

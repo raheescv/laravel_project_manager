@@ -1,2 +1,3 @@
-// GENERATED barrel — re-exports this folder's public API (skeleton §17).
+// GENERATED barrel — re-exports this folder API (skeleton §17).
+export 'outbox_repository.dart';
 export 'sale_repository.dart';

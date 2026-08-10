@@ -118,7 +118,7 @@
 <div class="wrap">
 
 <header class="top">
-  <div class="eyebrow">Remediation status · re-audited 2026-08-06</div>
+  <div class="eyebrow">Remediation status · re-audited 2026-08-06 · test cases re-run 2026-08-09</div>
   <h1>Codebase audit against the project skills</h1>
   <p class="sub">Follow-up to the 2026-08-05 audit of <code>project_manager</code>, measured against the
   convention skills in <code>.claude/skills/</code>. <strong>All 11 original findings are resolved</strong>
@@ -126,6 +126,12 @@
   fixed 6 new defects, corrected 7 skill inaccuracies across 5 skill files, and leaves 5 items open. Every
   claim below was then independently re-verified against the working tree; one stale count was found and
   corrected (§06).</p>
+  <p class="sub" style="margin-top:10px"><strong>2026-08-09 update:</strong> every finding above was
+  re-verified once more against the <code>offline</code> branch and all still hold. The test suite was
+  re-run from scratch and <strong>§08 has been rewritten</strong> — the 2026-08-06 failure diagnosis was
+  wrong, and a single Mockery <code>overload:</code> mock is currently reporting 25 of the offline
+  branch's new API tests as red when every one of them passes. §08 also records where the first draft of
+  that rewrite was itself wrong, and what re-checking it changed.</p>
 </header>
 
 <h2 id="summary"><span class="n">01</span>Summary</h2>
@@ -134,8 +140,21 @@
   <div class="stat o"><div class="v">11</div><div class="l">Original · resolved</div></div>
   <div class="stat o"><div class="v">6</div><div class="l">New · fixed</div></div>
   <div class="stat m"><div class="v">7</div><div class="l">Skill fixes · 5 files</div></div>
-  <div class="stat h"><div class="v">5</div><div class="l">Still open</div></div>
-  <div class="stat c"><div class="v">1</div><div class="l">Action required</div></div>
+  <div class="stat h"><div class="v">6</div><div class="l">Still open</div></div>
+  <div class="stat c"><div class="v">2</div><div class="l">Action required</div></div>
+</div>
+
+<div class="callout crit">
+  <h4>New on 2026-08-09 — one line of test code is failing 25 tests that pass on their own</h4>
+  <p><code>tests/Unit/Purchase/JournalEntryActionTest.php:58</code> creates a Mockery
+  <strong><code>overload:</code></strong> mock of <code>App\Actions\Journal\CreateAction</code>. That
+  defines the class for the rest of the PHP process, so every later test whose code path posts a journal
+  gets the mock instead of the real action. <code>app/Actions/Sale/JournalEntryAction.php</code> imports
+  exactly that class — so the offline branch's 25 V1 sale tests, all green in isolation, answer
+  <code>422</code> in the full suite.</p>
+  <p>Of the <strong>54</strong> failures in a full run, only <strong>29</strong> are real. All 29 are
+  pre-existing, none introduced by the remediation. Separately, three tests drop real tables and corrupt
+  the schema mid-run; today that is contained by luck of alphabetical ordering. Full working in §08.</p>
 </div>
 
 <div class="callout ok">
@@ -170,14 +189,15 @@
 <thead><tr><th>Area</th><th>Then (2026-08-05)</th><th>Now</th><th>Detail</th></tr></thead>
 <tbody>
 <tr><td><strong>Tenant &amp; branch isolation</strong></td><td><span class="b crit">3 critical</span></td><td><span class="b ok">clean</span></td><td>All three cache/scope defects closed; 1 new leak found &amp; fixed this pass</td></tr>
-<tr><td><strong>Authorization</strong></td><td><span class="b high">4 high</span></td><td><span class="b high">1 open</span></td><td>Impersonation, deletes and unmapped exports all guarded; 30 Livewire components still unguarded</td></tr>
-<tr><td><strong>Money &amp; accounting</strong></td><td><span class="b med">1 medium</span></td><td><span class="b ok">clean</span></td><td>Account resolution moved to <code>Account::slugIdMap()</code> / <code>idBySlug()</code> across 29 files</td></tr>
+<tr><td><strong>Authorization</strong></td><td><span class="b high">4 high</span></td><td><span class="b med">1 open</span></td><td>Impersonation, deletes and unmapped exports guarded; the 4 privileged Livewire components now guarded too — 6 low-risk ones left (§05a)</td></tr>
+<tr><td><strong>Money &amp; accounting</strong></td><td><span class="b med">1 medium</span></td><td><span class="b ok">clean</span></td><td>Account resolution moved to <code>Account::slugIdMap()</code> / <code>idBySlug()</code> across 30 files</td></tr>
 <tr><td><strong>Action layer</strong></td><td><span class="b med">1 medium</span></td><td><span class="b low">1 low</span></td><td>Skill corrected; 14 actions still read <code>Auth::id()</code> internally</td></tr>
 <tr><td><strong>Livewire layer</strong></td><td><span class="b med">1 medium</span></td><td><span class="b ok">clean</span></td><td>Toast-before-commit down from ~59 files to <strong>0 of 116</strong></td></tr>
 <tr><td><strong>Print / PDF</strong></td><td><span class="b high">1 high</span></td><td><span class="b low">2 deferred</span></td><td>All of <code>PrintController</code> plus 5 more documents on Browsershot; 2 fixed-size docs deliberately left</td></tr>
 <tr><td><strong>Blade / UI</strong></td><td><span class="b low">2 low</span></td><td><span class="b ok">clean</span></td><td>0 FA5/6 prefixes remain; duplicated lines removed</td></tr>
 <tr><td><strong>API v1</strong></td><td><span class="b ok">clean</span></td><td><span class="b ok">clean</span></td><td>Missing sale-return duplicate guard found &amp; added this pass</td></tr>
 <tr><td><strong>Flutter apps</strong></td><td><span class="b ok">clean</span></td><td><span class="b ok">clean</span></td><td>Re-verified: no direct service construction, no stray endpoint literals</td></tr>
+<tr><td><strong>Test harness</strong></td><td><span class="b med">not examined</span></td><td><span class="b crit">2 open</span></td><td>Added 2026-08-09: a Mockery <code>overload:</code> mock leaks across the process (25 false failures), and 3 tests rebuild real tables mid-run (§08)</td></tr>
 </tbody></table></div>
 
 <div class="callout">
@@ -186,11 +206,15 @@
   actually rendered through Browsershot and inspected as images (Arabic shaping confirmed correct,
   logo data-URI and coloured header bands confirmed present). The rewritten tenant-scoped query was
   dumped via <code>toSql()</code> with its bindings to confirm <code>sales.tenant_id = ?</code> is
-  applied inside the sub-select. Route registration was re-checked (<code>569</code> routes boot),
+  applied inside the sub-select. Route registration was re-checked (<code>569</code> routes booted then,
+  <code>570</code> on 2026-08-09),
   and every changed file passes <code>php -l</code> and <code>pint</code>.</p>
-  <p><strong>The test suite has since been run</strong>, and it does carry signal — see §08. It has no
-  coverage of the tenant cache, permissions or PDF paths, so it cannot confirm these fixes are
-  <em>correct</em>; what it establishes is that they broke nothing that was previously passing.</p>
+  <p><strong>The test suite has since been run</strong> — see §08, which was rewritten on 2026-08-09 after
+  re-running every test case. It has no coverage of the tenant cache, permissions or PDF paths, so it
+  cannot confirm these fixes are <em>correct</em>. What it was taken to establish — that they broke nothing
+  previously passing — now needs a caveat: the suite's failure count is not stable across runs, so that
+  guarantee is only as good as the two runs it was diffed from happening to start from the same schema
+  state.</p>
   <p>Still <strong>not</strong> covered: counts over large directories (<code>app/Actions</code> 383 files,
   <code>app/Livewire</code> 355) are script-derived across every file rather than sampled, but the
   <em>judgement</em> of whether each hit is genuinely wrong was spot-checked, not exhaustive.
@@ -209,7 +233,7 @@ evidence column is what was actually run or read to confirm it, not a claim that
 <tbody>
 <tr><td>1</td><td>Tenant identity in a globally-shared cache key<br><span class="loc">TenantService.php:66–81</span></td><td><span class="b ok">Fixed</span></td><td>No <code>current_tenant_id</code> key anywhere. Only <code>tenant_subdomain_{$subdomain}</code> remains — keyed by the thing that identifies the tenant.</td></tr>
 <tr><td>2</td><td>Tenant data cached under global keys at boot<br><span class="loc">AppServiceProvider.php:57–90</span></td><td><span class="b ok">Fixed</span></td><td><code>boot()</code> warms nothing tenant-scoped and documents why. <code>TenantCache</code> suffixes every key <code>:tenant:{id}</code> and returns the default (caching nothing) when no tenant resolves.</td></tr>
-<tr><td>3</td><td>Ledger accounts resolved by raw name query — 10 sites</td><td><span class="b ok">Fixed</span></td><td>29 files now use <code>Account::slugIdMap()</code> / <code>Account::idBySlug()</code>. No <code>DB::table('accounts')</code> remains in application code — the only hits are one-off migration commands.</td></tr>
+<tr><td>3</td><td>Ledger accounts resolved by raw name query — 10 sites</td><td><span class="b ok">Fixed</span></td><td>30 files now use <code>Account::slugIdMap()</code> / <code>Account::idBySlug()</code> (29 when first measured; the offline branch added one). No <code>DB::table('accounts')</code> remains in application code — the only hits are one-off migration commands and a docblock warning in <code>Account.php</code>.</td></tr>
 <tr><td>4</td><td>Impersonation has no permission check<br><span class="loc">User/View.php:86–103</span></td><td><span class="b ok">Fixed</span></td><td><code>abort_unless(…can('user.impersonate'), 403)</code> at line 91, plus an <code>abort_if</code> self-impersonation guard. <code>user.impersonate</code> is declared in config.</td></tr>
 <tr><td>5</td><td>Two unguarded delete methods</td><td><span class="b ok">Fixed</span></td><td><code>Trading/AlertRules.php:39</code> → <code>flat_trade.trade</code>; <code>Property/TenantDetail/Table.php:35</code> → <code>tenant detail.delete</code>. Both abilities declared.</td></tr>
 <tr><td>6</td><td>20 actions marked as having no mapped permission</td><td><span class="b ok">Fixed</span></td><td><strong>Zero</strong> <code>TODO(C7): unmapped</code> markers remain. The four data-egress exports it called out are all guarded: <code>rent out utility.export</code>, <code>rent out cheque.export</code>, <code>rent out service.export</code>, <code>property lead.download</code> — all four declared in config.</td></tr>
@@ -479,23 +503,72 @@ views need no restyling — but the constraints no longer bind if you redesign t
 <p class="lead">Nothing here was fixed. Listed with an honest severity rather than deferred silently.</p>
 
 <details class="f" open>
-<summary><span class="arrow">▶</span><span class="ttl">30 Livewire components with write methods and no authorization guard
-<div class="badges"><span class="b high">High</span><span class="b conf">Confirmed</span></div></span></summary>
+<summary><span class="arrow">▶</span><span class="ttl">21 Livewire components with write methods and no authorization guard — 6 of them unexplained
+<div class="badges"><span class="b med">Medium</span><span class="b conf">Confirmed</span><span class="b ok">Partly fixed</span></div></span></summary>
 <div class="body">
+
+<div class="callout crit">
+  <h4>This finding was overstated — the original count came from a grep that only knew one guard idiom</h4>
+  <p>The &ldquo;30 unguarded&rdquo; figure was derived by searching for <code>abort_unless</code>. This
+  codebase has a <strong>second, equally valid guard idiom</strong>: <code>Auth::user()->cannot('x')</code>
+  followed by <code>throw new Exception(...)</code>, which the component's own catch block turns into an
+  error toast rather than a 403 page. Every file using that form was miscounted as unguarded.</p>
+  <p>The headline casualty was <code>Grn/Table::delete()</code>, named here as &ldquo;an unguarded bulk
+  delete&rdquo;. It was never unguarded — <a href="#"><code>app/Livewire/Grn/Table.php:92</code></a> has
+  read <code>if (Auth::user()->cannot('grn.delete')) { throw ... }</code> the whole time. <strong>No fix was
+  needed and none was applied.</strong></p>
+  <p>Re-counted across <em>all</em> guard idioms (<code>abort_unless</code>, <code>abort_if</code>,
+  <code>can()</code>, <code>cannot()</code>, <code>authorize()</code>): of 188 components with a write
+  method, <strong>21</strong> have no authorization of any kind — not 30.</p>
+</div>
 
 <div class="step"><div class="h">What the code does now</div>
 <p>Of 188 Livewire components exposing a <code>save</code>/<code>delete</code>/<code>store</code>/<code>update</code>/<code>destroy</code>/<code>submit</code>
-method, 158 carry an <code>abort_unless</code>. The other 30 split into two very different groups:</p>
+method, 167 carry a guard in one form or the other. The remaining 21 split into two very different
+groups:</p>
 <ul>
 <li><strong>15 carry a <code>TODO(C7)</code> marker</strong> recording a deliberate decision — mostly
 nested POS sub-components (line-item and payment-line removal inside an already-authorized create/edit
 flow) and settings tabs where the candidate ability was ambiguous and guessing would have denied
 everyone. These are defensible.</li>
-<li><strong>15 have no marker at all.</strong> The material ones:
-<code>Grn/Table::delete()</code> (an unguarded bulk delete),
-<code>Settings/Role/Permissions::save()</code> and <code>syncPermission()</code> (grants permissions to
-roles), <code>Settings/Role/Page::save()</code>, <code>Settings/Branch/Page::save()</code>, and
-<code>Sale/Import::save()</code> (bulk sale import).</li>
+<li><strong>6 have no marker at all</strong>, down from 10 after this pass. The four genuinely
+privileged ones are now guarded (see Resolution): <code>Settings/Role/Permissions::save()</code> and
+<code>syncPermission()</code>, <code>Settings/Role/Page::save()</code>,
+<code>Settings/Branch/Page::save()</code>, and <code>Sale/Import::save()</code>.</li>
+</ul>
+</div>
+
+<div class="step res"><div class="h">Resolution — the four privileged ones, guarded</div>
+<pre><code><span class="com">// Settings/Role/Permissions.php:77 and :110 — the screen that hands out every other</span>
+<span class="com">// permission in the system. syncPermission() re-seeds config/permissions.php, which</span>
+<span class="com">// is the same power, so it takes the same ability.</span>
+abort_unless(auth()->user()?->can(<span class="str">'role.permissions'</span>), 403);
+
+<span class="com">// Settings/Role/Page.php:54 and Settings/Branch/Page.php:77 — create/edit split,</span>
+<span class="com">// matching the pattern already used in Property/TenantDetail/Page.</span>
+abort_unless(auth()->user()?->can($this->table_id ? <span class="str">'role.edit'</span> : <span class="str">'role.create'</span>), 403);
+abort_unless(auth()->user()?->can($this->table_id ? <span class="str">'branch.edit'</span> : <span class="str">'branch.create'</span>), 403);
+
+<span class="com">// Sale/Import.php:34 — bulk sale import</span>
+abort_unless(auth()->user()?->can(<span class="str">'sale.import'</span>), 403);</code></pre>
+<p>Every ability used already exists in <code>config/permissions.php</code> and was checked against the
+live grant table <em>before</em> the guard was written — the whole point of §05e is that a guard on an
+unheld ability is a dead feature, and adding five more would have repeated the mistake this report is
+about.</p>
+<p class="loc">Verified: <code>php -l</code> and Pint clean on all four files; full Pest run shows no
+failure in any area they touch — and no test in the suite exercises these four components, so the
+guards are unverified by test, only by construction.</p>
+</div>
+
+<div class="step"><div class="h">What is left — the 6 unmarked</div>
+<p>None is a privilege-escalation surface; all six are settings or line-item editors reached from an
+already-gated route. Listed so the next pass does not have to re-derive them:</p>
+<ul>
+<li><code>Sale/Feedback.php</code> · <code>Sale/EditItem.php</code> · <code>SaleReturn/EditItem.php</code>
+— line-item and feedback editors inside an authorized sale flow, the same shape as the 15 marked ones</li>
+<li><code>Settings/NotificationPreferences.php</code> · <code>Settings/UniqueNoCounterConfiguration.php</code>
+· <code>Accounts/ChequeConfiguration.php</code> — settings tabs; each needs a decision on whether
+<code>configuration.settings</code> is the right ability or a narrower one should exist</li>
 </ul>
 </div>
 
@@ -511,13 +584,53 @@ hole</strong> — but it is exactly the layer that stops a future refactor (nest
 somewhere less guarded) from becoming one.</p>
 </div>
 
-<div class="step"><div class="h">Suggested approach</div>
-<p>Guard the 15 unmarked ones — each is a one-line <code>abort_unless</code> against an ability that
-already exists. Then decide the 15 marked ones as a batch: either accept the inherited authorization
-and delete the markers, or introduce the sub-permissions the markers propose. Leaving them marked
-indefinitely is the worst of both.</p>
+<div class="step"><div class="h">Suggested approach for what remains</div>
+<p>The four privileged components are done. For the 6 unmarked leftovers, the three settings tabs need a
+naming decision (reuse <code>configuration.settings</code>, or introduce a narrower ability) and the three
+sale line-item editors should almost certainly just inherit the sale flow's authorization and get a
+<code>TODO(C7)</code> marker recording that, which folds them into the batch below.</p>
+<p>Then decide the 15 marked ones as a batch: either accept the inherited authorization and delete the
+markers, or introduce the sub-permissions the markers propose. Leaving them marked indefinitely is the
+worst of both.</p>
+<p><strong>And whichever ability you pick, check it is actually granted to a role first.</strong> That is
+the lesson of §05e sitting one section below this one: a guard on an ability nobody holds does not secure
+the feature, it deletes it.</p>
 </div>
 
+</div>
+</details>
+
+<details class="f" open>
+<summary><span class="arrow">▶</span><span class="ttl">Test-harness defects: an <code>overload:</code> mock leaks process-wide, and three tests rebuild real tables
+<div class="badges"><span class="b crit">Action required</span><span class="b conf">Confirmed</span></div></span></summary>
+<div class="body">
+<div class="step"><div class="h">What the code does now</div>
+<p class="loc">tests/Unit/Purchase/JournalEntryActionTest.php:58</p>
+<p><code>Mockery::mock('overload:App\Actions\Journal\CreateAction')</code> defines that class for the rest
+of the PHP process. <code>Sale\JournalEntryAction</code> imports the same class, so every later test that
+posts a sale gets the stub and answers <code>422</code>. Bisected to exactly 25 failures — all of them the
+offline branch's V1 sale tests, which pass 35 of 35 alone.</p>
+<p class="loc">tests/Unit/Product/DropboxImageImportQueueTest.php:19 ·
+tests/Unit/Product/ProductImageFolderMatcherTest.php:44, :136 ·
+tests/Unit/Tailoring/BulkCuttingSlipPrintTest.php:66</p>
+<p>Separately, each of these drops real tables in its <code>beforeEach</code> to build a private stub
+schema; the drop dies on a foreign key and the tables are never recreated. Today the blast radius is only
+their own 7 failures, because <code>tests/Unit/User</code> happens to sort after them and its
+<code>RefreshDatabase</code> rebuilds the schema before <code>tests/Feature/</code> runs. Full mechanism
+and measurements in §08.</p>
+</div>
+<div class="step"><div class="h">Why it is action-required rather than merely open</div>
+<p>The first one is not a latent risk — it is actively producing wrong output today. 25 passing tests, the
+offline branch's entire new sale-API coverage, are reported as failures. Anyone reading
+<code>php artisan test</code> concludes that work is broken when it is the best-tested code in the repo.
+The second is latent but only by accident of file ordering.</p>
+</div>
+<div class="step"><div class="h">Why it was not fixed in this pass</div>
+<p>Both mean editing test files, and each has two defensible fixes with different consequences — process
+isolation on the mock versus injecting the dependency; restoring the commented-out sqlite connection
+versus disabling foreign key checks around the drops. Which to take is a call for whoever owns the
+harness. §08 sets all four out.</p>
+</div>
 </div>
 </details>
 
@@ -698,25 +811,175 @@ action count in <code>action-layer</code>, which the fix for original finding 7 
 </tbody></table></div>
 
 <!-- ═══════════════ TESTS ═══════════════ -->
-<h2 id="tests"><span class="n">08</span>Test-suite verification</h2>
-<p class="lead">Run after the fixes landed, and compared against the same suite on unmodified
-<code>HEAD</code> — a raw pass/fail count means nothing here without that baseline, because the suite was
-already substantially red before any of this work started.</p>
+<h2 id="tests"><span class="n">08</span>Test-suite verification — re-run 2026-08-09</h2>
+<p class="lead">The 2026-08-06 figures below are kept for the record, but they are superseded and their
+diagnosis was wrong. Every test case was re-run on the <code>offline</code> branch: as a whole suite on a
+freshly migrated database, then twice more with no reset, then folder-by-folder with a fresh schema before
+each, then again against a pre-remediation worktree. Two of the three clusters the earlier pass named turn
+out to have been misattributed.</p>
 
 <div class="tw"><table>
-<thead><tr><th></th><th>Baseline (pre-remediation <code>HEAD</code>)</th><th>Now</th><th>Delta</th></tr></thead>
+<thead><tr><th>Run</th><th>Passed</th><th>Failed</th><th>Total</th></tr></thead>
 <tbody>
-<tr><td><strong>Passed</strong></td><td>82</td><td>86</td><td><span class="b ok">+4</span></td></tr>
-<tr><td><strong>Failed</strong></td><td>49</td><td>46</td><td><span class="b ok">−3</span></td></tr>
-<tr><td><strong>Newly broken</strong></td><td>—</td><td>—</td><td><span class="b ok">0</span></td></tr>
+<tr><td>Full suite, freshly migrated test DB</td><td>113</td><td><span class="b high">54</span></td><td>167</td></tr>
+<tr><td>Same, run twice more with no reset</td><td>113 · 113</td><td>54 · 54</td><td>167</td></tr>
+<tr><td>Folder by folder, fresh schema each time</td><td><strong>138</strong></td><td><span class="b med">29</span></td><td>167</td></tr>
+<tr><td><em>For comparison — 2026-08-06, full suite</em></td><td><em>86</em></td><td><em>46</em></td><td><em>132</em></td></tr>
 </tbody></table></div>
 
-<p>The two failure lists were diffed by name, not just counted: <strong>no test that passed before these
-changes fails after them</strong>, and three that were already failing now pass.</p>
+<p>The suite has grown from 132 tests to 167. All 35 additions are the offline branch's V1 sale API tests
+(<code>tests/Feature/Api/V1/</code>), and <strong>all 35 pass</strong> when the folder is run on its own.
+The full-suite figure is stable once the database starts from a migrated state — three consecutive runs
+gave 54 every time — so the gap to 29 is caused inside a single run, not carried between them.</p>
+
+<div class="callout crit">
+  <h4>The 25 in-suite-only failures come from one line: a Mockery <code>overload:</code> mock</h4>
+  <p class="loc">tests/Unit/Purchase/JournalEntryActionTest.php:58</p>
+<pre><code>$mock = Mockery::mock(<span class="str">'overload:App\Actions\Journal\CreateAction'</span>);
+$mock-&gt;shouldReceive(<span class="str">'execute'</span>)-&gt;once()-&gt;andReturnUsing(<span class="kw">fn</span> (<span class="kw">array</span> $data) =&gt; [
+    <span class="str">'success'</span> =&gt; <span class="kw">true</span>, <span class="str">'message'</span> =&gt; <span class="str">'ok'</span>,
+]);</code></pre>
+  <p>Mockery's <code>overload:</code> prefix does not mock an instance — it <strong>defines the class in
+  the PHP runtime</strong>, and the definition survives for the remainder of the process. This is the only
+  <code>overload:</code> mock in the suite, and <code>app/Actions/Sale/JournalEntryAction.php</code>
+  imports precisely that class. So every test that runs afterwards and posts a sale gets a stub that
+  expects exactly one <code>execute()</code> call and returns a canned array. The V1 sale endpoint answers
+  <code>422</code> and the test never reaches what it was written to check.</p>
+  <p>Mockery's own documentation requires overload mocks to run under
+  <code>#[RunInSeparateProcess]</code> with <code>preserveGlobalState: false</code>. This test has
+  neither.</p>
+</div>
+
+<div class="step"><div class="h">Bisected, not inferred — each folder paired with the V1 suite, fresh schema each time</div>
+<div class="tw"><table>
+<thead><tr><th>Combination</th><th>Failures</th><th>Reading</th></tr></thead>
+<tbody>
+<tr><td><code>tests/Feature/Api/V1</code> alone</td><td>0 of 35</td><td>baseline — the branch's tests are green</td></tr>
+<tr><td><code>Unit/Purchase</code> + V1</td><td><span class="b crit">27</span></td><td>2 of its own + <strong>25</strong> — the whole deficit, one folder</td></tr>
+<tr><td><code>Unit/Product</code> + V1</td><td>5</td><td>its own only</td></tr>
+<tr><td><code>Unit/Tailoring</code> + V1</td><td>2</td><td>its own only</td></tr>
+<tr><td><code>Unit/User</code> + V1</td><td>2</td><td>its own only</td></tr>
+<tr><td><code>Unit/Inventory</code> + V1</td><td>1</td><td>its own only</td></tr>
+<tr><td><code>Unit/Livewire</code> + V1 · <code>Unit/Sale</code> + V1</td><td>0</td><td>clean</td></tr>
+</tbody></table></div>
+<p>54 − 29 = 25, and <code>Unit/Purchase</code> accounts for exactly 25. The affected files are
+<code>SaleIdempotencyTest</code>, <code>SaleDraftCompletionTest</code> and
+<code>SaleCashierAttributionTest</code>. The fix is process isolation on two test methods.</p>
+</div>
+
+<div class="callout crit">
+  <h4>Separately: three tests rebuild real tables, and only file ordering is containing it</h4>
+  <p class="loc">tests/Unit/Product/DropboxImageImportQueueTest.php:19 ·
+  tests/Unit/Product/ProductImageFolderMatcherTest.php:44, :136 ·
+  tests/Unit/Tailoring/BulkCuttingSlipPrintTest.php:66</p>
+<pre><code><span class="com">// beforeEach — no RefreshDatabase, no transaction, real tables</span>
+collect([<span class="str">'categories'</span>, <span class="str">'departments'</span>, <span class="str">'units'</span>, <span class="str">'tenants'</span>])
+    -&gt;each(<span class="kw">fn</span> (<span class="kw">string</span> $table) =&gt; Schema::dropIfExists($table));
+
+Schema::create(<span class="str">'tenants'</span>, …);   <span class="com">// ← never reached</span></code></pre>
+  <p>Each builds itself a private miniature schema. Against the full migrated database the drop raises
+  <code>SQLSTATE[HY000] 3730 Cannot drop table 'units' referenced by a foreign key constraint
+  'sale_items_unit_id_foreign'</code>, so the <code>beforeEach</code> throws <strong>after</strong> some
+  tables are gone and <strong>before</strong> any <code>Schema::create</code> runs. Measured immediately
+  after those two folders execute: <code>categories</code> and <code>product_images</code> sit at
+  <strong>0 columns</strong>.</p>
+  <p>What keeps this from taking down the whole Feature suite is an accident:
+  <code>tests/Unit/User</code> sorts after them, it uses <code>RefreshDatabase</code>, and it is the first
+  test in the process to do so — which fires the once-per-process <code>migrate:fresh</code> and rebuilds
+  everything before <code>tests/Feature/</code> starts. Verified directly: run those two folders and then
+  <code>Unit/User</code>, and <code>categories</code> and <code>product_images</code> are back to 8 and 11
+  columns. Rename that folder, or drop those tests, and the corruption reaches everything downstream.</p>
+  <p>So today the cost is 7 failures of their own — but the containment is not a design, and a
+  fresh-checkout database that has never been migrated will fail far more widely until
+  <code>php artisan migrate:fresh --env=testing</code> is run by hand.</p>
+</div>
+
+<h3>The 29 real failures, by root cause</h3>
+<div class="tw"><table>
+<thead><tr><th>Root cause</th><th>Count</th><th>Where, and the one-line diagnosis</th></tr></thead>
+<tbody>
+<tr><td><strong>Test drops and rebuilds real tables</strong></td><td>7</td>
+    <td><code>Unit/Product</code> 5, <code>Unit/Tailoring</code> 2 — the three files above. They fail for
+    themselves as well as poisoning the run; on a fully migrated schema they can never pass.</td></tr>
+<tr><td><strong>Insert into a generated column</strong></td><td>11</td>
+    <td><code>StockAnalysisReportTest.php:89</code> writes <code>'barcode' =&gt; …</code>, but
+    <code>inventories.barcode</code> is <code>STORED GENERATED</code> → <code>3105 The value specified for
+    generated column 'barcode' … is not allowed</code>. Whole file, one cause, one-line fix.</td></tr>
+<tr><td><strong>Assertions drifted from the code</strong></td><td>11</td>
+    <td><code>Feature/Auth</code> 5, <code>Unit/User</code> 2, <code>Unit/Purchase</code> 2,
+    <code>Unit/Inventory</code> 1, <code>AssetDepreciationPeriodTest</code> 1 — the last still a
+    <code>ReflectionException</code> on the <code>getTotalPeriods()</code> method the earlier pass named.</td></tr>
+</tbody></table></div>
 
 <div class="callout ok">
+  <h4>All 29 are pre-existing — checked against a pre-remediation worktree, not assumed</h4>
+  <p>A worktree at <code>3395cd48</code> (the commit before the two remediation commits) reproduces the
+  Unit half exactly: <code>Purchase</code> 2, <code>User</code> 2, <code>Inventory</code> 1,
+  <code>AssetDepreciation</code> 1, <code>Product</code> 5, <code>Tailoring</code> 2 — identical counts,
+  identical assertions. Nothing in this audit's changes broke a test that was passing.</p>
+  <p><strong>One hypothesis this killed:</strong> the two <code>Unit/Purchase</code> failures looked like
+  collateral from finding 3 — commit <code>c08643b5</code> changed that action's line 30 from
+  <code>Cache::get('accounts_slug_id_map', [])</code> to <code>Account::slugIdMap()</code> and updated no
+  test, while the test still seeds the old global key. Plausible, and wrong: the same two fail identically
+  at the baseline.</p>
+  <p><strong>What could not be established:</strong> a baseline for the Feature half (<code>Auth</code> 5,
+  <code>StockAnalysis</code> 11). Pest binds <code>pest()->extend(Tests\TestCase::class)->in('Feature')</code>
+  by path, and in a git worktree that binding silently does not apply — every Feature test then fails with
+  0 assertions regardless of the code. Confirmed with a control worktree at current <code>HEAD</code>,
+  where <code>ProfileTest</code> and <code>ServiceChargeReportTest</code> — green in the real checkout —
+  &ldquo;fail&rdquo; 5 of 5 and 13 of 13. Circumstantially both are pre-existing: the remediation commits
+  touch no auth, login or password code, and <code>StockAnalysis</code> dies on a hard SQL error unrelated
+  to anything they changed. Stated as circumstantial because that is what it is.</p>
+</div>
+
+<div class="callout">
+  <h4>Two corrections to the previous §08 — and one to the first draft of this one</h4>
+  <p><strong>The 2026-08-06 diagnosis was wrong.</strong> It attributed the failures to &ldquo;a
+  <code>RefreshDatabase</code> teardown that cannot drop tables under existing foreign keys&rdquo;. Right
+  error message, wrong subject — <code>RefreshDatabase</code>'s own <code>migrate:fresh</code> disables
+  foreign key checks and works perfectly; <code>php artisan migrate:fresh --env=testing</code> completes
+  clean every time. It is the three tests calling <code>Schema::dropIfExists()</code> by hand that do not.
+  That reading pointed at unchangeable framework behaviour instead of three fixable files, which is
+  presumably why nothing was done about it.</p>
+  <p><strong>The first 2026-08-09 draft of this section was also wrong</strong>, and is corrected above.
+  It reported 119–128 failures on a re-run and concluded the suite corrupts itself across runs. Those two
+  runs happened before any <code>migrate:fresh</code> — the test database was already missing ~21 tables
+  when the session began, left that way by something earlier. From a migrated start the count is stable at
+  54 across three consecutive runs. The draft also blamed the 25 V1 failures on the schema-dropping tests;
+  bisection puts them entirely on the <code>overload:</code> mock.</p>
+</div>
+
+<div class="step"><div class="h">The fix — three edits, in order of payoff</div>
+<ul>
+<li><strong>25 failures.</strong> Put <code>JournalEntryActionTest</code>'s two methods in their own
+process — <code>#[RunInSeparateProcess]</code> with <code>preserveGlobalState: false</code>, as Mockery
+requires for <code>overload:</code>. Alternatively inject <code>Journal\CreateAction</code> into
+<code>Purchase\JournalEntryAction</code> so the test can pass a normal mock and the overload disappears.</li>
+<li><strong>11 failures.</strong> <code>StockAnalysisReportTest:89</code> — stop writing
+<code>inventories.barcode</code>; it is a <code>STORED GENERATED</code> column.</li>
+<li><strong>7 failures, plus the latent risk.</strong> Give the three self-schema tests the throwaway
+connection they were written for — <code>phpunit.xml</code> still carries
+<code>&lt;!-- &lt;env name="DB_CONNECTION" value="sqlite"/&gt; --&gt;</code> and
+<code>DB_DATABASE=":memory:"</code>, commented out since the initial commit. Failing that, wrap the drops
+in <code>Schema::disableForeignKeyConstraints()</code> / <code>enableForeignKeyConstraints()</code>.</li>
+</ul>
+<p>Those three take the suite from 54 red to 11 — all of them honest assertion drift, and worth reading.</p>
+</div>
+
+<div class="callout crit">
+  <h4>Footgun found while doing this: <code>migrate:fresh</code> defaults to a live database</h4>
+  <p>Tests read <code>.env.testing</code> (<code>DB_DATABASE=project_manager</code>), which is correctly
+  separate from the tenant databases. But <code>php artisan migrate:fresh</code> without
+  <code>--env=testing</code> reads <code>.env</code>, which declares <code>DB_DATABASE</code>
+  <strong>seven times</strong> — the last wins, so a plain <code>migrate:fresh</code> would drop every table
+  in <code>astra_daraltafseel</code>. Every command in this section was run with <code>--env=testing</code>.
+  Worth a guard, and it is the same duplicate-key hazard already recorded for <code>APP_TIMEZONE</code>.</p>
+</div>
+
+<h3>Kept from 2026-08-06 — still true</h3>
+<div class="callout ok">
   <h4>A test-harness bug the tenant work exposed — found and fixed</h4>
-  <p>Those three recoveries are not incidental. A Laravel test case flushes its Application on teardown but
+  <p>A Laravel test case flushes its Application on teardown but
   leaves it memoized in <code>Facade::$resolvedInstance</code>. The next <em>plain</em> unit test that boots
   an Eloquent model whose traits touch a facade — <code>Auditable</code> reaching for
   <code>Config</code> — then died with <code>Target class [config] does not exist</code>, purely as a
@@ -725,20 +988,8 @@ changes fails after them</strong>, and three that were already failing now pass.
   application and clears it, so facade-guarded boot code sees &ldquo;no app&rdquo; and skips cleanly. The
   related hardening is in <code>TenantService</code> itself: each fallback is wrapped in
   <code>$app->bound(…)</code>, so resolving a tenant outside a booted framework returns <code>null</code>
-  instead of throwing.</p>
-</div>
-
-<div class="callout warn">
-  <h4>The 46 remaining failures are pre-existing — and worth their own pass</h4>
-  <p>Every one fails identically on unmodified <code>HEAD</code>. Two clusters: a
-  <code>RefreshDatabase</code> teardown that cannot drop tables under existing foreign keys
-  (<code>Cannot drop table 'units' referenced by … sale_items_unit_id_foreign</code>), and assertions that
-  have drifted from the code they test — <code>AssetDepreciationPeriodTest</code> reflects on a
-  <code>getTotalPeriods()</code> method that no longer exists.</p>
-  <p>Neither was introduced here and neither was fixed here. But a suite that is roughly a third red is a
-  suite nobody reads, and that is precisely the condition under which a regression in a change set this
-  size would have gone unnoticed. The baseline diff above is what stands in for it — a weaker guarantee
-  than a green suite, and worth saying plainly.</p>
+  instead of throwing. Re-checked 2026-08-09: both are still in place and
+  <code>AssetDepreciationPeriodTest</code> no longer fails that way.</p>
 </div>
 
 <!-- ═══════════════ NEXT ═══════════════ -->
@@ -746,20 +997,23 @@ changes fails after them</strong>, and three that were already failing now pass.
 <div class="tw"><table>
 <thead><tr><th>#</th><th>Work</th><th>Effort</th><th>Risk of the change</th></tr></thead>
 <tbody>
+<tr><td>0</td><td><strong>Isolate the <code>overload:</code> mock in <code>JournalEntryActionTest</code> (§08)</strong></td><td>Minutes</td><td><strong>Low</strong> — two methods; recovers 25 falsely-red tests and stops the suite libelling the offline branch</td></tr>
+<tr><td>0b</td><td>Stop the three tests rebuilding real tables (§08)</td><td>An hour</td><td><strong>Low</strong> — recovers 7, and removes a corruption that only file ordering is containing</td></tr>
 <tr><td>1</td><td>Seed the new permissions and assign them to roles (§05e)</td><td>Minutes + a role review</td><td><strong>Low</strong>, but do it in the same deploy as this branch or the print routes 403</td></tr>
-<tr><td>2</td><td>Guard the 15 unmarked Livewire write methods (§05a)</td><td>An hour</td><td><strong>Low</strong> — abilities already exist; verify each role holds the one you pick</td></tr>
+<tr><td>2</td><td>Decide an ability for the 6 remaining unmarked Livewire write methods (§05a)</td><td>Half an hour</td><td><strong>Low</strong> — the 4 privileged ones are done; these are settings tabs and line-item editors</td></tr>
 <tr><td>3</td><td>Decide the 15 <code>TODO(C7)</code> markers as a batch (§05a)</td><td>Half a day of decisions</td><td><strong>Low</strong> — mostly a naming call on sub-permissions</td></tr>
 <tr><td>4</td><td>Decide whether <code>PermissionSeeder</code> should loop all tenants (§05d)</td><td>An hour</td><td><strong>Medium</strong> — depends on the provisioning model; wrong loop grants abilities broadly</td></tr>
 <tr><td>5</td><td>Print-test the barcode sticker, then convert it (§04)</td><td>Half a day</td><td><strong>Medium</strong> — needs real label hardware to verify</td></tr>
 <tr><td>6</td><td>Put Chrome on the scheduler host, then convert the daily summary (§04)</td><td>Infra + an hour</td><td><strong>Medium</strong> — infrastructure change first</td></tr>
 <tr><td>7</td><td>Fix the 14 <code>Auth::id()</code> actions opportunistically (§05b)</td><td>Ongoing</td><td><strong>Low</strong> — thread the actor through the caller</td></tr>
-<tr><td>8</td><td>Fix the 46 pre-existing test failures (§08)</td><td>A day; two distinct root causes</td><td><strong>Low</strong> — but until it is done, the baseline diff is the only regression signal this repo has</td></tr>
+<tr><td>8</td><td>Fix the 11 generated-column failures in <code>StockAnalysisReportTest</code> (§08)</td><td>Minutes — one line</td><td><strong>Low</strong> — stop inserting <code>inventories.barcode</code>; takes the suite from 54 red to 11</td></tr>
+<tr><td>9</td><td>Fix the 11 drifted assertions — Auth, User, Purchase, Inventory, AssetDepreciation (§08)</td><td>Half a day</td><td><strong>Low</strong> — genuine drift between tests and code; the only failures worth reading once 0 and 8 land</td></tr>
 </tbody></table></div>
 
 <div class="foot">
 Re-audited 2026-08-06 against branch <code>main</code>. Unlike the previous pass, code was executed:
 PDFs were rendered through Browsershot and inspected, generated SQL was dumped with bindings, and
-routes were re-registered (569). Large directories were scanned by script across every file; the
+routes were re-registered (569 then, 570 now). Large directories were scanned by script across every file; the
 judgement on individual hits was spot-checked, not exhaustive — see the scope note in §01.
 <br><br>
 <strong>Claims re-verified 2026-08-06 (second pass).</strong> Every checkable assertion in §02 and §05 was
@@ -769,8 +1023,29 @@ call (the single grep hit is a docblock warning inside <code>Account.php</code>)
 the sale-return duplicate guard, <code>Grn/Table::delete()</code> still being unguarded, the
 <code>tenant_id => 1</code> seeder, and the 14 <code>Auth::id()</code> CRUD actions — which is exactly
 right once two comment-only matches are excluded. One figure was stale and has been corrected here and in
-the skill: <strong>32</strong> self-transacting actions, not 33. Test-suite figures in §08 come from a full
-Pest run diffed by test name against the same suite on unmodified <code>HEAD</code>.
+the skill: <strong>32</strong> self-transacting actions, not 33.
+<br><br>
+<strong>Test cases re-run 2026-08-09 (third pass, branch <code>offline</code>).</strong> Every §02, §03 and
+§05 claim was re-derived once more and all still hold: no <code>current_tenant_id</code> key; 0 FA5/6
+prefixes; the impersonation, delete and export guards present at the stated lines; 0
+<code>TODO(C7): unmapped</code> markers; the POS category cache keyed through <code>TenantCache::key()</code>;
+the <code>view own</code> and <code>task-management</code> abilities declared; the sale-return duplicate
+window in place; all 15 print routes gated; <code>PermissionSeeder</code> still hardcoding
+<code>tenant_id =&gt; 1</code>; DomPDF still confined to <code>BarcodeController</code> and
+<code>SendDailySaleSummaryCommand</code>; 32 self-transacting actions (21 closure, 11 manual); the same 14
+CRUD actions reading <code>Auth::id()</code>; 116 Livewire files transacting, 0 without a rollback; and the
+four privileged Livewire guards and six unguarded leftovers exactly as described. Two counts drifted by one
+with the branch's new code and are updated in place: <strong>30</strong> files on the slug accessors (was
+29) and <strong>570</strong> routes (was 569).
+<br><br>
+<strong>§08 was rewritten twice.</strong> Its 2026-08-06 diagnosis was wrong. The first 2026-08-09 rewrite
+was also partly wrong and is corrected in place, with the error left on the record rather than quietly
+overwritten: it reported a suite that corrupts itself between runs, on the strength of two runs that had
+started from an already-broken database, and it blamed the 25 in-suite-only failures on the wrong tests.
+The current text rests on a full suite run three times consecutively from a migrated start (54 failures
+every time), a folder-by-folder pass (29), a seven-way bisection pinning the 25 to one
+<code>overload:</code> mock, and a pre-remediation worktree confirming all 29 pre-date this audit — with
+the one comparison that worktree cannot make stated as unresolved rather than guessed.
 </div>
 
 </div>

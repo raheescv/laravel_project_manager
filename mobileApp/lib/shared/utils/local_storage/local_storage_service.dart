@@ -26,6 +26,17 @@ class LocalStorageService {
       _secure.write(key: LocalStorageKeys.token, value: token);
   Future<void> clearToken() => _secure.delete(key: LocalStorageKeys.token);
 
+  // ---- device account roster (secure) ----
+  // Who has signed in on this device before, so an offline till can still let them
+  // back in. Secure storage because it holds their PIN / password and API token —
+  // the same class of secret as the biometric credential below, kept the same way.
+  Future<String?> readDeviceAccounts() =>
+      _secure.read(key: LocalStorageKeys.deviceAccounts);
+  Future<void> writeDeviceAccounts(String json) =>
+      _secure.write(key: LocalStorageKeys.deviceAccounts, value: json);
+  Future<void> clearDeviceAccounts() =>
+      _secure.delete(key: LocalStorageKeys.deviceAccounts);
+
   // ---- biometric credential (secure) ----
   Future<String?> readBiometric() =>
       _secure.read(key: LocalStorageKeys.biometric);
@@ -130,6 +141,27 @@ class LocalStorageService {
           : null;
   Future<void> setPosLockAfterSale(bool v) =>
       _prefs.setBool(LocalStorageKeys.posLockAfterSale, v);
+
+  // How many product tiles New Sale fits across in grid view. Null until the
+  // till picks one, so the screen keeps its own default.
+  int? get posGridColumns => _prefs.getInt(LocalStorageKeys.posGridColumns);
+  Future<void> setPosGridColumns(int v) =>
+      _prefs.setInt(LocalStorageKeys.posGridColumns, v);
+
+  // ---- offline selling (device-local) ----
+  // Short tag identifying this till inside the provisional references it prints,
+  // minted once on the first offline sale and never changed after — reusing a
+  // tag on another device would let two queues print the same reference.
+  String? get offlineDeviceTag =>
+      _prefs.getString(LocalStorageKeys.offlineDeviceTag);
+  Future<void> setOfflineDeviceTag(String v) =>
+      _prefs.setString(LocalStorageKeys.offlineDeviceTag, v);
+
+  // Monotonic counter behind the provisional reference. Never reset: a repeated
+  // reference on two receipts is worse than a gap in the sequence.
+  int? get offlineSequence => _prefs.getInt(LocalStorageKeys.offlineSequence);
+  Future<void> setOfflineSequence(int v) =>
+      _prefs.setInt(LocalStorageKeys.offlineSequence, v);
 
   // ---- thermal print settings ----
   String? get printStyle => _prefs.getString(LocalStorageKeys.printStyle);
