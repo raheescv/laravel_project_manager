@@ -39,6 +39,9 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', 'index')->name('index')->can('user.view');
         Route::get('view/{id}', 'view')->name('view')->can('user.edit');
         Route::get('list', 'get')->name('list');
+        // No ->can(): the session is authenticated as the impersonated user here,
+        // who has no 'user.impersonate' permission of their own.
+        Route::get('impersonate/leave', 'leaveImpersonation')->name('impersonate-leave');
         Route::name('employee::')->prefix('employee')->group(function (): void {
             Route::get('', 'employee')->name('index')->can('employee.view');
             Route::get('view/{id}', 'view')->name('view')->can('employee.edit');

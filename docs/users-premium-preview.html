@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Users · Premium Redesign — 3 Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+  :root{
+    --bs-primary:#3b5bdb; --bs-primary-rgb:59,91,219;
+    --bs-success:#1f9d63; --bs-success-rgb:31,157,99;
+    --bs-info:#2a9fd6;    --bs-info-rgb:42,159,214;
+    --bs-warning:#d99a17; --bs-warning-rgb:217,154,23;
+    --bs-danger:#d64545;  --bs-danger-rgb:214,69,69;
+    --bs-emphasis-color:#0f1522; --bs-body-color:#333b49;
+    --bs-secondary-color:#697488; --bs-tertiary-color:#98a1b0;
+    --page:#eef1f6;
+  }
+  [data-bs-theme="dark"]{
+    --bs-emphasis-color:#eef1f6; --bs-body-color:#c4ccd8;
+    --bs-secondary-color:#8b95a5; --bs-tertiary-color:#5f6a7a;
+    --page:#1b2027;
+  }
+  body{ margin:0; background:var(--page); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+        padding:20px 20px 70px; transition:background .2s; color:var(--bs-body-color); }
+
+  /* demo chrome */
+  .demo-bar{ max-width:1280px; margin:0 auto 18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .demo-bar h6{ margin:0; font-size:12px; letter-spacing:1.6px; text-transform:uppercase; color:var(--bs-secondary-color); font-weight:800; flex:1; }
+  .demo-bar button{ border:0; padding:8px 14px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer;
+                    background:#fff; color:#333; box-shadow:0 2px 8px rgba(0,0,0,.12); }
+  [data-bs-theme="dark"] .demo-bar button{ background:#2b323b; color:#eee; }
+  .demo-bar .accents{ display:flex; gap:6px; }
+  .demo-bar .accents i{ width:22px; height:22px; border-radius:50%; cursor:pointer; display:inline-block; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.2); }
+  .wrap{ max-width:1280px; margin:0 auto; }
+  .sample-head{ max-width:1280px; margin:44px auto 12px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .sample-head .badge-n{ background:var(--bs-primary); color:#fff; font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; letter-spacing:.6px; }
+  .sample-head h2{ margin:0; font-size:19px; font-weight:800; color:var(--bs-emphasis-color); letter-spacing:-.2px; }
+  .sample-head p{ margin:0; font-size:12.5px; color:var(--bs-secondary-color); flex:1 1 260px; }
+
+  /* ================================================================
+     .usrx — shared premium token layer for the Users screen
+     ================================================================ */
+  .usrx{
+    --acc:var(--bs-primary); --acc-rgb:var(--bs-primary-rgb);
+    --acc-d:color-mix(in srgb, var(--bs-primary), #000 14%);
+    --acc-deep:color-mix(in srgb, var(--bs-primary), #000 44%);
+    --acc-tint:color-mix(in srgb, var(--bs-primary), transparent 90%);
+    --acc-tint-2:color-mix(in srgb, var(--bs-primary), transparent 82%);
+    --surface:#ffffff; --surface-2:#f5f7fa; --surface-3:#eef1f6;
+    --ink:var(--bs-emphasis-color); --ink-2:var(--bs-body-color);
+    --muted:var(--bs-secondary-color); --faint:var(--bs-tertiary-color);
+    --line:#e7ebf1; --line-soft:#eff2f6;
+    --ok:var(--bs-success); --ok-rgb:var(--bs-success-rgb);
+    --info:var(--bs-info); --info-rgb:var(--bs-info-rgb);
+    --warn:var(--bs-warning); --warn-rgb:var(--bs-warning-rgb);
+    --bad:var(--bs-danger); --bad-rgb:var(--bs-danger-rgb);
+    --shadow:0 1px 2px rgba(16,24,40,.05), 0 8px 24px -10px rgba(16,24,40,.12);
+    --shadow-lg:0 18px 42px -18px rgba(var(--acc-rgb),.40), 0 8px 18px -12px rgba(16,24,40,.20);
+    color:var(--ink); font-size:12.5px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .usrx *{ box-sizing:border-box; }
+  [data-bs-theme="dark"] .usrx{
+    --surface:#272d34; --surface-2:#2e353d; --surface-3:#333b44;
+    --line:#3a424c; --line-soft:#343c45;
+    --acc-tint:color-mix(in srgb, var(--bs-primary), transparent 85%);
+    --acc-tint-2:color-mix(in srgb, var(--bs-primary), transparent 75%);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -10px rgba(0,0,0,.5);
+    --shadow-lg:0 18px 44px -18px rgba(0,0,0,.6), 0 8px 18px -12px rgba(0,0,0,.5);
+  }
+  .usrx .u-card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+
+  /* ---- HERO (shared) ---- */
+  .usrx-hero{ position:relative; border-radius:16px; overflow:hidden; margin-bottom:12px; box-shadow:var(--shadow-lg);
+    background:radial-gradient(120% 165% at 100% 0, color-mix(in srgb, var(--acc) 30%, transparent), transparent 55%),
+               linear-gradient(125deg, var(--acc-deep), var(--acc-d)); }
+  .usrx-hero .glow{ position:absolute; inset-inline-end:-60px; top:-90px; width:300px; height:300px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.16), transparent 65%); pointer-events:none; }
+  .usrx-hero .mesh{ position:absolute; inset:0; opacity:.5; pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size:34px 34px; mask-image:radial-gradient(120% 100% at 0 0, #000, transparent 70%); }
+  .usrx-hero-inner{ position:relative; display:flex; align-items:center; gap:15px; padding:16px 18px; flex-wrap:wrap; }
+  .usrx-hero .doc-ic{ width:46px; height:46px; border-radius:13px; flex:0 0 auto; background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+  .usrx-hero .h-main{ flex:1; min-width:200px; color:#fff; }
+  .usrx-hero .h-eyebrow{ font-size:9.5px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
+  .usrx-hero .h-ref{ font-size:21px; font-weight:800; letter-spacing:.2px; line-height:1.15; margin-top:2px; }
+  .usrx-hero .h-meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:5px; font-size:11.5px; color:rgba(255,255,255,.86); }
+  .usrx-hero .h-meta i{ opacity:.82; margin-inline-end:5px; }
+  .usrx-hero .h-right{ display:flex; gap:8px; flex-wrap:wrap; }
+  .usrx-hero .btn-hero{ background:#fff; color:var(--acc-deep); border:0; padding:9px 15px; border-radius:10px; font-size:11.5px; font-weight:800;
+    cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:7px; box-shadow:0 4px 12px rgba(0,0,0,.18); transition:transform .12s; }
+  .usrx-hero .btn-hero:hover{ transform:translateY(-1px); }
+  .usrx-hero .btn-hero.ghost{ background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.28); box-shadow:none; }
+  .usrx-hstats{ position:relative; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px;
+    background:rgba(255,255,255,.14); border-top:1px solid rgba(255,255,255,.14); }
+  .usrx-hs{ background:linear-gradient(180deg, rgba(255,255,255,.05), transparent); padding:10px 16px; }
+  .usrx-hs .s-k{ font-size:9px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:rgba(255,255,255,.66); display:flex; align-items:center; gap:5px; }
+  .usrx-hs .s-v{ font-size:17px; font-weight:800; color:#fff; margin-top:3px; letter-spacing:.2px; }
+  .usrx-hs .s-v small{ font-size:10.5px; font-weight:700; color:rgba(255,255,255,.6); margin-inline-start:4px; }
+
+  /* ---- controls (shared) ---- */
+  .usrx .u-toolbar{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; padding:13px 15px; border-bottom:1px solid var(--line-soft); }
+  .usrx .u-search{ flex:1; min-width:190px; display:flex; align-items:center; gap:9px; background:var(--surface-2);
+    border:1px solid var(--line); border-radius:11px; padding:9px 13px; transition:border-color .15s, box-shadow .15s; }
+  .usrx .u-search:focus-within{ border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-tint); }
+  .usrx .u-search i{ color:var(--muted); }
+  .usrx .u-search input{ border:0; background:transparent; outline:none; width:100%; font-size:12.5px; color:var(--ink); font-family:inherit; }
+  .usrx .btn-x{ display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+    padding:9px 13px; border-radius:10px; font-size:11.5px; font-weight:750; cursor:pointer; font-family:inherit; white-space:nowrap; transition:.15s; }
+  .usrx .btn-x:hover{ border-color:var(--acc); color:var(--acc-d); }
+  .usrx .btn-x.solid{ background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 4px 12px -4px rgba(var(--acc-rgb),.6); }
+  .usrx .btn-x.solid:hover{ color:#fff; filter:brightness(1.06); }
+  .usrx .btn-x.ok{ color:var(--ok); } .usrx .btn-x.bad{ color:var(--bad); }
+  .usrx .u-select{ position:relative; }
+  .usrx .u-select select{ appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    padding:9px 32px 9px 13px; border-radius:10px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit; width:100%; }
+  .usrx .u-select select:focus{ outline:none; border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-tint); }
+  .usrx .u-select::after{ content:"\f107"; font-family:FontAwesome; position:absolute; inset-inline-end:11px; top:50%;
+    transform:translateY(-50%); color:var(--muted); pointer-events:none; font-size:12px; }
+  .usrx .u-filters{ display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:11px; padding:14px 15px;
+    border-bottom:1px solid var(--line-soft); background:color-mix(in srgb, var(--acc) 3%, var(--surface)); }
+  .usrx .f-item label{ font-size:9.5px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--muted);
+    display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+  .usrx .f-item label i{ color:var(--acc); }
+
+  /* active filter chips */
+  .usrx .chips{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; padding:10px 15px; border-bottom:1px solid var(--line-soft); }
+  .usrx .chips .lbl{ font-size:9.5px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--faint); }
+  .usrx .chip{ display:inline-flex; align-items:center; gap:6px; background:var(--acc-tint); color:var(--acc-d);
+    border:1px solid color-mix(in srgb, var(--acc), transparent 70%); border-radius:20px; padding:4px 6px 4px 10px; font-size:11px; font-weight:750; }
+  .usrx .chip b{ font-weight:800; }
+  .usrx .chip i{ cursor:pointer; opacity:.6; width:15px; height:15px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:10px; }
+  .usrx .chip i:hover{ opacity:1; background:rgba(var(--acc-rgb),.18); }
+  .usrx .chip.clear{ background:transparent; border-color:transparent; color:var(--muted); padding:4px 8px; cursor:pointer; text-decoration:underline; }
+
+  /* segmented control */
+  .usrx .seg{ display:inline-flex; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px; }
+  .usrx .seg button{ border:0; background:transparent; color:var(--muted); font-size:11px; font-weight:750; padding:6px 11px;
+    border-radius:8px; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; transition:.15s; }
+  .usrx .seg button.on{ background:var(--surface); color:var(--acc-d); box-shadow:0 1px 3px rgba(16,24,40,.14); }
+
+  /* avatars */
+  .usrx .av{ position:relative; flex:0 0 auto; }
+  .usrx .av img, .usrx .av .ini{ display:block; border-radius:50%; object-fit:cover; }
+  .usrx .av .ini{ display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; letter-spacing:.4px;
+    background:linear-gradient(135deg, var(--acc-d), var(--acc-deep)); }
+  .usrx .av.s-lg .ini, .usrx .av.s-lg img{ width:56px; height:56px; font-size:18px; }
+  .usrx .av.s-md .ini, .usrx .av.s-md img{ width:40px; height:40px; font-size:14px; }
+  .usrx .av.s-sm .ini, .usrx .av.s-sm img{ width:32px; height:32px; font-size:12px; }
+  .usrx .av .dot{ position:absolute; inset-inline-end:0; bottom:0; width:12px; height:12px; border-radius:50%;
+    border:2.5px solid var(--surface); background:var(--faint); }
+  .usrx .av.on .dot{ background:var(--ok); }
+  .usrx .av.off .dot{ background:var(--faint); }
+  .usrx .av.ring::before{ content:""; position:absolute; inset:-4px; border-radius:50%; border:2px solid color-mix(in srgb, var(--acc), transparent 65%); }
+
+  /* badges */
+  .usrx .bdg{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-size:10.5px; font-weight:750; white-space:nowrap; }
+  .usrx .bdg.role{ background:var(--acc-tint); color:var(--acc-d); border:1px solid color-mix(in srgb, var(--acc), transparent 76%); }
+  .usrx .bdg.role.admin{ background:rgba(var(--warn-rgb),.12); color:color-mix(in srgb,var(--warn),#000 18%); border-color:rgba(var(--warn-rgb),.3); }
+  .usrx .bdg.desig{ background:rgba(var(--info-rgb),.11); color:color-mix(in srgb,var(--info),#000 16%); border:1px solid rgba(var(--info-rgb),.26); }
+  .usrx .bdg.ok{ background:rgba(var(--ok-rgb),.12); color:color-mix(in srgb,var(--ok),#000 8%); border:1px solid rgba(var(--ok-rgb),.28); }
+  .usrx .bdg.off{ background:var(--surface-2); color:var(--muted); border:1px solid var(--line); }
+  [data-bs-theme="dark"] .usrx .bdg.desig{ color:color-mix(in srgb,var(--info),#fff 24%); }
+  [data-bs-theme="dark"] .usrx .bdg.role.admin{ color:color-mix(in srgb,var(--warn),#fff 26%); }
+  [data-bs-theme="dark"] .usrx .bdg.ok{ color:color-mix(in srgb,var(--ok),#fff 24%); }
+
+  /* footer bar */
+  .usrx .u-foot{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    padding:12px 15px; border-top:1px solid var(--line-soft); background:var(--surface-2); }
+  .usrx .u-foot .cnt{ font-size:11.5px; color:var(--muted); font-weight:650; }
+  .usrx .pager{ display:flex; gap:5px; }
+  .usrx .pager a{ min-width:30px; height:30px; padding:0 9px; border-radius:9px; border:1px solid var(--line); background:var(--surface);
+    color:var(--ink-2); display:inline-flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:750; text-decoration:none; }
+  .usrx .pager a.on{ background:var(--acc); border-color:var(--acc); color:#fff; }
+  .usrx .pager a.dis{ color:var(--faint); }
+
+  /* =========================================================
+     SAMPLE A — "Roster Cards"
+     ========================================================= */
+  .usrx .grid-a{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; padding:15px; }
+  .usrx .ucard{ position:relative; background:var(--surface); border:1px solid var(--line); border-radius:15px; padding:0;
+    overflow:hidden; transition:transform .16s, box-shadow .16s, border-color .16s; }
+  .usrx .ucard:hover{ transform:translateY(-3px); border-color:color-mix(in srgb, var(--acc), transparent 55%);
+    box-shadow:0 16px 34px -18px rgba(var(--acc-rgb),.5); }
+  .usrx .ucard .cap{ height:52px; background:
+      radial-gradient(90% 140% at 100% 0, color-mix(in srgb, var(--acc) 34%, transparent), transparent 60%),
+      linear-gradient(120deg, var(--acc-deep), var(--acc-d)); position:relative; }
+  .usrx .ucard .cap .st{ position:absolute; top:9px; inset-inline-end:10px; }
+  .usrx .ucard .cap .st .bdg{ background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.3); backdrop-filter:blur(3px); }
+  .usrx .ucard .body{ padding:0 14px 13px; margin-top:-26px; }
+  .usrx .ucard .av .ini, .usrx .ucard .av img{ border:3px solid var(--surface); box-shadow:0 4px 12px rgba(16,24,40,.16); }
+  .usrx .ucard .nm{ font-size:14.5px; font-weight:800; color:var(--ink); margin-top:9px; letter-spacing:-.2px; }
+  .usrx .ucard .nm a{ color:inherit; text-decoration:none; }
+  .usrx .ucard .nm a:hover{ color:var(--acc-d); }
+  .usrx .ucard .dg{ font-size:11px; font-weight:750; color:var(--muted); margin-top:2px; display:flex; align-items:center; gap:5px; }
+  .usrx .ucard .dg i{ color:var(--acc); font-size:11px; }
+  .usrx .ucard .roles{ display:flex; gap:5px; flex-wrap:wrap; margin-top:10px; }
+  .usrx .ucard .lines{ margin-top:11px; padding-top:10px; border-top:1px dashed var(--line); display:grid; gap:6px; }
+  .usrx .ucard .ln{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--ink-2); }
+  .usrx .ucard .ln i{ width:22px; height:22px; border-radius:7px; background:var(--surface-2); color:var(--muted);
+    display:inline-flex; align-items:center; justify-content:center; font-size:11px; flex:0 0 auto; }
+  .usrx .ucard .ln span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .usrx .ucard .acts{ display:flex; gap:6px; padding:10px 14px; border-top:1px solid var(--line-soft); background:var(--surface-2); }
+  .usrx .ucard .acts a{ flex:1; text-align:center; padding:7px 0; border-radius:9px; font-size:11px; font-weight:750;
+    text-decoration:none; color:var(--ink-2); background:var(--surface); border:1px solid var(--line); transition:.14s; }
+  .usrx .ucard .acts a:hover{ border-color:var(--acc); color:var(--acc-d); }
+  .usrx .ucard .acts a.key{ background:var(--acc-tint); border-color:transparent; color:var(--acc-d); }
+
+  /* =========================================================
+     SAMPLE B — "Command Table"
+     ========================================================= */
+  .usrx .tblwrap{ overflow-x:auto; }
+  .usrx table.u-tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .usrx table.u-tbl thead th{ background:var(--surface-2); color:var(--muted); font-size:9.5px; font-weight:800; letter-spacing:.7px;
+    text-transform:uppercase; text-align:start; padding:11px 12px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .usrx table.u-tbl thead th .sort{ color:var(--faint); margin-inline-start:4px; }
+  .usrx table.u-tbl tbody td{ padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:middle; color:var(--ink-2); }
+  .usrx table.u-tbl tbody tr{ transition:background .12s; }
+  .usrx table.u-tbl tbody tr:hover{ background:var(--acc-tint); }
+  .usrx .who{ display:flex; align-items:center; gap:10px; }
+  .usrx .who .nm{ font-weight:800; color:var(--ink); }
+  .usrx .who .nm a{ color:inherit; text-decoration:none; }
+  .usrx .who .nm a:hover{ color:var(--acc-d); text-decoration:underline; }
+  .usrx .who .sub{ font-size:10.5px; color:var(--muted); }
+  .usrx .rowacts{ display:flex; gap:4px; justify-content:flex-end; opacity:.35; transition:opacity .14s; }
+  .usrx tr:hover .rowacts{ opacity:1; }
+  .usrx .rowacts a{ width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:var(--surface);
+    color:var(--muted); display:inline-flex; align-items:center; justify-content:center; font-size:12px; text-decoration:none; }
+  .usrx .rowacts a:hover{ border-color:var(--acc); color:var(--acc-d); }
+  .usrx .rowacts a.bad:hover{ border-color:var(--bad); color:var(--bad); }
+  .usrx .cbx{ width:15px; height:15px; accent-color:var(--acc); cursor:pointer; }
+  .usrx .idp{ font-size:10.5px; font-weight:800; color:var(--faint); }
+
+  /* =========================================================
+     SAMPLE C — "Facet Rail"
+     ========================================================= */
+  .usrx .layout-c{ display:grid; grid-template-columns:238px 1fr; gap:12px; align-items:start; }
+  @media (max-width:900px){ .usrx .layout-c{ grid-template-columns:1fr; } }
+  .usrx .rail{ background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+  .usrx .rail .rh{ padding:11px 14px; border-bottom:1px solid var(--line-soft); display:flex; align-items:center; justify-content:space-between; }
+  .usrx .rail .rh .t{ font-size:9.5px; font-weight:800; letter-spacing:.9px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .usrx .rail .rh .t i{ color:var(--acc); }
+  .usrx .rail .rh .rst{ font-size:10.5px; color:var(--faint); cursor:pointer; font-weight:700; }
+  .usrx .rail .rh .rst:hover{ color:var(--acc-d); }
+  .usrx .facets{ padding:7px; }
+  .usrx .facet{ display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:10px; cursor:pointer;
+    font-size:12px; font-weight:700; color:var(--ink-2); transition:.13s; }
+  .usrx .facet:hover{ background:var(--surface-2); }
+  .usrx .facet.on{ background:var(--acc-tint); color:var(--acc-d); }
+  .usrx .facet .sw{ width:8px; height:8px; border-radius:3px; background:var(--faint); flex:0 0 auto; }
+  .usrx .facet.on .sw{ background:var(--acc); }
+  .usrx .facet .n{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .usrx .facet .c{ font-size:10.5px; font-weight:800; color:var(--muted); background:var(--surface-2);
+    border:1px solid var(--line); border-radius:20px; padding:1px 7px; }
+  .usrx .facet.on .c{ background:var(--surface); border-color:transparent; color:var(--acc-d); }
+  .usrx .rail .split{ height:1px; background:var(--line-soft); margin:3px 0; }
+
+  .usrx .rowlist{ display:grid; }
+  .usrx .urow{ display:flex; align-items:center; gap:13px; padding:12px 15px; border-bottom:1px solid var(--line-soft);
+    transition:background .12s; position:relative; }
+  .usrx .urow:last-child{ border-bottom:0; }
+  .usrx .urow:hover{ background:var(--acc-tint); }
+  .usrx .urow::before{ content:""; position:absolute; inset-inline-start:0; top:0; bottom:0; width:3px; background:transparent; transition:.14s; }
+  .usrx .urow:hover::before{ background:var(--acc); }
+  .usrx .urow .main{ flex:1 1 200px; min-width:0; }
+  .usrx .urow .main .nm{ font-size:13.5px; font-weight:800; color:var(--ink); letter-spacing:-.1px; }
+  .usrx .urow .main .nm a{ color:inherit; text-decoration:none; }
+  .usrx .urow .main .nm a:hover{ color:var(--acc-d); }
+  .usrx .urow .main .sub{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:3px; font-size:11px; color:var(--muted); }
+  .usrx .urow .main .sub i{ margin-inline-end:5px; opacity:.75; }
+  .usrx .urow .tags{ display:flex; gap:5px; flex-wrap:wrap; flex:0 1 auto; }
+  .usrx .urow .meta{ text-align:end; flex:0 0 auto; min-width:96px; }
+  .usrx .urow .meta .k{ font-size:9px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--faint); }
+  .usrx .urow .meta .v{ font-size:11.5px; font-weight:750; color:var(--ink-2); margin-top:2px; }
+  .usrx .urow .go{ width:30px; height:30px; border-radius:9px; border:1px solid var(--line); background:var(--surface);
+    color:var(--muted); display:inline-flex; align-items:center; justify-content:center; text-decoration:none; flex:0 0 auto; }
+  .usrx .urow:hover .go{ border-color:var(--acc); color:var(--acc-d); }
+  [dir="rtl"] .usrx .urow .go i{ transform:scaleX(-1); }
+
+  /* empty state */
+  .usrx .empty{ padding:52px 20px; text-align:center; }
+  .usrx .empty i{ font-size:34px; color:var(--faint); opacity:.5; }
+  .usrx .empty h5{ margin:12px 0 4px; font-size:14px; font-weight:800; color:var(--ink); }
+  .usrx .empty p{ margin:0; font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <h6>Users · Premium redesign — 3 directions</h6>
+  <div class="accents" title="Accent = settings theme colour">
+    <i style="background:#3b5bdb" data-acc="59,91,219"></i>
+    <i style="background:#1f9d63" data-acc="31,157,99"></i>
+    <i style="background:#7048e8" data-acc="112,72,232"></i>
+    <i style="background:#c2410c" data-acc="194,65,12"></i>
+    <i style="background:#0f766e" data-acc="15,118,110"></i>
+  </div>
+  <button onclick="toggleTheme()"><i class="fa fa-adjust"></i> Light / Dark</button>
+  <button onclick="toggleDir()"><i class="fa fa-exchange"></i> LTR / RTL</button>
+</div>
+
+<!-- ============================== SAMPLE A ============================== -->
+<div class="sample-head">
+  <span class="badge-n">A</span>
+  <h2>Roster Cards</h2>
+  <p>Evolution of today's card grid — hero + KPI rail, a proper filter bar, avatar-forward cards with role chips and quick actions.</p>
+</div>
+<div class="wrap usrx" id="sampleA">
+  <div class="usrx-hero">
+    <div class="mesh"></div><div class="glow"></div>
+    <div class="usrx-hero-inner">
+      <div class="doc-ic"><i class="fa fa-users"></i></div>
+      <div class="h-main">
+        <div class="h-eyebrow">Access Control</div>
+        <div class="h-ref">Users</div>
+        <div class="h-meta">
+          <span><i class="fa fa-shield"></i>System login accounts</span>
+          <span><i class="fa fa-clock-o"></i>Updated 12 min ago</span>
+        </div>
+      </div>
+      <div class="h-right">
+        <a href="#" class="btn-hero ghost"><i class="fa fa-download"></i> Export</a>
+        <a href="#" class="btn-hero"><i class="fa fa-plus"></i> Add User</a>
+      </div>
+    </div>
+    <div class="usrx-hstats">
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-users"></i> Total users</div><div class="s-v">48</div></div>
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-check-circle"></i> Active</div><div class="s-v">41 <small>85%</small></div></div>
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-lock"></i> Roles</div><div class="s-v">7</div></div>
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-id-badge"></i> Designations</div><div class="s-v">12</div></div>
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-user-plus"></i> Added this month</div><div class="s-v">5</div></div>
+    </div>
+  </div>
+
+  <div class="u-card">
+    <div class="u-toolbar">
+      <div class="u-search"><i class="fa fa-search"></i><input placeholder="Search by name, email, mobile or code…"></div>
+      <div class="seg">
+        <button class="on"><i class="fa fa-th-large"></i> Cards</button>
+        <button><i class="fa fa-list"></i> List</button>
+      </div>
+      <div class="u-select"><select><option>Sort: Date created</option><option>Date modified</option><option>Alphabetically</option><option>Alphabetically ↓</option></select></div>
+      <div class="u-select"><select><option>10</option><option>100</option><option>500</option></select></div>
+    </div>
+    <div class="u-filters">
+      <div class="f-item"><label><i class="fa fa-lock"></i> Role</label>
+        <div class="u-select"><select><option>All roles</option><option selected>Manager</option><option>Cashier</option><option>Accountant</option></select></div></div>
+      <div class="f-item"><label><i class="fa fa-id-badge"></i> Designation</label>
+        <div class="u-select"><select><option>All designations</option><option>Branch Manager</option><option>Sales Executive</option></select></div></div>
+      <div class="f-item"><label><i class="fa fa-toggle-on"></i> Status</label>
+        <div class="u-select"><select><option>All status</option><option>Active</option><option>Inactive</option></select></div></div>
+      <div class="f-item"><label><i class="fa fa-map-marker"></i> Branch</label>
+        <div class="u-select"><select><option>All branches</option><option>Head Office</option><option>Al Sadd</option></select></div></div>
+    </div>
+    <div class="chips">
+      <span class="lbl">Filtered by</span>
+      <span class="chip">Role <b>Manager</b><i class="fa fa-times"></i></span>
+      <span class="chip">Status <b>Active</b><i class="fa fa-times"></i></span>
+      <span class="chip clear">Clear all</span>
+    </div>
+
+    <div class="grid-a">
+      <!-- card 1 -->
+      <div class="ucard">
+        <div class="cap"><div class="st"><span class="bdg"><i class="fa fa-circle" style="font-size:6px"></i> Active</span></div></div>
+        <div class="body">
+          <div class="av s-lg on"><div class="ini">RC</div><span class="dot"></span></div>
+          <div class="nm"><a href="#">Rahees C V</a></div>
+          <div class="dg"><i class="fa fa-id-badge"></i> Branch Manager</div>
+          <div class="roles">
+            <span class="bdg role admin"><i class="fa fa-star"></i> Super Admin</span>
+            <span class="bdg role">Manager</span>
+          </div>
+          <div class="lines">
+            <div class="ln"><i class="fa fa-envelope"></i><span>rahees@astra.qa</span></div>
+            <div class="ln"><i class="fa fa-phone"></i><span>+974 5512 8890</span></div>
+            <div class="ln"><i class="fa fa-map-marker"></i><span>Head Office</span></div>
+          </div>
+        </div>
+        <div class="acts"><a href="#" class="key"><i class="fa fa-eye"></i> View</a><a href="#"><i class="fa fa-pencil"></i> Edit</a><a href="#"><i class="fa fa-sign-in"></i> Login as</a></div>
+      </div>
+      <!-- card 2 -->
+      <div class="ucard">
+        <div class="cap"><div class="st"><span class="bdg"><i class="fa fa-circle" style="font-size:6px"></i> Active</span></div></div>
+        <div class="body">
+          <div class="av s-lg on"><div class="ini">AR</div><span class="dot"></span></div>
+          <div class="nm"><a href="#">Ayesha Rahman</a></div>
+          <div class="dg"><i class="fa fa-id-badge"></i> Accountant</div>
+          <div class="roles"><span class="bdg role">Manager</span><span class="bdg role">Accounts</span></div>
+          <div class="lines">
+            <div class="ln"><i class="fa fa-envelope"></i><span>ayesha.r@astra.qa</span></div>
+            <div class="ln"><i class="fa fa-phone"></i><span>+974 3345 1120</span></div>
+            <div class="ln"><i class="fa fa-map-marker"></i><span>Al Sadd</span></div>
+          </div>
+        </div>
+        <div class="acts"><a href="#" class="key"><i class="fa fa-eye"></i> View</a><a href="#"><i class="fa fa-pencil"></i> Edit</a><a href="#"><i class="fa fa-sign-in"></i> Login as</a></div>
+      </div>
+      <!-- card 3 -->
+      <div class="ucard">
+        <div class="cap"><div class="st"><span class="bdg"><i class="fa fa-circle" style="font-size:6px"></i> Active</span></div></div>
+        <div class="body">
+          <div class="av s-lg on"><div class="ini">MK</div><span class="dot"></span></div>
+          <div class="nm"><a href="#">Mohammed Kutty</a></div>
+          <div class="dg"><i class="fa fa-id-badge"></i> Sales Executive</div>
+          <div class="roles"><span class="bdg role">Manager</span></div>
+          <div class="lines">
+            <div class="ln"><i class="fa fa-envelope"></i><span>m.kutty@astra.qa</span></div>
+            <div class="ln"><i class="fa fa-phone"></i><span>+974 7788 3410</span></div>
+            <div class="ln"><i class="fa fa-map-marker"></i><span>Al Wakrah</span></div>
+          </div>
+        </div>
+        <div class="acts"><a href="#" class="key"><i class="fa fa-eye"></i> View</a><a href="#"><i class="fa fa-pencil"></i> Edit</a><a href="#"><i class="fa fa-sign-in"></i> Login as</a></div>
+      </div>
+      <!-- card 4 (inactive) -->
+      <div class="ucard">
+        <div class="cap"><div class="st"><span class="bdg"><i class="fa fa-circle" style="font-size:6px;opacity:.55"></i> Inactive</span></div></div>
+        <div class="body">
+          <div class="av s-lg off"><div class="ini" style="filter:grayscale(.5)">SF</div><span class="dot"></span></div>
+          <div class="nm"><a href="#">Sana Fathima</a></div>
+          <div class="dg"><i class="fa fa-id-badge"></i> Cashier</div>
+          <div class="roles"><span class="bdg role">Cashier</span></div>
+          <div class="lines">
+            <div class="ln"><i class="fa fa-envelope"></i><span>sana.f@astra.qa</span></div>
+            <div class="ln"><i class="fa fa-phone"></i><span>+974 6621 7745</span></div>
+            <div class="ln"><i class="fa fa-map-marker"></i><span>Head Office</span></div>
+          </div>
+        </div>
+        <div class="acts"><a href="#" class="key"><i class="fa fa-eye"></i> View</a><a href="#"><i class="fa fa-pencil"></i> Edit</a><a href="#"><i class="fa fa-sign-in"></i> Login as</a></div>
+      </div>
+    </div>
+
+    <div class="u-foot">
+      <span class="cnt">Showing <b>1–4</b> of <b>48</b> users</span>
+      <div class="pager"><a class="dis" href="#"><i class="fa fa-angle-left"></i></a><a class="on" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#"><i class="fa fa-angle-right"></i></a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SAMPLE B ============================== -->
+<div class="sample-head">
+  <span class="badge-n">B</span>
+  <h2>Command Table</h2>
+  <p>Dense, scannable data table — same premium chrome, but bulk-select, sortable columns, inline row actions and every field visible at once.</p>
+</div>
+<div class="wrap usrx" id="sampleB">
+  <div class="usrx-hero">
+    <div class="mesh"></div><div class="glow"></div>
+    <div class="usrx-hero-inner">
+      <div class="doc-ic"><i class="fa fa-users"></i></div>
+      <div class="h-main">
+        <div class="h-eyebrow">Access Control</div>
+        <div class="h-ref">Users</div>
+        <div class="h-meta"><span><i class="fa fa-shield"></i>48 accounts · 7 roles</span></div>
+      </div>
+      <div class="h-right">
+        <a href="#" class="btn-hero ghost"><i class="fa fa-download"></i> Export</a>
+        <a href="#" class="btn-hero ghost"><i class="fa fa-trash"></i> Delete</a>
+        <a href="#" class="btn-hero"><i class="fa fa-plus"></i> Add User</a>
+      </div>
+    </div>
+    <div class="usrx-hstats">
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-check-circle"></i> Active</div><div class="s-v">41</div></div>
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-ban"></i> Inactive</div><div class="s-v">7</div></div>
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-star"></i> Admins</div><div class="s-v">3</div></div>
+      <div class="usrx-hs"><div class="s-k"><i class="fa fa-user-secret"></i> No role assigned</div><div class="s-v">2</div></div>
+    </div>
+  </div>
+
+  <div class="u-card">
+    <div class="u-toolbar">
+      <div class="u-search"><i class="fa fa-search"></i><input placeholder="Search users…"></div>
+      <div class="u-select"><select><option>10</option><option>100</option><option>500</option></select></div>
+      <button class="btn-x"><i class="fa fa-sliders"></i> Columns</button>
+      <button class="btn-x"><i class="fa fa-filter"></i> Filters <span class="bdg role" style="padding:1px 7px">2</span></button>
+    </div>
+    <div class="u-filters">
+      <div class="f-item"><label><i class="fa fa-lock"></i> Role</label>
+        <div class="u-select"><select><option>All roles</option><option selected>Cashier</option></select></div></div>
+      <div class="f-item"><label><i class="fa fa-id-badge"></i> Designation</label>
+        <div class="u-select"><select><option>All designations</option><option selected>Cashier</option></select></div></div>
+      <div class="f-item"><label><i class="fa fa-toggle-on"></i> Status</label>
+        <div class="u-select"><select><option>All status</option><option>Active</option></select></div></div>
+      <div class="f-item"><label><i class="fa fa-map-marker"></i> Branch</label>
+        <div class="u-select"><select><option>All branches</option></select></div></div>
+      <div class="f-item"><label><i class="fa fa-sort"></i> Sort by</label>
+        <div class="u-select"><select><option>Date created</option><option>Alphabetically</option></select></div></div>
+    </div>
+
+    <div class="tblwrap">
+      <table class="u-tbl">
+        <thead>
+          <tr>
+            <th style="width:34px"><input type="checkbox" class="cbx"></th>
+            <th>ID</th>
+            <th>User <i class="fa fa-sort sort"></i></th>
+            <th>Designation <i class="fa fa-sort sort"></i></th>
+            <th>Roles</th>
+            <th>Branch</th>
+            <th>Mobile</th>
+            <th>Status</th>
+            <th>Created <i class="fa fa-sort-desc sort"></i></th>
+            <th style="text-align:end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" class="cbx" checked></td>
+            <td><span class="idp">#1</span></td>
+            <td><div class="who"><div class="av s-sm on"><div class="ini">RC</div><span class="dot"></span></div>
+              <div><div class="nm"><a href="#">Rahees C V</a></div><div class="sub">rahees@astra.qa</div></div></div></td>
+            <td><span class="bdg desig">Branch Manager</span></td>
+            <td><span class="bdg role admin"><i class="fa fa-star"></i> Super Admin</span></td>
+            <td>Head Office</td>
+            <td style="white-space:nowrap">+974 5512 8890</td>
+            <td><span class="bdg ok"><i class="fa fa-circle" style="font-size:6px"></i> Active</span></td>
+            <td style="white-space:nowrap">12 Jan 2026</td>
+            <td><div class="rowacts"><a href="#" title="View"><i class="fa fa-eye"></i></a><a href="#" title="Edit"><i class="fa fa-pencil"></i></a><a href="#" title="Login as"><i class="fa fa-sign-in"></i></a><a href="#" class="bad" title="Delete"><i class="fa fa-trash"></i></a></div></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="cbx"></td>
+            <td><span class="idp">#4</span></td>
+            <td><div class="who"><div class="av s-sm on"><div class="ini">AR</div><span class="dot"></span></div>
+              <div><div class="nm"><a href="#">Ayesha Rahman</a></div><div class="sub">ayesha.r@astra.qa</div></div></div></td>
+            <td><span class="bdg desig">Accountant</span></td>
+            <td><span class="bdg role">Accounts</span> <span class="bdg role">Reports</span></td>
+            <td>Al Sadd</td>
+            <td style="white-space:nowrap">+974 3345 1120</td>
+            <td><span class="bdg ok"><i class="fa fa-circle" style="font-size:6px"></i> Active</span></td>
+            <td style="white-space:nowrap">03 Feb 2026</td>
+            <td><div class="rowacts"><a href="#"><i class="fa fa-eye"></i></a><a href="#"><i class="fa fa-pencil"></i></a><a href="#"><i class="fa fa-sign-in"></i></a><a href="#" class="bad"><i class="fa fa-trash"></i></a></div></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="cbx"></td>
+            <td><span class="idp">#9</span></td>
+            <td><div class="who"><div class="av s-sm on"><div class="ini">MK</div><span class="dot"></span></div>
+              <div><div class="nm"><a href="#">Mohammed Kutty</a></div><div class="sub">m.kutty@astra.qa</div></div></div></td>
+            <td><span class="bdg desig">Sales Executive</span></td>
+            <td><span class="bdg role">Cashier</span></td>
+            <td>Al Wakrah</td>
+            <td style="white-space:nowrap">+974 7788 3410</td>
+            <td><span class="bdg ok"><i class="fa fa-circle" style="font-size:6px"></i> Active</span></td>
+            <td style="white-space:nowrap">28 Mar 2026</td>
+            <td><div class="rowacts"><a href="#"><i class="fa fa-eye"></i></a><a href="#"><i class="fa fa-pencil"></i></a><a href="#"><i class="fa fa-sign-in"></i></a><a href="#" class="bad"><i class="fa fa-trash"></i></a></div></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="cbx"></td>
+            <td><span class="idp">#15</span></td>
+            <td><div class="who"><div class="av s-sm off"><div class="ini" style="filter:grayscale(.6)">SF</div><span class="dot"></span></div>
+              <div><div class="nm"><a href="#">Sana Fathima</a></div><div class="sub">sana.f@astra.qa</div></div></div></td>
+            <td><span class="bdg desig">Cashier</span></td>
+            <td><span class="bdg role">Cashier</span></td>
+            <td>Head Office</td>
+            <td style="white-space:nowrap">+974 6621 7745</td>
+            <td><span class="bdg off"><i class="fa fa-circle" style="font-size:6px"></i> Inactive</span></td>
+            <td style="white-space:nowrap">11 Jun 2026</td>
+            <td><div class="rowacts"><a href="#"><i class="fa fa-eye"></i></a><a href="#"><i class="fa fa-pencil"></i></a><a href="#"><i class="fa fa-sign-in"></i></a><a href="#" class="bad"><i class="fa fa-trash"></i></a></div></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" class="cbx"></td>
+            <td><span class="idp">#22</span></td>
+            <td><div class="who"><div class="av s-sm on"><div class="ini">JT</div><span class="dot"></span></div>
+              <div><div class="nm"><a href="#">Jithin Thomas</a></div><div class="sub">jithin.t@astra.qa</div></div></div></td>
+            <td><span class="bdg desig">Technician</span></td>
+            <td><span class="bdg role">Service</span></td>
+            <td>Al Sadd</td>
+            <td style="white-space:nowrap">+974 5590 2214</td>
+            <td><span class="bdg ok"><i class="fa fa-circle" style="font-size:6px"></i> Active</span></td>
+            <td style="white-space:nowrap">02 Aug 2026</td>
+            <td><div class="rowacts"><a href="#"><i class="fa fa-eye"></i></a><a href="#"><i class="fa fa-pencil"></i></a><a href="#"><i class="fa fa-sign-in"></i></a><a href="#" class="bad"><i class="fa fa-trash"></i></a></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="u-foot">
+      <span class="cnt">Showing <b>1–5</b> of <b>48</b> users · <b>1</b> selected</span>
+      <div class="pager"><a class="dis" href="#"><i class="fa fa-angle-left"></i></a><a class="on" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#"><i class="fa fa-angle-right"></i></a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SAMPLE C ============================== -->
+<div class="sample-head">
+  <span class="badge-n">C</span>
+  <h2>Facet Rail</h2>
+  <p>Directory feel — roles and designations become a clickable facet rail with live counts on the left, roomy roster rows on the right. One tap to filter, no dropdown hunting.</p>
+</div>
+<div class="wrap usrx" id="sampleC">
+  <div class="usrx-hero">
+    <div class="mesh"></div><div class="glow"></div>
+    <div class="usrx-hero-inner">
+      <div class="doc-ic"><i class="fa fa-address-book-o"></i></div>
+      <div class="h-main">
+        <div class="h-eyebrow">Access Control</div>
+        <div class="h-ref">Users Directory</div>
+        <div class="h-meta"><span><i class="fa fa-filter"></i>Manager · Active</span><span><i class="fa fa-users"></i>6 matching</span></div>
+      </div>
+      <div class="h-right">
+        <a href="#" class="btn-hero ghost"><i class="fa fa-download"></i> Export</a>
+        <a href="#" class="btn-hero"><i class="fa fa-plus"></i> Add User</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout-c">
+    <!-- FACET RAIL -->
+    <div>
+      <div class="rail" style="margin-bottom:12px">
+        <div class="rh"><span class="t"><i class="fa fa-lock"></i> Roles</span><span class="rst">Reset</span></div>
+        <div class="facets">
+          <div class="facet"><span class="sw"></span><span class="n">All roles</span><span class="c">48</span></div>
+          <div class="facet on"><span class="sw"></span><span class="n">Manager</span><span class="c">12</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Cashier</span><span class="c">18</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Accounts</span><span class="c">6</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Service</span><span class="c">9</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Super Admin</span><span class="c">3</span></div>
+        </div>
+      </div>
+      <div class="rail" style="margin-bottom:12px">
+        <div class="rh"><span class="t"><i class="fa fa-id-badge"></i> Designations</span><span class="rst">Reset</span></div>
+        <div class="facets">
+          <div class="facet"><span class="sw"></span><span class="n">All designations</span><span class="c">48</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Branch Manager</span><span class="c">5</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Accountant</span><span class="c">4</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Sales Executive</span><span class="c">14</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Cashier</span><span class="c">11</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Technician</span><span class="c">7</span></div>
+        </div>
+      </div>
+      <div class="rail">
+        <div class="rh"><span class="t"><i class="fa fa-toggle-on"></i> Status</span></div>
+        <div class="facets">
+          <div class="facet on"><span class="sw"></span><span class="n">Active</span><span class="c">41</span></div>
+          <div class="facet"><span class="sw"></span><span class="n">Inactive</span><span class="c">7</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROSTER -->
+    <div class="u-card">
+      <div class="u-toolbar">
+        <div class="u-search"><i class="fa fa-search"></i><input placeholder="Search this directory…"></div>
+        <div class="u-select"><select><option>Sort: Alphabetically</option><option>Date created</option><option>Date modified</option></select></div>
+        <div class="seg"><button class="on"><i class="fa fa-list"></i></button><button><i class="fa fa-th-large"></i></button></div>
+      </div>
+      <div class="chips">
+        <span class="lbl">Active filters</span>
+        <span class="chip">Role <b>Manager</b><i class="fa fa-times"></i></span>
+        <span class="chip">Status <b>Active</b><i class="fa fa-times"></i></span>
+        <span class="chip clear">Clear all</span>
+      </div>
+      <div class="rowlist">
+        <div class="urow">
+          <div class="av s-md on ring"><div class="ini">RC</div><span class="dot"></span></div>
+          <div class="main">
+            <div class="nm"><a href="#">Rahees C V</a></div>
+            <div class="sub"><span><i class="fa fa-envelope"></i>rahees@astra.qa</span><span><i class="fa fa-phone"></i>+974 5512 8890</span></div>
+          </div>
+          <div class="tags"><span class="bdg desig">Branch Manager</span><span class="bdg role admin"><i class="fa fa-star"></i> Super Admin</span></div>
+          <div class="meta"><div class="k">Branch</div><div class="v">Head Office</div></div>
+          <a href="#" class="go"><i class="fa fa-angle-right"></i></a>
+        </div>
+        <div class="urow">
+          <div class="av s-md on"><div class="ini">AR</div><span class="dot"></span></div>
+          <div class="main">
+            <div class="nm"><a href="#">Ayesha Rahman</a></div>
+            <div class="sub"><span><i class="fa fa-envelope"></i>ayesha.r@astra.qa</span><span><i class="fa fa-phone"></i>+974 3345 1120</span></div>
+          </div>
+          <div class="tags"><span class="bdg desig">Accountant</span><span class="bdg role">Manager</span></div>
+          <div class="meta"><div class="k">Branch</div><div class="v">Al Sadd</div></div>
+          <a href="#" class="go"><i class="fa fa-angle-right"></i></a>
+        </div>
+        <div class="urow">
+          <div class="av s-md on"><div class="ini">MK</div><span class="dot"></span></div>
+          <div class="main">
+            <div class="nm"><a href="#">Mohammed Kutty</a></div>
+            <div class="sub"><span><i class="fa fa-envelope"></i>m.kutty@astra.qa</span><span><i class="fa fa-phone"></i>+974 7788 3410</span></div>
+          </div>
+          <div class="tags"><span class="bdg desig">Sales Executive</span><span class="bdg role">Manager</span></div>
+          <div class="meta"><div class="k">Branch</div><div class="v">Al Wakrah</div></div>
+          <a href="#" class="go"><i class="fa fa-angle-right"></i></a>
+        </div>
+        <div class="urow">
+          <div class="av s-md on"><div class="ini">JT</div><span class="dot"></span></div>
+          <div class="main">
+            <div class="nm"><a href="#">Jithin Thomas</a></div>
+            <div class="sub"><span><i class="fa fa-envelope"></i>jithin.t@astra.qa</span><span><i class="fa fa-phone"></i>+974 5590 2214</span></div>
+          </div>
+          <div class="tags"><span class="bdg desig">Technician</span><span class="bdg role">Manager</span></div>
+          <div class="meta"><div class="k">Branch</div><div class="v">Al Sadd</div></div>
+          <a href="#" class="go"><i class="fa fa-angle-right"></i></a>
+        </div>
+        <div class="urow">
+          <div class="av s-md on"><div class="ini">NP</div><span class="dot"></span></div>
+          <div class="main">
+            <div class="nm"><a href="#">Nithin Prakash</a></div>
+            <div class="sub"><span><i class="fa fa-envelope"></i>nithin.p@astra.qa</span><span><i class="fa fa-phone"></i>+974 3311 8842</span></div>
+          </div>
+          <div class="tags"><span class="bdg desig">Branch Manager</span><span class="bdg role">Manager</span></div>
+          <div class="meta"><div class="k">Branch</div><div class="v">Head Office</div></div>
+          <a href="#" class="go"><i class="fa fa-angle-right"></i></a>
+        </div>
+      </div>
+      <div class="u-foot">
+        <span class="cnt">Showing <b>1–5</b> of <b>12</b> managers</span>
+        <div class="pager"><a class="dis" href="#"><i class="fa fa-angle-left"></i></a><a class="on" href="#">1</a><a href="#">2</a><a href="#"><i class="fa fa-angle-right"></i></a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleTheme(){
+    const h = document.documentElement;
+    h.setAttribute('data-bs-theme', h.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
+  }
+  function toggleDir(){
+    const h = document.documentElement;
+    h.setAttribute('dir', h.getAttribute('dir') === 'rtl' ? 'ltr' : 'rtl');
+  }
+  document.querySelectorAll('.accents i').forEach(function(sw){
+    sw.addEventListener('click', function(){
+      const rgb = sw.getAttribute('data-acc');
+      const hex = sw.style.background;
+      document.documentElement.style.setProperty('--bs-primary', hex);
+      document.documentElement.style.setProperty('--bs-primary-rgb', rgb);
+    });
+  });
+  // facet demo interactivity
+  document.querySelectorAll('#sampleC .facets').forEach(function(group){
+    group.addEventListener('click', function(e){
+      const f = e.target.closest('.facet'); if(!f) return;
+      group.querySelectorAll('.facet').forEach(x => x.classList.remove('on'));
+      f.classList.add('on');
+    });
+  });
+  document.querySelectorAll('.seg').forEach(function(seg){
+    seg.addEventListener('click', function(e){
+      const b = e.target.closest('button'); if(!b) return;
+      seg.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+    });
+  });
+</script>
+</body>
+</html>

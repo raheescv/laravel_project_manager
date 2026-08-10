@@ -29,7 +29,9 @@
                                 @endif
                                 @if ($user->id != auth()->id())
                                     @can('user.impersonate')
-                                    <button class="btn btn-warning btn-sm text-nowrap" wire:click="impersonate" wire:loading.attr="disabled">
+                                    <button class="btn btn-warning btn-sm text-nowrap" wire:click="impersonate" wire:loading.attr="disabled"
+                                        title="Temporarily sign in as {{ $user->name }} for {{ \App\Services\ImpersonationService::DURATION_MINUTES }} minutes"
+                                        wire:confirm="Sign in as {{ $user->name }}?&#10;&#10;This is a temporary login lasting {{ \App\Services\ImpersonationService::DURATION_MINUTES }} minutes. Everything you do will be recorded against their account.">
                                         <i class="fa fa-user-secret me-1"></i>
                                         <span wire:loading.remove>Impersonate</span>
                                         <span wire:loading>Logging in...</span>

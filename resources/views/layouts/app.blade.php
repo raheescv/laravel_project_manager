@@ -131,6 +131,36 @@
                 line-height: 1.35;
             }
         }
+
+        .impersonation-banner {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            background: repeating-linear-gradient(135deg, #b45309 0 14px, #a34e08 14px 28px);
+            color: #fff;
+            font-size: 0.875rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .impersonation-banner .btn-light {
+            --bs-btn-color: #7c3d06;
+        }
+
+        .impersonation-banner__timer {
+            background: rgba(0, 0, 0, 0.28);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .impersonation-banner__timer.is-urgent {
+            background: #dc3545;
+            animation: impersonation-pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes impersonation-pulse {
+            50% {
+                opacity: 0.55;
+            }
+        }
     </style>
     {{-- <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script> --}}
     @stack('styles')
@@ -139,6 +169,7 @@
 <body class="out-quart">
     <div id="root" class="root mn--max tm--expanded-hd">
         <section id="content" class="content">
+            @include('layouts.impersonation-banner')
             {{ $slot }}
             @include('layouts.footer')
         </section>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EndExpiredImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentifyTenant;
 use App\Http\Middleware\TrackVisitor;
@@ -62,8 +63,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(prepend: [IdentifyTenant::class]);
 
         // Add Inertia middleware to the web group
+        // EndExpiredImpersonation must run after the session/auth middleware,
+        // hence append rather than prepend.
         $middleware->web(append: [
             HandleInertiaRequests::class,
+            EndExpiredImpersonation::class,
         ]);
 
         // Exclude routes from CSRF verification

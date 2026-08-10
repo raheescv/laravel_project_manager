@@ -203,9 +203,18 @@ class User extends Authenticatable implements AuditableContracts
         return $query->where('is_active', 1);
     }
 
+    /**
+     * Shared filter builder for both roster screens.
+     *
+     * The account type is driven by the 'type' filter — 'employee' when it is
+     * omitted, so existing employee callers keep their behaviour — which lets
+     * the Users list (type 'user') reuse the same role / designation / branch
+     * filtering instead of duplicating it.
+     */
     public static function getFilteredQuery(array $filters = [])
     {
-        return static::employee()
+        return static::query()
+            ->where('users.type', $filters['type'] ?? 'employee')
             ->when($filters['search'] ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $value = trim($value);
@@ -223,11 +232,11 @@ class User extends Authenticatable implements AuditableContracts
                     $q->where('id', $filters['role_id']);
                 });
             })
-            ->when(isset($filters['is_active']) && $filters['is_active'] !== '', function ($query, $value): void {
-                $query->where('is_active', $value);
-            })
-            ->when($filters['type'] ?? '', function ($query, $value): void {
-                $query->where('type', $value);
+            // The condition passed to when() is a boolean, so the closure's second
+            // argument would be `true` rather than the requested flag — read the
+            // value off $filters instead, or "Inactive" silently lists active users.
+            ->when(isset($filters['is_active']) && $filters['is_active'] !== '', function ($query) use ($filters): void {
+                $query->where('users.is_active', (int) $filters['is_active']);
             })
             ->when($filters['designation_id'] ?? null, function ($query, $value): void {
                 $query->where('designation_id', $value);

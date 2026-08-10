@@ -5,10 +5,10 @@ namespace App\Livewire\User;
 use App\Actions\User\BranchAction;
 use App\Models\Branch;
 use App\Models\User;
+use App\Services\ImpersonationService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 
@@ -84,7 +84,7 @@ class View extends Component
         }
     }
 
-    public function impersonate()
+    public function impersonate(ImpersonationService $impersonation)
     {
         // Becoming another user is a full account takeover: it needs its own
         // dedicated permission, not a ride-along on 'user.edit'.
@@ -101,26 +101,13 @@ class View extends Component
                 throw new Exception('Cannot impersonate inactive user', 1);
             }
 
-            // Store original user ID in session for later restoration
-            session(['impersonator_id' => Auth::id()]);
+            // Nested impersonation would overwrite the stored impersonator id and
+            // strand the original admin in the second account.
+            if ($impersonation->isImpersonating()) {
+                throw new Exception('You are already impersonating. Return to your own account first.', 1);
+            }
 
-            // Audit trail: record who became whom — the regenerated session
-            // otherwise makes the impersonation indistinguishable from a login.
-            Log::info('User impersonation started', [
-                'impersonator_id' => Auth::id(),
-                'target_user_id' => $targetUser->id,
-            ]);
-
-            // Log in as the target user
-            Auth::login($targetUser);
-
-            // Set branch session data like in AuthenticatedSessionController
-            session(['branch_id' => $targetUser->default_branch_id]);
-            session(['branch_code' => $targetUser->branch?->code]);
-            session(['branch_name' => $targetUser->branch?->name]);
-
-            // Regenerate session for security
-            request()->session()->regenerate();
+            $impersonation->start($targetUser);
 
             return $this->redirect(route('dashboard'));
         } catch (Exception $e) {
