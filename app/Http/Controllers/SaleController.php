@@ -307,6 +307,9 @@ class SaleController extends Controller
             // Premium colour preset for the POS screen and its modals. 'theme'
             // follows the app theme colour; the rest are fixed palettes.
             'colorPreset' => Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme',
+            // Product cards per catalogue row (`pos_grid_columns`); 'auto' fits
+            // as many as the screen allows.
+            'gridColumns' => Configuration::where('key', 'pos_grid_columns')->value('value') ?: 'auto',
         ];
 
         return inertia('Sale/POS', $data);

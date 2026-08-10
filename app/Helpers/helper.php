@@ -790,6 +790,29 @@ if (! function_exists('posColorPresets')) {
         ];
     }
 }
+if (! function_exists('posGridColumns')) {
+    /**
+     * How many product cards a row of the POS catalogue holds.
+     *
+     * The key is written to Configuration `pos_grid_columns` and reaches the
+     * POS grid as the --pg-cols custom property. 'auto' keeps the original
+     * behaviour: as many cards as fit at a comfortable minimum width. Phones
+     * stay at two per row whatever is chosen here.
+     */
+    function posGridColumns()
+    {
+        return [
+            'auto' => 'Auto (fit the screen)',
+            '2' => '2 per row',
+            '3' => '3 per row',
+            '4' => '4 per row',
+            '5' => '5 per row',
+            '6' => '6 per row',
+            '7' => '7 per row',
+            '8' => '8 per row',
+        ];
+    }
+}
 if (! function_exists('packageFrequency')) {
     function packageFrequency()
     {

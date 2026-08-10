@@ -25,6 +25,10 @@
                 /* ── Accent: single source → settings theme primary ───────── */
                 --acc: var(--bs-primary);
                 --acc-rgb: var(--bs-primary-rgb);
+                /* --acc-d is the INK used on accent-tinted surfaces (facets, chips,
+                   role badges). It darkens the theme colour for the light ramp and
+                   is lightened again in the dark block below — darkening a theme
+                   whose primary is already deep leaves the text unreadable. */
                 --acc-d: color-mix(in srgb, var(--bs-primary), #000 14%);
                 --acc-deep: color-mix(in srgb, var(--bs-primary), #000 44%);
                 --acc-tint: color-mix(in srgb, var(--bs-primary), transparent 90%);
@@ -70,8 +74,10 @@
                 --surface-3: #333b44;
                 --line: #3a424c;
                 --line-soft: #343c45;
-                --acc-tint: color-mix(in srgb, var(--bs-primary), transparent 85%);
-                --acc-tint-2: color-mix(in srgb, var(--bs-primary), transparent 75%);
+                /* Lift the accent ink off the dark surfaces instead of darkening it */
+                --acc-d: color-mix(in srgb, var(--bs-primary), #fff 46%);
+                --acc-tint: color-mix(in srgb, var(--bs-primary), transparent 78%);
+                --acc-tint-2: color-mix(in srgb, var(--bs-primary), transparent 66%);
                 --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -10px rgba(0, 0, 0, .5);
                 --shadow-lg: 0 18px 44px -18px rgba(0, 0, 0, .6), 0 8px 18px -12px rgba(0, 0, 0, .5);
             }
@@ -91,9 +97,11 @@
                 overflow: hidden;
                 margin-bottom: 12px;
                 box-shadow: var(--shadow-lg);
+                /* Gradients use the raw --acc, never --acc-d: that token flips light
+                   in dark mode and would wash the banner out. */
                 background:
                     radial-gradient(120% 165% at 100% 0, color-mix(in srgb, var(--acc) 30%, transparent), transparent 55%),
-                    linear-gradient(125deg, var(--acc-deep), var(--acc-d));
+                    linear-gradient(125deg, var(--acc-deep), var(--acc));
             }
             .usrx-hero .glow {
                 position: absolute; inset-inline-end: -60px; top: -90px;
@@ -279,7 +287,7 @@
             .usrx .av .ini {
                 display: flex; align-items: center; justify-content: center;
                 font-weight: 800; color: #fff; letter-spacing: .4px;
-                background: linear-gradient(135deg, var(--acc-d), var(--acc-deep));
+                background: linear-gradient(135deg, var(--acc), var(--acc-deep));
             }
             .usrx .av.s-lg img, .usrx .av.s-lg .ini { width: 56px; height: 56px; font-size: 18px; }
             .usrx .av.s-md img, .usrx .av.s-md .ini { width: 40px; height: 40px; font-size: 14px; }
@@ -383,7 +391,7 @@
                 height: 52px; position: relative;
                 background:
                     radial-gradient(90% 140% at 100% 0, color-mix(in srgb, var(--acc) 34%, transparent), transparent 60%),
-                    linear-gradient(120deg, var(--acc-deep), var(--acc-d));
+                    linear-gradient(120deg, var(--acc-deep), var(--acc));
             }
             .usrx .ucard .cap .st { position: absolute; top: 9px; inset-inline-end: 10px; }
             .usrx .ucard .cap .st .bdg {
@@ -434,6 +442,9 @@
             }
             .usrx .u-foot .cnt { font-size: 11.5px; color: var(--muted); font-weight: 650; }
             .usrx .u-foot nav { margin: 0; }
+            /* Livewire's bootstrap paginator prints its own "Showing x to y of z"
+               summary; the footer already states the count, so hide the duplicate. */
+            .usrx .u-foot nav p { display: none; }
             .usrx .u-foot .pagination { margin: 0; gap: 5px; flex-wrap: wrap; }
             .usrx .u-foot .page-link {
                 border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);

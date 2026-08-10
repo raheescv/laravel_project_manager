@@ -97,7 +97,7 @@
 
                     <div class="rail">
                         <div class="rh">
-                            <span class="t"><i class="fa fa-id-badge"></i> Designations</span>
+                            <span class="t"><i class="fa fa-briefcase"></i> Designations</span>
                             @if ($designation_id !== '')
                                 <button type="button" class="rst" wire:click="setDesignation('')">Reset</button>
                             @endif
@@ -260,7 +260,7 @@
                                             <a href="{{ route('users::view', $user->id) }}">{{ $user->name }}</a>
                                         </div>
                                         <div class="dg">
-                                            <i class="fa fa-id-badge"></i>
+                                            <i class="fa fa-briefcase"></i>
                                             {{ $user->designation?->name ?: 'No designation' }}
                                         </div>
                                         <div class="roles">

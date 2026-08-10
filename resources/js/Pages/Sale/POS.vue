@@ -134,6 +134,7 @@
                                         </div>
                                     </div>
                                     <products-grid v-else :products="products" :lowStockThreshold="10"
+                                        :columns="gridColumns"
                                         @product-selected="addProductToCart"></products-grid>
                                 </div>
                             </div>
@@ -383,6 +384,13 @@ export default {
         colorPreset: {
             type: String,
             default: 'theme'
+        },
+        // Product cards per catalogue row from Settings → Sale Settings
+        // (`pos_grid_columns`): 'auto' fits as many as the screen allows,
+        // otherwise a fixed count. Phones stay at 2 either way.
+        gridColumns: {
+            type: String,
+            default: 'auto'
         }
     },
 

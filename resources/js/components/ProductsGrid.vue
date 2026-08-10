@@ -1,5 +1,5 @@
 <template>
-    <div class="products-grid-container">
+    <div class="products-grid-container" :style="columnStyle">
         <div class="products-grid">
             <product-card v-for="product in validProducts" :key="product.id" :product="product"
                 :lowStockThreshold="lowStockThreshold" @product-selected="handleCardClick" />
@@ -32,9 +32,27 @@ export default {
         lowStockThreshold: {
             type: Number,
             default: 10
+        },
+        // Cards per row: 'auto' fits as many as the width allows, a number
+        // pins the count. Set in Settings → Sale Settings (pos_grid_columns).
+        columns: {
+            type: [String, Number],
+            default: 'auto'
         }
     },
     computed: {
+        // The count rides in on the container as custom properties so the
+        // responsive rules below — which declare them on .products-grid
+        // itself — still win on phones.
+        columnStyle() {
+            const count = parseInt(this.columns, 10);
+
+            if (!count || count < 1) {
+                return {};
+            }
+
+            return { '--pg-cols': count, '--pg-min': '0px' };
+        },
         validProducts() {
             // Filter out any products without valid IDs at the component level as an extra safeguard
             const filtered = this.products.filter(product => {
@@ -90,9 +108,14 @@ export default {
     overflow-y: visible;
 }
 
+/*
+ * Column count: --pg-cols/--pg-min are inherited from the container when the
+ * shop pinned a count in Sale Settings; otherwise the auto-fill fallback runs
+ * and --pg-min-auto (set per breakpoint below) decides the card width.
+ */
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    grid-template-columns: repeat(var(--pg-cols, auto-fill), minmax(var(--pg-min, var(--pg-min-auto, 132px)), 1fr));
     gap: 8px;
     width: 100%;
     max-width: 100%;
@@ -114,39 +137,41 @@ export default {
 /* Responsive grid layouts for different screen sizes */
 @media (min-width: 1536px) {
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+        --pg-min-auto: 146px;
         gap: 10px;
     }
 }
 
 @media (min-width: 1280px) and (max-width: 1535px) {
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        --pg-min-auto: 120px;
         gap: 10px;
     }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+        --pg-min-auto: 115px;
         gap: 8px;
     }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+        --pg-min-auto: 105px;
         gap: 8px;
     }
 }
 
+/* Phones ignore the pinned count — two per row is the only usable density. */
 @media (min-width: 480px) and (max-width: 767px) {
     .products-grid-container {
         padding: 3px;
     }
 
     .products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        --pg-cols: 2;
+        --pg-min: 0px;
         gap: 6px;
         max-height: 500px;
         overflow-y: auto;
@@ -179,7 +204,8 @@ export default {
     }
 
     .products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        --pg-cols: 2;
+        --pg-min: 0px;
         gap: 6px;
         max-height: 500px;
         overflow-y: auto;

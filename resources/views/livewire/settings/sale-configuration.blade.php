@@ -130,6 +130,13 @@
                         <small class="form-text text-muted">When disabled, the "Add a Tip" option is hidden on the sale payment screens (web and mobile app).</small>
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label fw-medium" for="pos_grid_columns">POS Products Per Row</label>
+                        {{ html()->select('pos_grid_columns', posGridColumns())->value('')->class('form-select')->placeholder('How many product cards per row?')->attribute('wire:model', 'pos_grid_columns') }}
+                        <small class="form-text text-muted">Number of product cards in each row of the POS catalogue. &ldquo;Auto&rdquo; fits as many as the screen allows. Phones always show 2 per row.</small>
+                    </div>
+                </div>
                 <div class="col-12">
                     <hr class="my-2">
                     <label class="form-label fw-medium d-block mb-1">POS Colour Preset</label>

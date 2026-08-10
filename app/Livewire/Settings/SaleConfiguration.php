@@ -55,6 +55,9 @@ class SaleConfiguration extends Component
     /** Palette for the POS screen and its modals — see posColorPresets(). */
     public $pos_color_preset;
 
+    /** Product cards per row in the POS catalogue — see posGridColumns(). */
+    public $pos_grid_columns;
+
     public function mount()
     {
         $this->default_status = Configuration::where('key', 'default_status')->value('value');
@@ -80,6 +83,7 @@ class SaleConfiguration extends Component
         $this->enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
         $this->enable_tip = Configuration::where('key', 'enable_tip')->value('value') ?? 'yes';
         $this->pos_color_preset = Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme';
+        $this->pos_grid_columns = Configuration::where('key', 'pos_grid_columns')->value('value') ?: 'auto';
     }
 
     public function save()
@@ -110,6 +114,10 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(
             ['key' => 'pos_color_preset'],
             ['value' => array_key_exists($this->pos_color_preset, posColorPresets()) ? $this->pos_color_preset : 'theme']
+        );
+        Configuration::updateOrCreate(
+            ['key' => 'pos_grid_columns'],
+            ['value' => array_key_exists($this->pos_grid_columns, posGridColumns()) ? $this->pos_grid_columns : 'auto']
         );
         $this->dispatch('success', ['message' => 'Updated Successfully']);
         Artisan::call('optimize:clear');
