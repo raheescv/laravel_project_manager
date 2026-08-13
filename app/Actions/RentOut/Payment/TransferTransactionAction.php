@@ -2,8 +2,8 @@
 
 namespace App\Actions\RentOut\Payment;
 
-use App\Enums\RentOut\AgreementType;
-use App\Models\Account;
+use App\Actions\RentOut\Payment\Concerns\AppliesPaymentTerms;
+use App\Actions\RentOut\Payment\Concerns\ResolvesRentOutAccounts;
 use App\Models\Journal;
 use App\Models\JournalEntry;
 use App\Models\RentOut;
@@ -30,6 +30,9 @@ use Illuminate\Support\Facades\DB;
  */
 class TransferTransactionAction
 {
+    use AppliesPaymentTerms;
+    use ResolvesRentOutAccounts;
+
     /**
      * @param  int  $paymentId  the receipt (rent_out_transactions.id) to move
      * @param  int  $toRentOutId  the target RentOut agreement to move it to
@@ -56,7 +59,7 @@ class TransferTransactionAction
 
                 // 3. Credit the chosen target term (if any).
                 if ($toTermId) {
-                    $this->applyTargetTerm($toTermId, $amount, $today);
+                    $this->creditTerm(RentOutPaymentTerm::find($toTermId), $amount, $today);
                 }
 
                 // 4. Re-home the ledger row itself onto the target agreement.
@@ -175,58 +178,15 @@ class TransferTransactionAction
      */
     protected function releaseSourceTerm(RentOutTransaction $payment): void
     {
-        $term = null;
-        if ($payment->model === 'RentOutPaymentTerm' && $payment->model_id) {
-            $term = RentOutPaymentTerm::find($payment->model_id);
-        } elseif ($payment->source === 'PaymentTerm' && $payment->source_id) {
-            $term = RentOutPaymentTerm::find($payment->source_id);
-        }
-
-        if (! $term) {
-            return;
-        }
-
-        $term->paid = max(0, (float) $term->paid - (float) $payment->credit);
-        if ($term->paid <= 0) {
-            $term->paid_date = null;
-        }
-        if ($term->paid < (float) $term->total) {
-            $term->status = 'pending';
-        }
-        $term->save();
+        $this->releaseTerm($this->termFor($payment), (float) $payment->credit);
     }
 
-    protected function applyTargetTerm(int $termId, float $amount, string $date): void
-    {
-        $term = RentOutPaymentTerm::find($termId);
-        if (! $term) {
-            return;
-        }
-
-        $term->paid = (float) $term->paid + $amount;
-        $term->paid_date = $date;
-        // The model's saving hook flips status to 'paid' once fully covered.
-        $term->save();
-    }
-
+    /**
+     * The account a receipt on this agreement was recognised to. Falls back to
+     * the customer account so an unconfigured chart still names a real account.
+     */
     protected function incomeAccountId(RentOut $rentOut): ?int
     {
-        if ($rentOut->agreement_type === AgreementType::Lease) {
-            return $this->lockedAccountId($rentOut->tenant_id, 'sale')
-                ?? $rentOut->account_id;
-        }
-
-        return $this->lockedAccountId($rentOut->tenant_id, 'rent_income')
-            ?? $this->lockedAccountId($rentOut->tenant_id, 'sale')
-            ?? $rentOut->account_id;
-    }
-
-    protected function lockedAccountId(int $tenantId, string $slug): ?int
-    {
-        return Account::query()
-            ->where('tenant_id', $tenantId)
-            ->where('slug', $slug)
-            ->where('is_locked', 1)
-            ->value('id');
+        return $this->propertyIncomeAccountId($rentOut) ?? $rentOut->account_id;
     }
 }

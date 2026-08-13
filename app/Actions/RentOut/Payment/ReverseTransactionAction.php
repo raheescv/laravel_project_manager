@@ -2,6 +2,7 @@
 
 namespace App\Actions\RentOut\Payment;
 
+use App\Actions\RentOut\Payment\Concerns\AppliesPaymentTerms;
 use App\Enums\RentOut\ChequeStatus;
 use App\Models\Journal;
 use App\Models\JournalEntry;
@@ -22,6 +23,8 @@ use App\Models\RentOutTransaction;
  */
 class ReverseTransactionAction
 {
+    use AppliesPaymentTerms;
+
     /**
      * Reverse a single transaction: undo its term/cheque side effects, then
      * delete its journal (with entries) and the transaction itself.
@@ -37,11 +40,7 @@ class ReverseTransactionAction
         }
 
         $this->rollbackSideEffects($payment, $resetCheque);
-
-        if ($payment->journal_id) {
-            JournalEntry::where('journal_id', $payment->journal_id)->delete();
-            Journal::where('id', $payment->journal_id)->delete();
-        }
+        $this->deleteJournal($payment->journal_id);
 
         $payment->delete();
     }
@@ -62,14 +61,12 @@ class ReverseTransactionAction
                 // Restore the source term the transfer had freed. The originating
                 // receipt is referenced by source_id; re-add the amount to its term.
                 $origin = $row->source_id ? RentOutTransaction::find($row->source_id) : null;
-                $term = $this->resolveTerm($origin);
-                if ($term) {
-                    $term->paid = (float) $term->paid + (float) $row->debit;
-                    if ($term->paid > 0 && ! $term->paid_date) {
-                        $term->paid_date = $row->date;
-                    }
-                    $term->save();
-                }
+                $this->creditTerm(
+                    $this->termFor($origin),
+                    (float) $row->debit,
+                    $row->date,
+                    stampPaidDate: false
+                );
             }
 
             if ($row->category === 'transfer_in' && $row->credit > 0) {
@@ -78,33 +75,9 @@ class ReverseTransactionAction
             }
         }
 
-        if ($payment->journal_id) {
-            JournalEntry::where('journal_id', $payment->journal_id)->delete();
-            Journal::where('id', $payment->journal_id)->delete();
-        }
+        $this->deleteJournal($payment->journal_id);
 
         RentOutTransaction::whereIn('id', $rows->pluck('id'))->delete();
-    }
-
-    /**
-     * Resolve the payment term a receipt was applied to, whether it is linked by
-     * model (RentOutPaymentTerm) or by source (PaymentTerm/source_id).
-     */
-    protected function resolveTerm(?RentOutTransaction $payment): ?RentOutPaymentTerm
-    {
-        if (! $payment) {
-            return null;
-        }
-
-        if ($payment->model === 'RentOutPaymentTerm' && $payment->model_id) {
-            return RentOutPaymentTerm::find($payment->model_id);
-        }
-
-        if ($payment->source === 'PaymentTerm' && $payment->source_id) {
-            return RentOutPaymentTerm::find($payment->source_id);
-        }
-
-        return null;
     }
 
     /**
@@ -153,29 +126,25 @@ class ReverseTransactionAction
             return;
         }
 
-        $term = null;
-        if ($payment->model === 'RentOutPaymentTerm' && $payment->model_id) {
-            $term = RentOutPaymentTerm::find($payment->model_id);
-        } elseif ($payment->source === 'PaymentTerm' && $payment->source_id) {
-            $term = RentOutPaymentTerm::find($payment->source_id);
-        }
-
-        if ($term) {
-            $term->paid = max(0, (float) $term->paid - $amount);
-            if ($term->paid <= 0) {
-                $term->paid_date = null;
-            }
-            // The model's saving hook only flips status TO paid; force it back to
-            // pending when the term is no longer fully covered.
-            if ($term->paid < (float) $term->total) {
-                $term->status = 'pending';
-            }
-            $term->save();
-        }
+        $this->releaseTerm($this->termFor($payment), $amount);
 
         if ($resetCheque && $payment->model === 'RentOutCheque' && $payment->model_id) {
             RentOutCheque::where('id', $payment->model_id)
                 ->update(['status' => ChequeStatus::Uncleared->value]);
         }
+    }
+
+    /**
+     * Remove a journal and its entries. A rent-out journal always belongs to
+     * the row(s) being reversed, so it goes with them.
+     */
+    protected function deleteJournal(?int $journalId): void
+    {
+        if (! $journalId) {
+            return;
+        }
+
+        JournalEntry::where('journal_id', $journalId)->delete();
+        Journal::where('id', $journalId)->delete();
     }
 }

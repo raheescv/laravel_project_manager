@@ -51,17 +51,27 @@ class RentOutTransactionHelper
     public function storeManagementFee(RentOut $rentOut, int $userId): array
     {
         $accounts = Account::slugIdMap();
+        $paymentMethodId = $rentOut->management_fee_payment_method_id;
 
-        return $this->chargeAndPay($rentOut->id, [
+        $data = [
             'date' => now()->format('Y-m-d'),
             'amount' => $rentOut->management_fee,
-            'account_id' => $accounts['service_charge'] ?? $accounts['sale'] ?? 0,
+            // Payment method for the receipt leg; the income leg is resolved
+            // from the fee's own income account below.
+            'account_id' => $paymentMethodId,
+            'income_account_id' => $accounts['service_charge'] ?? $accounts['sale'] ?? null,
             'source' => $rentOut->agreement_type?->sourceSlug(),
             'group' => 'Management Fee',
             'category' => 'management_fee',
             'remark' => $rentOut->management_fee_remarks ?: 'Management fee for RentOut:'.$rentOut->id,
             'created_by' => $userId,
-        ]);
+        ];
+
+        // With no payment method on the booking the fee is only billed, not
+        // collected — record the receivable and leave the receipt for later.
+        return $paymentMethodId
+            ? $this->chargeAndPay($rentOut->id, $data)
+            : $this->charge($rentOut->id, $data);
     }
 
     public function storeDownPayment(RentOut $rentOut, int $userId): array
@@ -114,6 +124,9 @@ class RentOutTransactionHelper
             'date' => $data['date'],
             'amount' => $data['amount'],
             'account_id' => $data['account_id'] ?? '',
+            // The category select is an account picker, so the chosen category
+            // is the income account the charge leg must credit.
+            'income_account_id' => is_numeric($data['category'] ?? null) ? (int) $data['category'] : null,
             'source' => 'Service',
             'model' => 'RentOutService',
             'paid_date' => $data['date'],

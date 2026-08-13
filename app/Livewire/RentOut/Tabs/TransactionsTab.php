@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Models\Account;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
 use App\Models\RentOutTransaction;
@@ -75,17 +76,55 @@ class TransactionsTab extends Component
 
     protected function recordedTransactions(): Collection
     {
-        return RentOutTransaction::with('account')
+        $transactions = RentOutTransaction::with('account')
             ->where('rent_out_id', $this->rentOutId)
-            ->get()
-            ->map(fn (RentOutTransaction $transaction): array => [
-                'date' => $transaction->date,
-                'category' => $transaction->category ?: $transaction->group,
-                'payment_mode' => $transaction->account?->name,
-                'debit' => (float) $transaction->debit,
-                'credit' => (float) $transaction->credit,
-                'remark' => $transaction->remark,
-            ]);
+            ->get();
+
+        $categoryNames = $this->categoryNames($transactions);
+        $customerAccountId = $this->customerAccountId();
+
+        return $transactions->map(fn (RentOutTransaction $transaction): array => [
+            'date' => $transaction->date,
+            'category' => $categoryNames[$transaction->category]
+                ?? ($transaction->category ?: $transaction->group),
+            // A charge is billed to the customer's own account, so there is no
+            // payment mode to show until it is collected.
+            'payment_mode' => (int) $transaction->account_id === $customerAccountId
+                ? null
+                : $transaction->account?->name,
+            'debit' => (float) $transaction->debit,
+            'credit' => (float) $transaction->credit,
+            'remark' => $transaction->remark,
+        ]);
+    }
+
+    /**
+     * The account the agreement bills to — the customer's ledger account.
+     */
+    protected function customerAccountId(): ?int
+    {
+        $accountId = RentOut::whereKey($this->rentOutId)->value('account_id');
+
+        return $accountId ? (int) $accountId : null;
+    }
+
+    /**
+     * Service charges store their category as an account id — the modal's
+     * category select is an account picker — so those rows would otherwise
+     * show a bare number. Resolved in one query, keyed by the stored value.
+     */
+    protected function categoryNames(Collection $transactions): array
+    {
+        $accountIds = $transactions
+            ->pluck('category')
+            ->filter(fn ($category) => is_numeric($category))
+            ->unique();
+
+        if ($accountIds->isEmpty()) {
+            return [];
+        }
+
+        return Account::whereIn('id', $accountIds)->pluck('name', 'id')->all();
     }
 
     protected function accruedRentCharges(): Collection

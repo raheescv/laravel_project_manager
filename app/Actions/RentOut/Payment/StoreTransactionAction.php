@@ -3,8 +3,8 @@
 namespace App\Actions\RentOut\Payment;
 
 use App\Actions\Journal\CreateAction as JournalCreateAction;
-use App\Enums\RentOut\AgreementType;
-use App\Models\Account;
+use App\Actions\Journal\UpdateAction as JournalUpdateAction;
+use App\Actions\RentOut\Payment\Concerns\ResolvesRentOutAccounts;
 use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
@@ -13,9 +13,15 @@ use Illuminate\Support\Facades\Auth;
 
 class StoreTransactionAction
 {
+    use ResolvesRentOutAccounts;
+
     /**
      * Charge customer (debit entry only — no payment received yet).
      * Used for Pay Later / Service Charge scenarios.
+     *
+     * Journal: Dr Customer (receivable), Cr Income. The income account is the
+     * category chosen on the modal when there is one, otherwise the tenant's
+     * locked service/sale income account.
      */
     public function charge(int $rentOutId, array $data): array
     {
@@ -26,6 +32,11 @@ class StoreTransactionAction
             'credit' => 0,
             'debit' => $data['amount'],
             'account_id' => $rentOut->account_id,
+            'counter_account_id' => $data['counter_account_id'] ?? $this->resolveChargeIncomeAccountId($rentOut, $data),
+            'journal_source' => $data['journal_source'] ?? 'income',
+            // A charge is not money leaving the business: the row's own account
+            // (the customer) is the debit side, the income account the credit side.
+            'journal_is_payout' => false,
         ]));
     }
 
@@ -48,15 +59,22 @@ class StoreTransactionAction
      */
     public function chargeAndPay(int $rentOutId, array $data): array
     {
-        // Entry 1: Debit — charge to customer
+        $rentOut = RentOut::findOrFail($rentOutId);
+
+        // Entry 1: Debit — charge to customer (Dr Customer, Cr Income)
         $chargeResponse = $this->charge($rentOutId, $data);
         if (! $chargeResponse['success']) {
             return $chargeResponse;
         }
 
-        // Entry 2: Credit — payment received
+        // Entry 2: Credit — payment received. The charge leg already recognised
+        // the income, so this leg only settles the receivable it created:
+        // Dr Payment Method, Cr Customer. Countering to income here instead
+        // would recognise the same revenue twice.
         $receiveData = array_merge($data, [
             'group' => ($data['group'] ?? 'Service').' Payment',
+            'counter_account_id' => $rentOut->account_id,
+            'journal_source' => $rentOut->agreement_type?->sourceSlug() ?? 'rent_out',
         ]);
 
         return $this->receive($rentOutId, $receiveData);
@@ -105,7 +123,11 @@ class StoreTransactionAction
                 'debit' => $newDebit,
                 'credit' => $newCredit,
                 'category' => $data['category'] ?? $payment->category,
-                'account_id' => $data['account_id'] ?? $payment->account_id,
+                // A charge row is the customer's receivable — the payment mode
+                // picked on the modal belongs to the receipt row, not this one.
+                'account_id' => $this->isChargeRow($payment)
+                    ? $payment->account_id
+                    : ($data['account_id'] ?? $payment->account_id),
                 'remark' => $data['remark'] ?? $payment->remark,
                 'reason' => $data['reason'] ?? $payment->reason,
                 'cheque_no' => $data['cheque_no'] ?? $payment->cheque_no,
@@ -113,20 +135,12 @@ class StoreTransactionAction
                 'bank_name' => $data['bank_name'] ?? $payment->bank_name,
             ]);
 
-            // Sync journal entries if journal exists
+            // Re-post the journal so a changed payment method or category moves
+            // the entries too, not just their amounts.
             if ($payment->journal_id) {
-                $amount = max($newCredit, $newDebit);
-                /** @var Journal|null $model */
-                $journal = Journal::find($payment->journal_id);
-                if ($journal) {
-                    $journal->entries()->each(function ($entry) use ($amount) {
-                        if ($entry->debit > 0) {
-                            $entry->update(['debit' => $amount]);
-                        }
-                        if ($entry->credit > 0) {
-                            $entry->update(['credit' => $amount]);
-                        }
-                    });
+                $journalResponse = $this->syncJournalEntries($payment->fresh());
+                if (! $journalResponse['success']) {
+                    throw new \Exception($journalResponse['message']);
                 }
             }
 
@@ -145,6 +159,8 @@ class StoreTransactionAction
      *
      * For receipts (money IN): credit > 0, journal = Dr PaymentMethod, Cr Customer
      * For payouts (money OUT): debit > 0, journal = Dr Customer, Cr PaymentMethod
+     * For charges (no cash):   debit > 0 with journal_is_payout = false,
+     *                          journal = Dr Customer, Cr Income
      */
     public function execute(array $data): array
     {
@@ -156,7 +172,12 @@ class StoreTransactionAction
 
             // Create journal entry
             $amount = max($data['credit'] ?? 0, $data['debit'] ?? 0);
-            $isPayout = ($data['debit'] ?? 0) > 0;
+            // A debit row normally means money left the business, but a charge
+            // debits the customer without any cash moving — those callers say so
+            // explicitly rather than being inferred from the debit column.
+            $isPayout = array_key_exists('journal_is_payout', $data)
+                ? (bool) $data['journal_is_payout']
+                : ($data['debit'] ?? 0) > 0;
 
             $journalMetadata = $this->resolveJournalMetadata($rentOut, $data, $isPayout);
 
@@ -203,6 +224,64 @@ class StoreTransactionAction
                 'message' => $th->getMessage(),
             ];
         }
+    }
+
+    /**
+     * A billed-but-not-yet-collected row: it debits the customer without any
+     * cash moving, unlike a payout which also carries a debit.
+     */
+    protected function isChargeRow(RentOutTransaction $payment): bool
+    {
+        return $payment->debit > 0 && in_array($payment->source, ['Service', 'ServiceCharge'], true);
+    }
+
+    /**
+     * Rewrite a transaction's journal entries from its current state, keeping
+     * the journal itself (and every reference to it) intact.
+     */
+    protected function syncJournalEntries(RentOutTransaction $payment): array
+    {
+        $journal = Journal::find($payment->journal_id);
+        if (! $journal) {
+            return ['success' => true, 'message' => 'No journal to sync'];
+        }
+
+        $rentOut = RentOut::findOrFail($payment->rent_out_id);
+        $amount = (float) max($payment->credit, $payment->debit);
+        $isCharge = $this->isChargeRow($payment);
+        $isPayout = $payment->debit > 0 && ! $isCharge;
+
+        if ($isCharge) {
+            // Dr Customer, Cr Income (the chosen category).
+            $accountId = (int) $rentOut->account_id;
+            $counterAccountId = $this->resolveChargeIncomeAccountId($rentOut, [
+                'income_account_id' => is_numeric($payment->category) ? (int) $payment->category : null,
+                'source' => $payment->source,
+            ]);
+        } else {
+            // Receipt: Dr Payment Method, Cr Customer. Payout: the mirror.
+            $accountId = (int) $payment->account_id;
+            $counterAccountId = (int) $rentOut->account_id;
+        }
+
+        $entries = $this->makeEntryPair(
+            $rentOut,
+            $accountId,
+            $amount,
+            $isPayout,
+            $counterAccountId,
+            $payment->remark ?? '',
+            (int) $payment->created_by
+        );
+
+        return (new JournalUpdateAction())->execute([
+            'branch_id' => $journal->branch_id,
+            'date' => $payment->date,
+            'description' => $journal->description,
+            'remarks' => $payment->remark ?? $journal->remarks,
+            'created_by' => $journal->created_by,
+            'entries' => $entries,
+        ], $journal->id);
     }
 
     /**
@@ -280,6 +359,13 @@ class StoreTransactionAction
         int $createdBy
     ): array {
         $counterAccountId ??= $rentOut->account_id;
+
+        // Both legs landing on the same account is never a real posting — it
+        // nets to nothing and hides the account that should have been resolved.
+        if ((int) $counterAccountId === $paymentAccountId) {
+            throw new \RuntimeException('Cannot post a journal against a single account (account #'.$paymentAccountId.'); the counter account could not be resolved.');
+        }
+
         $base = [
             'created_by' => $createdBy,
             'remarks' => $remarks,
@@ -342,17 +428,10 @@ class StoreTransactionAction
 
         $source = (string) ($data['source'] ?? '');
 
-        if ($source === 'PaymentTerm') {
+        if (in_array($source, ['PaymentTerm', 'UtilityTerm', 'Service', 'ServiceCharge'], true)) {
             return [
                 'source' => 'income',
-                'counter_account_id' => $this->resolvePropertyIncomeAccountId($rentOut),
-            ];
-        }
-
-        if (in_array($source, ['UtilityTerm', 'Service', 'ServiceCharge'], true)) {
-            return [
-                'source' => 'income',
-                'counter_account_id' => $this->resolveServiceIncomeAccountId($rentOut),
+                'counter_account_id' => $this->incomeAccountIdFor($rentOut, $source),
             ];
         }
 
@@ -362,29 +441,26 @@ class StoreTransactionAction
         ];
     }
 
-    protected function resolvePropertyIncomeAccountId(RentOut $rentOut): ?int
+    /**
+     * Rent recognises to the property income account; the services and
+     * utilities billed alongside it recognise to the service income account.
+     */
+    protected function incomeAccountIdFor(RentOut $rentOut, string $source): ?int
     {
-        if ($rentOut->agreement_type === AgreementType::Lease) {
-            return $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'sale');
-        }
-
-        return $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'rent_income')
-            ?? $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'sale');
+        return $source === 'PaymentTerm'
+            ? $this->propertyIncomeAccountId($rentOut)
+            : $this->serviceIncomeAccountId($rentOut);
     }
 
-    protected function resolveServiceIncomeAccountId(RentOut $rentOut): ?int
+    /**
+     * Income account credited by a charge leg. The category picked on the modal
+     * is an account id, so it wins when it belongs to this tenant; otherwise
+     * fall back to the module's locked income account.
+     */
+    protected function resolveChargeIncomeAccountId(RentOut $rentOut, array $data): ?int
     {
-        return $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'service_charge')
-            ?? $this->findLockedAccountIdBySlug($rentOut->tenant_id, 'sale');
-    }
-
-    protected function findLockedAccountIdBySlug(int $tenantId, string $slug): ?int
-    {
-        return Account::query()
-            ->where('tenant_id', $tenantId)
-            ->where('slug', $slug)
-            ->where('is_locked', 1)
-            ->value('id');
+        return $this->tenantAccountId($rentOut, $data['income_account_id'] ?? null)
+            ?? $this->incomeAccountIdFor($rentOut, (string) ($data['source'] ?? ''));
     }
 
     protected function resolveCreatedBy(RentOut $rentOut, array $data): int
