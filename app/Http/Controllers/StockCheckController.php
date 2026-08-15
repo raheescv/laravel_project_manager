@@ -8,6 +8,7 @@ use App\Actions\Product\Inventory\StockCheck\Item\GetStockCheckItemsAction;
 use App\Actions\Product\Inventory\StockCheck\Item\ScanBarcodeAction;
 use App\Actions\Product\Inventory\StockCheck\Item\UpdateStockCheckAction;
 use App\Actions\Product\Inventory\StockCheck\UpdateStockCheckMetadataAction;
+use App\Actions\Product\Inventory\StockCheck\UpdateStockCheckStatusAction;
 use App\Exports\StockCheckItemExport;
 use App\Http\Requests\Inventory\StockCheck\CreateStockCheckRequest;
 use App\Http\Requests\Inventory\StockCheck\UpdateStockCheckRequest;

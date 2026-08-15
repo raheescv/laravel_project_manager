@@ -6,6 +6,7 @@ use App\Actions\Product\Inventory\StockCheck\CreateStockCheckAction;
 use App\Actions\Product\Inventory\StockCheck\DeleteStockCheckAction;
 use App\Actions\Product\Inventory\StockCheck\Item\GetStockCheckItemsAction;
 use App\Actions\Product\Inventory\StockCheck\Item\UpdateStockCheckAction;
+use App\Actions\Product\Inventory\StockCheck\UpdateStockCheckStatusAction;
 use App\Actions\V1\StockCheck\GetAction;
 use App\Actions\V1\StockCheck\ListAction;
 use App\Actions\V1\StockCheck\ScanAction;

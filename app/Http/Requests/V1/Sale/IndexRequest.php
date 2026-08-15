@@ -28,6 +28,10 @@ class IndexRequest extends FormRequest
             'customer_id' => ['nullable', 'integer', 'exists:accounts,id'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
             'payment_method_id' => ['nullable', 'integer', 'exists:accounts,id'],
+            // Who rang the sale up. The staff filter on the mobile Sales list;
+            // a non-admin employee is hard-scoped to themselves in ListAction
+            // regardless of what they send.
+            'created_by' => ['nullable', 'integer', 'exists:users,id'],
             'from_date' => ['nullable', 'date'],
             'to_date' => ['nullable', 'date', 'after_or_equal:from_date'],
             'sort_by' => ['nullable', 'string', 'in:date,invoice_no,paid,gross_amount,id'],
