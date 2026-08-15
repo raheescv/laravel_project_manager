@@ -11,8 +11,9 @@ class ListAction
     /**
      * List active employees (stylists) with optional search/branch filters and
      * pagination. Scoped to users with type = 'employee' so the mobile POS can
-     * assign a stylist to a sale / line. A non-admin employee is scoped to
-     * their own record.
+     * assign a stylist to a sale / line. Deliberately unscoped by caller: one
+     * device serves several cashiers and caches this list for offline use, so
+     * who may be assigned is decided in the app (see StylistCubit.all).
      */
     public function execute(IndexRequest $request): array
     {

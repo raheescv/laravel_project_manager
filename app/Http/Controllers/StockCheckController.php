@@ -11,6 +11,7 @@ use App\Actions\Product\Inventory\StockCheck\UpdateStockCheckMetadataAction;
 use App\Exports\StockCheckItemExport;
 use App\Http\Requests\Inventory\StockCheck\CreateStockCheckRequest;
 use App\Http\Requests\Inventory\StockCheck\UpdateStockCheckRequest;
+use App\Http\Requests\Inventory\StockCheck\UpdateStockCheckStatusRequest;
 use App\Jobs\StockCheck\ImportStockCheckItemJob;
 use App\Models\StockCheck;
 use App\Traits\ApiResponseTrait;

@@ -12,6 +12,7 @@ use App\Actions\V1\StockCheck\ScanAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Inventory\StockCheck\CreateStockCheckRequest;
 use App\Http\Requests\Inventory\StockCheck\UpdateStockCheckRequest;
+use App\Http\Requests\Inventory\StockCheck\UpdateStockCheckStatusRequest;
 use App\Http\Requests\V1\StockCheck\ScanRequest;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
