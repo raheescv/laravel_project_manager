@@ -11,6 +11,7 @@ import 'shared/logic/currency_cubit/currency_cubit.dart';
 import 'shared/utils/router/http_utils/dev_http_stub.dart'
     if (dart.library.io) 'shared/utils/router/http_utils/dev_http_io.dart';
 import 'shared/utils/crash_reporter.dart';
+import 'shared/widgets/boot_failure_app.dart';
 import 'shared/utils/service_locator_setup/setup.dart';
 
 /// Shared boot sequence. The flavor entry points (`main_dev.dart` /
@@ -27,24 +28,31 @@ Future<void> main() async {
   // physical device (dev only) — same self-signed-cert bypass Dio already uses.
   configureDevHttpOverrides();
 
-  await setUpServiceLocator();
+  // The boot below is async, so anything that throws in it escapes main() and
+  // would otherwise leave the device on a blank white screen. runApp happens
+  // either way — with the app on success, with the reason on failure.
+  await CrashReporter.guardBoot(
+    () async {
+      await setUpServiceLocator();
 
-  final auth = serviceLocator<AuthCubit>();
-  await auth.bootstrap();
+      final auth = serviceLocator<AuthCubit>();
+      await auth.bootstrap();
 
-  final currency = serviceLocator<CurrencyCubit>();
-  final branch = serviceLocator<BranchCubit>();
+      final currency = serviceLocator<CurrencyCubit>();
+      final branch = serviceLocator<BranchCubit>();
 
-  // Refresh the cached currency list when already signed in (authenticated
-  // endpoint; no-ops offline and the cache is used).
-  if (auth.user != null) unawaited(currency.refreshCurrencies());
+      // Refresh the cached currency list when already signed in (authenticated
+      // endpoint; no-ops offline and the cache is used).
+      if (auth.user != null) unawaited(currency.refreshCurrencies());
 
-  // After a fresh sign-in, default the active branch to that user's home branch
-  // and pull the latest currency list to cache for offline use.
-  auth.onAuthenticated = (user) {
-    branch.applyUserDefault(int.tryParse(user.branchId ?? ''));
-    currency.refreshCurrencies();
-  };
-
-  runApp(const InvoApp());
+      // After a fresh sign-in, default the active branch to that user's home
+      // branch and pull the latest currency list to cache for offline use.
+      auth.onAuthenticated = (user) {
+        branch.applyUserDefault(int.tryParse(user.branchId ?? ''));
+        currency.refreshCurrencies();
+      };
+    },
+    onSuccess: () => runApp(const InvoApp()),
+    onBootError: (error, stack) => runApp(BootFailureApp(error: error)),
+  );
 }

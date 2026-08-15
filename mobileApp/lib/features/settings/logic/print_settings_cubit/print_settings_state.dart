@@ -19,7 +19,7 @@ class PrintSettingsState extends Equatable {
     this.logoBytes,
     this.showCompanyName = false,
     this.companyName = '',
-    this.autoPrint = false,
+    this.autoPrint = true,
     this.printerUrl,
     this.printerName,
     this.skipInvoice = false,

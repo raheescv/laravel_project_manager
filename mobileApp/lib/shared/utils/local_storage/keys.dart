@@ -22,6 +22,12 @@ class LocalStorageKeys {
   static const String defaultProductType = 'astra.defaultProductType';
   static const String haptics = 'astra.haptics';
   static const String branch = 'astra.branch';
+
+  /// The branch the app last actually operated as — including one it resolved
+  /// on its own, which [branch] deliberately does not record. Read only as a
+  /// fallback, so a launch with no network still lands on the branch whose
+  /// snapshot is on the device. See `BranchCubit`.
+  static const String lastBranch = 'astra.branch.last';
   static const String user = 'astra.user';
   // New Sale — remembered choices, auto-selected on the next ticket.
   static const String saleView = 'astra.saleView'; // 'grid' | 'list'
@@ -42,6 +48,10 @@ class LocalStorageKeys {
   // provisional references it prints; the sequence numbers them.
   static const String offlineDeviceTag = 'astra.offline.deviceTag';
   static const String offlineSequence = 'astra.offline.sequence';
+  /// Whether provisioning also pre-downloads product photos. Device-local
+  /// because it is a storage and data-plan decision, and a tablet on shop wifi
+  /// and a phone on a metered SIM should be free to answer it differently.
+  static const String offlineCachePhotos = 'astra.offline.cachePhotos';
 
   /// Roster of users who have signed in on this device, so an offline till can
   /// authenticate a cashier who has used it before. SECURE storage only.

@@ -29,7 +29,15 @@ void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
   tearDown(() async => serviceLocator.reset());
 
-  testWidgets('Charge on Review & Pay navigates to the Invoice screen', (tester) async {
+  /// Charges a ticket on Review & Pay and returns the seeded session, with the
+  /// two till-behaviour toggles set explicitly: a shared till locks after every
+  /// sale and prints without being asked, both on by default, and what happens
+  /// after a charge depends entirely on them.
+  Future<AuthCubit> chargeATicket(
+    WidgetTester tester, {
+    required bool lockAfterSale,
+    required bool autoPrint,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     await serviceLocator.reset();
 
@@ -76,6 +84,11 @@ void main() {
         thumbnail: '',
       ));
 
+    final pos = PosSettingsCubit();
+    await pos.setLockAfterSale(lockAfterSale);
+    final print = PrintSettingsCubit();
+    await print.setAutoPrint(autoPrint);
+
     final router = GoRouter(
       initialLocation: '/review',
       routes: [
@@ -93,8 +106,8 @@ void main() {
         providers: [
           BlocProvider<AuthCubit>.value(value: authCubit),
           BlocProvider<CartCubit>.value(value: cart),
-          BlocProvider<PrintSettingsCubit>(create: (_) => PrintSettingsCubit()),
-          BlocProvider<PosSettingsCubit>(create: (_) => PosSettingsCubit()),
+          BlocProvider<PrintSettingsCubit>.value(value: print),
+          BlocProvider<PosSettingsCubit>.value(value: pos),
           BlocProvider<ReturnDraftCubit>(create: (_) => ReturnDraftCubit()),
         ],
         child: MaterialApp.router(
@@ -115,8 +128,28 @@ void main() {
     // The default Cash mode → paymentMethod "Cash", sendToWhatsapp flag present.
     expect(sale.lastPayload?['paymentMethod'], 'Cash');
     expect(sale.lastPayload?.containsKey('sendToWhatsapp'), true);
-    // We must now be on the Invoice screen (the invoice number is shown in the
-    // hero line, e.g. "Invoice  INV-9001  ·  Jun 14, 2026").
+    return authCubit;
+  }
+
+  testWidgets('Charge on Review & Pay navigates to the Invoice screen', (tester) async {
+    await chargeATicket(tester, lockAfterSale: false, autoPrint: false);
+
+    // The invoice number is shown in the hero line, e.g.
+    // "Invoice  INV-9001  ·  Jun 14, 2026".
     expect(find.textContaining('INV-9001'), findsWidgets, reason: 'should have navigated to the invoice');
+  });
+
+  testWidgets('a shared till locks itself after the charge instead', (tester) async {
+    final auth = await chargeATicket(tester, lockAfterSale: true, autoPrint: false);
+
+    // The session survives — coming back is a local PIN check, not a fresh
+    // login — but the till is closed to the next person until they identify
+    // themselves, so the invoice screen is deliberately not reached.
+    expect(auth.status, AuthStatus.locked);
+    expect(auth.user, isNotNull);
+    expect(find.byType(InvoiceScreen), findsNothing);
+    // The cashier is still told what happened, in the snackbar the lock leaves
+    // behind — otherwise the till would just lock with no word of the sale.
+    expect(find.textContaining('INV-9001'), findsWidgets);
   });
 }

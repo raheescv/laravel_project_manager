@@ -65,6 +65,31 @@ class DeviceAccount extends Equatable {
   bool matchesCredential(String user, String pass) =>
       username.isNotEmpty && username == user.trim() && password == pass;
 
+  /// The credential blob replayed for biometric sign-in, stamped with the user
+  /// it belongs to.
+  ///
+  /// The stamp is what makes it safe on a shared till: the blob is a single slot
+  /// and several people use the device, so without it a saved PIN cannot be told
+  /// apart from a colleague's — see `AuthCubit._isCurrentUsersPin`.
+  Map<String, String> get credential => {
+        'user_id': userId,
+        if (pin.isNotEmpty)
+          ...{'mode': 'pin', 'pin': pin}
+        else
+          ...{'mode': 'cred', 'username': username, 'password': password},
+      };
+
+  DeviceAccount copyWith({String? pin, DateTime? lastSignInAt}) => DeviceAccount(
+        userId: userId,
+        name: name,
+        token: token,
+        userJson: userJson,
+        lastSignInAt: lastSignInAt ?? this.lastSignInAt,
+        pin: pin ?? this.pin,
+        username: username,
+        password: password,
+      );
+
   Map<String, dynamic> toJson() => {
         'user_id': userId,
         'name': name,

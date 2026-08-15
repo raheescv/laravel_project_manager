@@ -73,6 +73,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Exclude routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'flat_trade/webhook/post_back',
+            // Public booking endpoint. Authorisation here is the unguessable
+            // per-booking token in the URL, not the session — so CSRF adds no
+            // protection (there is no ambient authority to borrow) while an
+            // expired session would turn a customer's booking into a 419.
+            // The route is rate limited and the token is single-purpose.
+            'appointment/b/*/book',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

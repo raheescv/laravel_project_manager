@@ -6,6 +6,7 @@ import 'package:invo/shared/domain/models/index.dart';
 import 'package:flutter/foundation.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
 import 'package:invo/shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/local_storage/offline_db.dart';
@@ -84,16 +85,39 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> updateConnection(
       {required String baseUrl, required String tenant}) async {
-    // Repointing the device at a different business invalidates the whole roster:
-    // a PIN remembered for one tenant must never open a session against another.
+    // Repointing the device at a different business invalidates everything this
+    // device holds for the old one: a PIN remembered for one tenant must never
+    // open a session against another, and the cached catalog, lookups and photos
+    // are that shop's stock and staff, not this one's.
     final changed = baseUrl.trim() != config.baseUrl || tenant.trim() != config.tenant;
-    if (changed) await _accounts.clear();
+    if (changed) {
+      await _accounts.clear();
+      await _clearOfflineData();
+    }
     _http.config = AppConfig(baseUrl: baseUrl.trim(), tenant: tenant.trim());
     await _storage.setBaseUrl(baseUrl.trim());
     await _storage.setTenant(tenant.trim());
     // The connection lives on HttpService, not in the state — emit so screens
     // showing the base URL / tenant repaint.
     emit(state.copyWith());
+  }
+
+  /// Drop the catalog snapshot, the lookups and the cached photos.
+  ///
+  /// Goes through [CatalogSnapshotRepository] when it is registered, because the
+  /// photo files are as much the old shop's catalog as the prices are; the raw
+  /// database wipe is the fallback for a boot that has not built the locator yet.
+  Future<void> _clearOfflineData() async {
+    try {
+      if (serviceLocator.isRegistered<CatalogSnapshotRepository>()) {
+        await serviceLocator<CatalogSnapshotRepository>().clear();
+        return;
+      }
+      await OfflineDb.clearCatalog();
+    } catch (_) {
+      // Never block repointing the device on a cache that would not drop; the
+      // snapshot is re-provisioned against the new connection anyway.
+    }
   }
 
   Future<bool> login(String pin) => _runLogin(
@@ -120,7 +144,10 @@ class AuthCubit extends Cubit<AuthState> {
       final res = await attempt();
       await _storage.writeToken(res.token);
       await _storage.setUserJson(jsonEncode(res.user.toJson()));
-      await _storage.writeBiometric(jsonEncode(biometric));
+      // Stamped with the user: the blob is one slot on a till several people
+      // use, and a saved PIN nobody owns cannot be checked against anybody.
+      await _storage.writeBiometric(
+          jsonEncode({...biometric, 'user_id': res.user.id}));
       await _storage.setAuthLocked(false);
       // Remember them as a user of this till, so the next outage does not lock
       // them out of it.
@@ -184,8 +211,18 @@ class AuthCubit extends Cubit<AuthState> {
       // the network is back.
       await _storage.writeToken(account.token);
       await _storage.setUserJson(account.userJson);
+      // Point the saved credential at whoever is actually signed in. Leaving the
+      // previous cashier's there is what used to let their PIN unlock this
+      // session — and would have signed them in again on the biometric tap.
+      await _storage.writeBiometric(jsonEncode(account.credential));
       await _storage.setAuthLocked(false);
       emit(state.copyWith(user: user, status: AuthStatus.signedIn, busy: false));
+      // Best-effort: an offline sign-in still counts as using this till.
+      try {
+        await _accounts.touch(account, DateTime.now());
+      } catch (_) {
+        // Costs only the roster's ordering.
+      }
       // Fired as on any sign-in: a different cashier may work a different branch,
       // and the branch is what scopes the cached catalog they are about to sell from.
       onAuthenticated?.call(user);
@@ -241,18 +278,17 @@ class AuthCubit extends Cubit<AuthState> {
     await _storage.setAuthLocked(true);
   }
 
-  /// Unlocks with [pin]. The cashier who locked the till is matched locally
-  /// against the credential already kept for biometric sign-in — no API call,
-  /// no re-bootstrap, no catalog refetch.
+  /// Unlocks with [pin]. The fast path resumes the locked session in place — no
+  /// API call, no re-bootstrap, no catalog refetch — but **only** for the PIN of
+  /// the cashier the session belongs to.
   ///
-  /// Anything the fast path doesn't recognise falls through to a normal login:
-  /// a different cashier taking over the till, or a PIN changed on the web
-  /// since this session started. So the slow path still always works, and it
-  /// only costs a round-trip when the fast one genuinely can't answer — and when
-  /// even that can't (no network), [login] falls back to this device's own roster,
-  /// so a handover to another cashier works through an outage too.
+  /// Any other PIN is a handover, and falls through to a normal login, which
+  /// signs that person in as themselves: their name on the sales they ring, their
+  /// permissions, their branch. Offline, [login] resolves them from this device's
+  /// own roster, so a handover works through an outage too — that is the whole
+  /// reason the roster keeps every user's PIN rather than just the last one's.
   Future<bool> unlock(String pin) async {
-    if (await _matchesCachedPin(pin)) {
+    if (await _isCurrentUsersPin(pin)) {
       emit(state.copyWith(status: AuthStatus.signedIn, clearError: true));
       await _storage.setAuthLocked(false);
       return true;
@@ -260,18 +296,56 @@ class AuthCubit extends Cubit<AuthState> {
     return login(pin);
   }
 
-  /// Whether [pin] is the one this session signed in with. Compared against
-  /// the secure-storage credential written by [_runLogin] — the same blob the
-  /// biometric shortcut already relies on, so this stores no new secret.
-  Future<bool> _matchesCachedPin(String pin) async {
-    if (user == null || pin.isEmpty) return false;
+  /// Whether [pin] belongs to the user this session is for.
+  ///
+  /// Answered from the device roster, the only store that knows *whose* each PIN
+  /// is. A shared till holds several, so matching a PIN without matching its
+  /// owner is how a colleague's PIN would resume the locked cashier's session —
+  /// their dashboard, their permissions, their name on the next sale.
+  ///
+  /// The saved biometric blob is the fallback for a session whose roster entry is
+  /// gone, and only when it names this same user; an unstamped one (written by a
+  /// build before the stamp existed) is not trusted, which costs a round-trip
+  /// through [login] and nothing else.
+  Future<bool> _isCurrentUsersPin(String pin) async {
+    final current = user;
+    if (current == null || pin.isEmpty) return false;
     try {
+      final account = await _accounts.byId(current.id);
+      if (account != null) return account.matchesPin(pin);
+
       final saved = await _storage.readBiometric();
       if (saved == null) return false;
       final cred = Map<String, dynamic>.from(jsonDecode(saved));
-      return cred['mode'] == 'pin' && cred['pin'].toString() == pin;
+      return cred['mode'] == 'pin' &&
+          cred['user_id']?.toString() == current.id &&
+          cred['pin'].toString() == pin;
     } catch (_) {
       return false;
+    }
+  }
+
+  /// Keeps this device in step with a PIN the user just changed from the app.
+  ///
+  /// Both stores replay a PIN, and a stale one fails in opposite directions: the
+  /// roster would keep opening offline sessions on a PIN the server has already
+  /// stopped accepting, while the biometric blob would replay it into a login the
+  /// server now refuses. Best-effort — the change itself has already succeeded.
+  Future<void> applyChangedPin(String pin) async {
+    final current = user;
+    if (current == null || pin.isEmpty) return;
+    try {
+      await _accounts.setPin(current.id, pin);
+      final saved = await _storage.readBiometric();
+      if (saved == null) return;
+      final cred = Map<String, dynamic>.from(jsonDecode(saved));
+      // Only rewrite a PIN blob of this user's: someone who signs in with a
+      // username and password keeps doing so, PIN change or not.
+      if (cred['mode'] == 'pin' && cred['user_id']?.toString() == current.id) {
+        await _storage.writeBiometric(jsonEncode({...cred, 'pin': pin}));
+      }
+    } catch (_) {
+      // Costs an offline sign-in on the new PIN, never the change itself.
     }
   }
 
@@ -388,18 +462,29 @@ class AuthCubit extends Cubit<AuthState> {
     _clear();
   }
 
-  /// Ends the session. The device roster is deliberately **kept**: signing out is
-  /// how a shared till is handed over, and forgetting who uses it would mean the
-  /// next cashier could not get in at all while the network is down.
+  /// Ends the session.
+  ///
+  /// The device roster is deliberately **kept**: signing out is how a shared till
+  /// is handed over, and forgetting who uses it would mean the next cashier could
+  /// not get in at all while the network is down.
+  ///
+  /// So is everything the till sells from — the catalog snapshot, the staff,
+  /// customer and payment-method lookups, the cached photos. None of it belongs
+  /// to the person who was signed in: it is this shop's, at this branch, and the
+  /// next cashier needs exactly the same rows. Dropping it here made a handover
+  /// with no network hand over an empty till — no products, no staff, no
+  /// categories — which is the one moment offline selling exists for. What that
+  /// wipe was actually protecting against is the device being pointed at a
+  /// different business, and that is handled where it happens, in
+  /// [updateConnection].
+  ///
+  /// The offline outbox is left alone for its own reason: an unsynced sale is
+  /// money that was taken, and it has to outlive the session that rang it up —
+  /// including a forced sign-out on a 401.
   Future<void> _clear() async {
     await _storage.clearToken();
     await _storage.clearUser();
     await _storage.setAuthLocked(false);
-    // Drop the cached catalog so the next user of a shared till never browses
-    // the previous tenant's products. The offline outbox is deliberately left
-    // alone: an unsynced sale is money that was taken, and it has to outlive
-    // the session that rang it up — including a forced sign-out on a 401.
-    await OfflineDb.clearCatalog();
     emit(state.copyWith(status: AuthStatus.signedOut, clearUser: true));
   }
 }

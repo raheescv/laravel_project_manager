@@ -16,7 +16,7 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   static PosSettingsState _initialState() {
     final storage = serviceLocator<LocalStorageService>();
     return PosSettingsState(
-      lockAfterSale: storage.posLockAfterSale ?? false,
+      lockAfterSale: storage.posLockAfterSale ?? true,
       gridColumns: _sanitize(storage.posGridColumns),
     );
   }

@@ -16,6 +16,12 @@
                                 <span class="d-none d-md-inline">Export</span>
                             </button>
                         @endcan
+                        @can('employee.edit')
+                            <button class="btn btn-info btn-sm d-flex align-items-center text-white" title="Assign Branches to Selected" data-bs-toggle="tooltip" wire:click="openBranchModal()">
+                                <i class="fa fa-sitemap me-md-1 fs-5"></i>
+                                <span class="d-none d-md-inline">Branches</span>
+                            </button>
+                        @endcan
                         @can('employee.delete')
                             <button class="btn btn-danger btn-sm d-flex align-items-center" title="Delete Selected" data-bs-toggle="tooltip" wire:click="delete()"
                                 wire:confirm="Are you sure you want to delete the selected items?">
@@ -257,6 +263,14 @@
                             </a>
                         </li>
                     @endcan
+                    @can('employee.edit')
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="#" wire:click="openBranchModal()">
+                                <i class="fa fa-sitemap me-2 text-info"></i>
+                                Assign Branches
+                            </a>
+                        </li>
+                    @endcan
                     @can('employee.delete')
                         <li>
                             <a class="dropdown-item d-flex align-items-center" href="#" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
@@ -266,6 +280,67 @@
                         </li>
                     @endcan
                 </ul>
+            </div>
+        </div>
+
+        <!-- Bulk Branch Assignment -->
+        <div class="modal fade" id="EmployeeBranchModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-light py-3">
+                        <h5 class="modal-title"><i class="fa fa-sitemap me-2"></i>Assign Branches</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">
+                            <i class="fa fa-users me-1"></i>
+                            Applies to <span class="fw-semibold text-body">{{ count($selected) }}</span> selected {{ Str::plural('employee', count($selected)) }}.
+                        </p>
+                        <div class="mb-3" wire:ignore>
+                            <label for="bulk_branch_ids" class="form-label small fw-medium">Branches</label>
+                            <select class="tomSelect" id="bulk_branch_ids" multiple>
+                                @foreach ($branches as $id => $name)
+                                    <option value="{{ $id }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-medium d-block">How to apply</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" id="bulk_branch_mode_replace" value="replace" wire:model="bulk_branch_mode">
+                                <label class="form-check-label" for="bulk_branch_mode_replace">
+                                    Replace <span class="text-muted small">— keep only the branches selected above</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" id="bulk_branch_mode_append" value="append" wire:model="bulk_branch_mode">
+                                <label class="form-check-label" for="bulk_branch_mode_append">
+                                    Add <span class="text-muted small">— keep what they already have and add these</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="bulk_default_branch_id" class="form-label small fw-medium">
+                                Default Branch <span class="text-muted fw-normal">(optional)</span>
+                            </label>
+                            <select class="form-select" id="bulk_default_branch_id" wire:model="bulk_default_branch_id">
+                                <option value="">Keep each employee's current default</option>
+                                @foreach ($branches as $id => $name)
+                                    <option value="{{ $id }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text small">Only applied to employees who end up assigned to that branch.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary d-flex align-items-center" wire:click="assignBranches()" wire:loading.attr="disabled" wire:target="assignBranches">
+                            <i class="fa fa-save me-1" wire:loading.remove wire:target="assignBranches"></i>
+                            <i class="fa fa-spinner fa-spin me-1" wire:loading wire:target="assignBranches"></i>
+                            Assign Branches
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -300,6 +375,23 @@
                     });
                     $(document).on('change', '#branch_id', function() {
                         @this.set('branch_id', $(this).val());
+                    });
+
+                    // Bulk branch assignment modal. Values are set deferred so
+                    // picking a branch does not fire a round trip (and reset the
+                    // table's page) before the Assign button is pressed.
+                    window.addEventListener('OpenEmployeeBranchModal', event => {
+                        $('#EmployeeBranchModal').modal('show');
+                    });
+                    window.addEventListener('CloseEmployeeBranchModal', event => {
+                        $('#EmployeeBranchModal').modal('hide');
+                        var branchSelect = document.getElementById('bulk_branch_ids');
+                        if (branchSelect && branchSelect.tomselect) {
+                            branchSelect.tomselect.clear();
+                        }
+                    });
+                    $(document).on('change', '#bulk_branch_ids', function() {
+                        @this.set('bulk_branch_ids', $(this).val() || [], false);
                     });
                 });
             </script>

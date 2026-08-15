@@ -26,6 +26,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
+import 'package:invo/shared/widgets/offline_image.dart';
 import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
@@ -82,11 +83,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       // Preselect the staff: the last employee used on a ticket (remembered
       // across sales) wins; otherwise default to the logged-in user. Skipped
       // while editing, where the ticket already carries its own stylist.
+      // An employee who may only assign themselves (see StylistCubit.all) is
+      // always themselves — a colleague remembered on this device (a shared
+      // till) must not carry over.
       if (cart.stylistName.isEmpty) {
         final storage = serviceLocator<LocalStorageService>();
         final savedId = storage.saleStylistId;
         final savedName = storage.saleStylistName;
-        if (savedId != null && savedName != null && savedName.isNotEmpty) {
+        final selfOnly = user?.isNonAdminEmployee ?? false;
+        if (!selfOnly && savedId != null && savedName != null && savedName.isNotEmpty) {
           cart.setStylist(savedId, savedName);
         } else if (user != null) {
           cart.setStylist(int.tryParse(user.id), user.name);
@@ -335,12 +340,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
     final leading = (avatarUrl != null && avatarUrl.startsWith('http'))
         ? ClipOval(
-            child: Image.network(
-              avatarUrl,
-              headers: avatarHeaders,
+            child: Image(
+              image: OfflineImage.provider(
+                avatarUrl,
+                headers: avatarHeaders,
+                cacheWidth: decodeWidthFor(context, 38),
+              ),
               width: 38,
               height: 38,
-              cacheWidth: decodeWidthFor(context, 38),
               fit: BoxFit.cover,
               gaplessPlayback: true,
               errorBuilder: (_, __, ___) => fallback,

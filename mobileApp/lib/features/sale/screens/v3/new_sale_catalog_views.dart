@@ -381,10 +381,12 @@ extension _CatalogViews on _NewSaleScreenState {
   Widget _tileImage(Product s, double width, {double iconSize = 40}) {
     if (s.thumbnail.isEmpty) return _tileFallback(s, iconSize: iconSize);
     final cfg = context.read<AuthCubit>().config;
-    return Image.network(
-      cfg.assetUrl(s.thumbnail),
-      headers: cfg.assetHeaders,
-      cacheWidth: decodeWidthFor(context, width),
+    return Image(
+      image: OfflineImage.provider(
+        cfg.assetUrl(s.thumbnail),
+        headers: cfg.assetHeaders,
+        cacheWidth: decodeWidthFor(context, width),
+      ),
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,

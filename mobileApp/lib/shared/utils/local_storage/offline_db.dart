@@ -18,7 +18,7 @@ class OfflineDb {
   OfflineDb._();
 
   static const String _fileName = 'invo_offline.db';
-  static const int _version = 2;
+  static const int _version = 3;
 
   static const String tableProducts = 'catalog_products';
   static const String tableCategories = 'catalog_categories';
@@ -70,6 +70,7 @@ class OfflineDb {
         category_id INTEGER,
         total_stock REAL NOT NULL DEFAULT 0,
         priority INTEGER NOT NULL DEFAULT 0,
+        thumbnail TEXT NOT NULL DEFAULT '',
         payload TEXT NOT NULL,
         PRIMARY KEY (branch_id, product_id)
       )
@@ -148,8 +149,19 @@ class OfflineDb {
   /// That "only add" rule is deliberate, not a coincidence: an ALTER on
   /// `outbox_sales` that failed halfway would take real takings with it. New
   /// capability gets a new table.
+  /// v3 lifts each product's photo URL out of `payload` into its own column, so
+  /// the pre-download pass can list every photo the grid will ask for without
+  /// decoding a few thousand JSON blobs to find them.
+  ///
+  /// An ALTER is safe here in a way it would never be on `outbox_sales`: this
+  /// table is a disposable copy of the server's catalog. Existing rows get the
+  /// default empty string and the next refresh fills them in, so the worst case
+  /// is one refresh cycle with nothing to pre-download.
   static Future<void> _upgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) await _createLookups(db);
+    if (oldVersion < 3) {
+      await db.execute("ALTER TABLE $tableProducts ADD COLUMN thumbnail TEXT NOT NULL DEFAULT ''");
+    }
   }
 
   /// Drops every cached row. Called on sign-out so the next user of a shared

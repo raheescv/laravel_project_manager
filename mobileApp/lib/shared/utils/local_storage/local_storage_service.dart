@@ -128,9 +128,16 @@ class LocalStorageService {
   Future<void> setHapticsEnabled(bool v) =>
       _prefs.setBool(LocalStorageKeys.haptics, v);
 
+  /// The branch the user explicitly picked. Null until they pick one, which is
+  /// what lets their home branch still apply — see `BranchCubit.applyUserDefault`.
   int? get branchId => _prefs.getInt(LocalStorageKeys.branch);
   Future<void> setBranchId(int v) =>
       _prefs.setInt(LocalStorageKeys.branch, v);
+
+  /// The branch actually in use, explicit or resolved. The offline fallback.
+  int? get lastBranchId => _prefs.getInt(LocalStorageKeys.lastBranch);
+  Future<void> setLastBranchId(int v) =>
+      _prefs.setInt(LocalStorageKeys.lastBranch, v);
 
   // ---- point-of-sale flow (device-local) ----
   // Shared-till mode: lock the terminal after every completed sale so the next
@@ -162,6 +169,14 @@ class LocalStorageService {
   int? get offlineSequence => _prefs.getInt(LocalStorageKeys.offlineSequence);
   Future<void> setOfflineSequence(int v) =>
       _prefs.setInt(LocalStorageKeys.offlineSequence, v);
+
+  // Pre-download product photos so the catalog still looks like a catalog with
+  // no network. Defaults to on: a grid of blank tiles is the failure people
+  // actually notice, and a till that cannot afford the storage can turn it off.
+  bool get offlineCachePhotos =>
+      _prefs.getBool(LocalStorageKeys.offlineCachePhotos) ?? true;
+  Future<void> setOfflineCachePhotos(bool v) =>
+      _prefs.setBool(LocalStorageKeys.offlineCachePhotos, v);
 
   // ---- thermal print settings ----
   String? get printStyle => _prefs.getString(LocalStorageKeys.printStyle);

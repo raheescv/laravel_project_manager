@@ -128,6 +128,21 @@ if (! function_exists('systemTime')) {
     }
 }
 
+if (! function_exists('appointmentTime')) {
+    /**
+     * Time-of-day in the format the booking scheduler is configured to show.
+     * Unlike systemTime() this omits seconds, which are meaningless on a slot.
+     */
+    function appointmentTime($value)
+    {
+        if (! $value) {
+            return $value;
+        }
+
+        return Carbon::parse($value)->format(config('property_appointment.time_format', 'h:i A'));
+    }
+}
+
 if (! function_exists('systemDateTime')) {
     function systemDateTime($value)
     {

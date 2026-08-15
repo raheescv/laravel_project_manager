@@ -19,7 +19,15 @@ class BranchCubit extends Cubit<BranchState> {
   BranchCubit({this.userBranchId}) : super(const BranchState()) {
     // Apply the persisted (or the user's home) branch immediately so requests
     // made before the branch list returns already carry branch_id.
-    _http.activeBranchId = _storage.branchId ?? userBranchId;
+    //
+    // [lastBranchId] sits in the middle for the launch that has no network: the
+    // offline catalog, the lookups and the queued sales are all keyed by branch,
+    // so resolving a different one than the snapshot was written under reads as
+    // an empty till — no products, no staff, "nothing is stored yet". That is
+    // the likely case whenever the branch was resolved rather than picked (an
+    // account with no home branch falls back to the first branch the server
+    // lists, which [branchId] deliberately does not record).
+    _http.activeBranchId = _storage.branchId ?? _storage.lastBranchId ?? userBranchId;
     _load();
   }
 
@@ -51,9 +59,12 @@ class BranchCubit extends Cubit<BranchState> {
       final rows = await _repo.branches();
       Branch? pick = state.selected;
       if (rows.isNotEmpty) {
-        final targetId = _storage.branchId ?? userBranchId;
+        final targetId = _storage.branchId ?? _storage.lastBranchId ?? userBranchId;
         pick = rows.firstWhere((b) => b.id == targetId, orElse: () => rows.first);
         _http.activeBranchId = pick.id;
+        // Remember what we actually landed on, so the next launch resolves the
+        // same branch with no network to ask.
+        await _storage.setLastBranchId(pick.id);
       }
       emit(state.copyWith(
           status: DataFetchStatus.success, branches: rows, selected: pick));
@@ -74,6 +85,7 @@ class BranchCubit extends Cubit<BranchState> {
     final match = state.branches.where((b) => b.id == homeBranchId);
     if (match.isEmpty) return;
     _http.activeBranchId = match.first.id;
+    await _storage.setLastBranchId(match.first.id);
     emit(state.copyWith(selected: match.first));
   }
 
@@ -82,6 +94,7 @@ class BranchCubit extends Cubit<BranchState> {
     _http.activeBranchId = b.id;
     emit(state.copyWith(selected: b));
     await _storage.setBranchId(b.id);
+    await _storage.setLastBranchId(b.id);
     // Fan out to every branch-scoped screen/cubit so they reload for this branch.
     _branchChanged.add(b.id);
   }

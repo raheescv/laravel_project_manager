@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Property\MaintenanceController;
+use App\Http\Controllers\Property\PropertyAppointmentController;
 use App\Http\Controllers\Property\PropertyBuildingController;
 use App\Http\Controllers\Property\PropertyController;
 use App\Http\Controllers\Property\PropertyGroupController;
@@ -96,6 +97,17 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('import', 'import')->name('import')->can('rent out lease.create');
             });
 
+            // Appointment Scheduler — the Calendly-style self-service bookings.
+            // Named appointment_schedule:: rather than appointment:: so it
+            // cannot be confused with the Sale module's appointment:: routes,
+            // nor with property::sale::booking, which is the pre-agreement
+            // RentOut reservation — three different things, three namespaces.
+            Route::name('appointment_schedule::')->prefix('appointment-schedule')->controller(PropertyAppointmentController::class)->group(function (): void {
+                Route::get('', 'index')->name('index')->can('property appointment.view');
+                Route::get('calendar', 'calendar')->name('calendar')->can('property appointment.calendar');
+                Route::get('calendar/data', 'calendarData')->name('calendar.data')->can('property appointment.calendar');
+            });
+
             Route::controller(RentOutTransactionController::class)->group(function (): void {
                 Route::get('payments', 'payments')->name('payments')->defaults('agreement_type', 'lease')->can('rent out lease.payment');
                 Route::get('services', 'services')->name('services')->defaults('agreement_type', 'lease')->can('rent out service.view');
@@ -134,4 +146,19 @@ Route::middleware('auth')->group(function (): void {
             Route::get('complaint/{id}', 'complaint')->name('complaint')->can('maintenance.view');
         });
     });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUBLIC booking booking — no auth, no session. The tenant is resolved from the
+// token itself (see PropertyAppointmentController::publicPage) rather than trusted
+// from the host, so a link always reads its own tenant's data and nothing else.
+// Rate limited because it is an unauthenticated endpoint that writes.
+// ─────────────────────────────────────────────────────────────────────────────
+Route::middleware('throttle:30,1')->group(function (): void {
+    Route::get('appointment/b/{token}', [PropertyAppointmentController::class, 'publicPage'])->name('property_appointment::public');
+
+    // The page is a Vue app: it loads its slots once from here, so picking a
+    // day or a time costs nothing over the network. Only booking posts back.
+    Route::get('appointment/b/{token}/data', [PropertyAppointmentController::class, 'publicData'])->name('property_appointment::public.data');
+    Route::post('appointment/b/{token}/book', [PropertyAppointmentController::class, 'publicBook'])->name('property_appointment::public.book');
 });

@@ -140,6 +140,7 @@ class OfflineFirstSaleService implements SaleRepository {
     String sortBy = 'date',
     String sortDirection = 'desc',
     bool mineOnly = false,
+    int? createdById,
     int page = 1,
     int perPage = 30,
   }) =>
@@ -152,6 +153,7 @@ class OfflineFirstSaleService implements SaleRepository {
         sortBy: sortBy,
         sortDirection: sortDirection,
         mineOnly: mineOnly,
+        createdById: createdById,
         page: page,
         perPage: perPage,
       );

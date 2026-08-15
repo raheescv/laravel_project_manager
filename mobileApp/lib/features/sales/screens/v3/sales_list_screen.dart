@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
+import 'package:invo/features/sale/logic/stylist_cubit/stylist_cubit.dart';
 import 'package:invo/features/sale/screens/v3/invoice_screen.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
@@ -74,6 +75,12 @@ class _SalesListScreenState extends State<SalesListScreen> {
   Timer? _searchDebounce;
   int? _methodId; // null = all payment methods
   List<PaymentMethod> _methods = [];
+
+  // Staff filter — who rang the sale up (`created_by`). Admin-only: everyone
+  // else already sees nothing but their own sales, so the control would be a
+  // filter with one possible answer.
+  int? _staffId; // null = all staff
+  String _staffName = '';
   String _sortBy = 'date';
   String _sortDir = 'desc';
 
@@ -105,6 +112,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _load();
       _loadMethods();
+      // Warm the staff list so the filter sheet opens instantly. Admin-only,
+      // like the filter itself.
+      if (mounted && _isAdmin) unawaited(context.read<StylistCubit>().loadIfNeeded());
     });
     // The shell keeps this screen alive, so reload the list (and branch-scoped
     // payment methods) when the active branch changes.
@@ -141,7 +151,12 @@ class _SalesListScreenState extends State<SalesListScreen> {
         toDate: _endDate == null ? null : Dates.iso(_endDate!),
         sortBy: _sortBy,
         sortDirection: _sortDir,
+        staffId: _staffId,
       );
+
+  /// Whether this user sees the whole till's sales — and so has anything to
+  /// filter by staff, or any reason to be told who rang a sale up.
+  bool get _isAdmin => context.read<AuthCubit>().user?.isAdmin ?? false;
 
   /// (Re)load from page 1 for the current filters, then re-sync the tablet
   /// detail pane against the new rows.
@@ -204,6 +219,15 @@ class _SalesListScreenState extends State<SalesListScreen> {
   void _setMethod(int? id) {
     if (_methodId == id) return;
     setState(() => _methodId = id);
+    _load();
+  }
+
+  void _setStaff(int? id, String name) {
+    if (_staffId == id) return;
+    setState(() {
+      _staffId = id;
+      _staffName = id == null ? '' : name;
+    });
     _load();
   }
 
@@ -280,6 +304,8 @@ class _SalesListScreenState extends State<SalesListScreen> {
   String get _sortLabel => _sortOptions
       .firstWhere((o) => o.by == _sortBy && o.dir == _sortDir, orElse: () => _sortOptions.first)
       .label;
+
+  String get _staffLabel => _staffId == null ? 'All staff' : _staffName;
 
   @override
   Widget build(BuildContext context) {
@@ -478,6 +504,13 @@ class _SalesListScreenState extends State<SalesListScreen> {
                 icon: Icons.swap_vert_rounded,
                 trailingIcon: Icons.keyboard_arrow_down_rounded,
                 onTap: _openSort),
+            if (_isAdmin)
+              TabletFilterChip(
+                  label: _staffLabel,
+                  active: _staffId != null,
+                  icon: Icons.badge_outlined,
+                  trailingIcon: Icons.keyboard_arrow_down_rounded,
+                  onTap: _openStaffSheet),
           ],
         ),
       ],
@@ -544,6 +577,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     final sub = [
       d.who,
       if (d.date.isNotEmpty) d.date,
+      if (_isAdmin && d.staff.isNotEmpty) d.staff,
       if (d.method.isNotEmpty) d.method,
       if (d.offlineRef.isNotEmpty) d.offlineRef,
     ].join(' · ');
@@ -668,6 +702,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     String offlineRef,
     num amount,
     String who,
+    String staff,
     String status,
     String date,
     String method,
@@ -696,6 +731,10 @@ class _SalesListScreenState extends State<SalesListScreen> {
       offlineRef: offlineRef == invoice ? '' : offlineRef,
       amount: asNum(summary['paid'] ?? summary['gross_amount'] ?? r['paid'] ?? r['gross_amount'] ?? r['amount']),
       who: asStr(customer['name']).isEmpty ? AppStrings.walkInCustomer : asStr(customer['name']),
+      // Who rang it up. `SaleListResource` sends the name, and a held row carries
+      // the same key — the offline ticket stamps it at capture — so a queued sale
+      // names its cashier exactly as the committed one will.
+      staff: asStr(r['created_by']),
       status: status,
       date: Dates.human(asStr(r['date'])),
       method: asStr(r['payment_methods']),
@@ -757,6 +796,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
                     Flexible(
                       child: Text(
                           '$who${date.isEmpty ? '' : ' · $date'}'
+                          // Only an admin is shown the cashier: everyone else is
+                          // looking at a list of nothing but their own sales.
+                          '${_isAdmin && d.staff.isNotEmpty ? ' · ${d.staff}' : ''}'
                           '${d.offlineRef.isEmpty ? '' : ' · ${d.offlineRef}'}',
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                           style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
@@ -879,8 +921,14 @@ class _SalesListScreenState extends State<SalesListScreen> {
     ]);
   }
 
-  void _openPaymentSheet() {
-    _optionSheet('Payment method', [
+  Future<void> _openPaymentSheet() async {
+    // Retried here because the one load at screen init can have failed — the app
+    // may have started during an outage before the snapshot was readable, and the
+    // shell keeps this screen alive, so nothing would ask again for the rest of
+    // the session. Offline this is a local read of the cached list.
+    if (_methods.isEmpty) await _loadMethods();
+    if (!mounted) return;
+    unawaited(_optionSheet('Payment method', [
       _optTile(
         label: 'All methods',
         icon: Icons.account_balance_wallet_outlined,
@@ -900,7 +948,40 @@ class _SalesListScreenState extends State<SalesListScreen> {
             _setMethod(m.id);
           },
         ),
-    ]);
+    ]));
+  }
+
+  /// Who rang the sale up. Fed by [StylistCubit], which is the same staff list
+  /// the New Sale picker uses and is served from the offline snapshot when there
+  /// is no network — so the filter keeps working on a till that has dropped off.
+  Future<void> _openStaffSheet() async {
+    final staff = context.read<StylistCubit>();
+    // Served from the offline snapshot when there is no network, so this is a
+    // local read on a till that has provisioned — but it can still be the first
+    // call of the session, and the sheet is built from a fixed list of tiles.
+    await staff.loadIfNeeded();
+    if (!mounted) return;
+    unawaited(_optionSheet('Staff', [
+      _optTile(
+        label: 'All staff',
+        icon: Icons.groups_outlined,
+        active: _staffId == null,
+        onTap: () {
+          Navigator.pop(context);
+          _setStaff(null, '');
+        },
+      ),
+      for (final e in staff.all)
+        _optTile(
+          label: e.name,
+          icon: Icons.person_outline,
+          active: _staffId == e.id,
+          onTap: () {
+            Navigator.pop(context);
+            _setStaff(e.id, e.name);
+          },
+        ),
+    ]));
   }
 
   void _openSort() {

@@ -267,7 +267,7 @@ class User extends Authenticatable implements AuditableContracts
                 return $query->where('type', $value);
             })
             ->active()
-            ->limit(10)
+            // ->limit(10)
             ->get(['name', 'email', 'mobile', 'id'])->toArray();
         $return['items'] = $self;
 

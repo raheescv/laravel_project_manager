@@ -3,7 +3,7 @@
         $selectedCount = 0;
         $totalCount = 0;
         $groupedPermissions = [];
-        foreach ($permissions as $module => $moduleActions) {
+        foreach ($allPermissions as $module => $moduleActions) {
             $totalCount += count($moduleActions);
             $selectedModulePermissions = [];
             foreach ($moduleActions as $key => $action) {
@@ -34,15 +34,26 @@
                     </button>
                 </div>
                 <div class="col-md-6">
-                    <div class="row g-2 align-items-center justify-content-end">
-                        <div class="col">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-white border-secondary-subtle">
-                                    <i class="fa fa-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="search" autofocus placeholder="Search permissions..."
-                                    class="form-control form-control-sm border-secondary-subtle shadow-sm" autocomplete="off">
-                            </div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-md-end">
+                        {{-- Filter: hide everything this role already has, so only the gaps remain --}}
+                        <label for="onlyNotGranted"
+                            class="form-check form-switch d-inline-flex align-items-center gap-2 mb-0 px-3 py-1 rounded-pill border user-select-none
+                                {{ $only_not_granted ? 'bg-warning bg-opacity-10 border-warning border-opacity-50' : 'bg-white border-secondary-subtle' }}"
+                            style="cursor: pointer; transition: all 0.15s ease;"
+                            title="Show only the permissions this role has NOT been given yet">
+                            <input type="checkbox" id="onlyNotGranted" wire:model.live="only_not_granted"
+                                class="form-check-input mt-0 shadow-sm" style="cursor: pointer;">
+                            <span class="small fw-medium text-nowrap {{ $only_not_granted ? 'text-warning-emphasis' : 'text-muted' }}">
+                                <i class="fa fa-filter me-1"></i> Show only not-granted permissions
+                            </span>
+                            <span class="badge rounded-pill {{ $only_not_granted ? 'bg-warning text-dark' : 'bg-secondary bg-opacity-25 text-body' }}">{{ $not_granted_count }}</span>
+                        </label>
+                        <div class="input-group input-group-sm" style="max-width: 260px;">
+                            <span class="input-group-text bg-white border-secondary-subtle">
+                                <i class="fa fa-search"></i>
+                            </span>
+                            <input type="text" wire:model.live="search" autofocus placeholder="Search permissions..."
+                                class="form-control form-control-sm border-secondary-subtle shadow-sm" autocomplete="off">
                         </div>
                     </div>
                 </div>
@@ -54,7 +65,7 @@
                     <button class="nav-link active d-flex align-items-center gap-2 fw-semibold" id="tab-selection" data-bs-toggle="tab"
                         data-bs-target="#pane-selection" type="button" role="tab" aria-controls="pane-selection" aria-selected="true">
                         <i class="fa fa-th-list text-primary"></i>
-                        Permission Selection
+                        {{ $only_not_granted ? 'Not Granted Yet' : 'Permission Selection' }}
                         <span class="badge bg-primary rounded-pill">{{ count($permissions) }}</span>
                     </button>
                 </li>
@@ -93,7 +104,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($permissions as $module => $actions)
+                                    @forelse ($permissions as $module => $actions)
                                         <tr>
                                             <td class="ps-3 text-nowrap">
                                                 <div class="d-flex align-items-center gap-2">
@@ -123,7 +134,25 @@
                                                 </div>
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted py-5">
+                                                @if ($only_not_granted)
+                                                    <i class="fa fa-check-circle fa-3x mb-3 opacity-25 d-block text-success"></i>
+                                                    <h6 class="text-muted">Nothing left to grant</h6>
+                                                    <p class="small mb-0">
+                                                        This role already has every permission
+                                                        {{ $search ? 'matching this search' : 'available here' }}.
+                                                        Turn off <strong>Show only not-granted permissions</strong> to see them.
+                                                    </p>
+                                                @else
+                                                    <i class="fa fa-search fa-3x mb-3 opacity-25 d-block"></i>
+                                                    <h6 class="text-muted">No permissions found</h6>
+                                                    <p class="small mb-0">Try a different search term.</p>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>

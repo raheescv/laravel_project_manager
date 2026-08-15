@@ -21,6 +21,7 @@ import 'package:invo/features/stock_check/domain/models/stock_check_models.dart'
 import 'package:invo/features/stock_check/screens/v3/new_stock_check_screen.dart';
 import 'package:invo/features/stock_check/screens/v3/stock_check_count_screen.dart';
 import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
+import 'package:invo/features/settings/screens/v3/offline_data_screen.dart';
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
@@ -157,6 +158,9 @@ GoRouter createRouter(AuthCubit auth) {
       GoRoute(
           path: Routes.permissions,
           builder: (_, __) => const TabletRailScaffold(child: PermissionsScreen())),
+      GoRoute(
+          path: Routes.offlineData,
+          builder: (_, __) => const TabletRailScaffold(child: OfflineDataScreen())),
     ],
   );
 }

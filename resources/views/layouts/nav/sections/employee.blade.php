@@ -1,7 +1,7 @@
 @if (auth()->user()->can('employee.view'))
     <li class="nav-item has-sub">
         <a href="#"
-            class="mininav-toggle nav-link {{ request()->is(['users/employee', 'users/employee/attendance', 'users/employee/commission']) ? 'active' : '' }}">
+            class="mininav-toggle nav-link {{ request()->is(['users/employee','users/employee/view/*', 'users/employee/attendance', 'users/employee/commission']) ? 'active' : '' }}">
             <i class="fa fa-users fs-5 me-2"></i>
             <span class="nav-label mininav-content ms-1 collapse show">Employee</span>
         </a>
@@ -10,7 +10,7 @@
             @can('employee.view')
                 <li class="nav-item">
                     <a href="{{ route('users::employee::index') }}"
-                        class="nav-link {{ request()->is(['users/employee']) ? 'active' : '' }}">List</a>
+                        class="nav-link {{ request()->is(['users/employee','users/employee/view/*']) ? 'active' : '' }}">List</a>
                 </li>
             @endcan
             @can('employee commission.view')

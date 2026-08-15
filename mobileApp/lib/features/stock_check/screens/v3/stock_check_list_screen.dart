@@ -294,21 +294,26 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
         const minTile = 420.0;
         final width = constraints.crossAxisExtent;
         final cols = ((width + gap) / (minTile + gap)).floor().clamp(1, 3);
-        final colW = (width - gap * (cols - 1)) / cols;
         final rowCount = (_rows.length + cols - 1) ~/ cols;
         return SliverList.separated(
           itemCount: rowCount,
           separatorBuilder: (_, __) => const SizedBox(height: gap),
           itemBuilder: (_, r) {
             final start = r * cols;
+            // Expanded, not a computed SizedBox width: the columns then divide
+            // whatever the row is actually given, so a stale or unpadded
+            // crossAxisExtent can make the cards narrower but can never
+            // overflow. The trailing slots on a short last row stay empty so
+            // the cards keep their column alignment.
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 for (var i = 0; i < cols; i++) ...[
                   if (i > 0) const SizedBox(width: gap),
-                  SizedBox(
-                    width: colW,
-                    child: start + i < _rows.length ? _card(_rows[start + i]) : null,
+                  Expanded(
+                    child: start + i < _rows.length
+                        ? _card(_rows[start + i])
+                        : const SizedBox.shrink(),
                   ),
                 ],
               ],
@@ -332,11 +337,24 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         children: [
-          for (final (label, s) in statuses) ...[
-            TabletFilterChip(label: label, active: _status == s, onTap: () => _setStatus(s)),
-            const SizedBox(width: 7),
-          ],
-          const Spacer(),
+          // The chips take what is left and scroll if they outgrow it. Fixed
+          // widths either side of a Spacer overflow the moment a status is
+          // added — which is exactly what adding "Cancelled" did on a 768pt
+          // tablet.
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final (label, s) in statuses) ...[
+                    TabletFilterChip(label: label, active: _status == s, onTap: () => _setStatus(s)),
+                    const SizedBox(width: 7),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           SizedBox(width: 320, child: _searchBox()),
         ],
       ),

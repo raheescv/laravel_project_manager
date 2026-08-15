@@ -28,6 +28,12 @@ class Permissions extends Component
 
     public $search = '';
 
+    /** Show only the abilities this role has NOT been granted yet. */
+    public $only_not_granted = false;
+
+    /** How many abilities in the current view are still not granted. */
+    public $not_granted_count = 0;
+
     public function mount($role_id)
     {
         $this->role_id = $role_id;
@@ -35,6 +41,11 @@ class Permissions extends Component
         $assignedIds = $this->role->permissions()->pluck('id')->toArray();
         $this->assigned = $assignedIds;
         $this->selected = array_fill_keys($assignedIds, true);
+    }
+
+    public function updatedOnlyNotGranted()
+    {
+        $this->select_all = false;
     }
 
     public function moduleSelection()
@@ -60,7 +71,11 @@ class Permissions extends Component
         $visibleIds = collect($this->permissions)->flatMap(fn ($actions) => array_keys($actions))->all();
 
         if (! $this->select_all) {
-            $this->selected = [];
+            // Only drop what is on screen — anything hidden by the search or the
+            // "Not granted yet" filter must keep its state or save() would revoke it.
+            foreach ($visibleIds as $permissionId) {
+                unset($this->selected[$permissionId]);
+            }
             $this->module = [];
         } else {
             foreach ($visibleIds as $permissionId) {
@@ -90,7 +105,8 @@ class Permissions extends Component
 
     public function moduleSelect($module)
     {
-        $modulePermission = Permission::where('name', 'LIKE', "%$module.%")->pluck('id')->toArray();
+        // Visible ids only, so a filtered view never revokes an ability it is hiding.
+        $modulePermission = array_keys($this->permissions[$module] ?? []);
         if (! $this->module[$module]) {
             foreach ($modulePermission as $permissionId) {
                 unset($this->selected[$permissionId]);
@@ -127,9 +143,7 @@ class Permissions extends Component
     {
         $activeModule = Configuration::where('key', 'active_module')->value('value');
 
-        $list = Permission::when($this->search, function ($query, $value) {
-            $query->where('name', 'LIKE', '%'.trim($value).'%');
-        })->when($activeModule, function ($query) use ($activeModule) {
+        $scoped = Permission::when($activeModule, function ($query) use ($activeModule) {
             [$allowedGroups, $allowedExact] = $this->resolveAllowedPermissions($activeModule);
 
             $query->where(function ($q) use ($allowedGroups, $allowedExact) {
@@ -142,14 +156,40 @@ class Permissions extends Component
             });
         })->pluck('name', 'id');
 
-        $this->permissions = [];
-        foreach ($list as $key => $name) {
-            [$module, $action] = explode('.', $name, 2);
-            $this->permissions[$module][$key] = $action;
+        $list = $scoped;
+
+        if ($this->search) {
+            $needle = mb_strtolower(trim($this->search));
+            $list = $list->filter(fn ($name) => str_contains(mb_strtolower($name), $needle));
         }
+
+        // Counted before the toggle is applied, so the badge still reads "N left" once filtering is on.
+        $this->not_granted_count = $list->keys()->diff($this->assigned)->count();
+
+        if ($this->only_not_granted) {
+            $list = $list->except($this->assigned);
+        }
+
+        $this->permissions = $this->group($list);
         $this->moduleSelection();
 
-        return view('livewire.settings.role.permissions');
+        // The summary badge and the "Selected Permissions" tab describe the whole role,
+        // never just whatever the search or the not-granted filter happens to show.
+        return view('livewire.settings.role.permissions', [
+            'allPermissions' => $this->group($scoped),
+        ]);
+    }
+
+    /** Turn an id => 'module.action' list into ['module' => [id => 'action']]. */
+    private function group($list): array
+    {
+        $grouped = [];
+        foreach ($list as $key => $name) {
+            [$module, $action] = explode('.', $name, 2);
+            $grouped[$module][$key] = $action;
+        }
+
+        return $grouped;
     }
 
     private function resolveAllowedPermissions(string $activeModule): array

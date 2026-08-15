@@ -30,7 +30,8 @@ class Metric extends Equatable {
 }
 
 class DashboardData extends Equatable {
-  const DashboardData({required this.today, required this.payments, required this.business});
+  const DashboardData(
+      {required this.today, required this.payments, required this.business, this.date = ''});
   final List<Metric> today;
 
   /// Today's collections grouped by payment method (Cash / Card / Bank / …),
@@ -38,10 +39,17 @@ class DashboardData extends Equatable {
   final List<Metric> payments;
   final List<Metric> business;
 
+  /// `yyyy-MM-dd` — the business day every figure here is anchored on: the
+  /// branch's open day-session date, or the calendar date when no session is
+  /// open (App\Actions\V1\Dashboard\GetAction). The client scopes the blocks it
+  /// fetches separately — the top performers list — to this same day.
+  final String date;
+
   factory DashboardData.fromJson(Map<String, dynamic> j) => DashboardData(
         today: _list(j['todaySummary']),
         payments: _list(j['paymentSplit']),
         business: _list(j['bussinessOverview']),
+        date: asStr(j['date']),
       );
 
   static List<Metric> _list(dynamic v) => ((v as List?) ?? const [])
@@ -54,6 +62,7 @@ class DashboardData extends Equatable {
         today,
         payments,
         business,
+        date,
       ];
 }
 

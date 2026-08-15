@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:invo/features/auth/domain/repository/auth_repository.dart';
@@ -6,6 +8,8 @@ import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
+import 'package:invo/shared/domain/services/catalog_snapshot_service.dart';
 import 'package:invo/shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
@@ -191,6 +195,93 @@ void main() {
     });
   });
 
+  group('handing a locked till to the next cashier', () {
+    /// Signs Sara in, then Omar, leaving the roster holding both.
+    Future<void> bothCashiersHaveUsedTheTill() async {
+      await auth.login('1234');
+      await auth.logout();
+      repo
+        ..pinAccepted = '5678'
+        ..userId = '8'
+        ..userName = 'Omar';
+      await auth.login('5678');
+      await auth.logout();
+      repo
+        ..pinAccepted = '1234'
+        ..userId = '7'
+        ..userName = 'Sara';
+    }
+
+    test('another cashier’s PIN never resumes the locked cashier’s session', () async {
+      await bothCashiersHaveUsedTheTill();
+      // Sara signs in with no network, so the last credential this device wrote
+      // online is still Omar's. That mismatch is what used to hand Omar's PIN
+      // Sara's dashboard — her permissions, her name on his sales.
+      goOffline();
+      await auth.login('1234');
+      await auth.lock();
+
+      final ok = await auth.unlock('5678');
+
+      expect(ok, isTrue);
+      expect(auth.user?.name, 'Omar', reason: 'Omar typed his PIN, so Omar is who gets in');
+      expect(auth.status, AuthStatus.signedIn);
+    });
+
+    test('the cashier’s own PIN resumes their session offline', () async {
+      await bothCashiersHaveUsedTheTill();
+      goOffline();
+      await auth.login('1234');
+      await auth.lock();
+
+      expect(await auth.unlock('1234'), isTrue);
+      expect(auth.user?.name, 'Sara');
+    });
+
+    test('a PIN belonging to nobody leaves the till locked', () async {
+      await auth.login('1234');
+      await auth.lock();
+      goOffline();
+
+      expect(await auth.unlock('0000'), isFalse);
+      expect(auth.status, AuthStatus.locked);
+      expect(auth.user?.name, 'Sara');
+    });
+
+    test('an offline sign-in leaves the saved credential on that user', () async {
+      await bothCashiersHaveUsedTheTill();
+      goOffline();
+
+      await auth.login('1234');
+
+      final saved = jsonDecode(
+          (await serviceLocator<LocalStorageService>().readBiometric())!) as Map<String, dynamic>;
+      expect(saved['user_id'], '7');
+      expect(saved['pin'], '1234');
+    });
+  });
+
+  group('a PIN changed from the app', () {
+    test('stops opening a session offline once it is retired', () async {
+      await auth.login('1234');
+
+      await auth.applyChangedPin('4321');
+
+      expect(await accounts.byPin('1234'), isNull, reason: 'the old PIN is retired');
+      expect((await accounts.byPin('4321'))?.name, 'Sara');
+    });
+
+    test('a credential user keeps signing in with their password', () async {
+      await auth.loginWithCredential('sara@shop.test', 'secret');
+
+      await auth.applyChangedPin('4321');
+
+      // The blob drives both the biometric replay and the login screen's default
+      // mode — a PIN change must not switch either.
+      expect(await auth.lastLoginMode(), 'cred');
+    });
+  });
+
   group('what the fallback must never do', () {
     test('a server that REFUSED the PIN is never second-guessed locally', () async {
       await auth.login('1234');
@@ -210,6 +301,32 @@ void main() {
       await auth.logout();
 
       expect(await accounts.all(), hasLength(1));
+    });
+
+    test('signing out keeps the catalog — it is the shop’s, not the cashier’s', () async {
+      final snapshot = CatalogSnapshotService();
+      serviceLocator.registerSingleton<CatalogSnapshotRepository>(snapshot);
+      await snapshot.replaceLookups(
+          branchId: 1, kind: SnapshotLookup.employee, rows: [{'id': 9, 'name': 'Maya'}]);
+      await auth.login('1234');
+
+      await auth.logout();
+
+      // Wiping here handed the next cashier an empty till — no products, no
+      // staff, no categories — at the one moment offline selling exists for.
+      expect(await snapshot.lookupCount(branchId: 1, kind: SnapshotLookup.employee), 1);
+    });
+
+    test('repointing at another business drops that shop’s catalog too', () async {
+      final snapshot = CatalogSnapshotService();
+      serviceLocator.registerSingleton<CatalogSnapshotRepository>(snapshot);
+      await snapshot.replaceLookups(
+          branchId: 1, kind: SnapshotLookup.employee, rows: [{'id': 9, 'name': 'Maya'}]);
+      await auth.login('1234');
+
+      await auth.updateConnection(baseUrl: 'http://other-shop.test', tenant: 'other');
+
+      expect(await snapshot.lookupCount(branchId: 1, kind: SnapshotLookup.employee), 0);
     });
 
     test('repointing the device at another business forgets everyone', () async {

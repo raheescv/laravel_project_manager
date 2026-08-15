@@ -58,7 +58,11 @@ at the **LAN IP** of the machine running Valet.
 
 ```bash
 # Android — debug APK (quick device sideload)
+flutter devices
 flutter build apk --dart-define-from-file=env.json
+flutter run -d 1A291FDEE002SK 2>&1 --dart-define-from-file=env.json
+
+
 flutter build apk --dart-define-from-file=env.json --target-platform android-arm64
 
 # Android — release APK (signed, for distribution)

@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Appointment Calendar Console — 3 Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<style>
+  :root{
+    --p:#1D4ED8; --p-rgb:29,78,216;
+    --ok:#0F9D58; --ok-rgb:15,157,88;
+    --warn:#B45309; --warn-rgb:180,83,9;
+    --bad:#DC2626; --bad-rgb:220,38,38;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:0 0 50px; font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+        background:#e9edf3; color:#0d1424; -webkit-font-smoothing:antialiased; }
+  body[data-t="dark"]{ background:#0d1117; color:#e9edf4; }
+
+  .bar{ position:sticky; top:0; z-index:80; display:flex; gap:7px; justify-content:center; align-items:center; flex-wrap:wrap;
+        padding:11px 12px; background:rgba(255,255,255,.88); backdrop-filter:blur(12px); border-bottom:1px solid #dce2ea; }
+  body[data-t="dark"] .bar{ background:rgba(20,25,32,.9); border-color:#2b323b; }
+  .bar button{ border:1px solid #cbd5e1; background:#fff; color:#334155; padding:7px 14px; border-radius:9px;
+        font-weight:750; font-size:12px; cursor:pointer; font-family:inherit; }
+  body[data-t="dark"] .bar button{ background:#242a33; color:#c7d0dc; border-color:#39414c; }
+  .bar button.on{ background:var(--p); color:#fff; border-color:var(--p); }
+  .bar .sep{ width:1px; height:22px; background:#cbd5e1; margin:0 5px; }
+  body[data-t="dark"] .bar .sep{ background:#39414c; }
+  .sw{ width:23px; height:23px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+  .sw.on{ border-color:#0d1424; box-shadow:0 0 0 2px #fff inset; }
+  body[data-t="dark"] .sw.on{ border-color:#fff; box-shadow:0 0 0 2px #16202c inset; }
+
+  .stage{ max-width:1240px; margin:22px auto; padding:0 16px; }
+  .variant{ display:none; } .variant.show{ display:block; }
+  .vhead{ margin:0 0 13px; }
+  .vhead .tag{ display:inline-flex; background:var(--p); color:#fff; padding:4px 11px; border-radius:999px;
+        font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .vhead h2{ margin:9px 0 3px; font-size:19px; font-weight:800; letter-spacing:-.03em; }
+  .vhead p{ margin:0; font-size:12.5px; color:#64748b; max-width:80ch; line-height:1.55; }
+  body[data-t="dark"] .vhead p{ color:#94a3b8; }
+  .hint{ margin-top:9px; font-size:11.5px; color:#94a3b8; }
+
+  .frame{ height:min(80vh,820px); overflow:hidden; border-radius:16px; border:1px solid #d9e0e9;
+          box-shadow:0 26px 60px -34px rgba(13,20,36,.5); position:relative; }
+  body[data-t="dark"] .frame{ border-color:#2c333e; }
+  .stage.phone .frame{ width:420px; margin:0 auto; height:min(80vh,780px); }
+
+  /* ── shared premium token layer (mirrors .apx in the app) ───────────── */
+  .cx{
+    --brand:var(--p); --brand-rgb:var(--p-rgb);
+    --brand-600:color-mix(in srgb,var(--p),#000 12%);
+    --hero-1:color-mix(in srgb,var(--p),#000 46%);
+    --hero-2:color-mix(in srgb,var(--p),#000 12%);
+    --surface:#fff; --surface-2:#f6f8fb; --surface-3:#eceff4;
+    --border:#e4e8ee; --border-strong:#d3d9e1;
+    --text:#0f1622; --text-2:#4a5568; --text-3:#8592a6;
+    --success:var(--ok); --success-rgb:var(--ok-rgb);
+    --danger:var(--bad); --danger-rgb:var(--bad-rgb);
+    --warning:var(--warn); --warning-rgb:var(--warn-rgb);
+    --shadow-lg:0 18px 42px -18px rgba(16,24,40,.3);
+    height:100%; display:flex; font-size:12.5px; color:var(--text); background:var(--surface-2);
+  }
+  body[data-t="dark"] .cx{
+    --surface:#1c222a; --surface-2:#161b22; --surface-3:#232a33;
+    --border:#2c333d; --border-strong:#3a434f;
+    --text:#e9edf4; --text-2:#b3bcc9; --text-3:#7e8a9b;
+    --shadow-lg:0 18px 42px -18px rgba(0,0,0,.7);
+  }
+  .cx .chip{ display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:800; letter-spacing:.06em;
+        text-transform:uppercase; padding:4px 9px; border-radius:999px; line-height:1; }
+  .cx .chip .dot{ width:6px; height:6px; border-radius:50%; }
+  .cx .c-scheduled{ background:rgba(var(--brand-rgb),.12); color:var(--brand); } .cx .c-scheduled .dot{ background:var(--brand); }
+  .cx .c-completed{ background:rgba(var(--success-rgb),.12); color:var(--success); } .cx .c-completed .dot{ background:var(--success); }
+  .cx .c-awaiting{ background:rgba(var(--warning-rgb),.14); color:var(--warning); } .cx .c-awaiting .dot{ background:var(--warning); }
+  .cx .c-no_show{ background:rgba(var(--danger-rgb),.12); color:var(--danger); } .cx .c-no_show .dot{ background:var(--danger); }
+  .cx .c-cancelled{ background:var(--surface-3); color:var(--text-3); } .cx .c-cancelled .dot{ background:var(--text-3); }
+  .cx .btn{ display:inline-flex; align-items:center; justify-content:center; gap:7px; font-family:inherit; cursor:pointer;
+        font-size:11.5px; font-weight:700; padding:8px 13px; border-radius:9px; border:1px solid var(--border-strong);
+        background:var(--surface); color:var(--text-2); white-space:nowrap; }
+  .cx .btn:hover{ background:var(--surface-3); color:var(--text); }
+  .cx .btn.pri{ background:var(--brand); border-color:var(--brand); color:#fff; box-shadow:0 8px 18px -10px rgba(var(--brand-rgb),.9); }
+  .cx .btn.pri:hover{ background:var(--brand-600); color:#fff; }
+  .cx .btn.block{ width:100%; }
+  .cx .av{ width:24px; height:24px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:9px;
+        font-weight:800; flex:none; }
+  .cx .kv{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px dashed var(--border); font-size:12px; }
+  .cx .kv:last-child{ border-bottom:0; }
+  .cx .kv .k{ color:var(--text-3); flex:none; } .cx .kv .v{ font-weight:700; text-align:end; }
+  .cx .sect{ font-size:9.5px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; color:var(--text-3); }
+
+  /* ── FullCalendar skin shared by all three samples ──────────────────── */
+  .cx .fc{
+    --fc-page-bg-color:var(--surface); --fc-border-color:var(--border);
+    --fc-neutral-bg-color:var(--surface-2); --fc-neutral-text-color:var(--text-3);
+    --fc-today-bg-color:rgba(var(--brand-rgb),.07); --fc-highlight-color:rgba(var(--brand-rgb),.14);
+    --fc-now-indicator-color:var(--danger);
+    --fc-event-bg-color:var(--brand); --fc-event-border-color:var(--brand); --fc-event-text-color:#fff;
+    --fc-small-font-size:10.5px; font-size:12px; color:var(--text); height:100%;
+  }
+  .cx .fc .fc-toolbar.fc-header-toolbar{ display:none; }          /* every sample drives its own toolbar */
+  .cx .fc-theme-standard td, .cx .fc-theme-standard th, .cx .fc-theme-standard .fc-scrollgrid{ border-color:var(--border); }
+  .cx .fc .fc-col-header-cell{ background:var(--surface-2); }
+  .cx .fc .fc-col-header-cell-cushion{ padding:9px 6px; font-size:10px; font-weight:800; letter-spacing:.1em;
+        text-transform:uppercase; color:var(--text-3); text-decoration:none; }
+  .cx .fc .fc-day-today .fc-col-header-cell-cushion{ color:var(--brand); }
+  .cx .fc .fc-daygrid-day-number{ padding:6px 8px; font-size:11.5px; font-weight:700; color:var(--text-2); text-decoration:none; }
+  .cx .fc .fc-day-today .fc-daygrid-day-number{ color:var(--brand); font-weight:800; }
+  .cx .fc .fc-timegrid-slot{ height:2.25em; }
+  .cx .fc .fc-timegrid-slot-label-cushion, .cx .fc .fc-timegrid-axis-cushion{ font-size:10px; font-weight:700; color:var(--text-3); }
+  .cx .fc .fc-event{ border:0; border-radius:7px; padding:2px 6px; font-size:11px; font-weight:650; cursor:pointer;
+        box-shadow:0 2px 6px -3px rgba(16,24,40,.45); }
+  .cx .fc .fc-event:hover{ filter:brightness(1.07); }
+  .cx .fc .fc-event.picked{ outline:2px solid var(--text); outline-offset:1px; }
+  .cx .fc .fc-list{ border-color:var(--border); }
+  .cx .fc .fc-list-day-cushion{ background:var(--surface-2); font-size:10.5px; font-weight:800; letter-spacing:.08em;
+        text-transform:uppercase; color:var(--text-3); }
+  .cx .fc .fc-list-event:hover td{ background:var(--surface-2); }
+  .cx .fc .fc-list-event-title a{ color:var(--text); text-decoration:none; font-weight:650; }
+  .cx .ev-scheduled{ background:var(--brand)!important; color:#fff!important; }
+  .cx .ev-completed{ background:var(--success)!important; color:#fff!important; }
+  .cx .ev-cancelled{ background:var(--text-3)!important; color:#fff!important; }
+  .cx .ev-no_show{ background:var(--danger)!important; color:#fff!important; }
+  .cx .ev-awaiting{ background:var(--warning)!important; color:#fff!important; }
+
+  /* shared toolbar bits */
+  .cx .seg{ display:inline-flex; background:var(--surface-3); border-radius:10px; padding:3px; gap:2px; }
+  .cx .seg button{ border:0; background:none; font-family:inherit; font-size:11px; font-weight:750; color:var(--text-3);
+        padding:6px 11px; border-radius:8px; cursor:pointer; }
+  .cx .seg button.on{ background:var(--surface); color:var(--text); box-shadow:0 1px 3px rgba(16,24,40,.14); }
+  .cx .nav{ display:inline-flex; gap:4px; }
+  .cx .nav button{ width:30px; height:30px; border-radius:9px; border:1px solid var(--border-strong); background:var(--surface);
+        color:var(--text-2); cursor:pointer; }
+  .cx .title{ font-size:14.5px; font-weight:800; letter-spacing:-.025em; }
+
+/* ══════════════════════════════════════════════════════════════
+   A — COMMAND RAIL   filters rail + slide-in detail drawer
+   ══════════════════════════════════════════════════════════════ */
+.A .rail{ width:252px; flex:none; background:var(--surface); border-inline-end:1px solid var(--border); display:flex; flex-direction:column; }
+.A .rail .top{ padding:14px 15px; border-bottom:1px solid var(--border); }
+.A .rail .top .t{ font-size:14px; font-weight:800; letter-spacing:-.025em; }
+.A .rail .top .s{ font-size:10.5px; color:var(--text-3); margin-top:2px; }
+.A .rail .scroll{ flex:1; overflow:auto; padding:13px 12px; }
+.A .rail .grp{ margin-bottom:16px; }
+.A .rail .grp .sect{ margin-bottom:8px; padding-inline-start:3px; }
+.A .frow{ display:flex; align-items:center; gap:9px; width:100%; text-align:start; font-family:inherit; cursor:pointer;
+      padding:7px 9px; border-radius:9px; border:1px solid transparent; background:none; color:var(--text-2); font-size:12px; }
+.A .frow:hover{ background:var(--surface-2); }
+.A .frow.on{ background:rgba(var(--brand-rgb),.10); border-color:rgba(var(--brand-rgb),.24); color:var(--text); font-weight:700; }
+.A .frow .n{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.A .frow .c{ font-size:10px; font-weight:800; color:var(--text-3); background:var(--surface-3); padding:2px 7px; border-radius:999px; }
+.A .rail .legend{ border-top:1px solid var(--border); padding:11px 14px; display:grid; gap:6px; font-size:10.5px; color:var(--text-3); }
+.A .rail .legend span{ display:flex; align-items:center; gap:7px; }
+.A .rail .legend i{ width:10px; height:10px; border-radius:3px; }
+.A .main{ flex:1; min-width:0; display:flex; flex-direction:column; background:var(--surface); }
+.A .tbar{ display:flex; align-items:center; gap:11px; padding:11px 15px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.A .tbar .right{ margin-inline-start:auto; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.A .cal{ flex:1; min-height:0; padding:10px 12px 12px; }
+.A .drawer{ width:330px; flex:none; background:var(--surface); border-inline-start:1px solid var(--border);
+      display:flex; flex-direction:column; transform:translateX(100%); transition:transform .22s ease; }
+[dir="rtl"] .A .drawer{ transform:translateX(-100%); }
+.A .drawer.open{ transform:none; }
+.A .drawer.closed{ display:none; }
+.A .dhead{ padding:16px; color:#fff; background:linear-gradient(140deg,var(--hero-1),var(--hero-2)); }
+.A .dhead .r{ font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; opacity:.76; }
+.A .dhead .n{ font-size:18px; font-weight:800; letter-spacing:-.028em; margin-top:5px; line-height:1.2; }
+.A .dhead .w{ font-size:12px; opacity:.86; margin-top:6px; }
+.A .dhead .x{ float:inline-end; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.26); color:#fff;
+      width:26px; height:26px; border-radius:8px; cursor:pointer; }
+.A .dbody{ flex:1; overflow:auto; padding:14px 16px; }
+.A .dfoot{ padding:13px 16px; border-top:1px solid var(--border); display:grid; gap:8px; }
+.A .mobtn{ display:none; }
+.stage.phone .A .rail{ position:absolute; inset:0 auto 0 0; z-index:20; transform:translateX(-100%); transition:transform .2s ease; box-shadow:var(--shadow-lg); }
+.stage.phone .A .rail.open{ transform:none; }
+.stage.phone .A .drawer{ position:absolute; inset:auto 0 0 0; width:auto; height:78%; border-radius:18px 18px 0 0;
+      border:1px solid var(--border); transform:translateY(100%); z-index:30; }
+.stage.phone .A .drawer.open{ transform:none; }
+.stage.phone .A .mobtn{ display:inline-flex; }
+
+/* ══════════════════════════════════════════════════════════════
+   B — GLASS STUDIO   full-bleed calendar + anchored event popover
+   ══════════════════════════════════════════════════════════════ */
+.B{ position:relative; display:block; background:var(--surface); }
+.B .sheet{ position:absolute; inset:0; display:flex; flex-direction:column; }
+.B .float{ position:absolute; inset-inline:14px; top:12px; z-index:20; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:9px 13px; border-radius:14px; background:color-mix(in srgb,var(--surface),transparent 12%);
+      border:1px solid var(--border); backdrop-filter:blur(14px); box-shadow:var(--shadow-lg); }
+.B .float .right{ margin-inline-start:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.B .fchips{ display:flex; gap:6px; overflow-x:auto; }
+.B .fchip{ display:inline-flex; align-items:center; gap:6px; font-family:inherit; cursor:pointer; white-space:nowrap;
+      font-size:11px; font-weight:700; padding:6px 10px; border-radius:999px; border:1px solid var(--border-strong);
+      background:var(--surface); color:var(--text-2); }
+.B .fchip.on{ background:var(--brand); border-color:var(--brand); color:#fff; }
+.B .cal{ flex:1; min-height:0; padding:66px 12px 12px; }
+.B .pop{ position:absolute; z-index:40; width:296px; border-radius:14px; overflow:hidden; background:var(--surface);
+      border:1px solid var(--border); box-shadow:0 26px 54px -22px rgba(16,24,40,.5); display:none; }
+.B .pop.open{ display:block; }
+.B .pop .ph{ padding:13px 15px; border-bottom:1px solid var(--border); }
+.B .pop .ph .n{ font-size:14.5px; font-weight:800; letter-spacing:-.025em; }
+.B .pop .ph .w{ font-size:11.5px; color:var(--text-2); margin-top:3px; }
+.B .pop .pb{ padding:6px 15px 12px; }
+.B .pop .pf{ padding:11px 15px; border-top:1px solid var(--border); background:var(--surface-2); display:flex; gap:7px; }
+.B .pop .x{ float:inline-end; border:0; background:none; color:var(--text-3); cursor:pointer; font-size:14px; }
+.stage.phone .B .pop{ position:absolute; inset:auto 0 0 0 !important; width:auto; border-radius:18px 18px 0 0; }
+.stage.phone .B .cal{ padding-top:104px; }
+
+/* ══════════════════════════════════════════════════════════════
+   C — SPLIT BOARD   KPI header + calendar + permanent detail panel
+   ══════════════════════════════════════════════════════════════ */
+.C{ flex-direction:column; background:var(--surface-2); }
+.C .head{ display:flex; align-items:center; gap:12px; padding:12px 15px; background:var(--surface);
+      border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.C .head .t{ font-size:15px; font-weight:800; letter-spacing:-.028em; }
+.C .head .s{ font-size:10.5px; color:var(--text-3); }
+.C .kpis{ margin-inline-start:auto; display:flex; gap:8px; flex-wrap:wrap; }
+.C .kpi{ min-width:88px; padding:8px 12px; border-radius:11px; background:var(--surface-2); border:1px solid var(--border); }
+.C .kpi .k{ font-size:9px; font-weight:800; letter-spacing:.11em; text-transform:uppercase; color:var(--text-3); }
+.C .kpi .v{ font-size:17px; font-weight:800; letter-spacing:-.03em; margin-top:2px; }
+.C .kpi.b .v{ color:var(--brand); } .C .kpi.g .v{ color:var(--success); } .C .kpi.a .v{ color:var(--warning); }
+.C .body{ flex:1; min-height:0; display:flex; gap:12px; padding:12px; }
+.C .board{ flex:1; min-width:0; display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.C .tbar{ display:flex; align-items:center; gap:10px; padding:10px 13px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.C .tbar .right{ margin-inline-start:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.C .cal{ flex:1; min-height:0; padding:8px 10px 10px; }
+.C .side{ width:312px; flex:none; display:flex; flex-direction:column; gap:12px; }
+.C .panel{ background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.C .panel .ph{ padding:10px 13px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+.C .panel .pb{ padding:12px 13px; }
+.C .empty{ text-align:center; padding:26px 16px; color:var(--text-3); }
+.C .empty i{ font-size:26px; opacity:.5; } .C .empty p{ font-size:11.5px; margin:9px 0 0; line-height:1.55; }
+.C .detail .top{ padding:14px; color:#fff; background:linear-gradient(140deg,var(--hero-1),var(--hero-2)); }
+.C .detail .top .r{ font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; opacity:.76; }
+.C .detail .top .n{ font-size:16px; font-weight:800; letter-spacing:-.026em; margin-top:4px; }
+.C .detail .top .w{ font-size:11.5px; opacity:.86; margin-top:5px; }
+.C .upnext{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px dashed var(--border); }
+.C .upnext:last-child{ border-bottom:0; }
+.C .upnext .tm{ font-size:11px; font-weight:800; color:var(--text-3); width:58px; flex:none; }
+.C .upnext .nm{ flex:1; min-width:0; font-size:12px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stage.phone .C .body{ flex-direction:column; }
+.stage.phone .C .side{ width:auto; }
+.stage.phone .C .kpis{ width:100%; margin-inline-start:0; }
+</style>
+</head>
+<body data-t="light">
+
+<div class="bar">
+  <button data-v="A" class="on">A · Command Rail</button>
+  <button data-v="B">B · Glass Studio</button>
+  <button data-v="C">C · Split Board</button>
+  <span class="sep"></span>
+  <button id="theme"><i class="fa fa-moon-o"></i> Dark</button>
+  <button id="device"><i class="fa fa-mobile"></i> Phone</button>
+  <button id="dir">RTL</button>
+  <span class="sep"></span>
+  <button class="sw on" data-c="29,78,216" style="background:#1D4ED8" title="Blue"></button>
+  <button class="sw" data-c="13,148,136"   style="background:#0d9488" title="Teal"></button>
+  <button class="sw" data-c="124,58,237"   style="background:#7C3AED" title="Violet"></button>
+</div>
+
+<div class="stage" id="stage">
+
+<!-- ═════════ A ═════════ -->
+<section class="variant show" data-v="A">
+  <div class="vhead">
+    <span class="tag">Sample A</span>
+    <h2>Command Rail</h2>
+    <p>Filters live permanently in a left rail — every salesman with their appointment count, statuses, legend — so the calendar never loses screen to a filter bar. Clicking an event slides a detail drawer in from the right; the calendar stays visible and keeps its selection, so you can walk through several appointments without a modal blocking the grid. On a phone the rail becomes a slide-over and the drawer becomes a bottom sheet.</p>
+    <div class="hint">Click any event in the grid to open the drawer. Try the view segments and the phone toggle.</div>
+  </div>
+  <div class="frame"><div class="cx A">
+    <aside class="rail" id="a-rail">
+      <div class="top">
+        <div class="t">Appointments</div>
+        <div class="s">12 this week · times in Asia/Qatar</div>
+      </div>
+      <div class="scroll">
+        <div class="grp">
+          <div class="sect">Salesmen</div>
+          <button class="frow on"><i class="fa fa-users" style="width:16px"></i><span class="n">All salesmen</span><span class="c">12</span></button>
+          <button class="frow"><span class="av" style="background:#2563eb">RK</span><span class="n">Rashid Kareem</span><span class="c">5</span></button>
+          <button class="frow"><span class="av" style="background:#0d9488">AA</span><span class="n">Aseel Alfayoumi</span><span class="c">4</span></button>
+          <button class="frow"><span class="av" style="background:#b45309">MR</span><span class="n">Mohamad Romih</span><span class="c">3</span></button>
+        </div>
+        <div class="grp">
+          <div class="sect">Status</div>
+          <button class="frow on"><span class="chip c-scheduled"><span class="dot"></span>Confirmed</span><span class="c">7</span></button>
+          <button class="frow"><span class="chip c-completed"><span class="dot"></span>Completed</span><span class="c">3</span></button>
+          <button class="frow"><span class="chip c-awaiting"><span class="dot"></span>Awaiting</span><span class="c">1</span></button>
+          <button class="frow"><span class="chip c-no_show"><span class="dot"></span>No-show</span><span class="c">1</span></button>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--brand)"></i> Confirmed</span>
+        <span><i style="background:var(--success)"></i> Completed</span>
+        <span><i style="background:var(--text-3)"></i> Cancelled</span>
+        <span><i style="background:var(--danger)"></i> No-show</span>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="tbar">
+        <button class="btn mobtn" onclick="document.getElementById('a-rail').classList.toggle('open')"><i class="fa fa-sliders"></i></button>
+        <span class="nav"><button data-cal="A" data-act="prev"><i class="fa fa-angle-left"></i></button><button data-cal="A" data-act="next"><i class="fa fa-angle-right"></i></button></span>
+        <span class="title" id="A-title">This week</span>
+        <span class="right">
+          <button class="btn" data-cal="A" data-act="today">Today</button>
+          <span class="seg">
+            <button data-cal="A" data-view="timeGridDay">Day</button>
+            <button class="on" data-cal="A" data-view="timeGridWeek">Week</button>
+            <button data-cal="A" data-view="dayGridMonth">Month</button>
+            <button data-cal="A" data-view="listWeek">List</button>
+          </span>
+        </span>
+      </div>
+      <div class="cal"><div id="A-cal" style="height:100%"></div></div>
+    </div>
+
+    <aside class="drawer closed" id="A-drawer">
+      <div class="dhead">
+        <button class="x" onclick="closeDrawer()"><i class="fa fa-times"></i></button>
+        <div class="r" id="A-ref">VW-2026-0042</div>
+        <div class="n" id="A-cust">Ahmed Al Mansoori</div>
+        <div class="w" id="A-when">Thu 21 Aug · 01:45 PM – 02:45 PM</div>
+      </div>
+      <div class="dbody">
+        <div style="margin-bottom:11px" id="A-chip"></div>
+        <div class="kv"><span class="k">Property</span><span class="v" id="A-prop">Unit 1508, Marina Tower</span></div>
+        <div class="kv"><span class="k">Salesman</span><span class="v" id="A-sales">Rashid Kareem</span></div>
+        <div class="kv"><span class="k">Customer phone</span><span class="v">+974 5555 1234</span></div>
+        <div class="kv"><span class="k">Booked</span><span class="v">by customer · 18 Aug</span></div>
+        <div class="kv"><span class="k">Link opened</span><span class="v">3 times</span></div>
+      </div>
+      <div class="dfoot">
+        <button class="btn pri block"><i class="fa fa-external-link"></i> Open sale / lease view</button>
+        <div style="display:flex; gap:8px">
+          <button class="btn" style="flex:1"><i class="fa fa-phone"></i> Call</button>
+          <button class="btn" style="flex:1"><i class="fa fa-clipboard"></i> Copy link</button>
+        </div>
+      </div>
+    </aside>
+  </div></div>
+</section>
+
+<!-- ═════════ B ═════════ -->
+<section class="variant" data-v="B">
+  <div class="vhead">
+    <span class="tag">Sample B</span>
+    <h2>Glass Studio</h2>
+    <p>Maximum grid: the calendar runs edge to edge and the only chrome is one floating glass toolbar carrying the date nav, view segments and filter chips. Clicking an event opens a popover pinned to the event itself — Google-Calendar style — so your eye never leaves the slot you clicked. On a phone the popover becomes a bottom sheet. Fewest pixels spent on chrome; filters are chips rather than a full rail, so it suits a team of a handful of salesmen.</p>
+    <div class="hint">Click any event — the popover anchors to it.</div>
+  </div>
+  <div class="frame"><div class="cx B">
+    <div class="sheet">
+      <div class="float">
+        <span class="nav"><button data-cal="B" data-act="prev"><i class="fa fa-angle-left"></i></button><button data-cal="B" data-act="next"><i class="fa fa-angle-right"></i></button></span>
+        <span class="title" id="B-title">This week</span>
+        <button class="btn" data-cal="B" data-act="today">Today</button>
+        <span class="fchips">
+          <button class="fchip on">All</button>
+          <button class="fchip"><span class="av" style="background:#2563eb;width:17px;height:17px;font-size:7.5px">RK</span> Rashid</button>
+          <button class="fchip"><span class="av" style="background:#0d9488;width:17px;height:17px;font-size:7.5px">AA</span> Aseel</button>
+          <button class="fchip"><span class="av" style="background:#b45309;width:17px;height:17px;font-size:7.5px">MR</span> Mohamad</button>
+        </span>
+        <span class="right">
+          <span class="seg">
+            <button class="on" data-cal="B" data-view="timeGridWeek">Week</button>
+            <button data-cal="B" data-view="dayGridMonth">Month</button>
+            <button data-cal="B" data-view="listWeek">List</button>
+          </span>
+        </span>
+      </div>
+      <div class="cal"><div id="B-cal" style="height:100%"></div></div>
+    </div>
+
+    <div class="pop" id="B-pop">
+      <div class="ph">
+        <button class="x" onclick="document.getElementById('B-pop').classList.remove('open')"><i class="fa fa-times"></i></button>
+        <div class="n" id="B-cust">Ahmed Al Mansoori</div>
+        <div class="w" id="B-when">Thu 21 Aug · 01:45 PM – 02:45 PM</div>
+        <div style="margin-top:8px" id="B-chip"></div>
+      </div>
+      <div class="pb">
+        <div class="kv"><span class="k">Reference</span><span class="v" id="B-ref">VW-2026-0042</span></div>
+        <div class="kv"><span class="k">Property</span><span class="v" id="B-prop">Unit 1508</span></div>
+        <div class="kv"><span class="k">Salesman</span><span class="v" id="B-sales">Rashid Kareem</span></div>
+      </div>
+      <div class="pf">
+        <button class="btn pri" style="flex:1"><i class="fa fa-external-link"></i> Open sale view</button>
+        <button class="btn"><i class="fa fa-phone"></i></button>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ═════════ C ═════════ -->
+<section class="variant" data-v="C">
+  <div class="vhead">
+    <span class="tag">Sample C</span>
+    <h2>Split Board</h2>
+    <p>The operations view. A KPI strip across the top (today, this week, awaiting, no-shows), the calendar in the middle, and a permanent right panel that shows the selected appointment — or, when nothing is selected, what's coming up next. Nothing ever slides over the grid, and the panel is always there to read, which suits a screen someone leaves open all day. Costs the most horizontal space; on a phone the panel stacks under the calendar.</p>
+    <div class="hint">Click an event to fill the right panel; it falls back to "Up next" when you close it.</div>
+  </div>
+  <div class="frame"><div class="cx C">
+    <div class="head">
+      <div>
+        <div class="t">Appointment console</div>
+        <div class="s">All salesmen · times in Asia/Qatar</div>
+      </div>
+      <div class="kpis">
+        <div class="kpi b"><div class="k">Today</div><div class="v">4</div></div>
+        <div class="kpi"><div class="k">This week</div><div class="v">12</div></div>
+        <div class="kpi a"><div class="k">Awaiting</div><div class="v">1</div></div>
+        <div class="kpi g"><div class="k">Completed</div><div class="v">3</div></div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="board">
+        <div class="tbar">
+          <span class="nav"><button data-cal="C" data-act="prev"><i class="fa fa-angle-left"></i></button><button data-cal="C" data-act="next"><i class="fa fa-angle-right"></i></button></span>
+          <span class="title" id="C-title">This week</span>
+          <span class="right">
+            <button class="btn" data-cal="C" data-act="today">Today</button>
+            <select class="btn" style="padding-inline-end:26px"><option>All salesmen</option><option>Rashid Kareem</option><option>Aseel Alfayoumi</option></select>
+            <span class="seg">
+              <button class="on" data-cal="C" data-view="timeGridWeek">Week</button>
+              <button data-cal="C" data-view="dayGridMonth">Month</button>
+              <button data-cal="C" data-view="listWeek">List</button>
+            </span>
+          </span>
+        </div>
+        <div class="cal"><div id="C-cal" style="height:100%"></div></div>
+      </div>
+
+      <aside class="side">
+        <div class="panel detail" id="C-detail" style="display:none">
+          <div class="top">
+            <div class="r" id="C-ref">VW-2026-0042</div>
+            <div class="n" id="C-cust">Ahmed Al Mansoori</div>
+            <div class="w" id="C-when">Thu 21 Aug · 01:45 PM</div>
+          </div>
+          <div class="pb">
+            <div style="margin-bottom:10px" id="C-chip"></div>
+            <div class="kv"><span class="k">Property</span><span class="v" id="C-prop">Unit 1508</span></div>
+            <div class="kv"><span class="k">Salesman</span><span class="v" id="C-sales">Rashid Kareem</span></div>
+            <div class="kv"><span class="k">Phone</span><span class="v">+974 5555 1234</span></div>
+            <div style="display:grid; gap:8px; margin-top:12px">
+              <button class="btn pri block"><i class="fa fa-external-link"></i> Open sale / lease view</button>
+              <div style="display:flex; gap:8px">
+                <button class="btn" style="flex:1"><i class="fa fa-phone"></i> Call</button>
+                <button class="btn" style="flex:1" onclick="clearC()">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="C-upnext">
+          <div class="ph"><span class="sect">Up next</span></div>
+          <div class="pb">
+            <div class="upnext"><span class="tm">09:00 AM</span><span class="nm">Ibrahim Ahmed · 510</span><span class="chip c-scheduled"><span class="dot"></span>Conf</span></div>
+            <div class="upnext"><span class="tm">11:00 AM</span><span class="nm">Nisreen Mohamad · 1508</span><span class="chip c-scheduled"><span class="dot"></span>Conf</span></div>
+            <div class="upnext"><span class="tm">02:00 PM</span><span class="nm">Khalid Yousef · 709</span><span class="chip c-awaiting"><span class="dot"></span>Await</span></div>
+            <div class="upnext"><span class="tm">04:30 PM</span><span class="nm">Maryam Sultan · 302</span><span class="chip c-scheduled"><span class="dot"></span>Conf</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><span class="sect">Legend</span></div>
+          <div class="pb" style="display:grid; gap:7px; font-size:11px; color:var(--text-3)">
+            <span><i class="fa fa-square" style="color:var(--brand)"></i> Confirmed &nbsp;<i class="fa fa-square" style="color:var(--success)"></i> Completed</span>
+            <span><i class="fa fa-square" style="color:var(--text-3)"></i> Cancelled &nbsp;<i class="fa fa-square" style="color:var(--danger)"></i> No-show</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div></div>
+</section>
+
+</div>
+
+<script>
+/* ── sample data ─────────────────────────────────────────────── */
+const STATUS = { scheduled:'Confirmed', completed:'Completed', cancelled:'Cancelled', no_show:'No-show', awaiting:'Awaiting customer' }
+function at(dayOffset, h, m, len) {
+  const d = new Date(); d.setDate(d.getDate() - d.getDay() + dayOffset); d.setHours(h, m || 0, 0, 0)
+  const e = new Date(d.getTime() + (len || 60) * 60000)
+  return { start: d.toISOString(), end: e.toISOString() }
+}
+const EVENTS = [
+  { t:'Ibrahim Ahmed — 510',      s:'scheduled', ref:'VW-2026-0010', sm:'Aseel Alfayoumi', prop:'Unit 510, Marina Tower',  ...at(0, 9) },
+  { t:'Nisreen Mohamad — 1508',   s:'scheduled', ref:'VW-2026-0011', sm:'Mohamad Romih',   prop:'Unit 1508, Marina Tower', ...at(1, 11) },
+  { t:'Khalid Yousef — 709',      s:'awaiting',  ref:'VW-2026-0012', sm:'Rashid Kareem',   prop:'Unit 709, Marina Tower',  ...at(1, 14) },
+  { t:'Maryam Sultan — 302',      s:'scheduled', ref:'VW-2026-0013', sm:'Rashid Kareem',   prop:'Unit 302, Pearl Tower',   ...at(2, 10) },
+  { t:'Ahmed Al Mansoori — 1204', s:'scheduled', ref:'VW-2026-0014', sm:'Rashid Kareem',   prop:'Unit 1204, Pearl Tower',  ...at(2, 13, 45) },
+  { t:'Fatima Noor — 806',        s:'completed', ref:'VW-2026-0015', sm:'Aseel Alfayoumi', prop:'Unit 806, Marina Tower',  ...at(3, 9, 30) },
+  { t:'Yousef Salim — 214',       s:'no_show',   ref:'VW-2026-0016', sm:'Mohamad Romih',   prop:'Unit 214, Pearl Tower',   ...at(3, 16) },
+  { t:'Layla Hassan — 1102',      s:'scheduled', ref:'VW-2026-0017', sm:'Rashid Kareem',   prop:'Unit 1102, Marina Tower', ...at(4, 11) },
+  { t:'Omar Farid — 405',         s:'cancelled', ref:'VW-2026-0018', sm:'Aseel Alfayoumi', prop:'Unit 405, Pearl Tower',   ...at(4, 15) },
+  { t:'Sara Kamal — 908',         s:'completed', ref:'VW-2026-0019', sm:'Mohamad Romih',   prop:'Unit 908, Marina Tower',  ...at(5, 10) },
+]
+const fcEvents = EVENTS.map((e, i) => ({
+  id: String(i), title: e.t, start: e.start, end: e.end,
+  classNames: ['ev-' + e.s],
+  extendedProps: { ref: e.ref, sm: e.sm, prop: e.prop, status: e.s },
+}))
+
+/* ── calendars ───────────────────────────────────────────────── */
+const cals = {}
+const START_VIEW = { A:'timeGridWeek', B:'timeGridWeek', C:'timeGridWeek' }
+function build(key) {
+  if (cals[key]) return cals[key]
+  const el = document.getElementById(key + '-cal')
+  const cal = new FullCalendar.Calendar(el, {
+    initialView: START_VIEW[key],
+    height: '100%',
+    expandRows: true,
+    nowIndicator: true,
+    slotMinTime: '08:00:00',
+    slotMaxTime: '20:00:00',
+    allDaySlot: false,
+    dayMaxEvents: true,
+    eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
+    slotLabelFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
+    events: fcEvents,
+    datesSet: info => { document.getElementById(key + '-title').textContent = info.view.title },
+    eventClick: info => openDetail(key, info),
+  })
+  cal.render()
+  cals[key] = cal
+  return cal
+}
+function chipHtml(s) { return `<span class="chip c-${s}"><span class="dot"></span>${STATUS[s]}</span>` }
+function when(ev) {
+  const f = d => d.toLocaleString([], { weekday:'short', day:'2-digit', month:'short' })
+  const t = d => d.toLocaleString([], { hour:'numeric', minute:'2-digit', hour12:true })
+  return `${f(ev.start)} · ${t(ev.start)} – ${t(ev.end)}`
+}
+function openDetail(key, info) {
+  document.querySelectorAll('.fc-event.picked').forEach(e => e.classList.remove('picked'))
+  info.el.classList.add('picked')
+  const p = info.event.extendedProps
+  const name = info.event.title.split(' — ')[0]
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML = v }
+  set(key + '-cust', name); set(key + '-ref', p.ref); set(key + '-prop', p.prop)
+  set(key + '-sales', p.sm); set(key + '-when', when(info.event)); set(key + '-chip', chipHtml(p.status))
+
+  if (key === 'A') {
+    const d = document.getElementById('A-drawer')
+    d.classList.remove('closed'); requestAnimationFrame(() => d.classList.add('open'))
+    cals.A.updateSize()
+  }
+  if (key === 'B') {
+    const pop = document.getElementById('B-pop')
+    const frame = pop.closest('.frame').getBoundingClientRect()
+    const r = info.el.getBoundingClientRect()
+    pop.classList.add('open')
+    if (!document.getElementById('stage').classList.contains('phone')) {
+      let left = r.right - frame.left + 10
+      if (left + 296 > frame.width) left = r.left - frame.left - 306
+      let top = r.top - frame.top - 10
+      top = Math.max(70, Math.min(top, frame.height - 300))
+      pop.style.left = Math.max(10, left) + 'px'; pop.style.top = top + 'px'
+    } else { pop.style.left = ''; pop.style.top = '' }
+  }
+  if (key === 'C') {
+    document.getElementById('C-detail').style.display = ''
+    document.getElementById('C-upnext').style.display = 'none'
+  }
+}
+function closeDrawer() {
+  const d = document.getElementById('A-drawer')
+  d.classList.remove('open')
+  setTimeout(() => { d.classList.add('closed'); cals.A && cals.A.updateSize() }, 200)
+}
+function clearC() {
+  document.getElementById('C-detail').style.display = 'none'
+  document.getElementById('C-upnext').style.display = ''
+  document.querySelectorAll('.fc-event.picked').forEach(e => e.classList.remove('picked'))
+}
+
+/* ── toolbar wiring ──────────────────────────────────────────── */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-cal]')
+  if (!b) return
+  const cal = cals[b.dataset.cal]; if (!cal) return
+  if (b.dataset.act === 'prev') cal.prev()
+  if (b.dataset.act === 'next') cal.next()
+  if (b.dataset.act === 'today') cal.today()
+  if (b.dataset.view) {
+    cal.changeView(b.dataset.view)
+    b.parentNode.querySelectorAll('button').forEach(x => x.classList.remove('on'))
+    b.classList.add('on')
+  }
+})
+document.querySelectorAll('.A .frow, .B .fchip').forEach(btn => {
+  btn.onclick = function () {
+    const scope = this.closest('.grp') || this.closest('.fchips')
+    scope.querySelectorAll(this.classList.contains('frow') ? '.frow' : '.fchip').forEach(x => x.classList.remove('on'))
+    this.classList.add('on')
+  }
+})
+
+/* ── preview chrome ──────────────────────────────────────────── */
+const stage = document.getElementById('stage')
+function showVariant(v) {
+  document.querySelectorAll('.variant').forEach(s => s.classList.toggle('show', s.dataset.v === v))
+  const cal = build(v)
+  setTimeout(() => cal.updateSize(), 60)
+}
+document.querySelectorAll('.bar button[data-v]').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.bar button[data-v]').forEach(x => x.classList.remove('on'))
+    b.classList.add('on'); showVariant(b.dataset.v)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+})
+const themeBtn = document.getElementById('theme')
+themeBtn.onclick = () => {
+  const dark = document.body.dataset.t === 'dark'
+  document.body.dataset.t = dark ? 'light' : 'dark'
+  themeBtn.innerHTML = dark ? '<i class="fa fa-moon-o"></i> Dark' : '<i class="fa fa-sun-o"></i> Light'
+  themeBtn.classList.toggle('on', !dark)
+  Object.values(cals).forEach(c => c.updateSize())
+}
+const devBtn = document.getElementById('device')
+devBtn.onclick = () => {
+  const phone = stage.classList.toggle('phone')
+  devBtn.innerHTML = phone ? '<i class="fa fa-desktop"></i> Desktop' : '<i class="fa fa-mobile"></i> Phone'
+  devBtn.classList.toggle('on', phone)
+  Object.entries(cals).forEach(([k, c]) => {
+    const view = phone ? 'listWeek' : START_VIEW[k]
+    c.changeView(view)
+    document.querySelectorAll(`[data-cal="${k}"][data-view]`).forEach(b => b.classList.toggle('on', b.dataset.view === view))
+    setTimeout(() => c.updateSize(), 60)
+  })
+}
+const dirBtn = document.getElementById('dir')
+dirBtn.onclick = () => {
+  const rtl = stage.getAttribute('dir') === 'rtl'
+  stage.setAttribute('dir', rtl ? 'ltr' : 'rtl')
+  dirBtn.textContent = rtl ? 'RTL' : 'LTR'
+  dirBtn.classList.toggle('on', !rtl)
+  Object.values(cals).forEach(c => { c.setOption('direction', rtl ? 'ltr' : 'rtl'); c.updateSize() })
+}
+document.querySelectorAll('.sw').forEach(s => {
+  s.onclick = () => {
+    document.querySelectorAll('.sw').forEach(x => x.classList.remove('on'))
+    s.classList.add('on')
+    document.documentElement.style.setProperty('--p', s.style.backgroundColor)
+    document.documentElement.style.setProperty('--p-rgb', s.dataset.c)
+  }
+})
+showVariant('A')
+</script>
+</body>
+</html>

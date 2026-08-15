@@ -34,6 +34,12 @@
                         class="nav-link {{ request()->is(['property/sale/booking', 'property/sale/booking/edit/*', 'property/sale/booking/view/*', 'property/sale/booking/create']) ? 'active' : '' }}">Booking</a>
                 </li>
             @endcan
+            @can('property appointment.view')
+                <li class="nav-item">
+                    <a href="{{ route('property::sale::appointment_schedule::calendar') }}"
+                        class="nav-link {{ request()->is(['property/sale/appointment-schedule','property/sale/appointment-schedule/calendar']) ? 'active' : '' }}">Appointments</a>
+                </li>
+            @endcan
             @can('rent out lease.payment')
                 <li class="nav-item">
                     <a href="{{ route('property::sale::payments') }}"

@@ -135,6 +135,40 @@ class HttpService {
     throw ApiException(message, statusCode: status);
   }
 
+  /// Download an asset — a product photo, a staff avatar — from an absolute URL
+  /// already resolved by [AppConfig.assetUrl].
+  ///
+  /// Separate from [getBytes] because none of that method's assumptions hold
+  /// here: there is no `/api/v1` prefix, the response is an image rather than a
+  /// PDF, and no envelope is ever involved. It goes through the same Dio all the
+  /// same, so an asset fetch reports reachability like every other request and
+  /// inherits the dev self-signed-certificate handling — a photo that cannot
+  /// load on a `.test` host would otherwise look like a missing image.
+  ///
+  /// The auth token is deliberately not attached: storage paths are served by
+  /// the web server, not the API, and sending a bearer token to a plain file
+  /// route gains nothing. [headers] carries the `Host` override that lets nginx
+  /// route a LAN-IP request to the right vhost.
+  Future<Uint8List> getAssetBytes(
+    String url, {
+    Map<String, String>? headers,
+    void Function(int received, int total)? onProgress,
+  }) async {
+    final res = await _dio.get<List<int>>(
+      url,
+      options: Options(
+        responseType: ResponseType.bytes,
+        headers: {'Accept': '*/*', ...?headers},
+      ),
+      onReceiveProgress: onProgress,
+    );
+    final status = res.statusCode ?? 0;
+    if (status < 200 || status >= 300) {
+      throw ApiException('Image request failed ($status)', statusCode: status);
+    }
+    return Uint8List.fromList(res.data ?? const []);
+  }
+
   Future<dynamic> post(String path, {Object? body, bool auth = true}) async {
     final res = await _dio.post(
       '${config.apiV1}$path',

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
+import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
+import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
@@ -75,6 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _lockAfterSaleCard(context),
                         _gridColumnsCard(context),
                         _permissionsCard(context),
+                        _offlineDataCard(context),
                         _serverCard(context),
                       ]),
                     ),
@@ -124,6 +128,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           pos.lockAfterSale ? 'Locks after each sale' : 'Stays unlocked'),
       (Icons.grid_view_rounded, 'Catalog grid', '${pos.gridColumns} products per row'),
       (Icons.verified_user_outlined, 'My permissions', (user?.isAdmin ?? false) ? 'Administrator' : '$permCount granted'),
+      // Read straight off the cubit rather than watched: this is a sub-label on
+      // a nav tile, and the panel beside it carries the live version.
+      (Icons.cloud_off_outlined, 'Offline data', _offlineSummary(_syncState)),
       (Icons.cloud_outlined, 'Server connection', 'Base URL & tenant'),
     ];
   }
@@ -292,6 +299,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 12),
           AstraButton(label: 'View permissions', icon: Icons.list_alt, onTap: _openPermissions),
         ]);
+      case 10:
+        return _panelShell(context, Icons.cloud_off_outlined, 'Offline data',
+            'What this till can sell without a network.', [
+          _offlineDataCard(context),
+          const SizedBox(height: 12),
+          AstraButton(
+              label: 'Manage offline data',
+              icon: Icons.cloud_download_outlined,
+              onTap: () => context.push(Routes.offlineData)),
+        ]);
       default:
         return _panelShell(context, Icons.cloud_outlined, 'Server connection', 'The API base URL and tenant this app talks to.', [
           AstraButton(label: 'Connection settings', icon: Icons.cloud_outlined, onTap: () => ConnectionSheet.show(context)),
@@ -388,6 +405,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
           IconChip(icon: Icons.cloud_outlined, size: 28, radius: 8, bg: p.tint),
           const SizedBox(width: 11),
           Expanded(child: Text('Server connection', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink))),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+        ],
+      ),
+    );
+  }
+
+  /// The sync engine is an app-wide singleton that boots with the session, so a
+  /// widget test rendering this screen on its own has none. Guarded the same way
+  /// [OfflineBanner] guards it — a settings list is not worth crashing over a
+  /// dependency that only exists once someone has signed in.
+  bool get _hasSync => serviceLocator.isRegistered<OfflineSyncCubit>();
+
+  OfflineSyncState get _syncState =>
+      _hasSync ? serviceLocator<OfflineSyncCubit>().state : const OfflineSyncState();
+
+  /// One line for how ready this till is to sell with no network. Shared by the
+  /// phone card and the tablet nav sub-label so the two never disagree.
+  String _offlineSummary(OfflineSyncState sync) {
+    if (sync.catalogRefreshing) return 'Preparing…';
+    if (!sync.hasCatalog) return 'Not prepared — can’t sell offline';
+    if (sync.provisionIncomplete.isNotEmpty) return 'Incomplete — reconnect to finish';
+    return 'Synced ${catalogAgeLabel(sync.catalogSyncedAt)}';
+  }
+
+  Widget _offlineDataCard(BuildContext context) {
+    if (!_hasSync) return _offlineDataTile(context, const OfflineSyncState());
+    // Resolved from the locator rather than the widget tree: OfflineSyncCubit is
+    // an app-wide singleton that is deliberately not in the MultiBlocProvider,
+    // the same way the offline banner reaches it.
+    return BlocBuilder<OfflineSyncCubit, OfflineSyncState>(
+      bloc: serviceLocator<OfflineSyncCubit>(),
+      buildWhen: (a, b) =>
+          a.catalogSyncedAt != b.catalogSyncedAt ||
+          a.catalogRefreshing != b.catalogRefreshing ||
+          a.hasCatalog != b.hasCatalog ||
+          a.provisionIncomplete != b.provisionIncomplete,
+      builder: (context, sync) => _offlineDataTile(context, sync),
+    );
+  }
+
+  Widget _offlineDataTile(BuildContext context, OfflineSyncState sync) {
+    final p = context.astra;
+    final unready = !sync.hasCatalog || sync.provisionIncomplete.isNotEmpty;
+    return AstraCard(
+      radius: 14,
+      onTap: () => context.push(Routes.offlineData),
+      child: Row(
+        children: [
+          IconChip(
+            icon: sync.hasCatalog ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
+            size: 34,
+            radius: 9,
+            bg: unready ? AstraPalette.danger.withValues(alpha: 0.14) : p.tint,
+            fg: unready ? AstraPalette.danger : null,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Offline data', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text(_offlineSummary(sync),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(
+                      size: 10,
+                      weight: FontWeight.w600,
+                      color: unready ? AstraPalette.danger : p.textMuted,
+                    )),
+              ],
+            ),
+          ),
           Icon(Icons.chevron_right, color: p.textMuted, size: 18),
         ],
       ),

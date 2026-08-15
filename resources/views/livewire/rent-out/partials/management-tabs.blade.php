@@ -41,6 +41,7 @@
                         ['key' => 'NotesTab', 'icon' => 'fa-file-text-o', 'label' => 'Notes'],
                         ['key' => 'TransactionTab', 'icon' => 'fa-exchange', 'label' => 'Transactions'],
                         ['key' => 'MaintenanceTab', 'icon' => 'fa-wrench', 'label' => 'Maintenance'],
+                        ['key' => 'AppointmentTab', 'icon' => 'fa-calendar-check-o', 'label' => 'Appointments'],
                         ['key' => 'DocumentsTab', 'icon' => 'fa-file-o', 'label' => 'Documents'],
                         ['key' => 'ChecklistTab', 'icon' => 'fa-list-alt', 'label' => 'Checklist'],
                     ]);
@@ -107,6 +108,9 @@
                 @livewire('rent-out.tabs.maintenance-tab', ['rentOutId' => $rentOut->id], key('maintenance-tab-' . $rentOut->id))
             </div>
 
+            <div x-show="activeTab === 'AppointmentTab'" x-transition:enter.duration.150ms>
+                @livewire('rent-out.tabs.appointment-tab', ['rentOutId' => $rentOut->id], key('appointment-tab-' . $rentOut->id))
+            </div>
             <div x-show="activeTab === 'DocumentsTab'" x-transition:enter.duration.150ms>
                 @livewire('rent-out.tabs.documents-tab', ['rentOutId' => $rentOut->id, 'isBooking' => $isBooking ?? false], key('documents-tab-' . $rentOut->id))
             </div>

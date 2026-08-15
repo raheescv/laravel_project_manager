@@ -135,6 +135,36 @@ void main() {
       expect((await service.customers(mobile: '7778888')).single.name, 'Cached Aisha');
     });
 
+    test('an online read repairs a stale cached list', () async {
+      // Provisioning is the only other writer and it skips a snapshot under six
+      // hours old, so without this a roster the server has since changed — or one
+      // it used to filter differently — reads one way online and another offline
+      // for the rest of that window.
+      expect((await service.employees()).map((e) => e.name), ['Live Maya', 'Live Omar']);
+      expect((await service.paymentMethods()).single.name, 'Live Cash');
+      // The cache write is a side effect of the read, so it is not on the
+      // caller's future — let it land before pulling the network.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      online.failWith = DioException(
+        requestOptions: RequestOptions(path: '/x'),
+        type: DioExceptionType.connectionError,
+      );
+      expect((await service.employees()).map((e) => e.name), ['Live Maya', 'Live Omar']);
+      expect((await service.paymentMethods()).single.name, 'Live Cash');
+    });
+
+    test('a search result never becomes the cached roster', () async {
+      await service.employees(search: 'may');
+      online.failWith = DioException(
+        requestOptions: RequestOptions(path: '/x'),
+        type: DioExceptionType.connectionError,
+      );
+
+      // Still the provisioned list — a handful of matches must not replace it.
+      expect((await service.employees()).single.name, 'Cached Maya');
+    });
+
     test('a refusal from the server is passed on, not papered over', () async {
       // A 403 is a real answer. Swallowing it would hide a permissions problem
       // behind a list that quietly stops updating.
@@ -158,7 +188,15 @@ class _StubLookup implements LookupRepository {
   @override
   Future<List<Employee>> employees({String? search, int? branchId}) async {
     if (failWith case final e?) throw e;
-    return const [];
+    // A search is answered with the matches only — which is exactly what must
+    // never end up cached as the roster.
+    return [
+      const Employee(
+          id: 5, name: 'Live Maya', code: 'E5', mobile: '', designation: 'Stylist'),
+      if (search == null || search.isEmpty)
+        const Employee(
+            id: 6, name: 'Live Omar', code: 'E6', mobile: '', designation: 'Stylist'),
+    ];
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -84,6 +85,7 @@ class AdminCubit extends Cubit<AdminState> {
   String? get error => state.errorMessage;
   DashboardData? get dashboard => state.dashboard;
   List<ReportRow> get topStylists => state.topStylists;
+  String get topStylistsDate => state.topStylistsDate;
   List<double> get trendPoints => state.trendPoints;
   List<String> get trendLabels => state.trendLabels;
   bool get reportLoading => state.reportLoading;
@@ -178,14 +180,33 @@ class AdminCubit extends Cubit<AdminState> {
   Future<void> loadDashboard() async {
     emit(state.copyWith(loading: true, clearError: true));
 
+    // The leaderboard needs the business date up front to stay parallel with
+    // the cards, so it starts from the session date the signed-in user carries.
+    // That copy can be stale — on a shared till another device can open or
+    // close the day — so the server's answer is reconciled below.
+    final assumed = _sessionDate;
     final cards = _loadCards();
-    final decoration = Future.wait([_loadTopStylists(), _loadTrend()]);
+    final decoration = Future.wait([_loadTopStylists(assumed), _loadTrend()]);
 
     await cards;
     if (!isClosed) emit(state.copyWith(loading: false));
 
     // Still awaited so pull-to-refresh doesn't end while these are in flight.
     await decoration;
+
+    final actual = state.dashboard?.date ?? '';
+    if (actual.isNotEmpty && actual != assumed && !isClosed) {
+      await _loadTopStylists(actual);
+    }
+  }
+
+  /// The business day the dashboard reports on: the branch's open day-session
+  /// date, or the calendar date when no session is open — the same anchor the
+  /// server uses for the KPI cards (App\Actions\V1\Dashboard\GetAction).
+  String get _sessionDate {
+    final user = serviceLocator<AuthCubit>().user;
+    final date = (user?.daySessionDate ?? '').split(' ').first;
+    return (user?.dayOpen ?? false) && date.isNotEmpty ? date : Dates.today();
   }
 
   Future<void> _loadCards() async {
@@ -202,9 +223,12 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
-  Future<void> _loadTopStylists() async {
+  /// Ranks the stylists for a single business day — [date], the branch's open
+  /// day-session date. Sending no range would rank them on every sale ever
+  /// recorded, which puts the same names on the board whatever happened today.
+  Future<void> _loadTopStylists(String date) async {
     try {
-      final emp = await _repo.report(type: 'employeewise');
+      final emp = await _repo.report(type: 'employeewise', startDate: date, endDate: date);
       final rows = (emp['rows'] as List?) ?? const [];
       final stylists = rows.map((e) {
         final m = Map<String, dynamic>.from(e);
@@ -217,7 +241,10 @@ class AdminCubit extends Cubit<AdminState> {
         );
       }).toList()
         ..sort((a, b) => b.amount.compareTo(a.amount));
-      if (!isClosed) emit(state.copyWith(topStylists: stylists.take(4).toList()));
+      if (!isClosed) {
+        emit(state.copyWith(
+            topStylists: stylists.take(4).toList(), topStylistsDate: date));
+      }
     } catch (_) {/* keep whatever we had */}
   }
 

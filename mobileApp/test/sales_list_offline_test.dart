@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/domain/models/pending_sale.dart';
 import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
 import 'package:invo/features/sale/domain/services/outbox_service.dart';
@@ -36,7 +37,24 @@ void main() {
 
   tearDown(tearDownOfflineHarness);
 
-  Future<PendingSale> queue(String uuid, {String? status, String date = '2026-08-09'}) =>
+  /// Signs [id] in, so the held rows have somebody to be scoped against.
+  /// [admin] is the difference between "sees the whole till" and "sees their own".
+  void signIn(String id, {required bool admin, String type = 'employee'}) {
+    if (serviceLocator.isRegistered<AuthCubit>()) serviceLocator.unregister<AuthCubit>();
+    final auth = AuthCubit()
+      ..seedSession(ApiUser.fromJson({
+        'id': id,
+        'name': 'Cashier $id',
+        'is_admin': admin,
+        'type': type,
+        'permissions': const <String>[],
+      }));
+    serviceLocator.registerSingleton<AuthCubit>(auth);
+    addTearDown(auth.close);
+  }
+
+  Future<PendingSale> queue(String uuid,
+          {String? status, String date = '2026-08-09', String userId = '7'}) =>
       outbox.enqueue(
         clientUuid: uuid,
         payload: {
@@ -61,7 +79,7 @@ void main() {
           'payments': const [],
           'summary': {'grand_total': 10.0, 'paid': 10.0, 'balance': 0},
         },
-        userId: '7',
+        userId: userId,
         branchId: 1,
       );
 
@@ -223,6 +241,69 @@ void main() {
     });
   });
 
+  group('whose sales a held row belongs to', () {
+    /// One sale each from two cashiers on the same till.
+    Future<void> twoCashiersHaveSold() async {
+      await queue(a, userId: '7');
+      await queue(b, userId: '8');
+    }
+
+    test('a non-admin employee sees only their own', () async {
+      await twoCashiersHaveSold();
+      signIn('7', admin: false);
+      online.failWith = DioException.connectionError(
+          requestOptions: RequestOptions(), reason: 'no route');
+
+      final page = await sales.fetchPage(page: 1);
+
+      // Offline the server's own scoping cannot run, so going offline must not
+      // hand a cashier their colleague's takings.
+      expect(page.rows, hasLength(1));
+      expect(page.rows.single['client_uuid'], a);
+    });
+
+    test('an admin sees the whole till', () async {
+      await twoCashiersHaveSold();
+      signIn('9', admin: true);
+      online.failWith = DioException.connectionError(
+          requestOptions: RequestOptions(), reason: 'no route');
+
+      final page = await sales.fetchPage(page: 1);
+
+      expect(page.rows, hasLength(2));
+    });
+
+    test('a back-office account is not treated as an employee', () async {
+      await twoCashiersHaveSold();
+      signIn('9', admin: false, type: 'user');
+      online.failWith = DioException.connectionError(
+          requestOptions: RequestOptions(), reason: 'no route');
+
+      expect((await sales.fetchPage(page: 1)).rows, hasLength(2));
+    });
+
+    test('the staff filter narrows held rows and is sent to the server', () async {
+      await twoCashiersHaveSold();
+      signIn('9', admin: true);
+
+      final page = await sales.fetchPage(page: 1, staffId: 8);
+
+      expect(online.lastCreatedById, 8, reason: 'the committed rows are filtered server-side');
+      final held = page.rows.where((r) => r['pending'] == true).toList();
+      expect(held, hasLength(1));
+      expect(held.single['client_uuid'], b);
+    });
+
+    test('an unattributed row stays visible — it is still money taken', () async {
+      await queue(a, userId: '');
+      signIn('7', admin: false);
+      online.failWith = DioException.connectionError(
+          requestOptions: RequestOptions(), reason: 'no route');
+
+      expect((await sales.fetchPage(page: 1)).rows, hasLength(1));
+    });
+  });
+
   group('editing a held row from the list', () {
     test('the row carries the key the Edit action needs', () async {
       await queue(a);
@@ -274,6 +355,9 @@ class _StubSales extends FakeSaleRepository {
   /// rather than only applied locally.
   String? lastSearch;
 
+  /// Same, for the staff filter.
+  int? lastCreatedById;
+
   @override
   Future<SalesPage> sales({
     String? status,
@@ -284,10 +368,12 @@ class _StubSales extends FakeSaleRepository {
     String sortBy = 'date',
     String sortDirection = 'desc',
     bool mineOnly = false,
+    int? createdById,
     int page = 1,
     int perPage = 30,
   }) async {
     lastSearch = search;
+    lastCreatedById = createdById;
     if (failWith case final failure?) throw failure;
     return SalesPage(
       rows: [

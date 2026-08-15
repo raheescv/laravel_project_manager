@@ -83,6 +83,19 @@ class _PendingRow extends StatelessWidget {
   final PendingSale row;
   final OfflineSyncCubit sync;
 
+  /// Who rang this one up, by name.
+  ///
+  /// The ticket carries it: `created_by` is stamped at capture, so a queued row
+  /// still names its cashier on a till that has since been handed over — and a
+  /// manager looking at the queue can tell one person's sales from another's
+  /// rather than reading "another cashier" against every row. Falls back to that
+  /// wording only for a row captured before the name was stamped, where guessing
+  /// would be worse than saying less.
+  String get _takenBy {
+    final name = asStr(row.saleJson['created_by']);
+    return name.isEmpty ? 'Taken by another cashier' : 'Taken by $name';
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
@@ -139,7 +152,7 @@ class _PendingRow extends StatelessWidget {
               children: [
                 Icon(Icons.person_outline, size: 12, color: p.textMuted),
                 const SizedBox(width: 5),
-                Text('Taken by another cashier · syncs from here',
+                Text('$_takenBy · syncs from here',
                     style: ui(size: 10, color: p.textMuted)),
               ],
             ),

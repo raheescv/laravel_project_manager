@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/widgets/offline_image.dart';
 
 /// Decode target, in pixels, for a network image painted [logicalWidth] wide.
 ///
@@ -317,12 +318,14 @@ class ProductThumb extends StatelessWidget {
     final cfg = context.read<AuthCubit>().config;
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: Image.network(
-        cfg.assetUrl(url),
-        headers: cfg.assetHeaders,
+      child: Image(
+        image: OfflineImage.provider(
+          cfg.assetUrl(url),
+          headers: cfg.assetHeaders,
+          cacheWidth: decodeWidthFor(context, size),
+        ),
         width: size,
         height: size,
-        cacheWidth: decodeWidthFor(context, size),
         fit: BoxFit.cover,
         gaplessPlayback: true,
         errorBuilder: (_, __, ___) => fallback,
@@ -469,10 +472,12 @@ class ProfileAvatar extends StatelessWidget {
 
     Widget inner;
     if (hasPhoto) {
-      inner = Image.network(
-        url,
-        headers: headers,
-        cacheWidth: decodeWidthFor(context, size),
+      inner = Image(
+        image: OfflineImage.provider(
+          url,
+          headers: headers,
+          cacheWidth: decodeWidthFor(context, size),
+        ),
         fit: BoxFit.cover,
         gaplessPlayback: true,
         errorBuilder: (_, __, ___) => Center(child: letterChild),

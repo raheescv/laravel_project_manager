@@ -16,6 +16,9 @@ class OfflineSyncState extends Equatable {
     this.provisionTotal = 0,
     this.provisionIncomplete = const [],
     this.catalogTruncated = false,
+    this.photosCached = 0,
+    this.photosTotal = 0,
+    this.photosBudgetHit = false,
   });
 
   final DataFetchStatus status;
@@ -58,6 +61,17 @@ class OfflineSyncState extends Equatable {
   /// cannot be sold offline. Reported rather than swallowed: a partial snapshot that
   /// looks complete is worse than one that says so.
   final bool catalogTruncated;
+
+  /// How many product photos the last warm pass got onto the device, out of how
+  /// many the catalog has. Both zero until a pass has run in this session — the
+  /// offline-data screen reads the disk directly for the resting figure.
+  final int photosCached;
+  final int photosTotal;
+
+  /// The warm pass stopped because the photo cache hit its size ceiling, so the
+  /// tail of the catalog has no pictures. Distinct from a failure: everything
+  /// downloaded is sound, there was simply no room for the rest.
+  final bool photosBudgetHit;
 
   bool get provisioning => provisionStep != null;
 
@@ -116,6 +130,9 @@ class OfflineSyncState extends Equatable {
     int? provisionTotal,
     List<String>? provisionIncomplete,
     bool? catalogTruncated,
+    int? photosCached,
+    int? photosTotal,
+    bool? photosBudgetHit,
   }) =>
       OfflineSyncState(
         status: status ?? this.status,
@@ -130,6 +147,9 @@ class OfflineSyncState extends Equatable {
         provisionTotal: provisionTotal ?? this.provisionTotal,
         provisionIncomplete: provisionIncomplete ?? this.provisionIncomplete,
         catalogTruncated: catalogTruncated ?? this.catalogTruncated,
+        photosCached: photosCached ?? this.photosCached,
+        photosTotal: photosTotal ?? this.photosTotal,
+        photosBudgetHit: photosBudgetHit ?? this.photosBudgetHit,
       );
 
   @override
@@ -146,5 +166,8 @@ class OfflineSyncState extends Equatable {
         provisionTotal,
         provisionIncomplete,
         catalogTruncated,
+        photosCached,
+        photosTotal,
+        photosBudgetHit,
       ];
 }

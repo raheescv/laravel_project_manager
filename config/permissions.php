@@ -131,7 +131,7 @@ return [
         'tailoring non delivery',
         'tailoring order item tailor',
     ],
-    'log' => ['inventory', 'log viewer'],
+    'log' => ['inventory', 'log viewer', 'email'],
     'day close' => ['sync amount'],
     'api_log' => ['view', 'delete', 'moq settings'],
     'backup' => ['create', 'view', 'download'],
@@ -223,6 +223,24 @@ return [
     'rent out document' => ['create', 'view', 'edit', 'delete'],
     'rent out checklist' => ['view', 'create', 'edit', 'delete', 'print'],
     'rent out checklist item' => ['create', 'view', 'edit', 'delete', 'import'],
+
+    // Email templates get their OWN group rather than riding on
+    // configuration.settings, so template authoring can be delegated to
+    // marketing/leasing staff without handing them the whole settings screen.
+    'email template' => ['create', 'view', 'edit', 'delete'],
+
+    // Property Appointment Scheduler — customer-scheduled appointments made
+    // from a public link sent off a lease/sale agreement.
+    'property appointment' => [
+        'create',
+        'view',
+        'edit',
+        'delete',
+        'export',
+        'send link',
+        'calendar',
+        'manage availability',
+    ],
 
     // RentOut - Lease/Sale Module
     'rent out lease' => [

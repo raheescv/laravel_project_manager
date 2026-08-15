@@ -677,10 +677,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ---- TOP PERFORMERS ----
+  /// Ranked for the open day session's date only — the same business day the
+  /// KPI cards report — so the board reads as "who is ahead today", not as an
+  /// all-time honour roll that never moves.
   Widget _topPerformers(AdminCubit admin) {
     final p = context.astra;
     final top = admin.topStylists;
     if (top.isEmpty) return const SizedBox.shrink();
+    final day = Dates.human(admin.topStylistsDate);
     final maxRev = top.first.amount <= 0 ? 1.0 : top.first.amount;
     const medals = [Color(0xFFD9A93B), Color(0xFFB6B6C2), Color(0xFFC58B5B)];
     return AstraCard(
@@ -691,7 +695,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Icon(Icons.emoji_events_outlined, size: 16, color: p.goldText),
               const SizedBox(width: 7),
-              Text('Top performers', style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+              Expanded(
+                child: Text('Top performers',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+              ),
+              if (day.isNotEmpty)
+                Text(day, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
             ],
           ),
           const SizedBox(height: 14),

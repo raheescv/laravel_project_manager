@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
@@ -33,6 +34,8 @@ class OfflineFirstLookupService implements LookupRepository {
   Future<List<PaymentMethod>> paymentMethods() async {
     try {
       final live = await _online.paymentMethods();
+      _cache(SnapshotLookup.paymentMethod,
+          [for (final m in live) {'id': m.id, 'name': m.name}]);
       return live;
     } catch (e) {
       final branchId = _branchId;
@@ -46,12 +49,56 @@ class OfflineFirstLookupService implements LookupRepository {
   @override
   Future<List<Employee>> employees({String? search, int? branchId}) async {
     try {
-      return await _online.employees(search: search, branchId: branchId);
+      final live = await _online.employees(search: search, branchId: branchId);
+      // Only an unfiltered fetch may rewrite the cache: a search result is a
+      // handful of matches, and storing it would leave the till offline with a
+      // roster of whoever was last searched for.
+      if (search == null || search.trim().isEmpty) {
+        _cache(
+          SnapshotLookup.employee,
+          [
+            for (final e in live)
+              {
+                'id': e.id,
+                'name': e.name,
+                'code': e.code,
+                'mobile': e.mobile,
+                'designation': e.designation,
+                'photo': e.photoUrl,
+              },
+          ],
+          branchId: branchId,
+        );
+      }
+      return live;
     } catch (e) {
       final id = branchId ?? _branchId;
       if (id == null || !isServerUnreachable(e)) rethrow;
       return _snapshot.employees(branchId: id, search: search);
     }
+  }
+
+  /// Keep the offline copy of a small reference list in step with what the server
+  /// just said.
+  ///
+  /// These lists are otherwise only written by provisioning, which skips a
+  /// snapshot less than six hours old — so a roster that changed (someone hired,
+  /// someone's access changed, a list the server used to filter differently) read
+  /// one way online and another way offline until that window passed. Any online
+  /// use of the list now repairs it.
+  ///
+  /// Fire-and-forget and silent: this is a side effect of a read, and a cache
+  /// that would not write must never fail the list the caller asked for.
+  void _cache(SnapshotLookup kind, List<Map<String, dynamic>> rows, {int? branchId}) {
+    final id = branchId ?? _branchId;
+    if (id == null) return;
+    unawaited(() async {
+      try {
+        await _snapshot.replaceLookups(branchId: id, kind: kind, rows: rows);
+      } catch (_) {
+        // The next provisioning run writes it.
+      }
+    }());
   }
 
   @override

@@ -21,6 +21,7 @@ abstract class SaleRepository {
     String sortBy,
     String sortDirection,
     bool mineOnly,
+    int? createdById,
     int page,
     int perPage,
   });

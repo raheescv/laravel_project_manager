@@ -11,10 +11,21 @@
                         {{ $config->singularLabel }}</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">{{ $id ? 'Edit' : 'New' }} {{ $config->singularLabel }}</h1>
-            <p class="lead">
-                {{ $id ? 'Update ' . strtolower($config->singularLabel) . ' details' : 'Create a new ' . strtolower($config->singularLabel) }}
-            </p>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="page-title mb-0 mt-2">{{ $id ? 'Edit' : 'New' }} {{ $config->singularLabel }}</h1>
+                    <p class="lead">
+                        {{ $id ? 'Update ' . strtolower($config->singularLabel) . ' details' : 'Create a new ' . strtolower($config->singularLabel) }}
+                    </p>
+                </div>
+                @if ($id)
+                    @can($config->viewPermission)
+                        <a href="{{ route($config->viewRoute, $id) }}" class="btn btn-info btn-sm rounded-pill px-3">
+                            <i class="fa fa-eye me-1"></i> View {{ $config->singularLabel }}
+                        </a>
+                    @endcan
+                @endif
+            </div>
         </div>
     </div>
     <div class="content__boxed">

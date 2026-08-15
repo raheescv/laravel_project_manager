@@ -53,7 +53,7 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
       logoBytes: logo,
       showCompanyName: st.printShowCompany ?? false,
       companyName: st.printCompanyName ?? '',
-      autoPrint: st.printAuto ?? false,
+      autoPrint: st.printAuto ?? true,
       printerUrl: st.printerUrl,
       printerName: st.printerName,
       skipInvoice: st.printSkipInvoice ?? false,

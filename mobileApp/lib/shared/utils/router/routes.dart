@@ -49,4 +49,7 @@ class Routes {
   static const String daySession = '/day-session';
   static const String printSettings = '/print-settings';
   static const String permissions = '/permissions';
+
+  /// What the till holds for selling with no network, and the controls for it.
+  static const String offlineData = '/offline-data';
 }

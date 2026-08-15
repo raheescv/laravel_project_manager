@@ -10,6 +10,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('inventory', 'inventory')->name('inventory')->can('log.inventory');
             Route::get('jobs', 'jobs')->name('jobs')->can('log.inventory');
             Route::get('failed-jobs', 'failedJobs')->name('failed_jobs')->can('log.inventory');
+            Route::get('emails', 'emails')->name('emails')->can('log.email');
         });
 
     Route::name('report::')->prefix('report')

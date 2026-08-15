@@ -2,9 +2,11 @@
 
 namespace App\Livewire\User\Employee;
 
+use App\Actions\User\BranchAction;
 use App\Actions\User\DeleteAction;
 use App\Exports\UserExport;
 use App\Jobs\Export\ExportUserJob;
+use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +34,13 @@ class Table extends Component
     public $designation_id = '';
 
     public $branch_id = '';
+
+    /** Bulk "assign branches" modal state. */
+    public $bulk_branch_ids = [];
+
+    public $bulk_default_branch_id = '';
+
+    public $bulk_branch_mode = BranchAction::MODE_REPLACE;
 
     public $sortField = 'users.order_no';
 
@@ -75,9 +84,44 @@ class Table extends Component
         }
     }
 
+    public function openBranchModal()
+    {
+        abort_unless(auth()->user()?->can('employee.edit'), 403);
+        if (! count($this->selected)) {
+            $this->dispatch('error', ['message' => 'Please select any item to assign branches.']);
+
+            return;
+        }
+        $this->dispatch('OpenEmployeeBranchModal');
+    }
+
+    public function assignBranches()
+    {
+        abort_unless(auth()->user()?->can('employee.edit'), 403);
+        try {
+            DB::beginTransaction();
+            $response = (new BranchAction())->bulk($this->selected, $this->bulk_branch_ids, $this->bulk_branch_mode, $this->bulk_default_branch_id);
+            if (! $response['result']) {
+                throw new \Exception($response['message'], 1);
+            }
+            DB::commit();
+            $this->dispatch('success', ['message' => $response['message']]);
+            $this->reset(['bulk_branch_ids', 'bulk_default_branch_id', 'bulk_branch_mode']);
+            $this->selected = [];
+            $this->selectAll = false;
+            $this->dispatch('CloseEmployeeBranchModal');
+            $this->dispatch('RefreshEmployeeTable');
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
     public function updated($key, $value)
     {
-        if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key)) {
+        // Selection and the bulk-assign modal's own fields must not bounce the
+        // table back to page 1 while the user is mid-action.
+        if (! in_array($key, ['SelectAll']) && ! preg_match('/^(selected\.|bulk_).*/', $key)) {
             $this->resetPage();
         }
     }
@@ -156,6 +200,7 @@ class Table extends Component
         return view('livewire.user.employee.table', [
             'data' => $data,
             'roles' => $roles,
+            'branches' => Branch::orderBy('name')->pluck('name', 'id')->toArray(),
         ]);
     }
 }

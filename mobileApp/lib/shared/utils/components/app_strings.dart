@@ -26,6 +26,14 @@ class AppStrings {
   /// must stay a single shared constant.
   static const String walkInCustomer = 'Walk-in';
   static const String couldNotLoadCatalog = 'Could not load the catalog.';
+
+  /// Offline with nothing cached to fall back on — a till that has never
+  /// completed a sync, or one whose offline data has been cleared. Says what to
+  /// do about it, because unlike every other offline state this one does not
+  /// resolve itself by waiting.
+  static const String noOfflineCatalog =
+      'You’re offline and this device has no saved catalog yet. '
+      'Reconnect once to prepare offline data.';
   static const String couldNotLoadStylists = 'Could not load stylists.';
   static const String couldNotLoadBranches = 'Could not load branches.';
 

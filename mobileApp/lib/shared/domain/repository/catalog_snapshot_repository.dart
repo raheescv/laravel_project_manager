@@ -109,6 +109,19 @@ abstract class CatalogSnapshotRepository {
 
   Future<List<Category>> categories({required int branchId, String? type});
 
+  /// How many categories this branch holds — the All Types list, which is the
+  /// real count. The per-type lists are the same categories sliced again, so
+  /// summing every row would report each one two or three times.
+  Future<int> categoryCount(int branchId);
+
+  /// Every product photo path in this branch's snapshot, in the order the grid
+  /// paints them, skipping products that have none.
+  ///
+  /// Grid order is not cosmetic here: pre-downloading is bounded by a disk
+  /// budget, so when it runs out it has to be the products nobody scrolls to
+  /// that go without a picture, not an arbitrary slice.
+  Future<List<String>> thumbnails(int branchId);
+
   /// Replace one branch's copy of a reference list. [rows] are the server's own
   /// JSON maps; [kind] is one of [SnapshotLookup] values.
   ///

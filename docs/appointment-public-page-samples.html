@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Public Booking Page — 4 Design Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+  :root{
+    --p:#1D4ED8; --p-rgb:29,78,216;
+    --ok:#0F9D58; --ok-rgb:15,157,88;
+    --warn:#B45309; --bad:#DC2626;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:0 0 70px; font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+        background:#e9edf3; color:#0d1424; -webkit-font-smoothing:antialiased; }
+  body[data-t="dark"]{ background:#0d1117; color:#e9edf4; }
+
+  /* ── control bar ─────────────────────────────────────────── */
+  .bar{ position:sticky; top:0; z-index:60; display:flex; gap:7px; justify-content:center; align-items:center; flex-wrap:wrap;
+        padding:11px 12px; background:rgba(255,255,255,.86); backdrop-filter:blur(12px); border-bottom:1px solid #dce2ea; }
+  body[data-t="dark"] .bar{ background:rgba(20,25,32,.88); border-color:#2b323b; }
+  .bar button{ border:1px solid #cbd5e1; background:#fff; color:#334155; padding:7px 14px; border-radius:9px;
+        font-weight:750; font-size:12px; cursor:pointer; font-family:inherit; letter-spacing:-.01em; }
+  body[data-t="dark"] .bar button{ background:#242a33; color:#c7d0dc; border-color:#39414c; }
+  .bar button.on{ background:var(--p); color:#fff; border-color:var(--p); }
+  .bar .sep{ width:1px; height:22px; background:#cbd5e1; margin:0 5px; }
+  body[data-t="dark"] .bar .sep{ background:#39414c; }
+  .sw{ width:24px; height:24px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+  .sw.on{ border-color:#0d1424; box-shadow:0 0 0 2px #fff inset; }
+  body[data-t="dark"] .sw.on{ border-color:#fff; box-shadow:0 0 0 2px #16202c inset; }
+
+  .stage{ max-width:1080px; margin:24px auto; padding:0 16px; }
+  .stage.phone{ max-width:430px; }
+  .variant{ display:none; }
+  .variant.show{ display:block; }
+  .vhead{ margin:0 0 14px; }
+  .vhead .tag{ display:inline-flex; align-items:center; gap:7px; background:var(--p); color:#fff; padding:4px 11px;
+        border-radius:999px; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .vhead h2{ margin:9px 0 3px; font-size:19px; font-weight:800; letter-spacing:-.03em; }
+  .vhead p{ margin:0; font-size:12.5px; color:#64748b; max-width:70ch; line-height:1.55; }
+  body[data-t="dark"] .vhead p{ color:#94a3b8; }
+  .statelabel{ font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:#94a3b8;
+        margin:26px 0 10px; display:flex; align-items:center; gap:10px; }
+  .statelabel::after{ content:""; flex:1; height:1px; background:currentColor; opacity:.25; }
+
+  /* page ground each sample paints for itself */
+  .frame{ border-radius:20px; overflow:hidden; border:1px solid #d9e0e9; box-shadow:0 24px 60px -34px rgba(13,20,36,.5); }
+  body[data-t="dark"] .frame{ border-color:#2c333e; }
+
+/* ══════════════════════════════════════════════════════════════
+   A — CONCIERGE   two-column: sticky property/agent rail + picker
+   ══════════════════════════════════════════════════════════════ */
+.A{ --sf:#fff; --sf2:#f6f8fb; --ink:#0d1424; --ink2:#4a5568; --mut:#8592a6; --ln:#e4e9f0;
+    --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 18%);
+    --deep:color-mix(in srgb,var(--p),#000 52%);
+    background:linear-gradient(180deg,#f2f5f9,#e8edf4); color:var(--ink); font-size:13px; padding:0 0 26px; }
+body[data-t="dark"] .A{ --sf:#1c2129; --sf2:#232932; --ink:#e9edf4; --ink2:#b3bcc9; --mut:#7e8a9b; --ln:#2e3641;
+    background:linear-gradient(180deg,#12161d,#0d1117); }
+.A .mast{ display:flex; align-items:center; gap:12px; padding:14px 20px; background:var(--sf); border-bottom:1px solid var(--ln); }
+.A .bm{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:16px;
+    background:linear-gradient(140deg,var(--deep),var(--accd)); }
+.A .mast .nm{ font-weight:800; font-size:14px; letter-spacing:-.02em; }
+.A .mast .ds{ font-size:11px; color:var(--mut); }
+.A .lock{ margin-inline-start:auto; font-size:10.5px; font-weight:700; color:var(--ok); background:color-mix(in srgb,var(--ok),transparent 90%);
+    border:1px solid color-mix(in srgb,var(--ok),transparent 76%); padding:6px 11px; border-radius:999px; }
+.A .wrap{ display:grid; grid-template-columns:330px 1fr; gap:18px; padding:22px 20px; align-items:start; }
+.stage.phone .A .wrap{ grid-template-columns:1fr; }
+.A .card{ background:var(--sf); border:1px solid var(--ln); border-radius:18px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(13,20,36,.04),0 18px 40px -30px rgba(13,20,36,.45); }
+.A .shot{ height:148px; position:relative; display:grid; place-items:end start; padding:14px;
+    background:radial-gradient(120% 140% at 15% 0%,rgba(255,255,255,.18),transparent 55%),linear-gradient(135deg,var(--deep),var(--accd)); }
+.A .shot::after{ content:"\f1ad"; font-family:FontAwesome; position:absolute; inset-inline-end:14px; top:12px; font-size:40px; color:rgba(255,255,255,.16); }
+.A .shot .eye{ font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.72); }
+.A .shot .unit{ font-size:20px; font-weight:800; letter-spacing:-.03em; color:#fff; line-height:1.1; margin-top:3px; }
+.A .tags{ display:flex; gap:6px; flex-wrap:wrap; padding:13px 14px 0; }
+.A .tag{ font-size:10.5px; font-weight:700; padding:5px 10px; border-radius:8px; background:var(--sf2); color:var(--ink2); border:1px solid var(--ln); }
+.A .agent{ display:flex; align-items:center; gap:11px; padding:14px; margin:13px 14px 0; border-radius:14px; background:var(--sf2); border:1px solid var(--ln); }
+.A .av{ width:42px; height:42px; border-radius:50%; display:grid; place-items:center; color:#fff; font-weight:800; font-size:14px;
+    background:linear-gradient(140deg,var(--accd),color-mix(in srgb,var(--p),#fff 18%)); flex:none; }
+.A .agent .k{ font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--mut); }
+.A .agent .v{ font-size:13.5px; font-weight:750; letter-spacing:-.02em; }
+.A .acts{ display:flex; gap:7px; padding:12px 14px 0; }
+.A .btn{ flex:1; display:inline-flex; align-items:center; justify-content:center; gap:7px; font-family:inherit; cursor:pointer;
+    font-size:12px; font-weight:750; padding:9px 12px; border-radius:11px; border:1px solid var(--ln); background:var(--sf); color:var(--ink2); }
+.A .btn.pri{ background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 10px 22px -12px rgba(var(--acc-rgb),.9); }
+.A .kv{ display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px dashed var(--ln); font-size:12px; }
+.A .kv:last-child{ border-bottom:0; }
+.A .kv .k{ color:var(--mut); } .A .kv .v{ font-weight:700; }
+.A .pad{ padding:6px 14px 14px; }
+.A .note{ margin:12px 14px 16px; padding:11px 13px; border-radius:12px; font-size:11.5px; line-height:1.55; color:var(--ink2);
+    background:color-mix(in srgb,var(--acc),transparent 94%); border:1px solid color-mix(in srgb,var(--acc),transparent 86%); }
+.A h1{ margin:0 0 4px; font-size:clamp(21px,2.6vw,27px); font-weight:800; letter-spacing:-.035em; }
+.A .lede{ margin:0 0 18px; font-size:13px; color:var(--ink2); max-width:52ch; }
+.A .weekhd{ display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+.A .weekhd .mo{ font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--mut); }
+.A .nav{ margin-inline-start:auto; display:flex; gap:6px; }
+.A .nav button{ width:28px; height:28px; border-radius:9px; border:1px solid var(--ln); background:var(--sf); color:var(--ink2); cursor:pointer; }
+.A .rail{ display:grid; grid-template-columns:repeat(7,1fr); gap:7px; }
+.stage.phone .A .rail{ display:flex; overflow-x:auto; padding-bottom:6px; }
+.A .day{ border:1px solid var(--ln); background:var(--sf); border-radius:14px; padding:11px 4px; text-align:center; cursor:pointer;
+    font-family:inherit; transition:.15s; min-width:62px; }
+.A .day:hover{ border-color:var(--acc); transform:translateY(-2px); }
+.A .day .w{ font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--mut); }
+.A .day .d{ font-size:18px; font-weight:800; letter-spacing:-.03em; margin-top:2px; }
+.A .day .n{ font-size:9.5px; color:var(--mut); margin-top:2px; }
+.A .day.off{ opacity:.42; cursor:default; }
+.A .day.sel{ background:linear-gradient(155deg,var(--acc),var(--accd)); border-color:transparent; color:#fff;
+    box-shadow:0 14px 26px -14px rgba(var(--acc-rgb),.95); }
+.A .day.sel .w,.A .day.sel .n{ color:rgba(255,255,255,.8); }
+.A .partof{ display:flex; align-items:center; gap:9px; margin:20px 0 10px; }
+.A .partof .t{ font-size:10.5px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; color:var(--mut); }
+.A .partof .l{ flex:1; height:1px; background:var(--ln); }
+.A .slots{ display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:8px; }
+.A .slot{ padding:12px 8px; border-radius:12px; border:1px solid var(--ln); background:var(--sf); color:var(--ink);
+    font-family:inherit; font-size:13.5px; font-weight:750; letter-spacing:-.02em; cursor:pointer; transition:.15s; }
+.A .slot:hover{ border-color:var(--acc); background:color-mix(in srgb,var(--acc),transparent 94%); transform:translateY(-2px); }
+.A .slot.sel{ background:linear-gradient(155deg,var(--acc),var(--accd)); border-color:transparent; color:#fff;
+    box-shadow:0 14px 26px -14px rgba(var(--acc-rgb),.95); }
+.A .confirm{ position:sticky; bottom:14px; margin-top:20px; display:flex; align-items:center; gap:13px; flex-wrap:wrap;
+    padding:13px 16px; border-radius:16px; background:var(--sf); border:1px solid color-mix(in srgb,var(--acc),transparent 70%);
+    box-shadow:0 22px 44px -24px rgba(13,20,36,.55); }
+.A .confirm .ic{ width:38px; height:38px; border-radius:12px; display:grid; place-items:center; color:#fff; flex:none;
+    background:linear-gradient(150deg,var(--acc),var(--accd)); }
+.A .confirm .big{ font-size:13.5px; font-weight:800; letter-spacing:-.02em; }
+.A .confirm .sm{ font-size:11.5px; color:var(--ink2); }
+.A .confirm .go{ margin-inline-start:auto; }
+
+/* ══════════════════════════════════════════════════════════════
+   B — ESTATE   editorial hero, overlapping booking card
+   ══════════════════════════════════════════════════════════════ */
+.B{ --sf:#fffdfa; --sf2:#f6f2ec; --ink:#191512; --ink2:#5b5248; --mut:#94897c; --ln:#e7dfd4;
+    --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 22%);
+    background:#f3efe9; color:var(--ink); font-size:13px; padding-bottom:26px; }
+body[data-t="dark"] .B{ --sf:#1b1815; --sf2:#231f1b; --ink:#f2ece4; --ink2:#c3b8ab; --mut:#8c8175; --ln:#332d27; background:#131110; }
+.B .hero{ position:relative; padding:26px 26px 92px; color:#f6f1ea; overflow:hidden;
+    background:radial-gradient(90% 120% at 88% 0%,color-mix(in srgb,var(--acc) 44%,transparent),transparent 60%),
+               linear-gradient(160deg,#171310,#241d18 62%,#171310); }
+.B .hero::after{ content:"\f015"; font-family:FontAwesome; position:absolute; inset-inline-end:-14px; bottom:34px; font-size:190px;
+    color:rgba(255,255,255,.05); line-height:1; }
+.B .hmast{ display:flex; align-items:center; gap:11px; margin-bottom:34px; position:relative; z-index:2; }
+.B .hmast .bm{ width:36px; height:36px; border-radius:11px; display:grid; place-items:center; font-weight:800;
+    background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); }
+.B .hmast .nm{ font-size:13px; font-weight:750; letter-spacing:-.01em; }
+.B .hmast .ds{ font-size:10.5px; color:rgba(255,255,255,.6); }
+.B .hmast .lock{ margin-inline-start:auto; font-size:10.5px; font-weight:700; padding:6px 12px; border-radius:999px;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); }
+.B .eye{ font-size:10px; font-weight:800; letter-spacing:.24em; text-transform:uppercase; color:color-mix(in srgb,var(--acc),#fff 42%); position:relative; z-index:2; }
+.B .hero h1{ font-family:Georgia,'Times New Roman',serif; font-weight:400; font-size:clamp(28px,4.4vw,46px); letter-spacing:-.02em;
+    line-height:1.06; margin:11px 0 0; max-width:16ch; position:relative; z-index:2; }
+.B .hero h1 em{ font-style:italic; color:color-mix(in srgb,var(--acc),#fff 46%); }
+.B .hsub{ margin:13px 0 0; font-size:13px; color:rgba(246,241,234,.72); max-width:46ch; line-height:1.6; position:relative; z-index:2; }
+.B .hfacts{ display:flex; gap:22px; flex-wrap:wrap; margin-top:22px; position:relative; z-index:2; }
+.B .hfact .k{ font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:rgba(246,241,234,.5); }
+.B .hfact .v{ font-size:13.5px; font-weight:700; margin-top:3px; }
+.B .body{ padding:0 26px; margin-top:-70px; position:relative; z-index:3; }
+.B .panel{ background:var(--sf); border:1px solid var(--ln); border-radius:4px; box-shadow:0 30px 60px -34px rgba(25,21,18,.6); }
+.B .ptop{ display:flex; align-items:flex-end; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:20px 22px 0; }
+.B .ptop h3{ margin:0; font-family:Georgia,serif; font-weight:400; font-size:20px; letter-spacing:-.01em; }
+.B .ptop .cnt{ font-size:11.5px; color:var(--mut); }
+.B .divider{ height:1px; background:var(--ln); margin:16px 22px 0; }
+.B .strip{ display:flex; gap:0; overflow-x:auto; padding:14px 22px 0; }
+.B .d{ flex:none; min-width:78px; padding:10px 6px 12px; text-align:center; cursor:pointer; font-family:inherit; background:none;
+    border:0; border-bottom:2px solid transparent; color:var(--ink2); }
+.B .d .w{ font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--mut); }
+.B .d .n{ font-family:Georgia,serif; font-size:22px; margin-top:2px; }
+.B .d.sel{ color:var(--ink); border-bottom-color:var(--acc); }
+.B .d.sel .w{ color:var(--acc); }
+.B .rows{ padding:6px 22px 20px; }
+.B .row{ display:flex; align-items:center; gap:14px; width:100%; text-align:start; font-family:inherit; cursor:pointer;
+    padding:14px 4px; background:none; border:0; border-bottom:1px solid var(--ln); color:var(--ink); }
+.B .row:last-child{ border-bottom:0; }
+.B .row .t{ font-family:Georgia,serif; font-size:19px; min-width:96px; letter-spacing:-.01em; }
+.B .row .m{ font-size:11.5px; color:var(--mut); flex:1; }
+.B .row .pick{ font-size:10.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--acc); opacity:0; }
+.B .row:hover{ background:var(--sf2); }
+.B .row:hover .pick{ opacity:1; }
+.B .row.sel{ background:color-mix(in srgb,var(--acc),transparent 92%); }
+.B .row.sel .pick{ opacity:1; }
+.B .foot{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:18px 22px; border-top:1px solid var(--ln); background:var(--sf2); }
+.B .foot .lab .k{ font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); }
+.B .foot .lab .v{ font-family:Georgia,serif; font-size:17px; margin-top:2px; }
+.B .cta{ margin-inline-start:auto; font-family:inherit; cursor:pointer; border:0; padding:14px 26px; border-radius:2px; color:#fff;
+    font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; background:var(--ink); }
+body[data-t="dark"] .B .cta{ background:var(--acc); }
+.B .cta:hover{ background:var(--acc); }
+.B .fine{ padding:16px 26px 0; font-size:11.5px; color:var(--mut); display:flex; gap:18px; flex-wrap:wrap; }
+
+/* ══════════════════════════════════════════════════════════════
+   C — BOARDING PASS   narrow mobile-first stepper + ticket
+   ══════════════════════════════════════════════════════════════ */
+.C{ --sf:#fff; --sf2:#f7f8fa; --ink:#101418; --ink2:#4d5560; --mut:#8b96a4; --ln:#e6e9ee;
+    --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 18%);
+    background:#eef1f5; color:var(--ink); font-size:13px; padding:0 0 26px; }
+body[data-t="dark"] .C{ --sf:#1a1e24; --sf2:#21262d; --ink:#eaeef4; --ink2:#b0b9c5; --mut:#7d8794; --ln:#2b313a; background:#0f1216; }
+.C .inner{ max-width:520px; margin:0 auto; padding:20px 16px; }
+.C .mast{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+.C .bm{ width:34px; height:34px; border-radius:11px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:14px;
+    background:linear-gradient(140deg,var(--accd),var(--acc)); }
+.C .mast .nm{ font-size:13px; font-weight:800; letter-spacing:-.02em; }
+.C .mast .ds{ font-size:10.5px; color:var(--mut); }
+.C .mast .lock{ margin-inline-start:auto; font-size:10.5px; color:var(--mut); }
+.C .steps{ display:flex; align-items:center; gap:6px; margin-bottom:16px; }
+.C .st{ display:flex; align-items:center; gap:7px; font-size:11px; font-weight:750; color:var(--mut); }
+.C .st .n{ width:21px; height:21px; border-radius:50%; display:grid; place-items:center; font-size:10.5px; font-weight:800;
+    background:var(--sf); border:1px solid var(--ln); }
+.C .st.done .n{ background:var(--ok); border-color:var(--ok); color:#fff; }
+.C .st.now{ color:var(--ink); } .C .st.now .n{ background:var(--acc); border-color:var(--acc); color:#fff; }
+.C .steps .line{ flex:1; height:1px; background:var(--ln); }
+.C .card{ background:var(--sf); border:1px solid var(--ln); border-radius:20px; box-shadow:0 1px 2px rgba(13,20,36,.04),0 20px 44px -32px rgba(13,20,36,.5); overflow:hidden; }
+.C .head{ padding:20px 20px 16px; text-align:center; border-bottom:1px solid var(--ln); }
+.C .head .ic{ width:46px; height:46px; border-radius:15px; margin:0 auto 11px; display:grid; place-items:center; font-size:19px;
+    color:var(--acc); background:color-mix(in srgb,var(--acc),transparent 90%); border:1px solid color-mix(in srgb,var(--acc),transparent 82%); }
+.C .head h1{ margin:0 0 5px; font-size:20px; font-weight:800; letter-spacing:-.032em; }
+.C .head p{ margin:0; font-size:12.5px; color:var(--ink2); line-height:1.55; }
+.C .head .who{ display:inline-flex; align-items:center; gap:8px; margin-top:12px; padding:6px 12px 6px 6px; border-radius:999px;
+    background:var(--sf2); border:1px solid var(--ln); font-size:12px; font-weight:700; }
+.C .head .who .av{ width:24px; height:24px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:10px; font-weight:800;
+    background:linear-gradient(140deg,var(--accd),var(--acc)); }
+.C .sect{ padding:16px 20px 4px; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); }
+.C .drail{ display:flex; gap:8px; overflow-x:auto; padding:8px 20px 4px; }
+.C .day{ flex:none; min-width:66px; border:1px solid var(--ln); background:var(--sf); border-radius:14px; padding:10px 6px;
+    text-align:center; cursor:pointer; font-family:inherit; color:var(--ink); }
+.C .day .w{ font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--mut); }
+.C .day .d{ font-size:17px; font-weight:800; letter-spacing:-.03em; margin-top:2px; }
+.C .day .n{ font-size:9px; color:var(--mut); margin-top:2px; }
+.C .day.sel{ background:var(--acc); border-color:var(--acc); color:#fff; }
+.C .day.sel .w,.C .day.sel .n{ color:rgba(255,255,255,.82); }
+.C .list{ padding:8px 20px 4px; display:grid; gap:7px; }
+.C .opt{ display:flex; align-items:center; gap:12px; width:100%; text-align:start; font-family:inherit; cursor:pointer;
+    padding:13px 14px; border-radius:14px; border:1px solid var(--ln); background:var(--sf); color:var(--ink); }
+.C .opt .rd{ width:19px; height:19px; border-radius:50%; border:2px solid var(--ln); flex:none; display:grid; place-items:center; }
+.C .opt .tm{ font-size:14.5px; font-weight:750; letter-spacing:-.02em; }
+.C .opt .du{ margin-inline-start:auto; font-size:11px; color:var(--mut); }
+.C .opt:hover{ border-color:var(--acc); }
+.C .opt.sel{ border-color:var(--acc); background:color-mix(in srgb,var(--acc),transparent 94%); }
+.C .opt.sel .rd{ border-color:var(--acc); background:var(--acc); color:#fff; font-size:10px; }
+.C .more{ display:block; width:100%; margin:9px 0 0; padding:11px; border:1px dashed var(--ln); background:none; color:var(--ink2);
+    border-radius:12px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+.C .bottom{ padding:16px 20px 20px; }
+.C .bottom .sel-lab{ display:flex; align-items:center; gap:9px; padding:12px 14px; border-radius:14px; margin-bottom:11px;
+    background:var(--sf2); border:1px solid var(--ln); }
+.C .bottom .sel-lab .k{ font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--mut); }
+.C .bottom .sel-lab .v{ font-size:13.5px; font-weight:800; letter-spacing:-.022em; }
+.C .go{ width:100%; padding:15px; border-radius:15px; border:0; color:#fff; font-family:inherit; font-size:14px; font-weight:800;
+    letter-spacing:-.02em; cursor:pointer; background:linear-gradient(150deg,var(--acc),var(--accd));
+    box-shadow:0 16px 30px -14px rgba(var(--acc-rgb),.95); }
+.C .fine{ text-align:center; font-size:11px; color:var(--mut); margin-top:11px; line-height:1.5; }
+
+/* C confirmed ticket */
+.C .ticket{ background:var(--sf); border:1px solid var(--ln); border-radius:20px; overflow:hidden;
+    box-shadow:0 20px 44px -30px rgba(13,20,36,.55); }
+.C .tk-h{ padding:20px; color:#fff; text-align:center; background:linear-gradient(150deg,var(--accd),var(--acc)); }
+.C .tk-h .mk{ width:52px; height:52px; border-radius:50%; margin:0 auto 12px; display:grid; place-items:center; font-size:22px;
+    background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.34); }
+.C .tk-h .ttl{ font-size:18px; font-weight:800; letter-spacing:-.03em; }
+.C .tk-h .sub{ font-size:11.5px; opacity:.82; margin-top:4px; }
+.C .perf{ position:relative; height:22px; background:var(--sf); }
+.C .perf::before,.C .perf::after{ content:""; position:absolute; top:0; width:22px; height:22px; border-radius:50%; background:#eef1f5; }
+body[data-t="dark"] .C .perf::before, body[data-t="dark"] .C .perf::after{ background:#0f1216; }
+.C .perf::before{ inset-inline-start:-11px; } .C .perf::after{ inset-inline-end:-11px; }
+.C .perf .dash{ position:absolute; inset-inline:18px; top:11px; height:1px;
+    background:repeating-linear-gradient(90deg,var(--ln) 0 6px,transparent 6px 12px); }
+.C .tk-b{ padding:4px 20px 18px; }
+.C .tk-row{ display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px dashed var(--ln); font-size:12.5px; }
+.C .tk-row:last-child{ border-bottom:0; }
+.C .tk-row .k{ color:var(--mut); } .C .tk-row .v{ font-weight:750; text-align:end; }
+.C .tk-f{ display:flex; gap:8px; padding:0 20px 20px; }
+.C .tk-f button{ flex:1; padding:12px; border-radius:13px; border:1px solid var(--ln); background:var(--sf2); color:var(--ink2);
+    font-family:inherit; font-size:12px; font-weight:750; cursor:pointer; }
+
+/* ══════════════════════════════════════════════════════════════
+   D — AGENDA   day list + timeline rail, dense & desktop-first
+   ══════════════════════════════════════════════════════════════ */
+.D{ --sf:#fff; --sf2:#f7f9fc; --ink:#0f1620; --ink2:#4b5563; --mut:#8a94a3; --ln:#e5e9f0;
+    --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 18%);
+    background:#eaeef4; color:var(--ink); font-size:13px; padding:0 0 22px; }
+body[data-t="dark"] .D{ --sf:#191d24; --sf2:#20252d; --ink:#e8edf4; --ink2:#aeb8c5; --mut:#7b8593; --ln:#2a3038; background:#0e1116; }
+.D .top{ display:flex; align-items:center; gap:12px; padding:13px 18px; background:var(--sf); border-bottom:1px solid var(--ln); flex-wrap:wrap; }
+.D .bm{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:#fff; font-weight:800; font-size:14px;
+    background:linear-gradient(140deg,var(--accd),var(--acc)); }
+.D .top .nm{ font-size:13px; font-weight:800; letter-spacing:-.02em; }
+.D .top .ds{ font-size:10.5px; color:var(--mut); }
+.D .top .chip{ display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:10px; background:var(--sf2);
+    border:1px solid var(--ln); font-size:11.5px; font-weight:700; }
+.D .top .chip i{ color:var(--acc); }
+.D .top .right{ margin-inline-start:auto; display:flex; gap:7px; flex-wrap:wrap; }
+.D .band{ padding:18px 18px 0; }
+.D .band h1{ margin:0 0 3px; font-size:clamp(19px,2.4vw,24px); font-weight:800; letter-spacing:-.033em; }
+.D .band p{ margin:0; font-size:12.5px; color:var(--ink2); }
+.D .grid{ display:grid; grid-template-columns:250px 1fr; gap:14px; padding:16px 18px 0; align-items:start; }
+.stage.phone .D .grid{ grid-template-columns:1fr; }
+.D .panel{ background:var(--sf); border:1px solid var(--ln); border-radius:16px; overflow:hidden; box-shadow:0 1px 2px rgba(13,20,36,.04); }
+.D .ph{ padding:11px 14px; border-bottom:1px solid var(--ln); font-size:10px; font-weight:800; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--mut); }
+.D .dl{ display:flex; flex-direction:column; }
+.D .di{ display:flex; align-items:center; gap:11px; padding:11px 14px; border-bottom:1px solid var(--ln); cursor:pointer;
+    font-family:inherit; background:none; border-left:0; border-right:0; border-top:0; text-align:start; color:var(--ink); }
+.D .di:last-child{ border-bottom:0; }
+.D .di .num{ width:38px; text-align:center; flex:none; }
+.D .di .num .w{ font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--mut); }
+.D .di .num .d{ font-size:17px; font-weight:800; letter-spacing:-.03em; }
+.D .di .lb{ flex:1; min-width:0; }
+.D .di .lb .t{ font-size:12.5px; font-weight:700; letter-spacing:-.015em; }
+.D .di .lb .s{ font-size:11px; color:var(--mut); }
+.D .di .cnt{ font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:999px; background:var(--sf2); color:var(--ink2); border:1px solid var(--ln); }
+.D .di.sel{ background:color-mix(in srgb,var(--acc),transparent 93%); box-shadow:inset 3px 0 0 var(--acc); }
+.D .di.sel .lb .t{ color:var(--acc); }
+.D .di.none{ opacity:.45; }
+.D .tl{ padding:6px 16px 16px; position:relative; }
+.D .tl::before{ content:""; position:absolute; inset-inline-start:74px; top:14px; bottom:16px; width:1px; background:var(--ln); }
+.D .tr{ display:flex; align-items:center; gap:16px; padding:7px 0; position:relative; }
+.D .tr .tm{ width:58px; text-align:end; font-size:11.5px; font-weight:750; color:var(--mut); flex:none; }
+.D .tr .dot{ width:9px; height:9px; border-radius:50%; background:var(--ln); flex:none; margin-inline-start:-4px; z-index:2; }
+.D .tr .bar{ flex:1; display:flex; align-items:center; gap:11px; padding:11px 14px; border-radius:12px; border:1px dashed var(--ln);
+    background:var(--sf2); cursor:pointer; font-family:inherit; color:var(--ink2); font-size:12.5px; font-weight:700; text-align:start; }
+.D .tr .bar .go{ margin-inline-start:auto; font-size:10.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--acc); opacity:0; }
+.D .tr:hover .bar{ border-style:solid; border-color:var(--acc); background:color-mix(in srgb,var(--acc),transparent 94%); color:var(--ink); }
+.D .tr:hover .bar .go{ opacity:1; }
+.D .tr:hover .dot{ background:var(--acc); }
+.D .tr.sel .bar{ border-style:solid; border-color:transparent; color:#fff; background:linear-gradient(150deg,var(--acc),var(--accd));
+    box-shadow:0 14px 26px -14px rgba(var(--acc-rgb),.9); }
+.D .tr.sel .bar .go{ opacity:1; color:#fff; }
+.D .tr.sel .dot{ background:var(--acc); box-shadow:0 0 0 4px color-mix(in srgb,var(--acc),transparent 78%); }
+.D .tr.busy .bar{ border-style:solid; opacity:.5; cursor:not-allowed; text-decoration:line-through; }
+.D .dock{ position:sticky; bottom:12px; margin:14px 18px 0; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:12px 16px; border-radius:15px; background:var(--sf); border:1px solid var(--ln);
+    box-shadow:0 22px 44px -26px rgba(13,20,36,.55); }
+.D .dock .k{ font-size:9.5px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; color:var(--mut); }
+.D .dock .v{ font-size:13.5px; font-weight:800; letter-spacing:-.022em; }
+.D .dock .go{ margin-inline-start:auto; padding:11px 20px; border-radius:12px; border:0; color:#fff; font-family:inherit;
+    font-size:12.5px; font-weight:800; cursor:pointer; background:linear-gradient(150deg,var(--acc),var(--accd)); }
+.D .dock .ghost{ padding:11px 16px; border-radius:12px; border:1px solid var(--ln); background:var(--sf2); color:var(--ink2);
+    font-family:inherit; font-size:12.5px; font-weight:750; cursor:pointer; }
+
+/* confirmed panels shared bits for A / B / D */
+.A .done, .D .done{ text-align:center; padding:30px 22px; }
+.A .done .mk, .D .done .mk{ width:64px; height:64px; border-radius:50%; margin:0 auto 15px; display:grid; place-items:center;
+    font-size:27px; color:#fff; background:linear-gradient(150deg,var(--ok),#0b7a44); box-shadow:0 18px 34px -16px rgba(var(--ok-rgb),.85); }
+.A .done h2, .D .done h2{ margin:0 0 6px; font-size:22px; font-weight:800; letter-spacing:-.032em; }
+.A .done p, .D .done p{ margin:0 auto; font-size:12.5px; color:var(--ink2); max-width:44ch; line-height:1.6; }
+.A .stub, .D .stub{ max-width:430px; margin:20px auto 0; text-align:start; border:1px solid var(--ln); border-radius:16px; overflow:hidden; background:var(--sf2); }
+.A .stub .sh, .D .stub .sh{ padding:14px 16px; color:#fff; background:linear-gradient(140deg,var(--accd),var(--acc)); }
+.A .stub .sh .r, .D .stub .sh .r{ font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; opacity:.78; }
+.A .stub .sh .w, .D .stub .sh .w{ font-size:19px; font-weight:800; letter-spacing:-.03em; margin-top:3px; }
+.A .stub .sb, .D .stub .sb{ padding:6px 16px 14px; }
+.A .stub .kv, .D .stub .kv{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px dashed var(--ln); font-size:12.5px; }
+.A .stub .kv:last-child, .D .stub .kv:last-child{ border-bottom:0; }
+.A .stub .kv .k, .D .stub .kv .k{ color:var(--mut); } .A .stub .kv .v, .D .stub .kv .v{ font-weight:750; }
+.A .ics, .D .ics{ display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+.A .ics button, .D .ics button{ padding:10px 15px; border-radius:12px; border:1px solid var(--ln); background:var(--sf); color:var(--ink2);
+    font-family:inherit; font-size:12px; font-weight:750; cursor:pointer; }
+</style>
+</head>
+<body data-t="light">
+
+<div class="bar">
+  <button data-v="A" class="on">A · Concierge</button>
+  <button data-v="B">B · Estate</button>
+  <button data-v="C">C · Boarding Pass</button>
+  <button data-v="D">D · Agenda</button>
+  <span class="sep"></span>
+  <button id="theme"><i class="fa fa-moon-o"></i> Dark</button>
+  <button id="device"><i class="fa fa-mobile"></i> Phone</button>
+  <button id="dir">RTL</button>
+  <span class="sep"></span>
+  <button class="sw on" data-c="29,78,216"  style="background:#1D4ED8" title="Blue"></button>
+  <button class="sw" data-c="13,148,136"    style="background:#0d9488" title="Teal"></button>
+  <button class="sw" data-c="154,106,60"    style="background:#9A6A3C" title="Bronze"></button>
+  <button class="sw" data-c="124,58,237"    style="background:#7C3AED" title="Violet"></button>
+</div>
+
+<div class="stage" id="stage">
+
+<!-- ═══════════════ A — CONCIERGE ═══════════════ -->
+<section class="variant show" data-v="A">
+  <div class="vhead">
+    <span class="tag">Sample A</span>
+    <h2>Concierge</h2>
+    <p>Closest to what you have, but the property and the agent get a permanent home on the left instead of being squeezed into hero chips. The right column is nothing but the decision: week strip, slots grouped morning/afternoon, sticky confirm. Reads as "a real company arranged this for me".</p>
+  </div>
+
+  <div class="frame"><div class="A">
+    <div class="mast">
+      <span class="bm">A</span>
+      <div><div class="nm">Astra Properties</div><div class="ds">Schedule your property viewing</div></div>
+      <span class="lock"><i class="fa fa-lock"></i> Secure personal link</span>
+    </div>
+
+    <div class="wrap">
+      <aside class="card">
+        <div class="shot">
+          <div><div class="eye">Viewing</div><div class="unit">Unit A-1204</div></div>
+        </div>
+        <div class="tags">
+          <span class="tag"><i class="fa fa-building-o"></i> Pearl Tower</span>
+          <span class="tag"><i class="fa fa-bed"></i> 2 Bed</span>
+          <span class="tag"><i class="fa fa-clock-o"></i> 30 min</span>
+        </div>
+        <div class="agent">
+          <span class="av">RK</span>
+          <div><div class="k">Your agent</div><div class="v">Rashid Kareem</div></div>
+        </div>
+        <div class="acts">
+          <button class="btn pri"><i class="fa fa-phone"></i> Call</button>
+          <button class="btn"><i class="fa fa-whatsapp"></i> WhatsApp</button>
+        </div>
+        <div class="pad" style="padding-top:14px">
+          <div class="kv"><span class="k">Booking as</span><span class="v">Ahmed Al Mansoori</span></div>
+          <div class="kv"><span class="k">Reference</span><span class="v">PV-2026-0142</span></div>
+          <div class="kv"><span class="k">Times shown in</span><span class="v">Asia/Qatar</span></div>
+          <div class="kv"><span class="k">Link valid until</span><span class="v">27 Aug 2026</span></div>
+        </div>
+        <div class="note"><i class="fa fa-info-circle"></i> Bring an ID for building access. If you're running late, call Rashid — he'll hold the slot for 10 minutes.</div>
+      </aside>
+
+      <main>
+        <h1>Choose a time that suits you</h1>
+        <p class="lede">That's all we need — your details are already with us. You'll get a confirmation by email the moment you pick.</p>
+
+        <div class="weekhd">
+          <span class="mo">August 2026</span>
+          <span class="nav"><button><i class="fa fa-angle-left"></i></button><button><i class="fa fa-angle-right"></i></button></span>
+        </div>
+        <div class="rail">
+          <button class="day"><div class="w">Wed</div><div class="d">20</div><div class="n">3 free</div></button>
+          <button class="day sel"><div class="w">Thu</div><div class="d">21</div><div class="n">8 free</div></button>
+          <button class="day"><div class="w">Fri</div><div class="d">22</div><div class="n">5 free</div></button>
+          <button class="day off"><div class="w">Sat</div><div class="d">23</div><div class="n">—</div></button>
+          <button class="day"><div class="w">Sun</div><div class="d">24</div><div class="n">6 free</div></button>
+          <button class="day"><div class="w">Mon</div><div class="d">25</div><div class="n">9 free</div></button>
+          <button class="day"><div class="w">Tue</div><div class="d">26</div><div class="n">4 free</div></button>
+        </div>
+
+        <div class="partof"><span class="t"><i class="fa fa-sun-o"></i> Morning</span><span class="l"></span></div>
+        <div class="slots">
+          <button class="slot">09:00 AM</button>
+          <button class="slot">09:45 AM</button>
+          <button class="slot">10:30 AM</button>
+          <button class="slot">11:15 AM</button>
+        </div>
+
+        <div class="partof"><span class="t"><i class="fa fa-moon-o"></i> Afternoon</span><span class="l"></span></div>
+        <div class="slots">
+          <button class="slot">01:00 PM</button>
+          <button class="slot sel">01:45 PM</button>
+          <button class="slot">02:30 PM</button>
+          <button class="slot">04:00 PM</button>
+        </div>
+
+        <div class="confirm">
+          <span class="ic"><i class="fa fa-calendar-check-o"></i></span>
+          <div>
+            <div class="big">Thursday, 21 August at 01:45 PM</div>
+            <div class="sm">with Rashid Kareem · Asia/Qatar · 30 minutes</div>
+          </div>
+          <button class="btn pri go" style="flex:none"><i class="fa fa-check"></i> Confirm booking</button>
+        </div>
+      </main>
+    </div>
+
+    <div class="statelabel" style="margin:26px 20px 10px">Confirmed state</div>
+    <div style="padding:0 20px 6px"><div class="card"><div class="done">
+      <div class="mk"><i class="fa fa-check"></i></div>
+      <h2>You're booked in</h2>
+      <p>We've sent a confirmation to <strong>ahmed@example.com</strong>. Rashid will meet you in the Pearl Tower lobby.</p>
+      <div class="stub">
+        <div class="sh"><div class="r">Property viewing · PV-2026-0142</div><div class="w">Thu 21 Aug · 01:45 PM</div></div>
+        <div class="sb">
+          <div class="kv"><span class="k">Property</span><span class="v">Unit A-1204, Pearl Tower</span></div>
+          <div class="kv"><span class="k">Agent</span><span class="v">Rashid Kareem · +974 5555 1234</span></div>
+          <div class="kv"><span class="k">Timezone</span><span class="v">Asia/Qatar</span></div>
+        </div>
+      </div>
+      <div class="ics">
+        <button><i class="fa fa-calendar-plus-o"></i> Add to calendar</button>
+        <button><i class="fa fa-map-marker"></i> Directions</button>
+        <button><i class="fa fa-phone"></i> Call Rashid</button>
+      </div>
+    </div></div></div>
+  </div></div>
+</section>
+
+<!-- ═══════════════ B — ESTATE ═══════════════ -->
+<section class="variant" data-v="B">
+  <div class="vhead">
+    <span class="tag">Sample B</span>
+    <h2>Estate</h2>
+    <p>The marketing-grade option. Dark editorial hero with a serif headline, then the booking panel lifts over it. Times are full-width rows, not chips — calmer and easier to scan on a phone. Squared corners and a warm ivory ground make it read as property, not SaaS.</p>
+  </div>
+
+  <div class="frame"><div class="B">
+    <div class="hero">
+      <div class="hmast">
+        <span class="bm">A</span>
+        <div><div class="nm">Astra Properties</div><div class="ds">Est. 2009 · Doha</div></div>
+        <span class="lock"><i class="fa fa-lock"></i> Personal link</span>
+      </div>
+      <div class="eye">Private viewing · Unit A-1204</div>
+      <h1>Come and see <em>Pearl Tower</em> for yourself.</h1>
+      <p class="hsub">Ahmed, Rashid has held these times open for you. Pick whichever suits — nothing else is needed from you.</p>
+      <div class="hfacts">
+        <div class="hfact"><div class="k">Your agent</div><div class="v">Rashid Kareem</div></div>
+        <div class="hfact"><div class="k">Duration</div><div class="v">30 minutes</div></div>
+        <div class="hfact"><div class="k">Times in</div><div class="v">Asia/Qatar</div></div>
+        <div class="hfact"><div class="k">Link valid until</div><div class="v">27 Aug 2026</div></div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="panel">
+        <div class="ptop">
+          <h3>Thursday, 21 August</h3>
+          <span class="cnt">8 times available</span>
+        </div>
+        <div class="divider"></div>
+        <div class="strip">
+          <button class="d"><div class="w">Wed</div><div class="n">20</div></button>
+          <button class="d sel"><div class="w">Thu</div><div class="n">21</div></button>
+          <button class="d"><div class="w">Fri</div><div class="n">22</div></button>
+          <button class="d"><div class="w">Sun</div><div class="n">24</div></button>
+          <button class="d"><div class="w">Mon</div><div class="n">25</div></button>
+          <button class="d"><div class="w">Tue</div><div class="n">26</div></button>
+        </div>
+        <div class="rows">
+          <button class="row"><span class="t">09:00</span><span class="m">Morning · lobby meet</span><span class="pick">Select</span></button>
+          <button class="row"><span class="t">09:45</span><span class="m">Morning · lobby meet</span><span class="pick">Select</span></button>
+          <button class="row"><span class="t">10:30</span><span class="m">Morning · lobby meet</span><span class="pick">Select</span></button>
+          <button class="row sel"><span class="t">01:45</span><span class="m">Afternoon · lobby meet</span><span class="pick"><i class="fa fa-check"></i> Selected</span></button>
+          <button class="row"><span class="t">02:30</span><span class="m">Afternoon · lobby meet</span><span class="pick">Select</span></button>
+          <button class="row"><span class="t">04:00</span><span class="m">Late afternoon · lobby meet</span><span class="pick">Select</span></button>
+        </div>
+        <div class="foot">
+          <div class="lab"><div class="k">Your viewing</div><div class="v">Thu 21 Aug, 01:45 PM</div></div>
+          <button class="cta">Confirm booking</button>
+        </div>
+      </div>
+      <div class="fine">
+        <span><i class="fa fa-phone"></i> +974 5555 1234</span>
+        <span><i class="fa fa-envelope-o"></i> hello@astra.qa</span>
+        <span><i class="fa fa-info-circle"></i> This link is personal to you — please don't share it.</span>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ═══════════════ C — BOARDING PASS ═══════════════ -->
+<section class="variant" data-v="C">
+  <div class="vhead">
+    <span class="tag">Sample C</span>
+    <h2>Boarding Pass</h2>
+    <p>Mobile-first and deliberately narrow — most of these links are opened on a phone from an email. A three-step header removes all doubt about what's left to do, times are tappable rows, and the confirmed state is a real perforated ticket you'd screenshot. On desktop it stays a centred column rather than stretching.</p>
+  </div>
+
+  <div class="frame"><div class="C"><div class="inner">
+    <div class="mast">
+      <span class="bm">A</span>
+      <div><div class="nm">Astra Properties</div><div class="ds">Property viewing</div></div>
+      <span class="lock"><i class="fa fa-lock"></i> Secure link</span>
+    </div>
+
+    <div class="steps">
+      <span class="st done"><span class="n"><i class="fa fa-check"></i></span> Your details</span>
+      <span class="line"></span>
+      <span class="st now"><span class="n">2</span> Pick a time</span>
+      <span class="line"></span>
+      <span class="st"><span class="n">3</span> Confirmed</span>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <div class="ic"><i class="fa fa-calendar-o"></i></div>
+        <h1>Pick a time for Unit A-1204</h1>
+        <p>30-minute viewing at Pearl Tower. Times are shown in Asia/Qatar.</p>
+        <span class="who"><span class="av">RK</span> Rashid Kareem will meet you</span>
+      </div>
+
+      <div class="sect">Choose a day</div>
+      <div class="drail">
+        <button class="day"><div class="w">Wed</div><div class="d">20</div><div class="n">3</div></button>
+        <button class="day sel"><div class="w">Thu</div><div class="d">21</div><div class="n">8</div></button>
+        <button class="day"><div class="w">Fri</div><div class="d">22</div><div class="n">5</div></button>
+        <button class="day"><div class="w">Sun</div><div class="d">24</div><div class="n">6</div></button>
+        <button class="day"><div class="w">Mon</div><div class="d">25</div><div class="n">9</div></button>
+      </div>
+
+      <div class="sect">Thursday, 21 August</div>
+      <div class="list">
+        <button class="opt"><span class="rd"></span><span class="tm">09:00 AM</span><span class="du">30 min</span></button>
+        <button class="opt"><span class="rd"></span><span class="tm">10:30 AM</span><span class="du">30 min</span></button>
+        <button class="opt sel"><span class="rd"><i class="fa fa-check"></i></span><span class="tm">01:45 PM</span><span class="du">30 min</span></button>
+        <button class="opt"><span class="rd"></span><span class="tm">02:30 PM</span><span class="du">30 min</span></button>
+        <button class="more">Show 4 more times</button>
+      </div>
+
+      <div class="bottom">
+        <div class="sel-lab">
+          <i class="fa fa-calendar-check-o" style="color:var(--acc);font-size:16px"></i>
+          <div><div class="k">You picked</div><div class="v">Thu 21 Aug · 01:45 PM</div></div>
+        </div>
+        <button class="go">Confirm this time</button>
+        <div class="fine">You can change it later by replying to your confirmation email.</div>
+      </div>
+    </div>
+
+    <div class="statelabel">Confirmed state</div>
+    <div class="ticket">
+      <div class="tk-h">
+        <div class="mk"><i class="fa fa-check"></i></div>
+        <div class="ttl">You're booked in</div>
+        <div class="sub">Thursday, 21 August 2026 · 01:45 PM</div>
+      </div>
+      <div class="perf"><span class="dash"></span></div>
+      <div class="tk-b">
+        <div class="tk-row"><span class="k">Reference</span><span class="v">PV-2026-0142</span></div>
+        <div class="tk-row"><span class="k">Property</span><span class="v">Unit A-1204, Pearl Tower</span></div>
+        <div class="tk-row"><span class="k">Agent</span><span class="v">Rashid Kareem<br>+974 5555 1234</span></div>
+        <div class="tk-row"><span class="k">Timezone</span><span class="v">Asia/Qatar</span></div>
+      </div>
+      <div class="tk-f">
+        <button><i class="fa fa-calendar-plus-o"></i> Add to calendar</button>
+        <button><i class="fa fa-map-marker"></i> Directions</button>
+      </div>
+    </div>
+  </div></div></div>
+</section>
+
+<!-- ═══════════════ D — AGENDA ═══════════════ -->
+<section class="variant" data-v="D">
+  <div class="vhead">
+    <span class="tag">Sample D</span>
+    <h2>Agenda</h2>
+    <p>The information-dense one. Days sit in a list with free-slot counts so a customer can see the whole week at once, and times run down a real timeline — including the ones already taken, greyed out, which quietly signals the agent is in demand. Least decorative, fastest to scan, best if most bookings come from desktop.</p>
+  </div>
+
+  <div class="frame"><div class="D">
+    <div class="top">
+      <span class="bm">A</span>
+      <div><div class="nm">Astra Properties</div><div class="ds">Property viewing · PV-2026-0142</div></div>
+      <span class="right">
+        <span class="chip"><i class="fa fa-user-o"></i> Ahmed Al Mansoori</span>
+        <span class="chip"><i class="fa fa-user-circle-o"></i> Rashid Kareem</span>
+        <span class="chip"><i class="fa fa-globe"></i> Asia/Qatar</span>
+      </span>
+    </div>
+
+    <div class="band">
+      <h1>Unit A-1204 · Pearl Tower</h1>
+      <p>Pick any open slot below. Your booking is confirmed the moment you choose — nothing else to fill in.</p>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="ph">Next 7 days</div>
+        <div class="dl">
+          <button class="di"><span class="num"><span class="w">Wed</span><span class="d">20</span></span><span class="lb"><span class="t">Today</span><span class="s">from 04:00 PM</span></span><span class="cnt">3</span></button>
+          <button class="di sel"><span class="num"><span class="w">Thu</span><span class="d">21</span></span><span class="lb"><span class="t">Tomorrow</span><span class="s">09:00 AM – 05:00 PM</span></span><span class="cnt">8</span></button>
+          <button class="di"><span class="num"><span class="w">Fri</span><span class="d">22</span></span><span class="lb"><span class="t">Friday</span><span class="s">02:00 PM – 06:00 PM</span></span><span class="cnt">5</span></button>
+          <button class="di none"><span class="num"><span class="w">Sat</span><span class="d">23</span></span><span class="lb"><span class="t">Saturday</span><span class="s">Not working</span></span><span class="cnt">—</span></button>
+          <button class="di"><span class="num"><span class="w">Sun</span><span class="d">24</span></span><span class="lb"><span class="t">Sunday</span><span class="s">09:00 AM – 05:00 PM</span></span><span class="cnt">6</span></button>
+          <button class="di"><span class="num"><span class="w">Mon</span><span class="d">25</span></span><span class="lb"><span class="t">Monday</span><span class="s">09:00 AM – 06:00 PM</span></span><span class="cnt">9</span></button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph">Thursday, 21 August · 8 open</div>
+        <div class="tl">
+          <div class="tr"><span class="tm">09:00 AM</span><span class="dot"></span><button class="bar">Available <span class="go">Book</span></button></div>
+          <div class="tr"><span class="tm">09:45 AM</span><span class="dot"></span><button class="bar">Available <span class="go">Book</span></button></div>
+          <div class="tr busy"><span class="tm">10:30 AM</span><span class="dot"></span><button class="bar">Already booked</button></div>
+          <div class="tr"><span class="tm">11:15 AM</span><span class="dot"></span><button class="bar">Available <span class="go">Book</span></button></div>
+          <div class="tr"><span class="tm">01:00 PM</span><span class="dot"></span><button class="bar">Available <span class="go">Book</span></button></div>
+          <div class="tr sel"><span class="tm">01:45 PM</span><span class="dot"></span><button class="bar"><i class="fa fa-check"></i> Selected <span class="go">Your pick</span></button></div>
+          <div class="tr"><span class="tm">02:30 PM</span><span class="dot"></span><button class="bar">Available <span class="go">Book</span></button></div>
+          <div class="tr busy"><span class="tm">03:15 PM</span><span class="dot"></span><button class="bar">Already booked</button></div>
+          <div class="tr"><span class="tm">04:00 PM</span><span class="dot"></span><button class="bar">Available <span class="go">Book</span></button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dock">
+      <i class="fa fa-calendar-check-o" style="color:var(--acc);font-size:17px"></i>
+      <div><div class="k">Selected</div><div class="v">Thu 21 Aug · 01:45 PM – 02:15 PM</div></div>
+      <button class="ghost">Clear</button>
+      <button class="go"><i class="fa fa-check"></i> Confirm booking</button>
+    </div>
+
+    <div class="statelabel" style="margin:26px 18px 10px">Confirmed state</div>
+    <div style="padding:0 18px"><div class="panel"><div class="done">
+      <div class="mk"><i class="fa fa-check"></i></div>
+      <h2>Viewing confirmed</h2>
+      <p>A confirmation is on its way to <strong>ahmed@example.com</strong>, and Rashid has it in his calendar.</p>
+      <div class="stub">
+        <div class="sh"><div class="r">PV-2026-0142</div><div class="w">Thu 21 Aug · 01:45 PM</div></div>
+        <div class="sb">
+          <div class="kv"><span class="k">Property</span><span class="v">Unit A-1204</span></div>
+          <div class="kv"><span class="k">Agent</span><span class="v">Rashid Kareem</span></div>
+          <div class="kv"><span class="k">Timezone</span><span class="v">Asia/Qatar</span></div>
+        </div>
+      </div>
+      <div class="ics"><button><i class="fa fa-calendar-plus-o"></i> Add to calendar</button><button><i class="fa fa-map-marker"></i> Directions</button></div>
+    </div></div></div>
+  </div></div>
+</section>
+
+</div>
+
+<script>
+  var stage = document.getElementById('stage');
+  document.querySelectorAll('.bar button[data-v]').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('.bar button[data-v]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      document.querySelectorAll('.variant').forEach(function (s) { s.classList.toggle('show', s.dataset.v === b.dataset.v); });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  });
+  var t = document.getElementById('theme');
+  t.onclick = function () {
+    var dark = document.body.dataset.t === 'dark';
+    document.body.dataset.t = dark ? 'light' : 'dark';
+    t.innerHTML = dark ? '<i class="fa fa-moon-o"></i> Dark' : '<i class="fa fa-sun-o"></i> Light';
+    t.classList.toggle('on', !dark);
+  };
+  var dv = document.getElementById('device');
+  dv.onclick = function () {
+    var phone = stage.classList.toggle('phone');
+    dv.innerHTML = phone ? '<i class="fa fa-desktop"></i> Desktop' : '<i class="fa fa-mobile"></i> Phone';
+    dv.classList.toggle('on', phone);
+  };
+  var dr = document.getElementById('dir');
+  dr.onclick = function () {
+    var rtl = stage.getAttribute('dir') === 'rtl';
+    stage.setAttribute('dir', rtl ? 'ltr' : 'rtl');
+    dr.textContent = rtl ? 'RTL' : 'LTR';
+    dr.classList.toggle('on', !rtl);
+  };
+  document.querySelectorAll('.sw').forEach(function (s) {
+    s.onclick = function () {
+      document.querySelectorAll('.sw').forEach(function (x) { x.classList.remove('on'); });
+      s.classList.add('on');
+      document.documentElement.style.setProperty('--p', s.style.backgroundColor);
+      document.documentElement.style.setProperty('--p-rgb', s.dataset.c);
+    };
+  });
+</script>
+</body>
+</html>

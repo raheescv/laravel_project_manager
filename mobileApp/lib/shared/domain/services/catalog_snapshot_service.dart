@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
 
+import '../../utils/local_storage/image_store.dart';
 import '../../utils/local_storage/offline_db.dart';
 import '../helpers/formatters.dart';
 import '../models/index.dart';
@@ -44,6 +45,12 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
           'category_id': main is Map ? asNum(main['id']).toInt() : null,
           'total_stock': asNum(json['total_stock']).toDouble(),
           'priority': asNum(json['priority']).toInt(),
+          // Derived through Product.fromJson rather than read straight off
+          // `thumbnail`, because that parse falls back to the first attached
+          // image when the server sends no thumbnail. Deriving it any other way
+          // here would pre-download one URL while the tile asks for another —
+          // which looks exactly like the caching not working at all.
+          'thumbnail': Product.fromJson(json).thumbnail,
           'payload': jsonEncode(json),
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
@@ -174,6 +181,31 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
               productCount: asNum(r['product_count']).toInt(),
             ))
         .toList();
+  }
+
+  @override
+  Future<int> categoryCount(int branchId) async {
+    final db = await _db;
+    final rows = await db.rawQuery(
+      'SELECT COUNT(*) AS c FROM ${OfflineDb.tableCategories} WHERE branch_id = ? AND type = ?',
+      [branchId, _allTypes],
+    );
+    return asNum(rows.first['c']).toInt();
+  }
+
+  @override
+  Future<List<String>> thumbnails(int branchId) async {
+    final db = await _db;
+    final rows = await db.query(
+      OfflineDb.tableProducts,
+      columns: ['thumbnail'],
+      where: "branch_id = ? AND thumbnail <> ''",
+      whereArgs: [branchId],
+      // The same ordering `products()` pages in, so a budget that runs out
+      // leaves the tail of the catalog without photos rather than the middle.
+      orderBy: 'priority DESC, name COLLATE NOCASE ASC',
+    );
+    return rows.map((r) => asStr(r['thumbnail'])).where((s) => s.isNotEmpty).toList();
   }
 
   @override
@@ -310,8 +342,16 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
         .toList();
   }
 
+  /// Sign-out, and the offline-data screen's reset.
+  ///
+  /// The photo files go with the rows. They are as much the previous tenant's
+  /// catalog as the prices are, and leaving a shared till holding another
+  /// shop's product photography would be the visible half of the leak.
   @override
-  Future<void> clear() => OfflineDb.clearCatalog();
+  Future<void> clear() async {
+    await OfflineDb.clearCatalog();
+    await ImageStore.instance.clear();
+  }
 
   /// Rebuild a [Product] from a stored row — the same parse the live response
   /// goes through, which is the point of storing the raw JSON.

@@ -15,6 +15,7 @@ class AdminState extends Equatable {
     this.errorMessage,
     this.dashboard,
     this.topStylists = const [],
+    this.topStylistsDate = '',
     this.trendPoints = const [],
     this.trendLabels = const [],
     // report
@@ -45,6 +46,10 @@ class AdminState extends Equatable {
   final String? errorMessage;
   final DashboardData? dashboard;
   final List<ReportRow> topStylists;
+
+  /// `yyyy-MM-dd` the leaderboard was fetched for — the branch's open
+  /// day-session date, which is what the card labels itself with.
+  final String topStylistsDate;
   final List<double> trendPoints;
   final List<String> trendLabels;
 
@@ -76,6 +81,7 @@ class AdminState extends Equatable {
     String? errorMessage,
     DashboardData? dashboard,
     List<ReportRow>? topStylists,
+    String? topStylistsDate,
     List<double>? trendPoints,
     List<String>? trendLabels,
     bool? reportLoading,
@@ -107,6 +113,7 @@ class AdminState extends Equatable {
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
         dashboard: dashboard ?? this.dashboard,
         topStylists: topStylists ?? this.topStylists,
+        topStylistsDate: topStylistsDate ?? this.topStylistsDate,
         trendPoints: trendPoints ?? this.trendPoints,
         trendLabels: trendLabels ?? this.trendLabels,
         reportLoading: reportLoading ?? this.reportLoading,
@@ -132,7 +139,8 @@ class AdminState extends Equatable {
   @override
   List<Object?> get props => [
         startDate, endDate, rangePreset,
-        loading, errorMessage, dashboard, topStylists, trendPoints, trendLabels,
+        loading, errorMessage, dashboard, topStylists, topStylistsDate,
+        trendPoints, trendLabels,
         reportLoading, reportLoadingMore, reportError, reportType, itemMetric,
         itemProductType, reportRows, reportTotal, reportRowCount, reportPage,
         reportLastPage, reportTrendPoints, reportTrendLabels,

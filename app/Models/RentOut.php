@@ -21,8 +21,8 @@ class RentOut extends Model implements AuditableContracts
 
     /**
      * Configuration key holding the tenant-wide default list of mandatory
-     * document type ids (comma-separated). New bookings copy this list into
-     * their own `mandatory_documents` column, after which the per-booking
+     * document type ids (comma-separated). New appointments copy this list into
+     * their own `mandatory_documents` column, after which the per-appointment
      * value becomes the source of truth.
      */
     public const MANDATORY_DOCUMENTS_CONFIG_KEY = 'rent_out_mandatory_document_types';
@@ -134,7 +134,7 @@ class RentOut extends Model implements AuditableContracts
         ], $merge);
     }
 
-    public static array $bookingRules = [
+    public static array $appointmentRules = [
         'account_id' => 'required',
         'start_date' => 'required|date',
         'end_date' => 'required|date|after:start_date',
@@ -205,6 +205,11 @@ class RentOut extends Model implements AuditableContracts
     public function salesman(): BelongsTo
     {
         return $this->belongsTo(User::class, 'salesman_id');
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(PropertyAppointment::class)->latest('id');
     }
 
     public function property(): BelongsTo
@@ -297,8 +302,8 @@ class RentOut extends Model implements AuditableContracts
     }
 
     /**
-     * The mandatory document type ids that apply to this booking. Falls back to
-     * the settings default only while the booking has never been configured
+     * The mandatory document type ids that apply to this appointment. Falls back to
+     * the settings default only while the appointment has never been configured
      * (null column) — an explicit empty selection is respected.
      */
     public function mandatoryDocumentTypeIds(): array

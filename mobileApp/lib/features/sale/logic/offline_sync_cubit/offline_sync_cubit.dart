@@ -14,6 +14,8 @@ import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'package:invo/shared/logic/currency_cubit/currency_cubit.dart';
 import 'package:invo/shared/utils/components/app_strings.dart';
+import 'package:invo/shared/utils/local_storage/image_store.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 
 import '../../domain/models/pending_sale.dart';
@@ -91,8 +93,8 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
   /// (see [OfflineSyncState.catalogTruncated]).
   static const int _snapshotPageLimit = 500;
 
-  /// Products, categories, payment methods, staff, customers, settings.
-  static const int _provisionSteps = 6;
+  /// Products, categories, payment methods, staff, customers, settings, photos.
+  static const int _provisionSteps = 7;
 
   final SaleRepository _online;
 
@@ -113,6 +115,10 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
   /// The same idea for the catalog pull, held outside `state` so it is set
   /// synchronously — a flag read from `state` across an await is not a mutex.
   bool _refreshingCatalog = false;
+
+  /// And again for the photo pass, which the offline-data screen can start by
+  /// hand while a refresh is already running one.
+  bool _warmingPhotos = false;
 
   /// The real invoice numbers the current drain has collected.
   ///
@@ -470,6 +476,12 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
 
       final missing = await _provisionLookups(branchId);
 
+      // Last, and deliberately so: the photos are by far the largest download
+      // and the only one the till can sell without. Everything above has already
+      // landed by the time this starts, so a refresh cut short here leaves a
+      // working catalog that merely looks plainer.
+      await warmPhotos(branchId: branchId);
+
       final meta = await _snapshot.meta(branchId);
       if (isClosed) return;
       emit(state.copyWith(
@@ -497,6 +509,66 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
       // a spinner that never stops.
       if (!isClosed && state.catalogRefreshing) {
         emit(state.copyWith(catalogRefreshing: false));
+      }
+    }
+  }
+
+  /// Pre-download the catalog's product photos into [ImageStore].
+  ///
+  /// The rest of the snapshot makes a product *sellable* offline; this is what
+  /// makes it *findable*. Flutter's image cache is memory-only and empty on
+  /// every cold start, so without this pass an offline grid is a wall of tinted
+  /// placeholders — the catalog is all there, and none of it is recognisable at
+  /// a glance, which on a busy till means reading every label.
+  ///
+  /// Fetching a photo the first time it is shown cannot work for this: by then
+  /// the network is already gone. It has to happen while there is still one.
+  ///
+  /// Never throws. A photo is the one part of the snapshot the till can trade
+  /// without, so nothing here is allowed to fail a refresh that has already put
+  /// a working catalog on the device.
+  Future<void> warmPhotos({int? branchId}) async {
+    final id = branchId ?? serviceLocator<BranchCubit>().selectedId;
+    if (id == null) return;
+    // The till's own choice, checked here rather than at the call sites so both
+    // the automatic refresh and the settings screen honour it the same way.
+    if (!serviceLocator<LocalStorageService>().offlineCachePhotos) return;
+    if (_warmingPhotos) return;
+    _warmingPhotos = true;
+    try {
+      final paths = await _snapshot.thumbnails(id);
+      if (paths.isEmpty) {
+        if (!isClosed) emit(state.copyWith(photosCached: 0, photosTotal: 0, photosBudgetHit: false));
+        return;
+      }
+      final cfg = serviceLocator<AuthCubit>().config;
+      _step('Product photos', 7, _provisionSteps);
+      final result = await ImageStore.instance.warm(
+        [for (final path in paths) cfg.assetUrl(path)],
+        headers: cfg.assetHeaders,
+        // A branch switch mid-download would spend the remaining budget on the
+        // branch the till just left; the branch listener has already queued a
+        // fresh refresh for the new one.
+        shouldContinue: () =>
+            !isClosed && serviceLocator<BranchCubit>().selectedId == id,
+      );
+      if (isClosed) return;
+      emit(state.copyWith(
+        photosCached: result.cached,
+        photosTotal: paths.length,
+        photosBudgetHit: result.stoppedOnBudget,
+      ));
+    } catch (_) {
+      // Offline again, or no writable cache directory. The catalog itself is
+      // already stored and sellable; only the pictures are missing.
+    } finally {
+      _warmingPhotos = false;
+      // Cleared here rather than by the caller: `refreshCatalog` clears it on
+      // its way out, but the offline-data screen calls this on its own, and a
+      // step label left set would leave the first-run strip reading
+      // "Preparing offline data" with nothing running behind it.
+      if (!isClosed && state.provisionStep != null) {
+        emit(state.copyWith(clearProvisionStep: true));
       }
     }
   }
@@ -544,7 +616,9 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
                 'code': e.code,
                 'mobile': e.mobile,
                 'designation': e.designation,
-                'photo_url': e.photoUrl,
+                // `Employee.fromJson` reads `photo` — under any other key the
+                // cached staff come back offline with no avatar.
+                'photo': e.photoUrl,
               },
           ],
         );

@@ -214,19 +214,21 @@ class _Strip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!serviceLocator.isRegistered<OfflineSyncCubit>()) {
-      return _bar(context, CatalogFreshness.fresh, null);
+      return _bar(context, CatalogFreshness.fresh, null, hasCatalog: true);
     }
     // The snapshot's age is folded into this one strip rather than stacked as a
     // second bar: two strips on a phone POS push the ticket off the screen, and
     // the cashier only needs one line to know both facts.
     return BlocBuilder<OfflineSyncCubit, OfflineSyncState>(
       bloc: serviceLocator<OfflineSyncCubit>(),
-      buildWhen: (a, b) => a.catalogSyncedAt != b.catalogSyncedAt,
-      builder: (context, sync) => _bar(context, sync.catalogFreshness, sync.catalogSyncedAt),
+      buildWhen: (a, b) => a.catalogSyncedAt != b.catalogSyncedAt || a.hasCatalog != b.hasCatalog,
+      builder: (context, sync) =>
+          _bar(context, sync.catalogFreshness, sync.catalogSyncedAt, hasCatalog: sync.hasCatalog),
     );
   }
 
-  Widget _bar(BuildContext context, CatalogFreshness freshness, DateTime? syncedAt) {
+  Widget _bar(BuildContext context, CatalogFreshness freshness, DateTime? syncedAt,
+      {required bool hasCatalog}) {
     // Amber rather than red: offline is a state to be aware of, not a failure.
     // Sales still complete — red would say something is broken. Fixed rather
     // than preset-derived so it reads the same on all five themes, light or
@@ -235,7 +237,10 @@ class _Strip extends StatelessWidget {
     // A stale snapshot does earn the redder shade, because by then the figures
     // on screen are the thing to be careful about, not the connection. Selling
     // is still never blocked — see [CatalogFreshness].
-    final background = freshness == CatalogFreshness.stale
+    //
+    // No catalog at all earns the same redder shade for a different reason: at
+    // that point the till cannot trade, which is a harder fact than a stale price.
+    final background = freshness == CatalogFreshness.stale || !hasCatalog
         ? const Color(0xFF8A3A1F)
         : const Color(0xFF8A6A1F);
 
@@ -251,7 +256,7 @@ class _Strip extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  freshness == CatalogFreshness.stale
+                  freshness == CatalogFreshness.stale || !hasCatalog
                       ? Icons.warning_amber_rounded
                       : Icons.cloud_off_rounded,
                   size: 14,
@@ -260,7 +265,7 @@ class _Strip extends StatelessWidget {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    _text(freshness, syncedAt),
+                    _text(freshness, syncedAt, hasCatalog: hasCatalog),
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
                     style: ui(size: 11, weight: FontWeight.w700, color: Colors.white),
@@ -275,12 +280,18 @@ class _Strip extends StatelessWidget {
     );
   }
 
-  String _text(CatalogFreshness freshness, DateTime? syncedAt) {
+  String _text(CatalogFreshness freshness, DateTime? syncedAt, {required bool hasCatalog}) {
     // "No network" and "can't reach the server" are different problems with
     // different fixes — turn wifi on, versus go find out why the server is down.
     final connection = hasInterface
         ? 'Offline — can’t reach the server.'
         : 'No network.';
+
+    // Nothing was ever downloaded, so there is nothing to sell from and the
+    // reassurance below would be a lie: no catalog means no ticket can be rung
+    // up at all. This is the one offline state that does not fix itself by
+    // waiting, so it says what will fix it instead.
+    if (!hasCatalog) return '$connection No offline catalog on this device yet.';
 
     // Once the snapshot is old enough to matter, its age displaces the reassuring
     // half of the message. "Sales are saved on this device" is the right thing to

@@ -29,6 +29,7 @@ class SaleService implements SaleRepository {
     String sortBy = 'date',
     String sortDirection = 'desc',
     bool mineOnly = false,
+    int? createdById,
     int page = 1,
     int perPage = 30,
   }) async {
@@ -36,6 +37,8 @@ class SaleService implements SaleRepository {
       if (status != null) 'status': status,
       if (search != null && search.isNotEmpty) 'search': search,
       if (paymentMethodId != null) 'payment_method_id': paymentMethodId,
+      // Who rang it up — the staff filter. Server-side it is `created_by`.
+      if (createdById != null) 'created_by': createdById,
       if (fromDate != null) 'from_date': fromDate,
       if (toDate != null) 'to_date': toDate,
       'sort_by': sortBy,

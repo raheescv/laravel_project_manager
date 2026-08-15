@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/profile/logic/profile_cubit/profile_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:invo/shared/domain/helpers/responsive.dart';
@@ -57,6 +59,10 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
     final ok = await _profile.changePin(_current.text, _next.text);
     if (!mounted) return;
     if (ok) {
+      // This device remembers the PIN it signed in with — for the lock screen
+      // and for signing in offline. Retire the old one here, or it keeps
+      // working on this till after the server has stopped accepting it.
+      unawaited(context.read<AuthCubit>().applyChangedPin(_next.text));
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN updated')));
       _close();
     } else {

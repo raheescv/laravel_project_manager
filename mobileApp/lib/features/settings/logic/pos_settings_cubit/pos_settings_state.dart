@@ -3,7 +3,7 @@ part of 'pos_settings_cubit.dart';
 /// State for [PosSettingsCubit] — every value is device-local (§5 shape).
 class PosSettingsState extends Equatable {
   const PosSettingsState({
-    this.lockAfterSale = false,
+    this.lockAfterSale = true,
     this.gridColumns = defaultGridColumns,
   });
 

@@ -14,7 +14,8 @@ export default defineConfig({
                 'resources/js/general-voucher-modal.js',
                 'resources/js/journal-entries-modal.js',
                 'resources/js/purchase-page.js',
-                'resources/js/barcode-template-config.js'
+                'resources/js/barcode-template-config.js',
+                'resources/js/property-appointment.js'
             ],
             refresh: true,
         }),

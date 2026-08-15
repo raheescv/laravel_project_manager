@@ -364,7 +364,7 @@
                                         @endif
 
                                         {{-- Organization --}}
-                                        @if(auth()->user()->canAny(['branch.view', 'country.view', 'account category.view', 'document type.view']))
+                                        @if(auth()->user()->canAny(['branch.view', 'country.view', 'account category.view', 'document type.view', 'email template.view']))
                                             <div class="header-mega-section">
                                                 <div class="header-mega-title">
                                                     <i class="fa fa-building"></i>
@@ -388,6 +388,11 @@
                                                 @can('document type.view')
                                                     <a href="{{ route('settings::document_type::index') }}" class="list-group-item list-group-item-action header-mega-child">
                                                         <i class="fa fa-file-text-o fs-5 me-2"></i>Document Types
+                                                    </a>
+                                                @endcan
+                                                @can('email template.view')
+                                                    <a href="{{ route('settings::email_template::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                        <i class="fa fa-envelope-o fs-5 me-2"></i>Email Templates
                                                     </a>
                                                 @endcan
                                             </div>

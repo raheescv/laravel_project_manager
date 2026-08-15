@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:invo/shared/utils/crash_reporter.dart';
@@ -31,6 +34,38 @@ void main() {
     // throwing — a crash must never be made worse by the crash reporter.
     expect(() => CrashReporter.report(StateError('boom'), null), returnsNormally);
     expect(CrashReporter.recent, hasLength(1));
+  });
+
+  group('an offline device is not a crash', () {
+    test('a dropped connection is neither recorded nor uploaded', () {
+      final seen = <CrashRecord>[];
+      CrashReporter.onReport = seen.add;
+
+      CrashReporter.report(
+        DioException.connectionError(
+            requestOptions: RequestOptions(path: '/photo.jpg'), reason: 'Failed host lookup'),
+        StackTrace.current,
+        context: 'resolving an image codec',
+      );
+
+      expect(CrashReporter.recent, isEmpty);
+      expect(seen, isEmpty, reason: 'the upload cannot land offline anyway');
+    });
+
+    test('a bare SocketException is dropped too', () {
+      // Thrown by a plugin or the framework on its own HttpClient, so it never
+      // becomes a DioException. `dart:io` is not importable in the reporter.
+      CrashReporter.report(
+        const SocketException('Failed host lookup: \'talent.astraqatar.com\''), null);
+
+      expect(CrashReporter.recent, isEmpty);
+    });
+
+    test('a real fault still gets through', () {
+      CrashReporter.report(StateError('null check on a null value'), null);
+
+      expect(CrashReporter.recent, hasLength(1));
+    });
   });
 
   test('an attached sink replaces the default upload', () {

@@ -6,6 +6,10 @@ use Spatie\Health\Commands\RunHealthChecksCommand;
 
 Schedule::command('backup:run --only-db')->daily();
 Schedule::command('property:status-check')->daily();
+
+// Appointment reminders. Hourly, so an appointment entering the reminder window
+// is picked up within the hour; reminder_sent_at makes repeat runs harmless.
+Schedule::command('appointments:send-reminders')->hourly()->withoutOverlapping();
 Schedule::command('backup:clean')->daily();
 
 if (config('constants.auto_pull_enabled')) {

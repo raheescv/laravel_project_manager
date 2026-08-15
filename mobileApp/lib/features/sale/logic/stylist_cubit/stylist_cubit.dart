@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/data_fetching_status.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -12,6 +13,10 @@ import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 
 /// Loads the assignable stylists (active employees) for the New Sale / Edit Line
 /// pickers. Fetched once and filtered client-side.
+///
+/// The server hands back every employee on purpose — one device serves several
+/// cashiers, and the offline snapshot has to cover whoever signs in next — so
+/// who may be *assigned* is decided here, against the signed-in user.
 class StylistCubit extends Cubit<ListFetchState<Employee>> {
   StylistCubit() : super(const ListFetchState<Employee>()) {
     // Employees are branch-scoped — drop the cache and refetch (if it had
@@ -27,10 +32,23 @@ class StylistCubit extends Cubit<ListFetchState<Employee>> {
 
   LookupRepository get _repo => serviceLocator<LookupRepository>();
 
+  AuthCubit get _auth => serviceLocator<AuthCubit>();
+
   // Read facade over `state`.
   bool get loading => state.loading;
   String? get error => state.errorMessage;
-  List<Employee> get all => state.items;
+
+  /// The stylists the signed-in user may assign. An admin gets the whole staff
+  /// list, as does a back-office ('user'-type) account; a non-admin employee
+  /// sees only itself — it can't ring a ticket under a colleague's name.
+  /// Applied on read rather than on fetch, so the cached list stays whole for
+  /// the next user of a shared till.
+  List<Employee> get all {
+    final user = _auth.user;
+    if (user == null || !user.isNonAdminEmployee) return state.items;
+    final selfId = int.tryParse(user.id);
+    return state.items.where((e) => e.id == selfId).toList();
+  }
 
   Future<void> loadIfNeeded() async {
     if (state.loaded) return;

@@ -315,6 +315,7 @@ class _StubSaleRepository implements SaleRepository {
     String sortBy = 'date',
     String sortDirection = 'desc',
     bool mineOnly = false,
+    int? createdById,
     int page = 1,
     int perPage = 30,
   }) =>

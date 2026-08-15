@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Booking Emails — Premium Design Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   PREVIEW CHROME — not part of the email
+   ══════════════════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;}
+body{ margin:0; font-family:'Segoe UI',system-ui,Arial,sans-serif; padding:112px 18px 80px; min-height:100vh; }
+body[data-mode="light"]{ background:#eef1f5; background-image:radial-gradient(circle at 50% -10%, #f8fafc, #e5e9f0); }
+body[data-mode="dark"]{  background:#0c0f15; background-image:radial-gradient(circle at 50% -10%, #171d27, #0a0c11); }
+
+.toolbar{ position:fixed; top:0; left:0; right:0; z-index:120; display:flex; align-items:center; gap:14px;
+    flex-wrap:wrap; padding:9px 18px; background:rgba(13,17,23,.94); backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.08); box-shadow:0 6px 24px rgba(0,0,0,.3); }
+.toolbar .brand{ color:#fff; font-weight:700; font-size:13px; }
+.toolbar .brand small{ display:block; font-weight:400; font-size:10px; color:#9ca3af; }
+.toolbar .label{ color:#8b93a1; font-size:9.5px; text-transform:uppercase; letter-spacing:1px; }
+.toolbar .spacer{ flex:1; }
+.seg{ display:flex; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+      border-radius:9px; padding:3px; gap:2px; }
+.seg button{ background:transparent; color:#cbd2dc; border:0; padding:5px 11px; border-radius:6px;
+      font-size:11.5px; cursor:pointer; font-weight:600; font-family:inherit; }
+.seg button.active{ background:#fff; color:#111827; }
+.swatch{ width:24px; height:24px; border-radius:7px; cursor:pointer; border:2px solid transparent; }
+.swatch.active{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.22); }
+.sw-royal{background:#1D4ED8}.sw-emerald{background:#0E8A4F}.sw-graphite{background:#334155}.sw-bronze{background:#9A5B1E}
+
+.designbar{ position:fixed; top:47px; left:0; right:0; z-index:119; display:flex; gap:6px; flex-wrap:wrap;
+    padding:9px 18px; background:rgba(20,25,33,.94); backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.07); }
+.designbar button{ background:rgba(255,255,255,.06); color:#aeb6c2; border:1px solid rgba(255,255,255,.10);
+    padding:6px 13px; border-radius:8px; font-size:11.5px; cursor:pointer; font-family:inherit; font-weight:600;
+    display:inline-flex; align-items:center; gap:7px; }
+.designbar button:hover{ background:rgba(255,255,255,.13); color:#e7ebf1; }
+.designbar button.active{ background:#fff; color:#111827; border-color:#fff; }
+.designbar button .n{ font-size:9px; opacity:.55; font-weight:800; }
+
+.stage{ max-width:720px; margin:0 auto; }
+.note{ margin:0 auto 20px; padding:12px 15px; border-radius:11px; font-size:12px; line-height:1.6;
+       background:rgba(29,78,216,.09); border:1px solid rgba(29,78,216,.28); }
+body[data-mode="light"] .note{ color:#1e3a8a; }
+body[data-mode="dark"]  .note{ color:#bfdbfe; background:rgba(29,78,216,.14); }
+.note code{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; padding:1px 5px;
+            border-radius:4px; background:rgba(29,78,216,.16); }
+
+.evlabel{ display:flex; align-items:center; gap:10px; margin:30px 0 12px; font-size:11px; font-weight:800;
+          letter-spacing:.09em; text-transform:uppercase; }
+body[data-mode="light"] .evlabel{ color:#64748b; }
+body[data-mode="dark"]  .evlabel{ color:#8b94a3; }
+.evlabel::after{ content:""; flex:1; height:1px; }
+body[data-mode="light"] .evlabel::after{ background:linear-gradient(90deg,#cbd5e1,transparent); }
+body[data-mode="dark"]  .evlabel::after{ background:linear-gradient(90deg,#333c48,transparent); }
+.evlabel .tok{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:10px; font-weight:600;
+               padding:2px 7px; border-radius:5px; letter-spacing:0; text-transform:none; }
+body[data-mode="light"] .evlabel .tok{ background:#e2e8f0; color:#475569; }
+body[data-mode="dark"]  .evlabel .tok{ background:#242c37; color:#94a3b8; }
+
+/* mail-client frame */
+.client{ border-radius:14px; overflow:hidden; box-shadow:0 22px 50px -24px rgba(8,12,20,.5); }
+.client .bar{ display:flex; align-items:center; gap:10px; padding:10px 14px; background:#e8ebf0;
+              border-bottom:1px solid #d7dce4; font-size:11px; color:#64748b; }
+body[data-mode="dark"] .client .bar{ background:#20262e; border-bottom-color:#333b45; color:#8b94a3; }
+.client .bar .subj{ font-weight:700; color:#1e293b; }
+body[data-mode="dark"] .client .bar .subj{ color:#e2e8f0; }
+.client .bar .to{ margin-inline-start:auto; font-size:10.5px; }
+.client .body{ background:#f1f3f7; padding:26px 14px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE EMAILS — light-only, table-safe. Classes here become inline styles in
+   the blade wrapper; kept as classes only so the preview can switch designs.
+   ══════════════════════════════════════════════════════════════════════════ */
+.mail{ --acc:#1D4ED8; --acc-d:#12327f; --acc-l:#3b6fe0;
+       max-width:600px; margin:0 auto; background:#fff; }
+.stage[data-acc="emerald"] .mail{ --acc:#0E8A4F; --acc-d:#085c34; --acc-l:#22a869; }
+.stage[data-acc="graphite"] .mail{ --acc:#334155; --acc-d:#1e293b; --acc-l:#54657f; }
+.stage[data-acc="bronze"] .mail{ --acc:#9A5B1E; --acc-d:#6d3f14; --acc-l:#c07d33; }
+
+.mail a.cta{ text-decoration:none; }
+.mail .muted{ color:#94a3b8; }
+.mail table{ border-collapse:collapse; }
+.mail .dl td{ padding:7px 0; font-size:13px; vertical-align:top; }
+.mail .dl td.k{ color:#94a3b8; width:132px; white-space:nowrap; }
+.mail .dl td.v{ color:#1e293b; font-weight:600; }
+
+/* ── A · SIGNATURE CARD ─────────────────────────────────────────── */
+.d-card .mail{ border-radius:16px; overflow:hidden; box-shadow:0 18px 40px -24px rgba(15,23,42,.4); }
+.d-card .m-head{ padding:26px 30px; background:linear-gradient(122deg,var(--acc-d),var(--acc-l)); color:#fff; }
+.d-card .m-logo{ width:46px; height:46px; border-radius:13px; background:rgba(255,255,255,.18);
+    border:1px solid rgba(255,255,255,.3); display:inline-block; text-align:center; line-height:46px;
+    font-size:19px; font-weight:800; color:#fff; overflow:hidden; }
+.d-card .m-logo img{ width:100%; height:100%; object-fit:contain; display:block; background:#fff; }
+.d-card .m-co{ font-size:13px; font-weight:700; letter-spacing:.02em; margin-top:12px; }
+.d-card .m-h1{ font-size:25px; font-weight:800; letter-spacing:-.03em; line-height:1.15; margin:6px 0 0; }
+.d-card .m-sub{ font-size:13px; color:rgba(255,255,255,.85); margin-top:8px; line-height:1.55; }
+.d-card .m-body{ padding:28px 30px; color:#334155; font-size:14px; line-height:1.7; }
+.d-card .m-body p{ margin:0 0 14px; }
+.d-card .m-panel{ border:1px solid #e2e8f0; border-radius:12px; padding:16px 18px; background:#f8fafc; margin:20px 0; }
+.d-card .cta{ display:inline-block; padding:14px 30px; border-radius:10px; background:var(--acc);
+    color:#fff; font-weight:700; font-size:14px; box-shadow:0 10px 22px -10px rgba(0,0,0,.45); }
+.d-card .m-foot{ padding:20px 30px 26px; border-top:1px solid #e2e8f0; color:#94a3b8; font-size:11.5px; line-height:1.7; background:#fbfcfe; }
+.d-card .stub{ height:1px; background:repeating-linear-gradient(90deg,#e2e8f0 0 7px,transparent 7px 14px); }
+
+/* ── B · EDITORIAL ──────────────────────────────────────────────── */
+.d-edit .mail{ background:#fffdf9; border:1px solid #ece5da; }
+.d-edit .m-head{ padding:34px 40px 0; text-align:center; }
+.d-edit .m-logo{ width:44px; height:44px; border-radius:50%; background:var(--acc); display:inline-block;
+    text-align:center; line-height:44px; color:#fff; font-weight:800; font-size:18px; overflow:hidden; }
+.d-edit .m-logo img{ width:100%; height:100%; object-fit:contain; background:#fff; display:block; }
+.d-edit .m-co{ font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:#a89880; margin-top:14px; font-weight:700; }
+.d-edit .rule{ width:44px; height:2px; background:var(--acc); margin:18px auto; }
+.d-edit .m-h1{ font-family:Georgia,'Times New Roman',serif; font-size:31px; line-height:1.2;
+    letter-spacing:-.02em; color:#1a1a1a; margin:0; font-weight:400; text-align:center; }
+.d-edit .m-sub{ font-size:13.5px; color:#7c7264; text-align:center; margin:12px auto 0; max-width:38ch; line-height:1.65; }
+.d-edit .m-body{ padding:26px 40px 34px; color:#4a4238; font-size:14px; line-height:1.8; }
+.d-edit .m-body p{ margin:0 0 15px; }
+.d-edit .m-panel{ border-top:1px solid #ece5da; border-bottom:1px solid #ece5da; padding:18px 0; margin:24px 0; }
+.d-edit .dl td.k{ color:#a89880; font-size:10px; letter-spacing:.14em; text-transform:uppercase; }
+.d-edit .dl td.v{ color:#1a1a1a; font-family:Georgia,serif; font-weight:400; font-size:14px; }
+.d-edit .cta{ display:inline-block; padding:13px 34px; border:1px solid var(--acc); color:var(--acc);
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; border-radius:2px; }
+.d-edit .m-foot{ padding:22px 40px 30px; border-top:1px solid #ece5da; color:#a89880; font-size:11px;
+    line-height:1.8; text-align:center; }
+
+/* ── C · MINIMAL MONO ───────────────────────────────────────────── */
+.d-mono .mail{ border:1px solid #e8ebf0; }
+.d-mono .m-head{ padding:30px 34px 0; }
+.d-mono .m-logo{ width:36px; height:36px; border-radius:9px; background:#0f172a; display:inline-block;
+    text-align:center; line-height:36px; color:#fff; font-weight:800; font-size:15px; overflow:hidden; }
+.d-mono .m-logo img{ width:100%; height:100%; object-fit:contain; background:#fff; display:block; }
+.d-mono .m-co{ font-size:12px; font-weight:700; color:#0f172a; margin-top:14px; letter-spacing:-.01em; }
+.d-mono .m-h1{ font-size:22px; font-weight:750; letter-spacing:-.03em; color:#0f172a; margin:16px 0 0; line-height:1.25; }
+.d-mono .m-sub{ font-size:13px; color:#8592a6; margin-top:8px; line-height:1.6; }
+.d-mono .m-body{ padding:22px 34px 30px; color:#475569; font-size:13.5px; line-height:1.75; }
+.d-mono .m-body p{ margin:0 0 13px; }
+.d-mono .m-panel{ margin:20px 0; }
+.d-mono .dl td{ border-bottom:1px solid #f1f5f9; }
+.d-mono .dl td.k{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#a3aec0; }
+.d-mono .cta{ display:inline-block; padding:12px 24px; border-radius:8px; background:#0f172a; color:#fff;
+    font-weight:650; font-size:13px; }
+.d-mono .cta .arw{ color:var(--acc); }
+.d-mono .m-foot{ padding:18px 34px 26px; border-top:1px solid #f1f5f9; color:#a3aec0; font-size:11px; line-height:1.7; }
+
+/* ── D · BOLD BRAND ─────────────────────────────────────────────── */
+.d-bold .mail{ border-radius:14px; overflow:hidden; }
+.d-bold .m-head{ padding:36px 34px; background:var(--acc); color:#fff; }
+.d-bold .m-logo{ width:42px; height:42px; border-radius:11px; background:#fff; display:inline-block;
+    text-align:center; line-height:42px; color:var(--acc); font-weight:800; font-size:18px; overflow:hidden; }
+.d-bold .m-logo img{ width:100%; height:100%; object-fit:contain; display:block; }
+.d-bold .m-co{ font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase;
+    color:rgba(255,255,255,.75); margin-top:16px; }
+.d-bold .m-h1{ font-size:32px; font-weight:800; letter-spacing:-.035em; line-height:1.08; margin:8px 0 0; }
+.d-bold .m-sub{ font-size:14px; color:rgba(255,255,255,.88); margin-top:10px; line-height:1.55; max-width:34ch; }
+.d-bold .m-body{ padding:30px 34px; color:#334155; font-size:14px; line-height:1.7; }
+.d-bold .m-body p{ margin:0 0 14px; }
+.d-bold .m-panel{ border-inline-start:3px solid var(--acc); background:#f8fafc; padding:16px 20px; margin:22px 0; }
+.d-bold .cta{ display:block; text-align:center; padding:17px 24px; border-radius:10px; background:#0f172a;
+    color:#fff; font-weight:750; font-size:15px; letter-spacing:-.01em; }
+.d-bold .m-foot{ padding:22px 34px 28px; background:#0f172a; color:#94a3b8; font-size:11.5px; line-height:1.7; }
+.d-bold .m-foot a{ color:#cbd5e1; text-decoration:none; }
+
+/* logo-off fallback shows the monogram */
+.stage[data-logo="off"] .m-logo img{ display:none; }
+.stage[data-logo="on"]  .m-logo .mono{ display:none; }
+</style>
+</head>
+
+<body data-mode="light">
+
+<div class="toolbar">
+    <div class="brand">Booking Emails <small>Premium wrapper samples — pick one and I'll build it</small></div>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:7px;align-items:center"><span class="label">Accent</span>
+        <div class="swatch sw-royal active" data-acc="royal"></div>
+        <div class="swatch sw-emerald" data-acc="emerald"></div>
+        <div class="swatch sw-graphite" data-acc="graphite"></div>
+        <div class="swatch sw-bronze" data-acc="bronze"></div>
+    </div>
+    <div style="display:flex;gap:7px;align-items:center"><span class="label">Logo</span>
+        <div class="seg" id="logoSeg">
+            <button class="active" data-logo="on">Has logo</button>
+            <button data-logo="off">No logo</button>
+        </div>
+    </div>
+    <div style="display:flex;gap:7px;align-items:center"><span class="label">Page</span>
+        <div class="seg" id="modeSeg">
+            <button class="active" data-mode="light"><i class="fa fa-sun-o"></i></button>
+            <button data-mode="dark"><i class="fa fa-moon-o"></i></button>
+        </div>
+    </div>
+    <div style="display:flex;gap:7px;align-items:center"><span class="label">Dir</span>
+        <div class="seg" id="dirSeg">
+            <button class="active" data-dir="ltr">LTR</button>
+            <button data-dir="rtl">RTL</button>
+        </div>
+    </div>
+</div>
+
+<div class="designbar" id="designbar">
+    <button class="active" data-d="d-card"><span class="n">A</span> Signature Card</button>
+    <button data-d="d-edit"><span class="n">B</span> Editorial</button>
+    <button data-d="d-mono"><span class="n">C</span> Minimal Mono</button>
+    <button data-d="d-bold"><span class="n">D</span> Bold Brand</button>
+</div>
+
+<div class="stage d-card" id="stage" data-acc="royal" data-logo="on" dir="ltr">
+
+    <div class="note">
+        <b>What you're choosing.</b> The tenant writes the wording in Settings &rarr; Email Templates.
+        These samples are the <b>wrapper</b> that wording sits inside — masthead, logo, detail panel, button and
+        footer. Picking one design applies it to <b>every</b> booking email automatically, so the tenant never has
+        to build layout by hand. Sample copy below is the starter wording already shipped in
+        <code>config/email_templates.php</code>. Switch design with A&ndash;D above; toggle the logo to see the
+        monogram fallback when a tenant hasn't uploaded one.
+    </div>
+
+    <!-- ═══════════ 1 · INVITE ═══════════ -->
+    <div class="evlabel">1 &middot; Invitation <span class="tok">booking_invite</span></div>
+    <div class="client">
+        <div class="bar"><span class="subj">Book your viewing for Unit 1204</span>
+            <span class="to">Astra Properties &rarr; fatima@example.com</span></div>
+        <div class="body">
+            <div class="mail">
+                <div class="m-head">
+                    <span class="m-logo"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTMyIDEyIDUwIDUyIEgxNFoiIGZpbGw9IiMxRDRFRDgiLz48L3N2Zz4=" alt=""><span class="mono">A</span></span>
+                    <div class="m-co">ASTRA PROPERTIES</div>
+                    <h1 class="m-h1">Book your property viewing</h1>
+                    <div class="m-sub">Unit 1204, Marina Heights &middot; Al Sadd, Doha</div>
+                </div>
+                <div class="m-body">
+                    <p>Hello <strong>Fatima Al-Ansari</strong>,</p>
+                    <p>Thank you for your interest in <strong>Unit 1204</strong>. You can choose a viewing time that suits you.</p>
+                    <p>Your viewing will be handled by <strong>Rashid Kareem</strong>.</p>
+
+                    <div class="m-panel">
+                        <table class="dl" width="100%">
+                            <tr><td class="k">Property</td><td class="v">Unit 1204, Marina Heights</td></tr>
+                            <tr><td class="k">Agreement</td><td class="v">#1919</td></tr>
+                            <tr><td class="k">Salesman</td><td class="v">Rashid Kareem &middot; +974 3345 1120</td></tr>
+                        </table>
+                    </div>
+
+                    <p style="text-align:center;margin:26px 0 10px">
+                        <a href="#" class="cta">Choose your booking time <span class="arw">&rarr;</span></a>
+                    </p>
+                    <p style="text-align:center;font-size:12px;margin:0" class="muted">
+                        Please pick a time before <strong>14 September 2026</strong>.
+                    </p>
+
+                    <p style="margin-top:24px">If none of the available times work for you, just reply to this email.</p>
+                    <p style="margin:0">Kind regards,<br><strong>Astra Properties</strong></p>
+                </div>
+                <div class="m-foot">
+                    Astra Properties &middot; Al Sadd, Doha &middot; <a href="#">+974 4412 8800</a><br>
+                    You received this because you enquired about a property with us.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ 2 · CONFIRMED ═══════════ -->
+    <div class="evlabel">2 &middot; Confirmed <span class="tok">booking_confirmed</span></div>
+    <div class="client">
+        <div class="bar"><span class="subj">Your booking is confirmed for Monday, 14 September 2026</span>
+            <span class="to">&rarr; fatima@example.com</span></div>
+        <div class="body">
+            <div class="mail">
+                <div class="m-head">
+                    <span class="m-logo"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTMyIDEyIDUwIDUyIEgxNFoiIGZpbGw9IiMxRDRFRDgiLz48L3N2Zz4=" alt=""><span class="mono">A</span></span>
+                    <div class="m-co">ASTRA PROPERTIES</div>
+                    <h1 class="m-h1">You're booked in</h1>
+                    <div class="m-sub">Monday, 14 September 2026 at 04:00 PM</div>
+                </div>
+                <div class="stub"></div>
+                <div class="m-body">
+                    <p>Hello <strong>Fatima Al-Ansari</strong>,</p>
+                    <p>Your booking for <strong>Unit 1204</strong> is confirmed.</p>
+
+                    <div class="m-panel">
+                        <table class="dl" width="100%">
+                            <tr><td class="k">Date</td><td class="v">Monday, 14 September 2026</td></tr>
+                            <tr><td class="k">Time</td><td class="v">04:00 PM</td></tr>
+                            <tr><td class="k">Reference</td><td class="v">VW-2026-0418</td></tr>
+                            <tr><td class="k">Salesman</td><td class="v">Rashid Kareem &middot; +974 3345 1120</td></tr>
+                        </table>
+                    </div>
+
+                    <p style="text-align:center;margin:26px 0 10px">
+                        <a href="#" class="cta">Add to your calendar <span class="arw">&rarr;</span></a>
+                    </p>
+
+                    <p style="margin-top:22px">Please bring photo ID — building security requires it at the lobby desk.</p>
+                    <p style="margin:0">Kind regards,<br><strong>Astra Properties</strong></p>
+                </div>
+                <div class="m-foot">
+                    Astra Properties &middot; Al Sadd, Doha &middot; <a href="#">+974 4412 8800</a><br>
+                    Need to change it? Reply to this email and we'll move it for you.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ 3 · REMINDER ═══════════ -->
+    <div class="evlabel">3 &middot; Reminder <span class="tok">booking_reminder</span></div>
+    <div class="client">
+        <div class="bar"><span class="subj">Reminder: your booking is on Monday, 14 September 2026</span>
+            <span class="to">&rarr; fatima@example.com</span></div>
+        <div class="body">
+            <div class="mail">
+                <div class="m-head">
+                    <span class="m-logo"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTMyIDEyIDUwIDUyIEgxNFoiIGZpbGw9IiMxRDRFRDgiLz48L3N2Zz4=" alt=""><span class="mono">A</span></span>
+                    <div class="m-co">ASTRA PROPERTIES</div>
+                    <h1 class="m-h1">See you tomorrow</h1>
+                    <div class="m-sub">Monday, 14 September 2026 at 04:00 PM</div>
+                </div>
+                <div class="m-body">
+                    <p>Hello <strong>Fatima Al-Ansari</strong>,</p>
+                    <p>This is a reminder of your booking for <strong>Unit 1204</strong>.</p>
+                    <div class="m-panel">
+                        <table class="dl" width="100%">
+                            <tr><td class="k">When</td><td class="v">Monday, 14 September 2026 &middot; 04:00 PM</td></tr>
+                            <tr><td class="k">Reference</td><td class="v">VW-2026-0418</td></tr>
+                            <tr><td class="k">Meet</td><td class="v">Rashid Kareem &middot; +974 3345 1120</td></tr>
+                        </table>
+                    </div>
+                    <p style="margin:0">Kind regards,<br><strong>Astra Properties</strong></p>
+                </div>
+                <div class="m-foot">Astra Properties &middot; Al Sadd, Doha &middot; <a href="#">+974 4412 8800</a></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ 4 · RESCHEDULED ═══════════ -->
+    <div class="evlabel">4 &middot; Rescheduled <span class="tok">booking_rescheduled</span></div>
+    <div class="client">
+        <div class="bar"><span class="subj">Your booking has moved to Wednesday, 16 September 2026</span>
+            <span class="to">&rarr; fatima@example.com</span></div>
+        <div class="body">
+            <div class="mail">
+                <div class="m-head">
+                    <span class="m-logo"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTMyIDEyIDUwIDUyIEgxNFoiIGZpbGw9IiMxRDRFRDgiLz48L3N2Zz4=" alt=""><span class="mono">A</span></span>
+                    <div class="m-co">ASTRA PROPERTIES</div>
+                    <h1 class="m-h1">Your booking has moved</h1>
+                    <div class="m-sub">New time: Wednesday, 16 September 2026 at 11:00 AM</div>
+                </div>
+                <div class="m-body">
+                    <p>Hello <strong>Fatima Al-Ansari</strong>,</p>
+                    <p>Your booking for <strong>Unit 1204</strong> has been moved.</p>
+                    <div class="m-panel">
+                        <table class="dl" width="100%">
+                            <tr><td class="k">New date</td><td class="v">Wednesday, 16 September 2026</td></tr>
+                            <tr><td class="k">New time</td><td class="v">11:00 AM</td></tr>
+                            <tr><td class="k">Reference</td><td class="v">VW-2026-0418</td></tr>
+                        </table>
+                    </div>
+                    <p>If this no longer suits you, reply to this email or call Rashid on +974 3345 1120.</p>
+                    <p style="margin:0">Kind regards,<br><strong>Astra Properties</strong></p>
+                </div>
+                <div class="m-foot">Astra Properties &middot; Al Sadd, Doha &middot; <a href="#">+974 4412 8800</a></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ 5 · CANCELLED ═══════════ -->
+    <div class="evlabel">5 &middot; Cancelled <span class="tok">booking_cancelled</span></div>
+    <div class="client">
+        <div class="bar"><span class="subj">Your booking on Monday, 14 September 2026 has been cancelled</span>
+            <span class="to">&rarr; fatima@example.com</span></div>
+        <div class="body">
+            <div class="mail">
+                <div class="m-head">
+                    <span class="m-logo"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTMyIDEyIDUwIDUyIEgxNFoiIGZpbGw9IiMxRDRFRDgiLz48L3N2Zz4=" alt=""><span class="mono">A</span></span>
+                    <div class="m-co">ASTRA PROPERTIES</div>
+                    <h1 class="m-h1">Booking cancelled</h1>
+                    <div class="m-sub">Monday, 14 September 2026 at 04:00 PM</div>
+                </div>
+                <div class="m-body">
+                    <p>Hello <strong>Fatima Al-Ansari</strong>,</p>
+                    <p>Your booking for <strong>Unit 1204</strong> on <strong>Monday, 14 September 2026</strong> at
+                       <strong>04:00 PM</strong> has been cancelled.</p>
+                    <div class="m-panel">
+                        <table class="dl" width="100%">
+                            <tr><td class="k">Reference</td><td class="v">VW-2026-0418</td></tr>
+                            <tr><td class="k">Contact</td><td class="v">Rashid Kareem &middot; +974 3345 1120</td></tr>
+                        </table>
+                    </div>
+                    <p style="text-align:center;margin:24px 0 8px">
+                        <a href="#" class="cta">Book another time <span class="arw">&rarr;</span></a>
+                    </p>
+                    <p style="margin:22px 0 0">Kind regards,<br><strong>Astra Properties</strong></p>
+                </div>
+                <div class="m-foot">Astra Properties &middot; Al Sadd, Doha &middot; <a href="#">+974 4412 8800</a></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    var body = document.body, stage = document.getElementById('stage');
+    function wire(id, attr, fn) {
+        document.querySelectorAll('#' + id + ' button').forEach(function (b) {
+            b.addEventListener('click', function () {
+                document.querySelectorAll('#' + id + ' button').forEach(function (x) { x.classList.remove('active'); });
+                b.classList.add('active');
+                fn(b.dataset[attr]);
+            });
+        });
+    }
+    wire('modeSeg', 'mode', function (v) { body.setAttribute('data-mode', v); });
+    wire('dirSeg', 'dir', function (v) { stage.setAttribute('dir', v); });
+    wire('logoSeg', 'logo', function (v) { stage.setAttribute('data-logo', v); });
+    wire('designbar', 'd', function (v) {
+        stage.className = 'stage ' + v;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.querySelectorAll('.swatch').forEach(function (s) {
+        s.addEventListener('click', function () {
+            document.querySelectorAll('.swatch').forEach(function (x) { x.classList.remove('active'); });
+            s.classList.add('active');
+            stage.setAttribute('data-acc', s.dataset.acc);
+        });
+    });
+})();
+</script>
+</body>
+</html>

@@ -20,4 +20,9 @@ class LogController extends Controller
     {
         return view('log.failed-jobs');
     }
+
+    public function emails(): View
+    {
+        return view('log.emails');
+    }
 }

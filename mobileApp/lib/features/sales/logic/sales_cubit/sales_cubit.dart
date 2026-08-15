@@ -1,3 +1,4 @@
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/domain/models/pending_sale.dart';
 import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
 import 'package:invo/features/sale/domain/repository/sale_repository.dart';
@@ -43,6 +44,7 @@ class SalesCubit {
     String? toDate,
     String sortBy = 'date',
     String sortDirection = 'desc',
+    int? staffId,
   }) async {
     // Only the first page carries them: they are a short, bounded set, and repeating
     // them on page two would show the same sale twice.
@@ -53,6 +55,7 @@ class SalesCubit {
             paymentMethodId: paymentMethodId,
             fromDate: fromDate,
             toDate: toDate,
+            staffId: staffId,
           )
         : const <Map<String, dynamic>>[];
 
@@ -65,6 +68,7 @@ class SalesCubit {
         toDate: toDate,
         sortBy: sortBy,
         sortDirection: sortDirection,
+        createdById: staffId,
         page: page,
       );
       return PageResult(
@@ -97,6 +101,7 @@ class SalesCubit {
     int? paymentMethodId,
     String? fromDate,
     String? toDate,
+    int? staffId,
   }) async {
     if (!serviceLocator.isRegistered<OutboxRepository>()) return const [];
     // A held sale has no payment-method id yet — the server assigns those — so any
@@ -109,6 +114,7 @@ class SalesCubit {
       return [
         for (final row in rows)
           if (row.status != PendingSaleStatus.synced &&
+              _visibleTo(row, staffId) &&
               _matchesStatus(row, status) &&
               _matchesSearch(row, search) &&
               _withinRange(row, fromDate: fromDate, toDate: toDate))
@@ -127,6 +133,31 @@ class SalesCubit {
       return const [];
     }
   }
+
+  /// Whether the signed-in user may see this held row, and whether it survives
+  /// the staff filter.
+  ///
+  /// A shared till queues every cashier's sales into one outbox, and offline the
+  /// server's own scoping (`App\Actions\V1\Sale\ListAction`) cannot run — so the
+  /// same rule is applied here: a non-admin employee sees only what they rang up.
+  /// Without this, going offline would show a cashier their colleagues' takings,
+  /// which is exactly what the online list refuses them.
+  ///
+  /// A row with no attribution stays visible to everyone. That only happens when
+  /// the capture could not resolve the user, and a sale the till has taken money
+  /// for must not vanish from the one list that can show it.
+  bool _visibleTo(PendingSale row, int? staffId) {
+    if (row.userId.isEmpty) return true;
+    if (staffId != null && row.userId != '$staffId') return false;
+    final user = _user;
+    if (user == null || !user.isNonAdminEmployee) return true;
+    return row.userId == user.id;
+  }
+
+  /// Resolved leniently: a screen that never registers [AuthCubit] (a test, a
+  /// preview) still gets its list rather than an exception.
+  ApiUser? get _user =>
+      serviceLocator.isRegistered<AuthCubit>() ? serviceLocator<AuthCubit>().user : null;
 
   bool _matchesStatus(PendingSale row, String? status) {
     if (status == null || status.isEmpty) return true;

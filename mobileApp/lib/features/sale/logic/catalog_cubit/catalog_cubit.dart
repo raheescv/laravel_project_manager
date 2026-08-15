@@ -8,8 +8,10 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/domain/constants/data_fetching_status.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
+import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
+import 'package:invo/shared/utils/router/http_utils/reachability.dart';
 
 part 'catalog_state.dart';
 
@@ -147,13 +149,20 @@ class CatalogCubit extends Cubit<CatalogState> {
         emit(state.copyWith(
             status: DataFetchStatus.failed, errorMessage: e.message, clearCached: true));
       }
-    } catch (_) {
+    } catch (e) {
       if (req != _reqId) return;
       if (await _loadFromSnapshot(req, needCategories: needCategories)) return;
       if (req == _reqId) {
+        // Nothing on the network and nothing on the device. Naming that
+        // precisely is the difference between a cashier retrying a failed screen
+        // all shift and one who knows the till has to be reconnected once before
+        // it can ever sell offline — the generic "could not load" said neither.
         emit(state.copyWith(
-            status: DataFetchStatus.failed,
-            errorMessage: 'Could not load the catalog.'));
+          status: DataFetchStatus.failed,
+          errorMessage: isServerUnreachable(e)
+              ? AppStrings.noOfflineCatalog
+              : AppStrings.couldNotLoadCatalog,
+        ));
       }
     }
   }

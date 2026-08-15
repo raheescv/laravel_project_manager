@@ -224,6 +224,11 @@
                         <div class="card shadow-sm mb-4">
                             @livewire('user.employee-inventory-list', ['employee_id' => $user->id], key('employee-inventory-list-'.$user->id))
                         </div>
+                        @can('property appointment.view')
+                            <div class="card shadow-sm mb-4">
+                                @livewire('property-appointment.salesman-schedule', ['userId' => $user->id], key('salesman-schedule-'.$user->id))
+                            </div>
+                        @endcan
                     @endif
                 </div>
             </div>
