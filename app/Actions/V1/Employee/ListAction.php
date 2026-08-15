@@ -11,13 +11,22 @@ class ListAction
     /**
      * List active employees (stylists) with optional search/branch filters and
      * pagination. Scoped to users with type = 'employee' so the mobile POS can
-     * assign a stylist to a sale / line.
+     * assign a stylist to a sale / line. A non-admin employee is scoped to
+     * their own record.
      */
     public function execute(IndexRequest $request): array
     {
         $filters = $request->validatedWithDefaults();
+        $user = $request->user();
 
         $query = User::query()->employee()->active()->with('designation');
+
+        // A non-admin employee only ever sees themselves in the stylist list —
+        // they can't ring a ticket under a colleague's name. Same rule as the
+        // self-scoped sale list (App\Actions\V1\Sale\ListAction).
+        if ($user && $user->type === 'employee' && ! $user->is_admin) {
+            $query->whereKey($user->id);
+        }
 
         $query->when($filters['search'] ?? null, function ($q, $value) {
             $value = trim($value);
