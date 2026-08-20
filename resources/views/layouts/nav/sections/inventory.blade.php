@@ -52,7 +52,7 @@
                     </a>
                 </li>
             @endcan
-            @can('report.product')
+            @can('report.product-not-using')
                 <li class="nav-item">
                     <a href="{{ route('report::product') }}"
                         class="nav-link {{ request()->is(['report/product']) ? 'active' : '' }}">Product Check</a>

@@ -28,9 +28,17 @@
                     <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-2">
                         <i class="fa fa-check-circle me-1"></i> {{ $selectedCount }} / {{ $totalCount }}
                     </span>
-                    <button class="btn btn-primary btn-sm d-flex align-items-center shadow-sm" wire:click="syncPermission">
+                    <button type="button" class="btn btn-primary btn-sm d-flex align-items-center shadow-sm" wire:click="syncPermission">
                         <i class="fa fa-sync-alt me-md-1"></i>
                         <span class="d-none d-md-inline">Sync</span>
+                    </button>
+                    {{-- Unticks the whole matrix; nothing is revoked until "Update Permissions" is pressed --}}
+                    <button type="button" class="btn btn-outline-danger btn-sm d-flex align-items-center shadow-sm"
+                        wire:click="clearAll" @disabled($selectedCount === 0)
+                        wire:confirm="Untick all {{ $selectedCount }} permissions for &quot;{{ $role->name }}&quot;? You still have to press Update Permissions to save."
+                        title="Untick every permission for this role">
+                        <i class="fa fa-eraser me-md-1"></i>
+                        <span class="d-none d-md-inline">Remove All</span>
                     </button>
                 </div>
                 <div class="col-md-6">

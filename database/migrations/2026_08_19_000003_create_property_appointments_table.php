@@ -10,8 +10,14 @@ return new class() extends Migration
     /**
      * A property booking made by the customer from a signed public link.
      *
-     * The booking stores a single point in time (scheduled_at) — there is no
-     * duration; the slot grid is generated from the salesman's availability.
+     * The booking stores both ends of the visit: the customer says when they
+     * arrive (scheduled_at) AND when they must leave (ends_at), so the length
+     * is not one global number the whole diary pretends to keep — a customer
+     * who asks for 90 minutes gets 90 minutes on the salesman's calendar and
+     * the overlap check has something real to compare against.
+     *
+     * ends_at is nullable: an appointment still awaiting a slot has neither
+     * end, and readers fall back to the configured slot length.
      *
      * salesman_id is COPIED from rent_outs.salesman_id when the link is sent,
      * not joined live: reassigning the agreement later must not silently move
@@ -30,6 +36,7 @@ return new class() extends Migration
             $table->unsignedBigInteger('salesman_id');
 
             $table->dateTime('scheduled_at')->nullable();
+            $table->dateTime('ends_at')->nullable();
             $table->enum('status', ['awaiting', 'scheduled', 'completed', 'cancelled', 'no_show'])->default('awaiting');
 
             $table->uuid('token');

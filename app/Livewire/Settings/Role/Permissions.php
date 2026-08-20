@@ -85,6 +85,18 @@ class Permissions extends Component
         }
     }
 
+    /** Untick every ability for this role — the whole matrix, not just what the filters show. */
+    public function clearAll()
+    {
+        abort_unless(auth()->user()?->can('role.permissions'), 403);
+
+        $this->selected = [];
+        $this->module = [];
+        $this->select_all = false;
+
+        $this->dispatch('warning', ['message' => 'All permissions unticked. Press "Update Permissions" to save.']);
+    }
+
     public function syncPermission()
     {
         // Re-seeds every ability in config/permissions.php. Same power as editing
