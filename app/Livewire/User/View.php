@@ -28,6 +28,16 @@ class View extends Component
 
     public $user;
 
+    /**
+     * Tab rail state. Deliberately NOT reset in mount(): saveBranches() calls
+     * mount() again to re-read the record, and resetting here would throw the
+     * user back to the first tab after every save.
+     */
+    public $selected_tab = 'profile';
+
+    /** Tabs opened at least once — the heavy ones only query once opened. */
+    public $loaded_tabs = ['profile' => true];
+
     public function mount($table_id)
     {
         $this->table_id = $table_id;
@@ -37,6 +47,12 @@ class View extends Component
         $this->branch_ids = $this->user->branches->pluck('branch_id')->toArray();
         $this->default_branch_id = $this->user->default_branch_id;
         $this->default_branch[$this->default_branch_id] = $this->user?->branch?->name;
+    }
+
+    public function selectTab($tab)
+    {
+        $this->selected_tab = $tab;
+        $this->loaded_tabs[$tab] = true;
     }
 
     public function enabledWhatsapp()

@@ -8,7 +8,7 @@
     </style>
     <div class="modal-header bg-light">
         <h1 class="modal-title fs-5">
-            <i class="fa fa-user-circle me-2 text-primary"></i>
+            <i class="fa fa-user me-2 text-primary"></i>
             {{ isset($users['id']) ? 'Edit User' : 'Add New User' }}
         </h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -30,7 +30,7 @@
             <div class="card mb-3 border-0 shadow-sm">
                 <div class="card-header bg-light py-2">
                     <h6 class="mb-0">
-                        <i class="fa fa-address-card me-1 text-primary"></i>
+                        <i class="fa fa-info-circle me-1 text-primary"></i>
                         User Information
                     </h6>
                 </div>

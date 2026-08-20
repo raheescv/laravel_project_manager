@@ -10,6 +10,7 @@ use App\Actions\PropertyAppointment\TimeOff\DeleteAction as TimeOffDeleteAction;
 use App\Models\PropertyAppointment;
 use App\Models\PropertyAppointmentAvailability;
 use App\Models\PropertyAppointmentTimeOff;
+use App\Models\WorkingDay;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -28,8 +29,6 @@ class SalesmanSchedule extends Component
     public $start_time = '09:00';
 
     public $end_time = '13:00';
-
-    public $slot_interval_minutes = 60;
 
     public $off_date;
 
@@ -57,11 +56,10 @@ class SalesmanSchedule extends Component
             'day_of_week' => $this->day_of_week,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
-            'slot_interval_minutes' => $this->slot_interval_minutes,
         ], Auth::id()));
     }
 
-    /** Fill the whole working week in one press. */
+    /** Copy the company working week onto this salesman in one press. */
     public function addDefaultHours()
     {
         abort_unless(auth()->user()?->can('property appointment.manage availability'), 403);
@@ -122,7 +120,10 @@ class SalesmanSchedule extends Component
                 ->limit(15)
                 ->get(),
             'days' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-            'defaults' => config('property_appointment.default_availability', []),
+            // The company week from Settings -> Working Day. It is what this
+            // salesman is already bookable on while the panel above is empty,
+            // so the view can state the real hours instead of warning about none.
+            'companyHours' => WorkingDay::schedule(),
         ]);
     }
 }

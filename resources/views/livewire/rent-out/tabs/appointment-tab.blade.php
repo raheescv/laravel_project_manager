@@ -239,7 +239,8 @@
                             <div class="s">
                                 {{ $rentOut->salesman?->name }} has no bookable hours in the next
                                 {{ \App\Services\PropertyAppointment\SlotService::appointmentWindowDays() }} days.
-                                Set their weekly availability on their employee page first.
+                                Check the company hours in Settings → Working Day, or set this salesman's own
+                                weekly availability on their employee page.
                             </div>
                         </div>
                     </div>

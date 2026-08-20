@@ -6,7 +6,6 @@ use App\Actions\PropertyAppointment\BookAction;
 use App\Enums\RentOut\AgreementType;
 use App\Http\Controllers\Controller;
 use App\Models\PropertyAppointment;
-use App\Models\PropertyAppointmentAvailability;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\PropertyAppointment\SlotService;
@@ -60,12 +59,11 @@ class PropertyAppointmentController extends Controller
             ->when(session('branch_id'), fn ($query, $value) => $query->where('branch_id', $value))
             ->get();
 
-        $durations = $this->salesmanSlotMinutes($appointments->pluck('salesman_id')->filter()->unique()->all());
-
-        return response()->json($appointments->map(function (PropertyAppointment $appointment) use ($durations) {
-            $minutes = $durations[$appointment->salesman_id] ?? 60;
+        return response()->json($appointments->map(function (PropertyAppointment $appointment) {
             $property = $appointment->rentOut?->property;
-            $end = $appointment->scheduled_at?->copy()->addMinutes($minutes);
+            // The customer chose how long they need, so the block is as long as
+            // they asked for; older bookings fall back to the slot length.
+            $end = $appointment->endsAt();
             $agreement = $this->agreementLink($appointment);
 
             return [
@@ -138,32 +136,6 @@ class PropertyAppointmentController extends Controller
     }
 
     /**
-     * Minutes one appointment occupies, per salesman.
-     *
-     * Length is a per-rule setting, so a salesman whose day mixes 30- and
-     * 60-minute rules gets the SHORTEST — a block that is too short leaves a
-     * gap, while one that is too long would overlap the following appointment
-     * and make the grid lie about availability.
-     *
-     * @param  array<int, int>  $salesmanIds
-     * @return array<int, int>
-     */
-    private function salesmanSlotMinutes(array $salesmanIds): array
-    {
-        if (! $salesmanIds) {
-            return [];
-        }
-
-        return PropertyAppointmentAvailability::query()
-            ->whereIn('user_id', $salesmanIds)
-            ->where('is_active', true)
-            ->get(['user_id', 'slot_interval_minutes'])
-            ->groupBy('user_id')
-            ->map(fn ($rules) => max(5, (int) $rules->min('slot_interval_minutes')))
-            ->all();
-    }
-
-    /**
      * The customer-facing appointment page.
      *
      * The page itself is a thin shell — a Vue app fetches its data from
@@ -199,6 +171,7 @@ class PropertyAppointmentController extends Controller
 
         $validated = $request->validate([
             'slot' => ['required', 'date'],
+            'ends_at' => ['nullable', 'date', 'after:slot'],
             'timezone' => ['nullable', 'string', 'max:64'],
         ]);
 
@@ -207,7 +180,8 @@ class PropertyAppointmentController extends Controller
             $validated['slot'],
             'customer',
             null,
-            $validated['timezone'] ?? null
+            $validated['timezone'] ?? null,
+            $validated['ends_at'] ?? null
         );
 
         // Always hand back fresh slots so a losing race can re-render without
@@ -256,12 +230,16 @@ class PropertyAppointmentController extends Controller
         ]);
 
         $bookable = $appointment->isBookable();
+        $slotService = app(SlotService::class);
 
-        $slots = $bookable
-            ? app(SlotService::class)->availableSlots($appointment->salesman_id, null, null, $appointment->id)
-            : [];
+        // The page offers two ways to the same window — tap a suggested time, or
+        // type your own — so it needs both the grid AND the edges the grid was
+        // cut from, plus what is already taken out of each day.
+        $slots = $bookable ? $slotService->availableSlots($appointment->salesman_id, null, null, $appointment->id) : [];
+        $windows = $bookable ? $slotService->openWindows($appointment->salesman_id) : [];
+        $busy = $bookable ? $slotService->busyStretches($appointment->salesman_id, null, null, $appointment->id) : [];
 
-        $duration = $this->appointmentDuration($appointment->salesman_id);
+        $duration = SlotService::slotLengthMinutes();
         $property = $appointment->rentOut?->property;
 
         return [
@@ -281,10 +259,19 @@ class PropertyAppointmentController extends Controller
                 'rooms' => $property->rooms,
                 'size' => $property->size ? rtrim(rtrim(number_format((float) $property->size, 2, '.', ','), '0'), '.') : null,
             ] : null,
-            // Null whenever the salesman's rules disagree on slot length — the
-            // page then simply says nothing about duration rather than guessing.
             'duration_minutes' => $duration,
             'timezone' => config('app.timezone'),
+            // Everything the typed fields validate against, so a customer is
+            // told what is wrong before they submit rather than after.
+            'windows' => $windows,
+            'busy' => $busy,
+            'notice_hours' => SlotService::minimumNoticeHours(),
+            // 12 or 24, so the typed fields label times the way the tenant's
+            // own format string does without shipping the format to the client.
+            'clock' => str_contains((string) config('property_appointment.time_format', 'h:i A'), 'H') ? 24 : 12,
+            'window_days' => SlotService::appointmentWindowDays(),
+            'server_now' => now()->format('Y-m-d H:i:s'),
+            'now_label' => now()->format('l, d M').' · '.appointmentTime(now()),
             'expires_at' => $appointment->token_expires_at?->format('d M Y'),
             'scheduled' => $appointment->scheduled_at ? [
                 'day_name' => $appointment->scheduled_at->format('l'),
@@ -294,7 +281,10 @@ class PropertyAppointmentController extends Controller
                 // the full date, so repeating the year there reads as filler.
                 'headline_date' => $appointment->scheduled_at->format('l, d F'),
                 'time' => appointmentTime($appointment->scheduled_at),
-                'end_time' => $duration ? appointmentTime($appointment->scheduled_at->copy()->addMinutes($duration)) : null,
+                'end_time' => $appointment->endsAt() ? appointmentTime($appointment->endsAt()) : null,
+                'minutes' => $appointment->endsAt()
+                    ? (int) $appointment->scheduled_at->diffInMinutes($appointment->endsAt())
+                    : $duration,
             ] : null,
             'days' => collect($slots)->map(fn ($daySlots, $day) => [
                 'date' => $day,
@@ -308,29 +298,6 @@ class PropertyAppointmentController extends Controller
                 ])->all(),
             ])->values()->all(),
         ];
-    }
-
-    /**
-     * How long one appointment runs, in minutes.
-     *
-     * Slot length is a per-rule setting, so a salesman with 30-minute mornings
-     * and 60-minute afternoons has no single answer — in that case this returns
-     * null and the page omits the claim entirely rather than printing a wrong
-     * finish time next to every slot.
-     */
-    private function appointmentDuration(?int $salesmanId): ?int
-    {
-        if (! $salesmanId) {
-            return null;
-        }
-
-        $intervals = PropertyAppointmentAvailability::query()
-            ->where('user_id', $salesmanId)
-            ->where('is_active', true)
-            ->pluck('slot_interval_minutes')
-            ->unique();
-
-        return $intervals->count() === 1 ? (int) $intervals->first() : null;
     }
 
     private function partOfDay(Carbon $slot): string

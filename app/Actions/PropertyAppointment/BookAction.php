@@ -22,13 +22,20 @@ class BookAction
     /** MySQL duplicate-key error. */
     private const DUPLICATE_ENTRY = 1062;
 
-    public function execute($appointmentId, $scheduledAt, $bookedBy = 'customer', $userId = null, $timezone = null)
+    /**
+     * @param  mixed  $endsAt  When the customer leaves. Null keeps the configured
+     *                         slot length, which is what a tapped preset means.
+     */
+    public function execute($appointmentId, $scheduledAt, $bookedBy = 'customer', $userId = null, $timezone = null, $endsAt = null)
     {
         try {
             $slot = Carbon::parse($scheduledAt);
+            $end = $endsAt
+                ? Carbon::parse($endsAt)
+                : $slot->copy()->addMinutes(SlotService::slotLengthMinutes());
             $wasReschedule = false;
 
-            $return = DB::transaction(function () use ($appointmentId, $slot, $bookedBy, $userId, $timezone, &$wasReschedule) {
+            $return = DB::transaction(function () use ($appointmentId, $slot, $end, $bookedBy, $userId, $timezone, &$wasReschedule) {
                 // Lock the row so two requests for the SAME appointment serialise.
                 // Two requests for two DIFFERENT appointments contending for one
                 // slot are not covered by this lock — the unique index below is
@@ -39,12 +46,18 @@ class BookAction
                     throw new \Exception('This appointment link is no longer valid. Please contact us to arrange your appointment.', 1);
                 }
 
-                if ($model->status === 'scheduled' && $model->scheduled_at?->equalTo($slot)) {
+                if ($model->status === 'scheduled' && $model->scheduled_at?->equalTo($slot) && $model->endsAt()?->equalTo($end)) {
                     return ['success' => true, 'message' => 'This appointment is already booked for that time.', 'data' => $model];
                 }
 
-                if (! app(SlotService::class)->isSlotBookable($model->salesman_id, $slot, $model->id)) {
-                    throw new SlotUnavailableException('That time is no longer available. Please choose another slot.');
+                // One gate for both ways in: a tapped preset is a window someone
+                // filled in for the customer, so it is checked exactly as a typed
+                // one is — inside the open hours, clear of everything already on
+                // the calendar, and past the notice cut-off.
+                $problem = app(SlotService::class)->windowProblem($model->salesman_id, $slot, $end, $model->id);
+
+                if (! $problem['ok']) {
+                    throw new SlotUnavailableException($problem['reason'], $problem['taken'] ? 1 : 0);
                 }
 
                 // A CONFIRMED appointment moving to a different time is a
@@ -54,6 +67,7 @@ class BookAction
 
                 $model->update([
                     'scheduled_at' => $slot,
+                    'ends_at' => $end,
                     'status' => 'scheduled',
                     'booked_at' => now(),
                     'booked_by' => $bookedBy,
@@ -82,7 +96,10 @@ class BookAction
 
             return ['success' => false, 'message' => $e->getMessage()];
         } catch (SlotUnavailableException $e) {
-            return ['success' => false, 'message' => $e->getMessage(), 'slot_taken' => true];
+            // Only a clash frees the page to say "someone else took it" and
+            // re-render the grid; a window outside the open hours is the
+            // customer's own input to fix.
+            return ['success' => false, 'message' => $e->getMessage(), 'slot_taken' => $e->getCode() === 1];
         } catch (\Throwable $th) {
             return ['success' => false, 'message' => $th->getMessage()];
         }

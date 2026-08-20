@@ -20,7 +20,6 @@ class PropertyAppointmentAvailability extends Model implements AuditableContract
         'day_of_week',
         'start_time',
         'end_time',
-        'slot_interval_minutes',
         'is_active',
         'created_by',
         'updated_by',
@@ -28,7 +27,6 @@ class PropertyAppointmentAvailability extends Model implements AuditableContract
 
     protected $casts = [
         'day_of_week' => 'integer',
-        'slot_interval_minutes' => 'integer',
         'is_active' => 'boolean',
     ];
 
@@ -39,7 +37,6 @@ class PropertyAppointmentAvailability extends Model implements AuditableContract
             'day_of_week' => 'required|integer|min:0|max:6',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'slot_interval_minutes' => 'required|integer|min:5|max:480',
         ], $merge);
     }
 

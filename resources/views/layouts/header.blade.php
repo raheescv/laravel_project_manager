@@ -573,8 +573,8 @@
                 <div class="form-check form-check-alt form-switch mx-md-2">
                     <input id="headerThemeToggler" class="form-check-input mode-switcher" type="checkbox" role="switch">
                     <label class="form-check-label ps-1 fw-bold d-none d-md-flex align-items-center " for="headerThemeToggler">
-                        <i class="mode-switcher-icon icon-light fa fa-sun fs-5"></i>
-                        <i class="mode-switcher-icon icon-dark d-none fa fa-moon"></i>
+                        <i class="mode-switcher-icon icon-light fa fa-sun-o fs-5"></i>
+                        <i class="mode-switcher-icon icon-dark d-none fa fa-moon-o"></i>
                     </label>
                 </div>
 

@@ -61,7 +61,8 @@
       "Bash(php -l app/Livewire/LocalPurchaseOrder/View.php)",
       "Bash(cd /Users/Shared/sites/personal/main_projects/project_manager && grep -rn -i \"font\" config/barcode_default_configuration.php app/Support/BarcodeTemplateConfiguration.php app/Support/BarcodeLabel.php | head -50)",
       "Bash(python3 -)",
-      "Bash(grep -vE \"sqflite warning|You are changing|Be aware|will have this|^$|available\\\\\\)|Unicode support\")"
+      "Bash(grep -vE \"sqflite warning|You are changing|Be aware|will have this|^$|available\\\\\\)|Unicode support\")",
+      "Bash(open \"/Users/Shared/sites/personal/main_projects/project_manager/docs/employee-view-3-samples.html\")"
     ]
   },
   "hooks": {

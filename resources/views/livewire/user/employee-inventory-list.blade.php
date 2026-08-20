@@ -1,7 +1,7 @@
 <div>
     <div class="card-header bg-white p-2">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="mb-0"><i class="fa fa-boxes me-2"></i>Employee Inventory</h6>
+            <h6 class="mb-0"><i class="fa fa-cubes me-2"></i>Employee Inventory</h6>
             <div class="d-flex gap-2 align-items-center">
                 <div class="input-group input-group-sm" style="width: 120px;">
                     <select wire:model.live="limit" class="form-select border-start-0">
@@ -109,7 +109,7 @@
                         <tr>
                             <td colspan="11" class="text-center py-4">
                                 <div class="text-muted">
-                                    <i class="fa fa-box-open fa-2x mb-2"></i>
+                                    <i class="fa fa-cube fa-2x mb-2"></i>
                                     <p class="mb-0">No inventory items found</p>
                                 </div>
                             </td>

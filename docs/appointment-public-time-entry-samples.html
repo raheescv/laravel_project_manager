@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Public Appointment Page — typed start &amp; end time · 3 samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+  :root{
+    --p:#1D4ED8; --p-rgb:29,78,216;
+    --ok:#0F9D58; --bad:#DC2626; --warn:#B45309;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:0 0 80px; font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+        background:#e9edf3; color:#0d1424; -webkit-font-smoothing:antialiased; }
+  body[data-t="dark"]{ background:#0d1117; color:#e9edf4; }
+
+  /* ── control bar ─────────────────────────────────────────── */
+  .bar{ position:sticky; top:0; z-index:60; display:flex; gap:7px; justify-content:center; align-items:center; flex-wrap:wrap;
+        padding:11px 12px; background:rgba(255,255,255,.86); backdrop-filter:blur(12px); border-bottom:1px solid #dce2ea; }
+  body[data-t="dark"] .bar{ background:rgba(20,25,32,.88); border-color:#2b323b; }
+  .bar button{ border:1px solid #cbd5e1; background:#fff; color:#334155; padding:7px 14px; border-radius:9px;
+        font-weight:750; font-size:12px; cursor:pointer; font-family:inherit; letter-spacing:-.01em; }
+  body[data-t="dark"] .bar button{ background:#242a33; color:#c7d0dc; border-color:#39414c; }
+  .bar button.on{ background:var(--p); color:#fff; border-color:var(--p); }
+  .bar .sep{ width:1px; height:22px; background:#cbd5e1; margin:0 5px; }
+  body[data-t="dark"] .bar .sep{ background:#39414c; }
+  .sw{ width:24px; height:24px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+  .sw.on{ border-color:#0d1424; box-shadow:0 0 0 2px #fff inset; }
+  body[data-t="dark"] .sw.on{ border-color:#fff; box-shadow:0 0 0 2px #16202c inset; }
+
+  .stage{ max-width:1060px; margin:22px auto; padding:0 16px; }
+  .stage.phone{ max-width:430px; }
+  .variant{ display:none; }
+  .variant.show{ display:block; }
+  .vhead{ margin:0 0 15px; }
+  .vhead .tag{ display:inline-flex; align-items:center; gap:7px; background:var(--p); color:#fff; padding:4px 11px;
+        border-radius:999px; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .vhead h2{ margin:9px 0 3px; font-size:19px; font-weight:800; letter-spacing:-.03em; }
+  .vhead p{ margin:0; font-size:12.5px; line-height:1.6; max-width:80ch; opacity:.78; }
+  .vhead .why{ margin-top:9px; font-size:11.5px; line-height:1.6; max-width:80ch;
+        border-inline-start:3px solid var(--p); padding:7px 0 7px 11px; opacity:.9; }
+  body[dir="rtl"] .vhead .why, .stage[dir="rtl"] .vhead .why{ padding:7px 11px 7px 0; }
+
+  .callout{ max-width:1060px; margin:20px auto 0; padding:14px 16px; border-radius:10px; font-size:12.5px; line-height:1.65;
+        background:#fff7e6; border:1px solid #f0d9a8; color:#5b4409; }
+  body[data-t="dark"] .callout{ background:#2a2109; border-color:#5a4715; color:#f3dfae; }
+  .callout b{ font-weight:800; }
+
+  /* ══════════════════════════════════════════════════════════
+     Estate — the live page's own system (.apxp), reproduced so
+     the samples read exactly as they would in production.
+     ══════════════════════════════════════════════════════════ */
+  .es{
+    --acc:var(--p); --acc-rgb:var(--p-rgb);
+    --sf:#fffdfa; --sf-2:#f6f2ec; --ink:#191512; --ink-2:#5b5248; --mut:#94897c; --ln:#e7dfd4;
+    --serif:Georgia,'Times New Roman',serif;
+    font-size:13px; line-height:1.5; color:var(--ink);
+  }
+  body[data-t="dark"] .es{ --sf:#1b1815; --sf-2:#231f1b; --ink:#f2ece4; --ink-2:#c3b8ab; --mut:#8c8175; --ln:#332d27; }
+
+  .es-hero{ position:relative; overflow:hidden; color:#f6f1ea; padding:22px clamp(16px,3vw,32px) 96px; border-radius:6px 6px 0 0;
+        background:radial-gradient(90% 120% at 88% 0%, color-mix(in srgb, var(--acc) 42%, transparent), transparent 60%),
+                   linear-gradient(160deg,#171310 0%,#241d18 62%,#171310 100%); }
+  .es-hero::after{ content:"\f015"; font-family:FontAwesome; position:absolute; inset-inline-end:-14px; bottom:38px;
+        font-size:170px; line-height:1; color:rgba(255,255,255,.05); }
+  .es-in{ position:relative; z-index:2; }
+  .es-mast{ display:flex; align-items:center; gap:11px; margin-bottom:26px; }
+  .es-mast .bm{ width:36px; height:36px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center;
+        font-weight:800; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); }
+  .es-mast .nm{ font-size:13px; font-weight:750; }
+  .es-mast .ds{ font-size:10.5px; color:rgba(246,241,234,.6); }
+  .es-mast .lock{ margin-inline-start:auto; font-size:10.5px; font-weight:700; padding:6px 12px; border-radius:999px;
+        background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); }
+  .es-eyebrow{ font-size:10px; font-weight:800; letter-spacing:.24em; text-transform:uppercase;
+        color:color-mix(in srgb, var(--acc), #fff 42%); }
+  .es-h1{ font-family:var(--serif); font-weight:400; letter-spacing:-.02em; line-height:1.06; color:inherit;
+        font-size:clamp(25px,3.6vw,38px); margin:11px 0 0; max-width:17ch; }
+  .es-h1 em{ font-style:italic; color:color-mix(in srgb, var(--acc), #fff 46%); }
+  .es-sub{ margin:12px 0 0; font-size:12.5px; line-height:1.6; max-width:48ch; color:rgba(246,241,234,.72); }
+  .es-facts{ display:flex; gap:26px; flex-wrap:wrap; margin-top:20px; }
+  .es-fact .k{ font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:rgba(246,241,234,.5); }
+  .es-fact .v{ font-size:13px; font-weight:700; margin-top:3px; }
+
+  .es-body{ margin:-74px clamp(10px,2vw,22px) 0; position:relative; z-index:3; }
+  .es-panel{ background:var(--sf); border:1px solid var(--ln); border-radius:4px; box-shadow:0 30px 62px -34px rgba(25,21,18,.62); }
+  .es-ptop{ display:flex; align-items:flex-end; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:20px 22px 0; }
+  .es-ptop h3{ margin:0; font-family:var(--serif); font-weight:400; font-size:20px; }
+  .es-ptop .cnt{ font-size:11.5px; color:var(--mut); }
+  .es-rule{ height:1px; background:var(--ln); margin:15px 22px 0; }
+  .es-foot{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:17px 22px; border-top:1px solid var(--ln); background:var(--sf-2); }
+  .es-foot .lab .k{ font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); }
+  .es-foot .lab .v{ font-family:var(--serif); font-size:18px; margin-top:2px; }
+  .es-foot .lab .v.none{ font-family:inherit; font-size:13px; color:var(--mut); }
+  .es-foot .lab .exp{ font-size:11px; color:var(--mut); margin-top:4px; }
+  .es-cta{ margin-inline-start:auto; font-family:inherit; cursor:pointer; border:0; padding:14px 26px; border-radius:2px;
+        color:#fff; font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; background:var(--ink); }
+  .es-cta:hover{ background:var(--acc); }
+  body[data-t="dark"] .es-cta{ background:var(--acc); }
+
+  /* shared field furniture */
+  .fl{ font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--mut); display:block; margin-bottom:6px; }
+  .fi{ width:100%; font-family:var(--serif); font-size:22px; color:var(--ink); background:var(--sf);
+        border:1px solid var(--ln); border-radius:3px; padding:11px 12px; }
+  .fi:focus{ outline:none; border-color:var(--acc); box-shadow:0 0 0 3px color-mix(in srgb, var(--acc), transparent 86%); }
+  .fi.sm{ font-family:inherit; font-size:13px; font-weight:650; padding:10px 12px; }
+  .hint{ font-size:11px; color:var(--mut); margin-top:7px; line-height:1.55; }
+  .chiprow{ display:flex; gap:6px; flex-wrap:wrap; margin-top:9px; }
+  .chip{ font-family:inherit; cursor:pointer; font-size:11px; font-weight:750; padding:6px 11px; border-radius:999px;
+        background:var(--sf-2); border:1px solid var(--ln); color:var(--ink-2); }
+  .chip:hover{ border-color:var(--acc); color:var(--acc); }
+  .chip.on{ background:color-mix(in srgb, var(--acc), transparent 88%); border-color:var(--acc); color:var(--acc); }
+  .banner{ display:flex; gap:10px; align-items:flex-start; padding:11px 13px; border-radius:3px; font-size:11.5px; line-height:1.55;
+        background:color-mix(in srgb, var(--acc), transparent 93%); border:1px solid color-mix(in srgb, var(--acc), transparent 82%); }
+  .banner i{ color:var(--acc); margin-top:2px; }
+  .dur{ display:inline-flex; align-items:center; gap:7px; font-size:11px; font-weight:800; letter-spacing:.1em;
+        text-transform:uppercase; padding:6px 12px; border-radius:999px;
+        background:color-mix(in srgb, var(--acc), transparent 90%); color:var(--acc); }
+  .dur.bad{ background:color-mix(in srgb, var(--bad), transparent 90%); color:var(--bad); }
+
+  /* ── shared: calendar (all three variants) ───────────────── */
+  .cal{ padding:18px 20px 22px; }
+  .calh{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .calh .m{ font-family:var(--serif); font-size:17px; }
+  .calh button{ width:26px; height:26px; border-radius:50%; border:1px solid var(--ln); background:var(--sf); color:var(--ink-2); cursor:pointer; }
+  .dow{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:4px; }
+  .dow span{ text-align:center; font-size:9px; font-weight:800; letter-spacing:.1em; color:var(--mut); }
+  .days{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .dy{ aspect-ratio:1; border:0; background:none; font-family:var(--serif); font-size:14px; color:var(--ink); border-radius:50%; cursor:pointer; }
+  .dy:hover:not(:disabled){ background:var(--sf-2); }
+  .dy.off{ color:var(--mut); opacity:.34; cursor:not-allowed; text-decoration:line-through; }
+  .dy.sel{ background:var(--ink); color:#fff; }
+  body[data-t="dark"] .dy.sel{ background:var(--acc); }
+  .dy.today{ box-shadow:inset 0 0 0 1px var(--acc); }
+  .dy .pip{ display:block; width:4px; height:4px; border-radius:50%; background:var(--acc); margin:1px auto 0; }
+  .dy.sel .pip{ background:#fff; }
+  .dy.off .pip{ visibility:hidden; }
+  .legend{ margin-top:14px; font-size:10.5px; color:var(--mut); line-height:1.75; }
+  .legend i{ color:var(--acc); width:14px; }
+
+  /* shared: fixed slot presets */
+  .slotgrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:7px; }
+  .slot{ font-family:var(--serif); font-size:16px; color:var(--ink); background:var(--sf); cursor:pointer;
+        border:1px solid var(--ln); border-radius:3px; padding:11px 6px; text-align:center; line-height:1.15; }
+  .slot small{ display:block; font-family:inherit; font-size:9.5px; font-weight:800; letter-spacing:.1em;
+        text-transform:uppercase; color:var(--mut); margin-top:3px; }
+  .slot:hover:not(:disabled){ border-color:var(--acc); color:var(--acc); }
+  .slot.on{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .slot.on small{ color:rgba(255,255,255,.6); }
+  body[data-t="dark"] .slot.on{ background:var(--acc); border-color:var(--acc); }
+  .slot:disabled{ opacity:.34; cursor:not-allowed; text-decoration:line-through; }
+  .sechead{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:11px; }
+  .sechead .h{ font-size:12.5px; font-weight:800; letter-spacing:-.01em; }
+  .sechead .s{ font-size:11px; color:var(--mut); margin-top:2px; }
+  .divider{ display:flex; align-items:center; gap:12px; margin:20px 0 16px; }
+  .divider::before, .divider::after{ content:""; height:1px; background:var(--ln); flex:1; }
+  .divider span{ font-size:9.5px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--mut); }
+
+  .split{ display:grid; grid-template-columns:298px 1fr; }
+  .split .cal{ border-inline-end:1px solid var(--ln); }
+  .pane{ padding:20px 22px 24px; }
+  .sel-date{ font-family:var(--serif); font-size:25px; letter-spacing:-.01em; }
+  .sel-sub{ font-size:11.5px; color:var(--mut); margin-top:3px; }
+  .whenrow{ display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:12px; align-items:end; margin-top:16px; }
+  .nowline{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+        margin-top:14px; padding-top:13px; border-top:1px dashed var(--ln); font-size:11.5px; color:var(--mut); }
+  .nowline b{ color:var(--ink); font-weight:750; }
+
+  /* ── H2 · segmented ──────────────────────────────────────── */
+  .seg{ display:inline-flex; padding:3px; border-radius:999px; background:var(--sf-2); border:1px solid var(--ln); }
+  .seg button{ font-family:inherit; cursor:pointer; border:0; background:none; color:var(--ink-2);
+        font-size:11.5px; font-weight:750; padding:7px 15px; border-radius:999px; }
+  .seg button.on{ background:var(--ink); color:#fff; }
+  body[data-t="dark"] .seg button.on{ background:var(--acc); }
+  .lane{ display:none; margin-top:16px; }
+  .lane.show{ display:block; }
+
+  /* ── H3 · rail ───────────────────────────────────────────── */
+  .rail{ position:relative; height:52px; border-radius:3px; background:var(--sf-2); border:1px solid var(--ln); overflow:hidden; margin-top:14px; }
+  .rail .busy{ position:absolute; top:0; bottom:0; background:repeating-linear-gradient(45deg,
+        color-mix(in srgb, var(--mut), transparent 74%) 0 6px, transparent 6px 12px);
+        border-inline-start:1px solid var(--ln); border-inline-end:1px solid var(--ln); }
+  .rail .blk{ position:absolute; top:6px; bottom:6px; border-radius:2px; background:var(--ink); color:#fff;
+        display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:800; letter-spacing:.06em; }
+  body[data-t="dark"] .rail .blk{ background:var(--acc); }
+  .ticks{ display:flex; justify-content:space-between; margin-top:6px; font-size:9.5px; color:var(--mut); font-weight:700; }
+  .keys{ display:flex; gap:15px; flex-wrap:wrap; margin-top:10px; font-size:10.5px; color:var(--mut); }
+  .keys i{ margin-inline-end:5px; }
+
+  @media (max-width:860px){
+    .split{ grid-template-columns:1fr; }
+    .split .cal{ border-inline-end:0; border-bottom:1px solid var(--ln); }
+    .whenrow{ grid-template-columns:1fr 1fr; }
+  }
+  .stage.phone .split{ grid-template-columns:1fr; }
+  .stage.phone .split .cal{ border-inline-end:0; border-bottom:1px solid var(--ln); }
+  .stage.phone .whenrow{ grid-template-columns:1fr 1fr; }
+  .stage.phone .es-cta{ width:100%; margin-inline-start:0; }
+</style>
+</head>
+<body data-t="light">
+
+<div class="bar">
+  <button data-v="H1" class="on">H1 · Presets &amp; Window</button>
+  <button data-v="H2">H2 · Two Lanes</button>
+  <button data-v="H3">H3 · Rail</button>
+  <span class="sep"></span>
+  <button id="theme"><i class="fa fa-moon-o"></i> Dark</button>
+  <button id="device"><i class="fa fa-mobile"></i> Phone</button>
+  <button id="dir">RTL</button>
+  <span class="sep"></span>
+  <button class="sw on" data-c="29,78,216" style="background:#1D4ED8" title="Blue"></button>
+  <button class="sw" data-c="13,148,136"   style="background:#0d9488" title="Teal"></button>
+  <button class="sw" data-c="154,106,60"   style="background:#9A6A3C" title="Bronze"></button>
+  <button class="sw" data-c="124,58,237"   style="background:#7C3AED" title="Violet"></button>
+</div>
+
+<div class="callout">
+  <b>All three are the same hybrid</b> — the month calendar from Open Hours, the generated fixed slots you have today, and a typed
+  From/To window — arranged three different ways. The slots stay exactly what the server produces now (open hours ÷ the config slot
+  length, minus what is taken and inside the notice window); typing is the escape hatch for anyone the grid does not suit.
+  <br><br>
+  <b>What the server needs either way.</b> A typed window is not on the grid, so booking validates a <i>window</i>: inside that day's
+  open hours, not overlapping an existing appointment, past the minimum-notice cut-off, end after start. The appointment gains a real
+  <b>ends_at</b>, so a customer who asks for 90 minutes gets 90 minutes. A tapped slot is just a pre-filled window — one code path, not two.
+</div>
+
+<div class="stage" id="stage">
+
+<!-- ═══════════════════ H1 — PRESETS & WINDOW ═══════════════════ -->
+<section class="variant show" data-v="H1">
+  <div class="vhead">
+    <span class="tag">Hybrid H1 · recommended</span>
+    <h2>Presets &amp; Window — the slots fill the fields</h2>
+    <p>Both paths are visible at once and neither is a mode. The generated slots sit where they always did; tapping one writes it into
+       the From/To fields underneath, and typing over those fields simply un-picks the chip. The window is the single source of truth,
+       so there is one thing to submit and one thing to validate.</p>
+    <div class="why">Nothing is hidden behind a toggle, and the customer who just wants "10 o'clock" is still one tap from done.
+       This is the one I would build.</div>
+  </div>
+
+  <div class="es" data-h="1">
+    <header class="es-hero">
+      <div class="es-in">
+        <div class="es-mast">
+          <span class="bm">A</span>
+          <div><div class="nm">Astra Properties</div><div class="ds">Property appointments</div></div>
+          <span class="lock"><i class="fa fa-lock"></i> Personal link</span>
+        </div>
+        <div class="es-eyebrow">Private appointment</div>
+        <h1 class="es-h1">Come and see <em>Pearl Residences</em> for yourself.</h1>
+        <p class="es-sub">Pick one of the times Rahees has open, or set your own window — whichever suits you.</p>
+        <div class="es-facts">
+          <div class="es-fact"><div class="k">Appointment as</div><div class="v">Mohammed Ali</div></div>
+          <div class="es-fact"><div class="k">Your agent</div><div class="v">Rahees CV</div></div>
+          <div class="es-fact"><div class="k">Times shown in</div><div class="v">Asia/Qatar</div></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="es-body">
+      <div class="es-panel">
+        <div class="es-ptop">
+          <div><h3>Choose your time</h3></div>
+          <span class="cnt">Open Sun–Thu · 09:00–18:00</span>
+        </div>
+        <div class="es-rule"></div>
+
+        <div class="split">
+          <div class="cal">
+            <div class="calh">
+              <button type="button"><i class="fa fa-angle-left"></i></button>
+              <div class="m">August 2026</div>
+              <button type="button"><i class="fa fa-angle-right"></i></button>
+            </div>
+            <div class="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+            <div class="days" data-days></div>
+            <div class="legend">
+              <div><i class="fa fa-circle-o"></i> Today</div>
+              <div><i class="fa fa-circle" style="font-size:7px"></i> Times available</div>
+              <div><i class="fa fa-ban"></i> Closed — Friday &amp; Saturday</div>
+            </div>
+          </div>
+
+          <div class="pane">
+            <div class="sel-date" data-longdate>Monday, 24 August</div>
+            <div class="sel-sub">Rahees is available 09:00 – 18:00 · <span data-freecount>7</span> times open</div>
+
+            <div style="margin-top:18px">
+              <div class="sechead">
+                <div>
+                  <div class="h">Suggested times</div>
+                  <div class="s">One hour each · struck-through times are taken</div>
+                </div>
+              </div>
+              <div class="slotgrid" data-slots></div>
+            </div>
+
+            <div class="divider"><span>or set your own window</span></div>
+
+            <div class="whenrow">
+              <div>
+                <label class="fl">Date</label>
+                <input class="fi sm" type="date" data-date value="2026-08-24">
+              </div>
+              <div>
+                <label class="fl">Arriving at</label>
+                <input class="fi" type="time" data-start value="10:00">
+              </div>
+              <div>
+                <label class="fl">Leaving by</label>
+                <input class="fi" type="time" data-end value="11:00">
+              </div>
+              <div><span class="dur" data-dur><i class="fa fa-hourglass-half"></i> 1 hour</span></div>
+            </div>
+
+            <div class="banner" data-banner style="margin-top:14px">
+              <i class="fa fa-info-circle"></i><div>That window is free.</div>
+            </div>
+
+            <div class="nowline">
+              <div>Right now it is <b data-now>—</b></div>
+              <button type="button" class="chip" data-asap><i class="fa fa-bolt"></i> Earliest possible</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="es-foot">
+          <div class="lab">
+            <div class="k">Your appointment</div>
+            <div class="v" data-summary>—</div>
+            <div class="exp">This link is valid until 19 Sep 2026.</div>
+          </div>
+          <button class="es-cta" type="button">Confirm appointment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ H2 — TWO LANES ═══════════════════ -->
+<section class="variant" data-v="H2">
+  <div class="vhead">
+    <span class="tag">Hybrid H2</span>
+    <h2>Two Lanes — a segmented switch above one panel</h2>
+    <p>Same calendar, but the right pane holds a switch: <i>Suggested times</i> shows the slot grid on its own, <i>Choose exact times</i>
+       shows the typed window on its own. Whatever you last touched is what gets submitted, and the footer always says which.</p>
+    <div class="why">The calmest of the three — one decision on screen at a time. The cost is that a customer never sees the typed
+       option unless they notice the switch, so most will never know it exists.</div>
+  </div>
+
+  <div class="es" data-h="2">
+    <header class="es-hero">
+      <div class="es-in">
+        <div class="es-mast">
+          <span class="bm">A</span>
+          <div><div class="nm">Astra Properties</div><div class="ds">Property appointments</div></div>
+          <span class="lock"><i class="fa fa-lock"></i> Personal link</span>
+        </div>
+        <div class="es-eyebrow">Private appointment</div>
+        <h1 class="es-h1">Let's find a time that suits you.</h1>
+        <p class="es-sub">Rahees has held these hours open. Take one of them, or tell us exactly when you'd like to come.</p>
+        <div class="es-facts">
+          <div class="es-fact"><div class="k">Your agent</div><div class="v">Rahees CV</div></div>
+          <div class="es-fact"><div class="k">Unit</div><div class="v">Unit 1204 · 2 Bedroom</div></div>
+          <div class="es-fact"><div class="k">Times shown in</div><div class="v">Asia/Qatar</div></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="es-body">
+      <div class="es-panel">
+        <div class="es-ptop">
+          <div><h3>Choose your time</h3></div>
+          <span class="cnt">Open Sun–Thu · 09:00–18:00</span>
+        </div>
+        <div class="es-rule"></div>
+
+        <div class="split">
+          <div class="cal">
+            <div class="calh">
+              <button type="button"><i class="fa fa-angle-left"></i></button>
+              <div class="m">August 2026</div>
+              <button type="button"><i class="fa fa-angle-right"></i></button>
+            </div>
+            <div class="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+            <div class="days" data-days></div>
+            <div class="legend">
+              <div><i class="fa fa-circle-o"></i> Today</div>
+              <div><i class="fa fa-ban"></i> Closed — Friday &amp; Saturday</div>
+            </div>
+          </div>
+
+          <div class="pane">
+            <div class="sechead">
+              <div>
+                <div class="sel-date" data-longdate>Monday, 24 August</div>
+                <div class="sel-sub">Available 09:00 – 18:00</div>
+              </div>
+              <div class="seg">
+                <button type="button" class="on" data-lane="slots">Suggested times</button>
+                <button type="button" data-lane="typed">Choose exact times</button>
+              </div>
+            </div>
+
+            <div class="lane show" data-lanebody="slots">
+              <div class="slotgrid" data-slots></div>
+              <div class="hint"><i class="fa fa-info-circle"></i> Each appointment runs one hour. Need longer, or a time that isn't here?
+                Switch to <b>Choose exact times</b>.</div>
+            </div>
+
+            <div class="lane" data-lanebody="typed">
+              <div class="whenrow">
+                <div>
+                  <label class="fl">Date</label>
+                  <input class="fi sm" type="date" data-date value="2026-08-24">
+                </div>
+                <div>
+                  <label class="fl">Arriving at</label>
+                  <input class="fi" type="time" data-start value="10:00">
+                </div>
+                <div>
+                  <label class="fl">Leaving by</label>
+                  <input class="fi" type="time" data-end value="11:00">
+                </div>
+                <div><span class="dur" data-dur><i class="fa fa-hourglass-half"></i> 1 hour</span></div>
+              </div>
+              <div class="banner" data-banner style="margin-top:14px">
+                <i class="fa fa-info-circle"></i><div>That window is free.</div>
+              </div>
+            </div>
+
+            <div class="nowline">
+              <div>Right now it is <b data-now>—</b></div>
+              <button type="button" class="chip" data-asap><i class="fa fa-bolt"></i> Earliest possible</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="es-foot">
+          <div class="lab">
+            <div class="k">Your appointment</div>
+            <div class="v" data-summary>—</div>
+            <div class="exp">This link is valid until 19 Sep 2026.</div>
+          </div>
+          <button class="es-cta" type="button">Confirm appointment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ H3 — RAIL ═══════════════════ -->
+<section class="variant" data-v="H3">
+  <div class="vhead">
+    <span class="tag">Hybrid H3</span>
+    <h2>Rail — the day drawn, slots as the quick way in</h2>
+    <p>Calendar, then the chosen day as one bar: open hours tinted, booked stretches hatched, and the customer's window drawn solid and
+       moving live as the fields change. The fixed slots sit under the rail as one-tap presets. Nobody has to imagine what "10:00 – 11:00"
+       means against a busy diary — they can see it.</p>
+    <div class="why">The most informative and the most work: the payload has to carry each day's booked stretches, not just its free slots.
+       Worth it if double-attempts are a real problem in practice.</div>
+  </div>
+
+  <div class="es" data-h="3">
+    <header class="es-hero">
+      <div class="es-in">
+        <div class="es-mast">
+          <span class="bm">A</span>
+          <div><div class="nm">Astra Properties</div><div class="ds">Property appointments</div></div>
+          <span class="lock"><i class="fa fa-lock"></i> Personal link</span>
+        </div>
+        <div class="es-eyebrow">Private appointment</div>
+        <h1 class="es-h1">Pick your hour at <em>Pearl Residences</em>.</h1>
+        <p class="es-sub">The shaded stretches are already taken. Anything else on the bar is yours.</p>
+        <div class="es-facts">
+          <div class="es-fact"><div class="k">Your agent</div><div class="v">Rahees CV</div></div>
+          <div class="es-fact"><div class="k">Open hours</div><div class="v">09:00 – 18:00</div></div>
+          <div class="es-fact"><div class="k">Times shown in</div><div class="v">Asia/Qatar</div></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="es-body">
+      <div class="es-panel">
+        <div class="es-ptop">
+          <div><h3 data-longdate>Monday, 24 August</h3></div>
+          <span class="cnt">2 appointments already booked</span>
+        </div>
+        <div class="es-rule"></div>
+
+        <div class="split">
+          <div class="cal">
+            <div class="calh">
+              <button type="button"><i class="fa fa-angle-left"></i></button>
+              <div class="m">August 2026</div>
+              <button type="button"><i class="fa fa-angle-right"></i></button>
+            </div>
+            <div class="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+            <div class="days" data-days></div>
+            <div class="legend">
+              <div><i class="fa fa-circle-o"></i> Today</div>
+              <div><i class="fa fa-ban"></i> Closed — Friday &amp; Saturday</div>
+            </div>
+          </div>
+
+          <div class="pane">
+            <div class="whenrow">
+              <div>
+                <label class="fl">Date</label>
+                <input class="fi sm" type="date" data-date value="2026-08-24">
+              </div>
+              <div>
+                <label class="fl">Arriving at</label>
+                <input class="fi" type="time" data-start value="10:00">
+              </div>
+              <div>
+                <label class="fl">Leaving by</label>
+                <input class="fi" type="time" data-end value="11:00">
+              </div>
+              <div><span class="dur" data-dur><i class="fa fa-hourglass-half"></i> 1 hour</span></div>
+            </div>
+
+            <div class="rail" data-rail>
+              <div class="busy" style="inset-inline-start:11.1%; width:11.1%"></div>
+              <div class="busy" style="inset-inline-start:55.5%; width:16.6%"></div>
+              <div class="blk" data-blk>10:00 – 11:00</div>
+            </div>
+            <div class="ticks"><span>09:00</span><span>12:00</span><span>15:00</span><span>18:00</span></div>
+            <div class="keys">
+              <span><i class="fa fa-square-o"></i>Already booked</span>
+              <span><i class="fa fa-square" style="color:var(--ink)"></i>Your window</span>
+            </div>
+
+            <div class="divider"><span>or take one of the open hours</span></div>
+            <div class="slotgrid" data-slots></div>
+
+            <div class="banner" data-banner style="margin-top:14px">
+              <i class="fa fa-info-circle"></i><div>That window is free.</div>
+            </div>
+
+            <div class="nowline">
+              <div>Right now it is <b data-now>—</b></div>
+              <button type="button" class="chip" data-asap><i class="fa fa-bolt"></i> Earliest possible</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="es-foot">
+          <div class="lab">
+            <div class="k">Your appointment</div>
+            <div class="v" data-summary>—</div>
+            <div class="exp">This link is valid until 19 Sep 2026.</div>
+          </div>
+          <button class="es-cta" type="button">Confirm appointment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+
+  /* ── chrome: sample / theme / device / direction / accent ── */
+  document.querySelectorAll('.bar button[data-v]').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('.bar button[data-v]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      document.querySelectorAll('.variant').forEach(function (s) { s.classList.toggle('show', s.dataset.v === b.dataset.v); });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  });
+  var t = document.getElementById('theme');
+  t.onclick = function () {
+    var dark = document.body.dataset.t === 'dark';
+    document.body.dataset.t = dark ? 'light' : 'dark';
+    t.innerHTML = dark ? '<i class="fa fa-moon-o"></i> Dark' : '<i class="fa fa-sun-o"></i> Light';
+    t.classList.toggle('on', !dark);
+  };
+  var dv = document.getElementById('device');
+  dv.onclick = function () {
+    var phone = stage.classList.toggle('phone');
+    dv.innerHTML = phone ? '<i class="fa fa-desktop"></i> Desktop' : '<i class="fa fa-mobile"></i> Phone';
+    dv.classList.toggle('on', phone);
+  };
+  var dr = document.getElementById('dir');
+  dr.onclick = function () {
+    var rtl = stage.getAttribute('dir') === 'rtl';
+    stage.setAttribute('dir', rtl ? 'ltr' : 'rtl');
+    dr.textContent = rtl ? 'RTL' : 'LTR';
+    dr.classList.toggle('on', !rtl);
+  };
+  document.querySelectorAll('.sw').forEach(function (s) {
+    s.onclick = function () {
+      document.querySelectorAll('.sw').forEach(function (x) { x.classList.remove('on'); });
+      s.classList.add('on');
+      document.documentElement.style.setProperty('--p', s.style.backgroundColor);
+      document.documentElement.style.setProperty('--p-rgb', s.dataset.c);
+    };
+  });
+
+  /* ── shared model ────────────────────────────────────────── */
+  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var OPEN = 540, CLOSE = 1080, STEP = 60;        // 09:00–18:00, one-hour slots
+  var TAKEN = { '2026-08-24': [600, 960], '2026-08-25': [540] };   // slot starts already booked
+  var BUSY  = { '2026-08-24': [[600, 660], [960, 1020]] };         // the same, as stretches
+
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+  function hhmm(m){ return pad(Math.floor(m / 60)) + ':' + pad(m % 60); }
+  function mins(s){ var p = s.split(':'); return (+p[0]) * 60 + (+p[1]); }
+  function h12(s){ var p = s.split(':'), h = +p[0], ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad(h) + ':' + p[1] + ' ' + ap; }
+  function longDate(iso){ var d = new Date(iso + 'T00:00:00'); return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()]; }
+  function lengthLabel(a, b){
+    var n = mins(b) - mins(a); if (n <= 0) return null;
+    var h = Math.floor(n / 60), r = n % 60;
+    if (h && r) return h + 'h ' + r + 'm';
+    if (h) return h + (h === 1 ? ' hour' : ' hours');
+    return r + ' minutes';
+  }
+  function nowLabel(){
+    var d = new Date(), h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3) + ' · ' + pad(h) + ':' + pad(m) + ' ' + ap;
+  }
+  function part(m){ return m < 720 ? 'Morning' : (m < 1020 ? 'Afternoon' : 'Evening'); }
+
+  /* One controller drives all three variants — they differ only in layout. */
+  document.querySelectorAll('.es[data-h]').forEach(function (root) {
+    var state = { date: '2026-08-24', start: '10:00', end: '11:00' };
+    var els = {
+      days: root.querySelector('[data-days]'),
+      slots: root.querySelector('[data-slots]'),
+      date: root.querySelector('[data-date]'),
+      start: root.querySelector('[data-start]'),
+      end: root.querySelector('[data-end]'),
+      dur: root.querySelector('[data-dur]'),
+      banner: root.querySelector('[data-banner]'),
+      summary: root.querySelector('[data-summary]'),
+      longdate: root.querySelector('[data-longdate]'),
+      freecount: root.querySelector('[data-freecount]'),
+      blk: root.querySelector('[data-blk]'),
+      now: root.querySelector('[data-now]'),
+      asap: root.querySelector('[data-asap]'),
+    };
+
+    /* calendar — August 2026 opens on a Saturday */
+    (function () {
+      var html = '';
+      for (var b = 0; b < 6; b++) html += '<span></span>';
+      for (var d = 1; d <= 31; d++) {
+        var dow = (6 + d - 1) % 7;
+        var closed = dow === 5 || dow === 6;
+        var iso = '2026-08-' + pad(d);
+        html += '<button type="button" class="dy' + (closed ? ' off' : '') + (d === 20 ? ' today' : '') +
+                (iso === state.date ? ' sel' : '') + '" data-iso="' + iso + '"' + (closed ? ' disabled' : '') + '>' +
+                d + '<span class="pip"></span></button>';
+      }
+      els.days.innerHTML = html;
+      els.days.addEventListener('click', function (e) {
+        var btn = e.target.closest('.dy'); if (!btn || btn.disabled) return;
+        els.days.querySelectorAll('.dy').forEach(function (x) { x.classList.remove('sel'); });
+        btn.classList.add('sel');
+        state.date = btn.dataset.iso;
+        if (els.date) els.date.value = state.date;
+        renderSlots(); paint();
+      });
+    })();
+
+    if (els.date) els.date.addEventListener('change', function () {
+      state.date = els.date.value;
+      els.days.querySelectorAll('.dy').forEach(function (x) { x.classList.toggle('sel', x.dataset.iso === state.date); });
+      renderSlots(); paint();
+    });
+
+    [els.start, els.end].forEach(function (f) {
+      if (!f) return;
+      f.addEventListener('input', function () { state.start = els.start.value; state.end = els.end.value; paint(); });
+    });
+
+    if (els.asap) els.asap.onclick = function () {
+      var free = openSlots().filter(function (s) { return !s.taken; })[0];
+      if (!free) return;
+      setWindow(hhmm(free.m), hhmm(free.m + STEP));
+    };
+
+    function openSlots() {
+      var taken = TAKEN[state.date] || [];
+      var out = [];
+      for (var m = OPEN; m + STEP <= CLOSE; m += STEP) out.push({ m: m, taken: taken.indexOf(m) !== -1 });
+      return out;
+    }
+
+    function renderSlots() {
+      if (!els.slots) return;
+      var list = openSlots();
+      els.slots.innerHTML = list.map(function (s) {
+        return '<button type="button" class="slot" data-m="' + s.m + '"' + (s.taken ? ' disabled' : '') + '>' +
+               h12(hhmm(s.m)) + '<small>' + (s.taken ? 'Taken' : part(s.m)) + '</small></button>';
+      }).join('');
+      if (els.freecount) els.freecount.textContent = list.filter(function (s) { return !s.taken; }).length;
+    }
+
+    if (els.slots) els.slots.addEventListener('click', function (e) {
+      var btn = e.target.closest('.slot'); if (!btn || btn.disabled) return;
+      setWindow(hhmm(+btn.dataset.m), hhmm(+btn.dataset.m + STEP));
+    });
+
+    function setWindow(a, b) {
+      state.start = a; state.end = b;
+      if (els.start) els.start.value = a;
+      if (els.end) els.end.value = b;
+      paint();
+    }
+
+    function overlapsBusy(a, b) {
+      return (BUSY[state.date] || []).some(function (x) { return a < x[1] && b > x[0]; });
+    }
+
+    function paint() {
+      var len = lengthLabel(state.start, state.end);
+      var s = mins(state.start), e = mins(state.end);
+
+      if (els.longdate) els.longdate.textContent = longDate(state.date);
+
+      /* a slot chip stays lit only while the window still matches it exactly */
+      if (els.slots) els.slots.querySelectorAll('.slot').forEach(function (c) {
+        c.classList.toggle('on', +c.dataset.m === s && e - s === STEP);
+      });
+
+      if (els.dur) {
+        els.dur.classList.toggle('bad', !len);
+        els.dur.innerHTML = len ? '<i class="fa fa-hourglass-half"></i> ' + len
+                                : '<i class="fa fa-exclamation-triangle"></i> Check times';
+      }
+
+      if (els.blk) {
+        if (len) {
+          els.blk.style.display = '';
+          els.blk.style.insetInlineStart = Math.max(0, (s - OPEN) / (CLOSE - OPEN) * 100) + '%';
+          els.blk.style.width = Math.max(3, (e - s) / (CLOSE - OPEN) * 100) + '%';
+          els.blk.textContent = h12(state.start) + ' – ' + h12(state.end);
+        } else {
+          els.blk.style.display = 'none';
+        }
+      }
+
+      if (els.banner) {
+        if (!len) {
+          els.banner.innerHTML = '<i class="fa fa-exclamation-triangle" style="color:var(--bad)"></i><div>The leaving time has to be after the arriving time.</div>';
+        } else if (s < OPEN || e > CLOSE) {
+          els.banner.innerHTML = '<i class="fa fa-exclamation-circle" style="color:var(--warn)"></i><div>Rahees is only open 09:00 – 18:00 on this day.</div>';
+        } else if (overlapsBusy(s, e)) {
+          els.banner.innerHTML = '<i class="fa fa-exclamation-circle" style="color:var(--warn)"></i><div>That overlaps an appointment already in the diary. Please shift it a little.</div>';
+        } else {
+          els.banner.innerHTML = '<i class="fa fa-check-circle" style="color:var(--ok)"></i><div>That window is free — Rahees will hold ' +
+            h12(state.start) + ' – ' + h12(state.end) + ' for you.</div>';
+        }
+      }
+
+      if (els.summary) els.summary.textContent = len
+        ? longDate(state.date) + ' · ' + h12(state.start) + ' – ' + h12(state.end)
+        : 'Check the times above';
+    }
+
+    /* H2's segmented switch */
+    root.querySelectorAll('[data-lane]').forEach(function (b) {
+      b.onclick = function () {
+        root.querySelectorAll('[data-lane]').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+        root.querySelectorAll('[data-lanebody]').forEach(function (p) {
+          p.classList.toggle('show', p.dataset.lanebody === b.dataset.lane);
+        });
+      };
+    });
+
+    if (els.now) els.now.textContent = nowLabel();
+    renderSlots();
+    paint();
+  });
+})();
+</script>
+</body>
+</html>

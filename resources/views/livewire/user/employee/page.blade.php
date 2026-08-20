@@ -743,7 +743,7 @@
             <!-- Personal Information -->
             <div class="empx-panel">
                 <div class="empx-panel-head">
-                    <span class="empx-panel-ic"><i class="fa fa-address-card"></i></span>
+                    <span class="empx-panel-ic"><i class="fa fa-user"></i></span>
                     <div>
                         <div class="empx-panel-title">Personal Information</div>
                         <div class="empx-panel-sub">Identity & contact details</div>
@@ -779,7 +779,7 @@
                             </div>
                         </div>
                         <div class="c4">
-                            <label for="code" class="empx-label"><i class="fa fa-hashtag"></i> Employee Code</label>
+                            <label for="code" class="empx-label"><i class="fa fa-barcode"></i> Employee Code</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-barcode"></i></span>
                                 {{ html()->input('code')->value('')->class('empx-control')->attribute('wire:model', 'users.code')->placeholder('EMP-001') }}
@@ -793,7 +793,7 @@
                             </div>
                         </div>
                         <div class="c8" wire:ignore>
-                            <label for="designation_id" class="empx-label"><i class="fa fa-id-badge"></i> Designation</label>
+                            <label for="designation_id" class="empx-label"><i class="fa fa-briefcase"></i> Designation</label>
                             {{ html()->select('designation_id', [])->value('')->class('select-designation_id')->id('model_designation_id')->placeholder('All') }}
                         </div>
                         <div class="c4">
@@ -868,9 +868,9 @@
                             </div>
                         </div>
                         <div class="c6">
-                            <label for="max_discount_per_sale" class="empx-label"><i class="fa fa-percent"></i> Max Discount Per Sale</label>
+                            <label for="max_discount_per_sale" class="empx-label"><i class="fa fa-tag"></i> Max Discount Per Sale</label>
                             <div class="empx-input">
-                                <span class="empx-input-ic"><i class="fa fa-percent"></i></span>
+                                <span class="empx-input-ic"><i class="fa fa-tag"></i></span>
                                 {{ html()->number('max_discount_per_sale')->value('')->class('empx-control number')->attribute('wire:model', 'users.max_discount_per_sale')->placeholder('0.00')->attribute('step', '0.01')->attribute('min', '0')->attribute('max', '100') }}
                             </div>
                         </div>

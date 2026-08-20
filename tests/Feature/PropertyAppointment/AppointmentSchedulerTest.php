@@ -85,7 +85,7 @@ function vsSeed(): array
     foreach (range(0, 6) as $dayOfWeek) {
         PropertyAppointmentAvailability::create([
             'tenant_id' => $tenant->id, 'user_id' => $salesman->id, 'day_of_week' => $dayOfWeek,
-            'start_time' => '09:00', 'end_time' => '13:00', 'slot_interval_minutes' => 60,
+            'start_time' => '09:00', 'end_time' => '13:00',
             'is_active' => true,
         ]);
     }
@@ -758,9 +758,12 @@ it('feeds the calendar with everything the detail popover renders', function () 
     $props = $event['extendedProps'];
 
     // The block must have a real end, or every appointment draws the same
-    // default height and the grid stops telling the truth about the day.
+    // default height and the grid stops telling the truth about the day. A
+    // booking with no window of its own runs for the configured slot length,
+    // whatever the tenant has set that to.
     expect($event['end'])->not->toBeNull()
-        ->and(Carbon\Carbon::parse($event['start'])->diffInMinutes(Carbon\Carbon::parse($event['end'])))->toBe(60.0)
+        ->and(Carbon\Carbon::parse($event['start'])->diffInMinutes(Carbon\Carbon::parse($event['end'])))
+        ->toBe((float) SlotService::slotLengthMinutes())
         ->and($props['reference_no'])->toBe($appointment->fresh()->reference_no)
         ->and($props['status_label'])->toBe('Confirmed')
         ->and($props['customer'])->toBe('VS Customer')
@@ -915,4 +918,492 @@ it('reminds again about a appointment that was moved after its reminder went out
     (new BookAction())->execute($appointment->id, $another, 'staff', $seed['salesman']->id);
 
     expect($appointment->fresh()->reminder_sent_at)->toBeNull();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Company hours (Settings -> Working Day)
+|--------------------------------------------------------------------------
+|
+| A salesman's own availability is an OVERRIDE, not a prerequisite: with none of
+| their own they are bookable on the company week, so nobody has to remember to
+| set up a schedule before an appointment link works.
+|
+*/
+
+/** Write the tenant's working week. $week maps a day name to its hours, or false when closed. */
+function vsWorkingWeek(int $tenantId, array $week): void
+{
+    WorkingDay::query()->where('tenant_id', $tenantId)->delete();
+
+    foreach (['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $order => $name) {
+        $hours = $week[$name] ?? false;
+
+        WorkingDay::create([
+            'tenant_id' => $tenantId,
+            'day_name' => $name,
+            'is_working' => (bool) $hours,
+            'start_time' => $hours['start_time'] ?? null,
+            'end_time' => $hours['end_time'] ?? null,
+            'order_no' => $order,
+        ]);
+    }
+}
+
+it('offers the company hours to a salesman who has none of their own', function () {
+    $seed = vsSeed();
+    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+
+    vsWorkingWeek($seed['tenant']->id, [
+        'Monday' => ['start_time' => '10:00', 'end_time' => '12:00'],
+        'Wednesday' => ['start_time' => '10:00', 'end_time' => '12:00'],
+    ]);
+
+    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+
+    expect($slots)->not->toBeEmpty();
+
+    foreach ($slots as $day => $daySlots) {
+        expect(Carbon\Carbon::parse($day)->dayOfWeek)->toBeIn([1, 3]);
+
+        foreach ($daySlots as $slot) {
+            $moment = Carbon\Carbon::parse($slot['value']);
+            expect((int) $moment->format('G'))->toBeGreaterThanOrEqual(10)->toBeLessThan(12)
+                ->and($moment->minute)->toBe(0);
+        }
+    }
+
+    // No rows were invented on the salesman's behalf — the company hours are
+    // read live, so editing Settings still moves this salesman's slots.
+    expect(PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->count())->toBe(0);
+});
+
+it('lets a salesman\'s own hours override the company hours', function () {
+    $seed = vsSeed(); // seeds the salesman with 09:00-13:00 every day
+
+    vsWorkingWeek($seed['tenant']->id, [
+        'Monday' => ['start_time' => '15:00', 'end_time' => '17:00'],
+        'Tuesday' => ['start_time' => '15:00', 'end_time' => '17:00'],
+        'Wednesday' => ['start_time' => '15:00', 'end_time' => '17:00'],
+        'Thursday' => ['start_time' => '15:00', 'end_time' => '17:00'],
+        'Friday' => ['start_time' => '15:00', 'end_time' => '17:00'],
+        'Saturday' => ['start_time' => '15:00', 'end_time' => '17:00'],
+        'Sunday' => ['start_time' => '15:00', 'end_time' => '17:00'],
+    ]);
+
+    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+
+    expect($slots)->not->toBeEmpty();
+
+    foreach (collect($slots)->flatten(1) as $slot) {
+        $hour = (int) Carbon\Carbon::parse($slot['value'])->format('G');
+        expect($hour)->toBeGreaterThanOrEqual(9)->toBeLessThan(13);
+    }
+});
+
+it('offers nothing when every company day is closed and the salesman has no hours', function () {
+    $seed = vsSeed();
+    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+
+    vsWorkingWeek($seed['tenant']->id, []);
+
+    expect(app(SlotService::class)->availableSlots($seed['salesman']->id))->toBeEmpty();
+});
+
+it('falls back to the module default week when no working day is configured', function () {
+    $seed = vsSeed();
+    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
+
+    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $defaults = config('property_appointment.default_availability');
+
+    expect($slots)->not->toBeEmpty();
+
+    foreach ($slots as $day => $daySlots) {
+        expect(Carbon\Carbon::parse($day)->dayOfWeek)->toBeIn($defaults['days']);
+
+        foreach ($daySlots as $slot) {
+            $hour = (int) Carbon\Carbon::parse($slot['value'])->format('G');
+            expect($hour)->toBeGreaterThanOrEqual((int) substr($defaults['start_time'], 0, 2))
+                ->toBeLessThan((int) substr($defaults['end_time'], 0, 2));
+        }
+    }
+});
+
+it('borrows the module times only for the columns a working day leaves blank', function () {
+    $seed = vsSeed();
+
+    // A tenant upgraded from before the timing columns existed: the day is on,
+    // but it has never been given hours.
+    vsWorkingWeek($seed['tenant']->id, ['Monday' => ['start_time' => '08:00']]);
+
+    $schedule = WorkingDay::schedule();
+    $defaults = config('property_appointment.default_availability');
+
+    expect($schedule)->toHaveKey(1)
+        ->and($schedule[1]['start_time'])->toBe('08:00')
+        ->and($schedule[1]['end_time'])->toBe($defaults['end_time']);
+});
+
+it('matches working days whatever case the day name was stored in', function () {
+    $seed = vsSeed(); // salesman works 09:00-13:00 on all seven days
+
+    // The seeder writes day names in upper case; the settings screen shows them
+    // capitalised. Both have to filter the week identically.
+    WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
+    foreach (['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'] as $order => $name) {
+        WorkingDay::create([
+            'tenant_id' => $seed['tenant']->id,
+            'day_name' => $name,
+            'is_working' => $name === 'MONDAY',
+            'order_no' => $order,
+        ]);
+    }
+
+    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+
+    expect($slots)->not->toBeEmpty();
+
+    foreach (array_keys($slots) as $day) {
+        expect(Carbon\Carbon::parse($day)->dayOfWeek)->toBe(1);
+    }
+});
+
+it('copies the company hours rather than the module times when the week is filled in one press', function () {
+    $seed = vsSeed();
+    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+
+    vsWorkingWeek($seed['tenant']->id, [
+        'Monday' => ['start_time' => '08:00', 'end_time' => '12:00'],
+    ]);
+
+    (new AvailabilityDefaultsAction())->execute($seed['salesman']->id, $seed['salesman']->id);
+
+    $rules = PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->get();
+
+    expect($rules)->toHaveCount(1)
+        ->and((int) $rules->first()->day_of_week)->toBe(1)
+        ->and(substr((string) $rules->first()->start_time, 0, 5))->toBe('08:00')
+        ->and(substr((string) $rules->first()->end_time, 0, 5))->toBe('12:00');
+});
+
+it('books a slot that only the company hours make available', function () {
+    $seed = vsSeed();
+    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+
+    vsWorkingWeek($seed['tenant']->id, [
+        'Sunday' => ['start_time' => '09:00', 'end_time' => '17:00'],
+        'Monday' => ['start_time' => '09:00', 'end_time' => '17:00'],
+        'Tuesday' => ['start_time' => '09:00', 'end_time' => '17:00'],
+        'Wednesday' => ['start_time' => '09:00', 'end_time' => '17:00'],
+        'Thursday' => ['start_time' => '09:00', 'end_time' => '17:00'],
+        'Friday' => ['start_time' => '09:00', 'end_time' => '17:00'],
+        'Saturday' => ['start_time' => '09:00', 'end_time' => '17:00'],
+    ]);
+
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $slot = vsFirstSlot($seed['salesman']->id);
+
+    $response = (new BookAction())->execute($appointment->id, $slot, 'customer');
+
+    expect($response['success'])->toBeTrue()
+        ->and($appointment->refresh()->scheduled_at->format('Y-m-d H:i:s'))->toBe($slot);
+});
+
+it('saves the company hours from the settings screen', function () {
+    $seed = vsSeed();
+    vsWorkingWeek($seed['tenant']->id, ['Monday' => ['start_time' => '09:00', 'end_time' => '18:00']]);
+    vsGrant($seed['salesman'], 'configuration.settings');
+    $this->actingAs($seed['salesman']);
+
+    $monday = collect(WorkingDay::orderBy('order_no')->get())->firstWhere('day_name', 'Monday');
+
+    Livewire::test(App\Livewire\Settings\WorkingDay::class)
+        ->set('days.1.is_working', true)
+        ->set('days.1.start_time', '10:30')
+        ->set('days.1.end_time', '16:00')
+        ->call('updateSettings')
+        ->assertDispatched('success');
+
+    $monday->refresh();
+
+    expect(substr((string) $monday->start_time, 0, 5))->toBe('10:30')
+        ->and(substr((string) $monday->end_time, 0, 5))->toBe('16:00')
+        ->and(WorkingDay::schedule()[1]['start_time'])->toBe('10:30');
+});
+
+it('refuses a working day that closes before it opens', function () {
+    $seed = vsSeed();
+    vsWorkingWeek($seed['tenant']->id, ['Monday' => ['start_time' => '09:00', 'end_time' => '18:00']]);
+    vsGrant($seed['salesman'], 'configuration.settings');
+    $this->actingAs($seed['salesman']);
+
+    Livewire::test(App\Livewire\Settings\WorkingDay::class)
+        ->set('days.1.is_working', true)
+        ->set('days.1.start_time', '17:00')
+        ->set('days.1.end_time', '09:00')
+        ->call('updateSettings')
+        ->assertDispatched('error');
+
+    $monday = collect(WorkingDay::orderBy('order_no')->get())->firstWhere('day_name', 'Monday');
+
+    expect(substr((string) $monday->start_time, 0, 5))->toBe('09:00');
+});
+
+it('creates the default working week from the settings screen when the tenant has none', function () {
+    $seed = vsSeed();
+    WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
+    vsGrant($seed['salesman'], 'configuration.settings');
+    $this->actingAs($seed['salesman']);
+
+    Livewire::test(App\Livewire\Settings\WorkingDay::class)
+        ->call('createDefaultWeek')
+        ->assertDispatched('success')
+        ->assertCount('days', 7);
+
+    $defaults = config('property_appointment.default_availability');
+
+    expect(WorkingDay::count())->toBe(7)
+        ->and(WorkingDay::where('is_working', true)->count())->toBe(count($defaults['days']))
+        ->and(array_keys(WorkingDay::schedule()))->toBe($defaults['days'])
+        ->and(WorkingDay::schedule()[$defaults['days'][0]]['start_time'])->toBe($defaults['start_time']);
+});
+
+it('does not duplicate days when the default week is created twice', function () {
+    $seed = vsSeed();
+    WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
+    vsGrant($seed['salesman'], 'configuration.settings');
+    $this->actingAs($seed['salesman']);
+
+    Livewire::test(App\Livewire\Settings\WorkingDay::class)
+        ->call('createDefaultWeek')
+        ->call('createDefaultWeek');
+
+    expect(WorkingDay::count())->toBe(7);
+});
+
+it('keeps the default week behind the settings permission', function () {
+    $seed = vsSeed();
+    WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
+    $this->actingAs($seed['salesman']);
+
+    Livewire::test(App\Livewire\Settings\WorkingDay::class)
+        ->call('createDefaultWeek')
+        ->assertForbidden();
+
+    expect(WorkingDay::count())->toBe(0);
+});
+
+it('states the company hours on the schedule panel of a salesman who has none', function () {
+    $seed = vsSeed();
+    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    vsWorkingWeek($seed['tenant']->id, [
+        'Monday' => ['start_time' => '10:00', 'end_time' => '16:00'],
+    ]);
+    vsGrant($seed['salesman'], 'property appointment.manage availability');
+    $this->actingAs($seed['salesman']);
+
+    Livewire::test(App\Livewire\PropertyAppointment\SalesmanSchedule::class, ['userId' => $seed['salesman']->id])
+        ->assertSee('Following the company hours')
+        ->assertSee('10:00–16:00')
+        ->assertDontSee('No availability set');
+});
+
+it('warns on the schedule panel only when there are no hours anywhere', function () {
+    $seed = vsSeed();
+    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    vsWorkingWeek($seed['tenant']->id, []);
+    $this->actingAs($seed['salesman']);
+
+    Livewire::test(App\Livewire\PropertyAppointment\SalesmanSchedule::class, ['userId' => $seed['salesman']->id])
+        ->assertSee('No availability set');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Typed windows
+|--------------------------------------------------------------------------
+|
+| The public page offers two ways to the same answer: tap a suggested time, or
+| type an arriving and a leaving time. Both end as one window, so both go through
+| the same gate — a preset is just a window somebody filled in for the customer.
+|
+*/
+
+/** An appointment on a salesman who works 09:00-13:00 every day. */
+function vsWindowSeed(): array
+{
+    $seed = vsSeed();
+    $seed['appointment'] = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $seed['day'] = now()->addDays(2)->toDateString();
+
+    return $seed;
+}
+
+it('books the window the customer typed, not the configured length', function () {
+    $seed = vsWindowSeed();
+
+    $response = (new BookAction())->execute(
+        $seed['appointment']->id, $seed['day'].' 10:15:00', 'customer', null, null, $seed['day'].' 10:45:00'
+    );
+
+    $booked = $seed['appointment']->fresh();
+
+    expect($response['success'])->toBeTrue()
+        ->and($booked->scheduled_at->format('H:i'))->toBe('10:15')
+        ->and($booked->ends_at->format('H:i'))->toBe('10:45')
+        ->and((int) $booked->scheduled_at->diffInMinutes($booked->endsAt()))->toBe(30);
+});
+
+it('falls back to the configured length when no leaving time is given', function () {
+    $seed = vsWindowSeed();
+
+    (new BookAction())->execute($seed['appointment']->id, vsFirstSlot($seed['salesman']->id));
+
+    $booked = $seed['appointment']->fresh();
+
+    expect((int) $booked->scheduled_at->diffInMinutes($booked->endsAt()))->toBe(SlotService::slotLengthMinutes());
+});
+
+it('refuses a window that runs past the day\'s closing time', function () {
+    $seed = vsWindowSeed();
+
+    $response = (new BookAction())->execute(
+        $seed['appointment']->id, $seed['day'].' 12:30:00', 'customer', null, null, $seed['day'].' 14:00:00'
+    );
+
+    expect($response['success'])->toBeFalse()
+        ->and($response['message'])->toContain('09:00')
+        ->and($response['slot_taken'] ?? false)->toBeFalse()
+        ->and($seed['appointment']->fresh()->scheduled_at)->toBeNull();
+});
+
+it('refuses a window that overlaps an appointment already on the calendar', function () {
+    $seed = vsWindowSeed();
+
+    (new BookAction())->execute($seed['appointment']->id, $seed['day'].' 10:00:00', 'customer', null, null, $seed['day'].' 11:00:00');
+
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+
+    $response = (new BookAction())->execute($second->id, $seed['day'].' 10:30:00', 'customer', null, null, $seed['day'].' 11:30:00');
+
+    expect($response['success'])->toBeFalse()
+        ->and($response['slot_taken'])->toBeTrue()
+        ->and($second->fresh()->scheduled_at)->toBeNull();
+});
+
+it('allows a window that starts exactly when another finishes', function () {
+    $seed = vsWindowSeed();
+
+    (new BookAction())->execute($seed['appointment']->id, $seed['day'].' 10:00:00', 'customer', null, null, $seed['day'].' 11:00:00');
+
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $response = (new BookAction())->execute($second->id, $seed['day'].' 11:00:00', 'customer', null, null, $seed['day'].' 12:00:00');
+
+    expect($response['success'])->toBeTrue();
+});
+
+it('refuses a window that ends before it starts', function () {
+    $seed = vsWindowSeed();
+
+    $response = (new BookAction())->execute(
+        $seed['appointment']->id, $seed['day'].' 11:00:00', 'customer', null, null, $seed['day'].' 10:00:00'
+    );
+
+    expect($response['success'])->toBeFalse()
+        ->and($response['message'])->toContain('after the arriving time');
+});
+
+it('refuses a window inside the notice period', function () {
+    $seed = vsWindowSeed();
+    $soon = now()->addHour();
+
+    $response = (new BookAction())->execute(
+        $seed['appointment']->id,
+        $soon->format('Y-m-d H:i:00'),
+        'customer', null, null,
+        $soon->copy()->addMinutes(30)->format('Y-m-d H:i:00')
+    );
+
+    expect($response['success'])->toBeFalse();
+});
+
+it('hands the page the open hours and the taken stretches, not just free slots', function () {
+    $seed = vsWindowSeed();
+    (new BookAction())->execute($seed['appointment']->id, $seed['day'].' 10:00:00', 'customer', null, null, $seed['day'].' 11:00:00');
+
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+
+    $payload = json_decode(
+        app(App\Http\Controllers\Property\PropertyAppointmentController::class)
+            ->publicData($second->token)->getContent(),
+        true
+    );
+
+    expect($payload['windows'][$seed['day']])->toBe(['start' => '09:00', 'end' => '13:00'])
+        ->and($payload['busy'][$seed['day']][0]['start'])->toBe('10:00')
+        ->and($payload['busy'][$seed['day']][0]['end'])->toBe('11:00')
+        ->and($payload['busy'][$seed['day']][0]['reason'])->toBe('booked')
+        ->and($payload['notice_hours'])->toBe(SlotService::minimumNoticeHours())
+        ->and($payload['clock'])->toBeIn([12, 24]);
+});
+
+it('books a typed window straight through the public endpoint', function () {
+    $seed = vsWindowSeed();
+
+    $response = $this->postJson(
+        route('property_appointment::public.book', $seed['appointment']->token),
+        ['slot' => $seed['day'].' 09:30:00', 'ends_at' => $seed['day'].' 10:15:00', 'timezone' => 'Asia/Qatar']
+    );
+
+    $response->assertOk()->assertJson(['success' => true]);
+
+    $booked = $seed['appointment']->fresh();
+
+    expect($booked->scheduled_at->format('H:i'))->toBe('09:30')
+        ->and($booked->ends_at->format('H:i'))->toBe('10:15')
+        ->and($booked->customer_timezone)->toBe('Asia/Qatar');
+});
+
+it('rejects a leaving time that is not after the arriving time at the endpoint', function () {
+    $seed = vsWindowSeed();
+
+    $this->postJson(
+        route('property_appointment::public.book', $seed['appointment']->token),
+        ['slot' => $seed['day'].' 11:00:00', 'ends_at' => $seed['day'].' 10:00:00']
+    )->assertStatus(422);
+});
+
+it('blocks a window that lands in the salesman\'s time off', function () {
+    $seed = vsWindowSeed();
+
+    App\Models\PropertyAppointmentTimeOff::create([
+        'tenant_id' => $seed['tenant']->id,
+        'user_id' => $seed['salesman']->id,
+        'date' => $seed['day'],
+        'start_time' => '10:00',
+        'end_time' => '12:00',
+        'reason' => 'Training',
+    ]);
+
+    $response = (new BookAction())->execute(
+        $seed['appointment']->id, $seed['day'].' 11:00:00', 'customer', null, null, $seed['day'].' 11:30:00'
+    );
+
+    expect($response['success'])->toBeFalse()
+        ->and($response['message'])->toContain('unavailable');
+});
+
+it('renders the public page shell with the picker mounted', function () {
+    $seed = vsWindowSeed();
+
+    $this->get(route('property_appointment::public', $seed['appointment']->token))
+        ->assertOk()
+        ->assertSee('property-appointment', false)
+        ->assertSee('apxp', false);
+
+    // Opening the link is recorded, so staff can tell "never saw it" from
+    // "saw it and did not book".
+    expect($seed['appointment']->fresh()->link_opened_count)->toBe(1);
 });

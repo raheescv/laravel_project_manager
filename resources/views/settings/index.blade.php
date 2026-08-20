@@ -120,7 +120,7 @@
         .settings-hero .breadcrumb,
         .settings-hero .breadcrumb a,
         .settings-hero .breadcrumb-item.active,
-        .settings-hero .breadcrumb-item + .breadcrumb-item::before {
+        .settings-hero .breadcrumb-item+.breadcrumb-item::before {
             color: var(--bs-secondary-color) !important;
         }
 
@@ -152,7 +152,7 @@
             background: var(--bs-body-bg);
         }
 
-        .settings-shell > .row {
+        .settings-shell>.row {
             align-items: flex-start;
         }
 
@@ -206,7 +206,7 @@
             transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
         }
 
-        .settings-tabs .nav-link > i {
+        .settings-tabs .nav-link>i {
             flex: 0 0 auto;
             display: inline-flex;
             align-items: center;
@@ -222,7 +222,7 @@
             transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
         }
 
-        .settings-tabs .nav-link > i::before {
+        .settings-tabs .nav-link>i::before {
             margin: 0 !important;
             padding: 0 !important;
             background: transparent !important;
@@ -236,7 +236,7 @@
             color: var(--s-brand);
         }
 
-        .settings-tabs .nav-link:hover > i {
+        .settings-tabs .nav-link:hover>i {
             background: rgba(var(--s-brand-rgb), 0.14);
             color: var(--s-brand) !important;
             box-shadow: none;
@@ -248,7 +248,7 @@
             box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--s-brand), transparent 70%);
         }
 
-        .settings-tabs .nav-link.active > i {
+        .settings-tabs .nav-link.active>i {
             background: color-mix(in srgb, var(--s-brand), transparent 78%);
             color: var(--s-brand) !important;
             box-shadow: none;
@@ -555,7 +555,7 @@
                 min-width: 0;
             }
 
-            .settings-content .d-flex.gap-2 > .btn {
+            .settings-content .d-flex.gap-2>.btn {
                 flex: 1 1 10rem;
             }
 
@@ -564,7 +564,7 @@
                 border-radius: 0 !important;
             }
 
-            .settings-page ._dm-settings-container__content > [class*="col-"] {
+            .settings-page ._dm-settings-container__content>[class*="col-"] {
                 padding: 1rem !important;
             }
 
@@ -577,7 +577,7 @@
                 display: none;
             }
 
-            .settings-page #dm_colorModeContainer .row > [class*="col-"] {
+            .settings-page #dm_colorModeContainer .row>[class*="col-"] {
                 margin-bottom: 0.75rem;
             }
 
@@ -637,14 +637,14 @@
                                 </li>
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab" aria-selected="false"
-                                            tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-data-settings"></i><span>Configuration</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsCurrencies" type="button" role="tab" aria-selected="false"
-                                            tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsCurrencies" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
                                             <i class="fa fa-money"></i><span>Currencies</span>
                                         </button>
                                     </li>
@@ -675,46 +675,46 @@
                                 @endcan
                                 @can('tailoring order.view')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button"
+                                            role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-repair"></i><span>Tailoring Settings</span>
                                         </button>
                                     </li>
                                 @endcan
                                 @can('rent out.view')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button"
+                                            role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-home"></i><span>Rent Out Settings</span>
                                         </button>
                                     </li>
                                 @endcan
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button"
+                                            role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-data-storage"></i><span>Universal UOM</span>
                                         </button>
                                     </li>
                                 @endcan
                                 @if (auth()->user()->is_super_admin)
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsUniqueNoCounters" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsUniqueNoCounters" type="button"
+                                            role="tab" aria-selected="false" tabindex="-1">
                                             <i class="fa fa-list-ol"></i><span>Unique No Counters</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsModuleConfiguration" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsModuleConfiguration" type="button"
+                                            role="tab" aria-selected="false" tabindex="-1">
                                             <i class="fa fa-cubes"></i><span>Module Configuration</span>
                                         </button>
                                     </li>
                                 @endif
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button" role="tab"
-                                            aria-selected="true" tabindex="0">
+                                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button"
+                                            role="tab" aria-selected="true" tabindex="0">
                                             <i class="demo-pli-male"></i><span>Company Profile</span>
                                         </button>
                                     </li>
@@ -731,30 +731,28 @@
                                         </button>
                                     </li>
                                 @endcan
-                                @if (false)
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab" aria-selected="false"
-                                            tabindex="-1">
-                                            <i class="demo-pli-calendar-4"></i><span>Working Day</span>
-                                        </button>
-                                    </li>
-                                @endif
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab"
+                                        aria-selected="false" tabindex="-1">
+                                        <i class="demo-pli-calendar-4"></i><span>Working Day</span>
+                                    </button>
+                                </li>
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button"
+                                            role="tab" aria-selected="false" tabindex="-1">
                                             <i class="fa fa-bars"></i><span>Navigation Order</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab" aria-selected="false"
-                                            tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-speech-bubble-5"></i><span>Telegram</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button"
+                                            role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-bell"></i><span>Notifications</span>
                                         </button>
                                     </li>
@@ -762,8 +760,8 @@
                                 @if (true)
                                     @can('whatsapp.integration')
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button" role="tab" aria-selected="false"
-                                                tabindex="-1">
+                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button"
+                                                role="tab" aria-selected="false" tabindex="-1">
                                                 <i class="demo-pli-speech-bubble-4"></i><span>Whatsapp</span>
                                             </button>
                                         </li>
@@ -776,23 +774,26 @@
                                 <div id="tabsMyPermissions" class="tab-pane" role="tabpanel">
                                     @php
                                         $myPermissions = auth()->user()->getAllPermissions()->pluck('name')->sort()->values();
-                                        $myPermissionGroups = $myPermissions->groupBy(fn ($name) => \Illuminate\Support\Str::before($name, '.'));
+                                        $myPermissionGroups = $myPermissions->groupBy(fn($name) => \Illuminate\Support\Str::before($name, '.'));
                                     @endphp
                                     <div class="card">
                                         <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                                             <div>
                                                 <h5 class="card-title mb-0 fw-bold">My Permissions</h5>
-                                                <small class="text-body-secondary">Permissions granted to your account &mdash; these also control what you can access in the mobile app.</small>
+                                                <small class="text-body-secondary">Permissions granted to your account &mdash; these also control
+                                                    what you can access in the mobile app.</small>
                                             </div>
                                             <span class="badge text-bg-primary-subtle text-primary border border-primary-subtle">
-                                                {{ $myPermissions->count() }} {{ \Illuminate\Support\Str::plural('permission', $myPermissions->count()) }}
+                                                {{ $myPermissions->count() }}
+                                                {{ \Illuminate\Support\Str::plural('permission', $myPermissions->count()) }}
                                             </span>
                                         </div>
                                         <div class="card-body">
                                             @if (auth()->user()->is_admin || auth()->user()->is_super_admin)
                                                 <div class="alert alert-info mb-3">
                                                     <i class="demo-psi-information me-1"></i>
-                                                    Your account is an administrator, so it implicitly has access to every feature regardless of the list below.
+                                                    Your account is an administrator, so it implicitly has access to every feature regardless of the
+                                                    list below.
                                                 </div>
                                             @endif
                                             @forelse ($myPermissionGroups as $group => $permissions)
@@ -874,7 +875,8 @@
                                             </div>
                                             <div class="card-body">
                                                 <p class="text-body-secondary small mb-3">
-                                                    All settings are automatically saved to your browser's local storage and synchronized with your account.
+                                                    All settings are automatically saved to your browser's local storage and synchronized with your
+                                                    account.
                                                 </p>
                                                 <div class="row g-3">
                                                     <div class="col-12 col-md-6 col-xl-4">
@@ -882,8 +884,8 @@
                                                             <div class="icon-pill primary"><i class="demo-psi-gear"></i></div>
                                                             <h6>Layout Preferences</h6>
                                                             <p>Choose your preferred layout style, transitions and positioning.</p>
-                                                            <button class="btn btn-primary btn-sm w-100" id="openSettingsOffcanvas" type="button" data-bs-toggle="offcanvas"
-                                                                data-bs-target="#_dm-settingsContainer">
+                                                            <button class="btn btn-primary btn-sm w-100" id="openSettingsOffcanvas" type="button"
+                                                                data-bs-toggle="offcanvas" data-bs-target="#_dm-settingsContainer">
                                                                 <i class="demo-psi-gear me-1"></i> Open Settings Panel
                                                             </button>
                                                         </div>
@@ -948,7 +950,7 @@
                                 @endcan
                                 @can('whatsapp.integration')
                                     <div id="tabsWhatsapp" class="tab-pane" role="tabpanel">
-                                         @livewire('settings.whatsapp')
+                                        @livewire('settings.whatsapp')
                                     </div>
                                 @endcan
                             </div>
@@ -960,8 +962,9 @@
         <!-- SETTINGS CONTAINER  -->
         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
         <div id="_dm-settingsContainer" class="_dm-settings-container offcanvas offcanvas-end rounded-start" tabindex="-1">
-            <button id="_dm-settingsToggler" class="_dm-btn-settings btn btn-sm btn-danger p-2 rounded-0 rounded-start shadow-none" type="button" data-bs-toggle="offcanvas"
-                data-bs-target="#_dm-settingsContainer" aria-label="Customization button" aria-controls="#_dm-settingsContainer">
+            <button id="_dm-settingsToggler" class="_dm-btn-settings btn btn-sm btn-danger p-2 rounded-0 rounded-start shadow-none" type="button"
+                data-bs-toggle="offcanvas" data-bs-target="#_dm-settingsContainer" aria-label="Customization button"
+                aria-controls="#_dm-settingsContainer">
                 <i class="demo-psi-gear fs-1"></i>
             </button>
 
@@ -978,7 +981,8 @@
                         <div class="d-flex align-items-center pt-1 mb-2">
                             <label class="form-check-label flex-fill" for="_dm-fluidLayoutRadio">Fluid Layout</label>
                             <div class="form-check form-switch">
-                                <input id="_dm-fluidLayoutRadio" class="form-check-input ms-0" type="radio" name="settingLayouts" autocomplete="off" checked>
+                                <input id="_dm-fluidLayoutRadio" class="form-check-input ms-0" type="radio" name="settingLayouts"
+                                    autocomplete="off" checked>
                             </div>
                         </div>
 
@@ -986,7 +990,8 @@
                         <div class="d-flex align-items-center pt-1 mb-2" hidden style="display: none">
                             <label class="form-check-label flex-fill" for="_dm-boxedLayoutRadio">Boxed Layout</label>
                             <div class="form-check form-switch">
-                                <input id="_dm-boxedLayoutRadio" class="form-check-input ms-0" type="radio" name="settingLayouts" autocomplete="off">
+                                <input id="_dm-boxedLayoutRadio" class="form-check-input ms-0" type="radio" name="settingLayouts"
+                                    autocomplete="off">
                             </div>
                         </div>
 
@@ -995,7 +1000,8 @@
                             <label class="form-label flex-fill mb-0">BG for
                                 Boxed Layout</label>
 
-                            <button id="_dm-boxedBgBtn" class="btn btn-icon btn-primary btn-xs" type="button" data-bs-toggle="offcanvas" data-bs-target="#_dm-boxedBgContent" disabled>
+                            <button id="_dm-boxedBgBtn" class="btn btn-icon btn-primary btn-xs" type="button" data-bs-toggle="offcanvas"
+                                data-bs-target="#_dm-boxedBgContent" disabled>
                                 <i class="demo-psi-dot-horizontal"></i>
                             </button>
                         </div>
@@ -1005,7 +1011,8 @@
                             <label class="form-check-label flex-fill text-nowrap" for="_dm-centeredLayoutRadio">Centered
                                 Layout</label>
                             <div class="form-check form-switch">
-                                <input id="_dm-centeredLayoutRadio" class="form-check-input ms-0" type="radio" name="settingLayouts" autocomplete="off">
+                                <input id="_dm-centeredLayoutRadio" class="form-check-input ms-0" type="radio" name="settingLayouts"
+                                    autocomplete="off">
                             </div>
                         </div>
 
@@ -1064,7 +1071,8 @@
                             <label class="form-check-label flex-fill" for="_dm-miniNavRadio">Min / Collapsed
                                 Mode</label>
                             <div class="form-check form-switch">
-                                <input id="_dm-miniNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode" autocomplete="off">
+                                <input id="_dm-miniNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode"
+                                    autocomplete="off">
                             </div>
                         </div>
 
@@ -1073,7 +1081,8 @@
                             <label class="form-check-label flex-fill" for="_dm-maxiNavRadio">Max / Expanded
                                 Mode</label>
                             <div class="form-check form-switch">
-                                <input id="_dm-maxiNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode" autocomplete="off" checked>
+                                <input id="_dm-maxiNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode"
+                                    autocomplete="off" checked>
                             </div>
                         </div>
 
@@ -1081,7 +1090,8 @@
                         <div class="d-flex align-items-center pt-1 mb-2">
                             <label class="form-check-label flex-fill" for="_dm-pushNavRadio">Push Mode</label>
                             <div class="form-check form-switch">
-                                <input id="_dm-pushNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode" autocomplete="off">
+                                <input id="_dm-pushNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode"
+                                    autocomplete="off">
                             </div>
                         </div>
 
@@ -1089,7 +1099,8 @@
                         <div class="d-flex align-items-center pt-1 mb-2">
                             <label class="form-check-label flex-fill" for="_dm-slideNavRadio">Slide on top</label>
                             <div class="form-check form-switch">
-                                <input id="_dm-slideNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode" autocomplete="off">
+                                <input id="_dm-slideNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode"
+                                    autocomplete="off">
                             </div>
                         </div>
 
@@ -1097,7 +1108,8 @@
                         <div class="d-flex align-items-center pt-1 mb-2">
                             <label class="form-check-label flex-fill" for="_dm-revealNavRadio">Reveal Mode</label>
                             <div class="form-check form-switch">
-                                <input id="_dm-revealNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode" autocomplete="off">
+                                <input id="_dm-revealNavRadio" class="form-check-input ms-0" type="radio" name="navigation-mode"
+                                    autocomplete="off">
                             </div>
                         </div>
 
@@ -1161,29 +1173,76 @@
                         <h6 class="mt-4 mb-2 py-1">Sidebar Style</h6>
                         <p class="text-muted small mb-2">Premium look for the left navigation. Applies instantly.</p>
                         <div class="dm-sidebar-style-grid">
-                            <button type="button" class="_dm-sidebarStyle dm-skin-btn active" data-nav-skin="standard" title="Standard — clean flat, single blue accent">
+                            <button type="button" class="_dm-sidebarStyle dm-skin-btn active" data-nav-skin="standard"
+                                title="Standard — clean flat, single blue accent">
                                 <span class="dm-skin-swatch dm-skin-swatch--standard"></span>
                                 <span class="dm-skin-name">Standard</span>
                             </button>
-                            <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="mono" title="Editorial Mono — minimal, hairline restraint">
+                            <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="mono"
+                                title="Editorial Mono — minimal, hairline restraint">
                                 <span class="dm-skin-swatch dm-skin-swatch--mono"></span>
                                 <span class="dm-skin-name">Mono</span>
                             </button>
-                            <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="atelier" title="Warm Atelier — champagne-brass luxury">
+                            <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="atelier"
+                                title="Warm Atelier — champagne-brass luxury">
                                 <span class="dm-skin-swatch dm-skin-swatch--atelier"></span>
                                 <span class="dm-skin-name">Atelier</span>
                             </button>
                         </div>
                         <style>
-                            .dm-sidebar-style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
-                            .dm-skin-btn { display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .5rem .35rem; border: 1.5px solid var(--bs-border-color, #e2e5ef); border-radius: 12px; background: var(--bs-body-bg, #fff); cursor: pointer; transition: border-color .18s, box-shadow .18s, transform .18s; }
-                            .dm-skin-btn:hover { transform: translateY(-1px); border-color: var(--bs-primary); }
-                            .dm-skin-btn.active { border-color: var(--bs-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, .18); }
-                            .dm-skin-swatch { width: 100%; height: 34px; border-radius: 8px; border: 1px solid rgba(0, 0, 0, .06); }
-                            .dm-skin-swatch--standard { background: linear-gradient(135deg, #2563eb 0 55%, #ffffff 55% 100%); }
-                            .dm-skin-swatch--mono { background: linear-gradient(135deg, #111114 0 50%, #f4f4f6 50% 100%); }
-                            .dm-skin-swatch--atelier { background: linear-gradient(135deg, #d2ab5e, #a87d36 60%, #2b2419); }
-                            .dm-skin-name { font-size: .72rem; font-weight: 600; color: var(--bs-body-color); }
+                            .dm-sidebar-style-grid {
+                                display: grid;
+                                grid-template-columns: repeat(3, 1fr);
+                                gap: .5rem;
+                            }
+
+                            .dm-skin-btn {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                gap: .4rem;
+                                padding: .5rem .35rem;
+                                border: 1.5px solid var(--bs-border-color, #e2e5ef);
+                                border-radius: 12px;
+                                background: var(--bs-body-bg, #fff);
+                                cursor: pointer;
+                                transition: border-color .18s, box-shadow .18s, transform .18s;
+                            }
+
+                            .dm-skin-btn:hover {
+                                transform: translateY(-1px);
+                                border-color: var(--bs-primary);
+                            }
+
+                            .dm-skin-btn.active {
+                                border-color: var(--bs-primary);
+                                box-shadow: 0 0 0 3px rgba(99, 102, 241, .18);
+                            }
+
+                            .dm-skin-swatch {
+                                width: 100%;
+                                height: 34px;
+                                border-radius: 8px;
+                                border: 1px solid rgba(0, 0, 0, .06);
+                            }
+
+                            .dm-skin-swatch--standard {
+                                background: linear-gradient(135deg, #2563eb 0 55%, #ffffff 55% 100%);
+                            }
+
+                            .dm-skin-swatch--mono {
+                                background: linear-gradient(135deg, #111114 0 50%, #f4f4f6 50% 100%);
+                            }
+
+                            .dm-skin-swatch--atelier {
+                                background: linear-gradient(135deg, #d2ab5e, #a87d36 60%, #2b2419);
+                            }
+
+                            .dm-skin-name {
+                                font-size: .72rem;
+                                font-weight: 600;
+                                color: var(--bs-body-color);
+                            }
                         </style>
 
                     </div>
@@ -1233,7 +1292,8 @@
 
                                         <!-- Scheme Button -->
                                         <button type="button" class="_dm-colorModeBtn btn p-1 shadow-none" data-color-mode="tm--expanded-hd">
-                                            <img src="./assets/img/color-schemes/expanded-header.png" alt="color scheme illusttration" loading="lazy">
+                                            <img src="./assets/img/color-schemes/expanded-header.png" alt="color scheme illusttration"
+                                                loading="lazy">
                                         </button>
 
                                     </div>
@@ -1316,7 +1376,8 @@
                                 <label for="_dm-fontSizeRange" class="form-label flex-shrink-0 mb-0">Root
                                     Font sizes</label>
                                 <div class="position-relative flex-fill">
-                                    <input type="range" class="form-range" min="9" max="19" step="1" value="16" id="_dm-fontSizeRange">
+                                    <input type="range" class="form-range" min="9" max="19" step="1" value="16"
+                                        id="_dm-fontSizeRange">
                                     <output id="_dm-fontSizeValue" class="range-bubble"></output>
                                 </div>
                             </div>
@@ -1332,7 +1393,8 @@
                                         <label class="form-check-label flex-fill" for="_dm-bodyScrollbarCheckbox">Body
                                             scrollbar</label>
                                         <div class="form-check form-switch">
-                                            <input id="_dm-bodyScrollbarCheckbox" class="form-check-input ms-0" type="checkbox" autocomplete="off">
+                                            <input id="_dm-bodyScrollbarCheckbox" class="form-check-input ms-0" type="checkbox"
+                                                autocomplete="off">
                                         </div>
                                     </div>
 
@@ -1341,7 +1403,8 @@
                                         <label class="form-check-label flex-fill" for="_dm-sidebarsScrollbarCheckbox">Navigation
                                             and Sidebar</label>
                                         <div class="form-check form-switch">
-                                            <input id="_dm-sidebarsScrollbarCheckbox" class="form-check-input ms-0" type="checkbox" autocomplete="off">
+                                            <input id="_dm-sidebarsScrollbarCheckbox" class="form-check-input ms-0" type="checkbox"
+                                                autocomplete="off">
                                         </div>
                                     </div>
 

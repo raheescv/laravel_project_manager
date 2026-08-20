@@ -1,17 +1,25 @@
 <script setup>
 /**
- * Public appointment appointment — "Estate".
+ * Public appointment page — "Estate".
  *
- * Every slot for the whole appointment window arrives in ONE payload, so choosing
- * a day or a time is pure local state and lands instantly. The only network
- * call a customer makes is the appointment itself.
+ * The customer answers one question in two ways: tap a suggested time, or type
+ * their own window. Both write the SAME pair of values (start, end), so there is
+ * one thing to submit and one thing for the server to validate — a preset is
+ * just a window somebody filled in for them.
+ *
+ * Everything needed to decide arrives in ONE payload — the free slots, the open
+ * hours each day runs between, and the stretches already taken — so changing a
+ * day or a time is pure local state and lands instantly. The only network call a
+ * customer makes is the booking itself. The checks below mirror
+ * SlotService::windowProblem() so the answer never differs from the server's,
+ * which stays the authority.
  *
  * The component owns the hero as well as the panel, because the hero's copy is
  * what changes between states — picking a time, already booked, expired link.
  * Styling comes entirely from the .apxp system on the page; this component
  * ships no CSS of its own so the two cannot drift apart.
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
     dataUrl: { type: String, required: true },
@@ -29,34 +37,203 @@ const message = ref('')
 const slotTaken = ref(false)
 
 const data = ref(null)
-const selectedDate = ref(null)
-const selectedSlot = ref(null)
+const selectedDate = ref(null)   // Y-m-d
+const startTime = ref('')        // HH:MM
+const endTime = ref('')          // HH:MM
+const monthCursor = ref(null)    // first of the month the calendar is showing
 
 const days = computed(() => data.value?.days ?? [])
-const hasSlots = computed(() => days.value.length > 0)
+const windows = computed(() => data.value?.windows ?? {})
+const busy = computed(() => data.value?.busy ?? {})
 const property = computed(() => data.value?.property ?? null)
 
-const activeDay = computed(() => {
-    if (!hasSlots.value) return null
-    return days.value.find((d) => d.date === selectedDate.value) ?? days.value[0]
-})
+/** Days the business is open at all — the calendar's selectable set. */
+const openDates = computed(() => Object.keys(windows.value).sort())
+const hasSlots = computed(() => openDates.value.length > 0)
+
+const activeWindow = computed(() => windows.value[selectedDate.value] ?? null)
+const activeDay = computed(() => days.value.find((d) => d.date === selectedDate.value) ?? null)
+const freeStarts = computed(() => new Set((activeDay.value?.slots ?? []).map((s) => s.value.slice(11, 16))))
+const activeBusy = computed(() => busy.value[selectedDate.value] ?? [])
 
 const isBooked = computed(() => data.value?.status === 'scheduled' && data.value?.scheduled)
 const isUsable = computed(() => data.value?.usable !== false)
 
 const initial = computed(() => (props.companyName || '?').trim().charAt(0).toUpperCase())
 
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December']
+
+const pad = (n) => (n < 10 ? '0' + n : '' + n)
+const toMinutes = (hhmm) => (hhmm ? Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5)) : NaN)
+const toHhmm = (minutes) => pad(Math.floor(minutes / 60)) + ':' + pad(minutes % 60)
+const isoOf = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+const dateOf = (iso) => new Date(`${iso}T00:00:00`)
+
+/** Times follow the tenant's clock preference, exactly as the server labels them. */
+function timeLabel(hhmm) {
+    if (!hhmm) return ''
+    if (data.value?.clock === 24) return hhmm
+    const h = Number(hhmm.slice(0, 2))
+    const suffix = h >= 12 ? 'PM' : 'AM'
+    return `${pad(h % 12 === 0 ? 12 : h % 12)}:${hhmm.slice(3, 5)} ${suffix}`
+}
+
+function longLabel(iso) {
+    if (!iso) return ''
+    const d = dateOf(iso)
+    return `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`
+}
+
+/** The month grid, padded to whole weeks so the columns line up under S M T W T F S. */
+const calendar = computed(() => {
+    const cursor = monthCursor.value ? dateOf(monthCursor.value) : new Date()
+    const year = cursor.getFullYear()
+    const month = cursor.getMonth()
+    const first = new Date(year, month, 1)
+    const total = new Date(year, month + 1, 0).getDate()
+    const today = isoOf(new Date())
+
+    const cells = []
+    for (let i = 0; i < first.getDay(); i++) cells.push(null)
+    for (let day = 1; day <= total; day++) {
+        const iso = `${year}-${pad(month + 1)}-${pad(day)}`
+        cells.push({
+            iso,
+            day,
+            open: !!windows.value[iso],
+            hasTimes: (days.value.find((d) => d.date === iso)?.slots ?? []).length > 0,
+            today: iso === today,
+        })
+    }
+    return { label: `${MONTHS[month]} ${year}`, cells }
+})
+
+/** Month arrows stop at the edges of the booking window rather than wandering. */
+const canGoBack = computed(() => monthCursor.value > (openDates.value[0] ?? '').slice(0, 7) + '-01')
+const canGoForward = computed(() => {
+    const last = openDates.value[openDates.value.length - 1] ?? ''
+    return monthCursor.value < last.slice(0, 7) + '-01'
+})
+
+function shiftMonth(step) {
+    const cursor = dateOf(monthCursor.value)
+    cursor.setMonth(cursor.getMonth() + step)
+    monthCursor.value = isoOf(new Date(cursor.getFullYear(), cursor.getMonth(), 1))
+}
+
 /**
- * Month is stamped on a day tab only where it CHANGES. The appointment window runs
- * a month ahead, so a strip that crosses into September has to say so — but
- * repeating "Aug" a dozen times over is noise.
+ * The suggested times: the day's open hours cut into slots, with anything the
+ * server did not offer marked for WHY it is gone. A struck-through time the
+ * customer can see is more use than a gap they cannot explain.
  */
-const dayTabs = computed(() =>
-    days.value.map((day, index) => ({
-        ...day,
-        showMonth: index === 0 || day.month !== days.value[index - 1].month,
-    }))
-)
+const suggestions = computed(() => {
+    const window = activeWindow.value
+    if (!window) return []
+
+    const step = data.value?.duration_minutes || 60
+    const close = toMinutes(window.end)
+    const out = []
+
+    for (let m = toMinutes(window.start); m + step <= close; m += step) {
+        const hhmm = toHhmm(m)
+        const free = freeStarts.value.has(hhmm)
+        out.push({
+            value: hhmm,
+            label: timeLabel(hhmm),
+            free,
+            note: free ? partOfDay(m) : (overlapsBusy(m, m + step) ? 'Taken' : 'Too soon'),
+        })
+    }
+    return out
+})
+
+function partOfDay(minutes) {
+    if (minutes < 720) return 'Morning'
+    if (minutes < 1020) return 'Afternoon'
+    return 'Evening'
+}
+
+function overlapsBusy(from, to) {
+    return activeBusy.value.some((b) => from < toMinutes(b.end) && to > toMinutes(b.start))
+}
+
+const windowMinutes = computed(() => toMinutes(endTime.value) - toMinutes(startTime.value))
+
+/** How long the CONFIRMED appointment runs — what the customer asked for, not a default. */
+const bookedLength = computed(() => minutesLabel(data.value?.scheduled?.minutes))
+
+function minutesLabel(minutes) {
+    if (!(minutes > 0)) return ''
+    const hours = Math.floor(minutes / 60)
+    const rest = minutes % 60
+    if (hours && rest) return `${hours}h ${rest}m`
+    if (hours) return `${hours} hour${hours === 1 ? '' : 's'}`
+    return `${rest} minutes`
+}
+
+const durationLabel = computed(() => minutesLabel(windowMinutes.value))
+
+/**
+ * The same checks SlotService::windowProblem() runs, so the customer is told
+ * what is wrong before they submit. The server still decides — this only saves
+ * them a round trip and a rejection.
+ */
+const verdict = computed(() => {
+    if (!selectedDate.value || !startTime.value || !endTime.value) {
+        return { tone: '', icon: 'fa-info-circle', text: 'Choose a time above.', ok: false }
+    }
+    const open = activeWindow.value
+    if (!open) {
+        return { tone: 'warn', icon: 'fa-exclamation-circle', text: 'We are closed that day. Please choose another date.', ok: false }
+    }
+    if (!(windowMinutes.value > 0)) {
+        return { tone: 'bad', icon: 'fa-exclamation-triangle', text: 'The leaving time has to be after the arriving time.', ok: false }
+    }
+
+    const from = toMinutes(startTime.value)
+    const to = toMinutes(endTime.value)
+
+    if (from < toMinutes(open.start) || to > toMinutes(open.end)) {
+        return {
+            tone: 'warn',
+            icon: 'fa-exclamation-circle',
+            text: `That day runs ${timeLabel(open.start)} to ${timeLabel(open.end)}. Please choose a time inside those hours.`,
+            ok: false,
+        }
+    }
+    if (overlapsBusy(from, to)) {
+        return { tone: 'warn', icon: 'fa-exclamation-circle', text: 'That overlaps something already in the diary. Please shift it a little.', ok: false }
+    }
+    if (data.value?.server_now && `${selectedDate.value} ${startTime.value}` < earliestStart.value) {
+        return {
+            tone: 'warn',
+            icon: 'fa-clock-o',
+            text: `We need at least ${data.value.notice_hours} hours' notice. Please choose a later time.`,
+            ok: false,
+        }
+    }
+
+    return {
+        tone: 'ok',
+        icon: 'fa-check-circle',
+        text: `That window is free${data.value?.salesman_name ? ' — ' + data.value.salesman_name + ' will hold it for you' : ''}.`,
+        ok: true,
+    }
+})
+
+/** The notice cut-off as a comparable 'Y-m-d HH:MM' stamp, in the tenant's timezone. */
+const earliestStart = computed(() => {
+    const now = data.value?.server_now
+    if (!now) return ''
+    const [datePart, timePart] = now.split(' ')
+    const stamp = new Date(`${datePart}T${timePart}`)
+    stamp.setHours(stamp.getHours() + (data.value?.notice_hours ?? 0))
+    return `${isoOf(stamp)} ${pad(stamp.getHours())}:${pad(stamp.getMinutes())}`
+})
+
+const canConfirm = computed(() => verdict.value.ok && !appointment.value)
 
 /** The building is what a customer recognises; the unit is what they ask for. */
 const headlineSubject = computed(() => property.value?.building || property.value?.unit || '')
@@ -67,24 +244,6 @@ const propertyMeta = computed(() => {
     // Deliberately no room count: the type ("2 Bedroom") already says it, and
     // the two fields disagree often enough that printing both looks wrong.
     return [p.unit ? `Unit ${p.unit}` : null, p.type].filter(Boolean).join(' · ')
-})
-
-const durationLabel = computed(() => {
-    const minutes = data.value?.duration_minutes
-    if (!minutes) return ''
-    return minutes % 60 === 0 && minutes >= 60
-        ? `${minutes / 60} hour${minutes === 60 ? '' : 's'}`
-        : `${minutes} minutes`
-})
-
-const selectedSlotObject = computed(() => {
-    if (!selectedSlot.value || !activeDay.value) return null
-    return activeDay.value.slots.find((s) => s.value === selectedSlot.value) ?? null
-})
-
-const selectedLabel = computed(() => {
-    const slot = selectedSlotObject.value
-    return slot ? `${activeDay.value.long_label}, ${slot.label}` : ''
 })
 
 /** Hero facts. Anything the tenant has not filled in simply does not appear. */
@@ -102,18 +261,60 @@ const facts = computed(() => {
     return [
         { k: 'Appointment as', v: data.value.customer_name },
         { k: 'Your agent', v: data.value.salesman_name },
-        { k: 'Appointment length', v: durationLabel.value },
+        { k: 'Open hours', v: openHoursLabel.value },
         { k: 'Times shown in', v: data.value.timezone },
     ].filter((f) => f.v)
 })
 
+/** The open hours of the day in view, for the hero and the sub-heading. */
+const openHoursLabel = computed(() => {
+    const open = activeWindow.value ?? Object.values(windows.value)[0]
+    return open ? `${timeLabel(open.start)} – ${timeLabel(open.end)}` : ''
+})
+
+const selectedLabel = computed(() =>
+    selectedDate.value && windowMinutes.value > 0
+        ? `${longLabel(selectedDate.value)} · ${timeLabel(startTime.value)} – ${timeLabel(endTime.value)}`
+        : ''
+)
+
 function applyPayload(payload) {
     data.value = payload
-    // Keep the customer on the day they were looking at when possible.
-    const stillThere = payload.days?.some((d) => d.date === selectedDate.value)
-    if (!stillThere) selectedDate.value = payload.days?.[0]?.date ?? null
-    selectedSlot.value = null
+
+    const openDays = Object.keys(payload.windows ?? {}).sort()
+    // Keep the customer on the day they were looking at when possible; otherwise
+    // open on the first day that actually has a time going spare.
+    const firstWithTimes = payload.days?.[0]?.date
+    const previous = selectedDate.value
+
+    if (!selectedDate.value || !openDays.includes(selectedDate.value)) {
+        selectedDate.value = firstWithTimes ?? openDays[0] ?? null
+    }
+    monthCursor.value = selectedDate.value ? selectedDate.value.slice(0, 8) + '01' : null
+
+    // A refresh after a lost race must not wipe what the customer typed — the
+    // verdict below re-reads the new stretches and tells them what is wrong.
+    // Only a day that moved out from under them earns a fresh seed.
+    if (selectedDate.value !== previous || !startTime.value) seedTimes()
 }
+
+/**
+ * Pre-fill the window with the first time still going spare on this day, so the
+ * page always opens on something valid — the customer edits rather than starts.
+ */
+function seedTimes() {
+    const first = (activeDay.value?.slots ?? [])[0]?.value?.slice(11, 16)
+    const open = activeWindow.value
+
+    const start = first ?? open?.start ?? ''
+    startTime.value = start
+    endTime.value = start
+        ? toHhmm(Math.min(toMinutes(start) + (data.value?.duration_minutes || 60), toMinutes(open?.end ?? '23:59')))
+        : ''
+}
+
+/** Changing the day re-seeds rather than carrying a time that may not exist there. */
+watch(selectedDate, () => seedTimes())
 
 async function load() {
     loading.value = true
@@ -132,20 +333,40 @@ async function load() {
 }
 
 function pickDay(date) {
+    if (!windows.value[date]) return
     selectedDate.value = date
-    selectedSlot.value = null
     slotTaken.value = false
     message.value = ''
 }
 
-function pickSlot(value) {
-    selectedSlot.value = value
+/** A suggested time is just a window, pre-filled. */
+function pickSuggestion(hhmm) {
+    startTime.value = hhmm
+    endTime.value = toHhmm(toMinutes(hhmm) + (data.value?.duration_minutes || 60))
+    slotTaken.value = false
+    message.value = ''
+}
+
+/** Whether the typed window still matches a suggestion, so the chip stays lit. */
+function isPicked(hhmm) {
+    return startTime.value === hhmm
+        && windowMinutes.value === (data.value?.duration_minutes || 60)
+}
+
+/** Jump to the earliest time the salesman can still take. */
+function pickEarliest() {
+    const day = days.value.find((d) => (d.slots ?? []).length)
+    if (!day) return
+    selectedDate.value = day.date
+    monthCursor.value = day.date.slice(0, 8) + '01'
+    // Seed explicitly: the watcher does not fire when that day is already open.
+    seedTimes()
     slotTaken.value = false
     message.value = ''
 }
 
 async function confirm() {
-    if (!selectedSlot.value || appointment.value) return
+    if (!canConfirm.value) return
 
     appointment.value = true
     slotTaken.value = false
@@ -161,7 +382,8 @@ async function confirm() {
                 'X-CSRF-TOKEN': props.csrf,
             },
             body: JSON.stringify({
-                slot: selectedSlot.value,
+                slot: `${selectedDate.value} ${startTime.value}:00`,
+                ends_at: `${selectedDate.value} ${endTime.value}:00`,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             }),
         })
@@ -305,7 +527,7 @@ onMounted(load)
                         <div class="when">{{ data.scheduled.long_date }}</div>
                         <div class="at">
                             {{ data.scheduled.time }}<template v-if="data.scheduled.end_time"> – {{ data.scheduled.end_time }}</template>
-                            <template v-if="durationLabel"> · {{ durationLabel }}</template>
+                            <template v-if="data.scheduled.minutes"> · {{ bookedLength }}</template>
                         </div>
                     </div>
                     <span class="apxp-seal"><i class="fa fa-check"></i> Confirmed</span>
@@ -387,61 +609,140 @@ onMounted(load)
 
                 <div class="apxp-ptop">
                     <div>
-                        <h3>{{ activeDay.long_label }}</h3>
+                        <h3>Choose your time</h3>
                         <div v-if="property && property.location" class="where">
                             <i class="fa fa-map-marker"></i>{{ property.location }}
                         </div>
                     </div>
-                    <span class="cnt">
-                        {{ activeDay.slots.length }} time{{ activeDay.slots.length === 1 ? '' : 's' }} available
-                    </span>
+                    <span class="cnt">{{ openHoursLabel }}</span>
                 </div>
                 <div class="apxp-rule"></div>
 
-                <div class="apxp-strip">
-                    <button
-                        v-for="day in dayTabs"
-                        :key="day.date"
-                        type="button"
-                        class="apxp-d"
-                        :class="{ sel: activeDay.date === day.date }"
-                        @click="pickDay(day.date)"
-                    >
-                        <div class="w">{{ day.weekday }}</div>
-                        <div class="n">{{ day.day }}</div>
-                        <div class="mo" :class="{ ghost: !day.showMonth }">{{ day.month }}</div>
-                    </button>
-                </div>
+                <div class="apxp-split">
+                    <!-- ── the month ─────────────────────────────── -->
+                    <div class="apxp-cal">
+                        <div class="h">
+                            <button type="button" :disabled="!canGoBack" aria-label="Previous month" @click="shiftMonth(-1)">
+                                <i class="fa fa-angle-left"></i>
+                            </button>
+                            <div class="m">{{ calendar.label }}</div>
+                            <button type="button" :disabled="!canGoForward" aria-label="Next month" @click="shiftMonth(1)">
+                                <i class="fa fa-angle-right"></i>
+                            </button>
+                        </div>
+                        <div class="apxp-dow">
+                            <span v-for="(name, index) in ['S', 'M', 'T', 'W', 'T', 'F', 'S']" :key="index">{{ name }}</span>
+                        </div>
+                        <div class="apxp-days">
+                            <template v-for="(cell, index) in calendar.cells" :key="index">
+                                <span v-if="!cell"></span>
+                                <button
+                                    v-else
+                                    type="button"
+                                    class="apxp-dy"
+                                    :class="{ sel: cell.iso === selectedDate, today: cell.today }"
+                                    :disabled="!cell.open"
+                                    @click="pickDay(cell.iso)"
+                                >
+                                    {{ cell.day }}
+                                    <span v-if="cell.hasTimes" class="pip"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <div class="apxp-legend">
+                            <div><i class="fa fa-circle-o"></i> Today</div>
+                            <div><i class="fa fa-circle" style="font-size:7px"></i> Times still open</div>
+                        </div>
+                    </div>
 
-                <div class="apxp-rows">
-                    <button
-                        v-for="slot in activeDay.slots"
-                        :key="slot.value"
-                        type="button"
-                        class="apxp-row"
-                        :class="{ sel: selectedSlot === slot.value }"
-                        @click="pickSlot(slot.value)"
-                    >
-                        <span class="t">{{ slot.label }}</span>
-                        <span class="m">
-                            {{ slot.part }}<template v-if="slot.end_label"> · ends {{ slot.end_label }}</template>
-                        </span>
-                        <span class="pick">
-                            <template v-if="selectedSlot === slot.value"><i class="fa fa-check"></i> Selected</template>
-                            <template v-else>Select</template>
-                        </span>
-                    </button>
+                    <!-- ── the day ───────────────────────────────── -->
+                    <div class="apxp-pane">
+                        <div class="apxp-seldate">{{ longLabel(selectedDate) }}</div>
+                        <div class="apxp-selsub">
+                            <template v-if="activeWindow">
+                                {{ data.salesman_name || 'We' }} {{ data.salesman_name ? 'is' : 'are' }} available
+                                {{ openHoursLabel }}
+                            </template>
+                            <template v-else>Closed on this day.</template>
+                        </div>
+
+                        <template v-if="suggestions.length">
+                            <div class="apxp-sechead">
+                                <div class="h">Suggested times</div>
+                                <div class="s">
+                                    {{ data.duration_minutes }} minutes each · tap one to fill the times below
+                                </div>
+                            </div>
+                            <div class="apxp-slots">
+                                <button
+                                    v-for="suggestion in suggestions"
+                                    :key="suggestion.value"
+                                    type="button"
+                                    class="apxp-slot"
+                                    :class="{ sel: isPicked(suggestion.value) }"
+                                    :disabled="!suggestion.free"
+                                    @click="pickSuggestion(suggestion.value)"
+                                >
+                                    {{ suggestion.label }}
+                                    <small>{{ suggestion.note }}</small>
+                                </button>
+                            </div>
+                        </template>
+
+                        <div class="apxp-or"><span>or set your own window</span></div>
+
+                        <div class="apxp-when">
+                            <div class="apxp-datefield">
+                                <label class="apxp-fl" for="apxp-date">Date</label>
+                                <input
+                                    id="apxp-date"
+                                    class="apxp-fi sm"
+                                    type="date"
+                                    :value="selectedDate"
+                                    :min="openDates[0]"
+                                    :max="openDates[openDates.length - 1]"
+                                    @change="pickDay($event.target.value)"
+                                >
+                            </div>
+                            <div>
+                                <label class="apxp-fl" for="apxp-from">Arriving at</label>
+                                <input id="apxp-from" v-model="startTime" class="apxp-fi" type="time">
+                            </div>
+                            <div>
+                                <label class="apxp-fl" for="apxp-to">Leaving by</label>
+                                <input id="apxp-to" v-model="endTime" class="apxp-fi" type="time">
+                            </div>
+                            <div class="apxp-durwrap">
+                                <span class="apxp-dur" :class="{ bad: !durationLabel }">
+                                    <i class="fa" :class="durationLabel ? 'fa-hourglass-half' : 'fa-exclamation-triangle'"></i>
+                                    {{ durationLabel || 'Check times' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="apxp-verdict" :class="verdict.tone">
+                            <i class="fa" :class="verdict.icon"></i>
+                            <div>{{ verdict.text }}</div>
+                        </div>
+
+                        <div class="apxp-nowline">
+                            <div v-if="data.now_label">Right now it is <b>{{ data.now_label }}</b></div>
+                            <button type="button" class="apxp-mini" @click="pickEarliest">
+                                <i class="fa fa-bolt"></i> Earliest available
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="apxp-foot">
                     <div class="lab">
                         <div class="k">Your appointment</div>
-                        <div class="v" :class="{ none: !selectedSlot }">
-                            {{ selectedSlot ? selectedLabel : 'Choose a time above' }}
+                        <div class="v" :class="{ none: !selectedLabel }">
+                            {{ selectedLabel || 'Choose a time above' }}
                         </div>
                         <div v-if="data.expires_at" class="exp">This link is valid until {{ data.expires_at }}.</div>
                     </div>
-                    <button type="button" class="apxp-cta" :disabled="!selectedSlot || appointment" @click="confirm">
+                    <button type="button" class="apxp-cta" :disabled="!canConfirm" @click="confirm">
                         <i v-if="appointment" class="fa fa-spinner fa-spin"></i>
                         {{ appointment ? 'Confirming' : 'Confirm appointment' }}
                     </button>

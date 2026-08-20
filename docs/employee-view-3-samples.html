@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Employee / User View — 3 Design Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   HARNESS  —  toolbar, theme, direction. Not part of any variant.
+   Accent (--p) mimics the tenant theme colour (--bs-primary).
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --p:#4f46e5; --p-rgb:79,70,229;
+  --ok:#16a34a; --ok-rgb:22,163,74;
+  --warn:#d97706; --warn-rgb:217,119,6;
+  --bad:#dc2626; --bad-rgb:220,38,38;
+  --info:#0ea5e9; --info-rgb:14,165,233;
+}
+*{ box-sizing:border-box; }
+body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:#eceff4; color:#0b1220; padding:0 0 70px; transition:background .2s,color .2s; }
+body[data-t="dark"]{ background:#14181e; color:#eef2f7; }
+.bar{ position:sticky; top:0; z-index:60; display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap;
+  padding:11px 12px; background:rgba(255,255,255,.85); backdrop-filter:blur(12px); border-bottom:1px solid #dde3ea; }
+body[data-t="dark"] .bar{ background:rgba(26,31,38,.85); border-color:#30373f; }
+.bar button{ border:1px solid #cbd5e1; background:#fff; padding:8px 15px; border-radius:9px; font-weight:750; font-size:12.5px; cursor:pointer; color:#0b1220; }
+body[data-t="dark"] .bar button{ background:#272d34; color:#cbd5e1; border-color:#3a424c; }
+.bar button.on{ background:var(--p); color:#fff; border-color:var(--p); }
+.bar .sep{ width:1px; height:22px; background:#cbd5e1; margin:0 5px; }
+body[data-t="dark"] .bar .sep{ background:#3a424c; }
+.bar .swatch{ width:26px; height:26px; border-radius:8px; border:2px solid transparent; cursor:pointer; padding:0; }
+.bar .swatch.on{ border-color:#0b1220; } body[data-t="dark"] .bar .swatch.on{ border-color:#fff; }
+.stage{ max-width:1180px; margin:24px auto; padding:0 16px; }
+.variant{ display:none; } .variant.show{ display:block; }
+.vlabel{ font-size:12px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:#64748b; margin-bottom:14px; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.vlabel span.tag{ background:var(--p); color:#fff; padding:3px 9px; border-radius:7px; font-size:11px; letter-spacing:.3px; }
+.vlabel em{ font-style:normal; font-weight:600; text-transform:none; letter-spacing:0; color:#94a3b8; }
+.note{ max-width:1180px; margin:0 auto 26px; padding:0 16px; font-size:12.5px; color:#64748b; line-height:1.65; }
+body[data-t="dark"] .note{ color:#94a3b8; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   VARIANT A — "DOSSIER"
+   Gradient identity hero + KPI strip + tab rail. Turns today's long
+   scroll into 4 tabs. Closest sibling to the RentOut / Customer heroes.
+   ═══════════════════════════════════════════════════════════════════ */
+.va{ --sf:#fff; --sf2:#f7f9fc; --ink:#0b1220; --ink2:#334155; --mut:#6b7789; --ln:#e6eaf1; --lns:#eef1f6;
+     --acc:var(--p); --acc-rgb:var(--p-rgb);
+     --accd:color-mix(in srgb,var(--p),#000 18%); --accdeep:color-mix(in srgb,var(--p),#000 48%);
+     --tint:color-mix(in srgb,var(--p),transparent 90%); font-size:13px; color:var(--ink); }
+body[data-t="dark"] .va{ --sf:#232931; --sf2:#2a3139; --ink:#f1f5f9; --ink2:#cbd5e1; --mut:#94a3b8; --ln:#39424c; --lns:#333b44; --tint:color-mix(in srgb,var(--p),transparent 82%); }
+
+.va .crumb{ font-size:11.5px; color:var(--mut); margin-bottom:12px; }
+.va .crumb a{ color:var(--mut); text-decoration:none; } .va .crumb b{ color:var(--ink); font-weight:650; }
+
+.va .hero{ position:relative; border-radius:18px; overflow:hidden; margin-bottom:14px;
+  background:radial-gradient(120% 160% at 100% 0,color-mix(in srgb,var(--acc) 34%,transparent),transparent 58%),linear-gradient(125deg,var(--accdeep),var(--accd));
+  box-shadow:0 22px 46px -24px rgba(var(--acc-rgb),.6); }
+.va .hero::after{ content:""; position:absolute; inset:0; background:
+  radial-gradient(60% 90% at 8% 120%,rgba(255,255,255,.16),transparent 60%); pointer-events:none; }
+.va .htop{ position:relative; z-index:1; display:flex; gap:18px; align-items:center; padding:20px 22px; flex-wrap:wrap; }
+.va .av{ width:86px; height:86px; border-radius:24px; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; color:#fff;
+  background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.3); letter-spacing:1px; flex:none; position:relative; }
+.va .av .dotst{ position:absolute; inset-inline-end:-4px; bottom:-4px; width:22px; height:22px; border-radius:50%; background:var(--ok);
+  border:3px solid var(--accdeep); display:flex; align-items:center; justify-content:center; color:#fff; font-size:9px; }
+.va .hmain{ flex:1; min-width:230px; color:#fff; }
+.va .heye{ font-size:9.5px; font-weight:700; letter-spacing:2.4px; text-transform:uppercase; color:rgba(255,255,255,.7); }
+.va .hname{ font-size:25px; font-weight:800; margin-top:3px; letter-spacing:-.4px; }
+.va .hmeta{ display:flex; gap:8px; flex-wrap:wrap; margin-top:9px; }
+.va .hchip{ background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.26); color:#fff; padding:4px 11px; border-radius:999px; font-size:11px; font-weight:650; display:inline-flex; align-items:center; gap:6px; }
+.va .hchip i{ opacity:.8; }
+.va .hact{ display:flex; gap:8px; flex-wrap:wrap; }
+.va .hbtn{ border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.14); color:#fff; padding:9px 15px; border-radius:11px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
+.va .hbtn.solid{ background:#fff; color:var(--accdeep); border-color:#fff; }
+.va .hstats{ position:relative; z-index:1; display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.16); border-top:1px solid rgba(255,255,255,.16); }
+.va .hs{ background:linear-gradient(180deg,rgba(255,255,255,.06),transparent); padding:11px 18px; }
+.va .hs .k{ font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,.62); }
+.va .hs .v{ font-size:17px; font-weight:800; color:#fff; margin-top:3px; }
+.va .hs .v small{ font-size:10.5px; font-weight:600; opacity:.7; }
+@media(max-width:760px){ .va .hstats{ grid-template-columns:repeat(2,1fr); } }
+
+.va .tabs{ display:flex; gap:4px; background:var(--sf); border:1px solid var(--ln); border-radius:14px; padding:5px; margin-bottom:14px; overflow-x:auto; }
+.va .tab{ border:0; background:transparent; color:var(--mut); padding:9px 15px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:7px; }
+.va .tab .n{ background:var(--lns); color:var(--mut); border-radius:999px; font-size:10px; padding:1px 7px; font-weight:800; }
+.va .tab.on{ background:var(--tint); color:var(--accd); }
+.va .tab.on .n{ background:var(--accd); color:#fff; }
+
+.va .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media(max-width:880px){ .va .grid{ grid-template-columns:1fr; } }
+.va .card{ background:var(--sf); border:1px solid var(--ln); border-radius:15px; overflow:hidden; margin-bottom:12px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04),0 12px 28px -18px rgba(16,24,40,.2); }
+.va .chd{ display:flex; align-items:center; gap:10px; padding:12px 15px; border-bottom:1px solid var(--lns); }
+.va .ci{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; background:var(--tint); color:var(--accd); flex:none; }
+.va .ct{ font-size:13px; font-weight:750; } .va .cs{ font-size:10.5px; color:var(--mut); margin-top:1px; }
+.va .cbtn{ margin-inline-start:auto; border:1px solid var(--ln); background:var(--sf2); color:var(--ink2); border-radius:9px; padding:6px 11px; font-size:11.5px; font-weight:700; cursor:pointer; }
+.va .cb{ padding:13px 15px; }
+
+.va .kv{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+@media(max-width:520px){ .va .kv{ grid-template-columns:1fr; } }
+.va .kvi{ background:var(--sf2); border:1px solid var(--lns); border-radius:11px; padding:9px 11px; }
+.va .kvi .k{ font-size:9px; font-weight:750; letter-spacing:.7px; text-transform:uppercase; color:var(--mut); display:flex; align-items:center; gap:6px; }
+.va .kvi .v{ font-size:13px; font-weight:650; margin-top:4px; }
+.va .kvi .v.empty{ color:var(--mut); font-weight:500; }
+
+.va .chips{ display:flex; flex-wrap:wrap; gap:7px; }
+.va .chip{ background:var(--tint); color:var(--accd); border:1px solid color-mix(in srgb,var(--acc),transparent 78%); padding:5px 12px; border-radius:999px; font-size:11.5px; font-weight:700; display:inline-flex; align-items:center; gap:6px; }
+.va .chip.g{ background:rgba(var(--ok-rgb),.11); color:var(--ok); border-color:rgba(var(--ok-rgb),.28); }
+.va .chip.mute{ background:var(--sf2); color:var(--mut); border-color:var(--lns); }
+
+.va .tgl{ display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--lns); }
+.va .tgl:last-child{ border-bottom:0; padding-bottom:0; }
+.va .tgl .ti{ width:34px; height:34px; border-radius:10px; background:var(--sf2); border:1px solid var(--lns); display:flex; align-items:center; justify-content:center; color:var(--mut); font-size:14px; flex:none; }
+.va .tgl.on .ti{ background:rgba(var(--ok-rgb),.12); border-color:rgba(var(--ok-rgb),.28); color:var(--ok); }
+.va .tgl .tt{ flex:1; } .va .tgl .tt b{ font-size:12.5px; font-weight:700; display:block; }
+.va .tgl .tt span{ font-size:11px; color:var(--mut); }
+.va .sw{ width:44px; height:25px; border-radius:999px; background:var(--lns); border:1px solid var(--ln); position:relative; cursor:pointer; flex:none; transition:.18s; }
+.va .sw::after{ content:""; position:absolute; top:2px; inset-inline-start:2px; width:19px; height:19px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.28); transition:.18s; }
+.va .sw.on{ background:var(--ok); border-color:var(--ok); }
+.va .sw.on::after{ inset-inline-start:21px; }
+
+.va table{ width:100%; border-collapse:collapse; font-size:12px; }
+.va thead th{ background:var(--sf2); color:var(--mut); font-size:9.5px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; padding:9px 12px; text-align:start; }
+.va tbody td{ padding:9px 12px; border-top:1px solid var(--lns); }
+.va tbody tr:hover td{ background:var(--sf2); }
+.va .num{ text-align:end; font-variant-numeric:tabular-nums; }
+.va .pn{ font-weight:700; } .va .ps{ color:var(--mut); font-size:10.5px; }
+.va .bcode{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; color:var(--mut); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   VARIANT B — "PERSONNEL FILE"  (editorial / paper, hairline, calm)
+   Reads like a printed HR record. No gradients, serif display, warm
+   paper ground, sticky section index on the left.
+   ═══════════════════════════════════════════════════════════════════ */
+.vb{ --pa:#fcfbf8; --pa2:#f4f2ec; --ink:#191611; --ink2:#4b463c; --mut:#8d8677; --ln:#e6e2d7; --lnd:#d6d1c3;
+     --acc:var(--p); --acc-rgb:var(--p-rgb); font-size:13.5px; color:var(--ink);
+     background:var(--pa); border:1px solid var(--lnd); border-radius:6px; overflow:hidden;
+     box-shadow:0 30px 60px -40px rgba(25,22,17,.4); }
+body[data-t="dark"] .vb{ --pa:#1d1c1a; --pa2:#26241f; --ink:#f3f0e8; --ink2:#cfc9bb; --mut:#8f887a; --ln:#37342d; --lnd:#413d34; }
+.vb .fhead{ padding:24px 30px 20px; border-bottom:2px solid var(--ink); display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; }
+.vb .fmark{ font-size:9.5px; letter-spacing:3.4px; text-transform:uppercase; color:var(--mut); font-weight:700; }
+.vb .fport{ width:96px; height:118px; border:1px solid var(--lnd); background:var(--pa2); display:flex; align-items:center; justify-content:center;
+  font-family:Georgia,"Times New Roman",serif; font-size:34px; color:var(--mut); flex:none; letter-spacing:1px; }
+.vb .fid{ flex:1; min-width:240px; }
+.vb .fname{ font-family:Georgia,"Times New Roman",serif; font-size:32px; font-weight:400; letter-spacing:-.6px; margin:8px 0 4px; line-height:1.1; }
+.vb .frole{ font-size:12.5px; color:var(--ink2); }
+.vb .frole b{ font-weight:650; }
+.vb .fstamp{ margin-inline-start:auto; text-align:end; }
+.vb .fseal{ display:inline-flex; align-items:center; gap:8px; border:1px solid var(--ok); color:var(--ok); padding:6px 14px; border-radius:2px;
+  font-size:10.5px; font-weight:800; letter-spacing:1.6px; text-transform:uppercase; }
+.vb .fno{ font-size:10.5px; color:var(--mut); margin-top:8px; letter-spacing:1px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.vb .facts{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+.vb .fbtn{ border:1px solid var(--ink); background:transparent; color:var(--ink); padding:8px 16px; border-radius:2px; font-size:11.5px; font-weight:700; letter-spacing:.4px; cursor:pointer; display:inline-flex; gap:7px; align-items:center; }
+.vb .fbtn.fill{ background:var(--ink); color:var(--pa); }
+.vb .fbtn.ghost{ border-color:var(--lnd); color:var(--ink2); }
+
+.vb .fbody{ display:grid; grid-template-columns:186px 1fr; }
+@media(max-width:820px){ .vb .fbody{ grid-template-columns:1fr; } }
+.vb .fnav{ border-inline-end:1px solid var(--ln); padding:20px 0; }
+@media(max-width:820px){ .vb .fnav{ border-inline-end:0; border-bottom:1px solid var(--ln); display:flex; overflow-x:auto; padding:10px; } }
+.vb .fnav a{ display:flex; align-items:center; gap:9px; padding:9px 20px; font-size:12px; color:var(--mut); text-decoration:none; font-weight:600; white-space:nowrap; }
+.vb .fnav a.on{ color:var(--ink); box-shadow:inset 3px 0 0 var(--acc); background:var(--pa2); }
+@media(max-width:820px){ .vb .fnav a.on{ box-shadow:inset 0 -3px 0 var(--acc); } }
+.vb .fnav a i{ width:15px; text-align:center; opacity:.7; }
+.vb .fmain{ padding:8px 30px 30px; }
+.vb .sec{ padding:22px 0; border-bottom:1px solid var(--ln); }
+.vb .sec:last-child{ border-bottom:0; }
+.vb .sh{ display:flex; align-items:baseline; gap:12px; margin-bottom:16px; }
+.vb .sh h3{ margin:0; font-size:10.5px; letter-spacing:2.6px; text-transform:uppercase; font-weight:800; color:var(--ink); }
+.vb .sh .rule{ flex:1; height:1px; background:var(--ln); }
+.vb .sh .act{ font-size:11px; color:var(--acc); font-weight:700; cursor:pointer; }
+.vb dl{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 34px; margin:0; }
+@media(max-width:620px){ .vb dl{ grid-template-columns:1fr; } }
+.vb dl > div{ display:flex; justify-content:space-between; gap:14px; align-items:baseline; padding:8px 0; border-bottom:1px dotted var(--lnd); }
+.vb dt{ font-size:11.5px; color:var(--mut); letter-spacing:.2px; }
+.vb dd{ margin:0; font-size:13px; font-weight:600; text-align:end; }
+.vb dd.empty{ color:var(--mut); font-weight:400; }
+.vb dd.money{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; }
+.vb .tagrow{ display:flex; flex-wrap:wrap; gap:7px; }
+.vb .tag{ border:1px solid var(--lnd); background:var(--pa2); padding:5px 13px; font-size:11.5px; border-radius:2px; font-weight:650; letter-spacing:.2px; }
+.vb .tag.pri{ border-color:var(--acc); color:var(--acc); background:transparent; }
+.vb .tag.add{ border-style:dashed; color:var(--mut); cursor:pointer; }
+.vb .prow{ display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px dotted var(--lnd); }
+.vb .prow:last-child{ border-bottom:0; }
+.vb .prow .pt{ flex:1; }
+.vb .prow .pt b{ display:block; font-size:12.5px; font-weight:650; }
+.vb .prow .pt span{ font-size:11.5px; color:var(--mut); }
+.vb .state{ font-size:10px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; color:var(--mut); }
+.vb .state.on{ color:var(--ok); }
+.vb .sw2{ width:40px; height:22px; border-radius:2px; border:1px solid var(--lnd); background:var(--pa2); position:relative; cursor:pointer; flex:none; }
+.vb .sw2::after{ content:""; position:absolute; top:2px; inset-inline-start:2px; width:16px; height:16px; background:var(--mut); transition:.18s; }
+.vb .sw2.on{ border-color:var(--ok); } .vb .sw2.on::after{ inset-inline-start:20px; background:var(--ok); }
+.vb table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.vb thead th{ text-align:start; font-size:9.5px; letter-spacing:1.6px; text-transform:uppercase; color:var(--mut); font-weight:800; padding:0 10px 9px; border-bottom:1px solid var(--ink); }
+.vb tbody td{ padding:9px 10px; border-bottom:1px dotted var(--lnd); }
+.vb .num{ text-align:end; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.vb .muted{ color:var(--mut); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   VARIANT C — "CONTROL DESK"  (dense admin console, glass, dark-first)
+   Sticky identity rail + module grid. Every switch is a card you can
+   read at a glance; built for admins managing many staff quickly.
+   ═══════════════════════════════════════════════════════════════════ */
+.vc{ --sf:#ffffff; --sf2:#f5f7fa; --sf3:#eef2f7; --ink:#0d1520; --ink2:#3d4b5c; --mut:#71809a; --ln:#e2e8f1; --lns:#edf1f6;
+     --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 15%);
+     --tint:color-mix(in srgb,var(--p),transparent 91%); font-size:12.5px; color:var(--ink); }
+body[data-t="dark"] .vc{ --sf:#1c222a; --sf2:#232a33; --sf3:#2a323c; --ink:#eaf0f7; --ink2:#b6c2d2; --mut:#7f8da3; --ln:#2f3843; --lns:#28303a; --tint:color-mix(in srgb,var(--p),transparent 84%); }
+.vc .shell{ display:grid; grid-template-columns:296px 1fr; gap:12px; align-items:start; }
+@media(max-width:940px){ .vc .shell{ grid-template-columns:1fr; } }
+.vc .rail{ position:sticky; top:70px; }
+.vc .idc{ background:var(--sf); border:1px solid var(--ln); border-radius:16px; overflow:hidden; margin-bottom:10px; }
+.vc .idtop{ padding:18px; text-align:center; position:relative;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--acc),transparent 88%),transparent); border-bottom:1px solid var(--lns); }
+.vc .idav{ width:74px; height:74px; margin:0 auto 10px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:26px; font-weight:800; color:#fff; background:linear-gradient(140deg,var(--acc),color-mix(in srgb,var(--acc),#000 34%));
+  box-shadow:0 10px 24px -12px rgba(var(--acc-rgb),.75); position:relative; }
+.vc .idav .rg{ position:absolute; inset:-5px; border-radius:50%; border:1.5px solid color-mix(in srgb,var(--acc),transparent 62%); }
+.vc .idnm{ font-size:16px; font-weight:800; letter-spacing:-.2px; }
+.vc .idsub{ font-size:11px; color:var(--mut); margin-top:3px; }
+.vc .idst{ display:inline-flex; align-items:center; gap:6px; margin-top:10px; font-size:10px; font-weight:800; letter-spacing:.9px; text-transform:uppercase;
+  padding:4px 11px; border-radius:999px; background:rgba(var(--ok-rgb),.12); color:var(--ok); border:1px solid rgba(var(--ok-rgb),.25); }
+.vc .idacts{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--lns); }
+.vc .idacts button{ border:0; background:var(--sf); color:var(--ink2); padding:11px 6px; font-size:11px; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; }
+.vc .idacts button i{ font-size:14px; color:var(--mut); }
+.vc .idacts button:hover{ background:var(--tint); color:var(--accd); } .vc .idacts button:hover i{ color:var(--accd); }
+.vc .facts{ padding:4px 14px 12px; }
+.vc .fact{ display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid var(--lns); font-size:12px; }
+.vc .fact:last-child{ border-bottom:0; }
+.vc .fact i{ width:24px; height:24px; border-radius:7px; background:var(--sf2); display:flex; align-items:center; justify-content:center; color:var(--mut); font-size:11px; flex:none; }
+.vc .fact .fk{ color:var(--mut); font-size:11px; } .vc .fact .fv{ margin-inline-start:auto; font-weight:650; }
+.vc .fact .fv.empty{ color:var(--mut); font-weight:400; }
+
+.vc .metrics{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+@media(max-width:700px){ .vc .metrics{ grid-template-columns:repeat(2,1fr); } }
+.vc .mt{ background:var(--sf); border:1px solid var(--ln); border-radius:13px; padding:11px 13px; position:relative; overflow:hidden; }
+.vc .mt::before{ content:""; position:absolute; inset-block:0; inset-inline-start:0; width:3px; background:var(--acc); opacity:.75; }
+.vc .mt .k{ font-size:9px; font-weight:800; letter-spacing:.9px; text-transform:uppercase; color:var(--mut); }
+.vc .mt .v{ font-size:19px; font-weight:800; margin-top:4px; letter-spacing:-.4px; font-variant-numeric:tabular-nums; }
+.vc .mt .v small{ font-size:10px; color:var(--mut); font-weight:650; }
+
+.vc .mods{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media(max-width:760px){ .vc .mods{ grid-template-columns:1fr; } }
+.vc .mod{ background:var(--sf); border:1px solid var(--ln); border-radius:14px; padding:13px; }
+.vc .mod.wide{ grid-column:1/-1; }
+.vc .mh{ display:flex; align-items:center; gap:9px; margin-bottom:11px; }
+.vc .mh i.ic{ width:28px; height:28px; border-radius:9px; background:var(--tint); color:var(--accd); display:flex; align-items:center; justify-content:center; font-size:12.5px; flex:none; }
+.vc .mh b{ font-size:12.5px; font-weight:750; } .vc .mh span{ font-size:10.5px; color:var(--mut); display:block; font-weight:500; }
+.vc .mh .mbtn{ margin-inline-start:auto; border:1px solid var(--ln); background:var(--sf2); color:var(--ink2); border-radius:8px; padding:5px 10px; font-size:11px; font-weight:700; cursor:pointer; }
+.vc .swrow{ display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--lns); border-radius:11px; background:var(--sf2); margin-bottom:7px; }
+.vc .swrow:last-child{ margin-bottom:0; }
+.vc .swrow.on{ background:rgba(var(--ok-rgb),.07); border-color:rgba(var(--ok-rgb),.24); }
+.vc .swrow i.si{ width:26px; height:26px; border-radius:8px; background:var(--sf); border:1px solid var(--lns); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--mut); flex:none; }
+.vc .swrow.on i.si{ color:var(--ok); border-color:rgba(var(--ok-rgb),.3); }
+.vc .swrow .st{ flex:1; font-size:12px; font-weight:650; }
+.vc .swrow .st span{ display:block; font-size:10.5px; color:var(--mut); font-weight:500; }
+.vc .sw3{ width:38px; height:21px; border-radius:999px; background:var(--sf3); border:1px solid var(--ln); position:relative; cursor:pointer; flex:none; transition:.18s; }
+.vc .sw3::after{ content:""; position:absolute; top:2px; inset-inline-start:2px; width:15px; height:15px; border-radius:50%; background:var(--mut); transition:.18s; }
+.vc .sw3.on{ background:rgba(var(--ok-rgb),.2); border-color:var(--ok); } .vc .sw3.on::after{ inset-inline-start:19px; background:var(--ok); }
+.vc .selrow{ display:flex; gap:7px; align-items:center; }
+.vc .sel{ flex:1; border:1px solid var(--ln); background:var(--sf2); border-radius:10px; padding:8px 11px; font-size:12px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-height:38px; }
+.vc .sel .tk{ background:var(--tint); color:var(--accd); border:1px solid color-mix(in srgb,var(--acc),transparent 78%); border-radius:7px; padding:3px 8px; font-size:11px; font-weight:700; display:inline-flex; gap:6px; align-items:center; }
+.vc .sel .tk i{ opacity:.6; font-size:10px; }
+.vc .sel .ph{ color:var(--mut); font-size:11.5px; }
+.vc .save{ border:0; background:var(--acc); color:#fff; border-radius:10px; padding:9px 14px; font-size:11.5px; font-weight:750; cursor:pointer; flex:none; }
+.vc .hint{ font-size:10.5px; color:var(--mut); margin-top:7px; display:flex; align-items:center; gap:6px; }
+.vc table{ width:100%; border-collapse:collapse; font-size:11.5px; }
+.vc thead th{ text-align:start; background:var(--sf2); color:var(--mut); font-size:9px; letter-spacing:.7px; text-transform:uppercase; font-weight:800; padding:8px 10px; }
+.vc thead th:first-child{ border-start-start-radius:9px; } .vc thead th:last-child{ border-start-end-radius:9px; }
+.vc tbody td{ padding:8px 10px; border-bottom:1px solid var(--lns); }
+.vc .num{ text-align:end; font-variant-numeric:tabular-nums; }
+.vc .empty{ text-align:center; padding:26px 10px; color:var(--mut); font-size:11.5px; }
+.vc .empty i{ font-size:22px; display:block; margin-bottom:8px; opacity:.45; }
+</style>
+</head>
+<body data-t="light">
+
+<div class="bar">
+  <button data-v="a" class="on">A · Dossier</button>
+  <button data-v="b">B · Personnel File</button>
+  <button data-v="c">C · Control Desk</button>
+  <span class="sep"></span>
+  <button id="theme"><i class="fa fa-moon-o"></i> Dark</button>
+  <button id="dir">RTL</button>
+  <span class="sep"></span>
+  <button class="swatch on" data-c="#4f46e5" style="background:#4f46e5" title="Indigo"></button>
+  <button class="swatch" data-c="#0d6efd" style="background:#0d6efd" title="Blue"></button>
+  <button class="swatch" data-c="#047857" style="background:#047857" title="Emerald"></button>
+  <button class="swatch" data-c="#b45309" style="background:#b45309" title="Bronze"></button>
+  <button class="swatch" data-c="#334155" style="background:#334155" title="Graphite"></button>
+</div>
+
+<div class="note">
+  Same page, same Livewire pieces (roles, branches, WhatsApp / browser / Telegram toggles, status, employee inventory, appointment schedule) — three different shells.
+  Data below is employee&nbsp;#18 as it really is, blanks included, so you can see how each design handles missing fields.
+  The accent swatches show how each variant reacts to the tenant theme colour.
+</div>
+
+<div class="stage" id="stage">
+
+<!-- ══════════════════════════════ A ══════════════════════════════ -->
+<div class="variant show" data-v="a">
+  <div class="vlabel"><span class="tag">Sample A</span> Dossier <em>— gradient identity hero, KPI strip, tabbed body</em></div>
+  <div class="va">
+    <div class="crumb"><a href="#">Home</a> / <a href="#">Users</a> / <b>Mohamad Romih</b></div>
+
+    <div class="hero">
+      <div class="htop">
+        <div class="av">MR<span class="dotst"><i class="fa fa-check"></i></span></div>
+        <div class="hmain">
+          <div class="heye">Employee Record</div>
+          <div class="hname">Mohamad Romih</div>
+          <div class="hmeta">
+            <span class="hchip"><i class="fa fa-id-badge"></i> Code 5025</span>
+            <span class="hchip"><i class="fa fa-shield"></i> Manager, Sales</span>
+            <span class="hchip"><i class="fa fa-sitemap"></i> Main Branch</span>
+            <span class="hchip"><i class="fa fa-envelope-o"></i> mr@bas</span>
+          </div>
+        </div>
+        <div class="hact">
+          <button class="hbtn solid"><i class="fa fa-pencil"></i> Edit Profile</button>
+          <button class="hbtn"><i class="fa fa-user-secret"></i> Impersonate</button>
+          <button class="hbtn"><i class="fa fa-ellipsis-h"></i></button>
+        </div>
+      </div>
+      <div class="hstats">
+        <div class="hs"><div class="k">Salary</div><div class="v">0.00 <small>QAR</small></div></div>
+        <div class="hs"><div class="k">Allowance + HRA</div><div class="v">0.00 <small>QAR</small></div></div>
+        <div class="hs"><div class="k">Max Discount / Sale</div><div class="v">100<small>%</small></div></div>
+        <div class="hs"><div class="k">Stock In Hand</div><div class="v">3 <small>items</small></div></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on"><i class="fa fa-user-o"></i> Profile</button>
+      <button class="tab"><i class="fa fa-key"></i> Access <span class="n">2</span></button>
+      <button class="tab"><i class="fa fa-bell-o"></i> Notifications <span class="n">3</span></button>
+      <button class="tab"><i class="fa fa-cubes"></i> Inventory <span class="n">3</span></button>
+      <button class="tab"><i class="fa fa-calendar-o"></i> Schedule</button>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <div class="chd">
+            <div class="ci"><i class="fa fa-user-o"></i></div>
+            <div><div class="ct">Personal</div><div class="cs">Identity &amp; contact details</div></div>
+            <button class="cbtn"><i class="fa fa-pencil"></i></button>
+          </div>
+          <div class="cb">
+            <div class="kv">
+              <div class="kvi"><div class="k"><i class="fa fa-envelope-o"></i> Email</div><div class="v">mr@bas</div></div>
+              <div class="kvi"><div class="k"><i class="fa fa-phone"></i> Mobile</div><div class="v empty">Not set</div></div>
+              <div class="kvi"><div class="k"><i class="fa fa-map-marker"></i> Place</div><div class="v empty">Not set</div></div>
+              <div class="kvi"><div class="k"><i class="fa fa-flag-o"></i> Nationality</div><div class="v">Lebanese</div></div>
+              <div class="kvi"><div class="k"><i class="fa fa-birthday-cake"></i> Date of birth</div><div class="v empty">Not set</div></div>
+              <div class="kvi"><div class="k"><i class="fa fa-calendar-check-o"></i> Date of joining</div><div class="v empty">Not set</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="chd">
+            <div class="ci"><i class="fa fa-money"></i></div>
+            <div><div class="ct">Payroll</div><div class="cs">Compensation &amp; selling limits</div></div>
+            <button class="cbtn"><i class="fa fa-pencil"></i></button>
+          </div>
+          <div class="cb">
+            <div class="kv">
+              <div class="kvi"><div class="k">Salary</div><div class="v">QAR 0.00</div></div>
+              <div class="kvi"><div class="k">Allowance</div><div class="v">QAR 0.00</div></div>
+              <div class="kvi"><div class="k">HRA</div><div class="v">QAR 0.00</div></div>
+              <div class="kvi"><div class="k">Max discount / sale</div><div class="v">100%</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="chd">
+            <div class="ci"><i class="fa fa-shield"></i></div>
+            <div><div class="ct">Roles &amp; Branches</div><div class="cs">What this account can reach</div></div>
+            <button class="cbtn">Manage</button>
+          </div>
+          <div class="cb">
+            <div class="k" style="font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);margin-bottom:8px;">Roles</div>
+            <div class="chips" style="margin-bottom:14px;">
+              <span class="chip"><i class="fa fa-check"></i> Manager</span>
+              <span class="chip"><i class="fa fa-check"></i> Sales</span>
+            </div>
+            <div class="k" style="font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);margin-bottom:8px;">Branches</div>
+            <div class="chips">
+              <span class="chip g"><i class="fa fa-star"></i> Main Branch <small style="opacity:.75">default</small></span>
+              <span class="chip mute">Warehouse</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="chd">
+            <div class="ci"><i class="fa fa-bell-o"></i></div>
+            <div><div class="ct">Notifications &amp; Status</div><div class="cs">Channels and account state</div></div>
+          </div>
+          <div class="cb">
+            <div class="tgl"><div class="ti"><i class="fa fa-whatsapp"></i></div><div class="tt"><b>WhatsApp notifications</b><span>Currently off</span></div><div class="sw"></div></div>
+            <div class="tgl on"><div class="ti"><i class="fa fa-desktop"></i></div><div class="tt"><b>Browser notifications</b><span>Enabled on this account</span></div><div class="sw on"></div></div>
+            <div class="tgl"><div class="ti"><i class="fa fa-telegram"></i></div><div class="tt"><b>Telegram</b><span>Not linked — send /start to the bot</span></div><div class="sw"></div></div>
+            <div class="tgl on"><div class="ti"><i class="fa fa-toggle-on"></i></div><div class="tt"><b>Account active</b><span>Can sign in to POS and web</span></div><div class="sw on"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chd">
+        <div class="ci"><i class="fa fa-cubes"></i></div>
+        <div><div class="ct">Employee Inventory</div><div class="cs">Stock currently held by this employee</div></div>
+        <button class="cbtn"><i class="fa fa-download"></i> Export</button>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Branch</th><th>Product</th><th>Code</th><th>Barcode</th><th class="num">Qty</th><th class="num">Cost</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          <tr><td class="ps">#1421</td><td>Main Branch</td><td><div class="pn">Diamond Ring 18K</div><div class="ps">Cartier</div></td><td class="bcode">P-2201</td><td class="bcode">889012340012</td><td class="num">1</td><td class="num">3,200.00</td><td class="num pn">3,200.00</td></tr>
+          <tr><td class="ps">#1508</td><td>Main Branch</td><td><div class="pn">Gold Chain 22K</div><div class="ps">In-house</div></td><td class="bcode">P-1180</td><td class="bcode">889012341293</td><td class="num">1</td><td class="num">5,750.00</td><td class="num pn">5,750.00</td></tr>
+          <tr><td class="ps">#1622</td><td>Warehouse</td><td><div class="pn">Pearl Bracelet</div><div class="ps">Mikimoto</div></td><td class="bcode">P-3390</td><td class="bcode">889012342871</td><td class="num">1</td><td class="num">1,480.00</td><td class="num pn">1,480.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ B ══════════════════════════════ -->
+<div class="variant" data-v="b">
+  <div class="vlabel"><span class="tag">Sample B</span> Personnel File <em>— editorial paper record, hairline rules, section index</em></div>
+  <div class="vb">
+    <div class="fhead">
+      <div class="fport">MR</div>
+      <div class="fid">
+        <div class="fmark">Personnel File · Employee</div>
+        <div class="fname">Mohamad Romih</div>
+        <div class="frole"><b>Manager</b> · Sales &nbsp;—&nbsp; Main Branch</div>
+        <div class="facts">
+          <button class="fbtn fill"><i class="fa fa-pencil"></i> Edit Profile</button>
+          <button class="fbtn"><i class="fa fa-user-secret"></i> Impersonate</button>
+          <button class="fbtn ghost"><i class="fa fa-print"></i> Print</button>
+        </div>
+      </div>
+      <div class="fstamp">
+        <div class="fseal"><i class="fa fa-check-circle"></i> Active</div>
+        <div class="fno">EMP · 5025<br>ID 18</div>
+      </div>
+    </div>
+
+    <div class="fbody">
+      <nav class="fnav">
+        <a href="#" class="on"><i class="fa fa-user-o"></i> Identity</a>
+        <a href="#"><i class="fa fa-money"></i> Payroll</a>
+        <a href="#"><i class="fa fa-shield"></i> Roles</a>
+        <a href="#"><i class="fa fa-sitemap"></i> Branches</a>
+        <a href="#"><i class="fa fa-bell-o"></i> Notifications</a>
+        <a href="#"><i class="fa fa-cubes"></i> Inventory</a>
+        <a href="#"><i class="fa fa-calendar-o"></i> Schedule</a>
+      </nav>
+
+      <div class="fmain">
+        <section class="sec">
+          <div class="sh"><h3>Identity</h3><div class="rule"></div><span class="act">Edit</span></div>
+          <dl>
+            <div><dt>Full name</dt><dd>Mohamad Romih</dd></div>
+            <div><dt>Employee code</dt><dd>5025</dd></div>
+            <div><dt>Email</dt><dd>mr@bas</dd></div>
+            <div><dt>Mobile</dt><dd class="empty">—</dd></div>
+            <div><dt>Place</dt><dd class="empty">—</dd></div>
+            <div><dt>Nationality</dt><dd>Lebanese</dd></div>
+            <div><dt>Date of birth</dt><dd class="empty">—</dd></div>
+            <div><dt>Date of joining</dt><dd class="empty">—</dd></div>
+          </dl>
+        </section>
+
+        <section class="sec">
+          <div class="sh"><h3>Payroll</h3><div class="rule"></div><span class="act">Edit</span></div>
+          <dl>
+            <div><dt>Basic salary</dt><dd class="money">QAR 0.00</dd></div>
+            <div><dt>Allowance</dt><dd class="money">QAR 0.00</dd></div>
+            <div><dt>House rent allowance</dt><dd class="money">QAR 0.00</dd></div>
+            <div><dt>Max discount per sale</dt><dd class="money">100.00 %</dd></div>
+          </dl>
+        </section>
+
+        <section class="sec">
+          <div class="sh"><h3>Roles</h3><div class="rule"></div><span class="act">Save</span></div>
+          <div class="tagrow">
+            <span class="tag pri">Manager</span>
+            <span class="tag pri">Sales</span>
+            <span class="tag add"><i class="fa fa-plus"></i> Assign role</span>
+          </div>
+        </section>
+
+        <section class="sec">
+          <div class="sh"><h3>Branches</h3><div class="rule"></div><span class="act">Save</span></div>
+          <div class="tagrow" style="margin-bottom:14px;">
+            <span class="tag pri">Main Branch</span>
+            <span class="tag">Warehouse</span>
+            <span class="tag add"><i class="fa fa-plus"></i> Assign branch</span>
+          </div>
+          <dl style="grid-template-columns:1fr;">
+            <div><dt>Default branch</dt><dd>Main Branch</dd></div>
+          </dl>
+        </section>
+
+        <section class="sec">
+          <div class="sh"><h3>Notifications &amp; Access</h3><div class="rule"></div></div>
+          <div class="prow"><div class="pt"><b>WhatsApp notifications</b><span>Order and sale alerts over WhatsApp</span></div><span class="state">Off</span><div class="sw2"></div></div>
+          <div class="prow"><div class="pt"><b>Browser notifications</b><span>Desktop push while signed in</span></div><span class="state on">On</span><div class="sw2 on"></div></div>
+          <div class="prow"><div class="pt"><b>Telegram</b><span class="muted">Not linked — send <b>/start</b> to @astra_bot, then paste the code</span></div><span class="state">Off</span><div class="sw2"></div></div>
+          <div class="prow"><div class="pt"><b>Account status</b><span>Signing in is permitted</span></div><span class="state on">Active</span><div class="sw2 on"></div></div>
+        </section>
+
+        <section class="sec">
+          <div class="sh"><h3>Employee Inventory</h3><div class="rule"></div><span class="act">Export</span></div>
+          <table>
+            <thead><tr><th>ID</th><th>Product</th><th>Code</th><th class="num">Qty</th><th class="num">Cost</th><th class="num">Total</th></tr></thead>
+            <tbody>
+              <tr><td class="muted">1421</td><td>Diamond Ring 18K <span class="muted">· Cartier</span></td><td class="muted">P-2201</td><td class="num">1</td><td class="num">3,200.00</td><td class="num">3,200.00</td></tr>
+              <tr><td class="muted">1508</td><td>Gold Chain 22K <span class="muted">· In-house</span></td><td class="muted">P-1180</td><td class="num">1</td><td class="num">5,750.00</td><td class="num">5,750.00</td></tr>
+              <tr><td class="muted">1622</td><td>Pearl Bracelet <span class="muted">· Mikimoto</span></td><td class="muted">P-3390</td><td class="num">1</td><td class="num">1,480.00</td><td class="num">1,480.00</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ C ══════════════════════════════ -->
+<div class="variant" data-v="c">
+  <div class="vlabel"><span class="tag">Sample C</span> Control Desk <em>— sticky identity rail, metric tiles, module grid</em></div>
+  <div class="vc">
+    <div class="shell">
+      <div class="rail">
+        <div class="idc">
+          <div class="idtop">
+            <div class="idav">MR<span class="rg"></span></div>
+            <div class="idnm">Mohamad Romih</div>
+            <div class="idsub">Manager · Sales</div>
+            <div class="idst"><i class="fa fa-circle" style="font-size:7px"></i> Active</div>
+          </div>
+          <div class="idacts">
+            <button><i class="fa fa-pencil"></i> Edit</button>
+            <button><i class="fa fa-user-secret"></i> Impersonate</button>
+            <button><i class="fa fa-key"></i> Reset PIN</button>
+            <button><i class="fa fa-ban"></i> Disable</button>
+          </div>
+          <div class="facts">
+            <div class="fact"><i class="fa fa-id-badge"></i><span class="fk">Code</span><span class="fv">5025</span></div>
+            <div class="fact"><i class="fa fa-envelope-o"></i><span class="fk">Email</span><span class="fv">mr@bas</span></div>
+            <div class="fact"><i class="fa fa-phone"></i><span class="fk">Mobile</span><span class="fv empty">—</span></div>
+            <div class="fact"><i class="fa fa-map-marker"></i><span class="fk">Place</span><span class="fv empty">—</span></div>
+            <div class="fact"><i class="fa fa-flag-o"></i><span class="fk">Nationality</span><span class="fv">Lebanese</span></div>
+            <div class="fact"><i class="fa fa-calendar-check-o"></i><span class="fk">Joined</span><span class="fv empty">—</span></div>
+            <div class="fact"><i class="fa fa-sitemap"></i><span class="fk">Default branch</span><span class="fv">Main Branch</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="metrics">
+          <div class="mt"><div class="k">Salary</div><div class="v">0.00 <small>QAR</small></div></div>
+          <div class="mt"><div class="k">Allowance</div><div class="v">0.00 <small>QAR</small></div></div>
+          <div class="mt"><div class="k">HRA</div><div class="v">0.00 <small>QAR</small></div></div>
+          <div class="mt"><div class="k">Max discount</div><div class="v">100<small>%</small></div></div>
+        </div>
+
+        <div class="mods">
+          <div class="mod">
+            <div class="mh"><i class="fa fa-shield ic"></i><div><b>Roles</b><span>2 assigned</span></div></div>
+            <div class="selrow">
+              <div class="sel"><span class="tk">Manager <i class="fa fa-times"></i></span><span class="tk">Sales <i class="fa fa-times"></i></span><span class="ph">Add role…</span></div>
+              <button class="save"><i class="fa fa-check"></i></button>
+            </div>
+            <div class="hint"><i class="fa fa-info-circle"></i> Roles decide every permission this account holds.</div>
+          </div>
+
+          <div class="mod">
+            <div class="mh"><i class="fa fa-sitemap ic"></i><div><b>Branches</b><span>2 assigned · default Main Branch</span></div></div>
+            <div class="selrow">
+              <div class="sel"><span class="tk">Main Branch <i class="fa fa-times"></i></span><span class="tk">Warehouse <i class="fa fa-times"></i></span><span class="ph">Add branch…</span></div>
+              <button class="save"><i class="fa fa-check"></i></button>
+            </div>
+            <div class="hint"><i class="fa fa-star"></i> Default branch loads first at sign-in.</div>
+          </div>
+
+          <div class="mod">
+            <div class="mh"><i class="fa fa-bell-o ic"></i><div><b>Notifications</b><span>1 of 3 channels on</span></div></div>
+            <div class="swrow"><i class="fa fa-whatsapp si"></i><div class="st">WhatsApp<span>Sale &amp; order alerts</span></div><div class="sw3"></div></div>
+            <div class="swrow on"><i class="fa fa-desktop si"></i><div class="st">Browser push<span>While signed in</span></div><div class="sw3 on"></div></div>
+            <div class="swrow"><i class="fa fa-telegram si"></i><div class="st">Telegram<span>Not linked</span></div><div class="sw3"></div></div>
+          </div>
+
+          <div class="mod">
+            <div class="mh"><i class="fa fa-lock ic"></i><div><b>Account</b><span>Sign-in &amp; session control</span></div><button class="mbtn">Audit log</button></div>
+            <div class="swrow on"><i class="fa fa-toggle-on si"></i><div class="st">Account active<span>Can sign in to POS and web</span></div><div class="sw3 on"></div></div>
+            <div class="swrow"><i class="fa fa-mobile si"></i><div class="st">Mobile app access<span>Astra POS on device</span></div><div class="sw3 on" style="background:rgba(var(--ok-rgb),.2);border-color:var(--ok)"></div></div>
+          </div>
+
+          <div class="mod wide">
+            <div class="mh"><i class="fa fa-cubes ic"></i><div><b>Employee Inventory</b><span>3 items · QAR 10,430.00 at cost</span></div><button class="mbtn"><i class="fa fa-download"></i> Export</button></div>
+            <table>
+              <thead><tr><th>ID</th><th>Branch</th><th>Product</th><th>Code</th><th>Barcode</th><th class="num">Qty</th><th class="num">Cost</th><th class="num">Total</th><th class="num">MRP</th></tr></thead>
+              <tbody>
+                <tr><td>1421</td><td>Main Branch</td><td>Diamond Ring 18K</td><td>P-2201</td><td>889012340012</td><td class="num">1</td><td class="num">3,200.00</td><td class="num">3,200.00</td><td class="num">4,900.00</td></tr>
+                <tr><td>1508</td><td>Main Branch</td><td>Gold Chain 22K</td><td>P-1180</td><td>889012341293</td><td class="num">1</td><td class="num">5,750.00</td><td class="num">5,750.00</td><td class="num">7,200.00</td></tr>
+                <tr><td>1622</td><td>Warehouse</td><td>Pearl Bracelet</td><td>P-3390</td><td>889012342871</td><td class="num">1</td><td class="num">1,480.00</td><td class="num">1,480.00</td><td class="num">2,150.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mod wide">
+            <div class="mh"><i class="fa fa-calendar-o ic"></i><div><b>Appointment Schedule</b><span>Next 7 days</span></div><button class="mbtn">Open calendar</button></div>
+            <div class="empty"><i class="fa fa-calendar-o"></i>No appointments assigned to this employee.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+  var body = document.body, stage = document.getElementById('stage');
+
+  document.querySelectorAll('.bar button[data-v]').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('.bar button[data-v]').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      document.querySelectorAll('.variant').forEach(function (v) { v.classList.toggle('show', v.dataset.v === b.dataset.v); });
+      window.scrollTo({ top: 0 });
+    };
+  });
+
+  document.getElementById('theme').onclick = function () {
+    var dark = body.dataset.t === 'dark';
+    body.dataset.t = dark ? 'light' : 'dark';
+    this.innerHTML = dark ? '<i class="fa fa-moon-o"></i> Dark' : '<i class="fa fa-sun-o"></i> Light';
+  };
+
+  document.getElementById('dir').onclick = function () {
+    var rtl = stage.getAttribute('dir') === 'rtl';
+    stage.setAttribute('dir', rtl ? 'ltr' : 'rtl');
+    this.textContent = rtl ? 'RTL' : 'LTR';
+    this.classList.toggle('on', !rtl);
+  };
+
+  document.querySelectorAll('.bar .swatch').forEach(function (s) {
+    s.onclick = function () {
+      document.querySelectorAll('.bar .swatch').forEach(function (x) { x.classList.remove('on'); });
+      s.classList.add('on');
+      var hex = s.dataset.c;
+      var rgb = [parseInt(hex.substr(1, 2), 16), parseInt(hex.substr(3, 2), 16), parseInt(hex.substr(5, 2), 16)].join(',');
+      document.documentElement.style.setProperty('--p', hex);
+      document.documentElement.style.setProperty('--p-rgb', rgb);
+    };
+  });
+
+  // switches are live so the toggles feel real while comparing
+  document.querySelectorAll('.sw, .sw2, .sw3').forEach(function (s) {
+    s.onclick = function () { s.classList.toggle('on'); s.closest('.tgl, .prow, .swrow')?.classList.toggle('on'); };
+  });
+
+  // tab rail in sample A
+  document.querySelectorAll('.va .tab').forEach(function (t) {
+    t.onclick = function () {
+      document.querySelectorAll('.va .tab').forEach(function (x) { x.classList.remove('on'); });
+      t.classList.add('on');
+    };
+  });
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@
     @else
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-light py-3 d-flex align-items-center justify-content-between">
-            <h5 class="mb-0"><i class="fa fa-telegram me-2"></i>Telegram Setup</h5>
+            <h5 class="mb-0"><i class="fa fa-paper-plane me-2"></i>Telegram Setup</h5>
             @if($user && $user->telegram_chat_id)
                 <span class="badge bg-success">Connected</span>
             @else

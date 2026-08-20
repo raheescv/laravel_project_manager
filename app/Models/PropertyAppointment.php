@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PropertyAppointment\SlotService;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +27,7 @@ class PropertyAppointment extends Model implements AuditableContracts
         'account_id',
         'salesman_id',
         'scheduled_at',
+        'ends_at',
         'status',
         'token',
         'token_expires_at',
@@ -50,6 +52,7 @@ class PropertyAppointment extends Model implements AuditableContracts
     // from $fillable — the database owns it and writing to it errors.
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'ends_at' => 'datetime',
         'token_expires_at' => 'datetime',
         'link_sent_at' => 'datetime',
         'link_opened_at' => 'datetime',
@@ -93,6 +96,24 @@ class PropertyAppointment extends Model implements AuditableContracts
     public function emailLogs(): MorphMany
     {
         return $this->morphMany(EmailLog::class, 'related');
+    }
+
+    /**
+     * When this appointment finishes.
+     *
+     * Bookings made before appointments carried an end time fall back to the
+     * configured slot length, so every reader — calendar, email, overlap check
+     * — gets a finish time for every appointment.
+     */
+    public function endsAt(): ?\Carbon\Carbon
+    {
+        if (! $this->scheduled_at) {
+            return null;
+        }
+
+        return $this->ends_at
+            ? $this->ends_at->copy()
+            : $this->scheduled_at->copy()->addMinutes(SlotService::slotLengthMinutes());
     }
 
     public function scopeHoldingSlot(Builder $query): Builder

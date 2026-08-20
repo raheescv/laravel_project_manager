@@ -197,7 +197,17 @@
                         @endif
                     </x-rent-out.view.field>
                     <x-rent-out.view.field icon="fa-tag" label="{{ $isRental ? 'Booking Type' : 'Agreement Type' }}" :value="$isRental ? $rentOut->booking_type : $rentOut->agreement_type?->label()" />
-                    <x-rent-out.view.field icon="fa-user" label="Salesman" :value="$rentOut->salesman?->name" />
+                    <x-rent-out.view.field icon="fa-user" label="Salesman">
+                        @if ($rentOut->salesman)
+                            @can('employee.edit')
+                                <a href="{{ route('users::employee::view', $rentOut->salesman_id) }}" class="text-decoration-none link-primary">{{ $rentOut->salesman->name }}</a>
+                            @else
+                                {{ $rentOut->salesman->name }}
+                            @endcan
+                        @else
+                            —
+                        @endif
+                    </x-rent-out.view.field>
                     <x-rent-out.view.field icon="fa-clock-o" label="Duration" :value="$rentOut->totalStay() . ' months'" />
                     @if ($isRental)
                         <x-rent-out.view.field icon="fa-gift" label="Free Months" :value="(string) ($rentOut->free_month ?? 0)" />
