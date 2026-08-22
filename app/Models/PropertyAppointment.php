@@ -22,7 +22,6 @@ class PropertyAppointment extends Model implements AuditableContracts
     protected $fillable = [
         'tenant_id',
         'branch_id',
-        'reference_no',
         'rent_out_id',
         'account_id',
         'salesman_id',
@@ -61,6 +60,19 @@ class PropertyAppointment extends Model implements AuditableContracts
         'cancelled_at' => 'datetime',
         'link_opened_count' => 'integer',
     ];
+
+    /**
+     * The customer-facing label, e.g. VW-2026-0032. It is derived from the row's
+     * own id rather than stored: there is nothing to allocate and nothing that
+     * can collide. The year comes from created_at, not now(), so the reference a
+     * customer was emailed still reads the same next January.
+     */
+    public function getReferenceNoAttribute(): string
+    {
+        $year = ($this->created_at ?? now())->format('Y');
+
+        return 'VW-'.$year.'-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
 
     public static function rules($id = 0, $merge = []): array
     {

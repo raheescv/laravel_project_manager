@@ -39,12 +39,9 @@
                 <option value="no_show">No-show</option>
             </select>
 
-            <select class="form-select form-select-sm" style="max-width:160px" wire:model.live="salesman_id">
-                <option value="">All salesmen</option>
-                @foreach ($salesmen as $salesman)
-                    <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
-                @endforeach
-            </select>
+            <div wire:ignore style="max-width:400px;min-width:280px">
+                {{ html()->select('salesman_id', [])->value('')->class('select-employee_id-list form-select-sm')->id('salesman_id')->placeholder('All salesmen') }}
+            </div>
 
             <input type="date" class="form-control form-control-sm" style="max-width:150px" wire:model.live="from_date">
             <input type="date" class="form-control form-control-sm" style="max-width:150px" wire:model.live="to_date">
@@ -156,3 +153,27 @@
         </div>
     </div>
 </div>
+
+    @push('styles')
+        <style>
+            .select-employee_id-list + .ts-wrapper .ts-control {
+                min-height: calc(1.5em + .5rem + 2px);
+                padding-top: .15rem;
+                padding-bottom: .15rem;
+                font-size: .875rem;
+                border-radius: .375rem;
+            }
+        </style>
+    @endpush
+
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                // The select lives behind wire:ignore so TomSelect keeps its DOM across
+                // re-renders; that also means Livewire never sees the change itself.
+                $('#salesman_id').on('change', function() {
+                    @this.set('salesman_id', $(this).val() || '');
+                });
+            });
+        </script>
+    @endpush

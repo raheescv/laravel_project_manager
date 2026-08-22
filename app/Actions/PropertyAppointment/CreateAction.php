@@ -34,7 +34,6 @@ class CreateAction
             $data['status'] = $data['status'] ?? 'awaiting';
             $data['token'] = (string) Str::uuid();
             $data['token_expires_at'] = $data['token_expires_at'] ?? now()->addDays(14);
-            $data['reference_no'] = $this->referenceNo();
             $data['created_by'] = $this->userId;
 
             validationHelper(PropertyAppointment::rules(), $data);
@@ -50,12 +49,5 @@ class CreateAction
         }
 
         return $return;
-    }
-
-    private function referenceNo(): string
-    {
-        $next = getNextUniqueNumber('PropertyAppointment');
-
-        return 'VW-'.now()->format('Y').'-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
     }
 }

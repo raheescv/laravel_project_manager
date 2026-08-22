@@ -5,9 +5,9 @@ namespace App\Livewire\PropertyAppointment;
 use App\Actions\PropertyAppointment\CancelAction;
 use App\Actions\PropertyAppointment\DeleteAction;
 use App\Models\PropertyAppointment;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -114,10 +114,15 @@ class Table extends Component
         return PropertyAppointment::query()
             ->with(['customer:id,name,mobile', 'salesman:id,name', 'rentOut:id,property_id', 'rentOut.property:id,number'])
             ->when($this->search, function ($query, $value) {
-                $query->where(function ($query) use ($value) {
-                    $query->where('property_appointments.reference_no', 'like', "%{$value}%")
-                        ->orWhereHas('customer', fn ($q) => $q->where('name', 'like', "%{$value}%"))
-                        ->orWhereHas('rentOut.property', fn ($q) => $q->where('name', 'like', "%{$value}%"));
+                // The reference in the list is derived (VW-<year>-<padded id>), so read
+                // the id out of whatever was typed: "14", "0014" and "VW-2026-0014" all
+                // point at appointment 14. A padded string can never LIKE-match the id.
+                $id = (int) Str::afterLast($value, '-');
+
+                $query->where(function ($query) use ($value, $id) {
+                    $query->whereHas('customer', fn ($q) => $q->where('name', 'like', "%{$value}%"))
+                        ->orWhereHas('rentOut.property', fn ($q) => $q->where('number', 'like', "%{$value}%"))
+                        ->when($id, fn ($q) => $q->orWhere('property_appointments.id', $id));
                 });
             })
             ->when($this->status, fn ($query, $value) => $query->where('property_appointments.status', $value))
@@ -135,7 +140,6 @@ class Table extends Component
 
         return view('livewire.property-appointment.table', [
             'appointments' => $this->rows()->paginate($this->limit),
-            'salesmen' => User::employee()->select('id', 'name')->orderBy('name')->get(),
             'stats' => [
                 'upcoming' => (clone $base)->upcoming()->count(),
                 'awaiting' => (clone $base)->where('status', 'awaiting')->count(),
