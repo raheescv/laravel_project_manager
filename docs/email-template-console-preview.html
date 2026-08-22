@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Templates — Console Redesign Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   PREVIEW CHROME — not part of the design
+   ═══════════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;}
+body{ margin:0; font-family:'Segoe UI',system-ui,Arial,sans-serif; padding:104px 16px 60px; min-height:100vh; }
+body[data-mode="light"]{ background:#eef1f5; background-image:radial-gradient(circle at 50% -10%, #f8fafc, #e5e9f0); }
+body[data-mode="dark"]{  background:#0c0f15; background-image:radial-gradient(circle at 50% -10%, #171d27, #0a0c11); }
+
+.toolbar{ position:fixed; top:0; left:0; right:0; z-index:120; display:flex; align-items:center; gap:14px;
+    flex-wrap:wrap; padding:9px 18px; background:rgba(13,17,23,.94); backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.08); box-shadow:0 6px 24px rgba(0,0,0,.3); }
+.toolbar .brand{ color:#fff; font-weight:700; font-size:13px; }
+.toolbar .brand small{ display:block; font-weight:400; font-size:10px; color:#9ca3af; }
+.toolbar .label{ color:#8b93a1; font-size:9.5px; text-transform:uppercase; letter-spacing:1px; }
+.toolbar .spacer{ flex:1; }
+.seg{ display:flex; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+      border-radius:9px; padding:3px; gap:2px; }
+.seg button{ background:transparent; color:#cbd2dc; border:0; padding:5px 11px; border-radius:6px;
+      font-size:11.5px; cursor:pointer; font-weight:600; font-family:inherit; }
+.seg button.active{ background:#fff; color:#111827; }
+.swatch{ width:24px; height:24px; border-radius:7px; cursor:pointer; border:2px solid transparent; }
+.swatch.active{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.22); }
+.sw-royal{background:#1D4ED8}.sw-emerald{background:#0E8A4F}.sw-graphite{background:#334155}.sw-bronze{background:#9A5B1E}
+
+.designbar{ position:fixed; top:47px; left:0; right:0; z-index:119; display:flex; gap:6px; flex-wrap:wrap;
+    padding:9px 18px; background:rgba(20,25,33,.94); backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.07); }
+.designbar button{ background:rgba(255,255,255,.06); color:#aeb6c2; border:1px solid rgba(255,255,255,.10);
+    padding:6px 13px; border-radius:8px; font-size:11.5px; cursor:pointer; font-family:inherit; font-weight:600;
+    display:inline-flex; align-items:center; gap:7px; }
+.designbar button:hover{ background:rgba(255,255,255,.13); color:#e7ebf1; }
+.designbar button.active{ background:#fff; color:#111827; border-color:#fff; }
+.designbar button .n{ font-size:9px; opacity:.55; font-weight:800; }
+
+.note{ max-width:1460px; margin:0 auto 18px; padding:12px 15px; border-radius:11px; font-size:12px; line-height:1.6;
+       background:rgba(29,78,216,.09); border:1px solid rgba(29,78,216,.28); }
+body[data-mode="light"] .note{ color:#1e3a8a; }
+body[data-mode="dark"]  .note{ color:#bfdbfe; background:rgba(29,78,216,.14); }
+.note b{font-weight:700;}
+.stage{ max-width:1460px; margin:0 auto; }
+.dsec{ display:none; }
+.dsec.on{ display:block; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHARED DESIGN TOKENS — theme-var driven in the real page (.apx style)
+   ═══════════════════════════════════════════════════════════════════ */
+.stage{
+  --brand:#1D4ED8; --brand-rgb:29,78,216;
+  --surface:#ffffff; --surface-2:#f5f7fa; --surface-3:#eceff4;
+  --border:#e4e8ee; --border-strong:#d3d9e1;
+  --text:#111827; --text-2:#4b5563; --text-3:#8892a0;
+  --success:#198754; --success-bg:#d1e7dd; --danger:#dc3545; --danger-bg:#f8d7da;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+  --shadow-lg:0 16px 38px -16px rgba(16,24,40,.28), 0 7px 16px -10px rgba(16,24,40,.16);
+  color:var(--text); font-size:12.5px; letter-spacing:-.004em; -webkit-font-smoothing:antialiased;
+}
+body[data-mode="dark"] .stage{
+  --surface:#272d34; --surface-2:#2e353d; --surface-3:#353d46;
+  --border:#3a424c; --border-strong:#4a535e;
+  --text:#e5eaf0; --text-2:#aeb6c2; --text-3:#7d8794;
+  --success:#3fb27f; --success-bg:rgba(63,178,127,.14); --danger:#e5636f; --danger-bg:rgba(229,99,111,.14);
+  --shadow-lg:0 16px 38px -16px rgba(0,0,0,.6), 0 7px 16px -10px rgba(0,0,0,.5);
+}
+.stage[data-acc="emerald"]{ --brand:#0E8A4F; --brand-rgb:14,138,79; }
+.stage[data-acc="graphite"]{ --brand:#334155; --brand-rgb:51,65,85; }
+.stage[data-acc="bronze"]{ --brand:#9A5B1E; --brand-rgb:154,91,30; }
+body[data-mode="dark"] .stage[data-acc="graphite"]{ --brand:#64748b; --brand-rgb:100,116,139; }
+
+/* ── console shell ── */
+.shell{ background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-lg); }
+.cbar{ display:flex; align-items:center; gap:10px; min-height:50px; padding:8px 14px; flex-wrap:wrap;
+       background:var(--surface-2); border-bottom:1px solid var(--border); }
+.cbar .cico{ width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;
+       background:rgba(var(--brand-rgb),.12); color:var(--brand); font-size:12px; flex:none; }
+.cbar h4{ margin:0; font-size:13px; font-weight:800; letter-spacing:-.01em; }
+.cbar .sub{ font-size:10.5px; color:var(--text-3); }
+.cbar .sp{ flex:1; }
+.sel{ background:var(--surface); color:var(--text); border:1px solid var(--border-strong); border-radius:8px;
+      font-size:11.5px; height:30px; padding:0 8px; font-family:inherit; }
+.btn{ display:inline-flex; align-items:center; gap:6px; font-weight:600; font-size:11.5px; padding:7px 12px;
+      border-radius:9px; border:1px solid transparent; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.btn-primary{ background:var(--brand); color:#fff; box-shadow:0 6px 16px -8px rgba(var(--brand-rgb),.75); }
+.btn-ghost{ background:var(--surface); color:var(--text-2); border-color:var(--border-strong); }
+.btn-soft{ background:rgba(var(--brand-rgb),.09); color:var(--brand); border-color:rgba(var(--brand-rgb),.22); }
+.btn-danger{ background:var(--danger-bg); color:var(--danger); border-color:transparent; }
+.btn-sm{ padding:4px 9px; font-size:10.5px; border-radius:7px; }
+
+.chip{ display:inline-flex; align-items:center; gap:5px; font-size:9px; font-weight:700; letter-spacing:.06em;
+       text-transform:uppercase; padding:3px 8px; border-radius:999px; line-height:1; }
+.chip .dot{ width:5px; height:5px; border-radius:50%; }
+.chip-on{ background:var(--success-bg); color:var(--success); } .chip-on .dot{ background:var(--success); }
+.chip-off{ background:var(--surface-3); color:var(--text-3); } .chip-off .dot{ background:var(--text-3); }
+.chip-lang{ background:rgba(var(--brand-rgb),.1); color:var(--brand); }
+
+/* ── rail ── */
+.rail{ background:var(--surface-2); border-inline-end:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
+.rail-search{ padding:10px 10px 6px; }
+.rail-search input{ width:100%; background:var(--surface); border:1px solid var(--border-strong); color:var(--text);
+      border-radius:8px; height:30px; padding:0 10px 0 28px; font-size:11.5px; font-family:inherit; }
+.rail-search{ position:relative; }
+.rail-search i{ position:absolute; left:20px; top:19px; font-size:10.5px; color:var(--text-3); }
+.rail-g{ font-size:9px; font-weight:800; letter-spacing:.11em; text-transform:uppercase; color:var(--text-3);
+         padding:12px 12px 5px; display:flex; align-items:center; gap:6px; }
+.rail-g i{ font-size:10px; color:var(--brand); }
+.tpl{ display:flex; align-items:center; gap:9px; padding:9px 12px; cursor:pointer; border-inline-start:3px solid transparent; }
+.tpl:hover{ background:var(--surface-3); }
+.tpl.on{ background:var(--surface); border-inline-start-color:var(--brand); }
+.tpl .nm{ font-size:11.5px; font-weight:700; line-height:1.25; }
+.tpl .ty{ font-size:9.5px; color:var(--text-3); margin-top:1px; }
+.tpl .fg{ flex:1; min-width:0; }
+.rail-foot{ margin-top:auto; padding:10px; border-top:1px solid var(--border); display:grid; gap:6px; }
+
+/* ── editor ── */
+.ed{ padding:14px 16px; min-width:0; overflow:auto; }
+.fl{ font-size:10px; font-weight:700; color:var(--text-2); margin-bottom:3px; display:block; }
+.fc{ width:100%; background:var(--surface); border:1px solid var(--border-strong); color:var(--text); border-radius:8px;
+     height:31px; padding:0 9px; font-size:11.5px; font-family:inherit; }
+.fc:focus, .rail-search input:focus{ outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(var(--brand-rgb),.14); }
+.meta{ display:grid; grid-template-columns:1.1fr 1.2fr .55fr 1fr; gap:9px; margin-bottom:12px; }
+.sect{ font-size:9px; font-weight:800; letter-spacing:.11em; text-transform:uppercase; color:var(--text-3); margin:14px 0 7px; }
+.tokens{ display:flex; flex-wrap:wrap; gap:4px; }
+.tok{ border:1px solid var(--border); background:var(--surface-2); color:var(--text-2); border-radius:999px;
+      font-size:10px; font-family:var(--mono); padding:2px 8px; cursor:pointer; }
+.tok:hover{ border-color:var(--brand); color:var(--brand); }
+.hint{ font-size:10px; color:var(--text-3); margin-top:5px; }
+/* rich-text mock */
+.rte{ border:1px solid var(--border-strong); border-radius:10px; overflow:hidden; background:var(--surface); }
+.rte-bar{ display:flex; flex-wrap:wrap; gap:2px 8px; padding:5px 8px; border-bottom:1px solid var(--border); background:var(--surface-2); }
+.rte-bar .g{ display:flex; gap:1px; padding-right:8px; border-right:1px solid var(--border); }
+.rte-bar .g:last-child{ border-right:0; }
+.rte-bar button{ width:24px; height:24px; border:0; background:transparent; color:var(--text-2); border-radius:5px;
+     font-size:10.5px; cursor:pointer; }
+.rte-bar button:hover{ background:rgba(var(--brand-rgb),.12); color:var(--brand); }
+.rte-body{ padding:10px 12px; font-size:12px; line-height:1.65; min-height:170px; color:var(--text); }
+.rte-body p{ margin:0 0 8px; }
+.rte-body .v{ font-family:var(--mono); font-size:10.5px; background:rgba(var(--brand-rgb),.1); color:var(--brand);
+     border-radius:4px; padding:0 4px; }
+.ed-foot{ display:flex; align-items:center; gap:8px; margin-top:14px; padding-top:12px; border-top:1px solid var(--border); }
+
+/* switch */
+.sw{ position:relative; display:inline-flex; align-items:center; gap:7px; cursor:pointer; font-size:11px; font-weight:700; }
+.sw .tr{ width:30px; height:17px; border-radius:999px; background:var(--surface-3); border:1px solid var(--border-strong);
+        position:relative; transition:.15s; }
+.sw .tr::after{ content:""; position:absolute; top:1.5px; left:2px; width:12px; height:12px; border-radius:50%;
+        background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.3); transition:.15s; }
+.sw.on .tr{ background:var(--success); border-color:var(--success); }
+.sw.on .tr::after{ left:14px; }
+
+/* ── preview pane ── */
+.pv{ background:var(--surface-3); border-inline-start:1px solid var(--border); display:flex; flex-direction:column; min-width:0; }
+.pv-bar{ display:flex; align-items:center; gap:9px; padding:8px 12px; border-bottom:1px solid var(--border);
+         background:var(--surface-2); flex-wrap:wrap; }
+.pv-bar .t{ font-size:9px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--text-3);
+            display:flex; align-items:center; gap:6px; }
+.pv-bar .t .live{ width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 0 3px var(--success-bg); }
+.pv-seg{ display:flex; background:var(--surface); border:1px solid var(--border-strong); border-radius:7px; padding:2px; gap:1px; margin-inline-start:auto; }
+.pv-seg button{ border:0; background:transparent; color:var(--text-3); font-size:10px; padding:3px 8px; border-radius:5px;
+            cursor:pointer; font-family:inherit; font-weight:700; }
+.pv-seg button.on{ background:rgba(var(--brand-rgb),.12); color:var(--brand); }
+.pv-meta{ padding:8px 14px; border-bottom:1px solid var(--border); background:var(--surface); font-size:10.5px; color:var(--text-3); }
+.pv-meta .s{ font-size:12px; font-weight:700; color:var(--text); margin-bottom:1px; }
+.pv-canvas{ flex:1; overflow:auto; padding:22px 14px; background:
+    linear-gradient(rgba(var(--brand-rgb),.03), rgba(var(--brand-rgb),.03)),
+    repeating-linear-gradient(0deg, transparent 0 15px, rgba(127,137,150,.07) 15px 16px),
+    repeating-linear-gradient(90deg, transparent 0 15px, rgba(127,137,150,.07) 15px 16px); }
+
+/* the Editorial email — deliberately light-only, exactly like the real wrapper */
+.mail{ max-width:600px; margin:0 auto; background:#fffdf9; border:1px solid #ece5da;
+       box-shadow:0 18px 40px -20px rgba(30,25,15,.35); transition:max-width .25s ease; }
+.pv-canvas.mob .mail{ max-width:368px; }
+.mail-in{ padding:34px 40px 0; text-align:center; }
+.pv-canvas.mob .mail-in{ padding:26px 22px 0; }
+.mail .lg{ width:50px; height:50px; border-radius:50%; background:var(--brand); color:#fff; display:inline-flex;
+       align-items:center; justify-content:center; font-family:Georgia,serif; font-size:21px; font-weight:700; }
+.mail .co{ margin-top:15px; font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:#a89880; font-weight:700; }
+.mail .rule{ width:44px; height:2px; background:var(--brand); margin:17px auto 0; }
+.mail .bd{ padding:24px 40px 30px; font-family:Georgia,'Times New Roman',serif; font-size:14.5px; line-height:1.8;
+       color:#4a4238; text-align:left; }
+.pv-canvas.mob .mail .bd{ padding:20px 22px 24px; }
+.mail .bd p{ margin:0 0 15px; }
+.mail .bd strong{ color:#1a1a1a; }
+.mail .cta{ margin:24px auto 8px; text-align:center; }
+.mail .cta a{ display:inline-block; padding:12px 32px; border:1px solid var(--brand); border-radius:2px; color:var(--brand);
+       font-family:'Segoe UI',Helvetica,Arial,sans-serif; font-size:10.5px; letter-spacing:.18em; text-transform:uppercase;
+       font-weight:700; text-decoration:none; }
+.mail .ft{ padding:20px 40px 28px; border-top:1px solid #ece5da; font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+       font-size:10.5px; line-height:1.9; color:#a89880; text-align:center; }
+.mail .ft b{ color:#8c7f6d; }
+
+/* status bar */
+.status{ display:flex; align-items:center; gap:16px; min-height:30px; padding:4px 14px; border-top:1px solid var(--border);
+       background:var(--surface-2); font-family:var(--mono); font-size:10px; letter-spacing:.04em; color:var(--text-3); flex-wrap:wrap; }
+.status b{ color:var(--text-2); font-weight:600; }
+.status .ok{ color:var(--success); }
+.status .sp{ flex:1; }
+
+/* ═══ DIRECTION 1 — Broadcast Console (3-pane) ═══ */
+.d1-grid{ display:grid; grid-template-columns:236px minmax(430px,1fr) minmax(430px,1.05fr); min-height:640px; }
+@media (max-width:1100px){ .d1-grid{ grid-template-columns:220px 1fr; } .d1-grid .pv{ grid-column:1/-1; border-inline-start:0; border-top:1px solid var(--border); min-height:480px; } }
+
+/* ═══ DIRECTION 2 — Split Studio (picker strip + 50/50) ═══ */
+.d2-strip{ display:flex; gap:8px; padding:10px 14px; border-bottom:1px solid var(--border); background:var(--surface-2); overflow-x:auto; }
+.d2-card{ flex:none; display:flex; align-items:center; gap:9px; padding:8px 12px; border:1px solid var(--border-strong);
+      border-radius:10px; background:var(--surface); cursor:pointer; min-width:190px; }
+.d2-card.on{ border-color:var(--brand); box-shadow:0 0 0 3px rgba(var(--brand-rgb),.14); }
+.d2-card .nm{ font-size:11px; font-weight:700; }
+.d2-card .ty{ font-size:9.5px; color:var(--text-3); }
+.d2-grid{ display:grid; grid-template-columns:1fr 1fr; min-height:600px; }
+@media (max-width:1000px){ .d2-grid{ grid-template-columns:1fr; } .d2-grid .pv{ border-inline-start:0; border-top:1px solid var(--border); min-height:480px; } }
+
+/* ═══ DIRECTION 3 — Inspector Deck (stage-first + right inspector) ═══ */
+.d3-grid{ display:grid; grid-template-columns:56px minmax(430px,1.1fr) minmax(400px,1fr); min-height:640px; }
+.d3-rail{ background:var(--surface-2); border-inline-end:1px solid var(--border); display:flex; flex-direction:column; align-items:center; padding:10px 0; gap:6px; }
+.d3-rb{ width:38px; height:38px; border-radius:10px; border:0; background:transparent; color:var(--text-3); font-size:14px;
+       cursor:pointer; position:relative; }
+.d3-rb:hover{ background:var(--surface-3); color:var(--text); }
+.d3-rb.on{ background:rgba(var(--brand-rgb),.12); color:var(--brand); }
+.d3-rb.on::before{ content:""; position:absolute; inset-inline-start:-9px; top:9px; bottom:9px; width:3px; border-radius:3px; background:var(--brand); }
+.d3-list{ background:var(--surface-2); border-inline-end:1px solid var(--border); }
+.d3-insp{ border-inline-start:1px solid var(--border); background:var(--surface); overflow:auto; }
+.d3-insp .hd{ display:flex; align-items:center; gap:8px; padding:11px 14px; border-bottom:1px solid var(--border); background:var(--surface-2); }
+.d3-insp .hd .t{ font-size:11.5px; font-weight:800; }
+.d3-acc{ border-bottom:1px solid var(--border); }
+.d3-acc .ah{ display:flex; align-items:center; gap:8px; padding:9px 14px; font-size:10px; font-weight:800; letter-spacing:.1em;
+       text-transform:uppercase; color:var(--text-3); cursor:pointer; }
+.d3-acc .ah i{ margin-inline-start:auto; font-size:9px; }
+.d3-acc .ab{ padding:2px 14px 13px; }
+@media (max-width:1100px){ .d3-grid{ grid-template-columns:56px 1fr; } .d3-insp{ grid-column:1/-1; border-inline-start:0; border-top:1px solid var(--border); } }
+
+.dtitle{ display:flex; align-items:center; gap:10px; margin:26px 0 12px; }
+.dtitle .k{ width:26px; height:26px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;
+     font-size:11px; font-weight:800; color:#fff; background:var(--brand); }
+.dtitle h2{ margin:0; font-size:15px; font-weight:800; letter-spacing:-.01em; }
+body[data-mode="dark"] .dtitle h2{ color:#e5eaf0; }
+.dtitle p{ margin:0; font-size:11px; color:#77808d; }
+</style>
+</head>
+<body data-mode="light">
+
+<div class="toolbar">
+  <div class="brand">Email Templates — Console Redesign<small>settings/email-template · edit + live preview on one screen</small></div>
+  <div class="spacer"></div>
+  <span class="label">Mode</span>
+  <div class="seg" id="modeSeg">
+    <button class="active" data-m="light">Light</button>
+    <button data-m="dark">Dark</button>
+  </div>
+  <span class="label">Theme</span>
+  <div style="display:flex;gap:6px">
+    <div class="swatch sw-royal active" data-a="royal"></div>
+    <div class="swatch sw-emerald" data-a="emerald"></div>
+    <div class="swatch sw-graphite" data-a="graphite"></div>
+    <div class="swatch sw-bronze" data-a="bronze"></div>
+  </div>
+</div>
+<div class="designbar" id="designBar">
+  <button class="active" data-d="1"><span class="n">01</span> Broadcast Console — rail · editor · preview</button>
+  <button data-d="2"><span class="n">02</span> Split Studio — picker strip · 50/50</button>
+  <button data-d="3"><span class="n">03</span> Inspector Deck — preview-first · right inspector</button>
+</div>
+
+<div class="note">
+  All three keep every existing behaviour (module filter, create defaults, starter wording, one-active-per-event, variable
+  guard) and add a <b>live preview</b> that renders the Editorial email with <b>sample data</b> as you type — try editing the
+  subject in option 1. The email canvas stays <b>light-only</b> in dark mode on purpose: that is exactly what the customer's
+  inbox shows. Console chrome follows the settings theme (<b>--bs-primary</b>) like .apx.
+</div>
+
+<div class="stage" data-acc="royal">
+
+<!-- ════════════ DIRECTION 1 ════════════ -->
+<section class="dsec on" id="d1">
+  <div class="dtitle"><span class="k">01</span><div><h2>Broadcast Console</h2><p>Three panes — template rail, editor, live preview — plus a console status bar. Closest to the barcode designer.</p></div></div>
+  <div class="shell">
+    <div class="cbar">
+      <span class="cico"><i class="fa fa-envelope-o"></i></span>
+      <div><h4>Email templates</h4><div class="sub">One active template per event · the wording is entirely yours</div></div>
+      <div class="sp"></div>
+      <select class="sel"><option>All modules</option><option selected>Property Appointment</option></select>
+      <button class="btn btn-soft"><i class="fa fa-magic"></i> Create defaults</button>
+      <button class="btn btn-ghost"><i class="fa fa-plus"></i> New template</button>
+    </div>
+    <div class="d1-grid">
+      <!-- rail -->
+      <div class="rail">
+        <div class="rail-search"><i class="fa fa-search"></i><input placeholder="Find a template…"></div>
+        <div class="rail-g"><i class="fa fa-calendar-check-o"></i> Property Appointment</div>
+        <div class="tpl on"><div class="fg"><div class="nm">Appointment Invitation</div><div class="ty">appointment_invite · EN</div></div><span class="chip chip-on"><span class="dot"></span>Active</span></div>
+        <div class="tpl"><div class="fg"><div class="nm">Appointment Confirmed</div><div class="ty">appointment_confirmed · EN</div></div><span class="chip chip-on"><span class="dot"></span>Active</span></div>
+        <div class="tpl"><div class="fg"><div class="nm">Appointment Rescheduled</div><div class="ty">appointment_rescheduled · EN</div></div><span class="chip chip-off"><span class="dot"></span>Off</span></div>
+        <div class="tpl"><div class="fg"><div class="nm">Appointment Cancelled</div><div class="ty">appointment_cancelled · EN</div></div><span class="chip chip-on"><span class="dot"></span>Active</span></div>
+        <div class="tpl"><div class="fg"><div class="nm">تأكيد الموعد — عربي</div><div class="ty">appointment_reminder · AR</div></div><span class="chip chip-on"><span class="dot"></span>Active</span></div>
+        <div class="rail-foot"><button class="btn btn-ghost btn-sm" style="width:100%"><i class="fa fa-magic"></i> Create missing defaults</button></div>
+      </div>
+      <!-- editor -->
+      <div class="ed">
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px">
+          <div style="flex:1"><div style="font-size:14px;font-weight:800;letter-spacing:-.02em">Appointment Invitation</div>
+          <div class="hint" style="margin-top:2px">Sent when staff share the appointment link from a lease/sale agreement.</div></div>
+          <span class="sw on"><span class="tr"></span>Active</span>
+        </div>
+        <div class="meta">
+          <div><label class="fl">Module</label><select class="fc"><option>Property Appointment</option></select></div>
+          <div><label class="fl">Event</label><select class="fc"><option>Appointment Invitation</option></select></div>
+          <div><label class="fl">Lang</label><select class="fc"><option>EN</option><option>AR</option></select></div>
+          <div><label class="fl">Reply-to</label><input class="fc" placeholder="leasing@company.com"></div>
+        </div>
+        <div style="margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+          <label class="fl" style="margin:0">Subject</label>
+          <button class="btn btn-ghost btn-sm"><i class="fa fa-magic"></i> Use starter wording</button>
+        </div>
+        <input class="fc" id="d1subject" value="Book your appointment for Unit {{ unit_number }}, {{ building_name }}">
+        <div class="sect">Variables — click to insert</div>
+        <div class="tokens">
+          <span class="tok">{{ customer_name }}</span><span class="tok">{{ unit_number }}</span><span class="tok">{{ building_name }}</span>
+          <span class="tok">{{ project_name }}</span><span class="tok">{{ salesman_name }}</span><span class="tok">{{ salesman_phone }}</span>
+          <span class="tok">{{ appointment_button }}</span><span class="tok">{{ link_expires_at }}</span><span class="tok">{{ company_name }}</span>
+        </div>
+        <div class="hint">Saving rejects any variable not in this list, so a typo never reaches a customer.</div>
+        <div class="sect">Body</div>
+        <div class="rte">
+          <div class="rte-bar">
+            <div class="g"><button><i class="fa fa-bold"></i></button><button><i class="fa fa-italic"></i></button><button><i class="fa fa-underline"></i></button></div>
+            <div class="g"><button><i class="fa fa-list-ul"></i></button><button><i class="fa fa-list-ol"></i></button></div>
+            <div class="g"><button><i class="fa fa-align-left"></i></button><button><i class="fa fa-align-center"></i></button></div>
+            <div class="g"><button><i class="fa fa-link"></i></button><button><i class="fa fa-eraser"></i></button></div>
+            <div class="g"><button style="width:auto;padding:0 7px;font-size:9.5px;font-weight:700">HTML</button></div>
+          </div>
+          <div class="rte-body">
+            <p>Hello <span class="v">{{ customer_name }}</span>,</p>
+            <p>Thank you for your interest in <strong>Unit <span class="v">{{ unit_number }}</span>, <span class="v">{{ building_name }}</span></strong>. You can choose an appointment time that suits you.</p>
+            <p>Your appointment will be handled by <span class="v">{{ salesman_name }}</span>.</p>
+            <p><span class="v">{{ appointment_button }}</span></p>
+            <p>Please pick a time before <span class="v">{{ link_expires_at }}</span>.</p>
+            <p>Kind regards,<br><span class="v">{{ company_name }}</span></p>
+          </div>
+        </div>
+        <div class="ed-foot">
+          <button class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Delete</button>
+          <div style="flex:1"></div>
+          <span class="hint" style="margin:0"><i class="fa fa-circle" style="font-size:6px;color:var(--success)"></i> saved</span>
+          <button class="btn btn-primary"><i class="fa fa-check"></i> Save template</button>
+        </div>
+      </div>
+      <!-- preview -->
+      <div class="pv">
+        <div class="pv-bar">
+          <span class="t"><span class="live"></span> Live preview · sample data</span>
+          <div class="pv-seg" id="d1seg"><button class="on" data-w="desk"><i class="fa fa-desktop"></i></button><button data-w="mob"><i class="fa fa-mobile" style="font-size:12px"></i></button></div>
+        </div>
+        <div class="pv-meta">
+          <div class="s" id="d1pvsubject">Book your appointment for Unit 1204, Marina Tower</div>
+          From <b>Bin Al Sheikh</b> · reply-to leasing@company.com · to sample.customer@email.com
+        </div>
+        <div class="pv-canvas" id="d1canvas">
+          <div class="mail">
+            <div class="mail-in"><span class="lg">B</span><div class="co">Bin Al Sheikh</div><div class="rule"></div></div>
+            <div class="bd">
+              <p>Hello Sample Customer,</p>
+              <p>Thank you for your interest in <strong>Unit 1204, Marina Tower</strong>. You can choose an appointment time that suits you.</p>
+              <p>Your appointment will be handled by Sample Salesman.</p>
+              <div class="cta"><a href="#">Choose your appointment time</a></div>
+              <p>Please pick a time before 05 Sep 2026.</p>
+              <p>Kind regards,<br>Bin Al Sheikh</p>
+            </div>
+            <div class="ft"><b>Bin Al Sheikh</b> · +974 0000 0000 · info@company.com<br>You received this because you enquired about a property with us.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="status">
+      <span>module <b>property_appointment</b></span><span>event <b>appointment_invite</b></span>
+      <span>lang <b>EN</b></span><span>vars <b>9 / 12 used</b></span>
+      <span class="sp"></span><span class="ok">✓ all variables valid</span><span>updated <b>2m ago</b></span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ DIRECTION 2 ════════════ -->
+<section class="dsec" id="d2">
+  <div class="dtitle"><span class="k">02</span><div><h2>Split Studio</h2><p>Templates become a horizontal picker strip; below it the editor and preview split the full width 50/50.</p></div></div>
+  <div class="shell">
+    <div class="cbar">
+      <span class="cico"><i class="fa fa-envelope-o"></i></span>
+      <div><h4>Email templates</h4><div class="sub">One active template per event</div></div>
+      <div class="sp"></div>
+      <select class="sel"><option>Property Appointment</option></select>
+      <button class="btn btn-soft"><i class="fa fa-magic"></i> Create defaults</button>
+      <button class="btn btn-ghost"><i class="fa fa-plus"></i> New</button>
+      <button class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+    </div>
+    <div class="d2-strip">
+      <div class="d2-card on"><span class="cico" style="width:24px;height:24px;font-size:10px"><i class="fa fa-calendar-check-o"></i></span><div style="flex:1"><div class="nm">Appointment Invitation</div><div class="ty">appointment_invite · EN</div></div><span class="chip chip-on"><span class="dot"></span>On</span></div>
+      <div class="d2-card"><span class="cico" style="width:24px;height:24px;font-size:10px"><i class="fa fa-calendar-check-o"></i></span><div style="flex:1"><div class="nm">Appointment Confirmed</div><div class="ty">appointment_confirmed · EN</div></div><span class="chip chip-on"><span class="dot"></span>On</span></div>
+      <div class="d2-card"><span class="cico" style="width:24px;height:24px;font-size:10px"><i class="fa fa-calendar-check-o"></i></span><div style="flex:1"><div class="nm">Appointment Rescheduled</div><div class="ty">appointment_rescheduled</div></div><span class="chip chip-off"><span class="dot"></span>Off</span></div>
+      <div class="d2-card"><span class="cico" style="width:24px;height:24px;font-size:10px"><i class="fa fa-calendar-check-o"></i></span><div style="flex:1"><div class="nm">Appointment Cancelled</div><div class="ty">appointment_cancelled</div></div><span class="chip chip-on"><span class="dot"></span>On</span></div>
+      <div class="d2-card" style="border-style:dashed;justify-content:center;color:var(--text-3)"><i class="fa fa-plus"></i>&nbsp;New template</div>
+    </div>
+    <div class="d2-grid">
+      <div class="ed">
+        <div class="meta" style="grid-template-columns:1.2fr .6fr 1fr">
+          <div><label class="fl">Template name</label><input class="fc" value="Appointment Invitation"></div>
+          <div><label class="fl">Lang</label><select class="fc"><option>EN</option></select></div>
+          <div><label class="fl">Reply-to</label><input class="fc" placeholder="leasing@company.com"></div>
+        </div>
+        <div style="margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+          <label class="fl" style="margin:0">Subject</label>
+          <span class="sw on"><span class="tr"></span>Active</span>
+        </div>
+        <input class="fc" value="Book your appointment for Unit {{ unit_number }}, {{ building_name }}">
+        <div class="sect">Body</div>
+        <div class="rte">
+          <div class="rte-bar">
+            <div class="g"><button><i class="fa fa-bold"></i></button><button><i class="fa fa-italic"></i></button><button><i class="fa fa-underline"></i></button></div>
+            <div class="g"><button><i class="fa fa-list-ul"></i></button><button><i class="fa fa-list-ol"></i></button></div>
+            <div class="g"><button><i class="fa fa-link"></i></button></div>
+          </div>
+          <div class="rte-body" style="min-height:210px">
+            <p>Hello <span class="v">{{ customer_name }}</span>,</p>
+            <p>Thank you for your interest in <strong>Unit <span class="v">{{ unit_number }}</span>, <span class="v">{{ building_name }}</span></strong>.</p>
+            <p><span class="v">{{ appointment_button }}</span></p>
+            <p>Kind regards,<br><span class="v">{{ company_name }}</span></p>
+          </div>
+        </div>
+        <div class="sect">Variables</div>
+        <div class="tokens">
+          <span class="tok">{{ customer_name }}</span><span class="tok">{{ unit_number }}</span><span class="tok">{{ building_name }}</span>
+          <span class="tok">{{ salesman_name }}</span><span class="tok">{{ appointment_button }}</span><span class="tok">{{ company_name }}</span>
+        </div>
+        <div class="ed-foot"><button class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Delete</button><div style="flex:1"></div><button class="btn btn-ghost btn-sm"><i class="fa fa-magic"></i> Starter wording</button></div>
+      </div>
+      <div class="pv">
+        <div class="pv-bar"><span class="t"><span class="live"></span> Preview</span>
+          <div class="pv-seg"><button class="on"><i class="fa fa-desktop"></i></button><button><i class="fa fa-mobile" style="font-size:12px"></i></button></div></div>
+        <div class="pv-meta"><div class="s">Book your appointment for Unit 1204, Marina Tower</div>From <b>Bin Al Sheikh</b> · to sample.customer@email.com</div>
+        <div class="pv-canvas">
+          <div class="mail">
+            <div class="mail-in"><span class="lg">B</span><div class="co">Bin Al Sheikh</div><div class="rule"></div></div>
+            <div class="bd">
+              <p>Hello Sample Customer,</p>
+              <p>Thank you for your interest in <strong>Unit 1204, Marina Tower</strong>.</p>
+              <div class="cta"><a href="#">Choose your appointment time</a></div>
+              <p>Kind regards,<br>Bin Al Sheikh</p>
+            </div>
+            <div class="ft"><b>Bin Al Sheikh</b> · +974 0000 0000<br>You received this because you enquired about a property with us.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="status"><span>property_appointment · appointment_invite</span><span class="sp"></span><span class="ok">✓ valid</span></div>
+  </div>
+</section>
+
+<!-- ════════════ DIRECTION 3 ════════════ -->
+<section class="dsec" id="d3">
+  <div class="dtitle"><span class="k">03</span><div><h2>Inspector Deck</h2><p>Preview takes centre stage on a drafting grid; settings live in a right inspector with collapsible sections; modules as an icon rail.</p></div></div>
+  <div class="shell">
+    <div class="cbar">
+      <span class="cico"><i class="fa fa-envelope-o"></i></span>
+      <div><h4>Email templates</h4><div class="sub">Appointment Invitation — EN</div></div>
+      <div class="sp"></div>
+      <select class="sel"><option>Appointment Invitation (Active)</option><option>Appointment Confirmed</option></select>
+      <button class="btn btn-ghost"><i class="fa fa-plus"></i> New</button>
+      <button class="btn btn-primary"><i class="fa fa-check"></i> Save</button>
+    </div>
+    <div class="d3-grid">
+      <div class="d3-rail">
+        <button class="d3-rb on" title="Property Appointment"><i class="fa fa-calendar-check-o"></i></button>
+        <button class="d3-rb" title="(future) Rent Out"><i class="fa fa-building-o"></i></button>
+        <button class="d3-rb" title="(future) Sale"><i class="fa fa-shopping-cart"></i></button>
+        <div style="flex:1"></div>
+        <button class="d3-rb" title="Create defaults"><i class="fa fa-magic"></i></button>
+      </div>
+      <div class="pv" style="border-inline-start:0">
+        <div class="pv-bar"><span class="t"><span class="live"></span> Live preview · sample data</span>
+          <div class="pv-seg"><button class="on"><i class="fa fa-desktop"></i></button><button><i class="fa fa-mobile" style="font-size:12px"></i></button></div></div>
+        <div class="pv-meta"><div class="s">Book your appointment for Unit 1204, Marina Tower</div>From <b>Bin Al Sheikh</b> · reply-to leasing@company.com</div>
+        <div class="pv-canvas">
+          <div class="mail">
+            <div class="mail-in"><span class="lg">B</span><div class="co">Bin Al Sheikh</div><div class="rule"></div></div>
+            <div class="bd">
+              <p>Hello Sample Customer,</p>
+              <p>Thank you for your interest in <strong>Unit 1204, Marina Tower</strong>. You can choose an appointment time that suits you.</p>
+              <p>Your appointment will be handled by Sample Salesman.</p>
+              <div class="cta"><a href="#">Choose your appointment time</a></div>
+              <p>Kind regards,<br>Bin Al Sheikh</p>
+            </div>
+            <div class="ft"><b>Bin Al Sheikh</b> · +974 0000 0000<br>You received this because you enquired about a property with us.</div>
+          </div>
+        </div>
+      </div>
+      <div class="d3-insp">
+        <div class="hd"><i class="fa fa-sliders" style="color:var(--brand)"></i><span class="t">Template inspector</span>
+          <div style="margin-inline-start:auto"><span class="sw on"><span class="tr"></span>Active</span></div></div>
+        <div class="d3-acc">
+          <div class="ah">Identity <i class="fa fa-chevron-up"></i></div>
+          <div class="ab">
+            <div class="meta" style="grid-template-columns:1fr 1fr">
+              <div><label class="fl">Event</label><select class="fc"><option>Appointment Invitation</option></select></div>
+              <div><label class="fl">Lang</label><select class="fc"><option>EN</option></select></div>
+            </div>
+            <label class="fl">Template name</label><input class="fc" value="Appointment Invitation" style="margin-bottom:9px">
+            <label class="fl">Reply-to</label><input class="fc" placeholder="leasing@company.com">
+          </div>
+        </div>
+        <div class="d3-acc">
+          <div class="ah">Subject <i class="fa fa-chevron-up"></i></div>
+          <div class="ab"><input class="fc" value="Book your appointment for Unit {{ unit_number }}, {{ building_name }}"></div>
+        </div>
+        <div class="d3-acc">
+          <div class="ah">Body <i class="fa fa-chevron-up"></i></div>
+          <div class="ab">
+            <div class="rte">
+              <div class="rte-bar">
+                <div class="g"><button><i class="fa fa-bold"></i></button><button><i class="fa fa-italic"></i></button></div>
+                <div class="g"><button><i class="fa fa-list-ul"></i></button><button><i class="fa fa-link"></i></button></div>
+              </div>
+              <div class="rte-body" style="min-height:130px">
+                <p>Hello <span class="v">{{ customer_name }}</span>,</p>
+                <p>Thank you for your interest in <strong>Unit <span class="v">{{ unit_number }}</span></strong>…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="d3-acc">
+          <div class="ah">Variables <i class="fa fa-chevron-up"></i></div>
+          <div class="ab"><div class="tokens">
+            <span class="tok">{{ customer_name }}</span><span class="tok">{{ unit_number }}</span><span class="tok">{{ building_name }}</span>
+            <span class="tok">{{ appointment_button }}</span><span class="tok">{{ company_name }}</span>
+          </div></div>
+        </div>
+        <div style="padding:12px 14px;display:flex;gap:8px">
+          <button class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+          <button class="btn btn-ghost btn-sm" style="flex:1"><i class="fa fa-magic"></i> Starter wording</button>
+          <button class="btn btn-primary btn-sm"><i class="fa fa-check"></i> Save</button>
+        </div>
+      </div>
+    </div>
+    <div class="status"><span>property_appointment · appointment_invite</span><span>EN</span><span class="sp"></span><span class="ok">✓ all variables valid</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+// mode
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{
+  document.body.dataset.mode=b.dataset.m;
+  document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.toggle('active',x===b));
+});
+// accent
+document.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{
+  document.querySelector('.stage').dataset.acc=s.dataset.a;
+  document.querySelectorAll('.swatch').forEach(x=>x.classList.toggle('active',x===s));
+});
+// design switch
+document.querySelectorAll('#designBar button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#designBar button').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('.dsec').forEach(s=>s.classList.toggle('on',s.id==='d'+b.dataset.d));
+  window.scrollTo({top:0});
+});
+// live subject demo (direction 1)
+const SAMPLE={customer_name:'Sample Customer',unit_number:'1204',building_name:'Marina Tower',project_name:'Bin Al Sheikh Marina Tower',
+  salesman_name:'Sample Salesman',salesman_phone:'+974 0000 0000',company_name:'Bin Al Sheikh',link_expires_at:'05 Sep 2026',
+  appointment_date:'Tuesday, 25 August 2026',appointment_time:'4:00 PM',appointment_reference:'VW-2026-0001'};
+const subj=document.getElementById('d1subject');
+subj.addEventListener('input',()=>{
+  document.getElementById('d1pvsubject').textContent=subj.value.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi,(m,k)=>SAMPLE[k]??m);
+});
+// width toggle (direction 1 wired; others visual)
+document.querySelectorAll('#d1seg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#d1seg button').forEach(x=>x.classList.toggle('on',x===b));
+  document.getElementById('d1canvas').classList.toggle('mob',b.dataset.w==='mob');
+});
+</script>
+</body>
+</html>

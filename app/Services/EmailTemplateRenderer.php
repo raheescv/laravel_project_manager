@@ -63,8 +63,9 @@ class EmailTemplateRenderer
     /**
      * Variables whose value is HTML we generated ourselves, not tenant or
      * customer input. These are injected raw; everything else is escaped.
+     * Public so the Settings live preview applies the same escaping rule.
      */
-    private const RAW_HTML = ['appointment_button'];
+    public const RAW_HTML = ['appointment_button'];
 
     /**
      * Sanitise, merge, then inline the Editorial typography.

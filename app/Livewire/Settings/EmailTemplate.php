@@ -7,6 +7,7 @@ use App\Actions\Settings\EmailTemplate\CreateDefaultsAction;
 use App\Actions\Settings\EmailTemplate\DeleteAction;
 use App\Actions\Settings\EmailTemplate\UpdateAction;
 use App\Models\EmailTemplate as TemplateModel;
+use App\Services\EmailTemplateRenderer;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -73,6 +74,9 @@ class EmailTemplate extends Component
         $this->language = $template->language;
         $this->reply_to = $template->reply_to;
         $this->is_active = (bool) $template->is_active;
+
+        // The body editor is wire:ignore — tell it to re-read its value.
+        $this->dispatch('rich-text:refresh', model: 'body');
     }
 
     public function newTemplate(): void
@@ -83,6 +87,8 @@ class EmailTemplate extends Component
         $this->module = $this->filterModule ?: (string) array_key_first(TemplateModel::modules());
         $this->type = (string) array_key_first(TemplateModel::typesFor($this->module));
         $this->language = 'en';
+
+        $this->dispatch('rich-text:refresh', model: 'body');
     }
 
     /** Create starter templates for every event this module has none for. */
@@ -123,6 +129,7 @@ class EmailTemplate extends Component
 
         $this->subject = $default['subject'];
         $this->body = $default['body'] ?? '';
+        $this->dispatch('rich-text:refresh', model: 'body');
         $this->dispatch('success', ['message' => 'Starter wording loaded — review it, then save.']);
     }
 
@@ -187,6 +194,29 @@ class EmailTemplate extends Component
         }
     }
 
+    /**
+     * Values merged into the live preview. A module that declares a `sample`
+     * class in config/email_templates.php supplies realistic data; otherwise
+     * each variable previews as a readable placeholder.
+     */
+    private function sampleVariables(): array
+    {
+        $class = config("email_templates.{$this->module}.sample");
+        if ($class && method_exists($class, 'sample')) {
+            return app($class)->sample();
+        }
+
+        $values = [];
+        foreach (TemplateModel::variablesFor($this->module, $this->type) as $variable) {
+            $values[$variable] = '['.str_replace('_', ' ', ucwords($variable, '_')).']';
+        }
+        if (array_key_exists('company_name', $values)) {
+            $values['company_name'] = tenant_cache('company_name', '') ?: config('app.name');
+        }
+
+        return $values;
+    }
+
     public function render()
     {
         return view('livewire.settings.email-template', [
@@ -198,6 +228,8 @@ class EmailTemplate extends Component
             'types' => TemplateModel::typesFor($this->module),
             'variables' => TemplateModel::variablesFor($this->module, $this->type),
             'hasDefault' => (bool) TemplateModel::defaultFor($this->module, $this->type),
+            'samples' => $this->sampleVariables(),
+            'rawHtmlVariables' => EmailTemplateRenderer::RAW_HTML,
         ]);
     }
 }

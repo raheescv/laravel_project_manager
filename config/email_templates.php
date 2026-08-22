@@ -1,5 +1,8 @@
 <?php
 
+use App\Services\PropertyAppointment\AppointmentMailData;
+
+
 /*
 |--------------------------------------------------------------------------
 | Email Templates
@@ -50,6 +53,8 @@ return [
     'property_appointment' => [
         'label' => 'Property Appointment',
         'icon' => 'fa-calendar-check-o',
+        // Supplies realistic values for the Settings live preview (->sample()).
+        'sample' => AppointmentMailData::class,
         'types' => [
             'appointment_invite' => [
                 'label' => 'Appointment Invitation',
