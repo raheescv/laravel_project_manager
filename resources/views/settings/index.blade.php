@@ -737,6 +737,12 @@
                                         <i class="demo-pli-calendar-4"></i><span>Working Day</span>
                                     </button>
                                 </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsHoliday" type="button" role="tab"
+                                        aria-selected="false" tabindex="-1">
+                                        <i class="fa fa-calendar-o"></i><span>Holiday Calendar</span>
+                                    </button>
+                                </li>
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button"
@@ -936,6 +942,9 @@
                                 @endcan
                                 <div id="tabsWorkingDay" class="tab-pane" role="tabpanel">
                                     @livewire('settings.working-day')
+                                </div>
+                                <div id="tabsHoliday" class="tab-pane" role="tabpanel">
+                                    @livewire('settings.holiday')
                                 </div>
                                 @can('configuration.settings')
                                     <div id="tabsNavigationOrder" class="tab-pane" role="tabpanel">

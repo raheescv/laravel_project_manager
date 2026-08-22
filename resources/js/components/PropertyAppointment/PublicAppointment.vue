@@ -49,6 +49,8 @@ const property = computed(() => data.value?.property ?? null)
 
 /** Days the business is open at all — the calendar's selectable set. */
 const openDates = computed(() => Object.keys(windows.value).sort())
+/** Company closures, keyed by date — why a day is greyed out. */
+const holidays = computed(() => data.value?.holidays ?? {})
 const hasSlots = computed(() => openDates.value.length > 0)
 
 const activeWindow = computed(() => windows.value[selectedDate.value] ?? null)
@@ -105,6 +107,7 @@ const calendar = computed(() => {
             open: !!windows.value[iso],
             hasTimes: (days.value.find((d) => d.date === iso)?.slots ?? []).length > 0,
             today: iso === today,
+            holiday: holidays.value[iso] ?? null,
         })
     }
     return { label: `${MONTHS[month]} ${year}`, cells }
@@ -640,8 +643,9 @@ onMounted(load)
                                     v-else
                                     type="button"
                                     class="apxp-dy"
-                                    :class="{ sel: cell.iso === selectedDate, today: cell.today }"
+                                    :class="{ sel: cell.iso === selectedDate, today: cell.today, hol: !!cell.holiday }"
                                     :disabled="!cell.open"
+                                    :title="cell.holiday ? 'Closed — ' + cell.holiday : null"
                                     @click="pickDay(cell.iso)"
                                 >
                                     {{ cell.day }}

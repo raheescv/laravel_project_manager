@@ -7,10 +7,12 @@ use App\Actions\PropertyAppointment\Availability\CreateDefaultsAction;
 use App\Actions\PropertyAppointment\Availability\DeleteAction;
 use App\Actions\PropertyAppointment\TimeOff\CreateAction as TimeOffCreateAction;
 use App\Actions\PropertyAppointment\TimeOff\DeleteAction as TimeOffDeleteAction;
+use App\Models\Holiday;
 use App\Models\PropertyAppointment;
 use App\Models\PropertyAppointmentAvailability;
 use App\Models\PropertyAppointmentTimeOff;
 use App\Models\WorkingDay;
+use App\Services\PropertyAppointment\SlotService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -124,6 +126,10 @@ class EmployeeSchedule extends Component
             // employee is already bookable on while the panel above is empty,
             // so the view can state the real hours instead of warning about none.
             'companyHours' => WorkingDay::schedule(),
+            // Company closures ahead. Listed beside this employee's own time
+            // off because both explain the same thing to whoever is looking —
+            // a day with no slots on it — and only one of them is theirs to change.
+            'holidays' => Holiday::datesBetween(now(), now()->addDays(SlotService::appointmentWindowDays())),
         ]);
     }
 }

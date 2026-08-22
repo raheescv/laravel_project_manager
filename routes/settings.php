@@ -19,6 +19,7 @@ use App\Http\Controllers\Settings\DepartmentController;
 use App\Http\Controllers\Settings\DesignationController;
 use App\Http\Controllers\Settings\DocumentTypeController;
 use App\Http\Controllers\Settings\EmailTemplateController;
+use App\Http\Controllers\Settings\HolidayController;
 use App\Http\Controllers\Settings\RackController;
 use App\Http\Controllers\Settings\TailoringCategoryController;
 use App\Http\Controllers\Settings\TailoringMeasurementOptionController;
@@ -81,6 +82,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('list', 'get')->name('list');
         });
         Route::name('working_day::')->prefix('working-day')->controller(WorkingDayController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('configuration.settings');
+        });
+        Route::name('holiday::')->prefix('holiday')->controller(HolidayController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('configuration.settings');
         });
         Route::name('email_template::')->prefix('email-template')

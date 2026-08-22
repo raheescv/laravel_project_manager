@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Property;
 use App\Actions\PropertyAppointment\BookAction;
 use App\Enums\RentOut\AgreementType;
 use App\Http\Controllers\Controller;
+use App\Models\Holiday;
 use App\Models\PropertyAppointment;
 use App\Models\Tenant;
 use App\Models\User;
@@ -59,7 +60,7 @@ class PropertyAppointmentController extends Controller
             ->when(session('branch_id'), fn ($query, $value) => $query->where('branch_id', $value))
             ->get();
 
-        return response()->json($appointments->map(function (PropertyAppointment $appointment) {
+        $events = $appointments->map(function (PropertyAppointment $appointment) {
             $property = $appointment->rentOut?->property;
             // The customer chose how long they need, so the block is as long as
             // they asked for; older bookings fall back to the slot length.
@@ -96,7 +97,38 @@ class PropertyAppointmentController extends Controller
                         : null,
                 ],
             ];
-        }));
+        })->values();
+
+        // Company holidays travel with the appointments so the console can shade
+        // a closed day without a second request. They are background events, not
+        // blocks: nothing is booked on them, they just explain the empty column.
+        // The employee and status filters deliberately do NOT apply — a closure
+        // is the whole company's, so it stays on screen whoever is being viewed.
+        return response()->json($events->concat($this->holidayEvents($request))->all());
+    }
+
+    /**
+     * The holiday shading for a calendar range, as FullCalendar background events.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function holidayEvents(Request $request)
+    {
+        $from = $request->start ? Carbon::parse($request->start) : now()->startOfMonth();
+        $to = $request->end ? Carbon::parse($request->end) : now()->endOfMonth();
+
+        return collect(Holiday::datesBetween($from, $to))->map(fn (string $name, string $date) => [
+            'id' => 'holiday-'.$date,
+            'title' => $name,
+            'start' => $date,
+            // FullCalendar's end is exclusive, so a one-day holiday runs to the
+            // next morning or it paints nothing at all.
+            'end' => Carbon::parse($date)->addDay()->toDateString(),
+            'allDay' => true,
+            'display' => 'background',
+            'classNames' => ['pv-holiday'],
+            'extendedProps' => ['holiday' => true],
+        ])->values();
     }
 
     /**
@@ -270,6 +302,11 @@ class PropertyAppointmentController extends Controller
             // told what is wrong before they submit rather than after.
             'windows' => $windows,
             'busy' => $busy,
+            // Closed dates, so a greyed-out day on the customer's calendar can
+            // say WHY rather than looking like a bug.
+            'holidays' => $bookable
+                ? Holiday::datesBetween(now(), now()->addDays(SlotService::appointmentWindowDays()))
+                : [],
             'notice_hours' => SlotService::minimumNoticeHours(),
             // 12 or 24, so the typed fields label times the way the tenant's
             // own format string does without shipping the format to the client.

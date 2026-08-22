@@ -2,6 +2,7 @@
 
 namespace App\Services\PropertyAppointment;
 
+use App\Models\Holiday;
 use App\Models\PropertyAppointment;
 use App\Models\PropertyAppointmentAvailability;
 use App\Models\PropertyAppointmentTimeOff;
@@ -33,6 +34,9 @@ class SlotService
     public const MINIMUM_NOTICE_HOURS = 4;
 
     public const SLOT_LENGTH_MINUTES = 120;
+
+    /** Holiday lookups already answered this request, keyed by date range. */
+    protected array $holidayCache = [];
 
     /** How many days ahead a customer may book. */
     public static function appointmentWindowDays(): int
@@ -77,6 +81,7 @@ class SlotService
         $timeOffs = $this->timeOffs($employeeId, $from, $to);
         $taken = $this->takenSlots($employeeId, $from, $to, $ignoreAppointmentId);
         $workingDays = $this->workingDayIndexes();
+        $holidays = $this->holidays($from, $to);
         $earliest = now()->addHours(self::minimumNoticeHours());
 
         $slots = [];
@@ -84,6 +89,13 @@ class SlotService
         foreach (CarbonPeriod::create($from, $to) as $day) {
             /** @var Carbon $day */
             if ($workingDays !== null && ! in_array((int) $day->dayOfWeek, $workingDays, true)) {
+                continue;
+            }
+
+            // A company holiday shuts the day whatever the week says, and
+            // whatever hours the employee keeps — it is a closure, not an
+            // absence, so no personal availability can book through it.
+            if (isset($holidays[$day->toDateString()])) {
                 continue;
             }
 
@@ -148,11 +160,16 @@ class SlotService
         }
 
         $workingDays = $this->workingDayIndexes();
+        $holidays = $this->holidays($from, $to);
         $windows = [];
 
         foreach (CarbonPeriod::create($from, $to) as $day) {
             /** @var Carbon $day */
             if ($workingDays !== null && ! in_array((int) $day->dayOfWeek, $workingDays, true)) {
+                continue;
+            }
+
+            if (isset($holidays[$day->toDateString()])) {
                 continue;
             }
 
@@ -251,6 +268,10 @@ class SlotService
 
         if ($start->gt(now()->addDays(self::appointmentWindowDays())->endOfDay())) {
             return $fail('That date is too far ahead. Please choose a time within the next '.self::appointmentWindowDays().' days.');
+        }
+
+        if ($holiday = $this->holidayOn($start)) {
+            return $fail('We are closed on '.$start->format('d M').' for '.$holiday.'. Please choose another date.');
         }
 
         $window = $this->openWindows($employeeId, $start->copy()->startOfDay(), $start->copy()->endOfDay())[$start->toDateString()] ?? null;
@@ -391,6 +412,28 @@ class SlotService
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * Company holidays inside the range, keyed by Y-m-d with the holiday's name.
+     *
+     * Memoised for the life of the request because one booking page asks three
+     * times over the same window — availableSlots(), openWindows() and the
+     * public payload — and the answer cannot change between them.
+     *
+     * @return array<string, string>
+     */
+    protected function holidays(Carbon $from, Carbon $to): array
+    {
+        $key = $from->toDateString().'|'.$to->toDateString();
+
+        return $this->holidayCache[$key] ??= Holiday::datesBetween($from, $to);
+    }
+
+    /** The holiday closing this date, or null when the business is open. */
+    public function holidayOn(Carbon $date): ?string
+    {
+        return $this->holidays($date->copy()->startOfDay(), $date->copy()->startOfDay())[$date->toDateString()] ?? null;
     }
 
     /** @return array<int, Carbon> */

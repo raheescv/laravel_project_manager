@@ -147,6 +147,9 @@
         .apxp-dy .pip{ width:4px; height:4px; border-radius:50%; background:var(--acc); }
         .apxp-dy.sel .pip{ background:#fff; }
         .apxp-dy:disabled .pip{ visibility:hidden; }
+        /* A company closure, struck through so a shut day is visibly different
+           from a day that is merely fully booked. */
+        .apxp-dy.hol{ text-decoration:line-through; opacity:.5; }
         .apxp-legend{ margin-top:13px; font-size:10.5px; color:var(--mut); line-height:1.75; }
         .apxp-legend i{ color:var(--acc); width:14px; }
 

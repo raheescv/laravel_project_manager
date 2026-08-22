@@ -76,7 +76,18 @@
                         <div class="apx-derived">
                             <span class="apx-avatar">{{ \Illuminate\Support\Str::of($employee->name)->substr(0, 2)->upper() }}</span>
                             <div class="flex-grow-1">
-                                <div style="font-size:12.5px;font-weight:700">{{ $employee->name }}</div>
+                                <div style="font-size:12.5px;font-weight:700">
+                                    {{-- Opens in a new tab: the booking in progress on this tab is not
+                                         worth losing to check somebody's diary. --}}
+                                    @can('employee.edit')
+                                        <a href="{{ route('users::employee::view', $employee->id) }}" target="_blank"
+                                            class="text-decoration-none link-primary" title="Open {{ $employee->name }}'s employee page">
+                                            {{ $employee->name }} <i class="fa fa-external-link" style="font-size:9.5px"></i>
+                                        </a>
+                                    @else
+                                        {{ $employee->name }}
+                                    @endcan
+                                </div>
                                 <div style="font-size:10.5px;color:var(--text-3)">{{ $employee->mobile ?: 'No mobile on file' }}</div>
                             </div>
                             @if ($appointment)

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sidebar Redesign — Space &amp; Density Samples</title>
+<link rel="stylesheet" href="vendor/font-awesome/font-awesome.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:'Poppins','Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;padding:22px 22px 60px;transition:background .28s,color .28s}
+[data-theme="light"] body{background:#eceff5;color:#0f172a}
+[data-theme="dark"]  body{background:#07080f;color:#e6e8f2}
+.wrap{max-width:1320px;margin:0 auto}
+
+/* ------------------------------- toolbar ------------------------------- */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:16px}
+.top h1{font-size:1.14rem;font-weight:700;letter-spacing:-.02em}
+.top p{font-size:.76rem;opacity:.6;margin-top:5px;max-width:66ch;line-height:1.55}
+.ctrls{display:flex;gap:8px;align-items:center}
+.btn{font:inherit;font-size:.72rem;font-weight:600;cursor:pointer;padding:.5rem .8rem;border-radius:9px;border:1px solid;
+     transition:transform .16s,background .16s,border-color .16s,color .16s;display:inline-flex;align-items:center;gap:.4rem}
+[data-theme="light"] .btn{background:#fff;border-color:#dde2ec;color:#334155}
+[data-theme="dark"]  .btn{background:#11121d;border-color:#24263a;color:#c7cee0}
+.btn:hover{transform:translateY(-1px)}
+.btn.on{background:#2563eb;border-color:#2563eb;color:#fff}
+
+/* --------------------------------- tabs -------------------------------- */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{font:inherit;cursor:pointer;text-align:start;border-radius:13px;border:1px solid;padding:10px 13px;min-width:172px;
+     transition:transform .16s,border-color .18s,background .18s,box-shadow .18s}
+[data-theme="light"] .tab{background:#fff;border-color:#e3e7f0;box-shadow:0 14px 30px -28px rgba(15,23,42,.55)}
+[data-theme="dark"]  .tab{background:#0d0e18;border-color:#1e2030}
+.tab:hover{transform:translateY(-2px)}
+.tab.on{border-color:#2563eb;box-shadow:0 0 0 1px #2563eb inset}
+.tab b{display:block;font-size:.79rem;font-weight:700;letter-spacing:-.01em}
+[data-theme="light"] .tab b{color:#0f172a}
+[data-theme="dark"]  .tab b{color:#eef1f8}
+.tab i{display:block;font-style:normal;font-size:.66rem;opacity:.55;margin-top:3px;line-height:1.45}
+.tab .k{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.45;margin-bottom:4px;display:block}
+.tab.base .k{color:#dc2626;opacity:.8}
+.tab.pick .k{color:#16a34a;opacity:.9}
+
+/* -------------------------------- stage -------------------------------- */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:18px;align-items:start}
+@media(max-width:1080px){.stage{grid-template-columns:1fr}}
+
+.frame{border-radius:16px;overflow:hidden;position:relative;transition:background .28s,border-color .28s}
+[data-theme="light"] .frame{border:1px solid #e0e5ef;box-shadow:0 30px 60px -45px rgba(15,23,42,.6)}
+[data-theme="dark"]  .frame{border:1px solid #1c1e2c}
+.frame__bar{display:flex;align-items:center;gap:7px;padding:9px 13px;font-size:.66rem;font-weight:600;letter-spacing:.02em}
+[data-theme="light"] .frame__bar{background:#f6f8fc;border-bottom:1px solid #e6eaf3;color:#64748b}
+[data-theme="dark"]  .frame__bar{background:#0d0e18;border-bottom:1px solid #1c1e2c;color:#7c8598}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+.frame__bar .grow{flex:1}
+.metric{font-size:.62rem;font-weight:700;letter-spacing:.02em;padding:3px 8px;border-radius:20px}
+[data-theme="light"] .metric{background:#eaf1fe;color:#1d4ed8}
+[data-theme="dark"]  .metric{background:rgba(96,165,250,.14);color:#93c5fd}
+.metric.warn{background:#fef2f2;color:#dc2626}
+[data-theme="dark"] .metric.warn{background:rgba(248,113,113,.13);color:#f87171}
+
+/* the mock app: sidebar + page */
+.app{display:flex;height:648px;position:relative;isolation:isolate;
+     --bg:#fff;--sur:#f7f8fb;--bd:#e7e9ee;--bd2:#dfe3ea;--txt:#4b5263;--str:#0f172a;--mut:#69707f;--dim:#9aa1ae;
+     --acc:#2563eb;--acc-soft:#eaf1fe;--acc-ink:#fff;--hov:#f2f4f9;--pane:#f7f9fc;--pane-bd:#ebeef4;--page:#f1f3f8;
+     --shadow:0 2px 6px -3px rgba(15,23,42,.3),0 0 0 1px #e7e9ee}
+[data-theme="dark"] .app{--bg:#10121e;--sur:rgba(255,255,255,.04);--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.13);
+     --txt:#c3c9d6;--str:#f2f4f9;--mut:#8d95a7;--dim:#616a7c;--acc:#60a5fa;--acc-soft:rgba(96,165,250,.14);--acc-ink:#0b1220;
+     --hov:rgba(255,255,255,.05);--pane:rgba(255,255,255,.035);--pane-bd:rgba(255,255,255,.075);--page:#0a0b13;
+     --shadow:none}
+.page{flex:1;min-width:0;background:var(--page);padding:20px 22px;transition:background .28s}
+.page h2{font-size:1rem;font-weight:700;color:var(--str);letter-spacing:-.01em}
+.page .sub{font-size:.68rem;color:var(--mut);margin-top:3px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:16px 0}
+.kpi{background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:11px 12px}
+.kpi span{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.kpi b{display:block;font-size:1.02rem;font-weight:700;color:var(--str);margin-top:5px;letter-spacing:-.02em}
+.tbl{background:var(--bg);border:1px solid var(--bd);border-radius:12px;overflow:hidden}
+.tr{display:flex;gap:12px;align-items:center;padding:10px 13px;border-bottom:1px solid var(--bd)}
+.tr:last-child{border-bottom:0}
+.tr.h{background:var(--sur)}
+.ln{height:8px;border-radius:5px;background:var(--bd2);opacity:.75}
+.tr.h .ln{opacity:.5;height:7px}
+.ln.a{flex:2.2}.ln.b{flex:1.4}.ln.c{flex:1}.ln.d{flex:.7}
+.pill{font-size:.6rem;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--acc-soft);color:var(--acc);white-space:nowrap}
+
+/* -------------------------------- spec --------------------------------- */
+.spec{border-radius:16px;padding:16px 17px;position:sticky;top:18px;transition:background .28s,border-color .28s}
+[data-theme="light"] .spec{background:#fff;border:1px solid #e3e7f0;box-shadow:0 22px 46px -40px rgba(15,23,42,.6)}
+[data-theme="dark"]  .spec{background:#0d0e18;border:1px solid #1d1f2e}
+.spec h3{font-size:.9rem;font-weight:700;letter-spacing:-.01em;margin-bottom:2px}
+.spec .lede{font-size:.7rem;opacity:.6;line-height:1.6;margin-bottom:14px}
+.spec dt{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.45;margin-top:13px;margin-bottom:5px}
+.spec dd{font-size:.71rem;line-height:1.65;opacity:.82}
+.spec dd ul{margin:0;padding-inline-start:15px}
+.spec dd li{margin-bottom:3px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:.63rem;font-weight:700;padding:4px 9px;border-radius:8px;margin-inline-end:6px;margin-bottom:5px}
+.b-good{background:#e9f9ef;color:#15803d}[data-theme="dark"] .b-good{background:rgba(34,197,94,.13);color:#4ade80}
+.b-mid{background:#fff6e6;color:#b45309}[data-theme="dark"] .b-mid{background:rgba(245,158,11,.13);color:#fbbf24}
+.b-hard{background:#fdecec;color:#b91c1c}[data-theme="dark"] .b-hard{background:rgba(248,113,113,.13);color:#f87171}
+
+/* ====================================================================== */
+/*  SHARED SIDEBAR ATOMS                                                  */
+/* ====================================================================== */
+.sb{background:var(--bg);color:var(--txt);display:flex;flex-direction:column;position:relative;flex:0 0 auto;
+    border-inline-end:1px solid var(--bd);transition:background .28s,border-color .28s;overflow:visible}
+.scroll{overflow-y:auto;overflow-x:hidden;flex:1;min-height:0}
+.scroll::-webkit-scrollbar{width:5px}
+.scroll::-webkit-scrollbar-thumb{background:rgba(37,99,235,.22);border-radius:9px}
+.logo{width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+      background:var(--str);color:var(--bg);font-weight:800;font-size:.8rem;letter-spacing:-.03em}
+.sb .bt{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.bname{font-size:.8rem;font-weight:700;color:var(--str);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btag{font-size:.55rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:1px}
+.cap{font-size:.55rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
+.who{display:flex;align-items:center;gap:9px;padding:9px 11px;border-top:1px solid var(--bd);background:var(--bg)}
+.who .av{width:27px;height:27px;flex:0 0 27px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#7c3aed);
+         color:#fff;font-size:.62rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.who .wn{min-width:0;flex:1}
+.who b{display:block;font-size:.7rem;font-weight:600;color:var(--str);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who i{font-style:normal;font-size:.58rem;color:var(--dim)}
+.who a{color:var(--dim);font-size:.72rem;text-decoration:none;padding:5px;border-radius:7px}
+.who a:hover{background:var(--hov);color:#dc2626}
+
+/* ====================================================================== */
+/*  0 · TODAY  (faithful repro of the live .luminous-nav Standard skin)    */
+/* ====================================================================== */
+.sb0{width:250px}
+.sb0 .w{margin:.5rem .55rem;padding:.45rem .5rem;background:var(--sur);border:1px solid var(--bd);border-radius:12px;
+        display:flex;align-items:center;gap:.55rem;min-width:0}
+.sb0 .menu{padding:0 .45rem 14px;display:flex;flex-direction:column;gap:.05rem}
+.sb0 .row{display:flex;align-items:center;gap:.55rem;padding:.34rem .5rem;border-radius:11px;font-size:.78rem;
+          font-weight:500;color:var(--txt);cursor:pointer;user-select:none}
+.sb0 .row .lb{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb0 .row>i.fa{width:26px;height:26px;flex:0 0 26px;border-radius:8px;display:inline-flex;align-items:center;
+               justify-content:center;font-size:.74rem;color:var(--mut)}
+.sb0 .row:hover{background:var(--hov);color:var(--acc)}
+.sb0 .row .cv{font-size:.6rem;color:var(--dim);transition:transform .25s}
+.sb0 .grp{margin:.06rem -3px;padding:3px;border:1px solid transparent;border-radius:13px}
+.sb0 .grp.open{background:var(--pane);border-color:var(--pane-bd);margin-block:.3rem}
+.sb0 .grp.open>.row{color:var(--str);font-weight:600;background:transparent}
+.sb0 .grp.open>.row .cv{transform:rotate(180deg)}
+.sb0 .sub{display:none;padding:1px 0 3px}
+.sb0 .grp.open>.sub{display:block}
+.sb0 .sub a{display:block;padding:.34rem .6rem;margin-inline-start:2.05rem;font-size:.78rem;color:var(--txt);
+            text-decoration:none;border-radius:9px}
+.sb0 .sub a:hover{background:var(--hov);color:var(--acc)}
+.sb0 .sub a.on{background:var(--bg);box-shadow:var(--shadow);color:var(--str);font-weight:600}
+
+/* ====================================================================== */
+/*  A · COMPACT LIST — same shape, ~30% tighter, children clustered        */
+/* ====================================================================== */
+.sbA{width:242px}
+.sbA .hd{display:flex;align-items:center;gap:9px;padding:12px 12px 10px;min-width:0}
+.sbA .hd .bt{min-width:0;flex:1;line-height:1.15}
+.sbA .srch{margin:0 10px 8px;display:flex;align-items:center;gap:7px;height:30px;padding:0 9px;border-radius:9px;
+           background:var(--sur);border:1px solid var(--bd);color:var(--dim);font-size:.7rem}
+.sbA .srch kbd{margin-inline-start:auto;font:inherit;font-size:.56rem;font-weight:700;padding:2px 5px;border-radius:5px;
+               background:var(--bg);border:1px solid var(--bd);color:var(--dim)}
+.sbA .menu{padding:0 8px 14px}
+.sbA .sec{font-size:.55rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);
+          padding:11px 8px 5px}
+.sbA .row{display:flex;align-items:center;gap:9px;height:30px;padding:0 8px;border-radius:8px;font-size:.755rem;
+          font-weight:500;color:var(--txt);cursor:pointer;user-select:none}
+.sbA .row>i.fa{width:15px;flex:0 0 15px;text-align:center;font-size:.8rem;color:var(--dim)}
+.sbA .row .lb{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbA .row .cv{font-size:.55rem;color:var(--dim);transition:transform .25s}
+.sbA .row:hover{background:var(--hov);color:var(--str)}
+.sbA .row:hover>i.fa{color:var(--acc)}
+.sbA .grp.open>.row{color:var(--str);font-weight:600}
+.sbA .grp.open>.row>i.fa{color:var(--acc)}
+.sbA .grp.open>.row .cv{transform:rotate(180deg)}
+.sbA .sub{display:none;padding:2px 0 8px;margin-inline-start:15px;border-inline-start:1px solid var(--bd)}
+.sbA .grp.open>.sub{display:block}
+.sbA .sub .cap{display:block;padding:8px 10px 3px}
+.sbA .sub .cap:first-child{padding-top:3px}
+.sbA .sub a{display:flex;align-items:center;height:26px;padding:0 9px;margin-inline-start:8px;font-size:.735rem;
+            color:var(--mut);text-decoration:none;border-radius:7px;position:relative}
+.sbA .sub a:hover{background:var(--hov);color:var(--str)}
+.sbA .sub a.on{background:var(--acc-soft);color:var(--acc);font-weight:600}
+.sbA .sub a.on::before{content:"";position:absolute;inset-inline-start:-9px;top:6px;bottom:6px;width:2px;
+                       border-radius:2px;background:var(--acc)}
+
+/* ====================================================================== */
+/*  B · TWO-PANE RAIL — modules on a rail, the open module owns a pane     */
+/* ====================================================================== */
+.sbB{flex-direction:row;border-inline-end:0}
+.sbB .rail{width:56px;flex:0 0 56px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 0 9px;
+           background:var(--sur);border-inline-end:1px solid var(--bd)}
+.sbB .rail .logo{margin-bottom:9px}
+.sbB .rail .rb{width:38px;height:38px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;
+               color:var(--mut);font-size:.86rem;cursor:pointer;position:relative;transition:background .16s,color .16s}
+.sbB .rail .rb:hover{background:var(--hov);color:var(--str)}
+.sbB .rail .rb.on{background:var(--acc);color:var(--acc-ink);box-shadow:0 6px 14px -8px var(--acc)}
+.sbB .rail .rb .tip{position:absolute;inset-inline-start:calc(100% + 8px);top:50%;transform:translateY(-50%) scale(.94);
+     background:var(--str);color:var(--bg);font-size:.63rem;font-weight:600;padding:4px 8px;border-radius:7px;
+     white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s,transform .14s;z-index:9}
+.sbB .rail .rb:hover .tip{opacity:1;transform:translateY(-50%) scale(1)}
+.sbB .rail .sp{flex:1}
+.sbB .pane{width:206px;flex:0 0 206px;display:flex;flex-direction:column;background:var(--bg);
+           border-inline-end:1px solid var(--bd)}
+.sbB .ph{padding:12px 13px 9px;border-bottom:1px solid var(--bd)}
+.sbB .ph .bt{display:flex;flex-direction:row;align-items:center;gap:7px}
+.sbB .ph h4{font-size:.83rem;font-weight:700;color:var(--str);letter-spacing:-.01em}
+.sbB .ph p{font-size:.6rem;color:var(--dim);margin-top:2px}
+.sbB .srch{margin:9px 11px 4px;display:flex;align-items:center;gap:7px;height:29px;padding:0 9px;border-radius:8px;
+           background:var(--sur);border:1px solid var(--bd);color:var(--dim);font-size:.68rem}
+.sbB .plist{padding:6px 9px 12px}
+.sbB .plist .cap{display:block;padding:10px 8px 4px}
+.sbB .plist .cap:first-child{padding-top:2px}
+.sbB .plist a{display:flex;align-items:center;gap:8px;height:29px;padding:0 9px;border-radius:8px;font-size:.745rem;
+              color:var(--txt);text-decoration:none}
+.sbB .plist a:hover{background:var(--hov);color:var(--str)}
+.sbB .plist a.on{background:var(--acc-soft);color:var(--acc);font-weight:600}
+.sbB .plist a .dt{width:4px;height:4px;border-radius:50%;background:var(--dim);flex:0 0 4px;opacity:.55}
+.sbB .plist a.on .dt{background:var(--acc);opacity:1}
+
+/* ====================================================================== */
+/*  C · ICON RAIL + MEGA FLYOUT — 66px permanent, everything else on demand*/
+/* ====================================================================== */
+.sbC{width:66px;align-items:center;padding:11px 0 9px;gap:3px;background:var(--sur)}
+.sbC .rb{width:42px;height:42px;border-radius:12px;display:flex;flex-direction:column;align-items:center;
+         justify-content:center;gap:3px;color:var(--mut);font-size:.86rem;cursor:pointer;transition:background .16s,color .16s}
+.sbC .rb span{font-size:.48rem;font-weight:700;letter-spacing:.01em;max-width:60px;overflow:hidden;text-overflow:ellipsis;
+              white-space:nowrap}
+.sbC .rb:hover{background:var(--hov);color:var(--str)}
+.sbC .rb.on{background:var(--acc);color:var(--acc-ink)}
+.sbC .sp{flex:1}
+.flyC{position:absolute;inset-inline-start:66px;top:12px;width:412px;z-index:20;background:var(--bg);
+      border:1px solid var(--bd);border-radius:15px;padding:14px 15px 13px;
+      box-shadow:0 30px 60px -34px rgba(15,23,42,.55),0 0 0 1px rgba(15,23,42,.03)}
+[data-theme="dark"] .flyC{box-shadow:0 30px 60px -30px #000}
+.flyC .fh{display:flex;align-items:center;gap:9px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--bd)}
+.flyC .fh .ic{width:30px;height:30px;flex:0 0 30px;border-radius:9px;background:var(--acc-soft);color:var(--acc);
+              display:inline-flex;align-items:center;justify-content:center;font-size:.82rem}
+.flyC .fh h4{font-size:.86rem;font-weight:700;color:var(--str);letter-spacing:-.01em}
+.flyC .fh p{font-size:.62rem;color:var(--dim);margin-top:1px}
+.flyC .cols{column-count:2;column-gap:16px}
+.flyC .blk{break-inside:avoid;margin-bottom:11px}
+.flyC .blk .cap{display:block;padding:0 6px 5px}
+.flyC .blk a{display:flex;align-items:center;gap:8px;height:27px;padding:0 7px;border-radius:7px;font-size:.735rem;
+             color:var(--txt);text-decoration:none}
+.flyC .blk a:hover{background:var(--hov);color:var(--str)}
+.flyC .blk a.on{background:var(--acc-soft);color:var(--acc);font-weight:600}
+.flyC .blk a .dt{width:4px;height:4px;border-radius:50%;background:var(--dim);opacity:.5;flex:0 0 4px}
+.flyC .blk a.on .dt{background:var(--acc);opacity:1}
+
+/* ====================================================================== */
+/*  D · GRID GROUPS — one column of modules, two columns of children       */
+/* ====================================================================== */
+.sbD{width:258px}
+.sbD .hd{display:flex;align-items:center;gap:9px;padding:12px 12px 9px;min-width:0}
+.sbD .hd .bt{flex:1;min-width:0;line-height:1.15}
+.sbD .srch{margin:0 10px 9px;display:flex;align-items:center;gap:7px;height:31px;padding:0 10px;border-radius:9px;
+           background:var(--sur);border:1px solid var(--bd);color:var(--dim);font-size:.7rem}
+.sbD .srch kbd{margin-inline-start:auto;font:inherit;font-size:.56rem;font-weight:700;padding:2px 5px;border-radius:5px;
+               background:var(--bg);border:1px solid var(--bd)}
+.sbD .pins{display:flex;flex-wrap:wrap;gap:5px;padding:0 10px 11px;margin-bottom:2px;border-bottom:1px solid var(--bd)}
+.sbD .pins .cap{width:100%;padding:0 2px 6px}
+.sbD .pins a{font-size:.65rem;font-weight:600;color:var(--txt);text-decoration:none;padding:4px 9px;border-radius:20px;
+             background:var(--sur);border:1px solid var(--bd);display:inline-flex;align-items:center;gap:5px}
+.sbD .pins a:hover{border-color:var(--acc);color:var(--acc)}
+.sbD .menu{padding:8px 8px 14px}
+.sbD .row{display:flex;align-items:center;gap:10px;height:32px;padding:0 8px;border-radius:9px;font-size:.765rem;
+          font-weight:500;color:var(--txt);cursor:pointer;user-select:none}
+.sbD .row>i.fa{width:16px;flex:0 0 16px;text-align:center;font-size:.82rem;color:var(--dim)}
+.sbD .row .lb{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbD .row .n{font-size:.56rem;font-weight:700;color:var(--dim);background:var(--sur);border:1px solid var(--bd);
+             border-radius:20px;padding:1px 6px}
+.sbD .row .cv{font-size:.55rem;color:var(--dim);transition:transform .25s}
+.sbD .row:hover{background:var(--hov);color:var(--str)}
+.sbD .grp{border-radius:12px;border:1px solid transparent}
+.sbD .grp.open{background:var(--pane);border-color:var(--pane-bd);margin:5px 0}
+.sbD .grp.open>.row{color:var(--str);font-weight:600}
+.sbD .grp.open>.row>i.fa{color:var(--acc)}
+.sbD .grp.open>.row .cv{transform:rotate(180deg)}
+.sbD .grp.open>.row .n{display:none}
+.sbD .sub{display:none;padding:1px 7px 8px}
+.sbD .grp.open>.sub{display:block}
+.sbD .sub .cap{display:block;padding:7px 3px 4px}
+.sbD .grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.sbD .grid a{display:flex;align-items:center;height:27px;padding:0 7px;border-radius:7px;font-size:.7rem;
+             color:var(--mut);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbD .grid a:hover{background:var(--bg);color:var(--str)}
+.sbD .grid a.on{background:var(--bg);color:var(--acc);font-weight:600;box-shadow:var(--shadow)}
+.sbD .grid a.wide{grid-column:1/-1}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Sidebar Redesign — space &amp; density directions</h1>
+      <p>The problem: modules like <b>Rent Out</b> and <b>Sales</b> carry 12 children each, so opening one pushes the
+         rest of the menu into a long scroll while the rail itself stays half empty. Four directions below, plus a
+         faithful repro of today's sidebar to compare against. Every number in the frame bar is measured live from the mock.</p>
+    </div>
+    <div class="ctrls">
+      <button class="btn" id="btnTheme"><i class="fa fa-moon-o"></i> Dark</button>
+      <button class="btn" id="btnDir"><i class="fa fa-exchange"></i> RTL</button>
+      <button class="btn" id="btnOpen"><i class="fa fa-list"></i> Toggle Rent Out</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <section class="stage">
+    <div class="frame">
+      <div class="frame__bar">
+        <span class="dot" style="background:#ef6a5e"></span>
+        <span class="dot" style="background:#f5bd4f"></span>
+        <span class="dot" style="background:#61c454"></span>
+        <span class="grow" id="barTitle" style="margin-inline-start:6px"></span>
+        <span class="metric" id="mNav">—</span>
+        <span class="metric" id="mWidth">—</span>
+      </div>
+      <div class="app" id="app"></div>
+    </div>
+    <aside class="spec" id="spec"></aside>
+  </section>
+</div>
+
+<script>
+/* ============================ menu data (real modules) ============================ */
+const MENU = [
+  {k:'dash', n:'Dashboard',    i:'fa-tachometer', sec:'Main',     kids:[]},
+  {k:'rent', n:'Rent Out',     i:'fa-home',       sec:'Property', kids:[
+      {c:'Operations', x:['Booking','Tenant Details','Rentouts']},
+      {c:'Billing',    x:['Payments','Payment Due','Cheque Management','Payment History']},
+      {c:'Charges',    x:['Utilities','Services']},
+      {c:'Reports',    x:['Customer Property','Security Report','Day Book']}]},
+  {k:'psal', n:'Sales',        i:'fa-dollar',     kids:[
+      {c:'Operations', x:['Sales','Booking','Appointments']},
+      {c:'Billing',    x:['Payments','Payment Due','Cheque Management','Payment History']},
+      {c:'Charges',    x:['Services','Service Charge Report']},
+      {c:'Reports',    x:['Customer Property','Security Report','Day Book']}]},
+  {k:'lead', n:'Leads',        i:'fa-filter',     kids:[{c:'', x:['List','Calendar']}]},
+  {k:'appt', n:'Appointments', i:'fa-calendar',   kids:[{c:'', x:['Employee Calendar','List']}]},
+  {k:'mnt',  n:'Maintenance',  i:'fa-wrench',     kids:[{c:'', x:['Registration','Technician']}]},
+  {k:'inv',  n:'Inventory',    i:'fa-cubes',      sec:'Trade',    kids:[
+      {c:'Stock',    x:['List','Product Search','Barcode Cart']},
+      {c:'Counting', x:['Product Check','Stock Check']}]},
+  {k:'sale', n:'Sale',         i:'fa-shopping-cart', kids:[
+      {c:'Sales',   x:['Create','List','Receipts','Item Wise Report']},
+      {c:'Returns', x:['Return Create','Return List','Return Payments']}]},
+  {k:'pur',  n:'Purchase',     i:'fa-cart-plus',  kids:[
+      {c:'Purchases', x:['Create','List','Payments','Item Wise Report']},
+      {c:'Returns',   x:['Return Create','Return List','Return Payments','Return Item Wise Report']}]},
+  {k:'tail', n:'Tailoring',    i:'fa-cut',        kids:[
+      {c:'Orders',  x:['Create Order','Orders','Order Management','Job Completion']},
+      {c:'Reports', x:['Item Wise Report','Tailor Wise Report','Non-Delivery Report']}]},
+  {k:'acc',  n:'Account',      i:'fa-university', sec:'Finance',  kids:[
+      {c:'Ledgers',  x:['Chart Of Account','Day Book','Bank Reconciliation']},
+      {c:'Vouchers', x:['Expense','Income','General Voucher']}]},
+  {k:'day',  n:'Day Session',  i:'fa-sun-o',      kids:[{c:'', x:['Day Management','Day Sessions Report']}]},
+  {k:'emp',  n:'Employee',     i:'fa-users',      sec:'Admin',    kids:[{c:'', x:['List','Commission','Attendance']}]},
+  {k:'usr',  n:'Users',        i:'fa-user',       kids:[{c:'', x:['List','Roles']}]},
+  {k:'log',  n:'Log',          i:'fa-clipboard',  kids:[
+      {c:'Queues', x:['Jobs','Failed Jobs']},
+      {c:'Audit',  x:['Api Log','Inventory','Email Log']},
+      {c:'System', x:['Visitor Analytics','System Health','Log Viewer']}]},
+  {k:'set',  n:'Settings',     i:'fa-cog',        kids:[]},
+];
+
+const ACTIVE_MOD = 'rent', ACTIVE_ITEM = 'Rentouts';
+const flat = m => m.kids.reduce((a,g) => a.concat(g.x), []);
+const count = m => flat(m).length;
+const on = (mk,x) => (mk === ACTIVE_MOD && x === ACTIVE_ITEM) ? ' on' : '';
+
+/* ================================== page mock ================================== */
+const PAGE = `
+<div class="page">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap">
+    <div><h2>Rentouts</h2><div class="sub">Rent Out &rsaquo; Rentouts &middot; 148 active agreements</div></div>
+    <div style="display:flex;gap:7px"><span class="pill">+ New Rentout</span><span class="pill">Export</span></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><span>Active</span><b>148</b></div>
+    <div class="kpi"><span>Due this week</span><b>QAR 96,400</b></div>
+    <div class="kpi"><span>Cheques</span><b>32</b></div>
+    <div class="kpi"><span>Vacant units</span><b>11</b></div>
+  </div>
+  <div class="tbl">
+    <div class="tr h"><div class="ln a"></div><div class="ln b"></div><div class="ln c"></div><div class="ln d"></div></div>
+    ${Array.from({length:9}).map(()=>`<div class="tr"><div class="ln a"></div><div class="ln b"></div><div class="ln c"></div><div class="ln d"></div></div>`).join('')}
+  </div>
+</div>`;
+
+const WHO = `<div class="who"><span class="av">RS</span><span class="wn"><b>Rahees Sadiq</b><i>Administrator</i></span>
+             <a href="#" title="Logout"><i class="fa fa-sign-out"></i></a></div>`;
+const BRAND = `<span class="logo">A</span><span class="bt"><span class="bname">Astra Properties</span>
+               <span class="btag">Doha Branch</span></span>`;
+
+/* ============================ 0 · TODAY (live repro) ============================ */
+function today(openKey){
+  const rows = MENU.map(m => {
+    const isOpen = m.k === openKey && m.kids.length;
+    const head = `<div class="row"><i class="fa ${m.i}"></i><span class="lb">${m.n}</span>
+        ${m.kids.length ? '<i class="fa fa-angle-down cv"></i>' : ''}</div>`;
+    if(!m.kids.length) return `<div class="grp">${head}</div>`;
+    const kids = flat(m).map(x => `<a href="#" class="${on(m.k,x)}">${x}</a>`).join('');
+    return `<div class="grp${isOpen?' open':''}"${isOpen?' id="stress"':''}>${head}<div class="sub">${kids}</div></div>`;
+  }).join('');
+  return `<aside class="sb sb0"><div class="w">${BRAND}</div>
+     <div class="scroll" data-measure><div class="menu">${rows}</div></div>${WHO}</aside>${PAGE}`;
+}
+
+/* ============================== A · COMPACT LIST =============================== */
+function compact(openKey){
+  const rows = MENU.map(m => {
+    const sec = m.sec ? `<div class="sec">${m.sec}</div>` : '';
+    const isOpen = m.k === openKey && m.kids.length;
+    const head = `<div class="row"><i class="fa ${m.i}"></i><span class="lb">${m.n}</span>
+        ${m.kids.length ? '<i class="fa fa-angle-down cv"></i>' : ''}</div>`;
+    if(!m.kids.length) return sec + `<div class="grp">${head}</div>`;
+    const useCaps = count(m) > 6;
+    const kids = m.kids.map(g =>
+        (useCaps && g.c ? `<span class="cap">${g.c}</span>` : '') +
+        g.x.map(x => `<a href="#" class="${on(m.k,x)}">${x}</a>`).join('')).join('');
+    return sec + `<div class="grp${isOpen?' open':''}"${isOpen?' id="stress"':''}>${head}<div class="sub">${kids}</div></div>`;
+  }).join('');
+  return `<aside class="sb sbA">
+      <div class="hd">${BRAND}</div>
+      <div class="srch"><i class="fa fa-search"></i><span>Search menu</span><kbd>&#8984;K</kbd></div>
+      <div class="scroll" data-measure><div class="menu">${rows}</div></div>${WHO}</aside>${PAGE}`;
+}
+
+/* ============================= B · TWO-PANE RAIL =============================== */
+function twoPane(openKey){
+  const m = MENU.find(x => x.k === openKey) || MENU[1];
+  const rail = MENU.map(x => `<span class="rb${x.k===m.k?' on':''}" data-mod="${x.k}">
+      <i class="fa ${x.i}"></i><span class="tip">${x.n}</span></span>`).join('');
+  const body = m.kids.length
+    ? m.kids.map(g => (g.c ? `<span class="cap">${g.c}</span>` : '') +
+        g.x.map(x => `<a href="#" class="${on(m.k,x)}"><span class="dt"></span>${x}</a>`).join('')).join('')
+    : `<a href="#" class="on"><span class="dt"></span>Overview</a>`;
+  return `<aside class="sb sbB">
+      <div class="rail"><span class="logo">A</span><div class="scroll" data-measure
+           style="display:flex;flex-direction:column;align-items:center;gap:3px;width:100%">${rail}</div></div>
+      <div class="pane">
+        <div class="ph"><div class="bt"><h4>${m.n}</h4></div><p>${count(m)||1} screens &middot; Doha Branch</p></div>
+        <div class="srch"><i class="fa fa-search"></i><span>Search in ${m.n}</span></div>
+        <div class="scroll" data-measure><div class="plist" id="stress">${body}</div></div>
+        ${WHO}
+      </div></aside>${PAGE}`;
+}
+
+/* =========================== C · ICON RAIL + FLYOUT ============================ */
+function railFly(openKey){
+  const m = MENU.find(x => x.k === openKey) || MENU[1];
+  const rail = MENU.map(x => `<span class="rb${x.k===m.k?' on':''}" data-mod="${x.k}">
+      <i class="fa ${x.i}"></i><span>${x.n}</span></span>`).join('');
+  const blocks = (m.kids.length ? m.kids : [{c:'',x:['Overview']}]).map(g => `<div class="blk">
+      ${g.c?`<span class="cap">${g.c}</span>`:''}
+      ${g.x.map(x => `<a href="#" class="${on(m.k,x)}"><span class="dt"></span>${x}</a>`).join('')}</div>`).join('');
+  return `<aside class="sb sbC"><span class="logo" style="margin-bottom:9px">A</span>
+      <div class="scroll" data-measure style="display:flex;flex-direction:column;align-items:center;gap:3px;width:100%">
+        ${rail}</div>
+      <span class="rb"><i class="fa fa-cog"></i><span>Settings</span></span></aside>
+    <div class="flyC" id="stress">
+      <div class="fh"><span class="ic"><i class="fa ${m.i}"></i></span>
+        <div><h4>${m.n}</h4><p>${count(m)||1} screens &middot; click a module to switch, Esc to close</p></div></div>
+      <div class="cols">${blocks}</div></div>${PAGE}`;
+}
+
+/* ============================== D · GRID GROUPS ================================ */
+function gridGroups(openKey){
+  const pins = ['Rentouts','Payments','New Sale','Day Book'];
+  const rows = MENU.map(m => {
+    const isOpen = m.k === openKey && m.kids.length;
+    const head = `<div class="row"><i class="fa ${m.i}"></i><span class="lb">${m.n}</span>
+        ${m.kids.length ? `<span class="n">${count(m)}</span><i class="fa fa-angle-down cv"></i>` : ''}</div>`;
+    if(!m.kids.length) return `<div class="grp">${head}</div>`;
+    const kids = m.kids.map(g => (g.c ? `<span class="cap">${g.c}</span>` : '') +
+        `<div class="grid">${g.x.map(x => `<a href="#" class="${on(m.k,x)}${x.length>16?' wide':''}" title="${x}">${x}</a>`).join('')}</div>`).join('');
+    return `<div class="grp${isOpen?' open':''}"${isOpen?' id="stress"':''}>${head}<div class="sub">${kids}</div></div>`;
+  }).join('');
+  return `<aside class="sb sbD">
+      <div class="hd">${BRAND}</div>
+      <div class="srch"><i class="fa fa-search"></i><span>Search or jump to&hellip;</span><kbd>&#8984;K</kbd></div>
+      <div class="pins"><span class="cap">Pinned</span>
+        ${pins.map(p=>`<a href="#"><i class="fa fa-thumb-tack" style="font-size:.55rem"></i>${p}</a>`).join('')}</div>
+      <div class="scroll" data-measure><div class="menu">${rows}</div></div>${WHO}</aside>${PAGE}`;
+}
+
+/* ================================= variants ==================================== */
+const V = [
+{id:'today', tag:'Baseline', flag:'base', name:'0 · Today', blurb:'What is live right now', render:today, groups:true,
+ lede:'A faithful repro of the live <code>.luminous-nav</code> Standard skin, at its real CSS values.',
+ body:`<dt>Where the space goes</dt><dd><ul>
+   <li>Module rows are 37px tall — a 26px icon chip plus padding — so 16 modules alone fill most of a laptop screen.</li>
+   <li>Opening Rent Out injects 12 more 30px rows inline, pushing Sales &rarr; Settings below the fold.</li>
+   <li>Those 12 children are one flat list: Booking, Payments, Utilities and Day Book all read at the same weight.</li>
+   <li>The rail is 250px wide but the widest label needs ~150px — the rest is unused gutter.</li></ul></dd>
+ <dt>Verdict</dt><dd><span class="badge b-hard">Replace</span> The layout, not the styling, is the constraint.</dd>`},
+
+{id:'compact', tag:'Direction A', flag:'', name:'A · Compact List', blurb:'Same shape, ~25% tighter', render:compact, groups:true,
+ lede:'The current pattern, disciplined: flat 15px icons, 30px rows, section headers, a search field, and captions that break the huge groups into meaning.',
+ body:`<dt>What changes</dt><dd><ul>
+   <li>Icon chips &rarr; plain glyphs; rows drop 37px &rarr; 30px, children 30px &rarr; 26px.</li>
+   <li>Modules gain <b>Main / Property / Trade / Finance / Admin</b> headers, so the eye jumps by area.</li>
+   <li>Groups over 6 children get captions (Operations · Billing · Charges · Reports).</li>
+   <li>Sticky search with &#8984;K for people who know the screen name.</li></ul></dd>
+ <dt>Effort</dt><dd><span class="badge b-good">Low</span> Mostly CSS in <code>navigation.blade.php</code>, plus a caption
+   <code>&lt;li&gt;</code> in the four fat section partials. Nifty behaviour untouched.</dd>
+ <dt>Watch out</dt><dd>It is still an accordion: a 12-child module still costs 12 rows of scroll. This makes the
+   sidebar look right without fixing the structural problem.</dd>`},
+
+{id:'twopane', tag:'Direction B', flag:'pick', name:'B · Two-Pane Rail', blurb:'Recommended — children never grow the list', render:twoPane, groups:false,
+ lede:'A 56px module rail plus a 206px pane that belongs to the open module. The module list is a fixed height forever; children live in their own scroll.',
+ body:`<dt>What changes</dt><dd><ul>
+   <li>Every module is one icon on the rail — 16 modules fit without scrolling, always one click away.</li>
+   <li>The pane shows only the current module, titled, with captioned clusters and a scoped search.</li>
+   <li>Rent Out's 12 screens no longer bury Sales, Purchase or Settings — nothing moves when you switch.</li>
+   <li>The pane can be collapsed to give the page an extra 206px when someone needs the width.</li></ul></dd>
+ <dt>Effort</dt><dd><span class="badge b-mid">Medium</span> A real layout change: rail + pane markup, an active-module
+   state (persisted per user), and each <code>nav/sections/*.blade.php</code> split into a rail button and a pane block.
+   The <code>@can</code> guards move as-is, so permissions are unaffected.</dd>
+ <dt>Watch out</dt><dd>Under 992px it must fall back to a drawer. Tooltip labels on the rail are essential —
+   icon-only rails are unusable without them.</dd>`},
+
+{id:'railfly', tag:'Direction C', flag:'', name:'C · Rail + Mega Flyout', blurb:'Maximum page width', render:railFly, groups:false,
+ lede:'Only a 66px labelled rail stays on screen. Choosing a module opens a wide two-column panel over the page, then gets out of the way.',
+ body:`<dt>What changes</dt><dd><ul>
+   <li>The page gains roughly 190px of width against today — real estate for wide tables like Payment History.</li>
+   <li>The flyout is 2 columns, so even a 12-screen module reads in one glance without scrolling.</li>
+   <li>Nifty already ships this in <code>mn--min</code> collapsed mode — this direction makes it the default and widens it.</li></ul></dd>
+ <dt>Effort</dt><dd><span class="badge b-mid">Medium</span> Mostly restyling the existing collapsed-rail popover
+   (multi-column, captions, header) and defaulting the app to collapsed.</dd>
+ <dt>Watch out</dt><dd>You cannot see where you are without opening a panel, and hover panels are fiddly on tablets —
+   it needs click-to-open and click-to-pin. Best as a <b>toggle on top of B</b> rather than the only mode.</dd>`},
+
+{id:'grid', tag:'Direction D', flag:'', name:'D · Grid Groups', blurb:'Fast win — children in two columns', render:gridGroups, groups:true,
+ lede:'Keeps the familiar accordion, but children lay out two per row with captions and a pinned strip on top.',
+ body:`<dt>What changes</dt><dd><ul>
+   <li>12 children become ~7 rows instead of 12 — the fat modules stop dominating the scroll.</li>
+   <li>A count badge on each module tells you how deep it is before you open it.</li>
+   <li>A Pinned strip puts the four screens a user actually lives in above everything else.</li></ul></dd>
+ <dt>Effort</dt><dd><span class="badge b-good">Low&ndash;Medium</span> Largely
+   <code>ul.mininav-content{display:grid;grid-template-columns:1fr 1fr}</code> plus captions in the fat partials;
+   pinning needs a small <code>user_preferences</code> store (the same pattern as column visibility).</dd>
+ <dt>Watch out</dt><dd>Long labels — "Return Item Wise Report", "Cheque Management" — need a full-width span rule or
+   they truncate. Two columns scan slower than one; captions are doing the heavy lifting here.</dd>`},
+];
+
+/* ================================== plumbing =================================== */
+const app=document.getElementById('app'), spec=document.getElementById('spec'),
+      tabs=document.getElementById('tabs'), barTitle=document.getElementById('barTitle'),
+      mNav=document.getElementById('mNav'), mWidth=document.getElementById('mWidth');
+let cur='today', openKey=ACTIVE_MOD, base=null;
+
+tabs.innerHTML = V.map(v=>`<button class="tab ${v.flag}" data-id="${v.id}">
+   <span class="k">${v.tag}</span><b>${v.name.replace(/^\S+ · /,'')}</b><i>${v.blurb}</i></button>`).join('');
+
+function measure(){
+  const sc=[...app.querySelectorAll('[data-measure]')];
+  const navH=Math.max(...sc.map(s=>s.scrollHeight),0);
+  const pageW=Math.round(app.querySelector('.page').getBoundingClientRect().width);
+  if(!base) base={navH,pageW};
+  const dN=navH-base.navH, dW=pageW-base.pageW;
+  mNav.textContent='Nav column '+navH+'px'+(dN?' ('+(dN>0?'+':'')+dN+')':'');
+  mNav.className='metric'+(dN>0?' warn':'');
+  mWidth.textContent='Page '+pageW+'px'+(dW?' ('+(dW>0?'+':'')+dW+')':'');
+  mWidth.className='metric'+(dW<0?' warn':'');
+}
+
+function draw(){
+  const v=V.find(x=>x.id===cur);
+  app.innerHTML=v.render(openKey);
+  spec.innerHTML='<h3>'+v.name+'</h3><div class="lede">'+v.lede+'</div><dl>'+v.body+'</dl>';
+  barTitle.textContent=v.name+'  —  Rent Out '+(v.groups?(openKey?'expanded':'collapsed'):'selected');
+  [...tabs.children].forEach(t=>t.classList.toggle('on',t.dataset.id===cur));
+  document.getElementById('btnOpen').style.display=v.groups?'':'none';
+  measure();
+}
+
+tabs.addEventListener('click',e=>{const t=e.target.closest('.tab'); if(!t)return;
+  cur=t.dataset.id; if(!openKey) openKey=ACTIVE_MOD; draw();});
+
+app.addEventListener('click',e=>{
+  const rb=e.target.closest('[data-mod]');
+  if(rb){ openKey=rb.dataset.mod; draw(); return; }
+  const row=e.target.closest('.row');
+  if(row){ const g=row.closest('.grp'); if(!g)return;
+    const wasOpen=g.classList.contains('open');
+    const idx=[...app.querySelectorAll('.grp')].indexOf(g);
+    const mods=MENU.filter(m=>true);
+    openKey=wasOpen?null:(mods[idx]?mods[idx].k:null); draw(); }
+});
+
+document.getElementById('btnOpen').addEventListener('click',()=>{openKey=openKey?null:ACTIVE_MOD;draw();});
+document.getElementById('btnTheme').addEventListener('click',e=>{
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  e.currentTarget.innerHTML=d?'<i class="fa fa-moon-o"></i> Dark':'<i class="fa fa-sun-o"></i> Light';
+  e.currentTarget.classList.toggle('on',!d);});
+document.getElementById('btnDir').addEventListener('click',e=>{
+  const r=document.documentElement.getAttribute('dir')==='rtl';
+  document.documentElement.setAttribute('dir',r?'ltr':'rtl');
+  e.currentTarget.innerHTML=r?'<i class="fa fa-exchange"></i> RTL':'<i class="fa fa-exchange"></i> LTR';
+  e.currentTarget.classList.toggle('on',!r); measure();});
+
+draw();
+window.addEventListener('resize',measure);
+</script>
+</body>
+</html>

@@ -87,6 +87,30 @@
         .apx .apxc-legend span{ display:inline-flex; align-items:center; gap:6px; }
         .apx .apxc-legend i{ width:10px; height:10px; border-radius:3px; display:inline-block; }
 
+        /* ── company holidays ───────────────────────────────────────── */
+        /* A closure is drawn as a hatched wash rather than a solid block, so a
+           day nobody can book reads as "shut", not as "busy". */
+        .apx .fc .fc-bg-event.pv-holiday{
+            background:repeating-linear-gradient(135deg,
+                color-mix(in srgb, var(--danger), transparent 90%) 0 7px,
+                color-mix(in srgb, var(--danger), transparent 96%) 7px 14px);
+            opacity:1; border-inline-start:2px solid color-mix(in srgb, var(--danger), transparent 45%);
+        }
+        .apx .fc .fc-bg-event.pv-holiday .fc-event-title{
+            font-size:10px; font-weight:800; letter-spacing:.02em; text-transform:uppercase;
+            color:color-mix(in srgb, var(--danger), var(--text) 25%);
+            padding:3px 6px; font-style:normal; white-space:normal;
+        }
+        /* Month and year grids paint the whole cell, so the name goes in a chip
+           pinned to the bottom instead of stretching down the column. */
+        .apx .fc-daygrid-day-bg .fc-bg-event.pv-holiday .fc-event-title,
+        .apx .fc-multimonth-daygrid .fc-bg-event.pv-holiday .fc-event-title{
+            position:absolute; inset-inline:2px; bottom:2px; padding:1px 4px; border-radius:5px;
+            font-size:8.5px; line-height:1.25; overflow:hidden; text-overflow:ellipsis;
+            background:color-mix(in srgb, var(--danger), transparent 86%);
+        }
+        .apx .fc-multimonth-daygrid .fc-bg-event.pv-holiday .fc-event-title{ display:none; }
+
         /* ── event popover ──────────────────────────────────────────── */
         .apx .apxc-pop{
             position:absolute; z-index:40; width:300px; border-radius:var(--r-lg); overflow:hidden;
@@ -179,6 +203,7 @@
             <span><i style="background:var(--success)"></i> Completed</span>
             <span><i style="background:var(--text-3)"></i> Cancelled</span>
             <span><i style="background:var(--danger)"></i> No-show</span>
+            <span><i style="background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--danger),transparent 70%) 0 3px,transparent 3px 6px)"></i> Holiday</span>
         </div>
 
         <div class="apxc-scrim" id="pvScrim"></div>
@@ -272,9 +297,15 @@
             },
             eventDidMount: function (info) {
                 const p = info.event.extendedProps;
+                if (p.holiday) {
+                    info.el.setAttribute('title', 'Closed — ' + info.event.title);
+                    return;
+                }
                 info.el.setAttribute('title', `${p.reference_no} — ${p.customer || ''}\n${p.status_label}`);
             },
             eventClick: function (info) {
+                // Background events carry no appointment, so there is nothing to open.
+                if (info.event.extendedProps.holiday) return;
                 info.jsEvent.preventDefault();
                 openPop(info);
             },

@@ -160,6 +160,22 @@
                     </div>
                 </div>
                 <div class="apx-panel-b">
+                    {{-- Company closures first: they are not this employee's to
+                         remove, so they are stated rather than offered as rows. --}}
+                    @if (count($holidays))
+                        <div class="apx-kv">
+                            <div class="k">Holidays</div>
+                            <div class="v d-flex gap-2 flex-wrap">
+                                @foreach ($holidays as $date => $holidayName)
+                                    <span class="apx-chip chip-cancelled" wire:key="holiday-{{ $date }}"
+                                        title="Company holiday &mdash; set in Settings &rarr; Holiday Calendar">
+                                        {{ \Carbon\Carbon::parse($date)->format('d M') }} &middot; {{ $holidayName }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                     @forelse ($timeOffs as $off)
                         <div class="apx-kv" wire:key="off-{{ $off->id }}">
                             <div class="k">{{ $off->date->format('d M Y') }}</div>

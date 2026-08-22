@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 
-class WorkingDayController extends Controller
+class HolidayController extends Controller
 {
     public function index()
     {
-        return view('settings.working-day.index');
+        return view('settings.holiday.index');
     }
 }
