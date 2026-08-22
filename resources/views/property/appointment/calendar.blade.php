@@ -140,8 +140,13 @@
             <span class="apxc-right">
                 {{-- Salesmen who already hold appointments are rendered up front so
                      the common choice needs no request; focusing the field loads
-                     every employee from the shared users list endpoint. --}}
+                     every employee from the shared users list endpoint.
+
+                     The empty first option matters: without it the browser
+                     pre-selects the first salesman and the calendar opens looking
+                     filtered to one person instead of showing everybody. --}}
                 <select id="pvSalesmanFilter" aria-label="Salesman" placeholder="All salesmen">
+                    <option value="" selected></option>
                     @foreach ($salesmen as $salesman)
                         <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
                     @endforeach
@@ -224,6 +229,9 @@
 
         const calendar = new FullCalendar.Calendar(el, {
             initialView: phone() ? 'timeGridDay' : 'timeGridWeek',
+            // The working week here starts on Saturday, so the week and month
+            // grids are laid out Sat → Fri rather than FullCalendar's Sunday.
+            firstDay: 6,
             headerToolbar: false,
             height: '100%',
             expandRows: true,
