@@ -30,8 +30,10 @@ class Calendar extends Component
             return [
                 'id' => $lead->id,
                 'title' => trim(($lead->name ?? '').' - '.($lead->mobile ?? '').' - '.($lead->assignee?->name ?? '')),
-                'start' => $start->toIso8601String(),
-                'end' => $end->toIso8601String(),
+                // Wall-clock, no offset: FullCalendar draws in the viewer's
+                // device timezone and would otherwise shift every meeting.
+                'start' => $start->format('Y-m-d\TH:i:s'),
+                'end' => $end->format('Y-m-d\TH:i:s'),
                 'url' => route('property::lead::edit', $lead->id),
                 'classNames' => [$this->cssClass($lead->status)],
                 'extendedProps' => [

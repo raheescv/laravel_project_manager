@@ -213,6 +213,11 @@
         const scrim = document.getElementById('pvScrim');
         const phone = () => window.matchMedia('(max-width: 767.98px)').matches;
 
+        /* Events arrive as plain wall-clock times (the branch's clock), so the
+           device clock is only trustworthy after correcting for the gap to the
+           server's — otherwise "now" and "today" land in the wrong place. */
+        const serverSkewMs = new Date('{{ now()->format('Y-m-d\TH:i:s') }}').getTime() - Date.now();
+
         let salesmanId = '';
         let status = '';
         let picked = null;
@@ -236,6 +241,7 @@
             height: '100%',
             expandRows: true,
             nowIndicator: true,
+            now: () => new Date(Date.now() + serverSkewMs),
             stickyHeaderDates: true,
             allDaySlot: false,
             dayMaxEvents: true,

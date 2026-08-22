@@ -69,8 +69,13 @@ class PropertyAppointmentController extends Controller
             return [
                 'id' => $appointment->id,
                 'title' => trim(($appointment->customer?->name ?? 'Appointment').' — '.($property?->number ?? '')),
-                'start' => $appointment->scheduled_at?->toIso8601String(),
-                'end' => $end?->toIso8601String(),
+                // A slot is a wall-clock time in the branch's day, not an
+                // instant on a world clock, so the times go out WITHOUT a
+                // timezone offset. FullCalendar renders in the viewer's device
+                // timezone, and an offset would slide every block by the gap
+                // between that device and the server.
+                'start' => $appointment->scheduled_at?->format('Y-m-d\TH:i:s'),
+                'end' => $end?->format('Y-m-d\TH:i:s'),
                 'classNames' => ['pv-event-'.str_replace('_', '-', $appointment->status)],
                 'extendedProps' => [
                     'reference_no' => $appointment->reference_no,
