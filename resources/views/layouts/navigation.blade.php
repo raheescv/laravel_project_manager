@@ -10,6 +10,13 @@
 
         /* ---------- palette tokens (light-first, dark overrides below) ---------- */
         .luminous-nav {
+            /* Nifty underlines every active nav link with a dotted rule
+               (--nf-mainnav-link-active-underline). Soft Card marks the active
+               child with the raised pill instead, so switch it off at the
+               variable rather than fighting the text-decoration declaration.
+               Set once here: the skin blocks below only redefine --ln-* tokens. */
+            --nf-mainnav-link-active-underline: none;
+
             --ln-primary: #2563eb;
             --ln-secondary: #2563eb;
 
@@ -32,11 +39,11 @@
 
             --ln-active-bg: #eaf1fe;
             --ln-active-color: #1d4ed8;
-            --ln-accent-bar: #2563eb;
 
-            --ln-sub-line: #e7e9ee;
-            --ln-sub-dot: #d1d5db;
-            --ln-sub-dot-ring: #ffffff;
+            --ln-pane: #f7f9fc;
+            --ln-pane-border: #eceff5;
+            --ln-sub-active-bg: #ffffff;
+            --ln-sub-active-shadow: 0 2px 6px -3px rgba(15, 23, 42, 0.30), 0 0 0 1px #e7e9ee;
 
             --ln-scrollbar: rgba(37, 99, 235, 0.22);
             --ln-scrollbar-hover: rgba(37, 99, 235, 0.42);
@@ -81,11 +88,11 @@
 
             --ln-active-bg: rgba(96, 165, 250, 0.13);
             --ln-active-color: #93c5fd;
-            --ln-accent-bar: #60a5fa;
 
-            --ln-sub-line: rgba(255, 255, 255, 0.10);
-            --ln-sub-dot: #475569;
-            --ln-sub-dot-ring: #111420;
+            --ln-pane: rgba(255, 255, 255, 0.035);
+            --ln-pane-border: rgba(255, 255, 255, 0.075);
+            --ln-sub-active-bg: rgba(96, 165, 250, 0.16);
+            --ln-sub-active-shadow: none;
 
             --ln-scrollbar: rgba(96, 165, 250, 0.3);
             --ln-scrollbar-hover: rgba(96, 165, 250, 0.55);
@@ -131,10 +138,10 @@
             --ln-hover-bg: #f5f5f6;
             --ln-active-bg: #f3f3f8;
             --ln-active-color: #111114;
-            --ln-accent-bar: #4f46e5;
-            --ln-sub-line: #ededf0;
-            --ln-sub-dot: #d4d4d8;
-            --ln-sub-dot-ring: #ffffff;
+            --ln-pane: #fafafb;
+            --ln-pane-border: #ededf0;
+            --ln-sub-active-bg: #ffffff;
+            --ln-sub-active-shadow: 0 2px 6px -3px rgba(17, 17, 20, 0.28), 0 0 0 1px #ececef;
             --ln-scrollbar: rgba(17, 17, 20, 0.18);
             --ln-scrollbar-hover: rgba(17, 17, 20, 0.34);
             --ln-popover-bg: #ffffff;
@@ -169,10 +176,10 @@
             --ln-hover-bg: rgba(255, 255, 255, 0.05);
             --ln-active-bg: rgba(255, 255, 255, 0.07);
             --ln-active-color: #fafafa;
-            --ln-accent-bar: #a5b4fc;
-            --ln-sub-line: rgba(255, 255, 255, 0.08);
-            --ln-sub-dot: #3f3f46;
-            --ln-sub-dot-ring: #0b0b0e;
+            --ln-pane: rgba(255, 255, 255, 0.04);
+            --ln-pane-border: rgba(255, 255, 255, 0.08);
+            --ln-sub-active-bg: rgba(255, 255, 255, 0.09);
+            --ln-sub-active-shadow: none;
             --ln-scrollbar: rgba(255, 255, 255, 0.16);
             --ln-scrollbar-hover: rgba(255, 255, 255, 0.3);
             --ln-popover-bg: #121216;
@@ -207,10 +214,10 @@
             --ln-hover-bg: #f5eee0;
             --ln-active-bg: linear-gradient(135deg, rgba(180, 140, 72, 0.18), rgba(150, 110, 50, 0.08));
             --ln-active-color: #8a6a2c;
-            --ln-accent-bar: linear-gradient(180deg, #d2ab5e, #a87d36);
-            --ln-sub-line: #ece1cf;
-            --ln-sub-dot: #d9c8a9;
-            --ln-sub-dot-ring: #fbf8f2;
+            --ln-pane: #fbf6ec;
+            --ln-pane-border: #eee5d5;
+            --ln-sub-active-bg: #fffdf9;
+            --ln-sub-active-shadow: 0 2px 6px -3px rgba(120, 92, 40, 0.30), 0 0 0 1px #ece1cf;
             --ln-scrollbar: rgba(168, 125, 54, 0.28);
             --ln-scrollbar-hover: rgba(168, 125, 54, 0.48);
             --ln-popover-bg: #fffdf9;
@@ -245,10 +252,10 @@
             --ln-hover-bg: rgba(214, 182, 120, 0.10);
             --ln-active-bg: rgba(214, 182, 120, 0.15);
             --ln-active-color: #ecd6a2;
-            --ln-accent-bar: linear-gradient(180deg, #e7cf94, #c2a05a);
-            --ln-sub-line: rgba(214, 182, 120, 0.18);
-            --ln-sub-dot: #6f6452;
-            --ln-sub-dot-ring: #16120c;
+            --ln-pane: rgba(214, 182, 120, 0.07);
+            --ln-pane-border: rgba(214, 182, 120, 0.17);
+            --ln-sub-active-bg: rgba(214, 182, 120, 0.16);
+            --ln-sub-active-shadow: none;
             --ln-scrollbar: rgba(214, 182, 120, 0.3);
             --ln-scrollbar-hover: rgba(214, 182, 120, 0.5);
             --ln-popover-bg: #16120c;
@@ -379,13 +386,13 @@
         .luminous-nav .mainnav__menu > .nav-item > .nav-link {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.32rem 0.45rem !important;
-            margin: 0.06rem 0;
-            border-radius: 9px;
+            gap: 0.55rem;
+            padding: 0.34rem 0.5rem !important;
+            margin: 0;
+            border-radius: 11px;
             color: var(--ln-text) !important;
             font-size: 0.78rem;
-            font-weight: 600;
+            font-weight: 500;
             letter-spacing: 0;
             position: relative;
             min-width: 0;
@@ -398,18 +405,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-
-        /* left rail accent — active only, clean */
-        .luminous-nav .mainnav__menu > .nav-item > .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: -0.42rem;
-            top: 24%;
-            bottom: 24%;
-            width: 3px;
-            border-radius: 0 3px 3px 0;
-            background: var(--ln-accent-bar);
         }
 
         .luminous-nav .mainnav__menu > .nav-item > .nav-link:hover {
@@ -443,17 +438,17 @@
         /* ============================ ICON CHIPS (uniform) ============================= */
         .luminous-nav .mainnav__menu > .nav-item > .nav-link > .fa,
         .luminous-nav .mainnav__menu > .nav-item > .nav-link > i.fa {
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
             flex-shrink: 0;
             display: inline-flex !important;
             align-items: center;
             justify-content: center;
             background: var(--ln-chip-bg);
             border: 1px solid var(--ln-chip-border);
-            border-radius: 7px;
+            border-radius: 8px;
             color: var(--ln-chip-color);
-            font-size: 0.72rem !important;
+            font-size: 0.74rem !important;
             line-height: 1 !important;
             margin: 0 !important;
             transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
@@ -461,6 +456,7 @@
 
         .luminous-nav .mainnav__menu > .nav-item > .nav-link:hover > .fa,
         .luminous-nav .mainnav__menu > .nav-item > .nav-link:hover > i.fa {
+            background: var(--ln-hover-bg);
             color: var(--ln-primary);
         }
 
@@ -472,13 +468,68 @@
             box-shadow: var(--ln-glow);
         }
 
-        /* ============================ SUBMENU (tree) ============================= */
+        /* ====================== OPEN GROUP PANEL (Soft Card) ======================
+           An expanded parent and its children read as ONE tinted block. That
+           grouping is what replaces the old dashed connector line and node dots.
+           Bootstrap toggles .show on .mininav-content, so :has() is the reliable
+           "is open" signal. Every has-sub item carries the padding and the
+           negative inline margin at rest, so opening only fades in a background
+           and a border — rows never shift sideways.
+           Scoped to __top-content so the Logout group at the bottom is untouched,
+           and switched off in the collapsed rail (submenu is a popover there).
+           ====================================================================== */
+        .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item.has-sub {
+            margin: 0.06rem -3px;
+            padding: 3px;
+            border: 1px solid transparent;
+            border-radius: 13px;
+            transition: background 0.2s, border-color 0.2s, margin 0.2s;
+        }
+        .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item.has-sub:has(> .mininav-content.show),
+        .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item.has-sub:has(> .mininav-content.collapsing) {
+            background: var(--ln-pane);
+            border-color: var(--ln-pane-border);
+            margin-block: 0.3rem;
+        }
+
+        /* the parent row rides on the panel instead of carrying its own pill */
+        .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item.has-sub:has(> .mininav-content.show) > .nav-link,
+        .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item.has-sub:has(> .mininav-content.collapsing) > .nav-link {
+            background: transparent;
+            color: var(--ln-text-strong) !important;
+            font-weight: 600;
+        }
+
+        /* ============================ SUBMENU ============================= */
         .luminous-nav .mininav-content.nav {
-            margin: 0.1rem 0 0.25rem 1.4rem !important;
-            padding: 0.1rem 0 0.1rem 0.65rem !important;
             position: relative;
-            border-left: 1.5px solid var(--ln-sub-line);
             list-style: none;
+        }
+
+        /* Nifty draws the submenu's dashed connector itself, via
+           border-inline-start plus a margin-inline-start marked !important at
+           specificity (0,6,0) — which is why the old `border-left` here never
+           actually did anything. Soft Card replaces that connector with the
+           group panel, so the override has to outrank Nifty on its own terms:
+           .root in the selector, logical properties (keeps RTL correct), and
+           Nifty's own media split, since it guards with :not(.mn--min) only
+           above 992px. The collapsed rail is left alone — there the submenu is
+           a Popper-positioned flyout and must keep its own offset. */
+        @media (min-width: 992px) {
+            .root:not(.mn--min) .luminous-nav .mainnav__menu > .nav-item.has-sub > .mininav-content.nav {
+                border-inline-start: 0 !important;
+                margin-block: 0.05rem 0.1rem !important;
+                margin-inline: 2.375rem 0 !important;
+                padding: 0 0.1rem 0.05rem 0 !important;
+            }
+        }
+        @media (max-width: 991.98px) {
+            .root .luminous-nav .mainnav__menu > .nav-item.has-sub > .mininav-content.nav {
+                border-inline-start: 0 !important;
+                margin-block: 0.05rem 0.1rem !important;
+                margin-inline: 2.55rem 0 !important;
+                padding: 0 0.1rem 0.05rem 0 !important;
+            }
         }
         .luminous-nav .mininav-content,
         .luminous-nav .mininav-content .nav-item { list-style: none; }
@@ -487,12 +538,12 @@
 
         .luminous-nav .mininav-content .nav-item > .nav-link {
             display: block;
-            padding: 0.26rem 0.5rem !important;
-            margin: 0.02rem 0;
-            border-radius: 7px;
+            padding: 0.28rem 0.55rem !important;
+            margin: 0.04rem 0;
+            border-radius: 8px;
             color: var(--ln-text-muted) !important;
             font-size: 0.745rem;
-            font-weight: 600;
+            font-weight: 500;
             position: relative;
             white-space: nowrap;
             overflow: hidden;
@@ -500,36 +551,16 @@
             transition: background 0.18s, color 0.18s;
         }
 
-        /* node dot sitting on the tree line */
-        .luminous-nav .mininav-content .nav-item > .nav-link::before {
-            content: '';
-            position: absolute;
-            left: -0.73rem;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--ln-sub-dot);
-            border: 1.5px solid var(--ln-sub-dot-ring);
-            transition: background 0.18s, box-shadow 0.18s, transform 0.18s;
-        }
-
         .luminous-nav .mininav-content .nav-item > .nav-link:hover {
             background: var(--ln-hover-bg);
             color: var(--ln-active-color) !important;
         }
-        .luminous-nav .mininav-content .nav-item > .nav-link:hover::before {
-            background: var(--ln-primary);
-        }
 
         .luminous-nav .mininav-content .nav-item > .nav-link.active {
+            background: var(--ln-sub-active-bg);
+            box-shadow: var(--ln-sub-active-shadow);
             color: var(--ln-active-color) !important;
-            font-weight: 800;
-        }
-        .luminous-nav .mininav-content .nav-item > .nav-link.active::before {
-            background: var(--ln-primary);
-            box-shadow: 0 0 0 3px var(--ln-active-bg);
+            font-weight: 600;
         }
 
         /* hide legacy popper arrow inside inline sub-list (tree line replaces it) */
@@ -669,6 +700,14 @@
             .mn--min .luminous-nav .mainnav__menu > .nav-item > .nav-link { min-height: 40px; }
             .mn--min.tm--expanded-hd .content__header { border-bottom-left-radius: 0 !important; }
             .mn--min.tm--expanded-hd .content__header::before { display: none !important; }
+        }
+
+        /* collapsed rail — no group panel; the submenu flies out as a popover */
+        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item.has-sub {
+            background: transparent !important;
+            border-color: transparent !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         /* collapsed rail — the icon CHIP is the only visual; strip the pill/accent */

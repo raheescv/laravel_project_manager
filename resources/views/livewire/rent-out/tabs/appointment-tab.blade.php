@@ -1,32 +1,118 @@
 <div class="apx">
     <x-property-appointment.premium />
 
+    @once
+        <style>
+        .apx .apx-employee-select + .ts-wrapper .ts-control {
+            border-radius: 9px;
+            border-color: var(--border-strong);
+            background: var(--surface);
+            min-height: 36px;
+            font-size: 12.5px;
+        }
+
+        .apx .apx-employee-select + .ts-wrapper.focus .ts-control {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .14);
+        }
+
+        /* The tabs card is overflow-hidden for its rounded corners, so the list
+           is parented to <body> instead of being clipped inside it. Being out of
+           the card also puts it out of the card's stacking context, hence the
+           explicit width/position handling TomSelect does and the z-index that
+           keeps it above the sticky page chrome. */
+        .ts-dropdown.apx-employee-dropdown {
+            z-index: 1080;
+            font-size: 12.5px;
+        }
+
+        .ts-dropdown.apx-employee-dropdown .ts-dropdown-content {
+            max-height: 320px;
+        }
+        </style>
+    @endonce
+
     @php
         $rentOut = $this->rentOut;
         $appointment = $this->appointment;
+        $employee = $this->employee;
     @endphp
 
-    @if (! $rentOut?->salesman_id)
-        {{-- salesman_id is nullable on rent_outs: with no salesman there is no
-             availability to offer, so the scheduler cannot run at all. --}}
-        <div class="apx-alert alert-warn">
-            <i class="fa fa-user-times lead"></i>
-            <div>
-                <div class="t">No salesman on this agreement</div>
-                <div class="s">
-                    <code class="apx-codev">salesman_id</code> is empty, so there is no availability to offer and
-                    nobody to carry out the appointment. Assign a salesman to this agreement and the scheduler
-                    becomes available here.
+    {{-- The employee is chosen HERE, on the appointment, not inherited from the
+         agreement: whoever shows a property is routinely not whoever owns the
+         lease. Everything below — the slot grid, the link, the diary the booking
+         lands in — follows this one choice. --}}
+    <div class="apx-panel mb-3">
+        <div class="apx-panel-h">
+            <span class="apx-ico"><i class="fa fa-user"></i></span>
+            <div class="flex-grow-1">
+                <h4>Employee</h4>
+                <div class="sub">Who will carry out this appointment</div>
+            </div>
+            @if ($employee)
+                <span class="apx-chip chip-scheduled"><span class="dot"></span> Assigned</span>
+            @endif
+        </div>
+        <div class="apx-panel-b">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="apx-sect">Employee</div>
+                    <div wire:ignore>
+                        <select id="apxEmployeeId" class="apx-employee-select" placeholder="Search and select employee…">
+                            <option value=""></option>
+                            @if ($employee)
+                                <option value="{{ $employee->id }}" selected>{{ $employee->name }}</option>
+                            @endif
+                        </select>
+                    </div>
+                    <div class="apx-hint">
+                        Slots come from this person's own weekly availability, or the company week
+                        from Settings &rarr; Working Day when they have none of their own.
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    @if ($employee)
+                        <div class="apx-sect">Selected</div>
+                        <div class="apx-derived">
+                            <span class="apx-avatar">{{ \Illuminate\Support\Str::of($employee->name)->substr(0, 2)->upper() }}</span>
+                            <div class="flex-grow-1">
+                                <div style="font-size:12.5px;font-weight:700">{{ $employee->name }}</div>
+                                <div style="font-size:10.5px;color:var(--text-3)">{{ $employee->mobile ?: 'No mobile on file' }}</div>
+                            </div>
+                            @if ($appointment)
+                                <span class="apx-chip chip-scheduled"><span class="dot"></span> On this appointment</span>
+                            @endif
+                        </div>
+                        @if ($appointment?->scheduled_at)
+                            <div class="apx-hint">
+                                Changing this hands the confirmed slot to someone else &mdash; it is refused if
+                                their diary is not clear at that time.
+                            </div>
+                        @endif
+                    @else
+                        <div class="apx-alert alert-warn mb-0">
+                            <i class="fa fa-user-times lead"></i>
+                            <div>
+                                <div class="t">No employee chosen yet</div>
+                                <div class="s">Pick who is carrying out this appointment and the scheduler opens below.</div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
+    </div>
+
+    @if (! $employee)
+        {{-- Nothing further can be offered: there is no diary to read slots
+             from and nobody for the customer's link to belong to. --}}
     @elseif (! $appointment)
         <div class="apx-empty">
             <div class="art"><i class="fa fa-paper-plane-o"></i></div>
             <h3>No appointment link sent yet</h3>
             <p>
                 Send {{ $rentOut->account?->name ?? 'the customer' }} a secure link and they will choose a time
-                from {{ $rentOut->salesman?->name }}'s availability. The confirmed slot appears here as soon as they book.
+                from {{ $employee->name }}'s availability. The confirmed slot appears here as soon as they book.
             </p>
             <div class="d-flex gap-2 flex-wrap justify-content-center">
                 @can('property appointment.send link')
@@ -36,29 +122,18 @@
                 @endcan
                 @can('property appointment.create')
                     <button type="button" class="apx-btn apx-btn-ghost" wire:click="$toggle('showSlotPicker')">
-                        <i class="fa fa-calendar-plus-o"></i> Book on their behalf
+                        <i class="fa fa-calendar-o"></i> Book on their behalf
                     </button>
                 @endcan
             </div>
         </div>
 
         <div class="row g-3 mt-1 pt-3" style="border-top:1px solid var(--border)">
-            <div class="col-md-5">
-                <div class="apx-sect">Salesman</div>
-                <div class="apx-derived">
-                    <span class="apx-avatar">{{ \Illuminate\Support\Str::of($rentOut->salesman?->name)->substr(0, 2)->upper() }}</span>
-                    <div class="flex-grow-1">
-                        <div style="font-size:12.5px;font-weight:700">{{ $rentOut->salesman?->name }}</div>
-                        <div style="font-size:10.5px;color:var(--text-3)">{{ $rentOut->salesman?->mobile }}</div>
-                    </div>
-                    <span class="apx-chip chip-cancelled"><i class="fa fa-lock"></i> From agreement</span>
-                </div>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="apx-sect">Link valid until</div>
                 <input type="date" class="form-control form-control-sm" wire:model="linkValidUntil">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-8">
                 <div class="apx-sect">Email template</div>
                 <div class="apx-derived">
                     <i class="fa fa-envelope-o" style="color:var(--brand)"></i>
@@ -100,7 +175,7 @@
                     <div class="bc-b">
                         <div class="apx-kv"><div class="k">Reference</div><div class="v">{{ $appointment->reference_no }}</div></div>
                         <div class="apx-kv"><div class="k">Customer</div><div class="v">{{ $appointment->customer?->name }} &middot; {{ $appointment->customer?->mobile }}</div></div>
-                        <div class="apx-kv"><div class="k">Salesman</div><div class="v">{{ $appointment->salesman?->name }}</div></div>
+                        <div class="apx-kv"><div class="k">Employee</div><div class="v">{{ $appointment->employee?->name }}</div></div>
                         <div class="apx-kv"><div class="k">Property</div><div class="v">{{ $rentOut->property?->number }}</div></div>
                         @if ($appointment->booked_at)
                             <div class="apx-kv">
@@ -217,14 +292,14 @@
     @endif
 
     {{-- Staff-side slot picker (book on the customer's behalf / reschedule) --}}
-    @if ($showSlotPicker && $rentOut?->salesman_id)
+    @if ($showSlotPicker && $employee)
         @php $slots = $this->slots; @endphp
         <div class="apx-panel mt-3">
             <div class="apx-panel-h">
                 <span class="apx-ico"><i class="fa fa-clock-o"></i></span>
                 <div class="flex-grow-1">
                     <h4>Choose a slot</h4>
-                    <div class="sub">{{ $rentOut->salesman?->name }}'s availability &middot; {{ config('app.timezone') }}</div>
+                    <div class="sub">{{ $employee->name }}'s availability &middot; {{ config('app.timezone') }}</div>
                 </div>
                 <button type="button" class="apx-btn apx-btn-ghost" wire:click="$toggle('showSlotPicker')">
                     <i class="fa fa-times"></i>
@@ -237,9 +312,9 @@
                         <div>
                             <div class="t">No slots available</div>
                             <div class="s">
-                                {{ $rentOut->salesman?->name }} has no bookable hours in the next
+                                {{ $employee->name }} has no bookable hours in the next
                                 {{ \App\Services\PropertyAppointment\SlotService::appointmentWindowDays() }} days.
-                                Check the company hours in Settings → Working Day, or set this salesman's own
+                                Check the company hours in Settings → Working Day, or set this employee's own
                                 weekly availability on their employee page.
                             </div>
                         </div>
@@ -271,7 +346,7 @@
                     <div class="d-flex justify-content-end mt-3">
                         <button type="button" class="apx-btn apx-btn-primary" wire:click="bookSlot"
                             @disabled(blank($selectedSlot))>
-                            <i class="fa fa-calendar-check-o"></i> Confirm appointment
+                            <i class="fa fa-check-circle"></i> Confirm appointment
                         </button>
                     </div>
                 @endif
@@ -279,3 +354,78 @@
         </div>
     @endif
 </div>
+
+@script
+<script>
+    /*
+     * The whole body is one IIFE on purpose. Livewire hands a script block to
+     * Alpine.evaluate() as an EXPRESSION, and Alpine only wraps it in an async
+     * IIFE of its own when the text literally starts with `let`, `const` or
+     * `if (`. Anything else — a comment first, as this block once had — is
+     * compiled as `__self.result = <body>` and dies on the first statement with
+     * "Unexpected token 'const'". An IIFE is a valid expression either way.
+     *
+     * Nothing in here may contain an at-sign followed by a directive name
+     * either: Blade parses the comment too, and the word for this very block
+     * written out in full closed it early and rendered the component empty.
+     *
+     * Inside: the picker sits behind wire:ignore so TomSelect survives every
+     * re-render, which also means Livewire never sees the change itself — hence
+     * the manual $wire.set. The sync event is the other direction: when the
+     * server refuses a reassignment (the new person's diary is not clear) it
+     * sends back who is ACTUALLY on the appointment, and the control is put back
+     * silently so the name on screen is never a person the appointment lacks.
+     */
+    (() => {
+        const el = document.getElementById('apxEmployeeId');
+
+        if (el && !el.tomselect) {
+            new TomSelect(el, {
+                persist: false,
+                valueField: 'id',
+                labelField: 'name',
+                searchField: ['name', 'mobile', 'email', 'id'],
+                // The tabs card is overflow-hidden, which would cut the list off at
+                // its edge. Parenting to <body> takes it out of that box entirely.
+                dropdownParent: 'body',
+                dropdownClass: 'ts-dropdown apx-employee-dropdown',
+                load: function(query, callback) {
+                    fetch("{{ route('users::list') }}?type=employee&query=" + encodeURIComponent(query))
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.json();
+                        })
+                        .then(json => callback(json.items))
+                        .catch(() => callback());
+                },
+                onFocus: function() {
+                    this.clearOptions();
+                    this.load('');
+                },
+                onChange: function(value) {
+                    if (this._syncing) return;
+                    $wire.set('employee_id', value || '');
+                },
+                render: {
+                    option: (item, escape) =>
+                        `<div>${escape(item.name || item.text || '')}${item.mobile ? ` @${escape(item.mobile)}` : ''}</div>`,
+                    item: (item, escape) => `<div>${escape(item.name || item.text || '')}</div>`,
+                },
+            });
+        }
+
+        $wire.on('appointment-employee-synced', (payload) => {
+            const data = Array.isArray(payload) ? payload[0] : payload;
+            const control = document.getElementById('apxEmployeeId')?.tomselect;
+            if (!control || String(control.getValue() || '') === String(data.id || '')) return;
+
+            control._syncing = true;
+            if (data.id) {
+                control.addOption({ id: data.id, name: data.name });
+            }
+            control.setValue(data.id || '', true);
+            control._syncing = false;
+        });
+    })();
+</script>
+@endscript

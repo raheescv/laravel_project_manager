@@ -2,7 +2,6 @@
 
 use App\Services\PropertyAppointment\AppointmentMailData;
 
-
 /*
 |--------------------------------------------------------------------------
 | Email Templates
@@ -34,8 +33,8 @@ $appointmentBase = array_merge($common, [
     'unit_number',
     'building_name',
     'project_name',
-    'salesman_name',
-    'salesman_phone',
+    'employee_name',
+    'employee_phone',
     'agreement_no',
     'appointment_link',
     'appointment_button',
@@ -63,7 +62,7 @@ return [
                     'subject' => 'Book your appointment for Unit {{ unit_number }}, {{ building_name }}',
                     'body' => '<p>Hello {{ customer_name }},</p>'.
                     '<p>Thank you for your interest in <strong>Unit {{ unit_number }}, {{ building_name }}</strong>. You can choose a appointment time that suits you.</p>'.
-                    '<p>Your appointment will be handled by {{ salesman_name }}.</p>'.
+                    '<p>Your appointment will be handled by {{ employee_name }}.</p>'.
                     '{{ appointment_button }}'.
                     '<p>Please pick a time before {{ link_expires_at }}. If none of the available times work for you, just reply to this email.</p>'.
                     '<p>Kind regards,<br>{{ company_name }}</p>',
@@ -78,7 +77,7 @@ return [
                     'body' => '<p>Hello {{ customer_name }},</p>'.
                     '<p>Your appointment for <strong>Unit {{ unit_number }}, {{ building_name }}</strong> is confirmed.</p>'.
                     '<p><strong>{{ appointment_date }} at {{ appointment_time }}</strong><br>Reference: {{ appointment_reference }}</p>'.
-                    '<p>{{ salesman_name }} will meet you there and can be reached on {{ salesman_phone }}.</p>'.
+                    '<p>{{ employee_name }} will meet you there and can be reached on {{ employee_phone }}.</p>'.
                     '<p>Kind regards,<br>{{ company_name }}</p>',
                 ],
                 'variables' => $appointmentScheduled,
@@ -91,7 +90,7 @@ return [
                     'body' => '<p>Hello {{ customer_name }},</p>'.
                     '<p>Your appointment for <strong>Unit {{ unit_number }}, {{ building_name }}</strong> has been moved.</p>'.
                     '<p><strong>New time: {{ appointment_date }} at {{ appointment_time }}</strong><br>Reference: {{ appointment_reference }}</p>'.
-                    '<p>If this no longer suits you, please reply to this email or call {{ salesman_name }} on {{ salesman_phone }}.</p>'.
+                    '<p>If this no longer suits you, please reply to this email or call {{ employee_name }} on {{ employee_phone }}.</p>'.
                     '<p>Kind regards,<br>{{ company_name }}</p>',
                 ],
                 'variables' => $appointmentScheduled,
@@ -104,7 +103,7 @@ return [
                     'body' => '<p>Hello {{ customer_name }},</p>'.
                     '<p>Your appointment for <strong>Unit {{ unit_number }}, {{ building_name }}</strong> on {{ appointment_date }} at {{ appointment_time }} has been cancelled.</p>'.
                     '<p>Reference: {{ appointment_reference }}</p>'.
-                    '<p>To arrange another time, reply to this email or contact {{ salesman_name }} on {{ salesman_phone }}.</p>'.
+                    '<p>To arrange another time, reply to this email or contact {{ employee_name }} on {{ employee_phone }}.</p>'.
                     '<p>Kind regards,<br>{{ company_name }}</p>',
                 ],
                 'variables' => $appointmentScheduled,
@@ -117,7 +116,7 @@ return [
                     'body' => '<p>Hello {{ customer_name }},</p>'.
                     '<p>This is a reminder of your appointment for <strong>Unit {{ unit_number }}, {{ building_name }}</strong>.</p>'.
                     '<p><strong>{{ appointment_date }} at {{ appointment_time }}</strong><br>Reference: {{ appointment_reference }}</p>'.
-                    '<p>{{ salesman_name }} will meet you there on {{ salesman_phone }}.</p>'.
+                    '<p>{{ employee_name }} will meet you there on {{ employee_phone }}.</p>'.
                     '<p>Kind regards,<br>{{ company_name }}</p>',
                 ],
                 'variables' => $appointmentScheduled,

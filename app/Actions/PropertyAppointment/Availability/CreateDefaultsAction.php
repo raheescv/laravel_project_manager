@@ -6,11 +6,11 @@ use App\Models\PropertyAppointmentAvailability;
 use App\Models\WorkingDay;
 
 /**
- * Copies the company working week onto one salesman in one go.
+ * Copies the company working week onto one employee in one go.
  *
  * The week — which days and the hours kept on each — comes from Settings ->
  * Working Day, so what lands here is exactly what the scheduler already offers
- * on this salesman's behalf. Pressing it is therefore never a change of hours;
+ * on this employee's behalf. Pressing it is therefore never a change of hours;
  * it is the step you take before tuning a day for this one person.
  *
  * It only ever ADDS days that have no rule yet, so pressing the button twice

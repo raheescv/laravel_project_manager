@@ -16,11 +16,11 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 /**
- * One salesman's appointment schedule, embedded on the shared User/Employee view
+ * One employee's appointment schedule, embedded on the shared User/Employee view
  * page. Shows their upcoming appointments and lets an authorised user maintain the
  * weekly availability those appointments are booked against.
  */
-class SalesmanSchedule extends Component
+class EmployeeSchedule extends Component
 {
     public $userId;
 
@@ -59,7 +59,7 @@ class SalesmanSchedule extends Component
         ], Auth::id()));
     }
 
-    /** Copy the company working week onto this salesman in one press. */
+    /** Copy the company working week onto this employee in one press. */
     public function addDefaultHours()
     {
         abort_unless(auth()->user()?->can('property appointment.manage availability'), 403);
@@ -108,20 +108,20 @@ class SalesmanSchedule extends Component
 
     public function render()
     {
-        return view('livewire.property-appointment.salesman-schedule', [
+        return view('livewire.property-appointment.employee-schedule', [
             'availabilities' => PropertyAppointmentAvailability::where('user_id', $this->userId)
                 ->orderBy('day_of_week')->orderBy('start_time')->get()->groupBy('day_of_week'),
             'timeOffs' => PropertyAppointmentTimeOff::where('user_id', $this->userId)
                 ->whereDate('date', '>=', now()->subWeek())->orderBy('date')->get(),
             'upcoming' => PropertyAppointment::with(['customer:id,name', 'rentOut:id,property_id', 'rentOut.property:id,number'])
-                ->where('salesman_id', $this->userId)
+                ->where('employee_id', $this->userId)
                 ->upcoming()
                 ->orderBy('scheduled_at')
                 ->limit(15)
                 ->get(),
             'days' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
             // The company week from Settings -> Working Day. It is what this
-            // salesman is already bookable on while the panel above is empty,
+            // employee is already bookable on while the panel above is empty,
             // so the view can state the real hours instead of warning about none.
             'companyHours' => WorkingDay::schedule(),
         ]);

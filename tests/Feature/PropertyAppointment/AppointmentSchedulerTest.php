@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
 /**
- * The appointment scheduler's one non-negotiable invariant is that a salesman can
+ * The appointment scheduler's one non-negotiable invariant is that an employee can
  * never be double-booked for the same moment. It is enforced by a unique index
  * over a generated column, so these tests drive the real database rather than
  * mocking the guard they are supposed to be proving.
@@ -46,8 +46,8 @@ function vsSeed(): array
     app(TenantService::class)->setCurrentTenant($tenant);
     session(['tenant_id' => $tenant->id, 'branch_code' => 'M']);
 
-    $salesman = User::create([
-        'tenant_id' => $tenant->id, 'name' => 'VS Salesman', 'type' => 'employee',
+    $employee = User::create([
+        'tenant_id' => $tenant->id, 'name' => 'VS Employee', 'type' => 'employee',
         'email' => 'vs'.uniqid().'@example.test', 'password' => bcrypt('secret'),
     ]);
 
@@ -75,22 +75,22 @@ function vsSeed(): array
 
     $rentOut = RentOut::create([
         'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'account_id' => $customer->id,
-        'salesman_id' => $salesman->id, 'property_id' => $property->id,
+        'salesman_id' => $employee->id, 'property_id' => $property->id,
         'property_building_id' => $building->id, 'property_type_id' => $type->id,
         'property_group_id' => $group->id, 'agreement_type' => 'lease',
         'start_date' => now()->toDateString(), 'end_date' => now()->addYear()->toDateString(),
-        'created_by' => $salesman->id,
+        'created_by' => $employee->id,
     ]);
 
     foreach (range(0, 6) as $dayOfWeek) {
         PropertyAppointmentAvailability::create([
-            'tenant_id' => $tenant->id, 'user_id' => $salesman->id, 'day_of_week' => $dayOfWeek,
+            'tenant_id' => $tenant->id, 'user_id' => $employee->id, 'day_of_week' => $dayOfWeek,
             'start_time' => '09:00', 'end_time' => '13:00',
             'is_active' => true,
         ]);
     }
 
-    return compact('tenant', 'salesman', 'customer', 'rentOut', 'branch', 'property');
+    return compact('tenant', 'employee', 'customer', 'rentOut', 'branch', 'property');
 }
 
 /** Grant one ability to a user, creating the permission row if needed. */
@@ -103,18 +103,18 @@ function vsGrant(App\Models\User $user, string $ability): void
     );
 }
 
-function vsFirstSlot(int $salesmanId): string
+function vsFirstSlot(int $employeeId): string
 {
-    $slots = app(SlotService::class)->availableSlots($salesmanId);
+    $slots = app(SlotService::class)->availableSlots($employeeId);
     $day = array_key_first($slots);
 
     return $slots[$day][0]['value'];
 }
 
-it('generates slots only inside the salesman\'s availability', function () {
+it('generates slots only inside the employee\'s availability', function () {
     $seed = vsSeed();
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
 
     expect($slots)->not->toBeEmpty();
 
@@ -129,7 +129,7 @@ it('generates slots only inside the salesman\'s availability', function () {
 it('labels slots on a 12-hour clock while keeping the value machine-readable', function () {
     $seed = vsSeed();
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
     $first = collect($slots)->flatten(1)->first();
 
     // The value is what BookAction and the unique index rely on, so it must
@@ -140,22 +140,22 @@ it('labels slots on a 12-hour clock while keeping the value machine-readable', f
 
 it('never offers a slot that is already booked', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $slot = vsFirstSlot($seed['salesman']->id);
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $slot = vsFirstSlot($seed['employee']->id);
 
     (new BookAction())->execute($appointment->id, $slot);
 
-    $after = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $after = app(SlotService::class)->availableSlots($seed['employee']->id);
     $stillOffered = collect($after)->flatten(1)->contains('value', $slot);
 
     expect($stillOffered)->toBeFalse();
 });
 
-it('refuses to double-book a salesman for the same moment', function () {
+it('refuses to double-book an employee for the same moment', function () {
     $seed = vsSeed();
-    $first = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $slot = vsFirstSlot($seed['salesman']->id);
+    $first = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $slot = vsFirstSlot($seed['employee']->id);
 
     expect((new BookAction())->execute($first->id, $slot)['success'])->toBeTrue();
 
@@ -167,24 +167,43 @@ it('refuses to double-book a salesman for the same moment', function () {
 
 it('releases the slot again when a appointment is cancelled', function () {
     $seed = vsSeed();
-    $first = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $slot = vsFirstSlot($seed['salesman']->id);
+    $first = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $slot = vsFirstSlot($seed['employee']->id);
 
     (new BookAction())->execute($first->id, $slot);
-    (new CancelAction())->execute($first->id, $seed['salesman']->id, 'testing');
+    (new CancelAction())->execute($first->id, $seed['employee']->id, 'testing');
 
     expect((new BookAction())->execute($second->id, $slot)['success'])->toBeTrue();
 });
 
-it('will not open a appointment on an agreement with no salesman', function () {
+it('will not open a appointment with nobody to carry it out', function () {
     $seed = vsSeed();
-    $seed['rentOut']->update(['salesman_id' => null]);
 
     $response = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], 1);
 
     expect($response['success'])->toBeFalse()
-        ->and($response['message'])->toContain('no salesman');
+        ->and($response['message'])->toContain('select the employee');
+});
+
+it('opens a appointment on an employee the agreement knows nothing about', function () {
+    $seed = vsSeed();
+
+    // Deliberately not the agreement's salesman: the two are unrelated now.
+    $other = User::create([
+        'tenant_id' => $seed['tenant']->id, 'name' => 'VS Other', 'type' => 'employee',
+        'email' => 'vso'.uniqid().'@example.test', 'password' => bcrypt('secret'),
+    ]);
+
+    $seed['rentOut']->update(['salesman_id' => null]);
+
+    $response = (new CreateAction())->execute([
+        'rent_out_id' => $seed['rentOut']->id,
+        'employee_id' => $other->id,
+    ], 1);
+
+    expect($response['success'])->toBeTrue()
+        ->and($response['data']->employee_id)->toBe($other->id);
 });
 
 it('refuses to send when no template is active for the type', function () {
@@ -240,26 +259,64 @@ it('does not wipe the body when only toggling a template active', function () {
 
 it('renders the appointments tab on a lease agreement', function () {
     $seed = vsSeed();
-    $this->actingAs($seed['salesman']);
+    $this->actingAs($seed['employee']);
 
     Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('employee_id', $seed['employee']->id)
         ->assertOk()
         ->assertSee('No appointment link sent yet');
 });
 
-it('tells the user why the tab is unusable with no salesman', function () {
+it('asks for an employee before it offers anything else', function () {
     $seed = vsSeed();
-    $seed['rentOut']->update(['salesman_id' => null]);
-    $this->actingAs($seed['salesman']);
+    $this->actingAs($seed['employee']);
 
     Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
         ->assertOk()
-        ->assertSee('No salesman on this agreement');
+        ->assertSee('No employee chosen yet')
+        ->assertDontSee('No appointment link sent yet');
+});
+
+it('offers slots from the chosen employee, not the agreement salesman', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+
+    $other = User::create([
+        'tenant_id' => $seed['tenant']->id, 'name' => 'VS Other', 'type' => 'employee',
+        'email' => 'vso'.uniqid().'@example.test', 'password' => bcrypt('secret'),
+    ]);
+
+    // Afternoons only, against the seeded employee's 09:00-13:00. Both are
+    // bookable, so an empty grid would prove nothing — the hours the grid is
+    // cut from are what has to follow the choice.
+    foreach (range(0, 6) as $dayOfWeek) {
+        PropertyAppointmentAvailability::create([
+            'tenant_id' => $seed['tenant']->id, 'user_id' => $other->id, 'day_of_week' => $dayOfWeek,
+            'start_time' => '15:00', 'end_time' => '17:00', 'is_active' => true,
+        ]);
+    }
+
+    $hourOf = fn ($slots) => collect($slots)->flatten(1)->pluck('value')->map(fn ($v) => (int) substr($v, 11, 2));
+
+    $component = Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('employee_id', $seed['employee']->id);
+
+    $mine = $hourOf($component->instance()->slots);
+
+    expect($mine)->not->toBeEmpty()
+        ->and($mine->max())->toBeLessThan(13);
+
+    $component->set('employee_id', $other->id);
+
+    $theirs = $hourOf($component->instance()->slots);
+
+    expect($theirs)->not->toBeEmpty()
+        ->and($theirs->min())->toBeGreaterThanOrEqual(15);
 });
 
 it('serves the public appointment page for a valid token', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     // Assert against the id the Vue entry actually mounts to, read from the
     // source — hardcoding it here let a rename break the page while this test
@@ -287,7 +344,7 @@ it('404s an unknown appointment token', function () {
 
 it('returns every slot in one payload so selection needs no round-trip', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     $response = $this->getJson(route('property_appointment::public.data', $appointment->token))->assertOk();
 
@@ -295,15 +352,15 @@ it('returns every slot in one payload so selection needs no round-trip', functio
 
     expect($payload['status'])->toBe('awaiting')
         ->and($payload['customer_name'])->toBe('VS Customer')
-        ->and($payload['salesman_name'])->toBe('VS Salesman')
+        ->and($payload['employee_name'])->toBe('VS Employee')
         ->and(count($payload['days']))->toBeGreaterThan(1)
         ->and($payload['days'][0]['slots'][0])->toHaveKeys(['value', 'label']);
 });
 
 it('books through the public endpoint and records who booked it', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $slot = vsFirstSlot($seed['salesman']->id);
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $slot = vsFirstSlot($seed['employee']->id);
 
     $this->postJson(route('property_appointment::public.book', $appointment->token), ['slot' => $slot])
         ->assertOk()
@@ -318,9 +375,9 @@ it('books through the public endpoint and records who booked it', function () {
 
 it('rejects a taken slot and hands back fresh times to recover with', function () {
     $seed = vsSeed();
-    $first = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $slot = vsFirstSlot($seed['salesman']->id);
+    $first = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $slot = vsFirstSlot($seed['employee']->id);
 
     (new BookAction())->execute($first->id, $slot);
 
@@ -339,7 +396,7 @@ it('rejects a taken slot and hands back fresh times to recover with', function (
 
 it('validates the slot the public endpoint is given', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     $this->postJson(route('property_appointment::public.book', $appointment->token), [])
         ->assertStatus(422);
@@ -404,8 +461,8 @@ it('renders a starter template with no placeholder left behind', function () {
     $seed = vsSeed();
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
 
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
 
     $rendered = app(EmailTemplateRenderer::class)->render(
         AppointmentMailData::MODULE,
@@ -433,20 +490,20 @@ it('never overwrites wording the tenant has already edited', function () {
         ->and($template->body)->toContain('Our own body');
 });
 
-it('fills the whole default week for a salesman in one press', function () {
+it('fills the whole default week for an employee in one press', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
 
-    $response = (new AvailabilityDefaultsAction())->execute($seed['salesman']->id, $seed['salesman']->id);
+    $response = (new AvailabilityDefaultsAction())->execute($seed['employee']->id, $seed['employee']->id);
 
     expect($response['success'])->toBeTrue()
-        ->and(PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->count())
+        ->and(PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->count())
         ->toBe(count(config('property_appointment.default_availability.days')));
 });
 
 it('uses the tenant working days rather than the config fallback when they exist', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
 
     // Only Monday and Wednesday are worked here.
     foreach (['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $order => $name) {
@@ -458,9 +515,9 @@ it('uses the tenant working days rather than the config fallback when they exist
         ]);
     }
 
-    (new AvailabilityDefaultsAction())->execute($seed['salesman']->id, $seed['salesman']->id);
+    (new AvailabilityDefaultsAction())->execute($seed['employee']->id, $seed['employee']->id);
 
-    $days = PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)
+    $days = PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)
         ->pluck('day_of_week')->map(fn ($d) => (int) $d)->sort()->values()->all();
 
     expect($days)->toBe([1, 3]);
@@ -468,28 +525,28 @@ it('uses the tenant working days rather than the config fallback when they exist
 
 it('does not duplicate or overwrite hours when pressed twice', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
 
-    (new AvailabilityDefaultsAction())->execute($seed['salesman']->id, $seed['salesman']->id);
+    (new AvailabilityDefaultsAction())->execute($seed['employee']->id, $seed['employee']->id);
 
-    $first = PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->first();
+    $first = PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->first();
     $first->update(['start_time' => '11:00', 'end_time' => '15:00']);
-    $countAfterFirst = PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->count();
+    $countAfterFirst = PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->count();
 
-    $second = (new AvailabilityDefaultsAction())->execute($seed['salesman']->id, $seed['salesman']->id);
+    $second = (new AvailabilityDefaultsAction())->execute($seed['employee']->id, $seed['employee']->id);
 
     expect($second['success'])->toBeFalse()
-        ->and(PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->count())->toBe($countAfterFirst)
+        ->and(PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->count())->toBe($countAfterFirst)
         ->and(substr((string) $first->refresh()->start_time, 0, 5))->toBe('11:00');
 });
 
 it('produces bookable slots straight after the default week is applied', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
 
-    (new AvailabilityDefaultsAction())->execute($seed['salesman']->id, $seed['salesman']->id);
+    (new AvailabilityDefaultsAction())->execute($seed['employee']->id, $seed['employee']->id);
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
 
     expect($slots)->not->toBeEmpty();
 });
@@ -497,9 +554,9 @@ it('produces bookable slots straight after the default week is applied', functio
 it('logs a sent email with the body the recipient actually received', function () {
     $seed = vsSeed();
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
-    $response = (new SendLinkAction())->execute($appointment->id, 'appointment_invite', $seed['salesman']->id);
+    $response = (new SendLinkAction())->execute($appointment->id, 'appointment_invite', $seed['employee']->id);
 
     expect($response['success'])->toBeTrue();
 
@@ -516,9 +573,9 @@ it('logs a sent email with the body the recipient actually received', function (
 it('keeps the sent body even after the template is reworded', function () {
     $seed = vsSeed();
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
-    (new SendLinkAction())->execute($appointment->id, 'appointment_invite', $seed['salesman']->id);
+    (new SendLinkAction())->execute($appointment->id, 'appointment_invite', $seed['employee']->id);
     $log = EmailLog::latest('id')->first();
     $sentBody = $log->body;
 
@@ -554,7 +611,7 @@ it('logs email sent by code that knows nothing about the log', function () {
 it('gates the email log behind its own permission', function () {
     $seed = vsSeed();
 
-    $this->actingAs($seed['salesman'])
+    $this->actingAs($seed['employee'])
         ->get(route('log::emails'))
         ->assertForbidden();
 });
@@ -562,7 +619,7 @@ it('gates the email log behind its own permission', function () {
 it('injects the styled call-to-action instead of printing its markup', function () {
     $seed = vsSeed();
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     $rendered = app(EmailTemplateRenderer::class)->render(
         AppointmentMailData::MODULE,
@@ -580,8 +637,8 @@ it('injects the styled call-to-action instead of printing its markup', function 
 it('leaves no unresolved variable in a rendered email', function () {
     $seed = vsSeed();
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
 
     foreach (array_keys(EmailTemplate::typesFor(AppointmentMailData::MODULE)) as $type) {
         $rendered = app(EmailTemplateRenderer::class)->render(
@@ -609,7 +666,7 @@ it('escapes customer data but never the generated button', function () {
     $seed = vsSeed();
     $seed['customer']->update(['name' => 'A & B <script>']);
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     $rendered = app(EmailTemplateRenderer::class)->render(
         AppointmentMailData::MODULE,
@@ -623,7 +680,7 @@ it('escapes customer data but never the generated button', function () {
 
 it('names the building and project alongside the unit', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     $variables = app(AppointmentMailData::class)->forAppointment($appointment);
 
@@ -635,7 +692,7 @@ it('names the building and project alongside the unit', function () {
 it('renders the unit inside its building in the invitation', function () {
     $seed = vsSeed();
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     $rendered = app(EmailTemplateRenderer::class)->render(
         AppointmentMailData::MODULE,
@@ -650,7 +707,7 @@ it('renders the unit inside its building in the invitation', function () {
 
 it('never signs off blank when company profile is empty', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     // Nothing is configured in Company Profile for this tenant.
     expect(app(AppointmentMailData::class)->forAppointment($appointment)['company_name'])->not->toBeEmpty();
@@ -658,10 +715,10 @@ it('never signs off blank when company profile is empty', function () {
 
 it('reflects a status change without needing a page refresh', function () {
     $seed = vsSeed();
-    vsGrant($seed['salesman'], 'property appointment.edit');
-    $this->actingAs($seed['salesman']);
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
+    vsGrant($seed['employee'], 'property appointment.edit');
+    $this->actingAs($seed['employee']);
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
 
     $component = Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
         ->assertSee('Confirmed');
@@ -677,9 +734,9 @@ it('reflects a status change without needing a page refresh', function () {
 
 it('lets a no-show customer book again from the same link', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
-    (new StatusAction())->execute($appointment->id, 'no_show', $seed['salesman']->id);
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
+    (new StatusAction())->execute($appointment->id, 'no_show', $seed['employee']->id);
 
     $payload = $this->getJson(route('property_appointment::public.data', $appointment->token))->assertOk()->json();
 
@@ -687,27 +744,27 @@ it('lets a no-show customer book again from the same link', function () {
         ->and($payload['usable'])->toBeTrue()
         ->and($payload['days'])->not->toBeEmpty();
 
-    $this->postJson(route('property_appointment::public.book', $appointment->token), ['slot' => vsFirstSlot($seed['salesman']->id)])
+    $this->postJson(route('property_appointment::public.book', $appointment->token), ['slot' => vsFirstSlot($seed['employee']->id)])
         ->assertOk()
         ->assertJson(['success' => true, 'status' => 'scheduled']);
 });
 
 it('lets a cancelled customer book again from the same link', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
-    (new CancelAction())->execute($appointment->id, $seed['salesman']->id, 'testing');
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
+    (new CancelAction())->execute($appointment->id, $seed['employee']->id, 'testing');
 
-    $this->postJson(route('property_appointment::public.book', $appointment->token), ['slot' => vsFirstSlot($seed['salesman']->id)])
+    $this->postJson(route('property_appointment::public.book', $appointment->token), ['slot' => vsFirstSlot($seed['employee']->id)])
         ->assertOk()
         ->assertJson(['success' => true, 'status' => 'scheduled']);
 });
 
 it('closes the link once the visit is completed', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
-    (new StatusAction())->execute($appointment->id, 'completed', $seed['salesman']->id);
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
+    (new StatusAction())->execute($appointment->id, 'completed', $seed['employee']->id);
 
     $payload = $this->getJson(route('property_appointment::public.data', $appointment->token))->assertOk()->json();
 
@@ -717,9 +774,9 @@ it('closes the link once the visit is completed', function () {
 
 it('still lets staff revoke a link deliberately', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
-    (new RevokeLinkAction())->execute($appointment->id, $seed['salesman']->id);
+    (new RevokeLinkAction())->execute($appointment->id, $seed['employee']->id);
 
     expect($this->getJson(route('property_appointment::public.data', $appointment->token))->json('usable'))->toBeFalse();
 });
@@ -748,11 +805,11 @@ function vsFeedEvent(): array
 
 it('feeds the calendar with everything the detail popover renders', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
 
-    vsGrant($seed['salesman'], 'rent out lease.view');
-    $this->actingAs($seed['salesman']);
+    vsGrant($seed['employee'], 'rent out lease.view');
+    $this->actingAs($seed['employee']);
 
     $event = vsFeedEvent();
     $props = $event['extendedProps'];
@@ -776,12 +833,12 @@ it('feeds the calendar with everything the detail popover renders', function () 
 
 it('withholds the agreement link from a user who may not open it', function () {
     $seed = vsSeed();
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
 
     // No 'rent out lease.view': the popover must not offer a link this user
     // would only be shown a 403 by.
-    $this->actingAs($seed['salesman']);
+    $this->actingAs($seed['employee']);
 
     $props = vsFeedEvent()['extendedProps'];
 
@@ -804,8 +861,8 @@ it('withholds the agreement link from a user who may not open it', function () {
 /** A appointment already confirmed on its first free slot. */
 function vsBookedAppointment(array $seed): PropertyAppointment
 {
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['salesman']->id));
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($appointment->id, vsFirstSlot($seed['employee']->id));
 
     return $appointment->fresh();
 }
@@ -815,7 +872,7 @@ it('tells the customer when a confirmed appointment is cancelled', function () {
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
     $appointment = vsBookedAppointment($seed);
 
-    (new CancelAction())->execute($appointment->id, $seed['salesman']->id, 'Salesman unavailable');
+    (new CancelAction())->execute($appointment->id, $seed['employee']->id, 'Employee unavailable');
 
     $log = EmailLog::where('type', 'appointment_cancelled')->latest('id')->first();
 
@@ -831,9 +888,9 @@ it('tells the customer when a confirmed appointment is cancelled', function () {
 it('says nothing when cancelling a appointment the customer never booked', function () {
     $seed = vsSeed();
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
-    (new CancelAction())->execute($appointment->id, $seed['salesman']->id);
+    (new CancelAction())->execute($appointment->id, $seed['employee']->id);
 
     expect(EmailLog::where('type', 'appointment_cancelled')->count())->toBe(0);
 });
@@ -845,7 +902,7 @@ it('still cancels when the tenant has no cancellation template', function () {
 
     EmailTemplate::where('type', 'appointment_cancelled')->update(['is_active' => 0]);
 
-    $response = (new CancelAction())->execute($appointment->id, $seed['salesman']->id);
+    $response = (new CancelAction())->execute($appointment->id, $seed['employee']->id);
 
     // The cancellation stands, and the silence is on the record rather than lost.
     expect($response['success'])->toBeTrue()
@@ -858,10 +915,10 @@ it('tells the customer when a confirmed appointment is moved', function () {
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
     $appointment = vsBookedAppointment($seed);
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
     $another = collect($slots)->flatten(1)->pluck('value')->first(fn ($value) => $value !== $appointment->scheduled_at->format('Y-m-d H:i:s'));
 
-    (new BookAction())->execute($appointment->id, $another, 'staff', $seed['salesman']->id);
+    (new BookAction())->execute($appointment->id, $another, 'staff', $seed['employee']->id);
 
     $log = EmailLog::where('type', 'appointment_rescheduled')->latest('id')->first();
 
@@ -884,7 +941,7 @@ it('queues a reminder once, however often the command runs', function () {
     (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
     $appointment = vsBookedAppointment($seed);
 
-    // Wide enough to catch whichever slot the salesman's rules produced first.
+    // Wide enough to catch whichever slot the employee's rules produced first.
     $hours = (int) ceil(now()->diffInHours($appointment->scheduled_at, false)) + 1;
 
     $this->artisan('appointments:send-reminders', ['--hours' => $hours])->assertSuccessful();
@@ -913,9 +970,9 @@ it('reminds again about a appointment that was moved after its reminder went out
     $hours = (int) ceil(now()->diffInHours($appointment->scheduled_at, false)) + 1;
     $this->artisan('appointments:send-reminders', ['--hours' => $hours])->assertSuccessful();
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
     $another = collect($slots)->flatten(1)->pluck('value')->first(fn ($value) => $value !== $appointment->fresh()->scheduled_at->format('Y-m-d H:i:s'));
-    (new BookAction())->execute($appointment->id, $another, 'staff', $seed['salesman']->id);
+    (new BookAction())->execute($appointment->id, $another, 'staff', $seed['employee']->id);
 
     expect($appointment->fresh()->reminder_sent_at)->toBeNull();
 });
@@ -925,7 +982,7 @@ it('reminds again about a appointment that was moved after its reminder went out
 | Company hours (Settings -> Working Day)
 |--------------------------------------------------------------------------
 |
-| A salesman's own availability is an OVERRIDE, not a prerequisite: with none of
+| An employee's own availability is an OVERRIDE, not a prerequisite: with none of
 | their own they are bookable on the company week, so nobody has to remember to
 | set up a schedule before an appointment link works.
 |
@@ -950,16 +1007,16 @@ function vsWorkingWeek(int $tenantId, array $week): void
     }
 }
 
-it('offers the company hours to a salesman who has none of their own', function () {
+it('offers the company hours to an employee who has none of their own', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
 
     vsWorkingWeek($seed['tenant']->id, [
         'Monday' => ['start_time' => '10:00', 'end_time' => '12:00'],
         'Wednesday' => ['start_time' => '10:00', 'end_time' => '12:00'],
     ]);
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
 
     expect($slots)->not->toBeEmpty();
 
@@ -973,13 +1030,13 @@ it('offers the company hours to a salesman who has none of their own', function 
         }
     }
 
-    // No rows were invented on the salesman's behalf — the company hours are
-    // read live, so editing Settings still moves this salesman's slots.
-    expect(PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->count())->toBe(0);
+    // No rows were invented on the employee's behalf — the company hours are
+    // read live, so editing Settings still moves this employee's slots.
+    expect(PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->count())->toBe(0);
 });
 
-it('lets a salesman\'s own hours override the company hours', function () {
-    $seed = vsSeed(); // seeds the salesman with 09:00-13:00 every day
+it('lets an employee\'s own hours override the company hours', function () {
+    $seed = vsSeed(); // seeds the employee with 09:00-13:00 every day
 
     vsWorkingWeek($seed['tenant']->id, [
         'Monday' => ['start_time' => '15:00', 'end_time' => '17:00'],
@@ -991,7 +1048,7 @@ it('lets a salesman\'s own hours override the company hours', function () {
         'Sunday' => ['start_time' => '15:00', 'end_time' => '17:00'],
     ]);
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
 
     expect($slots)->not->toBeEmpty();
 
@@ -1001,21 +1058,21 @@ it('lets a salesman\'s own hours override the company hours', function () {
     }
 });
 
-it('offers nothing when every company day is closed and the salesman has no hours', function () {
+it('offers nothing when every company day is closed and the employee has no hours', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
 
     vsWorkingWeek($seed['tenant']->id, []);
 
-    expect(app(SlotService::class)->availableSlots($seed['salesman']->id))->toBeEmpty();
+    expect(app(SlotService::class)->availableSlots($seed['employee']->id))->toBeEmpty();
 });
 
 it('falls back to the module default week when no working day is configured', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
     WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
     $defaults = config('property_appointment.default_availability');
 
     expect($slots)->not->toBeEmpty();
@@ -1047,7 +1104,7 @@ it('borrows the module times only for the columns a working day leaves blank', f
 });
 
 it('matches working days whatever case the day name was stored in', function () {
-    $seed = vsSeed(); // salesman works 09:00-13:00 on all seven days
+    $seed = vsSeed(); // employee works 09:00-13:00 on all seven days
 
     // The seeder writes day names in upper case; the settings screen shows them
     // capitalised. Both have to filter the week identically.
@@ -1061,7 +1118,7 @@ it('matches working days whatever case the day name was stored in', function () 
         ]);
     }
 
-    $slots = app(SlotService::class)->availableSlots($seed['salesman']->id);
+    $slots = app(SlotService::class)->availableSlots($seed['employee']->id);
 
     expect($slots)->not->toBeEmpty();
 
@@ -1072,15 +1129,15 @@ it('matches working days whatever case the day name was stored in', function () 
 
 it('copies the company hours rather than the module times when the week is filled in one press', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
 
     vsWorkingWeek($seed['tenant']->id, [
         'Monday' => ['start_time' => '08:00', 'end_time' => '12:00'],
     ]);
 
-    (new AvailabilityDefaultsAction())->execute($seed['salesman']->id, $seed['salesman']->id);
+    (new AvailabilityDefaultsAction())->execute($seed['employee']->id, $seed['employee']->id);
 
-    $rules = PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->get();
+    $rules = PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->get();
 
     expect($rules)->toHaveCount(1)
         ->and((int) $rules->first()->day_of_week)->toBe(1)
@@ -1090,7 +1147,7 @@ it('copies the company hours rather than the module times when the week is fille
 
 it('books a slot that only the company hours make available', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
 
     vsWorkingWeek($seed['tenant']->id, [
         'Sunday' => ['start_time' => '09:00', 'end_time' => '17:00'],
@@ -1102,8 +1159,8 @@ it('books a slot that only the company hours make available', function () {
         'Saturday' => ['start_time' => '09:00', 'end_time' => '17:00'],
     ]);
 
-    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
-    $slot = vsFirstSlot($seed['salesman']->id);
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $slot = vsFirstSlot($seed['employee']->id);
 
     $response = (new BookAction())->execute($appointment->id, $slot, 'customer');
 
@@ -1114,8 +1171,8 @@ it('books a slot that only the company hours make available', function () {
 it('saves the company hours from the settings screen', function () {
     $seed = vsSeed();
     vsWorkingWeek($seed['tenant']->id, ['Monday' => ['start_time' => '09:00', 'end_time' => '18:00']]);
-    vsGrant($seed['salesman'], 'configuration.settings');
-    $this->actingAs($seed['salesman']);
+    vsGrant($seed['employee'], 'configuration.settings');
+    $this->actingAs($seed['employee']);
 
     $monday = collect(WorkingDay::orderBy('order_no')->get())->firstWhere('day_name', 'Monday');
 
@@ -1136,8 +1193,8 @@ it('saves the company hours from the settings screen', function () {
 it('refuses a working day that closes before it opens', function () {
     $seed = vsSeed();
     vsWorkingWeek($seed['tenant']->id, ['Monday' => ['start_time' => '09:00', 'end_time' => '18:00']]);
-    vsGrant($seed['salesman'], 'configuration.settings');
-    $this->actingAs($seed['salesman']);
+    vsGrant($seed['employee'], 'configuration.settings');
+    $this->actingAs($seed['employee']);
 
     Livewire::test(App\Livewire\Settings\WorkingDay::class)
         ->set('days.1.is_working', true)
@@ -1154,8 +1211,8 @@ it('refuses a working day that closes before it opens', function () {
 it('creates the default working week from the settings screen when the tenant has none', function () {
     $seed = vsSeed();
     WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
-    vsGrant($seed['salesman'], 'configuration.settings');
-    $this->actingAs($seed['salesman']);
+    vsGrant($seed['employee'], 'configuration.settings');
+    $this->actingAs($seed['employee']);
 
     Livewire::test(App\Livewire\Settings\WorkingDay::class)
         ->call('createDefaultWeek')
@@ -1173,8 +1230,8 @@ it('creates the default working week from the settings screen when the tenant ha
 it('does not duplicate days when the default week is created twice', function () {
     $seed = vsSeed();
     WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
-    vsGrant($seed['salesman'], 'configuration.settings');
-    $this->actingAs($seed['salesman']);
+    vsGrant($seed['employee'], 'configuration.settings');
+    $this->actingAs($seed['employee']);
 
     Livewire::test(App\Livewire\Settings\WorkingDay::class)
         ->call('createDefaultWeek')
@@ -1186,7 +1243,7 @@ it('does not duplicate days when the default week is created twice', function ()
 it('keeps the default week behind the settings permission', function () {
     $seed = vsSeed();
     WorkingDay::query()->where('tenant_id', $seed['tenant']->id)->delete();
-    $this->actingAs($seed['salesman']);
+    $this->actingAs($seed['employee']);
 
     Livewire::test(App\Livewire\Settings\WorkingDay::class)
         ->call('createDefaultWeek')
@@ -1195,16 +1252,16 @@ it('keeps the default week behind the settings permission', function () {
     expect(WorkingDay::count())->toBe(0);
 });
 
-it('states the company hours on the schedule panel of a salesman who has none', function () {
+it('states the company hours on the schedule panel of an employee who has none', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
     vsWorkingWeek($seed['tenant']->id, [
         'Monday' => ['start_time' => '10:00', 'end_time' => '16:00'],
     ]);
-    vsGrant($seed['salesman'], 'property appointment.manage availability');
-    $this->actingAs($seed['salesman']);
+    vsGrant($seed['employee'], 'property appointment.manage availability');
+    $this->actingAs($seed['employee']);
 
-    Livewire::test(App\Livewire\PropertyAppointment\SalesmanSchedule::class, ['userId' => $seed['salesman']->id])
+    Livewire::test(App\Livewire\PropertyAppointment\EmployeeSchedule::class, ['userId' => $seed['employee']->id])
         ->assertSee('Following the company hours')
         ->assertSee('10:00–16:00')
         ->assertDontSee('No availability set');
@@ -1212,11 +1269,11 @@ it('states the company hours on the schedule panel of a salesman who has none', 
 
 it('warns on the schedule panel only when there are no hours anywhere', function () {
     $seed = vsSeed();
-    PropertyAppointmentAvailability::where('user_id', $seed['salesman']->id)->forceDelete();
+    PropertyAppointmentAvailability::where('user_id', $seed['employee']->id)->forceDelete();
     vsWorkingWeek($seed['tenant']->id, []);
-    $this->actingAs($seed['salesman']);
+    $this->actingAs($seed['employee']);
 
-    Livewire::test(App\Livewire\PropertyAppointment\SalesmanSchedule::class, ['userId' => $seed['salesman']->id])
+    Livewire::test(App\Livewire\PropertyAppointment\EmployeeSchedule::class, ['userId' => $seed['employee']->id])
         ->assertSee('No availability set');
 });
 
@@ -1231,11 +1288,11 @@ it('warns on the schedule panel only when there are no hours anywhere', function
 |
 */
 
-/** An appointment on a salesman who works 09:00-13:00 every day. */
+/** An appointment on an employee who works 09:00-13:00 every day. */
 function vsWindowSeed(): array
 {
     $seed = vsSeed();
-    $seed['appointment'] = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $seed['appointment'] = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
     $seed['day'] = now()->addDays(2)->toDateString();
 
     return $seed;
@@ -1259,7 +1316,7 @@ it('books the window the customer typed, not the configured length', function ()
 it('falls back to the configured length when no leaving time is given', function () {
     $seed = vsWindowSeed();
 
-    (new BookAction())->execute($seed['appointment']->id, vsFirstSlot($seed['salesman']->id));
+    (new BookAction())->execute($seed['appointment']->id, vsFirstSlot($seed['employee']->id));
 
     $booked = $seed['appointment']->fresh();
 
@@ -1284,7 +1341,7 @@ it('refuses a window that overlaps an appointment already on the calendar', func
 
     (new BookAction())->execute($seed['appointment']->id, $seed['day'].' 10:00:00', 'customer', null, null, $seed['day'].' 11:00:00');
 
-    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     $response = (new BookAction())->execute($second->id, $seed['day'].' 10:30:00', 'customer', null, null, $seed['day'].' 11:30:00');
 
@@ -1298,7 +1355,7 @@ it('allows a window that starts exactly when another finishes', function () {
 
     (new BookAction())->execute($seed['appointment']->id, $seed['day'].' 10:00:00', 'customer', null, null, $seed['day'].' 11:00:00');
 
-    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
     $response = (new BookAction())->execute($second->id, $seed['day'].' 11:00:00', 'customer', null, null, $seed['day'].' 12:00:00');
 
     expect($response['success'])->toBeTrue();
@@ -1333,7 +1390,7 @@ it('hands the page the open hours and the taken stretches, not just free slots',
     $seed = vsWindowSeed();
     (new BookAction())->execute($seed['appointment']->id, $seed['day'].' 10:00:00', 'customer', null, null, $seed['day'].' 11:00:00');
 
-    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id], $seed['salesman']->id)['data'];
+    $second = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
 
     $payload = json_decode(
         app(App\Http\Controllers\Property\PropertyAppointmentController::class)
@@ -1375,12 +1432,12 @@ it('rejects a leaving time that is not after the arriving time at the endpoint',
     )->assertStatus(422);
 });
 
-it('blocks a window that lands in the salesman\'s time off', function () {
+it('blocks a window that lands in the employee\'s time off', function () {
     $seed = vsWindowSeed();
 
     App\Models\PropertyAppointmentTimeOff::create([
         'tenant_id' => $seed['tenant']->id,
-        'user_id' => $seed['salesman']->id,
+        'user_id' => $seed['employee']->id,
         'date' => $seed['day'],
         'start_time' => '10:00',
         'end_time' => '12:00',

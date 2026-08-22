@@ -40,7 +40,7 @@
             </select>
 
             <div wire:ignore style="max-width:400px;min-width:280px">
-                {{ html()->select('salesman_id', [])->value('')->class('select-employee_id-list form-select-sm')->id('salesman_id')->placeholder('All salesmen') }}
+                {{ html()->select('employee_id', [])->value('')->class('select-employee_id-list form-select-sm')->id('employee_id')->placeholder('All employees') }}
             </div>
 
             <input type="date" class="form-control form-control-sm" style="max-width:150px" wire:model.live="from_date">
@@ -68,7 +68,7 @@
                         <th>Customer</th>
                         <th>Property</th>
                         <th>Agreement</th>
-                        <th>Salesman</th>
+                        <th>Employee</th>
                         <th>Status</th>
                         <th style="width:78px"></th>
                     </tr>
@@ -102,8 +102,8 @@
                             <td><span class="ref">#{{ $appointment->rent_out_id }}</span></td>
                             <td>
                                 <div class="who">
-                                    <span class="apx-avatar">{{ \Illuminate\Support\Str::of($appointment->salesman?->name)->substr(0, 2)->upper() }}</span>
-                                    <span>{{ $appointment->salesman?->name }}</span>
+                                    <span class="apx-avatar">{{ \Illuminate\Support\Str::of($appointment->employee?->name)->substr(0, 2)->upper() }}</span>
+                                    <span>{{ $appointment->employee?->name }}</span>
                                 </div>
                             </td>
                             <td>
@@ -171,8 +171,8 @@
             $(document).ready(function() {
                 // The select lives behind wire:ignore so TomSelect keeps its DOM across
                 // re-renders; that also means Livewire never sees the change itself.
-                $('#salesman_id').on('change', function() {
-                    @this.set('salesman_id', $(this).val() || '');
+                $('#employee_id').on('change', function() {
+                    @this.set('employee_id', $(this).val() || '');
                 });
             });
         </script>

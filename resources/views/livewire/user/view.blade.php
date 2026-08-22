@@ -1203,7 +1203,7 @@
                             class="tab-pane fade @if ($selected_tab === 'schedule') show active @endif">
                             @if (isset($loaded_tabs['schedule']))
                                 {{-- the schedule brings its own .apx design system; no outer panel --}}
-                                @livewire('property-appointment.salesman-schedule', ['userId' => $user->id], key('salesman-schedule-' . $user->id))
+                                @livewire('property-appointment.employee-schedule', ['userId' => $user->id], key('employee-schedule-' . $user->id))
                             @else
                                 <div class="uvx-panel">
                                     <div class="uvx-pb text-center py-4" style="color:var(--text-3)">

@@ -39,7 +39,7 @@
         }
         .apx .apxc-nav button:hover{ background:var(--surface-2); color:var(--text); }
         .apx .apxc-title{ font-size:14px; font-weight:800; letter-spacing:-.025em; white-space:nowrap; }
-        /* salesman picker — a searchable TomSelect rather than a chip per
+        /* employee picker — a searchable TomSelect rather than a chip per
            employee, because the chip row stops working the moment the team
            outgrows a handful of people */
         .apx .apxc-right{ flex:1 1 auto; justify-content:flex-end; }
@@ -143,12 +143,12 @@
                      every employee from the shared users list endpoint.
 
                      The empty first option matters: without it the browser
-                     pre-selects the first salesman and the calendar opens looking
+                     pre-selects the first employee and the calendar opens looking
                      filtered to one person instead of showing everybody. --}}
-                <select id="pvSalesmanFilter" aria-label="Salesman" placeholder="All salesmen">
+                <select id="pvEmployeeFilter" aria-label="Employee" placeholder="All employees">
                     <option value="" selected></option>
-                    @foreach ($salesmen as $salesman)
-                        <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
+                    @foreach ($employees as $employee)
+                        <option value="{{ $employee->id }}">{{ $employee->name }}</option>
                     @endforeach
                 </select>
 
@@ -218,7 +218,7 @@
            server's — otherwise "now" and "today" land in the wrong place. */
         const serverSkewMs = new Date('{{ now()->format('Y-m-d\TH:i:s') }}').getTime() - Date.now();
 
-        let salesmanId = '';
+        let employeeId = '';
         let status = '';
         let picked = null;
 
@@ -260,7 +260,7 @@
             },
             events: function (info, success, failure) {
                 const params = new URLSearchParams({ start: info.startStr, end: info.endStr });
-                if (salesmanId) params.append('salesman_id[]', salesmanId);
+                if (employeeId) params.append('employee_id[]', employeeId);
                 if (status) params.append('status', status);
 
                 fetch('{{ route('property::sale::appointment_schedule::calendar.data') }}?' + params.toString(), {
@@ -303,7 +303,7 @@
             document.getElementById('pvPopBody').innerHTML =
                 row('Reference', p.reference_no) +
                 row('Property', [p.property, p.building].filter(Boolean).join(', ')) +
-                row('Salesman', p.salesman) +
+                row('Employee', p.employee) +
                 row('Phone', p.customer_phone) +
                 row('Booked', p.booked);
 
@@ -393,7 +393,7 @@
         });
         markView(calendar.view.type);
 
-        /* Salesman picker. The team will outgrow a chip row, so this searches
+        /* Employee picker. The team will outgrow a chip row, so this searches
            the whole employee list server-side through the same endpoint every
            other employee select in the app uses. */
         function tint(id) {
@@ -412,7 +412,7 @@
         }
 
         let employeesLoaded = false;
-        const salesmanPicker = new TomSelect('#pvSalesmanFilter', {
+        const employeePicker = new TomSelect('#pvEmployeeFilter', {
             valueField: 'id',
             labelField: 'name',
             searchField: ['name', 'mobile', 'email'],
@@ -440,7 +440,7 @@
                 item: renderRow,
             },
             onChange: function (value) {
-                salesmanId = value || '';
+                employeeId = value || '';
                 closePop();
                 calendar.refetchEvents();
             },

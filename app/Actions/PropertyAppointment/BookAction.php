@@ -54,7 +54,7 @@ class BookAction
                 // filled in for the customer, so it is checked exactly as a typed
                 // one is — inside the open hours, clear of everything already on
                 // the calendar, and past the notice cut-off.
-                $problem = app(SlotService::class)->windowProblem($model->salesman_id, $slot, $end, $model->id);
+                $problem = app(SlotService::class)->windowProblem($model->employee_id, $slot, $end, $model->id);
 
                 if (! $problem['ok']) {
                     throw new SlotUnavailableException($problem['reason'], $problem['taken'] ? 1 : 0);

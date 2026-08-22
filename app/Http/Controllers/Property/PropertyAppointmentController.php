@@ -21,13 +21,13 @@ class PropertyAppointmentController extends Controller
         return view('property.appointment.index');
     }
 
-    /** All-salesmen calendar. */
+    /** All-employees calendar. */
     public function calendar()
     {
         return view('property.appointment.calendar', [
-            'salesmen' => User::employee()
+            'employees' => User::employee()
                 ->select(['id', 'name'])
-                ->whereIn('id', PropertyAppointment::query()->distinct()->pluck('salesman_id')->filter())
+                ->whereIn('id', PropertyAppointment::query()->distinct()->pluck('employee_id')->filter())
                 ->orderBy('name')
                 ->get(),
         ]);
@@ -46,13 +46,13 @@ class PropertyAppointmentController extends Controller
         $appointments = PropertyAppointment::query()
             ->with([
                 'customer:id,name,mobile',
-                'salesman:id,name,mobile',
+                'employee:id,name,mobile',
                 'rentOut:id,property_id,agreement_type',
                 'rentOut.property:id,number,property_building_id',
                 'rentOut.property.building:id,name',
             ])
             ->whereNotNull('scheduled_at')
-            ->when($request->salesman_id, fn ($query, $value) => $query->whereIn('salesman_id', (array) $value))
+            ->when($request->employee_id, fn ($query, $value) => $query->whereIn('employee_id', (array) $value))
             ->when($request->status, fn ($query, $value) => $query->where('status', $value))
             ->when($request->start, fn ($query, $value) => $query->where('scheduled_at', '>=', Carbon::parse($value)))
             ->when($request->end, fn ($query, $value) => $query->where('scheduled_at', '<=', Carbon::parse($value)))
@@ -83,7 +83,7 @@ class PropertyAppointmentController extends Controller
                     'status_label' => $appointment->statusLabel(),
                     'customer' => $appointment->customer?->name,
                     'customer_phone' => $appointment->customer?->mobile,
-                    'salesman' => $appointment->salesman?->name,
+                    'employee' => $appointment->employee?->name,
                     'property' => $property?->number,
                     'building' => $property?->building?->name,
                     'long_date' => $appointment->scheduled_at?->format('l, d F Y'),
@@ -227,7 +227,7 @@ class PropertyAppointmentController extends Controller
     {
         $appointment->load([
             'customer:id,name,email,mobile',
-            'salesman:id,name,mobile',
+            'employee:id,name,mobile',
             'rentOut:id,property_id',
             'rentOut.property:id,number,property_building_id,property_type_id,rooms,size',
             'rentOut.property.building:id,name,location',
@@ -240,9 +240,9 @@ class PropertyAppointmentController extends Controller
         // The page offers two ways to the same window — tap a suggested time, or
         // type your own — so it needs both the grid AND the edges the grid was
         // cut from, plus what is already taken out of each day.
-        $slots = $bookable ? $slotService->availableSlots($appointment->salesman_id, null, null, $appointment->id) : [];
-        $windows = $bookable ? $slotService->openWindows($appointment->salesman_id) : [];
-        $busy = $bookable ? $slotService->busyStretches($appointment->salesman_id, null, null, $appointment->id) : [];
+        $slots = $bookable ? $slotService->availableSlots($appointment->employee_id, null, null, $appointment->id) : [];
+        $windows = $bookable ? $slotService->openWindows($appointment->employee_id) : [];
+        $busy = $bookable ? $slotService->busyStretches($appointment->employee_id, null, null, $appointment->id) : [];
 
         $duration = SlotService::slotLengthMinutes();
         $property = $appointment->rentOut?->property;
@@ -253,8 +253,8 @@ class PropertyAppointmentController extends Controller
             'reference_no' => $appointment->reference_no,
             'customer_name' => $appointment->customer?->name,
             'customer_email' => $appointment->customer?->email,
-            'salesman_name' => $appointment->salesman?->name,
-            'salesman_phone' => $appointment->salesman?->mobile,
+            'employee_name' => $appointment->employee?->name,
+            'employee_phone' => $appointment->employee?->mobile,
             'property_name' => $property?->number,
             'property' => $property ? [
                 'unit' => $property->number,

@@ -218,7 +218,7 @@ const verdict = computed(() => {
     return {
         tone: 'ok',
         icon: 'fa-check-circle',
-        text: `That window is free${data.value?.salesman_name ? ' — ' + data.value.salesman_name + ' will hold it for you' : ''}.`,
+        text: `That window is free${data.value?.employee_name ? ' — ' + data.value.employee_name + ' will hold it for you' : ''}.`,
         ok: true,
     }
 })
@@ -253,14 +253,14 @@ const facts = computed(() => {
     if (isBooked.value) {
         return [
             { k: 'Reference', v: data.value.reference_no },
-            { k: 'Your agent', v: data.value.salesman_name },
+            { k: 'Your agent', v: data.value.employee_name },
             { k: 'Times shown in', v: data.value.timezone },
         ].filter((f) => f.v)
     }
 
     return [
         { k: 'Appointment as', v: data.value.customer_name },
-        { k: 'Your agent', v: data.value.salesman_name },
+        { k: 'Your agent', v: data.value.employee_name },
         { k: 'Open hours', v: openHoursLabel.value },
         { k: 'Times shown in', v: data.value.timezone },
     ].filter((f) => f.v)
@@ -353,7 +353,7 @@ function isPicked(hhmm) {
         && windowMinutes.value === (data.value?.duration_minutes || 60)
 }
 
-/** Jump to the earliest time the salesman can still take. */
+/** Jump to the earliest time the employee can still take. */
 function pickEarliest() {
     const day = days.value.find((d) => (d.slots ?? []).length)
     if (!day) return
@@ -449,11 +449,11 @@ onMounted(load)
                     </h1>
                     <p class="apxp-sub">
                         Your time is held.
-                        <template v-if="data.salesman_name && property && property.location">
-                            {{ data.salesman_name }} will meet you at {{ property.location }}.
+                        <template v-if="data.employee_name && property && property.location">
+                            {{ data.employee_name }} will meet you at {{ property.location }}.
                         </template>
-                        <template v-else-if="data.salesman_name">
-                            {{ data.salesman_name }} has it in the diary and will be in touch if anything changes.
+                        <template v-else-if="data.employee_name">
+                            {{ data.employee_name }} has it in the diary and will be in touch if anything changes.
                         </template>
                     </p>
                     <div class="apxp-facts">
@@ -469,7 +469,7 @@ onMounted(load)
                     <div class="apxp-eyebrow">Property appointment</div>
                     <h1 class="apxp-h1">This link has expired.</h1>
                     <p class="apxp-sub">
-                        Get in touch with {{ data.salesman_name || 'us' }} and we'll send you a fresh one —
+                        Get in touch with {{ data.employee_name || 'us' }} and we'll send you a fresh one —
                         it only takes a moment.
                     </p>
                 </template>
@@ -485,7 +485,7 @@ onMounted(load)
                     </h1>
                     <div v-if="propertyMeta" class="apxp-meta">{{ propertyMeta }}</div>
                     <p class="apxp-sub">
-                        <template v-if="data.salesman_name">{{ data.salesman_name }} has</template>
+                        <template v-if="data.employee_name">{{ data.employee_name }} has</template>
                         <template v-else>We've</template>
                         held these times open for you. Pick whichever suits — nothing else is needed from you.
                     </p>
@@ -543,10 +543,10 @@ onMounted(load)
                     <div v-if="property && property.location" class="apxp-kv">
                         <span class="k">Where</span><span class="v">{{ property.location }}</span>
                     </div>
-                    <div v-if="data.salesman_name" class="apxp-kv">
+                    <div v-if="data.employee_name" class="apxp-kv">
                         <span class="k">Your agent</span>
                         <span class="v">
-                            {{ data.salesman_name }}<template v-if="data.salesman_phone"><br>{{ data.salesman_phone }}</template>
+                            {{ data.employee_name }}<template v-if="data.employee_phone"><br>{{ data.employee_phone }}</template>
                         </span>
                     </div>
                     <div class="apxp-kv"><span class="k">Reference</span><span class="v">{{ data.reference_no }}</span></div>
@@ -555,8 +555,8 @@ onMounted(load)
 
                 <div class="apxp-note">
                     Need to change it?
-                    <template v-if="data.salesman_phone">
-                        Call {{ data.salesman_name }} on {{ data.salesman_phone }} and we'll move it for you.
+                    <template v-if="data.employee_phone">
+                        Call {{ data.employee_name }} on {{ data.employee_phone }} and we'll move it for you.
                     </template>
                     <template v-else>Get in touch and we'll move it for you.</template>
                     Keep this link — it stays valid for your appointment.
@@ -569,11 +569,11 @@ onMounted(load)
                     <div class="art"><i class="fa fa-clock-o"></i></div>
                     <h3>We can send you another link</h3>
                     <p>
-                        This one is no longer valid. {{ data.salesman_name || 'Our team' }} can issue a fresh link
+                        This one is no longer valid. {{ data.employee_name || 'Our team' }} can issue a fresh link
                         and you'll be booked in a minute.
                     </p>
-                    <a v-if="data.salesman_phone" class="call" :href="`tel:${data.salesman_phone}`">
-                        <i class="fa fa-phone"></i> Call {{ data.salesman_name }}
+                    <a v-if="data.employee_phone" class="call" :href="`tel:${data.employee_phone}`">
+                        <i class="fa fa-phone"></i> Call {{ data.employee_name }}
                     </a>
                 </div>
             </div>
@@ -584,11 +584,11 @@ onMounted(load)
                     <div class="art"><i class="fa fa-calendar-o"></i></div>
                     <h3>No times open just now</h3>
                     <p>
-                        {{ data.salesman_name || 'Our team' }} has no free slots at the moment. Get in touch and
+                        {{ data.employee_name || 'Our team' }} has no free slots at the moment. Get in touch and
                         we'll arrange a appointment with you directly.
                     </p>
-                    <a v-if="data.salesman_phone" class="call" :href="`tel:${data.salesman_phone}`">
-                        <i class="fa fa-phone"></i> Call {{ data.salesman_name }}
+                    <a v-if="data.employee_phone" class="call" :href="`tel:${data.employee_phone}`">
+                        <i class="fa fa-phone"></i> Call {{ data.employee_name }}
                     </a>
                 </div>
             </div>
@@ -660,7 +660,7 @@ onMounted(load)
                         <div class="apxp-seldate">{{ longLabel(selectedDate) }}</div>
                         <div class="apxp-selsub">
                             <template v-if="activeWindow">
-                                {{ data.salesman_name || 'We' }} {{ data.salesman_name ? 'is' : 'are' }} available
+                                {{ data.employee_name || 'We' }} {{ data.employee_name ? 'is' : 'are' }} available
                                 {{ openHoursLabel }}
                             </template>
                             <template v-else>Closed on this day.</template>

@@ -34,7 +34,7 @@
                                     <div class="apx-empty">
                                         <div class="art"><i class="fa fa-calendar-o"></i></div>
                                         <h3>No upcoming appointments</h3>
-                                        <p>Nothing is booked with this salesman yet.</p>
+                                        <p>Nothing is booked with this employee yet.</p>
                                     </div>
                                 </td></tr>
                             @endforelse
@@ -92,8 +92,8 @@
                             <i class="fa fa-building-o lead"></i>
                             <div class="flex-grow-1">
                                 <div class="t">Following the company hours</div>
-                                <div class="s">This salesman has no hours of their own, so customers are offered the
-                                    company week from Settings → Working Day. Add hours below only where this salesman
+                                <div class="s">This employee has no hours of their own, so customers are offered the
+                                    company week from Settings → Working Day. Add hours below only where this employee
                                     differs.</div>
                                 <div class="d-flex gap-2 flex-wrap mt-2">
                                     @foreach ($companyHours as $dayIndex => $timing)
@@ -116,7 +116,7 @@
                             <i class="fa fa-exclamation-circle lead"></i>
                             <div class="flex-grow-1">
                                 <div class="t">No availability set</div>
-                                <div class="s">This salesman has no hours of their own and every day is switched off in
+                                <div class="s">This employee has no hours of their own and every day is switched off in
                                     Settings → Working Day, so customers see no bookable times and the appointment link
                                     shows an empty calendar.</div>
                             </div>

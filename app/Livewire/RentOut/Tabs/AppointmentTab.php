@@ -8,8 +8,10 @@ use App\Actions\PropertyAppointment\CreateAction;
 use App\Actions\PropertyAppointment\RevokeLinkAction;
 use App\Actions\PropertyAppointment\SendLinkAction;
 use App\Actions\PropertyAppointment\StatusAction;
+use App\Actions\PropertyAppointment\UpdateAction;
 use App\Models\PropertyAppointment;
 use App\Models\RentOut;
+use App\Models\User;
 use App\Services\PropertyAppointment\SlotService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +22,15 @@ class AppointmentTab extends Component
     public $rentOutId;
 
     public $linkValidUntil;
+
+    /**
+     * Who carries out the appointment.
+     *
+     * A fresh choice, deliberately NOT seeded from the agreement's salesman:
+     * the person who shows a property is routinely not the person who owns the
+     * lease, so the tab asks rather than assumes.
+     */
+    public $employee_id = '';
 
     /** Staff-side "book on the customer's behalf" state. */
     public $showSlotPicker = false;
@@ -39,32 +50,86 @@ class AppointmentTab extends Component
     {
         $this->rentOutId = $rentOutId;
         $this->linkValidUntil = now()->addDays(14)->format('Y-m-d');
+        $this->employee_id = $this->appointment?->employee_id ?? '';
     }
 
     public function getRentOutProperty(): ?RentOut
     {
-        return RentOut::with(['salesman:id,name,mobile', 'account:id,name,email,mobile', 'property:id,number'])
+        return RentOut::with(['account:id,name,email,mobile', 'property:id,number'])
             ->find($this->rentOutId);
     }
 
     public function getAppointmentProperty(): ?PropertyAppointment
     {
-        return PropertyAppointment::with(['salesman:id,name,mobile', 'customer:id,name,email,mobile', 'emailLogs'])
+        return PropertyAppointment::with(['employee:id,name,mobile', 'customer:id,name,email,mobile', 'emailLogs'])
             ->where('rent_out_id', $this->rentOutId)
             ->whereNot('status', 'cancelled')
             ->latest('id')
             ->first();
     }
 
+    /** The chosen employee, for the panel heading and the slot picker's copy. */
+    public function getEmployeeProperty(): ?User
+    {
+        return $this->employee_id
+            ? User::select(['id', 'name', 'mobile'])->find($this->employee_id)
+            : null;
+    }
+
     /** Slot grid for the staff-side picker, grouped by day. */
     public function getSlotsProperty(): array
     {
-        $rentOut = $this->rentOut;
-        if (! $rentOut?->salesman_id) {
+        if (! $this->employee_id) {
             return [];
         }
 
-        return app(SlotService::class)->availableSlots($rentOut->salesman_id);
+        return app(SlotService::class)->availableSlots((int) $this->employee_id);
+    }
+
+    /**
+     * Picking someone else.
+     *
+     * Before a appointment exists this is just held state. Once one exists the
+     * change is written straight through, because the slots on screen, the link
+     * the customer holds and the diary the booking sits in all belong to that
+     * person — leaving the three disagreeing until some later Save is exactly
+     * how a customer ends up meeting nobody.
+     */
+    public function updatedEmployeeId($value)
+    {
+        // A slot chosen from the previous person's diary means nothing now.
+        $this->reset(['selectedSlot', 'selectedDate']);
+        unset($this->slots, $this->employee);
+
+        $appointment = $this->appointment;
+
+        if (! $appointment || (int) $appointment->employee_id === (int) $value) {
+            $this->syncEmployeePicker();
+
+            return;
+        }
+
+        if (blank($value)) {
+            $this->dispatch('error', ['message' => 'An appointment always needs an employee. Pick a different one instead.']);
+        } else {
+            abort_unless(auth()->user()?->can('property appointment.edit'), 403);
+            $this->runAction(fn () => (new UpdateAction())->execute(['employee_id' => $value], $appointment->id, Auth::id()));
+        }
+
+        // Whatever the database settled on wins — a rejected change must not
+        // leave the picker showing someone who is not on the appointment.
+        $this->employee_id = $this->appointment?->employee_id ?? '';
+        unset($this->slots, $this->employee);
+        $this->syncEmployeePicker();
+    }
+
+    /** Push the authoritative choice back to the TomSelect behind wire:ignore. */
+    private function syncEmployeePicker(): void
+    {
+        $this->dispatch('appointment-employee-synced', [
+            'id' => (string) $this->employee_id,
+            'name' => $this->employee?->name ?? '',
+        ]);
     }
 
     public function sendLink()
@@ -77,6 +142,7 @@ class AppointmentTab extends Component
             if (! $appointment) {
                 $response = (new CreateAction())->execute([
                     'rent_out_id' => $this->rentOutId,
+                    'employee_id' => $this->employee_id,
                     'token_expires_at' => $this->linkValidUntil,
                 ], Auth::id());
                 if (! $response['success']) {
@@ -122,6 +188,7 @@ class AppointmentTab extends Component
                 DB::beginTransaction();
                 $response = (new CreateAction())->execute([
                     'rent_out_id' => $this->rentOutId,
+                    'employee_id' => $this->employee_id,
                     'token_expires_at' => $this->linkValidUntil,
                 ], Auth::id());
                 if (! $response['success']) {
@@ -189,7 +256,7 @@ class AppointmentTab extends Component
      */
     private function freshen(): void
     {
-        unset($this->appointment, $this->rentOut, $this->slots);
+        unset($this->appointment, $this->rentOut, $this->slots, $this->employee);
     }
 
     public function render()

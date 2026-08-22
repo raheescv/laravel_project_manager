@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sidebar — Simple &amp; Premium Samples</title>
+<link rel="stylesheet" href="vendor/font-awesome/font-awesome.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{font-family:'Poppins','Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;padding:26px 24px 70px;transition:background .28s,color .28s}
+  [data-theme="light"] body{background:#eef1f6;color:#0f172a}
+  [data-theme="dark"]  body{background:#07070d;color:#e6e8f2}
+
+  /* ------------------------------ toolbar ------------------------------ */
+  .wrap{max-width:1180px;margin:0 auto}
+  .toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:8px}
+  .toolbar h1{font-size:1.12rem;font-weight:700;letter-spacing:-.015em}
+  .toolbar p{font-size:.78rem;opacity:.6;margin-top:4px;max-width:52ch;line-height:1.5}
+  .ctrls{display:flex;gap:8px;align-items:center}
+  .btn{font:inherit;font-size:.74rem;font-weight:600;cursor:pointer;padding:.5rem .85rem;border-radius:9px;
+       border:1px solid;transition:transform .16s,background .16s,border-color .16s;display:inline-flex;align-items:center;gap:.4rem}
+  [data-theme="light"] .btn{background:#fff;border-color:#dde2ec;color:#334155}
+  [data-theme="dark"]  .btn{background:#12121d;border-color:#25253a;color:#c7cee0}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.on{background:#2563eb;border-color:#2563eb;color:#fff}
+
+  .legend{font-size:.72rem;opacity:.55;margin:16px 0 22px;line-height:1.6}
+  .legend b{font-weight:600;opacity:.9}
+
+  /* ------------------------------ gallery ------------------------------ */
+  .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;align-items:start;transition:gap .25s}
+  .card{border-radius:16px;padding:14px;transition:background .28s,border-color .28s}
+  [data-theme="light"] .card{background:#fff;border:1px solid #e4e8f0;box-shadow:0 18px 40px -30px rgba(15,23,42,.4)}
+  [data-theme="dark"]  .card{background:#0e0e18;border:1px solid #1e1e2e}
+  .card__h{display:flex;align-items:center;gap:9px;margin-bottom:3px}
+  .tag{width:22px;height:22px;flex:0 0 22px;border-radius:7px;background:#2563eb;color:#fff;font-size:.68rem;
+       font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  .card__h h3{font-size:.86rem;font-weight:700;letter-spacing:-.01em}
+  .card__sub{font-size:.7rem;opacity:.55;line-height:1.5;margin-bottom:12px}
+  .frame{border-radius:12px;overflow:visible;position:relative;transition:background .28s}
+  [data-theme="light"] .frame{background:#f3f5f9}
+  [data-theme="dark"]  .frame{background:#0a0a12}
+  .notes{margin-top:12px;font-size:.68rem;line-height:1.65;opacity:.62}
+  .notes li{margin-left:14px;margin-bottom:2px}
+
+  /* ==================================================================== */
+  /*  SHARED SIDEBAR SKELETON                                             */
+  /* ==================================================================== */
+  .sb{width:100%;display:flex;flex-direction:column;position:relative;
+      background:var(--bg);color:var(--txt);border-radius:12px;transition:background .28s,color .28s;overflow:hidden}
+
+  .sb__brand{display:flex;align-items:center;gap:9px;padding:14px 12px 12px;min-width:0}
+  .lg{width:30px;height:30px;flex:0 0 30px;border-radius:9px;background:var(--acc);color:var(--acc-ink);
+      display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;letter-spacing:-.02em}
+  .bt{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+  .bt b{font-size:.8rem;font-weight:700;color:var(--txt-str);letter-spacing:-.01em}
+  .bt i{font-style:normal;font-size:.58rem;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);margin-top:2px}
+
+  .sb__menu{padding:2px 8px 14px;display:flex;flex-direction:column;gap:1px;position:relative}
+  .grp{position:relative}
+
+  .sec{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:14px 10px 6px}
+  .sec:first-child{padding-top:2px}
+
+  .row{display:flex;align-items:center;gap:10px;padding:0 10px;height:34px;border-radius:9px;position:relative;
+       color:var(--txt);text-decoration:none;font-size:12.5px;font-weight:500;cursor:pointer;
+       transition:background .16s,color .16s,box-shadow .16s}
+  .row .ic{width:18px;flex:0 0 18px;display:inline-flex;align-items:center;justify-content:center;
+           font-size:13px;color:var(--dim2);transition:color .16s,background .16s}
+  .row .lb{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cv{width:5px;height:5px;flex:0 0 5px;border-right:1.4px solid currentColor;border-bottom:1.4px solid currentColor;
+      transform:rotate(-45deg);opacity:.4;transition:transform .22s,opacity .16s;margin-left:2px}
+  .row.open .cv{transform:rotate(45deg);opacity:.75}
+  .row:hover{background:var(--hov);color:var(--txt-str)}
+  .row:hover .ic{color:var(--acc)}
+
+  .sub{display:flex;flex-direction:column;gap:1px;padding:2px 0 8px;margin-left:28px;position:relative}
+  .sub a{display:block;padding:0 10px;height:29px;line-height:29px;border-radius:8px;font-size:12px;font-weight:500;
+         color:var(--mut);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+         position:relative;transition:background .16s,color .16s,box-shadow .16s}
+  .sub a:hover{background:var(--hov);color:var(--txt-str)}
+
+  /* rail popover (collapsed mode only) */
+  .pop{display:none;position:absolute;left:calc(100% + 10px);top:-6px;width:178px;z-index:5;
+       background:var(--pop);border:1px solid var(--edge);border-radius:12px;padding:6px;
+       box-shadow:0 20px 44px -18px rgba(15,23,42,.45),0 4px 12px -8px rgba(15,23,42,.2)}
+  .pop__h{font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);padding:6px 10px 6px}
+  .pop a{display:block;padding:0 10px;height:28px;line-height:28px;border-radius:7px;font-size:12px;font-weight:500;
+         color:var(--mut);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pop a.on{color:var(--acc);font-weight:600;background:var(--soft)}
+
+  /* ==================================================================== */
+  /*  A — QUIET RAIL                                                      */
+  /* ==================================================================== */
+  .sb--a{--bg:#ffffff;--edge:#e7e9ee;--pop:#ffffff;
+         --txt:#525a6b;--txt-str:#111827;--mut:#6b7280;--dim:#9aa2b1;--dim2:#9aa2b1;
+         --acc:#2563eb;--acc-ink:#ffffff;--soft:#eef3ff;--hov:#f4f6fa}
+  [data-theme="dark"] .sb--a{--bg:#101018;--edge:#232334;--pop:#16161f;
+         --txt:#c3c9d6;--txt-str:#f2f4f9;--mut:#8d95a6;--dim:#626b7e;--dim2:#7b8496;
+         --acc:#60a5fa;--acc-ink:#0b1220;--soft:rgba(96,165,250,.14);--hov:rgba(255,255,255,.05)}
+  .sb--a .row.active{background:var(--soft);color:var(--acc);font-weight:600}
+  .sb--a .row.active .ic{color:var(--acc)}
+  .sb--a .row.active::before{content:'';position:absolute;left:-8px;top:6px;bottom:6px;width:3px;
+       border-radius:0 3px 3px 0;background:var(--acc)}
+  .sb--a .sub a.on{color:var(--acc);font-weight:600}
+  .sb--a .sub a.on::before{content:'';position:absolute;left:-9px;top:50%;transform:translateY(-50%);
+       width:4px;height:4px;border-radius:50%;background:var(--acc)}
+
+  /* ==================================================================== */
+  /*  B — SOFT CARD                                                       */
+  /* ==================================================================== */
+  .sb--b{--bg:#ffffff;--edge:#e9edf4;--pop:#ffffff;
+         --txt:#4d5566;--txt-str:#0f172a;--mut:#697182;--dim:#9aa3b2;--dim2:#8b94a6;
+         --acc:#4f46e5;--acc-ink:#ffffff;--soft:#eeecfd;--hov:#f4f6fa}
+  [data-theme="dark"] .sb--b{--bg:#0f0f19;--edge:#232338;--pop:#17172a;
+         --txt:#c5cad8;--txt-str:#f4f5fa;--mut:#8e95a8;--dim:#646c80;--dim2:#7a8296;
+         --acc:#a5b4fc;--acc-ink:#171735;--soft:rgba(165,180,252,.16);--hov:rgba(255,255,255,.05)}
+  .sb--b .row .ic{width:26px;height:26px;flex:0 0 26px;border-radius:8px;font-size:12px}
+  .sb--b .row{height:38px;gap:9px;border-radius:11px}
+  .sb--b .row:hover .ic{background:var(--hov)}
+  .sb--b .grp{border-radius:13px;transition:background .2s}
+  .sb--b .grp.open{background:var(--pane);border:1px solid var(--edge);padding:3px;margin:5px 0}
+  .sb--b{--pane:#f7f9fc}
+  [data-theme="dark"] .sb--b{--pane:rgba(255,255,255,.035)}
+  .sb--b .grp.open .row{background:transparent;color:var(--txt-str);font-weight:600}
+  .sb--b .row.active .ic{background:var(--acc);color:var(--acc-ink)}
+  .sb--b .grp.open .sub{margin-left:35px;padding-bottom:4px}
+  .sb--b .sub a.on{color:var(--acc);font-weight:600;background:var(--bg);
+       box-shadow:0 2px 6px -3px rgba(15,23,42,.25),0 0 0 1px var(--edge)}
+  [data-theme="dark"] .sb--b .sub a.on{box-shadow:none;background:var(--soft)}
+
+  /* ==================================================================== */
+  /*  C — INK LINE                                                        */
+  /* ==================================================================== */
+  .sb--c{--bg:#ffffff;--edge:#ececef;--pop:#ffffff;
+         --txt:#3f3f46;--txt-str:#09090b;--mut:#71717a;--dim:#a1a1aa;--dim2:#a1a1aa;
+         --acc:#09090b;--acc-ink:#ffffff;--soft:#f4f4f5;--hov:#f6f6f7}
+  [data-theme="dark"] .sb--c{--bg:#0a0a0c;--edge:rgba(255,255,255,.09);--pop:#131316;
+         --txt:#d4d4d8;--txt-str:#fafafa;--mut:#a1a1aa;--dim:#71717a;--dim2:#8b8b93;
+         --acc:#fafafa;--acc-ink:#09090b;--soft:rgba(255,255,255,.07);--hov:rgba(255,255,255,.05)}
+  .sb--c .row{font-size:13px;height:33px;border-radius:7px}
+  .sb--c .row.active{background:transparent;color:var(--txt-str);font-weight:650}
+  .sb--c .row.active .ic{color:var(--txt-str)}
+  .sb--c .row.active::before{content:'';position:absolute;left:-8px;top:7px;bottom:7px;width:2px;background:var(--acc)}
+  .sb--c .sub{margin-left:29px;padding-left:11px;border-left:1px solid var(--edge)}
+  .sb--c .sub a{font-size:12.5px}
+  .sb--c .sub a.on{color:var(--txt-str);font-weight:650;background:transparent}
+  .sb--c .sub a.on::before{content:'';position:absolute;left:-12px;top:5px;bottom:5px;width:2px;background:var(--acc)}
+
+  /* ==================================================================== */
+  /*  D — FLOATING PILL                                                   */
+  /* ==================================================================== */
+  .sb--d{--bg:#f4f6fb;--edge:#e6eaf3;--pop:#ffffff;
+         --txt:#4b5468;--txt-str:#0f172a;--mut:#6b7488;--dim:#98a1b4;--dim2:#8c95a8;
+         --acc:#2563eb;--acc-ink:#ffffff;--soft:rgba(37,99,235,.10);--hov:#eaeef7}
+  [data-theme="dark"] .sb--d{--bg:#08080f;--edge:#20202f;--pop:#15151f;
+         --txt:#c1c7d5;--txt-str:#f2f4f9;--mut:#8b93a5;--dim:#626a7d;--dim2:#7a8295}
+  [data-theme="dark"] .sb--d{--dim2:#7a8295;--acc:#3b82f6;--acc-ink:#ffffff;--soft:rgba(59,130,246,.18);--hov:rgba(255,255,255,.05)}
+  .sb--d .sb__menu{margin:0 8px 10px;padding:8px 7px 12px;border-radius:16px;background:var(--panel2);
+       box-shadow:0 10px 30px -22px rgba(15,23,42,.55)}
+  .sb--d{--panel2:#ffffff}
+  [data-theme="dark"] .sb--d{--panel2:#101019}
+  .sb--d .row{height:36px;border-radius:999px;padding:0 12px}
+  .sb--d .sub a{border-radius:999px;padding:0 12px}
+  .sb--d .row.active{background:var(--acc);color:#fff;font-weight:600;
+       box-shadow:0 8px 18px -10px rgba(37,99,235,.75)}
+  .sb--d .row.active .ic{color:#fff}
+  .sb--d .row.active .cv{opacity:.85}
+  .sb--d .sub{margin-left:26px}
+  .sb--d .sub a.on{background:var(--soft);color:var(--acc);font-weight:600}
+
+  /* ==================================================================== */
+  /*  COLLAPSED RAIL MODE                                                 */
+  /* ==================================================================== */
+  .gallery.is-rail{grid-template-columns:repeat(4,86px);gap:206px;justify-content:start}
+  .gallery.is-rail .card{padding:12px}
+  .gallery.is-rail .card__h h3,.gallery.is-rail .card__sub,.gallery.is-rail .notes{display:none}
+  .gallery.is-rail .lb,.gallery.is-rail .cv,.gallery.is-rail .sec,
+  .gallery.is-rail .sub,.gallery.is-rail .bt{display:none}
+  .gallery.is-rail .row{justify-content:center;padding:0;height:38px;gap:0}
+  .gallery.is-rail .row.active::before{display:none}
+  .gallery.is-rail .sb__brand{justify-content:center;padding:14px 0 12px}
+  .gallery.is-rail .pop{display:block}
+  .gallery.is-rail .card,
+  .gallery.is-rail .frame,
+  .gallery.is-rail .sb,
+  .gallery.is-rail .sb__menu{overflow:visible}
+  .gallery.is-rail .sb--b .grp.open{background:transparent;border-color:transparent}
+  .gallery.is-rail .sb--d .row{border-radius:11px;width:38px;margin:0 auto}
+  .gallery.is-rail .sb--a .row.active,
+  .gallery.is-rail .sb--c .row.active{background:var(--soft);border-radius:10px}
+
+  @media(max-width:1120px){.gallery{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.gallery{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <div>
+      <h1>Sidebar — simple &amp; premium, four directions</h1>
+      <p>Same menu, same structure classes. What changes is weight, spacing, how an open group reads, and how the active child is marked. Pick one (or mix: e.g. “A rows + C submenu”).</p>
+    </div>
+    <div class="ctrls">
+      <button class="btn" id="theme"><i class="fa fa-moon-o"></i> Dark</button>
+      <button class="btn" id="rail"><i class="fa fa-compress"></i> Collapsed rail</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <b>What all four fix vs. today:</b> the dashed connector line and node-dots under an open group are gone · label weight drops from 700–800 to 500–600 so the <i>active</i> item is the only bold thing · icons stop being filled chips at rest · optional section captions break a 13-item list into three scannable blocks.
+  </div>
+
+  <div class="gallery" id="gallery"></div>
+</div>
+
+<script>
+var ITEMS = [
+  {s:'Main'},
+  {i:'fa-tachometer', t:'Dashboard'},
+  {i:'fa-cubes',      t:'Inventory',  sub:1},
+  {i:'fa-home',       t:'Rent Out',   sub:1},
+  {i:'fa-dollar',     t:'Sales',      sub:1, open:1,
+   kids:['Sales','Booking','Appointments','Payments','Services','Payment Due','Service Charge Report'],
+   on:'Appointments'},
+  {s:'Operations'},
+  {i:'fa-filter',   t:'Leads',      sub:1},
+  {i:'fa-wrench',   t:'Maintenance',sub:1},
+  {i:'fa-bank',     t:'Account',    sub:1},
+  {i:'fa-users',    t:'Employee',   sub:1},
+  {s:'Organisation'},
+  {i:'fa-user',     t:'Users',   sub:1},
+  {i:'fa-building', t:'Tenants'},
+  {i:'fa-ticket',   t:'Tickets'}
+];
+
+var DIRS = [
+  {k:'a', n:'Quiet Rail',
+   d:'Minimal and typographic. No chrome at rest — one soft tint plus a 3px rail marks the active row.',
+   notes:['Bare icons, tinted only when active','Children indent under the label — no line, no dots','Active child = accent text + 4px dot']},
+  {k:'b', n:'Soft Card',
+   d:'The open group becomes one tinted card, so “where am I” is grouping, not a connector line.',
+   notes:['Rounded icon chips, filled only on active','Open group wrapped in a panel','Active child = raised white pill']},
+  {k:'c', n:'Ink Line',
+   d:'Editorial. Almost no colour — ink, one hairline, and weight does all the work.',
+   notes:['Zero fills; hover is a faint wash','Single hairline replaces the dashed tree','Active child thickens that hairline']},
+  {k:'d', n:'Floating Pill',
+   d:'Menu sits on its own white card inside a tinted rail. Boldest of the four.',
+   notes:['Solid accent pill + soft shadow on active','Fully rounded rows','Active child = tinted pill, not solid']}
+];
+
+function menu(){
+  var h = '';
+  for (var x=0; x<ITEMS.length; x++){
+    var it = ITEMS[x];
+    if (it.s){ h += '<div class="sec">'+it.s+'</div>'; continue; }
+    var isOpen = !!it.open;
+    var row = '<a class="row'+(isOpen?' open active':'')+'">'
+            + '<span class="ic"><i class="fa '+it.i+'"></i></span>'
+            + '<span class="lb">'+it.t+'</span>'
+            + (it.sub?'<span class="cv"></span>':'')
+            + '</a>';
+
+    var block = row;
+    if (isOpen){
+      block += '<div class="pop"><div class="pop__h">'+it.t+'</div>';
+      for (var p=0; p<it.kids.length; p++){
+        block += '<a'+(it.kids[p]===it.on?' class="on"':'')+'>'+it.kids[p]+'</a>';
+      }
+      block += '</div>';
+      block += '<div class="sub">';
+      for (var j=0; j<it.kids.length; j++){
+        block += '<a'+(it.kids[j]===it.on?' class="on"':'')+'>'+it.kids[j]+'</a>';
+      }
+      block += '</div>';
+      block = '<div class="grp open">'+block+'</div>';
+    } else {
+      block = '<div class="grp">'+block+'</div>';
+    }
+    h += block;
+  }
+  return h;
+}
+
+var g = document.getElementById('gallery');
+var out = '';
+for (var i=0; i<DIRS.length; i++){
+  var d = DIRS[i];
+  var nl = '';
+  for (var m=0; m<d.notes.length; m++) nl += '<li>'+d.notes[m]+'</li>';
+  out += '<div class="card">'
+       + '<div class="card__h"><span class="tag">'+d.k.toUpperCase()+'</span><h3>'+d.n+'</h3></div>'
+       + '<div class="card__sub">'+d.d+'</div>'
+       + '<div class="frame"><aside class="sb sb--'+d.k+'">'
+       +   '<div class="sb__brand"><span class="lg">N</span><span class="bt"><b>BAS</b><i>Workspace</i></span></div>'
+       +   '<div class="sb__menu">'+menu()+'</div>'
+       + '</aside></div>'
+       + '<ul class="notes">'+nl+'</ul>'
+       + '</div>';
+}
+g.innerHTML = out;
+
+var root = document.documentElement, tb = document.getElementById('theme'), rb = document.getElementById('rail');
+tb.onclick = function(){
+  var dark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', dark ? 'light' : 'dark');
+  tb.innerHTML = dark ? '<i class="fa fa-moon-o"></i> Dark' : '<i class="fa fa-sun-o"></i> Light';
+};
+rb.onclick = function(){
+  var on = g.classList.toggle('is-rail');
+  rb.classList.toggle('on', on);
+  rb.innerHTML = on ? '<i class="fa fa-expand"></i> Expanded' : '<i class="fa fa-compress"></i> Collapsed rail';
+};
+</script>
+</body>
+</html>

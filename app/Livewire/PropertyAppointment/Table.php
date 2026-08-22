@@ -19,7 +19,7 @@ class Table extends Component
 
     public $status = '';
 
-    public $salesman_id = '';
+    public $employee_id = '';
 
     public $branch_id = '';
 
@@ -57,7 +57,7 @@ class Table extends Component
 
     public function updating($field)
     {
-        if (in_array($field, ['search', 'status', 'salesman_id', 'branch_id', 'from_date', 'to_date', 'limit'], true)) {
+        if (in_array($field, ['search', 'status', 'employee_id', 'branch_id', 'from_date', 'to_date', 'limit'], true)) {
             $this->resetPage();
         }
     }
@@ -112,7 +112,7 @@ class Table extends Component
     private function rows()
     {
         return PropertyAppointment::query()
-            ->with(['customer:id,name,mobile', 'salesman:id,name', 'rentOut:id,property_id', 'rentOut.property:id,number'])
+            ->with(['customer:id,name,mobile', 'employee:id,name', 'rentOut:id,property_id', 'rentOut.property:id,number'])
             ->when($this->search, function ($query, $value) {
                 // The reference in the list is derived (VW-<year>-<padded id>), so read
                 // the id out of whatever was typed: "14", "0014" and "VW-2026-0014" all
@@ -126,7 +126,7 @@ class Table extends Component
                 });
             })
             ->when($this->status, fn ($query, $value) => $query->where('property_appointments.status', $value))
-            ->when($this->salesman_id, fn ($query, $value) => $query->where('property_appointments.salesman_id', $value))
+            ->when($this->employee_id, fn ($query, $value) => $query->where('property_appointments.employee_id', $value))
             ->when($this->branch_id, fn ($query, $value) => $query->where('property_appointments.branch_id', $value))
             ->when($this->from_date, fn ($query, $value) => $query->whereDate('property_appointments.scheduled_at', '>=', $value))
             ->when($this->to_date, fn ($query, $value) => $query->whereDate('property_appointments.scheduled_at', '<=', $value))

@@ -47,7 +47,7 @@ class SendAppointmentEmailJob implements ShouldQueue
         $tenantService->setCurrentTenant($tenant);
 
         $log = EmailLog::find($this->logId);
-        $appointment = PropertyAppointment::with(['customer', 'salesman', 'rentOut.property'])->find($this->appointmentId);
+        $appointment = PropertyAppointment::with(['customer', 'employee', 'rentOut.property'])->find($this->appointmentId);
 
         if (! $appointment || ! $log) {
             return;

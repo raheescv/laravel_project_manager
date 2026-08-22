@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
- * Turns a salesman's weekly availability into concrete bookable slots.
+ * Turns an employee's weekly availability into concrete bookable slots.
  *
  * Slots are COMPUTED, never stored. Materialising them would mean a nightly
  * generation job, drift whenever a rule is edited, and a backfill every time
@@ -51,7 +51,7 @@ class SlotService
      *
      * One number for the whole application, read from config wherever a grid is
      * drawn or a finish time is printed. It is deliberately not stored: as data
-     * it was seven identical copies per salesman and a question the UI had to
+     * it was seven identical copies per employee and a question the UI had to
      * ask before anyone could add an hour to a schedule.
      */
     public static function slotLengthMinutes(): int
@@ -60,22 +60,22 @@ class SlotService
     }
 
     /**
-     * Bookable slots for one salesman, keyed by Y-m-d.
+     * Bookable slots for one employee, keyed by Y-m-d.
      *
      * @return array<string, array<int, array{value: string, label: string}>>
      */
-    public function availableSlots(int $salesmanId, ?Carbon $from = null, ?Carbon $to = null, ?int $ignoreAppointmentId = null): array
+    public function availableSlots(int $employeeId, ?Carbon $from = null, ?Carbon $to = null, ?int $ignoreAppointmentId = null): array
     {
         $from = ($from ?? now())->copy()->startOfDay();
         $to = ($to ?? now()->addDays(self::appointmentWindowDays()))->copy()->endOfDay();
 
-        $rules = $this->rules($salesmanId);
+        $rules = $this->rules($employeeId);
         if ($rules->isEmpty()) {
             return [];
         }
 
-        $timeOffs = $this->timeOffs($salesmanId, $from, $to);
-        $taken = $this->takenSlots($salesmanId, $from, $to, $ignoreAppointmentId);
+        $timeOffs = $this->timeOffs($employeeId, $from, $to);
+        $taken = $this->takenSlots($employeeId, $from, $to, $ignoreAppointmentId);
         $workingDays = $this->workingDayIndexes();
         $earliest = now()->addHours(self::minimumNoticeHours());
 
@@ -137,12 +137,12 @@ class SlotService
      *
      * @return array<string, array{start: string, end: string}>
      */
-    public function openWindows(int $salesmanId, ?Carbon $from = null, ?Carbon $to = null): array
+    public function openWindows(int $employeeId, ?Carbon $from = null, ?Carbon $to = null): array
     {
         $from = ($from ?? now())->copy()->startOfDay();
         $to = ($to ?? now()->addDays(self::appointmentWindowDays()))->copy()->endOfDay();
 
-        $rules = $this->rules($salesmanId);
+        $rules = $this->rules($employeeId);
         if ($rules->isEmpty()) {
             return [];
         }
@@ -177,12 +177,12 @@ class SlotService
      * Stretches of each day the customer cannot have, keyed by Y-m-d.
      *
      * Two sources, one shape: appointments already on the calendar, and the
-     * salesman's time off. Both are half-open [start, end) ranges in HH:MM, so
+     * employee's time off. Both are half-open [start, end) ranges in HH:MM, so
      * a window that ends exactly when a booking starts is fine.
      *
      * @return array<string, array<int, array{start: string, end: string, reason: string}>>
      */
-    public function busyStretches(int $salesmanId, ?Carbon $from = null, ?Carbon $to = null, ?int $ignoreAppointmentId = null): array
+    public function busyStretches(int $employeeId, ?Carbon $from = null, ?Carbon $to = null, ?int $ignoreAppointmentId = null): array
     {
         $from = ($from ?? now())->copy()->startOfDay();
         $to = ($to ?? now()->addDays(self::appointmentWindowDays()))->copy()->endOfDay();
@@ -191,7 +191,7 @@ class SlotService
 
         $appointments = PropertyAppointment::query()
             ->holdingSlot()
-            ->where('salesman_id', $salesmanId)
+            ->where('employee_id', $employeeId)
             ->whereBetween('scheduled_at', [$from, $to])
             ->when($ignoreAppointmentId, fn ($query, $id) => $query->where('id', '!=', $id))
             ->get(['id', 'scheduled_at', 'ends_at']);
@@ -209,7 +209,7 @@ class SlotService
             ];
         }
 
-        foreach ($this->timeOffs($salesmanId, $from, $to) as $date => $offs) {
+        foreach ($this->timeOffs($employeeId, $from, $to) as $date => $offs) {
             foreach ($offs as $off) {
                 $busy[$date][] = [
                     'start' => $off->isFullDay() ? '00:00' : Str::substr($off->start_time, 0, 5),
@@ -233,7 +233,7 @@ class SlotService
      *
      * @return array{ok: bool, reason: ?string, taken: bool}
      */
-    public function windowProblem(int $salesmanId, Carbon $start, Carbon $end, ?int $ignoreAppointmentId = null): array
+    public function windowProblem(int $employeeId, Carbon $start, Carbon $end, ?int $ignoreAppointmentId = null): array
     {
         $fail = fn (string $reason, bool $taken = false) => ['ok' => false, 'reason' => $reason, 'taken' => $taken];
 
@@ -253,7 +253,7 @@ class SlotService
             return $fail('That date is too far ahead. Please choose a time within the next '.self::appointmentWindowDays().' days.');
         }
 
-        $window = $this->openWindows($salesmanId, $start->copy()->startOfDay(), $start->copy()->endOfDay())[$start->toDateString()] ?? null;
+        $window = $this->openWindows($employeeId, $start->copy()->startOfDay(), $start->copy()->endOfDay())[$start->toDateString()] ?? null;
 
         if (! $window) {
             return $fail('We are closed that day. Please choose another date.');
@@ -266,7 +266,7 @@ class SlotService
             return $fail('That day runs '.$window['start'].' to '.$window['end'].'. Please choose a time inside those hours.');
         }
 
-        $stretches = $this->busyStretches($salesmanId, $start->copy()->startOfDay(), $start->copy()->endOfDay(), $ignoreAppointmentId)[$start->toDateString()] ?? [];
+        $stretches = $this->busyStretches($employeeId, $start->copy()->startOfDay(), $start->copy()->endOfDay(), $ignoreAppointmentId)[$start->toDateString()] ?? [];
 
         foreach ($stretches as $stretch) {
             $busyStart = $start->copy()->setTimeFromTimeString($stretch['start']);
@@ -288,9 +288,9 @@ class SlotService
      * friendly pre-check — the database unique index is what actually enforces
      * it, because anything checked before an INSERT can go stale mid-request.
      */
-    public function isSlotBookable(int $salesmanId, Carbon $slot, ?int $ignoreAppointmentId = null): bool
+    public function isSlotBookable(int $employeeId, Carbon $slot, ?int $ignoreAppointmentId = null): bool
     {
-        $slots = $this->availableSlots($salesmanId, $slot->copy()->startOfDay(), $slot->copy()->endOfDay(), $ignoreAppointmentId);
+        $slots = $this->availableSlots($employeeId, $slot->copy()->startOfDay(), $slot->copy()->endOfDay(), $ignoreAppointmentId);
 
         return collect($slots[$slot->toDateString()] ?? [])
             ->contains('value', $slot->format('Y-m-d H:i:s'));
@@ -299,38 +299,38 @@ class SlotService
     /**
      * Weekly rules grouped by day_of_week.
      *
-     * A salesman's own rows are an OVERRIDE of the company week, not a
+     * An employee's own rows are an OVERRIDE of the company week, not a
      * prerequisite for being bookable: when they have none, the hours from
-     * Settings -> Working Day answer instead, so a salesman nobody has given a
+     * Settings -> Working Day answer instead, so an employee nobody has given a
      * schedule to still offers the times the business actually keeps.
      */
-    protected function rules(int $salesmanId): Collection
+    protected function rules(int $employeeId): Collection
     {
         $own = PropertyAppointmentAvailability::query()
-            ->where('user_id', $salesmanId)
+            ->where('user_id', $employeeId)
             ->where('is_active', true)
             ->orderBy('start_time')
             ->get()
             ->groupBy('day_of_week');
 
-        return $own->isEmpty() ? $this->companyRules($salesmanId) : $own;
+        return $own->isEmpty() ? $this->companyRules($employeeId) : $own;
     }
 
     /**
      * The company working week expressed as availability rules.
      *
      * The rules are built in memory and never saved — persisting them would
-     * freeze today's company hours onto every salesman, so a later change in
+     * freeze today's company hours onto every employee, so a later change in
      * Settings would silently stop applying to the people who never had their
      * own schedule. Computing them on read keeps the setting live.
      */
-    protected function companyRules(int $salesmanId): Collection
+    protected function companyRules(int $employeeId): Collection
     {
         $rules = [];
 
         foreach (WorkingDay::schedule() as $dayOfWeek => $timing) {
             $rules[] = new PropertyAppointmentAvailability([
-                'user_id' => $salesmanId,
+                'user_id' => $employeeId,
                 'day_of_week' => $dayOfWeek,
                 'start_time' => $timing['start_time'],
                 'end_time' => $timing['end_time'],
@@ -341,25 +341,25 @@ class SlotService
         return collect($rules)->groupBy('day_of_week');
     }
 
-    protected function timeOffs(int $salesmanId, Carbon $from, Carbon $to): Collection
+    protected function timeOffs(int $employeeId, Carbon $from, Carbon $to): Collection
     {
         return PropertyAppointmentTimeOff::query()
-            ->where('user_id', $salesmanId)
+            ->where('user_id', $employeeId)
             ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
             ->get()
             ->groupBy(fn (PropertyAppointmentTimeOff $off) => $off->date->toDateString());
     }
 
     /**
-     * Slots already held on this salesman's calendar. Mirrors exactly the
+     * Slots already held on this employee's calendar. Mirrors exactly the
      * statuses in the active_slot_key generated column, so the UI and the
      * database constraint can never disagree about what "taken" means.
      */
-    protected function takenSlots(int $salesmanId, Carbon $from, Carbon $to, ?int $ignoreAppointmentId): Collection
+    protected function takenSlots(int $employeeId, Carbon $from, Carbon $to, ?int $ignoreAppointmentId): Collection
     {
         return PropertyAppointment::query()
             ->holdingSlot()
-            ->where('salesman_id', $salesmanId)
+            ->where('employee_id', $employeeId)
             ->whereBetween('scheduled_at', [$from, $to])
             ->when($ignoreAppointmentId, fn ($query, $id) => $query->where('id', '!=', $id))
             ->pluck('scheduled_at')
@@ -368,7 +368,7 @@ class SlotService
 
     /**
      * Tenant working days as day-of-week indexes, or null when the tenant has
-     * not configured any — in which case the salesman's own weekly rules are the
+     * not configured any — in which case the employee's own weekly rules are the
      * only authority.
      *
      * Indexes rather than names because day_name is stored in whatever case the

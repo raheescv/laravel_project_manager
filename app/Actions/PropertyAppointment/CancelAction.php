@@ -8,7 +8,7 @@ class CancelAction
 {
     /**
      * Cancelling frees the slot: active_slot_key becomes NULL, so the time
-     * immediately becomes bookable again for this salesman.
+     * immediately becomes bookable again for this employee.
      */
     public function execute($id, $userId, $reason = null)
     {

@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
  * keeps on each of them.
  *
  * This is the GLOBAL answer to "when can customers be seen". A salesman's own
- * PropertyAppointmentAvailability rows override it; when a salesman has none,
+ * PropertyAppointmentAvailability rows override it; when an employee has none,
  * the scheduler falls back to the week described here, so a new employee is
  * bookable from their first day without anyone touching their schedule.
  */

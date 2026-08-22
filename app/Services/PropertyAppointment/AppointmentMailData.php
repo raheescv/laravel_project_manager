@@ -20,7 +20,7 @@ class AppointmentMailData
     /** @return array<string, string> */
     public function forAppointment(PropertyAppointment $appointment): array
     {
-        $appointment->loadMissing(['rentOut.property', 'rentOut.building', 'rentOut.group', 'customer', 'salesman']);
+        $appointment->loadMissing(['rentOut.property', 'rentOut.building', 'rentOut.group', 'customer', 'employee']);
 
         return [
             'company_name' => tenant_cache('company_name', '') ?: config('app.name'),
@@ -32,8 +32,8 @@ class AppointmentMailData
             'unit_number' => $appointment->rentOut?->property?->number ?? '',
             'building_name' => $appointment->rentOut?->building?->name ?? '',
             'project_name' => $appointment->rentOut?->group?->name ?? '',
-            'salesman_name' => $appointment->salesman?->name ?? '',
-            'salesman_phone' => $appointment->salesman?->mobile ?? '',
+            'employee_name' => $appointment->employee?->name ?? '',
+            'employee_phone' => $appointment->employee?->mobile ?? '',
             'agreement_no' => '#'.$appointment->rent_out_id,
             'appointment_link' => route('property_appointment::public', $appointment->token),
             // A complete, styled call-to-action. Tenants drop this in and get
@@ -60,8 +60,8 @@ class AppointmentMailData
             'unit_number' => '1204',
             'building_name' => 'Marina Tower',
             'project_name' => 'Bin Al Sheikh Marina Tower',
-            'salesman_name' => 'Sample Salesman',
-            'salesman_phone' => '+974 0000 0000',
+            'employee_name' => 'Sample Employee',
+            'employee_phone' => '+974 0000 0000',
             'agreement_no' => '#0000',
             'appointment_link' => url('/appointment/b/sample-token'),
             'appointment_button' => EmailStyler::button(

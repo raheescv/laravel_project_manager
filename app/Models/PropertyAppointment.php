@@ -16,7 +16,7 @@ class PropertyAppointment extends Model implements AuditableContracts
 {
     use Auditable, BelongsToTenant, SoftDeletes;
 
-    /** Statuses that occupy a slot on the salesman's calendar. */
+    /** Statuses that occupy a slot on the employee's calendar. */
     public const HOLDING_STATUSES = ['scheduled', 'completed'];
 
     protected $fillable = [
@@ -24,7 +24,7 @@ class PropertyAppointment extends Model implements AuditableContracts
         'branch_id',
         'rent_out_id',
         'account_id',
-        'salesman_id',
+        'employee_id',
         'scheduled_at',
         'ends_at',
         'status',
@@ -79,7 +79,7 @@ class PropertyAppointment extends Model implements AuditableContracts
         return array_merge([
             'rent_out_id' => 'required|exists:rent_outs,id',
             'account_id' => 'required|exists:accounts,id',
-            'salesman_id' => 'required|exists:users,id',
+            'employee_id' => 'required|exists:users,id',
             'status' => 'required|in:awaiting,scheduled,completed,cancelled,no_show',
             'scheduled_at' => 'nullable|date',
         ], $merge);
@@ -95,9 +95,9 @@ class PropertyAppointment extends Model implements AuditableContracts
         return $this->belongsTo(Account::class, 'account_id');
     }
 
-    public function salesman(): BelongsTo
+    public function employee(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'salesman_id');
+        return $this->belongsTo(User::class, 'employee_id');
     }
 
     public function branch(): BelongsTo

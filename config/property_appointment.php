@@ -7,10 +7,10 @@
 |
 | Operational defaults for the appointment scheduler. These are STARTING points a
 | tenant can override in the UI — nothing here is enforced at send time, and
-| editing hours in Settings or on a salesman never gets reset from here.
+| editing hours in Settings or on an employee never gets reset from here.
 |
 | The working week itself is answered in three steps, most specific first:
-|   1. the salesman's own weekly availability (their employee page),
+|   1. the employee's own weekly availability (their employee page),
 |   2. the company hours in Settings -> Working Day,
 |   3. the defaults below, for a tenant who has configured neither.
 |
