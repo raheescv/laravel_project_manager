@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RentOut → Appointments tab — 3 compact premium directions</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   PREVIEW CHROME (not shipped)
+   ══════════════════════════════════════════════════════════════ */
+*{ box-sizing:border-box; }
+body{ margin:0; padding:0 0 80px; font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+      background:#e9edf3; color:#0d1424; -webkit-font-smoothing:antialiased; }
+body[data-t="dark"]{ background:#0d1117; color:#e9edf4; }
+
+.bar{ position:sticky; top:0; z-index:60; display:flex; gap:7px; justify-content:center; align-items:center; flex-wrap:wrap;
+      padding:10px 12px; background:rgba(255,255,255,.88); backdrop-filter:blur(12px); border-bottom:1px solid #dce2ea; }
+body[data-t="dark"] .bar{ background:rgba(20,25,32,.9); border-color:#2b323b; }
+.bar button{ border:1px solid #cbd5e1; background:#fff; color:#334155; padding:6px 13px; border-radius:9px;
+      font-weight:750; font-size:11.5px; cursor:pointer; font-family:inherit; letter-spacing:-.01em; }
+body[data-t="dark"] .bar button{ background:#242a33; color:#c7d0dc; border-color:#39414c; }
+.bar button.on{ background:#1e3a6e; color:#fff; border-color:#1e3a6e; }
+.bar .sep{ width:1px; height:20px; background:#cbd5e1; margin:0 4px; }
+body[data-t="dark"] .bar .sep{ background:#39414c; }
+.bar .lbl{ font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#94a3b8; }
+
+.stage{ max-width:1180px; margin:22px auto; padding:0 16px; }
+.variant{ display:none; } .variant.show{ display:block; }
+.state{ display:none; } .state.show{ display:block; }
+.vhead{ margin:0 0 16px; }
+.vhead .tag{ display:inline-flex; align-items:center; gap:7px; background:#1e3a6e; color:#fff; padding:4px 11px;
+      border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; }
+.vhead h2{ margin:9px 0 4px; font-size:20px; font-weight:800; letter-spacing:-.03em; }
+.vhead p{ margin:0; font-size:12.5px; color:#64748b; max-width:78ch; line-height:1.6; }
+body[data-t="dark"] .vhead p{ color:#94a3b8; }
+.vhead .win{ margin-top:9px; display:flex; gap:7px; flex-wrap:wrap; }
+.vhead .win b{ font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:7px; background:#dbeafe; color:#1e40af; }
+body[data-t="dark"] .vhead .win b{ background:#1e293b; color:#93c5fd; }
+.statelabel{ font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:#94a3b8;
+      margin:24px 0 9px; display:flex; align-items:center; gap:10px; }
+.statelabel::after{ content:""; flex:1; height:1px; background:currentColor; opacity:.25; }
+.frame{ border-radius:18px; border:1px solid #d9e0e9; box-shadow:0 24px 60px -34px rgba(13,20,36,.5);
+      background:#f5f7fa; padding:16px; }
+body[data-t="dark"] .frame{ border-color:#2c333e; background:#1b2027; }
+
+/* ══════════════════════════════════════════════════════════════
+   .apx TOKENS — copied from resources/views/components/property-appointment/premium.blade.php
+   so anything picked here transfers to real code verbatim.
+   ══════════════════════════════════════════════════════════════ */
+.apx{
+  --bs-primary:#1e3a6e; --bs-primary-rgb:30,58,110;
+  --brand:var(--bs-primary); --brand-rgb:var(--bs-primary-rgb);
+  --brand-600:color-mix(in srgb,var(--bs-primary),#000 12%);
+  --hero-1:color-mix(in srgb,var(--bs-primary),#000 42%);
+  --hero-2:color-mix(in srgb,var(--bs-primary),#000 4%);
+  --hero-3:color-mix(in srgb,var(--bs-primary),#fff 10%);
+  --surface:#fff; --surface-2:#f5f7fa; --surface-3:#eceff4;
+  --border:#e4e8ee; --border-strong:#d3d9e1;
+  --text:#111827; --text-2:#4b5563; --text-3:#8a93a2;
+  --success:#198754; --success-bg:#d1e7dd; --success-rgb:25,135,84;
+  --danger:#dc3545;  --danger-bg:#f8d7da;  --danger-rgb:220,53,69;
+  --warning:#b45309; --warning-bg:#fff3cd; --warning-rgb:180,83,9;
+  --info:#0d6efd;    --info-bg:#cfe2ff;    --info-rgb:13,110,253;
+  --r-sm:7px; --r-md:10px; --r-lg:13px;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.05);
+  --shadow-md:0 4px 14px -4px rgba(16,24,40,.12),0 2px 6px -2px rgba(16,24,40,.07);
+  color:var(--text); font-size:12.5px; line-height:1.45; letter-spacing:-.004em;
+}
+body[data-t="dark"] .apx{
+  --hero-1:color-mix(in srgb,var(--bs-primary),#000 64%);
+  --hero-2:color-mix(in srgb,var(--bs-primary),#000 48%);
+  --hero-3:color-mix(in srgb,var(--bs-primary),#000 30%);
+  --surface:#272d34; --surface-2:#2e353d; --surface-3:#353d46;
+  --border:#3a424c; --border-strong:#4a535e;
+  --text:#e6eaf0; --text-2:#adb5bd; --text-3:#868e96;
+  --success-bg:#0b2e20; --danger-bg:#3a1d21; --warning-bg:#3a2c12; --info-bg:#12233d;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4); --shadow-md:0 6px 18px -6px rgba(0,0,0,.55);
+}
+.apx .apx-btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600; font-size:11.5px;
+  padding:7px 12px; border-radius:9px; border:1px solid transparent; cursor:pointer; font-family:inherit;
+  transition:transform .14s,box-shadow .14s,background .14s; white-space:nowrap; }
+.apx .apx-btn:active{ transform:translateY(1px); }
+.apx .apx-btn-primary{ background:var(--brand); color:#fff; box-shadow:0 6px 16px -8px rgba(var(--brand-rgb),.75); }
+.apx .apx-btn-ghost{ background:var(--surface); color:var(--text-2); border-color:var(--border-strong); }
+.apx .apx-btn-ghost:hover{ background:var(--surface-2); color:var(--text); }
+.apx .apx-btn-soft{ background:rgba(var(--brand-rgb),.09); color:var(--brand); border-color:rgba(var(--brand-rgb),.22); }
+.apx .apx-btn-danger{ background:var(--danger-bg); color:var(--danger); border-color:rgba(var(--danger-rgb),.28); }
+.apx .apx-btn-xs{ padding:5px 10px; font-size:11px; border-radius:8px; }
+.apx .apx-chip{ display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; padding:4px 9px; border-radius:999px; line-height:1; }
+.apx .apx-chip .dot{ width:6px; height:6px; border-radius:50%; }
+.apx .chip-scheduled{ background:rgba(var(--brand-rgb),.10); color:var(--brand); } .apx .chip-scheduled .dot{ background:var(--brand); }
+.apx .chip-awaiting{ background:var(--warning-bg); color:var(--warning); } .apx .chip-awaiting .dot{ background:var(--warning); }
+.apx .chip-completed{ background:var(--success-bg); color:var(--success); } .apx .chip-completed .dot{ background:var(--success); }
+.apx .apx-avatar{ width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800; color:#fff; flex:none; background:linear-gradient(135deg,var(--hero-2),var(--hero-3)); }
+.apx .apx-sect{ font-size:9.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--text-3); }
+.apx .apx-hint{ font-size:10.5px; color:var(--text-3); }
+.apx .ts{ border:1px solid var(--border-strong); background:var(--surface); border-radius:9px; min-height:34px;
+  display:flex; align-items:center; gap:8px; padding:0 10px; font-size:12px; color:var(--text); }
+.apx .ts i.caret{ margin-inline-start:auto; color:var(--text-3); font-size:11px; }
+
+/* ══════════════════════════════════════════════════════════════
+   A — COCKPIT   one identity strip + two dense panes
+   ══════════════════════════════════════════════════════════════ */
+.A .ck{ display:flex; align-items:center; gap:11px; padding:8px 11px; border-radius:var(--r-lg);
+  background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm); flex-wrap:wrap; }
+.A .ck .who{ display:flex; align-items:center; gap:9px; min-width:0; }
+.A .ck .nm{ font-size:12.5px; font-weight:750; letter-spacing:-.015em; display:flex; align-items:center; gap:5px; }
+.A .ck .nm a{ color:inherit; text-decoration:none; }
+.A .ck .nm i{ font-size:9px; color:var(--text-3); }
+.A .ck .sb{ font-size:10.5px; color:var(--text-3); margin-top:1px; }
+.A .ck .vr{ width:1px; align-self:stretch; background:var(--border); margin:0 2px; }
+.A .ck .picker{ min-width:190px; flex:1 1 190px; max-width:280px; }
+.A .ck .rgt{ margin-inline-start:auto; display:flex; align-items:center; gap:7px; }
+.A .grid{ display:grid; grid-template-columns:1.3fr 1fr; gap:12px; margin-top:12px; align-items:start; }
+.A .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg);
+  box-shadow:var(--shadow-sm); overflow:hidden; }
+.A .card .hd{ display:flex; align-items:center; gap:11px; padding:11px 13px; border-bottom:1px solid var(--border); }
+.A .dt{ width:46px; flex:none; text-align:center; border-radius:11px; padding:5px 0 6px; color:#fff;
+  background:linear-gradient(140deg,var(--hero-1),var(--hero-3)); box-shadow:0 6px 14px -8px rgba(var(--brand-rgb),.9); }
+.A .dt .mo{ font-size:8.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; opacity:.85; }
+.A .dt .dy{ font-size:18px; font-weight:800; line-height:1; margin-top:1px; }
+.A .dt.wait{ background:var(--surface-3); color:var(--text-3); box-shadow:none; display:flex; align-items:center;
+  justify-content:center; height:44px; font-size:17px; }
+.A .hd .tt{ font-size:14px; font-weight:800; letter-spacing:-.02em; }
+.A .hd .ss{ font-size:10.5px; color:var(--text-3); margin-top:2px; }
+.A .facts{ display:grid; grid-template-columns:repeat(2,1fr); gap:1px; background:var(--border); }
+.A .facts .f{ background:var(--surface); padding:9px 13px; min-width:0; }
+.A .facts .f .k{ font-size:9px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--text-3); }
+.A .facts .f .v{ font-size:12px; font-weight:650; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.A .facts .f .v.mono{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; color:var(--brand); font-weight:700; }
+.A .fbar{ display:flex; gap:7px; flex-wrap:wrap; padding:9px 13px; border-top:1px solid var(--border); background:var(--surface-2); }
+.A .fbar .spacer{ flex:1; }
+.A .lk{ display:flex; align-items:center; gap:7px; padding:7px 9px; border-radius:var(--r-sm); background:var(--surface-2);
+  border:1px dashed var(--border-strong); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:10px;
+  color:var(--text-2); direction:ltr; margin:11px 13px; }
+.A .lk > span{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.A .cp{ flex:none; display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:700;
+  font-family:system-ui,sans-serif; letter-spacing:.04em; text-transform:uppercase; padding:4px 8px; border-radius:6px;
+  cursor:pointer; background:rgba(var(--brand-rgb),.09); color:var(--brand); border:1px solid rgba(var(--brand-rgb),.22); }
+.A .trail{ padding:0 13px 11px; position:relative; }
+.A .tl{ position:relative; padding:0 0 11px 20px; }
+.A .tl:last-child{ padding-bottom:0; }
+.A .tl::before{ content:""; position:absolute; inset-inline-start:0; top:3px; width:9px; height:9px; border-radius:50%;
+  background:var(--surface); border:2px solid var(--border-strong); z-index:1; }
+.A .tl:not(:last-child)::after{ content:""; position:absolute; inset-inline-start:4px; top:12px; bottom:0; width:1.5px; background:var(--border); }
+.A .tl.ok::before{ background:var(--success); border-color:var(--success); }
+.A .tl.on::before{ background:var(--brand); border-color:var(--brand); }
+.A .tl .tt{ font-size:11.5px; font-weight:700; }
+.A .tl .ts2{ font-size:10px; color:var(--text-3); margin-top:1px; }
+.A .mini{ display:flex; align-items:center; gap:8px; padding:9px 13px; border-bottom:1px solid var(--border); }
+.A .mini .apx-sect{ margin:0; }
+.A .mini .rt{ margin-inline-start:auto; }
+.A .prompt{ display:flex; align-items:center; gap:11px; padding:13px; border-radius:var(--r-lg); margin-top:12px;
+  background:rgba(var(--brand-rgb),.05); border:1px dashed rgba(var(--brand-rgb),.3); }
+.A .prompt .ic{ width:34px; height:34px; border-radius:11px; display:grid; place-items:center; flex:none;
+  background:rgba(var(--brand-rgb),.12); color:var(--brand); font-size:15px; }
+.A .prompt .t{ font-size:12.5px; font-weight:750; }
+.A .prompt .s{ font-size:11px; color:var(--text-2); margin-top:1px; }
+
+/* ══════════════════════════════════════════════════════════════
+   B — LEDGER   one card, hairline rows, zero wasted band
+   ══════════════════════════════════════════════════════════════ */
+.B .led{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg);
+  box-shadow:var(--shadow-md); overflow:hidden; position:relative; }
+.B .led::before{ content:""; position:absolute; inset-block:0; inset-inline-start:0; width:3px;
+  background:linear-gradient(180deg,var(--hero-1),var(--hero-3)); }
+.B .led.wait::before{ background:linear-gradient(180deg,var(--warning),color-mix(in srgb,var(--warning),#fff 35%)); }
+.B .r{ display:flex; align-items:center; gap:12px; padding:11px 14px 11px 17px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.B .r:last-child{ border-bottom:0; }
+.B .r.tight{ padding-top:9px; padding-bottom:9px; }
+.B .hero{ background:linear-gradient(90deg,rgba(var(--brand-rgb),.07),transparent 62%); }
+.B .clock{ display:flex; align-items:baseline; gap:8px; }
+.B .clock .hh{ font-size:20px; font-weight:800; letter-spacing:-.035em; line-height:1; }
+.B .clock .dd{ font-size:11.5px; color:var(--text-2); font-weight:600; }
+.B .clock.wait .hh{ font-size:15px; color:var(--text-3); }
+.B .r .rgt{ margin-inline-start:auto; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.B .strip{ display:flex; flex-wrap:wrap; gap:0 22px; }
+.B .strip .f{ padding:2px 0; min-width:0; }
+.B .strip .f .k{ font-size:9px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--text-3); }
+.B .strip .f .v{ font-size:12px; font-weight:650; margin-top:1px; }
+.B .strip .f .v.mono{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; color:var(--brand); font-weight:700; }
+.B .who{ display:flex; align-items:center; gap:9px; }
+.B .who .nm{ font-size:12.5px; font-weight:750; }
+.B .who .sb{ font-size:10.5px; color:var(--text-3); }
+.B .lk{ flex:1 1 320px; display:flex; align-items:center; gap:7px; padding:6px 9px; border-radius:var(--r-sm);
+  background:var(--surface-2); border:1px dashed var(--border-strong); font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:10px; color:var(--text-2); direction:ltr; min-width:0; }
+.B .lk > span{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.B .cp{ flex:none; display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:700;
+  font-family:system-ui,sans-serif; letter-spacing:.04em; text-transform:uppercase; padding:4px 8px; border-radius:6px;
+  cursor:pointer; background:rgba(var(--brand-rgb),.09); color:var(--brand); border:1px solid rgba(var(--brand-rgb),.22); }
+.B .beads{ display:flex; align-items:center; gap:0; flex-wrap:wrap; }
+.B .bead{ display:flex; align-items:center; gap:7px; padding-inline-end:14px; }
+.B .bead + .bead{ padding-inline-start:14px; border-inline-start:1px dashed var(--border); }
+.B .bead .bd{ width:8px; height:8px; border-radius:50%; background:var(--border-strong); flex:none; }
+.B .bead.ok .bd{ background:var(--success); box-shadow:0 0 0 3px rgba(var(--success-rgb),.16); }
+.B .bead.on .bd{ background:var(--brand); box-shadow:0 0 0 3px rgba(var(--brand-rgb),.16); }
+.B .bead .tt{ font-size:11px; font-weight:700; }
+.B .bead .ts2{ font-size:9.5px; color:var(--text-3); }
+.B .act{ background:var(--surface-2); }
+.B .foot{ display:flex; gap:7px; flex-wrap:wrap; }
+.B .foot .spacer{ flex:1; }
+.B .picker{ flex:1 1 240px; max-width:320px; }
+
+/* ══════════════════════════════════════════════════════════════
+   C — JOURNEY   progress spine across the top, facts beneath
+   ══════════════════════════════════════════════════════════════ */
+.C .wrap{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg);
+  box-shadow:var(--shadow-md); overflow:hidden; }
+.C .top{ display:flex; align-items:center; gap:11px; padding:10px 13px; border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg,rgba(var(--brand-rgb),.06),transparent 70%); flex-wrap:wrap; }
+.C .top .who{ display:flex; align-items:center; gap:9px; }
+.C .top .nm{ font-size:12.5px; font-weight:750; }
+.C .top .sb{ font-size:10.5px; color:var(--text-3); }
+.C .top .rgt{ margin-inline-start:auto; display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+.C .steps{ display:grid; grid-template-columns:repeat(4,1fr); padding:14px 13px 12px; gap:0; }
+.C .stp{ position:relative; padding-inline-end:12px; }
+.C .stp::before{ content:""; position:absolute; top:6px; inset-inline-start:0; width:13px; height:13px; border-radius:50%;
+  background:var(--surface); border:2px solid var(--border-strong); z-index:2; }
+.C .stp::after{ content:""; position:absolute; top:12px; inset-inline-start:13px; inset-inline-end:0; height:2px; background:var(--border); }
+.C .stp:last-child::after{ display:none; }
+.C .stp.done::before{ background:var(--success); border-color:var(--success); }
+.C .stp.done::after{ background:var(--success); opacity:.45; }
+.C .stp.now::before{ background:var(--brand); border-color:var(--brand); box-shadow:0 0 0 4px rgba(var(--brand-rgb),.16); }
+.C .stp .lb{ padding-inline-start:20px; font-size:11.5px; font-weight:750; letter-spacing:-.01em; }
+.C .stp .mt{ padding-inline-start:20px; font-size:9.5px; color:var(--text-3); margin-top:2px; line-height:1.35; }
+.C .stp.idle .lb{ color:var(--text-3); }
+.C .body{ display:grid; grid-template-columns:1.15fr .85fr; gap:0; border-top:1px solid var(--border); }
+.C .body > div{ padding:12px 13px; }
+.C .body > div + div{ border-inline-start:1px solid var(--border); background:var(--surface-2); }
+.C .slab{ display:flex; align-items:center; gap:12px; padding-bottom:11px; margin-bottom:11px; border-bottom:1px dashed var(--border); }
+.C .slab .dt{ width:50px; flex:none; text-align:center; border-radius:12px; padding:6px 0 7px; color:#fff;
+  background:linear-gradient(140deg,var(--hero-1),var(--hero-3)); }
+.C .slab .dt .mo{ font-size:8.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; opacity:.85; }
+.C .slab .dt .dy{ font-size:19px; font-weight:800; line-height:1; margin-top:1px; }
+.C .slab .dt.wait{ background:var(--surface-3); color:var(--text-3); }
+.C .slab .tt{ font-size:15px; font-weight:800; letter-spacing:-.025em; }
+.C .slab .ss{ font-size:10.5px; color:var(--text-3); margin-top:2px; }
+.C .kv{ display:grid; grid-template-columns:repeat(2,1fr); gap:9px 14px; }
+.C .kv .f .k{ font-size:9px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--text-3); }
+.C .kv .f .v{ font-size:12px; font-weight:650; margin-top:2px; }
+.C .kv .f .v.mono{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:11px; color:var(--brand); font-weight:700; }
+.C .lk{ display:flex; align-items:center; gap:7px; padding:6px 9px; border-radius:var(--r-sm); background:var(--surface);
+  border:1px dashed var(--border-strong); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:10px;
+  color:var(--text-2); direction:ltr; }
+.C .lk > span{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.C .cp{ flex:none; display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:700;
+  font-family:system-ui,sans-serif; letter-spacing:.04em; text-transform:uppercase; padding:4px 8px; border-radius:6px;
+  cursor:pointer; background:rgba(var(--brand-rgb),.09); color:var(--brand); border:1px solid rgba(var(--brand-rgb),.22); }
+.C .stack{ display:flex; flex-direction:column; gap:7px; margin-top:11px; }
+.C .stack .apx-btn{ width:100%; }
+.C .foot{ display:flex; gap:7px; flex-wrap:wrap; padding:10px 13px; border-top:1px solid var(--border); background:var(--surface-2); }
+.C .foot .spacer{ flex:1; }
+
+@media (max-width:900px){
+  .A .grid, .C .body{ grid-template-columns:1fr; }
+  .C .steps{ grid-template-columns:repeat(2,1fr); row-gap:14px; }
+  .C .stp:nth-child(2)::after{ display:none; }
+  .C .body > div + div{ border-inline-start:0; border-top:1px solid var(--border); }
+}
+</style>
+</head>
+<body data-t="light" dir="ltr">
+
+<div style="background:#0f766e;color:#fff;padding:9px 14px;font:600 12px/1.5 system-ui;text-align:center"><b>SHIPPED:</b> Direction A (Cockpit) is what the RentOut → Appointments tab now renders — resources/views/livewire/rent-out/tabs/appointment-tab.blade.php. B and C are kept here as the rejected alternatives.</div>
+<div class="bar">
+  <span class="lbl">Theme</span>
+  <button data-act="theme" data-val="light" class="on">Light</button>
+  <button data-act="theme" data-val="dark">Dark</button>
+  <span class="sep"></span>
+  <span class="lbl">Dir</span>
+  <button data-act="dir" data-val="ltr" class="on">LTR</button>
+  <button data-act="dir" data-val="rtl">RTL</button>
+  <span class="sep"></span>
+  <span class="lbl">Design</span>
+  <button data-act="v" data-val="A" class="on">A · Cockpit</button>
+  <button data-act="v" data-val="B">B · Ledger</button>
+  <button data-act="v" data-val="C">C · Journey</button>
+  <span class="sep"></span>
+  <span class="lbl">State</span>
+  <button data-act="s" data-val="wait" class="on">Awaiting</button>
+  <button data-act="s" data-val="done">Confirmed</button>
+  <button data-act="s" data-val="none">No employee</button>
+</div>
+
+<div class="stage">
+
+<!-- ══════════════ A — COCKPIT ══════════════ -->
+<section class="variant show" data-v="A">
+  <div class="vhead">
+    <span class="tag"><i class="fa fa-columns"></i> Direction A</span>
+    <h2>Cockpit — identity strip, then two dense panes</h2>
+    <p>The whole Employee card collapses into one 48px strip: avatar, name, the picker itself and the status live on a single
+       line. Underneath, the appointment becomes a compact card whose four facts sit in a 2×2 grid instead of four full-width
+       rows, and the navy band shrinks to a small date tile. Everything you had, roughly a third of the height.</p>
+    <div class="win"><b>~620px → ~330px</b><b>4 stacked rows → 2×2 fact grid</b><b>no full-width hero band</b></div>
+  </div>
+
+  <!-- state: awaiting -->
+  <div class="state show" data-s="wait">
+    <div class="statelabel">Link sent · customer has not booked yet</div>
+    <div class="frame"><div class="apx A">
+      <div class="ck">
+        <div class="who">
+          <span class="apx-avatar">AA</span>
+          <div>
+            <div class="nm"><a href="#">Aamir Issak <i class="fa fa-external-link"></i></a></div>
+            <div class="sb">No mobile on file</div>
+          </div>
+        </div>
+        <div class="vr"></div>
+        <div class="picker"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Change employee… <i class="fa fa-caret-down caret"></i></div></div>
+        <div class="rgt">
+          <span class="apx-chip chip-awaiting"><span class="dot"></span> Awaiting customer</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="hd">
+            <div class="dt wait"><i class="fa fa-hourglass-half"></i></div>
+            <div style="flex:1">
+              <div class="tt">Not booked yet</div>
+              <div class="ss">Customer picks from Aamir Issak’s availability · Asia/Kolkata</div>
+            </div>
+          </div>
+          <div class="facts">
+            <div class="f"><div class="k">Reference</div><div class="v mono">VW-2026-0036</div></div>
+            <div class="f"><div class="k">Property</div><div class="v">0002</div></div>
+            <div class="f"><div class="k">Customer</div><div class="v">Abdalla R A Almallah</div></div>
+            <div class="f"><div class="k">Mobile</div><div class="v">77607666</div></div>
+          </div>
+          <div class="fbar">
+            <button class="apx-btn apx-btn-primary apx-btn-xs"><i class="fa fa-calendar-o"></i> Book a slot</button>
+            <span class="spacer"></span>
+            <button class="apx-btn apx-btn-danger apx-btn-xs"><i class="fa fa-times"></i> Cancel</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="mini">
+            <span class="apx-sect">Link &amp; delivery</span>
+            <span class="rt apx-hint">2 opens</span>
+          </div>
+          <div class="lk">
+            <i class="fa fa-link" style="color:var(--brand)"></i>
+            <span>https://project_manager.test/appointment/b/8cef704f-a72a…</span>
+            <button class="cp"><i class="fa fa-files-o"></i> Copy</button>
+          </div>
+          <div class="trail">
+            <div class="tl on">
+              <div class="tt">Link opened</div>
+              <div class="ts2">22 Aug 2026, 23:06 · 2 time(s)</div>
+            </div>
+            <div class="tl">
+              <div class="tt">Invitation queued</div>
+              <div class="ts2">22 Aug 2026, 23:00 · raheescv1992@gmail.com</div>
+            </div>
+          </div>
+          <div class="fbar">
+            <button class="apx-btn apx-btn-ghost apx-btn-xs" style="flex:1"><i class="fa fa-paper-plane-o"></i> Resend</button>
+            <button class="apx-btn apx-btn-ghost apx-btn-xs" style="flex:1"><i class="fa fa-ban"></i> Revoke</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- state: confirmed -->
+  <div class="state" data-s="done">
+    <div class="statelabel">Slot confirmed</div>
+    <div class="frame"><div class="apx A">
+      <div class="ck">
+        <div class="who">
+          <span class="apx-avatar">AA</span>
+          <div>
+            <div class="nm"><a href="#">Aamir Issak <i class="fa fa-external-link"></i></a></div>
+            <div class="sb">No mobile on file</div>
+          </div>
+        </div>
+        <div class="vr"></div>
+        <div class="picker"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Change employee… <i class="fa fa-caret-down caret"></i></div></div>
+        <div class="rgt"><span class="apx-chip chip-scheduled"><span class="dot"></span> Scheduled</span></div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="hd">
+            <div class="dt"><div class="mo">Aug</div><div class="dy">27</div></div>
+            <div style="flex:1">
+              <div class="tt">11:30 AM – 12:00 PM</div>
+              <div class="ss">Thursday · Asia/Kolkata</div>
+            </div>
+          </div>
+          <div class="facts">
+            <div class="f"><div class="k">Reference</div><div class="v mono">VW-2026-0036</div></div>
+            <div class="f"><div class="k">Property</div><div class="v">0002</div></div>
+            <div class="f"><div class="k">Customer</div><div class="v">Abdalla R A Almallah</div></div>
+            <div class="f"><div class="k">Booked</div><div class="v">23 Aug, 09:14 · customer</div></div>
+          </div>
+          <div class="fbar">
+            <button class="apx-btn apx-btn-soft apx-btn-xs"><i class="fa fa-refresh"></i> Reschedule</button>
+            <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-check"></i> Completed</button>
+            <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-user-times"></i> No-show</button>
+            <span class="spacer"></span>
+            <button class="apx-btn apx-btn-danger apx-btn-xs"><i class="fa fa-times"></i> Cancel</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="mini"><span class="apx-sect">Link &amp; delivery</span><span class="rt apx-hint">2 opens</span></div>
+          <div class="lk">
+            <i class="fa fa-link" style="color:var(--brand)"></i>
+            <span>https://project_manager.test/appointment/b/8cef704f-a72a…</span>
+            <button class="cp"><i class="fa fa-files-o"></i> Copy</button>
+          </div>
+          <div class="trail">
+            <div class="tl ok"><div class="tt">Appointment confirmed</div><div class="ts2">23 Aug 2026, 09:14 · by customer</div></div>
+            <div class="tl on"><div class="tt">Link opened</div><div class="ts2">22 Aug 2026, 23:06 · 2 time(s)</div></div>
+            <div class="tl"><div class="tt">Invitation queued</div><div class="ts2">22 Aug 2026, 23:00 · raheescv1992@gmail.com</div></div>
+          </div>
+          <div class="fbar">
+            <button class="apx-btn apx-btn-ghost apx-btn-xs" style="flex:1"><i class="fa fa-paper-plane-o"></i> Resend</button>
+            <button class="apx-btn apx-btn-ghost apx-btn-xs" style="flex:1"><i class="fa fa-ban"></i> Revoke</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- state: none -->
+  <div class="state" data-s="none">
+    <div class="statelabel">No employee chosen yet</div>
+    <div class="frame"><div class="apx A">
+      <div class="ck">
+        <div class="who">
+          <span class="apx-avatar" style="background:var(--surface-3);color:var(--text-3)"><i class="fa fa-user-o"></i></span>
+          <div>
+            <div class="nm" style="color:var(--text-3)">No employee assigned</div>
+            <div class="sb">Pick who carries out this appointment</div>
+          </div>
+        </div>
+        <div class="vr"></div>
+        <div class="picker"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Search and select employee… <i class="fa fa-caret-down caret"></i></div></div>
+      </div>
+      <div class="prompt">
+        <span class="ic"><i class="fa fa-paper-plane-o"></i></span>
+        <div style="flex:1">
+          <div class="t">The scheduler opens as soon as somebody is chosen</div>
+          <div class="s">Slots come from their own weekly availability, or the company week from Settings → Working Day.</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ══════════════ B — LEDGER ══════════════ -->
+<section class="variant" data-v="B">
+  <div class="vhead">
+    <span class="tag"><i class="fa fa-bars"></i> Direction B</span>
+    <h2>Ledger — one card, hairline rows, nothing floats</h2>
+    <p>Two panels become one. A coloured spine on the edge carries the status; each row is a single line of the record —
+       time, the four facts inline, the link, the delivery trail as beads, the actions. The tightest of the three and the
+       calmest to scan, at the cost of the side-by-side split.</p>
+    <div class="win"><b>~620px → ~250px</b><b>one card, no second column</b><b>trail reads left→right</b></div>
+  </div>
+
+  <div class="state show" data-s="wait">
+    <div class="statelabel">Link sent · customer has not booked yet</div>
+    <div class="frame"><div class="apx B">
+      <div class="led wait">
+        <div class="r hero">
+          <div class="clock wait">
+            <span class="hh"><i class="fa fa-hourglass-half" style="font-size:13px;opacity:.6"></i> Not booked yet</span>
+            <span class="dd">Asia/Kolkata</span>
+          </div>
+          <div class="rgt">
+            <span class="apx-chip chip-awaiting"><span class="dot"></span> Awaiting customer</span>
+            <button class="apx-btn apx-btn-primary apx-btn-xs"><i class="fa fa-calendar-o"></i> Book a slot</button>
+          </div>
+        </div>
+
+        <div class="r tight">
+          <div class="who">
+            <span class="apx-avatar">AA</span>
+            <div><div class="nm">Aamir Issak <i class="fa fa-external-link" style="font-size:9px;color:var(--text-3)"></i></div>
+                 <div class="sb">No mobile on file</div></div>
+          </div>
+          <div class="picker"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Change employee… <i class="fa fa-caret-down caret"></i></div></div>
+        </div>
+
+        <div class="r tight">
+          <div class="strip">
+            <div class="f"><div class="k">Reference</div><div class="v mono">VW-2026-0036</div></div>
+            <div class="f"><div class="k">Customer</div><div class="v">Abdalla R A Almallah · 77607666</div></div>
+            <div class="f"><div class="k">Property</div><div class="v">0002</div></div>
+          </div>
+        </div>
+
+        <div class="r tight">
+          <div class="lk">
+            <i class="fa fa-link" style="color:var(--brand)"></i>
+            <span>https://project_manager.test/appointment/b/8cef704f-a72a-4396-b08e…</span>
+            <button class="cp"><i class="fa fa-files-o"></i> Copy</button>
+          </div>
+        </div>
+
+        <div class="r tight">
+          <div class="beads">
+            <div class="bead ok"><span class="bd"></span><div><div class="tt">Invitation queued</div><div class="ts2">22 Aug, 23:00 · raheescv1992@gmail.com</div></div></div>
+            <div class="bead on"><span class="bd"></span><div><div class="tt">Link opened</div><div class="ts2">22 Aug, 23:06 · 2 times</div></div></div>
+            <div class="bead"><span class="bd"></span><div><div class="tt" style="color:var(--text-3)">Booking</div><div class="ts2">waiting on customer</div></div></div>
+          </div>
+        </div>
+
+        <div class="r act">
+          <div class="foot" style="width:100%">
+            <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-paper-plane-o"></i> Resend link</button>
+            <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-ban"></i> Revoke</button>
+            <span class="spacer"></span>
+            <button class="apx-btn apx-btn-danger apx-btn-xs"><i class="fa fa-times"></i> Cancel appointment</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="state" data-s="done">
+    <div class="statelabel">Slot confirmed</div>
+    <div class="frame"><div class="apx B">
+      <div class="led">
+        <div class="r hero">
+          <div class="clock">
+            <span class="hh">11:30 AM</span>
+            <span class="dd">Thu 27 Aug 2026 · Asia/Kolkata</span>
+          </div>
+          <div class="rgt">
+            <span class="apx-chip chip-scheduled"><span class="dot"></span> Scheduled</span>
+            <button class="apx-btn apx-btn-soft apx-btn-xs"><i class="fa fa-refresh"></i> Reschedule</button>
+          </div>
+        </div>
+        <div class="r tight">
+          <div class="who">
+            <span class="apx-avatar">AA</span>
+            <div><div class="nm">Aamir Issak <i class="fa fa-external-link" style="font-size:9px;color:var(--text-3)"></i></div>
+                 <div class="sb">No mobile on file</div></div>
+          </div>
+          <div class="picker"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Change employee… <i class="fa fa-caret-down caret"></i></div></div>
+        </div>
+        <div class="r tight">
+          <div class="strip">
+            <div class="f"><div class="k">Reference</div><div class="v mono">VW-2026-0036</div></div>
+            <div class="f"><div class="k">Customer</div><div class="v">Abdalla R A Almallah · 77607666</div></div>
+            <div class="f"><div class="k">Property</div><div class="v">0002</div></div>
+            <div class="f"><div class="k">Booked at</div><div class="v">23 Aug, 09:14 · customer</div></div>
+          </div>
+        </div>
+        <div class="r tight">
+          <div class="lk">
+            <i class="fa fa-link" style="color:var(--brand)"></i>
+            <span>https://project_manager.test/appointment/b/8cef704f-a72a-4396-b08e…</span>
+            <button class="cp"><i class="fa fa-files-o"></i> Copy</button>
+          </div>
+        </div>
+        <div class="r tight">
+          <div class="beads">
+            <div class="bead ok"><span class="bd"></span><div><div class="tt">Invitation sent</div><div class="ts2">22 Aug, 23:00</div></div></div>
+            <div class="bead ok"><span class="bd"></span><div><div class="tt">Link opened</div><div class="ts2">22 Aug, 23:06 · 2 times</div></div></div>
+            <div class="bead ok"><span class="bd"></span><div><div class="tt">Confirmed</div><div class="ts2">23 Aug, 09:14 · by customer</div></div></div>
+          </div>
+        </div>
+        <div class="r act">
+          <div class="foot" style="width:100%">
+            <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-check"></i> Mark completed</button>
+            <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-user-times"></i> No-show</button>
+            <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-paper-plane-o"></i> Resend link</button>
+            <span class="spacer"></span>
+            <button class="apx-btn apx-btn-danger apx-btn-xs"><i class="fa fa-times"></i> Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="state" data-s="none">
+    <div class="statelabel">No employee chosen yet</div>
+    <div class="frame"><div class="apx B">
+      <div class="led" style="--brand:var(--text-3)">
+        <div class="r hero" style="background:none">
+          <div class="who">
+            <span class="apx-avatar" style="background:var(--surface-3);color:var(--text-3)"><i class="fa fa-user-o"></i></span>
+            <div><div class="nm" style="color:var(--text-3)">No employee assigned</div>
+                 <div class="sb">Slots and the customer link both follow this choice</div></div>
+          </div>
+          <div class="picker" style="margin-inline-start:auto"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Search and select employee… <i class="fa fa-caret-down caret"></i></div></div>
+        </div>
+        <div class="r tight">
+          <div class="apx-hint" style="line-height:1.5">
+            <i class="fa fa-info-circle" style="color:var(--info)"></i>
+            Slots come from this person’s own weekly availability, or the company week from Settings → Working Day when they have none.
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ══════════════ C — JOURNEY ══════════════ -->
+<section class="variant" data-v="C">
+  <div class="vhead">
+    <span class="tag"><i class="fa fa-road"></i> Direction C</span>
+    <h2>Journey — the booking’s progress is the spine</h2>
+    <p>A four-step rail across the top answers “where is this?” before you read a single field: assigned → invited → opened
+       → booked. Beneath it the facts sit in one pane and the link plus its actions in a narrower one. The most explanatory
+       of the three; slightly taller than B because the rail earns its row.</p>
+    <div class="win"><b>~620px → ~300px</b><b>status readable at a glance</b><b>actions grouped, not scattered</b></div>
+  </div>
+
+  <div class="state show" data-s="wait">
+    <div class="statelabel">Link sent · customer has not booked yet</div>
+    <div class="frame"><div class="apx C">
+      <div class="wrap">
+        <div class="top">
+          <div class="who">
+            <span class="apx-avatar">AA</span>
+            <div><div class="nm">Aamir Issak <i class="fa fa-external-link" style="font-size:9px;color:var(--text-3)"></i></div>
+                 <div class="sb">No mobile on file · carrying out this appointment</div></div>
+          </div>
+          <div class="rgt">
+            <div style="width:210px"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Change… <i class="fa fa-caret-down caret"></i></div></div>
+            <span class="apx-chip chip-awaiting"><span class="dot"></span> Awaiting customer</span>
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="stp done"><div class="lb">Assigned</div><div class="mt">Aamir Issak</div></div>
+          <div class="stp done"><div class="lb">Invited</div><div class="mt">22 Aug, 23:00</div></div>
+          <div class="stp now"><div class="lb">Link opened</div><div class="mt">22 Aug, 23:06 · 2 times</div></div>
+          <div class="stp idle"><div class="lb">Booked</div><div class="mt">waiting on customer</div></div>
+        </div>
+
+        <div class="body">
+          <div>
+            <div class="slab">
+              <div class="dt wait" style="display:grid;place-items:center;height:44px"><i class="fa fa-hourglass-half" style="font-size:17px"></i></div>
+              <div>
+                <div class="tt">Not booked yet</div>
+                <div class="ss">Customer chooses from Aamir Issak’s availability · Asia/Kolkata</div>
+              </div>
+            </div>
+            <div class="kv">
+              <div class="f"><div class="k">Reference</div><div class="v mono">VW-2026-0036</div></div>
+              <div class="f"><div class="k">Property</div><div class="v">0002</div></div>
+              <div class="f"><div class="k">Customer</div><div class="v">Abdalla R A Almallah</div></div>
+              <div class="f"><div class="k">Mobile</div><div class="v">77607666</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="apx-sect" style="margin-bottom:7px">Customer link</div>
+            <div class="lk">
+              <i class="fa fa-link" style="color:var(--brand)"></i>
+              <span>https://project_manager.test/appointment/b/8cef…</span>
+              <button class="cp"><i class="fa fa-files-o"></i> Copy</button>
+            </div>
+            <div class="apx-hint" style="margin-top:6px">Valid until 05 Sep 2026 · sent to raheescv1992@gmail.com</div>
+            <div class="stack">
+              <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-paper-plane-o"></i> Resend link</button>
+              <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-ban"></i> Revoke link</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="foot">
+          <button class="apx-btn apx-btn-primary apx-btn-xs"><i class="fa fa-calendar-o"></i> Book a slot on their behalf</button>
+          <span class="spacer"></span>
+          <button class="apx-btn apx-btn-danger apx-btn-xs"><i class="fa fa-times"></i> Cancel appointment</button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="state" data-s="done">
+    <div class="statelabel">Slot confirmed</div>
+    <div class="frame"><div class="apx C">
+      <div class="wrap">
+        <div class="top">
+          <div class="who">
+            <span class="apx-avatar">AA</span>
+            <div><div class="nm">Aamir Issak <i class="fa fa-external-link" style="font-size:9px;color:var(--text-3)"></i></div>
+                 <div class="sb">No mobile on file · carrying out this appointment</div></div>
+          </div>
+          <div class="rgt">
+            <div style="width:210px"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Change… <i class="fa fa-caret-down caret"></i></div></div>
+            <span class="apx-chip chip-scheduled"><span class="dot"></span> Scheduled</span>
+          </div>
+        </div>
+        <div class="steps">
+          <div class="stp done"><div class="lb">Assigned</div><div class="mt">Aamir Issak</div></div>
+          <div class="stp done"><div class="lb">Invited</div><div class="mt">22 Aug, 23:00</div></div>
+          <div class="stp done"><div class="lb">Link opened</div><div class="mt">22 Aug, 23:06 · 2 times</div></div>
+          <div class="stp now"><div class="lb">Booked</div><div class="mt">23 Aug, 09:14 · by customer</div></div>
+        </div>
+        <div class="body">
+          <div>
+            <div class="slab">
+              <div class="dt"><div class="mo">Aug</div><div class="dy">27</div></div>
+              <div>
+                <div class="tt">11:30 AM – 12:00 PM</div>
+                <div class="ss">Thursday · Asia/Kolkata</div>
+              </div>
+              <span class="apx-chip chip-completed" style="margin-inline-start:auto"><span class="dot"></span> In 5 days</span>
+            </div>
+            <div class="kv">
+              <div class="f"><div class="k">Reference</div><div class="v mono">VW-2026-0036</div></div>
+              <div class="f"><div class="k">Property</div><div class="v">0002</div></div>
+              <div class="f"><div class="k">Customer</div><div class="v">Abdalla R A Almallah</div></div>
+              <div class="f"><div class="k">Mobile</div><div class="v">77607666</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="apx-sect" style="margin-bottom:7px">Customer link</div>
+            <div class="lk">
+              <i class="fa fa-link" style="color:var(--brand)"></i>
+              <span>https://project_manager.test/appointment/b/8cef…</span>
+              <button class="cp"><i class="fa fa-files-o"></i> Copy</button>
+            </div>
+            <div class="apx-hint" style="margin-top:6px">Confirmation emailed 23 Aug, 09:14</div>
+            <div class="stack">
+              <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-paper-plane-o"></i> Resend confirmation</button>
+              <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-ban"></i> Revoke link</button>
+            </div>
+          </div>
+        </div>
+        <div class="foot">
+          <button class="apx-btn apx-btn-soft apx-btn-xs"><i class="fa fa-refresh"></i> Reschedule</button>
+          <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-check"></i> Mark completed</button>
+          <button class="apx-btn apx-btn-ghost apx-btn-xs"><i class="fa fa-user-times"></i> No-show</button>
+          <span class="spacer"></span>
+          <button class="apx-btn apx-btn-danger apx-btn-xs"><i class="fa fa-times"></i> Cancel</button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="state" data-s="none">
+    <div class="statelabel">No employee chosen yet</div>
+    <div class="frame"><div class="apx C">
+      <div class="wrap">
+        <div class="top">
+          <div class="who">
+            <span class="apx-avatar" style="background:var(--surface-3);color:var(--text-3)"><i class="fa fa-user-o"></i></span>
+            <div><div class="nm" style="color:var(--text-3)">No employee assigned</div>
+                 <div class="sb">Who will carry out this appointment?</div></div>
+          </div>
+          <div class="rgt"><div style="width:250px"><div class="ts"><i class="fa fa-search" style="color:var(--text-3);font-size:11px"></i> Search and select employee… <i class="fa fa-caret-down caret"></i></div></div></div>
+        </div>
+        <div class="steps">
+          <div class="stp now"><div class="lb">Assign</div><div class="mt">pick an employee</div></div>
+          <div class="stp idle"><div class="lb">Invite</div><div class="mt">—</div></div>
+          <div class="stp idle"><div class="lb">Link opened</div><div class="mt">—</div></div>
+          <div class="stp idle"><div class="lb">Booked</div><div class="mt">—</div></div>
+        </div>
+        <div class="body" style="grid-template-columns:1fr">
+          <div class="apx-hint" style="line-height:1.55">
+            <i class="fa fa-info-circle" style="color:var(--info)"></i>
+            Slots come from this person’s own weekly availability, or the company week from Settings → Working Day when they
+            have none of their own. The scheduler and the customer link both open as soon as somebody is chosen.
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+document.querySelector('.bar').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  const act = b.dataset.act, val = b.dataset.val;
+  document.querySelectorAll(`.bar button[data-act="${act}"]`).forEach(x => x.classList.toggle('on', x === b));
+  if (act === 'theme') document.body.dataset.t = val;
+  if (act === 'dir')   document.body.dir = val;
+  if (act === 'v')     document.querySelectorAll('.variant').forEach(v => v.classList.toggle('show', v.dataset.v === val));
+  if (act === 's')     document.querySelectorAll('.state').forEach(s => s.classList.toggle('show', s.dataset.s === val));
+});
+</script>
+</body>
+</html>
