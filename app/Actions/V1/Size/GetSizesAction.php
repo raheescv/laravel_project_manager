@@ -14,18 +14,37 @@ class GetSizesAction
     {
         $filters = $request->validatedWithDefaults();
 
-        $rows = Product::selectRaw('size, size_category')
-            ->when($filters['code'] ?? null, function ($q, $value) {
-                return $q->where('code', 'like', "%{$value}%");
+        $branchId = $filters['branch_id'] ?? null;
+
+        // The showcase renders a stock count under every size chip and greys out
+        // the ones with nothing on the shelf. Counting per size in SQL keeps that
+        // to one request — the alternative, a lookup per size, is a request storm
+        // on a screen that shows twenty of them.
+        //
+        // The inventories join is keyed on a tenant-scoped product id, so it
+        // cannot pull another tenant's stock even though the join itself is
+        // outside the global scope.
+        $rows = Product::query()
+            ->selectRaw('products.size as size, products.size_category as size_category')
+            ->selectRaw('COUNT(DISTINCT products.id) as product_count')
+            ->selectRaw('COALESCE(SUM(inventories.quantity), 0) as stock_total')
+            ->leftJoin('inventories', function ($join) use ($branchId) {
+                $join->on('inventories.product_id', '=', 'products.id');
+                if ($branchId) {
+                    $join->where('inventories.branch_id', '=', $branchId);
+                }
             })
-            ->when($filters['main_category_id'] ?? null, fn ($q, $v) => $q->where('main_category_id', $v))
-            ->when($filters['sub_category_id'] ?? null, fn ($q, $v) => $q->where('sub_category_id', $v))
-            ->when($filters['brand_id'] ?? null, fn ($q, $v) => $q->where('brand_id', $v))
+            ->when($filters['code'] ?? null, function ($q, $value) {
+                return $q->where('products.code', 'like', "%{$value}%");
+            })
+            ->when($filters['main_category_id'] ?? null, fn ($q, $v) => $q->where('products.main_category_id', $v))
+            ->when($filters['sub_category_id'] ?? null, fn ($q, $v) => $q->where('products.sub_category_id', $v))
+            ->when($filters['brand_id'] ?? null, fn ($q, $v) => $q->where('products.brand_id', $v))
             // Only surface sizes from products in an online-visible category (matches /categories).
             ->whereHas('mainCategory', fn ($catQ) => $catQ->where('online_visibility_flag', true))
-            ->whereNotNull('size')
-            ->where('size', '!=', '')
-            ->groupBy('size', 'size_category')
+            ->whereNotNull('products.size')
+            ->where('products.size', '!=', '')
+            ->groupBy('products.size', 'products.size_category')
             ->get();
 
         $young = [];
@@ -38,10 +57,17 @@ class GetSizesAction
             // never backfilled (defensive; the migration backfills existing data).
             $category = $row->size_category ?: Product::classifySizeCategory($size);
 
+            $entry = [
+                'size' => $size,
+                'product_count' => (int) $row->product_count,
+                'stock_total' => (int) $row->stock_total,
+                'in_stock' => ((int) $row->stock_total) > 0,
+            ];
+
             if ($category === Product::SIZE_CATEGORY_YOUNG) {
-                $young[$size] = ['size' => $size];
+                $young[$size] = $entry;
             } else {
-                $adult[$size] = ['size' => $size];
+                $adult[$size] = $entry;
             }
         }
 

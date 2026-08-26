@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Showcase App Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&family=Hanken+Grotesk:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Inter+Tight:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600&family=Manrope:wght@400;500;700;800&family=Archivo:wdth,wght@75..125,400..800&family=Jost:wght@300;400;500;600&display=swap">
+</head>
+<body>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   HARNESS — toolbar + device frames. Not part of any theme.
+   ══════════════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box}
+body{margin:0;padding:0 0 80px;background:#eceff4;color:#0b1220;
+  font-family:"Inter Tight",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  transition:background .25s,color .25s;-webkit-font-smoothing:antialiased}
+body[data-t="dark"]{background:#0e1116;color:#e9edf3}
+
+.bar{position:sticky;top:0;z-index:80;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;
+  padding:11px 14px;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border-bottom:1px solid #dce2ea}
+body[data-t="dark"] .bar{background:rgba(18,22,29,.86);border-color:#2a313a}
+.bar b{font-size:13px;font-weight:800;letter-spacing:.2px;margin-right:4px}
+.bar button{border:1px solid #cbd5e1;background:#fff;color:#0b1220;padding:8px 14px;border-radius:10px;
+  font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s}
+body[data-t="dark"] .bar button{background:#20262e;color:#c9d3df;border-color:#38414d}
+.bar button:hover{transform:translateY(-1px)}
+.bar button.on{background:#111827;color:#fff;border-color:#111827}
+body[data-t="dark"] .bar button.on{background:#e9edf3;color:#0e1116;border-color:#e9edf3}
+.bar .sep{width:1px;height:22px;background:#cbd5e1;margin:0 4px}
+body[data-t="dark"] .bar .sep{background:#38414d}
+
+.intro{max-width:1320px;margin:26px auto 0;padding:0 20px}
+.intro h1{font-size:26px;margin:0 0 6px;letter-spacing:-.4px;font-weight:800}
+.intro p{margin:0;font-size:14px;line-height:1.65;opacity:.72;max-width:820px}
+.intro .flow{margin-top:12px;font-size:12px;font-family:"JetBrains Mono",monospace;opacity:.6}
+
+.themehead{max-width:1320px;margin:26px auto 0;padding:16px 20px;border-radius:14px;
+  background:#fff;border:1px solid #dce2ea}
+body[data-t="dark"] .themehead{background:#171c23;border-color:#2a313a}
+.themehead h2{margin:0 0 4px;font-size:19px;font-weight:800;letter-spacing:-.2px}
+.themehead .kick{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;opacity:.55;margin-bottom:6px}
+.themehead p{margin:0;font-size:13.5px;line-height:1.6;opacity:.75;max-width:900px}
+.themehead .swatches{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+.themehead .sw{display:flex;align-items:center;gap:7px;font-size:11px;font-family:"JetBrains Mono",monospace;
+  padding:5px 9px 5px 5px;border:1px solid #dce2ea;border-radius:99px;opacity:.85}
+body[data-t="dark"] .themehead .sw{border-color:#2a313a}
+.themehead .sw i{width:16px;height:16px;border-radius:5px;display:block}
+
+.stage{max-width:1320px;margin:20px auto;padding:0 20px;display:grid;gap:26px;
+  grid-template-columns:repeat(auto-fill,minmax(316px,1fr))}
+.variant{display:none}.variant.show{display:block}
+
+.frame{display:flex;flex-direction:column;gap:9px}
+.frame .cap{display:flex;align-items:baseline;gap:8px;padding-left:2px}
+.frame .cap .n{font-family:"JetBrains Mono",monospace;font-size:11px;opacity:.45;font-weight:600}
+.frame .cap .t{font-size:13px;font-weight:800;letter-spacing:-.1px}
+.frame .cap .d{font-size:11.5px;opacity:.55}
+.device{background:#0b0d11;border-radius:34px;padding:9px;box-shadow:0 30px 60px -34px rgba(6,12,22,.6);border:1px solid rgba(255,255,255,.07)}
+body[data-t="dark"] .device{box-shadow:0 30px 60px -30px rgba(0,0,0,.85)}
+.screen{position:relative;width:100%;height:640px;border-radius:26px;overflow:hidden;display:flex;flex-direction:column;
+  background:var(--bg);color:var(--ink);font-family:var(--f-body)}
+.notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:86px;height:20px;border-radius:99px;background:#0b0d11;z-index:40}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SHARED SCREEN PRIMITIVES — themed entirely through CSS variables
+   ══════════════════════════════════════════════════════════════════════ */
+.status{display:flex;justify-content:space-between;align-items:center;padding:12px 18px 4px;font-size:10.5px;font-weight:700;opacity:.55;letter-spacing:.2px;flex-shrink:0}
+.status .rr{display:flex;gap:4px;align-items:center}
+.status .rr b{display:block;width:16px;height:8px;border:1px solid currentColor;border-radius:2px;position:relative}
+.status .rr b::after{content:"";position:absolute;inset:1.5px;right:5px;background:currentColor;border-radius:1px}
+
+.body{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.scroll{flex:1;overflow:hidden;padding:0 var(--pad) 14px}
+.fade{position:absolute;left:0;right:0;bottom:0;height:44px;pointer-events:none;
+  background:linear-gradient(to top,var(--bg),transparent)}
+
+.hd{padding:8px var(--pad) 12px;flex-shrink:0}
+.hd .eyebrow{font-size:10px;letter-spacing:var(--track);text-transform:uppercase;color:var(--faint);font-weight:700;font-family:var(--f-micro)}
+.hd h1{margin:5px 0 0;font-family:var(--f-display);font-size:var(--h1);line-height:1.06;font-weight:var(--h1w);letter-spacing:var(--h1t)}
+.hd .sub{margin-top:5px;font-size:11.5px;color:var(--muted);line-height:1.45}
+
+.nav{display:flex;align-items:center;gap:10px;padding:6px var(--pad) 2px;flex-shrink:0}
+.nav .back{width:32px;height:32px;border-radius:var(--r-sm);display:grid;place-items:center;
+  background:var(--surface);border:1px solid var(--line);flex-shrink:0}
+.nav .ttl{font-size:12.5px;font-weight:700;letter-spacing:.1px}
+.nav .sp{flex:1}
+.nav .ic{width:32px;height:32px;border-radius:var(--r-sm);display:grid;place-items:center;background:var(--surface);border:1px solid var(--line)}
+svg.g{display:block}
+svg.g path,svg.g circle,svg.g line,svg.g rect,svg.g polyline{stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.crumb{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:2px var(--pad) 10px;font-size:9.5px;
+  font-family:var(--f-micro);letter-spacing:.6px;text-transform:uppercase;color:var(--faint);font-weight:700;flex-shrink:0}
+.crumb b{color:var(--accent);font-weight:700}
+
+.search{display:flex;align-items:center;gap:8px;margin:0 var(--pad) 12px;padding:9px 12px;border-radius:var(--r-sm);
+  background:var(--surface);border:1px solid var(--line);color:var(--faint);font-size:11.5px;flex-shrink:0}
+
+.tabbar{display:flex;justify-content:space-around;align-items:center;padding:9px 8px 13px;flex-shrink:0;
+  background:var(--tabbg);border-top:1px solid var(--line);backdrop-filter:blur(12px)}
+.tabbar .tb{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--faint);font-size:8.5px;font-weight:700;letter-spacing:.3px}
+.tabbar .tb.on{color:var(--accent)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap)}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+
+.shot{position:relative;background:var(--shot);border-radius:var(--r);overflow:hidden;display:grid;place-items:center}
+.shot svg.sneaker{width:86%;height:auto;filter:drop-shadow(0 8px 10px rgba(0,0,0,.16))}
+.shot .tagpill{position:absolute;top:7px;left:7px;font-size:8px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  padding:3px 6px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-micro)}
+.shot .spin360{position:absolute;bottom:7px;right:7px;display:flex;align-items:center;gap:3px;font-size:8px;font-weight:800;
+  padding:3px 6px;border-radius:99px;background:var(--pillbg);color:var(--ink);border:1px solid var(--line);font-family:var(--f-micro)}
+
+.sectitle{display:flex;align-items:baseline;justify-content:space-between;margin:16px 0 9px}
+.sectitle h3{margin:0;font-family:var(--f-display);font-size:14px;font-weight:var(--h3w);letter-spacing:var(--h1t)}
+.sectitle span{font-size:9.5px;font-family:var(--f-micro);letter-spacing:.7px;text-transform:uppercase;color:var(--accent);font-weight:700}
+.grouphd{font-family:var(--f-micro);font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--faint);
+  font-weight:700;margin:14px 0 8px;display:flex;align-items:center;gap:9px}
+.grouphd::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.chip{display:grid;place-items:center;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);
+  padding:11px 4px;font-size:12.5px;font-weight:700;line-height:1;position:relative}
+.chip small{display:block;font-size:8px;font-weight:600;color:var(--faint);margin-top:4px;font-family:var(--f-micro)}
+.chip.sel{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chip.sel small{color:var(--accent-ink);opacity:.7}
+.chip.dis{opacity:.32}
+.chip.dis::after{content:"";position:absolute;inset:0;background:linear-gradient(to top right,transparent 47%,var(--line) 47%,var(--line) 53%,transparent 53%)}
+
+.row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.row .mono{width:38px;height:38px;border-radius:var(--r-sm);display:grid;place-items:center;flex-shrink:0;
+  background:var(--surface);border:1px solid var(--line);font-family:var(--f-display);font-size:14px;font-weight:700}
+.row .tx{flex:1;min-width:0}
+.row .tx b{display:block;font-size:12.5px;font-weight:700;letter-spacing:-.1px}
+.row .tx span{display:block;font-size:10px;color:var(--muted);margin-top:2px;font-family:var(--f-micro)}
+.row .ch{color:var(--faint);flex-shrink:0}
+
+.pcard .nm{font-family:var(--f-display);font-size:11.5px;font-weight:var(--h3w);margin-top:7px;line-height:1.25;letter-spacing:var(--h1t)}
+.pcard .br{font-size:8.5px;font-family:var(--f-micro);letter-spacing:.8px;text-transform:uppercase;color:var(--faint);font-weight:700;margin-top:3px}
+.pcard .pr{font-size:11.5px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
+.pcard .pr s{font-weight:500;color:var(--faint);font-size:9.5px;margin-left:4px}
+
+.filters{display:flex;gap:6px;padding:0 var(--pad) 11px;flex-shrink:0;overflow:hidden}
+.fchip{font-size:10px;font-weight:700;padding:6px 10px;border-radius:99px;border:1px solid var(--line);
+  background:var(--surface);white-space:nowrap;display:flex;align-items:center;gap:4px}
+.fchip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+</style>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   DETAIL / 360 PRIMITIVES
+   ══════════════════════════════════════════════════════════════════════ */
+.hero{position:relative;background:var(--shot);flex-shrink:0;display:grid;place-items:center;overflow:hidden}
+.hero svg.sneaker{width:78%;filter:drop-shadow(0 16px 20px rgba(0,0,0,.2))}
+.hero .float{position:absolute;top:10px;left:10px;right:10px;display:flex;align-items:center;gap:8px}
+.hero .fbtn{width:30px;height:30px;border-radius:99px;display:grid;place-items:center;background:var(--pillbg);
+  border:1px solid var(--line);backdrop-filter:blur(8px)}
+.hero .sp{flex:1}
+.hero .dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px}
+.hero .dots i{width:5px;height:5px;border-radius:99px;background:var(--faint);display:block}
+.hero .dots i.on{width:16px;background:var(--accent)}
+.hero .badge360{position:absolute;bottom:10px;right:10px;display:flex;align-items:center;gap:4px;font-size:9px;font-weight:800;
+  letter-spacing:.5px;padding:5px 9px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-micro)}
+
+.thumbs{display:flex;gap:6px;padding:10px var(--pad) 0;flex-shrink:0}
+.thumbs .th{flex:1;aspect-ratio:1;border-radius:var(--r-sm);background:var(--shot);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
+.thumbs .th.on{border-color:var(--accent);border-width:1.5px}
+.thumbs .th svg.sneaker{width:74%}
+.thumbs .th.more{display:grid;place-items:center;font-size:10px;font-weight:800;color:var(--muted);background:var(--surface)}
+
+.pinfo{padding:12px var(--pad) 0}
+.pinfo .brandline{display:flex;align-items:center;justify-content:space-between}
+.pinfo .brandline .b{font-size:9.5px;font-family:var(--f-micro);letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);font-weight:700}
+.pinfo .brandline .stk{font-size:9px;font-weight:700;padding:3px 7px;border-radius:99px;background:var(--okbg);color:var(--ok);font-family:var(--f-micro)}
+.pinfo h2{margin:6px 0 0;font-family:var(--f-display);font-size:19px;font-weight:var(--h1w);line-height:1.15;letter-spacing:var(--h1t)}
+.pinfo .meta{margin-top:4px;font-size:10px;color:var(--muted);font-family:var(--f-micro);letter-spacing:.4px}
+.pinfo .price{display:flex;align-items:baseline;gap:8px;margin-top:9px}
+.pinfo .price b{font-size:21px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.pinfo .price s{font-size:12px;color:var(--faint);font-weight:500}
+.pinfo .price em{font-style:normal;font-size:9px;font-weight:800;padding:3px 6px;border-radius:5px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-micro)}
+
+.swatchrow{display:flex;gap:7px;margin-top:11px}
+.swatchrow i{width:26px;height:26px;border-radius:var(--r-sm);display:block;border:1px solid var(--line);position:relative}
+.swatchrow i.on{outline:1.5px solid var(--accent);outline-offset:2px}
+
+.spec{margin-top:12px;border-top:1px solid var(--line)}
+.spec div{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:10.5px}
+.spec div span{color:var(--muted);font-family:var(--f-micro);letter-spacing:.3px}
+.spec div b{font-weight:700}
+
+.cta{display:flex;gap:8px;padding:10px var(--pad) 12px;background:var(--tabbg);border-top:1px solid var(--line);flex-shrink:0;backdrop-filter:blur(12px)}
+.cta .heart{width:42px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex-shrink:0}
+.cta .btn{flex:1;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:12px;font-size:12px;font-weight:800;letter-spacing:.3px}
+
+.relscroll{display:flex;gap:var(--gap);margin-top:2px}
+.relscroll .rc{width:112px;flex-shrink:0}
+.relscroll .rc .shot{aspect-ratio:1/1.05}
+
+.spinstage{flex:1;position:relative;display:grid;place-items:center;background:var(--shot);overflow:hidden}
+.spinstage>svg.sneaker{position:relative;z-index:1}
+.spinstage svg.sneaker{width:90%;filter:drop-shadow(0 22px 26px rgba(0,0,0,.22))}
+.spinstage .ghost{position:absolute;width:86%;pointer-events:none}
+.spinstage .ghost.a{opacity:.16;transform:translateX(-30px) scale(.94)}
+.spinstage .ghost.b{opacity:.13;transform:translateX(30px) scale(.94)}
+.spinstage .ring{position:absolute;bottom:74px;width:78%;height:34px;border-radius:50%;
+  border:1px dashed var(--faint);opacity:.45;
+  background:radial-gradient(ellipse at center,color-mix(in srgb,var(--accent) 22%,transparent),transparent 70%)}
+.spinhint{position:absolute;bottom:14px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:7px}
+.spinhint .hd2{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.4px;
+  padding:7px 13px;border-radius:99px;background:var(--pillbg);border:1px solid var(--line);backdrop-filter:blur(8px)}
+.spinhint .ticks{display:flex;gap:2.5px;align-items:flex-end;height:13px}
+.spinhint .ticks i{width:2px;height:5px;background:var(--faint);border-radius:2px;display:block}
+.spinhint .ticks i.on{height:13px;background:var(--accent)}
+.spintop{display:flex;align-items:center;gap:8px;padding:8px var(--pad) 10px;flex-shrink:0}
+.spintop .deg{margin-left:auto;font-family:var(--f-micro);font-size:11px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.spinmodes{display:flex;gap:6px;padding:0 var(--pad) 12px;flex-shrink:0}
+.spinmodes .m{flex:1;text-align:center;padding:8px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);font-size:10px;font-weight:700}
+.spinmodes .m.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.empty{padding:26px 0;text-align:center}
+.storepill{display:flex;align-items:center;gap:7px;margin:0 var(--pad) 10px;padding:8px 11px;border-radius:var(--r-sm);
+  background:var(--surface);border:1px solid var(--line);font-size:10.5px;flex-shrink:0}
+.storepill b{font-weight:700}.storepill span{color:var(--muted);margin-left:auto;font-size:9.5px;font-family:var(--f-micro)}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THEME 1 — ATELIER NOIR  (editorial boutique: ivory, ink, brass)
+   ══════════════════════════════════════════════════════════════════════ */
+.t-noir{
+  --f-display:"Fraunces",Georgia,serif; --f-body:"Hanken Grotesk",system-ui,sans-serif; --f-micro:"Hanken Grotesk",sans-serif;
+  --bg:#F7F4EE; --surface:#FFFDF8; --shot:#EFEAE0; --ink:#1A1714; --muted:#6E655A; --faint:#A79C8D;
+  --line:#E3DCCE; --accent:#8A6A2F; --accent-ink:#FFFDF8; --pillbg:rgba(255,253,248,.88);
+  --tabbg:rgba(247,244,238,.92); --ok:#3F6B4A; --okbg:#E8EFE7;
+  --r:4px; --r-sm:4px; --pad:20px; --gap:12px; --h1:27px; --h1w:300; --h1t:-.4px; --h3w:500; --track:2.2px;
+}
+body[data-t="dark"] .t-noir{
+  --bg:#141210; --surface:#1E1B17; --shot:#242019; --ink:#F2EDE3; --muted:#A79C8D; --faint:#75695A;
+  --line:#2E2921; --accent:#C99B4E; --accent-ink:#141210; --pillbg:rgba(30,27,23,.9);
+  --tabbg:rgba(20,18,16,.92); --ok:#7FB08C; --okbg:rgba(127,176,140,.14);
+}
+.t-noir .hd h1{font-variation-settings:"SOFT" 0,"WONK" 1}
+.t-noir .chip{border-radius:99px}
+.t-noir .fchip{border-radius:2px;text-transform:uppercase;letter-spacing:.7px;font-size:9px}
+.t-noir .row .mono{border-radius:99px}
+.t-noir .cta .btn{border-radius:2px;text-transform:uppercase;letter-spacing:1.4px;font-size:10.5px}
+.t-noir .shot .tagpill{background:transparent;color:var(--ink);border:1px solid var(--ink);border-radius:0;backdrop-filter:none}
+.t-noir .pcard .nm{font-style:italic}
+.t-noir .sectitle h3{font-style:italic}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THEME 2 — AURORA GLASS  (frosted depth: indigo, violet, cyan glow)
+   ══════════════════════════════════════════════════════════════════════ */
+.t-aurora{
+  --f-display:"Plus Jakarta Sans",system-ui,sans-serif; --f-body:"Plus Jakarta Sans",system-ui,sans-serif; --f-micro:"Plus Jakarta Sans",sans-serif;
+  --bg:#F4F5FC; --surface:rgba(255,255,255,.72); --shot:linear-gradient(150deg,#E8EAFB,#F6EFFB 55%,#E4F3FA);
+  --ink:#191B33; --muted:#5F6285; --faint:#9EA1C0; --line:rgba(96,86,180,.16);
+  --accent:#5B4CE0; --accent-ink:#fff; --pillbg:rgba(255,255,255,.72);
+  --tabbg:rgba(244,245,252,.86); --ok:#0E9F6E; --okbg:rgba(14,159,110,.12);
+  --r:20px; --r-sm:14px; --pad:18px; --gap:11px; --h1:25px; --h1w:800; --h1t:-.8px; --h3w:800; --track:1.6px;
+}
+body[data-t="dark"] .t-aurora{
+  --bg:#0B0C1C; --surface:rgba(255,255,255,.06); --shot:linear-gradient(150deg,#1B1D3D,#241A45 55%,#122B3D);
+  --ink:#EDEEFB; --muted:#A0A3C8; --faint:#6D719B; --line:rgba(255,255,255,.12);
+  --accent:#8B7BFF; --accent-ink:#0B0C1C; --pillbg:rgba(255,255,255,.09);
+  --tabbg:rgba(11,12,28,.82); --ok:#3DD9A0; --okbg:rgba(61,217,160,.14);
+}
+.t-aurora .screen{background:var(--bg)}
+.t-aurora .screen::before{content:"";position:absolute;top:-90px;left:-70px;width:270px;height:270px;border-radius:50%;
+  background:radial-gradient(circle,rgba(91,76,224,.30),transparent 68%);filter:blur(14px);pointer-events:none;z-index:0}
+.t-aurora .screen::after{content:"";position:absolute;bottom:40px;right:-90px;width:250px;height:250px;border-radius:50%;
+  background:radial-gradient(circle,rgba(38,190,220,.24),transparent 68%);filter:blur(14px);pointer-events:none;z-index:0}
+body[data-t="dark"] .t-aurora .screen::before{background:radial-gradient(circle,rgba(139,123,255,.34),transparent 68%)}
+.t-aurora .status,.t-aurora .body,.t-aurora .tabbar,.t-aurora .cta{position:relative;z-index:2}
+.t-aurora .chip,.t-aurora .row .mono,.t-aurora .nav .back,.t-aurora .nav .ic,.t-aurora .search,
+.t-aurora .fchip,.t-aurora .storepill,.t-aurora .spinmodes .m{backdrop-filter:blur(14px)}
+.t-aurora .cta .btn{box-shadow:0 10px 22px -10px rgba(91,76,224,.75)}
+.t-aurora .chip.sel{box-shadow:0 8px 18px -8px rgba(91,76,224,.7)}
+.t-aurora .pcard .shot{box-shadow:0 12px 26px -18px rgba(25,27,51,.6)}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THEME 3 — STUDIO MONO  (swiss gallery: paper, graphite, signal orange)
+   ══════════════════════════════════════════════════════════════════════ */
+.t-mono{
+  --f-display:"Inter Tight",system-ui,sans-serif; --f-body:"Inter Tight",system-ui,sans-serif; --f-micro:"JetBrains Mono",monospace;
+  --bg:#FFFFFF; --surface:#FAFAFA; --shot:#F2F2F2; --ink:#0D0D0D; --muted:#6B6B6B; --faint:#A3A3A3;
+  --line:#E4E4E4; --accent:#FF4D19; --accent-ink:#FFFFFF; --pillbg:rgba(255,255,255,.9);
+  --tabbg:rgba(255,255,255,.94); --ok:#0D7A46; --okbg:#E7F4ED;
+  --r:0px; --r-sm:0px; --pad:18px; --gap:10px; --h1:24px; --h1w:800; --h1t:-1.1px; --h3w:800; --track:1.8px;
+}
+body[data-t="dark"] .t-mono{
+  --bg:#0D0D0D; --surface:#151515; --shot:#1A1A1A; --ink:#F5F5F5; --muted:#9A9A9A; --faint:#5E5E5E;
+  --line:#252525; --accent:#FF5C2B; --accent-ink:#0D0D0D; --pillbg:rgba(21,21,21,.9);
+  --tabbg:rgba(13,13,13,.94); --ok:#3DBE7C; --okbg:rgba(61,190,124,.14);
+}
+.t-mono .hd h1{text-transform:uppercase}
+.t-mono .fchip{border-radius:0;font-family:var(--f-micro);font-size:9px;text-transform:uppercase}
+.t-mono .pcard .nm{text-transform:uppercase;font-size:10.5px;letter-spacing:-.2px}
+.t-mono .pcard .pr,.t-mono .pinfo .price b{font-family:var(--f-micro);font-weight:600}
+.t-mono .cta .btn{text-transform:uppercase;letter-spacing:1.6px;font-size:10.5px;font-family:var(--f-micro)}
+.t-mono .sectitle h3{text-transform:uppercase;letter-spacing:-.3px}
+.t-mono .pinfo h2{text-transform:uppercase;letter-spacing:-.9px}
+.t-mono .shot{border:1px solid var(--line)}
+.t-mono .chip{font-family:var(--f-micro);font-weight:600}
+</style>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   THEME 4 — VITRINE  (night gallery: obsidian, lit pedestal, oxblood)
+   Dark is the primary state; light is a daylit case, not an inversion.
+   ══════════════════════════════════════════════════════════════════════ */
+.t-vitrine{
+  --f-display:"Bodoni Moda",Didot,"Times New Roman",serif; --f-body:"Manrope",system-ui,sans-serif; --f-micro:"Manrope",sans-serif;
+  --bg:#F3EFEB; --surface:#FFFFFF; --shot:radial-gradient(ellipse 78% 62% at 50% 42%,#FFFFFF,#E7DED7 74%);
+  --ink:#171313; --muted:#6A5F5C; --faint:#A6988F; --line:#E3D9D2;
+  --accent:#8E1F2E; --accent-ink:#FFF6F3; --pillbg:rgba(255,255,255,.86);
+  --tabbg:rgba(243,239,235,.93); --ok:#3C6B4E; --okbg:#E7EFE8;
+  --r:6px; --r-sm:6px; --pad:20px; --gap:13px; --h1:30px; --h1w:400; --h1t:-.2px; --h3w:500; --track:2.6px;
+}
+body[data-t="dark"] .t-vitrine{
+  --bg:#0E0C0D; --surface:#181416; --shot:radial-gradient(ellipse 78% 62% at 50% 42%,#332C30,#100E0F 74%);
+  --ink:#F3EEE9; --muted:#A79E97; --faint:#6E6560; --line:#2A2428;
+  --accent:#B23A48; --accent-ink:#0E0C0D; --pillbg:rgba(24,20,22,.9);
+  --tabbg:rgba(14,12,13,.93); --ok:#7FAE8E; --okbg:rgba(127,174,142,.14);
+}
+/* every product sits in a pool of light with a gilt hairline above it */
+.t-vitrine .shot,.t-vitrine .hero,.t-vitrine .tb-gal,.t-vitrine .tb-stage,
+.t-vitrine .tb-hero,.t-vitrine .thumbs .th,.t-vitrine .tb-galstrip .th,.t-vitrine .tb-brand .strip .s{
+  border-top:1px solid rgba(198,162,74,.42)}
+.t-vitrine .tb-cat,.t-vitrine .cattile,.t-vitrine .tb-brand,.t-vitrine .tb-prev{border-top-color:rgba(198,162,74,.36)}
+.t-vitrine .hd h1,.t-vitrine .tb-hero h1,.t-vitrine .pinfo h2,.t-vitrine .tb-info h2{letter-spacing:-.4px}
+.t-vitrine .eyebrow,.t-vitrine .tb-hero .eyebrow,.t-vitrine .grouphd,.t-vitrine .tb-colhd{letter-spacing:2.6px}
+.t-vitrine .chip{border-radius:99px}
+.t-vitrine .cta .btn,.t-vitrine .tb-actions .btn,.t-vitrine .tb-hero .btn,.t-vitrine .tb-card .btn{
+  text-transform:uppercase;letter-spacing:1.8px;font-size:10px;font-weight:700;border-radius:2px}
+.t-vitrine .shot .tagpill{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:0}
+.t-vitrine .sectitle h3,.t-vitrine .tb-sect h3{font-weight:400}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THEME 5 — COURT  (performance: ink navy, volt, notched corners)
+   ══════════════════════════════════════════════════════════════════════ */
+.t-court{
+  --f-display:"Archivo",system-ui,sans-serif; --f-body:"Archivo",system-ui,sans-serif; --f-micro:"Archivo",sans-serif;
+  --bg:#F3F5F8; --surface:#FFFFFF; --shot:#E7EAF0; --ink:#0B1220; --muted:#57627A; --faint:#939DB2;
+  --line:#DBE0EA; --accent:#C6F224; --accent-ink:#0B1220; --pillbg:rgba(255,255,255,.88);
+  --tabbg:rgba(243,245,248,.93); --ok:#0F7D4F; --okbg:#E3F4EB;
+  --r:3px; --r-sm:3px; --pad:18px; --gap:11px; --h1:27px; --h1w:800; --h1t:-.7px; --h3w:800; --track:2px;
+}
+body[data-t="dark"] .t-court{
+  --bg:#080C16; --surface:#111827; --shot:#151D2D; --ink:#E9EEF7; --muted:#939DB2; --faint:#5B6579;
+  --line:#1C2434; --accent:#D6FF3F; --accent-ink:#080C16; --pillbg:rgba(17,24,39,.9);
+  --tabbg:rgba(8,12,22,.93); --ok:#3FCE8B; --okbg:rgba(63,206,139,.14);
+}
+.t-court .hd h1,.t-court .tb-hero h1,.t-court .pinfo h2,.t-court .tb-info h2{
+  text-transform:uppercase;font-variation-settings:"wdth" 112;line-height:.98}
+.t-court .sectitle h3,.t-court .tb-sect h3{text-transform:uppercase;font-variation-settings:"wdth" 108;
+  padding-left:11px;position:relative}
+.t-court .sectitle h3::before,.t-court .tb-sect h3::before{content:"";position:absolute;left:0;top:12%;bottom:12%;
+  width:4px;background:var(--accent)}
+.t-court .chip,.t-court .fchip,.t-court .cta .btn,.t-court .tb-actions .btn,.t-court .tb-hero .btn,.t-court .tb-card .btn{
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%)}
+.t-court .cta .btn,.t-court .tb-actions .btn,.t-court .tb-hero .btn,.t-court .tb-card .btn{
+  text-transform:uppercase;letter-spacing:1.3px;font-size:11px;font-weight:800}
+.t-court .pcard .nm{text-transform:uppercase;font-variation-settings:"wdth" 104;font-size:10.5px}
+.t-court .pcard .pr,.t-court .pinfo .price b,.t-court .tb-info .price b,.t-court .tb-prev .cnt{font-variant-numeric:tabular-nums}
+.t-court .shot .tagpill,.t-court .badge360,.t-court .hero .badge360{border-radius:0;font-weight:800}
+.t-court .tb-rail .logo,.t-court .row .mono,.t-court .tb-brand .mk{border-radius:3px}
+
+/* ══════════════════════════════════════════════════════════════════════
+   THEME 6 — PEARL  (hard luxury: cool pearl, graphite, hairlines only)
+   ══════════════════════════════════════════════════════════════════════ */
+.t-pearl{
+  --f-display:"Jost",system-ui,sans-serif; --f-body:"Jost",system-ui,sans-serif; --f-micro:"Jost",sans-serif;
+  --bg:#F0F0F2; --surface:#FAFAFB; --shot:linear-gradient(158deg,#FFFFFF,#E6E6EA);
+  --ink:#191A1E; --muted:#6D6F78; --faint:#A7A9B2; --line:#E0E0E5;
+  --accent:#191A1E; --accent-ink:#FAFAFB; --pillbg:rgba(250,250,251,.86);
+  --tabbg:rgba(240,240,242,.93); --ok:#3E6152; --okbg:#E8EDEA;
+  --r:0px; --r-sm:0px; --pad:22px; --gap:14px; --h1:26px; --h1w:300; --h1t:-.3px; --h3w:400; --track:3.4px;
+}
+body[data-t="dark"] .t-pearl{
+  --bg:#121316; --surface:#1A1B1F; --shot:linear-gradient(158deg,#2A2C32,#141519);
+  --ink:#EFEFF2; --muted:#9A9CA5; --faint:#63656E; --line:#26272D;
+  --accent:#EFEFF2; --accent-ink:#121316; --pillbg:rgba(26,27,31,.88);
+  --tabbg:rgba(18,19,22,.93); --ok:#8FB3A2; --okbg:rgba(143,179,162,.14);
+}
+.t-pearl .eyebrow,.t-pearl .tb-hero .eyebrow,.t-pearl .grouphd,.t-pearl .tb-colhd,
+.t-pearl .crumb,.t-pearl .sectitle span,.t-pearl .tb-sect span{letter-spacing:3.4px;font-weight:500}
+.t-pearl .sectitle h3,.t-pearl .tb-sect h3{text-transform:uppercase;letter-spacing:2.6px;font-size:10.5px;font-weight:500}
+.t-pearl .pcard .br{letter-spacing:2.2px;font-weight:500}
+.t-pearl .pcard .nm{text-transform:uppercase;letter-spacing:1.7px;font-size:9.5px;font-weight:500}
+.t-pearl .pcard .pr,.t-pearl .pinfo .price b,.t-pearl .tb-info .price b{font-weight:400;letter-spacing:.4px}
+.t-pearl .pinfo h2,.t-pearl .tb-info h2,.t-pearl .hd h1,.t-pearl .tb-hero h1{font-weight:300}
+.t-pearl .chip{font-weight:400;letter-spacing:.9px;background:transparent}
+.t-pearl .chip.sel{background:var(--accent)}
+.t-pearl .cta .btn,.t-pearl .tb-actions .btn,.t-pearl .tb-hero .btn,.t-pearl .tb-card .btn{
+  text-transform:uppercase;letter-spacing:3px;font-size:9.5px;font-weight:500}
+.t-pearl .shot .tagpill{background:transparent;color:var(--ink);border:1px solid var(--ink);letter-spacing:1.4px}
+.t-pearl .tb-cat,.t-pearl .cattile,.t-pearl .tb-brand,.t-pearl .row .mono,.t-pearl .tb-brand .mk{background:transparent}
+.t-pearl .tb-cat b,.t-pearl .cattile b{text-transform:uppercase;letter-spacing:1.6px;font-size:10.5px;font-weight:500}
+.t-pearl .tb-rail .logo{font-weight:400;letter-spacing:1px}
+</style>
+<div class="bar">
+  <b>New</b>
+  <button class="tv on" data-v="vitrine">1 · Vitrine</button>
+  <button class="tv" data-v="court">2 · Court</button>
+  <button class="tv" data-v="pearl">3 · Pearl</button>
+  <span class="sep"></span>
+  <b>First set</b>
+  <button class="tv" data-v="noir">Atelier Noir</button>
+  <button class="tv" data-v="aurora">Aurora Glass</button>
+  <button class="tv" data-v="mono">Studio Mono</button>
+  <span class="sep"></span>
+  <button id="allBtn">Compare all</button>
+  <span class="sep"></span>
+  <b>Device</b>
+  <button class="dv on" data-d="tab">▭ Tablet</button>
+  <button class="dv" data-d="phone">▯ Phone</button>
+  <span class="sep"></span>
+  <button id="modeBtn">◐ Dark</button>
+  <button id="dirBtn">⇄ RTL</button>
+</div>
+
+<div class="intro">
+  <h1>Showcase App — 3 directions</h1>
+  <p>Every screen of the product-showcase app, drawn three ways, laid out for the <b>tablet</b> it will actually run on
+     (11&Prime; landscape). On the big screen the funnel stops being a corridor: the steps you have already chosen stay
+     pinned to the left, live results stay visible on the right, and the product view splits into a full-height gallery
+     beside a standing info panel. Same data throughout — the public catalog API
+     (<code>/api/v1</code> — categories, sizes, brands, products, <code>images360</code>, <code>related_sizes</code>).
+     Switch to <b>Phone</b> above to see any direction at handset width.</p>
+  <p style="margin-top:10px"><b>Six directions, two sets.</b> 04–06 are the new premium styles;
+     01–03 (Atelier Noir, Aurora Glass, Studio Mono) are still here to compare against.</p>
+  <div class="flow">CATEGORY → SIZE → BRAND → PRODUCT LIST → PRODUCT VIEW (gallery · 360° · related)</div>
+</div>
+
+<div id="root"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   MOCK CATALOG — shapes mirror the real /api/v1 payloads
+   ══════════════════════════════════════════════════════════════════════ */
+const CATS = [
+  {n:'Sneakers',   c:248, s:'Low & high tops'},
+  {n:'Running',    c:164, s:'Road, trail, race'},
+  {n:'Basketball', c:96,  s:'Court performance'},
+  {n:'Lifestyle',  c:132, s:'Everyday classics'},
+  {n:'Kids',       c:78,  s:'Young sizes 10C–3Y'},
+  {n:'Sandals',    c:41,  s:'Slides & slippers'}
+];
+const SIZES_YOUNG = ['10C','11C','12C','13C','1Y','2Y','3Y'];
+const SIZES_ADULT = ['5','5.5','6','6.5','7','7.5','8','8.5','9','9.5','10','10.5','11','12'];
+const DEAD = ['5.5','9.5','10.5','12C'];
+const BRANDS = [
+  {n:'Nike', c:86}, {n:'Adidas', c:74}, {n:'New Balance', c:52},
+  {n:'Puma', c:38}, {n:'Asics', c:31}, {n:'Converse', c:24}
+];
+const PRODUCTS = [
+  {n:'Air Runner Vapor',  b:'Nike',        p:'QAR 549',  o:'QAR 699', h:[212,88,58],  tag:'New',   spin:true},
+  {n:'Cloudframe 03',     b:'Adidas',      p:'QAR 429',  o:null,      h:[24,90,60],   tag:null,    spin:true},
+  {n:'Gravel 990v6',      b:'New Balance', p:'QAR 785',  o:null,      h:[150,22,52],  tag:'Only 2',spin:false},
+  {n:'Velocity Knit',     b:'Puma',        p:'QAR 369',  o:'QAR 449', h:[280,55,60],  tag:'-18%',  spin:true},
+  {n:'Gel Trace Pro',     b:'Asics',       p:'QAR 612',  o:null,      h:[196,70,52],  tag:null,    spin:true},
+  {n:'Court Canvas 70',   b:'Converse',    p:'QAR 289',  o:null,      h:[0,0,28],     tag:null,    spin:false}
+];
+const HERO = {n:'Air Runner Vapor', b:'Nike', p:'QAR 549', o:'QAR 699', h:[212,88,58], code:'NK-ARV-0042'};
+
+/* Stylised sneaker — one silhouette, recoloured per product (h = [hue,sat,light]) */
+function sneaker(h, cls){
+  const [hu,sa,li] = h;
+  const up   = `hsl(${hu},${sa}%,${li}%)`;
+  const up2  = `hsl(${hu},${sa}%,${Math.max(li-16,10)}%)`;
+  const sole = `hsl(${hu},${Math.max(sa-46,4)}%,${Math.min(li+30,95)}%)`;
+  const acc  = `hsl(${(hu+186)%360},${Math.min(sa+8,96)}%,${Math.min(li+8,72)}%)`;
+  return `<svg class="sneaker ${cls||''}" viewBox="0 0 132 68" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="68" cy="64" rx="54" ry="3.4" fill="rgba(0,0,0,.10)"/>
+    <path d="M10,54 C10,47 15,45 22,45 L114,45 C122,45 126,48 126,53 C126,58 121,60 114,60 L20,60 C13,60 10,58 10,54 Z" fill="${sole}"/>
+    <path d="M10,54 L126,54 C126,58 121,60 114,60 L20,60 C13,60 10,58 10,54 Z" fill="${up2}" opacity=".22"/>
+    <path d="M18,45 C18,36 22,31 30,28 C39,25 45,21 51,14 C55,9 60,6 66,7 C73,8 75,14 76,21 C77,29 82,33 93,36 C106,40 116,41 121,45 Z" fill="${up}"/>
+    <path d="M36,44 C44,37 55,28 66,21 C70,18 73,20 73,25 C73,30 66,35 55,42 C49,45 43,46 39,46 C35,46 34,45 36,44 Z" fill="${acc}" opacity=".92"/>
+    <path d="M51,14 C55,9 60,6 66,7 C73,8 75,14 76,21 L67,24 C64,19 58,16 51,14 Z" fill="${up2}"/>
+    <g stroke="${sole}" stroke-width="1.6" stroke-linecap="round" opacity=".9">
+      <line x1="45" y1="26" x2="53" y2="23"/><line x1="49" y1="32" x2="58" y2="28"/><line x1="53" y1="38" x2="63" y2="33"/>
+    </g>
+    <circle cx="98" cy="41" r="2.4" fill="${sole}" opacity=".8"/>
+  </svg>`;
+}
+const ICON = {
+  back:'<svg class="g" width="15" height="15" viewBox="0 0 24 24"><polyline points="15 5 8 12 15 19"/></svg>',
+  chev:'<svg class="g" width="13" height="13" viewBox="0 0 24 24"><polyline points="9 5 16 12 9 19"/></svg>',
+  search:'<svg class="g" width="14" height="14" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>',
+  heart:'<svg class="g" width="15" height="15" viewBox="0 0 24 24"><path d="M12 20s-7-4.6-7-9.6A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 7 3.4c0 5-7 9.6-7 9.6z"/></svg>',
+  share:'<svg class="g" width="14" height="14" viewBox="0 0 24 24"><circle cx="17" cy="6" r="2.6"/><circle cx="7" cy="12" r="2.6"/><circle cx="17" cy="18" r="2.6"/><line x1="9.3" y1="10.8" x2="14.7" y2="7.3"/><line x1="9.3" y1="13.2" x2="14.7" y2="16.7"/></svg>',
+  spin:'<svg class="g" width="12" height="12" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6"/><polyline points="18 3 18 7 14 7"/><path d="M20 12a8 8 0 0 1-13.7 5.6"/><polyline points="6 21 6 17 10 17"/></svg>',
+  filter:'<svg class="g" width="13" height="13" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>',
+  grid:'<svg class="g" width="13" height="13" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg>',
+  home:'<svg class="g" width="16" height="16" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>',
+  tagI:'<svg class="g" width="16" height="16" viewBox="0 0 24 24"><path d="M4 4h7l9 9-7 7-9-9z"/><circle cx="8.5" cy="8.5" r="1.4"/></svg>',
+  pin:'<svg class="g" width="16" height="16" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>',
+  bag:'<svg class="g" width="15" height="15" viewBox="0 0 24 24"><path d="M6 8h12l1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
+  store:'<svg class="g" width="14" height="14" viewBox="0 0 24 24"><path d="M4 9h16v10H4z"/><path d="M4 9 6 4h12l2 5"/></svg>',
+  drag:'<svg class="g" width="14" height="14" viewBox="0 0 24 24"><polyline points="8 8 4 12 8 16"/><polyline points="16 8 20 12 16 16"/><line x1="4" y1="12" x2="20" y2="12"/></svg>',
+  x:'<svg class="g" width="14" height="14" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>'
+};
+const status = () => `<div class="status"><span>9:41</span><span class="rr">▮▮▮ <b></b></span></div>`;
+const tabbar = (on) => `<div class="tabbar">
+  ${[['home','Browse'],['tagI','Brands'],['pin','Stores'],['bag','Saved']].map((t,i)=>
+    `<div class="tb ${i===on?'on':''}">${ICON[t[0]]}<span>${t[1]}</span></div>`).join('')}
+</div>`;
+</script>
+<style>
+.catrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.catrow .ix{font-family:var(--f-micro);font-size:9px;color:var(--faint);font-weight:700;width:16px;flex-shrink:0}
+.catrow .tx{flex:1;min-width:0}
+.catrow .tx b{display:block;font-family:var(--f-display);font-size:16px;font-weight:var(--h1w);letter-spacing:var(--h1t);font-style:var(--catstyle,normal)}
+.catrow .tx span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.catrow .cnt{font-size:10px;font-family:var(--f-micro);color:var(--faint);font-weight:700}
+.catrow .mini{width:52px;height:34px;border-radius:var(--r-sm);background:var(--shot);display:grid;place-items:center;overflow:hidden;flex-shrink:0}
+.catrow .mini svg{width:88%}
+.t-noir .catrow .tx b{font-style:italic}
+
+.cattile{border-radius:var(--r);background:var(--surface);border:1px solid var(--line);padding:11px;position:relative;overflow:hidden}
+.cattile .art{height:50px;display:grid;place-items:center;margin:-4px -4px 6px}
+.cattile .art svg{width:84%}
+.cattile b{display:block;font-family:var(--f-display);font-size:12.5px;font-weight:var(--h3w);letter-spacing:var(--h1t)}
+.cattile span{display:block;font-size:9px;color:var(--muted);margin-top:2px;font-family:var(--f-micro)}
+.t-aurora .cattile{backdrop-filter:blur(16px);box-shadow:0 10px 24px -18px rgba(25,27,51,.55)}
+.t-mono .cattile{background:var(--bg)}
+.t-mono .cattile .ix{position:absolute;top:9px;right:10px;font-family:var(--f-micro);font-size:9px;color:var(--faint);font-weight:600}
+.t-mono .cattile b{text-transform:uppercase;font-size:11px}
+
+.hint{font-size:9.5px;color:var(--faint);font-family:var(--f-micro);letter-spacing:.3px;margin-top:9px;line-height:1.5}
+.stepdots{display:flex;gap:5px;align-items:center;padding:0 var(--pad) 8px;flex-shrink:0}
+.stepdots i{height:2px;flex:1;background:var(--line);display:block;border-radius:2px}
+.stepdots i.on{background:var(--accent)}
+.selsum{display:flex;align-items:center;gap:6px;margin:0 var(--pad) 10px;padding:8px 11px;border-radius:var(--r-sm);
+  background:var(--accent);color:var(--accent-ink);font-size:10px;font-weight:700;flex-shrink:0;font-family:var(--f-micro);letter-spacing:.4px}
+.selsum .sp{flex:1}
+</style>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   SCREENS
+   ══════════════════════════════════════════════════════════════════════ */
+const S = {};
+
+/* 1 — CATEGORY (home) */
+S.home = v => {
+  let list;
+  if(v==='noir'){
+    list = CATS.map((c,i)=>`<div class="catrow">
+      <span class="ix">${String(i+1).padStart(2,'0')}</span>
+      <div class="tx"><b>${c.n}</b><span>${c.s}</span></div>
+      <span class="cnt">${c.c}</span>
+      <div class="mini">${sneaker(PRODUCTS[i%6].h)}</div>
+    </div>`).join('');
+  } else if(v==='aurora'){
+    list = `<div class="grid2">`+CATS.map((c,i)=>`<div class="cattile">
+      <div class="art">${sneaker(PRODUCTS[i%6].h)}</div>
+      <b>${c.n}</b><span>${c.c} styles</span></div>`).join('')+`</div>`;
+  } else {
+    list = `<div class="grid2">`+CATS.map((c,i)=>`<div class="cattile">
+      <span class="ix">${String(i+1).padStart(2,'0')}</span>
+      <div class="art">${sneaker(PRODUCTS[i%6].h)}</div>
+      <b>${c.n}</b><span>${c.c} SKU</span></div>`).join('')+`</div>`;
+  }
+  return `${status()}
+  <div class="hd">
+    <div class="eyebrow">Sizerun · Doha Festival City</div>
+    <h1>${v==='noir'?'Find<br>your pair.':v==='aurora'?'What are you<br>looking for?':'Browse the<br>catalogue'}</h1>
+  </div>
+  <div class="search">${ICON.search}<span>Search product, code or barcode…</span></div>
+  <div class="body"><div class="scroll">
+    <div class="sectitle"><h3>Categories</h3><span>${CATS.length} groups</span></div>
+    ${list}
+    <div class="hint">Step 1 of 4 — pick a category to narrow sizes</div>
+  </div><div class="fade"></div></div>
+  ${tabbar(0)}`;
+};
+
+/* 2 — SIZE */
+S.sizes = v => {
+  const chip = (s,g) => `<div class="chip ${s==='9'?'sel':''} ${DEAD.includes(s)?'dis':''}">${s}${v!=='noir'?`<small>${DEAD.includes(s)?'—':(20+(s.length*7))}</small>`:''}</div>`;
+  return `${status()}
+  <div class="nav"><div class="back">${ICON.back}</div><span class="ttl">Select size</span><span class="sp"></span>
+    <div class="ic">${ICON.search}</div></div>
+  <div class="stepdots"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  <div class="crumb">Sneakers <span>›</span> <b>Size</b></div>
+  <div class="hd" style="padding-top:0"><h1>${v==='mono'?'Pick a size':'Which size?'}</h1>
+    <div class="sub">Only sizes with live stock in this branch are selectable.</div></div>
+  <div class="body"><div class="scroll">
+    <div class="grouphd">Young · 10C – 3Y</div>
+    <div class="${v==='noir'?'grid4':'grid4'}">${SIZES_YOUNG.map(s=>chip(s,'y')).join('')}</div>
+    <div class="grouphd">Adult · UK 5 – 13</div>
+    <div class="grid4">${SIZES_ADULT.map(s=>chip(s,'a')).join('')}</div>
+    <div class="hint">Greyed sizes are out of stock at Doha Festival City. Switch branch to widen the run.</div>
+  </div><div class="fade"></div></div>
+  <div class="cta"><div class="btn">Continue · size 9</div></div>`;
+};
+
+/* 3 — BRAND */
+S.brands = v => {
+  let list;
+  if(v==='aurora'){
+    list = `<div class="grid2">`+BRANDS.map((b,i)=>`<div class="cattile" style="padding:13px">
+      <div style="width:34px;height:34px;border-radius:11px;display:grid;place-items:center;margin-bottom:8px;
+        background:linear-gradient(135deg,hsl(${PRODUCTS[i%6].h[0]},70%,62%),hsl(${(PRODUCTS[i%6].h[0]+40)%360},80%,58%));
+        color:#fff;font-weight:800;font-size:14px">${b.n[0]}</div>
+      <b>${b.n}</b><span>${b.c} in size 9</span></div>`).join('')+`</div>`;
+  } else {
+    list = BRANDS.map((b,i)=>`<div class="row">
+      <div class="mono">${b.n[0]}</div>
+      <div class="tx"><b>${b.n}</b><span>${b.c} styles · size 9</span></div>
+      <span class="ch">${ICON.chev}</span></div>`).join('');
+  }
+  return `${status()}
+  <div class="nav"><div class="back">${ICON.back}</div><span class="ttl">Select brand</span><span class="sp"></span>
+    <div class="ic">${ICON.search}</div></div>
+  <div class="stepdots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+  <div class="crumb">Sneakers <span>›</span> Size 9 <span>›</span> <b>Brand</b></div>
+  <div class="hd" style="padding-top:0"><h1>${v==='noir'?'The houses':v==='aurora'?'Choose a brand':'Brands'}</h1></div>
+  <div class="body"><div class="scroll">
+    <div class="sectitle"><h3>Available</h3><span>${BRANDS.reduce((a,b)=>a+b.c,0)} products</span></div>
+    ${list}
+    <div class="hint">Skip this step to see every brand in size 9.</div>
+  </div><div class="fade"></div></div>
+  <div class="cta"><div class="heart">${ICON.filter}</div><div class="btn">Show all brands</div></div>`;
+};
+
+/* 4 — PRODUCT LIST */
+S.list = v => {
+  const card = (p,i)=>`<div class="pcard">
+    <div class="shot" style="aspect-ratio:1/${v==='noir'?'1.28':v==='aurora'?'1.08':'1'}">
+      ${p.tag?`<span class="tagpill">${p.tag}</span>`:''}
+      ${sneaker(p.h)}
+      ${p.spin?`<span class="spin360">${ICON.spin} 360</span>`:''}
+    </div>
+    <div class="br">${p.b}</div>
+    <div class="nm">${p.n}</div>
+    <div class="pr">${p.p}${p.o?`<s>${p.o}</s>`:''}</div>
+  </div>`;
+  return `${status()}
+  <div class="nav"><div class="back">${ICON.back}</div><span class="ttl">Nike · Size 9</span><span class="sp"></span>
+    <div class="ic">${ICON.grid}</div><div class="ic">${ICON.search}</div></div>
+  <div class="crumb">Sneakers <span>›</span> 9 <span>›</span> Nike <span>›</span> <b>86 results</b></div>
+  <div class="filters">
+    <span class="fchip on">${ICON.filter} Filters · 2</span>
+    <span class="fchip">Colour</span><span class="fchip">Price</span><span class="fchip">In stock</span>
+  </div>
+  <div class="body"><div class="scroll">
+    <div class="grid2">${PRODUCTS.map(card).join('')}</div>
+    <div class="hint">Showing 6 of 86 · infinite scroll</div>
+  </div><div class="fade"></div></div>
+  ${tabbar(0)}`;
+};
+</script>
+<script>
+/* 5 — PRODUCT VIEW (gallery) */
+S.detail = v => `${status()}
+  <div class="hero" style="height:${v==='noir'?'234':v==='aurora'?'222':'212'}px">
+    <div class="float">
+      <div class="fbtn">${ICON.back}</div><span class="sp"></span>
+      <div class="fbtn">${ICON.share}</div><div class="fbtn">${ICON.heart}</div>
+    </div>
+    ${sneaker(HERO.h)}
+    <div class="dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+    <div class="badge360">${ICON.spin} 360° view</div>
+  </div>
+  <div class="thumbs">
+    ${[0,3,1,4].map((k,i)=>`<div class="th ${i===0?'on':''}">${sneaker(i===0?HERO.h:PRODUCTS[k].h)}</div>`).join('')}
+    <div class="th more">+7</div>
+  </div>
+  <div class="body"><div class="scroll" style="padding-top:0">
+    <div class="pinfo" style="padding-left:0;padding-right:0">
+      <div class="brandline"><span class="b">${HERO.b}</span><span class="stk">In stock · 6 left</span></div>
+      <h2>${HERO.n}</h2>
+      <div class="meta">${HERO.code} · Mesh / rubber · Unisex</div>
+      <div class="price"><b>${HERO.p}</b><s>${HERO.o}</s><em dir="ltr">-21%</em></div>
+      <div class="swatchrow">
+        ${PRODUCTS.slice(0,5).map((p,i)=>`<i class="${i===0?'on':''}" style="background:hsl(${p.h[0]},${p.h[1]}%,${p.h[2]}%)"></i>`).join('')}
+      </div>
+    </div>
+    <div class="sectitle"><h3>Size run</h3><span>UK · 9 selected</span></div>
+    <div class="grid4">${['7','7.5','8','8.5','9','9.5','10','11'].map(s=>
+      `<div class="chip ${s==='9'?'sel':''} ${DEAD.includes(s)?'dis':''}">${s}</div>`).join('')}</div>
+    <div class="hint">Tap the shoe to open the 360° spin · pinch any photo to zoom</div>
+  </div><div class="fade"></div></div>
+  <div class="cta"><div class="heart">${ICON.heart}</div><div class="btn">${ICON.store} Reserve in store</div></div>`;
+
+/* 6 — PRODUCT VIEW (scrolled: specs, stores, related) */
+S.related = v => {
+  const rel = PRODUCTS.slice(1,5).map(p=>`<div class="rc pcard">
+    <div class="shot">${sneaker(p.h)}${p.spin?`<span class="spin360">${ICON.spin} 360</span>`:''}</div>
+    <div class="br">${p.b}</div><div class="nm">${p.n}</div><div class="pr">${p.p}</div></div>`).join('');
+  return `${status()}
+  <div class="nav"><div class="back">${ICON.back}</div><span class="ttl">${HERO.n}</span><span class="sp"></span>
+    <div class="ic">${ICON.share}</div></div>
+  <div class="body"><div class="scroll">
+    <div class="sectitle"><h3>Details</h3></div>
+    <div class="spec">
+      <div><span>Category</span><b>Sneakers / Running</b></div>
+      <div><span>Colour</span><b>Photon Blue</b></div>
+      <div><span>Code</span><b>${HERO.code}</b></div>
+    </div>
+    <div class="sectitle"><h3>Availability</h3><span>3 branches</span></div>
+    <div class="storepill">${ICON.pin}<b>Doha Festival City</b><span>6 in size 9</span></div>
+    <div class="storepill">${ICON.pin}<b>Villaggio Mall</b><span>2 in size 9</span></div>
+    <div class="sectitle"><h3>You may also like</h3><span>related · same category + brand</span></div>
+    <div class="relscroll">${rel}</div>
+    <div class="hint">Horizontally scrollable · 360° badge shows which have spin frames</div>
+  </div><div class="fade"></div></div>
+  <div class="cta"><div class="heart">${ICON.heart}</div><div class="btn">${ICON.store} Reserve in store</div></div>`;
+};
+
+/* 7 — 360° VIEWER */
+S.spin = v => `${status()}
+  <div class="spintop"><div class="nav" style="padding:0"><div class="back">${ICON.x}</div></div>
+    <span class="ttl" style="font-size:12px;font-weight:700">${HERO.n}</span><span class="deg">168°</span></div>
+  <div class="spinstage">
+    <div class="ring"></div>
+    <div class="ghost a">${sneaker(HERO.h)}</div>
+    <div class="ghost b">${sneaker(HERO.h)}</div>
+    ${sneaker(HERO.h)}
+    <div class="spinhint">
+      <div class="ticks">${Array.from({length:24},(_,i)=>`<i class="${i===11?'on':''}"></i>`).join('')}</div>
+      <div class="hd2">${ICON.drag} Drag to spin · 24 frames</div>
+    </div>
+  </div>
+  <div class="spinmodes"><div class="m on">360° spin</div><div class="m">Gallery</div><div class="m">Zoom</div></div>
+  <div class="cta"><div class="heart">${ICON.heart}</div><div class="btn">${ICON.store} Reserve in store</div></div>`;
+
+/* ══════════════════════════════════════════════════════════════════════
+   MOUNT
+   ══════════════════════════════════════════════════════════════════════ */
+const SCREENS = [
+  ['home',    'Category',        'entry — step 1'],
+  ['sizes',   'Size',            'step 2 · young + adult runs'],
+  ['brands',  'Brand',           'step 3 · skippable'],
+  ['list',    'Product list',    'step 4 · filters + infinite scroll'],
+  ['detail',  'Product view',    'gallery · swatches · size run'],
+  ['related', 'Product view ▸ 2','specs · branch stock · related'],
+  ['spin',    '360° viewer',     'drag-to-spin, 24 frames']
+];
+const THEMES = [
+  {k:'vitrine', name:'Vitrine', kick:'Direction 04 · night gallery',
+   blurb:'Obsidian ground, each product sitting in its own pool of light, a gilt hairline along the top edge of every surface. Bodoni Moda set large and thin against Manrope. The oxblood accent appears only where a decision is being made. Built dark-first — the light theme is a daylit display case, not an inversion.',
+   sw:[['#0E0C0D','Obsidian'],['#B23A48','Oxblood'],['#C6A24A','Gilt hairline'],['#F3EFEB','Daylight']]},
+  {k:'court', name:'Court', kick:'Direction 05 · performance',
+   blurb:'Ink navy, volt, and corners notched off at 45°. Archivo set expanded and uppercase, every number tabular, a volt bar leading each section title. This is the sneaker-drop language — fast to scan, loud where it counts, and the only direction here that looks like it belongs to sport rather than retail.',
+   sw:[['#080C16','Ink navy'],['#D6FF3F','Volt'],['#151D2D','Court'],['#F3F5F8','Chalk']]},
+  {k:'pearl', name:'Pearl', kick:'Direction 06 · hard luxury',
+   blurb:'Cool pearl and graphite, hairlines instead of fills, and no accent hue at all — selection is signalled by an ink block, nothing else. Jost at small sizes with wide tracking, uppercase throughout, and far more air than any other direction. The most restrained, and the most expensive-looking.',
+   sw:[['#F0F0F2','Pearl'],['#191A1E','Graphite'],['#E0E0E5','Hairline'],['#2A2C32','Slate']]},
+  {k:'noir', name:'Atelier Noir', kick:'Direction 01 · editorial boutique',
+   blurb:'Ivory paper, ink type and a brass hairline. Fraunces serif headlines set large and light, square corners, uppercase micro-labels, product photography left to breathe. Reads like a lookbook, not a store app — it makes ordinary catalogue data feel curated.',
+   sw:[['#F7F4EE','Paper'],['#1A1714','Ink'],['#8A6A2F','Brass'],['#EFEAE0','Stage']]},
+  {k:'aurora', name:'Aurora Glass', kick:'Direction 02 · frosted depth',
+   blurb:'Soft indigo-to-cyan light bleeding behind frosted panels. Big rounded cards, Plus Jakarta Sans, glowing selected states and coloured shadows. The most modern and the friendliest of the three — closest in spirit to the current Astra mobile app.',
+   sw:[['#F4F5FC','Mist'],['#5B4CE0','Iris'],['#26BEDC','Cyan'],['#191B33','Deep']]},
+  {k:'mono', name:'Studio Mono', kick:'Direction 03 · swiss gallery',
+   blurb:'Pure white, hairline grid, zero radius. Inter Tight set tight and uppercase, JetBrains Mono for every number and label, one signal-orange accent doing all the work. Maximum product contrast and the fastest to scan on a shop floor.',
+   sw:[['#FFFFFF','Paper'],['#0D0D0D','Graphite'],['#FF4D19','Signal'],['#F2F2F2','Stage']]}
+];
+
+/* mount + toolbar wiring live in the final script block */
+</script>
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   TABLET / BIG-SCREEN LAYER — landscape 11" (≈1194×834)
+   ══════════════════════════════════════════════════════════════════════ */
+body[data-dev="tab"] .stage.phones{display:none}
+body[data-dev="phone"] .stage.tabs{display:none}
+.stage.tabs{grid-template-columns:1fr;gap:34px}
+.device.tab{border-radius:26px;padding:11px;width:100%;max-width:1124px;margin:0 auto}
+.screen.tab{height:762px;flex-direction:row;border-radius:18px}
+.screen.tab .cam{position:absolute;left:5px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:#2a2f36;z-index:40}
+
+.tb-rail{width:68px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:7px;padding:16px 0 14px;
+  background:var(--surface);border-right:1px solid var(--line);position:relative;z-index:3}
+.tb-rail .logo{width:38px;height:38px;border-radius:var(--r-sm);display:grid;place-items:center;margin-bottom:10px;
+  background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-weight:800;font-size:16px}
+.tb-rail .it{width:42px;height:42px;border-radius:var(--r-sm);display:grid;place-items:center;color:var(--faint);position:relative}
+.tb-rail .it.on{background:var(--accent);color:var(--accent-ink)}
+.tb-rail .it em{position:absolute;bottom:4px;font-style:normal;font-size:7px;font-weight:700;letter-spacing:.2px}
+.tb-rail .sp{flex:1}
+.tb-rail .av{width:34px;height:34px;border-radius:99px;border:1px solid var(--line);display:grid;place-items:center;
+  font-size:9px;font-weight:800;font-family:var(--f-micro);color:var(--muted)}
+
+.tb-main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;z-index:3}
+.tb-top{display:flex;align-items:center;gap:12px;padding:13px 22px;border-bottom:1px solid var(--line);flex-shrink:0}
+.tb-top .wordmark{font-family:var(--f-display);font-size:16px;font-weight:var(--h3w);letter-spacing:var(--h1t);white-space:nowrap}
+.tb-top .search{flex:1;margin:0;padding:9px 13px;font-size:12px}
+.tb-top .pill{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:var(--r-sm);border:1px solid var(--line);
+  background:var(--surface);font-size:11px;font-weight:700;white-space:nowrap}
+.tb-top .pill small{color:var(--faint);font-weight:600;font-family:var(--f-micro);font-size:9.5px}
+.tb-top .ic{width:36px;height:36px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex-shrink:0}
+
+.tb-body{flex:1;display:flex;min-height:0}
+.tb-col{width:252px;flex-shrink:0;border-right:1px solid var(--line);padding:16px 16px 0;overflow:hidden}
+.tb-aside{width:296px;flex-shrink:0;border-left:1px solid var(--line);padding:16px 16px 0;overflow:hidden}
+.tb-content{flex:1;padding:16px 22px 0;overflow:hidden;position:relative;min-width:0}
+.tb-fade{position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none}
+
+.tb-hero{display:flex;align-items:center;gap:22px;padding:18px 24px;border-radius:var(--r);background:var(--shot);overflow:hidden;position:relative}
+.tb-hero .tx{flex:1;min-width:0}
+.tb-hero .eyebrow{font-size:9.5px;letter-spacing:var(--track);text-transform:uppercase;color:var(--faint);font-weight:700;font-family:var(--f-micro)}
+.tb-hero h1{margin:7px 0 0;font-family:var(--f-display);font-size:31px;line-height:1.04;font-weight:var(--h1w);letter-spacing:var(--h1t)}
+.tb-hero p{margin:9px 0 0;font-size:12.5px;color:var(--muted);line-height:1.55;max-width:330px}
+.tb-hero .btn{display:inline-flex;align-items:center;gap:8px;margin-top:13px;padding:11px 20px;border-radius:var(--r-sm);
+  background:var(--accent);color:var(--accent-ink);font-size:11.5px;font-weight:800;letter-spacing:.4px}
+.tb-hero .art{width:268px;flex-shrink:0;display:grid;place-items:center}
+.tb-hero .art svg{width:100%;filter:drop-shadow(0 18px 22px rgba(0,0,0,.18))}
+
+.tb-sect{display:flex;align-items:baseline;justify-content:space-between;margin:15px 0 10px}
+.tb-sect h3{margin:0;font-family:var(--f-display);font-size:15px;font-weight:var(--h3w);letter-spacing:var(--h1t)}
+.tb-sect span{font-size:9.5px;font-family:var(--f-micro);letter-spacing:.8px;text-transform:uppercase;color:var(--accent);font-weight:700}
+
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.g8{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.tb-content .g8 .chip{padding:20px 4px;font-size:15px}
+.tb-content .g8 .chip small{font-size:9px;margin-top:6px}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
+
+.tb-cat{border-radius:var(--r);background:var(--surface);border:1px solid var(--line);padding:11px 11px 12px;position:relative;overflow:hidden}
+.tb-cat .art{height:62px;display:grid;place-items:center;margin-bottom:8px}
+.tb-cat .art svg{width:92%}
+.tb-cat b{display:block;font-family:var(--f-display);font-size:12.5px;font-weight:var(--h3w);letter-spacing:var(--h1t)}
+.tb-cat span{display:block;font-size:9px;color:var(--faint);margin-top:3px;font-family:var(--f-micro)}
+.tb-cat.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.t-mono .tb-cat b{text-transform:uppercase;font-size:11px}
+.t-aurora .tb-cat{backdrop-filter:blur(16px)}
+
+/* funnel step list in the left column */
+.tb-steps{display:flex;flex-direction:column;gap:2px;margin-bottom:16px}
+.tb-step{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:var(--r-sm);border:1px solid transparent}
+.tb-step .n{width:20px;height:20px;border-radius:99px;display:grid;place-items:center;flex-shrink:0;
+  font-size:9px;font-weight:800;font-family:var(--f-micro);border:1px solid var(--line);color:var(--faint)}
+.tb-step .tx{flex:1;min-width:0}
+.tb-step .tx small{display:block;font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);font-weight:700;font-family:var(--f-micro)}
+.tb-step .tx b{display:block;font-size:12px;font-weight:700;margin-top:2px}
+.tb-step.done .n{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tb-step.now{background:var(--surface);border-color:var(--line)}
+.tb-step.now .n{border-color:var(--accent);color:var(--accent)}
+.tb-step.next{opacity:.45}
+.tb-colhd{font-family:var(--f-micro);font-size:9px;letter-spacing:1.3px;text-transform:uppercase;color:var(--faint);font-weight:700;margin:14px 0 9px}
+
+.tb-prev{border-radius:var(--r);border:1px solid var(--line);background:var(--surface);padding:13px;margin-top:4px}
+.tb-prev .cnt{font-family:var(--f-display);font-size:26px;font-weight:var(--h1w);letter-spacing:var(--h1t);line-height:1}
+.tb-prev .lb{font-size:9.5px;color:var(--muted);margin-top:4px;font-family:var(--f-micro);letter-spacing:.4px}
+
+.tb-brand{border-radius:var(--r);border:1px solid var(--line);background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:11px}
+.tb-brand .hdr{display:flex;align-items:center;gap:11px}
+.tb-brand .mk{width:42px;height:42px;border-radius:var(--r-sm);display:grid;place-items:center;flex-shrink:0;
+  border:1px solid var(--line);font-family:var(--f-display);font-size:17px;font-weight:700}
+.tb-brand .hdr b{display:block;font-size:14px;font-weight:700;letter-spacing:-.2px}
+.tb-brand .hdr span{display:block;font-size:9.5px;color:var(--muted);margin-top:2px;font-family:var(--f-micro)}
+.tb-brand .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tb-brand .strip .s{aspect-ratio:1.1;border-radius:var(--r-sm);background:var(--shot);display:grid;place-items:center;overflow:hidden}
+.tb-brand .strip .s svg{width:88%}
+.t-aurora .tb-brand{backdrop-filter:blur(16px)}
+
+.tb-toolbar{display:flex;align-items:center;gap:9px;padding-bottom:13px}
+.tb-toolbar .cnt{font-size:11.5px;font-weight:700}
+.tb-toolbar .cnt small{color:var(--faint);font-weight:600;font-family:var(--f-micro);font-size:10px;margin-left:5px}
+.tb-toolbar .sp{flex:1}
+
+.tb-swatchgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.tb-swatchgrid i{aspect-ratio:1;border-radius:var(--r-sm);display:block;border:1px solid var(--line)}
+.tb-swatchgrid i.on{outline:1.5px solid var(--accent);outline-offset:2px}
+.tb-range{height:3px;background:var(--line);border-radius:3px;position:relative;margin:14px 2px 8px}
+.tb-range i{position:absolute;top:-4.5px;width:12px;height:12px;border-radius:99px;background:var(--accent);display:block}
+.tb-switch{display:flex;align-items:center;justify-content:space-between;padding:9px 0;font-size:11.5px;font-weight:600}
+.tb-switch b{width:34px;height:19px;border-radius:99px;background:var(--accent);position:relative;display:block}
+.tb-switch b::after{content:"";position:absolute;top:2.5px;right:2.5px;width:14px;height:14px;border-radius:99px;background:var(--accent-ink)}
+</style>
+<style>
+/* product view + 360, tablet */
+.tb-split{flex:1;display:flex;min-height:0}
+.tb-gal{flex:1;background:var(--shot);display:flex;min-width:0;position:relative}
+.tb-galstrip{width:78px;flex-shrink:0;padding:16px 11px;display:flex;flex-direction:column;gap:9px}
+.tb-galstrip .th{aspect-ratio:1;border-radius:var(--r-sm);background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
+.tb-galstrip .th.on{border-color:var(--accent);border-width:1.5px}
+.tb-galstrip .th svg{width:80%}
+.tb-galstrip .th.more{font-size:10px;font-weight:800;color:var(--muted);font-family:var(--f-micro)}
+.tb-galmain{flex:1;display:grid;place-items:center;position:relative;padding:16px 16px 16px 0;min-width:0}
+.tb-galmain svg.sneaker{width:74%;filter:drop-shadow(0 22px 26px rgba(0,0,0,.2))}
+.tb-galmain .float{position:absolute;top:16px;right:16px;display:flex;gap:8px}
+.tb-galmain .fbtn{width:34px;height:34px;border-radius:99px;display:grid;place-items:center;background:var(--pillbg);border:1px solid var(--line);backdrop-filter:blur(8px)}
+.tb-galmain .badge360{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;
+  font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:9px 16px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-micro)}
+
+.tb-info{width:344px;flex-shrink:0;border-left:1px solid var(--line);padding:18px 20px 0;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.tb-iscroll{flex:1;min-height:0;overflow:hidden}
+.tb-info .bl{display:flex;align-items:center;justify-content:space-between}
+.tb-info .bl .b{font-size:10px;font-family:var(--f-micro);letter-spacing:1.3px;text-transform:uppercase;color:var(--accent);font-weight:700}
+.tb-info .bl .stk{font-size:9.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:var(--okbg);color:var(--ok);font-family:var(--f-micro)}
+.tb-info h2{margin:9px 0 0;font-family:var(--f-display);font-size:26px;font-weight:var(--h1w);line-height:1.12;letter-spacing:var(--h1t)}
+.t-mono .tb-info h2{text-transform:uppercase}
+.tb-info .meta{margin-top:6px;font-size:10.5px;color:var(--muted);font-family:var(--f-micro);letter-spacing:.4px}
+.tb-info .price{display:flex;align-items:baseline;gap:9px;margin-top:13px}
+.tb-info .price b{font-size:27px;font-weight:800;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.t-mono .tb-info .price b{font-family:var(--f-micro);font-weight:600}
+.tb-info .price s{font-size:13px;color:var(--faint);font-weight:500}
+.tb-info .price em{font-style:normal;font-size:9.5px;font-weight:800;padding:4px 7px;border-radius:5px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-micro)}
+.tb-info .lbl{font-family:var(--f-micro);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--faint);font-weight:700;margin:16px 0 9px;display:flex;justify-content:space-between}
+.tb-info .lbl b{color:var(--accent)}
+.tb-actions{display:flex;gap:9px;padding:13px 0 15px;flex-shrink:0;border-top:1px solid var(--line)}
+.tb-actions .heart{width:46px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex-shrink:0}
+.tb-actions .btn{flex:1;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;font-size:12px;font-weight:800;letter-spacing:.4px}
+.t-noir .tb-actions .btn,.t-noir .tb-hero .btn{text-transform:uppercase;letter-spacing:1.5px;font-size:10.5px;border-radius:2px}
+.t-mono .tb-actions .btn,.t-mono .tb-hero .btn{text-transform:uppercase;letter-spacing:1.6px;font-size:10.5px;font-family:var(--f-micro)}
+
+.tb-rel{border-top:1px solid var(--line);padding:12px 22px 0;flex-shrink:0;height:212px;overflow:hidden;position:relative}
+.screen.tab .pcard .nm,.tb-rel .rc .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.screen.tab .pcard .pr{white-space:nowrap}
+.tb-rel .tb-sect{margin:0 0 9px}
+.tb-rel .rowx{display:flex;gap:14px}
+.tb-rel .rc{width:118px;flex-shrink:0}
+.tb-rel .rc .shot{aspect-ratio:1.05}
+
+.tb-stage{flex:1;position:relative;display:grid;place-items:center;background:var(--shot);overflow:hidden}
+.tb-stage>svg.sneaker{position:relative;z-index:1}
+.tb-stage svg.sneaker{width:58%;filter:drop-shadow(0 26px 30px rgba(0,0,0,.22))}
+.tb-stage .ghost{position:absolute;width:56%;pointer-events:none}
+.tb-stage .ghost.a{opacity:.16;transform:translateX(-132px) scale(.95)}
+.tb-stage .ghost.b{opacity:.14;transform:translateX(132px) scale(.95)}
+.tb-stage .ring{position:absolute;bottom:150px;width:52%;height:52px;border-radius:50%;border:1px dashed var(--faint);opacity:.4;
+  background:radial-gradient(ellipse at center,color-mix(in srgb,var(--accent) 20%,transparent),transparent 70%)}
+.tb-stage .topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;padding:16px 20px}
+.tb-stage .topbar .fbtn{width:34px;height:34px;border-radius:99px;display:grid;place-items:center;background:var(--pillbg);border:1px solid var(--line);backdrop-filter:blur(8px)}
+.tb-stage .topbar .nm{font-family:var(--f-display);font-size:15px;font-weight:var(--h3w);letter-spacing:var(--h1t)}
+.tb-stage .topbar .sp{flex:1}
+.tb-stage .deg{font-family:var(--f-micro);font-size:15px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.tb-ctrl{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:12px;width:min(560px,72%)}
+.tb-ctrl .ticks{display:flex;gap:4px;align-items:flex-end;height:20px}
+.tb-ctrl .ticks i{width:2.5px;height:8px;background:var(--faint);border-radius:2px;display:block}
+.tb-ctrl .ticks i.on{height:20px;background:var(--accent)}
+.tb-ctrl .modes{display:flex;gap:7px;padding:6px;border-radius:99px;background:var(--pillbg);border:1px solid var(--line);backdrop-filter:blur(10px)}
+.tb-ctrl .modes .m{padding:9px 20px;border-radius:99px;font-size:11px;font-weight:700}
+.tb-ctrl .modes .m.on{background:var(--accent);color:var(--accent-ink)}
+.tb-ctrl .hint2{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;color:var(--muted)}
+.tb-card{position:absolute;top:74px;right:20px;width:230px;padding:15px;border-radius:var(--r);
+  background:var(--pillbg);border:1px solid var(--line);backdrop-filter:blur(14px)}
+.tb-card .b{font-size:9.5px;font-family:var(--f-micro);letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);font-weight:700}
+.tb-card h4{margin:7px 0 0;font-family:var(--f-display);font-size:16px;font-weight:var(--h1w);line-height:1.15;letter-spacing:var(--h1t)}
+.tb-card .p{margin-top:9px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.tb-card .btn{margin-top:13px;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);text-align:center;padding:11px;font-size:11px;font-weight:800;letter-spacing:.4px}
+</style>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   TABLET SCREENS — the funnel keeps its steps but stops being a corridor:
+   choices stay visible on the left, results stay visible on the right.
+   ══════════════════════════════════════════════════════════════════════ */
+const T = {};
+const rail = (on) => `<div class="tb-rail">
+  <div class="logo">S</div>
+  ${[['home','Browse'],['tagI','Brands'],['pin','Stores'],['bag','Saved']].map((t,i)=>
+    `<div class="it ${i===on?'on':''}">${ICON[t[0]]}</div>`).join('')}
+  <span class="sp"></span>
+  <div class="av">EN</div>
+</div>`;
+const topbar = (extra) => `<div class="tb-top">
+  <span class="wordmark">Sizerun</span>
+  <div class="search">${ICON.search}<span>Search by name, code or barcode…</span></div>
+  ${extra||''}
+  <div class="pill">${ICON.pin} Doha Festival City <small>Branch</small></div>
+  <div class="ic">${ICON.spin}</div>
+</div>`;
+const steps = (at, size, brand) => `<div class="tb-steps">
+  ${[['Category','Sneakers'],['Size', size||'—'],['Brand', brand||'Any brand'],['Results','86 products']].map((s,i)=>
+    `<div class="tb-step ${i<at?'done':i===at?'now':'next'}">
+       <span class="n">${i<at?'✓':i+1}</span>
+       <div class="tx"><small>${s[0]}</small><b>${s[1]}</b></div>
+       ${i<at?`<span class="ch" style="color:var(--faint)">${ICON.chev}</span>`:''}
+     </div>`).join('')}
+</div>`;
+const pcard = (p,ar) => `<div class="pcard">
+  <div class="shot" style="aspect-ratio:${ar||'1/1.06'}">
+    ${p.tag?`<span class="tagpill">${p.tag}</span>`:''}${sneaker(p.h)}
+    ${p.spin?`<span class="spin360">${ICON.spin} 360</span>`:''}
+  </div>
+  <div class="br">${p.b}</div><div class="nm">${p.n}</div>
+  <div class="pr">${p.p}${p.o?`<s>${p.o}</s>`:''}</div></div>`;
+
+/* T1 — BROWSE */
+T.home = v => `${rail(0)}<div class="tb-main">${topbar()}
+  <div class="tb-body"><div class="tb-content">
+    <div class="tb-hero">
+      <div class="tx">
+        <div class="eyebrow">Autumn arrivals · 41 new styles</div>
+        <h1>${v==='noir'?'Find<br>your pair.':v==='aurora'?'Every pair,<br>in your size.':'Browse the<br>full catalogue'}</h1>
+        <p>Pick a category, then a size — we only ever show you what is on the shelf in this branch today.</p>
+        <span class="btn">Start browsing ${ICON.chev}</span>
+      </div>
+      <div class="art">${sneaker(HERO.h)}</div>
+    </div>
+    <div class="tb-sect"><h3>Categories</h3><span>${CATS.length} groups · 759 styles</span></div>
+    <div class="g6">${CATS.map((c,i)=>`<div class="tb-cat ${i===0?'on':''}">
+      <div class="art">${sneaker(PRODUCTS[i%6].h)}</div><b>${c.n}</b><span>${c.c} styles</span></div>`).join('')}</div>
+    <div class="tb-sect"><h3>Trending this week</h3><span>See all</span></div>
+    <div class="g5">${PRODUCTS.slice(0,5).map(p=>pcard(p,'1/.78')).join('')}</div>
+    <div class="tb-fade"></div>
+  </div></div></div>`;
+
+/* T2 — SIZE, with a live count and preview beside it */
+T.sizes = v => {
+  const chip = s => `<div class="chip ${s==='9'?'sel':''} ${DEAD.includes(s)?'dis':''}">${s}
+    <small>${DEAD.includes(s)?'none':(20+s.length*7)+' left'}</small></div>`;
+  return `${rail(0)}<div class="tb-main">${topbar()}
+  <div class="tb-body">
+    <div class="tb-col">${steps(1,'Choosing…')}
+      <div class="tb-colhd">Branch stock</div>
+      <div class="tb-switch">In stock only <b></b></div>
+      <div class="tb-switch" style="opacity:.55">Include other branches <b style="background:var(--line)"></b></div>
+    </div>
+    <div class="tb-content">
+      <div class="tb-sect"><h3>${v==='mono'?'Pick a size':'Which size?'}</h3><span>UK sizing</span></div>
+      <div class="tb-colhd" style="margin-top:2px">Young · 10C – 3Y</div>
+      <div class="g8">${SIZES_YOUNG.map(chip).join('')}</div>
+      <div class="tb-colhd">Adult · UK 5 – 13</div>
+      <div class="g8">${SIZES_ADULT.map(chip).join('')}</div>
+      <div class="tb-sect"><h3>In size 9 right now</h3><span>live preview · 86 total</span></div>
+      <div class="g3">${PRODUCTS.slice(0,3).map(p=>pcard(p,'1/.86')).join('')}</div>
+      <div class="tb-fade"></div>
+    </div>
+    <div class="tb-aside">
+      <div class="tb-prev"><div class="cnt">86</div><div class="lb">products in size 9<br>at Doha Festival City</div></div>
+      <div class="tb-colhd">Top brands in this size</div>
+      ${BRANDS.slice(0,4).map(b=>`<div class="row" style="padding:9px 0">
+        <div class="mono" style="width:32px;height:32px;font-size:12px">${b.n[0]}</div>
+        <div class="tx"><b style="font-size:11.5px">${b.n}</b><span>${b.c} styles</span></div></div>`).join('')}
+      <div class="tb-colhd">Colours</div>
+      <div class="tb-swatchgrid">${PRODUCTS.concat(PRODUCTS).slice(0,6).map((p,i)=>
+        `<i class="${i===0?'on':''}" style="background:hsl(${p.h[0]},${p.h[1]}%,${p.h[2]}%)"></i>`).join('')}</div>
+    </div>
+  </div></div>`;
+};
+
+/* T3 — BRAND */
+T.brands = v => `${rail(1)}<div class="tb-main">${topbar()}
+  <div class="tb-body">
+    <div class="tb-col">${steps(2,'UK 9')}
+      <div class="tb-colhd">Skip ahead</div>
+      <div class="tb-prev" style="margin-top:0"><div class="cnt">86</div><div class="lb">products across all brands<br>in size 9</div>
+        <div class="btn" style="display:block;text-align:center;margin-top:11px;padding:10px;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:800">Show all brands</div></div>
+    </div>
+    <div class="tb-content">
+      <div class="tb-sect"><h3>${v==='noir'?'The houses':'Choose a brand'}</h3><span>${BRANDS.length} with stock in size 9</span></div>
+      <div class="g2">${BRANDS.map((b,i)=>`<div class="tb-brand">
+        <div class="hdr"><div class="mk" style="color:hsl(${PRODUCTS[i%6].h[0]},${PRODUCTS[i%6].h[1]}%,${PRODUCTS[i%6].h[2]}%)">${b.n[0]}</div>
+          <div><b>${b.n}</b><span>${b.c} styles · size 9</span></div></div>
+        <div class="strip">${[0,1,2].map(k=>`<div class="s">${sneaker(PRODUCTS[(i+k)%6].h)}</div>`).join('')}</div>
+      </div>`).join('')}</div>
+      <div class="tb-fade"></div>
+    </div>
+  </div></div>`;
+
+/* T4 — PRODUCT LIST */
+T.list = v => `${rail(0)}<div class="tb-main">${topbar()}
+  <div class="tb-body">
+    <div class="tb-col">${steps(3,'UK 9','Nike')}
+      <div class="tb-colhd">Colour</div>
+      <div class="tb-swatchgrid">${PRODUCTS.concat(PRODUCTS).slice(0,6).map((p,i)=>
+        `<i class="${i===0?'on':''}" style="background:hsl(${p.h[0]},${p.h[1]}%,${p.h[2]}%)"></i>`).join('')}</div>
+      <div class="tb-colhd">Price · QAR 280 – 900</div>
+      <div class="tb-range"><i style="left:6%"></i><i style="right:18%"></i></div>
+      <div class="tb-switch">In stock only <b></b></div>
+      <div class="tb-switch">Has 360° view <b></b></div>
+    </div>
+    <div class="tb-content">
+      <div class="tb-toolbar">
+        <span class="cnt">86 products <small>Sneakers · UK 9 · Nike</small></span>
+        <span class="sp"></span>
+        <span class="fchip on">${ICON.filter} Sort · Price ↑</span>
+        <span class="fchip">${ICON.grid} Density</span>
+      </div>
+      <div class="g4">${PRODUCTS.concat(PRODUCTS).map(p=>pcard(p)).join('')}</div>
+      <div class="tb-fade"></div>
+    </div>
+  </div></div>`;
+
+/* T5 — PRODUCT VIEW */
+T.detail = v => `${rail(0)}<div class="tb-main">
+  <div class="tb-top" style="padding-left:16px">
+    <div class="ic">${ICON.back}</div>
+    <span class="crumb" style="padding:0;flex:1">Sneakers <span>›</span> UK 9 <span>›</span> Nike <span>›</span> <b>${HERO.n}</b></span>
+    <div class="ic">${ICON.share}</div><div class="ic">${ICON.heart}</div>
+  </div>
+  <div class="tb-split">
+    <div class="tb-gal">
+      <div class="tb-galstrip">
+        ${[0,3,1,4,2].map((k,i)=>`<div class="th ${i===0?'on':''}">${sneaker(i===0?HERO.h:PRODUCTS[k].h)}</div>`).join('')}
+        <div class="th more">+7</div>
+      </div>
+      <div class="tb-galmain">
+        <div class="float"><div class="fbtn">${ICON.search}</div></div>
+        ${sneaker(HERO.h)}
+        <div class="badge360">${ICON.spin} Spin 360°</div>
+      </div>
+    </div>
+    <div class="tb-info">
+      <div class="tb-iscroll">
+      <div class="bl"><span class="b">${HERO.b}</span><span class="stk">In stock · 6 left</span></div>
+      <h2>${HERO.n}</h2>
+      <div class="meta">${HERO.code} · Engineered mesh / rubber · Unisex</div>
+      <div class="price"><b>${HERO.p}</b><s>${HERO.o}</s><em dir="ltr">-21%</em></div>
+      <div class="lbl">Colour <b>Photon Blue</b></div>
+      <div class="swatchrow">${PRODUCTS.slice(0,5).map((p,i)=>
+        `<i class="${i===0?'on':''}" style="background:hsl(${p.h[0]},${p.h[1]}%,${p.h[2]}%)"></i>`).join('')}</div>
+      <div class="lbl">Size run · UK <b>9 selected</b></div>
+      <div class="grid4">${['7','7.5','8','8.5','9','9.5','10','11'].map(s=>
+        `<div class="chip ${s==='9'?'sel':''} ${DEAD.includes(s)?'dis':''}">${s}</div>`).join('')}</div>
+      <div class="lbl">Availability <b>3 branches</b></div>
+      <div class="storepill" style="margin:0 0 7px">${ICON.pin}<b>Doha Festival City</b><span>6 in size 9</span></div>
+      <div class="storepill" style="margin:0 0 7px">${ICON.pin}<b>Villaggio Mall</b><span>2 in size 9</span></div>
+      </div>
+      <div class="tb-actions"><div class="heart">${ICON.heart}</div><div class="btn">${ICON.store} Reserve in store</div></div>
+    </div>
+  </div>
+  <div class="tb-rel">
+    <div class="tb-sect" style="margin:0 0 10px"><h3>You may also like</h3><span>same category + brand</span></div>
+    <div class="rowx">${PRODUCTS.slice(1).concat(PRODUCTS.slice(0,3)).map(p=>`<div class="rc pcard">
+      <div class="shot">${sneaker(p.h)}${p.spin?`<span class="spin360">${ICON.spin} 360</span>`:''}</div>
+      <div class="br">${p.b}</div><div class="nm">${p.n}</div><div class="pr">${p.p}</div></div>`).join('')}</div>
+  </div></div>`;
+
+/* T6 — 360° VIEWER */
+T.spin = v => `${rail(0)}<div class="tb-main"><div class="tb-stage">
+  <div class="topbar"><div class="fbtn">${ICON.x}</div><span class="nm">${HERO.n}</span><span class="sp"></span>
+    <span class="deg">168°</span></div>
+  <div class="ring"></div>
+  <div class="ghost a">${sneaker(HERO.h)}</div>
+  <div class="ghost b">${sneaker(HERO.h)}</div>
+  ${sneaker(HERO.h)}
+  <div class="tb-card">
+    <div class="b">${HERO.b}</div><h4>${HERO.n}</h4><div class="p">${HERO.p}</div>
+    <div class="lbl" style="font-family:var(--f-micro);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--faint);font-weight:700;margin:14px 0 8px">Size · UK 9</div>
+    <div class="btn">${ICON.store} Reserve in store</div>
+  </div>
+  <div class="tb-ctrl">
+    <div class="ticks">${Array.from({length:36},(_,i)=>`<i class="${i===17?'on':''}"></i>`).join('')}</div>
+    <div class="hint2">${ICON.drag} Drag anywhere to spin · 36 frames · pinch to zoom</div>
+    <div class="modes"><span class="m on">360° spin</span><span class="m">Gallery</span><span class="m">Zoom</span></div>
+  </div>
+</div></div>`;
+
+/* ══════════════════════════════════════════════════════════════════════
+   MOUNT — every theme renders both device layouts; the toolbar swaps them
+   ══════════════════════════════════════════════════════════════════════ */
+const TSCREENS = [
+  ['home',   'Browse',        'rail · hero · categories · trending'],
+  ['sizes',  'Size',          'choices left · live results right'],
+  ['brands', 'Brand',         'brand cards with in-stock previews'],
+  ['list',   'Product list',  'persistent filters · 4-up grid'],
+  ['detail', 'Product view',  'gallery | info panel | related rail'],
+  ['spin',   '360° viewer',   'immersive · floating controls']
+];
+document.getElementById('root').innerHTML = THEMES.map(t=>`
+  <section class="variant ${t.k==='vitrine'?'show':''}" data-v="${t.k}">
+    <div class="themehead">
+      <div class="kick">${t.kick}</div>
+      <h2>${t.name}</h2>
+      <p>${t.blurb}</p>
+      <div class="swatches">${t.sw.map(s=>`<span class="sw"><i style="background:${s[0]};border:1px solid rgba(128,128,128,.35)"></i>${s[1]} ${s[0]}</span>`).join('')}</div>
+    </div>
+    <div class="stage tabs t-${t.k}">
+      ${TSCREENS.map((s,i)=>`<div class="frame">
+        <div class="cap"><span class="n">${String(i+1).padStart(2,'0')}</span><span class="t">${s[1]}</span><span class="d">${s[2]}</span></div>
+        <div class="device tab"><div class="screen tab"><div class="cam"></div>${T[s[0]](t.k)}</div></div>
+      </div>`).join('')}
+    </div>
+    <div class="stage phones t-${t.k}">
+      ${SCREENS.map((s,i)=>`<div class="frame">
+        <div class="cap"><span class="n">${String(i+1).padStart(2,'0')}</span><span class="t">${s[1]}</span><span class="d">${s[2]}</span></div>
+        <div class="device"><div class="screen"><div class="notch"></div>${S[s[0]](t.k)}</div></div>
+      </div>`).join('')}
+    </div>
+  </section>`).join('');
+
+const vars = [...document.querySelectorAll('.variant')];
+const btns = [...document.querySelectorAll('.tv')];
+function pick(v){
+  btns.forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  vars.forEach(s=>s.classList.toggle('show', s.dataset.v===v));
+  document.getElementById('allBtn').classList.remove('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+btns.forEach(b=>b.addEventListener('click',()=>pick(b.dataset.v)));
+document.getElementById('allBtn').addEventListener('click',function(){
+  const on = !this.classList.contains('on');
+  this.classList.toggle('on', on);
+  if(on){ btns.forEach(b=>b.classList.remove('on')); vars.forEach(s=>s.classList.add('show')); }
+  else pick('vitrine');
+});
+const devBtns = [...document.querySelectorAll('.dv')];
+devBtns.forEach(b=>b.addEventListener('click',()=>{
+  document.body.dataset.dev = b.dataset.d;
+  devBtns.forEach(x=>x.classList.toggle('on', x===b));
+}));
+const modeBtn = document.getElementById('modeBtn');
+function setMode(dark){
+  document.body.dataset.t = dark ? 'dark' : 'light';
+  modeBtn.textContent = dark ? '☀ Light' : '◐ Dark';
+  modeBtn.classList.toggle('on', dark);
+}
+modeBtn.addEventListener('click',()=>setMode(document.body.dataset.t!=='dark'));
+const dirBtn = document.getElementById('dirBtn');
+dirBtn.addEventListener('click',()=>{
+  const rtl = !dirBtn.classList.contains('on');
+  dirBtn.classList.toggle('on', rtl);
+  dirBtn.textContent = rtl ? '⇄ LTR' : '⇄ RTL';
+  document.querySelectorAll('.screen').forEach(s=>s.setAttribute('dir', rtl?'rtl':'ltr'));
+});
+document.body.dataset.dev = 'tab';
+(function(){
+  const attr = document.documentElement.getAttribute('data-theme');
+  const dark = attr ? attr==='dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  setMode(!!dark);
+})();
+</script>
+</body>
+</html>

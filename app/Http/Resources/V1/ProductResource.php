@@ -21,8 +21,14 @@ class ProductResource extends JsonResource
         // so they are emitted only for the single-product endpoints.
         $isList = $request->routeIs('api.v1.products.index');
 
+        // Stock reaches the resource one of two ways: as `stock_total` /
+        // `stock_in_branch` aggregates (the list) or as a loaded inventories
+        // relation (the detail views). Either is enough to emit the figures.
+        $hasStock = $this->hasStockAggregate() || $this->relationLoaded('inventories');
+
         return [
             'id' => $this->id,
+            'type' => $this->type,
             'code' => $this->code,
             'name' => $this->name,
             'name_arabic' => $this->name_arabic,
@@ -118,7 +124,10 @@ class ProductResource extends JsonResource
                 });
             }),
 
-            'inventories' => $this->whenLoaded('inventories', function () {
+            // The per-branch breakdown is a detail-view concern. On the list the
+            // stock figures come from SQL aggregates instead (see $hasStock),
+            // so no inventory row is hydrated for a card that never shows one.
+            'inventories' => $this->when(! $isList && $this->relationLoaded('inventories'), function () {
                 return $this->inventories->map(function ($inventory) {
                     return [
                         'id' => $inventory->id,
@@ -134,25 +143,13 @@ class ProductResource extends JsonResource
             }),
 
             // Computed fields
-            'total_stock' => $this->when($this->relationLoaded('inventories'), function () {
-                return $this->inventories->sum('quantity');
-            }),
+            'total_stock' => $this->when($hasStock, fn () => $this->totalStock()),
 
-            'is_low_stock' => $this->when($this->relationLoaded('inventories'), function () {
-                $totalStock = $this->inventories->sum('quantity');
+            'is_low_stock' => $this->when($hasStock, fn () => $this->totalStock() <= $this->min_stock),
 
-                return $totalStock <= $this->min_stock;
-            }),
+            'is_out_of_stock' => $this->when($hasStock, fn () => $this->totalStock() <= 0),
 
-            'is_out_of_stock' => $this->when($this->relationLoaded('inventories'), function () {
-                $availableStock = $this->inventories->sum('quantity');
-
-                return $availableStock <= 0;
-            }),
-
-            'stock_quantity_availability_status' => $this->when($this->relationLoaded('inventories'), function () {
-                return $this->getStockQuantityAvailabilityStatus();
-            }),
+            'stock_quantity_availability_status' => $this->when($hasStock, fn () => $this->getStockQuantityAvailabilityStatus()),
 
             'available_sizes' => $this->when(! $isList, fn () => $this->getAvailableSizes()),
             'related_sizes' => $this->when(! $isList, fn () => $this->getRelatedSizes()),
@@ -160,15 +157,20 @@ class ProductResource extends JsonResource
     }
 
     /**
-     * The card thumbnail: use the explicit thumbnail column when set, otherwise
-     * fall back to the first normal product image (when the images relation is
-     * loaded). Keeps mobile/POS product cards from showing a placeholder icon for
-     * products that have images but no thumbnail chosen.
+     * The card thumbnail: the explicit thumbnail column when set, otherwise the
+     * first normal product image. Keeps mobile/POS product cards from showing a
+     * placeholder icon for products that have images but no thumbnail chosen.
      */
     private function resolvedThumbnail(): ?string
     {
         if (! empty($this->thumbnail)) {
             return $this->thumbnail;
+        }
+
+        // List: the first normal image's path, selected as a subquery column so
+        // the images relation never has to be loaded for a single URL.
+        if (! empty($this->fallback_image_path)) {
+            return url($this->fallback_image_path);
         }
 
         if ($this->relationLoaded('images')) {
@@ -181,10 +183,71 @@ class ProductResource extends JsonResource
     }
 
     /**
+     * Whether the query selected the stock aggregates. Checked against the raw
+     * attributes rather than the value: a product with no inventory rows sums
+     * to NULL, and that still means "stock is known, and it is zero".
+     */
+    private function hasStockAggregate(): bool
+    {
+        return array_key_exists('stock_total', $this->resource->getAttributes());
+    }
+
+    /**
+     * The stock figure the response reports, from whichever source the query
+     * used. When the caller filtered by branch this is that branch's stock —
+     * matching the branch-scoped inventories the list used to eager-load — and
+     * otherwise it is the catalog-wide total.
+     */
+    private function totalStock(): int|float
+    {
+        if ($this->hasStockAggregate()) {
+            return $this->hasBranchStockAggregate()
+                ? $this->numeric($this->stock_in_branch)
+                : $this->numeric($this->stock_total);
+        }
+
+        return $this->relationLoaded('inventories') ? $this->inventories->sum('quantity') : 0;
+    }
+
+    /**
+     * Whether the query also summed stock for a specific branch.
+     */
+    private function hasBranchStockAggregate(): bool
+    {
+        return array_key_exists('stock_in_branch', $this->resource->getAttributes());
+    }
+
+    /**
+     * A SUM() comes back as a numeric string, or NULL when the product has no
+     * inventory rows at all.
+     */
+    private function numeric(mixed $value): int|float
+    {
+        return is_numeric($value) ? $value + 0 : 0;
+    }
+
+    /**
      * Get stock quantity availability status based on selected branch.
      */
     private function getStockQuantityAvailabilityStatus(): string
     {
+        // List: derived from the aggregates. `stock_in_branch` is only selected
+        // when the caller asked for a branch — with no branch in play there is
+        // no "other branch" to fall back to, so any stock simply means in stock.
+        if ($this->hasStockAggregate()) {
+            $everywhere = $this->numeric($this->stock_total);
+
+            if (! $this->hasBranchStockAggregate()) {
+                return $everywhere > 0 ? 'in_stock' : 'out_of_stock';
+            }
+
+            if ($this->numeric($this->stock_in_branch) > 0) {
+                return 'in_stock';
+            }
+
+            return $everywhere > 0 ? 'available_in_other_branches' : 'out_of_stock';
+        }
+
         if (! $this->relationLoaded('inventories') || $this->inventories->isEmpty()) {
             return 'out_of_stock';
         }

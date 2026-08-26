@@ -34,6 +34,9 @@ class GetProductsRequest extends FormRequest
             'min_price' => ['nullable', 'numeric', 'min:0'],
             'max_price' => ['nullable', 'numeric', 'min:0'],
             'search' => ['nullable', 'string', 'max:100'],
+            // Widen `search` to the description text. Off by default because it
+            // forces a full row read per product; see GetProductsAction.
+            'search_in_description' => ['nullable', 'boolean'],
             'sort_by' => ['nullable', 'string', 'in:name,price,mrp,cost'],
             'sort_direction' => ['nullable', 'string', 'in:asc,desc'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -77,6 +80,7 @@ class GetProductsRequest extends FormRequest
             'per_page' => 15,
             'page' => 1,
             'in_stock_only' => true,
+            'search_in_description' => false,
         ], $validated);
     }
 }

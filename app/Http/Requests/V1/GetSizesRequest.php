@@ -26,6 +26,7 @@ class GetSizesRequest extends FormRequest
             'main_category_id' => ['nullable'],
             'sub_category_id' => ['nullable'],
             'brand_id' => ['nullable'],
+            'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
         ];
     }
 
@@ -55,6 +56,7 @@ class GetSizesRequest extends FormRequest
             'main_category_id' => null,
             'sub_category_id' => null,
             'brand_id' => null,
+            'branch_id' => null,
         ], $validated);
     }
 }

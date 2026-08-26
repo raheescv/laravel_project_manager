@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sale View — 3 Premium Design Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --p:#4f46e5; --p-rgb:79,70,229;
+    --ok:#16a34a; --ok-rgb:22,163,74;
+    --info:#0ea5e9; --info-rgb:14,165,233;
+    --warn:#d97706; --warn-rgb:217,119,6;
+    --bad:#dc2626; --bad-rgb:220,38,38;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:#eceff4; color:#0b1220; padding:0 0 70px; transition:.2s; }
+  body[data-t="dark"]{ background:#14181e; color:#eef2f7; }
+
+  .bar{ position:sticky; top:0; z-index:50; display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap;
+    padding:11px; background:rgba(255,255,255,.85); backdrop-filter:blur(10px); border-bottom:1px solid #dde3ea; }
+  body[data-t="dark"] .bar{ background:rgba(26,31,38,.85); border-color:#30373f; }
+  .bar button{ border:1px solid #cbd5e1; background:#fff; padding:7px 14px; border-radius:9px; font-weight:750; font-size:12.5px; cursor:pointer; color:#0b1220; }
+  body[data-t="dark"] .bar button{ background:#272d34; color:#cbd5e1; border-color:#3a424c; }
+  .bar button.on{ background:var(--p); color:#fff; border-color:var(--p); }
+  .bar .sep{ width:1px; height:22px; background:#cbd5e1; margin:0 5px; }
+  .bar select{ border:1px solid #cbd5e1; background:#fff; color:#0b1220; padding:7px 10px; border-radius:9px; font-weight:650; font-size:12.5px; }
+  body[data-t="dark"] .bar select{ background:#272d34; color:#cbd5e1; border-color:#3a424c; }
+
+  .stage{ max-width:1120px; margin:24px auto; padding:0 16px; }
+  .variant{ display:none; } .variant.show{ display:block; }
+  .vlabel{ font-size:12px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:#64748b; margin-bottom:14px; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .vlabel span.tag{ background:var(--p); color:#fff; padding:3px 9px; border-radius:7px; font-size:11px; letter-spacing:.4px; }
+  .vlabel em{ font-style:normal; text-transform:none; letter-spacing:0; font-weight:550; color:#94a3b8; }
+
+/* ══════════════════════════════════════════════════════════════
+   VARIANT A — "AURORA LEDGER"  (house premium, .lpox lineage)
+   ══════════════════════════════════════════════════════════════ */
+.va{ --sf:#fff; --sf2:#f6f8fb; --ink:#0b1220; --ink2:#334155; --mut:#64748b; --ln:#e6eaf1; --lns:#eef1f6;
+  --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 16%); --accdeep:color-mix(in srgb,var(--p),#000 46%);
+  --tint:color-mix(in srgb,var(--p),transparent 90%); --tint2:color-mix(in srgb,var(--p),transparent 95%);
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 8px 24px -10px rgba(16,24,40,.13);
+  font-size:12.5px; line-height:1.5; color:var(--ink); }
+body[data-t="dark"] .va{ --sf:#242a31; --sf2:#2b323a; --ink:#f1f5f9; --ink2:#cbd5e1; --mut:#94a3b8; --ln:#39424c; --lns:#333b44;
+  --tint:color-mix(in srgb,var(--p),transparent 82%); --tint2:color-mix(in srgb,var(--p),transparent 90%);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -10px rgba(0,0,0,.5); }
+
+.va .card{ background:var(--sf); border:1px solid var(--ln); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:12px; }
+.va .head{ display:flex; align-items:center; gap:11px; padding:12px 15px; border-bottom:1px solid var(--lns); }
+.va .ic{ width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; background:var(--tint); color:var(--accd); flex:0 0 auto; }
+.va .ic.ok{ background:rgba(var(--ok-rgb),.13); color:var(--ok); }
+.va .ic.wn{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+.va .ttl{ font-size:13.5px; font-weight:750; }
+.va .sub{ font-size:11px; color:var(--mut); margin-top:-1px; }
+.va .pill{ display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px; font-size:10.5px; font-weight:750; letter-spacing:.3px; }
+.va .pill-acc{ background:var(--tint); color:var(--accd); }
+.va .pill-wn{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+.va .pill-ok{ background:rgba(var(--ok-rgb),.13); color:var(--ok); }
+
+.va .a-hero{ position:relative; border-radius:16px; overflow:hidden; margin-bottom:12px;
+  box-shadow:0 18px 42px -18px rgba(var(--acc-rgb),.42),0 8px 18px -12px rgba(16,24,40,.22);
+  background:radial-gradient(120% 165% at 100% 0, color-mix(in srgb,var(--acc) 30%,transparent), transparent 55%),
+             linear-gradient(125deg,var(--accdeep),var(--accd)); }
+.va .a-hero .glow{ position:absolute; right:-70px; top:-100px; width:320px; height:320px; border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.17),transparent 65%); pointer-events:none; }
+.va .a-hero-in{ position:relative; display:flex; align-items:center; gap:15px; padding:16px 18px; flex-wrap:wrap; }
+.va .doc-ic{ width:46px; height:46px; border-radius:13px; flex:0 0 auto; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22);
+  display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.25); }
+.va .h-main{ flex:1; min-width:210px; color:#fff; }
+.va .h-eyebrow{ font-size:9.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.72); }
+.va .h-ref{ font-size:20px; font-weight:800; letter-spacing:.3px; line-height:1.15; margin-top:2px; }
+.va .h-meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; font-size:11.5px; color:rgba(255,255,255,.87); }
+.va .h-meta i{ opacity:.82; margin-right:5px; }
+.va .h-right{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.va .status-pill{ background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.3); padding:5px 12px; border-radius:999px;
+  font-size:11.5px; font-weight:750; letter-spacing:.4px; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+.va .status-pill .dot{ width:7px; height:7px; border-radius:50%; background:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,.22); }
+.va .h-acts{ display:flex; gap:6px; }
+.va .btn-w{ background:#fff; color:var(--accdeep); border:0; padding:6px 13px; border-radius:9px; font-size:11.5px; font-weight:750; cursor:pointer;
+  display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,0,0,.18); text-decoration:none; }
+.va .btn-gh{ background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.28); color:#fff; padding:6px 11px; border-radius:9px; font-size:11.5px; font-weight:700; cursor:pointer; }
+.va .a-stats{ position:relative; display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:1px;
+  background:rgba(255,255,255,.14); border-top:1px solid rgba(255,255,255,.14); }
+.va .a-s{ background:linear-gradient(180deg,rgba(255,255,255,.06),transparent); padding:10px 15px; }
+.va .a-s .k{ font-size:9px; font-weight:700; letter-spacing:.85px; text-transform:uppercase; color:rgba(255,255,255,.68); display:flex; align-items:center; gap:5px; }
+.va .a-s .v{ font-size:16.5px; font-weight:800; color:#fff; margin-top:3px; }
+.va .a-s .v small{ font-size:10px; font-weight:600; color:rgba(255,255,255,.7); }
+.va .a-s .v.wn{ color:#fcd34d; }
+
+.va .grid2{ display:grid; grid-template-columns:1.05fr .95fr; gap:12px; }
+@media(max-width:840px){ .va .grid2{ grid-template-columns:1fr; } }
+.va .kv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:7px; padding:12px 14px; }
+.va .kv{ background:var(--sf2); border:1px solid var(--lns); border-radius:10px; padding:8px 11px; }
+.va .kv .kk{ font-size:9.5px; font-weight:750; letter-spacing:.6px; text-transform:uppercase; color:var(--mut); display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+.va .kv .kk i{ color:var(--acc); font-size:11px; }
+.va .kv .vv{ font-size:13px; font-weight:680; color:var(--ink); }
+.va .kv .vv a{ color:var(--acc); text-decoration:none; }
+
+.va table.tbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.va .tblwrap{ overflow-x:auto; }
+.va table.tbl thead th{ background:var(--sf2); color:var(--mut); font-size:9.5px; font-weight:800; letter-spacing:.7px; text-transform:uppercase;
+  padding:9px 12px; text-align:left; border-bottom:1px solid var(--ln); white-space:nowrap; }
+.va table.tbl th.num,.va table.tbl td.num{ text-align:right; }
+.va table.tbl td{ padding:9px 12px; border-bottom:1px solid var(--lns); vertical-align:middle; }
+.va table.tbl tbody tr:hover td{ background:var(--tint2); }
+.va tr.grp td{ background:linear-gradient(90deg,var(--tint),transparent 60%); padding:6px 12px; border-bottom:1px solid var(--lns); }
+.va tr.grp .gname{ font-size:11px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; color:var(--accd); display:flex; align-items:center; gap:7px; }
+.va .avaz{ width:20px; height:20px; border-radius:50%; background:var(--acc); color:#fff; font-size:9.5px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
+.va .pname{ font-weight:700; color:var(--ink); text-decoration:none; }
+.va .psub{ color:var(--mut); font-size:10.5px; }
+.va .idx{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:7px; background:var(--sf2); color:var(--mut); font-weight:800; font-size:10.5px; }
+.va tr.ret td{ background:rgba(var(--warn-rgb),.07); font-size:11.5px; color:var(--mut); }
+.va tr.ret td a{ color:var(--warn); text-decoration:none; font-weight:700; }
+.va table.tbl tfoot td{ padding:10px 12px; font-weight:800; background:var(--sf2); border-top:2px solid var(--ln); }
+.va table.tbl tfoot tr.rt td{ background:rgba(var(--warn-rgb),.09); color:var(--warn); border-top:1px solid var(--lns); }
+
+.va .pay{ display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--lns); }
+.va .pay:last-of-type{ border-bottom:0; }
+.va .pav{ width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.va .sum{ padding:6px 14px 12px; }
+.va .srow{ display:flex; justify-content:space-between; padding:6px 0; font-size:12.5px; border-bottom:1px dashed var(--lns); }
+.va .srow:last-child{ border-bottom:0; }
+.va .srow .lb{ color:var(--mut); }
+.va .srow .vl{ font-weight:700; }
+.va .grand{ margin:8px 14px 14px; padding:12px 14px; border-radius:12px; background:linear-gradient(120deg,var(--tint),var(--tint2));
+  border:1px solid color-mix(in srgb,var(--acc),transparent 78%); display:flex; justify-content:space-between; align-items:center; }
+.va .grand .gl{ font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--accd); }
+.va .grand .gv{ font-size:22px; font-weight:850; color:var(--accd); }
+.va .due{ background:linear-gradient(120deg,rgba(var(--bad-rgb),.10),rgba(var(--bad-rgb),.04)); border-color:rgba(var(--bad-rgb),.25); }
+.va .due .gl,.va .due .gv{ color:var(--bad); }
+
+.va .actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; margin:2px 0 12px; }
+.va .btn{ border:1px solid var(--ln); background:var(--sf); color:var(--ink2); padding:7px 13px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+.va .btn:hover{ border-color:var(--acc); color:var(--acc); }
+.va .btn.pri{ background:var(--acc); border-color:var(--acc); color:#fff; }
+.va .btn.wn{ background:rgba(var(--warn-rgb),.12); border-color:rgba(var(--warn-rgb),.3); color:var(--warn); }
+.va .btn.bad{ background:rgba(var(--bad-rgb),.10); border-color:rgba(var(--bad-rgb),.28); color:var(--bad); }
+.va .tabs{ display:flex; gap:2px; padding:0 6px; border-bottom:1px solid var(--ln); }
+.va .tab{ padding:10px 14px; font-size:12px; font-weight:700; color:var(--mut); border-bottom:2px solid transparent; cursor:pointer; }
+.va .tab.on{ color:var(--acc); border-bottom-color:var(--acc); }
+
+/* ══════════════════════════════════════════════════════════════
+   VARIANT B — "COMMAND RAIL"  (sticky money rail, work-first)
+   ══════════════════════════════════════════════════════════════ */
+.vb{ --sf:#fff; --sf2:#f7f8fb; --ink:#0b1220; --ink2:#334155; --mut:#6b7686; --ln:#e5e9f0; --lns:#f0f2f7;
+  --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 14%);
+  --tint:color-mix(in srgb,var(--p),transparent 91%);
+  font-size:12.5px; line-height:1.5; color:var(--ink); }
+body[data-t="dark"] .vb{ --sf:#232930; --sf2:#2a3039; --ink:#f1f5f9; --ink2:#cbd5e1; --mut:#98a3b3; --ln:#38404a; --lns:#323942; --tint:color-mix(in srgb,var(--p),transparent 84%); }
+
+.vb .top{ display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; padding:0 2px 14px; border-bottom:1px solid var(--ln); margin-bottom:14px; }
+.vb .mono{ font-variant-numeric:tabular-nums; }
+.vb .b-id{ display:flex; align-items:center; gap:12px; flex:1; min-width:240px; }
+.vb .b-badge{ width:44px; height:44px; border-radius:12px; background:var(--tint); color:var(--acc); display:flex; align-items:center; justify-content:center; font-size:19px; }
+.vb .b-no{ font-size:19px; font-weight:800; letter-spacing:-.2px; }
+.vb .b-line{ font-size:11.5px; color:var(--mut); margin-top:2px; display:flex; gap:12px; flex-wrap:wrap; }
+.vb .b-line i{ margin-right:5px; opacity:.75; }
+.vb .chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:750; }
+.vb .chip-ok{ background:rgba(var(--ok-rgb),.12); color:var(--ok); }
+.vb .chip-wn{ background:rgba(var(--warn-rgb),.13); color:var(--warn); }
+.vb .chip-mut{ background:var(--sf2); color:var(--mut); border:1px solid var(--ln); }
+
+.vb .split{ display:grid; grid-template-columns:1fr 318px; gap:16px; align-items:start; }
+@media(max-width:900px){ .vb .split{ grid-template-columns:1fr; } }
+.vb .panel{ background:var(--sf); border:1px solid var(--ln); border-radius:14px; overflow:hidden; margin-bottom:14px; }
+.vb .ph{ display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border-bottom:1px solid var(--lns); }
+.vb .ph h4{ margin:0; font-size:12px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--mut); display:flex; align-items:center; gap:8px; }
+.vb .ph h4 i{ color:var(--acc); }
+
+.vb .items{ }
+.vb .grp{ padding:7px 14px; background:var(--sf2); font-size:10.5px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--mut);
+  display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--lns); }
+.vb .grp .who{ color:var(--ink2); }
+.vb .it{ display:grid; grid-template-columns:26px 1fr auto; gap:12px; align-items:center; padding:11px 14px; border-bottom:1px solid var(--lns); }
+.vb .it:hover{ background:var(--tint); }
+.vb .it .n{ width:26px; height:26px; border-radius:8px; background:var(--sf2); color:var(--mut); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.vb .it .nm{ font-weight:700; }
+.vb .it .meta{ font-size:11px; color:var(--mut); margin-top:2px; display:flex; gap:10px; flex-wrap:wrap; }
+.vb .it .amt{ text-align:right; }
+.vb .it .amt b{ font-size:14px; font-weight:800; }
+.vb .it .amt .calc{ display:block; font-size:10.5px; color:var(--mut); margin-top:1px; }
+.vb .it.retd{ background:rgba(var(--warn-rgb),.05); }
+.vb .subret{ padding:7px 14px 7px 52px; font-size:11px; color:var(--warn); background:rgba(var(--warn-rgb),.07); border-bottom:1px solid var(--lns); display:flex; justify-content:space-between; }
+.vb .subret a{ color:var(--warn); font-weight:750; text-decoration:none; }
+.vb .ifoot{ display:flex; justify-content:space-between; padding:11px 14px; background:var(--sf2); font-weight:800; }
+
+.vb .rail{ position:sticky; top:64px; }
+.vb .money{ background:linear-gradient(160deg,var(--accd),color-mix(in srgb,var(--p),#000 40%)); border-radius:16px; padding:16px; color:#fff;
+  box-shadow:0 16px 34px -16px rgba(var(--acc-rgb),.55); margin-bottom:12px; }
+.vb .money .lab{ font-size:9.5px; font-weight:750; letter-spacing:1.4px; text-transform:uppercase; color:rgba(255,255,255,.7); }
+.vb .money .big{ font-size:30px; font-weight:850; letter-spacing:-.6px; line-height:1.1; margin-top:3px; }
+.vb .money .prog{ height:6px; border-radius:99px; background:rgba(255,255,255,.2); margin:12px 0 8px; overflow:hidden; }
+.vb .money .prog i{ display:block; height:100%; background:#4ade80; border-radius:99px; }
+.vb .money .pl{ display:flex; justify-content:space-between; font-size:11.5px; color:rgba(255,255,255,.85); }
+.vb .money .pl b{ color:#fff; }
+.vb .brk{ padding:4px 14px 10px; }
+.vb .brow{ display:flex; justify-content:space-between; padding:6px 0; font-size:12.5px; }
+.vb .brow .l{ color:var(--mut); }
+.vb .brow.tot{ border-top:1px solid var(--ln); margin-top:5px; padding-top:9px; font-weight:850; font-size:14px; }
+.vb .paym{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--lns); }
+.vb .paym:last-child{ border-bottom:0; }
+.vb .paym .pi{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; }
+.vb .stack{ display:grid; gap:7px; }
+.vb .abtn{ display:flex; align-items:center; gap:9px; width:100%; padding:9px 12px; border-radius:11px; border:1px solid var(--ln); background:var(--sf);
+  color:var(--ink2); font-size:12.5px; font-weight:700; cursor:pointer; text-align:left; }
+.vb .abtn i{ width:16px; text-align:center; color:var(--mut); }
+.vb .abtn:hover{ border-color:var(--acc); color:var(--acc); } .vb .abtn:hover i{ color:var(--acc); }
+.vb .abtn.pri{ background:var(--acc); border-color:var(--acc); color:#fff; } .vb .abtn.pri i{ color:#fff; }
+.vb .abtn.bad{ color:var(--bad); } .vb .abtn.bad i{ color:var(--bad); }
+.vb .tabs{ display:flex; gap:18px; padding:0 4px; border-bottom:1px solid var(--ln); margin-bottom:0; }
+.vb .tab{ padding:11px 2px; font-size:12px; font-weight:750; color:var(--mut); border-bottom:2px solid transparent; cursor:pointer; }
+.vb .tab.on{ color:var(--ink); border-bottom-color:var(--acc); }
+
+/* ══════════════════════════════════════════════════════════════
+   VARIANT C — "BOUTIQUE TICKET"  (editorial, print-like)
+   ══════════════════════════════════════════════════════════════ */
+.vc{ --paper:#fffdfa; --paper2:#f6f2ec; --ink:#161311; --ink2:#4a423b; --mut:#8d8177; --ln:#e6ded3; --lns:#efe9e0;
+  --acc:#8a6d3f; --acc-rgb:138,109,63; --gold:#b28c4e;
+  font-size:13px; line-height:1.55; color:var(--ink); }
+body[data-t="dark"] .vc{ --paper:#221f1d; --paper2:#2a2624; --ink:#f4efe8; --ink2:#d5cabd; --mut:#a2958a; --ln:#3b342f; --lns:#332d29; --acc:#d8b071; --acc-rgb:216,176,113; --gold:#e2c288; }
+
+.vc .sheet{ background:var(--paper); border:1px solid var(--ln); border-radius:6px; box-shadow:0 24px 60px -32px rgba(0,0,0,.35); overflow:hidden; }
+.vc .mast{ padding:30px 34px 22px; border-bottom:1px solid var(--ln); display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; }
+.vc .brandline{ font-size:10px; font-weight:700; letter-spacing:3.4px; text-transform:uppercase; color:var(--mut); }
+.vc .num{ font-family:"Fraunces",Georgia,serif; font-size:36px; font-weight:700; letter-spacing:-.6px; line-height:1.05; margin-top:8px; }
+.vc .num small{ display:block; font-family:system-ui,sans-serif; font-size:11px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:var(--mut); margin-top:7px; }
+.vc .stamp{ text-align:right; }
+.vc .stamp .st{ display:inline-flex; align-items:center; gap:7px; border:1px solid var(--acc); color:var(--acc); padding:6px 14px; border-radius:2px;
+  font-size:10.5px; font-weight:750; letter-spacing:2px; text-transform:uppercase; }
+.vc .stamp .amt{ font-family:"Fraunces",Georgia,serif; font-size:30px; font-weight:700; margin-top:12px; }
+.vc .stamp .amtl{ font-size:9.5px; letter-spacing:2px; text-transform:uppercase; color:var(--mut); }
+
+.vc .flow{ display:flex; gap:0; padding:16px 34px; border-bottom:1px solid var(--ln); background:var(--paper2); flex-wrap:wrap; }
+.vc .step{ flex:1; min-width:120px; position:relative; padding-right:14px; }
+.vc .step:before{ content:''; position:absolute; left:0; top:7px; width:9px; height:9px; border-radius:50%; background:var(--acc); }
+.vc .step:after{ content:''; position:absolute; left:9px; top:11px; right:8px; height:1px; background:var(--ln); }
+.vc .step:last-child:after{ display:none; }
+.vc .step.mut:before{ background:var(--ln); }
+.vc .step .sl{ padding-left:18px; font-size:9.5px; font-weight:750; letter-spacing:1.3px; text-transform:uppercase; color:var(--mut); }
+.vc .step .sv{ padding-left:18px; font-size:12.5px; font-weight:650; margin-top:2px; }
+
+.vc .cols{ display:grid; grid-template-columns:1fr 1fr; }
+@media(max-width:760px){ .vc .cols{ grid-template-columns:1fr; } }
+.vc .col{ padding:20px 34px; }
+.vc .col+.col{ border-left:1px solid var(--ln); }
+@media(max-width:760px){ .vc .col+.col{ border-left:0; border-top:1px solid var(--ln); } }
+.vc .lbl{ font-size:9.5px; font-weight:750; letter-spacing:2px; text-transform:uppercase; color:var(--mut); margin-bottom:9px; }
+.vc .dl{ display:grid; grid-template-columns:auto 1fr; gap:5px 16px; font-size:12.5px; }
+.vc .dl dt{ color:var(--mut); }
+.vc .dl dd{ margin:0; font-weight:650; text-align:right; }
+.vc .who{ font-family:"Fraunces",Georgia,serif; font-size:20px; font-weight:700; }
+
+.vc .lines{ padding:6px 34px 0; }
+.vc .lh{ display:grid; grid-template-columns:1fr 62px 92px 100px; gap:10px; padding:9px 0; border-bottom:1px solid var(--ink);
+  font-size:9.5px; font-weight:750; letter-spacing:1.6px; text-transform:uppercase; color:var(--mut); }
+.vc .lh span:not(:first-child){ text-align:right; }
+.vc .stylist{ padding:14px 0 6px; font-size:10px; font-weight:750; letter-spacing:2px; text-transform:uppercase; color:var(--acc); display:flex; align-items:center; gap:9px; }
+.vc .stylist:after{ content:''; flex:1; height:1px; background:var(--lns); }
+.vc .ln{ display:grid; grid-template-columns:1fr 62px 92px 100px; gap:10px; padding:11px 0; border-bottom:1px solid var(--lns); align-items:baseline; }
+.vc .ln .nm{ font-weight:650; }
+.vc .ln .sub{ font-size:11px; color:var(--mut); margin-top:2px; }
+.vc .ln .r{ text-align:right; font-variant-numeric:tabular-nums; }
+.vc .ln .r.b{ font-weight:750; }
+.vc .ln.void .nm,.vc .ln.void .r{ text-decoration:line-through; opacity:.55; }
+.vc .retnote{ padding:7px 0 10px; font-size:11px; color:var(--acc); display:flex; justify-content:space-between; border-bottom:1px solid var(--lns); }
+.vc .retnote a{ color:var(--acc); font-weight:700; text-decoration:none; }
+
+.vc .foot{ display:grid; grid-template-columns:1fr 300px; gap:26px; padding:20px 34px 26px; }
+@media(max-width:760px){ .vc .foot{ grid-template-columns:1fr; } }
+.vc .paycard{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--lns); font-size:12.5px; }
+.vc .paycard .pm{ display:flex; align-items:center; gap:10px; }
+.vc .paycard .pd{ width:30px; height:30px; border:1px solid var(--ln); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--acc); font-size:12px; }
+.vc .tot{ }
+.vc .trow{ display:flex; justify-content:space-between; padding:7px 0; font-size:12.5px; border-bottom:1px dotted var(--ln); }
+.vc .trow .l{ color:var(--mut); }
+.vc .trow .v{ font-variant-numeric:tabular-nums; font-weight:650; }
+.vc .trow.due{ border-bottom:0; margin-top:9px; padding-top:12px; border-top:2px solid var(--ink); }
+.vc .trow.due .l{ font-size:10px; font-weight:750; letter-spacing:2px; text-transform:uppercase; color:var(--ink); align-self:center; }
+.vc .trow.due .v{ font-family:"Fraunces",Georgia,serif; font-size:24px; font-weight:700; }
+.vc .bar2{ display:flex; gap:9px; flex-wrap:wrap; padding:16px 34px; border-top:1px solid var(--ln); background:var(--paper2); }
+.vc .cbtn{ border:1px solid var(--ln); background:transparent; color:var(--ink2); padding:8px 15px; border-radius:2px; font-size:10.5px; font-weight:750;
+  letter-spacing:1.4px; text-transform:uppercase; cursor:pointer; display:inline-flex; align-items:center; gap:7px; }
+.vc .cbtn:hover{ border-color:var(--acc); color:var(--acc); }
+.vc .cbtn.solid{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+body[data-t="dark"] .vc .cbtn.solid{ background:var(--acc); border-color:var(--acc); color:#221f1d; }
+.vc .ctabs{ display:flex; gap:26px; padding:0 34px; border-top:1px solid var(--ln); }
+.vc .ctab{ padding:13px 0; font-size:10px; font-weight:750; letter-spacing:1.8px; text-transform:uppercase; color:var(--mut); border-bottom:2px solid transparent; cursor:pointer; }
+.vc .ctab.on{ color:var(--ink); border-bottom-color:var(--acc); }
+
+/* ══════════════════════════════════════════════════════════════
+   VARIANT D — "COMPACT CONSOLE"  (max density, one screen)
+   ══════════════════════════════════════════════════════════════ */
+.vd{ --sf:#fff; --sf2:#f6f7fa; --sf3:#eef1f6; --ink:#0b1220; --ink2:#3a4557; --mut:#727c8c; --ln:#e2e7ee; --lns:#eef1f5;
+  --acc:var(--p); --acc-rgb:var(--p-rgb); --accd:color-mix(in srgb,var(--p),#000 14%);
+  --tint:color-mix(in srgb,var(--p),transparent 92%); --tint2:color-mix(in srgb,var(--p),transparent 96%);
+  font-size:11.5px; line-height:1.42; color:var(--ink); font-variant-numeric:tabular-nums; }
+body[data-t="dark"] .vd{ --sf:#22282f; --sf2:#282f37; --sf3:#2f3740; --ink:#f1f5f9; --ink2:#c3cdd9; --mut:#8e99a8; --ln:#363e48; --lns:#2f363f;
+  --tint:color-mix(in srgb,var(--p),transparent 86%); --tint2:color-mix(in srgb,var(--p),transparent 92%); }
+.vd *{ box-sizing:border-box; }
+.vd .num{ text-align:right; }
+
+/* ── top bar: identity + live KPIs + actions, all on one line ── */
+.vd .bar1{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:7px 10px; background:var(--sf); border:1px solid var(--ln);
+  border-radius:9px 9px 0 0; border-bottom:0; }
+.vd .dic{ width:26px; height:26px; border-radius:7px; background:var(--tint); color:var(--acc); display:flex; align-items:center; justify-content:center; font-size:12px; flex:0 0 auto; }
+.vd .ino{ font-size:14px; font-weight:800; letter-spacing:-.1px; }
+.vd .crumb{ display:flex; align-items:center; gap:7px; color:var(--mut); font-size:11px; flex-wrap:wrap; }
+.vd .crumb b{ color:var(--ink2); font-weight:650; }
+.vd .crumb .dot{ width:3px; height:3px; border-radius:50%; background:var(--ln); }
+.vd .st{ display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:5px; font-size:10px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; }
+.vd .st-ok{ background:rgba(var(--ok-rgb),.13); color:var(--ok); }
+.vd .st-wn{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+.vd .st-mut{ background:var(--sf3); color:var(--mut); }
+.vd .spacer{ flex:1; }
+.vd .kpis{ display:flex; align-items:stretch; gap:0; border:1px solid var(--ln); border-radius:7px; overflow:hidden; background:var(--sf2); }
+.vd .kpi{ padding:3px 11px; border-right:1px solid var(--ln); }
+.vd .kpi:last-child{ border-right:0; }
+.vd .kpi .k{ font-size:8.5px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:var(--mut); }
+.vd .kpi .v{ font-size:13px; font-weight:800; margin-top:-1px; }
+.vd .kpi .v.ok{ color:var(--ok); } .vd .kpi .v.due{ color:var(--bad); } .vd .kpi .v.wn{ color:var(--warn); }
+.vd .kpi.hero{ background:var(--tint); border-right-color:color-mix(in srgb,var(--acc),transparent 78%); }
+.vd .kpi.hero .v{ color:var(--accd); }
+.vd .ib{ width:26px; height:26px; border-radius:6px; border:1px solid var(--ln); background:var(--sf); color:var(--ink2);
+  display:inline-flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; }
+.vd .ib:hover{ border-color:var(--acc); color:var(--acc); background:var(--tint2); }
+.vd .ib.pri{ background:var(--acc); border-color:var(--acc); color:#fff; width:auto; padding:0 10px; gap:5px; font-size:11px; font-weight:750; }
+.vd .ib.bad:hover{ border-color:var(--bad); color:var(--bad); background:rgba(var(--bad-rgb),.07); }
+
+/* ── meta rail: every header field on one scrollable line ── */
+.vd .rail2{ display:flex; align-items:stretch; background:var(--sf2); border:1px solid var(--ln); border-radius:0 0 9px 9px;
+  overflow-x:auto; margin-bottom:9px; }
+.vd .m{ padding:5px 12px; border-right:1px solid var(--ln); white-space:nowrap; flex:0 0 auto; }
+.vd .m:last-child{ border-right:0; }
+.vd .m .mk{ font-size:8.5px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:var(--mut); }
+.vd .m .mv{ font-size:11.5px; font-weight:650; color:var(--ink); margin-top:-1px; }
+.vd .m .mv a{ color:var(--acc); text-decoration:none; }
+.vd .m.warnish{ background:rgba(var(--warn-rgb),.08); }
+
+/* ── body split ── */
+.vd .split{ display:grid; grid-template-columns:1fr 252px; gap:9px; align-items:start; }
+@media(max-width:880px){ .vd .split{ grid-template-columns:1fr; } }
+.vd .box{ background:var(--sf); border:1px solid var(--ln); border-radius:9px; overflow:hidden; margin-bottom:9px; }
+.vd .bh{ display:flex; align-items:center; gap:8px; padding:5px 10px; background:var(--sf2); border-bottom:1px solid var(--ln); }
+.vd .bh h4{ margin:0; font-size:9.5px; font-weight:800; letter-spacing:.9px; text-transform:uppercase; color:var(--mut); display:flex; align-items:center; gap:6px; }
+.vd .bh h4 i{ color:var(--acc); font-size:11px; }
+.vd .bh .r{ margin-left:auto; display:flex; align-items:center; gap:6px; }
+.vd .mini{ border:1px solid var(--ln); background:var(--sf); color:var(--ink2); border-radius:5px; padding:1px 8px; font-size:10px; font-weight:750; cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
+.vd .mini:hover{ border-color:var(--acc); color:var(--acc); }
+.vd .mini.wn{ background:rgba(var(--warn-rgb),.11); border-color:rgba(var(--warn-rgb),.3); color:var(--warn); }
+
+/* ── ultra-compact table ── */
+.vd .tw{ overflow-x:auto; }
+.vd table.t{ width:100%; border-collapse:collapse; font-size:11.5px; }
+.vd table.t thead th{ background:var(--sf2); color:var(--mut); font-size:8.5px; font-weight:800; letter-spacing:.8px; text-transform:uppercase;
+  padding:4px 8px; text-align:left; border-bottom:1px solid var(--ln); white-space:nowrap; }
+.vd table.t th.num,.vd table.t td.num{ text-align:right; }
+.vd table.t tbody td{ padding:4px 8px; border-bottom:1px solid var(--lns); white-space:nowrap; }
+.vd table.t tbody tr:hover td{ background:var(--tint2); }
+.vd table.t input[type=checkbox]{ width:12px; height:12px; margin:0; vertical-align:middle; }
+.vd tr.g td{ background:var(--sf3); padding:2px 8px; }
+.vd tr.g .gn{ font-size:9px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--accd); display:flex; align-items:center; gap:6px; }
+.vd tr.g .gn em{ font-style:normal; color:var(--mut); font-weight:650; letter-spacing:0; text-transform:none; font-size:10px; }
+.vd .pn{ font-weight:700; color:var(--ink); text-decoration:none; }
+.vd .tagx{ display:inline-block; padding:0 5px; border-radius:4px; font-size:9px; font-weight:750; line-height:14px; vertical-align:1px; margin-left:4px; }
+.vd .tagx.w{ background:rgba(var(--warn-rgb),.15); color:var(--warn); }
+.vd .tagx.i{ background:rgba(var(--info-rgb),.15); color:var(--info); }
+.vd .tagx.m{ background:var(--sf3); color:var(--mut); }
+.vd tr.r td{ background:rgba(var(--warn-rgb),.06); color:var(--mut); font-size:10.5px; padding:2px 8px; }
+.vd tr.r a{ color:var(--warn); font-weight:750; text-decoration:none; }
+.vd table.t tfoot td{ padding:5px 8px; font-weight:800; background:var(--sf2); border-top:1px solid var(--ln); }
+.vd table.t tfoot tr.rr td{ background:rgba(var(--warn-rgb),.08); color:var(--warn); border-top:0; font-size:10.5px; padding:3px 8px; }
+
+/* ── right column micro-cards ── */
+.vd .tot{ padding:5px 10px; }
+.vd .tr{ display:flex; justify-content:space-between; padding:2.5px 0; }
+.vd .tr .l{ color:var(--mut); }
+.vd .tr .v{ font-weight:700; }
+.vd .tr.neg .v{ color:var(--bad); }
+.vd .tr.warnv .l,.vd .tr.warnv .v{ color:var(--warn); }
+.vd .tr.sub{ border-top:1px dashed var(--ln); margin-top:3px; padding-top:5px; }
+.vd .payline{ display:flex; align-items:center; justify-content:space-between; padding:4px 10px; border-bottom:1px solid var(--lns); }
+.vd .payline:last-child{ border-bottom:0; }
+.vd .pdot{ width:20px; height:20px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; margin-right:7px; }
+.vd .grandbar{ display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--tint); border-top:1px solid var(--ln); }
+.vd .grandbar .gl{ font-size:9px; font-weight:800; letter-spacing:.9px; text-transform:uppercase; color:var(--accd); }
+.vd .grandbar .gv{ font-size:15px; font-weight:850; color:var(--accd); }
+.vd .duebar{ background:rgba(var(--bad-rgb),.09); }
+.vd .duebar .gl,.vd .duebar .gv{ color:var(--bad); }
+.vd .meter{ height:4px; background:var(--sf3); }
+.vd .meter i{ display:block; height:100%; background:var(--ok); }
+.vd .acts{ display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:7px; }
+.vd .a{ display:flex; align-items:center; gap:6px; padding:5px 8px; border:1px solid var(--ln); border-radius:6px; background:var(--sf);
+  color:var(--ink2); font-size:10.5px; font-weight:700; cursor:pointer; }
+.vd .a i{ width:12px; text-align:center; color:var(--mut); font-size:11px; }
+.vd .a:hover{ border-color:var(--acc); color:var(--acc); } .vd .a:hover i{ color:var(--acc); }
+.vd .a.pri{ background:var(--acc); border-color:var(--acc); color:#fff; } .vd .a.pri i{ color:#fff; }
+.vd .a.bad{ color:var(--bad); } .vd .a.bad i{ color:var(--bad); }
+.vd .a.full{ grid-column:1/-1; }
+
+/* ── bottom tabs ── */
+.vd .tabs{ display:flex; gap:0; background:var(--sf2); border-bottom:1px solid var(--ln); }
+.vd .tab{ padding:6px 12px; font-size:10px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; color:var(--mut);
+  border-bottom:2px solid transparent; border-right:1px solid var(--ln); cursor:pointer; display:flex; align-items:center; gap:5px; }
+.vd .tab.on{ color:var(--acc); border-bottom-color:var(--acc); background:var(--sf); }
+.vd .cnt{ background:var(--sf3); color:var(--mut); border-radius:99px; padding:0 5px; font-size:9px; }
+</style>
+</head>
+<body data-t="light">
+
+<div class="bar">
+  <button data-v="a" class="on">A · Aurora Ledger</button>
+  <button data-v="b">B · Command Rail</button>
+  <button data-v="c">C · Boutique Ticket</button>
+  <button data-v="d">D · Compact Console</button>
+  <span class="sep"></span>
+  <button id="theme"><i class="fa fa-moon-o"></i> Dark</button>
+  <span class="sep"></span>
+  <select id="accent">
+    <option value="#4f46e5|79,70,229">Accent · Indigo (theme)</option>
+    <option value="#0d6efd|13,110,253">Accent · Blue</option>
+    <option value="#0f766e|15,118,110">Accent · Teal</option>
+    <option value="#7c3aed|124,58,237">Accent · Violet</option>
+    <option value="#b45309|180,83,9">Accent · Amber</option>
+    <option value="#334155|51,65,85">Accent · Graphite</option>
+  </select>
+</div>
+
+<div class="stage">
+
+<!-- ══════════════ VARIANT A ══════════════ -->
+<section class="variant show" id="v-a">
+  <div class="vlabel"><span class="tag">A</span> Aurora Ledger <em>— same family as the LPO / RentOut premium pages. Dense, data-first, safest fit.</em></div>
+  <div class="va">
+
+    <div class="a-hero">
+      <div class="glow"></div>
+      <div class="a-hero-in">
+        <div class="doc-ic"><i class="fa fa-file-text-o"></i></div>
+        <div class="h-main">
+          <div class="h-eyebrow">Sale Invoice &middot; Moscow Boutique</div>
+          <div class="h-ref">MOQ/24-25/261</div>
+          <div class="h-meta">
+            <span><i class="fa fa-calendar"></i>03 Oct 2024</span>
+            <span><i class="fa fa-user-o"></i>General Customer</span>
+            <span><i class="fa fa-random"></i>POS</span>
+            <span><i class="fa fa-tag"></i>Normal</span>
+            <span><i class="fa fa-clock-o"></i>Session #14 &middot; Evening</span>
+          </div>
+        </div>
+        <div class="h-right">
+          <span class="status-pill"><span class="dot"></span>Completed</span>
+          <div class="h-acts">
+            <a class="btn-w"><i class="fa fa-print"></i>Print</a>
+            <button class="btn-gh"><i class="fa fa-whatsapp"></i></button>
+            <button class="btn-gh"><i class="fa fa-ellipsis-h"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="a-stats">
+        <div class="a-s"><div class="k"><i class="fa fa-shopping-cart"></i>Items</div><div class="v">3 <small>/ 4.000 qty</small></div></div>
+        <div class="a-s"><div class="k"><i class="fa fa-money"></i>Grand total</div><div class="v">1,302.00</div></div>
+        <div class="a-s"><div class="k"><i class="fa fa-check-circle-o"></i>Paid</div><div class="v">1,000.00</div></div>
+        <div class="a-s"><div class="k"><i class="fa fa-exclamation-circle"></i>Balance</div><div class="v wn">302.00</div></div>
+        <div class="a-s"><div class="k"><i class="fa fa-reply"></i>Returned</div><div class="v">157.50</div></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="head"><div class="ic"><i class="fa fa-file-o"></i></div><div><div class="ttl">Invoice details</div><div class="sub">Sale #260</div></div></div>
+        <div class="kv-grid">
+          <div class="kv"><div class="kk"><i class="fa fa-calendar"></i>Date</div><div class="vv">03 Oct 2024</div></div>
+          <div class="kv"><div class="kk"><i class="fa fa-calendar-check-o"></i>Due date</div><div class="vv">03 Oct 2024</div></div>
+          <div class="kv"><div class="kk"><i class="fa fa-file-text-o"></i>Reference</div><div class="vv">&mdash;</div></div>
+          <div class="kv"><div class="kk"><i class="fa fa-tag"></i>Sale type</div><div class="vv">Normal</div></div>
+          <div class="kv"><div class="kk"><i class="fa fa-random"></i>Source</div><div class="vv"><span class="pill pill-acc"><i class="fa fa-desktop"></i>POS</span></div></div>
+          <div class="kv"><div class="kk"><i class="fa fa-building-o"></i>Branch</div><div class="vv">Moscow Boutique</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <div class="ic ok"><i class="fa fa-user"></i></div>
+          <div style="flex:1"><div class="ttl">Customer</div><div class="sub">Account #1</div></div>
+          <button class="btn"><i class="fa fa-external-link"></i>Profile</button>
+        </div>
+        <div class="kv-grid">
+          <div class="kv" style="grid-column:1/-1"><div class="kk"><i class="fa fa-id-card-o"></i>Name</div><div class="vv"><a href="#">General Customer</a></div></div>
+          <div class="kv"><div class="kk"><i class="fa fa-phone"></i>Mobile</div><div class="vv">+7 903 118 2245</div></div>
+          <div class="kv"><div class="kk"><i class="fa fa-envelope-o"></i>Email</div><div class="vv">&mdash;</div></div>
+          <div class="kv" style="grid-column:1/-1"><div class="kk"><i class="fa fa-star"></i>Feedback</div>
+            <div class="vv">
+              <i class="fa fa-star" style="color:#f59e0b"></i><i class="fa fa-star" style="color:#f59e0b"></i><i class="fa fa-star" style="color:#f59e0b"></i><i class="fa fa-star" style="color:#f59e0b"></i><i class="fa fa-star-o" style="opacity:.4"></i>
+              <span style="font-weight:550;font-size:12px;margin-left:6px">&ldquo;Quick service, loved the fit.&rdquo;</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <div class="ic"><i class="fa fa-shopping-cart"></i></div>
+        <div style="flex:1"><div class="ttl">Items</div><div class="sub">3 lines &middot; grouped by staff</div></div>
+        <span class="pill pill-wn"><i class="fa fa-reply"></i>Returned 1.000 qty / 157.50</span>
+        <button class="btn wn" style="margin-left:8px"><i class="fa fa-reply"></i>Return selected (0)</button>
+      </div>
+      <div class="tblwrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:32px"><input type="checkbox"></th>
+              <th style="width:40px">#</th>
+              <th>Product / Service</th>
+              <th>Unit</th>
+              <th class="num">Rate</th>
+              <th class="num">Qty</th>
+              <th class="num">Disc</th>
+              <th class="num">Tax</th>
+              <th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="grp"><td colspan="9"><div class="gname"><span class="avaz">J</span>Julie <span style="font-weight:600;color:var(--mut);text-transform:none;letter-spacing:0">&middot; 2 items &middot; 1,170.00</span></div></td></tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td><span class="idx">1</span></td>
+              <td><a href="#" class="pname">Samba Kids Blk 8.5c</a><div class="psub"><i class="fa fa-barcode"></i> 8901234512 &middot; Footwear</div></td>
+              <td>PCS</td><td class="num">450.00</td><td class="num">1.000</td><td class="num">&mdash;</td><td class="num">&mdash;</td>
+              <td class="num" style="font-weight:800">450.00</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td><span class="idx">2</span></td>
+              <td><a href="#" class="pname">Nike Air Force 1 '07</a><div class="psub"><i class="fa fa-user-plus"></i> Assist: Anna &middot; Footwear</div></td>
+              <td>PCS</td><td class="num">380.00</td><td class="num">2.000</td><td class="num">40.00</td><td class="num">&mdash;</td>
+              <td class="num" style="font-weight:800">720.00</td>
+            </tr>
+            <tr class="grp"><td colspan="9"><div class="gname"><span class="avaz" style="background:var(--warn)">M</span>Maria <span style="font-weight:600;color:var(--mut);text-transform:none;letter-spacing:0">&middot; 1 item &middot; 157.50</span></div></td></tr>
+            <tr>
+              <td><input type="checkbox" disabled></td>
+              <td><span class="idx">3</span></td>
+              <td><a href="#" class="pname">Hair Spa Treatment</a><div class="psub"><span class="pill pill-wn" style="font-size:9.5px"><i class="fa fa-reply"></i>Returned 1.000</span></div></td>
+              <td>SVC</td><td class="num">150.00</td><td class="num">1.000</td><td class="num">&mdash;</td><td class="num">7.50 <span style="color:var(--mut);font-size:10px">(5%)</span></td>
+              <td class="num" style="font-weight:800">157.50</td>
+            </tr>
+            <tr class="ret">
+              <td></td><td class="num"><i class="fa fa-level-up fa-rotate-90"></i></td>
+              <td colspan="2"><a href="#">Return #18</a> &mdash; Hair Spa Treatment &middot; 05 Oct 2024</td>
+              <td class="num">150.00</td><td class="num">1.000</td><td class="num">&mdash;</td><td class="num">7.50</td>
+              <td class="num" style="font-weight:750">-157.50</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="5" class="num">Total</td><td class="num">4.000</td><td class="num">40.00</td><td class="num">7.50</td><td class="num">1,327.50</td></tr>
+            <tr class="rt"><td colspan="5" class="num"><i class="fa fa-reply"></i> Returned</td><td class="num">-1.000</td><td class="num">&mdash;</td><td class="num">-7.50</td><td class="num">-157.50</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="head"><div class="ic ok"><i class="fa fa-credit-card"></i></div><div style="flex:1"><div class="ttl">Payments</div><div class="sub">2 transactions</div></div><span class="pill pill-ok">1,000.00 received</span></div>
+        <div class="pay">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="pav" style="background:rgba(var(--info-rgb),.13);color:var(--info)"><i class="fa fa-credit-card"></i></div>
+            <div><div style="font-weight:750">Card</div><div class="psub">Txn #001 &middot; 03 Oct 2024</div></div>
+          </div>
+          <div style="font-weight:800;color:var(--ok)">700.00</div>
+        </div>
+        <div class="pay">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="pav" style="background:rgba(var(--ok-rgb),.13);color:var(--ok)"><i class="fa fa-money"></i></div>
+            <div><div style="font-weight:750">Cash</div><div class="psub">Txn #002 &middot; 03 Oct 2024</div></div>
+          </div>
+          <div style="font-weight:800;color:var(--ok)">300.00</div>
+        </div>
+        <div class="grand due">
+          <div><div class="gl">Balance due</div><div style="font-size:10.5px;color:var(--mut);font-weight:600">Awaiting collection</div></div>
+          <div class="gv">302.00</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head"><div class="ic"><i class="fa fa-calculator"></i></div><div><div class="ttl">Financial summary</div><div class="sub">Invoice totals</div></div></div>
+        <div class="sum">
+          <div class="srow"><span class="lb">Gross amount</span><span class="vl">1,360.00</span></div>
+          <div class="srow"><span class="lb">Item discount</span><span class="vl" style="color:var(--bad)">-40.00</span></div>
+          <div class="srow"><span class="lb">Tax</span><span class="vl">7.50</span></div>
+          <div class="srow"><span class="lb">Sale total</span><span class="vl">1,327.50</span></div>
+          <div class="srow"><span class="lb">Other discount</span><span class="vl" style="color:var(--bad)">-25.00</span></div>
+          <div class="srow"><span class="lb">Freight</span><span class="vl">0.00</span></div>
+          <div class="srow"><span class="lb">Round off</span><span class="vl">-0.50</span></div>
+          <div class="srow"><span class="lb" style="color:var(--warn)"><i class="fa fa-reply"></i> Returned</span><span class="vl" style="color:var(--warn)">-157.50</span></div>
+        </div>
+        <div class="grand"><div class="gl">Total payable</div><div class="gv">1,302.00</div></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn"><i class="fa fa-print"></i>Print</button>
+      <button class="btn"><i class="fa fa-whatsapp"></i>WhatsApp</button>
+      <button class="btn"><i class="fa fa-clock-o"></i>Change day session</button>
+      <button class="btn wn"><i class="fa fa-reply"></i>Return all</button>
+      <button class="btn bad"><i class="fa fa-times"></i>Cancel</button>
+      <button class="btn pri"><i class="fa fa-pencil"></i>Edit sale</button>
+    </div>
+
+    <div class="card">
+      <div class="tabs"><div class="tab on">Journal entries</div><div class="tab">Audit report</div><div class="tab">Inventory log <span class="pill pill-acc" style="margin-left:5px">3</span></div></div>
+      <div class="tblwrap">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Date</th><th>Account</th><th>Description</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+          <tbody>
+            <tr><td>4181</td><td>03 Oct 2024</td><td><a href="#" class="pname">Card Account</a></td><td>Sale MOQ/24-25/261</td><td class="num">700.00</td><td class="num">&mdash;</td></tr>
+            <tr><td>4182</td><td>03 Oct 2024</td><td><a href="#" class="pname">Cash in Hand</a></td><td>Sale MOQ/24-25/261</td><td class="num">300.00</td><td class="num">&mdash;</td></tr>
+            <tr><td>4183</td><td>03 Oct 2024</td><td><a href="#" class="pname">General Customer</a></td><td>Balance receivable</td><td class="num">302.00</td><td class="num">&mdash;</td></tr>
+            <tr><td>4184</td><td>03 Oct 2024</td><td><a href="#" class="pname">Sales Income</a></td><td>Sale MOQ/24-25/261</td><td class="num">&mdash;</td><td class="num">1,302.00</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4" class="num">Total</td><td class="num">1,302.00</td><td class="num">1,302.00</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ VARIANT B ══════════════ -->
+<section class="variant" id="v-b">
+  <div class="vlabel"><span class="tag">B</span> Command Rail <em>— money &amp; actions pinned in a sticky right rail, items breathe on the left. Best for daily cashier work.</em></div>
+  <div class="vb">
+
+    <div class="top">
+      <div class="b-id">
+        <div class="b-badge"><i class="fa fa-file-text-o"></i></div>
+        <div>
+          <div class="b-no mono">MOQ/24-25/261</div>
+          <div class="b-line">
+            <span><i class="fa fa-calendar"></i>03 Oct 2024</span>
+            <span><i class="fa fa-user-o"></i>General Customer</span>
+            <span><i class="fa fa-building-o"></i>Moscow Boutique</span>
+            <span><i class="fa fa-clock-o"></i>Session #14</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+        <span class="chip chip-ok"><i class="fa fa-check"></i>Completed</span>
+        <span class="chip chip-mut"><i class="fa fa-desktop"></i>POS</span>
+        <span class="chip chip-mut"><i class="fa fa-tag"></i>Normal</span>
+        <span class="chip chip-wn"><i class="fa fa-reply"></i>Partly returned</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="main">
+
+        <div class="panel">
+          <div class="ph">
+            <h4><i class="fa fa-shopping-cart"></i>Items &middot; 3</h4>
+            <div style="display:flex;gap:8px;align-items:center">
+              <label style="font-size:11.5px;color:var(--mut);display:flex;gap:6px;align-items:center"><input type="checkbox">Select all</label>
+              <button class="abtn" style="padding:5px 11px;font-size:11.5px"><i class="fa fa-reply"></i>Return selected</button>
+            </div>
+          </div>
+          <div class="items">
+            <div class="grp"><i class="fa fa-user-o"></i><span class="who">Julie</span> &middot; 2 items &middot; 1,170.00</div>
+            <div class="it">
+              <div class="n">1</div>
+              <div><div class="nm">Samba Kids Blk 8.5c</div><div class="meta"><span><i class="fa fa-barcode"></i> 8901234512</span><span>PCS</span><span>Footwear</span></div></div>
+              <div class="amt mono"><b>450.00</b><span class="calc">450.00 &times; 1.000</span></div>
+            </div>
+            <div class="it">
+              <div class="n">2</div>
+              <div><div class="nm">Nike Air Force 1 '07</div><div class="meta"><span><i class="fa fa-user-plus"></i> Assist: Anna</span><span>PCS</span><span style="color:var(--bad)">Disc 40.00</span></div></div>
+              <div class="amt mono"><b>720.00</b><span class="calc">380.00 &times; 2.000 &minus; 40.00</span></div>
+            </div>
+            <div class="grp"><i class="fa fa-user-o"></i><span class="who">Maria</span> &middot; 1 item &middot; 157.50</div>
+            <div class="it retd">
+              <div class="n">3</div>
+              <div><div class="nm">Hair Spa Treatment</div><div class="meta"><span>SVC</span><span>Tax 7.50 (5%)</span></div></div>
+              <div class="amt mono"><b>157.50</b><span class="calc">150.00 &times; 1.000 + 7.50</span></div>
+            </div>
+            <div class="subret"><span><i class="fa fa-reply"></i> Returned on <a href="#">Return #18</a> &middot; 05 Oct 2024</span><span class="mono">-157.50</span></div>
+          </div>
+          <div class="ifoot"><span>4.000 qty &middot; 3 lines</span><span class="mono">1,327.50</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><h4><i class="fa fa-user"></i>Customer</h4><button class="abtn" style="padding:5px 11px;font-size:11.5px"><i class="fa fa-external-link"></i>Open profile</button></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--ln)">
+            <div style="background:var(--sf);padding:11px 14px"><div style="font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);font-weight:750">Name</div><div style="font-weight:700;margin-top:2px">General Customer</div></div>
+            <div style="background:var(--sf);padding:11px 14px"><div style="font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);font-weight:750">Mobile</div><div style="font-weight:700;margin-top:2px">+7 903 118 2245</div></div>
+            <div style="background:var(--sf);padding:11px 14px"><div style="font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);font-weight:750">Reference</div><div style="font-weight:700;margin-top:2px">&mdash;</div></div>
+            <div style="background:var(--sf);padding:11px 14px"><div style="font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);font-weight:750">Feedback</div><div style="font-weight:700;margin-top:2px"><i class="fa fa-star" style="color:#f59e0b"></i><i class="fa fa-star" style="color:#f59e0b"></i><i class="fa fa-star" style="color:#f59e0b"></i><i class="fa fa-star" style="color:#f59e0b"></i><i class="fa fa-star-o" style="opacity:.4"></i> 4/5</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="tabs"><div class="tab on">Journal entries</div><div class="tab">Audit report</div><div class="tab">Inventory log &middot; 3</div></div>
+          <div style="padding:2px 0">
+            <div class="it" style="grid-template-columns:1fr auto auto;gap:16px">
+              <div><div class="nm">Card Account</div><div class="meta"><span>03 Oct 2024</span><span>Sale MOQ/24-25/261</span></div></div>
+              <div class="mono" style="font-weight:800;color:var(--ok)">700.00</div><div class="mono" style="color:var(--mut);width:70px;text-align:right">&mdash;</div>
+            </div>
+            <div class="it" style="grid-template-columns:1fr auto auto;gap:16px">
+              <div><div class="nm">Cash in Hand</div><div class="meta"><span>03 Oct 2024</span><span>Sale MOQ/24-25/261</span></div></div>
+              <div class="mono" style="font-weight:800;color:var(--ok)">300.00</div><div class="mono" style="color:var(--mut);width:70px;text-align:right">&mdash;</div>
+            </div>
+            <div class="it" style="grid-template-columns:1fr auto auto;gap:16px">
+              <div><div class="nm">Sales Income</div><div class="meta"><span>03 Oct 2024</span><span>Revenue recognition</span></div></div>
+              <div class="mono" style="color:var(--mut)">&mdash;</div><div class="mono" style="font-weight:800;color:var(--acc);width:70px;text-align:right">1,302.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="rail">
+        <div class="money">
+          <div class="lab">Balance due</div>
+          <div class="big mono">302.00</div>
+          <div class="prog"><i style="width:77%"></i></div>
+          <div class="pl"><span>Paid <b>1,000.00</b></span><span>of <b>1,302.00</b></span></div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><h4><i class="fa fa-calculator"></i>Summary</h4></div>
+          <div class="brk mono">
+            <div class="brow"><span class="l">Gross</span><span>1,360.00</span></div>
+            <div class="brow"><span class="l">Item discount</span><span style="color:var(--bad)">-40.00</span></div>
+            <div class="brow"><span class="l">Tax</span><span>7.50</span></div>
+            <div class="brow"><span class="l">Other discount</span><span style="color:var(--bad)">-25.00</span></div>
+            <div class="brow"><span class="l">Freight</span><span>0.00</span></div>
+            <div class="brow"><span class="l">Round off</span><span>-0.50</span></div>
+            <div class="brow"><span class="l" style="color:var(--warn)">Returned</span><span style="color:var(--warn)">-157.50</span></div>
+            <div class="brow tot"><span>Total payable</span><span>1,302.00</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><h4><i class="fa fa-credit-card"></i>Payments &middot; 2</h4></div>
+          <div class="paym"><div class="pi" style="background:rgba(var(--info-rgb),.13);color:var(--info)"><i class="fa fa-credit-card"></i></div>
+            <div style="flex:1"><div style="font-weight:700">Card</div><div style="font-size:10.5px;color:var(--mut)">03 Oct 2024</div></div>
+            <div class="mono" style="font-weight:800">700.00</div></div>
+          <div class="paym"><div class="pi" style="background:rgba(var(--ok-rgb),.13);color:var(--ok)"><i class="fa fa-money"></i></div>
+            <div style="flex:1"><div style="font-weight:700">Cash</div><div style="font-size:10.5px;color:var(--mut)">03 Oct 2024</div></div>
+            <div class="mono" style="font-weight:800">300.00</div></div>
+        </div>
+
+        <div class="stack">
+          <button class="abtn pri"><i class="fa fa-pencil"></i>Edit sale</button>
+          <button class="abtn"><i class="fa fa-print"></i>Print invoice</button>
+          <button class="abtn"><i class="fa fa-whatsapp"></i>Send on WhatsApp</button>
+          <button class="abtn"><i class="fa fa-reply"></i>Create return</button>
+          <button class="abtn"><i class="fa fa-clock-o"></i>Change day session</button>
+          <button class="abtn bad"><i class="fa fa-times"></i>Cancel sale</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ VARIANT C ══════════════ -->
+<section class="variant" id="v-c">
+  <div class="vlabel"><span class="tag">C</span> Boutique Ticket <em>— editorial &ldquo;printed document&rdquo; feel with a lifecycle strip. Most distinctive, lower density.</em></div>
+  <div class="vc">
+    <div class="sheet">
+
+      <div class="mast">
+        <div>
+          <div class="brandline">Moscow Boutique &middot; Sale Invoice</div>
+          <div class="num">MOQ/24-25/261<small>Sale #260 &middot; 03 October 2024</small></div>
+        </div>
+        <div class="stamp">
+          <div class="st"><i class="fa fa-check"></i>Completed</div>
+          <div class="amt">1,302.00</div>
+          <div class="amtl">Total payable</div>
+        </div>
+      </div>
+
+      <div class="flow">
+        <div class="step"><div class="sl">Created</div><div class="sv">03 Oct &middot; 18:42<br><span style="color:var(--mut);font-size:11px">by Julie</span></div></div>
+        <div class="step"><div class="sl">Paid</div><div class="sv">1,000.00 <span style="color:var(--mut);font-size:11px">of 1,302.00</span></div></div>
+        <div class="step"><div class="sl">Returned</div><div class="sv">157.50 <span style="color:var(--mut);font-size:11px">Return #18</span></div></div>
+        <div class="step mut"><div class="sl">Balance</div><div class="sv">302.00 <span style="color:var(--mut);font-size:11px">outstanding</span></div></div>
+      </div>
+
+      <div class="cols">
+        <div class="col">
+          <div class="lbl">Billed to</div>
+          <div class="who">General Customer</div>
+          <div style="font-size:12.5px;color:var(--ink2);margin-top:5px">+7 903 118 2245<br>Account #1</div>
+        </div>
+        <div class="col">
+          <div class="lbl">Invoice</div>
+          <dl class="dl">
+            <dt>Date</dt><dd>03 Oct 2024</dd>
+            <dt>Due date</dt><dd>03 Oct 2024</dd>
+            <dt>Reference</dt><dd>&mdash;</dd>
+            <dt>Sale type</dt><dd>Normal</dd>
+            <dt>Source</dt><dd>POS</dd>
+            <dt>Day session</dt><dd>#14 &middot; Evening</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="lines">
+        <div class="lh"><span>Description</span><span>Qty</span><span>Rate</span><span>Amount</span></div>
+
+        <div class="stylist">Julie</div>
+        <div class="ln">
+          <div><div class="nm">Samba Kids Blk 8.5c</div><div class="sub">Footwear &middot; 8901234512 &middot; PCS</div></div>
+          <div class="r">1.000</div><div class="r">450.00</div><div class="r b">450.00</div>
+        </div>
+        <div class="ln">
+          <div><div class="nm">Nike Air Force 1 '07</div><div class="sub">Assisted by Anna &middot; discount 40.00</div></div>
+          <div class="r">2.000</div><div class="r">380.00</div><div class="r b">720.00</div>
+        </div>
+
+        <div class="stylist">Maria</div>
+        <div class="ln void">
+          <div><div class="nm">Hair Spa Treatment</div><div class="sub" style="text-decoration:none;opacity:1">Service &middot; tax 7.50 (5%)</div></div>
+          <div class="r">1.000</div><div class="r">150.00</div><div class="r b">157.50</div>
+        </div>
+        <div class="retnote"><span><i class="fa fa-reply"></i> Returned in full &mdash; <a href="#">Return #18</a>, 05 Oct 2024</span><span>-157.50</span></div>
+      </div>
+
+      <div class="foot">
+        <div>
+          <div class="lbl">Payments received</div>
+          <div class="paycard"><div class="pm"><div class="pd"><i class="fa fa-credit-card"></i></div><div><div style="font-weight:650">Card</div><div style="font-size:11px;color:var(--mut)">03 Oct 2024</div></div></div><div style="font-weight:700">700.00</div></div>
+          <div class="paycard"><div class="pm"><div class="pd"><i class="fa fa-money"></i></div><div><div style="font-weight:650">Cash</div><div style="font-size:11px;color:var(--mut)">03 Oct 2024</div></div></div><div style="font-weight:700">300.00</div></div>
+          <div style="margin-top:16px" class="lbl">Note</div>
+          <div style="font-size:12.5px;color:var(--ink2)">Customer rated 4/5 &mdash; &ldquo;Quick service, loved the fit.&rdquo;</div>
+        </div>
+        <div class="tot">
+          <div class="trow"><span class="l">Gross amount</span><span class="v">1,360.00</span></div>
+          <div class="trow"><span class="l">Item discount</span><span class="v">-40.00</span></div>
+          <div class="trow"><span class="l">Tax</span><span class="v">7.50</span></div>
+          <div class="trow"><span class="l">Other discount</span><span class="v">-25.00</span></div>
+          <div class="trow"><span class="l">Round off</span><span class="v">-0.50</span></div>
+          <div class="trow"><span class="l">Paid</span><span class="v">-1,000.00</span></div>
+          <div class="trow due"><span class="l">Balance due</span><span class="v">302.00</span></div>
+        </div>
+      </div>
+
+      <div class="bar2">
+        <button class="cbtn solid"><i class="fa fa-pencil"></i>Edit</button>
+        <button class="cbtn"><i class="fa fa-print"></i>Print</button>
+        <button class="cbtn"><i class="fa fa-whatsapp"></i>WhatsApp</button>
+        <button class="cbtn"><i class="fa fa-reply"></i>Return</button>
+        <button class="cbtn"><i class="fa fa-clock-o"></i>Day session</button>
+        <button class="cbtn"><i class="fa fa-times"></i>Cancel</button>
+      </div>
+
+      <div class="ctabs"><div class="ctab on">Journal</div><div class="ctab">Audit</div><div class="ctab">Inventory log</div></div>
+      <div style="padding:14px 34px 26px">
+        <div class="trow"><span class="l">Card Account &middot; <span style="color:var(--mut)">Sale MOQ/24-25/261</span></span><span class="v">Dr 700.00</span></div>
+        <div class="trow"><span class="l">Cash in Hand &middot; <span style="color:var(--mut)">Sale MOQ/24-25/261</span></span><span class="v">Dr 300.00</span></div>
+        <div class="trow"><span class="l">General Customer &middot; <span style="color:var(--mut)">Balance receivable</span></span><span class="v">Dr 302.00</span></div>
+        <div class="trow"><span class="l">Sales Income &middot; <span style="color:var(--mut)">Revenue</span></span><span class="v">Cr 1,302.00</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ VARIANT D ══════════════ -->
+<section class="variant" id="v-d">
+  <div class="vlabel"><span class="tag">D</span> Compact Console <em>— maximum density: identity, KPIs and actions on one bar, every header field in a single meta rail, 24px table rows. Whole invoice fits one screen.</em></div>
+  <div class="vd">
+
+    <div class="bar1">
+      <div class="dic"><i class="fa fa-file-text-o"></i></div>
+      <div>
+        <div class="ino">MOQ/24-25/261</div>
+        <div class="crumb">
+          <span>Sale #260</span><span class="dot"></span>
+          <b>03 Oct 2024</b><span class="dot"></span>
+          <b>General Customer</b><span class="dot"></span>
+          <span>Moscow Boutique</span>
+        </div>
+      </div>
+      <span class="st st-ok"><i class="fa fa-check"></i>Completed</span>
+      <span class="st st-wn"><i class="fa fa-reply"></i>Part returned</span>
+      <div class="spacer"></div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">Items</div><div class="v">3</div></div>
+        <div class="kpi"><div class="k">Qty</div><div class="v">4.000</div></div>
+        <div class="kpi hero"><div class="k">Total</div><div class="v">1,302.00</div></div>
+        <div class="kpi"><div class="k">Paid</div><div class="v ok">1,000.00</div></div>
+        <div class="kpi"><div class="k">Due</div><div class="v due">302.00</div></div>
+        <div class="kpi"><div class="k">Returned</div><div class="v wn">157.50</div></div>
+      </div>
+      <button class="ib pri"><i class="fa fa-pencil"></i>Edit</button>
+      <button class="ib" title="Print"><i class="fa fa-print"></i></button>
+      <button class="ib" title="WhatsApp"><i class="fa fa-whatsapp"></i></button>
+      <button class="ib" title="Return"><i class="fa fa-reply"></i></button>
+      <button class="ib" title="Change day session"><i class="fa fa-clock-o"></i></button>
+      <button class="ib bad" title="Cancel"><i class="fa fa-times"></i></button>
+    </div>
+
+    <div class="rail2">
+      <div class="m"><div class="mk">Date</div><div class="mv">03 Oct 2024</div></div>
+      <div class="m"><div class="mk">Due</div><div class="mv">03 Oct 2024</div></div>
+      <div class="m"><div class="mk">Reference</div><div class="mv">&mdash;</div></div>
+      <div class="m"><div class="mk">Type</div><div class="mv">Normal</div></div>
+      <div class="m"><div class="mk">Source</div><div class="mv">POS</div></div>
+      <div class="m"><div class="mk">Session</div><div class="mv">#14 &middot; Evening</div></div>
+      <div class="m"><div class="mk">Customer</div><div class="mv"><a href="#">General Customer</a></div></div>
+      <div class="m"><div class="mk">Mobile</div><div class="mv">+7 903 118 2245</div></div>
+      <div class="m"><div class="mk">Created by</div><div class="mv">Julie &middot; 18:42</div></div>
+      <div class="m"><div class="mk">Rating</div><div class="mv"><i class="fa fa-star" style="color:#f59e0b"></i> 4/5 <span style="color:var(--mut);font-weight:550">&ldquo;Quick service&rdquo;</span></div></div>
+      <div class="m warnish"><div class="mk">Returns</div><div class="mv"><a href="#">#18</a> &middot; -157.50</div></div>
+    </div>
+
+    <div class="split">
+      <div>
+        <div class="box">
+          <div class="bh">
+            <h4><i class="fa fa-shopping-cart"></i>Items</h4>
+            <span class="tagx m">3 lines &middot; 2 staff</span>
+            <div class="r">
+              <label style="font-size:10px;color:var(--mut);display:flex;gap:4px;align-items:center"><input type="checkbox" style="width:12px;height:12px;margin:0">All</label>
+              <button class="mini wn"><i class="fa fa-reply"></i>Return selected (0)</button>
+            </div>
+          </div>
+          <div class="tw">
+            <table class="t">
+              <thead>
+                <tr><th style="width:24px"></th><th style="width:26px">#</th><th>Product / Service</th><th>Unit</th>
+                  <th class="num">Rate</th><th class="num">Qty</th><th class="num">Disc</th><th class="num">Tax</th><th class="num">Total</th></tr>
+              </thead>
+              <tbody>
+                <tr class="g"><td colspan="9"><div class="gn"><i class="fa fa-user-o"></i>Julie <em>2 items &middot; 1,170.00</em></div></td></tr>
+                <tr>
+                  <td><input type="checkbox"></td><td>1</td>
+                  <td><a href="#" class="pn">Samba Kids Blk 8.5c</a><span class="tagx m">8901234512</span></td>
+                  <td>PCS</td><td class="num">450.00</td><td class="num">1.000</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num" style="font-weight:800">450.00</td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td><td>2</td>
+                  <td><a href="#" class="pn">Nike Air Force 1 '07</a><span class="tagx i">+ Anna</span></td>
+                  <td>PCS</td><td class="num">380.00</td><td class="num">2.000</td><td class="num">40.00</td><td class="num">&mdash;</td><td class="num" style="font-weight:800">720.00</td>
+                </tr>
+                <tr class="g"><td colspan="9"><div class="gn"><i class="fa fa-user-o"></i>Maria <em>1 item &middot; 157.50</em></div></td></tr>
+                <tr>
+                  <td><input type="checkbox" disabled></td><td>3</td>
+                  <td><a href="#" class="pn">Hair Spa Treatment</a><span class="tagx w">Returned 1.000</span></td>
+                  <td>SVC</td><td class="num">150.00</td><td class="num">1.000</td><td class="num">&mdash;</td><td class="num">7.50 <span style="color:var(--mut)">5%</span></td><td class="num" style="font-weight:800">157.50</td>
+                </tr>
+                <tr class="r"><td></td><td class="num"><i class="fa fa-reply"></i></td><td colspan="2"><a href="#">Return #18</a> &middot; 05 Oct 2024</td>
+                  <td class="num">150.00</td><td class="num">1.000</td><td class="num">&mdash;</td><td class="num">7.50</td><td class="num" style="font-weight:750">-157.50</td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="5" class="num">Total</td><td class="num">4.000</td><td class="num">40.00</td><td class="num">7.50</td><td class="num">1,327.50</td></tr>
+                <tr class="rr"><td colspan="5" class="num">Returned</td><td class="num">-1.000</td><td class="num">&mdash;</td><td class="num">-7.50</td><td class="num">-157.50</td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="tabs">
+            <div class="tab on"><i class="fa fa-book"></i>Journal <span class="cnt">4</span></div>
+            <div class="tab"><i class="fa fa-history"></i>Audit</div>
+            <div class="tab"><i class="fa fa-cubes"></i>Inventory log <span class="cnt">3</span></div>
+          </div>
+          <div class="tw">
+            <table class="t">
+              <thead><tr><th style="width:50px">#</th><th>Date</th><th>Account</th><th>Description</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+              <tbody>
+                <tr><td>4181</td><td>03 Oct 2024</td><td><a href="#" class="pn">Card Account</a></td><td>Sale MOQ/24-25/261</td><td class="num">700.00</td><td class="num">&mdash;</td></tr>
+                <tr><td>4182</td><td>03 Oct 2024</td><td><a href="#" class="pn">Cash in Hand</a></td><td>Sale MOQ/24-25/261</td><td class="num">300.00</td><td class="num">&mdash;</td></tr>
+                <tr><td>4183</td><td>03 Oct 2024</td><td><a href="#" class="pn">General Customer</a></td><td>Balance receivable</td><td class="num">302.00</td><td class="num">&mdash;</td></tr>
+                <tr><td>4184</td><td>03 Oct 2024</td><td><a href="#" class="pn">Sales Income</a></td><td>Revenue recognition</td><td class="num">&mdash;</td><td class="num">1,302.00</td></tr>
+              </tbody>
+              <tfoot><tr><td colspan="4" class="num">Total</td><td class="num">1,302.00</td><td class="num">1,302.00</td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="box">
+          <div class="bh"><h4><i class="fa fa-calculator"></i>Summary</h4></div>
+          <div class="tot">
+            <div class="tr"><span class="l">Gross</span><span class="v">1,360.00</span></div>
+            <div class="tr neg"><span class="l">Item discount</span><span class="v">-40.00</span></div>
+            <div class="tr"><span class="l">Tax</span><span class="v">7.50</span></div>
+            <div class="tr sub"><span class="l">Sale total</span><span class="v">1,327.50</span></div>
+            <div class="tr neg"><span class="l">Other discount</span><span class="v">-25.00</span></div>
+            <div class="tr"><span class="l">Freight</span><span class="v">0.00</span></div>
+            <div class="tr"><span class="l">Round off</span><span class="v">-0.50</span></div>
+            <div class="tr warnv sub"><span class="l">Returned</span><span class="v">-157.50</span></div>
+          </div>
+          <div class="grandbar"><span class="gl">Total payable</span><span class="gv">1,302.00</span></div>
+        </div>
+
+        <div class="box">
+          <div class="bh"><h4><i class="fa fa-credit-card"></i>Payments</h4><span class="tagx m">2</span></div>
+          <div class="meter"><i style="width:77%"></i></div>
+          <div class="payline">
+            <span><span class="pdot" style="background:rgba(var(--info-rgb),.14);color:var(--info)"><i class="fa fa-credit-card"></i></span>Card <span style="color:var(--mut)">&middot; 03 Oct</span></span>
+            <b>700.00</b>
+          </div>
+          <div class="payline">
+            <span><span class="pdot" style="background:rgba(var(--ok-rgb),.14);color:var(--ok)"><i class="fa fa-money"></i></span>Cash <span style="color:var(--mut)">&middot; 03 Oct</span></span>
+            <b>300.00</b>
+          </div>
+          <div class="grandbar duebar"><span class="gl">Balance due</span><span class="gv">302.00</span></div>
+        </div>
+
+        <div class="box">
+          <div class="bh"><h4><i class="fa fa-bolt"></i>Actions</h4></div>
+          <div class="acts">
+            <button class="a pri full"><i class="fa fa-pencil"></i>Edit sale</button>
+            <button class="a"><i class="fa fa-print"></i>Print</button>
+            <button class="a"><i class="fa fa-whatsapp"></i>WhatsApp</button>
+            <button class="a"><i class="fa fa-reply"></i>Return all</button>
+            <button class="a"><i class="fa fa-clock-o"></i>Session</button>
+            <button class="a bad full"><i class="fa fa-times"></i>Cancel sale</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+  const body = document.body;
+  document.querySelectorAll('.bar button[data-v]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.bar button[data-v]').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelectorAll('.variant').forEach(v => v.classList.remove('show'));
+    document.getElementById('v-' + b.dataset.v).classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }));
+
+  const tbtn = document.getElementById('theme');
+  tbtn.addEventListener('click', () => {
+    const dark = body.dataset.t === 'dark';
+    body.dataset.t = dark ? 'light' : 'dark';
+    tbtn.innerHTML = dark ? '<i class="fa fa-moon-o"></i> Dark' : '<i class="fa fa-sun-o"></i> Light';
+  });
+
+  document.getElementById('accent').addEventListener('change', e => {
+    const [hex, rgb] = e.target.value.split('|');
+    document.documentElement.style.setProperty('--p', hex);
+    document.documentElement.style.setProperty('--p-rgb', rgb);
+  });
+
+  // tab clicks are cosmetic in the preview
+  document.querySelectorAll('.tabs, .ctabs').forEach(group => {
+    group.addEventListener('click', e => {
+      const t = e.target.closest('.tab, .ctab');
+      if (!t) return;
+      group.querySelectorAll('.tab, .ctab').forEach(x => x.classList.remove('on'));
+      t.classList.add('on');
+    });
+  });
+</script>
+</body>
+</html>

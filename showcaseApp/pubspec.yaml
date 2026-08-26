@@ -1,0 +1,46 @@
+name: showcase
+description: "Sizerun Showcase — tablet product showcase over the api/v1 public catalog."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management (BLoC / Cubit) + DI — same stack as mobileApp.
+  flutter_bloc: ^8.1.6
+  bloc: ^8.1.4
+  equatable: ^2.0.7
+  get_it: ^8.0.3
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+
+  # Device-local preferences (branch, layout density, theme mode).
+  shared_preferences: ^2.3.3
+
+  # UI
+  google_fonts: ^6.2.1
+  intl: ^0.20.1
+
+  # Barcode lookup on the shop floor.
+  mobile_scanner: ^7.2.0
+  permission_handler: ^12.0.3
+
+  # Re-exported by flutter_bloc for context.read/watch in widgets.
+  provider: ^6.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
