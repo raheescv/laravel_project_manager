@@ -261,6 +261,7 @@ class MigrateSalesChunkJob implements ShouldQueue
             'balance' => $sale->balance,
             'address' => null,
             'status' => $sale->status == 2 ? 'completed' : 'draft',
+            'source' => 'migration',
             'created_by' => $userMap[$sale->created_by] ?? null,
             'updated_by' => $userMap[$sale->updated_by] ?? null,
         ];

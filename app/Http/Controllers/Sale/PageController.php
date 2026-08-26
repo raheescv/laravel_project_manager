@@ -217,7 +217,7 @@ class PageController extends Controller
             $user_id = Auth::id();
             $response = $request->table_id
                 ? (new UpdateAction())->execute($saleData, $request->table_id, $user_id)
-                : (new CreateAction())->execute($saleData, $user_id);
+                : (new CreateAction())->execute(array_merge($saleData, ['source' => 'pos']), $user_id);
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);

@@ -37,6 +37,9 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             ->when($this->filters['status'] ?? null, function ($query, $value) {
                 return $query->where('status', $value);
             })
+            ->when($this->filters['source'] ?? null, function ($query, $value) {
+                return $query->where('source', $value);
+            })
             ->when($this->filters['from_date'] ?? null, function ($query, $value) {
                 return $query->whereDate('date', '>=', $value);
             })
@@ -74,6 +77,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             'Updated At',
             'Cancelled By',
             'Cancelled At',
+            'Source',
         ];
     }
 
@@ -107,6 +111,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             systemDateTime($row->updated_at),
             $row->cancelledUser?->name ?? 'N/A',
             $row->cancelled_at ? systemDateTime($row->cancelled_at) : 'N/A',
+            $row->source_label,
         ];
     }
 
@@ -137,7 +142,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
                     $totalRow = $highestRow + 1;
 
                     // Style the total row
-                    $sheet->getStyle("A{$totalRow}:V{$totalRow}")->applyFromArray([
+                    $sheet->getStyle("A{$totalRow}:W{$totalRow}")->applyFromArray([
                         'font' => ['bold' => true],
                         'fill' => [
                             'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
@@ -158,7 +163,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
                     $sheet->setCellValue("O{$totalRow}", "=SUM(O2:O{$highestRow})");
 
                     // Auto-size columns for better readability
-                    foreach (range('A', 'V') as $column) {
+                    foreach (range('A', 'W') as $column) {
                         $sheet->getColumnDimension($column)->setAutoSize(true);
                     }
                 }

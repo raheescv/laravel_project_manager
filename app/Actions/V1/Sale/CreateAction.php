@@ -94,6 +94,7 @@ class CreateAction
 
             $data = [
                 'status' => $request->validated('status') ?: 'completed',
+                'source' => 'api',
                 'branch_id' => $branchId,
                 'client_uuid' => $clientUuid,
                 'client_created_at' => $request->validated('clientCreatedAt'),

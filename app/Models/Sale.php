@@ -34,6 +34,9 @@ class Sale extends Model implements AuditableContracts
         'client_uuid',
         'client_created_at',
         'sale_type',
+        // Where the sale came from (web / pos / api / import ...). Written once
+        // by App\Actions\Sale\CreateAction and never updated afterwards.
+        'source',
 
         'branch_id',
         'account_id',
@@ -174,6 +177,7 @@ class Sale extends Model implements AuditableContracts
                 });
             })
             ->when($filters['sale_type'] ?? '', fn ($q, $value) => $q->where('sales.sale_type', $value))
+            ->when($filters['source'] ?? '', fn ($q, $value) => $q->where('sales.source', $value))
             ->when($filters['created_by'] ?? '', fn ($q, $value) => $q->where('sales.created_by', $value))
             ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('branch_id', $value))
             ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('account_id', $value))
@@ -184,6 +188,15 @@ class Sale extends Model implements AuditableContracts
             ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('status', $value))
             ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
             ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))));
+    }
+
+    /**
+     * Human label for the channel this sale came from, for lists, the view page
+     * and exports. Sales predating the `source` column have none.
+     */
+    public function getSourceLabelAttribute(): string
+    {
+        return saleSources()[$this->source] ?? 'Unknown';
     }
 
     public function employeeNames()

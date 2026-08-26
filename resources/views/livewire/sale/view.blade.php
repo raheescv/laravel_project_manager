@@ -52,6 +52,12 @@
                                             <span class="fw-medium">{{ ucfirst($sale->sale_type) }}</span>
                                         </div>
                                     </div>
+                                    <div class="col-6">
+                                        <div class="info-item p-1 px-2 rounded bg-light bg-opacity-50">
+                                            <small class="text-muted d-block"><i class="fa fa-random text-primary me-1"></i>Source</small>
+                                            <x-sale.source-badge :source="$sale->source" class="fw-medium" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

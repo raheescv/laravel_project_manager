@@ -683,9 +683,15 @@
             color: inherit;
         }
 
+        /* No z-index on the wrapper itself — that would make every field its own
+           stacking context and an open menu could never rise above the next one.
+           Lift it only while its dropdown is open. */
         .uvx .ts-wrapper {
             position: relative;
-            z-index: 3;
+        }
+
+        .uvx .ts-wrapper.dropdown-active {
+            z-index: 40;
         }
 
         .uvx .ts-dropdown {

@@ -144,6 +144,9 @@ class POSController extends Controller
             }, $saleData['payments']);
 
             if (! $table_id) {
+                // Set after the request payload is unpacked, so a client cannot
+                // pass a `source` of its own and have it stick.
+                $saleData['source'] = 'pos';
                 $response = (new CreateAction())->execute($saleData, $user_id);
             } else {
                 $response = (new UpdateAction())->execute($saleData, $table_id, $user_id);

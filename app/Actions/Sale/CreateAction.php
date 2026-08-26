@@ -19,6 +19,7 @@ class CreateAction
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             $data['created_by'] = $this->userId;
             $data['invoice_no'] = $data['invoice_no'] ?? getNextSaleInvoiceNo();
+            $data['source'] = $this->resolveSource($data['source'] ?? null);
 
             validationHelper(Sale::rules(), $data);
             $this->model = Sale::create($data);
@@ -80,6 +81,24 @@ class CreateAction
         }
 
         return $return;
+    }
+
+    /**
+     * Where this sale came from.
+     *
+     * Every caller passes its own channel explicitly (see saleSources()). Anything
+     * else — an unrecognised value, or a `source` that rode in on a request body
+     * because a caller hands the whole payload straight through — is discarded and
+     * inferred from the request instead, so the column can never be spoofed by a
+     * client and never ends up holding a value the UI cannot render.
+     */
+    private function resolveSource($source): string
+    {
+        if (is_string($source) && array_key_exists($source, saleSources())) {
+            return $source;
+        }
+
+        return request()->is('api/*') ? 'api' : 'web';
     }
 
     private function items($data)

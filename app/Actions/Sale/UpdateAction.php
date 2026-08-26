@@ -25,6 +25,11 @@ class UpdateAction
             if (! $model) {
                 throw new Exception("Sale not found with the specified ID: $saleId.", 1);
             }
+            // The channel a sale came from is a fact about its creation, so it
+            // survives every later edit — including edits made from a different
+            // channel than the one that rang it up.
+            unset($data['source']);
+
             if ($data['status'] != 'cancelled') {
                 $data['invoice_no'] = $model->invoice_no;
                 $data['branch_id'] = $model->branch_id;

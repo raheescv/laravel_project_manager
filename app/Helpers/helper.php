@@ -632,6 +632,25 @@ if (! function_exists('saleStatuses')) {
         ];
     }
 }
+if (! function_exists('saleSources')) {
+    /**
+     * Where a sale was rung up. Stamped on sales.source when the sale is created
+     * and never changed afterwards, so an invoice can always be traced back to
+     * the channel it came from. A sale created before this existed has no source
+     * and reads as "Unknown".
+     */
+    function saleSources()
+    {
+        return [
+            'web' => 'Web',
+            'pos' => 'POS',
+            'api' => 'API',
+            'appointment' => 'Appointment',
+            'import' => 'Import',
+            'migration' => 'Migration',
+        ];
+    }
+}
 if (! function_exists('appointmentStatuses')) {
     function appointmentStatuses()
     {

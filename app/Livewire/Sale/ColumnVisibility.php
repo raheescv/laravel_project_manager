@@ -13,15 +13,22 @@ class ColumnVisibility extends Component
 
     public function mount()
     {
+        // Merged over the defaults rather than used raw: a tenant who saved their
+        // column choices before a new column existed would otherwise never be
+        // offered it, because this list is what the toggle panel renders.
         $config = Configuration::where('key', 'sale_visible_column')->value('value');
-        $this->sale_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
+        $this->sale_visible_column = array_merge(self::defaultColumns(), json_decode((string) $config, true) ?: []);
     }
 
-    protected function getDefaultColumns()
+    /**
+     * @return array<string, bool>
+     */
+    public static function defaultColumns(): array
     {
         return [
             'created_at' => false,
             'reference_no' => false,
+            'source' => false,
             'branch_id' => false,
             'created_by' => true,
             'customer' => true,
@@ -47,7 +54,7 @@ class ColumnVisibility extends Component
 
     public function resetToDefaults()
     {
-        $this->sale_visible_column = $this->getDefaultColumns();
+        $this->sale_visible_column = self::defaultColumns();
         Configuration::updateOrCreate(['key' => 'sale_visible_column'], ['value' => json_encode($this->sale_visible_column)]);
     }
 

@@ -91,6 +91,14 @@
                                 {{ html()->select('sale_type', priceTypes())->value('')->class('tomSelect')->id('sale_type')->placeholder('All Types') }}
                             </div>
                         </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="source">
+                                    <i class="fa fa-random me-1"></i> Source
+                                </label>
+                                {{ html()->select('source', saleSources())->value($source)->class('form-select form-select-sm')->id('source')->placeholder('All Sources') }}
+                            </div>
+                        </div>
                         <div class="col-md-3" wire:ignore>
                             <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="branch_id">
@@ -147,6 +155,9 @@
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="invoice no" /> </th>
                         @if ($sale_visible_column['reference_no'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_no" label="reference no" /> </th>
+                        @endif
+                        @if ($sale_visible_column['source'] ?? false)
+                            <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.source" label="source" /> </th>
                         @endif
                         @if ($sale_visible_column['branch_id'])
                             <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch_id" label="branch" /> </th>
@@ -222,6 +233,9 @@
                             </td>
                             @if ($sale_visible_column['reference_no'])
                                 <td>{{ $item->reference_no }}</td>
+                            @endif
+                            @if ($sale_visible_column['source'] ?? false)
+                                <td><x-sale.source-badge :source="$item->source" /></td>
                             @endif
                             @if ($sale_visible_column['branch_id'])
                                 <td>
@@ -320,6 +334,9 @@
                         @if ($sale_visible_column['reference_no'])
                             <th></th>
                         @endif
+                        @if ($sale_visible_column['source'] ?? false)
+                            <th></th>
+                        @endif
                         @if ($sale_visible_column['branch_id'])
                             <th></th>
                         @endif
@@ -413,6 +430,10 @@
                 $('#sale_type').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('sale_type', value);
+                });
+                $('#source').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('source', value);
                 });
             });
         </script>

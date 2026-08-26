@@ -27,6 +27,8 @@ class Table extends Component
 
     public $sale_type = '';
 
+    public $source = '';
+
     public $created_by = '';
 
     public $default_status = '';
@@ -57,7 +59,12 @@ class Table extends Component
 
     public function mount()
     {
-        $this->sale_visible_column = json_decode(Configuration::where('key', 'sale_visible_column')->value('value'), true);
+        // Same merge as the toggle panel, so a column added after this tenant
+        // saved their preferences still has a key here for the table to read.
+        $this->sale_visible_column = array_merge(
+            ColumnVisibility::defaultColumns(),
+            json_decode((string) Configuration::where('key', 'sale_visible_column')->value('value'), true) ?: [],
+        );
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
         $this->status = Configuration::where('key', 'default_status')->value('value');
@@ -111,6 +118,7 @@ class Table extends Component
         $filters = [
             'branch_id' => $this->branch_id,
             'customer_id' => $this->customer_id,
+            'source' => $this->source,
             'status' => $this->status,
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
@@ -143,6 +151,7 @@ class Table extends Component
             'branch_id' => $this->branch_id,
             'customer_id' => $this->customer_id,
             'sale_type' => $this->sale_type,
+            'source' => $this->source,
             'created_by' => $this->created_by,
             'payment_method_id' => $this->payment_method_id,
             'status' => $this->status,

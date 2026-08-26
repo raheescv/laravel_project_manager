@@ -34,6 +34,7 @@ class CheckoutAction
                 'paid' => 0,
                 'address' => null,
                 'status' => 'draft',
+                'source' => 'appointment',
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ];

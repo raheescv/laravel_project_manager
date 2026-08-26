@@ -1054,7 +1054,11 @@ class Page extends Component
             }
             $user_id = Auth::id();
             if (! $this->table_id) {
-                $response = (new CreateAction())->execute($this->sales, $user_id);
+                // This one component renders either the classic sale form or the
+                // POS screen depending on the tenant's `sale_type`, so the source
+                // follows whichever one the cashier is actually looking at.
+                $source = tenant_cache('sale_type') == 'pos' ? 'pos' : 'web';
+                $response = (new CreateAction())->execute(array_merge($this->sales, ['source' => $source]), $user_id);
             } else {
                 $response = (new UpdateAction())->execute($this->sales, $this->table_id, $user_id);
             }

@@ -132,6 +132,8 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
 
         $data['payments'] = $payments;
 
+        $data['source'] = 'import';
+
         // Create sale using CreateAction
         $response = (new CreateAction())->execute($data, $this->userId);
         if (! $response['success']) {
