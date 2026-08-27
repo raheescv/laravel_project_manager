@@ -27,6 +27,11 @@ class GetSizesAction
         $rows = Product::query()
             ->selectRaw('products.size as size, products.size_category as size_category')
             ->selectRaw('COUNT(DISTINCT products.id) as product_count')
+            // How many of them the customer could actually walk out with. The
+            // same rule the results grid filters on (`in_stock_only`) — a row
+            // with stock at this branch — so the number on the chip is the
+            // number of products the grid behind it will show.
+            ->selectRaw('COUNT(DISTINCT CASE WHEN inventories.quantity > 0 THEN products.id END) as in_stock_product_count')
             ->selectRaw('COALESCE(SUM(inventories.quantity), 0) as stock_total')
             ->leftJoin('inventories', function ($join) use ($branchId) {
                 $join->on('inventories.product_id', '=', 'products.id');
@@ -57,11 +62,18 @@ class GetSizesAction
             // never backfilled (defensive; the migration backfills existing data).
             $category = $row->size_category ?: Product::classifySizeCategory($size);
 
+            $inStockCount = (int) $row->in_stock_product_count;
+
             $entry = [
                 'size' => $size,
                 'product_count' => (int) $row->product_count,
+                'in_stock_product_count' => $inStockCount,
                 'stock_total' => (int) $row->stock_total,
-                'in_stock' => ((int) $row->stock_total) > 0,
+                // Availability follows the product count, not the unit total: a
+                // live catalogue accumulates negative quantities, and a size
+                // whose totals net out below zero can still hold something
+                // sellable. Struck through here has to mean "the grid is empty".
+                'in_stock' => $inStockCount > 0,
             ];
 
             if ($category === Product::SIZE_CATEGORY_YOUNG) {
