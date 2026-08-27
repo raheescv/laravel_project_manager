@@ -5,11 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../features/catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../../domain/helpers/responsive.dart';
 import '../../logic/branch_cubit/branch_cubit.dart';
+import '../../logic/locale_cubit/locale_cubit.dart';
 import '../../utils/components/theme/pearl_theme.dart';
 import '../../utils/router/routes.dart';
 import '../brand_mark.dart';
 import '../branch_picker.dart';
 import '../pearl_widgets.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The bar that stays put across the funnel: wordmark, search, stock, branch,
 /// scan.
@@ -30,11 +32,22 @@ class AppTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: p.line)),
+    // The bar does not mirror.
+    //
+    // Everything below it does — Arabic flips the funnel, the grids and the
+    // panels, which is right. But the chrome is furniture: the mark, the shop,
+    // the language switch and the back control stay where the hand already
+    // knows to find them, so switching language does not move the controls out
+    // from under a customer mid-tap. Arabic *text* inside still shapes and
+    // reads right-to-left — this fixes the order of the boxes, not the words.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: p.line)),
+        ),
+        child: context.isTablet ? _tabletBar(context) : _phoneBar(context),
       ),
-      child: context.isTablet ? _tabletBar(context) : _phoneBar(context),
     );
   }
 
@@ -56,6 +69,8 @@ class AppTopBar extends StatelessWidget {
                 Expanded(child: _SearchField(onTap: () => context.push(Routes.search))),
               const SizedBox(width: _group),
               const StockPill(),
+              const SizedBox(width: _gap),
+              const LanguagePill(),
               const SizedBox(width: _gap),
               const Flexible(child: BranchPill()),
               const SizedBox(width: _gap),
@@ -89,6 +104,8 @@ class AppTopBar extends StatelessWidget {
             children: [
               BrandMark(height: 42),
               SizedBox(width: _group),
+              LanguagePill(),
+              SizedBox(width: _gap),
               // Expanded + Align rather than a Spacer beside a Flexible: two
               // flex children split the slack between them, so the pill ended
               // up sitting in the middle of the row with empty space to its
@@ -149,7 +166,7 @@ class _OverflowMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.pearl;
     return PopupMenuButton<String>(
-      tooltip: 'More',
+      tooltip: L.of(context).more,
       position: PopupMenuPosition.under,
       color: p.bg,
       // Pearl has no corner radius; the menu inherits that rather than
@@ -159,8 +176,8 @@ class _OverflowMenu extends StatelessWidget {
       onSelected: (value) => context.push(value),
       itemBuilder: (context) => [
         // Search left the menu when it got its own field in the control row.
-        _item(context, Routes.scan, Icons.qr_code_scanner_outlined, 'Scan a barcode'),
-        _item(context, Routes.settings, Icons.tune, 'Appearance'),
+        _item(context, Routes.scan, Icons.qr_code_scanner_outlined, L.of(context).scanBarcode),
+        _item(context, Routes.settings, Icons.tune, L.of(context).appearance),
       ],
       child: Container(
         width: 38,
@@ -231,7 +248,7 @@ class _SearchField extends StatelessWidget {
                     // the field.
                     Flexible(
                       child: Text(
-                        compact ? 'Search' : 'Search by name, code or barcode',
+                        compact ? L.of(context).search : L.of(context).searchLong,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: PearlText.body(11.5).copyWith(color: p.faint),
@@ -284,13 +301,51 @@ class StockPill extends StatelessWidget {
             // every screen — it has to say what it does.
             const SizedBox(width: 7),
             Text(
-              'In stock',
+              L.of(context).inStock,
               style: PearlText.label.copyWith(
                 color: on ? p.accentInk : p.muted,
                 fontSize: 11.5,
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One tap between English and Arabic.
+///
+/// It sits in the bar beside the shop rather than in Settings because it is not
+/// a setting — it is the first thing a customer needs when the tablet is handed
+/// to them, and a member of staff should not have to go and find a screen. It
+/// is labelled with the language you would get, not the one you are in, which
+/// is the only version that reads as a button.
+class LanguagePill extends StatelessWidget {
+  const LanguagePill({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    final arabic = Localizations.localeOf(context).languageCode == 'ar';
+    final t = L.of(context);
+    return InkWell(
+      onTap: () => context
+          .read<LocaleCubit>()
+          .set(Locale(arabic ? 'en' : 'ar')),
+      child: Container(
+        height: _control,
+        padding: const EdgeInsets.symmetric(horizontal: 11),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: p.surface,
+          border: Border.all(color: p.line),
+        ),
+        child: Text(
+          // The other language, in its own script — the one word a speaker of
+          // it will recognise without reading the rest of the screen.
+          arabic ? t.english : t.arabic,
+          style: PearlText.label.copyWith(color: p.ink, fontSize: 11.5),
         ),
       ),
     );
@@ -324,7 +379,7 @@ class BranchPill extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 170),
                 child: Text(
-                  branch?.label ?? 'Choose a store',
+                  branch?.label ?? L.of(context).chooseStore,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: PearlText.label.copyWith(color: p.ink, fontSize: 11.5),

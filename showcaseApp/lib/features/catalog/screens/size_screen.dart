@@ -11,6 +11,7 @@ import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../logic/funnel_cubit/funnel_cubit.dart';
 import 'funnel_navigation.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Step 1 — the size run, and where the app opens.
 ///
@@ -50,9 +51,9 @@ class SizeScreen extends StatelessWidget {
       leftColumn: _LeftColumn(state: state),
       body: switch (state.sizesStatus) {
         DataFetchStatus.failed => MessageState(
-            title: 'Sizes did not load',
+            title: L.of(context).sizesDidNotLoad,
             detail: state.errorMessage,
-            actionLabel: 'Try again',
+            actionLabel: L.of(context).tryAgain,
             onAction: funnel.loadSizes,
           ),
         DataFetchStatus.waiting when state.sizes.isEmpty => const _SizeSkeleton(),
@@ -61,7 +62,7 @@ class SizeScreen extends StatelessWidget {
       // "Any size" is the only thing left to press, so it takes the bar.
       bottomBar: PinnedBar(
         child: PearlButton(
-          label: 'Any size',
+          label: L.of(context).anySize,
           ghost: true,
           onTap: () async {
             await funnel.skipSize();
@@ -82,6 +83,7 @@ class _SizeBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
+    final t = L.of(context);
     final tablet = context.isTablet;
     final run = state.visibleSizes;
 
@@ -90,23 +92,21 @@ class _SizeBody extends StatelessWidget {
           PearlMetrics.pad, 18, PearlMetrics.pad, 30),
       children: [
         Text(
-          'Which size?',
+          t.whichSize,
           style: PearlText.display(tablet ? 30 : 26).copyWith(color: p.ink),
         ),
         const SizedBox(height: 10),
         Text(
           state.inStockOnly
-              ? 'Only sizes on the shelf here are shown. Turn off "In stock" at the '
-                  'top to see the whole size run.'
-              : 'Sizes with nothing on the shelf are struck through — ask a colleague '
-                  'and we can check the other stores.',
+              ? t.sizeHintInStock
+              : t.sizeHintAll,
           style: PearlText.body(12).copyWith(color: p.muted),
         ),
         if (run.isNotEmpty) ...[
-          const SectionHeading(
-            'Available',
-            meta: 'styles per size',
-            padding: EdgeInsets.only(top: 24, bottom: 12),
+          SectionHeading(
+            t.available,
+            meta: t.stylesPerSize,
+            padding: const EdgeInsets.only(top: 24, bottom: 12),
           ),
           // `state.size` rather than a local selection: the only thing worth
           // marking is the answer already given, for someone who reopened the
@@ -119,12 +119,11 @@ class _SizeBody extends StatelessWidget {
           ),
         ],
         if (run.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 40),
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
             child: MessageState(
-              title: 'No sizes recorded',
-              detail: 'Nothing in this category carries a size yet. Continue to see '
-                  'everything in it.',
+              title: t.noSizes,
+              detail: t.noSizesDetail,
             ),
           ),
       ],

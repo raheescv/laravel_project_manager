@@ -8,7 +8,9 @@ import 'package:showcase/shared/domain/models/index.dart';
 import 'package:showcase/shared/domain/repository/catalog_repository.dart';
 import 'package:showcase/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:showcase/shared/logic/theme_cubit/theme_cubit.dart';
+import 'package:showcase/shared/utils/components/theme/pearl_theme.dart';
 import 'package:showcase/shared/utils/components/theme/theme_presets.dart';
+import 'package:showcase/shared/utils/components/theme/type_presets.dart';
 import 'package:showcase/shared/utils/local_storage/local_storage_service.dart';
 import 'package:showcase/shared/utils/router/http_utils/http_service.dart';
 
@@ -53,6 +55,33 @@ void main() {
     expect(theme.state.mode, ThemeMode.dark);
     // Untouched slots keep the default rather than following the other one.
     expect(theme.state.dark, ThemePreset.aurora);
+  });
+
+  test('type starts at Jost, at standard size', () {
+    final theme = ThemeCubit();
+    expect(theme.state.typeface, TypePreset.jost);
+    expect(theme.state.textScale, 1);
+  });
+
+  test('choosing a typeface takes effect before the frame that shows it', () {
+    // PearlText is read statically from a hundred call sites, so if the cubit
+    // emitted first the rebuild would paint one frame in the old face.
+    final theme = ThemeCubit();
+    theme.setTypeface(TypePreset.neutral);
+    expect(PearlText.type, TypePreset.neutral);
+    expect(theme.state.typeface, TypePreset.neutral);
+    PearlText.useType(TypePreset.jost);
+  });
+
+  test('each pairing tracks its own labels', () {
+    // Jost was drawn at the full 3.4; a face with more personality of its own
+    // wants less. A pairing that forgot to say would silently inherit Jost's.
+    for (final preset in TypePreset.values) {
+      expect(preset.tracking, greaterThan(0));
+      expect(preset.tracking, lessThanOrEqualTo(1));
+    }
+    expect(TypePreset.jost.tracking, 1);
+    expect(TypePreset.neutral.tracking, lessThan(TypePreset.jost.tracking));
   });
 
   test('in stock is on before anyone touches it', () {

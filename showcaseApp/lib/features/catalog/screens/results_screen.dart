@@ -15,6 +15,7 @@ import '../logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_list_cubit/product_list_cubit.dart';
 import 'filter_panel.dart';
 import 'funnel_navigation.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Step 4 — the results.
 ///
@@ -125,8 +126,8 @@ class _ResultsViewState extends State<_ResultsView> {
           : PinnedBar(
               child: PearlButton(
                 label: state.filters.activeCount == 0
-                    ? 'Filter and sort'
-                    : 'Filters · ${state.filters.activeCount}',
+                    ? L.of(context).filterAndSort
+                    : L.of(context).filtersCount(state.filters.activeCount),
                 icon: Icons.tune,
                 ghost: true,
                 onTap: () => showFilterSheet(context, list),
@@ -163,15 +164,17 @@ class _Toolbar extends StatelessWidget {
           Expanded(
             child: Text(
               state.status.isWaiting && state.items.isEmpty
-                  ? 'Loading…'.toUpperCase()
+                  ? L.of(context).loadingEllipsis.toUpperCase()
                   : state.totalIsExact
-                      ? '${state.total} products'.toUpperCase()
-                      : '${state.items.length} shown'.toUpperCase(),
+                      ? L.of(context).productsCount(state.total).toUpperCase()
+                      : L.of(context).shownCount(state.items.length).toUpperCase(),
               style: PearlText.section.copyWith(color: p.ink),
             ),
           ),
           _SortButton(
-            label: state.filters.sortBy == 'name' ? 'Name' : 'Price',
+            label: state.filters.sortBy == 'name'
+                ? L.of(context).sortName
+                : L.of(context).sortPrice,
             ascending: ascending,
             onTap: () {
               final nextBy = state.filters.sortBy == 'name' ? 'mrp' : 'name';
@@ -213,7 +216,7 @@ class _SortButton extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(border: Border.all(color: p.line)),
             child: Text(
-              'Sort · $label'.toUpperCase(),
+              L.of(context).sortBy(label).toUpperCase(),
               style: PearlText.micro.copyWith(fontSize: 8.5, color: p.ink),
             ),
           ),
@@ -239,9 +242,9 @@ class _Results extends StatelessWidget {
   Widget build(BuildContext context) {
     if (state.status.isFailed && state.items.isEmpty) {
       return MessageState(
-        title: 'The list did not load',
+        title: L.of(context).listDidNotLoad,
         detail: state.errorMessage,
-        actionLabel: 'Try again',
+        actionLabel: L.of(context).tryAgain,
         onAction: context.read<ProductListCubit>().load,
       );
     }
@@ -250,9 +253,9 @@ class _Results extends StatelessWidget {
     }
     if (state.items.isEmpty) {
       return MessageState(
-        title: 'Nothing matches',
-        detail: 'Try clearing the filters, or change the store at the top of the screen.',
-        actionLabel: 'Clear filters',
+        title: L.of(context).nothingMatches,
+        detail: L.of(context).nothingMatchesDetail,
+        actionLabel: L.of(context).clearFilters,
         onAction: () => context.read<ProductListCubit>().apply(
               ProductFilters(
                 mainCategoryId: state.filters.mainCategoryId,
@@ -283,9 +286,9 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.pearl;
     final label = state.loadingMore
-        ? 'Loading more'
+        ? L.of(context).loadingMore
         : state.hasMore
-            ? 'Scroll for more'
+            ? L.of(context).scrollForMore
             : '${state.items.length} of ${state.total}';
     return Padding(
       padding: const EdgeInsets.fromLTRB(PearlMetrics.pad, 4, PearlMetrics.pad, 40),

@@ -2,20 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/domain/helpers/responsive.dart';
 import '../../../shared/logic/theme_cubit/theme_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/components/theme/theme_presets.dart';
+import '../../../shared/utils/components/theme/type_presets.dart';
 import '../../../shared/widgets/chrome/app_top_bar.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 
-/// How the tablet is dressed: when to go dark, and which palette each mode
-/// wears.
+/// How the tablet is dressed: when to go dark, which palette each mode wears,
+/// what it is set in, and how large.
 ///
-/// Day and night are picked separately because they are different rooms — the
-/// same shop is daylit through the window at noon and lit by its own spots at
-/// eight, and one compromise palette is wrong in both.
+/// Laid out as blocks on a grid rather than a single column of full-width
+/// sections. There are five settings here and the old layout put each one
+/// under the last, which made a screen you had to scroll to see the effect of
+/// the control you were touching — on a tablet with room for two columns that
+/// was a page of whitespace and a lost connection between cause and effect.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -24,7 +28,7 @@ class SettingsScreen extends StatelessWidget {
     final cubit = context.watch<ThemeCubit>();
     final state = cubit.state;
     final p = context.pearl;
-    final tablet = context.isTablet;
+    final t = L.of(context);
 
     return ShowcaseScaffold(
       topBar: AppTopBar(
@@ -36,103 +40,143 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
-            PearlMetrics.pad, 18, PearlMetrics.pad, 40),
+            PearlMetrics.pad, 16, PearlMetrics.pad, 32),
         children: [
           Text(
-            'Appearance',
-            style: PearlText.display(tablet ? 30 : 26).copyWith(color: p.ink),
+            t.appearance,
+            style: PearlText.display(context.isTablet ? 26 : 23)
+                .copyWith(color: p.ink),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Text(
-            'Set once per tablet. Nothing here leaves the device.',
-            style: PearlText.body(12).copyWith(color: p.muted),
+            t.appearanceIntro,
+            style: PearlText.body(11.5).copyWith(color: p.muted),
           ),
-          const ColumnHeading('Mode'),
-          _ModeRow(mode: state.mode, onChanged: cubit.set),
-          _PresetSection(
-            heading: 'Day palette',
-            meta: 'used in light mode',
-            brightness: Brightness.light,
-            selected: state.light,
-            onPick: cubit.setLight,
+          const SizedBox(height: 18),
+          _Blocks(
+            children: [
+              _Block(
+                title: t.mode,
+                child: _Segments(
+                  count: _modes.length,
+                  selected: _modes.indexOf(state.mode),
+                  onTap: (i) => cubit.set(_modes[i]),
+                  builder: (i, on) => _IconLabel(
+                    icon: _modeIcons[i],
+                    label: _modeLabel(t, _modes[i]),
+                    on: on,
+                  ),
+                ),
+              ),
+              _Block(
+                title: t.textSize,
+                note: t.textSizeHint,
+                child: _Segments(
+                  count: ThemeCubit.textScales.length,
+                  selected: ThemeCubit.textScales.indexOf(state.textScale),
+                  onTap: (i) => cubit.setTextScale(ThemeCubit.textScales[i]),
+                  // The sample is the preview: "Aa" drawn at the multiplier it
+                  // sets, so the control shows its answer.
+                  builder: (i, on) => _AaLabel(
+                    scale: ThemeCubit.textScales[i],
+                    label: [t.textStandard, t.textLarge, t.textLarger][i],
+                    on: on,
+                  ),
+                ),
+              ),
+              _Block(
+                title: t.typeface,
+                note: t.typefaceHint,
+                span: 2,
+                child: _Segments(
+                  count: TypePreset.values.length,
+                  selected: TypePreset.values.indexOf(state.typeface),
+                  onTap: (i) => cubit.setTypeface(TypePreset.values[i]),
+                  // Each option set in its own face — naming a typeface tells
+                  // you nothing you can act on; seeing it does.
+                  builder: (i, on) => _FaceLabel(
+                    preset: TypePreset.values[i],
+                    on: on,
+                  ),
+                ),
+              ),
+              _Block(
+                title: t.dayPalette,
+                note: t.usedInLight,
+                child: _PaletteRow(
+                  brightness: Brightness.light,
+                  selected: state.light,
+                  onPick: cubit.setLight,
+                ),
+              ),
+              _Block(
+                title: t.nightPalette,
+                note: t.usedInDark,
+                child: _PaletteRow(
+                  brightness: Brightness.dark,
+                  selected: state.dark,
+                  onPick: cubit.setDark,
+                ),
+              ),
+            ],
           ),
-          _PresetSection(
-            heading: 'Night palette',
-            meta: 'used in dark mode',
-            brightness: Brightness.dark,
-            selected: state.dark,
-            onPick: cubit.setDark,
-          ),
-          const SizedBox(height: 26),
-          _MatchRow(state: state, onMatch: cubit.setBoth),
+          if (state.light != state.dark) ...[
+            const SizedBox(height: 14),
+            PearlButton(
+              label: t.useForBoth(state.light.label),
+              ghost: true,
+              onTap: () => cubit.setBoth(state.light),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  static const List<ThemeMode> _modes = [
+    ThemeMode.system,
+    ThemeMode.light,
+    ThemeMode.dark,
+  ];
+
+  static const List<IconData> _modeIcons = [
+    Icons.contrast,
+    Icons.light_mode_outlined,
+    Icons.dark_mode_outlined,
+  ];
+
+  static String _modeLabel(L t, ThemeMode mode) => switch (mode) {
+        ThemeMode.system => t.followDevice,
+        ThemeMode.light => t.day,
+        ThemeMode.dark => t.night,
+      };
 }
 
-class _ModeRow extends StatelessWidget {
-  const _ModeRow({required this.mode, required this.onChanged});
+/// Two columns where there is room for two, one where there is not.
+class _Blocks extends StatelessWidget {
+  const _Blocks({required this.children});
 
-  final ThemeMode mode;
-  final ValueChanged<ThemeMode> onChanged;
-
-  static const List<(ThemeMode, String, IconData)> _options = [
-    (ThemeMode.system, 'Follow device', Icons.contrast),
-    (ThemeMode.light, 'Day', Icons.light_mode_outlined),
-    (ThemeMode.dark, 'Night', Icons.dark_mode_outlined),
-  ];
+  final List<_Block> children;
 
   @override
   Widget build(BuildContext context) {
-    final p = context.pearl;
     return LayoutBuilder(
       builder: (context, constraints) {
-        // "Follow device" is wide-tracked and does not fit beside its icon in a
-        // third of a phone. Below that the pill stacks instead of truncating —
-        // the label is the part that has to survive.
-        final stacked = (constraints.maxWidth - 16) / 3 < 130;
-        return Row(
+        const gap = 12.0;
+        final columns = constraints.maxWidth >= 620 ? 2 : 1;
+        final unit = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
           children: [
-            for (final (value, label, icon) in _options) ...[
-              Expanded(
-                child: InkWell(
-                  onTap: () => onChanged(value),
-                  child: Container(
-                    height: stacked ? 62 : 54,
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: value == mode ? p.accent : null,
-                      border: Border.all(color: value == mode ? p.accent : p.line),
-                    ),
-                    child: Flex(
-                      direction: stacked ? Axis.vertical : Axis.horizontal,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icon, size: 15, color: value == mode ? p.accentInk : p.muted),
-                        SizedBox(width: stacked ? 0 : 9, height: stacked ? 7 : 0),
-                        Flexible(
-                          child: Text(
-                            label.toUpperCase(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: PearlText.micro.copyWith(
-                              fontSize: 8.5,
-                              letterSpacing: stacked ? 1.6 : 3.4,
-                              color: value == mode ? p.accentInk : p.ink,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+            for (final block in children)
+              SizedBox(
+                // A block can ask for the full width when its control needs it.
+                width: block.span == 2 || columns == 1
+                    ? constraints.maxWidth
+                    : unit,
+                child: block,
               ),
-              if (value != _options.last.$1) const SizedBox(width: 8),
-            ],
           ],
         );
       },
@@ -140,174 +184,245 @@ class _ModeRow extends StatelessWidget {
   }
 }
 
-class _PresetSection extends StatelessWidget {
-  const _PresetSection({
-    required this.heading,
-    required this.meta,
+class _Block extends StatelessWidget {
+  const _Block({
+    required this.title,
+    required this.child,
+    this.note,
+    this.span = 1,
+  });
+
+  final String title;
+  final Widget child;
+  final String? note;
+
+  /// 2 to take the whole row even on a two-column layout.
+  final int span;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(border: Border.all(color: p.line)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title.toUpperCase(),
+                  style: PearlText.micro.copyWith(fontSize: 8.5, color: p.faint),
+                ),
+              ),
+              if (note != null)
+                Flexible(
+                  child: Text(
+                    note!.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: PearlText.micro.copyWith(fontSize: 7.5, color: p.faint),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 11),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// A row of equal cells, one selected. Every control on this screen is one of
+/// these, so they all behave and measure the same.
+class _Segments extends StatelessWidget {
+  const _Segments({
+    required this.count,
+    required this.selected,
+    required this.onTap,
+    required this.builder,
+  });
+
+  final int count;
+  final int selected;
+  final ValueChanged<int> onTap;
+  final Widget Function(int index, bool selected) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Row(
+      children: [
+        for (var i = 0; i < count; i++) ...[
+          Expanded(
+            child: InkWell(
+              onTap: () => onTap(i),
+              child: Container(
+                height: 54,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: i == selected ? p.accent : null,
+                  border: Border.all(color: i == selected ? p.accent : p.line),
+                ),
+                child: builder(i, i == selected),
+              ),
+            ),
+          ),
+          if (i < count - 1) const SizedBox(width: 6),
+        ],
+      ],
+    );
+  }
+}
+
+class _IconLabel extends StatelessWidget {
+  const _IconLabel({required this.icon, required this.label, required this.on});
+
+  final IconData icon;
+  final String label;
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: on ? p.accentInk : p.muted),
+        const SizedBox(height: 6),
+        _Caption(label, on: on),
+      ],
+    );
+  }
+}
+
+class _AaLabel extends StatelessWidget {
+  const _AaLabel({required this.scale, required this.label, required this.on});
+
+  final double scale;
+  final String label;
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Aa',
+          style: PearlText.label
+              .copyWith(fontSize: 13 * scale, color: on ? p.accentInk : p.ink),
+        ),
+        const SizedBox(height: 5),
+        _Caption(label, on: on),
+      ],
+    );
+  }
+}
+
+class _FaceLabel extends StatelessWidget {
+  const _FaceLabel({required this.preset, required this.on});
+
+  final TypePreset preset;
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Ag',
+          style: preset.sample(19).copyWith(color: on ? p.accentInk : p.ink),
+        ),
+        const SizedBox(height: 4),
+        _Caption(preset.label, on: on),
+      ],
+    );
+  }
+}
+
+class _Caption extends StatelessWidget {
+  const _Caption(this.text, {required this.on});
+
+  final String text;
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Text(
+      text.toUpperCase(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: PearlText.micro
+          .copyWith(fontSize: 7.5, color: on ? p.accentInk : p.faint),
+    );
+  }
+}
+
+/// The palettes, as swatch strips rather than the full preview cards.
+///
+/// A card painted in each scheme showed more, but three of them stacked was
+/// most of the screen — and the thing being chosen is a colour scheme, which a
+/// four-colour strip conveys at a fraction of the height.
+class _PaletteRow extends StatelessWidget {
+  const _PaletteRow({
     required this.brightness,
     required this.selected,
     required this.onPick,
   });
 
-  final String heading;
-  final String meta;
-
-  /// Which half of each preset the cards preview — a night palette previewed in
-  /// its day colours would be picked for the wrong reasons.
   final Brightness brightness;
   final ThemePreset selected;
   final ValueChanged<ThemePreset> onPick;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SectionHeading(heading, meta: meta),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const target = 250.0;
-            const gap = PearlMetrics.gap;
-            final columns =
-                ((constraints.maxWidth + gap) / (target + gap)).round().clamp(1, 4);
-            final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                for (final preset in ThemePreset.values)
-                  SizedBox(
-                    width: width,
-                    child: _PresetCard(
-                      preset: preset,
-                      brightness: brightness,
-                      selected: preset == selected,
-                      onTap: () => onPick(preset),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-/// One direction, previewed in its own colours rather than the current theme's.
-///
-/// The card paints itself with the palette it is offering — a swatch row
-/// describes a scheme, but a card wearing it shows what the screen will
-/// actually feel like, which is the thing being chosen.
-class _PresetCard extends StatelessWidget {
-  const _PresetCard({
-    required this.preset,
-    required this.brightness,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final ThemePreset preset;
-  final Brightness brightness;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
     final theme = context.pearl;
-    final swatch = preset.paletteFor(brightness);
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: swatch.bg,
-          // The selection ring is the app's accent, not the preset's, so the
-          // "this one is chosen" signal stays the same across all six cards.
-          border: Border.all(
-            color: selected ? theme.accent : theme.line,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    preset.label.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: PearlText.section.copyWith(fontSize: 10, color: swatch.ink),
+    return Row(
+      children: [
+        for (final preset in ThemePreset.values) ...[
+          Expanded(
+            child: InkWell(
+              onTap: () => onPick(preset),
+              child: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  // The ring is the app's accent, not the preset's, so
+                  // "chosen" looks the same across all three.
+                  border: Border.all(
+                    color: preset == selected ? theme.accent : theme.line,
+                    width: preset == selected ? 2 : 1,
                   ),
                 ),
-                if (selected)
-                  Container(
-                    width: 16,
-                    height: 16,
-                    alignment: Alignment.center,
-                    color: theme.accent,
-                    child: Icon(Icons.check, size: 11, color: theme.accentInk),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 9),
-            Text(
-              preset.blurb,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: PearlText.body(11).copyWith(color: swatch.muted),
-            ),
-            const SizedBox(height: 13),
-            Row(
-              children: [
-                for (final color in preset.swatches(brightness)) ...[
-                  Expanded(
-                    child: Container(
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: color,
-                        border: Border.all(color: swatch.line),
-                      ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        for (final colour in preset.swatches(brightness))
+                          Expanded(
+                            child: Container(height: 22, color: colour),
+                          ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 5),
-                ],
-                // A chip in the preset's own accent: the one thing that differs
-                // most between directions is what "selected" looks like.
-                Container(
-                  width: 42,
-                  height: 26,
-                  alignment: Alignment.center,
-                  color: swatch.accent,
-                  child: Text(
-                    '42',
-                    style: PearlText.label.copyWith(fontSize: 10, color: swatch.accentInk),
-                  ),
+                    const SizedBox(height: 7),
+                    _Caption(preset.label, on: false),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MatchRow extends StatelessWidget {
-  const _MatchRow({required this.state, required this.onMatch});
-
-  final ThemeSettings state;
-  final ValueChanged<ThemePreset> onMatch;
-
-  @override
-  Widget build(BuildContext context) {
-    if (state.light == state.dark) return const SizedBox.shrink();
-    return PearlButton(
-      label: 'Use ${state.light.label} for both',
-      ghost: true,
-      onTap: () => onMatch(state.light),
+          ),
+          if (preset != ThemePreset.values.last) const SizedBox(width: 6),
+        ],
+      ],
     );
   }
 }

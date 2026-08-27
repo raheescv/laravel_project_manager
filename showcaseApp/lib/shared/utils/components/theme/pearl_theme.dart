@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'type_presets.dart';
+
 /// The "Pearl" design system — direction 06 of the showcase samples.
 ///
 /// Hard luxury: cool pearl and graphite, hairlines instead of fills, and **no
@@ -179,48 +181,107 @@ class PearlMetrics {
 class PearlText {
   const PearlText._();
 
-  static TextStyle _jost({
+  /// Whether the app is currently set to Arabic.
+  ///
+  /// A mutable static rather than something read from context, because every
+  /// style below is reached as `PearlText.label` from a hundred call sites that
+  /// have no BuildContext to offer. [LocaleCubit] owns it and sets it before
+  /// the frame that changes language.
+  static bool _arabic = false;
+
+  static void useArabic(bool value) => _arabic = value;
+
+  static bool get isArabic => _arabic;
+
+  /// The pairing chosen in Settings → Appearance. Same reasoning as [_arabic]:
+  /// these styles are reached statically from everywhere.
+  static TypePreset _type = TypePreset.jost;
+
+  static void useType(TypePreset preset) => _type = preset;
+
+  static TypePreset get type => _type;
+
+  /// One face for each script.
+  ///
+  /// Jost has no Arabic glyphs at all, so Arabic would fall back to whatever
+  /// the platform picked and stop looking like this app. IBM Plex Sans Arabic
+  /// is the closest thing to Jost's geometry that shapes Arabic properly.
+  /// Positive tracking pulls apart the joins in Arabic script — the cursive
+  /// stops being cursive and the words stop being readable. Pearl's whole voice
+  /// is wide tracking, so this is the one place the direction bends.
+  ///
+  /// Pulled out of [_face] so it can be checked without resolving a font: the
+  /// Google Fonts call underneath cannot run in a test.
+  @visibleForTesting
+  static double trackingFor(double tracking) =>
+      _arabic ? 0 : tracking * _type.tracking;
+
+  /// Arabic sits taller in its line box; the tight leading Jost is set with
+  /// clips the descenders.
+  @visibleForTesting
+  static double? leadingFor(double? height) =>
+      _arabic && height != null ? height + .18 : height;
+
+  static TextStyle _face({
     required double size,
     required FontWeight weight,
     required double tracking,
     double? height,
-  }) =>
-      GoogleFonts.jost(
-        fontSize: size,
-        fontWeight: weight,
-        letterSpacing: tracking,
-        height: height,
-      );
+    bool display = false,
+  }) {
+    final letterSpacing = trackingFor(tracking);
+    final leading = leadingFor(height);
+    return display
+        ? _type.displayStyle(
+            size: size,
+            weight: weight,
+            letterSpacing: letterSpacing,
+            height: leading,
+            arabic: _arabic,
+          )
+        : _type.textStyle(
+            size: size,
+            weight: weight,
+            letterSpacing: letterSpacing,
+            height: leading,
+            arabic: _arabic,
+          );
+  }
 
   /// Page headline. Light weight, large, tight — the one place Pearl is loud.
-  static TextStyle display(double size) =>
-      _jost(size: size, weight: FontWeight.w300, tracking: -0.3, height: 1.08);
+  static TextStyle display(double size) => _face(
+        size: size,
+        weight: FontWeight.w300,
+        tracking: -0.3,
+        height: 1.08,
+        display: true,
+      );
 
   /// Section headings: uppercase, small, wide.
-  static TextStyle section = _jost(size: 10.5, weight: FontWeight.w500, tracking: 2.6);
+  static TextStyle get section => _face(size: 10.5, weight: FontWeight.w500, tracking: 2.6);
 
   /// Eyebrows, column headings, breadcrumbs — the widest tracking in the system.
-  static TextStyle micro = _jost(size: 9.5, weight: FontWeight.w500, tracking: 3.4);
+  static TextStyle get micro => _face(size: 9.5, weight: FontWeight.w500, tracking: 3.4);
 
   /// Brand line on a product card.
-  static TextStyle brand = _jost(size: 8.5, weight: FontWeight.w500, tracking: 2.2);
+  static TextStyle get brand => _face(size: 8.5, weight: FontWeight.w500, tracking: 2.2);
 
   /// Product name on a card. Uppercase at the call site.
   static TextStyle productName(double size) =>
-      _jost(size: size, weight: FontWeight.w500, tracking: 1.7, height: 1.3);
+      _face(size: size, weight: FontWeight.w500, tracking: 1.7, height: 1.3);
 
   /// Prices are set in the regular weight — bolding them would be the loudest
   /// thing on the screen, and in this direction the product is.
   static TextStyle price(double size) =>
-      _jost(size: size, weight: FontWeight.w400, tracking: 0.4);
+      _face(size: size, weight: FontWeight.w400, tracking: 0.4);
 
   static TextStyle body(double size) =>
-      _jost(size: size, weight: FontWeight.w400, tracking: 0.1, height: 1.5);
+      _face(size: size, weight: FontWeight.w400, tracking: 0.1, height: 1.5);
 
-  static TextStyle label = _jost(size: 12, weight: FontWeight.w500, tracking: 0.6);
+  static TextStyle get label => _face(size: 12, weight: FontWeight.w500, tracking: 0.6);
 
   /// Buttons: the widest tracking of all, because there are very few of them.
-  static TextStyle button = _jost(size: 9.5, weight: FontWeight.w500, tracking: 3);
+  static TextStyle get button => _face(size: 9.5, weight: FontWeight.w500, tracking: 3);
 }
 
 /// Build the app theme from [p]. The palette carries its own brightness, so a

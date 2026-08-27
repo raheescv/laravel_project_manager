@@ -9,6 +9,7 @@ import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/photo.dart';
 import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_cubit/product_cubit.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The photo, on its own and close up.
 ///
@@ -50,9 +51,9 @@ class PhotoViewerScreen extends StatelessWidget {
             return Scaffold(
               backgroundColor: context.pearl.bg,
               body: MessageState(
-                title: 'This photo did not load',
+                title: L.of(context).photoDidNotLoad,
                 detail: state.errorMessage,
-                actionLabel: 'Close',
+                actionLabel: L.of(context).close,
                 onAction: () => context.pop(),
               ),
             );
@@ -211,8 +212,8 @@ class _PhotoViewerState extends State<_PhotoViewer> {
                 child: Center(
                   child: Text(
                     (_urls.length > 1
-                            ? 'Pinch or double tap to zoom · swipe for the next photo'
-                            : 'Pinch or double tap to zoom')
+                            ? L.of(context).pinchToZoomSwipe
+                            : L.of(context).pinchToZoom)
                         .toUpperCase(),
                     style: PearlText.micro.copyWith(fontSize: 8.5, color: p.faint),
                   ),

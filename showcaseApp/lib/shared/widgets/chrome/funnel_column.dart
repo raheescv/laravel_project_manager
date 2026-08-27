@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../features/catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../../utils/components/theme/pearl_theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The choices made so far, pinned to the left of every funnel screen on tablet.
 ///
@@ -23,26 +24,27 @@ class FunnelColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = L.of(context);
     // One rule for every row, rather than a special case per step: a step the
     // customer has not reached yet shows nothing, the one they are on says so,
     // and a passed step shows its answer — or the skip, which is an answer too.
     String value(FunnelStep step, String? answer, String skipped) {
       if (step.index > current.index) return '—';
-      if (step == current && answer == null) return 'Choosing…';
+      if (step == current && answer == null) return t.choosing;
       return answer ?? skipped;
     }
 
     final steps = <_StepData>[
-      _StepData(FunnelStep.size, 'Size', value(FunnelStep.size, state.size, 'Any size')),
+      _StepData(FunnelStep.size, t.stepSize, value(FunnelStep.size, state.size, t.anySize)),
       _StepData(
         FunnelStep.brand,
-        'Brand',
-        value(FunnelStep.brand, state.brand?.name, 'Any brand'),
+        t.stepBrand,
+        value(FunnelStep.brand, state.brand?.name, t.anyBrand),
       ),
       _StepData(
         FunnelStep.results,
-        'Results',
-        state.brand != null ? '${state.brand!.productCount} products' : '—',
+        t.stepResults,
+        state.brand != null ? t.productsCount(state.brand!.productCount) : '—',
       ),
     ];
 

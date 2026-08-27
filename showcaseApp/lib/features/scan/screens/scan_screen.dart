@@ -9,6 +9,7 @@ import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/router/http_utils/common_exception.dart';
 import '../../../shared/utils/router/routes.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Barcode lookup — a colleague scans the box and the customer sees the product
 /// page, spin frames and all.
@@ -97,7 +98,7 @@ class _ScanScreenState extends State<ScanScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.isNotFound ? 'No product carries the barcode $code.' : e.message;
+        _error = e.isNotFound ? L.of(context).barcodeNotFound(code) : e.message;
         _stage = _Stage.scanning;
       });
       await _controller?.start();
@@ -125,7 +126,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      'Scan a barcode'.toUpperCase(),
+                      L.of(context).scanBarcode.toUpperCase(),
                       style: PearlText.section.copyWith(color: p.ink),
                     ),
                   ),
@@ -143,21 +144,20 @@ class _ScanScreenState extends State<ScanScreen> {
     final p = context.pearl;
     return switch (_stage) {
       _Stage.primer => MessageState(
-          title: 'Camera access',
-          detail: 'The scanner reads the barcode on a shoe box and opens that product. '
-              'The camera is only used while this screen is open.',
-          actionLabel: 'Allow the camera',
+          title: L.of(context).cameraAccess,
+          detail: L.of(context).cameraDetail,
+          actionLabel: L.of(context).allowCamera,
           onAction: _request,
         ),
-      _Stage.denied => const MessageState(
-          title: 'Camera is blocked',
-          detail: 'Turn the camera on for this app in Settings, then come back.',
-          actionLabel: 'Open settings',
+      _Stage.denied => MessageState(
+          title: L.of(context).cameraBlocked,
+          detail: L.of(context).cameraBlockedDetail,
+          actionLabel: L.of(context).openSettings,
           onAction: openAppSettings,
         ),
       _Stage.looking => Center(
           child: Text(
-            'Looking it up'.toUpperCase(),
+            L.of(context).lookingUp.toUpperCase(),
             style: PearlText.section.copyWith(color: p.ink),
           ),
         ),

@@ -5,6 +5,7 @@ import '../../../shared/domain/models/index.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../logic/product_list_cubit/product_list_cubit.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The refinements that sit beside the grid on tablet and inside a sheet on
 /// phone. Same widget both times — a filter that behaves differently depending
@@ -27,10 +28,10 @@ class FilterPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showHeading) const ColumnHeading('Refine'),
+        if (showHeading) ColumnHeading(L.of(context).refine),
         if (state.categories.isNotEmpty) ...[
           _MiniHeading(
-            'Department',
+            L.of(context).department,
             trailing: _selectedCategory(state)?.name,
             onClear: filters.mainCategoryId == null
                 ? null
@@ -49,7 +50,7 @@ class FilterPanel extends StatelessWidget {
         ],
         if (state.colors.isNotEmpty) ...[
           _MiniHeading(
-            'Colour',
+            L.of(context).colour,
             trailing: filters.color,
             onClear: filters.color == null
                 ? null
@@ -67,7 +68,7 @@ class FilterPanel extends StatelessWidget {
           const SizedBox(height: 18),
         ],
         _MiniHeading(
-          'Price',
+          L.of(context).price,
           trailing: _priceLabel(filters),
           onClear: filters.minPrice == null && filters.maxPrice == null
               ? null
@@ -98,11 +99,11 @@ class FilterPanel extends StatelessWidget {
         // the whole funnel and lives in the top bar. Two controls for one
         // filter is how a filter ends up disagreeing with itself.
         _Toggle(
-          label: 'Has a 360° view',
+          label: L.of(context).has360,
           value: filters.spinOnly,
           // Narrows what came back rather than what was asked for — the list
           // payload carries no spin frames, so this cannot be a server filter.
-          note: 'Applied to loaded results',
+          note: L.of(context).appliedToLoaded,
           onChanged: (v) => onChanged(filters.copyWith(spinOnly: v)),
         ),
       ],
@@ -278,12 +279,20 @@ class _PriceBands extends StatelessWidget {
   final ProductFilters filters;
   final void Function(double? min, double? max) onPick;
 
-  static const List<(String, double?, double?)> _bands = [
-    ('Under 300', null, 300),
-    ('300 – 600', 300, 600),
-    ('600 – 900', 600, 900),
-    ('900+', 900, null),
+  /// Bounds only — the label is built from them so it can be translated and
+  /// so the numbers are never restated in two places.
+  static const List<(double?, double?)> _bands = [
+    (null, 300),
+    (300, 600),
+    (600, 900),
+    (900, null),
   ];
+
+  static String _bandLabel(L t, double? min, double? max) {
+    if (min == null) return t.underAmount('${max!.round()}');
+    if (max == null) return t.over('${min.round()}');
+    return t.band('${min.round()}', '${max.round()}');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -294,25 +303,25 @@ class _PriceBands extends StatelessWidget {
       children: [
         for (final band in _bands)
           InkWell(
-            onTap: () => onPick(band.$2, band.$3),
+            onTap: () => onPick(band.$1, band.$2),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
               decoration: BoxDecoration(
-                color: filters.minPrice == band.$2 && filters.maxPrice == band.$3
+                color: filters.minPrice == band.$1 && filters.maxPrice == band.$2
                     ? p.accent
                     : null,
                 border: Border.all(
-                  color: filters.minPrice == band.$2 && filters.maxPrice == band.$3
+                  color: filters.minPrice == band.$1 && filters.maxPrice == band.$2
                       ? p.accent
                       : p.line,
                 ),
               ),
               child: Text(
-                band.$1.toUpperCase(),
+                _bandLabel(L.of(context), band.$1, band.$2).toUpperCase(),
                 style: PearlText.micro.copyWith(
                   fontSize: 8.5,
                   letterSpacing: 1.4,
-                  color: filters.minPrice == band.$2 && filters.maxPrice == band.$3
+                  color: filters.minPrice == band.$1 && filters.maxPrice == band.$2
                       ? p.accentInk
                       : p.ink,
                 ),
@@ -416,7 +425,7 @@ class _FilterSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SectionHeading('Refine'),
+              SectionHeading(L.of(context).refine),
               FilterPanel(
                 state: state,
                 showHeading: false,
@@ -424,7 +433,7 @@ class _FilterSheet extends StatelessWidget {
               ),
               const SizedBox(height: 22),
               PearlButton(
-                label: 'Show results',
+                label: L.of(context).showResults,
                 onTap: () => Navigator.of(context).pop(),
               ),
             ],

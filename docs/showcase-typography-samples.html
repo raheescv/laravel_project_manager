@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Showcase · Typography — four pairings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Hanken+Grotesk:wght@400;500;600&family=Instrument+Serif&family=Inter+Tight:wght@300;400;500;600&family=Manrope:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+#stage[data-preset="aurora"]{--bg:#F4F5FC;--surface:rgba(255,255,255,.72);--ink:#191B33;--muted:#5F6285;
+  --faint:#9EA1C0;--line:rgba(96,86,180,.16);--accent:#5B4CE0;--accent-ink:#FFFFFF}
+#stage[data-preset="aurora"][data-theme="dark"]{--bg:#0B0C1C;--surface:rgba(255,255,255,.06);--ink:#EDEEFB;
+  --muted:#A0A3C8;--faint:#6D719B;--line:rgba(255,255,255,.12);--accent:#8B7BFF;--accent-ink:#0B0C1C}
+#stage[data-preset="pearl"]{--bg:#F0F0F2;--surface:#FAFAFB;--ink:#191A1E;--muted:#6D6F78;
+  --faint:#A7A9B2;--line:#E0E0E5;--accent:#191A1E;--accent-ink:#FAFAFB}
+#stage[data-preset="pearl"][data-theme="dark"]{--bg:#121316;--surface:#1A1B1F;--ink:#EFEFF2;--muted:#9A9CA5;
+  --faint:#63656E;--line:#26272D;--accent:#EFEFF2;--accent-ink:#121316}
+#stage[data-preset="noir"]{--bg:#F7F4EE;--surface:#FFFDF8;--ink:#1A1714;--muted:#6E655A;
+  --faint:#A79C8D;--line:#E3DCCE;--accent:#8A6A2F;--accent-ink:#FFFDF8}
+#stage[data-preset="noir"][data-theme="dark"]{--bg:#141210;--surface:#1E1B17;--ink:#F2EDE3;--muted:#A79C8D;
+  --faint:#75695A;--line:#2E2921;--accent:#C99B4E;--accent-ink:#141210}
+
+/* Each pairing: a display face, a text face, and how hard the micro labels are tracked. */
+.t1{--display:'Jost';--text:'Jost';--dw:300;--track:3.4px;--caps:uppercase}
+.t2{--display:'Fraunces';--text:'Hanken Grotesk';--dw:300;--track:2.2px;--caps:uppercase}
+.t3{--display:'Instrument Serif';--text:'Manrope';--dw:400;--track:1.6px;--caps:uppercase}
+.t4{--display:'Inter Tight';--text:'Inter Tight';--dw:300;--track:1.2px;--caps:none}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:#1b1c20;color:#e8e8ea;padding:26px 18px 70px}
+.wrap{max-width:1560px;margin:0 auto}
+h1{font-weight:300;font-size:30px;letter-spacing:-.4px;margin-bottom:6px}
+.lede{color:#9a9ba3;font-size:13.5px;max-width:880px;line-height:1.65;margin-bottom:22px}
+.lede b{color:#e8e8ea;font-weight:500}
+.bar{display:flex;flex-wrap:wrap;gap:22px;align-items:center;background:#232429;border:1px solid #303138;
+  padding:13px 16px;margin-bottom:24px;position:sticky;top:0;z-index:20}
+.grp{display:flex;gap:7px;align-items:center}
+.grp b{font-size:9px;letter-spacing:2.6px;text-transform:uppercase;color:#7c7d86;font-weight:500;margin-right:4px}
+.bar button{font-family:inherit;font-size:10px;letter-spacing:1.7px;text-transform:uppercase;font-weight:500;
+  background:transparent;color:#c8c9d0;border:1px solid #3a3b43;padding:8px 13px;cursor:pointer}
+.bar button:hover{border-color:#5a5b66;color:#fff}
+.bar button[aria-pressed="true"]{background:#e8e8ea;color:#1b1c20;border-color:#e8e8ea}
+
+#stage{display:flex;flex-direction:column;gap:26px}
+.opt{border:1px solid #34353d}
+.cap{padding:16px 18px 14px;background:#202126}
+.cap h2{font-weight:300;font-size:23px;letter-spacing:-.3px}
+.cap p{font-size:12.5px;color:#9a9ba3;line-height:1.65;margin-top:7px;max-width:92ch}
+.cap .faces{font-size:11px;color:#7c7d86;margin-top:8px;letter-spacing:1.4px;text-transform:uppercase}
+.panes{display:flex;gap:16px;flex-wrap:wrap;padding:16px;background:#17181c;align-items:flex-start}
+.pane{background:var(--bg);color:var(--ink);border:1px solid #34353d;padding:20px;flex:1;min-width:330px}
+.pane .tag{font-size:8px;letter-spacing:2.2px;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+
+/* type roles, driven by the pairing vars */
+.h1{font-family:var(--display);font-weight:var(--dw);font-size:30px;letter-spacing:-.3px;line-height:1.08}
+.sub{font-family:var(--text);font-size:12px;color:var(--muted);line-height:1.5;margin-top:9px}
+.sect{font-family:var(--text);font-size:10.5px;font-weight:500;letter-spacing:var(--track);
+  text-transform:var(--caps);margin:20px 0 11px;display:flex}
+.sect em{margin-inline-start:auto;font-style:normal;color:var(--faint);font-size:9.5px}
+.micro{font-family:var(--text);font-size:9px;letter-spacing:var(--track);text-transform:var(--caps);color:var(--faint)}
+.price{font-family:var(--text);font-size:26px;font-weight:400;letter-spacing:.4px}
+.pname{font-family:var(--text);font-size:11px;font-weight:500;letter-spacing:calc(var(--track) / 2);
+  text-transform:var(--caps);line-height:1.3}
+
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.chip{position:relative;height:58px;border:1px solid var(--line);display:grid;place-items:center}
+.chip b{font-family:var(--text);font-weight:500;font-size:15px;letter-spacing:.9px}
+.chip i{position:absolute;top:6px;inset-inline-end:8px;font-style:normal;font-size:9px;color:var(--faint);
+  font-family:var(--text)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.on i{color:var(--accent-ink);opacity:.72}
+
+.btn{margin-top:20px;height:46px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+  display:grid;place-items:center;font-family:var(--text);font-size:9.5px;font-weight:500;
+  letter-spacing:var(--track);text-transform:var(--caps)}
+.ar{direction:rtl;font-family:'IBM Plex Sans Arabic',sans-serif}
+.ar .h1,.ar .sub,.ar .sect,.ar .micro,.ar .pname,.ar .chip b,.ar .btn{font-family:'IBM Plex Sans Arabic',sans-serif;letter-spacing:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Typography — four pairings</h1>
+  <p class="lede">Each is shown on the two screens that carry the most type: the size run and a product panel.
+  The Arabic pane is the same pairing with <b>IBM Plex Sans Arabic</b> underneath and the tracking dropped to zero,
+  which is what the app already does — no Latin display face has Arabic glyphs, so the second script is always a
+  substitution and it is worth seeing what you actually get.</p>
+
+  <div class="bar">
+    <div class="grp"><b>Palette</b>
+      <button data-p="aurora" aria-pressed="true">Aurora</button>
+      <button data-p="pearl" aria-pressed="false">Pearl</button>
+      <button data-p="noir" aria-pressed="false">Noir</button></div>
+    <div class="grp"><b>Theme</b>
+      <button data-t="light" aria-pressed="true">Day</button>
+      <button data-t="dark" aria-pressed="false">Night</button></div>
+    <div class="grp"><b>Text size</b>
+      <button data-s="1" aria-pressed="true">Standard</button>
+      <button data-s="1.12" aria-pressed="false">Large</button>
+      <button data-s="1.25" aria-pressed="false">Larger</button></div>
+  </div>
+
+  <div id="stage" data-preset="aurora" data-theme="light"></div>
+</div>
+
+<script>
+const OPTS = [
+  ['t1','1 · Jost — what it is now','Jost / Jost · tracking 3.4',
+   `Geometric sans doing every job, set small and tracked very wide. Distinctive and cheap to hold in the head —
+    one family, one voice. It is also the least "premium" of the four in the specific sense that a geometric sans
+    at 9px with 3.4 of tracking is a <i>tech</i> signal, not a retail one, and it is the pairing that suffers most
+    in Arabic because the tracking is the whole personality and Arabic cannot take it.`],
+  ['t2','2 · Fraunces + Hanken Grotesk','Fraunces / Hanken Grotesk · tracking 2.2',
+   `A soft-serif display over a quiet humanist sans — the pairing the storefront already uses, so the app and the
+    website would finally sound alike. Fraunces at 30px light is the most expensive-looking headline of the four
+    and the numerals in Hanken are unusually clear at small sizes, which matters on a screen that is mostly counts.`],
+  ['t3','3 · Instrument Serif + Manrope','Instrument Serif / Manrope · tracking 1.6',
+   `A high-contrast serif against a geometric-humanist sans. The most editorial of the four: the headline reads
+    like a magazine standfirst rather than an interface. Manrope's tabular figures line up in the size grid, which
+    Jost's do not. The serif is delicate — it wants the larger text sizes and good contrast to hold up.`],
+  ['t4','4 · Inter Tight','Inter Tight / Inter Tight · tracking 1.2, sentence case',
+   `One family again, but a workhorse UI face set tight and mostly in sentence case rather than caps. The most
+    <i>professional</i> in the plainest sense — nothing about it is styled, so nothing about it dates or competes
+    with the product photography. Also the safest at the larger text sizes and the closest in colour to the Arabic
+    face, so switching language changes least.`],
+];
+
+const chips = [['44',53],['43.5',13],['43',30],['42.5',58],['42',80,true],['41.5',46],['41',40],['40.5',70]];
+
+function pane(tag, arabic){
+  const t = arabic
+    ? {h:'ما هو مقاسك؟', s:'تُعرض المقاسات المتوفرة في هذا المتجر فقط.', a:'المتوفر', m:'تصميم لكل مقاس',
+       n:'نيو بالانس 530', p:'٤٨٠ ر.ق', b:'عرض كل ٨٠ في المقاس ٤٢', av:'التوفر', st:'مول قطر'}
+    : {h:'Which size?', s:'Only sizes on the shelf here are shown.', a:'Available', m:'styles per size',
+       n:'NB 530 Kids Chrome', p:'QAR 480', b:'Show all 80 in size 42', av:'Availability', st:'Mall of Qatar'};
+  return `<div class="pane ${arabic ? 'ar' : ''}">
+    <div class="tag">${tag}</div>
+    <div class="h1">${t.h}</div>
+    <div class="sub">${t.s}</div>
+    <div class="sect">${t.a}<em>${t.m}</em></div>
+    <div class="chips">${chips.map(c =>
+      `<div class="chip ${c[2] ? 'on' : ''}"><b>${c[0]}</b><i>${c[1]}</i></div>`).join('')}</div>
+    <div class="sect">${t.av}</div>
+    <div class="pname">${t.n}</div>
+    <div class="price" style="margin-top:8px">${t.p}</div>
+    <div class="micro" style="margin-top:10px">${t.st}</div>
+    <div class="btn">${t.b}</div>
+  </div>`;
+}
+
+const stage = document.getElementById('stage');
+stage.innerHTML = OPTS.map(([cls, title, faces, why]) => `
+  <div class="opt ${cls}">
+    <div class="cap"><h2>${title}</h2><p>${why}</p><div class="faces">${faces}</div></div>
+    <div class="panes">${pane('English', false)}${pane('العربية', true)}</div>
+  </div>`).join('');
+
+document.querySelectorAll('.bar button').forEach(b => {
+  b.addEventListener('click', () => {
+    const key = ['p','t','s'].find(k => b.dataset[k] !== undefined);
+    b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    if (key === 's') {
+      document.documentElement.style.fontSize = (16 * parseFloat(b.dataset.s)) + 'px';
+      stage.querySelectorAll('.pane').forEach(p => p.style.zoom = b.dataset.s);
+    } else {
+      stage.dataset[key === 'p' ? 'preset' : 'theme'] = b.dataset[key];
+    }
+  });
+});
+</script>
+</body>
+</html>

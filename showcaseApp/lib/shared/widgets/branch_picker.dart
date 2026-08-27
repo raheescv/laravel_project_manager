@@ -5,6 +5,7 @@ import '../domain/models/index.dart';
 import '../logic/branch_cubit/branch_cubit.dart';
 import '../utils/components/theme/pearl_theme.dart';
 import 'pearl_widgets.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Click-and-go: tapping a store applies it and closes. There is no Save button
 /// anywhere in this app.
@@ -34,15 +35,15 @@ class _BranchSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
                   PearlMetrics.pad, PearlMetrics.pad, PearlMetrics.pad, 4),
-              child: SectionHeading('Choose a store'),
+              child: SectionHeading(L.of(context).chooseStore),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: PearlMetrics.pad),
               child: Text(
-                'Stock counts on every screen describe the store shown here.',
+                L.of(context).storeHint,
                 style: PearlText.body(11.5).copyWith(color: p.muted),
               ),
             ),

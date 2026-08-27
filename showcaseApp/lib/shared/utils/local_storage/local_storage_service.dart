@@ -12,6 +12,9 @@ class LocalStorageService {
 
   static const _kBranchId = 'branch_id';
   static const _kThemeMode = 'theme_mode';
+  static const _kLocale = 'locale';
+  static const _kTextScale = 'text_scale';
+  static const _kTypeface = 'typeface';
   static const _kLightPreset = 'theme_preset_light';
   static const _kDarkPreset = 'theme_preset_dark';
   static const _kGridColumns = 'grid_columns';
@@ -26,6 +29,19 @@ class LocalStorageService {
   /// 'system' | 'light' | 'dark'
   String get themeMode => _prefs.getString(_kThemeMode) ?? 'system';
   Future<void> setThemeMode(String mode) => _prefs.setString(_kThemeMode, mode);
+
+  /// 'en' | 'ar', or null to follow the device.
+  String? get locale => _prefs.getString(_kLocale);
+  Future<void> setLocale(String? code) =>
+      code == null ? _prefs.remove(_kLocale) : _prefs.setString(_kLocale, code);
+
+  /// How large the type is set, as a multiplier. 0 means never chosen.
+  double get textScale => _prefs.getDouble(_kTextScale) ?? 0;
+  Future<void> setTextScale(double value) => _prefs.setDouble(_kTextScale, value);
+
+  /// Which typeface pairing the app is set in.
+  String? get typeface => _prefs.getString(_kTypeface);
+  Future<void> setTypeface(String name) => _prefs.setString(_kTypeface, name);
 
   /// Which palette dresses each mode. Null until the staff pick one, so the
   /// default lives with the theme rather than being duplicated here.

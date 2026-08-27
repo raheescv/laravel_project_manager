@@ -11,6 +11,7 @@ import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/product_card.dart';
 import '../../catalog/logic/product_list_cubit/product_list_cubit.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Free search across the catalogue — the way past the funnel when the customer
 /// already knows what they want. Reachable from every screen's top bar.
@@ -139,7 +140,7 @@ class _SearchBar extends StatelessWidget {
                       decoration: InputDecoration(
                         isDense: true,
                         border: InputBorder.none,
-                        hintText: 'Name, code or barcode',
+                        hintText: L.of(context).searchPrompt,
                         hintStyle: PearlText.body(13).copyWith(color: p.faint),
                       ),
                     ),
@@ -178,7 +179,7 @@ class _Body extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'Type a name, a product code, or scan a barcode.',
+            L.of(context).searchEmpty,
             textAlign: TextAlign.center,
             style: PearlText.body(13).copyWith(color: p.faint),
           ),
@@ -187,13 +188,13 @@ class _Body extends StatelessWidget {
     }
     if (state.status.isWaiting && state.items.isEmpty) {
       return Center(
-        child: Text('Searching'.toUpperCase(), style: PearlText.micro.copyWith(color: p.faint)),
+        child: Text(L.of(context).searching.toUpperCase(), style: PearlText.micro.copyWith(color: p.faint)),
       );
     }
     if (state.items.isEmpty) {
       return MessageState(
-        title: 'Nothing found',
-        detail: 'No product matches "$query" in this store.',
+        title: L.of(context).nothingFound,
+        detail: L.of(context).searchNoMatch(query),
       );
     }
     return ProductGrid(

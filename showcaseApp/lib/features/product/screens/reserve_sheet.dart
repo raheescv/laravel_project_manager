@@ -8,6 +8,7 @@ import '../../../shared/logic/branch_cubit/branch_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/local_storage/local_storage_service.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// "Reserve in store" is a **local intent only**.
 ///
@@ -50,27 +51,26 @@ class _ReserveSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SectionHeading('Reserve in store'),
+            SectionHeading(L.of(context).reserveInStore),
             Text(
-              'We will note this on the tablet and tell a colleague. Nothing is '
-              'charged and nothing is held online.',
+              L.of(context).reserveIntro,
               style: PearlText.body(12).copyWith(color: p.muted),
             ),
             const SizedBox(height: 20),
-            _Line(label: 'Product', value: product.name),
-            _Line(label: 'Code', value: product.code),
-            if (size != null) _Line(label: 'Size', value: size!),
-            _Line(label: 'Price', value: money(product.mrp)),
-            _Line(label: 'Store', value: branch?.label ?? '—'),
+            _Line(label: L.of(context).product, value: product.name),
+            _Line(label: L.of(context).fieldCode, value: product.code),
+            if (size != null) _Line(label: L.of(context).fieldSize, value: size!),
+            _Line(label: L.of(context).price, value: money(product.mrp)),
+            _Line(label: L.of(context).fieldStore, value: branch?.label ?? '—'),
             if (branch != null && branch!.mobile.isNotEmpty)
-              _Line(label: 'Phone', value: branch!.mobile),
+              _Line(label: L.of(context).fieldPhone, value: branch!.mobile),
             _Line(
-              label: 'On the shelf',
+              label: L.of(context).onTheShelf,
               value: line > 0 ? '$line in this store' : 'none in this store',
             ),
             const SizedBox(height: 22),
             PearlButton(
-              label: 'Note it and close',
+              label: L.of(context).noteAndClose,
               onTap: () async {
                 await serviceLocator<LocalStorageService>().addReservation(
                   productId: product.id,
@@ -83,7 +83,7 @@ class _ReserveSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             PearlButton(
-              label: 'Cancel',
+              label: L.of(context).cancel,
               ghost: true,
               onTap: () => Navigator.of(context).pop(),
             ),

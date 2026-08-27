@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import 'pearl_theme.dart';
 
 /// The palettes the tablet can be dressed in, and the only other place in the
@@ -36,10 +37,20 @@ enum ThemePreset {
     _auroraDark,
   );
 
-  const ThemePreset(this.label, this.blurb, this.light, this.dark);
+  const ThemePreset(this.label, this.blurbKey, this.light, this.dark);
 
+  /// The direction's name — a proper noun, the same in every language.
   final String label;
-  final String blurb;
+
+  /// Looked up rather than stored, so the description translates while the
+  /// name does not.
+  final String blurbKey;
+
+  String blurb(L t) => switch (this) {
+        ThemePreset.pearl => t.presetPearlBlurb,
+        ThemePreset.noir => t.presetNoirBlurb,
+        ThemePreset.aurora => t.presetAuroraBlurb,
+      };
 
   /// The day palette and the night palette this direction was drawn with. Only
   /// one of the two is used at a time — which depends on the slot the preset

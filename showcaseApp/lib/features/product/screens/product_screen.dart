@@ -16,6 +16,7 @@ import '../../../shared/widgets/product_card.dart';
 import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_cubit/product_cubit.dart';
 import 'reserve_sheet.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The product page.
 ///
@@ -50,11 +51,11 @@ class _ProductView extends StatelessWidget {
     if (state.status.isFailed) {
       return ShowcaseScaffold(
         showRail: false,
-        topBar: const _ProductTopBar(title: 'Product'),
+        topBar: _ProductTopBar(title: L.of(context).product),
         body: MessageState(
-          title: 'This product did not load',
+          title: L.of(context).productDidNotLoad,
           detail: state.errorMessage,
-          actionLabel: 'Try again',
+          actionLabel: L.of(context).tryAgain,
           onAction: cubit.load,
         ),
       );
@@ -64,7 +65,7 @@ class _ProductView extends StatelessWidget {
     if (product == null) {
       return ShowcaseScaffold(
         showRail: false,
-        topBar: const _ProductTopBar(title: 'Loading'),
+        topBar: _ProductTopBar(title: L.of(context).loading),
         body: Container(color: p.bg),
       );
     }
@@ -175,7 +176,7 @@ class _PhoneBody extends StatelessWidget {
                 PearlMetrics.pad, 18, PearlMetrics.pad, 10),
             child: _Info(state: state, product: product),
           ),
-          _RelatedRail(state: state, height: 248),
+          _RelatedRail(state: state),
         ],
       );
 }
@@ -307,7 +308,7 @@ class _GalleryState extends State<_Gallery> {
                     Icon(Icons.zoom_in, size: 13, color: p.muted),
                     const SizedBox(width: 6),
                     Text(
-                      'Tap to zoom'.toUpperCase(),
+                      L.of(context).tapToZoom.toUpperCase(),
                       style: PearlText.micro.copyWith(fontSize: 8, color: p.muted),
                     ),
                   ],
@@ -398,7 +399,7 @@ class _SpinEntry extends StatelessWidget {
             Icon(Icons.threesixty_outlined, size: 16, color: p.accentInk),
             const SizedBox(width: 10),
             Text(
-              'Spin 360° · $frames frames'.toUpperCase(),
+              L.of(context).spin360(frames).toUpperCase(),
               style: PearlText.button.copyWith(color: p.accentInk),
             ),
           ],
@@ -435,9 +436,9 @@ class _Info extends StatelessWidget {
             ),
             StockPill(
               label: switch (product.availabilityStatus) {
-                'in_stock' => 'In stock · ${product.totalStock}',
-                'available_in_other_branches' => 'Other stores',
-                _ => 'Sold out',
+                'in_stock' => L.of(context).inStockCount(product.totalStock.toInt()),
+                'available_in_other_branches' => L.of(context).otherStores,
+                _ => L.of(context).soldOut,
               },
               positive: product.availabilityStatus == 'in_stock',
             ),
@@ -466,7 +467,7 @@ class _Info extends StatelessWidget {
         const SizedBox(height: 16),
         Text(money(product.mrp), style: PearlText.price(26).copyWith(color: p.ink)),
         if (sizes.isNotEmpty) ...[
-          _PanelHeading('Size run', trailing: state.selectedSize),
+          _PanelHeading(L.of(context).sizeRun, trailing: state.selectedSize),
           _SizeRun(
             sizes: sizes,
             selected: state.selectedSize,
@@ -475,7 +476,7 @@ class _Info extends StatelessWidget {
         ],
         _Availability(product: product, branchId: branchId),
         if (product.description.isNotEmpty) ...[
-          const _PanelHeading('Details'),
+          _PanelHeading(L.of(context).details),
           Text(
             product.description,
             style: PearlText.body(12).copyWith(color: p.muted),
@@ -603,9 +604,9 @@ class _Availability extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _PanelHeading('Availability'),
+          _PanelHeading(L.of(context).availability),
           Text(
-            'Not on the shelf at any store right now.',
+            L.of(context).notOnShelf,
             style: PearlText.body(11.5).copyWith(color: p.faint),
           ),
         ],
@@ -616,8 +617,10 @@ class _Availability extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _PanelHeading(
-          'Availability',
-          trailing: stocked.length == 1 ? '1 store' : '${stocked.length} stores',
+          L.of(context).availability,
+          trailing: stocked.length == 1
+              ? L.of(context).storeCount(1)
+              : L.of(context).storesCount(stocked.length),
         ),
         Wrap(
           spacing: 7,
@@ -704,7 +707,7 @@ class _Actions extends StatelessWidget {
       children: [
         Expanded(
           child: PearlButton(
-            label: 'Reserve in store',
+            label: L.of(context).reserveInStore,
             icon: Icons.store_outlined,
             onTap: () => showReserveSheet(
               context,
@@ -722,28 +725,32 @@ class _Actions extends StatelessWidget {
 // ----------------------------------------------------------------- rail
 
 class _RelatedRail extends StatelessWidget {
-  const _RelatedRail({required this.state, this.height = 248});
+  const _RelatedRail({required this.state});
 
   final ProductState state;
-  final double height;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
     if (state.related.isEmpty) return const SizedBox.shrink();
     const cardWidth = 128.0;
+    // As tall as one card and no taller. A fixed height was measured against
+    // English and cropped the price off the bottom of every card in Arabic.
+    final rowHeight =
+        cardWidth + ProductCard.captionHeight(context, compact: true);
     return Container(
-      height: height,
       decoration: BoxDecoration(border: Border(top: BorderSide(color: p.line))),
       padding: const EdgeInsets.fromLTRB(PearlMetrics.pad, 14, 0, 10),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(right: PearlMetrics.pad),
-            child: SectionHeading('You may also like', meta: 'same category'),
+          Padding(
+            padding: const EdgeInsets.only(right: PearlMetrics.pad),
+            child: SectionHeading(L.of(context).youMayAlsoLike),
           ),
-          Expanded(
+          SizedBox(
+            height: rowHeight,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(right: PearlMetrics.pad),

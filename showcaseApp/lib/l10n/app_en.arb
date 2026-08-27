@@ -1,0 +1,282 @@
+{
+  "@@locale": "en",
+  "appTitle": "Sizerun",
+  "search": "Search",
+  "searchLong": "Search by name, code or barcode",
+  "inStock": "In stock",
+  "chooseStore": "Choose a store",
+  "storeHint": "Stock counts on every screen describe the store shown here.",
+  "scanBarcode": "Scan a barcode",
+  "appearance": "Appearance",
+  "more": "More",
+  "offline": "Offline — stock figures may be out of date",
+  "tryAgain": "Try again",
+  "close": "Close",
+  "cancel": "Cancel",
+  "loading": "Loading",
+  "loadingEllipsis": "Loading…",
+  "stepSize": "Size",
+  "stepBrand": "Brand",
+  "stepResults": "Results",
+  "choosing": "Choosing…",
+  "anySize": "Any size",
+  "anyBrand": "Any brand",
+  "whichSize": "What is your size?",
+  "sizesDidNotLoad": "Sizes did not load",
+  "sizeHintInStock": "Only sizes on the shelf here are shown. Turn off \"In stock\" at the top to see the whole size run.",
+  "sizeHintAll": "Sizes with nothing on the shelf are struck through — ask a colleague and we can check the other stores.",
+  "available": "Available",
+  "stylesPerSize": "styles per size",
+  "noSizes": "No sizes recorded",
+  "noSizesDetail": "Nothing in this category carries a size yet. Continue to see everything in it.",
+  "whichBrand": "Which brand?",
+  "brandsDidNotLoad": "Brands did not load",
+  "stylesPerBrand": "styles per brand",
+  "stylesPerBrandInSize": "styles per brand in size {size}",
+  "@stylesPerBrandInSize": {
+    "placeholders": {
+      "size": {}
+    }
+  },
+  "showEveryBrand": "Show every brand",
+  "showAllInSize": "Show all {count} in size {size}",
+  "@showAllInSize": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {}
+    }
+  },
+  "noBrandsHere": "No brands here",
+  "noBrandsInSize": "No brands in this size",
+  "noBrandsInStock": "Nothing{inSize} is on the shelf here right now. Turn off \"In stock\" at the top to see what we can order in.",
+  "@noBrandsInStock": {
+    "placeholders": {
+      "inSize": {}
+    }
+  },
+  "noBrandsAtAll": "Nothing in the catalogue carries a brand{inSize}.",
+  "@noBrandsAtAll": {
+    "placeholders": {
+      "inSize": {}
+    }
+  },
+  "inSizeSuffix": " in size {size}",
+  "@inSizeSuffix": {
+    "placeholders": {
+      "size": {}
+    }
+  },
+  "chooseAnotherSize": "Choose another size",
+  "skipAhead": "Skip ahead",
+  "filterAndSort": "Filter and sort",
+  "filtersCount": "Filters · {count}",
+  "@filtersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productsCount": "{count} products",
+  "@productsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shownCount": "{count} shown",
+  "@shownCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sortBy": "Sort · {field}",
+  "@sortBy": {
+    "placeholders": {
+      "field": {}
+    }
+  },
+  "sortName": "Name",
+  "sortPrice": "Price",
+  "listDidNotLoad": "The list did not load",
+  "nothingMatches": "Nothing matches",
+  "nothingMatchesDetail": "Try clearing the filters, or change the store at the top of the screen.",
+  "clearFilters": "Clear filters",
+  "loadingMore": "Loading more",
+  "scrollForMore": "Scroll for more",
+  "refine": "Refine",
+  "department": "Department",
+  "colour": "Colour",
+  "price": "Price",
+  "under": "Under {amount}",
+  "@under": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "over": "{amount}+",
+  "@over": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "band": "{from} – {to}",
+  "@band": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
+  "has360": "Has a 360° view",
+  "appliedToLoaded": "Applied to loaded results",
+  "showResults": "Show results",
+  "product": "Product",
+  "productDidNotLoad": "This product did not load",
+  "photoDidNotLoad": "This photo did not load",
+  "tapToZoom": "Tap to zoom",
+  "pinchToZoom": "Pinch or double tap to zoom",
+  "pinchToZoomSwipe": "Pinch or double tap to zoom · swipe for the next photo",
+  "spin360": "Spin 360° · {frames} frames",
+  "@spin360": {
+    "placeholders": {
+      "frames": {
+        "type": "int"
+      }
+    }
+  },
+  "dragToSpin": "Drag to spin · {frames} frames",
+  "@dragToSpin": {
+    "placeholders": {
+      "frames": {
+        "type": "int"
+      }
+    }
+  },
+  "loading360": "Loading 360°",
+  "framesLoaded": "{loaded} / {total} frames",
+  "@framesLoaded": {
+    "placeholders": {
+      "loaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "noPhotos": "No photos for this product",
+  "gallery": "Gallery",
+  "zoom": "Zoom",
+  "inStockCount": "In stock · {count}",
+  "@inStockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "otherStores": "Other stores",
+  "soldOut": "Sold out",
+  "onlyLeft": "Only {count}",
+  "@onlyLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sizeRun": "Size run",
+  "details": "Details",
+  "availability": "Availability",
+  "notOnShelf": "Not on the shelf at any store right now.",
+  "storeCount": "{count} store",
+  "@storeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storesCount": "{count} stores",
+  "@storesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "youMayAlsoLike": "You may also like",
+  "reserveInStore": "Reserve in store",
+  "reserveDetail": "We will note this on the tablet and tell a colleague. Nothing is ordered and nothing is charged.",
+  "fieldCode": "Code",
+  "fieldSize": "Size",
+  "fieldStore": "Store",
+  "fieldPhone": "Phone",
+  "onTheShelf": "On the shelf",
+  "noteAndClose": "Note it and close",
+  "barcodeNotFound": "No product carries the barcode {code}.",
+  "@barcodeNotFound": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "cameraAccess": "Camera access",
+  "cameraDetail": "The scanner reads the barcode on a shoe box and opens that product. The camera is only used while this screen is open.",
+  "allowCamera": "Allow the camera",
+  "cameraBlocked": "Camera is blocked",
+  "cameraBlockedDetail": "Turn the camera on for this app in Settings, then come back.",
+  "appearanceIntro": "Set once per tablet. Nothing here leaves the device.",
+  "mode": "Mode",
+  "followDevice": "Follow device",
+  "day": "Day",
+  "night": "Night",
+  "dayPalette": "Day palette",
+  "nightPalette": "Night palette",
+  "usedInLight": "used in light mode",
+  "usedInDark": "used in dark mode",
+  "useForBoth": "Use {preset} for both",
+  "@useForBoth": {
+    "placeholders": {
+      "preset": {}
+    }
+  },
+  "language": "Language",
+  "languageHint": "Labels only. Product names come from the catalogue.",
+  "english": "English",
+  "arabic": "العربية",
+  "cannotReach": "Cannot reach the store. Check the connection and try again.",
+  "openSettings": "Open settings",
+  "lookingUp": "Looking it up",
+  "searching": "Searching",
+  "nothingFound": "Nothing found",
+  "searchPrompt": "Name, code or barcode",
+  "searchEmpty": "Type a name, a product code, or scan a barcode.",
+  "searchNoMatch": "No product matches \"{query}\" in this store.",
+  "@searchNoMatch": {
+    "placeholders": {
+      "query": {}
+    }
+  },
+  "reserveIntro": "We will note this on the tablet and tell a colleague. Nothing is ordered and nothing is charged.",
+  "underAmount": "Under {amount}",
+  "@underAmount": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "presetPearlBlurb": "Cool pearl and graphite. No accent hue at all — selection is an ink block.",
+  "presetNoirBlurb": "Ivory paper, ink type, a brass hairline. Reads like a lookbook.",
+  "presetAuroraBlurb": "Indigo-to-cyan light behind frosted panels. The friendliest of the three.",
+  "textSize": "Text size",
+  "textStandard": "Standard",
+  "textLarge": "Large",
+  "textLarger": "Larger",
+  "textSizeHint": "For reading at arm’s length across a counter.",
+  "typeface": "Typeface",
+  "typefaceHint": "Changes every label in the app."
+}

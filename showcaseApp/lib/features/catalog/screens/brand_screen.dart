@@ -12,6 +12,7 @@ import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/photo.dart';
 import '../logic/funnel_cubit/funnel_cubit.dart';
 import 'funnel_navigation.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Step 2 — brand, and the most skippable step in the funnel. "Every brand" is
 /// a full-width button rather than a link, because most customers want it.
@@ -50,9 +51,9 @@ class BrandScreen extends StatelessWidget {
       leftColumn: _LeftColumn(state: state),
       body: switch (state.brandsStatus) {
         DataFetchStatus.failed => MessageState(
-            title: 'Brands did not load',
+            title: L.of(context).brandsDidNotLoad,
             detail: state.errorMessage,
-            actionLabel: 'Try again',
+            actionLabel: L.of(context).tryAgain,
             onAction: funnel.loadBrands,
           ),
         DataFetchStatus.waiting when state.brands.isEmpty => const _BrandSkeleton(),
@@ -61,8 +62,8 @@ class BrandScreen extends StatelessWidget {
       bottomBar: PinnedBar(
         child: PearlButton(
           label: state.size == null
-              ? 'Show every brand'
-              : 'Show all ${state.brandTotal} in size ${state.size}',
+              ? L.of(context).showEveryBrand
+              : L.of(context).showAllInSize(state.brandTotal, state.size!),
           icon: Icons.arrow_forward,
           onTap: () {
             funnel.skipBrand();
@@ -82,15 +83,15 @@ class _BrandBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
+    final t = L.of(context);
     if (state.brands.isEmpty) {
-      final inSize = state.size == null ? '' : ' in size ${state.size}';
+      final inSize = state.size == null ? '' : t.inSizeSuffix(state.size!);
       return MessageState(
-        title: state.size == null ? 'No brands here' : 'No brands in this size',
+        title: state.size == null ? t.noBrandsHere : t.noBrandsInSize,
         detail: state.inStockOnly
-            ? 'Nothing$inSize is on the shelf here right now. Turn off "In stock" '
-                'at the top to see what we can order in.'
-            : 'Nothing in the catalogue carries a brand$inSize.',
-        actionLabel: state.size == null ? null : 'Choose another size',
+            ? t.noBrandsInStock(inSize)
+            : t.noBrandsAtAll(inSize),
+        actionLabel: state.size == null ? null : t.chooseAnotherSize,
         onAction: state.size == null ? null : () => reopenFunnelStep(context, FunnelStep.size),
       );
     }
@@ -100,16 +101,17 @@ class _BrandBody extends StatelessWidget {
           PearlMetrics.pad, 18, PearlMetrics.pad, 30),
       children: [
         Text(
-          'Which brand?',
+          t.whichBrand,
           style: PearlText.display(context.isTablet ? 30 : 26).copyWith(color: p.ink),
         ),
         const SizedBox(height: 18),
         SectionHeading(
-          'Available',
+          t.available,
           // Names the unit for the number on every tile, so the badge does not
           // have to carry a label of its own.
-          meta: 'styles per brand'
-              '${state.size == null ? '' : ' in size ${state.size}'}',
+          meta: state.size == null
+              ? t.stylesPerBrand
+              : t.stylesPerBrandInSize(state.size!),
         ),
         _BrandGrid(
           brands: state.brands,
@@ -309,7 +311,7 @@ class _LeftColumn extends StatelessWidget {
             current: FunnelStep.brand,
             onReopen: (step) => reopenFunnelStep(context, step),
           ),
-          const ColumnHeading('Skip ahead'),
+          ColumnHeading(L.of(context).skipAhead),
           Hairline(
             filled: true,
             padding: const EdgeInsets.all(15),

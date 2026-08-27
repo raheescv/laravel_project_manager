@@ -7,7 +7,9 @@ import 'package:showcase/shared/domain/constants/app_config.dart';
 import 'package:showcase/shared/domain/constants/global_variables.dart';
 import 'package:showcase/shared/domain/models/index.dart';
 import 'package:showcase/shared/domain/repository/catalog_repository.dart';
+import 'package:showcase/l10n/app_localizations.dart';
 import 'package:showcase/shared/logic/branch_cubit/branch_cubit.dart';
+import 'package:showcase/shared/logic/locale_cubit/locale_cubit.dart';
 import 'package:showcase/shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'package:showcase/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:showcase/shared/utils/components/theme/pearl_theme.dart';
@@ -51,6 +53,8 @@ void main() {
     WidgetTester tester,
     Size size, {
     required bool withBreadcrumbs,
+    Locale locale = const Locale('en'),
+    double textScale = 1,
   }) async {
     tester.view
       ..physicalSize = size * 3
@@ -60,7 +64,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildPearlTheme(PearlPalette.light),
-        home: BlocProvider<FunnelCubit>(
+        locale: locale,
+        supportedLocales: L.supportedLocales,
+        localizationsDelegates: L.localizationsDelegates,
+        home: BlocProvider<LocaleCubit>(
+          create: (_) => LocaleCubit(),
+          child: BlocProvider<FunnelCubit>(
           create: (_) => FunnelCubit(),
           child: BlocProvider<BranchCubit>.value(
             value: serviceLocator<BranchCubit>(),
@@ -68,7 +77,10 @@ void main() {
               value: serviceLocator<ThemeCubit>(),
               child: BlocProvider<ConnectivityCubit>.value(
                 value: serviceLocator<ConnectivityCubit>(),
-                child: Scaffold(
+                child: MediaQuery.withClampedTextScaling(
+                  minScaleFactor: textScale,
+                  maxScaleFactor: textScale,
+                  child: Scaffold(
                   body: Builder(
                     builder: (context) => AppTopBar(
                       leading: withBreadcrumbs
@@ -88,9 +100,11 @@ void main() {
                     ),
                   ),
                 ),
+                ),
               ),
             ),
           ),
+        ),
         ),
       ),
     );
@@ -124,6 +138,50 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Scan a barcode'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
+  });
+
+  for (final entry in sizes.entries) {
+    testWidgets('the top bar survives the largest text size on a ${entry.key}',
+        (tester) async {
+      // The text-size setting is the thing most likely to break a bar that
+      // only just fits: every label grows but the controls around it do not.
+      await pumpBar(tester, entry.value, withBreadcrumbs: true, textScale: 1.25);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('the language switch sits beside the shop, not in settings',
+      (tester) async {
+    // It is the first thing a customer needs when the tablet is handed over —
+    // a member of staff should not have to go and find a screen for it.
+    await pumpBar(tester, const Size(375, 812), withBreadcrumbs: false);
+
+    final lang = tester.getRect(find.byType(LanguagePill));
+    final branch = tester.getRect(find.byType(BranchPill));
+    expect((lang.center.dy - branch.center.dy).abs(), lessThan(6));
+
+    // Labelled with the language you would get, not the one you are in.
+    expect(find.text('العربية'), findsOneWidget);
+  });
+
+  testWidgets('the bar keeps its layout in Arabic', (tester) async {
+    // Everything below the bar mirrors in Arabic; the chrome does not. The mark
+    // stays left of the shop and the back control stays on the left, so the
+    // controls do not move out from under a hand mid-tap.
+    await pumpBar(tester, const Size(375, 812),
+        withBreadcrumbs: true, locale: const Locale('ar'));
+
+    final mark = tester.getRect(find.byType(BrandMark));
+    final branch = tester.getRect(find.byType(BranchPill));
+    final back = tester.getRect(find.byIcon(Icons.arrow_back));
+    final bar = tester.getRect(find.byType(AppTopBar));
+
+    expect(mark.left - bar.left, lessThan(16), reason: 'mark still hard left');
+    expect(bar.right - branch.right, lessThan(16), reason: 'shop still hard right');
+    expect(back.center.dx, lessThan(bar.center.dx), reason: 'back still on the left');
+
+    // The words themselves are Arabic even though the boxes did not move.
+    expect(find.text('English'), findsOneWidget);
   });
 
   testWidgets('the in-stock control says what it is', (tester) async {

@@ -5,6 +5,7 @@ import '../../domain/helpers/responsive.dart';
 import '../../logic/connectivity_cubit/connectivity_cubit.dart';
 import '../../utils/components/theme/pearl_theme.dart';
 import 'app_rail.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The frame every screen sits in.
 ///
@@ -106,7 +107,7 @@ class _OfflineBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: PearlMetrics.pad, vertical: 9),
       color: p.ink,
       child: Text(
-        'Offline — stock figures may be out of date'.toUpperCase(),
+        L.of(context).offline.toUpperCase(),
         textAlign: TextAlign.center,
         style: PearlText.micro.copyWith(color: p.bg),
       ),

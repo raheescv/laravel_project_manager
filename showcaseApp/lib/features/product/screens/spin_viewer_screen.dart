@@ -15,6 +15,7 @@ import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/photo.dart';
 import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_cubit/product_cubit.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The 360° viewer.
 ///
@@ -42,9 +43,9 @@ class SpinViewerScreen extends StatelessWidget {
             return Scaffold(
               backgroundColor: context.pearl.bg,
               body: MessageState(
-                title: 'This product did not load',
+                title: L.of(context).productDidNotLoad,
                 detail: state.errorMessage,
-                actionLabel: 'Close',
+                actionLabel: L.of(context).close,
                 onAction: () => context.pop(),
               ),
             );
@@ -378,7 +379,7 @@ class _Preloading extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Loading 360°'.toUpperCase(),
+            L.of(context).loading360.toUpperCase(),
             style: PearlText.section.copyWith(color: p.ink),
           ),
           const SizedBox(height: 14),
@@ -396,7 +397,7 @@ class _Preloading extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '$loaded / $total frames'.toUpperCase(),
+            L.of(context).framesLoaded(loaded, total).toUpperCase(),
             style: PearlText.micro.copyWith(color: p.faint),
           ),
         ],
@@ -415,7 +416,7 @@ class _GalleryStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (urls.isEmpty) {
-      return const MessageState(title: 'No photos for this product');
+      return MessageState(title: L.of(context).noPhotos);
     }
     return PageView.builder(
       controller: PageController(initialPage: index),
@@ -503,7 +504,7 @@ class _Ticker extends StatelessWidget {
                 Icon(Icons.swipe, size: 14, color: p.ink),
                 const SizedBox(width: 9),
                 Text(
-                  'Drag to spin · $count frames'.toUpperCase(),
+                  L.of(context).dragToSpin(count).toUpperCase(),
                   style: PearlText.micro.copyWith(fontSize: 8.5, color: p.ink),
                 ),
               ],
@@ -528,10 +529,10 @@ class _ModeBar extends StatelessWidget {
       decoration: BoxDecoration(border: Border(top: BorderSide(color: p.line))),
       child: Row(
         children: [
-          for (final entry in const [
-            (_Mode.spin, '360° spin'),
-            (_Mode.gallery, 'Gallery'),
-            (_Mode.zoom, 'Zoom'),
+          for (final entry in [
+            (_Mode.spin, '360°'),
+            (_Mode.gallery, L.of(context).gallery),
+            (_Mode.zoom, L.of(context).zoom),
           ])
             Expanded(
               child: Padding(
