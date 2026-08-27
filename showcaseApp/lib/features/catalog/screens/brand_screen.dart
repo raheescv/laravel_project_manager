@@ -325,10 +325,18 @@ class _BrandTile extends StatelessWidget {
   /// same height off the bottom of their stage.
   static const double _captionGap = 9;
 
-  /// How much of the stage the mark is kept away from. Generous on purpose: a
-  /// logo run to the edge of its plate reads as a cropped image rather than as
-  /// a mark on a card, and these sit in a wall of them.
-  double get _inset => width * .20;
+  /// The mark takes the whole plate.
+  ///
+  /// It used to be held a fifth of the tile off every edge, on the argument
+  /// that a logo run to the edge reads as a cropped image. On a panel read from
+  /// across a shop floor it read as something else: two fifths of every square
+  /// was air, and the mark a customer is meant to recognise was drawn at little
+  /// over half the width the tile had to give it. [BoxFit.contain] still keeps
+  /// the mark's own proportions, so a wordmark fills the width and settles in
+  /// the middle of the square rather than being stretched to fill it — and the
+  /// white a logo carries in its own file is the breathing room the padding was
+  /// there to add.
+  static const EdgeInsets _inset = EdgeInsets.zero;
 
   /// The name, set to the product grid's own name scale — a fraction of the
   /// tile, clamped at both ends, so the wall and the results read as one
@@ -405,7 +413,7 @@ class _BrandTile extends StatelessWidget {
                       final b when b.hasLogo => Photo(
                           url: b.imagePath,
                           width: width,
-                          padding: EdgeInsets.all(_inset),
+                          padding: _inset,
                         ),
                       final b => Center(
                           child: Text(
