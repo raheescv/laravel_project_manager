@@ -246,14 +246,14 @@ class _PhotoViewerState extends State<_PhotoViewer> {
               transformationController: i == _index ? _zoom : null,
               minScale: _minScale,
               maxScale: _maxScale,
-              child: LayoutBuilder(
-                builder: (context, box) => Photo(
-                  url: _urls[i],
-                  // Decoded for a deep zoom, not the resting size, or zooming in
-                  // just magnifies a blurry decode.
-                  width: box.maxWidth * 2,
-                  padding: const EdgeInsets.all(20),
-                ),
+              // Decoded for a deep zoom, not the resting size, or zooming in
+              // just magnifies a blurry decode. The product page warms this
+              // exact size for the shot that was on screen, so the tap that
+              // opened this usually lands on a photo that is already decoded.
+              child: Photo(
+                url: _urls[i],
+                width: zoomDecodeWidth(context),
+                padding: const EdgeInsets.all(20),
               ),
             ),
           ),

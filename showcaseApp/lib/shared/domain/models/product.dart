@@ -36,21 +36,40 @@ class InventoryLine extends Equatable {
   const InventoryLine({
     required this.branchId,
     required this.branchName,
+    required this.branchCode,
     required this.quantity,
   });
 
   factory InventoryLine.fromJson(Map<String, dynamic> json) {
     final branch = json['branch'];
     final map = branch is Map ? Map<String, dynamic>.from(branch) : const <String, dynamic>{};
+    final name = asStr(map['name']).trim();
+    final code = asStr(map['code']).trim();
     return InventoryLine(
       branchId: asInt(map['id']),
-      branchName: asStr(map['name']).trim(),
+      branchName: name,
+      // Older servers do not send the code; initials of the name beat showing
+      // nothing, and beat showing "Sizerun Mall of Qatar" on a phone.
+      branchCode: code.isNotEmpty ? code : _initials(name),
       quantity: asInt(json['quantity']),
     );
   }
 
+  static String _initials(String name) {
+    final words = name
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList(growable: false);
+    if (words.isEmpty) return '';
+    return words.take(3).map((w) => w[0].toUpperCase()).join();
+  }
+
   final int branchId;
   final String branchName;
+
+  /// The short code the shops go by — "MOQ", "DM".
+  final String branchCode;
+
   final int quantity;
 
   /// Stock can go negative when the shop has sold past its recorded count.
@@ -59,7 +78,7 @@ class InventoryLine extends Equatable {
   bool get hasStock => quantity > 0;
 
   @override
-  List<Object?> get props => [branchId, branchName, quantity];
+  List<Object?> get props => [branchId, branchName, branchCode, quantity];
 }
 
 /// One entry of `related_sizes`: the same style in another size, with the stock
@@ -79,11 +98,7 @@ class RelatedSize extends Equatable {
         totalStock: asInt(json['total_stock']),
         isOutOfStock: asBool(json['is_out_of_stock']),
         branches: asMapList(json['branches'])
-            .map((b) => InventoryLine(
-                  branchId: asInt(b['id']),
-                  branchName: asStr(b['name']).trim(),
-                  quantity: asInt(b['quantity']),
-                ))
+            .map((b) => InventoryLine.fromJson({'branch': b, 'quantity': b['quantity']}))
             .toList(growable: false),
       );
 

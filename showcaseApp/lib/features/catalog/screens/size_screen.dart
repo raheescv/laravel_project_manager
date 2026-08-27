@@ -83,8 +83,7 @@ class _SizeBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.pearl;
     final tablet = context.isTablet;
-    final young = state.youngSizes;
-    final adult = state.adultSizes;
+    final run = state.visibleSizes;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -103,18 +102,23 @@ class _SizeBody extends StatelessWidget {
                   'and we can check the other stores.',
           style: PearlText.body(12).copyWith(color: p.muted),
         ),
-        if (young.isNotEmpty) ...[
-          const ColumnHeading('Young'),
+        if (run.isNotEmpty) ...[
+          const SectionHeading(
+            'Available',
+            meta: 'styles per size',
+            padding: EdgeInsets.only(top: 24, bottom: 12),
+          ),
           // `state.size` rather than a local selection: the only thing worth
           // marking is the answer already given, for someone who reopened the
           // step to change it.
-          _SizeWrap(sizes: young, selected: state.size, onTap: onTapSize),
+          _SizeWrap(
+            sizes: run,
+            selected: state.size,
+            inStockOnly: state.inStockOnly,
+            onTap: onTapSize,
+          ),
         ],
-        if (adult.isNotEmpty) ...[
-          const ColumnHeading('Adult'),
-          _SizeWrap(sizes: adult, selected: state.size, onTap: onTapSize),
-        ],
-        if (young.isEmpty && adult.isEmpty)
+        if (run.isEmpty)
           const Padding(
             padding: EdgeInsets.only(top: 40),
             child: MessageState(
@@ -129,10 +133,16 @@ class _SizeBody extends StatelessWidget {
 }
 
 class _SizeWrap extends StatelessWidget {
-  const _SizeWrap({required this.sizes, required this.selected, required this.onTap});
+  const _SizeWrap({
+    required this.sizes,
+    required this.selected,
+    required this.inStockOnly,
+    required this.onTap,
+  });
 
   final List<SizeOption> sizes;
   final String? selected;
+  final bool inStockOnly;
   final void Function(String) onTap;
 
   @override
@@ -157,7 +167,15 @@ class _SizeWrap extends StatelessWidget {
                 width: width,
                 child: PearlChip(
                   label: size.size,
-                  sub: size.inStock ? '${size.stockTotal} left' : 'none',
+                  // How many products, not how many units: the chip is a
+                  // promise about the grid behind it, and the grid counts
+                  // products. Bare, like the brand badge — the heading above
+                  // names the unit once rather than every chip repeating it.
+                  sub: '${size.countFor(inStockOnly: inStockOnly)}',
+                  // Taller than the default: the count sits in the corner, so
+                  // the label needs the middle of the chip to itself rather
+                  // than sharing a column with it.
+                  height: 58,
                   selected: size.size == selected,
                   available: size.inStock,
                   onTap: () => onTap(size.size),

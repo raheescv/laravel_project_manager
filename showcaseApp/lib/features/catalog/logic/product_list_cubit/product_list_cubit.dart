@@ -115,6 +115,25 @@ class ProductListCubit extends Cubit<ProductListState> {
     }
   }
 
+  /// The departments the filter panel offers.
+  ///
+  /// Scoped to the size and the stock rule already in force, so a department is
+  /// never offered that would empty the grid — the same reason `/categories`
+  /// takes those filters at all.
+  Future<void> loadCategories() async {
+    try {
+      await _branch.ready;
+      final rows = await _repo.categories(
+        size: state.filters.size,
+        branchId: _branch.selectedId,
+        inStockOnly: state.filters.inStockOnly,
+      );
+      emit(state.copyWith(categories: rows));
+    } on ApiException {
+      // The panel simply shows no departments; the grid is unaffected.
+    }
+  }
+
   @override
   Future<void> close() {
     _branchSub?.cancel();

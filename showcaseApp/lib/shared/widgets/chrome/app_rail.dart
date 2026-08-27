@@ -26,7 +26,7 @@ class AppRail extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 16),
-          const BrandMark(height: 38, padding: 5),
+          const BrandMark(height: 46, padding: 4),
           const SizedBox(height: 14),
           _RailIcon(
             icon: Icons.grid_view_outlined,

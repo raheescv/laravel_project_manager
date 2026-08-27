@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../shared/domain/models/index.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../logic/product_list_cubit/product_list_cubit.dart';
@@ -27,6 +28,25 @@ class FilterPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showHeading) const ColumnHeading('Refine'),
+        if (state.categories.isNotEmpty) ...[
+          _MiniHeading(
+            'Department',
+            trailing: _selectedCategory(state)?.name,
+            onClear: filters.mainCategoryId == null
+                ? null
+                : () => onChanged(filters.copyWith(clearCategory: true)),
+          ),
+          _CategoryRow(
+            categories: state.categories,
+            selectedId: filters.mainCategoryId,
+            onTap: (id) => onChanged(
+              id == filters.mainCategoryId
+                  ? filters.copyWith(clearCategory: true)
+                  : filters.copyWith(mainCategoryId: id),
+            ),
+          ),
+          const SizedBox(height: 18),
+        ],
         if (state.colors.isNotEmpty) ...[
           _MiniHeading(
             'Colour',
@@ -87,6 +107,17 @@ class FilterPanel extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// The chosen department, if it is still one of the offered ones — a size
+  /// change can re-scope the list out from under a selection.
+  static CategoryOption? _selectedCategory(ProductListState state) {
+    final id = state.filters.mainCategoryId;
+    if (id == null) return null;
+    for (final c in state.categories) {
+      if (c.id == id) return c;
+    }
+    return null;
   }
 
   static String? _priceLabel(ProductFilters f) {
@@ -167,6 +198,72 @@ class _ColorRow extends StatelessWidget {
                   letterSpacing: 1.6,
                   color: color == selected ? p.accentInk : p.ink,
                 ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Departments as name-and-count chips.
+///
+/// The count comes along because it is the difference between a list of
+/// departments and a list of departments worth tapping: the funnel already
+/// narrowed to a size, so "Shoes 114" and "Apparel 2" are not equivalent
+/// choices even though they look it.
+class _CategoryRow extends StatelessWidget {
+  const _CategoryRow({
+    required this.categories,
+    required this.selectedId,
+    required this.onTap,
+  });
+
+  final List<CategoryOption> categories;
+  final int? selectedId;
+  final void Function(int) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Wrap(
+      spacing: 7,
+      runSpacing: 7,
+      children: [
+        for (final category in categories)
+          InkWell(
+            onTap: () => onTap(category.id),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: category.id == selectedId ? p.accent : null,
+                border: Border.all(
+                  color: category.id == selectedId ? p.accent : p.line,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    category.name.toUpperCase(),
+                    style: PearlText.micro.copyWith(
+                      fontSize: 8.5,
+                      letterSpacing: 1.6,
+                      color: category.id == selectedId ? p.accentInk : p.ink,
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    '${category.productCount}',
+                    style: PearlText.micro.copyWith(
+                      fontSize: 8.5,
+                      letterSpacing: .4,
+                      color: category.id == selectedId
+                          ? p.accentInk.withValues(alpha: .7)
+                          : p.faint,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -289,7 +386,9 @@ class _Toggle extends StatelessWidget {
 
 /// Phone: the same panel in a sheet.
 Future<void> showFilterSheet(BuildContext context, ProductListCubit cubit) {
-  cubit.loadColors();
+  cubit
+    ..loadColors()
+    ..loadCategories();
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,

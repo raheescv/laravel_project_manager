@@ -178,14 +178,27 @@ class PearlChip extends StatelessWidget {
     this.available = true,
     this.onTap,
     this.height = 54,
+    this.labelSize = 15,
   });
 
   final String label;
+
+  /// A secondary figure, set quietly in the top-right corner rather than under
+  /// the label.
+  ///
+  /// Stacking the two put a number directly beneath a number doing a different
+  /// job, so the eye had to stop on every chip to tell the size from its count
+  /// — sixty stops on a full size run. In the corner the label is
+  /// unmistakably the subject and the count is available without being read.
   final String? sub;
+
   final bool selected;
   final bool available;
   final VoidCallback? onTap;
   final double height;
+
+  /// The label carries the chip, so it is set larger than the body scale.
+  final double labelSize;
 
   @override
   Widget build(BuildContext context) {
@@ -195,31 +208,40 @@ class PearlChip extends StatelessWidget {
       onTap: available ? onTap : null,
       child: Container(
         height: height,
-        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? p.accent : null,
           border: Border.all(color: selected ? p.accent : p.line),
         ),
+        // `StackFit.expand`, and no `alignment` on the Container: an alignment
+        // wraps the child in an Align, which hands the Stack loose constraints
+        // — the Stack then shrink-wraps to the label and every Positioned child
+        // measures from the corner of the *text* instead of the corner of the
+        // chip. That put the count beside the label and left the strike-through
+        // crossing only the digits.
         child: Stack(
-          alignment: Alignment.center,
+          fit: StackFit.expand,
           children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(label, style: PearlText.label.copyWith(color: fg, letterSpacing: .9)),
-                if (sub != null) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    sub!.toUpperCase(),
-                    style: PearlText.micro.copyWith(
-                      fontSize: 8,
-                      letterSpacing: 1.6,
-                      color: selected ? p.accentInk.withValues(alpha: .7) : p.faint,
-                    ),
-                  ),
-                ],
-              ],
+            Center(
+              child: Text(
+                label,
+                maxLines: 1,
+                style: PearlText.label
+                    .copyWith(color: fg, fontSize: labelSize, letterSpacing: .9),
+              ),
             ),
+            if (sub != null)
+              Positioned(
+                top: 6,
+                right: 8,
+                child: Text(
+                  sub!.toUpperCase(),
+                  style: PearlText.micro.copyWith(
+                    fontSize: 9,
+                    letterSpacing: .4,
+                    color: selected ? p.accentInk.withValues(alpha: .7) : p.faint,
+                  ),
+                ),
+              ),
             // Never strike through the current selection: the chip the customer
             // is standing on reading as unavailable is just confusing.
             if (!available && !selected)

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Showcase · Top bar — three arrangements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Palettes transcribed from showcaseApp/lib/shared/utils/components/theme/theme_presets.dart */
+#stage[data-preset="pearl"]{--bg:#F0F0F2;--surface:#FAFAFB;--ink:#191A1E;--muted:#6D6F78;
+  --faint:#A7A9B2;--line:#E0E0E5;--accent:#191A1E;--accent-ink:#FAFAFB}
+#stage[data-preset="pearl"][data-theme="dark"]{--bg:#121316;--surface:#1A1B1F;--ink:#EFEFF2;--muted:#9A9CA5;
+  --faint:#63656E;--line:#26272D;--accent:#EFEFF2;--accent-ink:#121316}
+#stage[data-preset="noir"]{--bg:#F7F4EE;--surface:#FFFDF8;--ink:#1A1714;--muted:#6E655A;
+  --faint:#A79C8D;--line:#E3DCCE;--accent:#8A6A2F;--accent-ink:#FFFDF8}
+#stage[data-preset="noir"][data-theme="dark"]{--bg:#141210;--surface:#1E1B17;--ink:#F2EDE3;--muted:#A79C8D;
+  --faint:#75695A;--line:#2E2921;--accent:#C99B4E;--accent-ink:#141210}
+#stage[data-preset="aurora"]{--bg:#F4F5FC;--surface:rgba(255,255,255,.72);--ink:#191B33;--muted:#5F6285;
+  --faint:#9EA1C0;--line:rgba(96,86,180,.16);--accent:#5B4CE0;--accent-ink:#FFFFFF}
+#stage[data-preset="aurora"][data-theme="dark"]{--bg:#0B0C1C;--surface:rgba(255,255,255,.06);--ink:#EDEEFB;
+  --muted:#A0A3C8;--faint:#6D719B;--line:rgba(255,255,255,.12);--accent:#8B7BFF;--accent-ink:#0B0C1C}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Jost,system-ui,sans-serif;background:#1b1c20;color:#e8e8ea;padding:26px 18px 70px}
+.wrap{max-width:1560px;margin:0 auto}
+h1{font-weight:300;font-size:30px;letter-spacing:-.4px;margin-bottom:6px}
+.lede{color:#9a9ba3;font-size:13.5px;max-width:860px;line-height:1.65;margin-bottom:8px}
+.lede b{color:#e8e8ea;font-weight:500}
+.rule{color:#7c7d86;font-size:12.5px;line-height:1.7;max-width:860px;margin-bottom:22px}
+.rule code{background:#26272c;padding:1px 5px;font-size:11.5px}
+
+.bar{display:flex;flex-wrap:wrap;gap:22px;align-items:center;background:#232429;border:1px solid #303138;
+  padding:13px 16px;margin-bottom:24px;position:sticky;top:0;z-index:20}
+.grp{display:flex;gap:7px;align-items:center}
+.grp b{font-size:9px;letter-spacing:2.6px;text-transform:uppercase;color:#7c7d86;font-weight:500;margin-right:4px}
+.bar button{font-family:inherit;font-size:10px;letter-spacing:1.7px;text-transform:uppercase;font-weight:500;
+  background:transparent;color:#c8c9d0;border:1px solid #3a3b43;padding:8px 13px;cursor:pointer}
+.bar button:hover{border-color:#5a5b66;color:#fff}
+.bar button[aria-pressed="true"]{background:#e8e8ea;color:#1b1c20;border-color:#e8e8ea}
+
+#stage{display:flex;flex-direction:column;gap:28px}
+.opt{border:1px solid #34353d}
+.opt .cap{padding:16px 18px 14px;background:#202126}
+.opt .cap h2{font-weight:300;font-size:23px;letter-spacing:-.3px}
+.opt .cap p{font-size:12.5px;color:#9a9ba3;line-height:1.65;margin-top:7px;max-width:88ch}
+.opt .cap .verdict{color:#c8c9d0;margin-top:8px;font-size:12px}
+.frames{display:flex;gap:16px;flex-wrap:wrap;padding:16px;background:#17181c;align-items:flex-start}
+.frame{background:var(--bg);color:var(--ink);border:1px solid #34353d}
+.frame .lbl{font-size:8px;letter-spacing:2.2px;text-transform:uppercase;color:#6d6e77;
+  padding:6px 9px;background:#202126;border-bottom:1px solid #34353d;white-space:nowrap}
+.w320{width:320px}.w402{width:402px}.wtab{flex:1;min-width:620px}
+
+/* ---------- parts. one height (38), one gap unit (8) ---------- */
+.tb{display:flex;align-items:center;padding:11px 14px;gap:8px;border-bottom:1px solid var(--line)}
+.wtab .tb{padding:11px 20px}
+.ic{width:38px;height:38px;border:1px solid var(--line);display:grid;place-items:center;flex:none;
+  font-size:14px;color:var(--ink)}
+.mk{height:38px;background:#fff;padding:3px;display:flex;align-items:center;flex:none}
+.mk img{height:32px;display:block}
+.mk.lg{height:48px;padding:4px}.mk.lg img{height:40px}
+.pill{height:38px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:7px;
+  padding:0 11px;font-size:11.5px;font-weight:500;flex:none;min-width:0;white-space:nowrap}
+.pill span{overflow:hidden;text-overflow:ellipsis}
+.pill.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.pill.sq{width:38px;padding:0;justify-content:center}
+.pill.flex{flex:1 1 auto;min-width:40px}
+.srch{flex:1;height:38px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;
+  gap:9px;padding:0 12px;color:var(--faint);font-size:11.5px;min-width:0;overflow:hidden;white-space:nowrap}
+.sp{flex:1 1 auto;min-width:0}
+.crumbs{font-size:9.5px;letter-spacing:2.4px;text-transform:uppercase;color:var(--muted);
+  min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.crumbs i{font-style:normal;color:var(--faint);padding:0 6px}
+.rule-v{width:1px;height:22px;background:var(--line);flex:none}
+.row2{display:flex;align-items:center;gap:8px;padding:0 14px 11px;border-bottom:1px solid var(--line)}
+.wtab .row2{padding:0 20px 11px}
+.body{height:96px;display:grid;place-items:center;color:var(--faint);font-size:9px;
+  letter-spacing:3.4px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Top bar — three arrangements</h1>
+  <p class="lede">Back, mark, in stock, branch, overflow. Shown on the funnel <b>root</b> (no back control) and an
+  <b>inner</b> step (back plus breadcrumbs), because those are the two shapes the bar has to hold — and at 320pt,
+  402pt and tablet, because the narrow phone is where every one of these either works or does not.</p>
+  <p class="rule">All three fix the same two things the bar has today: mixed heights (the mark was 40 against 38pt
+  controls) and ad-hoc spacing (<code>12</code>, <code>4</code>, <code>8</code> with no system). Everything below is
+  38pt tall on an 8pt gap, with 14pt between groups. The branch name is the longest real one, and it is the only
+  element allowed to shrink.</p>
+
+  <div class="bar">
+    <div class="grp"><b>Palette</b>
+      <button data-p="pearl" aria-pressed="true">Pearl</button>
+      <button data-p="noir" aria-pressed="false">Noir</button>
+      <button data-p="aurora" aria-pressed="false">Aurora</button></div>
+    <div class="grp"><b>Theme</b>
+      <button data-t="light" aria-pressed="true">Day</button>
+      <button data-t="dark" aria-pressed="false">Night</button></div>
+    <div class="grp"><b>Branch</b>
+      <button data-b="long" aria-pressed="true">Longest name</button>
+      <button data-b="short" aria-pressed="false">Short name</button></div>
+  </div>
+
+  <div id="stage" data-preset="pearl" data-theme="light" data-b="long"></div>
+</div>
+
+<script>
+const NAMES = {long:'Mall of Qatar', short:'Doha Mall'};
+const mark  = (cls='') => `<div class="mk ${cls}"><img src="showcase-mark.png" alt="SIZE RUN"></div>`;
+const back  = `<div class="ic">&#8592;</div>`;
+const stock = `<div class="pill on sq" title="In stock">&#9745;</div>`;
+const stockW= `<div class="pill on">&#9745; <span>In stock</span></div>`;
+const menu  = `<div class="ic">&#8943;</div>`;
+const scan  = `<div class="ic">&#9707;</div>`;
+const srch  = `<div class="srch">&#9906; Search by name, code or barcode</div>`;
+const crumb = `<div class="crumbs">42 <i>&rsaquo;</i> New Balance</div>`;
+const branch = (flex) => `<div class="pill ${flex ? 'flex' : ''}">&#9679; <span class="bn"></span></div>`;
+
+const OPTS = [
+  ['A · One row, one rhythm',
+   `The smallest change that fixes it. Every control on a single 38pt line, one gap between siblings, a hairline
+    between the identity group and the action group. The mark stops being the thing the back button replaces and
+    simply sits after it.`,
+   `Holds at 402pt. At 320pt the branch pill is squeezed to about two words — legible, but the bar is full and
+    there is nowhere to put anything ever again.`,
+   (inner, tab) => `<div class="tb">
+      ${inner ? back : ''}${mark()}
+      ${tab ? (inner ? crumb : srch) : '<div class="sp"></div>'}
+      <div class="rule-v"></div>
+      ${tab ? stockW : stock}${branch(!tab)}${tab ? scan : menu}
+    </div>`],
+
+  ['B · Brand row over control row',
+   `Two lines. The top says who we are and which shop you are standing in; the bottom is what you can press. The
+    mark gets a line to itself so it can be set half again as large, the branch name never competes for width, and
+    the breadcrumbs finally get the room they need instead of a 90pt sliver.`,
+   `The only one that is genuinely comfortable at 320pt, and the only one where the mark reads as a brand rather
+    than an icon. Costs about 34pt of vertical on every screen — on a phone that is roughly one row of the grid.`,
+   (inner, tab) => `<div class="tb" style="border-bottom:0;padding-bottom:9px">
+      ${mark('lg')}<div class="sp"></div>${branch(false)}
+    </div>
+    <div class="row2">
+      ${inner ? back : ''}${inner ? crumb : (tab ? srch : '')}
+      <div class="sp"></div>${tab ? stockW : stock}${tab ? scan : menu}
+    </div>`],
+
+  ['C · Mark centred',
+   `Back left, mark in the middle with a slot of its own, controls right. The only arrangement where the logo is in
+    exactly the same place on every screen whether or not there is a back button — the centre does not move when
+    the left group changes.`,
+   `Neat on 402pt and tablet. At 320pt the two side groups are so unequal that the mark reads as off-centre even
+    though it is not, and the inline search has to leave the tablet bar entirely.`,
+   (inner, tab) => `<div class="tb">
+      <div style="flex:1 1 0;display:flex;gap:8px;align-items:center;min-width:0">
+        ${inner ? back : ''}${tab && inner ? crumb : ''}
+      </div>
+      ${mark()}
+      <div style="flex:1 1 0;display:flex;gap:8px;align-items:center;justify-content:flex-end;min-width:0">
+        ${stock}${branch(false)}${tab ? scan : menu}
+      </div>
+    </div>`],
+];
+
+const stage = document.getElementById('stage');
+
+function build(){
+  stage.innerHTML = OPTS.map(([title, why, verdict, make]) => `
+    <div class="opt">
+      <div class="cap"><h2>${title}</h2><p>${why}</p><p class="verdict">${verdict}</p></div>
+      <div class="frames">
+        <div class="frame w320"><div class="lbl">320 · root</div>${make(false,false)}<div class="body">size run</div></div>
+        <div class="frame w320"><div class="lbl">320 · inner</div>${make(true,false)}<div class="body">brands</div></div>
+        <div class="frame w402"><div class="lbl">402 · inner</div>${make(true,false)}<div class="body">brands</div></div>
+        <div class="frame wtab"><div class="lbl">Tablet · inner</div>${make(true,true)}<div class="body">brands</div></div>
+      </div>
+    </div>`).join('');
+  paintBranch();
+}
+function paintBranch(){
+  const n = NAMES[stage.dataset.b];
+  stage.querySelectorAll('.bn').forEach(el => el.textContent = n);
+}
+
+document.querySelectorAll('.bar button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = ['p','t','b'].find(k => btn.dataset[k] !== undefined);
+    const map = {p:'preset', t:'theme', b:'b'};
+    btn.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed','false'));
+    btn.setAttribute('aria-pressed','true');
+    stage.dataset[map[key]] = btn.dataset[key];
+    if (key === 'b') paintBranch();
+  });
+});
+build();
+</script>
+</body>
+</html>

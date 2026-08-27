@@ -37,6 +37,7 @@ class ProductFilters extends Equatable {
   /// What the filter chip counts — the funnel's own choices are shown as
   /// breadcrumbs and are deliberately excluded.
   int get activeCount => [
+        mainCategoryId != null,
         color != null && color!.isNotEmpty,
         minPrice != null || maxPrice != null,
         inStockOnly,
@@ -56,13 +57,14 @@ class ProductFilters extends Equatable {
     String? sortBy,
     String? sortDirection,
     bool clearBrand = false,
+    bool clearCategory = false,
     bool clearSize = false,
     bool clearColor = false,
     bool clearSearch = false,
     bool clearPrice = false,
   }) =>
       ProductFilters(
-        mainCategoryId: mainCategoryId ?? this.mainCategoryId,
+        mainCategoryId: clearCategory ? null : (mainCategoryId ?? this.mainCategoryId),
         brandId: clearBrand ? null : (brandId ?? this.brandId),
         size: clearSize ? null : (size ?? this.size),
         color: clearColor ? null : (color ?? this.color),
@@ -97,6 +99,7 @@ class ProductListState extends Equatable {
     this.filters = const ProductFilters(),
     this.items = const [],
     this.colors = const [],
+    this.categories = const [],
     this.page = 1,
     this.lastPage = 1,
     this.total = 0,
@@ -109,6 +112,11 @@ class ProductListState extends Equatable {
   final ProductFilters filters;
   final List<Product> items;
   final List<ColorOption> colors;
+
+  /// Departments to filter by. Since the funnel dropped its category step,
+  /// this is the only place a customer can narrow by department — and the
+  /// counts are scoped to the size they already chose.
+  final List<CategoryOption> categories;
   final int page;
   final int lastPage;
   final int total;
@@ -125,6 +133,7 @@ class ProductListState extends Equatable {
     ProductFilters? filters,
     List<Product>? items,
     List<ColorOption>? colors,
+    List<CategoryOption>? categories,
     int? page,
     int? lastPage,
     int? total,
@@ -138,6 +147,7 @@ class ProductListState extends Equatable {
         filters: filters ?? this.filters,
         items: items ?? this.items,
         colors: colors ?? this.colors,
+        categories: categories ?? this.categories,
         page: page ?? this.page,
         lastPage: lastPage ?? this.lastPage,
         total: total ?? this.total,
@@ -152,6 +162,7 @@ class ProductListState extends Equatable {
         filters,
         items,
         colors,
+        categories,
         page,
         lastPage,
         total,

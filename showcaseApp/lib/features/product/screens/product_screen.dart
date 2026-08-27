@@ -182,14 +182,71 @@ class _PhoneBody extends StatelessWidget {
 
 // --------------------------------------------------------------- gallery
 
-class _Gallery extends StatelessWidget {
+class _Gallery extends StatefulWidget {
   const _Gallery({required this.state, required this.product});
 
   final ProductState state;
   final Product product;
 
   @override
+  State<_Gallery> createState() => _GalleryState();
+}
+
+class _GalleryState extends State<_Gallery> {
+  /// The width the shots were warmed at, so a rotation re-warms and a rebuild
+  /// at the same size does not.
+  double? _warmedAt;
+
+  /// The gallery index whose zoom-resolution copy is warm.
+  int? _warmedZoomFor;
+
+  /// Fetch everything this page can lead to, the moment the stage knows how
+  /// wide it is, all at once.
+  ///
+  /// Three sets, because the image cache is keyed on the decoded size and each
+  /// destination decodes differently:
+  ///
+  /// * the gallery shots at stage width — the gallery paints one at a time, so
+  ///   otherwise the second photo only started downloading when the customer
+  ///   tapped its thumbnail;
+  /// * the 360° frames at screen width — two dozen of them, and the spin is
+  ///   not interactive until the last one lands;
+  /// * the shot on screen at zoom width, so tapping it opens instantly.
+  ///
+  /// The zoom copies are deliberately not warmed for every shot: they decode at
+  /// twice the screen, and five of those would evict everything else in the
+  /// cache — including each other. The one being looked at is the one that is
+  /// about to be tapped.
+  void _warm(double width) {
+    if (width <= 0 || _warmedAt == width) return;
+    _warmedAt = width;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final product = widget.product;
+      final screen = MediaQuery.sizeOf(context).width;
+      precachePhotos(context, product.galleryUrls, width);
+      precachePhotos(
+        context,
+        product.images360.map((frame) => frame.url),
+        screen,
+      );
+    });
+  }
+
+  /// Warm the zoom-resolution copy of whichever shot is showing.
+  void _warmZoom(int index, List<String> urls) {
+    if (urls.isEmpty || _warmedZoomFor == index) return;
+    _warmedZoomFor = index;
+    final width = zoomDecodeWidth(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) precachePhotos(context, [urls[index]], width);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
+    final product = widget.product;
     final p = context.pearl;
     final urls = product.galleryUrls;
     final index = state.galleryIndex.clamp(0, urls.isEmpty ? 0 : urls.length - 1);
@@ -210,11 +267,15 @@ class _Gallery extends StatelessWidget {
             child: Stage(
               border: false,
               child: LayoutBuilder(
-                builder: (context, constraints) => Photo(
-                  url: urls.isEmpty ? '' : urls[index],
-                  width: constraints.maxWidth,
-                  padding: EdgeInsets.all(tablet ? 40 : 26),
-                ),
+                builder: (context, constraints) {
+                  _warm(constraints.maxWidth);
+                  _warmZoom(index, urls);
+                  return Photo(
+                    url: urls.isEmpty ? '' : urls[index],
+                    width: constraints.maxWidth,
+                    padding: EdgeInsets.all(tablet ? 40 : 26),
+                  );
+                },
               ),
             ),
           ),
@@ -394,10 +455,11 @@ class _Info extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         Text(
+          // No unit: every line in this catalogue is sold by the piece, so
+          // "Nos" on a shoe told a customer nothing they did not assume.
           [
             product.code,
             if (product.color.isNotEmpty) product.color,
-            if (product.unitName.isNotEmpty) product.unitName,
           ].join(' · ').toUpperCase(),
           style: PearlText.micro.copyWith(fontSize: 8.5, color: p.faint),
         ),
@@ -411,8 +473,7 @@ class _Info extends StatelessWidget {
             branchId: branchId,
           ),
         ],
-        _PanelHeading('Availability', trailing: '${product.inventories.length} stores'),
-        ..._branchRows(context, product, branchId),
+        _Availability(product: product, branchId: branchId),
         if (product.description.isNotEmpty) ...[
           const _PanelHeading('Details'),
           Text(
@@ -448,21 +509,6 @@ class _Info extends StatelessWidget {
   static double _sizeOrder(String size) =>
       double.tryParse(size.replaceAll(RegExp('[^0-9.]'), '')) ?? 0;
 
-  static List<Widget> _branchRows(BuildContext context, Product product, int? branchId) {
-    final rows = product.branchesByStock(branchId);
-    if (rows.isEmpty) {
-      return [
-        Text(
-          'No stock recorded for this product.',
-          style: PearlText.body(11.5).copyWith(color: context.pearl.faint),
-        ),
-      ];
-    }
-    return [
-      for (final line in rows.take(5))
-        _BranchRow(line: line, isActive: line.branchId == branchId),
-    ];
-  }
 }
 
 class _PanelHeading extends StatelessWidget {
@@ -531,40 +577,112 @@ class _SizeRun extends StatelessWidget {
   }
 }
 
-class _BranchRow extends StatelessWidget {
-  const _BranchRow({required this.line, required this.isActive});
+/// Where you can pick this up, as a line of shop codes.
+///
+/// Only the shops that actually have it, and only their short code: a customer
+/// is deciding whether to walk across the mall, not reading a stock report. The
+/// full names ("Sizerun Mall of Qatar") wrapped to two lines each and turned
+/// five branches into a panel taller than the price — and the shops that had
+/// none of it took up exactly as much room as the ones that did.
+class _Availability extends StatelessWidget {
+  const _Availability({required this.product, required this.branchId});
 
-  final InventoryLine line;
-  final bool isActive;
+  final Product product;
+  final int? branchId;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
-    return Opacity(
-      opacity: line.hasStock ? 1 : .45,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 7),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        decoration: BoxDecoration(
-          border: Border.all(color: isActive ? p.ink : p.line),
+    final stocked = product
+        .branchesByStock(branchId)
+        .where((line) => line.hasStock && line.branchName.isNotEmpty)
+        .toList(growable: false);
+    final labels = shortenBranchNames(stocked.map((line) => line.branchName).toList());
+
+    if (stocked.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _PanelHeading('Availability'),
+          Text(
+            'Not on the shelf at any store right now.',
+            style: PearlText.body(11.5).copyWith(color: p.faint),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _PanelHeading(
+          'Availability',
+          trailing: stocked.length == 1 ? '1 store' : '${stocked.length} stores',
         ),
-        child: Row(
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
           children: [
-            Icon(Icons.place_outlined, size: 14, color: p.faint),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                line.branchName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: PearlText.label.copyWith(color: p.ink, fontSize: 11),
+            for (var i = 0; i < stocked.length; i++)
+              _BranchName(
+                name: labels[i],
+                here: stocked[i].branchId == branchId,
               ),
-            ),
-            Text(
-              line.hasStock ? '${line.available}' : 'none'.toUpperCase(),
-              style: PearlText.micro.copyWith(fontSize: 8.5, color: p.faint),
-            ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Drop a leading word every shop shares.
+///
+/// The branches here are "SIZERUN MALL OF QATAR", "SIZERUN GALLERIA MALL",
+/// "SIZERUN DOHA MALL" — the tenant's own name, repeated on every chip, inside
+/// an app that already says it at the top of the screen. Removing it is what
+/// lets the shops stay on one line and still read as names rather than codes.
+///
+/// Only ever strips a word *all* of them start with, and never the last word,
+/// so a single branch or a set with nothing in common is left exactly as it is.
+@visibleForTesting
+List<String> shortenBranchNames(List<String> names) {
+  if (names.length < 2) return names;
+
+  var out = names.map((n) => n.trim()).toList();
+  while (true) {
+    final heads = out.map((n) => n.split(RegExp(r'\s+')).first).toSet();
+    if (heads.length != 1) return out;
+    final trimmed = out
+        .map((n) => n.split(RegExp(r'\s+')).skip(1).join(' ').trim())
+        .toList();
+    if (trimmed.any((n) => n.isEmpty)) return out;
+    out = trimmed;
+  }
+}
+
+class _BranchName extends StatelessWidget {
+  const _BranchName({required this.name, required this.here});
+
+  final String name;
+
+  /// The shop the tablet is standing in, filled so it reads first.
+  final bool here;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: here ? p.accent : null,
+        border: Border.all(color: here ? p.accent : p.line),
+      ),
+      child: Text(
+        name.toUpperCase(),
+        style: PearlText.micro.copyWith(
+          fontSize: 9,
+          letterSpacing: 1.8,
+          color: here ? p.accentInk : p.ink,
         ),
       ),
     );

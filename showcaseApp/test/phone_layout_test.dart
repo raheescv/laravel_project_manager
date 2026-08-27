@@ -13,6 +13,7 @@ import 'package:showcase/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:showcase/shared/utils/components/theme/pearl_theme.dart';
 import 'package:showcase/shared/utils/local_storage/local_storage_service.dart';
 import 'package:showcase/shared/utils/router/http_utils/http_service.dart';
+import 'package:showcase/shared/widgets/brand_mark.dart';
 import 'package:showcase/shared/widgets/chrome/app_top_bar.dart';
 import 'package:showcase/shared/widgets/chrome/funnel_column.dart';
 
@@ -110,19 +111,73 @@ void main() {
     });
   }
 
-  testWidgets('the phone bar folds search, scan and appearance into one menu',
+  testWidgets('the phone bar keeps search inline and the rest in a menu',
       (tester) async {
     await pumpBar(tester, const Size(375, 812), withBreadcrumbs: false);
 
-    // Three separate icons would not fit beside the branch name; one would.
+    // Search earns a field of its own in the control row; what is left over
+    // is the pair nobody reaches for mid-browse.
+    expect(find.byIcon(Icons.search), findsOneWidget);
     expect(find.byIcon(Icons.more_horiz), findsOneWidget);
-    expect(find.byIcon(Icons.search), findsNothing);
 
     await tester.tap(find.byIcon(Icons.more_horiz));
     await tester.pumpAndSettle();
-    expect(find.text('Search'), findsOneWidget);
     expect(find.text('Scan a barcode'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
+  });
+
+  testWidgets('the in-stock control says what it is', (tester) async {
+    // A lone checkbox in a bar is a control nobody can name, and this one
+    // scopes every count on every screen.
+    await pumpBar(tester, const Size(375, 812), withBreadcrumbs: false);
+    expect(find.text('In stock'), findsOneWidget);
+  });
+
+  testWidgets('the phone bar puts brand and shop above the controls',
+      (tester) async {
+    // Direction B: row one says who we are and where you are, row two is what
+    // you can press. Asserted by geometry, because "two rows" collapses back to
+    // one the moment somebody moves a widget between them.
+    await pumpBar(tester, const Size(375, 812), withBreadcrumbs: true);
+
+    final mark = tester.getRect(find.byType(BrandMark));
+    final branch = tester.getRect(find.byType(BranchPill));
+    final stock = tester.getRect(find.byType(StockPill));
+    final back = tester.getRect(find.byIcon(Icons.arrow_back));
+
+    // Brand and shop share the top row.
+    expect((mark.center.dy - branch.center.dy).abs(), lessThan(6));
+    // The controls are strictly below them, not beside them.
+    expect(stock.top, greaterThan(mark.bottom - 1));
+    expect(back.center.dy, greaterThan(mark.bottom - 1));
+    // And the shop name sits to the right of the mark, not under it.
+    expect(branch.left, greaterThan(mark.right));
+
+    // Hard against the edges: the mark flush left, the shop flush right. A
+    // loose Flexible beside a Spacer left the pill floating mid-row with the
+    // slack behind it, which reads as neither aligned nor centred.
+    final bar = tester.getRect(find.byType(AppTopBar));
+    expect(mark.left - bar.left, lessThan(16));
+    expect(bar.right - branch.right, lessThan(16));
+  });
+
+  testWidgets('the phone keeps the mark when a back control is present',
+      (tester) async {
+    // Brand and Results have a back button. The mark used to be the thing that
+    // button replaced, so the shop's name vanished for two of the three funnel
+    // screens.
+    await pumpBar(tester, const Size(375, 812), withBreadcrumbs: true);
+
+    expect(find.byType(BrandMark), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the tablet bar leaves the mark to the rail', (tester) async {
+    // Two marks on one screen is one too many, and the rail carries it there.
+    await pumpBar(tester, const Size(1024, 1366), withBreadcrumbs: true);
+
+    expect(find.byType(BrandMark), findsNothing);
   });
 
   testWidgets('the tablet bar keeps its inline search and scanner', (tester) async {

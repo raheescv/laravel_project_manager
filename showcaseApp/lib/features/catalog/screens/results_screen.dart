@@ -36,7 +36,8 @@ class ResultsScreen extends StatelessWidget {
         ),
       )
         ..load()
-        ..loadColors(),
+        ..loadColors()
+        ..loadCategories(),
       child: const _ResultsView(),
     );
   }

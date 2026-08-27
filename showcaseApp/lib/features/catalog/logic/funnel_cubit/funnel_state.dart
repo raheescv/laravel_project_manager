@@ -38,16 +38,33 @@ class FunnelState extends Equatable {
 
   final String? errorMessage;
 
-  List<SizeOption> get youngSizes => _run(SizeGroup.young);
+  /// The size run, as one list.
+  ///
+  /// The server groups sizes into young and adult, but a customer looking for
+  /// their size does not think in those terms — they scan for a number, and
+  /// splitting the run in two means scanning twice and knowing which half to
+  /// scan. So the groups are merged and sorted as a single descending run.
+  ///
+  /// With [inStockOnly] on, sizes with nothing on the shelf are dropped rather
+  /// than struck through: the customer has asked to be shown only what they can
+  /// walk out with, and a greyed-out chip is still an offer.
+  List<SizeOption> get visibleSizes {
+    final rows = sizes.where((s) => !inStockOnly || s.inStock).toList()
+      ..sort(_bySizeDescending);
+    return List.unmodifiable(rows);
+  }
 
-  List<SizeOption> get adultSizes => _run(SizeGroup.adult);
-
-  /// One size run. With [inStockOnly] on, sizes with nothing on the shelf are
-  /// dropped rather than struck through: the customer has asked to be shown
-  /// only what they can walk out with, and a greyed-out chip is still an offer.
-  List<SizeOption> _run(SizeGroup group) => sizes
-      .where((s) => s.group == group && (!inStockOnly || s.inStock))
-      .toList(growable: false);
+  /// Numeric sizes first, largest to smallest, then the lettered ones. Mixing
+  /// "44.5" and "XL" in one comparison has no natural answer, so the two kinds
+  /// are kept apart rather than interleaved arbitrarily.
+  static int _bySizeDescending(SizeOption a, SizeOption b) {
+    final x = double.tryParse(a.size);
+    final y = double.tryParse(b.size);
+    if (x != null && y != null) return y.compareTo(x);
+    if (x != null) return -1;
+    if (y != null) return 1;
+    return a.size.compareTo(b.size);
+  }
 
   int get productsInSize => sizes
       .where((s) => s.size == size)

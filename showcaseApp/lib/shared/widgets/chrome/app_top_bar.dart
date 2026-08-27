@@ -30,56 +30,102 @@ class AppTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
-    final tablet = context.isTablet;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: tablet ? 20 : 14, vertical: 12),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: p.line)),
       ),
+      child: context.isTablet ? _tabletBar(context) : _phoneBar(context),
+    );
+  }
+
+  /// One row. The tablet has the width for everything inline, and the rail
+  /// beside it already carries the mark — a brand row here would be the second
+  /// one on screen and would cost height the tablet has no reason to spend.
+  Widget _tabletBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              if (leading != null) ...[leading!, const SizedBox(width: 12)],
-              if (leading == null) const BrandMark(height: 30),
-              // Only the tablet bar is wide enough to hold the breadcrumbs
-              // inline; on a phone they get their own row below.
-              if (tablet && title != null) ...[
-                const SizedBox(width: 14),
-                Expanded(child: title!),
-              ] else if (tablet) ...[
-                const SizedBox(width: 18),
+              if (leading != null) ...[leading!, const SizedBox(width: _group)],
+              if (title != null)
+                Expanded(child: title!)
+              else
                 Expanded(child: _SearchField(onTap: () => context.push(Routes.search))),
-              ] else
-                // A small flex against the branch pill's large one: the gap
-                // gives way first, so the shop name keeps its room.
-                const Spacer(),
-              const SizedBox(width: 12),
+              const SizedBox(width: _group),
               const StockPill(),
-              const SizedBox(width: 8),
-              // Flexible so a long shop name shortens the pill instead of
-              // overflowing the row — the phone bar has no spare width.
-              Flexible(flex: tablet ? 1 : 6, child: const BranchPill()),
-              if (tablet) ...[
-                const SizedBox(width: 8),
-                IconSquare(
-                  Icons.qr_code_scanner_outlined,
-                  size: 38,
-                  onTap: () => context.push(Routes.scan),
-                ),
-              ] else ...[
-                // Three separate icons do not fit beside a branch name on a
-                // 393pt phone — together they are wider than the bar. They
-                // fold into one menu, which also gets the phone the scanner it
-                // never had.
-                const SizedBox(width: 8),
-                const _OverflowMenu(),
-              ],
+              const SizedBox(width: _gap),
+              const Flexible(child: BranchPill()),
+              const SizedBox(width: _gap),
+              IconSquare(
+                Icons.qr_code_scanner_outlined,
+                size: _control,
+                onTap: () => context.push(Routes.scan),
+              ),
             ],
           ),
-          if (!tablet && title != null) ...[
-            const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
+  /// Two rows: who we are and where you are, then what you can press.
+  ///
+  /// One row could not hold a mark, a back control, a shop name and three
+  /// actions at 320pt — the branch name was squeezed to a couple of characters
+  /// and the breadcrumbs to a sliver. Split, the mark can be set half again as
+  /// large, the shop name never competes for width, and the breadcrumbs get the
+  /// whole line they need. It costs about 50pt of height, which is the trade.
+  Widget _phoneBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              BrandMark(height: 42),
+              SizedBox(width: _group),
+              // Expanded + Align rather than a Spacer beside a Flexible: two
+              // flex children split the slack between them, so the pill ended
+              // up sitting in the middle of the row with empty space to its
+              // right. One flex child that fills and aligns its contents puts
+              // the shop hard against the edge and still lets a long name
+              // shorten inside it.
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: BranchPill(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: _gap),
+          Row(
+            children: [
+              if (leading != null) ...[leading!, const SizedBox(width: _gap)],
+              Expanded(
+                child: _SearchField(
+                  onTap: () => context.push(Routes.search),
+                  // The full prompt does not survive a 320pt row once the
+                  // stock label and the back control have taken their share.
+                  compact: true,
+                ),
+              ),
+              const SizedBox(width: _gap),
+              const StockPill(),
+              const SizedBox(width: _gap),
+              const _OverflowMenu(),
+            ],
+          ),
+          // The funnel's answers, on a line of their own. They used to share
+          // the control row, which left them about 90pt — enough for "42" and
+          // an ellipsis.
+          if (title != null) ...[
+            const SizedBox(height: 9),
             title!,
           ],
         ],
@@ -87,6 +133,13 @@ class AppTopBar extends StatelessWidget {
     );
   }
 }
+
+/// One height and one gap, so the bar has a rhythm rather than a set of
+/// one-off numbers. [_group] separates the two halves of a row; [_gap]
+/// separates siblings inside one.
+const double _control = 38;
+const double _gap = 8;
+const double _group = 14;
 
 /// Phone only: search, scan and appearance behind one control.
 class _OverflowMenu extends StatelessWidget {
@@ -105,7 +158,7 @@ class _OverflowMenu extends StatelessWidget {
       padding: EdgeInsets.zero,
       onSelected: (value) => context.push(value),
       itemBuilder: (context) => [
-        _item(context, Routes.search, Icons.search, 'Search'),
+        // Search left the menu when it got its own field in the control row.
         _item(context, Routes.scan, Icons.qr_code_scanner_outlined, 'Scan a barcode'),
         _item(context, Routes.settings, Icons.tune, 'Appearance'),
       ],
@@ -141,9 +194,12 @@ class _OverflowMenu extends StatelessWidget {
 }
 
 class _SearchField extends StatelessWidget {
-  const _SearchField({required this.onTap});
+  const _SearchField({required this.onTap, this.compact = false});
 
   final VoidCallback onTap;
+
+  /// Shortens the prompt for the phone's control row.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -151,25 +207,41 @@ class _SearchField extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        height: 38,
-        padding: const EdgeInsets.symmetric(horizontal: 13),
+        height: _control,
         decoration: BoxDecoration(color: p.surface, border: Border.all(color: p.line)),
-        child: Row(
-          children: [
-            Icon(Icons.search, size: 15, color: p.faint),
-            const SizedBox(width: 10),
-            // Flexible because the placeholder is long: it fits at the tablet
-            // widths this was drawn at, but a narrower split, a larger text
-            // scale or a fallback font all push it past the field.
-            Flexible(
-              child: Text(
-                'Search by name, code or barcode',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: PearlText.body(11.5).copyWith(color: p.faint),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Below this there is not room for the icon, its gap and a legible
+            // word, so the field becomes the icon rather than overflowing by a
+            // few pixels. It is the most elastic thing in the row — the back
+            // control, the stock label and the menu all have to stay whole.
+            final iconOnly = constraints.maxWidth < 76;
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: iconOnly ? 0 : 12),
+              child: Row(
+                mainAxisAlignment:
+                    iconOnly ? MainAxisAlignment.center : MainAxisAlignment.start,
+                children: [
+                  Icon(Icons.search, size: 15, color: p.faint),
+                  if (!iconOnly) ...[
+                    const SizedBox(width: 9),
+                    // Flexible because the placeholder is long: it fits at the
+                    // tablet widths this was drawn at, but a narrower split, a
+                    // larger text scale or a fallback font all push it past
+                    // the field.
+                    Flexible(
+                      child: Text(
+                        compact ? 'Search' : 'Search by name, code or barcode',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: PearlText.body(11.5).copyWith(color: p.faint),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -190,12 +262,11 @@ class StockPill extends StatelessWidget {
     final p = context.pearl;
     final funnel = context.watch<FunnelCubit>();
     final on = funnel.state.inStockOnly;
-    final tablet = context.isTablet;
     return InkWell(
       onTap: () => funnel.setInStockOnly(!on),
       child: Container(
-        height: 38,
-        padding: EdgeInsets.symmetric(horizontal: tablet ? 12 : 10),
+        height: _control,
+        padding: const EdgeInsets.symmetric(horizontal: 11),
         decoration: BoxDecoration(
           color: on ? p.accent : p.surface,
           border: Border.all(color: on ? p.accent : p.line),
@@ -208,16 +279,17 @@ class StockPill extends StatelessWidget {
               size: 15,
               color: on ? p.accentInk : p.faint,
             ),
-            if (tablet) ...[
-              const SizedBox(width: 8),
-              Text(
-                'In stock',
-                style: PearlText.label.copyWith(
-                  color: on ? p.accentInk : p.muted,
-                  fontSize: 11.5,
-                ),
+            // Labelled everywhere. A lone checkbox in a bar is a control
+            // nobody can name, and this one silently scopes every count on
+            // every screen — it has to say what it does.
+            const SizedBox(width: 7),
+            Text(
+              'In stock',
+              style: PearlText.label.copyWith(
+                color: on ? p.accentInk : p.muted,
+                fontSize: 11.5,
               ),
-            ],
+            ),
           ],
         ),
       ),

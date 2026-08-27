@@ -3,8 +3,8 @@ part of 'theme_cubit.dart';
 class ThemeSettings extends Equatable {
   const ThemeSettings({
     this.mode = ThemeMode.system,
-    this.light = ThemePreset.pearl,
-    this.dark = ThemePreset.pearl,
+    this.light = ThemePreset.aurora,
+    this.dark = ThemePreset.aurora,
   });
 
   final ThemeMode mode;

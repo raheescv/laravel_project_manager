@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../shared/domain/constants/app_config.dart';
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/constants/global_variables.dart';
 import '../../../shared/domain/helpers/formatters.dart';
@@ -113,30 +112,26 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
   ///
   /// A spin that stalls on an uncached frame reads as a broken app rather than a
   /// slow network, so the wait is made explicit and finite instead.
+  ///
+  /// All frames go out at once. Awaiting them one at a time made the wait the
+  /// sum of twenty-four round trips instead of the slowest one — and the
+  /// product page has usually warmed them already, in which case this resolves
+  /// immediately and the viewer opens straight into the spin.
   Future<void> _preload() async {
     if (_count == 0) {
       if (mounted) setState(() => _ready = true);
       return;
     }
-    final config = serviceLocator<AppConfig>();
-    final width = decodeWidthFor(context, MediaQuery.sizeOf(context).width);
-    for (final frame in _frames) {
-      if (!mounted) return;
+    final width = MediaQuery.sizeOf(context).width;
+    await Future.wait(_frames.map((frame) async {
       try {
-        await precacheImage(
-          ResizeImage(
-            NetworkImage(config.assetUrl(frame.url), headers: config.assetHeaders),
-            width: width,
-          ),
-          context,
-        );
+        await precacheImage(photoProvider(context, frame.url, width), context);
       } catch (_) {
         // A single missing frame should not strand the viewer — the spin just
         // shows the previous image for that step.
       }
-      if (!mounted) return;
-      setState(() => _loaded++);
-    }
+      if (mounted) setState(() => _loaded++);
+    }));
     if (mounted) setState(() => _ready = true);
   }
 

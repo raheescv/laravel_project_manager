@@ -13,16 +13,20 @@ part 'theme_state.dart';
 ///
 /// The two presets are held separately on purpose: a shop that wants paper by
 /// day and obsidian after dark should not have to pick one compromise that is
-/// wrong half the time. Pearl is the default in both, so a tablet nobody has
-/// touched looks exactly as it always did.
+/// wrong half the time. Aurora Glass is the default in both, and the mode
+/// follows the device — so an untouched tablet goes light and dark with the
+/// room it is standing in.
 class ThemeCubit extends Cubit<ThemeSettings> {
   ThemeCubit() : super(const ThemeSettings()) {
     emit(ThemeSettings(
       mode: _decode(_storage.themeMode),
-      light: ThemePreset.decode(_storage.lightPreset, ThemePreset.pearl),
-      dark: ThemePreset.decode(_storage.darkPreset, ThemePreset.pearl),
+      light: ThemePreset.decode(_storage.lightPreset, _default),
+      dark: ThemePreset.decode(_storage.darkPreset, _default),
     ));
   }
+
+  /// What a tablet nobody has configured wears, in both modes.
+  static const ThemePreset _default = ThemePreset.aurora;
 
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
 
