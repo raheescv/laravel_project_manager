@@ -1,5 +1,5 @@
-<div class="modal" id="BranchModal" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="BranchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             @livewire('settings.branch.page')
         </div>

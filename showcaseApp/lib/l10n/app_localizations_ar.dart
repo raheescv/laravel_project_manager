@@ -78,18 +78,11 @@ class LAr extends L {
   String get sizesDidNotLoad => 'تعذّر تحميل المقاسات';
 
   @override
-  String get sizeHintInStock =>
-      'تُعرض المقاسات المتوفرة في هذا المتجر فقط. أوقف \"متوفر بالمخزون\" في الأعلى لعرض جميع المقاسات.';
-
-  @override
   String get sizeHintAll =>
       'المقاسات غير المتوفرة مشطوبة — اسأل أحد الموظفين ويمكننا التحقق من الفروع الأخرى.';
 
   @override
   String get available => 'المتوفر';
-
-  @override
-  String get stylesPerSize => 'تصميم لكل مقاس';
 
   @override
   String get noSizes => 'لا توجد مقاسات مسجّلة';
@@ -283,9 +276,6 @@ class LAr extends L {
   }
 
   @override
-  String get otherStores => 'فروع أخرى';
-
-  @override
   String get soldOut => 'نفدت الكمية';
 
   @override
@@ -373,19 +363,16 @@ class LAr extends L {
   String get mode => 'الوضع';
 
   @override
-  String get followDevice => 'حسب الجهاز';
+  String get systemMode => 'النظام';
 
   @override
-  String get day => 'نهاري';
+  String get lightMode => 'فاتح';
 
   @override
-  String get night => 'ليلي';
+  String get darkMode => 'داكن';
 
   @override
-  String get dayPalette => 'ألوان النهار';
-
-  @override
-  String get nightPalette => 'ألوان الليل';
+  String get palette => 'لوحة الألوان';
 
   @override
   String get usedInLight => 'تُستخدم في الوضع النهاري';
@@ -456,7 +443,11 @@ class LAr extends L {
 
   @override
   String get presetAuroraBlurb =>
-      'ضوء نيلي إلى سماوي خلف ألواح ضبابية. الأكثر ودّاً بين الثلاثة.';
+      'ضوء نيلي إلى سماوي خلف ألواح ضبابية. الأكثر ودّاً بينها.';
+
+  @override
+  String get presetSizerunBlurb =>
+      'أبيض ورقي وحبر أسود وكتلة زرقاء كهربائية. ألوان العلامة.';
 
   @override
   String get textSize => 'حجم النص';
@@ -474,8 +465,25 @@ class LAr extends L {
   String get textSizeHint => 'للقراءة من مسافة الذراع عبر الطاولة.';
 
   @override
+  String get sizesPerRow => 'المقاسات في كل صف';
+
+  @override
+  String get sizesPerRowHint => 'في شاشة المقاسات';
+
+  @override
   String get typeface => 'الخط';
 
   @override
   String get typefaceHint => 'يغيّر كل النصوص في التطبيق.';
+
+  @override
+  String searchNoMatchInStock(Object query) {
+    return 'لا يوجد منتج يطابق \"$query\" متوفراً هنا. أوقف \"متوفر بالمخزون\" للبحث في الكتالوج كاملاً.';
+  }
+
+  @override
+  String get allStores => 'كل الفروع';
+
+  @override
+  String get textLargest => 'الأكبر';
 }

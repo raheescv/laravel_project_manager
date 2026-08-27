@@ -84,6 +84,8 @@ void main() {
     expect(TypePreset.neutral.tracking, lessThan(TypePreset.jost.tracking));
   });
 
+  _sizeSteps();
+
   test('in stock is on before anyone touches it', () {
     serviceLocator.registerSingleton<BranchCubit>(BranchCubit());
     expect(FunnelCubit().state.inStockOnly, isTrue);
@@ -101,4 +103,21 @@ class _Stub implements CatalogRepository {
   Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) async => const [];
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+/// The text-size steps themselves. Adding one is cheap; adding one that no
+/// layout has ever been rendered at is not.
+void _sizeSteps() {
+  test('the steps only ever go up, and start at unscaled', () {
+    expect(ThemeCubit.textScales.first, 1);
+    for (var i = 1; i < ThemeCubit.textScales.length; i++) {
+      expect(ThemeCubit.textScales[i], greaterThan(ThemeCubit.textScales[i - 1]));
+    }
+  });
+
+  test('every step has a label to go with it', () {
+    // The picker indexes its labels by step; one more scale than label is an
+    // out-of-range crash the moment somebody opens Appearance.
+    expect(ThemeCubit.textScales.length, 4);
+  });
 }

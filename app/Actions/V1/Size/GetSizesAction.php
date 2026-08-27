@@ -26,11 +26,10 @@ class GetSizesAction
         // outside the global scope.
         $rows = Product::query()
             ->selectRaw('products.size as size, products.size_category as size_category')
-            ->selectRaw('COUNT(DISTINCT products.id) as product_count')
-            // How many of them the customer could actually walk out with. The
-            // same rule the results grid filters on (`in_stock_only`) — a row
-            // with stock at this branch — so the number on the chip is the
-            // number of products the grid behind it will show.
+            // Counted, not returned. The size run shows the sizes and nothing
+            // else, so the only thing the caller needs out of this is whether
+            // there is anything behind each one — and that is a question about
+            // rows with stock, not about a total.
             ->selectRaw('COUNT(DISTINCT CASE WHEN inventories.quantity > 0 THEN products.id END) as in_stock_product_count')
             ->selectRaw('COALESCE(SUM(inventories.quantity), 0) as stock_total')
             ->leftJoin('inventories', function ($join) use ($branchId) {
@@ -66,8 +65,6 @@ class GetSizesAction
 
             $entry = [
                 'size' => $size,
-                'product_count' => (int) $row->product_count,
-                'in_stock_product_count' => $inStockCount,
                 'stock_total' => (int) $row->stock_total,
                 // Availability follows the product count, not the unit total: a
                 // live catalogue accumulates negative quantities, and a size

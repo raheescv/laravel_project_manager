@@ -23,10 +23,8 @@
   "anyBrand": "Any brand",
   "whichSize": "What is your size?",
   "sizesDidNotLoad": "Sizes did not load",
-  "sizeHintInStock": "Only sizes on the shelf here are shown. Turn off \"In stock\" at the top to see the whole size run.",
   "sizeHintAll": "Sizes with nothing on the shelf are struck through — ask a colleague and we can check the other stores.",
   "available": "Available",
-  "stylesPerSize": "styles per size",
   "noSizes": "No sizes recorded",
   "noSizesDetail": "Nothing in this category carries a size yet. Continue to see everything in it.",
   "whichBrand": "Which brand?",
@@ -180,7 +178,6 @@
       }
     }
   },
-  "otherStores": "Other stores",
   "soldOut": "Sold out",
   "onlyLeft": "Only {count}",
   "@onlyLeft": {
@@ -232,11 +229,10 @@
   "cameraBlockedDetail": "Turn the camera on for this app in Settings, then come back.",
   "appearanceIntro": "Set once per tablet. Nothing here leaves the device.",
   "mode": "Mode",
-  "followDevice": "Follow device",
-  "day": "Day",
-  "night": "Night",
-  "dayPalette": "Day palette",
-  "nightPalette": "Night palette",
+  "systemMode": "System",
+  "lightMode": "Light",
+  "darkMode": "Dark",
+  "palette": "Palette",
   "usedInLight": "used in light mode",
   "usedInDark": "used in dark mode",
   "useForBoth": "Use {preset} for both",
@@ -271,12 +267,23 @@
   },
   "presetPearlBlurb": "Cool pearl and graphite. No accent hue at all — selection is an ink block.",
   "presetNoirBlurb": "Ivory paper, ink type, a brass hairline. Reads like a lookbook.",
-  "presetAuroraBlurb": "Indigo-to-cyan light behind frosted panels. The friendliest of the three.",
+  "presetAuroraBlurb": "Indigo-to-cyan light behind frosted panels. The friendliest of the set.",
+  "presetSizerunBlurb": "Paper white, black type, an electric ultramarine block. The house colours.",
   "textSize": "Text size",
   "textStandard": "Standard",
   "textLarge": "Large",
   "textLarger": "Larger",
   "textSizeHint": "For reading at arm’s length across a counter.",
+  "sizesPerRow": "Sizes per row",
+  "sizesPerRowHint": "on the size screen",
   "typeface": "Typeface",
-  "typefaceHint": "Changes every label in the app."
+  "typefaceHint": "Changes every label in the app.",
+  "searchNoMatchInStock": "No product matches \"{query}\" on the shelf here. Turn off \"In stock\" to search the whole catalogue.",
+  "@searchNoMatchInStock": {
+    "placeholders": {
+      "query": {}
+    }
+  },
+  "allStores": "All stores",
+  "textLargest": "Largest"
 }

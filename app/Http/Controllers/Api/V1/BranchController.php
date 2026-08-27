@@ -21,6 +21,7 @@ class BranchController extends Controller
      * @queryParam query string Filter branches by name, code, or location (partial match). Example: Main
      * @queryParam user_id integer Filter branches assigned to a specific user. Example: 1
      * @queryParam assigned_only boolean Filter only branches assigned to the user. Example: true
+     * @queryParam include_hidden boolean Include branches flagged "Exclude from Showcase". Example: false
      *
      * @response 200 {
      *   "success": true,

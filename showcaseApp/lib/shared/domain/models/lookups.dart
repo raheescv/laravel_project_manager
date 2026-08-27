@@ -81,8 +81,6 @@ class SizeOption extends Equatable {
   const SizeOption({
     required this.size,
     required this.group,
-    required this.productCount,
-    required this.inStockProductCount,
     required this.stockTotal,
     required this.inStock,
   });
@@ -92,16 +90,9 @@ class SizeOption extends Equatable {
     // `{size}` alone — treat those as available rather than greying out the
     // entire size run.
     final hasStock = json.containsKey('in_stock');
-    final productCount = asInt(json['product_count']);
     return SizeOption(
       size: asStr(json['size']),
       group: group,
-      productCount: productCount,
-      // Also newer than the first cut: fall back to the plain count so an older
-      // server shows a number rather than a zero.
-      inStockProductCount: json.containsKey('in_stock_product_count')
-          ? asInt(json['in_stock_product_count'])
-          : productCount,
       stockTotal: asInt(json['stock_total']),
       inStock: hasStock ? asBool(json['in_stock']) : true,
     );
@@ -110,25 +101,16 @@ class SizeOption extends Equatable {
   final String size;
   final SizeGroup group;
 
-  /// Every product carrying this size.
-  final int productCount;
-
-  /// How many of them are on the shelf at the active branch — the same rule the
-  /// results grid filters on, so this is what the grid behind the chip holds.
-  final int inStockProductCount;
-
-  /// Units, not products: the sum of the quantities behind [productCount].
+  /// Units on the shelf at the active branch. Not shown — the size run is a
+  /// list of sizes — but it is what a caller would reach for if it ever needed
+  /// a figure, and it costs nothing to carry.
   final int stockTotal;
 
+  /// Whether anything behind this size can actually be sold here.
   final bool inStock;
 
-  /// What the chip should say, given whether the customer asked for stock only.
-  int countFor({required bool inStockOnly}) =>
-      inStockOnly ? inStockProductCount : productCount;
-
   @override
-  List<Object?> get props =>
-      [size, group, productCount, inStockProductCount, stockTotal, inStock];
+  List<Object?> get props => [size, group, stockTotal, inStock];
 }
 
 /// `GET /colors`.

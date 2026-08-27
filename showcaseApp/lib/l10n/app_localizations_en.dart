@@ -79,18 +79,11 @@ class LEn extends L {
   String get sizesDidNotLoad => 'Sizes did not load';
 
   @override
-  String get sizeHintInStock =>
-      'Only sizes on the shelf here are shown. Turn off \"In stock\" at the top to see the whole size run.';
-
-  @override
   String get sizeHintAll =>
       'Sizes with nothing on the shelf are struck through — ask a colleague and we can check the other stores.';
 
   @override
   String get available => 'Available';
-
-  @override
-  String get stylesPerSize => 'styles per size';
 
   @override
   String get noSizes => 'No sizes recorded';
@@ -284,9 +277,6 @@ class LEn extends L {
   }
 
   @override
-  String get otherStores => 'Other stores';
-
-  @override
   String get soldOut => 'Sold out';
 
   @override
@@ -374,19 +364,16 @@ class LEn extends L {
   String get mode => 'Mode';
 
   @override
-  String get followDevice => 'Follow device';
+  String get systemMode => 'System';
 
   @override
-  String get day => 'Day';
+  String get lightMode => 'Light';
 
   @override
-  String get night => 'Night';
+  String get darkMode => 'Dark';
 
   @override
-  String get dayPalette => 'Day palette';
-
-  @override
-  String get nightPalette => 'Night palette';
+  String get palette => 'Palette';
 
   @override
   String get usedInLight => 'used in light mode';
@@ -458,7 +445,11 @@ class LEn extends L {
 
   @override
   String get presetAuroraBlurb =>
-      'Indigo-to-cyan light behind frosted panels. The friendliest of the three.';
+      'Indigo-to-cyan light behind frosted panels. The friendliest of the set.';
+
+  @override
+  String get presetSizerunBlurb =>
+      'Paper white, black type, an electric ultramarine block. The house colours.';
 
   @override
   String get textSize => 'Text size';
@@ -476,8 +467,25 @@ class LEn extends L {
   String get textSizeHint => 'For reading at arm’s length across a counter.';
 
   @override
+  String get sizesPerRow => 'Sizes per row';
+
+  @override
+  String get sizesPerRowHint => 'on the size screen';
+
+  @override
   String get typeface => 'Typeface';
 
   @override
   String get typefaceHint => 'Changes every label in the app.';
+
+  @override
+  String searchNoMatchInStock(Object query) {
+    return 'No product matches \"$query\" on the shelf here. Turn off \"In stock\" to search the whole catalogue.';
+  }
+
+  @override
+  String get allStores => 'All stores';
+
+  @override
+  String get textLargest => 'Largest';
 }

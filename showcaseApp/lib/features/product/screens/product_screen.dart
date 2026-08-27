@@ -434,14 +434,7 @@ class _Info extends StatelessWidget {
                 style: PearlText.micro.copyWith(color: p.ink),
               ),
             ),
-            StockPill(
-              label: switch (product.availabilityStatus) {
-                'in_stock' => L.of(context).inStockCount(product.totalStock.toInt()),
-                'available_in_other_branches' => L.of(context).otherStores,
-                _ => L.of(context).soldOut,
-              },
-              positive: product.availabilityStatus == 'in_stock',
-            ),
+            _HereBadge(count: product.stockAt(branchId)),
           ],
         ),
         const SizedBox(height: 12),
@@ -512,6 +505,33 @@ class _Info extends StatelessWidget {
 
 }
 
+/// What this shop has, in one badge.
+///
+/// Two states, not three: from the shop the customer is standing in, "in
+/// another branch" is the same as "not here", and the availability strip below
+/// already names the shops that do have it.
+///
+/// Counted from the branch's own inventory row rather than the server's
+/// availability status — that field is derived from a session the public API
+/// does not have, so it never reported "in stock" and the badge read "sold
+/// out" over a full shelf.
+class _HereBadge extends StatelessWidget {
+  const _HereBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final here = count > 0;
+    return StockPill(
+      label: here
+          ? L.of(context).inStockCount(count)
+          : L.of(context).soldOut,
+      positive: here,
+    );
+  }
+}
+
 class _PanelHeading extends StatelessWidget {
   const _PanelHeading(this.text, {this.trailing});
 
@@ -554,7 +574,14 @@ class _SizeRun extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 8.0;
-        const columns = 4;
+        // The same rule as the funnel's size run: fit chips at roughly [target]
+        // wide and skip four, which is the count that squeezes them. The panel
+        // is a fixed 348pt column and a phone page is not much wider, so in
+        // practice both land on three.
+        const target = 92.0;
+        final fit =
+            ((constraints.maxWidth + gap) / (target + gap)).round().clamp(3, 12);
+        final columns = fit == 4 ? 3 : fit;
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
         return Wrap(
           spacing: gap,
@@ -629,6 +656,7 @@ class _Availability extends StatelessWidget {
             for (var i = 0; i < stocked.length; i++)
               _BranchName(
                 name: labels[i],
+                count: stocked[i].available,
                 here: stocked[i].branchId == branchId,
               ),
           ],
@@ -664,9 +692,18 @@ List<String> shortenBranchNames(List<String> names) {
 }
 
 class _BranchName extends StatelessWidget {
-  const _BranchName({required this.name, required this.here});
+  const _BranchName({
+    required this.name,
+    required this.count,
+    required this.here,
+  });
 
   final String name;
+
+  /// How many are on that shelf. "Somewhere in the city" and "one left in the
+  /// city" are different answers to whether it is worth the drive, and the
+  /// strip was giving the first when it knew the second.
+  final int count;
 
   /// The shop the tablet is standing in, filled so it reads first.
   final bool here;
@@ -680,13 +717,30 @@ class _BranchName extends StatelessWidget {
         color: here ? p.accent : null,
         border: Border.all(color: here ? p.accent : p.line),
       ),
-      child: Text(
-        name.toUpperCase(),
-        style: PearlText.micro.copyWith(
-          fontSize: 9,
-          letterSpacing: 1.8,
-          color: here ? p.accentInk : p.ink,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            name.toUpperCase(),
+            style: PearlText.micro.copyWith(
+              fontSize: 9,
+              letterSpacing: 1.8,
+              color: here ? p.accentInk : p.ink,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$count',
+            // Untracked and a shade back: the number is the second thing read,
+            // and tracking digits only makes them harder to take in at a
+            // glance.
+            style: PearlText.micro.copyWith(
+              fontSize: 9,
+              letterSpacing: .4,
+              color: here ? p.accentInk.withValues(alpha: .72) : p.faint,
+            ),
+          ),
+        ],
       ),
     );
   }

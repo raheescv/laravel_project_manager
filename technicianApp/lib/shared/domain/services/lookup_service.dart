@@ -47,7 +47,9 @@ class LookupService implements LookupRepository {
 
   @override
   Future<List<Branch>> branches() async {
-    final data = await _http.get('/branches', auth: false);
+    // include_hidden: this is a staff picker, so branches the tenant hides from
+    // the customer showcase must still be selectable here.
+    final data = await _http.get('/branches', auth: false, query: {'include_hidden': 1});
     return ((data as List?) ?? const [])
         .map((e) => Branch.fromJson(Map<String, dynamic>.from(e)))
         .toList();

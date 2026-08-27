@@ -7,6 +7,7 @@ class ThemeSettings extends Equatable {
     this.dark = ThemePreset.aurora,
     this.textScale = 1,
     this.typeface = TypePreset.jost,
+    this.sizeColumns = ThemeCubit.defaultSizeColumns,
   });
 
   final ThemeMode mode;
@@ -23,12 +24,20 @@ class ThemeSettings extends Equatable {
   /// The typeface pairing every label is set in.
   final TypePreset typeface;
 
+  /// How many chips a row of the size run holds.
+  ///
+  /// A number rather than a rule, because the right answer is the shop's: the
+  /// same 11" tablet is a counter-top display in one branch and a handheld in
+  /// another, and the size run is the screen everyone starts on.
+  final int sizeColumns;
+
   ThemeSettings copyWith({
     ThemeMode? mode,
     ThemePreset? light,
     ThemePreset? dark,
     double? textScale,
     TypePreset? typeface,
+    int? sizeColumns,
   }) =>
       ThemeSettings(
         mode: mode ?? this.mode,
@@ -36,8 +45,10 @@ class ThemeSettings extends Equatable {
         dark: dark ?? this.dark,
         textScale: textScale ?? this.textScale,
         typeface: typeface ?? this.typeface,
+        sizeColumns: sizeColumns ?? this.sizeColumns,
       );
 
   @override
-  List<Object?> get props => [mode, light, dark, textScale, typeface];
+  List<Object?> get props =>
+      [mode, light, dark, textScale, typeface, sizeColumns];
 }

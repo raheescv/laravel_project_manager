@@ -84,6 +84,24 @@ class FunnelCubit extends Cubit<FunnelState> {
     if (state.brands.isNotEmpty) await loadBrands();
   }
 
+  /// Put the funnel back the way the next customer should find it.
+  ///
+  /// Called when the tablet has been left alone: the size and brand the last
+  /// person chose are cleared and the stock filter goes back on, because the
+  /// next person walking up has not asked for any of it. The branch is reset
+  /// alongside this by whoever calls it — it is the one piece of the slate
+  /// that does not live here.
+  Future<void> resetForNextCustomer() async {
+    emit(state.copyWith(
+      clearSize: true,
+      clearBrand: true,
+      brands: const [],
+      inStockOnly: true,
+      clearError: true,
+    ));
+    await loadSizes();
+  }
+
   /// Re-entering an earlier step keeps that step's answer and everything before
   /// it, and drops only what came after — going back must never be destructive.
   Future<void> backTo(FunnelStep step) async {

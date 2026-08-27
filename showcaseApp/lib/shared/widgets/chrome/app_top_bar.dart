@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -40,13 +42,23 @@ class AppTopBar extends StatelessWidget {
     // knows to find them, so switching language does not move the controls out
     // from under a customer mid-tap. Arabic *text* inside still shapes and
     // reads right-to-left — this fixes the order of the boxes, not the words.
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: p.line)),
+    return MediaQuery.withClampedTextScaling(
+      // The bar stops growing before the catalogue does.
+      //
+      // "Text size" exists so a customer can read a price at arm's length, and
+      // that is the content — the bar is furniture you tap. Letting its labels
+      // run to the largest step pushed a 320pt phone past its width, and the
+      // thing that would have had to give was the in-stock label, which is the
+      // one control on screen nobody can name without it.
+      maxScaleFactor: _chromeMaxScale,
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: p.line)),
+          ),
+          child: context.isTablet ? _tabletBar(context) : _phoneBar(context),
         ),
-        child: context.isTablet ? _tabletBar(context) : _phoneBar(context),
       ),
     );
   }
@@ -60,26 +72,29 @@ class AppTopBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              if (leading != null) ...[leading!, const SizedBox(width: _group)],
-              if (title != null)
-                Expanded(child: title!)
-              else
-                Expanded(child: _SearchField(onTap: () => context.push(Routes.search))),
-              const SizedBox(width: _group),
-              const StockPill(),
-              const SizedBox(width: _gap),
-              const LanguagePill(),
-              const SizedBox(width: _gap),
-              const Flexible(child: BranchPill()),
-              const SizedBox(width: _gap),
-              IconSquare(
-                Icons.qr_code_scanner_outlined,
-                size: _control,
-                onTap: () => context.push(Routes.scan),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, row) => Row(
+              children: [
+                if (leading != null) ...[leading!, const SizedBox(width: _group)],
+                if (title != null)
+                  Expanded(child: title!)
+                else
+                  Expanded(
+                      child: _SearchField(onTap: () => context.push(Routes.search))),
+                const SizedBox(width: _group),
+                const InStockToggle(),
+                const SizedBox(width: _gap),
+                const LanguagePill(),
+                const SizedBox(width: _gap),
+                _ShrinkTo(width: _branchCap(row.maxWidth), child: const BranchPill()),
+                const SizedBox(width: _gap),
+                IconSquare(
+                  Icons.qr_code_scanner_outlined,
+                  size: _control,
+                  onTap: () => context.push(Routes.scan),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -121,22 +136,27 @@ class AppTopBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: _gap),
-          Row(
-            children: [
-              if (leading != null) ...[leading!, const SizedBox(width: _gap)],
-              Expanded(
-                child: _SearchField(
-                  onTap: () => context.push(Routes.search),
-                  // The full prompt does not survive a 320pt row once the
-                  // stock label and the back control have taken their share.
-                  compact: true,
+          LayoutBuilder(
+            builder: (context, row) => Row(
+              children: [
+                if (leading != null) ...[leading!, const SizedBox(width: _gap)],
+                Expanded(
+                  child: _SearchField(
+                    onTap: () => context.push(Routes.search),
+                    // The full prompt does not survive a 320pt row once the
+                    // stock label and the back control have taken their share.
+                    compact: true,
+                  ),
                 ),
-              ),
-              const SizedBox(width: _gap),
-              const StockPill(),
-              const SizedBox(width: _gap),
-              const _OverflowMenu(),
-            ],
+                const SizedBox(width: _gap),
+                _ShrinkTo(
+                  width: _stockCap(row.maxWidth, leading != null),
+                  child: const InStockToggle(),
+                ),
+                const SizedBox(width: _gap),
+                const _OverflowMenu(),
+              ],
+            ),
           ),
           // The funnel's answers, on a line of their own. They used to share
           // the control row, which left them about 90pt — enough for "42" and
@@ -151,10 +171,62 @@ class AppTopBar extends StatelessWidget {
   }
 }
 
+/// A ceiling, not a share.
+///
+/// The stock toggle and the branch pill used to sit in the row as `Flexible`,
+/// which allots a child half the free space and lets it keep whatever it does
+/// not use — so on anything wider than about a 400pt phone the pair took their
+/// natural width and left the remainder as a hole between the last control and
+/// the edge of the bar. A 1366pt tablet ended its row 378pt short.
+///
+/// As an ordinary child with a maximum instead, each one takes exactly the
+/// width its label needs, the search field beside it absorbs the rest, and the
+/// row reaches the edge at every size. The cap is what the `Flexible` was
+/// really there for: a long shop name, or an Arabic label half again as long
+/// as its English, shortens rather than pushing the row past its width.
+class _ShrinkTo extends StatelessWidget {
+  const _ShrinkTo({required this.width, required this.child});
+
+  final double width;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: width),
+        child: child,
+      );
+}
+
+/// What the stock toggle may take: everything the row has left once the back
+/// control, the menu and the gaps are paid for, less what the field needs to
+/// keep its word. Below that the two share what there is, which is the even
+/// split a 320pt phone already had.
+double _stockCap(double row, bool hasLeading) {
+  final fixed = (hasLeading ? _control + _gap : 0) + _gap * 2 + _control;
+  return math.max(_searchComfort, row - fixed - _searchComfort);
+}
+
+/// The shop name gets a third of the bar. It is one of several controls in the
+/// tablet's row rather than one of two, so a share of the whole is a steadier
+/// ceiling than counting what the others happen to need.
+double _branchCap(double row) => math.max(120, row * .3);
+
 /// One height and one gap, so the bar has a rhythm rather than a set of
 /// one-off numbers. [_group] separates the two halves of a row; [_gap]
 /// separates siblings inside one.
 const double _control = 38;
+
+/// Under this the search field is an icon: there is no room for the glass, its
+/// gap and a legible word.
+const double _searchMin = 76;
+
+/// And under this the word is there but ellipsing. What shares the field's row
+/// is capped so the field is not pushed below it while the row still has space
+/// to give.
+const double _searchComfort = 96;
+
+/// How far the bar's own labels will grow, whatever the text-size setting says.
+const double _chromeMaxScale = 1.25;
 const double _gap = 8;
 const double _group = 14;
 
@@ -232,7 +304,7 @@ class _SearchField extends StatelessWidget {
             // word, so the field becomes the icon rather than overflowing by a
             // few pixels. It is the most elastic thing in the row — the back
             // control, the stock label and the menu all have to stay whole.
-            final iconOnly = constraints.maxWidth < 76;
+            final iconOnly = constraints.maxWidth < _searchMin;
             return Padding(
               padding: EdgeInsets.symmetric(horizontal: iconOnly ? 0 : 12),
               child: Row(
@@ -267,12 +339,15 @@ class _SearchField extends StatelessWidget {
 
 /// "Only what is on the shelf here", on by default.
 ///
+/// Named a toggle rather than a pill because there is a `StockPill` in
+/// `pearl_widgets` that only reports stock — this one changes it.
+///
 /// It lives in the bar rather than in the results filter panel because it is
 /// not a refinement of one screen — it scopes the brand list, the results and
 /// every count the funnel shows. A customer who has said they want stock has
 /// said it for the whole visit.
-class StockPill extends StatelessWidget {
-  const StockPill({super.key});
+class InStockToggle extends StatelessWidget {
+  const InStockToggle({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -300,11 +375,18 @@ class StockPill extends StatelessWidget {
             // nobody can name, and this one silently scopes every count on
             // every screen — it has to say what it does.
             const SizedBox(width: 7),
-            Text(
-              L.of(context).inStock,
-              style: PearlText.label.copyWith(
-                color: on ? p.accentInk : p.muted,
-                fontSize: 11.5,
+            // Flexible: "In stock" is eight characters and its Arabic is
+            // thirteen, so a label that cannot give way turns a bar that fits
+            // in one language into one that overflows in the other.
+            Flexible(
+              child: Text(
+                L.of(context).inStock,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: PearlText.label.copyWith(
+                  color: on ? p.accentInk : p.muted,
+                  fontSize: 11.5,
+                ),
               ),
             ),
           ],
@@ -360,7 +442,7 @@ class BranchPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
-    final branch = context.watch<BranchCubit>().state.selected;
+    final state = context.watch<BranchCubit>().state;
     return InkWell(
       onTap: () => showBranchPicker(context),
       child: Container(
@@ -379,7 +461,9 @@ class BranchPill extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 170),
                 child: Text(
-                  branch?.label ?? L.of(context).chooseStore,
+                  state.showingAll
+                    ? L.of(context).allStores
+                    : state.selected?.label ?? L.of(context).chooseStore,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: PearlText.label.copyWith(color: p.ink, fontSize: 11.5),

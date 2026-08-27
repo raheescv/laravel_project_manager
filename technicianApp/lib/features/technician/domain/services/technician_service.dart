@@ -156,7 +156,9 @@ class TechnicianService implements TechnicianRepository {
 
   @override
   Future<List<BranchOption>> branches() async {
-    final data = await _http.get(EndPoints.branches);
+    // include_hidden: a store flagged "Exclude from Showcase" is still a real
+    // store for supply items — only the customer-facing catalog drops it.
+    final data = await _http.get(EndPoints.branches, query: {'include_hidden': 1});
     final rows = data is List ? data : (data['data'] as List? ?? const []);
     return rows
         .map((e) => BranchOption.fromJson(Map<String, dynamic>.from(e)))

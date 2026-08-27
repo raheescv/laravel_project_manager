@@ -21,10 +21,12 @@ class Branch extends Model
         'location',
         'mobile',
         'moq_sync',
+        'exclude_from_showcase',
     ];
 
     protected $casts = [
         'moq_sync' => 'boolean',
+        'exclude_from_showcase' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -45,6 +47,8 @@ class Branch extends Model
         return array_merge([
             'name' => ['required', Rule::unique(self::class, 'name')->where('tenant_id', $tenantId)->ignore($id)],
             'code' => ['required', Rule::unique(self::class, 'code')->where('tenant_id', $tenantId)->ignore($id)],
+            'moq_sync' => ['sometimes', 'boolean'],
+            'exclude_from_showcase' => ['sometimes', 'boolean'],
         ], $merge);
     }
 

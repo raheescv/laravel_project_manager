@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../domain/models/index.dart';
 import '../logic/branch_cubit/branch_cubit.dart';
 import '../utils/components/theme/pearl_theme.dart';
 import 'pearl_widgets.dart';
@@ -52,13 +51,26 @@ class _BranchSheet extends StatelessWidget {
               child: ListView.builder(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(horizontal: PearlMetrics.pad),
-                itemCount: state.branches.length,
+                // One row longer than the list: "all stores" leads, because
+                // the question it answers — does the company have this at all —
+                // is the one a customer asks before they ask where.
+                itemCount: state.branches.length + 1,
                 itemBuilder: (context, i) {
-                  final branch = state.branches[i];
-                  final selected = branch.id == state.selected?.id;
+                  if (i == 0) {
+                    return _BranchRow(
+                      label: L.of(context).allStores,
+                      selected: state.showingAll,
+                      onTap: () {
+                        context.read<BranchCubit>().selectAll();
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  }
+                  final branch = state.branches[i - 1];
                   return _BranchRow(
-                    branch: branch,
-                    selected: selected,
+                    label: branch.label,
+                    detail: branch.mobile,
+                    selected: !state.showingAll && branch.id == state.selected?.id,
                     onTap: () {
                       context.read<BranchCubit>().select(branch);
                       Navigator.of(context).pop();
@@ -76,9 +88,18 @@ class _BranchSheet extends StatelessWidget {
 }
 
 class _BranchRow extends StatelessWidget {
-  const _BranchRow({required this.branch, required this.selected, required this.onTap});
+  const _BranchRow({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.detail,
+  });
 
-  final Branch branch;
+  final String label;
+
+  /// The shop's phone number. "All stores" has none, which is the whole reason
+  /// this row takes a label and a detail rather than a Branch.
+  final String? detail;
   final bool selected;
   final VoidCallback onTap;
 
@@ -99,12 +120,12 @@ class _BranchRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    branch.label.toUpperCase(),
+                    label.toUpperCase(),
                     style: PearlText.productName(11).copyWith(color: p.ink),
                   ),
-                  if (branch.mobile.isNotEmpty) ...[
+                  if (detail != null && detail!.isNotEmpty) ...[
                     const SizedBox(height: 5),
-                    Text(branch.mobile, style: PearlText.micro.copyWith(color: p.faint)),
+                    Text(detail!, style: PearlText.micro.copyWith(color: p.faint)),
                   ],
                 ],
               ),

@@ -145,7 +145,25 @@ void main() {
         (tester) async {
       // The text-size setting is the thing most likely to break a bar that
       // only just fits: every label grows but the controls around it do not.
-      await pumpBar(tester, entry.value, withBreadcrumbs: true, textScale: 1.25);
+      // Taken from the end of the list rather than written out, so adding a
+      // step to the setting widens this instead of leaving the new one
+      // unchecked.
+      await pumpBar(tester, entry.value,
+          withBreadcrumbs: true, textScale: ThemeCubit.textScales.last);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final entry in sizes.entries) {
+    testWidgets('the top bar survives Arabic at the largest text size on a ${entry.key}',
+        (tester) async {
+      // Arabic labels are longer than their English originals — "In stock" is
+      // eight characters and "متوفر بالمخزون" is thirteen — so a bar that fits
+      // in English is not evidence that it fits.
+      await pumpBar(tester, entry.value,
+          withBreadcrumbs: true,
+          locale: const Locale('ar'),
+          textScale: ThemeCubit.textScales.last);
       expect(tester.takeException(), isNull);
     });
   }
@@ -200,7 +218,7 @@ void main() {
 
     final mark = tester.getRect(find.byType(BrandMark));
     final branch = tester.getRect(find.byType(BranchPill));
-    final stock = tester.getRect(find.byType(StockPill));
+    final stock = tester.getRect(find.byType(InStockToggle));
     final back = tester.getRect(find.byIcon(Icons.arrow_back));
 
     // Brand and shop share the top row.

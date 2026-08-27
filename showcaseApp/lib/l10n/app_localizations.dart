@@ -235,12 +235,6 @@ abstract class L {
   /// **'Sizes did not load'**
   String get sizesDidNotLoad;
 
-  /// No description provided for @sizeHintInStock.
-  ///
-  /// In en, this message translates to:
-  /// **'Only sizes on the shelf here are shown. Turn off \"In stock\" at the top to see the whole size run.'**
-  String get sizeHintInStock;
-
   /// No description provided for @sizeHintAll.
   ///
   /// In en, this message translates to:
@@ -252,12 +246,6 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Available'**
   String get available;
-
-  /// No description provided for @stylesPerSize.
-  ///
-  /// In en, this message translates to:
-  /// **'styles per size'**
-  String get stylesPerSize;
 
   /// No description provided for @noSizes.
   ///
@@ -571,12 +559,6 @@ abstract class L {
   /// **'In stock · {count}'**
   String inStockCount(int count);
 
-  /// No description provided for @otherStores.
-  ///
-  /// In en, this message translates to:
-  /// **'Other stores'**
-  String get otherStores;
-
   /// No description provided for @soldOut.
   ///
   /// In en, this message translates to:
@@ -727,35 +709,29 @@ abstract class L {
   /// **'Mode'**
   String get mode;
 
-  /// No description provided for @followDevice.
+  /// No description provided for @systemMode.
   ///
   /// In en, this message translates to:
-  /// **'Follow device'**
-  String get followDevice;
+  /// **'System'**
+  String get systemMode;
 
-  /// No description provided for @day.
+  /// No description provided for @lightMode.
   ///
   /// In en, this message translates to:
-  /// **'Day'**
-  String get day;
+  /// **'Light'**
+  String get lightMode;
 
-  /// No description provided for @night.
+  /// No description provided for @darkMode.
   ///
   /// In en, this message translates to:
-  /// **'Night'**
-  String get night;
+  /// **'Dark'**
+  String get darkMode;
 
-  /// No description provided for @dayPalette.
+  /// No description provided for @palette.
   ///
   /// In en, this message translates to:
-  /// **'Day palette'**
-  String get dayPalette;
-
-  /// No description provided for @nightPalette.
-  ///
-  /// In en, this message translates to:
-  /// **'Night palette'**
-  String get nightPalette;
+  /// **'Palette'**
+  String get palette;
 
   /// No description provided for @usedInLight.
   ///
@@ -874,8 +850,14 @@ abstract class L {
   /// No description provided for @presetAuroraBlurb.
   ///
   /// In en, this message translates to:
-  /// **'Indigo-to-cyan light behind frosted panels. The friendliest of the three.'**
+  /// **'Indigo-to-cyan light behind frosted panels. The friendliest of the set.'**
   String get presetAuroraBlurb;
+
+  /// No description provided for @presetSizerunBlurb.
+  ///
+  /// In en, this message translates to:
+  /// **'Paper white, black type, an electric ultramarine block. The house colours.'**
+  String get presetSizerunBlurb;
 
   /// No description provided for @textSize.
   ///
@@ -907,6 +889,18 @@ abstract class L {
   /// **'For reading at arm’s length across a counter.'**
   String get textSizeHint;
 
+  /// No description provided for @sizesPerRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sizes per row'**
+  String get sizesPerRow;
+
+  /// No description provided for @sizesPerRowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'on the size screen'**
+  String get sizesPerRowHint;
+
   /// No description provided for @typeface.
   ///
   /// In en, this message translates to:
@@ -918,6 +912,24 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Changes every label in the app.'**
   String get typefaceHint;
+
+  /// No description provided for @searchNoMatchInStock.
+  ///
+  /// In en, this message translates to:
+  /// **'No product matches \"{query}\" on the shelf here. Turn off \"In stock\" to search the whole catalogue.'**
+  String searchNoMatchInStock(Object query);
+
+  /// No description provided for @allStores.
+  ///
+  /// In en, this message translates to:
+  /// **'All stores'**
+  String get allStores;
+
+  /// No description provided for @textLargest.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest'**
+  String get textLargest;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

@@ -23,6 +23,7 @@ class GetBranchesRequest extends FormRequest
     {
         return [
             'query' => ['nullable', 'string', 'max:50'],
+            'include_hidden' => ['nullable', 'boolean'],
         ];
     }
 
@@ -49,6 +50,7 @@ class GetBranchesRequest extends FormRequest
 
         return array_merge([
             'query' => null,
+            'include_hidden' => false,
         ], $validated);
     }
 }

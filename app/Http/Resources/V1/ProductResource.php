@@ -266,7 +266,12 @@ class ProductResource extends JsonResource
             return 'out_of_stock';
         }
 
-        $selectedBranchId = session('branch_id');
+        // The request's branch, then the session's. This endpoint is public
+        // and has no session, so relying on the session alone meant the
+        // selected-branch stock was always zero and a product on the shelf
+        // reported "available in other branches" — or, to a client that
+        // collapses that to "not here", sold out over a full shelf.
+        $selectedBranchId = request()->input('branch_id') ?: session('branch_id');
         $selectedBranchStock = 0;
         $otherBranchesStock = 0;
 

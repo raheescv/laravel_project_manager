@@ -21,9 +21,17 @@ part 'branch_state.dart';
 /// opening screen never shows another shop's stock.
 class BranchCubit extends Cubit<BranchState> {
   BranchCubit() : super(const BranchState()) {
-    _http.activeBranchId = _storage.branchId;
+    final saved = _storage.branchId;
+    // `allBranches` is a choice, so it survives a restart like any other. The
+    // http layer takes null for it, which is what makes the server answer for
+    // the whole chain.
+    _http.activeBranchId = saved == allBranches ? null : saved;
     load();
   }
+
+  /// Stored in place of a branch id to mean "every shop". Zero is never a real
+  /// id, and a sentinel beats a second flag that can disagree with the first.
+  static const int allBranches = 0;
 
   final Completer<void> _resolved = Completer<void>();
 
@@ -44,15 +52,17 @@ class BranchCubit extends Cubit<BranchState> {
   final StreamController<int> _changed = StreamController<int>.broadcast();
   Stream<int> get onBranchChanged => _changed.stream;
 
-  int? get selectedId => state.selected?.id ?? _http.activeBranchId;
+  /// The branch every request is scoped to, or null for the whole chain.
+  int? get selectedId => state.showingAll ? null : (state.selected?.id ?? _http.activeBranchId);
 
   Future<void> load() async {
     emit(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
     try {
       final rows = await _repo.branches();
+      final target = _storage.branchId;
+      final all = target == allBranches;
       Branch? pick;
-      if (rows.isNotEmpty) {
-        final target = _storage.branchId;
+      if (rows.isNotEmpty && !all) {
         pick = rows.firstWhere((b) => b.id == target, orElse: () => rows.first);
         _http.activeBranchId = pick.id;
         await _storage.setBranchId(pick.id);
@@ -61,6 +71,7 @@ class BranchCubit extends Cubit<BranchState> {
         status: DataFetchStatus.success,
         branches: rows,
         selected: pick,
+        showingAll: all,
       ));
     } on ApiException catch (e) {
       emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
@@ -72,11 +83,25 @@ class BranchCubit extends Cubit<BranchState> {
   }
 
   Future<void> select(Branch branch) async {
-    if (branch.id == state.selected?.id) return;
+    if (!state.showingAll && branch.id == state.selected?.id) return;
     _http.activeBranchId = branch.id;
     await _storage.setBranchId(branch.id);
-    emit(state.copyWith(selected: branch));
+    emit(state.copyWith(selected: branch, showingAll: false));
     _changed.add(branch.id);
+  }
+
+  /// Look at the whole chain rather than one shop.
+  ///
+  /// Stock then comes back summed across every branch. That is the honest
+  /// answer to "does the company have this", and it is a different question
+  /// from "can I hand it to you now" — which is why the availability strip
+  /// still breaks it down by shop.
+  Future<void> selectAll() async {
+    if (state.showingAll) return;
+    _http.activeBranchId = null;
+    await _storage.setBranchId(allBranches);
+    emit(state.copyWith(showingAll: true, clearSelected: true));
+    _changed.add(allBranches);
   }
 
   @override

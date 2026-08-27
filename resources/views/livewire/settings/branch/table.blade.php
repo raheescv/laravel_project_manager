@@ -43,6 +43,7 @@
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="location" label="location" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mobile" label="mobile" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="exclude_from_showcase" label="showcase" /> </th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -57,6 +58,17 @@
                             <td>{{ $item->name }}</td>
                             <td>{{ $item->location }}</td>
                             <td>{{ $item->mobile }}</td>
+                            <td>
+                                @if ($item->exclude_from_showcase)
+                                    <span class="badge bg-warning-subtle text-warning-emphasis" title="Hidden from the public catalog API">
+                                        <i class="fa fa-eye-slash"></i> Excluded
+                                    </span>
+                                @else
+                                    <span class="badge bg-success-subtle text-success-emphasis" title="Listed by the public catalog API">
+                                        <i class="fa fa-eye"></i> Listed
+                                    </span>
+                                @endif
+                            </td>
                             <td>
                                 @can('branch.edit')
                                     <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>

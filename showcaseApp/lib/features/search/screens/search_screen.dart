@@ -7,9 +7,11 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/router/routes.dart';
+import '../../../shared/widgets/chrome/app_top_bar.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/product_card.dart';
+import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../../catalog/logic/product_list_cubit/product_list_cubit.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -20,7 +22,15 @@ class SearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider<ProductListCubit>(
-        create: (_) => ProductListCubit(),
+        // Search obeys the same stock rule as the rest of the app. It is the
+        // one place that used not to, on the grounds that a scan should never
+        // come back empty because of a filter set on another screen — so the
+        // control is put in this bar too, and the empty state names it.
+        create: (_) => ProductListCubit(
+          filters: ProductFilters(
+            inStockOnly: context.read<FunnelCubit>().state.inStockOnly,
+          ),
+        ),
         child: const _SearchView(),
       );
 }
@@ -68,20 +78,26 @@ class _SearchViewState extends State<_SearchView> {
     _debounce = Timer(const Duration(milliseconds: 320), () {
       if (!mounted) return;
       final query = value.trim();
+      final inStockOnly = context.read<FunnelCubit>().state.inStockOnly;
       context.read<ProductListCubit>().apply(
             query.isEmpty
-                ? const ProductFilters()
-                : ProductFilters(search: query),
+                ? ProductFilters(inStockOnly: inStockOnly)
+                : ProductFilters(search: query, inStockOnly: inStockOnly),
           );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<ProductListCubit>().state;
+    final list = context.watch<ProductListCubit>();
+    final state = list.state;
     final query = _controller.text.trim();
 
-    return ShowcaseScaffold(
+    return BlocListener<FunnelCubit, FunnelState>(
+      listenWhen: (a, b) => a.inStockOnly != b.inStockOnly,
+      listener: (context, funnel) =>
+          list.apply(state.filters.copyWith(inStockOnly: funnel.inStockOnly)),
+      child: ShowcaseScaffold(
       showRail: false,
       topBar: _SearchBar(
         controller: _controller,
@@ -93,6 +109,7 @@ class _SearchViewState extends State<_SearchView> {
         },
       ),
       body: _Body(state: state, query: query, scroll: _scroll),
+      ),
     );
   }
 }
@@ -119,7 +136,9 @@ class _SearchBar extends StatelessWidget {
       child: Row(
         children: [
           IconSquare(Icons.arrow_back, size: 40, onTap: () => context.pop()),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
+          const InStockToggle(),
+          const SizedBox(width: 10),
           Expanded(
             child: Container(
               height: 40,
@@ -194,7 +213,9 @@ class _Body extends StatelessWidget {
     if (state.items.isEmpty) {
       return MessageState(
         title: L.of(context).nothingFound,
-        detail: L.of(context).searchNoMatch(query),
+        detail: state.filters.inStockOnly
+            ? L.of(context).searchNoMatchInStock(query)
+            : L.of(context).searchNoMatch(query),
       );
     }
     return ProductGrid(

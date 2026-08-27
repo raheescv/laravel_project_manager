@@ -66,10 +66,6 @@ class FunnelState extends Equatable {
     return a.size.compareTo(b.size);
   }
 
-  int get productsInSize => sizes
-      .where((s) => s.size == size)
-      .fold<int>(0, (sum, s) => sum + s.productCount);
-
   int get brandTotal => brands.fold<int>(0, (sum, b) => sum + b.productCount);
 
   /// The furthest step the customer has reached — drives the funnel column.

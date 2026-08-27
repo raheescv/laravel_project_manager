@@ -255,6 +255,21 @@ class Product extends Equatable {
 
   /// Branches with something on the shelf first, then the rest — a customer
   /// asking "where can I get it" should not have to read past the empty ones.
+  /// What is on the shelf at [branchId], from the per-branch rows.
+  ///
+  /// Not `totalStock`, which sums every shop, and not `availabilityStatus`,
+  /// which the detail endpoint derives from a session the public API does not
+  /// have — so it never says "in stock" no matter what is on the shelf. The
+  /// inventory rows are the thing that is actually true, and they are what the
+  /// availability strip is drawn from, so this keeps the two agreeing.
+  int stockAt(int? branchId) {
+    if (branchId == null) return inventories.fold(0, (sum, i) => sum + i.available);
+    for (final line in inventories) {
+      if (line.branchId == branchId) return line.available;
+    }
+    return 0;
+  }
+
   List<InventoryLine> branchesByStock(int? activeBranchId) {
     final rows = [...inventories];
     rows.sort((a, b) {

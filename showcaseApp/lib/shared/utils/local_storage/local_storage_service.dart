@@ -17,12 +17,14 @@ class LocalStorageService {
   static const _kTypeface = 'typeface';
   static const _kLightPreset = 'theme_preset_light';
   static const _kDarkPreset = 'theme_preset_dark';
-  static const _kGridColumns = 'grid_columns';
+  static const _kSizeColumns = 'size_columns';
   static const _kBaseUrl = 'base_url';
   static const _kTenant = 'tenant';
   static const _kSpinHintSeen = 'spin_hint_seen';
   static const _kReservations = 'reservations';
 
+  /// The chosen shop, or [BranchCubit.allBranches] for "all stores". Null when
+  /// nobody has chosen yet, which is different from having chosen all.
   int? get branchId => _prefs.getInt(_kBranchId);
   Future<void> setBranchId(int id) => _prefs.setInt(_kBranchId, id);
 
@@ -51,8 +53,10 @@ class LocalStorageService {
   String? get darkPreset => _prefs.getString(_kDarkPreset);
   Future<void> setDarkPreset(String name) => _prefs.setString(_kDarkPreset, name);
 
-  int get gridColumns => _prefs.getInt(_kGridColumns) ?? 0; // 0 = auto
-  Future<void> setGridColumns(int n) => _prefs.setInt(_kGridColumns, n);
+  /// How many size chips a row of the size run holds. 0 until the staff pick,
+  /// so the default lives with the theme rather than being repeated here.
+  int get sizeColumns => _prefs.getInt(_kSizeColumns) ?? 0;
+  Future<void> setSizeColumns(int n) => _prefs.setInt(_kSizeColumns, n);
 
   String? get baseUrl => _prefs.getString(_kBaseUrl);
   String? get tenant => _prefs.getString(_kTenant);

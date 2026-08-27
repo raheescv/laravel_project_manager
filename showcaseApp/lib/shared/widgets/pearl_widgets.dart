@@ -173,7 +173,6 @@ class PearlChip extends StatelessWidget {
   const PearlChip({
     super.key,
     required this.label,
-    this.sub,
     this.selected = false,
     this.available = true,
     this.onTap,
@@ -182,16 +181,6 @@ class PearlChip extends StatelessWidget {
   });
 
   final String label;
-
-  /// A secondary figure, set quietly in the top-right corner rather than under
-  /// the label.
-  ///
-  /// Stacking the two put a number directly beneath a number doing a different
-  /// job, so the eye had to stop on every chip to tell the size from its count
-  /// — sixty stops on a full size run. In the corner the label is
-  /// unmistakably the subject and the count is available without being read.
-  final String? sub;
-
   final bool selected;
   final bool available;
   final VoidCallback? onTap;
@@ -229,19 +218,6 @@ class PearlChip extends StatelessWidget {
                     .copyWith(color: fg, fontSize: labelSize, letterSpacing: .9),
               ),
             ),
-            if (sub != null)
-              Positioned(
-                top: 6,
-                right: 8,
-                child: Text(
-                  sub!.toUpperCase(),
-                  style: PearlText.micro.copyWith(
-                    fontSize: 9,
-                    letterSpacing: .4,
-                    color: selected ? p.accentInk.withValues(alpha: .7) : p.faint,
-                  ),
-                ),
-              ),
             // Never strike through the current selection: the chip the customer
             // is standing on reading as unavailable is just confusing.
             if (!available && !selected)

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/helpers/responsive.dart';
 import '../../../shared/domain/models/index.dart';
+import '../../../shared/logic/theme_cubit/theme_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/widgets/chrome/app_top_bar.dart';
 import '../../../shared/widgets/chrome/funnel_column.dart';
@@ -95,26 +96,24 @@ class _SizeBody extends StatelessWidget {
           t.whichSize,
           style: PearlText.display(tablet ? 30 : 26).copyWith(color: p.ink),
         ),
-        const SizedBox(height: 10),
-        Text(
-          state.inStockOnly
-              ? t.sizeHintInStock
-              : t.sizeHintAll,
-          style: PearlText.body(12).copyWith(color: p.muted),
-        ),
-        if (run.isNotEmpty) ...[
-          SectionHeading(
-            t.available,
-            meta: t.stylesPerSize,
-            padding: const EdgeInsets.only(top: 24, bottom: 12),
+        // Only when the run is showing sizes that cannot be sold, because then
+        // the strike-through needs explaining. With the stock filter on there
+        // is nothing to explain — every chip on screen is one you can have.
+        if (!state.inStockOnly) ...[
+          const SizedBox(height: 10),
+          Text(
+            t.sizeHintAll,
+            style: PearlText.body(12).copyWith(color: p.muted),
           ),
+        ],
+        if (run.isNotEmpty) ...[
+          const SizedBox(height: 22),
           // `state.size` rather than a local selection: the only thing worth
           // marking is the answer already given, for someone who reopened the
           // step to change it.
           _SizeWrap(
             sizes: run,
             selected: state.size,
-            inStockOnly: state.inStockOnly,
             onTap: onTapSize,
           ),
         ],
@@ -135,27 +134,26 @@ class _SizeWrap extends StatelessWidget {
   const _SizeWrap({
     required this.sizes,
     required this.selected,
-    required this.inStockOnly,
     required this.onTap,
   });
 
   final List<SizeOption> sizes;
   final String? selected;
-  final bool inStockOnly;
   final void Function(String) onTap;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Fit as many chips as the row will take at roughly [target] wide,
-        // rather than picking a column count per breakpoint. A size chip holds
-        // four characters however wide the screen is, so the width is what
-        // should stay put — the number of columns is the thing that gives.
-        const target = 100.0;
+        // The count is a setting, not a rule read off the width.
+        //
+        // It was a rule, and the rule was wrong on the screens that matter: a
+        // chip's width is worth more than a fourth column on a phone, and a
+        // counter-top tablet has the room for six. Neither is derivable from
+        // the width alone — the same 11" tablet is a display in one branch and
+        // a handheld in another — so Appearance asks, and this obeys.
         const gap = 10.0;
-        final columns =
-            ((constraints.maxWidth + gap) / (target + gap)).round().clamp(4, 12);
+        final columns = context.watch<ThemeCubit>().state.sizeColumns;
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
         return Wrap(
           spacing: gap,
@@ -166,14 +164,9 @@ class _SizeWrap extends StatelessWidget {
                 width: width,
                 child: PearlChip(
                   label: size.size,
-                  // How many products, not how many units: the chip is a
-                  // promise about the grid behind it, and the grid counts
-                  // products. Bare, like the brand badge — the heading above
-                  // names the unit once rather than every chip repeating it.
-                  sub: '${size.countFor(inStockOnly: inStockOnly)}',
-                  // Taller than the default: the count sits in the corner, so
-                  // the label needs the middle of the chip to itself rather
-                  // than sharing a column with it.
+                  // No count. The run is long and a number on every chip made
+                  // it a table to read rather than a row to scan — the size is
+                  // the only thing being chosen here.
                   height: 58,
                   selected: size.size == selected,
                   available: size.inStock,

@@ -15,6 +15,11 @@ class GetBranchesAction
         $filters = $request->validatedWithDefaults();
 
         $query = Branch::select(['id', 'name', 'code', 'location', 'mobile'])
+            // Back-office branches (warehouse / head office / online ledger) are
+            // flagged in Settings → Branch and never reach the public catalog.
+            ->unless($filters['include_hidden'] ?? false, function ($q) {
+                return $q->where('exclude_from_showcase', false);
+            })
             ->when($filters['query'] ?? null, function ($q, $value) {
                 return $q->where(function ($query) use ($value) {
                     $query->where('name', 'like', "%{$value}%")

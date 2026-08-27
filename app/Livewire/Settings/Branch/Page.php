@@ -48,12 +48,14 @@ class Page extends Component
                 'location' => '',
                 'mobile' => '',
                 'moq_sync' => false,
+                'exclude_from_showcase' => false,
             ];
         } else {
             $branch = Branch::find($this->table_id);
             $this->branches = $branch->toArray();
-            // Ensure moq_sync is a boolean
+            // Ensure the toggles are booleans
             $this->branches['moq_sync'] = (bool) $this->branches['moq_sync'];
+            $this->branches['exclude_from_showcase'] = (bool) ($this->branches['exclude_from_showcase'] ?? false);
         }
     }
 

@@ -28,6 +28,8 @@ class ThemeCubit extends Cubit<ThemeSettings> {
       dark: ThemePreset.decode(_storage.darkPreset, _default),
       textScale: _storage.textScale == 0 ? 1 : _storage.textScale,
       typeface: typeface,
+      sizeColumns:
+          _storage.sizeColumns == 0 ? defaultSizeColumns : _storage.sizeColumns,
     ));
   }
 
@@ -66,9 +68,23 @@ class ThemeCubit extends Cubit<ThemeSettings> {
     await _storage.setDarkPreset(preset.name);
   }
 
-  /// The sizes offered. Beyond about a quarter up, a bar that fits at 320pt
-  /// stops fitting — these are the steps the layouts were checked at.
-  static const List<double> textScales = [1, 1.12, 1.25];
+  /// The sizes offered, and the only sizes the layouts are checked at — the
+  /// overflow tests take their largest case from the end of this list, so
+  /// adding a step here widens what they cover rather than going untested.
+  static const List<double> textScales = [1, 1.12, 1.25, 1.4];
+
+  /// The counts offered for the size run, and what a tablet nobody has
+  /// configured shows. Three because it is the one count that fits every
+  /// screen the app runs on; a counter-top tablet will want more, which is
+  /// what the setting is for.
+  static const List<int> sizeColumnOptions = [3, 4, 5, 6];
+  static const int defaultSizeColumns = 3;
+
+  Future<void> setSizeColumns(int columns) async {
+    if (columns == state.sizeColumns) return;
+    emit(state.copyWith(sizeColumns: columns));
+    await _storage.setSizeColumns(columns);
+  }
 
   Future<void> setTypeface(TypePreset preset) async {
     if (preset == state.typeface) return;
