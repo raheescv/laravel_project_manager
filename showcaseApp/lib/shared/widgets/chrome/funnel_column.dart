@@ -23,25 +23,26 @@ class FunnelColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // One rule for every row, rather than a special case per step: a step the
+    // customer has not reached yet shows nothing, the one they are on says so,
+    // and a passed step shows its answer — or the skip, which is an answer too.
+    String value(FunnelStep step, String? answer, String skipped) {
+      if (step.index > current.index) return '—';
+      if (step == current && answer == null) return 'Choosing…';
+      return answer ?? skipped;
+    }
+
     final steps = <_StepData>[
-      _StepData(FunnelStep.category, 'Category', state.category?.name ?? '—'),
+      _StepData(FunnelStep.size, 'Size', value(FunnelStep.size, state.size, 'Any size')),
       _StepData(
-        FunnelStep.size,
-        'Size',
-        state.size ??
-            // "Any size" is an answer, not a prompt — it must not appear while
-            // the step is still the one being answered.
-            (current == FunnelStep.size
-                ? 'Choosing…'
-                : state.category == null
-                    ? '—'
-                    : 'Any size'),
+        FunnelStep.category,
+        'Department',
+        value(FunnelStep.category, state.category?.name, 'Everything'),
       ),
       _StepData(
         FunnelStep.brand,
         'Brand',
-        state.brand?.name ??
-            (current == FunnelStep.brand ? 'Choosing…' : 'Any brand'),
+        value(FunnelStep.brand, state.brand?.name, 'Any brand'),
       ),
       _StepData(
         FunnelStep.results,
@@ -173,8 +174,8 @@ class FunnelBreadcrumbs extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.pearl;
     final crumbs = <(FunnelStep, String)>[
-      if (state.category != null) (FunnelStep.category, state.category!.name),
       if (state.size != null) (FunnelStep.size, state.size!),
+      if (state.category != null) (FunnelStep.category, state.category!.name),
       if (state.brand != null) (FunnelStep.brand, state.brand!.name),
     ];
 

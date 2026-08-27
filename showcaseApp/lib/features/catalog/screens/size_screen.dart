@@ -11,54 +11,21 @@ import '../../../shared/widgets/chrome/app_top_bar.dart';
 import '../../../shared/widgets/chrome/funnel_column.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
-import '../../../shared/widgets/product_card.dart';
 import '../logic/funnel_cubit/funnel_cubit.dart';
-import '../logic/product_list_cubit/product_list_cubit.dart';
 import 'funnel_navigation.dart';
 
 /// Step 2 — the size run.
 ///
-/// Tapping a size is the answer: it commits the choice and moves to the brand
-/// step, because a chip that only highlights and waits for a second tap on a
-/// button somewhere else is a step people stall on.
+/// Tapping a size is the whole interaction: it commits the choice and moves to
+/// the brand step. No preview column, no Continue — a chip that only highlights
+/// and waits for a second tap on a button somewhere else is a step people
+/// stall on, and the size run is long enough that the button is often off
+/// screen by the time they have found their size.
 ///
-/// The wide layout is the exception. There the aside can show the consequence
-/// of the choice — a live count and the first few products in that size — so a
-/// tap fills it and Continue commits. Deciding without seeing what it gets you
-/// is the thing the phone funnel cannot avoid and the big screen can.
+/// The grid therefore gets the full width of the screen, and the chip's own
+/// "19 left" / struck-through "none" carries the stock story the aside used to.
 class SizeScreen extends StatelessWidget {
   const SizeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider<ProductListCubit>(
-      create: (_) => ProductListCubit(),
-      child: const _SizeView(),
-    );
-  }
-}
-
-class _SizeView extends StatefulWidget {
-  const _SizeView();
-
-  @override
-  State<_SizeView> createState() => _SizeViewState();
-}
-
-class _SizeViewState extends State<_SizeView> {
-  String? _previewSize;
-
-  /// Wide tablet only: fill the aside with what this size gets you. Narrower
-  /// layouts have nowhere to show it, so there a tap goes straight on.
-  void _preview(BuildContext context, FunnelState state, String size) {
-    if (_previewSize == size) return;
-    setState(() => _previewSize = size);
-    context.read<ProductListCubit>().apply(ProductFilters(
-          mainCategoryId: state.category?.id,
-          size: size,
-          inStockOnly: state.inStockOnly,
-        ));
-  }
 
   Future<void> _choose(BuildContext context, String size) async {
     await context.read<FunnelCubit>().chooseSize(size);
@@ -72,7 +39,8 @@ class _SizeViewState extends State<_SizeView> {
 
     return ShowcaseScaffold(
       topBar: AppTopBar(
-        leading: IconSquare(Icons.arrow_back, size: 38, onTap: () => context.go(Routes.browse)),
+        // Step 1 is the root of the funnel — there is nothing behind it, so the
+        // bar keeps the wordmark rather than offering a back control.
         title: context.isTablet
             ? null
             : FunnelBreadcrumbs(
@@ -82,7 +50,6 @@ class _SizeViewState extends State<_SizeView> {
               ),
       ),
       leftColumn: _LeftColumn(state: state),
-      rightColumn: _Aside(state: state, previewSize: _previewSize),
       body: switch (state.sizesStatus) {
         DataFetchStatus.failed => MessageState(
             title: 'Sizes did not load',
@@ -91,41 +58,17 @@ class _SizeViewState extends State<_SizeView> {
             onAction: funnel.loadSizes,
           ),
         DataFetchStatus.waiting when state.sizes.isEmpty => const _SizeSkeleton(),
-        _ => _SizeBody(
-            state: state,
-            previewSize: _previewSize,
-            onTapSize: (size) => context.isWide
-                ? _preview(context, state, size)
-                : _choose(context, size),
-          ),
+        _ => _SizeBody(state: state, onTapSize: (size) => _choose(context, size)),
       },
+      // "Any size" is the only thing left to press, so it takes the bar.
       bottomBar: PinnedBar(
-        child: Row(
-          children: [
-            Expanded(
-              child: PearlButton(
-                label: 'Any size',
-                ghost: true,
-                onTap: () async {
-                  await funnel.skipSize();
-                  if (context.mounted) context.go(Routes.brand);
-                },
-              ),
-            ),
-            // Only the wide layout previews first, so only it needs a separate
-            // Continue. Everywhere else the chip itself is the button.
-            if (context.isWide) ...[
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: PearlButton(
-                  label: _previewSize == null ? 'Choose a size' : 'Continue · ${_previewSize!}',
-                  icon: Icons.arrow_forward,
-                  onTap: _previewSize == null ? null : () => _choose(context, _previewSize!),
-                ),
-              ),
-            ],
-          ],
+        child: PearlButton(
+          label: 'Any size',
+          ghost: true,
+          onTap: () async {
+            await funnel.skipSize();
+            if (context.mounted) context.go(Routes.brand);
+          },
         ),
       ),
     );
@@ -133,14 +76,9 @@ class _SizeViewState extends State<_SizeView> {
 }
 
 class _SizeBody extends StatelessWidget {
-  const _SizeBody({
-    required this.state,
-    required this.previewSize,
-    required this.onTapSize,
-  });
+  const _SizeBody({required this.state, required this.onTapSize});
 
   final FunnelState state;
-  final String? previewSize;
   final void Function(String) onTapSize;
 
   @override
@@ -160,17 +98,23 @@ class _SizeBody extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          'Sizes with nothing on the shelf are struck through — ask a colleague and '
-          'we can check the other stores.',
+          state.inStockOnly
+              ? 'Only sizes on the shelf here are shown. Turn off "In stock" at the '
+                  'top to see the whole size run.'
+              : 'Sizes with nothing on the shelf are struck through — ask a colleague '
+                  'and we can check the other stores.',
           style: PearlText.body(12).copyWith(color: p.muted),
         ),
         if (young.isNotEmpty) ...[
           const ColumnHeading('Young'),
-          _SizeWrap(sizes: young, selected: previewSize, onTap: onTapSize),
+          // `state.size` rather than a local selection: the only thing worth
+          // marking is the answer already given, for someone who reopened the
+          // step to change it.
+          _SizeWrap(sizes: young, selected: state.size, onTap: onTapSize),
         ],
         if (adult.isNotEmpty) ...[
           const ColumnHeading('Adult'),
-          _SizeWrap(sizes: adult, selected: previewSize, onTap: onTapSize),
+          _SizeWrap(sizes: adult, selected: state.size, onTap: onTapSize),
         ],
         if (young.isEmpty && adult.isEmpty)
           const Padding(
@@ -197,13 +141,14 @@ class _SizeWrap extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = switch (constraints.maxWidth) {
-          >= 900 => 7,
-          >= 640 => 6,
-          >= 420 => 5,
-          _ => 4,
-        };
+        // Fit as many chips as the row will take at roughly [target] wide,
+        // rather than picking a column count per breakpoint. A size chip holds
+        // four characters however wide the screen is, so the width is what
+        // should stay put — the number of columns is the thing that gives.
+        const target = 100.0;
         const gap = 10.0;
+        final columns =
+            ((constraints.maxWidth + gap) / (target + gap)).round().clamp(4, 12);
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
         return Wrap(
           spacing: gap,
@@ -267,102 +212,4 @@ class _LeftColumn extends StatelessWidget {
           ],
         ),
       );
-}
-
-/// The right-hand column: what choosing this size actually gets you.
-class _Aside extends StatelessWidget {
-  const _Aside({required this.state, required this.previewSize});
-
-  final FunnelState state;
-  final String? previewSize;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.pearl;
-    final list = context.watch<ProductListCubit>().state;
-    final count = previewSize == null ? null : list.total;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Hairline(
-            filled: true,
-            padding: const EdgeInsets.all(15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  count?.toString() ?? '—',
-                  style: PearlText.display(30).copyWith(color: p.ink),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  previewSize == null
-                      ? 'Pick a size to see what is in it'
-                      : 'products in size $previewSize',
-                  style: PearlText.body(11).copyWith(color: p.muted),
-                ),
-              ],
-            ),
-          ),
-          const ColumnHeading('In this size'),
-          _LivePreview(previewSize: previewSize, columns: 2),
-        ],
-      ),
-    );
-  }
-}
-
-class _LivePreview extends StatelessWidget {
-  const _LivePreview({required this.previewSize, this.columns = 3});
-
-  final String? previewSize;
-  final int columns;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.pearl;
-    final state = context.watch<ProductListCubit>().state;
-
-    if (previewSize == null) {
-      return Text(
-        'Nothing chosen yet.',
-        style: PearlText.body(11.5).copyWith(color: p.faint),
-      );
-    }
-    if (state.status.isWaiting && state.items.isEmpty) {
-      return const SkeletonBlock(height: 150);
-    }
-    if (state.items.isEmpty) {
-      return Text(
-        'Nothing in this size at this store.',
-        style: PearlText.body(11.5).copyWith(color: p.faint),
-      );
-    }
-
-    final rows = state.items.take(columns * 2).toList();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const gap = PearlMetrics.gap;
-        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-        return Wrap(
-          spacing: gap,
-          runSpacing: 18,
-          children: [
-            for (final product in rows)
-              SizedBox(
-                width: width,
-                child: ProductCard(
-                  product: product,
-                  width: width,
-                  compact: true,
-                  onTap: () => context.push(Routes.productById(product.id)),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
 }

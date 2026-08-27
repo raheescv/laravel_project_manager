@@ -4,7 +4,7 @@ import '../models/index.dart';
 /// read path — the funnel, the product page and the store list all come from
 /// the same public catalog API.
 abstract class CatalogRepository {
-  Future<List<CategoryOption>> categories();
+  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly});
 
   /// Both size runs for a category, already split into young / adult.
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId});
@@ -39,7 +39,7 @@ abstract class CatalogRepository {
   /// There is no `/products/{id}/related` endpoint; this is composed from the
   /// list endpoint's own filters, which is why it lives behind the repository
   /// rather than in a screen.
-  Future<List<Product>> related(Product product, {int limit});
+  Future<List<Product>> related(Product product, {int limit, bool inStockOnly});
 
   Future<List<Branch>> branches();
 

@@ -13,6 +13,7 @@ import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/photo.dart';
 import '../../../shared/widgets/product_card.dart';
+import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_cubit/product_cubit.dart';
 import 'reserve_sheet.dart';
 
@@ -29,7 +30,10 @@ class ProductScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider<ProductCubit>(
-        create: (_) => ProductCubit(productId: productId),
+        create: (_) => ProductCubit(
+          productId: productId,
+          inStockOnly: context.read<FunnelCubit>().state.inStockOnly,
+        ),
         child: const _ProductView(),
       );
 }

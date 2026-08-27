@@ -12,11 +12,18 @@ part 'product_state.dart';
 /// One product page. Detail first, related after — the rail sits below the fold
 /// and must never hold up the photo, the price or the stock.
 class ProductCubit extends Cubit<ProductState> {
-  ProductCubit({required this.productId}) : super(const ProductState()) {
+  ProductCubit({required this.productId, this.inStockOnly = true})
+      : super(const ProductState()) {
     load();
   }
 
   final int productId;
+
+  /// The funnel's global "in stock at this store". A customer who has asked to
+  /// be shown only what they can walk out with means it for the related rail
+  /// too — passed in rather than read from the cubit so the product page stays
+  /// openable from a deep link with no funnel behind it.
+  final bool inStockOnly;
 
   CatalogRepository get _repo => serviceLocator<CatalogRepository>();
 
@@ -39,7 +46,7 @@ class ProductCubit extends Cubit<ProductState> {
   Future<void> _loadRelated(Product product) async {
     emit(state.copyWith(relatedStatus: DataFetchStatus.waiting));
     try {
-      final rows = await _repo.related(product);
+      final rows = await _repo.related(product, inStockOnly: inStockOnly);
       emit(state.copyWith(relatedStatus: DataFetchStatus.success, related: rows));
     } on ApiException {
       // A missing rail is a quiet degradation, not a failed page.

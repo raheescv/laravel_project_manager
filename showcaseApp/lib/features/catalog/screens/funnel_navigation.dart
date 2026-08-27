@@ -15,8 +15,8 @@ Future<void> reopenFunnelStep(BuildContext context, FunnelStep step) async {
   await funnel.backTo(step);
   if (!context.mounted) return;
   context.go(switch (step) {
-    FunnelStep.category => Routes.browse,
     FunnelStep.size => Routes.size,
+    FunnelStep.category => Routes.category,
     FunnelStep.brand => Routes.brand,
     FunnelStep.results => Routes.results,
   });

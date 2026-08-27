@@ -14,6 +14,7 @@ import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/local_storage/local_storage_service.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/photo.dart';
+import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_cubit/product_cubit.dart';
 
 /// The 360° viewer.
@@ -32,7 +33,10 @@ class SpinViewerScreen extends StatelessWidget {
     final known = product;
     if (known != null) return _SpinViewer(product: known);
     return BlocProvider<ProductCubit>(
-      create: (_) => ProductCubit(productId: productId),
+      create: (_) => ProductCubit(
+          productId: productId,
+          inStockOnly: context.read<FunnelCubit>().state.inStockOnly,
+        ),
       child: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, state) {
           if (state.status.isFailed) {

@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../../../features/catalog/screens/brand_screen.dart';
-import '../../../features/catalog/screens/browse_screen.dart';
+import '../../../features/catalog/screens/category_screen.dart';
 import '../../../features/catalog/screens/results_screen.dart';
 import '../../../features/catalog/screens/size_screen.dart';
 import '../../../features/product/screens/product_screen.dart';
@@ -20,15 +20,15 @@ const String _startAt = String.fromEnvironment('START_AT');
 /// The whole app is one read path, so there are no guards and no redirects —
 /// every route is reachable without a session.
 GoRouter createRouter() => GoRouter(
-      initialLocation: _startAt.isEmpty ? Routes.browse : _startAt,
+      initialLocation: _startAt.isEmpty ? Routes.size : _startAt,
       routes: [
-        GoRoute(
-          path: Routes.browse,
-          builder: (context, state) => const BrowseScreen(),
-        ),
         GoRoute(
           path: Routes.size,
           builder: (context, state) => const SizeScreen(),
+        ),
+        GoRoute(
+          path: Routes.category,
+          builder: (context, state) => const CategoryScreen(),
         ),
         GoRoute(
           path: Routes.brand,

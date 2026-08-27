@@ -13,22 +13,68 @@ part 'funnel_state.dart';
 /// Owns the whole funnel: the choices made so far and the options for each step.
 ///
 /// One cubit rather than three because the steps are not independent — choosing
-/// a category invalidates the size run, choosing a size re-scopes the brand
+/// a size re-scopes the categories, choosing a category re-scopes the brand
 /// counts, and the tablet layout shows all of it at once. Splitting them would
 /// mean choreographing three cubits to stay consistent.
 class FunnelCubit extends Cubit<FunnelState> {
   FunnelCubit() : super(const FunnelState()) {
-    loadCategories();
+    loadSizes();
     _branch.onBranchChanged.listen((_) => _reloadForBranch());
   }
 
   CatalogRepository get _repo => serviceLocator<CatalogRepository>();
   BranchCubit get _branch => serviceLocator<BranchCubit>();
 
-  Future<void> loadCategories() async {
-    emit(state.copyWith(categoriesStatus: DataFetchStatus.waiting, clearError: true));
+  /// Step 1's options. Every size in the catalogue — there is nothing chosen
+  /// yet to narrow them by, and the per-size stock figure comes from the branch.
+  Future<void> loadSizes() async {
+    emit(state.copyWith(sizesStatus: DataFetchStatus.waiting, clearError: true));
     try {
-      final rows = await _repo.categories();
+      await _branch.ready;
+      final rows = await _repo.sizes(branchId: _branch.selectedId);
+      emit(state.copyWith(sizesStatus: DataFetchStatus.success, sizes: rows));
+    } on ApiException catch (e) {
+      emit(state.copyWith(sizesStatus: DataFetchStatus.failed, errorMessage: e.message));
+    }
+  }
+
+  /// Choosing a size drops everything downstream of it — the category counts
+  /// were taken in a different size and would send the customer to an empty
+  /// grid.
+  Future<void> chooseSize(String size) async {
+    emit(state.copyWith(
+      size: size,
+      clearCategory: true,
+      clearBrand: true,
+      categories: const [],
+      brands: const [],
+      clearError: true,
+    ));
+    await loadCategories();
+  }
+
+  /// Skipping a step is a first-class action, not a hidden link: plenty of
+  /// customers know the brand but not the size, or the reverse.
+  Future<void> skipSize() async {
+    emit(state.copyWith(
+      clearSize: true,
+      clearCategory: true,
+      clearBrand: true,
+      categories: const [],
+      brands: const [],
+    ));
+    await loadCategories();
+  }
+
+  Future<void> loadCategories() async {
+    emit(state.copyWith(categoriesStatus: DataFetchStatus.waiting));
+    try {
+      await _branch.ready;
+      final rows = await _repo.categories(
+        size: state.size,
+        branchId: _branch.selectedId,
+        inStockOnly: state.inStockOnly,
+      );
       emit(state.copyWith(
         categoriesStatus: DataFetchStatus.success,
         categories: rows,
@@ -41,55 +87,22 @@ class FunnelCubit extends Cubit<FunnelState> {
     }
   }
 
-  /// Choosing a category drops everything downstream of it — the old size run
-  /// belongs to a different category and would silently filter the results.
   Future<void> chooseCategory(CategoryOption category) async {
-    emit(state.copyWith(
-      category: category,
-      clearSize: true,
-      clearBrand: true,
-      sizes: const [],
-      brands: const [],
-      clearError: true,
-    ));
-    await loadSizes();
-  }
-
-  Future<void> loadSizes() async {
-    final category = state.category;
-    if (category == null) return;
-    emit(state.copyWith(sizesStatus: DataFetchStatus.waiting));
-    try {
-      await _branch.ready;
-      final rows = await _repo.sizes(
-        mainCategoryId: category.id,
-        branchId: _branch.selectedId,
-      );
-      emit(state.copyWith(sizesStatus: DataFetchStatus.success, sizes: rows));
-    } on ApiException catch (e) {
-      emit(state.copyWith(sizesStatus: DataFetchStatus.failed, errorMessage: e.message));
-    }
-  }
-
-  Future<void> chooseSize(String size) async {
-    emit(state.copyWith(size: size, clearBrand: true, brands: const []));
+    emit(state.copyWith(category: category, clearBrand: true, brands: const []));
     await loadBrands();
   }
 
-  /// Skipping a step is a first-class action, not a hidden link: plenty of
-  /// customers know the brand but not the size, or the reverse.
-  Future<void> skipSize() async {
-    emit(state.copyWith(clearSize: true, clearBrand: true, brands: const []));
+  /// The category step is skippable too — "everything in my size".
+  Future<void> skipCategory() async {
+    emit(state.copyWith(clearCategory: true, clearBrand: true, brands: const []));
     await loadBrands();
   }
 
   Future<void> loadBrands() async {
-    final category = state.category;
-    if (category == null) return;
     emit(state.copyWith(brandsStatus: DataFetchStatus.waiting));
     try {
       final rows = await _repo.brands(
-        mainCategoryId: category.id,
+        mainCategoryId: state.category?.id,
         size: state.size,
         inStockOnly: state.inStockOnly,
       );
@@ -101,12 +114,14 @@ class FunnelCubit extends Cubit<FunnelState> {
 
   /// Flip "in stock at this store" for the whole funnel.
   ///
-  /// The brand counts are server-side and have to be refetched; the size chips
-  /// already carry their own stock figure, so they only need redrawing.
+  /// The category and brand counts are scoped server-side and have to be
+  /// refetched. The size chips already carry their own stock figure, so the
+  /// size run only needs redrawing — [FunnelState] drops the empty ones.
   Future<void> setInStockOnly(bool value) async {
     if (value == state.inStockOnly) return;
     emit(state.copyWith(inStockOnly: value));
-    if (state.category != null) await loadBrands();
+    if (state.categories.isNotEmpty) await loadCategories();
+    if (state.brands.isNotEmpty) await loadBrands();
   }
 
   void chooseBrand(BrandOption brand) => emit(state.copyWith(brand: brand));
@@ -117,17 +132,18 @@ class FunnelCubit extends Cubit<FunnelState> {
   /// it, and drops only what came after — going back must never be destructive.
   Future<void> backTo(FunnelStep step) async {
     switch (step) {
-      case FunnelStep.category:
+      case FunnelStep.size:
         emit(state.copyWith(
-          clearCategory: true,
           clearSize: true,
+          clearCategory: true,
           clearBrand: true,
-          sizes: const [],
+          categories: const [],
           brands: const [],
         ));
-      case FunnelStep.size:
-        emit(state.copyWith(clearSize: true, clearBrand: true, brands: const []));
         if (state.sizes.isEmpty) await loadSizes();
+      case FunnelStep.category:
+        emit(state.copyWith(clearCategory: true, clearBrand: true, brands: const []));
+        if (state.categories.isEmpty) await loadCategories();
       case FunnelStep.brand:
         emit(state.copyWith(clearBrand: true));
         if (state.brands.isEmpty) await loadBrands();
@@ -136,8 +152,11 @@ class FunnelCubit extends Cubit<FunnelState> {
     }
   }
 
+  /// Every count on screen is branch-relative once "in stock" is on, so a
+  /// branch switch re-asks for whichever steps have already been loaded.
   Future<void> _reloadForBranch() async {
-    // Only the size run is branch-sensitive; categories and brands are not.
-    if (state.category != null) await loadSizes();
+    await loadSizes();
+    if (state.categories.isNotEmpty) await loadCategories();
+    if (state.brands.isNotEmpty) await loadBrands();
   }
 }

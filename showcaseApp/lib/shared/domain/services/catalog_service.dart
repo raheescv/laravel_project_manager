@@ -10,8 +10,18 @@ class CatalogService implements CatalogRepository {
   HttpService get _http => serviceLocator<HttpService>();
 
   @override
-  Future<List<CategoryOption>> categories() async {
-    final data = await _http.get(EndPoints.categories);
+  Future<List<CategoryOption>> categories({
+    String? size,
+    int? branchId,
+    bool inStockOnly = true,
+  }) async {
+    // Scoped the same way /brands and /sizes are: the funnel asks for a size
+    // first, so a category's count has to mean "in that size", not "in total".
+    final data = await _http.get(EndPoints.categories, query: {
+      if (size != null && size.isNotEmpty) 'size': size,
+      if (branchId != null) 'branch_id': branchId,
+      'available_products_only': inStockOnly,
+    });
     return asMapList(data).map(CategoryOption.fromJson).toList(growable: false);
   }
 
@@ -110,10 +120,15 @@ class CatalogService implements CatalogRepository {
   }
 
   @override
-  Future<List<Product>> related(Product product, {int limit = 12}) async {
+  Future<List<Product>> related(
+    Product product, {
+    int limit = 12,
+    bool inStockOnly = true,
+  }) async {
     final page = await products(
       mainCategoryId: product.mainCategory?.id,
       brandId: product.brand?.id,
+      inStockOnly: inStockOnly,
       perPage: limit + 1,
     );
     final rows = page.items.where((p) => p.id != product.id).toList();
@@ -124,6 +139,7 @@ class CatalogService implements CatalogRepository {
     if (rows.length < 4 && product.mainCategory != null) {
       final wider = await products(
         mainCategoryId: product.mainCategory?.id,
+        inStockOnly: inStockOnly,
         perPage: limit + 1,
       );
       final seen = rows.map((p) => p.id).toSet()..add(product.id);

@@ -30,7 +30,7 @@ class AppRail extends StatelessWidget {
           _RailIcon(
             icon: Icons.grid_view_outlined,
             selected: active == 0,
-            onTap: () => context.go(Routes.browse),
+            onTap: () => context.go(Routes.size),
           ),
           _RailIcon(
             icon: Icons.search,

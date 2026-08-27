@@ -32,7 +32,7 @@ class BrandScreen extends StatelessWidget {
 
     return ShowcaseScaffold(
       topBar: AppTopBar(
-        leading: IconSquare(Icons.arrow_back, size: 38, onTap: () => context.go(Routes.size)),
+        leading: IconSquare(Icons.arrow_back, size: 38, onTap: () => context.go(Routes.category)),
         title: context.isTablet
             ? null
             : FunnelBreadcrumbs(
