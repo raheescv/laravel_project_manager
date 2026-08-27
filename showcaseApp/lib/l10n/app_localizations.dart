@@ -133,12 +133,6 @@ abstract class L {
   /// **'Stock counts on every screen describe the store shown here.'**
   String get storeHint;
 
-  /// No description provided for @scanBarcode.
-  ///
-  /// In en, this message translates to:
-  /// **'Scan a barcode'**
-  String get scanBarcode;
-
   /// No description provided for @appearance.
   ///
   /// In en, this message translates to:
@@ -211,16 +205,10 @@ abstract class L {
   /// **'Choosing…'**
   String get choosing;
 
-  /// No description provided for @anySize.
+  /// The first tile in the brand grid: skip the question and see every brand.
   ///
   /// In en, this message translates to:
-  /// **'Any size'**
-  String get anySize;
-
-  /// No description provided for @anyBrand.
-  ///
-  /// In en, this message translates to:
-  /// **'Any brand'**
+  /// **'All brands'**
   String get anyBrand;
 
   /// No description provided for @whichSize.
@@ -240,12 +228,6 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Sizes with nothing on the shelf are struck through — ask a colleague and we can check the other stores.'**
   String get sizeHintAll;
-
-  /// No description provided for @available.
-  ///
-  /// In en, this message translates to:
-  /// **'Available'**
-  String get available;
 
   /// No description provided for @noSizes.
   ///
@@ -270,18 +252,6 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Brands did not load'**
   String get brandsDidNotLoad;
-
-  /// No description provided for @stylesPerBrand.
-  ///
-  /// In en, this message translates to:
-  /// **'styles per brand'**
-  String get stylesPerBrand;
-
-  /// No description provided for @stylesPerBrandInSize.
-  ///
-  /// In en, this message translates to:
-  /// **'styles per brand in size {size}'**
-  String stylesPerBrandInSize(Object size);
 
   /// No description provided for @showEveryBrand.
   ///
@@ -337,6 +307,12 @@ abstract class L {
   /// **'Skip ahead'**
   String get skipAhead;
 
+  /// No description provided for @backToHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to home'**
+  String get backToHome;
+
   /// No description provided for @filterAndSort.
   ///
   /// In en, this message translates to:
@@ -354,12 +330,6 @@ abstract class L {
   /// In en, this message translates to:
   /// **'{count} products'**
   String productsCount(int count);
-
-  /// No description provided for @shownCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} shown'**
-  String shownCount(int count);
 
   /// No description provided for @sortBy.
   ///
@@ -462,12 +432,6 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Has a 360° view'**
   String get has360;
-
-  /// No description provided for @appliedToLoaded.
-  ///
-  /// In en, this message translates to:
-  /// **'Applied to loaded results'**
-  String get appliedToLoaded;
 
   /// No description provided for @showResults.
   ///
@@ -595,6 +559,12 @@ abstract class L {
   /// **'Not on the shelf at any store right now.'**
   String get notOnShelf;
 
+  /// No description provided for @sizeNotOnShelf.
+  ///
+  /// In en, this message translates to:
+  /// **'No store has {size} right now.'**
+  String sizeNotOnShelf(String size);
+
   /// No description provided for @storeCount.
   ///
   /// In en, this message translates to:
@@ -612,18 +582,6 @@ abstract class L {
   /// In en, this message translates to:
   /// **'You may also like'**
   String get youMayAlsoLike;
-
-  /// No description provided for @reserveInStore.
-  ///
-  /// In en, this message translates to:
-  /// **'Reserve in store'**
-  String get reserveInStore;
-
-  /// No description provided for @reserveDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'We will note this on the tablet and tell a colleague. Nothing is ordered and nothing is charged.'**
-  String get reserveDetail;
 
   /// No description provided for @fieldCode.
   ///
@@ -654,48 +612,6 @@ abstract class L {
   /// In en, this message translates to:
   /// **'On the shelf'**
   String get onTheShelf;
-
-  /// No description provided for @noteAndClose.
-  ///
-  /// In en, this message translates to:
-  /// **'Note it and close'**
-  String get noteAndClose;
-
-  /// No description provided for @barcodeNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'No product carries the barcode {code}.'**
-  String barcodeNotFound(Object code);
-
-  /// No description provided for @cameraAccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Camera access'**
-  String get cameraAccess;
-
-  /// No description provided for @cameraDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'The scanner reads the barcode on a shoe box and opens that product. The camera is only used while this screen is open.'**
-  String get cameraDetail;
-
-  /// No description provided for @allowCamera.
-  ///
-  /// In en, this message translates to:
-  /// **'Allow the camera'**
-  String get allowCamera;
-
-  /// No description provided for @cameraBlocked.
-  ///
-  /// In en, this message translates to:
-  /// **'Camera is blocked'**
-  String get cameraBlocked;
-
-  /// No description provided for @cameraBlockedDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn the camera on for this app in Settings, then come back.'**
-  String get cameraBlockedDetail;
 
   /// No description provided for @appearanceIntro.
   ///
@@ -781,18 +697,6 @@ abstract class L {
   /// **'Cannot reach the store. Check the connection and try again.'**
   String get cannotReach;
 
-  /// No description provided for @openSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Open settings'**
-  String get openSettings;
-
-  /// No description provided for @lookingUp.
-  ///
-  /// In en, this message translates to:
-  /// **'Looking it up'**
-  String get lookingUp;
-
   /// No description provided for @searching.
   ///
   /// In en, this message translates to:
@@ -814,7 +718,7 @@ abstract class L {
   /// No description provided for @searchEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Type a name, a product code, or scan a barcode.'**
+  /// **'Type a name or a product code.'**
   String get searchEmpty;
 
   /// No description provided for @searchNoMatch.
@@ -822,12 +726,6 @@ abstract class L {
   /// In en, this message translates to:
   /// **'No product matches \"{query}\" in this store.'**
   String searchNoMatch(Object query);
-
-  /// No description provided for @reserveIntro.
-  ///
-  /// In en, this message translates to:
-  /// **'We will note this on the tablet and tell a colleague. Nothing is ordered and nothing is charged.'**
-  String get reserveIntro;
 
   /// No description provided for @underAmount.
   ///
@@ -901,6 +799,18 @@ abstract class L {
   /// **'on the size screen'**
   String get sizesPerRowHint;
 
+  /// No description provided for @productsPerRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Products per row'**
+  String get productsPerRow;
+
+  /// No description provided for @productsPerRowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'on the results and search screens'**
+  String get productsPerRowHint;
+
   /// No description provided for @typeface.
   ///
   /// In en, this message translates to:
@@ -930,6 +840,48 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Largest'**
   String get textLargest;
+
+  /// No description provided for @allSizes.
+  ///
+  /// In en, this message translates to:
+  /// **'All sizes'**
+  String get allSizes;
+
+  /// The first plate in the size run: skip the question and see everything. One word, because it is set on a square plate beside four-character sizes.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get anySize;
+
+  /// No description provided for @resetTimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset after'**
+  String get resetTimer;
+
+  /// No description provided for @resetTimerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Minutes of no touch before the panel returns to the start and forgets the last customer.'**
+  String get resetTimerHint;
+
+  /// No description provided for @minutesUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get minutesUnit;
+
+  /// Footer line at the foot of Appearance naming the installed build, e.g. Version 1.0.0 (1).
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String appVersion(Object version);
+
+  /// No description provided for @resetTimerRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Between {min} and {max} minutes.'**
+  String resetTimerRange(int min, int max);
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

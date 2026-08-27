@@ -168,6 +168,73 @@ it('prefers an explicit thumbnail over the image fallback', function (): void {
     expect($rows[0]['thumbnail'])->toBe('https://cdn.test/chosen.png');
 });
 
+/** Give [product] a spin sequence of [frames] angle images. */
+function spinFrames(Product $product, int $frames): void
+{
+    foreach (range(1, $frames) as $i) {
+        DB::table('product_images')->insert([
+            'product_id' => $product->id,
+            'method' => 'angle',
+            'path' => "https://cdn.test/spin-{$product->id}-{$i}.png",
+            'name' => "spin{$i}",
+            'degree' => $i * 15,
+            'sort_order' => $i,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+}
+
+it('narrows the list to products with a 360° spin', function (): void {
+    // The showcase's "Has a 360° view" filter. It cannot be done client-side:
+    // the frames are a detail-view payload, so a list row has nothing to test.
+    $spun = makeProduct($this->world, ['name' => 'Spun Shoe']);
+    spinFrames($spun, 24);
+    makeProduct($this->world, ['name' => 'Flat Shoe']);
+
+    $rows = listProducts($this->world, ['has_360' => 1]);
+
+    expect(collect($rows)->pluck('id')->all())->toBe([$spun->id]);
+});
+
+it('does not count a single stray angle image as a spin', function (): void {
+    // One leftover upload is not a sequence, and every client hides the 360°
+    // affordance below two frames — a row returned on the strength of one
+    // would come back looking exactly like a product with no spin at all.
+    $stray = makeProduct($this->world, ['name' => 'One Frame']);
+    spinFrames($stray, 1);
+
+    expect(collect(listProducts($this->world, ['has_360' => 1]))->pluck('id'))
+        ->not->toContain($stray->id);
+});
+
+it('tells every card whether there is a spin behind it', function (): void {
+    // Without this the 360° badge never appeared on a result: the list omits
+    // the frames, so a card had no way to know one existed.
+    $spun = makeProduct($this->world, ['name' => 'Spun Shoe']);
+    spinFrames($spun, 24);
+
+    expect(listProducts($this->world, ['product_id' => $spun->id])[0]['has_360'])->toBeTrue()
+        ->and(listProducts($this->world, ['product_id' => $this->world->product->id])[0]['has_360'])
+        ->toBeFalse();
+});
+
+it('counts only the products the spin filter left', function (): void {
+    // The count drives the pagination and the "N products" heading, so it has
+    // to be the filtered one — the filter runs in SQL, not over the page.
+    $spun = makeProduct($this->world, ['name' => 'Spun Shoe']);
+    spinFrames($spun, 6);
+    makeProduct($this->world, ['name' => 'Flat Shoe']);
+
+    cache()->flush();
+    $response = test()->getJson($this->world->url('/api/v1/products?'.http_build_query([
+        'has_360' => 1,
+        'in_stock_only' => 0,
+    ])));
+
+    expect($response->json('data.pagination.total'))->toBe(1);
+});
+
 it('keeps the list to the card shape, leaving the detail record to the detail routes', function (): void {
     $rows = listProducts($this->world, ['product_id' => $this->world->product->id]);
 

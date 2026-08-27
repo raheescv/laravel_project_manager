@@ -1,19 +1,19 @@
 import 'dart:math' as math;
 
+// `ValueListenable` — the frame the three moving parts of this screen follow.
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/constants/global_variables.dart';
-import '../../../shared/domain/helpers/formatters.dart';
-import '../../../shared/domain/helpers/responsive.dart';
 import '../../../shared/domain/models/index.dart';
+import '../../../shared/logic/funnel_cubit/funnel_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/local_storage/local_storage_service.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/photo.dart';
-import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_cubit/product_cubit.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -81,7 +81,19 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
   final TransformationController _zoom = TransformationController();
 
   _Mode _mode = _Mode.spin;
-  int _frame = 0;
+
+  /// Which frame is facing the customer.
+  ///
+  /// A notifier rather than a field behind `setState`, because this changes on
+  /// every frame of a drag and every frame of the glide that follows it. Under
+  /// `setState` each of those rebuilt the whole viewer — the scaffold, the top
+  /// bar, the mode bar, the ticker and the stage — to swap one photograph, which
+  /// is the screen in this app most likely to be moving when somebody is
+  /// watching it. Three places listen, and only those three redraw. It also
+  /// stays quiet when a slow glide crosses several ticks without reaching the
+  /// next frame: a `ValueNotifier` says nothing when the value has not moved.
+  final ValueNotifier<int> _frame = ValueNotifier(0);
+
   double _position = 0;
   double _dragAnchor = 0;
   int _loaded = 0;
@@ -106,6 +118,7 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
       ..removeListener(_onGlide)
       ..dispose();
     _zoom.dispose();
+    _frame.dispose();
     super.dispose();
   }
 
@@ -124,24 +137,26 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
       return;
     }
     final width = MediaQuery.sizeOf(context).width;
-    await Future.wait(_frames.map((frame) async {
-      try {
-        await precacheImage(photoProvider(context, frame.url, width), context);
-      } catch (_) {
-        // A single missing frame should not strand the viewer — the spin just
-        // shows the previous image for that step.
-      }
-      if (mounted) setState(() => _loaded++);
-    }));
+    // A few at a time, not all two dozen: asking for every frame at once makes
+    // them all slow rather than any of them fast, and the counter stops moving.
+    await runBounded(
+      _frames.map((frame) => () async {
+            await precacheImage(photoProvider(context, frame.url, width), context);
+            if (mounted) setState(() => _loaded++);
+          }),
+      concurrency: 4,
+      // An image fetch has no timeout of its own, so one frame that never
+      // arrives would leave this viewer counting forever. Past this the spin
+      // opens with whatever landed — a stutter at one angle beats a screen
+      // that never opens.
+    ).timeout(const Duration(seconds: 20), onTimeout: () {});
     if (mounted) setState(() => _ready = true);
   }
 
   void _onGlide() {
     if (!mounted) return;
-    setState(() {
-      _position = _glide.value;
-      _frame = _wrap(_position.round());
-    });
+    _position = _glide.value;
+    _frame.value = _wrap(_position.round());
   }
 
   int _wrap(int index) => _count == 0 ? 0 : ((index % _count) + _count) % _count;
@@ -158,10 +173,8 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
   void _onDragUpdate(DragUpdateDetails details) {
     if (!_ready || _count == 0) return;
     _dragAnchor += details.delta.dx / _dragPerFrame;
-    setState(() {
-      _position = _dragAnchor;
-      _frame = _wrap(_position.round());
-    });
+    _position = _dragAnchor;
+    _frame.value = _wrap(_position.round());
   }
 
   /// A flick keeps turning and eases out, the way a real turntable would.
@@ -185,7 +198,13 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
   /// upload order rather than a turntable. A readout that climbs 2° → 3° → 5°
   /// across a full rotation is worse than no readout, so unless the labels
   /// actually span most of a turn they are ignored in favour of an even split.
-  bool get _anglesAreReal {
+  /// Read once. The frames do not change under this screen, and the readout
+  /// that asks for it is redrawn on every frame of a spin — a full scan of a
+  /// seventy-two frame sequence per turn of the wheel is a scan per answer that
+  /// was already known.
+  late final bool _anglesAreReal = _readAngles();
+
+  bool _readAngles() {
     if (_count < 2) return false;
     var min = _frames.first.degree;
     var max = min;
@@ -196,10 +215,10 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
     return (max - min) >= 180;
   }
 
-  double get _degrees {
+  double _degreesAt(int frame) {
     if (_count == 0) return 0;
-    if (_anglesAreReal) return _frames[_frame].degree;
-    return (360 / _count) * _frame;
+    if (_anglesAreReal) return _frames[frame].degree;
+    return (360 / _count) * frame;
   }
 
   @override
@@ -221,7 +240,8 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
           children: [
             _TopBar(
               product: product,
-              degrees: _degrees,
+              frame: _frame,
+              degreesAt: _degreesAt,
               showDegrees: hasSpin && mode == _Mode.spin,
             ),
             Expanded(
@@ -248,14 +268,12 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
                         _Mode.zoom => _ZoomStage(
                             controller: _zoom,
                             url: hasSpin
-                                ? _frames[_frame].url
+                                ? _frames[_frame.value].url
                                 : (gallery.isEmpty ? '' : gallery[_galleryIndex]),
                           ),
                       },
                     ),
                   ),
-                  if (context.isTablet)
-                    Positioned(top: 16, right: 16, child: _ProductCardOverlay(product: product)),
                   if (hasSpin && mode == _Mode.spin && _ready)
                     Positioned(
                       left: 0,
@@ -286,12 +304,17 @@ class _SpinViewerState extends State<_SpinViewer> with SingleTickerProviderState
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.product,
-    required this.degrees,
+    required this.frame,
+    required this.degreesAt,
     required this.showDegrees,
   });
 
   final Product product;
-  final double degrees;
+
+  /// The readout is the only thing up here that moves with the spin, so it is
+  /// the only thing that listens to it.
+  final ValueListenable<int> frame;
+  final double Function(int) degreesAt;
   final bool showDegrees;
 
   @override
@@ -302,7 +325,8 @@ class _TopBar extends StatelessWidget {
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: p.line))),
       child: Row(
         children: [
-          IconSquare(Icons.close, size: 38, onTap: () => context.pop()),
+          IconSquare(Icons.close,
+              size: 38, prominent: true, onTap: () => context.pop()),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
@@ -313,11 +337,14 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           if (showDegrees)
-            Text(
-              '${degrees.round()}°',
-              style: PearlText.price(15).copyWith(
-                color: p.ink,
-                fontFeatures: const [FontFeature.tabularFigures()],
+            ValueListenableBuilder<int>(
+              valueListenable: frame,
+              builder: (context, i, _) => Text(
+                '${degreesAt(i).round()}°',
+                style: PearlText.price(15).copyWith(
+                  color: p.ink,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
             ),
         ],
@@ -338,7 +365,7 @@ class _SpinStage extends StatelessWidget {
   });
 
   final List<ProductImage> frames;
-  final int frame;
+  final ValueListenable<int> frame;
   final bool ready;
   final int loaded;
   final GestureDragStartCallback onDragStart;
@@ -353,11 +380,18 @@ class _SpinStage extends StatelessWidget {
       onHorizontalDragStart: onDragStart,
       onHorizontalDragUpdate: onDragUpdate,
       onHorizontalDragEnd: onDragEnd,
+      // The listener is inside the LayoutBuilder, not around it: the stage does
+      // not change size while it is being turned, and re-measuring it once a
+      // frame to hand back the same width is the work this screen can least
+      // afford.
       child: LayoutBuilder(
-        builder: (context, constraints) => Photo(
-          url: frames[frame].url,
-          width: constraints.maxWidth,
-          padding: EdgeInsets.all(context.isTablet ? 60 : 30),
+        builder: (context, constraints) => ValueListenableBuilder<int>(
+          valueListenable: frame,
+          builder: (context, i, _) => Photo(
+            url: frames[i].url,
+            width: constraints.maxWidth,
+            padding: const EdgeInsets.all(30),
+          ),
         ),
       ),
     );
@@ -426,7 +460,7 @@ class _GalleryStage extends StatelessWidget {
         builder: (context, constraints) => Photo(
           url: urls[i],
           width: constraints.maxWidth,
-          padding: EdgeInsets.all(context.isTablet ? 60 : 30),
+          padding: const EdgeInsets.all(30),
         ),
       ),
     );
@@ -468,7 +502,7 @@ class _Ticker extends StatelessWidget {
   const _Ticker({required this.count, required this.frame, required this.showHint});
 
   final int count;
-  final int frame;
+  final ValueListenable<int> frame;
   final bool showHint;
 
   @override
@@ -476,22 +510,29 @@ class _Ticker extends StatelessWidget {
     final p = context.pearl;
     // A 72-frame sequence would draw a solid bar; sample it instead.
     final marks = math.min(count, 36);
-    final active = ((frame / count) * marks).floor();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (var i = 0; i < marks; i++)
-              Container(
-                width: 2,
-                height: i == active ? 18 : 7,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                color: i == active ? p.accent : p.faint,
-              ),
-          ],
+        // Only the row of marks follows the spin. The hint underneath it is a
+        // one-off that outlives a whole rotation.
+        ValueListenableBuilder<int>(
+          valueListenable: frame,
+          builder: (context, current, _) {
+            final active = ((current / count) * marks).floor();
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (var i = 0; i < marks; i++)
+                  Container(
+                    width: 2,
+                    height: i == active ? 18 : 7,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    color: i == active ? p.accent : p.faint,
+                  ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 12),
         if (showHint)
@@ -556,40 +597,6 @@ class _ModeBar extends StatelessWidget {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProductCardOverlay extends StatelessWidget {
-  const _ProductCardOverlay({required this.product});
-
-  final Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.pearl;
-    return Container(
-      width: 230,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: p.bg, border: Border.all(color: p.line)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            product.brandName.toUpperCase(),
-            style: PearlText.micro.copyWith(fontSize: 8.5, color: p.faint),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            product.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: PearlText.display(16).copyWith(color: p.ink),
-          ),
-          const SizedBox(height: 10),
-          Text(money(product.mrp), style: PearlText.price(15).copyWith(color: p.ink)),
         ],
       ),
     );

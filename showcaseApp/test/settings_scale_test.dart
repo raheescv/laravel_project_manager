@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:showcase/features/catalog/logic/funnel_cubit/funnel_cubit.dart';
+import 'package:showcase/shared/logic/funnel_cubit/funnel_cubit.dart';
 import 'package:showcase/features/settings/screens/settings_screen.dart';
 import 'package:showcase/l10n/app_localizations.dart';
 import 'package:showcase/shared/domain/constants/app_config.dart';

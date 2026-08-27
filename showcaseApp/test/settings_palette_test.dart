@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:showcase/features/catalog/logic/funnel_cubit/funnel_cubit.dart';
+import 'package:showcase/shared/logic/funnel_cubit/funnel_cubit.dart';
 import 'package:showcase/features/settings/screens/settings_screen.dart';
 import 'package:showcase/l10n/app_localizations.dart';
 import 'package:showcase/shared/domain/constants/app_config.dart';
@@ -90,18 +90,24 @@ void main() {
     final theme = serviceLocator<ThemeCubit>();
     await pumpSettings(tester, const Size(1180, 820));
 
+    // Scrolled to first: the layout is one capped column now, so the palette
+    // block sits below the fold on a panel this tall.
+    Future<void> tapBelowTheFold(Finder target) async {
+      await tester.ensureVisible(target);
+      await tester.pumpAndSettle();
+      await tester.tap(target);
+      await tester.pumpAndSettle();
+    }
+
     // Landed on the light tab, because the screen is painted light.
-    await tester.tap(find.text('SIZERUN'));
-    await tester.pumpAndSettle();
+    await tapBelowTheFold(find.text('SIZERUN'));
     expect(theme.state.light, ThemePreset.sizerun);
     expect(theme.state.dark, isNot(ThemePreset.sizerun));
 
     // "DARK" is also a Mode segment at the top of the screen; the palette tab
     // is the later of the two, since its block is further down.
-    await tester.tap(find.text('DARK').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('PEARL'));
-    await tester.pumpAndSettle();
+    await tapBelowTheFold(find.text('DARK').last);
+    await tapBelowTheFold(find.text('PEARL'));
     expect(theme.state.dark, ThemePreset.pearl);
     expect(theme.state.light, ThemePreset.sizerun);
   });

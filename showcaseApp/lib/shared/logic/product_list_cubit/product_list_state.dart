@@ -26,9 +26,11 @@ class ProductFilters extends Equatable {
   final double? maxPrice;
   final bool inStockOnly;
 
-  /// Client-side: the API has no "has spin frames" filter, and `images360` is
-  /// not on the list payload, so this narrows what came back rather than what
-  /// was asked for. It is labelled as a refinement in the UI for that reason.
+  /// Only products with a 360° spin behind them.
+  ///
+  /// Asked of the server as `has_360`. It used to be applied here instead, over
+  /// `hasSpin` — which reads the spin frames, which the list payload has never
+  /// carried — so turning it on emptied the grid every time.
   final bool spinOnly;
 
   final String sortBy;
@@ -123,10 +125,6 @@ class ProductListState extends Equatable {
   final bool hasMore;
   final bool loadingMore;
   final String? errorMessage;
-
-  /// [total] is the server's count for the query; when a client-side refinement
-  /// is on it no longer describes what is on screen.
-  bool get totalIsExact => !filters.spinOnly;
 
   ProductListState copyWith({
     DataFetchStatus? status,

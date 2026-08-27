@@ -1,9 +1,10 @@
 # Sizerun Showcase
 
 A read-only product showcase for the shop floor. A customer (or a colleague
-helping one) walks the funnel — **category → size → brand → results → product** —
-and lands on a product page with the gallery, the size run, per-store stock and a
-360° spin viewer.
+helping one) walks the funnel — **size → brand → results → product** — and lands
+on a product page with the gallery, the size run, per-store stock and a 360°
+spin viewer. (There is no category step; it was tried and removed, and the
+router has never had a route for one.)
 
 Design direction: **Pearl** (direction 06 of
 [`docs/showcase-app-3-samples.html`](../docs/showcase-app-3-samples.html)) — cool
@@ -22,6 +23,12 @@ cp env.example.json env.json      # then edit for your host/tenant
 flutter run --dart-define-from-file=env.json
 ```
 
+**The dart-define is not optional.** Without it `API_BASE_URL` falls back to
+`https://project_manager.test` and the tenant is empty, and every screen fails
+with "Cannot reach the store" — the app is pointed at a host the device cannot
+resolve. `.vscode/launch.json` passes it, so use Run rather than a bare
+`flutter run`.
+
 `env.json` carries three values:
 
 | key | meaning |
@@ -37,21 +44,97 @@ a simulator; release builds keep full validation.
 of the funnel — for working on one screen without walking to it. Empty in real
 builds.
 
-## Tablet first
+## One layout, drawn for the panel it is on
 
-The primary device is an 11″ tablet in landscape. The phone layout is the
-fallback, and the two differ structurally, not just in scale:
+The device is a kiosk: one screen, one customer standing in front of it, one
+question at a time. There is no device class and no second design — navigation
+is in the top bar, the funnel's answers are a breadcrumb strip, filters are a
+bottom sheet, and the product page stacks. Full bleed, no width cap, nothing
+centred in the middle of the glass.
 
-| | Tablet | Phone |
+The rail, the pinned funnel column and the right-hand aside this app used to
+carry on tablets are gone, along with the barcode scanner — it asked for a
+camera the kiosk has no use for.
+
+**`PanelScale` decides how large "one layout" is drawn.** Every number in this
+design system — a 38pt control, a 9.5pt eyebrow, 22pt of page padding — was
+drawn against a screen you hold, and Flutter's logical pixel says nothing about
+how far away the glass is. A panel reporting a thousand logical pixels across
+painted all of it at exactly the size a phone does, which is what made the app
+look like a stretched phone screenshot on the shop floor.
+
+So the frame is laid out on a smaller canvas and that canvas is scaled up to
+the glass — the same thing a browser's zoom does, and for the same reason:
+nothing has to carry a scale factor, so nothing can be missed. It is a scale
+and not a letterbox, because only part of the extra width becomes scale
+(`PanelScale.softness`) and the rest stays as canvas, which is what lets the
+grids open up rather than showing a tablet's layout larger:
+
+| panel (shortest side) | drawn at | canvas |
 |---|---|---|
-| Navigation | persistent 68px left rail | top-bar controls |
-| Funnel steps | pinned left column, each step reopens on tap | breadcrumb strip |
-| Consequence of a choice | live count + preview in a right column | next screen |
-| Filters | permanent beside the grid | bottom sheet |
-| Product page | gallery ‖ standing info panel, related rail below | stacked |
+| 402pt (phone) | 1.00x | 402pt |
+| 720pt and below | 1.00x | unchanged |
+| 1080pt (kiosk) | 1.33x | ~813pt |
+| 2160pt | 2.16x | ~1000pt |
 
-One widget tree throughout, branching on `context.isTablet` at the layout level —
-never a forked screen class.
+Two consequences worth knowing before you change a layout:
+
+- **`MediaQuery.sizeOf` is the canvas, not the panel.** That is deliberate —
+  a sheet capped at 80% of "the screen" and a photo decoded for the width it
+  will be painted at both want canvas units. The device pixel ratio is
+  multiplied by the scale to match, so decode widths still come out in real
+  pixels. A widget test that wants to measure what a customer sees has to use
+  `tester.getRect` (transformed) rather than `getSize` (not).
+- **Settings → Text size is unrelated and still multiplies on top.** How large
+  the app is drawn is a property of the glass; how much larger than the app its
+  words are is a customer's choice. The top bar caps the second one only.
+
+The two grids answer to the canvas rather than to constants: the size run fills
+its columns exactly (three across fills the width in three — the count is
+Appearance's "sizes per row", nothing is capped or centred any more), and
+`ProductGrid.columnsFor` puts the panel on two large tiles instead of the four
+narrow ones the old thresholds reached at 1000pt.
+
+## "All of them" is the first answer, not a button underneath
+
+Both funnel questions offer to skip themselves, and both offer it as the first
+tile in the grid — `All` leading the size run, `All brands` leading the brand
+wall, counted like every other tile. Neither screen has a bottom bar any more.
+
+A screen that asks its question with a wall of targets and then answers it
+again with a differently-shaped control pinned underneath is asking twice, and
+it made "I don't know my size" read as the way *out* of the screen rather than
+as one of the answers on it. Marked whenever nothing has been narrowed, which
+is what the screen actually means when it opens: nobody has chosen, so all of
+them are still on the table.
+
+Two consequences in `PearlChip`, and they are the only two places Pearl's
+square-cornered, ink-block direction bends:
+
+- **The plate has corners.** At a quarter of the panel a square corner reads as
+  a panel seam rather than as a target. Proportional to the plate's height, so
+  a 46pt chip on the product page and a 250pt plate on the funnel are the same
+  shape.
+- **Selection is a heavy accent outline, not a fill.** A filled plate at this
+  size is a slab of accent big enough to be the loudest thing in the shop, and
+  the number inside it has to be reversed out to survive. Outlined, the answer
+  keeps the same ink as every other plate.
+
+## Getting out
+
+The panel resets itself after Settings → "Reset after" minutes of nobody
+touching it. It also resets on demand: **Home** on the product page's top bar
+and beside the filter button on the results. All three go through
+`clearForNextCustomer()` in `funnel_navigation.dart`, so "start again" cannot
+come to mean two different things depending on how you asked for it.
+
+The controls that *move* a customer — Back, Home, and the close on the
+full-screen photo — are `IconSquare(prominent: true)`: accent border, accent
+icon. Nothing else in the frame is. The system bars are hidden and there is no
+back gesture, so these are the only way out of a screen, and a grey hairline
+square is furniture nobody sees from across a shop. The squares beside them
+(Settings, sort direction) change what you are looking at rather than taking
+you anywhere, and stay quiet — if everything is emphasised, nothing is.
 
 ## What it will not do
 
@@ -95,4 +178,8 @@ one per size. Additive: the existing `{size}` keys are unchanged, so
 Walked on an iPad simulator against the live catalogue: browse, size, results,
 product, the 360 viewer (preload → drag → frame advance) and its gallery
 fallback, plus dark mode. **Not yet exercised on a device:** the brand step, the
-phone layout, the barcode scanner (needs a real camera), and the reserve sheet.
+reserve sheet, and everything `PanelScale` does — the scale, the two-up product
+grid, the full-width size run, the half-panel gallery and the product page's
+Home control are covered by `test/panel_scale_test.dart` and
+`test/product_page_test.dart` at 1080x1920, but have not been seen on the
+kiosk itself.

@@ -3,25 +3,24 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../shared/domain/constants/data_fetching_status.dart';
-import '../../../shared/domain/helpers/responsive.dart';
+import '../../../shared/logic/funnel_cubit/funnel_cubit.dart';
+import '../../../shared/logic/product_list_cubit/product_list_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
+import '../../../shared/utils/router/funnel_navigation.dart';
 import '../../../shared/utils/router/routes.dart';
 import '../../../shared/widgets/chrome/app_top_bar.dart';
-import '../../../shared/widgets/chrome/funnel_column.dart';
+import '../../../shared/widgets/chrome/funnel_breadcrumbs.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/product_card.dart';
-import '../logic/funnel_cubit/funnel_cubit.dart';
-import '../logic/product_list_cubit/product_list_cubit.dart';
-import 'filter_panel.dart';
-import 'funnel_navigation.dart';
+import '../widgets/filter_panel.dart';
 import '../../../l10n/app_localizations.dart';
 
-/// Step 4 — the results.
+/// Step 3 — the results.
 ///
-/// On tablet the filters are permanent beside the grid rather than behind a
-/// sheet, so changing one is a tap and the effect is visible without anything
-/// opening or closing.
+/// One column of tiles with the filters behind the bottom bar. There is no
+/// aside: the panel is portrait and a customer reads it standing up, so width
+/// spent on a permanent filter rail is width taken off the photographs.
 class ResultsScreen extends StatelessWidget {
   const ResultsScreen({super.key});
 
@@ -79,72 +78,109 @@ class _ResultsViewState extends State<_ResultsView> {
   @override
   Widget build(BuildContext context) {
     final funnelState = context.watch<FunnelCubit>().state;
-    final list = context.watch<ProductListCubit>();
-    final state = list.state;
+    // Read, not watched. What the list is doing belongs to the grid and to the
+    // one label that counts the filters, and both say so for themselves below.
+    // Watched here, every page appended on a scroll and every flick of the
+    // "loading more" flag rebuilt the whole screen with it: the wordmark, the
+    // language and shop pills, the search field, the breadcrumb strip and both
+    // halves of the bottom bar — none of which have anything to do with the
+    // answer that just landed.
+    final list = context.read<ProductListCubit>();
 
     final scaffold = ShowcaseScaffold(
       topBar: AppTopBar(
         leading: IconSquare(
           Icons.arrow_back,
           size: 38,
+          prominent: true,
           onTap: () => context.leaveFunnelStep(FunnelStep.brand),
         ),
-        title: context.isTablet
-            ? null
-            : FunnelBreadcrumbs(
-                state: funnelState,
-                current: FunnelStep.results,
-                onReopen: (step) => reopenFunnelStep(context, step),
-              ),
+        title: FunnelBreadcrumbs(
+          state: funnelState,
+          current: FunnelStep.results,
+          onReopen: (step) => reopenFunnelStep(context, step),
+        ),
       ),
-      leftColumn: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: BlocBuilder<ProductListCubit, ProductListState>(
+        builder: (context, state) => Column(
           children: [
-            FunnelColumn(
-              state: funnelState,
-              current: FunnelStep.results,
-              onReopen: (step) => reopenFunnelStep(context, step),
+            _Toolbar(state: state, onChanged: list.apply),
+            Expanded(child: _Results(state: state, scroll: _scroll)),
+          ],
+        ),
+      ),
+      bottomBar: PinnedBar(
+        child: Row(
+          children: [
+            // The way out, beside the way to narrow down.
+            //
+            // The results are the deepest a customer gets without committing to
+            // a product, and the only way back to step one from here was to
+            // press Back through every answer they had given — or somebody
+            // else's. It clears the visit exactly as the idle timer does.
+            //
+            // Named rather than left as a glyph: a house on its own is a guess,
+            // and this is the one control somebody standing in a stranger's
+            // results must not have to work out. Filled in the accent against
+            // the ghost outline beside it, so which of the two takes you
+            // somewhere is legible from across the shop.
+            //
+            // Half the bar each. The earlier two-sevenths said the right thing
+            // about how often each is pressed, but it left "Back to home" too
+            // narrow to spell itself — the label ellipsised to "Bac…", which
+            // is worse than a button that looks slightly over-important. Equal
+            // shares rather than each label's own width, so the bar fills the
+            // panel at every text size and in both languages, and the longer
+            // of the two still has room before it starts to clip.
+            Expanded(
+              child: PearlButton(
+                label: L.of(context).backToHome,
+                icon: Icons.home_outlined,
+                height: _barControl,
+                onTap: () => goHome(context),
+              ),
             ),
-            const SizedBox(height: 6),
-            FilterPanel(
-              state: state,
-              onChanged: (filters) => list.apply(filters),
+            const SizedBox(width: PearlMetrics.gap),
+            Expanded(
+              // Only the count moves, so only the count listens.
+              child: BlocSelector<ProductListCubit, ProductListState, int>(
+                selector: (state) => state.filters.activeCount,
+                builder: (context, active) => PearlButton(
+                  label: active == 0
+                      ? L.of(context).filterAndSort
+                      : L.of(context).filtersCount(active),
+                  icon: Icons.tune,
+                  ghost: true,
+                  height: _barControl,
+                  onTap: () => showFilterSheet(context, list),
+                ),
+              ),
             ),
           ],
         ),
       ),
-      body: Column(
-        children: [
-          _Toolbar(state: state, onChanged: list.apply),
-          Expanded(child: _Results(state: state, scroll: _scroll)),
-        ],
-      ),
-      bottomBar: context.isTablet
-          ? null
-          : PinnedBar(
-              child: PearlButton(
-                label: state.filters.activeCount == 0
-                    ? L.of(context).filterAndSort
-                    : L.of(context).filtersCount(state.filters.activeCount),
-                icon: Icons.tune,
-                ghost: true,
-                onTap: () => showFilterSheet(context, list),
-              ),
-            ),
     );
 
     // "In stock" is owned by the top bar, not by this list, so the grid follows
     // it rather than keeping a copy that can drift out of step.
     return BlocListener<FunnelCubit, FunnelState>(
       listenWhen: (before, after) => before.inStockOnly != after.inStockOnly,
-      listener: (context, funnel) =>
-          list.apply(state.filters.copyWith(inStockOnly: funnel.inStockOnly)),
+      // The filters as they are when the toggle is pressed, not as they were
+      // when this frame was built — which is the same answer as before while
+      // the screen rebuilt on every emit, and the right one now that it does
+      // not.
+      listener: (context, funnel) => list
+          .apply(list.state.filters.copyWith(inStockOnly: funnel.inStockOnly)),
       child: scaffold,
     );
   }
 }
+
+/// One height for both halves of the bottom bar, so the square and the button
+/// beside it read as a pair rather than as two controls that happen to share a
+/// row. It is [PearlButton]'s own default; named here because the square has to
+/// be told the same number.
+const double _barControl = 46;
 
 class _Toolbar extends StatelessWidget {
   const _Toolbar({required this.state, required this.onChanged});
@@ -165,9 +201,9 @@ class _Toolbar extends StatelessWidget {
             child: Text(
               state.status.isWaiting && state.items.isEmpty
                   ? L.of(context).loadingEllipsis.toUpperCase()
-                  : state.totalIsExact
-                      ? L.of(context).productsCount(state.total).toUpperCase()
-                      : L.of(context).shownCount(state.items.length).toUpperCase(),
+                  // Every filter is the server's now, so the count it returns
+                  // is the count on screen.
+                  : L.of(context).productsCount(state.total).toUpperCase(),
               style: PearlText.section.copyWith(color: p.ink),
             ),
           ),
@@ -302,19 +338,26 @@ class _Footer extends StatelessWidget {
   }
 }
 
+/// Rehearses the real grid rather than guessing at it: the placeholder used to
+/// be a fixed three across, so on the panel the page laid out three columns,
+/// then dropped to two the moment the products landed. It reads the same
+/// Appearance count the grid does, so the change of hands is invisible.
 class _GridSkeleton extends StatelessWidget {
   const _GridSkeleton();
 
   @override
-  Widget build(BuildContext context) => GridView.builder(
-        padding: const EdgeInsets.all(PearlMetrics.pad),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: PearlMetrics.gap,
-          mainAxisSpacing: 24,
-          childAspectRatio: .74,
-        ),
-        itemCount: 9,
-        itemBuilder: (_, __) => const SkeletonBlock(height: double.infinity),
-      );
+  Widget build(BuildContext context) {
+    final columns = ProductGrid.columnsOf(context);
+    return GridView.builder(
+      padding: const EdgeInsets.all(PearlMetrics.pad),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: PearlMetrics.gap,
+        mainAxisSpacing: 24,
+        childAspectRatio: .74,
+      ),
+      itemCount: columns * 3,
+      itemBuilder: (_, __) => const SkeletonBlock(height: double.infinity),
+    );
+  }
 }

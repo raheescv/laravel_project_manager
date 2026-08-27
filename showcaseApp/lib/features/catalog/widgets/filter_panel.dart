@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../shared/domain/models/index.dart';
+import '../../../shared/logic/product_list_cubit/product_list_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
-import '../logic/product_list_cubit/product_list_cubit.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// The refinements that sit beside the grid on tablet and inside a sheet on
@@ -101,9 +101,6 @@ class FilterPanel extends StatelessWidget {
         _Toggle(
           label: L.of(context).has360,
           value: filters.spinOnly,
-          // Narrows what came back rather than what was asked for — the list
-          // payload carries no spin frames, so this cannot be a server filter.
-          note: L.of(context).appliedToLoaded,
           onChanged: (v) => onChanged(filters.copyWith(spinOnly: v)),
         ),
       ],
@@ -338,13 +335,11 @@ class _Toggle extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
-    this.note,
   });
 
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
-  final String? note;
 
   @override
   Widget build(BuildContext context) {
@@ -356,19 +351,8 @@ class _Toggle extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: PearlText.label.copyWith(color: p.ink, fontSize: 11.5)),
-                  if (note != null) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      note!.toUpperCase(),
-                      style: PearlText.micro.copyWith(fontSize: 8, color: p.faint),
-                    ),
-                  ],
-                ],
-              ),
+              child: Text(label,
+                  style: PearlText.label.copyWith(color: p.ink, fontSize: 11.5)),
             ),
             const SizedBox(width: 10),
             Container(

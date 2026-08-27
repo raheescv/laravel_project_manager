@@ -1,91 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/helpers/responsive.dart';
 import '../../logic/connectivity_cubit/connectivity_cubit.dart';
 import '../../utils/components/theme/pearl_theme.dart';
-import 'app_rail.dart';
 import '../../../l10n/app_localizations.dart';
 
-/// The frame every screen sits in.
+/// The frame every screen sits in: the offline banner, the top bar, one column
+/// of content, and an optional bar pinned to the bottom.
 ///
-/// Tablet: persistent rail, a top bar that stays put, and up to three columns —
-/// choices on the left, content in the middle, live context on the right.
-/// Phone: the same top bar, one column, and no rail. The columns are dropped
-/// rather than squeezed, because a 250px sidebar on a phone is neither.
+/// One column, and only one. This runs on a kiosk — a single screen, a single
+/// customer standing in front of it, one question at a time. The rail, the
+/// funnel column and the right-hand aside it used to carry were there to use up
+/// a tablet's width, and width is not what this app is short of.
 class ShowcaseScaffold extends StatelessWidget {
   const ShowcaseScaffold({
     super.key,
     required this.body,
     this.topBar,
-    this.leftColumn,
-    this.rightColumn,
     this.bottomBar,
-    this.railIndex = 0,
-    this.showRail = true,
   });
 
   final Widget body;
   final Widget? topBar;
-
-  /// Funnel steps / filters. Tablet only.
-  final Widget? leftColumn;
-
-  /// Live preview, top brands, running counts. Tablet, and only when wide.
-  final Widget? rightColumn;
-
   final Widget? bottomBar;
-  final int railIndex;
-  final bool showRail;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
-    final tablet = context.isTablet;
-
-    final content = Column(
-      children: [
-        const _OfflineBanner(),
-        if (topBar != null) topBar!,
-        Expanded(
-          child: tablet
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (leftColumn != null)
-                      Container(
-                        width: PearlMetrics.funnelColumn,
-                        decoration: BoxDecoration(
-                          border: Border(right: BorderSide(color: p.line)),
-                        ),
-                        child: leftColumn,
-                      ),
-                    Expanded(child: body),
-                    if (rightColumn != null && context.isWide)
-                      Container(
-                        width: PearlMetrics.aside,
-                        decoration: BoxDecoration(
-                          border: Border(left: BorderSide(color: p.line)),
-                        ),
-                        child: rightColumn,
-                      ),
-                  ],
-                )
-              : body,
-        ),
-        if (bottomBar != null) bottomBar!,
-      ],
-    );
 
     return Scaffold(
       backgroundColor: p.bg,
+      // Edge to edge. The kiosk is a panel the size of a door and the app is
+      // the only thing on it, so a column floating in the middle of it reads as
+      // a phone screenshot someone hung on a wall. How dense the size run gets
+      // at this width is Appearance's "sizes per row", not a cap here.
       body: SafeArea(
-        child: tablet && showRail
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [AppRail(active: railIndex), Expanded(child: content)],
-              )
-            : content,
+        child: Column(
+          children: [
+            const _OfflineBanner(),
+            if (topBar != null) topBar!,
+            Expanded(child: body),
+            if (bottomBar != null) bottomBar!,
+          ],
+        ),
       ),
     );
   }

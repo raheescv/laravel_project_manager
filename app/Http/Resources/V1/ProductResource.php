@@ -154,6 +154,13 @@ class ProductResource extends JsonResource
 
             'stock_quantity_availability_status' => $this->when($hasStock, fn () => $this->getStockQuantityAvailabilityStatus()),
 
+            // Whether there is a spin to open, without the frames it is made
+            // of. The list omits `images360` on purpose, so a card had no way
+            // to know a product could be spun — the 360° badge never appeared
+            // on a result, and a client filtering on the frames it had been
+            // sent filtered every row away.
+            'has_360' => $this->when($this->knowsSpinFrames(), fn () => $this->hasSpinFrames()),
+
             'available_sizes' => $this->when(! $isList, fn () => $this->getAvailableSizes()),
             'related_sizes' => $this->when(! $isList, fn () => $this->getRelatedSizes()),
         ];
@@ -194,6 +201,31 @@ class ProductResource extends JsonResource
         $path = $this->brand?->image_path;
 
         return $path ? url('storage/'.$path) : null;
+    }
+
+    /**
+     * Whether this response can speak to the spin at all: either the list query
+     * counted the frames, or a detail query loaded the images.
+     */
+    private function knowsSpinFrames(): bool
+    {
+        return array_key_exists('spin_frame_count', $this->resource->getAttributes())
+            || $this->relationLoaded('images');
+    }
+
+    /**
+     * A spin needs a sequence. One stray angle image is a leftover upload, and
+     * every client hides the 360° affordance below two frames — so this has to
+     * agree with them or the badge and the filter promise a viewer that opens
+     * on a single still.
+     */
+    private function hasSpinFrames(): bool
+    {
+        if (array_key_exists('spin_frame_count', $this->resource->getAttributes())) {
+            return (int) $this->spin_frame_count > 1;
+        }
+
+        return $this->images->where('method', 'angle')->count() > 1;
     }
 
     /**

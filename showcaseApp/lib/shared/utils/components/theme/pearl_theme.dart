@@ -37,7 +37,9 @@ class PearlPalette extends ThemeExtension<PearlPalette> {
   /// Page ground.
   final Color bg;
 
-  /// Cards, chips, rails — barely separated from [bg] on purpose.
+  /// Cards, chips, rails. In the light palettes this *is* the ground — a
+  /// panel is told apart from the page by its [line] and nothing else. The
+  /// dark palettes still lift it, because a hairline on black is not enough.
   final Color surface;
 
   /// The two stops of the product "stage" gradient every photo sits on.
@@ -60,8 +62,8 @@ class PearlPalette extends ThemeExtension<PearlPalette> {
   final Brightness brightness;
 
   static const PearlPalette light = PearlPalette(
-    bg: Color(0xFFF0F0F2),
-    surface: Color(0xFFFAFAFB),
+    bg: Color(0xFFFFFFFF),
+    surface: Color(0xFFFFFFFF),
     shotTop: Color(0xFFFFFFFF),
     shotBottom: Color(0xFFE6E6EA),
     ink: Color(0xFF191A1E),
@@ -162,18 +164,6 @@ class PearlMetrics {
   static const double gap = 14;
   static const double radius = 0;
   static const double hairline = 1;
-
-  /// Left icon rail on tablet.
-  static const double rail = 68;
-
-  /// The funnel's "choices so far" column.
-  static const double funnelColumn = 252;
-
-  /// The right-hand aside (live preview, top brands).
-  static const double aside = 296;
-
-  /// Standing info panel beside the product gallery.
-  static const double infoPanel = 348;
 }
 
 /// Every text style in the app. Screens never call `GoogleFonts` directly, so
@@ -212,15 +202,18 @@ class PearlText {
   ///
   /// Pulled out of [_face] so it can be checked without resolving a font: the
   /// Google Fonts call underneath cannot run in a test.
+  ///
+  /// [arabic] names the script explicitly; null means the app's own language,
+  /// which is what every ordinary call wants.
   @visibleForTesting
-  static double trackingFor(double tracking) =>
-      _arabic ? 0 : tracking * _type.tracking;
+  static double trackingFor(double tracking, {bool? arabic}) =>
+      (arabic ?? _arabic) ? 0 : tracking * _type.tracking;
 
   /// Arabic sits taller in its line box; the tight leading Jost is set with
   /// clips the descenders.
   @visibleForTesting
-  static double? leadingFor(double? height) =>
-      _arabic && height != null ? height + .18 : height;
+  static double? leadingFor(double? height, {bool? arabic}) =>
+      (arabic ?? _arabic) && height != null ? height + .18 : height;
 
   static TextStyle _face({
     required double size,
@@ -228,23 +221,25 @@ class PearlText {
     required double tracking,
     double? height,
     bool display = false,
+    bool? arabic,
   }) {
-    final letterSpacing = trackingFor(tracking);
-    final leading = leadingFor(height);
+    final rtl = arabic ?? _arabic;
+    final letterSpacing = trackingFor(tracking, arabic: rtl);
+    final leading = leadingFor(height, arabic: rtl);
     return display
         ? _type.displayStyle(
             size: size,
             weight: weight,
             letterSpacing: letterSpacing,
             height: leading,
-            arabic: _arabic,
+            arabic: rtl,
           )
         : _type.textStyle(
             size: size,
             weight: weight,
             letterSpacing: letterSpacing,
             height: leading,
-            arabic: _arabic,
+            arabic: rtl,
           );
   }
 
@@ -255,6 +250,54 @@ class PearlText {
         tracking: -0.3,
         height: 1.08,
         display: true,
+      );
+
+  /// [display], set in the script named here rather than the app's own.
+  ///
+  /// For the one heading that carries both languages at once: whichever way
+  /// the tablet is set, half of it is in the script the app is *not* in, and
+  /// the Latin faces have no Arabic glyphs — left to [display] that half would
+  /// fall back to whatever the platform picked and stop looking like this app.
+  ///
+  /// [weight] and [tracking] are open because the one heading set this way is
+  /// set in capitals: capitals want the bold weight and air between the
+  /// letters, where the sentence-case headline wants neither. Tracking still
+  /// goes through [_face], so the Arabic half is left at zero whatever is
+  /// asked for here — positive tracking pulls apart the joins.
+  static TextStyle displayIn(
+    double size, {
+    required bool arabic,
+    FontWeight weight = FontWeight.w300,
+    double tracking = -0.3,
+  }) =>
+      _face(
+        size: size,
+        weight: weight,
+        tracking: tracking,
+        height: 1.08,
+        display: true,
+        arabic: arabic,
+      );
+
+  /// The funnel's question — "WHAT IS YOUR SIZE?", "WHICH BRAND?" — set the
+  /// way this app asks a question: the display face in capitals, bold, with a
+  /// little air. Capitals are all one height with no descenders to hold them
+  /// apart, so the tracking goes positive where the sentence-case [display]
+  /// keeps it negative, and the weight goes up because a light capital at this
+  /// size reads as thin rather than quiet.
+  ///
+  /// Arabic has no capitals to raise and no tracking to give — the script
+  /// joins, and [displayIn] already leaves that half at zero — so in Arabic
+  /// this is the same heading a shade heavier, which is the whole of the
+  /// difference the script allows.
+  ///
+  /// [arabic] names the script for the one heading that carries both at once;
+  /// every ordinary call leaves it to the app's own language.
+  static TextStyle displayCaps(double size, {bool? arabic}) => displayIn(
+        size,
+        arabic: arabic ?? _arabic,
+        weight: FontWeight.w700,
+        tracking: 0.6,
       );
 
   /// Section headings: uppercase, small, wide.
@@ -284,6 +327,23 @@ class PearlText {
   static TextStyle get button => _face(size: 9.5, weight: FontWeight.w500, tracking: 3);
 }
 
+/// The ambient text theme, built once per brightness.
+///
+/// `jostTextTheme` is fourteen `GoogleFonts.jost` calls, and this is reached
+/// twice — light and dark — every time the theme is rebuilt, which the theme
+/// cubit and the locale cubit both do. It does not vary with anything but the
+/// brightness: the colours are applied on top by the caller, and the face is
+/// deliberately Jost whatever Appearance is set to, because this is only the
+/// default a widget inherits when it names no style of its own.
+final Map<Brightness, TextTheme> _ambientTextThemes = {};
+
+TextTheme _ambientText(Brightness brightness) =>
+    _ambientTextThemes[brightness] ??= GoogleFonts.jostTextTheme(
+      brightness == Brightness.dark
+          ? ThemeData.dark().textTheme
+          : ThemeData.light().textTheme,
+    );
+
 /// Build the app theme from [p]. The palette carries its own brightness, so a
 /// preset is the only thing a caller has to choose.
 ThemeData buildPearlTheme(PearlPalette p) {
@@ -305,11 +365,7 @@ ThemeData buildPearlTheme(PearlPalette p) {
       onPrimary: p.accentInk,
       outline: p.line,
     ),
-    textTheme: GoogleFonts.jostTextTheme(
-      brightness == Brightness.dark
-          ? ThemeData.dark().textTheme
-          : ThemeData.light().textTheme,
-    ).apply(bodyColor: p.ink, displayColor: p.ink),
+    textTheme: _ambientText(brightness).apply(bodyColor: p.ink, displayColor: p.ink),
     // Pearl has no rounded corners; the sheet inherits that.
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: p.bg,

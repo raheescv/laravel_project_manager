@@ -18,10 +18,11 @@ class LocalStorageService {
   static const _kLightPreset = 'theme_preset_light';
   static const _kDarkPreset = 'theme_preset_dark';
   static const _kSizeColumns = 'size_columns';
+  static const _kProductColumns = 'product_columns';
+  static const _kIdleMinutes = 'idle_minutes';
   static const _kBaseUrl = 'base_url';
   static const _kTenant = 'tenant';
   static const _kSpinHintSeen = 'spin_hint_seen';
-  static const _kReservations = 'reservations';
 
   /// The chosen shop, or [BranchCubit.allBranches] for "all stores". Null when
   /// nobody has chosen yet, which is different from having chosen all.
@@ -58,35 +59,21 @@ class LocalStorageService {
   int get sizeColumns => _prefs.getInt(_kSizeColumns) ?? 0;
   Future<void> setSizeColumns(int n) => _prefs.setInt(_kSizeColumns, n);
 
+  /// How many product tiles a row of the results grid holds. 0 until the staff
+  /// pick, same as the size run above.
+  int get productColumns => _prefs.getInt(_kProductColumns) ?? 0;
+  Future<void> setProductColumns(int n) => _prefs.setInt(_kProductColumns, n);
+
+  /// Zero means untouched, the same sentinel the other numeric settings use —
+  /// it is not a valid answer for any of them, so it cannot be confused with
+  /// one somebody chose.
+  int get idleMinutes => _prefs.getInt(_kIdleMinutes) ?? 0;
+  Future<void> setIdleMinutes(int n) => _prefs.setInt(_kIdleMinutes, n);
+
   String? get baseUrl => _prefs.getString(_kBaseUrl);
   String? get tenant => _prefs.getString(_kTenant);
 
   /// The "drag to spin" coach mark shows once per device, not once per product.
   bool get spinHintSeen => _prefs.getBool(_kSpinHintSeen) ?? false;
   Future<void> setSpinHintSeen() => _prefs.setBool(_kSpinHintSeen, true);
-
-  /// What a customer asked to be held, as a line of text per note. Local only —
-  /// there is no reservation endpoint and the showcase never writes to the
-  /// server. Kept to the last 50 so the store cannot grow without bound.
-  List<String> get reservations => _prefs.getStringList(_kReservations) ?? const [];
-
-  Future<void> addReservation({
-    required int productId,
-    required String productName,
-    String? size,
-    int? branchId,
-  }) async {
-    final note = [
-      DateTime.now().toIso8601String(),
-      '#\$productId',
-      productName,
-      if (size != null) 'size \$size',
-      if (branchId != null) 'branch \$branchId',
-    ].join(' · ');
-    final rows = [note, ...reservations];
-    await _prefs.setStringList(
-      _kReservations,
-      rows.length > 50 ? rows.sublist(0, 50) : rows,
-    );
-  }
 }

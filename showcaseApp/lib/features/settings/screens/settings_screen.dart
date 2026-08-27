@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/domain/helpers/responsive.dart';
 import '../../../shared/logic/theme_cubit/theme_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/components/theme/theme_presets.dart';
 import '../../../shared/utils/components/theme/type_presets.dart';
 import '../../../shared/widgets/chrome/app_top_bar.dart';
+import '../../../shared/widgets/chrome/idle_reset.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 
 /// How the tablet is dressed: when to go dark, which palette each mode wears,
 /// what it is set in, and how large.
 ///
-/// Laid out as blocks on a grid rather than a single column of full-width
-/// sections. There are five settings here and the old layout put each one
-/// under the last, which made a screen you had to scroll to see the effect of
-/// the control you were touching — on a tablet with room for two columns that
-/// was a page of whitespace and a lost connection between cause and effect.
+/// Laid out as blocks rather than a run of full-width sections. There are five
+/// settings here and the old layout put each one under the last, which made a
+/// screen you had to scroll to see the effect of the control you were touching
+/// — a lost connection between cause and effect.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -34,6 +34,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// one is a deliberate step away.
   Brightness? _slot;
 
+  /// The installed build, read off the bundle rather than off the pubspec at
+  /// compile time — the number that matters is the one on this tablet, not the
+  /// one in the checkout. Null until the read lands, and the footer stays away
+  /// until then rather than flashing a placeholder.
+  String? _build;
+
+  @override
+  void initState() {
+    super.initState();
+    _readBuild();
+  }
+
+  /// Swallows a failed read rather than letting it surface: the line is a
+  /// courtesy, and a platform that will not answer should cost the screen
+  /// nothing but the line itself.
+  Future<void> _readBuild() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() => _build = '${info.version} (${info.buildNumber})');
+    } catch (_) {
+      // Left null; the footer never appears.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cubit = context.watch<ThemeCubit>();
@@ -45,9 +70,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return ShowcaseScaffold(
       topBar: AppTopBar(
+        // You are already here: the bar's Settings square goes quiet rather
+        // than stacking another copy of this screen behind the back arrow.
+        atSettings: true,
         leading: IconSquare(
           Icons.arrow_back,
           size: 38,
+          prominent: true,
           onTap: () => context.canPop() ? context.pop() : context.go('/'),
         ),
       ),
@@ -57,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Text(
             t.appearance,
-            style: PearlText.display(context.isTablet ? 26 : 23)
+            style: PearlText.display(23)
                 .copyWith(color: p.ink),
           ),
           const SizedBox(height: 6),
@@ -111,6 +140,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     columns: ThemeCubit.sizeColumnOptions[i],
                     on: on,
                   ),
+                ),
+              ),
+              _Block(
+                title: t.productsPerRow,
+                note: t.productsPerRowHint,
+                span: 2,
+                child: _Segments(
+                  count: ThemeCubit.productColumnOptions.length,
+                  selected: ThemeCubit.productColumnOptions
+                      .indexOf(state.productColumns),
+                  onTap: (i) => cubit
+                      .setProductColumns(ThemeCubit.productColumnOptions[i]),
+                  builder: (i, on) => _ColumnsLabel(
+                    columns: ThemeCubit.productColumnOptions[i],
+                    on: on,
+                  ),
+                ),
+              ),
+              _Block(
+                title: t.resetTimer,
+                note: t.resetTimerHint,
+                child: _MinutesField(
+                  minutes: state.idleMinutes,
+                  onCommit: cubit.setIdleMinutes,
                 ),
               ),
               _Block(
@@ -169,6 +222,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: t.useForBoth(night ? state.dark.label : state.light.label),
               ghost: true,
               onTap: () => cubit.setBoth(night ? state.dark : state.light),
+            ),
+          ],
+          if (_build != null) ...[
+            const SizedBox(height: 22),
+            // Set at the foot in the faintest ink on the screen: nobody comes
+            // to Settings for it, but whoever is asked "which version is that
+            // one on?" needs somewhere to look.
+            Center(
+              child: Text(
+                t.appVersion(_build!),
+                style: PearlText.micro.copyWith(fontSize: 8.5, color: p.faint),
+              ),
             ),
           ],
         ],
@@ -473,7 +538,7 @@ class _PaletteRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        // Four abreast needs the width of a tablet column. Narrower than this
+        // Four abreast needs most of the content column. Narrower than this
         // the names start ellipsing away to nothing, so the strip folds to two
         // rows instead of shrinking further.
         const all = ThemePreset.values;
@@ -523,17 +588,147 @@ class _PaletteRow extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Row(
-              children: [
-                for (final colour in preset.swatches(brightness))
-                  Expanded(child: Container(height: 22, color: colour)),
-              ],
+            // Hairlined: the light presets all stand on pure white now, and
+            // so does this tile, so an unbordered strip would lose whichever
+            // of its four swatches happens to be the ground.
+            Container(
+              decoration: BoxDecoration(border: Border.all(color: theme.line)),
+              child: Row(
+                children: [
+                  for (final colour in preset.swatches(brightness))
+                    Expanded(child: Container(height: 22, color: colour)),
+                ],
+              ),
             ),
             const SizedBox(height: 7),
             _Caption(preset.label, on: false),
           ],
         ),
       ),
+    );
+  }
+}
+
+
+/// A number somebody types, not one they pick.
+///
+/// Every other control on this screen is a segmented row, because every other
+/// setting has a handful of right answers. This one does not: the wait that
+/// suits a shop depends on its queue and where the tablet stands, and a list
+/// of four guesses would be four wrong ones for somebody.
+///
+/// It commits on submit and on losing focus rather than on every keystroke —
+/// typing "45" passes through "4", and a panel that starts resetting every
+/// four minutes halfway through a number is worse than one that waits for you
+/// to finish. Whatever is committed is pulled into range and written back into
+/// the field, so what is on screen is always what is stored.
+class _MinutesField extends StatefulWidget {
+  const _MinutesField({required this.minutes, required this.onCommit});
+
+  final int minutes;
+  final ValueChanged<int> onCommit;
+
+  @override
+  State<_MinutesField> createState() => _MinutesFieldState();
+}
+
+class _MinutesFieldState extends State<_MinutesField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: '${widget.minutes}');
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _commit();
+      // The border tracks focus, and nothing else rebuilds this on its own.
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void didUpdateWidget(_MinutesField old) {
+    super.didUpdateWidget(old);
+    // Only while nobody is typing — otherwise the clamp that follows a commit
+    // would fight the cursor.
+    if (widget.minutes != old.minutes && !_focus.hasFocus) {
+      _controller.text = '${widget.minutes}';
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _commit() {
+    final typed = int.tryParse(_controller.text.trim());
+    // An empty field or a stray character is not an instruction to change
+    // anything; it puts back what is already set.
+    final value = (typed ?? widget.minutes)
+        .clamp(ThemeCubit.minIdleMinutes, ThemeCubit.maxIdleMinutes);
+    _controller.text = '$value';
+    widget.onCommit(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          constraints: const BoxConstraints(minHeight: 54),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: p.surface,
+            border: Border.all(color: _focus.hasFocus ? p.accent : p.line),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.timer_outlined, size: 17, color: p.faint),
+              const SizedBox(width: 11),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focus,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _commit(),
+                  // Not a commit — the field still waits for submit or blur.
+                  // This only tells the idle timer somebody is here, because
+                  // the soft keyboard's taps never reach it, and being reset
+                  // out of Settings while typing the reset time is a joke the
+                  // shop does not need.
+                  onChanged: (_) => IdleReset.keepAlive(context),
+                  style: PearlText.display(19).copyWith(color: p.ink),
+                  cursorColor: p.ink,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // The unit lives in the field rather than the label, so the
+              // number reads as a quantity even before you reach the note.
+              Text(
+                L.of(context).minutesUnit,
+                style: PearlText.body(11.5).copyWith(color: p.muted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          L.of(context).resetTimerRange(
+              ThemeCubit.minIdleMinutes, ThemeCubit.maxIdleMinutes),
+          style: PearlText.micro.copyWith(color: p.faint),
+        ),
+      ],
     );
   }
 }

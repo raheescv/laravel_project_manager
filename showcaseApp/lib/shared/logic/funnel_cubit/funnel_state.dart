@@ -66,9 +66,7 @@ class FunnelState extends Equatable {
     return a.size.compareTo(b.size);
   }
 
-  int get brandTotal => brands.fold<int>(0, (sum, b) => sum + b.productCount);
-
-  /// The furthest step the customer has reached — drives the funnel column.
+  /// The furthest step the customer has reached — drives the breadcrumbs.
   FunnelStep get step {
     if (size == null) return FunnelStep.size;
     if (brand == null) return FunnelStep.brand;

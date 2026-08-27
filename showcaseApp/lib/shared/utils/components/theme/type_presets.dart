@@ -70,6 +70,10 @@ enum TypePreset {
       );
 }
 
+/// A face's resolved identity at one weight: the two strings a [TextStyle] has
+/// to name to be painted in it.
+typedef _FontId = ({String? family, List<String>? fallback});
+
 /// The individual faces, so a pairing can name one without repeating the
 /// GoogleFonts call at every role. Public only because the pairings above
 /// expose which one they use.
@@ -82,57 +86,85 @@ enum TypeFace {
   inter,
   plexArabic;
 
+  /// What each face resolves to, per weight, once.
+  ///
+  /// Reaching a `GoogleFonts` method is not the map lookup it reads as. Every
+  /// call rebuilds the family's whole variant table — eighteen entries for Jost,
+  /// each one an allocation — scores all of them against the weight asked for,
+  /// builds two TextStyles, and schedules a load future with a closure and a
+  /// set entry behind it. And when the font has not landed yet it starts a file
+  /// read and an HTTP fetch, so an offline panel was doing both of those per
+  /// call, forever.
+  ///
+  /// Per call matters because [PearlText] is reached statically from eighty-odd
+  /// sites, which is once per `Text` per build: a results tile pays three times
+  /// over and the grid pays three more measuring the caption above it, on every
+  /// layout, for every tile on screen.
+  ///
+  /// What comes back that we cannot compute ourselves is two strings — the
+  /// variant's family name and its fallback — and for a given face and weight
+  /// they never change. So they are asked for once and the style is built from
+  /// them after that.
+  static final Map<TypeFace, Map<int, _FontId>> _ids = {};
+
+  /// Forget the resolved names, so the next style asks for them again.
+  ///
+  /// Which re-arms the download. The first call for a face is what starts the
+  /// fetch, and a panel that was offline when it started has no font behind the
+  /// name it cached — google_fonts drops a failed family from its own loaded
+  /// set, so asking again is all it takes. [ConnectivityCubit] calls this when
+  /// the server comes back.
+  static void forgetResolved() => _ids.clear();
+
+  /// Whether asking this face for a weight means anything.
+  ///
+  /// Instrument Serif ships one; asking for another silently synthesises a
+  /// bolder face that does not match the drawing, which is why the call below
+  /// leaves it out — and so, therefore, does the style built from it.
+  bool get _weighted => this != TypeFace.instrument;
+
   TextStyle style({
     required double size,
     required FontWeight weight,
     required double letterSpacing,
     required double? height,
   }) {
-    final args = (
+    final id = _identity(_weighted ? weight : FontWeight.w400);
+    return TextStyle(
       fontSize: size,
-      fontWeight: weight,
+      fontWeight: _weighted ? weight : null,
       letterSpacing: letterSpacing,
       height: height,
+      fontFamily: id.family,
+      fontFamilyFallback: id.fallback,
     );
-    return switch (this) {
-      TypeFace.jost => GoogleFonts.jost(
-          fontSize: args.fontSize,
-          fontWeight: args.fontWeight,
-          letterSpacing: args.letterSpacing,
-          height: args.height),
-      TypeFace.fraunces => GoogleFonts.fraunces(
-          fontSize: args.fontSize,
-          fontWeight: args.fontWeight,
-          letterSpacing: args.letterSpacing,
-          height: args.height),
-      TypeFace.hanken => GoogleFonts.hankenGrotesk(
-          fontSize: args.fontSize,
-          fontWeight: args.fontWeight,
-          letterSpacing: args.letterSpacing,
-          height: args.height),
-      // Instrument Serif ships one weight; asking for another silently
-      // synthesises a bolder face that does not match the drawing.
-      TypeFace.instrument => GoogleFonts.instrumentSerif(
-          fontSize: args.fontSize,
-          letterSpacing: args.letterSpacing,
-          height: args.height),
-      TypeFace.manrope => GoogleFonts.manrope(
-          fontSize: args.fontSize,
-          fontWeight: args.fontWeight,
-          letterSpacing: args.letterSpacing,
-          height: args.height),
-      TypeFace.inter => GoogleFonts.interTight(
-          fontSize: args.fontSize,
-          fontWeight: args.fontWeight,
-          letterSpacing: args.letterSpacing,
-          height: args.height),
-      TypeFace.plexArabic => GoogleFonts.ibmPlexSansArabic(
-          fontSize: args.fontSize,
-          fontWeight: args.fontWeight,
-          letterSpacing: args.letterSpacing,
-          height: args.height),
-    };
   }
+
+  /// Keyed on the weight's number rather than the object: `FontWeight` is a
+  /// const set, but a synthesised one would hash apart from its own value.
+  _FontId _identity(FontWeight weight) =>
+      (_ids[this] ??= <int, _FontId>{}).putIfAbsent(weight.value, () {
+        final resolved = _resolve(weight);
+        return (
+          family: resolved.fontFamily,
+          // Copied, and fixed-length: the list google_fonts hands back is
+          // growable and is about to be shared by every style in this face.
+          fallback: resolved.fontFamilyFallback?.toList(growable: false),
+        );
+      });
+
+  /// The one call per face and weight that this whole file exists to avoid
+  /// making twice. It also starts the font loading, which is the side effect
+  /// the identity is worth nothing without.
+  TextStyle _resolve(FontWeight weight) => switch (this) {
+        TypeFace.jost => GoogleFonts.jost(fontWeight: weight),
+        TypeFace.fraunces => GoogleFonts.fraunces(fontWeight: weight),
+        TypeFace.hanken => GoogleFonts.hankenGrotesk(fontWeight: weight),
+        TypeFace.instrument => GoogleFonts.instrumentSerif(),
+        TypeFace.manrope => GoogleFonts.manrope(fontWeight: weight),
+        TypeFace.inter => GoogleFonts.interTight(fontWeight: weight),
+        TypeFace.plexArabic => GoogleFonts.ibmPlexSansArabic(fontWeight: weight),
+      };
 }
 
 /// Reached by [PearlText] once it knows the script.

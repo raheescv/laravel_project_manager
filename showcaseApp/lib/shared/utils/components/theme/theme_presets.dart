@@ -85,8 +85,8 @@ enum ThemePreset {
 
 // ── Atelier Noir ────────────────────────────────────────────────────────────
 const PearlPalette _noirLight = PearlPalette(
-  bg: Color(0xFFF7F4EE),
-  surface: Color(0xFFFFFDF8),
+  bg: Color(0xFFFFFFFF),
+  surface: Color(0xFFFFFFFF),
   shotTop: Color(0xFFF6F2E9),
   shotBottom: Color(0xFFEFEAE0),
   ink: Color(0xFF1A1714),
@@ -117,11 +117,13 @@ const PearlPalette _noirDark = PearlPalette(
 );
 
 // ── Aurora Glass ────────────────────────────────────────────────────────────
-// The alphas are the direction's own: its surfaces and hairlines are frosted,
-// and flattening them to opaque loses the depth the whole scheme is built on.
+// The hairline alphas are the direction's own: they are frosted, and
+// flattening them to opaque loses the depth the whole scheme is built on.
+// Its light surface is the one exception — on a pure-white ground the frost
+// had nothing left to tint, so it is set flat.
 const PearlPalette _auroraLight = PearlPalette(
-  bg: Color(0xFFF4F5FC),
-  surface: Color(0xB8FFFFFF),
+  bg: Color(0xFFFFFFFF),
+  surface: Color(0xFFFFFFFF),
   shotTop: Color(0xFFE8EAFB),
   shotBottom: Color(0xFFE4F3FA),
   ink: Color(0xFF191B33),
@@ -157,7 +159,7 @@ const PearlPalette _auroraDark = PearlPalette(
 // brand mark, so a wash of it reads as the wrong blue rather than a soft one.
 const PearlPalette _sizerunLight = PearlPalette(
   bg: Color(0xFFFFFFFF),
-  surface: Color(0xFFF6F6FA),
+  surface: Color(0xFFFFFFFF),
   shotTop: Color(0xFFFFFFFF),
   shotBottom: Color(0xFFEDEEF6),
   ink: Color(0xFF000000),

@@ -43,6 +43,13 @@ class BranchCubit extends Cubit<BranchState> {
   /// catalog reads wait for this rather than racing it.
   Future<void> get ready => _resolved.future;
 
+  /// The list can land after this cubit is gone — only in tests, since the app
+  /// holds it for its whole life, but a teardown that crashes is a red suite
+  /// nobody trusts.
+  void _set(BranchState next) {
+    if (!isClosed) emit(next);
+  }
+
   HttpService get _http => serviceLocator<HttpService>();
   CatalogRepository get _repo => serviceLocator<CatalogRepository>();
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
@@ -56,7 +63,7 @@ class BranchCubit extends Cubit<BranchState> {
   int? get selectedId => state.showingAll ? null : (state.selected?.id ?? _http.activeBranchId);
 
   Future<void> load() async {
-    emit(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
+    _set(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
     try {
       final rows = await _repo.branches();
       final target = _storage.branchId;
@@ -67,14 +74,19 @@ class BranchCubit extends Cubit<BranchState> {
         _http.activeBranchId = pick.id;
         await _storage.setBranchId(pick.id);
       }
-      emit(state.copyWith(
+      _set(state.copyWith(
         status: DataFetchStatus.success,
         branches: rows,
         selected: pick,
         showingAll: all,
       ));
     } on ApiException catch (e) {
-      emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
+      _set(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
+    } catch (_) {
+      // Anything the transport did not think to type — a malformed body, a cast
+      // that did not hold. Uncaught it escapes a fire-and-forget `load()` and
+      // leaves the store pill on a spinner nothing will ever resolve.
+      _set(state.copyWith(status: DataFetchStatus.failed));
     } finally {
       // Released even on failure: a catalogue with unscoped stock still beats a
       // screen that never loads because the branch list 500'd.
@@ -86,7 +98,7 @@ class BranchCubit extends Cubit<BranchState> {
     if (!state.showingAll && branch.id == state.selected?.id) return;
     _http.activeBranchId = branch.id;
     await _storage.setBranchId(branch.id);
-    emit(state.copyWith(selected: branch, showingAll: false));
+    _set(state.copyWith(selected: branch, showingAll: false));
     _changed.add(branch.id);
   }
 
@@ -100,7 +112,7 @@ class BranchCubit extends Cubit<BranchState> {
     if (state.showingAll) return;
     _http.activeBranchId = null;
     await _storage.setBranchId(allBranches);
-    emit(state.copyWith(showingAll: true, clearSelected: true));
+    _set(state.copyWith(showingAll: true, clearSelected: true));
     _changed.add(allBranches);
   }
 

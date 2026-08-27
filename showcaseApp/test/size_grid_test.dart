@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:showcase/features/catalog/logic/funnel_cubit/funnel_cubit.dart';
+import 'package:showcase/shared/logic/funnel_cubit/funnel_cubit.dart';
 import 'package:showcase/features/catalog/screens/size_screen.dart';
 import 'package:showcase/l10n/app_localizations.dart';
 import 'package:showcase/shared/domain/constants/app_config.dart';
@@ -83,8 +83,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// Every screen whose body lands on four chips a row — phones, and a small
-  /// tablet once the rail and the funnel column have taken their share.
+  /// A spread of screens: the layout is one capped column now, so a kiosk
+  /// panel lands on the same chip count as a phone.
   const narrow = <String, Size>{
     'iPhone 17 Pro': Size(402, 874),
     'iPhone 13 mini': Size(375, 812),

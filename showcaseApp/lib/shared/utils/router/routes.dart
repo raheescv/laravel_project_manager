@@ -22,5 +22,4 @@ class Routes {
   static String photoFor(int id, int index) => '/product/$id/photo?i=$index';
 
   static const String search = '/search';
-  static const String scan = '/scan';
 }

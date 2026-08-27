@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../domain/helpers/formatters.dart';
+import '../logic/theme_cubit/theme_cubit.dart';
 import '../domain/models/index.dart';
 import '../utils/components/theme/pearl_theme.dart';
 import 'photo.dart';
@@ -12,9 +14,20 @@ const double _gapUnderStage = 9;
 const double _gapUnderBrand = 4;
 const double _gapUnderName = 5;
 
-double _nameSize(bool compact) => compact ? 9 : 10.5;
+/// The caption is set as a fraction of the tile it sits under.
+///
+/// A fixed 10.5pt name was drawn for a 3-up tile on a tablet. The same number
+/// under a kiosk tile more than twice that wide reads as a footnote, and the
+/// grid is exactly where a customer is deciding what to walk over and look at.
+/// Clamped at the bottom so nothing shrinks below what it was, and at the top
+/// so a very wide tile does not turn its price into a headline.
+double _brandSize(double width) => (width * .026).clamp(8.5, 13.0);
 
-double _priceSize(bool compact) => compact ? 11 : 12.5;
+double _nameSize(bool compact, double width) =>
+    compact ? 9 : (width * .034).clamp(10.5, 17.0);
+
+double _priceSize(bool compact, double width) =>
+    compact ? 11 : (width * .040).clamp(12.5, 20.0);
 
 int _nameLines(bool compact) => compact ? 1 : 2;
 
@@ -51,7 +64,11 @@ class ProductCard extends StatelessWidget {
   /// typeface is a setting, and the OS text size multiplies whatever comes out.
   /// The constant this replaced was measured against Jost at text size 1, and
   /// every other combination overflowed the tile.
-  static double captionHeight(BuildContext context, {bool compact = false}) {
+  static double captionHeight(
+    BuildContext context, {
+    bool compact = false,
+    double width = 0,
+  }) {
     final scaler = MediaQuery.textScalerOf(context);
     // Measured the way a Text is drawn, not the way the style reads: a Text
     // merges the ambient default before it paints, and the leading it inherits
@@ -72,11 +89,12 @@ class ProductCard extends StatelessWidget {
     }
 
     return _gapUnderStage +
-        lines(PearlText.brand, 1) +
+        lines(PearlText.brand.copyWith(fontSize: _brandSize(width)), 1) +
         _gapUnderBrand +
-        lines(PearlText.productName(_nameSize(compact)), _nameLines(compact)) +
+        lines(PearlText.productName(_nameSize(compact, width)),
+            _nameLines(compact)) +
         _gapUnderName +
-        lines(PearlText.price(_priceSize(compact)), 1);
+        lines(PearlText.price(_priceSize(compact, width)), 1);
   }
 
   @override
@@ -125,20 +143,23 @@ class ProductCard extends StatelessWidget {
               product.brandName.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: PearlText.brand.copyWith(color: p.faint),
+              style: PearlText.brand
+                  .copyWith(color: p.faint, fontSize: _brandSize(width)),
             ),
           const SizedBox(height: _gapUnderBrand),
           Text(
             product.name.toUpperCase(),
             maxLines: _nameLines(compact),
             overflow: TextOverflow.ellipsis,
-            style: PearlText.productName(_nameSize(compact)).copyWith(color: p.ink),
+            style: PearlText.productName(_nameSize(compact, width))
+                .copyWith(color: p.ink),
           ),
           const SizedBox(height: _gapUnderName),
           Text(
             money(product.mrp),
             maxLines: 1,
-            style: PearlText.price(_priceSize(compact)).copyWith(color: p.ink),
+            style:
+                PearlText.price(_priceSize(compact, width)).copyWith(color: p.ink),
           ),
         ],
       ),
@@ -190,9 +211,9 @@ class _Tag extends StatelessWidget {
       );
 }
 
-/// The grid the list and the browse screen both use. Column count comes from
-/// the painted width, so the same widget is 2-up on a phone and 4-up on a
-/// tablet without a device check.
+/// The grid the results and the search screen both use. How many tiles share a
+/// row is the Appearance setting, so the results and the search results are
+/// always the same grid, whatever screen they are drawn on.
 class ProductGrid extends StatelessWidget {
   const ProductGrid({
     super.key,
@@ -211,22 +232,31 @@ class ProductGrid extends StatelessWidget {
   final Widget? footer;
   final Widget? header;
 
-  static int columnsFor(double width) {
-    if (width >= 1000) return 4;
-    if (width >= 700) return 3;
-    if (width >= 420) return 3;
-    return 2;
-  }
+  /// The count the grid draws at, from Appearance.
+  ///
+  /// It used to be a rule read off the painted width, and the width could not
+  /// answer it: the panel is drawn on a canvas of roughly 800pt (see
+  /// `PanelScale`), which is about what a tablet reports, so every screen the
+  /// app actually runs on fell on the same side of every threshold. Two is
+  /// still what an unconfigured tablet shows — a customer is choosing a shoe
+  /// from a photograph — and a shop that wants its wall denser now says so.
+  ///
+  /// Selected rather than watched: Appearance also holds the palette, the
+  /// typeface, the text size and the idle wait, and watching the cubit rebuilt
+  /// every grid on screen when any of those moved — including the two that
+  /// rebuild the whole app above it anyway.
+  static int columnsOf(BuildContext context) =>
+      context.select<ThemeCubit, int>((cubit) => cubit.state.productColumns);
 
   @override
   Widget build(BuildContext context) {
+    final columns = columnsOf(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = columnsFor(constraints.maxWidth);
         const gap = PearlMetrics.gap;
         final cardWidth =
             (constraints.maxWidth - padding.horizontal - gap * (columns - 1)) / columns;
-        final caption = ProductCard.captionHeight(context);
+        final caption = ProductCard.captionHeight(context, width: cardWidth);
         return CustomScrollView(
           controller: controller,
           slivers: [

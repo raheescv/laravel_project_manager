@@ -4,26 +4,24 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/helpers/formatters.dart';
-import '../../../shared/domain/helpers/responsive.dart';
 import '../../../shared/domain/models/index.dart';
 import '../../../shared/logic/branch_cubit/branch_cubit.dart';
+import '../../../shared/logic/funnel_cubit/funnel_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
+import '../../../shared/utils/router/funnel_navigation.dart';
 import '../../../shared/utils/router/routes.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/photo.dart';
 import '../../../shared/widgets/product_card.dart';
-import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_cubit/product_cubit.dart';
-import 'reserve_sheet.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// The product page.
 ///
-/// Tablet splits it: a full-height gallery on the left, a standing info panel on
-/// the right whose call to action is pinned and never scrolls away, and the
-/// related rail spanning the full width beneath both. Phone stacks the same
-/// pieces in the same order.
+/// Gallery, then the info panel, then the related rail, stacked in that order.
+/// Nothing is pinned to the bottom: the showcase asks for nothing and sells
+/// nothing, so the page ends where the rail does.
 class ProductScreen extends StatelessWidget {
   const ProductScreen({super.key, required this.productId});
 
@@ -50,7 +48,6 @@ class _ProductView extends StatelessWidget {
 
     if (state.status.isFailed) {
       return ShowcaseScaffold(
-        showRail: false,
         topBar: _ProductTopBar(title: L.of(context).product),
         body: MessageState(
           title: L.of(context).productDidNotLoad,
@@ -64,19 +61,23 @@ class _ProductView extends StatelessWidget {
     final product = state.product;
     if (product == null) {
       return ShowcaseScaffold(
-        showRail: false,
         topBar: _ProductTopBar(title: L.of(context).loading),
-        body: Container(color: p.bg),
+        // A spinner, not a blank ground. This screen painted nothing while it
+        // waited, so a slow fetch and a broken one looked identical — and the
+        // broken one had no way out, because the failure never arrived.
+        body: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 1.4, color: p.faint),
+          ),
+        ),
       );
     }
 
     return ShowcaseScaffold(
-      showRail: false,
       topBar: _ProductTopBar(title: product.name),
-      body: context.isTablet
-          ? _TabletBody(state: state, product: product)
-          : _PhoneBody(state: state, product: product),
-      bottomBar: context.isTablet ? null : _Actions(product: product, state: state),
+      body: _Body(state: state, product: product),
     );
   }
 }
@@ -94,7 +95,8 @@ class _ProductTopBar extends StatelessWidget {
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: p.line))),
       child: Row(
         children: [
-          IconSquare(Icons.arrow_back, size: 38, onTap: () => context.pop()),
+          IconSquare(Icons.arrow_back,
+              size: 38, prominent: true, onTap: () => context.pop()),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
@@ -104,73 +106,54 @@ class _ProductTopBar extends StatelessWidget {
               style: PearlText.section.copyWith(color: p.ink),
             ),
           ),
+          const SizedBox(width: 14),
+          // The way out, on the one screen with no way out.
+          //
+          // This is the end of the funnel and the deepest the app goes: a
+          // customer who has finished with this shoe has a Back control that
+          // returns them to somebody else's results, three screens of somebody
+          // else's answers behind it. Home clears all of it — the same clearing
+          // the idle timer does — and puts them on step one.
+          IconSquare(
+            Icons.home_outlined,
+            size: 38,
+            prominent: true,
+            onTap: () => goHome(context),
+          ),
         ],
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------- tablet
+// ------------------------------------------------------------------- page
 
-class _TabletBody extends StatelessWidget {
-  const _TabletBody({required this.state, required this.product});
-
-  final ProductState state;
-  final Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.pearl;
-    return Column(
-      children: [
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: _Gallery(state: state, product: product)),
-              Container(
-                width: PearlMetrics.infoPanel,
-                decoration: BoxDecoration(
-                  border: Border(left: BorderSide(color: p.line)),
-                ),
-                child: Column(
-                  children: [
-                    // The panel scrolls; the actions below it do not.
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
-                        child: _Info(state: state, product: product),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
-                      child: _Actions(product: product, state: state, bare: true),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        _RelatedRail(state: state),
-      ],
-    );
-  }
-}
-
-// ----------------------------------------------------------------- phone
-
-class _PhoneBody extends StatelessWidget {
-  const _PhoneBody({required this.state, required this.product});
+class _Body extends StatelessWidget {
+  const _Body({required this.state, required this.product});
 
   final ProductState state;
   final Product product;
+
+  /// Half the panel goes to the photograph.
+  ///
+  /// It was a flat 300pt, which is most of a phone and a strip across the top
+  /// of a kiosk — the one thing a customer standing in front of the panel is
+  /// actually deciding on, drawn smaller than the paragraph of specifications
+  /// under it. A share rather than a number so it stays half of whatever the
+  /// panel turns out to be.
+  static const double _galleryShare = .5;
 
   @override
   Widget build(BuildContext context) => ListView(
         padding: EdgeInsets.zero,
         children: [
-          SizedBox(height: 300, child: _Gallery(state: state, product: product)),
+          SizedBox(
+            // Measured against the glass, not against the box this list was
+            // handed: the top bar and the offline banner come off the body, and
+            // half of what is left is not what "half the screen" means.
+            height: MediaQuery.sizeOf(context).height * _galleryShare,
+            child: _Gallery(state: state, product: product),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
                 PearlMetrics.pad, 18, PearlMetrics.pad, 10),
@@ -221,15 +204,29 @@ class _GalleryState extends State<_Gallery> {
   void _warm(double width) {
     if (width <= 0 || _warmedAt == width) return;
     _warmedAt = width;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final product = widget.product;
       final screen = MediaQuery.sizeOf(context).width;
-      precachePhotos(context, product.galleryUrls, width);
-      precachePhotos(
+
+      // In order, and a few at a time. The gallery is what the customer is
+      // looking at, so it goes first and alone; the spin frames are for a
+      // viewer they may never open, so they wait until the gallery is in and
+      // then trickle. Firing all of them at once is what made the first visit
+      // to a product feel broken.
+      await precachePhotos(
+        context,
+        product.galleryUrls,
+        width,
+        shouldContinue: () => mounted,
+      );
+      if (!mounted) return;
+      await precachePhotos(
         context,
         product.images360.map((frame) => frame.url),
         screen,
+        concurrency: 2,
+        shouldContinue: () => mounted,
       );
     });
   }
@@ -251,7 +248,6 @@ class _GalleryState extends State<_Gallery> {
     final p = context.pearl;
     final urls = product.galleryUrls;
     final index = state.galleryIndex.clamp(0, urls.isEmpty ? 0 : urls.length - 1);
-    final tablet = context.isTablet;
 
     return Stack(
       children: [
@@ -274,7 +270,7 @@ class _GalleryState extends State<_Gallery> {
                   return Photo(
                     url: urls.isEmpty ? '' : urls[index],
                     width: constraints.maxWidth,
-                    padding: EdgeInsets.all(tablet ? 40 : 26),
+                    padding: const EdgeInsets.all(26),
                   );
                 },
               ),
@@ -422,6 +418,10 @@ class _Info extends StatelessWidget {
     final p = context.pearl;
     final branchId = context.watch<BranchCubit>().selectedId;
     final sizes = _sizeRun(product);
+    // Everything below the photograph answers for the size in the size run, so
+    // the badge, the strip and the chip a customer is standing on all agree.
+    // Null is "no size chosen" and means the style as a whole.
+    final size = state.selectedSize;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,7 +434,7 @@ class _Info extends StatelessWidget {
                 style: PearlText.micro.copyWith(color: p.ink),
               ),
             ),
-            _HereBadge(count: product.stockAt(branchId)),
+            _HereBadge(count: product.stockAtForSize(branchId, size)),
           ],
         ),
         const SizedBox(height: 12),
@@ -460,14 +460,17 @@ class _Info extends StatelessWidget {
         const SizedBox(height: 16),
         Text(money(product.mrp), style: PearlText.price(26).copyWith(color: p.ink)),
         if (sizes.isNotEmpty) ...[
-          _PanelHeading(L.of(context).sizeRun, trailing: state.selectedSize),
+          // "All sizes" rather than a blank corner: it says what the strip
+          // below is answering for, and hints that the selection can be let go.
+          _PanelHeading(L.of(context).sizeRun,
+              trailing: size ?? L.of(context).allSizes),
           _SizeRun(
             sizes: sizes,
-            selected: state.selectedSize,
+            selected: size,
             branchId: branchId,
           ),
         ],
-        _Availability(product: product, branchId: branchId),
+        _Availability(product: product, branchId: branchId, size: size),
         if (product.description.isNotEmpty) ...[
           _PanelHeading(L.of(context).details),
           Text(
@@ -613,16 +616,25 @@ class _SizeRun extends StatelessWidget {
 /// five branches into a panel taller than the price — and the shops that had
 /// none of it took up exactly as much room as the ones that did.
 class _Availability extends StatelessWidget {
-  const _Availability({required this.product, required this.branchId});
+  const _Availability({
+    required this.product,
+    required this.branchId,
+    required this.size,
+  });
 
   final Product product;
   final int? branchId;
+
+  /// The size chosen in the run above, or null for the style as a whole. A
+  /// customer who has tapped 42.5 is asking where they can get a 42.5, not
+  /// where the shoe exists.
+  final String? size;
 
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
     final stocked = product
-        .branchesByStock(branchId)
+        .branchesByStockForSize(branchId, size)
         .where((line) => line.hasStock && line.branchName.isNotEmpty)
         .toList(growable: false);
     final labels = shortenBranchNames(stocked.map((line) => line.branchName).toList());
@@ -633,7 +645,11 @@ class _Availability extends StatelessWidget {
         children: [
           _PanelHeading(L.of(context).availability),
           Text(
-            L.of(context).notOnShelf,
+            // Which question came back empty matters: "nobody has a 42.5" sends
+            // a customer back to the size run, "nobody has it" does not.
+            size == null
+                ? L.of(context).notOnShelf
+                : L.of(context).sizeNotOnShelf(size!),
             style: PearlText.body(11.5).copyWith(color: p.faint),
           ),
         ],
@@ -743,36 +759,6 @@ class _BranchName extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-// --------------------------------------------------------------- actions
-
-class _Actions extends StatelessWidget {
-  const _Actions({required this.product, required this.state, this.bare = false});
-
-  final Product product;
-  final ProductState state;
-  final bool bare;
-
-  @override
-  Widget build(BuildContext context) {
-    final row = Row(
-      children: [
-        Expanded(
-          child: PearlButton(
-            label: L.of(context).reserveInStore,
-            icon: Icons.store_outlined,
-            onTap: () => showReserveSheet(
-              context,
-              product: product,
-              size: state.selectedSize,
-            ),
-          ),
-        ),
-      ],
-    );
-    return bare ? row : PinnedBar(child: row);
   }
 }
 

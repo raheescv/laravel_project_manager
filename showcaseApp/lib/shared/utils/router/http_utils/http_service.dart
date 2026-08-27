@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 
 import '../../../domain/constants/app_config.dart';
@@ -49,17 +51,37 @@ class HttpService {
   /// `branch_id` so stock counts describe the shop the customer is standing in.
   int? activeBranchId;
 
+  /// A hard ceiling on one request.
+  ///
+  /// Dio's receive timeout only fires between chunks, so a server that trickles
+  /// a response forever never trips it. Every screen in this app puts up a
+  /// spinner and waits for this future, so anything that can hang has to be
+  /// bounded here rather than left to the caller.
+  static const Duration _deadline = Duration(seconds: 25);
+
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) async {
     try {
-      final res = await _dio.get(
-        '${config.apiV1}$path',
-        queryParameters: _encode({..._baseQuery(), ...?query}),
-        options: Options(headers: _headers()),
-      );
+      final res = await _dio
+          .get(
+            '${config.apiV1}$path',
+            queryParameters: _encode({..._baseQuery(), ...?query}),
+            options: Options(headers: _headers()),
+          )
+          .timeout(_deadline);
       return _unwrap(res);
+    } on ApiException {
+      rethrow;
     } on DioException catch (e) {
       if (_unreachable(e)) throw OfflineException();
-      rethrow;
+      throw ApiException(e.message ?? 'Request failed');
+    } on TimeoutException {
+      throw OfflineException();
+    } catch (e) {
+      // Anything else — a malformed body, a cast that did not hold, a bug in
+      // here — becomes a typed failure too. Every caller catches ApiException
+      // and nothing else, so an escaping exception does not surface as an
+      // error: it strands the screen on its spinner with no way back.
+      throw ApiException('Something went wrong loading this.');
     }
   }
 

@@ -150,6 +150,7 @@ class Product extends Equatable {
     required this.relatedSizes,
     required this.totalStock,
     required this.availabilityStatus,
+    required this.has360,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -187,6 +188,10 @@ class Product extends Equatable {
           .toList(growable: false),
       totalStock: asInt(json['total_stock']),
       availabilityStatus: asStr(json['stock_quantity_availability_status']),
+      // Absent, not false, when the server did not speak to it — an older
+      // server says nothing here, and reading that as "no spin" would strip
+      // every badge and empty the 360° filter.
+      has360: json.containsKey('has_360') ? asBool(json['has_360']) : null,
     );
   }
 
@@ -235,12 +240,24 @@ class Product extends Equatable {
   final int totalStock;
   final String availabilityStatus;
 
+  /// The server's own "there is a spin behind this", carried by every payload
+  /// including the list — where the frames themselves are deliberately absent.
+  /// Null means the server never said, which is not the same as no.
+  final bool? has360;
+
   String get brandName => brand?.name ?? '';
 
   /// True only when the tenant has actually uploaded a spin sequence. Every
   /// 360° affordance in the UI is gated on this — an empty spin stage is worse
   /// than no button.
-  bool get hasSpin => images360.length > 1;
+  ///
+  /// The frames are a detail-view payload: a list row never carries them, so
+  /// counting them there answered "no spin" for the whole catalogue — no badge
+  /// on any card, and the "has a 360° view" filter emptying the grid. [has360]
+  /// is the server's own answer and is the only thing a list row can go on.
+  /// Frames still win where there are any, so the product page never offers a
+  /// viewer it has nothing to put in.
+  bool get hasSpin => images360.isNotEmpty ? images360.length > 1 : (has360 ?? false);
 
   /// The gallery, falling back to the card thumbnail when the product has no
   /// uploaded image rows at all.
@@ -253,25 +270,78 @@ class Product extends Equatable {
   bool get isOutOfStock => availabilityStatus == 'out_of_stock';
   bool get isElsewhere => availabilityStatus == 'available_in_other_branches';
 
-  /// Branches with something on the shelf first, then the rest — a customer
-  /// asking "where can I get it" should not have to read past the empty ones.
-  /// What is on the shelf at [branchId], from the per-branch rows.
+  /// What is on the shelf at [branchId], from this row's per-branch rows.
   ///
   /// Not `totalStock`, which sums every shop, and not `availabilityStatus`,
   /// which the detail endpoint derives from a session the public API does not
   /// have — so it never says "in stock" no matter what is on the shelf. The
   /// inventory rows are the thing that is actually true, and they are what the
   /// availability strip is drawn from, so this keeps the two agreeing.
-  int stockAt(int? branchId) {
-    if (branchId == null) return inventories.fold(0, (sum, i) => sum + i.available);
-    for (final line in inventories) {
+  int stockAt(int? branchId) => _stockIn(inventories, branchId);
+
+  /// Branches with something on the shelf first, then the rest — a customer
+  /// asking "where can I get it" should not have to read past the empty ones.
+  List<InventoryLine> branchesByStock(int? activeBranchId) =>
+      _byStock(inventories, activeBranchId);
+
+  /// The shelves behind one size — or behind the whole style.
+  ///
+  /// A null [size] means the customer has chosen no size, and the honest answer
+  /// to "where can I get this" is then every shop that has it in any size, its
+  /// rows summed. A size narrows that to the shops holding that size, which is
+  /// what the size run is for: tapping 42.5 should not leave the availability
+  /// strip listing the shop that only has 38s.
+  ///
+  /// [relatedSizes] is the only source with stock per size. When the catalogue
+  /// sent none — the list endpoint omits it, and `available_sizes` carries
+  /// labels alone — there is nothing to filter on, so this row's own shelves
+  /// are returned whatever was asked for.
+  List<InventoryLine> inventoryForSize(String? size) {
+    if (relatedSizes.isEmpty) return inventories;
+    if (size != null) {
+      for (final row in relatedSizes) {
+        if (row.size == size) return row.branches;
+      }
+      // A size the breakdown has never heard of. If it is this product's own
+      // size its inventory rows are still true; anything else has no shelves.
+      return size == this.size ? inventories : const [];
+    }
+    // One line per shop, quantities summed across every size it carries.
+    final merged = <int, InventoryLine>{};
+    for (final row in relatedSizes) {
+      for (final line in row.branches) {
+        final seen = merged[line.branchId];
+        merged[line.branchId] = seen == null
+            ? line
+            : InventoryLine(
+                branchId: seen.branchId,
+                branchName: seen.branchName,
+                branchCode: seen.branchCode,
+                quantity: seen.quantity + line.quantity,
+              );
+      }
+    }
+    return merged.values.toList(growable: false);
+  }
+
+  /// [stockAt], narrowed to one size. Same null-size rule as [inventoryForSize].
+  int stockAtForSize(int? branchId, String? size) =>
+      _stockIn(inventoryForSize(size), branchId);
+
+  /// [branchesByStock], narrowed to one size.
+  List<InventoryLine> branchesByStockForSize(int? activeBranchId, String? size) =>
+      _byStock(inventoryForSize(size), activeBranchId);
+
+  static int _stockIn(List<InventoryLine> lines, int? branchId) {
+    if (branchId == null) return lines.fold(0, (sum, i) => sum + i.available);
+    for (final line in lines) {
       if (line.branchId == branchId) return line.available;
     }
     return 0;
   }
 
-  List<InventoryLine> branchesByStock(int? activeBranchId) {
-    final rows = [...inventories];
+  static List<InventoryLine> _byStock(List<InventoryLine> lines, int? activeBranchId) {
+    final rows = [...lines];
     rows.sort((a, b) {
       if (a.branchId == activeBranchId) return -1;
       if (b.branchId == activeBranchId) return 1;

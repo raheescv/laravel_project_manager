@@ -5,14 +5,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../shared/domain/constants/data_fetching_status.dart';
+import '../../../shared/logic/funnel_cubit/funnel_cubit.dart';
+import '../../../shared/logic/product_list_cubit/product_list_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/router/routes.dart';
 import '../../../shared/widgets/chrome/app_top_bar.dart';
+import '../../../shared/widgets/chrome/idle_reset.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/product_card.dart';
-import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
-import '../../catalog/logic/product_list_cubit/product_list_cubit.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Free search across the catalogue — the way past the funnel when the customer
@@ -74,6 +75,11 @@ class _SearchViewState extends State<_SearchView> {
 
   /// Debounced so typing a product code is one request, not eight.
   void _onChanged(String value) {
+    // Typing is using the panel, and the idle timer cannot see it: the soft
+    // keyboard's taps go to the platform, not through the app's pointers. This
+    // is the only place a keystroke is visible, so it is where the clock goes
+    // back — otherwise a slow typist is sent home mid-search.
+    IdleReset.keepAlive(context);
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 320), () {
       if (!mounted) return;
@@ -89,26 +95,32 @@ class _SearchViewState extends State<_SearchView> {
 
   @override
   Widget build(BuildContext context) {
-    final list = context.watch<ProductListCubit>();
-    final state = list.state;
-    final query = _controller.text.trim();
+    // Read, not watched: the bar above the results does not depend on them, and
+    // rebuilding a focused text field every time a page of results lands is
+    // work done to redraw exactly what was already there.
+    final list = context.read<ProductListCubit>();
 
     return BlocListener<FunnelCubit, FunnelState>(
       listenWhen: (a, b) => a.inStockOnly != b.inStockOnly,
-      listener: (context, funnel) =>
-          list.apply(state.filters.copyWith(inStockOnly: funnel.inStockOnly)),
+      listener: (context, funnel) => list
+          .apply(list.state.filters.copyWith(inStockOnly: funnel.inStockOnly)),
       child: ShowcaseScaffold(
-      showRail: false,
-      topBar: _SearchBar(
-        controller: _controller,
-        focus: _focus,
-        onChanged: _onChanged,
-        onClear: () {
-          _controller.clear();
-          _onChanged('');
-        },
-      ),
-      body: _Body(state: state, query: query, scroll: _scroll),
+        topBar: _SearchBar(
+          controller: _controller,
+          focus: _focus,
+          onChanged: _onChanged,
+          onClear: () {
+            _controller.clear();
+            _onChanged('');
+          },
+        ),
+        body: BlocBuilder<ProductListCubit, ProductListState>(
+          builder: (context, state) => _Body(
+            state: state,
+            query: _controller.text.trim(),
+            scroll: _scroll,
+          ),
+        ),
       ),
     );
   }
@@ -135,7 +147,8 @@ class _SearchBar extends StatelessWidget {
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: p.line))),
       child: Row(
         children: [
-          IconSquare(Icons.arrow_back, size: 40, onTap: () => context.pop()),
+          IconSquare(Icons.arrow_back,
+              size: 40, prominent: true, onTap: () => context.pop()),
           const SizedBox(width: 10),
           const InStockToggle(),
           const SizedBox(width: 10),

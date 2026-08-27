@@ -6,7 +6,6 @@ import '../../../features/catalog/screens/size_screen.dart';
 import '../../../features/product/screens/photo_viewer_screen.dart';
 import '../../../features/product/screens/product_screen.dart';
 import '../../../features/product/screens/spin_viewer_screen.dart';
-import '../../../features/scan/screens/scan_screen.dart';
 import '../../../features/settings/screens/settings_screen.dart';
 import '../../../features/search/screens/search_screen.dart';
 import '../../domain/helpers/formatters.dart';
@@ -38,10 +37,6 @@ GoRouter createRouter() => GoRouter(
         GoRoute(
           path: Routes.search,
           builder: (context, state) => const SearchScreen(),
-        ),
-        GoRoute(
-          path: Routes.scan,
-          builder: (context, state) => const ScanScreen(),
         ),
         GoRoute(
           path: Routes.settings,

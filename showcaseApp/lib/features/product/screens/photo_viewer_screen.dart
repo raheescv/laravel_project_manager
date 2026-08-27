@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/models/index.dart';
+import '../../../shared/logic/funnel_cubit/funnel_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/widgets/pearl_widgets.dart';
 import '../../../shared/widgets/photo.dart';
-import '../../catalog/logic/funnel_cubit/funnel_cubit.dart';
 import '../logic/product_cubit/product_cubit.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -103,11 +103,29 @@ class _PhotoViewerState extends State<_PhotoViewer> {
 
   double get _scale => _zoom.value.getMaxScaleOnAxis();
 
+  /// Everything on this screen that depends on the zoom, which is two answers:
+  /// whether the photo is magnified at all, and whether it can go further in.
+  ///
+  /// Held as a notifier rather than read off the controller in `build`, because
+  /// the controller reports on every frame of a pinch or a pan. Answering that
+  /// with `setState` rebuilt the whole screen — the pager, every page's
+  /// `InteractiveViewer` and every `Photo` inside them — sixty times a second
+  /// while the customer's fingers were still on the glass, to change a button
+  /// from grey to black once. A record compares by value, so this notifies only
+  /// on the frame where one of the two answers actually turns over.
+  late final ValueNotifier<({bool zoomed, bool canZoomIn})> _zoomState =
+      ValueNotifier(_zoomAnswers);
+
+  ({bool zoomed, bool canZoomIn}) get _zoomAnswers => (
+        zoomed: _scale > _minScale + 0.01,
+        canZoomIn: _scale < _maxScale - 0.01,
+      );
+
   @override
   void initState() {
     super.initState();
-    // Rebuilds the controls: the zoom-out button and the reset are only live
-    // once the photo is actually zoomed.
+    // Drives the controls: the zoom-out button and the reset are only live once
+    // the photo is actually zoomed.
     _zoom.addListener(_onZoomChanged);
   }
 
@@ -116,11 +134,12 @@ class _PhotoViewerState extends State<_PhotoViewer> {
     _zoom
       ..removeListener(_onZoomChanged)
       ..dispose();
+    _zoomState.dispose();
     _pages.dispose();
     super.dispose();
   }
 
-  void _onZoomChanged() => setState(() {});
+  void _onZoomChanged() => _zoomState.value = _zoomAnswers;
 
   void _reset() => _zoom.value = Matrix4.identity();
 
@@ -163,14 +182,13 @@ class _PhotoViewerState extends State<_PhotoViewer> {
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
-    final zoomed = _scale > _minScale + 0.01;
 
     return Scaffold(
       backgroundColor: p.bg,
       body: SafeArea(
         child: Stack(
           children: [
-            Positioned.fill(child: _stage(zoomed: zoomed)),
+            Positioned.fill(child: _stage()),
             Positioned(
               top: 12,
               left: 14,
@@ -178,6 +196,9 @@ class _PhotoViewerState extends State<_PhotoViewer> {
                 Icons.close,
                 size: 40,
                 filled: true,
+                // The way out of a full-screen photograph, which on a kiosk is
+                // the only way out — same treatment as Back and Home.
+                prominent: true,
                 onTap: () => context.canPop() ? context.pop() : null,
               ),
             ),
@@ -196,36 +217,49 @@ class _PhotoViewerState extends State<_PhotoViewer> {
             Positioned(
               right: 14,
               bottom: 18,
-              child: _ZoomControls(
-                canZoomIn: _scale < _maxScale - 0.01,
-                canZoomOut: zoomed,
-                onIn: () => _zoomBy(_step),
-                onOut: () => _zoomBy(1 / _step),
-                onReset: zoomed ? _reset : null,
-              ),
-            ),
-            if (!zoomed)
-              Positioned(
-                bottom: 26,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Text(
-                    (_urls.length > 1
-                            ? L.of(context).pinchToZoomSwipe
-                            : L.of(context).pinchToZoom)
-                        .toUpperCase(),
-                    style: PearlText.micro.copyWith(fontSize: 8.5, color: p.faint),
-                  ),
+              child: _onZoom(
+                (zoom) => _ZoomControls(
+                  canZoomIn: zoom.canZoomIn,
+                  canZoomOut: zoom.zoomed,
+                  onIn: () => _zoomBy(_step),
+                  onOut: () => _zoomBy(1 / _step),
+                  onReset: zoom.zoomed ? _reset : null,
                 ),
               ),
+            ),
+            Positioned(
+              bottom: 26,
+              left: 0,
+              right: 0,
+              child: _onZoom(
+                (zoom) => zoom.zoomed
+                    ? const SizedBox.shrink()
+                    : Center(
+                        child: Text(
+                          (_urls.length > 1
+                                  ? L.of(context).pinchToZoomSwipe
+                                  : L.of(context).pinchToZoom)
+                              .toUpperCase(),
+                          style:
+                              PearlText.micro.copyWith(fontSize: 8.5, color: p.faint),
+                        ),
+                      ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _stage({required bool zoomed}) {
+  /// Rebuild just this corner of the screen when the zoom answers change.
+  Widget _onZoom(Widget Function(({bool zoomed, bool canZoomIn}) zoom) build) =>
+      ValueListenableBuilder<({bool zoomed, bool canZoomIn})>(
+        valueListenable: _zoomState,
+        builder: (context, zoom, _) => build(zoom),
+      );
+
+  Widget _stage() {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Cached so the button zoom can focus on the middle of the photo. The
@@ -234,27 +268,32 @@ class _PhotoViewerState extends State<_PhotoViewer> {
         return GestureDetector(
           onDoubleTapDown: (d) => _lastTap = d.localPosition,
           onDoubleTap: _onDoubleTap,
-          child: PageView.builder(
-            controller: _pages,
-            // A drag while zoomed in belongs to the photo, not the pager.
-            physics:
-                zoomed ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
-            itemCount: _urls.length,
-            onPageChanged: _showPage,
-            itemBuilder: (context, i) => InteractiveViewer(
-              // Only the visible page drives the shared controller; the others
-              // are always fitted, so they need no state.
-              transformationController: i == _index ? _zoom : null,
-              minScale: _minScale,
-              maxScale: _maxScale,
-              // Decoded for a deep zoom, not the resting size, or zooming in
-              // just magnifies a blurry decode. The product page warms this
-              // exact size for the shot that was on screen, so the tap that
-              // opened this usually lands on a photo that is already decoded.
-              child: Photo(
-                url: _urls[i],
-                width: zoomDecodeWidth(context),
-                padding: const EdgeInsets.all(20),
+          // The pager is rebuilt on the one frame the photo becomes magnified
+          // and the one where it stops being, and not on the sixty in between.
+          child: _onZoom(
+            (zoom) => PageView.builder(
+              controller: _pages,
+              // A drag while zoomed in belongs to the photo, not the pager.
+              physics: zoom.zoomed
+                  ? const NeverScrollableScrollPhysics()
+                  : const PageScrollPhysics(),
+              itemCount: _urls.length,
+              onPageChanged: _showPage,
+              itemBuilder: (context, i) => InteractiveViewer(
+                // Only the visible page drives the shared controller; the
+                // others are always fitted, so they need no state.
+                transformationController: i == _index ? _zoom : null,
+                minScale: _minScale,
+                maxScale: _maxScale,
+                // Decoded for a deep zoom, not the resting size, or zooming in
+                // just magnifies a blurry decode. The product page warms this
+                // exact size for the shot that was on screen, so the tap that
+                // opened this usually lands on a photo already decoded.
+                child: Photo(
+                  url: _urls[i],
+                  width: zoomDecodeWidth(context),
+                  padding: const EdgeInsets.all(20),
+                ),
               ),
             ),
           ),

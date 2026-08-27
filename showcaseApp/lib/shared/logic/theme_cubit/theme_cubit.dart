@@ -30,6 +30,11 @@ class ThemeCubit extends Cubit<ThemeSettings> {
       typeface: typeface,
       sizeColumns:
           _storage.sizeColumns == 0 ? defaultSizeColumns : _storage.sizeColumns,
+      productColumns: _storage.productColumns == 0
+          ? defaultProductColumns
+          : _storage.productColumns,
+      idleMinutes:
+          _storage.idleMinutes == 0 ? defaultIdleMinutes : _storage.idleMinutes,
     ));
   }
 
@@ -84,6 +89,42 @@ class ThemeCubit extends Cubit<ThemeSettings> {
     if (columns == state.sizeColumns) return;
     emit(state.copyWith(sizeColumns: columns));
     await _storage.setSizeColumns(columns);
+  }
+
+  /// The counts offered for the results grid, and what an unconfigured tablet
+  /// shows. Two because a customer is choosing a shoe from a photograph and a
+  /// photograph a quarter of the panel wide is not one they can choose from —
+  /// the same reason the width rule that used to decide this was wrong on the
+  /// one screen the app runs on. A wide desk display can want five.
+  static const List<int> productColumnOptions = [2, 3, 4, 5];
+  static const int defaultProductColumns = 2;
+
+  Future<void> setProductColumns(int columns) async {
+    if (columns == state.productColumns) return;
+    emit(state.copyWith(productColumns: columns));
+    await _storage.setProductColumns(columns);
+  }
+
+  /// How long the panel waits before it belongs to the next customer.
+  ///
+  /// Typed rather than picked from a list: the right number is the shop's, and
+  /// it depends on things no list can anticipate — how long the queue is, how
+  /// far the tablet is from the till, whether staff use it between customers.
+  /// A shop that wants seven minutes should be able to have seven.
+  static const int defaultIdleMinutes = 10;
+
+  /// Under a minute the panel resets while someone is still reading it; past
+  /// two hours it has stopped being a reset at all. Typing outside the range
+  /// is not refused — it is pulled to the nearest end, so the field always
+  /// answers with something that works.
+  static const int minIdleMinutes = 1;
+  static const int maxIdleMinutes = 120;
+
+  Future<void> setIdleMinutes(int minutes) async {
+    final value = minutes.clamp(minIdleMinutes, maxIdleMinutes);
+    if (value == state.idleMinutes) return;
+    emit(state.copyWith(idleMinutes: value));
+    await _storage.setIdleMinutes(value);
   }
 
   Future<void> setTypeface(TypePreset preset) async {

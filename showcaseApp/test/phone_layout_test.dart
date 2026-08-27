@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:showcase/features/catalog/logic/funnel_cubit/funnel_cubit.dart';
+import 'package:showcase/shared/logic/funnel_cubit/funnel_cubit.dart';
 import 'package:showcase/shared/domain/constants/app_config.dart';
 import 'package:showcase/shared/domain/constants/global_variables.dart';
 import 'package:showcase/shared/domain/models/index.dart';
@@ -17,7 +17,7 @@ import 'package:showcase/shared/utils/local_storage/local_storage_service.dart';
 import 'package:showcase/shared/utils/router/http_utils/http_service.dart';
 import 'package:showcase/shared/widgets/brand_mark.dart';
 import 'package:showcase/shared/widgets/chrome/app_top_bar.dart';
-import 'package:showcase/shared/widgets/chrome/funnel_column.dart';
+import 'package:showcase/shared/widgets/chrome/funnel_breadcrumbs.dart';
 
 /// The chrome has to survive a phone, not just the tablet it was designed on.
 ///
@@ -125,19 +125,16 @@ void main() {
     });
   }
 
-  testWidgets('the phone bar keeps search inline and the rest in a menu',
+  testWidgets('the bar keeps search inline and settings one tap away',
       (tester) async {
     await pumpBar(tester, const Size(375, 812), withBreadcrumbs: false);
 
-    // Search earns a field of its own in the control row; what is left over
-    // is the pair nobody reaches for mid-browse.
+    // Search earns a field of its own in the control row, and Settings is a
+    // square beside it. Neither is behind a menu: the overflow existed to hold
+    // the scanner alongside Settings, and the scanner is gone.
     expect(find.byIcon(Icons.search), findsOneWidget);
-    expect(find.byIcon(Icons.more_horiz), findsOneWidget);
-
-    await tester.tap(find.byIcon(Icons.more_horiz));
-    await tester.pumpAndSettle();
-    expect(find.text('Scan a barcode'), findsOneWidget);
-    expect(find.text('Appearance'), findsOneWidget);
+    expect(find.byIcon(Icons.tune), findsOneWidget);
+    expect(find.byIcon(Icons.more_horiz), findsNothing);
   });
 
   for (final entry in sizes.entries) {
@@ -180,6 +177,16 @@ void main() {
 
     // Labelled with the language you would get, not the one you are in.
     expect(find.text('العربية'), findsOneWidget);
+
+    // And named by a globe, because the word alone only reaches the people who
+    // already read the script it is written in.
+    expect(
+      find.descendant(
+        of: find.byType(LanguagePill),
+        matching: find.byIcon(Icons.language),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the bar keeps its layout in Arabic', (tester) async {
@@ -249,18 +256,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the tablet bar leaves the mark to the rail', (tester) async {
-    // Two marks on one screen is one too many, and the rail carries it there.
+  testWidgets('a kiosk panel gets the same bar as a phone', (tester) async {
+    // One layout now, whatever it is drawn on: the same mark, the same two
+    // rows. A wide screen buys margins, not a second design.
     await pumpBar(tester, const Size(1024, 1366), withBreadcrumbs: true);
 
-    expect(find.byType(BrandMark), findsNothing);
-  });
-
-  testWidgets('the tablet bar keeps its inline search and scanner', (tester) async {
-    await pumpBar(tester, const Size(1024, 1366), withBreadcrumbs: false);
-
-    expect(find.byIcon(Icons.qr_code_scanner_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.more_horiz), findsNothing);
+    expect(find.byType(BrandMark), findsOneWidget);
+    expect(find.byIcon(Icons.tune), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

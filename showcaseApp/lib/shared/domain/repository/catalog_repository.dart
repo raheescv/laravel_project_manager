@@ -22,6 +22,7 @@ abstract class CatalogRepository {
     double? minPrice,
     double? maxPrice,
     bool inStockOnly,
+    bool has360,
     String sortBy,
     String sortDirection,
     int page,
@@ -31,8 +32,6 @@ abstract class CatalogRepository {
   /// Full detail — the only place `images360`, `related_sizes` and the
   /// per-branch stock exist.
   Future<Product> product(int id);
-
-  Future<Product> productByBarcode(String barcode);
 
   /// Same main category and brand, current product removed.
   ///

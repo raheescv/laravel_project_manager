@@ -66,7 +66,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>Used only to scan a product barcode and open that product in the showcase.</string>
 </dict>
 </plist>

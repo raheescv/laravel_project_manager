@@ -78,14 +78,60 @@ double zoomDecodeWidth(BuildContext context) =>
 Future<void> precachePhotos(
   BuildContext context,
   Iterable<String> urls,
-  double width,
-) async {
-  final requests = urls
-      .where((url) => url.isNotEmpty)
-      .map((url) => precacheImage(photoProvider(context, url, width), context)
-          .catchError((_) {}))
-      .toList();
-  await Future.wait(requests);
+  double width, {
+  int concurrency = 3,
+  bool Function()? shouldContinue,
+}) async {
+  final pending = urls.where((url) => url.isNotEmpty).toList(growable: false);
+  await runBounded(
+    pending.map((url) => () =>
+        precacheImage(photoProvider(context, url, width), context)),
+    concurrency: concurrency,
+    shouldContinue: shouldContinue,
+  );
+}
+
+/// Run [tasks] with at most [concurrency] in flight, in order.
+///
+/// Warming a product's photos used to start every one at once: a gallery, two
+/// dozen spin frames and a zoom copy went out together, roughly thirty requests
+/// the instant the page opened. On shop wifi they do not arrive faster for
+/// being asked for together — they starve each other and, worse, they starve
+/// the page's own API calls, so the first visit to a product sat on a spinner
+/// while the second was instant off a warm cache.
+///
+/// Failures are swallowed: a photo that will not load is the gallery's problem
+/// to render, and one bad URL must not stop the rest being fetched.
+Future<void> runBounded(
+  Iterable<Future<void> Function()> tasks, {
+  int concurrency = 3,
+  bool Function()? shouldContinue,
+}) async {
+  final queue = tasks.toList(growable: false);
+  if (queue.isEmpty) return;
+  final width = concurrency < 1 ? 1 : concurrency;
+  var next = 0;
+
+  Future<void> worker() async {
+    while (true) {
+      // Checked between tasks, so leaving a page stops it queuing more. The
+      // request already in flight cannot be recalled, but two dozen spin
+      // frames should not go on competing with the screen the customer went
+      // back to — which is what made the list look stuck on return.
+      if (shouldContinue != null && !shouldContinue()) return;
+      final index = next++;
+      if (index >= queue.length) return;
+      try {
+        await queue[index]();
+      } catch (_) {
+        // Keep going; the next one may be fine.
+      }
+    }
+  }
+
+  await Future.wait([
+    for (var i = 0; i < width && i < queue.length; i++) worker(),
+  ]);
 }
 
 /// Shown while the photo is on its way.

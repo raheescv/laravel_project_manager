@@ -1,0 +1,31 @@
+{
+  // Without these args the app falls back to AppConfig.fallbackBaseUrl with no
+  // tenant, and every screen fails with "Cannot reach the store" while curl to
+  // the real host works fine. Pressing Run should not be a different app.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Showcase (debug)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define-from-file=env.json"]
+    },
+    {
+      "name": "Showcase (profile)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define-from-file=env.json"]
+    },
+    {
+      "name": "Showcase (release — what the kiosk runs)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release",
+      "program": "lib/main.dart",
+      "toolArgs": ["--dart-define-from-file=env.json"]
+    }
+  ]
+}

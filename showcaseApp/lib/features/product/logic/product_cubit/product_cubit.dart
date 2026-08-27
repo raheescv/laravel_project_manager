@@ -27,11 +27,18 @@ class ProductCubit extends Cubit<ProductState> {
 
   CatalogRepository get _repo => serviceLocator<CatalogRepository>();
 
+  /// The page can be popped while its request is in the air, and emitting into
+  /// a closed cubit throws — including from the catch block, which turned an
+  /// abandoned screen into an unhandled error.
+  void _set(ProductState next) {
+    if (!isClosed) emit(next);
+  }
+
   Future<void> load() async {
-    emit(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
+    _set(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
     try {
       final product = await _repo.product(productId);
-      emit(state.copyWith(
+      _set(state.copyWith(
         status: DataFetchStatus.success,
         product: product,
         selectedSize: product.size.isEmpty ? null : product.size,
@@ -39,22 +46,35 @@ class ProductCubit extends Cubit<ProductState> {
       ));
       await _loadRelated(product);
     } on ApiException catch (e) {
-      emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
+      _set(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
+    } catch (_) {
+      // Belt and braces behind HttpService, which types everything it throws.
+      // A screen that fails says so and offers a retry; a screen that throws
+      // past its handler sits on a spinner forever, which is the one outcome
+      // with no way out of it.
+      _set(state.copyWith(status: DataFetchStatus.failed));
     }
   }
 
   Future<void> _loadRelated(Product product) async {
-    emit(state.copyWith(relatedStatus: DataFetchStatus.waiting));
+    _set(state.copyWith(relatedStatus: DataFetchStatus.waiting));
     try {
       final rows = await _repo.related(product, inStockOnly: inStockOnly);
-      emit(state.copyWith(relatedStatus: DataFetchStatus.success, related: rows));
+      _set(state.copyWith(relatedStatus: DataFetchStatus.success, related: rows));
     } on ApiException {
       // A missing rail is a quiet degradation, not a failed page.
-      emit(state.copyWith(relatedStatus: DataFetchStatus.failed, related: const []));
+      _set(state.copyWith(relatedStatus: DataFetchStatus.failed, related: const []));
     }
   }
 
-  void showImage(int index) => emit(state.copyWith(galleryIndex: index));
+  void showImage(int index) => _set(state.copyWith(galleryIndex: index));
 
-  void selectSize(String size) => emit(state.copyWith(selectedSize: size));
+  /// Tapping the chosen size again clears it, which is what puts the
+  /// availability strip back to every shop that carries the style. There is no
+  /// other way out of a selection on a panel with no keyboard and no back
+  /// gesture, and a customer who has narrowed to a size they cannot get needs
+  /// one.
+  void selectSize(String size) => _set(state.selectedSize == size
+      ? state.copyWith(clearSize: true)
+      : state.copyWith(selectedSize: size));
 }

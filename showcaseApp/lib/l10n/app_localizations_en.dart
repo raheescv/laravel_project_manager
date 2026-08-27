@@ -28,9 +28,6 @@ class LEn extends L {
       'Stock counts on every screen describe the store shown here.';
 
   @override
-  String get scanBarcode => 'Scan a barcode';
-
-  @override
   String get appearance => 'Appearance';
 
   @override
@@ -67,10 +64,7 @@ class LEn extends L {
   String get choosing => 'Choosing…';
 
   @override
-  String get anySize => 'Any size';
-
-  @override
-  String get anyBrand => 'Any brand';
+  String get anyBrand => 'All brands';
 
   @override
   String get whichSize => 'What is your size?';
@@ -81,9 +75,6 @@ class LEn extends L {
   @override
   String get sizeHintAll =>
       'Sizes with nothing on the shelf are struck through — ask a colleague and we can check the other stores.';
-
-  @override
-  String get available => 'Available';
 
   @override
   String get noSizes => 'No sizes recorded';
@@ -97,14 +88,6 @@ class LEn extends L {
 
   @override
   String get brandsDidNotLoad => 'Brands did not load';
-
-  @override
-  String get stylesPerBrand => 'styles per brand';
-
-  @override
-  String stylesPerBrandInSize(Object size) {
-    return 'styles per brand in size $size';
-  }
 
   @override
   String get showEveryBrand => 'Show every brand';
@@ -142,6 +125,9 @@ class LEn extends L {
   String get skipAhead => 'Skip ahead';
 
   @override
+  String get backToHome => 'Back to home';
+
+  @override
   String get filterAndSort => 'Filter and sort';
 
   @override
@@ -152,11 +138,6 @@ class LEn extends L {
   @override
   String productsCount(int count) {
     return '$count products';
-  }
-
-  @override
-  String shownCount(int count) {
-    return '$count shown';
   }
 
   @override
@@ -218,9 +199,6 @@ class LEn extends L {
 
   @override
   String get has360 => 'Has a 360° view';
-
-  @override
-  String get appliedToLoaded => 'Applied to loaded results';
 
   @override
   String get showResults => 'Show results';
@@ -297,6 +275,11 @@ class LEn extends L {
   String get notOnShelf => 'Not on the shelf at any store right now.';
 
   @override
+  String sizeNotOnShelf(String size) {
+    return 'No store has $size right now.';
+  }
+
+  @override
   String storeCount(int count) {
     return '$count store';
   }
@@ -308,13 +291,6 @@ class LEn extends L {
 
   @override
   String get youMayAlsoLike => 'You may also like';
-
-  @override
-  String get reserveInStore => 'Reserve in store';
-
-  @override
-  String get reserveDetail =>
-      'We will note this on the tablet and tell a colleague. Nothing is ordered and nothing is charged.';
 
   @override
   String get fieldCode => 'Code';
@@ -330,31 +306,6 @@ class LEn extends L {
 
   @override
   String get onTheShelf => 'On the shelf';
-
-  @override
-  String get noteAndClose => 'Note it and close';
-
-  @override
-  String barcodeNotFound(Object code) {
-    return 'No product carries the barcode $code.';
-  }
-
-  @override
-  String get cameraAccess => 'Camera access';
-
-  @override
-  String get cameraDetail =>
-      'The scanner reads the barcode on a shoe box and opens that product. The camera is only used while this screen is open.';
-
-  @override
-  String get allowCamera => 'Allow the camera';
-
-  @override
-  String get cameraBlocked => 'Camera is blocked';
-
-  @override
-  String get cameraBlockedDetail =>
-      'Turn the camera on for this app in Settings, then come back.';
 
   @override
   String get appearanceIntro =>
@@ -404,12 +355,6 @@ class LEn extends L {
       'Cannot reach the store. Check the connection and try again.';
 
   @override
-  String get openSettings => 'Open settings';
-
-  @override
-  String get lookingUp => 'Looking it up';
-
-  @override
   String get searching => 'Searching';
 
   @override
@@ -419,16 +364,12 @@ class LEn extends L {
   String get searchPrompt => 'Name, code or barcode';
 
   @override
-  String get searchEmpty => 'Type a name, a product code, or scan a barcode.';
+  String get searchEmpty => 'Type a name or a product code.';
 
   @override
   String searchNoMatch(Object query) {
     return 'No product matches \"$query\" in this store.';
   }
-
-  @override
-  String get reserveIntro =>
-      'We will note this on the tablet and tell a colleague. Nothing is ordered and nothing is charged.';
 
   @override
   String underAmount(Object amount) {
@@ -473,6 +414,12 @@ class LEn extends L {
   String get sizesPerRowHint => 'on the size screen';
 
   @override
+  String get productsPerRow => 'Products per row';
+
+  @override
+  String get productsPerRowHint => 'on the results and search screens';
+
+  @override
   String get typeface => 'Typeface';
 
   @override
@@ -488,4 +435,30 @@ class LEn extends L {
 
   @override
   String get textLargest => 'Largest';
+
+  @override
+  String get allSizes => 'All sizes';
+
+  @override
+  String get anySize => 'All';
+
+  @override
+  String get resetTimer => 'Reset after';
+
+  @override
+  String get resetTimerHint =>
+      'Minutes of no touch before the panel returns to the start and forgets the last customer.';
+
+  @override
+  String get minutesUnit => 'minutes';
+
+  @override
+  String appVersion(Object version) {
+    return 'Version $version';
+  }
+
+  @override
+  String resetTimerRange(int min, int max) {
+    return 'Between $min and $max minutes.';
+  }
 }

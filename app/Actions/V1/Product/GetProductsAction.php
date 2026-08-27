@@ -53,6 +53,7 @@ class GetProductsAction
 
         $this->addThumbnailFallback($query);
         $this->addStockAggregates($query, $branchId);
+        $this->addSpinFrameCount($query);
 
         $this->applyFilters($query, $filters);
         $this->applySorting($query, $filters);
@@ -92,6 +93,22 @@ class GetProductsAction
             ->orderBy('id')
             ->limit(1),
         ]);
+    }
+
+    /**
+     * How many 360° frames sit behind each row.
+     *
+     * The frames themselves are a detail-view payload — a spin is two dozen
+     * images and the list must never carry them — but a card still has to know
+     * whether there is a spin to badge, and the showcase's "has a 360° view"
+     * filter has to be answerable. A count over the (product_id, method) index
+     * is one subquery in the same round trip, and the images are never loaded.
+     */
+    private function addSpinFrameCount(Builder $query): void
+    {
+        $query->withCount(['images as spin_frame_count' => function ($q) {
+            $q->where('method', 'angle');
+        }]);
     }
 
     /**
@@ -209,6 +226,17 @@ class GetProductsAction
                             return $branchQ->where('branch_id', $branchId);
                         });
                 });
+            })
+            // Only what has a spin behind it.
+            //
+            // Two frames, not one: a single angle image is a leftover upload,
+            // not a sequence anything can be spun through — and the clients
+            // hide the 360° affordance for it, so a row returned here on the
+            // strength of one frame would come back looking like every other.
+            ->when($filters['has_360'] ?? false, function ($q) {
+                return $q->whereHas('images', function ($imageQ) {
+                    $imageQ->where('method', 'angle');
+                }, '>=', 2);
             })
             // Size filter
             ->when($filters['size'] ?? null, function ($q, $value) {

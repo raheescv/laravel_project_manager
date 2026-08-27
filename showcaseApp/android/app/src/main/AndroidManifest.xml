@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Declared here, not only in the debug and profile manifests Flutter
+         ships with. Those cover `flutter run`; a release build merges neither,
+         so a release APK had no network at all and every request failed as
+         "cannot reach the store" — which is what a kiosk runs. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="Sizerun"
         android:name="${applicationName}"

@@ -27,9 +27,6 @@ class LAr extends L {
   String get storeHint => 'أرقام المخزون في كل الشاشات تخص المتجر المعروض هنا.';
 
   @override
-  String get scanBarcode => 'مسح الباركود';
-
-  @override
   String get appearance => 'المظهر';
 
   @override
@@ -66,10 +63,7 @@ class LAr extends L {
   String get choosing => 'جارٍ الاختيار…';
 
   @override
-  String get anySize => 'أي مقاس';
-
-  @override
-  String get anyBrand => 'أي علامة';
+  String get anyBrand => 'كل العلامات';
 
   @override
   String get whichSize => 'كم مقاسك؟';
@@ -80,9 +74,6 @@ class LAr extends L {
   @override
   String get sizeHintAll =>
       'المقاسات غير المتوفرة مشطوبة — اسأل أحد الموظفين ويمكننا التحقق من الفروع الأخرى.';
-
-  @override
-  String get available => 'المتوفر';
 
   @override
   String get noSizes => 'لا توجد مقاسات مسجّلة';
@@ -96,14 +87,6 @@ class LAr extends L {
 
   @override
   String get brandsDidNotLoad => 'تعذّر تحميل العلامات التجارية';
-
-  @override
-  String get stylesPerBrand => 'تصميم لكل علامة';
-
-  @override
-  String stylesPerBrandInSize(Object size) {
-    return 'تصميم لكل علامة في المقاس $size';
-  }
 
   @override
   String get showEveryBrand => 'عرض كل العلامات';
@@ -141,6 +124,9 @@ class LAr extends L {
   String get skipAhead => 'تخطَّ إلى النتائج';
 
   @override
+  String get backToHome => 'العودة إلى البداية';
+
+  @override
   String get filterAndSort => 'التصفية والترتيب';
 
   @override
@@ -151,11 +137,6 @@ class LAr extends L {
   @override
   String productsCount(int count) {
     return '$count منتج';
-  }
-
-  @override
-  String shownCount(int count) {
-    return '$count معروض';
   }
 
   @override
@@ -217,9 +198,6 @@ class LAr extends L {
 
   @override
   String get has360 => 'يحتوي على عرض 360°';
-
-  @override
-  String get appliedToLoaded => 'يُطبَّق على النتائج المحمّلة';
 
   @override
   String get showResults => 'عرض النتائج';
@@ -296,6 +274,11 @@ class LAr extends L {
   String get notOnShelf => 'غير متوفر في أي فرع حالياً.';
 
   @override
+  String sizeNotOnShelf(String size) {
+    return 'المقاس $size غير متوفر في أي فرع حالياً.';
+  }
+
+  @override
   String storeCount(int count) {
     return '$count فرع';
   }
@@ -307,13 +290,6 @@ class LAr extends L {
 
   @override
   String get youMayAlsoLike => 'قد يعجبك أيضاً';
-
-  @override
-  String get reserveInStore => 'احجز في المتجر';
-
-  @override
-  String get reserveDetail =>
-      'سنسجّل ذلك على الجهاز ونُبلغ أحد الموظفين. لن يتم أي طلب ولا أي دفع.';
 
   @override
   String get fieldCode => 'الرمز';
@@ -329,31 +305,6 @@ class LAr extends L {
 
   @override
   String get onTheShelf => 'المتوفر حالياً';
-
-  @override
-  String get noteAndClose => 'سجّلها وأغلق';
-
-  @override
-  String barcodeNotFound(Object code) {
-    return 'لا يوجد منتج يحمل الباركود $code.';
-  }
-
-  @override
-  String get cameraAccess => 'الوصول إلى الكاميرا';
-
-  @override
-  String get cameraDetail =>
-      'يقرأ الماسح الباركود على علبة الحذاء ويفتح المنتج. تُستخدم الكاميرا فقط أثناء فتح هذه الشاشة.';
-
-  @override
-  String get allowCamera => 'السماح بالكاميرا';
-
-  @override
-  String get cameraBlocked => 'الكاميرا محظورة';
-
-  @override
-  String get cameraBlockedDetail =>
-      'فعّل الكاميرا لهذا التطبيق من الإعدادات ثم عد.';
 
   @override
   String get appearanceIntro =>
@@ -402,12 +353,6 @@ class LAr extends L {
       'تعذّر الوصول إلى المتجر. تحقق من الاتصال وحاول مرة أخرى.';
 
   @override
-  String get openSettings => 'فتح الإعدادات';
-
-  @override
-  String get lookingUp => 'جارٍ البحث عنه';
-
-  @override
   String get searching => 'جارٍ البحث';
 
   @override
@@ -417,16 +362,12 @@ class LAr extends L {
   String get searchPrompt => 'الاسم أو الرمز أو الباركود';
 
   @override
-  String get searchEmpty => 'اكتب اسماً أو رمز منتج، أو امسح الباركود.';
+  String get searchEmpty => 'اكتب اسماً أو رمز منتج.';
 
   @override
   String searchNoMatch(Object query) {
     return 'لا يوجد منتج يطابق \"$query\" في هذا الفرع.';
   }
-
-  @override
-  String get reserveIntro =>
-      'سنسجّل ذلك على الجهاز ونُبلغ أحد الموظفين. لن يتم أي طلب ولا أي دفع.';
 
   @override
   String underAmount(Object amount) {
@@ -471,6 +412,12 @@ class LAr extends L {
   String get sizesPerRowHint => 'في شاشة المقاسات';
 
   @override
+  String get productsPerRow => 'المنتجات في كل صف';
+
+  @override
+  String get productsPerRowHint => 'في شاشتي النتائج والبحث';
+
+  @override
   String get typeface => 'الخط';
 
   @override
@@ -486,4 +433,30 @@ class LAr extends L {
 
   @override
   String get textLargest => 'الأكبر';
+
+  @override
+  String get allSizes => 'كل المقاسات';
+
+  @override
+  String get anySize => 'الكل';
+
+  @override
+  String get resetTimer => 'إعادة الضبط بعد';
+
+  @override
+  String get resetTimerHint =>
+      'عدد الدقائق دون لمس قبل أن تعود الشاشة إلى البداية وتنسى العميل السابق.';
+
+  @override
+  String get minutesUnit => 'دقيقة';
+
+  @override
+  String appVersion(Object version) {
+    return 'الإصدار $version';
+  }
+
+  @override
+  String resetTimerRange(int min, int max) {
+    return 'بين $min و $max دقيقة.';
+  }
 }

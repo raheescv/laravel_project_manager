@@ -17,8 +17,9 @@ class ProductState extends Equatable {
   final List<Product> related;
   final int galleryIndex;
 
-  /// Defaults to the product's own size; changing it navigates to that variant
-  /// rather than mutating this one.
+  /// Defaults to the product's own size. Null means the customer has cleared
+  /// it, and the availability strip then answers for the style rather than for
+  /// one size of it.
   final String? selectedSize;
 
   final String? errorMessage;
@@ -32,6 +33,7 @@ class ProductState extends Equatable {
     String? selectedSize,
     String? errorMessage,
     bool clearError = false,
+    bool clearSize = false,
   }) =>
       ProductState(
         status: status ?? this.status,
@@ -39,7 +41,7 @@ class ProductState extends Equatable {
         product: product ?? this.product,
         related: related ?? this.related,
         galleryIndex: galleryIndex ?? this.galleryIndex,
-        selectedSize: selectedSize ?? this.selectedSize,
+        selectedSize: clearSize ? null : (selectedSize ?? this.selectedSize),
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       );
 

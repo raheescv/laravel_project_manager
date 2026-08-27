@@ -3,6 +3,7 @@ import '../../utils/router/http_utils/http_service.dart';
 import '../constants/global_variables.dart';
 import '../helpers/formatters.dart';
 import '../models/index.dart';
+import '../../utils/router/http_utils/common_exception.dart';
 import '../repository/catalog_repository.dart';
 
 /// Concrete [CatalogRepository] over [HttpService].
@@ -83,6 +84,7 @@ class CatalogService implements CatalogRepository {
     double? minPrice,
     double? maxPrice,
     bool inStockOnly = false,
+    bool has360 = false,
     String sortBy = 'name',
     String sortDirection = 'asc',
     int page = 1,
@@ -97,6 +99,11 @@ class CatalogService implements CatalogRepository {
       if (minPrice != null) 'min_price': minPrice,
       if (maxPrice != null) 'max_price': maxPrice,
       'in_stock_only': inStockOnly,
+      // Only sent when it is on: a server that predates this filter ignores an
+      // unknown parameter, so the grid comes back unfiltered rather than empty
+      // — and sending `false` would put a second key in the count cache for
+      // every query that never asked the question.
+      if (has360) 'has_360': true,
       'sort_by': sortBy,
       'sort_direction': sortDirection,
       'type': 'product',
@@ -109,14 +116,16 @@ class CatalogService implements CatalogRepository {
 
   @override
   Future<Product> product(int id) async {
-    final data = await _http.get(EndPoints.productById(id));
-    return Product.fromJson(Map<String, dynamic>.from(data as Map));
+    return _asProduct(await _http.get(EndPoints.productById(id)));
   }
 
-  @override
-  Future<Product> productByBarcode(String barcode) async {
-    final data = await _http.get(EndPoints.productByBarcode, query: {'barcode': barcode});
-    return Product.fromJson(Map<String, dynamic>.from(data as Map));
+  /// A 200 carrying `data: null` is a real answer from this API — a product
+  /// that resolved to nothing. Casting it straight to a Map threw a TypeError
+  /// that no caller catches, which left the page spinning instead of saying
+  /// the product could not be loaded.
+  static Product _asProduct(dynamic data) {
+    if (data is! Map) throw ApiException('This product could not be read.');
+    return Product.fromJson(Map<String, dynamic>.from(data));
   }
 
   @override

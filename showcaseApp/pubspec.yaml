@@ -28,13 +28,16 @@ dependencies:
   # Device-local preferences (branch, layout density, theme mode).
   shared_preferences: ^2.3.3
 
+  # Reads the installed build's version so Settings can name it — a kiosk is
+  # updated by whoever is standing in front of it, and they need to be able to
+  # say which build is on the glass.
+  package_info_plus: ^10.1.0
+
   # UI
   google_fonts: ^6.2.1
   intl: ^0.20.1
 
   # Barcode lookup on the shop floor.
-  mobile_scanner: ^7.2.0
-  permission_handler: ^12.0.3
 
   # Re-exported by flutter_bloc for context.read/watch in widgets.
   provider: ^6.1.2
@@ -43,6 +46,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+  # Used by the timeout tests to move the clock without waiting on it.
+  fake_async: ^1.3.1
 
   # Generates the platform launcher icons from assets/brand/sizerun.png.
   flutter_launcher_icons: ^0.14.4

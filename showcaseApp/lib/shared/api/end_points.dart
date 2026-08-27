@@ -16,8 +16,6 @@ class EndPoints {
   /// per-branch `inventories`. Only the single-product routes emit those.
   static String productById(int id) => '/products/$id';
 
-  /// Barcode lookup; returns the same full detail payload.
-  static const String productByBarcode = '/products/single';
 
   // ---- Store ----
   static const String branches = '/branches';

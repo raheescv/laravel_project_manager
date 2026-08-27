@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:showcase/features/catalog/logic/funnel_cubit/funnel_cubit.dart';
+import 'package:showcase/shared/logic/funnel_cubit/funnel_cubit.dart';
 import 'package:showcase/shared/domain/constants/app_config.dart';
 import 'package:showcase/shared/domain/constants/global_variables.dart';
 import 'package:showcase/shared/domain/models/index.dart';

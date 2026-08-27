@@ -8,6 +8,8 @@ class ThemeSettings extends Equatable {
     this.textScale = 1,
     this.typeface = TypePreset.jost,
     this.sizeColumns = ThemeCubit.defaultSizeColumns,
+    this.productColumns = ThemeCubit.defaultProductColumns,
+    this.idleMinutes = ThemeCubit.defaultIdleMinutes,
   });
 
   final ThemeMode mode;
@@ -31,6 +33,17 @@ class ThemeSettings extends Equatable {
   /// another, and the size run is the screen everyone starts on.
   final int sizeColumns;
 
+  /// How many product tiles a row of the results grid holds.
+  ///
+  /// This was read off the painted width, and the width could not answer it:
+  /// the panel and a handheld report much the same number, and the tile that
+  /// suits one is wrong on the other. Appearance asks instead.
+  final int productColumns;
+
+  /// Minutes of nobody touching the panel before it returns to the start and
+  /// forgets the last customer.
+  final int idleMinutes;
+
   ThemeSettings copyWith({
     ThemeMode? mode,
     ThemePreset? light,
@@ -38,6 +51,8 @@ class ThemeSettings extends Equatable {
     double? textScale,
     TypePreset? typeface,
     int? sizeColumns,
+    int? productColumns,
+    int? idleMinutes,
   }) =>
       ThemeSettings(
         mode: mode ?? this.mode,
@@ -46,9 +61,19 @@ class ThemeSettings extends Equatable {
         textScale: textScale ?? this.textScale,
         typeface: typeface ?? this.typeface,
         sizeColumns: sizeColumns ?? this.sizeColumns,
+        productColumns: productColumns ?? this.productColumns,
+        idleMinutes: idleMinutes ?? this.idleMinutes,
       );
 
   @override
-  List<Object?> get props =>
-      [mode, light, dark, textScale, typeface, sizeColumns];
+  List<Object?> get props => [
+        mode,
+        light,
+        dark,
+        textScale,
+        typeface,
+        sizeColumns,
+        productColumns,
+        idleMinutes,
+      ];
 }

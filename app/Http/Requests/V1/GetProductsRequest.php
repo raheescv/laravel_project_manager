@@ -42,6 +42,10 @@ class GetProductsRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
             'in_stock_only' => ['nullable', 'boolean'],
+            // Only products with a 360° spin sequence behind them. The frames
+            // themselves are a detail-view payload, so without this the caller
+            // has no way to ask the question at all.
+            'has_360' => ['nullable', 'boolean'],
             'type' => ['nullable', 'string', 'in:product,service'],
         ];
     }

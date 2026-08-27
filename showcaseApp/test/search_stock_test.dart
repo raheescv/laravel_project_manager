@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:showcase/features/catalog/logic/product_list_cubit/product_list_cubit.dart';
+import 'package:showcase/shared/logic/product_list_cubit/product_list_cubit.dart';
 
 /// Search obeys the global stock rule, and says so when it comes back empty.
 ///

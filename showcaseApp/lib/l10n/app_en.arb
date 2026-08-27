@@ -6,7 +6,6 @@
   "inStock": "In stock",
   "chooseStore": "Choose a store",
   "storeHint": "Stock counts on every screen describe the store shown here.",
-  "scanBarcode": "Scan a barcode",
   "appearance": "Appearance",
   "more": "More",
   "offline": "Offline — stock figures may be out of date",
@@ -19,23 +18,14 @@
   "stepBrand": "Brand",
   "stepResults": "Results",
   "choosing": "Choosing…",
-  "anySize": "Any size",
   "anyBrand": "Any brand",
   "whichSize": "What is your size?",
   "sizesDidNotLoad": "Sizes did not load",
   "sizeHintAll": "Sizes with nothing on the shelf are struck through — ask a colleague and we can check the other stores.",
-  "available": "Available",
   "noSizes": "No sizes recorded",
   "noSizesDetail": "Nothing in this category carries a size yet. Continue to see everything in it.",
   "whichBrand": "Which brand?",
   "brandsDidNotLoad": "Brands did not load",
-  "stylesPerBrand": "styles per brand",
-  "stylesPerBrandInSize": "styles per brand in size {size}",
-  "@stylesPerBrandInSize": {
-    "placeholders": {
-      "size": {}
-    }
-  },
   "showEveryBrand": "Show every brand",
   "showAllInSize": "Show all {count} in size {size}",
   "@showAllInSize": {
@@ -68,6 +58,7 @@
   },
   "chooseAnotherSize": "Choose another size",
   "skipAhead": "Skip ahead",
+  "backToHome": "Back to home",
   "filterAndSort": "Filter and sort",
   "filtersCount": "Filters · {count}",
   "@filtersCount": {
@@ -79,14 +70,6 @@
   },
   "productsCount": "{count} products",
   "@productsCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "shownCount": "{count} shown",
-  "@shownCount": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -131,7 +114,6 @@
     }
   },
   "has360": "Has a 360° view",
-  "appliedToLoaded": "Applied to loaded results",
   "showResults": "Show results",
   "product": "Product",
   "productDidNotLoad": "This product did not load",
@@ -191,6 +173,14 @@
   "details": "Details",
   "availability": "Availability",
   "notOnShelf": "Not on the shelf at any store right now.",
+  "sizeNotOnShelf": "No store has {size} right now.",
+  "@sizeNotOnShelf": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
   "storeCount": "{count} store",
   "@storeCount": {
     "placeholders": {
@@ -208,25 +198,11 @@
     }
   },
   "youMayAlsoLike": "You may also like",
-  "reserveInStore": "Reserve in store",
-  "reserveDetail": "We will note this on the tablet and tell a colleague. Nothing is ordered and nothing is charged.",
   "fieldCode": "Code",
   "fieldSize": "Size",
   "fieldStore": "Store",
   "fieldPhone": "Phone",
   "onTheShelf": "On the shelf",
-  "noteAndClose": "Note it and close",
-  "barcodeNotFound": "No product carries the barcode {code}.",
-  "@barcodeNotFound": {
-    "placeholders": {
-      "code": {}
-    }
-  },
-  "cameraAccess": "Camera access",
-  "cameraDetail": "The scanner reads the barcode on a shoe box and opens that product. The camera is only used while this screen is open.",
-  "allowCamera": "Allow the camera",
-  "cameraBlocked": "Camera is blocked",
-  "cameraBlockedDetail": "Turn the camera on for this app in Settings, then come back.",
   "appearanceIntro": "Set once per tablet. Nothing here leaves the device.",
   "mode": "Mode",
   "systemMode": "System",
@@ -246,19 +222,16 @@
   "english": "English",
   "arabic": "العربية",
   "cannotReach": "Cannot reach the store. Check the connection and try again.",
-  "openSettings": "Open settings",
-  "lookingUp": "Looking it up",
   "searching": "Searching",
   "nothingFound": "Nothing found",
   "searchPrompt": "Name, code or barcode",
-  "searchEmpty": "Type a name, a product code, or scan a barcode.",
+  "searchEmpty": "Type a name or a product code.",
   "searchNoMatch": "No product matches \"{query}\" in this store.",
   "@searchNoMatch": {
     "placeholders": {
       "query": {}
     }
   },
-  "reserveIntro": "We will note this on the tablet and tell a colleague. Nothing is ordered and nothing is charged.",
   "underAmount": "Under {amount}",
   "@underAmount": {
     "placeholders": {
@@ -276,6 +249,8 @@
   "textSizeHint": "For reading at arm’s length across a counter.",
   "sizesPerRow": "Sizes per row",
   "sizesPerRowHint": "on the size screen",
+  "productsPerRow": "Products per row",
+  "productsPerRowHint": "on the results and search screens",
   "typeface": "Typeface",
   "typefaceHint": "Changes every label in the app.",
   "searchNoMatchInStock": "No product matches \"{query}\" on the shelf here. Turn off \"In stock\" to search the whole catalogue.",
@@ -285,5 +260,35 @@
     }
   },
   "allStores": "All stores",
-  "textLargest": "Largest"
+  "textLargest": "Largest",
+  "allSizes": "All sizes",
+  "anySize": "All",
+  "anyBrand": "All brands",
+  "@anyBrand": {
+    "description": "The first tile in the brand grid: skip the question and see every brand."
+  },
+  "@anySize": {
+    "description": "The first plate in the size run: skip the question and see everything. One word, because it is set on a square plate beside four-character sizes."
+  },
+  "resetTimer": "Reset after",
+  "resetTimerHint": "Minutes of no touch before the panel returns to the start and forgets the last customer.",
+  "minutesUnit": "minutes",
+  "appVersion": "Version {version}",
+  "@appVersion": {
+    "description": "Footer line at the foot of Appearance naming the installed build, e.g. Version 1.0.0 (1).",
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "resetTimerRange": "Between {min} and {max} minutes.",
+  "@resetTimerRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  }
 }
