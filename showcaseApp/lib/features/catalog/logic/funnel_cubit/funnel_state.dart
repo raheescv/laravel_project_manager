@@ -1,37 +1,30 @@
 part of 'funnel_cubit.dart';
 
-/// Where the customer is in `size → category → brand → results`.
+/// Where the customer is in `size → brand → results`.
 ///
 /// Size leads because it is the one answer a customer always has and the one
 /// that eliminates the most: most of the catalogue does not exist in their
-/// size, and asking for a category first offers them groups that are empty
-/// once the size is applied.
-enum FunnelStep { size, category, brand, results }
+/// size. Brand follows, and both are skippable — plenty of people know the
+/// brand but not the size, or the reverse.
+enum FunnelStep { size, brand, results }
 
 class FunnelState extends Equatable {
   const FunnelState({
-    this.categoriesStatus = DataFetchStatus.idle,
     this.sizesStatus = DataFetchStatus.idle,
     this.brandsStatus = DataFetchStatus.idle,
-    this.categories = const [],
     this.sizes = const [],
     this.brands = const [],
-    this.category,
     this.size,
     this.brand,
     this.inStockOnly = true,
     this.errorMessage,
   });
 
-  final DataFetchStatus categoriesStatus;
   final DataFetchStatus sizesStatus;
   final DataFetchStatus brandsStatus;
 
-  final List<CategoryOption> categories;
   final List<SizeOption> sizes;
   final List<BrandOption> brands;
-
-  final CategoryOption? category;
 
   /// The chosen size label, or null when the step was skipped.
   final String? size;
@@ -65,36 +58,28 @@ class FunnelState extends Equatable {
   /// The furthest step the customer has reached — drives the funnel column.
   FunnelStep get step {
     if (size == null) return FunnelStep.size;
-    if (category == null) return FunnelStep.category;
     if (brand == null) return FunnelStep.brand;
     return FunnelStep.results;
   }
 
   FunnelState copyWith({
-    DataFetchStatus? categoriesStatus,
     DataFetchStatus? sizesStatus,
     DataFetchStatus? brandsStatus,
-    List<CategoryOption>? categories,
     List<SizeOption>? sizes,
     List<BrandOption>? brands,
-    CategoryOption? category,
     String? size,
     BrandOption? brand,
     bool? inStockOnly,
     String? errorMessage,
     bool clearError = false,
-    bool clearCategory = false,
     bool clearSize = false,
     bool clearBrand = false,
   }) =>
       FunnelState(
-        categoriesStatus: categoriesStatus ?? this.categoriesStatus,
         sizesStatus: sizesStatus ?? this.sizesStatus,
         brandsStatus: brandsStatus ?? this.brandsStatus,
-        categories: categories ?? this.categories,
         sizes: sizes ?? this.sizes,
         brands: brands ?? this.brands,
-        category: clearCategory ? null : (category ?? this.category),
         size: clearSize ? null : (size ?? this.size),
         brand: clearBrand ? null : (brand ?? this.brand),
         inStockOnly: inStockOnly ?? this.inStockOnly,
@@ -103,13 +88,10 @@ class FunnelState extends Equatable {
 
   @override
   List<Object?> get props => [
-        categoriesStatus,
         sizesStatus,
         brandsStatus,
-        categories,
         sizes,
         brands,
-        category,
         size,
         brand,
         inStockOnly,

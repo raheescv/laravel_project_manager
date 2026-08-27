@@ -34,13 +34,14 @@ class _ShowcaseAppState extends State<ShowcaseApp> {
         BlocProvider<ConnectivityCubit>.value(value: serviceLocator<ConnectivityCubit>()),
         BlocProvider<FunnelCubit>(create: (_) => FunnelCubit()),
       ],
-      child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (context, mode) => MaterialApp.router(
-          title: 'Sizerun Showcase',
+      child: BlocBuilder<ThemeCubit, ThemeSettings>(
+        builder: (context, settings) => MaterialApp.router(
+          title: 'Sizerun',
           debugShowCheckedModeBanner: false,
-          themeMode: mode,
-          theme: buildPearlTheme(Brightness.light),
-          darkTheme: buildPearlTheme(Brightness.dark),
+          themeMode: settings.mode,
+          // Each mode wears the preset chosen for it in Settings → Appearance.
+          theme: buildPearlTheme(settings.light.light),
+          darkTheme: buildPearlTheme(settings.dark.dark),
           routerConfig: _router,
         ),
       ),

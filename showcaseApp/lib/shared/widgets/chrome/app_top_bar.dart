@@ -7,6 +7,7 @@ import '../../domain/helpers/responsive.dart';
 import '../../logic/branch_cubit/branch_cubit.dart';
 import '../../utils/components/theme/pearl_theme.dart';
 import '../../utils/router/routes.dart';
+import '../brand_mark.dart';
 import '../branch_picker.dart';
 import '../pearl_widgets.dart';
 
@@ -35,37 +36,104 @@ class AppTopBar extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: p.line)),
       ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              if (leading != null) ...[leading!, const SizedBox(width: 12)],
+              if (leading == null) const BrandMark(height: 30),
+              // Only the tablet bar is wide enough to hold the breadcrumbs
+              // inline; on a phone they get their own row below.
+              if (tablet && title != null) ...[
+                const SizedBox(width: 14),
+                Expanded(child: title!),
+              ] else if (tablet) ...[
+                const SizedBox(width: 18),
+                Expanded(child: _SearchField(onTap: () => context.push(Routes.search))),
+              ] else
+                // A small flex against the branch pill's large one: the gap
+                // gives way first, so the shop name keeps its room.
+                const Spacer(),
+              const SizedBox(width: 12),
+              const StockPill(),
+              const SizedBox(width: 8),
+              // Flexible so a long shop name shortens the pill instead of
+              // overflowing the row — the phone bar has no spare width.
+              Flexible(flex: tablet ? 1 : 6, child: const BranchPill()),
+              if (tablet) ...[
+                const SizedBox(width: 8),
+                IconSquare(
+                  Icons.qr_code_scanner_outlined,
+                  size: 38,
+                  onTap: () => context.push(Routes.scan),
+                ),
+              ] else ...[
+                // Three separate icons do not fit beside a branch name on a
+                // 393pt phone — together they are wider than the bar. They
+                // fold into one menu, which also gets the phone the scanner it
+                // never had.
+                const SizedBox(width: 8),
+                const _OverflowMenu(),
+              ],
+            ],
+          ),
+          if (!tablet && title != null) ...[
+            const SizedBox(height: 10),
+            title!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Phone only: search, scan and appearance behind one control.
+class _OverflowMenu extends StatelessWidget {
+  const _OverflowMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return PopupMenuButton<String>(
+      tooltip: 'More',
+      position: PopupMenuPosition.under,
+      color: p.bg,
+      // Pearl has no corner radius; the menu inherits that rather than
+      // arriving as the one rounded surface in the app.
+      shape: RoundedRectangleBorder(side: BorderSide(color: p.line)),
+      padding: EdgeInsets.zero,
+      onSelected: (value) => context.push(value),
+      itemBuilder: (context) => [
+        _item(context, Routes.search, Icons.search, 'Search'),
+        _item(context, Routes.scan, Icons.qr_code_scanner_outlined, 'Scan a barcode'),
+        _item(context, Routes.settings, Icons.tune, 'Appearance'),
+      ],
+      child: Container(
+        width: 38,
+        height: 38,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(border: Border.all(color: p.line)),
+        child: Icon(Icons.more_horiz, size: 16, color: p.ink),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _item(
+    BuildContext context,
+    String route,
+    IconData icon,
+    String label,
+  ) {
+    final p = context.pearl;
+    return PopupMenuItem<String>(
+      value: route,
+      height: 44,
       child: Row(
         children: [
-          if (leading != null) ...[leading!, const SizedBox(width: 12)],
-          if (leading == null)
-            Text(
-              'SIZERUN',
-              style: PearlText.section.copyWith(fontSize: 13, color: p.ink),
-            ),
-          if (title != null) ...[
-            const SizedBox(width: 14),
-            Expanded(child: title!),
-          ] else if (tablet) ...[
-            const SizedBox(width: 18),
-            Expanded(child: _SearchField(onTap: () => context.push(Routes.search))),
-          ] else
-            const Spacer(),
+          Icon(icon, size: 16, color: p.muted),
           const SizedBox(width: 12),
-          const StockPill(),
-          const SizedBox(width: 8),
-          const BranchPill(),
-          if (tablet) ...[
-            const SizedBox(width: 8),
-            IconSquare(
-              Icons.qr_code_scanner_outlined,
-              size: 38,
-              onTap: () => context.push(Routes.scan),
-            ),
-          ] else ...[
-            const SizedBox(width: 8),
-            IconSquare(Icons.search, size: 38, onTap: () => context.push(Routes.search)),
-          ],
+          Text(label, style: PearlText.label.copyWith(color: p.ink, fontSize: 12)),
         ],
       ),
     );
@@ -90,9 +158,16 @@ class _SearchField extends StatelessWidget {
           children: [
             Icon(Icons.search, size: 15, color: p.faint),
             const SizedBox(width: 10),
-            Text(
-              'Search by name, code or barcode',
-              style: PearlText.body(11.5).copyWith(color: p.faint),
+            // Flexible because the placeholder is long: it fits at the tablet
+            // widths this was drawn at, but a narrower split, a larger text
+            // scale or a fallback font all push it past the field.
+            Flexible(
+              child: Text(
+                'Search by name, code or barcode',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: PearlText.body(11.5).copyWith(color: p.faint),
+              ),
             ),
           ],
         ),
@@ -170,13 +245,18 @@ class BranchPill extends StatelessWidget {
           children: [
             Icon(Icons.place_outlined, size: 15, color: p.ink),
             const SizedBox(width: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 170),
-              child: Text(
-                branch?.label ?? 'Choose a store',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: PearlText.label.copyWith(color: p.ink, fontSize: 11.5),
+            // Flexible as well as capped: the cap stops a long shop name
+            // dominating a wide bar, but only the flex lets it give way on a
+            // narrow one. A ConstrainedBox alone still demands its 170.
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 170),
+                child: Text(
+                  branch?.label ?? 'Choose a store',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PearlText.label.copyWith(color: p.ink, fontSize: 11.5),
+                ),
               ),
             ),
           ],

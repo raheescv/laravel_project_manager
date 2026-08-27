@@ -5,7 +5,6 @@ class Routes {
 
   /// Step 1. The funnel opens on the size run, so it owns the root path.
   static const String size = '/';
-  static const String category = '/category';
   static const String brand = '/brand';
   static const String results = '/results';
   static const String settings = '/settings';

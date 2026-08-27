@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/helpers/responsive.dart';
 import '../../../shared/domain/models/index.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
-import '../../../shared/utils/router/routes.dart';
 import '../../../shared/widgets/chrome/app_top_bar.dart';
 import '../../../shared/widgets/chrome/funnel_column.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
@@ -15,7 +13,7 @@ import '../../../shared/widgets/photo.dart';
 import '../logic/funnel_cubit/funnel_cubit.dart';
 import 'funnel_navigation.dart';
 
-/// Step 3 — brand, and the most skippable step in the funnel. "Every brand" is
+/// Step 2 — brand, and the most skippable step in the funnel. "Every brand" is
 /// a full-width button rather than a link, because most customers want it.
 ///
 /// The brands are a grid of logos rather than a list of names: on a shop floor
@@ -32,7 +30,11 @@ class BrandScreen extends StatelessWidget {
 
     return ShowcaseScaffold(
       topBar: AppTopBar(
-        leading: IconSquare(Icons.arrow_back, size: 38, onTap: () => context.go(Routes.category)),
+        leading: IconSquare(
+          Icons.arrow_back,
+          size: 38,
+          onTap: () => context.leaveFunnelStep(FunnelStep.size),
+        ),
         title: context.isTablet
             ? null
             : FunnelBreadcrumbs(
@@ -60,7 +62,7 @@ class BrandScreen extends StatelessWidget {
           icon: Icons.arrow_forward,
           onTap: () {
             funnel.skipBrand();
-            context.go(Routes.results);
+            context.goToFunnelStep(FunnelStep.results);
           },
         ),
       ),
@@ -77,14 +79,13 @@ class _BrandBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.pearl;
     if (state.brands.isEmpty) {
-      final category = state.category?.name ?? 'this category';
       final inSize = state.size == null ? '' : ' in size ${state.size}';
       return MessageState(
         title: state.size == null ? 'No brands here' : 'No brands in this size',
         detail: state.inStockOnly
-            ? 'Nothing in $category is on the shelf$inSize right now. Turn off '
-                '"In stock" at the top to see what we can order in.'
-            : 'Nothing in $category carries a brand$inSize.',
+            ? 'Nothing$inSize is on the shelf here right now. Turn off "In stock" '
+                'at the top to see what we can order in.'
+            : 'Nothing in the catalogue carries a brand$inSize.',
         actionLabel: state.size == null ? null : 'Choose another size',
         onAction: state.size == null ? null : () => reopenFunnelStep(context, FunnelStep.size),
       );
@@ -109,7 +110,7 @@ class _BrandBody extends StatelessWidget {
           brands: state.brands,
           onTap: (brand) {
             context.read<FunnelCubit>().chooseBrand(brand);
-            context.go(Routes.results);
+            context.goToFunnelStep(FunnelStep.results);
           },
         ),
       ],

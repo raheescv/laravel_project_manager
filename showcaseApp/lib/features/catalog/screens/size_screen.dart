@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/helpers/responsive.dart';
 import '../../../shared/domain/models/index.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
-import '../../../shared/utils/router/routes.dart';
 import '../../../shared/widgets/chrome/app_top_bar.dart';
 import '../../../shared/widgets/chrome/funnel_column.dart';
 import '../../../shared/widgets/chrome/showcase_scaffold.dart';
@@ -14,7 +12,7 @@ import '../../../shared/widgets/pearl_widgets.dart';
 import '../logic/funnel_cubit/funnel_cubit.dart';
 import 'funnel_navigation.dart';
 
-/// Step 2 — the size run.
+/// Step 1 — the size run, and where the app opens.
 ///
 /// Tapping a size is the whole interaction: it commits the choice and moves to
 /// the brand step. No preview column, no Continue — a chip that only highlights
@@ -29,7 +27,7 @@ class SizeScreen extends StatelessWidget {
 
   Future<void> _choose(BuildContext context, String size) async {
     await context.read<FunnelCubit>().chooseSize(size);
-    if (context.mounted) context.go(Routes.brand);
+    if (context.mounted) context.goToFunnelStep(FunnelStep.brand);
   }
 
   @override
@@ -67,7 +65,7 @@ class SizeScreen extends StatelessWidget {
           ghost: true,
           onTap: () async {
             await funnel.skipSize();
-            if (context.mounted) context.go(Routes.brand);
+            if (context.mounted) context.goToFunnelStep(FunnelStep.brand);
           },
         ),
       ),

@@ -10,7 +10,8 @@ import 'package:google_fonts/google_fonts.dart';
 /// than any other direction.
 ///
 /// Two rules keep it from drifting:
-/// 1. Nothing outside this file names a colour. Screens read `context.pearl`.
+/// 1. Nothing outside this folder names a colour. Screens read `context.pearl`;
+///    the alternative palettes live in `theme_presets.dart` next door.
 /// 2. Nothing introduces a hue. If something needs emphasis it gets an ink
 ///    block, more space, or a heavier hairline — never a colour.
 @immutable
@@ -222,8 +223,10 @@ class PearlText {
   static TextStyle button = _jost(size: 9.5, weight: FontWeight.w500, tracking: 3);
 }
 
-ThemeData buildPearlTheme(Brightness brightness) {
-  final p = brightness == Brightness.dark ? PearlPalette.dark : PearlPalette.light;
+/// Build the app theme from [p]. The palette carries its own brightness, so a
+/// preset is the only thing a caller has to choose.
+ThemeData buildPearlTheme(PearlPalette p) {
+  final brightness = p.brightness;
   return ThemeData(
     useMaterial3: true,
     brightness: brightness,

@@ -12,6 +12,8 @@ class LocalStorageService {
 
   static const _kBranchId = 'branch_id';
   static const _kThemeMode = 'theme_mode';
+  static const _kLightPreset = 'theme_preset_light';
+  static const _kDarkPreset = 'theme_preset_dark';
   static const _kGridColumns = 'grid_columns';
   static const _kBaseUrl = 'base_url';
   static const _kTenant = 'tenant';
@@ -24,6 +26,14 @@ class LocalStorageService {
   /// 'system' | 'light' | 'dark'
   String get themeMode => _prefs.getString(_kThemeMode) ?? 'system';
   Future<void> setThemeMode(String mode) => _prefs.setString(_kThemeMode, mode);
+
+  /// Which palette dresses each mode. Null until the staff pick one, so the
+  /// default lives with the theme rather than being duplicated here.
+  String? get lightPreset => _prefs.getString(_kLightPreset);
+  Future<void> setLightPreset(String name) => _prefs.setString(_kLightPreset, name);
+
+  String? get darkPreset => _prefs.getString(_kDarkPreset);
+  Future<void> setDarkPreset(String name) => _prefs.setString(_kDarkPreset, name);
 
   int get gridColumns => _prefs.getInt(_kGridColumns) ?? 0; // 0 = auto
   Future<void> setGridColumns(int n) => _prefs.setInt(_kGridColumns, n);

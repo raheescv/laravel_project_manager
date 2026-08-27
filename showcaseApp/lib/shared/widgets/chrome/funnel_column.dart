@@ -35,11 +35,6 @@ class FunnelColumn extends StatelessWidget {
     final steps = <_StepData>[
       _StepData(FunnelStep.size, 'Size', value(FunnelStep.size, state.size, 'Any size')),
       _StepData(
-        FunnelStep.category,
-        'Department',
-        value(FunnelStep.category, state.category?.name, 'Everything'),
-      ),
-      _StepData(
         FunnelStep.brand,
         'Brand',
         value(FunnelStep.brand, state.brand?.name, 'Any brand'),
@@ -175,7 +170,6 @@ class FunnelBreadcrumbs extends StatelessWidget {
     final p = context.pearl;
     final crumbs = <(FunnelStep, String)>[
       if (state.size != null) (FunnelStep.size, state.size!),
-      if (state.category != null) (FunnelStep.category, state.category!.name),
       if (state.brand != null) (FunnelStep.brand, state.brand!.name),
     ];
 
@@ -183,7 +177,9 @@ class FunnelBreadcrumbs extends StatelessWidget {
       height: 34,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: PearlMetrics.pad),
+        // No padding of its own: this only ever renders inside AppTopBar, which
+        // has already inset it.
+        padding: EdgeInsets.zero,
         itemCount: crumbs.length + (trailing != null ? 1 : 0),
         itemBuilder: (context, i) {
           final last = i == crumbs.length;

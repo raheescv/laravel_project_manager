@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../logic/theme_cubit/theme_cubit.dart';
 import '../../utils/components/theme/pearl_theme.dart';
 import '../../utils/router/routes.dart';
+import '../brand_mark.dart';
 
 /// The tablet's persistent left rail. Replaces the phone's bottom bar and keeps
 /// the top-level destinations reachable from every screen in the funnel.
@@ -25,7 +26,7 @@ class AppRail extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 16),
-          _Mark(palette: p),
+          const BrandMark(height: 38, padding: 5),
           const SizedBox(height: 14),
           _RailIcon(
             icon: Icons.grid_view_outlined,
@@ -44,7 +45,7 @@ class AppRail extends StatelessWidget {
           ),
           const Spacer(),
           _RailIcon(
-            icon: switch (context.watch<ThemeCubit>().state) {
+            icon: switch (context.watch<ThemeCubit>().state.mode) {
               ThemeMode.light => Icons.light_mode_outlined,
               ThemeMode.dark => Icons.dark_mode_outlined,
               ThemeMode.system => Icons.contrast,
@@ -52,29 +53,16 @@ class AppRail extends StatelessWidget {
             selected: false,
             onTap: () => context.read<ThemeCubit>().cycle(),
           ),
+          _RailIcon(
+            icon: Icons.tune,
+            selected: active == 3,
+            onTap: () => context.push(Routes.settings),
+          ),
           const SizedBox(height: 14),
         ],
       ),
     );
   }
-}
-
-class _Mark extends StatelessWidget {
-  const _Mark({required this.palette});
-
-  final PearlPalette palette;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 38,
-        height: 38,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: palette.accent),
-        child: Text(
-          'S',
-          style: PearlText.section.copyWith(fontSize: 15, color: palette.accentInk),
-        ),
-      );
 }
 
 class _RailIcon extends StatelessWidget {

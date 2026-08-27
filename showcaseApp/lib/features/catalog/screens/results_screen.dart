@@ -30,7 +30,6 @@ class ResultsScreen extends StatelessWidget {
     return BlocProvider<ProductListCubit>(
       create: (_) => ProductListCubit(
         filters: ProductFilters(
-          mainCategoryId: funnel.category?.id,
           brandId: funnel.brand?.id,
           size: funnel.size,
           inStockOnly: funnel.inStockOnly,
@@ -83,7 +82,11 @@ class _ResultsViewState extends State<_ResultsView> {
 
     final scaffold = ShowcaseScaffold(
       topBar: AppTopBar(
-        leading: IconSquare(Icons.arrow_back, size: 38, onTap: () => context.go(Routes.brand)),
+        leading: IconSquare(
+          Icons.arrow_back,
+          size: 38,
+          onTap: () => context.leaveFunnelStep(FunnelStep.brand),
+        ),
         title: context.isTablet
             ? null
             : FunnelBreadcrumbs(

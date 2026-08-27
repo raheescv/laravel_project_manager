@@ -1,12 +1,12 @@
 import 'package:go_router/go_router.dart';
 
 import '../../../features/catalog/screens/brand_screen.dart';
-import '../../../features/catalog/screens/category_screen.dart';
 import '../../../features/catalog/screens/results_screen.dart';
 import '../../../features/catalog/screens/size_screen.dart';
 import '../../../features/product/screens/product_screen.dart';
 import '../../../features/product/screens/spin_viewer_screen.dart';
 import '../../../features/scan/screens/scan_screen.dart';
+import '../../../features/settings/screens/settings_screen.dart';
 import '../../../features/search/screens/search_screen.dart';
 import '../../domain/helpers/formatters.dart';
 import '../../domain/models/index.dart';
@@ -27,10 +27,6 @@ GoRouter createRouter() => GoRouter(
           builder: (context, state) => const SizeScreen(),
         ),
         GoRoute(
-          path: Routes.category,
-          builder: (context, state) => const CategoryScreen(),
-        ),
-        GoRoute(
           path: Routes.brand,
           builder: (context, state) => const BrandScreen(),
         ),
@@ -45,6 +41,10 @@ GoRouter createRouter() => GoRouter(
         GoRoute(
           path: Routes.scan,
           builder: (context, state) => const ScanScreen(),
+        ),
+        GoRoute(
+          path: Routes.settings,
+          builder: (context, state) => const SettingsScreen(),
         ),
         GoRoute(
           path: Routes.product,
