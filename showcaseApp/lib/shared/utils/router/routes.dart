@@ -17,6 +17,10 @@ class Routes {
   static const String spin = 'spin';
   static String spinFor(int id) => '/product/$id/spin';
 
+  /// The photo on its own, zoomable. `i` is which gallery image to open at.
+  static const String photo = 'photo';
+  static String photoFor(int id, int index) => '/product/$id/photo?i=$index';
+
   static const String search = '/search';
   static const String scan = '/scan';
 }

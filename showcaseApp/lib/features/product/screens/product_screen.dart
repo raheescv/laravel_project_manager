@@ -198,13 +198,23 @@ class _Gallery extends StatelessWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: Stage(
-            border: false,
-            child: LayoutBuilder(
-              builder: (context, constraints) => Photo(
-                url: urls.isEmpty ? '' : urls[index],
-                width: constraints.maxWidth,
-                padding: EdgeInsets.all(tablet ? 40 : 26),
+          child: GestureDetector(
+            // The photo is the decision on a shoe, and here it shares the
+            // screen with a price and a size run. Tapping gives it all of it.
+            onTap: urls.isEmpty
+                ? null
+                : () => context.push(
+                      Routes.photoFor(product.id, index),
+                      extra: product,
+                    ),
+            child: Stage(
+              border: false,
+              child: LayoutBuilder(
+                builder: (context, constraints) => Photo(
+                  url: urls.isEmpty ? '' : urls[index],
+                  width: constraints.maxWidth,
+                  padding: EdgeInsets.all(tablet ? 40 : 26),
+                ),
               ),
             ),
           ),
@@ -215,6 +225,34 @@ class _Gallery extends StatelessWidget {
             top: 0,
             bottom: 0,
             child: _ThumbStrip(urls: urls, index: index),
+          ),
+        // The stage is tappable but a photo does not look like a control, so it
+        // is labelled. Top-right: the thumbs are on the left and the spin entry
+        // is along the bottom.
+        if (urls.isNotEmpty)
+          Positioned(
+            top: 14,
+            right: 14,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                decoration: BoxDecoration(
+                  color: p.bg.withValues(alpha: .72),
+                  border: Border.all(color: p.line),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.zoom_in, size: 13, color: p.muted),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Tap to zoom'.toUpperCase(),
+                      style: PearlText.micro.copyWith(fontSize: 8, color: p.muted),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         if (product.hasSpin)
           Positioned(

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../features/catalog/screens/brand_screen.dart';
 import '../../../features/catalog/screens/results_screen.dart';
 import '../../../features/catalog/screens/size_screen.dart';
+import '../../../features/product/screens/photo_viewer_screen.dart';
 import '../../../features/product/screens/product_screen.dart';
 import '../../../features/product/screens/spin_viewer_screen.dart';
 import '../../../features/scan/screens/scan_screen.dart';
@@ -52,6 +53,14 @@ GoRouter createRouter() => GoRouter(
             productId: asInt(state.pathParameters['id']),
           ),
           routes: [
+            GoRoute(
+              path: Routes.photo,
+              builder: (context, state) => PhotoViewerScreen(
+                productId: asInt(state.pathParameters['id']),
+                initialIndex: asInt(state.uri.queryParameters['i']),
+                product: state.extra is Product ? state.extra! as Product : null,
+              ),
+            ),
             GoRoute(
               path: Routes.spin,
               builder: (context, state) => SpinViewerScreen(
