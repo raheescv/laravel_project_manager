@@ -23,7 +23,10 @@ class BrowseScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<ProductListCubit>(
       create: (_) => ProductListCubit(
-        filters: const ProductFilters(inStockOnly: true, sortBy: 'name'),
+        filters: ProductFilters(
+          inStockOnly: context.read<FunnelCubit>().state.inStockOnly,
+          sortBy: 'name',
+        ),
       )..load(),
       child: const _BrowseView(),
     );

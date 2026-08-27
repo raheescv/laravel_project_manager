@@ -67,6 +67,9 @@ class ProductResource extends JsonResource
                 return [
                     'id' => $this->brand->id,
                     'name' => $this->brand->name,
+                    // Same key and absolute-URL shape as GET /brands, so a client
+                    // renders a brand logo the same way wherever it came from.
+                    'image_path' => $this->brandLogoUrl(),
                 ];
             }),
 
@@ -180,6 +183,17 @@ class ProductResource extends JsonResource
         }
 
         return $this->thumbnail;
+    }
+
+    /**
+     * The brand's logo as an absolute URL. `brands.image_path` holds a path
+     * relative to the public disk, exactly as GET /brands resolves it.
+     */
+    private function brandLogoUrl(): ?string
+    {
+        $path = $this->brand?->image_path;
+
+        return $path ? url('storage/'.$path) : null;
     }
 
     /**

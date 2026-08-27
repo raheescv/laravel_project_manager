@@ -33,6 +33,7 @@ class ResultsScreen extends StatelessWidget {
           mainCategoryId: funnel.category?.id,
           brandId: funnel.brand?.id,
           size: funnel.size,
+          inStockOnly: funnel.inStockOnly,
         ),
       )
         ..load()
@@ -80,7 +81,7 @@ class _ResultsViewState extends State<_ResultsView> {
     final list = context.watch<ProductListCubit>();
     final state = list.state;
 
-    return ShowcaseScaffold(
+    final scaffold = ShowcaseScaffold(
       topBar: AppTopBar(
         leading: IconSquare(Icons.arrow_back, size: 38, onTap: () => context.go(Routes.brand)),
         title: context.isTablet
@@ -127,6 +128,15 @@ class _ResultsViewState extends State<_ResultsView> {
                 onTap: () => showFilterSheet(context, list),
               ),
             ),
+    );
+
+    // "In stock" is owned by the top bar, not by this list, so the grid follows
+    // it rather than keeping a copy that can drift out of step.
+    return BlocListener<FunnelCubit, FunnelState>(
+      listenWhen: (before, after) => before.inStockOnly != after.inStockOnly,
+      listener: (context, funnel) =>
+          list.apply(state.filters.copyWith(inStockOnly: funnel.inStockOnly)),
+      child: scaffold,
     );
   }
 }

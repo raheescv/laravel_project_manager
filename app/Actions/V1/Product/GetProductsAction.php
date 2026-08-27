@@ -46,7 +46,7 @@ class GetProductsAction
 
         $query = Product::query()->select(self::LIST_COLUMNS)->with([
             'unit:id,name,code',
-            'brand:id,name',
+            'brand:id,name,image_path',
             'mainCategory:id,name',
             'subCategory:id,name',
         ]);

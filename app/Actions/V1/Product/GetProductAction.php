@@ -20,7 +20,7 @@ class GetProductAction
         }
         $product->load([
             'unit:id,name,code',
-            'brand:id,name',
+            'brand:id,name,image_path',
             'department:id,name',
             'mainCategory:id,name',
             'subCategory:id,name',

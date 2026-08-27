@@ -37,20 +37,39 @@ class CategoryOption extends Equatable {
 /// `GET /brands` — scoped to whatever category/size is already chosen, so
 /// [productCount] means "in this size", not "in the whole catalogue".
 class BrandOption extends Equatable {
-  const BrandOption({required this.id, required this.name, required this.productCount});
+  const BrandOption({
+    required this.id,
+    required this.name,
+    required this.productCount,
+    this.imagePath = '',
+  });
 
   factory BrandOption.fromJson(Map<String, dynamic> json) => BrandOption(
         id: asInt(json['id']),
         name: asStr(json['name']),
         productCount: asInt(json['product_count']),
+        imagePath: asStr(json['image_path']),
       );
 
   final int id;
   final String name;
   final int productCount;
 
+  /// The brand logo, absolute, as `/brands` and the product payload both send
+  /// it. Empty for the brands nobody has uploaded one for — the tile falls back
+  /// to a monogram rather than a broken frame.
+  final String imagePath;
+
+  bool get hasLogo => imagePath.isNotEmpty;
+
+  /// The letter shown when there is no logo.
+  String get monogram {
+    final trimmed = name.trim();
+    return trimmed.isEmpty ? '·' : trimmed.substring(0, 1).toUpperCase();
+  }
+
   @override
-  List<Object?> get props => [id, name, productCount];
+  List<Object?> get props => [id, name, productCount, imagePath];
 }
 
 /// Which run a size belongs to. `GET /sizes` returns the two groups separately.

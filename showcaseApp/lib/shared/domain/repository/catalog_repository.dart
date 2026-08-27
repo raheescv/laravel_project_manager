@@ -9,7 +9,7 @@ abstract class CatalogRepository {
   /// Both size runs for a category, already split into young / adult.
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId});
 
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size});
+  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly});
 
   Future<List<ColorOption>> colors();
 

@@ -18,10 +18,14 @@ import 'funnel_navigation.dart';
 
 /// Step 2 — the size run.
 ///
-/// On tablet the chips are the subject of the screen and the consequence of the
-/// choice is visible beside them: a live count and the first few products in
-/// that size. Deciding without seeing what it gets you is the thing the phone
-/// funnel cannot avoid and the big screen can.
+/// Tapping a size is the answer: it commits the choice and moves to the brand
+/// step, because a chip that only highlights and waits for a second tap on a
+/// button somewhere else is a step people stall on.
+///
+/// The wide layout is the exception. There the aside can show the consequence
+/// of the choice — a live count and the first few products in that size — so a
+/// tap fills it and Continue commits. Deciding without seeing what it gets you
+/// is the thing the phone funnel cannot avoid and the big screen can.
 class SizeScreen extends StatelessWidget {
   const SizeScreen({super.key});
 
@@ -44,14 +48,21 @@ class _SizeView extends StatefulWidget {
 class _SizeViewState extends State<_SizeView> {
   String? _previewSize;
 
+  /// Wide tablet only: fill the aside with what this size gets you. Narrower
+  /// layouts have nowhere to show it, so there a tap goes straight on.
   void _preview(BuildContext context, FunnelState state, String size) {
     if (_previewSize == size) return;
     setState(() => _previewSize = size);
     context.read<ProductListCubit>().apply(ProductFilters(
           mainCategoryId: state.category?.id,
           size: size,
-          inStockOnly: true,
+          inStockOnly: state.inStockOnly,
         ));
+  }
+
+  Future<void> _choose(BuildContext context, String size) async {
+    await context.read<FunnelCubit>().chooseSize(size);
+    if (context.mounted) context.go(Routes.brand);
   }
 
   @override
@@ -83,7 +94,9 @@ class _SizeViewState extends State<_SizeView> {
         _ => _SizeBody(
             state: state,
             previewSize: _previewSize,
-            onPreview: (size) => _preview(context, state, size),
+            onTapSize: (size) => context.isWide
+                ? _preview(context, state, size)
+                : _choose(context, size),
           ),
       },
       bottomBar: PinnedBar(
@@ -99,20 +112,19 @@ class _SizeViewState extends State<_SizeView> {
                 },
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              flex: 2,
-              child: PearlButton(
-                label: _previewSize == null ? 'Choose a size' : 'Continue · ${_previewSize!}',
-                icon: Icons.arrow_forward,
-                onTap: _previewSize == null
-                    ? null
-                    : () async {
-                        await funnel.chooseSize(_previewSize!);
-                        if (context.mounted) context.go(Routes.brand);
-                      },
+            // Only the wide layout previews first, so only it needs a separate
+            // Continue. Everywhere else the chip itself is the button.
+            if (context.isWide) ...[
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: PearlButton(
+                  label: _previewSize == null ? 'Choose a size' : 'Continue · ${_previewSize!}',
+                  icon: Icons.arrow_forward,
+                  onTap: _previewSize == null ? null : () => _choose(context, _previewSize!),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -124,12 +136,12 @@ class _SizeBody extends StatelessWidget {
   const _SizeBody({
     required this.state,
     required this.previewSize,
-    required this.onPreview,
+    required this.onTapSize,
   });
 
   final FunnelState state;
   final String? previewSize;
-  final void Function(String) onPreview;
+  final void Function(String) onTapSize;
 
   @override
   Widget build(BuildContext context) {
@@ -154,11 +166,11 @@ class _SizeBody extends StatelessWidget {
         ),
         if (young.isNotEmpty) ...[
           const ColumnHeading('Young'),
-          _SizeWrap(sizes: young, selected: previewSize, onTap: onPreview),
+          _SizeWrap(sizes: young, selected: previewSize, onTap: onTapSize),
         ],
         if (adult.isNotEmpty) ...[
           const ColumnHeading('Adult'),
-          _SizeWrap(sizes: adult, selected: previewSize, onTap: onPreview),
+          _SizeWrap(sizes: adult, selected: previewSize, onTap: onTapSize),
         ],
         if (young.isEmpty && adult.isEmpty)
           const Padding(
@@ -169,10 +181,6 @@ class _SizeBody extends StatelessWidget {
                   'everything in it.',
             ),
           ),
-        if (!context.isWide) ...[
-          const SizedBox(height: 26),
-          _LivePreview(previewSize: previewSize),
-        ],
       ],
     );
   }

@@ -14,6 +14,7 @@ class FunnelState extends Equatable {
     this.category,
     this.size,
     this.brand,
+    this.inStockOnly = true,
     this.errorMessage,
   });
 
@@ -30,6 +31,12 @@ class FunnelState extends Equatable {
   /// The chosen size label, or null when the step was skipped.
   final String? size;
   final BrandOption? brand;
+
+  /// "Only what is on the shelf here", carried across every step rather than
+  /// living in the results filter panel. A customer who has said they want
+  /// stock does not mean it for one screen — and a size run or a brand list
+  /// counting things the shop cannot sell today sends them to an empty rail.
+  final bool inStockOnly;
 
   final String? errorMessage;
 
@@ -63,6 +70,7 @@ class FunnelState extends Equatable {
     CategoryOption? category,
     String? size,
     BrandOption? brand,
+    bool? inStockOnly,
     String? errorMessage,
     bool clearError = false,
     bool clearCategory = false,
@@ -79,6 +87,7 @@ class FunnelState extends Equatable {
         category: clearCategory ? null : (category ?? this.category),
         size: clearSize ? null : (size ?? this.size),
         brand: clearBrand ? null : (brand ?? this.brand),
+        inStockOnly: inStockOnly ?? this.inStockOnly,
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       );
 
@@ -93,6 +102,7 @@ class FunnelState extends Equatable {
         category,
         size,
         brand,
+        inStockOnly,
         errorMessage,
       ];
 }

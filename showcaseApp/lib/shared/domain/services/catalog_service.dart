@@ -41,11 +41,15 @@ class CatalogService implements CatalogRepository {
   }
 
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size}) async {
+  Future<List<BrandOption>> brands({
+    int? mainCategoryId,
+    String? size,
+    bool inStockOnly = true,
+  }) async {
     final data = await _http.get(EndPoints.brands, query: {
       if (mainCategoryId != null) 'main_category_id': mainCategoryId,
       if (size != null && size.isNotEmpty) 'size': size,
-      'available_products_only': true,
+      'available_products_only': inStockOnly,
     });
     return asMapList(data).map(BrandOption.fromJson).toList(growable: false);
   }

@@ -74,11 +74,9 @@ class FilterPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        _Toggle(
-          label: 'In stock at this store',
-          value: filters.inStockOnly,
-          onChanged: (v) => onChanged(filters.copyWith(inStockOnly: v)),
-        ),
+        // "In stock at this store" is deliberately not here: it is global to
+        // the whole funnel and lives in the top bar. Two controls for one
+        // filter is how a filter ends up disagreeing with itself.
         _Toggle(
           label: 'Has a 360° view',
           value: filters.spinOnly,

@@ -88,11 +88,25 @@ class FunnelCubit extends Cubit<FunnelState> {
     if (category == null) return;
     emit(state.copyWith(brandsStatus: DataFetchStatus.waiting));
     try {
-      final rows = await _repo.brands(mainCategoryId: category.id, size: state.size);
+      final rows = await _repo.brands(
+        mainCategoryId: category.id,
+        size: state.size,
+        inStockOnly: state.inStockOnly,
+      );
       emit(state.copyWith(brandsStatus: DataFetchStatus.success, brands: rows));
     } on ApiException catch (e) {
       emit(state.copyWith(brandsStatus: DataFetchStatus.failed, errorMessage: e.message));
     }
+  }
+
+  /// Flip "in stock at this store" for the whole funnel.
+  ///
+  /// The brand counts are server-side and have to be refetched; the size chips
+  /// already carry their own stock figure, so they only need redrawing.
+  Future<void> setInStockOnly(bool value) async {
+    if (value == state.inStockOnly) return;
+    emit(state.copyWith(inStockOnly: value));
+    if (state.category != null) await loadBrands();
   }
 
   void chooseBrand(BrandOption brand) => emit(state.copyWith(brand: brand));
