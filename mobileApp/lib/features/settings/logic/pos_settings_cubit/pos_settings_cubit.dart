@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 
 part 'pos_settings_state.dart';
 
-/// Device-local point-of-sale preferences — how the till behaves once a ticket
-/// is charged, and how densely it lays the catalog out. Not synced: a shared
-/// counter terminal and a manager's own phone want different answers.
+/// Device-local point-of-sale preferences — where the app lands after sign-in,
+/// how the till behaves once a ticket is charged, and how densely it lays the
+/// catalog out. Not synced: a shared counter terminal and a manager's own phone
+/// want different answers.
 class PosSettingsCubit extends Cubit<PosSettingsState> {
   PosSettingsCubit() : super(_initialState());
 
@@ -18,6 +20,7 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
     return PosSettingsState(
       lockAfterSale: storage.posLockAfterSale ?? true,
       gridColumns: _sanitize(storage.posGridColumns),
+      startScreen: StartScreen.fromKey(storage.posStartScreen),
     );
   }
 
@@ -39,6 +42,10 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   /// fits more — see `_productGrid`.
   int get gridColumns => state.gridColumns;
 
+  /// The screen a fresh sign-in (or an unlock) lands on. Read by the router's
+  /// redirect, which still has the last word on whether the account may open it.
+  StartScreen get startScreen => state.startScreen;
+
   Future<void> setLockAfterSale(bool v) async {
     if (v == state.lockAfterSale) return;
     emit(state.copyWith(lockAfterSale: v));
@@ -46,6 +53,12 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   }
 
   Future<void> toggleLockAfterSale() => setLockAfterSale(!state.lockAfterSale);
+
+  Future<void> setStartScreen(StartScreen v) async {
+    if (v == state.startScreen) return;
+    emit(state.copyWith(startScreen: v));
+    await _storage.setPosStartScreen(v.key);
+  }
 
   Future<void> setGridColumns(int v) async {
     final cols = _sanitize(v);

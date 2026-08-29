@@ -1,35 +1,15 @@
 <template>
-    <div class="card shadow-sm border-0 h-100">
-        <div class="card-header bg-gradient bg-primary text-white py-2">
-            <h5 class="card-title mb-0 text-white">
-                <i class="demo-psi-building me-2"></i>Vendor Information
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="vendor-select" class="form-label">
-                    Select Vendor <span class="text-danger">*</span>
-                </label>
-                <select ref="vendorSelect" id="vendor-select" class="select-vendor_id" :value="selectedVendorId"
-                    @change="handleVendorChange">
-                    <option value="">Select Vendor</option>
-                </select>
-            </div>
-            <div class="alert alert-light mb-0">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-medium">Current Balance</span>
-                    <span class="h5 mb-0" :class="accountBalance < 0 ? 'text-danger' : 'text-success'">
-                        {{ formatCurrency(accountBalance) }}
-                    </span>
-                </div>
-            </div>
-        </div>
+    <div class="pcx-f">
+        <label for="vendor-select">Vendor <i class="req">*</i></label>
+        <select ref="vendorSelect" id="vendor-select" class="select-vendor_id" :value="selectedVendorId"
+            @change="handleVendorChange">
+            <option value="">Select Vendor</option>
+        </select>
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue'
-import { formatCurrency } from '@/utils/number'
 import { useLivewire } from '@/composables/useLivewire'
 import { getRoute } from '@/utils/routes'
 
@@ -37,10 +17,6 @@ const props = defineProps({
     selectedVendorId: {
         type: [String, Number],
         default: null
-    },
-    accountBalance: {
-        type: Number,
-        default: 0
     },
     accounts: {
         type: Array,
@@ -54,9 +30,19 @@ const vendorSelect = ref(null)
 const { set, dispatch } = useLivewire()
 let tomSelectInstance = null
 
+// The deck strip and the vendor chip need the label; Livewire only carries the id.
+const vendor = ref(null)
+
+const readOption = (value) => {
+    const option = value && tomSelectInstance ? tomSelectInstance.options[value] : null
+    vendor.value = option ? { name: option.name || option.text || '', mobile: option.mobile || '' } : null
+
+    return vendor.value
+}
+
 const handleVendorChange = (event) => {
     const value = event.target.value || null
-    emit('vendor-changed', value)
+    emit('vendor-changed', value, readOption(value))
     set('purchases.account_id', value)
 
     // Open product select after vendor is selected
@@ -106,7 +92,10 @@ const initializeTomSelect = () => {
         },
         render: {
             option: function (item, escape) {
-                return `<div>${escape(item.name || item.text || '')}${item.mobile ? `@${escape(item.mobile)}` : ''}</div>`
+                const name = escape(item.name || item.text || '')
+                const meta = item.mobile ? `<div class="opt-meta">${escape(item.mobile)}</div>` : ''
+
+                return `<div><div class="opt-name">${name}</div>${meta}</div>`
             },
             item: function (item, escape) {
                 return `<div>${escape(item.name || item.text || '')}</div>`
@@ -146,6 +135,7 @@ const initializeTomSelect = () => {
                             tomSelectInstance.addOption(item)
                             // Then set as value
                             tomSelectInstance.setValue(String(defaultVendorId))
+                            emit('vendor-changed', defaultVendorId, readOption(String(defaultVendorId)))
                         } else {
                             // If item not found, try to add by ID directly
                             tomSelectInstance.addItem(String(defaultVendorId))
@@ -189,6 +179,7 @@ watch(() => props.selectedVendorId, async (newValue) => {
                     if (item) {
                         tomSelectInstance.addOption(item)
                         tomSelectInstance.setValue(String(newValue))
+                        emit('vendor-changed', newValue, readOption(String(newValue)))
                     } else {
                         tomSelectInstance.addItem(String(newValue))
                     }

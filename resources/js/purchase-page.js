@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import '../css/purchase-premium.css'
 import PurchasePage from './components/Purchase/PurchasePage.vue'
 
 // Initialize Vue app for purchase page

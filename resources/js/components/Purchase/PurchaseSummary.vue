@@ -1,76 +1,53 @@
 <template>
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-gradient bg-primary text-white py-3">
-            <h5 class="card-title mb-0 d-flex align-items-center text-white">
-                <i class="demo-psi-receipt-4 fs-4 me-2"></i>Purchase Summary
-            </h5>
+    <div class="pcx-card">
+        <div class="pcx-chd">
+            <div class="pcx-ci"><i class="fa fa-calculator"></i></div>
+            <h2 class="pcx-ct">Summary</h2>
         </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <!-- Amounts Section -->
-                <div class="col-12">
-                    <div class="list-group">
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="fw-medium">Gross Total</div>
-                                <div class="input-group input-group-sm" style="width: 150px;">
-                                    <input type="number" class="form-control form-control-sm text-end bg-light"
-                                        :value="grossAmount" disabled readonly />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="fw-medium">Purchase Total</div>
-                                <div class="input-group input-group-sm" style="width: 150px;">
-                                    <input type="number" class="form-control form-control-sm text-end bg-light"
-                                        :value="total" disabled readonly />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="fw-medium">Other Discount</div>
-                                <div class="input-group input-group-sm" style="width: 150px;">
-                                    <input type="number" class="form-control form-control-sm text-end"
-                                        :value="otherDiscount"
-                                        @input="handleInput('other_discount', $event.target.value)" step="any" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="fw-medium">Freight Charges</div>
-                                <div class="input-group input-group-sm" style="width: 150px;">
-                                    <input type="number" class="form-control form-control-sm text-end" :value="freight"
-                                        @input="handleInput('freight', $event.target.value)" step="any" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Shipping Address -->
-                <div class="col-12">
-                    <div class="card bg-light border-0">
-                        <div class="card-body p-2">
-                            <h6 class="card-subtitle mb-2 text-muted">
-                                <i class="demo-psi-map-marker-2 me-1"></i>Address
-                            </h6>
-                            <textarea class="form-control" rows="3" :value="address"
-                                @input="handleInput('address', $event.target.value)"
-                                placeholder="Enter shipping address..."></textarea>
-                        </div>
-                    </div>
-                </div>
+        <div class="pcx-sum">
+            <div class="pcx-sr">
+                <span class="k">Gross Total</span>
+                <span class="v">{{ formatNumber(grossAmount) }}</span>
             </div>
+            <div class="pcx-sr">
+                <span class="k">Item Discount</span>
+                <span class="v" :class="{ minus: itemDiscount > 0 }">{{ itemDiscount > 0 ? '-' : '' }}{{
+                    formatNumber(itemDiscount) }}</span>
+            </div>
+            <div class="pcx-sr">
+                <span class="k">Tax</span>
+                <span class="v">{{ formatNumber(taxAmount) }}</span>
+            </div>
+            <div class="pcx-sr">
+                <span class="k">Purchase Total</span>
+                <span class="v">{{ formatNumber(total) }}</span>
+            </div>
+            <div class="pcx-sr">
+                <span class="k">Other Discount</span>
+                <input type="number" class="pcx-cell" :value="otherDiscount"
+                    @input="handleInput('other_discount', $event.target.value)" step="any" />
+            </div>
+            <div class="pcx-sr">
+                <span class="k">Freight Charges</span>
+                <input type="number" class="pcx-cell" :value="freight"
+                    @input="handleInput('freight', $event.target.value)" step="any" />
+            </div>
+        </div>
+
+        <div class="pcx-grand">
+            <div>
+                <div class="k">Grand Total</div>
+                <div class="v">{{ formatCurrency(grandTotal) }}</div>
+            </div>
+            <i class="fa fa-shopping-cart"></i>
         </div>
     </div>
 </template>
 
 <script setup>
 import { useLivewire } from '@/composables/useLivewire'
-import { formatCurrency } from '@/utils/number'
+import { formatCurrency, formatNumber } from '@/utils/number'
 
 const props = defineProps({
     grossAmount: {
@@ -89,9 +66,17 @@ const props = defineProps({
         type: Number,
         default: 0
     },
-    address: {
-        type: String,
-        default: ''
+    grandTotal: {
+        type: Number,
+        default: 0
+    },
+    itemDiscount: {
+        type: Number,
+        default: 0
+    },
+    taxAmount: {
+        type: Number,
+        default: 0
     }
 })
 

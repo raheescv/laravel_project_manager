@@ -19,7 +19,7 @@
     };
 @endphp
 
-<div class="svx">
+<div class="dvx">
     {{-- ── LEAD: identity left, money right ─────────────────────────────────── --}}
     <div class="s-lead">
         <div class="l-ic"><i class="fa fa-file-text-o"></i></div>

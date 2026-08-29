@@ -5,6 +5,7 @@ class PosSettingsState extends Equatable {
   const PosSettingsState({
     this.lockAfterSale = true,
     this.gridColumns = defaultGridColumns,
+    this.startScreen = StartScreen.home,
   });
 
   /// Tile counts a till can choose between for the New Sale catalog grid.
@@ -16,12 +17,16 @@ class PosSettingsState extends Equatable {
   final bool lockAfterSale;
   final int gridColumns;
 
-  PosSettingsState copyWith({bool? lockAfterSale, int? gridColumns}) =>
+  /// Where sign-in — and an unlock, which is the same landing — puts the user.
+  final StartScreen startScreen;
+
+  PosSettingsState copyWith({bool? lockAfterSale, int? gridColumns, StartScreen? startScreen}) =>
       PosSettingsState(
         lockAfterSale: lockAfterSale ?? this.lockAfterSale,
         gridColumns: gridColumns ?? this.gridColumns,
+        startScreen: startScreen ?? this.startScreen,
       );
 
   @override
-  List<Object?> get props => [lockAfterSale, gridColumns];
+  List<Object?> get props => [lockAfterSale, gridColumns, startScreen];
 }

@@ -43,6 +43,10 @@ class LocalStorageKeys {
   static const String posLockAfterSale = 'astra.pos.lockAfterSale';
   // How many product tiles the New Sale catalog grid fits across (2 | 3 | 4).
   static const String posGridColumns = 'astra.pos.gridColumns';
+  /// Which screen a signed-in session lands on (a `StartScreen.key`). Device-
+  /// local: a counter till opens straight on the POS while the manager's own
+  /// phone keeps the dashboard, on the same build and the same account.
+  static const String posStartScreen = 'astra.pos.startScreen';
 
   // Offline selling — device-local. The tag identifies this till in the
   // provisional references it prints; the sequence numbers them.

@@ -53,3 +53,47 @@ class Routes {
   /// What the till holds for selling with no network, and the controls for it.
   static const String offlineData = '/offline-data';
 }
+
+/// Where a signed-in session lands.
+///
+/// Device-local (Settings → Start screen), because it is a decision about *this
+/// terminal*, not this account: the counter tablet a cashier rings tickets on
+/// wants to open on the POS, while the same manager's own phone — often the
+/// same login — still wants the dashboard. Storing it on the server would make
+/// the two fight over one value.
+enum StartScreen {
+  home('home', 'Dashboard', 'Today\'s figures and the module tiles', Routes.home),
+  sale('sale', 'New Sale', 'Straight into the POS, ready to ring a ticket', Routes.sale),
+  // The Sales tab *inside* the shell, not the standalone `/sales` route: landed
+  // on directly that one has no bottom nav and nothing to go back to, which
+  // strands the user on the screen they chose to start from.
+  sales('sales', 'Sales', 'The invoice list, with the rest of the app around it',
+      '${Routes.home}?tab=1');
+
+  const StartScreen(this.key, this.label, this.blurb, this.location);
+
+  /// Stored in local storage — never rename a value, older installs hold them.
+  final String key;
+  final String label;
+  final String blurb;
+
+  /// The route this option lands on.
+  final String location;
+
+  /// True when the destination lives inside the home shell, which the router
+  /// only lets through for an account that can see the dashboard.
+  bool get needsDashboard => location.startsWith(Routes.home);
+
+  static StartScreen fromKey(String? k) =>
+      StartScreen.values.firstWhere((s) => s.key == k, orElse: () => StartScreen.home);
+
+  /// Where to actually go. A till set to the dashboard whose cashier can't open
+  /// one — a permission revoked since, or a shared device signed into by
+  /// somebody else — falls back to New Sale rather than bouncing off `/home`.
+  String resolve({required bool canViewDashboard}) =>
+      needsDashboard && !canViewDashboard ? Routes.sale : location;
+
+  /// The options worth offering this account, in display order.
+  static List<StartScreen> optionsFor({required bool canViewDashboard}) =>
+      StartScreen.values.where((s) => canViewDashboard || !s.needsDashboard).toList();
+}

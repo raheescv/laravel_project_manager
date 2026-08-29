@@ -23,6 +23,7 @@ import 'package:invo/features/auth/widgets/v3/connection_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/appearance_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/branch_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/currency_sheet.dart';
+import 'package:invo/features/settings/widgets/v3/start_screen_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/theme_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/typography_sheet.dart';
 
@@ -77,6 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _printerCard(context),
                         _lockAfterSaleCard(context),
                         _gridColumnsCard(context),
+                        _startScreenCard(context),
                         _permissionsCard(context),
                         _offlineDataCard(context),
                         _serverCard(context),
@@ -127,6 +129,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       (pos.lockAfterSale ? Icons.lock_clock_outlined : Icons.lock_open_outlined, 'Shared till',
           pos.lockAfterSale ? 'Locks after each sale' : 'Stays unlocked'),
       (Icons.grid_view_rounded, 'Catalog grid', '${pos.gridColumns} products per row'),
+      (startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
+          'Opens on ${_effectiveStartScreen(context).label}'),
       (Icons.verified_user_outlined, 'My permissions', (user?.isAdmin ?? false) ? 'Administrator' : '$permCount granted'),
       // Read straight off the cubit rather than watched: this is a sub-label on
       // a nav tile, and the panel beside it carries the live version.
@@ -294,12 +298,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: ui(size: 11, weight: FontWeight.w600, color: context.astra.textMuted)),
         ]);
       case 9:
+        // No `final` locals here: every case shares the switch's one scope, and
+        // case 7 already holds `pos`.
+        return _panelShell(context, startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
+            'Where this device opens once you sign in — and after an unlock.', [
+          for (final option in StartScreen.optionsFor(canViewDashboard: _canViewDashboard(context)))
+            _startScreenRow(context, option, option == _effectiveStartScreen(context)),
+        ]);
+      case 10:
         return _panelShell(context, Icons.verified_user_outlined, 'My permissions', 'What this account is allowed to do.', [
           _permissionsCard(context),
           const SizedBox(height: 12),
           AstraButton(label: 'View permissions', icon: Icons.list_alt, onTap: _openPermissions),
         ]);
-      case 10:
+      case 11:
         return _panelShell(context, Icons.cloud_off_outlined, 'Offline data',
             'What this till can sell without a network.', [
           _offlineDataCard(context),
@@ -756,6 +768,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// True when this account may open the home shell — the dashboard and the
+  /// Sales tab both live inside it (see the router's redirect).
+  bool _canViewDashboard(BuildContext context) =>
+      context.watch<AuthCubit>().hasPermission(PermissionSlug.salesOverview);
+
+  /// What the device will *actually* open on. The stored choice normally, but a
+  /// till set to the dashboard that a cashier without the permission signs into
+  /// lands on New Sale instead — so say New Sale, rather than showing a setting
+  /// that doesn't hold.
+  StartScreen _effectiveStartScreen(BuildContext context) {
+    final chosen = context.watch<PosSettingsCubit>().startScreen;
+    return chosen.needsDashboard && !_canViewDashboard(context) ? StartScreen.sale : chosen;
+  }
+
+  /// Where signing in lands. Device-local, so the counter tablet can open
+  /// straight on the POS while the same manager's phone still opens on the
+  /// dashboard — it takes effect on the next sign-in or unlock.
+  Widget _startScreenCard(BuildContext context) {
+    final p = context.astra;
+    final start = _effectiveStartScreen(context);
+    return AstraCard(
+      radius: 14,
+      onTap: () => showStartScreenSheet(context),
+      child: Row(
+        children: [
+          IconChip(icon: startScreenIcon(start), size: 34, radius: 9, bg: p.tint),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Start screen',
+                    style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text('Opens on ${start.label} after sign-in',
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, size: 18, color: p.textMuted),
+        ],
+      ),
+    );
+  }
+
+  /// An inline start-screen option (tablet detail pane), click-and-go like the
+  /// appearance rows beside it.
+  Widget _startScreenRow(BuildContext context, StartScreen screen, bool active) {
+    final p = context.astra;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => context.read<PosSettingsCubit>().setStartScreen(screen),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: active ? p.tint : p.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: active ? p.primary : p.cardBorder, width: active ? 1.5 : 1),
+        ),
+        child: Row(
+          children: [
+            Icon(startScreenIcon(screen), size: 20, color: active ? p.primary : p.textSecondary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(screen.label, style: ui(size: 14, weight: FontWeight.w700, color: p.ink)),
+                  Text(screen.blurb,
+                      style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                ],
+              ),
+            ),
+            if (active) Icon(Icons.check_circle_rounded, size: 20, color: p.primary),
+          ],
+        ),
       ),
     );
   }

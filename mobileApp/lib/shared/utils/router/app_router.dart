@@ -21,11 +21,13 @@ import 'package:invo/features/stock_check/domain/models/stock_check_models.dart'
 import 'package:invo/features/stock_check/screens/v3/new_stock_check_screen.dart';
 import 'package:invo/features/stock_check/screens/v3/stock_check_count_screen.dart';
 import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/screens/v3/offline_data_screen.dart';
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/models/index.dart';
 
@@ -42,7 +44,15 @@ GoRouter createRouter(AuthCubit auth) {
       if (auth.status == AuthStatus.unknown) return null;
       if (!loggedIn) return atLogin ? null : Routes.login;
       final canViewAdmin = auth.hasPermission(PermissionSlug.salesOverview);
-      if (atLogin) return canViewAdmin ? Routes.home : Routes.sale;
+      // Landing after sign-in (and after an unlock, which comes back through
+      // the login route the same way) is the till's own choice — see
+      // [StartScreen]; `resolve` keeps an account that can't open the dashboard
+      // off it whatever the device is set to.
+      if (atLogin) {
+        return serviceLocator<PosSettingsCubit>()
+            .startScreen
+            .resolve(canViewDashboard: canViewAdmin);
+      }
       if (state.matchedLocation == Routes.home && !canViewAdmin) return Routes.sale;
       if (state.matchedLocation == Routes.daySession &&
           !auth.hasPermission(PermissionSlug.daySession)) {

@@ -1,135 +1,54 @@
 <template>
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-gradient bg-primary text-white py-3">
-            <h5 class="card-title mb-0 d-flex align-items-center text-white">
-                <i class="demo-psi-credit-card-2 fs-4 me-2"></i>Payment Details
-            </h5>
+    <div class="pcx-card">
+        <div class="pcx-chd">
+            <div class="pcx-ci"><i class="fa fa-credit-card"></i></div>
+            <h2 class="pcx-ct">Payments</h2>
+            <span class="pcx-cnt">{{ payments.length }}</span>
         </div>
-        <div class="card-body">
-            <div class="alert alert-primary text-center mb-3">
-                <span class="d-block small mb-1">Total Payable Amount</span>
-                <span class="h4 mb-0">{{ formatCurrency(grandTotal) }}</span>
-            </div>
 
-            <div class="row g-3 mb-4">
-                <div class="col-md-7">
-                    <label class="form-label">Payment Method</label>
-                    <select ref="paymentMethodSelect" id="payment-method-select" class="select-payment_method_id-list"
-                        :value="selectedPaymentMethodId" @change="handlePaymentMethodChange">
-                        <option value="">Select Payment Method</option>
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">Amount</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control text-end" :value="paymentAmount"
-                            @input="handlePaymentAmountChange($event.target.value)" step="any" placeholder="0.00" />
-                        <button type="button" @click="handleAddPayment" class="btn btn-primary">
-                            <i class="demo-psi-add me-1"></i> Add
-                        </button>
-                    </div>
-                </div>
+        <!-- nothing left to collect on a settled or cancelled purchase -->
+        <div v-if="canAddPayment" class="pcx-payrow">
+            <div class="pcx-f">
+                <label for="payment-method-select">Method</label>
+                <select ref="paymentMethodSelect" id="payment-method-select" class="select-payment_method_id-list"
+                    :value="selectedPaymentMethodId" @change="handlePaymentMethodChange">
+                    <option value="">Select Payment Method</option>
+                </select>
             </div>
-
-            <div class="table-responsive mb-4">
-                <table class="table table-sm table-bordered table-hover">
-                    <thead class="bg-light">
-                        <tr>
-                            <th style="width: 60%">Payment Method</th>
-                            <th class="text-end">Amount</th>
-                            <th style="width: 80px">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(payment, index) in payments" :key="index">
-                            <td class="align-middle">{{ payment.name }}</td>
-                            <td class="text-end align-middle">{{ formatCurrency(payment.amount) }}</td>
-                            <td class="text-center">
-                                <button type="button" @click="handleRemovePayment(index)"
-                                    class="btn btn-sm btn-icon btn-outline-danger rounded-circle"
-                                    title="Remove Payment">
-                                    <i class="demo-pli-recycling"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr v-if="payments.length === 0">
-                            <td colspan="3" class="text-center py-4 text-muted">
-                                <i class="demo-psi-credit-card-2 fs-1 mb-2 d-block"></i>
-                                No payments added yet
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="pcx-f">
+                <label for="payment">Amount</label>
+                <input type="number" id="payment" class="pcx-input pcx-input--num" :value="paymentAmount"
+                    @input="handlePaymentAmountChange($event.target.value)" @keydown.enter.prevent="handleAddPayment"
+                    step="any" placeholder="0.00" />
             </div>
+            <button type="button" @click="handleAddPayment" class="pcx-add" title="Add Payment">
+                <i class="fa fa-plus"></i>
+            </button>
+        </div>
 
-            <div v-if="errors && errors.length > 0" class="alert alert-danger border-0 mb-4">
-                <ul class="mb-0 ps-3">
-                    <li v-for="(error, index) in errors" :key="index">{{ error }}</li>
-                </ul>
+        <div class="pcx-plist">
+            <div v-for="(paymentRow, index) in payments" :key="index" class="pcx-pl">
+                <span class="mi"><i class="fa fa-money"></i></span>
+                <span class="n">{{ paymentRow.name }}</span>
+                <span class="a">{{ formatNumber(paymentRow.amount) }}</span>
+                <button type="button" @click="handleRemovePayment(index)" class="pcx-del" title="Remove Payment">
+                    <i class="fa fa-times"></i>
+                </button>
             </div>
-
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <div class="card bg-light border-0">
-                        <div class="card-body p-3">
-                            <p v-if="createdUser" class="mb-1 small">
-                                Created By: <strong>{{ createdUser.name }}</strong>
-                            </p>
-                            <p v-if="updatedUser" class="mb-1 small">
-                                Updated By: <strong>{{ updatedUser.name }}</strong>
-                            </p>
-                            <p v-if="cancelledUser" class="mb-0 small text-danger">
-                                Cancelled By: <strong>{{ cancelledUser.name }}</strong>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card bg-light border-0">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small">Total Paid:</span>
-                                <span class="h6 mb-0 text-success">{{ formatCurrency(paid) }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="small">Balance:</span>
-                                <span class="h6 mb-0 text-danger">{{ formatCurrency(balance) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div v-if="payments.length === 0" class="pcx-empty" style="padding:18px 8px">
+                <i class="fa fa-credit-card"></i>
+                <div class="t">No payments yet</div>
             </div>
+        </div>
 
-            <div class="d-flex justify-content-end gap-2 flex-wrap">
-                <template v-if="purchaseId">
-                    <template v-if="status !== 'cancelled'">
-                        <a v-if="canPrintPurchaseNote" :href="printPurchaseNoteUrl" target="_blank"
-                            class="btn btn-secondary">
-                            <i class="demo-psi-printer me-1"></i> Purchase Note Print
-                        </a>
-                    </template>
-                    <a v-if="canPrintBarcode" :href="printBarcodeUrl" target="_blank" class="btn btn-info">
-                        <i class="demo-psi-printer me-1"></i> Print
-                    </a>
-                </template>
-                <template v-if="status === 'draft'">
-                    <button type="button" @click="handleSave('draft')" class="btn btn-secondary">
-                        <i class="demo-psi-file me-1"></i> Save Draft
-                    </button>
-                    <button type="button" @click="handleSubmit" class="btn btn-primary">
-                        <i class="demo-psi-check me-1"></i> Submit
-                    </button>
-                </template>
-                <template v-else>
-                    <template v-if="status !== 'cancelled'">
-                        <button v-if="canCancel" type="button" @click="handleSave('cancelled')" class="btn btn-danger">
-                            <i class="demo-psi-cross me-1"></i> Cancel Purchase
-                        </button>
-                        <button type="button" @click="handleSubmit" class="btn btn-primary">
-                            <i class="demo-psi-check me-1"></i> Submit
-                        </button>
-                    </template>
-                </template>
+        <div class="pcx-balrow">
+            <div class="pcx-bx pcx-bx--ok">
+                <div class="k">Total Paid</div>
+                <div class="v">{{ formatNumber(paid) }}</div>
+            </div>
+            <div class="pcx-bx" :class="{ 'pcx-bx--due': balance > 0 }">
+                <div class="k">Balance</div>
+                <div class="v">{{ formatNumber(balance) }}</div>
             </div>
         </div>
     </div>
@@ -137,15 +56,11 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { formatCurrency } from '@/utils/number'
+import { formatNumber } from '@/utils/number'
 import { useLivewire } from '@/composables/useLivewire'
 import { getRoute } from '@/utils/routes'
 
 const props = defineProps({
-    grandTotal: {
-        type: Number,
-        default: 0
-    },
     payments: {
         type: Array,
         default: () => []
@@ -166,57 +81,20 @@ const props = defineProps({
         type: Number,
         default: 0
     },
-    purchaseId: {
-        type: [String, Number],
-        default: null
-    },
     status: {
         type: String,
         default: 'draft'
-    },
-    createdUser: {
-        type: Object,
-        default: null
-    },
-    updatedUser: {
-        type: Object,
-        default: null
-    },
-    cancelledUser: {
-        type: Object,
-        default: null
-    },
-    errors: {
-        type: Array,
-        default: () => []
-    },
-    canPrintPurchaseNote: {
-        type: Boolean,
-        default: false
-    },
-    canPrintBarcode: {
-        type: Boolean,
-        default: false
-    },
-    canCancel: {
-        type: Boolean,
-        default: false
     }
 })
 
-const emit = defineEmits(['add-payment', 'remove-payment', 'save', 'submit', 'clear-errors'])
+const emit = defineEmits(['add-payment', 'remove-payment'])
+
+const canAddPayment = computed(() => props.status !== 'cancelled'
+    && (props.status === 'draft' || props.balance > 0))
 
 const paymentMethodSelect = ref(null)
 const { set, call, on, get, dispatch } = useLivewire()
 let tomSelectInstance = null
-
-const printPurchaseNoteUrl = computed(() => {
-    return props.purchaseId ? getRoute('purchase::print', { id: props.purchaseId }) : '#'
-})
-
-const printBarcodeUrl = computed(() => {
-    return props.purchaseId ? getRoute('purchase::barcode-print', { id: props.purchaseId }) : '#'
-})
 
 const handlePaymentMethodChange = (event) => {
     const value = event.target.value || null
@@ -255,89 +133,6 @@ const handleRemovePayment = async (index) => {
             console.error('Error removing payment:', error)
         }
     }
-}
-
-const handleSave = async (type) => {
-    if (type === 'cancelled' && !confirm('Are you sure to cancel this?')) {
-        return
-    }
-
-    // Clear errors before saving
-    emit('clear-errors')
-
-    try {
-        await call('save', type)
-        emit('save', type)
-    } catch (error) {
-        console.error('Error saving purchase:', error)
-    }
-}
-
-const handleSubmit = async (event) => {
-    // Prevent form submission if event is passed
-    if (event) {
-        event.preventDefault()
-        event.stopPropagation()
-    }
-
-    // Don't clear errors here - let them show if validation fails after confirmation
-
-    // Get vendor name and payment methods for confirmation
-    // Get vendor name from accounts or purchases
-    const accounts = get('accounts') || []
-    const purchases = get('purchases') || {}
-    const vendorId = purchases.account_id
-
-    // Find vendor name - first check if purchases has account object with name
-    let vendorName = 'N/A'
-    if (purchases.account) {
-        // Format: name@mobile (matching backend format)
-        const name = purchases.account.name || ''
-        const mobile = purchases.account.mobile || ''
-        vendorName = mobile ? `${name}@${mobile}` : (name || 'N/A')
-    } else if (vendorId && accounts.length > 0) {
-        // Find vendor name from accounts array
-        const vendor = accounts.find(acc => {
-            const accId = acc.id || acc.value
-            return accId == vendorId
-        })
-        if (vendor) {
-            const name = vendor.name || vendor.text || ''
-            const mobile = vendor.mobile || ''
-            vendorName = mobile ? `${name}@${mobile}` : (name || 'N/A')
-        }
-    } else if (vendorId) {
-        // If we have vendorId but no account data, try to fetch it from Livewire
-        // This is a fallback for when data hasn't loaded yet
-        const livewirePurchases = get('purchases') || {}
-        if (livewirePurchases.account) {
-            const name = livewirePurchases.account.name || ''
-            const mobile = livewirePurchases.account.mobile || ''
-            vendorName = mobile ? `${name}@${mobile}` : (name || 'N/A')
-        }
-    }
-
-    // Get invoice number
-    const invoiceNo = purchases.invoice_no || 'N/A'
-
-    // Get payment methods summary
-    const paymentMethodsList = props.payments.map(p => `${p.name}: ${formatCurrency(p.amount)}`).join(', ')
-    const paymentMethods = paymentMethodsList || 'No payments added'
-
-    // Prepare confirmation data
-    const confirmationData = {
-        vendor: vendorName,
-        invoice_no: invoiceNo,
-        grand_total: formatCurrency(props.grandTotal),
-        payment_methods: paymentMethods,
-        paid: formatCurrency(props.paid),
-        balance: formatCurrency(props.balance)
-    }
-
-    // Dispatch confirmation event - use window.dispatchEvent directly to ensure it works
-    window.dispatchEvent(new CustomEvent('show-confirmation', { detail: confirmationData }))
-
-    emit('submit')
 }
 
 const initializePaymentMethodSelect = () => {

@@ -1,0 +1,1290 @@
+/* ==========================================================================
+   PURCHASE CREATE / EDIT — "Command Deck" premium layer
+   --------------------------------------------------------------------------
+   Scoped to `.pcx` so nothing here can leak into the rest of the admin.
+   The accent is the app theme colour (--bs-primary from Settings → Colors);
+   no second hue is invented, exactly like the POS `.posx` layer.
+
+   Layout:  sticky command deck (title · live grand total · actions · stat
+            strip) → items table takes the full width → summary + payments
+            live in a sticky right rail so the money never scrolls away.
+
+   Sticky offsets: `.hd--sticky` is put on #root by the Nifty theme when the
+   user turns on a sticky header, so the deck has to clear it in that case
+   only. The rail sits below the deck using --pcx-deck-h, which PurchasePage
+   keeps in sync with a ResizeObserver.
+   ========================================================================== */
+
+.pcx {
+    /* --- semantic: never rebranded --- */
+    --pcx-ok: #16a34a;
+    --pcx-ok-rgb: 22, 163, 74;
+    --pcx-bad: #dc2626;
+    --pcx-bad-rgb: 220, 38, 38;
+    --pcx-warn: #d97706;
+    --pcx-warn-rgb: 217, 119, 6;
+
+    /* --- accent: the app theme colour --- */
+    --pcx-acc: var(--bs-primary, #4f46e5);
+    --pcx-acc-rgb: var(--bs-primary-rgb, 79, 70, 229);
+    --pcx-acc-d: color-mix(in srgb, var(--pcx-acc), #000 18%);
+    --pcx-acc-deep: color-mix(in srgb, var(--pcx-acc), #000 48%);
+    --pcx-tint: color-mix(in srgb, var(--pcx-acc), transparent 91%);
+    /* accent as *ink* on a tinted chip — has to flip direction in dark, where a
+       darkened accent on a dark tint is unreadable */
+    --pcx-acc-ink: var(--pcx-acc-d);
+    --pcx-line-acc: color-mix(in srgb, var(--pcx-acc), transparent 78%);
+
+    /* --- surfaces (light) --- */
+    --pcx-sf: #fff;
+    --pcx-sf2: #f7f9fc;
+    --pcx-sf3: #eef2f7;
+    --pcx-ink: #0b1220;
+    --pcx-ink2: #334155;
+    --pcx-mut: #748196;
+    --pcx-ln: #e3e8ef;
+    --pcx-lns: #eef1f6;
+    --pcx-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 10px 24px -18px rgba(16, 24, 40, .3);
+    --pcx-shadow-lg: 0 1px 2px rgba(16, 24, 40, .05), 0 14px 30px -20px rgba(16, 24, 40, .35);
+
+    /* every full-size control (input, TomSelect, the Add button) is this tall */
+    --pcx-h-field: 35px;
+
+    /* sticky offset — raised when the theme header is sticky */
+    --pcx-top: .5rem;
+    --pcx-deck-h: 118px;
+
+    font-size: 12.5px;
+    color: var(--pcx-ink);
+}
+
+[data-bs-theme="dark"] .pcx {
+    --pcx-sf: #1e242b;
+    --pcx-sf2: #242b33;
+    --pcx-sf3: #2b333c;
+    --pcx-ink: #f1f5f9;
+    --pcx-ink2: #cbd5e1;
+    --pcx-mut: #8d9bad;
+    --pcx-ln: #333c46;
+    --pcx-lns: #2d353e;
+    --pcx-tint: color-mix(in srgb, var(--pcx-acc), transparent 84%);
+    --pcx-acc-ink: color-mix(in srgb, var(--pcx-acc), #fff 34%);
+    --pcx-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 24px -18px rgba(0, 0, 0, .6);
+    --pcx-shadow-lg: 0 1px 2px rgba(0, 0, 0, .35), 0 14px 30px -20px rgba(0, 0, 0, .7);
+}
+
+.hd--sticky .pcx {
+    --pcx-top: calc(var(--nf-header-height, 3.125rem) + .5rem);
+}
+
+.pcx * {
+    box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------------- the deck */
+.pcx-deck {
+    position: sticky;
+    top: var(--pcx-top);
+    z-index: 30;
+    background: var(--pcx-sf);
+    border: 1px solid var(--pcx-ln);
+    border-radius: 14px;
+    box-shadow: var(--pcx-shadow-lg);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.pcx-deck-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    flex-wrap: wrap;
+}
+
+.pcx-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #fff;
+    flex-shrink: 0;
+    background: linear-gradient(145deg, var(--pcx-acc-d), var(--pcx-acc-deep));
+    box-shadow: 0 7px 16px -8px rgba(var(--pcx-acc-rgb), .8);
+}
+
+.pcx-eye {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+}
+
+.pcx-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+    line-height: 1.25;
+    margin: 0;
+}
+
+.pcx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    background: rgba(var(--pcx-warn-rgb), .13);
+    color: var(--pcx-warn);
+    white-space: nowrap;
+}
+
+.pcx-chip--ok {
+    background: rgba(var(--pcx-ok-rgb), .13);
+    color: var(--pcx-ok);
+}
+
+.pcx-chip--bad {
+    background: rgba(var(--pcx-bad-rgb), .13);
+    color: var(--pcx-bad);
+}
+
+.pcx-chip i {
+    font-size: 6px;
+}
+
+.pcx-spacer {
+    flex: 1;
+    min-width: 0;
+}
+
+.pcx-readout {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-inline-end: 12px;
+    border-inline-end: 1px solid var(--pcx-ln);
+    margin-inline-end: 4px;
+}
+
+.pcx-readout .k {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: .9px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+}
+
+.pcx-readout .v {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -.4px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.pcx-btn {
+    border: 1px solid var(--pcx-ln);
+    background: var(--pcx-sf);
+    color: var(--pcx-ink2);
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.2;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    text-decoration: none;
+    transition: background .15s, transform .15s, box-shadow .15s;
+    white-space: nowrap;
+}
+
+.pcx-btn:hover {
+    background: var(--pcx-sf2);
+    color: var(--pcx-ink);
+    transform: translateY(-1px);
+}
+
+.pcx-btn--ghost {
+    background: transparent;
+}
+
+.pcx-btn--pri {
+    background: linear-gradient(180deg, var(--pcx-acc), var(--pcx-acc-d));
+    border-color: var(--pcx-acc-d);
+    color: #fff;
+    box-shadow: 0 8px 18px -9px rgba(var(--pcx-acc-rgb), .85);
+}
+
+.pcx-btn--pri:hover {
+    background: linear-gradient(180deg, var(--pcx-acc-d), var(--pcx-acc-deep));
+    color: #fff;
+}
+
+.pcx-btn--danger {
+    border-color: rgba(var(--pcx-bad-rgb), .35);
+    color: var(--pcx-bad);
+}
+
+.pcx-btn--danger:hover {
+    background: rgba(var(--pcx-bad-rgb), .1);
+    color: var(--pcx-bad);
+}
+
+.pcx-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--pcx-lns);
+    background: var(--pcx-sf2);
+}
+
+.pcx-ds {
+    padding: 8px 14px;
+    border-inline-end: 1px solid var(--pcx-lns);
+    min-width: 0;
+}
+
+.pcx-ds:last-child {
+    border-inline-end: 0;
+}
+
+.pcx-ds .k {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .9px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+}
+
+.pcx-ds .v {
+    font-size: 13px;
+    font-weight: 750;
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pcx-ds .v.due {
+    color: var(--pcx-bad);
+}
+
+/* -------------------------------------------------------------- the layout */
+.pcx-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 348px;
+    gap: 12px;
+    align-items: start;
+}
+
+.pcx-rail {
+    position: sticky;
+    top: calc(var(--pcx-top) + var(--pcx-deck-h) + 12px);
+    z-index: 1;
+}
+
+/* sticky makes the rail its own stacking context, so a dropdown opening inside it
+   would still slide under the deck — lift the whole rail only while one is open */
+.pcx-rail:has(.ts-wrapper.dropdown-active) {
+    z-index: 40;
+}
+
+@media (max-width: 1199.98px) {
+    .pcx-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pcx-rail {
+        position: static;
+    }
+}
+
+/* --------------------------------------------------------------- the cards */
+/* NOTE: no `overflow: hidden` here. The vendor and product TomSelect drop their
+   options panel as an absolutely-positioned child of the card, and clipping the
+   card clips the dropdown. The two children that actually touch a rounded corner
+   (the header, and the table footer) round themselves instead. */
+.pcx-card {
+    background: var(--pcx-sf);
+    border: 1px solid var(--pcx-ln);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    box-shadow: var(--pcx-shadow);
+}
+
+.pcx-chd {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 13px;
+    border-bottom: 1px solid var(--pcx-lns);
+    background: var(--pcx-sf2);
+    border-start-start-radius: 13px;
+    border-start-end-radius: 13px;
+}
+
+.pcx-ci {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    background: var(--pcx-tint);
+    color: var(--pcx-acc-ink);
+}
+
+.pcx-ct {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .2px;
+    margin: 0;
+}
+
+.pcx-cnt {
+    margin-inline-start: auto;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--pcx-mut);
+    background: var(--pcx-sf3);
+    border: 1px solid var(--pcx-ln);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- the fields */
+.pcx-fgrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px 13px;
+}
+
+@media (max-width: 991.98px) {
+    .pcx-fgrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    .pcx-fgrid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.pcx-f label {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+    margin-bottom: 5px;
+}
+
+.pcx-f label .req {
+    color: var(--pcx-bad);
+    font-style: normal;
+}
+
+.pcx-input {
+    width: 100%;
+    min-height: var(--pcx-h-field);
+    background: var(--pcx-sf2);
+    border: 1px solid var(--pcx-ln);
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--pcx-ink);
+    font-family: inherit;
+}
+
+.pcx-input:focus {
+    outline: none;
+    border-color: var(--pcx-acc);
+    box-shadow: 0 0 0 3px rgba(var(--pcx-acc-rgb), .14);
+    background: var(--pcx-sf);
+}
+
+.pcx-input::placeholder {
+    color: var(--pcx-mut);
+    font-weight: 500;
+}
+
+.pcx-input--num {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Every numeric field here is right-aligned, so the native spin buttons land on
+   top of the digits. Arrow keys still step the value with them hidden. */
+.pcx input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.pcx input[type="number"]::-webkit-outer-spin-button,
+.pcx input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+
+textarea.pcx-input {
+    resize: vertical;
+    min-height: 64px;
+}
+
+/* dark date pickers keep their icon visible */
+[data-bs-theme="dark"] .pcx-input::-webkit-calendar-picker-indicator {
+    filter: invert(.75);
+}
+
+/* -------------------------------------------------------------- the vendor */
+.pcx-vendor {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--pcx-tint);
+    border: 1px solid var(--pcx-line-acc);
+    border-radius: 11px;
+    padding: 9px 11px;
+    flex-wrap: wrap;
+}
+
+.pcx-av {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: linear-gradient(145deg, var(--pcx-acc-d), var(--pcx-acc-deep));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12.5px;
+    font-weight: 800;
+}
+
+.pcx-vn {
+    font-size: 12.5px;
+    font-weight: 800;
+}
+
+.pcx-vm {
+    font-size: 10.5px;
+    color: var(--pcx-mut);
+    margin-top: 1px;
+}
+
+.pcx-vbal {
+    margin-inline-start: auto;
+    text-align: end;
+}
+
+.pcx-vbal .k {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+}
+
+.pcx-vbal .v {
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--pcx-ok);
+}
+
+.pcx-vbal .v.due {
+    color: var(--pcx-bad);
+}
+
+/* ------------------------------------------------------- the product search */
+.pcx-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--pcx-sf);
+    border: 1.5px dashed color-mix(in srgb, var(--pcx-acc), transparent 62%);
+    border-radius: 10px;
+    padding: 6px 11px;
+    margin: 11px 13px;
+}
+
+.pcx-search > i {
+    color: var(--pcx-acc-ink);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.pcx-search .pcx-search-field {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ---------------------------------------------------------------- the table */
+.pcx-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.pcx-table thead th {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .9px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+    padding: 8px 10px;
+    background: var(--pcx-sf2);
+    border-top: 1px solid var(--pcx-lns);
+    border-bottom: 1px solid var(--pcx-lns);
+    text-align: start;
+    white-space: nowrap;
+}
+
+.pcx-table thead th.e {
+    text-align: end;
+}
+
+.pcx-table tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--pcx-lns);
+    vertical-align: middle;
+}
+
+.pcx-table tbody tr:hover td {
+    background: color-mix(in srgb, var(--pcx-acc), transparent 96%);
+}
+
+.pcx-idx {
+    width: 26px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--pcx-sf3);
+    color: var(--pcx-mut);
+    font-size: 10.5px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pcx-pname {
+    font-size: 12.5px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.pcx-pbar {
+    font-size: 10.5px;
+    color: var(--pcx-mut);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .3px;
+    margin-top: 1px;
+}
+
+.pcx-cell {
+    width: 84px;
+    background: var(--pcx-sf2);
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 5px 8px;
+    text-align: end;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--pcx-ink);
+    font-family: inherit;
+}
+
+.pcx-cell--tax {
+    width: 60px;
+}
+
+.pcx-cell:hover {
+    border-color: var(--pcx-ln);
+}
+
+.pcx-cell:focus {
+    outline: none;
+    background: var(--pcx-sf);
+    border-color: var(--pcx-acc);
+    box-shadow: 0 0 0 3px rgba(var(--pcx-acc-rgb), .14);
+}
+
+.pcx-unit {
+    width: 100%;
+    min-width: 76px;
+    background: var(--pcx-sf2);
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 5px 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--pcx-ink2);
+    font-family: inherit;
+}
+
+.pcx-unit:focus {
+    outline: none;
+    background: var(--pcx-sf);
+    border-color: var(--pcx-acc);
+    box-shadow: 0 0 0 3px rgba(var(--pcx-acc-rgb), .14);
+}
+
+.pcx-unit-cell {
+    width: 1%;
+    min-width: 96px;
+}
+
+.pcx-rtot {
+    text-align: end;
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.pcx-del {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    border: 1px solid var(--pcx-ln);
+    background: var(--pcx-sf);
+    color: var(--pcx-mut);
+    cursor: pointer;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: .15s;
+}
+
+.pcx-del:hover {
+    background: rgba(var(--pcx-bad-rgb), .1);
+    color: var(--pcx-bad);
+    border-color: rgba(var(--pcx-bad-rgb), .3);
+}
+
+.pcx-table tfoot td {
+    padding: 9px 10px;
+    background: var(--pcx-sf2);
+    border-top: 2px solid var(--pcx-ln);
+    font-size: 12.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+}
+
+.pcx-table tfoot td:first-child {
+    border-end-start-radius: 13px;
+}
+
+.pcx-table tfoot td:last-child {
+    border-end-end-radius: 13px;
+}
+
+/* with no lines yet the empty state is the last row and carries the corners */
+.pcx-table tbody tr:last-child td {
+    border-bottom: 0;
+    border-end-start-radius: 13px;
+    border-end-end-radius: 13px;
+}
+
+.pcx-table tfoot td.lab {
+    font-size: 9.5px;
+    letter-spacing: .9px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+}
+
+.pcx-empty {
+    text-align: center;
+    padding: 34px 16px;
+    color: var(--pcx-mut);
+}
+
+.pcx-empty i {
+    font-size: 26px;
+    display: block;
+    margin-bottom: 8px;
+    opacity: .5;
+}
+
+.pcx-empty .t {
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.pcx-empty .s {
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+/* --------------------------------------------------------- items as cards */
+.pcx-icards {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: 12px 13px;
+}
+
+.pcx-icard {
+    border: 1px solid var(--pcx-ln);
+    border-radius: 11px;
+    overflow: hidden;
+    background: var(--pcx-sf);
+}
+
+.pcx-icard-hd {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--pcx-sf2);
+    border-bottom: 1px solid var(--pcx-lns);
+}
+
+.pcx-icard-hd .pcx-pname {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pcx-icard-bd {
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+}
+
+.pcx-icard-bd .full {
+    grid-column: 1 / -1;
+}
+
+.pcx-fld label {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+    margin-bottom: 4px;
+}
+
+.pcx-fld .pcx-cell {
+    width: 100%;
+}
+
+.pcx-icard-tot {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px dashed var(--pcx-ln);
+}
+
+.pcx-icard-tot .k {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+}
+
+.pcx-icards-sum {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--pcx-ln);
+    border: 1px solid var(--pcx-ln);
+    border-radius: 11px;
+    overflow: hidden;
+}
+
+@media (max-width: 575.98px) {
+    .pcx-icards-sum {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.pcx-icards-sum > div {
+    background: var(--pcx-sf2);
+    padding: 8px 10px;
+}
+
+.pcx-icards-sum .k {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+}
+
+.pcx-icards-sum .v {
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+}
+
+/* -------------------------------------------------------------- the summary */
+.pcx-sum {
+    padding: 6px 13px 12px;
+}
+
+.pcx-sr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--pcx-lns);
+}
+
+.pcx-sr:last-child {
+    border-bottom: 0;
+}
+
+.pcx-sr .k {
+    font-size: 11.5px;
+    font-weight: 650;
+    color: var(--pcx-ink2);
+}
+
+.pcx-sr .v {
+    font-size: 12.5px;
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+}
+
+.pcx-sr .v.minus {
+    color: var(--pcx-bad);
+}
+
+.pcx-sr .pcx-cell {
+    width: 108px;
+}
+
+.pcx-grand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 13px 13px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--pcx-acc-deep), var(--pcx-acc-d));
+    box-shadow: 0 14px 30px -18px rgba(var(--pcx-acc-rgb), .9);
+}
+
+.pcx-grand .k {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    opacity: .75;
+}
+
+.pcx-grand .v {
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: -.6px;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+}
+
+.pcx-grand > i {
+    font-size: 26px;
+    opacity: .28;
+}
+
+/* ------------------------------------------------------------- the payments */
+.pcx-payrow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 122px 38px;
+    gap: 7px;
+    padding: 11px 13px 6px;
+    align-items: end;
+}
+
+.pcx-add {
+    border: 0;
+    border-radius: 9px;
+    background: var(--pcx-acc);
+    color: #fff;
+    height: var(--pcx-h-field);
+    cursor: pointer;
+    font-size: 13px;
+    box-shadow: 0 7px 15px -8px rgba(var(--pcx-acc-rgb), .9);
+}
+
+.pcx-add:hover {
+    background: var(--pcx-acc-d);
+}
+
+.pcx-plist {
+    padding: 4px 13px 0;
+}
+
+/* with the add row hidden the list becomes the card's first body element */
+.pcx-chd + .pcx-plist {
+    padding-top: 11px;
+}
+
+.pcx-pl {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border: 1px solid var(--pcx-ln);
+    border-radius: 10px;
+    background: var(--pcx-sf2);
+    margin-bottom: 6px;
+}
+
+.pcx-pl .mi {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--pcx-sf);
+    border: 1px solid var(--pcx-ln);
+    color: var(--pcx-acc-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.pcx-pl .n {
+    font-size: 12px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pcx-pl .a {
+    margin-inline-start: auto;
+    font-size: 12.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.pcx-balrow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px 13px 13px;
+}
+
+.pcx-bx {
+    border: 1px solid var(--pcx-ln);
+    border-radius: 10px;
+    padding: 8px 10px;
+    background: var(--pcx-sf2);
+}
+
+.pcx-bx .k {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--pcx-mut);
+}
+
+.pcx-bx .v {
+    font-size: 15px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+}
+
+.pcx-bx--ok .v {
+    color: var(--pcx-ok);
+}
+
+.pcx-bx--due {
+    background: rgba(var(--pcx-bad-rgb), .06);
+    border-color: rgba(var(--pcx-bad-rgb), .22);
+}
+
+.pcx-bx--due .v {
+    color: var(--pcx-bad);
+}
+
+/* ------------------------------------------------------- errors & the audit */
+.pcx-alert {
+    display: flex;
+    gap: 10px;
+    background: rgba(var(--pcx-bad-rgb), .07);
+    border: 1px solid rgba(var(--pcx-bad-rgb), .28);
+    border-radius: 12px;
+    padding: 11px 13px;
+    margin-bottom: 12px;
+    color: var(--pcx-ink);
+}
+
+.pcx-alert > i {
+    color: var(--pcx-bad);
+    font-size: 15px;
+    margin-top: 1px;
+}
+
+.pcx-alert .t {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    color: var(--pcx-bad);
+    margin-bottom: 3px;
+}
+
+.pcx-alert ul {
+    margin: 0;
+    padding-inline-start: 16px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pcx-audit {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 2px 4px 0;
+    font-size: 11px;
+    color: var(--pcx-mut);
+}
+
+.pcx-audit b {
+    color: var(--pcx-ink2);
+    font-weight: 750;
+}
+
+.pcx-audit .bad b {
+    color: var(--pcx-bad);
+}
+
+/* ------------------------------------------------------- TomSelect controls */
+.pcx .ts-wrapper {
+    min-height: 0;
+}
+
+.pcx .ts-wrapper .ts-control {
+    background: var(--pcx-sf2);
+    border: 1px solid var(--pcx-ln);
+    border-radius: 9px;
+    padding: 7px 10px;
+    min-height: var(--pcx-h-field);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pcx-ink);
+    box-shadow: none;
+}
+
+.pcx .ts-wrapper.focus .ts-control {
+    border-color: var(--pcx-acc);
+    box-shadow: 0 0 0 3px rgba(var(--pcx-acc-rgb), .14);
+    background: var(--pcx-sf);
+}
+
+.pcx .ts-wrapper .ts-control > input,
+.pcx .ts-wrapper .ts-control .item {
+    color: var(--pcx-ink);
+    font-size: 12.5px;
+}
+
+.pcx .ts-wrapper .ts-control > input::placeholder {
+    color: var(--pcx-mut);
+}
+
+/* the product search sits inside its own dashed frame — no second border */
+.pcx-search .ts-wrapper .ts-control {
+    background: transparent;
+    border-color: transparent;
+    padding-inline: 2px;
+}
+
+.pcx-search .ts-wrapper.focus .ts-control {
+    background: transparent;
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.pcx .ts-dropdown {
+    border-radius: 11px;
+    border: 1px solid var(--pcx-ln);
+    background: var(--pcx-sf);
+    color: var(--pcx-ink);
+    box-shadow: var(--pcx-shadow-lg);
+    z-index: 1055;
+    overflow: hidden;
+}
+
+/* the wrapper owns the panel's positioning context, so it has to out-rank the
+   cards below it — a bare z-index on .ts-dropdown loses to a later sibling card */
+.pcx .ts-wrapper.focus,
+.pcx .ts-wrapper.dropdown-active {
+    position: relative;
+    z-index: 1055;
+}
+
+/* ------------------------------------------------ TomSelect options panel
+   `components/select/productSelect.blade.php` ships a global <style> for the
+   rich product rows (.dropdown-item / .item-icon / .item-details) with light-only
+   literals. Everything below re-states those inside `.pcx` on tokens, so the
+   panel follows the theme instead of staying white in dark mode. */
+.pcx .ts-dropdown .ts-dropdown-content {
+    padding: 6px;
+    max-height: 340px;
+}
+
+.pcx .ts-dropdown .option {
+    padding: 8px 11px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pcx-ink);
+    scroll-margin: 6px;
+}
+
+.pcx .ts-dropdown .option + .option {
+    margin-top: 2px;
+}
+
+.pcx .ts-dropdown .option:hover,
+.pcx .ts-dropdown .option.active {
+    background: var(--pcx-tint);
+    color: var(--pcx-acc-ink);
+}
+
+.pcx .ts-dropdown .option.selected {
+    background: var(--pcx-sf2);
+}
+
+.pcx .ts-dropdown .no-results,
+.pcx .ts-dropdown .optgroup-header {
+    padding: 9px 11px;
+    font-size: 11.5px;
+    color: var(--pcx-mut);
+}
+
+.pcx .ts-dropdown .create {
+    padding: 8px 11px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--pcx-acc-ink);
+}
+
+.pcx .ts-dropdown .create:hover,
+.pcx .ts-dropdown .create.active {
+    background: var(--pcx-tint);
+}
+
+/* the vendor row: name on top, contact muted underneath */
+.pcx .ts-dropdown .opt-name {
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.pcx .ts-dropdown .opt-meta {
+    font-size: 10.5px;
+    color: var(--pcx-mut);
+    margin-top: 1px;
+}
+
+.pcx .ts-dropdown .option.active .opt-meta {
+    color: inherit;
+    opacity: .75;
+}
+
+/* the rich product row */
+.pcx .ts-dropdown .dropdown-item {
+    padding: 8px 9px;
+    border-radius: 10px;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    transform: none;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.pcx .ts-dropdown .dropdown-item:hover {
+    background: transparent;
+    transform: none;
+    border-color: transparent;
+}
+
+.pcx .ts-dropdown .item-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    margin: 0;
+    border: 1px solid var(--pcx-ln);
+    background: var(--pcx-sf2);
+    box-shadow: none;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.pcx .ts-dropdown .item-content {
+    min-width: 0;
+}
+
+.pcx .ts-dropdown .item-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: inherit;
+}
+
+.pcx .ts-dropdown .item-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 3px;
+    font-size: 10.5px;
+    color: var(--pcx-mut);
+}
+
+.pcx .ts-dropdown .option.active .item-details {
+    color: inherit;
+    opacity: .78;
+}
+
+.pcx .ts-dropdown .item-details strong {
+    font-weight: 800;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    font-size: 9px;
+}

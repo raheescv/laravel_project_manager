@@ -1,56 +1,168 @@
 <template>
-    <div class="container-fluid py-4">
-        <form @submit.prevent="handleSubmit" class="needs-validation" novalidate>
-            <!-- Header Section -->
-            <div class="row g-4 mb-4">
-                <!-- Vendor Selection -->
-                <div class="col-12 col-md-6">
-                    <VendorInfo :selected-vendor-id="purchases.account_id" :account-balance="accountBalance"
-                        :accounts="accounts" @vendor-changed="handleVendorChanged" />
+    <div class="pcx">
+        <!-- Enter inside a field must not submit — the deck button is the only way in -->
+        <form @submit.prevent novalidate>
+            <!-- ── COMMAND DECK ─────────────────────────────────────────────
+                 Title, live grand total and every action stay pinned while
+                 the item lines scroll underneath. -->
+            <div class="pcx-deck" ref="deckRef">
+                <div class="pcx-deck-top">
+                    <div class="pcx-mark"><i class="fa fa-truck"></i></div>
+                    <div>
+                        <div class="pcx-eye">Purchase Entry</div>
+                        <h1 class="pcx-title">{{ headline }}</h1>
+                    </div>
+                    <span class="pcx-chip" :class="statusChipClass">
+                        <i class="fa fa-circle"></i> {{ statusLabel }}
+                    </span>
+
+                    <div class="pcx-spacer"></div>
+
+                    <div class="pcx-readout">
+                        <span class="k">Grand Total</span>
+                        <span class="v">{{ formatCurrency(purchases.grand_total || 0) }}</span>
+                    </div>
+
+                    <template v-if="purchases.id">
+                        <a v-if="canPrintPurchaseNote && purchases.status !== 'cancelled'" :href="printPurchaseNoteUrl"
+                            target="_blank" class="pcx-btn pcx-btn--ghost">
+                            <i class="fa fa-file-text-o"></i> Purchase Note
+                        </a>
+                        <a v-if="canPrintBarcode" :href="printBarcodeUrl" target="_blank"
+                            class="pcx-btn pcx-btn--ghost">
+                            <i class="fa fa-barcode"></i> Barcode Print
+                        </a>
+                    </template>
+
+                    <template v-if="purchases.status === 'draft'">
+                        <button type="button" @click="handleSave('draft')" class="pcx-btn">
+                            <i class="fa fa-file-o"></i> Save Draft
+                        </button>
+                        <button type="button" @click="handleSubmit" class="pcx-btn pcx-btn--pri">
+                            <i class="fa fa-check"></i> Submit Purchase
+                        </button>
+                    </template>
+                    <template v-else-if="purchases.status !== 'cancelled'">
+                        <button v-if="canCancel" type="button" @click="handleSave('cancelled')"
+                            class="pcx-btn pcx-btn--danger">
+                            <i class="fa fa-ban"></i> Cancel Purchase
+                        </button>
+                        <button type="button" @click="handleSubmit" class="pcx-btn pcx-btn--pri">
+                            <i class="fa fa-check"></i> Submit Purchase
+                        </button>
+                    </template>
                 </div>
 
-                <!-- Invoice Details -->
-                <div class="col-12 col-md-6">
-                    <InvoiceDetails :invoice-no="purchases.invoice_no || ''" :date="purchases.date || ''"
-                        :delivery-date="purchases.delivery_date || ''" />
+                <div class="pcx-strip">
+                    <div class="pcx-ds">
+                        <div class="k">Vendor</div>
+                        <div class="v">{{ vendorName || '—' }}</div>
+                    </div>
+                    <div class="pcx-ds">
+                        <div class="k">Invoice No</div>
+                        <div class="v">{{ purchases.invoice_no || '—' }}</div>
+                    </div>
+                    <div class="pcx-ds">
+                        <div class="k">Items / Qty</div>
+                        <div class="v">{{ items.length }} · {{ totalQuantity }}</div>
+                    </div>
+                    <div class="pcx-ds">
+                        <div class="k">Balance Due</div>
+                        <div class="v" :class="{ due: (purchases.balance || 0) > 0 }">
+                            {{ formatCurrency(purchases.balance || 0) }}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Items Section -->
-            <div class="row g-3 mb-4">
-                <div class="col-12">
+            <!-- validation errors sit full width, right under the deck -->
+            <div v-if="errors && errors.length > 0" class="pcx-alert">
+                <i class="fa fa-exclamation-triangle"></i>
+                <div>
+                    <div class="t">Please fix the following</div>
+                    <ul>
+                        <li v-for="(error, index) in errors" :key="index">{{ error }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pcx-layout">
+                <!-- ── MAIN COLUMN ──────────────────────────────────────── -->
+                <div>
+                    <div class="pcx-card">
+                        <div class="pcx-chd">
+                            <div class="pcx-ci"><i class="fa fa-building-o"></i></div>
+                            <h2 class="pcx-ct">Party &amp; Invoice</h2>
+                            <span class="pcx-cnt">Step 1</span>
+                        </div>
+                        <div class="pcx-fgrid">
+                            <VendorInfo :selected-vendor-id="purchases.account_id" :accounts="accounts"
+                                @vendor-changed="handleVendorChanged" />
+                            <InvoiceDetails :invoice-no="purchases.invoice_no || ''" :date="purchases.date || ''"
+                                :delivery-date="purchases.delivery_date || ''" />
+
+                            <!-- full-row chip; it has to come AFTER the fields or grid
+                                 auto-placement pushes them onto the next row -->
+                            <div v-if="purchases.account_id" class="pcx-vendor">
+                                <div class="pcx-av">{{ vendorInitials }}</div>
+                                <div>
+                                    <div class="pcx-vn">{{ vendorName || 'Vendor' }}</div>
+                                    <div v-if="vendorMobile" class="pcx-vm">{{ vendorMobile }}</div>
+                                </div>
+                                <div class="pcx-vbal">
+                                    <div class="k">Current Balance</div>
+                                    <div class="v" :class="{ due: accountBalance < 0 }">
+                                        {{ formatCurrency(accountBalance) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <ItemsTable :items="items" @item-removed="handleItemRemoved" @item-updated="handleItemUpdated" />
-                </div>
-            </div>
 
-            <!-- Summary Section -->
-            <div class="row g-4">
-                <!-- Left Column - Purchase Summary -->
-                <div class="col-12 col-md-6">
+                    <div class="pcx-card">
+                        <div class="pcx-chd">
+                            <div class="pcx-ci"><i class="fa fa-map-marker"></i></div>
+                            <h2 class="pcx-ct">Delivery Address / Notes</h2>
+                        </div>
+                        <div style="padding:12px 13px">
+                            <textarea class="pcx-input" :value="purchases.address || ''"
+                                @input="set('purchases.address', $event.target.value)"
+                                placeholder="Enter shipping address…"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── STICKY RAIL ──────────────────────────────────────── -->
+                <div class="pcx-rail">
                     <PurchaseSummary :gross-amount="purchases.gross_amount || 0" :total="purchases.total || 0"
                         :other-discount="purchases.other_discount || 0" :freight="purchases.freight || 0"
-                        :address="purchases.address || ''" />
-                </div>
+                        :grand-total="purchases.grand_total || 0" :item-discount="totalItemDiscount"
+                        :tax-amount="totalTaxAmount" />
 
-                <!-- Right Column - Payment Details -->
-                <div class="col-12 col-md-6">
-                    <PaymentDetails :grand-total="purchases.grand_total || 0" :payments="payments"
-                        :selected-payment-method-id="payment.payment_method_id" :payment-amount="payment.amount || 0"
-                        :paid="purchases.paid || 0" :balance="purchases.balance || 0" :purchase-id="purchases.id"
-                        :status="purchases.status || 'draft'" :created-user="purchases.created_user"
-                        :updated-user="purchases.updated_user" :cancelled-user="purchases.cancelled_user"
-                        :errors="errors" :can-print-purchase-note="canPrintPurchaseNote"
-                        :can-print-barcode="canPrintBarcode" :can-cancel="canCancel" @add-payment="handleAddPayment"
-                        @remove-payment="handleRemovePayment" @save="handleSave" @submit="handleSubmit" @clear-errors="handleClearErrors" />
+                    <PaymentDetails :payments="payments" :selected-payment-method-id="payment.payment_method_id"
+                        :payment-amount="payment.amount || 0" :paid="purchases.paid || 0"
+                        :balance="purchases.balance || 0" :status="purchases.status || 'draft'"
+                        @add-payment="handleAddPayment" @remove-payment="handleRemovePayment" />
                 </div>
+            </div>
+
+            <div v-if="purchases.created_user || purchases.updated_user || purchases.cancelled_user" class="pcx-audit">
+                <span v-if="purchases.created_user">Created by <b>{{ purchases.created_user.name }}</b></span>
+                <span v-if="purchases.updated_user">Updated by <b>{{ purchases.updated_user.name }}</b></span>
+                <span v-if="purchases.cancelled_user" class="bad">Cancelled by
+                    <b>{{ purchases.cancelled_user.name }}</b></span>
             </div>
         </form>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLivewire } from '@/composables/useLivewire'
+import { formatCurrency, formatNumber } from '@/utils/number'
+import { getRoute } from '@/utils/routes'
 import VendorInfo from './VendorInfo.vue'
 import InvoiceDetails from './InvoiceDetails.vue'
 import ItemsTable from './ItemsTable.vue'
@@ -68,7 +180,7 @@ const props = defineProps({
     }
 })
 
-const { get, on, dispatch, call } = useLivewire()
+const { get, set, on, call } = useLivewire()
 
 // Reactive data
 const purchases = ref({
@@ -106,6 +218,51 @@ const redirecting = ref(false)
 const canPrintPurchaseNote = ref(false)
 const canPrintBarcode = ref(false)
 const canCancel = ref(false)
+
+// Vendor label for the deck strip — TomSelect knows the name, Livewire only the id
+const vendorMeta = ref(null)
+
+// The rail hangs below the sticky deck; the deck grows when buttons wrap.
+const deckRef = ref(null)
+let deckObserver = null
+
+const headline = computed(() => purchases.value.id
+    ? `Purchase ${purchases.value.invoice_no || '#' + purchases.value.id}`
+    : 'New Purchase')
+
+const statusLabel = computed(() => {
+    const status = purchases.value.status || 'draft'
+    return status.charAt(0).toUpperCase() + status.slice(1)
+})
+
+const statusChipClass = computed(() => {
+    const status = purchases.value.status || 'draft'
+    if (status === 'completed') return 'pcx-chip--ok'
+    if (status === 'cancelled') return 'pcx-chip--bad'
+    return ''
+})
+
+const vendorName = computed(() => vendorMeta.value?.name || purchases.value.account?.name || '')
+
+const vendorMobile = computed(() => vendorMeta.value?.mobile || purchases.value.account?.mobile || '')
+
+const vendorInitials = computed(() => (vendorName.value || '?')
+    .split(' ').filter(Boolean).slice(0, 2).map(word => word[0]).join('').toUpperCase())
+
+const totalQuantity = computed(() => formatNumber(
+    items.value.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0)))
+
+const totalItemDiscount = computed(() =>
+    items.value.reduce((sum, item) => sum + (parseFloat(item.discount) || 0), 0))
+
+const totalTaxAmount = computed(() =>
+    items.value.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0))
+
+const printPurchaseNoteUrl = computed(() => purchases.value.id
+    ? getRoute('purchase::print', { id: purchases.value.id }) : '#')
+
+const printBarcodeUrl = computed(() => purchases.value.id
+    ? getRoute('purchase::barcode-print', { id: purchases.value.id }) : '#')
 
 // Load data from Livewire
 const loadData = (preserveErrors = false) => {
@@ -168,8 +325,9 @@ const getComponent = () => {
     return null
 }
 
-const handleVendorChanged = (vendorId) => {
+const handleVendorChanged = (vendorId, meta = null) => {
     purchases.value.account_id = vendorId
+    vendorMeta.value = meta
 }
 
 const handleItemRemoved = () => {
@@ -188,16 +346,46 @@ const handleRemovePayment = () => {
     loadData()
 }
 
-const handleSave = (type) => {
-    loadData()
-}
+const handleSave = async (type) => {
+    if (type === 'cancelled' && !confirm('Are you sure to cancel this?')) {
+        return
+    }
 
-const handleSubmit = () => {
-    // This will be handled by the confirmation dialog
-}
-
-const handleClearErrors = () => {
     errors.value = []
+
+    try {
+        await call('save', type)
+        loadData()
+    } catch (error) {
+        console.error('Error saving purchase:', error)
+    }
+}
+
+const handleSubmit = (event) => {
+    if (event) {
+        event.preventDefault()
+        event.stopPropagation()
+    }
+
+    // Don't clear errors here - let them show if validation fails after confirmation
+    const name = vendorName.value
+    const mobile = vendorMobile.value
+    const vendor = name ? (mobile ? `${name}@${mobile}` : name) : 'N/A'
+
+    const paymentMethods = payments.value
+        .map(p => `${p.name}: ${formatCurrency(p.amount)}`)
+        .join(', ') || 'No payments added'
+
+    window.dispatchEvent(new CustomEvent('show-confirmation', {
+        detail: {
+            vendor,
+            invoice_no: purchases.value.invoice_no || 'N/A',
+            grand_total: formatCurrency(purchases.value.grand_total || 0),
+            payment_methods: paymentMethods,
+            paid: formatCurrency(purchases.value.paid || 0),
+            balance: formatCurrency(purchases.value.balance || 0)
+        }
+    }))
 }
 
 const redirectToEditPage = (purchaseId) => {
@@ -530,7 +718,23 @@ const setupEventListeners = () => {
     }
 }
 
+const syncDeckHeight = () => {
+    const deck = deckRef.value
+    if (!deck) return
+    deck.closest('.pcx')?.style.setProperty('--pcx-deck-h', `${deck.offsetHeight}px`)
+}
+
+onUnmounted(() => {
+    if (deckObserver) deckObserver.disconnect()
+})
+
 onMounted(() => {
+    syncDeckHeight()
+    if (deckRef.value && typeof ResizeObserver !== 'undefined') {
+        deckObserver = new ResizeObserver(syncDeckHeight)
+        deckObserver.observe(deckRef.value)
+    }
+
     // Load initial data if provided
     if (props.initialData && Object.keys(props.initialData).length > 0) {
         if (props.initialData.purchases) {
@@ -590,8 +794,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.container-fluid {
-    max-width: 1400px;
+.pcx {
+    max-width: 1440px;
     margin: 0 auto;
+    padding: 1.25rem 1rem 2rem;
 }
 </style>

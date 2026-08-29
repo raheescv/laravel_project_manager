@@ -155,6 +155,13 @@ class LocalStorageService {
   Future<void> setPosGridColumns(int v) =>
       _prefs.setInt(LocalStorageKeys.posGridColumns, v);
 
+  // Which screen a signed-in session lands on — a `StartScreen.key`. Null until
+  // the till picks one, so the app keeps landing where it always has.
+  String? get posStartScreen =>
+      _prefs.getString(LocalStorageKeys.posStartScreen);
+  Future<void> setPosStartScreen(String v) =>
+      _prefs.setString(LocalStorageKeys.posStartScreen, v);
+
   // ---- offline selling (device-local) ----
   // Short tag identifying this till inside the provisional references it prints,
   // minted once on the first offline sale and never changed after — reusing a

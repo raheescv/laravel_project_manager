@@ -3,7 +3,9 @@
 namespace App\Livewire\Purchase;
 
 use App\Actions\Purchase\UpdateAction;
+use App\Models\InventoryLog;
 use App\Models\Purchase;
+use App\Models\PurchaseReturnItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -19,6 +21,10 @@ class View extends Component
     public Purchase $purchase;
 
     public $purchases = [];
+
+    public $purchase_return_items = [];
+
+    public $inventory_logs = [];
 
     public function mount($table_id = null): void
     {
@@ -82,6 +88,18 @@ class View extends Component
         })->toArray();
 
         $this->payments = $this->purchase->payments->map->only(['id', 'amount', 'date', 'payment_method_id', 'created_by', 'name'])->toArray();
+
+        // Returns raised against this bill's lines, so the items table can show what
+        // went back to the vendor next to what was received.
+        $this->purchase_return_items = PurchaseReturnItem::with('purchaseReturn:id,invoice_no,other_discount,total', 'product:id,name', 'unit:id,name')
+            ->whereIn('purchase_item_id', $this->purchase->items->pluck('id'))
+            ->get();
+
+        $this->inventory_logs = InventoryLog::with('product:id,name')
+            ->where('model', 'Purchase')
+            ->where('model_id', $this->table_id)
+            ->orderBy('id', 'asc')
+            ->get();
     }
 
     public function save(string $type = 'completed'): void
