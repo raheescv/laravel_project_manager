@@ -127,12 +127,17 @@ class ComboOffer extends Component
                 if (isset($this->comboOfferItems[$item['key']])) {
                     $this->comboOfferItems[$item['key']]['combo_offer_price'] = 0;
                     $this->comboOfferItems[$item['key']]['discount'] = 0;
+                    $this->comboOfferItems[$item['key']]['combo_offer_id'] = null;
                     $this->comboOfferItems[$item['key']]['sale_combo_offer_id'] = null;
                 }
             }
             unset($this->selectedComboOffers[$index]);
+            $this->selectedComboOffers = array_values($this->selectedComboOffers);
             DB::commit();
             $this->dispatch('success', ['message' => 'Combo Offer removed successfully']);
+            // Push the change to the cart right away, otherwise the removed offer's
+            // pricing stays applied until (and unless) the user hits Save
+            $this->dispatch('Sale-ComboOffer-Update-Price', $this->comboOfferItems, $this->selectedComboOffers);
         } catch (\Throwable $th) {
             DB::rollback();
             $this->dispatch('error', ['message' => $th->getMessage()]);

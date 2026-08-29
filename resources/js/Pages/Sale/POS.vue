@@ -275,7 +275,8 @@
 
         <!-- Combo Offer Modal -->
         <ComboOfferModal :show="showComboOfferModal" :cart-items="form.items" :initial-combo-offers="form.comboOffers"
-            @close="closeComboOfferModal" @save="handleComboOfferSave" @openSettings="openComboOfferSettings" />
+            @close="closeComboOfferModal" @save="handleComboOfferSave" @update="handleComboOfferUpdate"
+            @openSettings="openComboOfferSettings" />
     </div>
 </template>
 
@@ -1396,7 +1397,7 @@ export default {
             closeComboOfferModal()
         }
 
-        const handleComboOfferSave = (comboData) => {
+        const syncComboOffersToCart = (comboData) => {
             // Get all item keys that are in combo offers
             const comboOfferItemKeys = new Set(Object.keys(comboData.comboOfferItems))
             // Reset combo offer prices for items no longer in any combo offer
@@ -1412,6 +1413,15 @@ export default {
 
             // Recalculate totals - this will use the updated combo offer prices
             calculateTotals()
+        }
+
+        // Live sync while the modal stays open (e.g. an offer was removed)
+        const handleComboOfferUpdate = (comboData) => {
+            syncComboOffersToCart(comboData)
+        }
+
+        const handleComboOfferSave = (comboData) => {
+            syncComboOffersToCart(comboData)
             toast.success('Combo offers applied successfully')
         }
 
@@ -1621,6 +1631,7 @@ export default {
             closeComboOfferModal,
             openComboOfferSettings,
             handleComboOfferSave,
+            handleComboOfferUpdate,
             convertDiscountToPercentage,
             formatNumber
         }

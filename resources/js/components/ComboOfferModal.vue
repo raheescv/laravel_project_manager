@@ -265,7 +265,7 @@ export default {
             default: () => []
         }
     },
-    emits: ['close', 'save'],
+    emits: ['close', 'save', 'update'],
 
     setup(props, { emit }) {
         const toast = useToast()
@@ -467,7 +467,38 @@ export default {
             })
 
             selectedComboOffers.value.splice(index, 1)
+
+            // Push the change to the cart right away, otherwise the removed offer's
+            // pricing stays applied until (and unless) the user hits Apply
+            emit('update', buildComboOfferPayload())
+
             toast.success('Combo Offer removed successfully')
+        }
+
+        // Build the payload the cart needs to mirror the current combo offer state
+        const buildComboOfferPayload = () => {
+            const itemsWithComboOffers = {}
+
+            // Collect all items from all selected combo offers
+            selectedComboOffers.value.forEach(comboOffer => {
+                comboOffer.items.forEach(item => {
+                    // Use the item from the combo offer (which has the calculated pricing)
+                    if (item.key) {
+                        itemsWithComboOffers[item.key] = {
+                            ...comboOfferItems.value[item.key], // Get base item data
+                            ...item, // Override with combo offer pricing
+                            combo_offer_price: item.combo_offer_price || 0,
+                            discount: item.discount || 0,
+                            combo_offer_id: item.combo_offer_id || null
+                        }
+                    }
+                })
+            })
+
+            return {
+                comboOfferItems: itemsWithComboOffers, // Only send items that are in combo offers
+                selectedComboOffers: selectedComboOffers.value
+            }
         }
 
         // Calculate discount percentage using utility function
@@ -477,8 +508,9 @@ export default {
 
         // Save combo offers
         const saveComboOffers = () => {
-            // If no combo offers are added but user has selected one, try to add it automatically
-            if (selectedComboOffers.value.length === 0) {
+            // If no combo offers are added but user has selected one, try to add it automatically.
+            // With nothing selected an empty list is a valid state - the user removed them all.
+            if (selectedComboOffers.value.length === 0 && selectedComboOfferId.value) {
                 // Ensure selectedComboOffer is set if we have an ID
                 if (selectedComboOfferId.value && !selectedComboOffer.value) {
                     selectedComboOffer.value = comboOffers.value.find(offer => offer.id === selectedComboOfferId.value)
@@ -500,42 +532,16 @@ export default {
                         return
                     }
                 } else {
-                    if (!selectedComboOfferId.value) {
-                        toast.error('Please select a combo offer first')
-                    } else if (!selectedComboOffer.value) {
+                    if (!selectedComboOffer.value) {
                         toast.error('Combo offer not found. Please select again.')
-                    } else if (selectedServices.value.length === 0) {
-                        toast.error('Please select services for the combo offer, then click "Add"')
                     } else {
-                        toast.error('Please select a combo offer and services, then click "Add" before applying')
+                        toast.error('Please select services for the combo offer, then click "Add"')
                     }
                     return
                 }
             }
 
-            // Build a map of items that are in combo offers with their pricing
-            const itemsWithComboOffers = {}
-
-            // Collect all items from all selected combo offers
-            selectedComboOffers.value.forEach(comboOffer => {
-                comboOffer.items.forEach(item => {
-                    // Use the item from the combo offer (which has the calculated pricing)
-                    if (item.key) {
-                        itemsWithComboOffers[item.key] = {
-                            ...comboOfferItems.value[item.key], // Get base item data
-                            ...item, // Override with combo offer pricing
-                            combo_offer_price: item.combo_offer_price || 0,
-                            discount: item.discount || 0,
-                            combo_offer_id: item.combo_offer_id || null
-                        }
-                    }
-                })
-            })
-
-            emit('save', {
-                comboOfferItems: itemsWithComboOffers, // Only send items that are in combo offers
-                selectedComboOffers: selectedComboOffers.value
-            })
+            emit('save', buildComboOfferPayload())
             emit('close')
         }
 
