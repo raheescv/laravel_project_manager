@@ -69,6 +69,12 @@ class LocalStorageService {
   Future<void> setThemeMode(String v) =>
       _prefs.setString(LocalStorageKeys.themeMode, v);
 
+  // How the tablet window is framed — an `AstraChrome.id`. Null until the
+  // device picks one, so `AstraChrome.fallback` decides the default.
+  String? get chromeId => _prefs.getString(LocalStorageKeys.chrome);
+  Future<void> setChromeId(String v) =>
+      _prefs.setString(LocalStorageKeys.chrome, v);
+
   String? get typefaceId => _prefs.getString(LocalStorageKeys.typeface);
   Future<void> setTypefaceId(String v) =>
       _prefs.setString(LocalStorageKeys.typeface, v);
@@ -154,6 +160,22 @@ class LocalStorageService {
   int? get posGridColumns => _prefs.getInt(LocalStorageKeys.posGridColumns);
   Future<void> setPosGridColumns(int v) =>
       _prefs.setInt(LocalStorageKeys.posGridColumns, v);
+
+  // Whether New Sale opens the client form before the catalog. Null until the
+  // till picks a side, so the screen keeps its long-standing "ask" behaviour.
+  bool? get posAskClient => _prefs.containsKey(LocalStorageKeys.posAskClient)
+      ? _prefs.getBool(LocalStorageKeys.posAskClient)
+      : null;
+  Future<void> setPosAskClient(bool v) =>
+      _prefs.setBool(LocalStorageKeys.posAskClient, v);
+
+  // Whether this device offers the tip row at checkout. Null until the till
+  // picks a side, so a fresh install follows the web setting alone.
+  bool? get posShowTip => _prefs.containsKey(LocalStorageKeys.posShowTip)
+      ? _prefs.getBool(LocalStorageKeys.posShowTip)
+      : null;
+  Future<void> setPosShowTip(bool v) =>
+      _prefs.setBool(LocalStorageKeys.posShowTip, v);
 
   // Which screen a signed-in session lands on — a `StartScreen.key`. Null until
   // the till picks one, so the app keeps landing where it always has.

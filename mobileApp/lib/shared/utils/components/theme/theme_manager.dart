@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 
 import 'palette.dart';
+import 'styles_manager.dart';
 import 'typeface.dart';
 
 /// Theme extension that carries the live [AstraPalette] plus the shared design
@@ -123,6 +124,18 @@ ThemeData buildAstraTheme(AstraPalette p, [AstraTypeface? typeface]) {
     // the cap, so this changes nothing.
     bottomSheetTheme: base.bottomSheetTheme.copyWith(
       constraints: const BoxConstraints(maxWidth: Breakpoints.contentMaxWidth),
+    ),
+    // Messages float as a rounded pill clear of the bottom edge rather than the
+    // default full-bleed band, which on a checkout screen lands squarely on the
+    // buttons it is talking about. `AstraSnack` builds every message in the app;
+    // this is what shapes anything that reaches the messenger without it.
+    snackBarTheme: base.snackBarTheme.copyWith(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: p.darkSurface,
+      contentTextStyle: ui(size: 12.5, weight: FontWeight.w700, color: Colors.white, height: 1.35),
+      insetPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 8,
     ),
     extensions: [AstraTheme(p)],
   );

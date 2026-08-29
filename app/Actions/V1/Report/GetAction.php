@@ -23,16 +23,27 @@ class GetAction
         $startDate = $request->validated('startDate');
         $endDate = $request->validated('endDate');
 
+        // A rank-and-file employee's reports are their own reports. Every
+        // breakdown below is hard-scoped to them, so the dashboard that reads
+        // this endpoint — Top performers, the trend sparkline — and the Reports
+        // screen can never surface a colleague's takings. Admins and
+        // back-office ('user'-type) accounts see the whole branch as before.
+        $user = $request->user();
+        $selfId = $user?->seesOnlyOwnRecords() ? $user->id : null;
+
         // The overview report is a single rich snapshot (sales performance +
         // payment overview + breakdowns), not a paginated table — return it as-is.
         if ($type === 'overview') {
             return array_merge(
                 ['type' => $type],
-                (new OverviewAction())->execute($startDate, $endDate, $request->validated('branch_id')),
+                (new OverviewAction())->execute($startDate, $endDate, $request->validated('branch_id'), $selfId),
             );
         }
 
-        $employeeId = $request->validated('employee_id');
+        // Item-level breakdowns rank people by the employee attributed on each
+        // line, so a self-scoped employee only ever ranks themselves — whatever
+        // employee_id the client asked for.
+        $employeeId = $selfId ?: $request->validated('employee_id');
         $productId = $request->validated('product_id');
         $branchId = $request->validated('branch_id');
         $sort = $request->validated('sort');
@@ -45,7 +56,11 @@ class GetAction
             'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $page, $perPage),
             'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $page, $perPage, $sort, $productType),
             'commission' => (new CommissionAction())->execute($startDate, $endDate, $employeeId, $productId, $branchId, $page, $perPage),
-            default => $this->billWise($startDate, $endDate, $employeeId, $page, $perPage),
+            // Bills are sale-level, so self-scope means "bills I rang up" —
+            // created_by, the same set the Sales list and the dashboard cards
+            // count. Filtering by line attribution as well would drop a bill
+            // whose stylist was reassigned and make the two disagree.
+            default => $this->billWise($startDate, $endDate, $selfId ? null : $employeeId, $selfId, $page, $perPage),
         };
 
         return [
@@ -73,12 +88,13 @@ class GetAction
     /**
      * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
      */
-    private function billWise(?string $startDate, ?string $endDate, ?int $employeeId, int $page, int $perPage): array
+    private function billWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $createdBy, int $page, int $perPage): array
     {
         $base = Sale::query()
             ->completed()
             ->when($startDate, fn ($q, $value) => $q->where('date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->where('date', '<=', $value))
+            ->when($createdBy, fn ($q, $value) => $q->where('created_by', $value))
             ->when($employeeId, fn ($q, $value) => $q->whereHas('items', fn ($i) => $i->where('employee_id', $value)));
 
         $totals = (clone $base)->selectRaw('COUNT(*) as invoices, COALESCE(SUM(paid), 0) as paid')->first();

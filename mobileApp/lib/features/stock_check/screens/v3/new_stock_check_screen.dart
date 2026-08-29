@@ -11,6 +11,7 @@ import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 import '../../domain/models/stock_check_models.dart';
 
@@ -167,7 +168,7 @@ class _NewStockCheckScreenState extends State<NewStockCheckScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
-  void _snack(String m) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+  void _snack(String m) => AstraSnack.error(context, m);
 
   @override
   Widget build(BuildContext context) {

@@ -7,6 +7,7 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 /// Wired to POST /change-password — the account password used for
 /// username/password (credential) login, alongside the PIN.
@@ -57,7 +58,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final ok = await _profile.changePassword(_current.text, _next.text);
     if (!mounted) return;
     if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated')));
+      AstraSnack.success(context, 'Password updated');
       _close();
     } else {
       _snack(_profile.state.errorMessage ?? 'Could not update password.');
@@ -65,9 +66,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
-  void _snack(String m) => ScaffoldMessenger.of(context)
-    ..clearSnackBars()
-    ..showSnackBar(SnackBar(content: Text(m)));
+  void _snack(String m) => AstraSnack.error(context, m);
 
   /// Leave the form: hand back to the host when embedded (no route to pop —
   /// the detail pane just switches), otherwise pop the route.

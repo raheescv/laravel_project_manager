@@ -16,8 +16,9 @@ import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
-import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/widgets/qloud_logo.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/features/sale/screens/v3/invoice_screen.dart'
     show DottedDivider;
 
@@ -283,13 +284,14 @@ class ReturnReceiptScreen extends StatelessWidget {
             const SizedBox(width: 11),
           ] else
             const SizedBox(width: 4),
-          const InvoLogomark(height: 32),
+          const QloudLogomark(height: 32),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Invo', style: serif(size: 16, color: p.ink)),
+                Text('QLOUD POS',
+                    style: ui(size: 14, weight: FontWeight.w800, letterSpacing: 1.4, color: p.ink)),
                 Text(saleReturn.branch.isEmpty ? 'Sale Return' : saleReturn.branch,
                     style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted)),
               ],
@@ -616,9 +618,7 @@ class ReturnReceiptScreen extends StatelessWidget {
   }
 
   void _toast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AstraSnack.error(context, message);
   }
 
   Widget _editReturnButton(BuildContext context, AstraPalette p) {

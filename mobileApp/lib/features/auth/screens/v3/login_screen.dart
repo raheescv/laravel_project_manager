@@ -7,8 +7,9 @@ import 'package:provider/provider.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
-import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/widgets/qloud_logo.dart';
 import 'package:invo/features/auth/widgets/v3/connection_sheet.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,9 +61,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       unawaited(HapticFeedback.heavyImpact());
       unawaited(_shake.forward(from: 0));
       setState(() => _pin = '');
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(auth.error ?? 'Login failed')));
+      AstraSnack.error(context, auth.error ?? 'Login failed');
     }
   }
 
@@ -124,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               bottom: 10,
               child: Opacity(
                 opacity: 0.06,
-                child: InvoLogomark(height: 320, color: Colors.white),
+                child: QloudLogomark(height: 320, color: Colors.white),
               ),
             ),
             SafeArea(
@@ -149,13 +148,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const InvoLogomark(height: 70),
+                    // White, not the palette inks: the mark sits on a
+                    // primary→primaryDark gradient, so a preset-coloured
+                    // logo would be the same hue as its own background.
+                    const QloudLogomark(height: 70, color: Colors.white),
                     const SizedBox(height: 16),
-                    Text('INVO',
-                        style: ui(size: 13, weight: FontWeight.w700, color: p.accent, letterSpacing: 7)),
+                    Text('QLOUD',
+                        style: ui(size: 13, weight: FontWeight.w800, color: p.accent, letterSpacing: 7)),
                     const SizedBox(height: 4),
-                    Text('Astra POS',
-                        style: ui(size: 9, weight: FontWeight.w700, color: Colors.white54, letterSpacing: 4)),
+                    Text('POS',
+                        style: ui(size: 9, weight: FontWeight.w700, color: Colors.white54, letterSpacing: 6)),
                     const SizedBox(height: 12),
                     Text(locked ? 'Locked' : 'Welcome back',
                         style: serif(size: 29, color: Colors.white)),
@@ -475,7 +477,5 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     }
   }
 
-  void _toast(String m) => ScaffoldMessenger.of(context)
-    ..clearSnackBars()
-    ..showSnackBar(SnackBar(content: Text(m)));
+  void _toast(String m) => AstraSnack.error(context, m);
 }

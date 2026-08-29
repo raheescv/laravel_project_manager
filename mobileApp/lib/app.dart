@@ -122,7 +122,7 @@ class _InvoAppState extends State<InvoApp> with WidgetsBindingObserver {
             selector: (s) => s,
             builder: (context, theme) {
             return MaterialApp.router(
-              title: 'Invo',
+              title: 'QLOUD POS',
               debugShowCheckedModeBanner: false,
               theme: buildAstraTheme(theme.palette, theme.typeface),
               routerConfig: _router,

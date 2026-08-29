@@ -13,6 +13,7 @@ import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 /// Step 1 of a return: find and select the paid invoice to return against.
 /// Reuses the Sales list (status = completed) so only billable sales appear.
@@ -111,16 +112,14 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
       Navigator.pop(context); // close the loader
       final hasReturnable = returnable.lines.any((l) => l.returnableQuantity > 0);
       if (!hasReturnable) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Every item on this invoice has already been returned.')),
-        );
+        AstraSnack.error(context, 'Every item on this invoice has already been returned.');
         return;
       }
       context.read<ReturnDraftCubit>().seed(returnable);
       unawaited(context.push(Routes.saleReturn));
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open invoice')));
+      if (mounted) AstraSnack.error(context, 'Could not open invoice');
     }
   }
 

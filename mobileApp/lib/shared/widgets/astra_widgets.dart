@@ -363,7 +363,9 @@ class SectionLabel extends StatelessWidget {
       style: ui(
         size: 10.5,
         weight: FontWeight.w800,
-        color: p.isEditorial ? p.goldText : (p.isDark ? p.accent : const Color(0xFF0F7A66)),
+        // Was a hard-coded Signature emerald, which left every section heading
+        // green on the other presets.
+        color: p.isEditorial ? p.goldText : (p.isDark ? p.accent : p.primary),
         letterSpacing: 1.2,
       ),
     );
@@ -382,6 +384,7 @@ class AstraButton extends StatelessWidget {
   const AstraButton({
     super.key,
     required this.label,
+    this.subtitle,
     this.onTap,
     this.icon,
     this.gold = false,
@@ -389,6 +392,10 @@ class AstraButton extends StatelessWidget {
     this.busy = false,
   });
   final String label;
+
+  /// A quieter second line under the label — for a consequence of the tap the
+  /// label has no room to name, e.g. the change owed back on a cash charge.
+  final String? subtitle;
   final VoidCallback? onTap;
   final IconData? icon;
   final bool gold;
@@ -407,6 +414,22 @@ class AstraButton extends StatelessWidget {
       softWrap: false,
       style: ui(size: 14.5, weight: FontWeight.w800, color: fg),
     );
+    final labelBlock = subtitle == null
+        ? labelText
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              labelText,
+              const SizedBox(height: 1),
+              Text(
+                subtitle!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: ui(size: 10.5, weight: FontWeight.w700, color: fg.withValues(alpha: 0.78)),
+              ),
+            ],
+          );
     final child = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -423,7 +446,7 @@ class AstraButton extends StatelessWidget {
           // which includes hug-width buttons in a narrow pane (the tablet
           // master column). Flexible is loose-fit, so a hug-width button still
           // sizes to its content when there is room.
-          Flexible(child: labelText),
+          Flexible(child: labelBlock),
           if (icon != null) ...[const SizedBox(width: 8), Icon(icon, size: 16, color: fg)],
         ],
       ],
@@ -444,7 +467,7 @@ class AstraButton extends StatelessWidget {
 }
 
 
-/// Circular avatar: shows the user's uploaded photo (gold-ringed, clipped to a
+/// Circular avatar: shows the user's uploaded photo (accent-ringed, clipped to a
 /// circle) when [imageUrl] is an absolute URL, otherwise falls back to the
 /// letter [Monogram]. [headers] mirror the API's Host override so the image
 /// loads over a LAN IP the same way requests do.
@@ -501,7 +524,9 @@ class ProfileAvatar extends StatelessWidget {
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(shape: BoxShape.circle, gradient: p.accentGradient),
       child: Container(
-        decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF0E5347)),
+        // Follows the preset — this used to be a hard-coded Signature emerald,
+        // so the avatar stayed green on every other theme.
+        decoration: BoxDecoration(shape: BoxShape.circle, color: p.primaryDark),
         clipBehavior: Clip.antiAlias,
         alignment: Alignment.center,
         child: inner,

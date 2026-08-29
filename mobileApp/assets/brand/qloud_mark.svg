@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="155 155 547 421" width="547" height="421">
+  <defs>
+    <linearGradient id="gCloud" gradientUnits="userSpaceOnUse" x1="190" y1="250" x2="690" y2="430">
+      <stop offset="0" stop-color="#06ABFE"/>
+      <stop offset="0.52" stop-color="#0A83E6"/>
+      <stop offset="1" stop-color="#0A4EB0"/>
+    </linearGradient>
+    <linearGradient id="gRing" gradientUnits="userSpaceOnUse" x1="315" y1="525" x2="565" y2="330">
+      <stop offset="0" stop-color="#0BA8FA"/>
+      <stop offset="0.48" stop-color="#0A62C8"/>
+      <stop offset="1" stop-color="#0A3A8D"/>
+    </linearGradient>
+    <linearGradient id="gTail" gradientUnits="userSpaceOnUse" x1="409" y1="443" x2="608" y2="570">
+      <stop offset="0" stop-color="#0A5AD2"/>
+      <stop offset="0.5" stop-color="#0C82F8"/>
+      <stop offset="1" stop-color="#0A56D6"/>
+    </linearGradient>
+    <linearGradient id="gShadow" gradientUnits="userSpaceOnUse" x1="409" y1="443" x2="365" y2="487">
+      <stop offset="0" stop-color="#052F72" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#052F72" stop-opacity="0"/>
+    </linearGradient>
+
+    <mask id="mCloud">
+      <rect x="0" y="0" width="900" height="900" fill="black"/>
+      <g fill="white">
+        <circle cx="455" cy="324" r="163"/>
+        <circle cx="266" cy="388" r="105"/>
+        <circle cx="592" cy="390" r="103"/>
+        <rect x="266" y="324" width="326" height="169"/>
+      </g>
+      <g fill="black">
+        <circle cx="448" cy="339" r="137"/>
+        <circle cx="305" cy="383" r="94"/>
+        <circle cx="592" cy="400" r="74"/>
+        <rect x="305" y="339" width="287" height="135"/>
+        <circle cx="433" cy="425" r="164"/>
+      </g>
+    </mask>
+
+    <mask id="mRing">
+      <rect x="0" y="0" width="900" height="900" fill="black"/>
+      <circle cx="433" cy="425" r="147" fill="white"/>
+      <circle cx="433" cy="425" r="89" fill="black"/>
+      <polygon points="388,400 460,400 650,590 578,590" fill="black"/>
+    </mask>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="900" fill="url(#gCloud)" mask="url(#mCloud)"/>
+  <rect x="0" y="0" width="900" height="900" fill="url(#gRing)" mask="url(#mRing)"/>
+  <g mask="url(#mRing)">
+    <polygon points="409,443 536,570 492,614 365,487" fill="url(#gShadow)"/>
+  </g>
+  <polygon points="415,449 475,449 602,564 542,564"
+           fill="url(#gTail)" stroke="url(#gTail)" stroke-width="12" stroke-linejoin="round"/>
+</svg>

@@ -12,6 +12,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 import '../../domain/models/stock_check_models.dart';
 import 'stock_check_status_sheet.dart';
@@ -154,11 +155,9 @@ class _StockCheckListScreenState extends State<StockCheckListScreen> {
     if (!mounted) return;
     if (ok) {
       unawaited(_load());
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Status changed to ${StockCheckStatus.label(next)}')));
+      AstraSnack.success(context, 'Status changed to ${StockCheckStatus.label(next)}');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_stock.state.errorMessage ?? 'Could not change the status.')));
+      AstraSnack.error(context, _stock.state.errorMessage ?? 'Could not change the status.');
     }
   }
 

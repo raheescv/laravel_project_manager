@@ -19,6 +19,7 @@ import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 part 'sales_returns_list_controls.dart';
 
@@ -832,7 +833,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       if (mounted) unawaited(context.push(Routes.returnReceipt, extra: ret));
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open return')));
+      if (mounted) AstraSnack.error(context, 'Could not open return');
     }
   }
 }

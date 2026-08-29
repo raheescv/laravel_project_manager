@@ -14,6 +14,9 @@ class LocalStorageKeys {
   static const String preset = 'astra.preset';
   static const String themeMode = 'astra.themeMode';
   static const String typeface = 'astra.typeface';
+  /// How the tablet window is framed — an `AstraChrome.id`. Device-local:
+  /// a till bolted to a counter and a manager's iPad can differ.
+  static const String chrome = 'astra.chrome';
   static const String currency = 'astra.currency';
   static const String currencies = 'astra.currencies';
   static const String baseCurrency = 'astra.baseCurrency';
@@ -43,6 +46,15 @@ class LocalStorageKeys {
   static const String posLockAfterSale = 'astra.pos.lockAfterSale';
   // How many product tiles the New Sale catalog grid fits across (2 | 3 | 4).
   static const String posGridColumns = 'astra.pos.gridColumns';
+  /// Whether opening New Sale asks who the ticket is for before anything else.
+  /// Device-local: a salon takes the name up front, a counter selling to a queue
+  /// wants the catalog the moment the screen opens.
+  static const String posAskClient = 'astra.pos.askClient';
+  /// Whether the tip row is offered at checkout on THIS device. A device-local
+  /// veto over the web's "Enable Tip" — a counter till that never takes tips can
+  /// hide the row without turning it off for the salon's other tills. It can
+  /// only hide: the web setting still has the final say. See [tipEnabled].
+  static const String posShowTip = 'astra.pos.showTip';
   /// Which screen a signed-in session lands on (a `StartScreen.key`). Device-
   /// local: a counter till opens straight on the POS while the manager's own
   /// phone keeps the dashboard, on the same build and the same account.

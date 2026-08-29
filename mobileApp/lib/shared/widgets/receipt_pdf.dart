@@ -130,7 +130,7 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
                   style: pw.TextStyle(fontSize: s(14), fontWeight: pw.FontWeight.bold, letterSpacing: 0.4)),
             ),
           pw.Center(
-            child: pw.Text((sale.branch.isEmpty ? 'INVO' : sale.branch).toUpperCase(),
+            child: pw.Text((sale.branch.isEmpty ? 'QLOUD POS' : sale.branch).toUpperCase(),
                 style: pw.TextStyle(fontSize: s(14), fontWeight: pw.FontWeight.bold, letterSpacing: 0.4)),
           ),
           _dashed(),
@@ -235,7 +235,7 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
           ],
           pw.SizedBox(height: 5),
           pw.Center(
-            child: pw.Text('Powered by Invo',
+            child: pw.Text('Powered by QLOUD POS',
                 style: pw.TextStyle(fontSize: s(6), color: PdfColors.grey600)),
           ),
         ],

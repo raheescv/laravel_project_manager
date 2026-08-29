@@ -20,6 +20,8 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
     return PosSettingsState(
       lockAfterSale: storage.posLockAfterSale ?? true,
       gridColumns: _sanitize(storage.posGridColumns),
+      askClientOnNewSale: storage.posAskClient ?? true,
+      showTip: storage.posShowTip ?? true,
       startScreen: StartScreen.fromKey(storage.posStartScreen),
     );
   }
@@ -42,6 +44,16 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   /// fits more — see `_productGrid`.
   int get gridColumns => state.gridColumns;
 
+  /// Whether New Sale opens the client form before the catalog, on a ticket
+  /// that is still an empty walk-in. Off is for a counter serving a queue, where
+  /// a form between the cashier and the products costs a tap on every sale.
+  bool get askClientOnNewSale => state.askClientOnNewSale;
+
+  /// Whether this device offers the tip row at Review & Pay. A veto only — the
+  /// web's "Enable Tip" is still the business's answer, and `CartCubit.tipEnabled`
+  /// requires both.
+  bool get showTip => state.showTip;
+
   /// The screen a fresh sign-in (or an unlock) lands on. Read by the router's
   /// redirect, which still has the last word on whether the account may open it.
   StartScreen get startScreen => state.startScreen;
@@ -53,6 +65,23 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   }
 
   Future<void> toggleLockAfterSale() => setLockAfterSale(!state.lockAfterSale);
+
+  Future<void> setAskClientOnNewSale(bool v) async {
+    if (v == state.askClientOnNewSale) return;
+    emit(state.copyWith(askClientOnNewSale: v));
+    await _storage.setPosAskClient(v);
+  }
+
+  Future<void> toggleAskClientOnNewSale() =>
+      setAskClientOnNewSale(!state.askClientOnNewSale);
+
+  Future<void> setShowTip(bool v) async {
+    if (v == state.showTip) return;
+    emit(state.copyWith(showTip: v));
+    await _storage.setPosShowTip(v);
+  }
+
+  Future<void> toggleShowTip() => setShowTip(!state.showTip);
 
   Future<void> setStartScreen(StartScreen v) async {
     if (v == state.startScreen) return;

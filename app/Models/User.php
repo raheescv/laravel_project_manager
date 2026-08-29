@@ -188,6 +188,23 @@ class User extends Authenticatable implements AuditableContracts
         return hash_hmac('sha256', $pin, (string) config('app.key'));
     }
 
+    /**
+     * Whether this account may only ever see its own work in the mobile app.
+     *
+     * True for a rank-and-file employee: their Sales list, Sales Returns,
+     * Dashboard and Reports are all hard-scoped to what they created / are
+     * attributed with, whatever filters the client sends. Admins — and
+     * back-office 'user'-type accounts — get the full branch-scoped view.
+     *
+     * Deliberately not permission-driven: a cashier is granted
+     * `report.sales overview` so the dashboard loads at all; what that
+     * permission opens is *their* overview, not the shop's.
+     */
+    public function seesOnlyOwnRecords(): bool
+    {
+        return $this->type === 'employee' && ! $this->is_admin;
+    }
+
     public function scopeEmployee($query)
     {
         return $query->where('type', 'employee');

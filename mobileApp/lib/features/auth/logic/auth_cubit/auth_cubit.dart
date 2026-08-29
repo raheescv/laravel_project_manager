@@ -382,7 +382,7 @@ class AuthCubit extends Cubit<AuthState> {
     bool ok;
     try {
       ok = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to unlock Invo',
+        localizedReason: 'Authenticate to unlock QLOUD POS',
         options: const AuthenticationOptions(
             biometricOnly: false, stickyAuth: true),
       );
@@ -403,7 +403,7 @@ class AuthCubit extends Cubit<AuthState> {
     bool ok;
     try {
       ok = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to sign in to Invo',
+        localizedReason: 'Authenticate to sign in to QLOUD POS',
         options: const AuthenticationOptions(
             biometricOnly: false, stickyAuth: true),
       );

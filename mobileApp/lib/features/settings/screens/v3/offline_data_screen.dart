@@ -23,17 +23,24 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 /// somewhere with no signal, and no way to make it ready on demand — which is
 /// precisely the moment anyone would think to ask.
 class OfflineDataScreen extends StatelessWidget {
-  const OfflineDataScreen({super.key});
+  const OfflineDataScreen({super.key, this.embedded = false});
+
+  /// Rendered inside the tablet Settings detail pane rather than pushed as its
+  /// own page: body only, no scaffold, no header, no back arrow. The cubit and
+  /// the sync listener still come with it — this is the screen, hosted.
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
         create: (_) => OfflineDataCubit()..load(),
-        child: const _OfflineDataView(),
+        child: _OfflineDataView(embedded: embedded),
       );
 }
 
 class _OfflineDataView extends StatelessWidget {
-  const _OfflineDataView();
+  const _OfflineDataView({this.embedded = false});
+
+  final bool embedded;
 
   static final NumberFormat _count = NumberFormat.decimalPattern();
 
@@ -51,7 +58,14 @@ class _OfflineDataView extends StatelessWidget {
           a.photosCached != b.photosCached ||
           (a.catalogRefreshing && !b.catalogRefreshing),
       listener: (context, _) => context.read<OfflineDataCubit>().load(),
-      child: Scaffold(
+      child: embedded
+          ? BlocBuilder<OfflineDataCubit, OfflineDataState>(
+              builder: (context, data) => BlocBuilder<OfflineSyncCubit, OfflineSyncState>(
+                bloc: _sync,
+                builder: (context, sync) => _body(context, data, sync),
+              ),
+            )
+          : Scaffold(
         backgroundColor: Colors.transparent,
         body: AstraBackground(
           child: Column(
@@ -82,7 +96,9 @@ class _OfflineDataView extends StatelessWidget {
   Widget _body(BuildContext context, OfflineDataState data, OfflineSyncState sync) {
     final storage = serviceLocator<LocalStorageService>();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+      shrinkWrap: embedded,
+      physics: embedded ? const NeverScrollableScrollPhysics() : null,
+      padding: embedded ? EdgeInsets.zero : const EdgeInsets.fromLTRB(16, 16, 16, 40),
       children: [
         _statusCard(context, data, sync),
         const SizedBox(height: 18),

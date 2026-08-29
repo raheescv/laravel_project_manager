@@ -12,6 +12,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 import '../../domain/models/stock_check_models.dart';
 import 'stock_check_status_sheet.dart';
@@ -210,10 +211,10 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
       _dirty.clear();
       ok = true;
       if (feedback && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Saved ${payload.length} item${payload.length == 1 ? '' : 's'}')));
+        AstraSnack.success(context, 'Saved ${payload.length} item${payload.length == 1 ? '' : 's'}');
       }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save counts.')));
+      if (mounted) AstraSnack.error(context, 'Could not save counts.');
     }
     if (mounted) setState(() => _saving = false);
     return ok;
@@ -221,7 +222,7 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
 
   Future<void> _save() async {
     if (_dirty.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nothing to save yet.')));
+      AstraSnack.show(context, 'Nothing to save yet.');
       return;
     }
     final toReconcile = _items.where((e) => _dirty.contains(e.id) && e.isCompleted).length;
@@ -244,11 +245,9 @@ class _StockCheckCountScreenState extends State<StockCheckCountScreen> {
     if (ok) {
       await _refreshStats();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Status changed to ${StockCheckStatus.label(next)}')));
+      AstraSnack.success(context, 'Status changed to ${StockCheckStatus.label(next)}');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_stock.state.errorMessage ?? 'Could not change the status.')));
+      AstraSnack.error(context, _stock.state.errorMessage ?? 'Could not change the status.');
     }
   }
 

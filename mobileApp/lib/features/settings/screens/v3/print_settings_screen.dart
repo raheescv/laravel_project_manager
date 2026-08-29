@@ -10,6 +10,7 @@ import 'package:invo/features/settings/logic/print_settings_cubit/print_settings
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/receipt_printer.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 /// Thermal-printer configuration. The receipt options (language, footers,
 /// the show-on-receipt toggles, Qty vs Weight label) live in the shared web
@@ -19,7 +20,12 @@ import 'package:invo/shared/widgets/receipt_printer.dart';
 /// them read-only. The "This device" block (paper width, auto-print and the
 /// paired printer) is local to the till.
 class PrintSettingsScreen extends StatefulWidget {
-  const PrintSettingsScreen({super.key});
+  const PrintSettingsScreen({super.key, this.embedded = false});
+
+  /// Rendered inside the tablet Settings detail pane rather than pushed as its
+  /// own page: body only, no scaffold, no header, no back arrow. The host owns
+  /// the frame, so opening this from Settings never leaves Settings.
+  final bool embedded;
 
   @override
   State<PrintSettingsScreen> createState() => _PrintSettingsScreenState();
@@ -48,9 +54,7 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
   Future<void> _apply(Future<bool> save) async {
     final ok = await save;
     if (!ok && mounted) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(const SnackBar(content: Text('Couldn\'t save — check your connection.')));
+      AstraSnack.error(context, 'Couldn\'t save — check your connection.');
     }
   }
 
@@ -59,6 +63,173 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
     final p = context.astra;
     final c = context.watch<PrintSettingsCubit>();
     final canEdit = context.read<AuthCubit>().hasPermission(PermissionSlug.settings);
+
+    // Built either way: embedded it IS the screen, pushed it is the scroll
+    // inside the page frame.
+    final body = ListView(
+      shrinkWrap: widget.embedded,
+      physics: widget.embedded ? const NeverScrollableScrollPhysics() : null,
+      padding: widget.embedded
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(16, 16, 16, 40),
+      children: [
+            SectionLabel('This device'),
+            const SizedBox(height: 8),
+            _label(context, 'Paper width'),
+            const SizedBox(height: 8),
+            _segment<PaperWidth>(
+              context,
+              options: PaperWidth.values,
+              selected: c.width,
+              labelOf: (w) => w.label,
+              onSelect: (w) => context.read<PrintSettingsCubit>().setWidth(w),
+            ),
+            const SizedBox(height: 14),
+            _flagRow(context,
+                icon: Icons.bolt_outlined,
+                title: 'Auto-print after charge',
+                subtitle: 'Print the receipt the moment a sale is charged',
+                value: c.autoPrint,
+                onChanged: (v) => context.read<PrintSettingsCubit>().setAutoPrint(v)),
+            if (c.autoPrint) ...[
+              const SizedBox(height: 9),
+              _printerRow(context, c),
+              const SizedBox(height: 9),
+              _testPrintRow(context, c),
+              const SizedBox(height: 9),
+              _flagRow(context,
+                  icon: Icons.replay_outlined,
+                  title: 'Back to New Sale',
+                  subtitle: c.hasPrinter
+                      ? 'Skip the invoice screen once the receipt prints'
+                      : 'Choose a printer first',
+                  value: c.skipInvoice,
+                  // Only meaningful when the receipt actually prints on
+                  // its own — with the system dialog in the way there is
+                  // no silent print to skip ahead from.
+                  onChanged: c.hasPrinter
+                      ? (v) => context.read<PrintSettingsCubit>().setSkipInvoice(v)
+                      : null),
+            ],
+            const SizedBox(height: 20),
+            SectionLabel('Receipt options'),
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 4, bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(canEdit ? Icons.cloud_sync_outlined : Icons.cloud_done_outlined,
+                      size: 13, color: p.textMuted),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      canEdit
+                          ? 'Shared with the web Sale Configuration — changes here update the web invoice print too.'
+                          : 'Managed in web Settings → Sale Configuration and synced automatically.',
+                      style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (canEdit) ...[
+              _label(context, 'Print language'),
+              const SizedBox(height: 8),
+              _segment<PrintStyle>(
+                context,
+                options: PrintStyle.values,
+                selected: c.style,
+                labelOf: (s) => s.label,
+                onSelect: (s) => _apply(context.read<PrintSettingsCubit>().setStyle(s)),
+              ),
+              const SizedBox(height: 14),
+              _label(context, 'Quantity label'),
+              const SizedBox(height: 8),
+              _segment<QuantityLabel>(
+                context,
+                options: QuantityLabel.values,
+                selected: c.quantityLabel,
+                labelOf: (q) => q.column,
+                onSelect: (q) => _apply(context.read<PrintSettingsCubit>().setQuantityLabel(q)),
+              ),
+              const SizedBox(height: 14),
+            ] else ...[
+              _valueRow(
+                context,
+                icon: Icons.translate,
+                title: 'Print language',
+                subtitle: c.style.isArabic
+                    ? 'English with Arabic labels & item names alongside'
+                    : 'English only',
+                value: c.style.label,
+              ),
+              const SizedBox(height: 9),
+              _valueRow(
+                context,
+                icon: Icons.straighten,
+                title: 'Quantity label',
+                subtitle: 'Column and total row wording',
+                value: c.quantityLabel.column,
+              ),
+              const SizedBox(height: 9),
+            ],
+            _flagRow(context,
+                icon: Icons.image_outlined,
+                title: 'Logo',
+                subtitle: 'Print the company logo',
+                value: c.showLogo,
+                onChanged: canEdit
+                    ? (v) => _apply(context.read<PrintSettingsCubit>().setShowLogo(v))
+                    : null),
+            const SizedBox(height: 9),
+            _flagRow(context,
+                icon: Icons.storefront_outlined,
+                title: 'Company name',
+                subtitle: c.showCompanyName && c.companyName.trim().isNotEmpty
+                    ? c.companyName.trim()
+                    : 'Print the company name',
+                value: c.showCompanyName,
+                onChanged: canEdit
+                    ? (v) => _apply(context.read<PrintSettingsCubit>().setShowCompanyName(v))
+                    : null),
+            const SizedBox(height: 9),
+            _flagRow(context,
+                icon: Icons.percent,
+                title: 'Discount',
+                subtitle: 'Print the discount line',
+                value: c.showDiscount,
+                onChanged: canEdit
+                    ? (v) => _apply(context.read<PrintSettingsCubit>().setShowDiscount(v))
+                    : null),
+            const SizedBox(height: 9),
+            _flagRow(context,
+                icon: Icons.numbers,
+                title: 'Total quantity',
+                subtitle: 'Print the total item count',
+                value: c.showTotalQty,
+                onChanged: canEdit
+                    ? (v) => _apply(context.read<PrintSettingsCubit>().setShowTotalQty(v))
+                    : null),
+            const SizedBox(height: 9),
+            _flagRow(context,
+                icon: Icons.qr_code_2,
+                title: 'Barcode & QR',
+                subtitle: 'Print the barcode and QR code',
+                value: c.showBarcode,
+                onChanged: canEdit
+                    ? (v) => _apply(context.read<PrintSettingsCubit>().setShowBarcode(v))
+                    : null),
+            const SizedBox(height: 20),
+            SectionLabel('Footer'),
+            const SizedBox(height: 8),
+        _footerCard(context, c, canEdit),
+      ],
+    );
+
+    // Hosted in the settings detail pane, which already carries the head and
+    // the framing — so this hands back the body alone rather than a page. It is
+    // the same screen either way, never a second copy of these controls.
+    if (widget.embedded) return body;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -70,166 +241,7 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
               subtitle: 'Thermal print · 58mm / 80mm',
               leading: HeaderIconButton(icon: Icons.arrow_back, onTap: () => context.pop()),
             ),
-            Expanded(
-              child: MaxWidthBox(
-                maxWidth: 560,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-                  children: [
-                    SectionLabel('This device'),
-                    const SizedBox(height: 8),
-                    _label(context, 'Paper width'),
-                    const SizedBox(height: 8),
-                    _segment<PaperWidth>(
-                      context,
-                      options: PaperWidth.values,
-                      selected: c.width,
-                      labelOf: (w) => w.label,
-                      onSelect: (w) => context.read<PrintSettingsCubit>().setWidth(w),
-                    ),
-                    const SizedBox(height: 14),
-                    _flagRow(context,
-                        icon: Icons.bolt_outlined,
-                        title: 'Auto-print after charge',
-                        subtitle: 'Print the receipt the moment a sale is charged',
-                        value: c.autoPrint,
-                        onChanged: (v) => context.read<PrintSettingsCubit>().setAutoPrint(v)),
-                    if (c.autoPrint) ...[
-                      const SizedBox(height: 9),
-                      _printerRow(context, c),
-                      const SizedBox(height: 9),
-                      _testPrintRow(context, c),
-                      const SizedBox(height: 9),
-                      _flagRow(context,
-                          icon: Icons.replay_outlined,
-                          title: 'Back to New Sale',
-                          subtitle: c.hasPrinter
-                              ? 'Skip the invoice screen once the receipt prints'
-                              : 'Choose a printer first',
-                          value: c.skipInvoice,
-                          // Only meaningful when the receipt actually prints on
-                          // its own — with the system dialog in the way there is
-                          // no silent print to skip ahead from.
-                          onChanged: c.hasPrinter
-                              ? (v) => context.read<PrintSettingsCubit>().setSkipInvoice(v)
-                              : null),
-                    ],
-                    const SizedBox(height: 20),
-                    SectionLabel('Receipt options'),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, left: 4, bottom: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(canEdit ? Icons.cloud_sync_outlined : Icons.cloud_done_outlined,
-                              size: 13, color: p.textMuted),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              canEdit
-                                  ? 'Shared with the web Sale Configuration — changes here update the web invoice print too.'
-                                  : 'Managed in web Settings → Sale Configuration and synced automatically.',
-                              style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (canEdit) ...[
-                      _label(context, 'Print language'),
-                      const SizedBox(height: 8),
-                      _segment<PrintStyle>(
-                        context,
-                        options: PrintStyle.values,
-                        selected: c.style,
-                        labelOf: (s) => s.label,
-                        onSelect: (s) => _apply(context.read<PrintSettingsCubit>().setStyle(s)),
-                      ),
-                      const SizedBox(height: 14),
-                      _label(context, 'Quantity label'),
-                      const SizedBox(height: 8),
-                      _segment<QuantityLabel>(
-                        context,
-                        options: QuantityLabel.values,
-                        selected: c.quantityLabel,
-                        labelOf: (q) => q.column,
-                        onSelect: (q) => _apply(context.read<PrintSettingsCubit>().setQuantityLabel(q)),
-                      ),
-                      const SizedBox(height: 14),
-                    ] else ...[
-                      _valueRow(
-                        context,
-                        icon: Icons.translate,
-                        title: 'Print language',
-                        subtitle: c.style.isArabic
-                            ? 'English with Arabic labels & item names alongside'
-                            : 'English only',
-                        value: c.style.label,
-                      ),
-                      const SizedBox(height: 9),
-                      _valueRow(
-                        context,
-                        icon: Icons.straighten,
-                        title: 'Quantity label',
-                        subtitle: 'Column and total row wording',
-                        value: c.quantityLabel.column,
-                      ),
-                      const SizedBox(height: 9),
-                    ],
-                    _flagRow(context,
-                        icon: Icons.image_outlined,
-                        title: 'Logo',
-                        subtitle: 'Print the company logo',
-                        value: c.showLogo,
-                        onChanged: canEdit
-                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowLogo(v))
-                            : null),
-                    const SizedBox(height: 9),
-                    _flagRow(context,
-                        icon: Icons.storefront_outlined,
-                        title: 'Company name',
-                        subtitle: c.showCompanyName && c.companyName.trim().isNotEmpty
-                            ? c.companyName.trim()
-                            : 'Print the company name',
-                        value: c.showCompanyName,
-                        onChanged: canEdit
-                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowCompanyName(v))
-                            : null),
-                    const SizedBox(height: 9),
-                    _flagRow(context,
-                        icon: Icons.percent,
-                        title: 'Discount',
-                        subtitle: 'Print the discount line',
-                        value: c.showDiscount,
-                        onChanged: canEdit
-                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowDiscount(v))
-                            : null),
-                    const SizedBox(height: 9),
-                    _flagRow(context,
-                        icon: Icons.numbers,
-                        title: 'Total quantity',
-                        subtitle: 'Print the total item count',
-                        value: c.showTotalQty,
-                        onChanged: canEdit
-                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowTotalQty(v))
-                            : null),
-                    const SizedBox(height: 9),
-                    _flagRow(context,
-                        icon: Icons.qr_code_2,
-                        title: 'Barcode & QR',
-                        subtitle: 'Print the barcode and QR code',
-                        value: c.showBarcode,
-                        onChanged: canEdit
-                            ? (v) => _apply(context.read<PrintSettingsCubit>().setShowBarcode(v))
-                            : null),
-                    const SizedBox(height: 20),
-                    SectionLabel('Footer'),
-                    const SizedBox(height: 8),
-                    _footerCard(context, c, canEdit),
-                  ],
-                ),
-              ),
-            ),
+            Expanded(child: MaxWidthBox(maxWidth: 560, child: body)),
           ],
         ),
       ),
@@ -298,13 +310,15 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
     if (!mounted) return;
     setState(() => _testing = false);
     if (result == ReceiptPrintResult.cancelled) return;
-    _toast(result.ok ? 'Test slip sent to the printer.' : 'Couldn\'t reach the printer.');
+    if (result.ok) {
+      AstraSnack.success(context, 'Test slip sent to the printer.');
+    } else {
+      _toast('Couldn\'t reach the printer.');
+    }
   }
 
   void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    AstraSnack.error(context, message);
   }
 
   /// A two/three-way pill selector. Tapping applies instantly.

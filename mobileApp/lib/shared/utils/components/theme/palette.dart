@@ -226,6 +226,11 @@ class AstraPalette {
   Color get warnText =>
       isDark ? const Color(0xFFE6C16B) : const Color(0xFF9A6A00);
 
+  /// Wash behind a gold-accented panel — the sibling [goldText] never had. Reads
+  /// as warm metal rather than the caution amber of [warnTint], so the two can
+  /// sit on the same screen without meaning the same thing.
+  Color get goldTint => goldText.withValues(alpha: isDark ? 0.18 : 0.13);
+
   /// Header / hero gradient. Editorial overrides to a near-black field.
   LinearGradient get heroGradient {
     if (skin == AstraSkin.editorial) {
@@ -280,6 +285,26 @@ class AstraPalette {
 
 /// The four premium presets shown in Settings. Aurora Glass is the default.
 class AstraPresets {
+  /// The QLOUD POS house palette, sampled straight off the logomark: the ring's
+  /// mid blue, the wordmark navy, and the cloud's bright sky accent.
+  static const qloudBlue = AstraPalette(
+    id: 'qloud_blue',
+    name: 'Qloud Blue',
+    tagline: 'Brand signature · light',
+    skin: AstraSkin.clean,
+    primary: Color(0xFF0A62C8),
+    primaryDark: Color(0xFF01377F),
+    accent: Color(0xFF0BA8FA),
+    canvas: Color(0xFFF3F7FD),
+    isDark: false,
+    swatch: [
+      Color(0xFF01377F),
+      Color(0xFF0A62C8),
+      Color(0xFF0BA8FA),
+      Color(0xFFE8F1FD),
+    ],
+  );
+
   static const auroraGlass = AstraPalette(
     id: 'aurora_indigo',
     name: 'Aurora Glass',
@@ -353,6 +378,7 @@ class AstraPresets {
   );
 
   static const List<AstraPalette> all = [
+    qloudBlue,
     auroraGlass,
     luminousIndigo,
     emeraldGold,
@@ -360,7 +386,7 @@ class AstraPresets {
   ];
 
   /// The preset applied on a fresh install / when nothing is persisted yet.
-  static const AstraPalette fallback = emeraldGold;
+  static const AstraPalette fallback = qloudBlue;
 
   /// Resolve a persisted id to a preset. Unknown ids fall back to the default.
   static AstraPalette byId(String? id) =>

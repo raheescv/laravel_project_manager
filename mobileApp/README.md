@@ -1,12 +1,21 @@
-# Astra Salon — Flutter app (mobile + tablet)
+# QLOUD POS — Flutter app (mobile + tablet)
 
-Premium salon **POS + admin** for iOS / Android (and web for review), implementing
-the **Astra Salon "Signature"** design system (emerald · cream · champagne-gold,
-Marcellus + Manrope) and wired to the Laravel `api/v1` backend in this repo.
+Premium **POS + admin** for iOS / Android (and web for review), wired to the
+Laravel `api/v1` backend in this repo.
 
-The design source lives in `designs/astra-mobile/` (the Claude Design handoff
-bundle). The chosen direction is **Signature**; the `Astra POS *` files are earlier
-rejected explorations.
+Brand: the logomark is a vector in `lib/shared/widgets/qloud_logo.dart`
+(`QloudLogomark`); its source artwork is `assets/brand/qloud_mark.svg`, which is
+also what the launcher icons in `assets/icon/` are rendered from. The default
+theme preset is **Qloud Blue**, sampled off the logomark.
+
+The design system predates the QLOUD rebrand and still uses the `Astra*` prefix
+internally (`AstraPalette`, `AstraCard`, `AstraSkin`, …) — those are code-level
+names only and are never shown to users. Settings → Theme still offers the four
+older presets (Aurora Glass, Luminous Indigo, Emerald & Gold, Editorial Noir)
+alongside Qloud Blue.
+
+The original design source lives in `designs/astra-mobile/` (the Claude Design
+handoff bundle).
 
 ## Run
 

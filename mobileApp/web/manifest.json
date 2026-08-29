@@ -1,11 +1,11 @@
 {
-    "name": "invo",
-    "short_name": "invo",
+    "name": "QLOUD POS",
+    "short_name": "QLOUD POS",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#121212",
-    "theme_color": "#C9A24B",
-    "description": "A new Flutter project.",
+    "background_color": "#F7FAFF",
+    "theme_color": "#0A62C8",
+    "description": "QLOUD POS — point of sale & admin.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile · Review &amp; Pay — tender &amp; change samples</title>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra tokens — mirrors mobileApp/lib/shared/utils/components/theme/palette.dart
+   Driven by [data-preset] + [data-theme] on #stage.
+   ============================================================ */
+#stage{
+  --success:#1F9D63; --success-tint:#E4F6EC;
+  --danger:#D4546A;  --danger-tint:#FBE9EC;
+  --warn-tint:#FBF3DF; --warn-ink:#9A6A00;
+}
+#stage[data-preset="signature"]{
+  --primary:#15806C; --primary-dark:#0E5648; --accent:#C9A24B;
+  --canvas:#F6F1E8; --card:#FFFFFF;
+  --ink:#16312A; --text2:#5D7269; --muted:#A8B3AB;
+  --hairline:#F0ECE1; --tint:#E6F0EC; --gold:#BF953F; --gold-tint:#FBF3DF;
+  --hero:linear-gradient(135deg,#15806C,#0E5648);
+  --shadow:0 9px 22px -15px rgba(11,40,33,.20);
+}
+#stage[data-preset="signature"][data-theme="dark"]{
+  --canvas:#0C1E1A; --card:#15302A;
+  --ink:#F3F1EA; --text2:#A9C2BA; --muted:#7C9189;
+  --hairline:rgba(255,255,255,.10); --tint:rgba(21,128,108,.22); --gold:#C9A24B; --gold-tint:rgba(201,162,75,.16);
+  --success-tint:rgba(31,157,99,.18); --warn-tint:rgba(230,193,107,.16); --warn-ink:#E6C16B;
+  --danger-tint:rgba(212,84,106,.18);
+  --shadow:0 12px 26px -14px rgba(0,0,0,.55);
+}
+#stage[data-preset="clean"]{
+  --primary:#111827; --primary-dark:#0B1220; --accent:#111827;
+  --canvas:#F7F7F8; --card:#FFFFFF;
+  --ink:#111827; --text2:#4B5563; --muted:#9CA3AF;
+  --hairline:#ECEDF0; --tint:#F0F1F3; --gold:#111827; --gold-tint:#F0F1F3;
+  --hero:linear-gradient(135deg,#1F2937,#0B1220);
+  --shadow:0 10px 24px -18px rgba(17,24,39,.28);
+}
+#stage[data-preset="clean"][data-theme="dark"]{
+  --canvas:#0D0F13; --card:#171A20; --primary:#E5E7EB; --primary-dark:#F3F4F6; --accent:#E5E7EB;
+  --ink:#F3F4F6; --text2:#A9AEB8; --muted:#7A808C;
+  --hairline:rgba(255,255,255,.09); --tint:rgba(255,255,255,.07); --gold:#E5E7EB; --gold-tint:rgba(255,255,255,.08);
+  --success-tint:rgba(31,157,99,.18); --warn-tint:rgba(230,193,107,.14); --warn-ink:#E6C16B;
+  --hero:linear-gradient(135deg,#232833,#12151B);
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Manrope',system-ui,sans-serif;background:#EFEFEF;color:#111}
+#stage{min-height:100vh;background:var(--canvas);color:var(--ink);padding:26px 20px 70px;transition:background .2s}
+
+/* ---- page chrome ---- */
+.top{max-width:1360px;margin:0 auto 26px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.top h1{font-family:'Marcellus',serif;font-size:28px;font-weight:400;letter-spacing:.2px}
+.top p{font-size:13px;color:var(--text2);margin-top:5px;max-width:660px;line-height:1.55}
+.switches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{display:flex;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+.sw button{border:0;background:transparent;font:inherit;font-size:11.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--muted);padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+.sw button.on{background:var(--primary);color:#fff}
+#stage[data-preset="clean"][data-theme="dark"] .sw button.on{color:#111}
+
+.grid{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(390px,1fr));gap:26px;align-items:start}
+
+.sample{display:flex;flex-direction:column;gap:14px}
+.cap{background:var(--card);border:1px solid var(--hairline);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
+.cap .n{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--primary);margin-bottom:5px}
+#stage[data-preset="clean"][data-theme="dark"] .cap .n{color:var(--gold)}
+.cap h2{font-family:'Marcellus',serif;font-size:20px;font-weight:400;margin-bottom:7px}
+.cap p{font-size:12.5px;line-height:1.6;color:var(--text2)}
+.cap ul{margin:9px 0 0 16px;font-size:12px;line-height:1.65;color:var(--text2)}
+.cap li{margin-bottom:2px}
+.cap b{color:var(--ink)}
+
+/* ---- phone frame ---- */
+.phone{width:100%;max-width:392px;margin:0 auto;background:var(--card);border-radius:34px;overflow:hidden;
+  box-shadow:0 30px 60px -30px rgba(0,0,0,.45),0 0 0 8px rgba(0,0,0,.06);border:1px solid var(--hairline)}
+.screen{background:var(--canvas);display:flex;flex-direction:column;min-height:720px}
+
+.hd{background:var(--hero);color:#fff;padding:16px 18px 15px;display:flex;align-items:center;gap:12px}
+#stage[data-preset="clean"][data-theme="dark"] .hd{color:#F3F4F6}
+.hd .bk{width:32px;height:32px;border-radius:11px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:17px}
+.hd .ttl{font-family:'Marcellus',serif;font-size:17px}
+.hd .sub{font-size:10.5px;opacity:.78;font-weight:600;margin-top:2px}
+
+.body{flex:1;padding:14px 15px 12px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border-radius:18px;padding:14px;box-shadow:var(--shadow);border:1px solid var(--hairline)}
+.lbl{font-size:9.5px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
+
+/* receipt strip */
+.ticket{display:flex;align-items:center;gap:11px}
+.ticket .badge{width:38px;height:38px;border-radius:12px;background:var(--tint);color:var(--primary);display:grid;place-items:center;
+  font-size:13px;font-weight:800;flex:none}
+#stage[data-preset="clean"][data-theme="dark"] .ticket .badge{color:var(--ink)}
+.ticket .who{font-size:12.5px;font-weight:800;color:var(--ink)}
+.ticket .meta{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.ticket .amt{margin-left:auto;text-align:right}
+.ticket .amt b{font-family:'Marcellus',serif;font-size:19px;font-weight:400;display:block;color:var(--ink)}
+.ticket .amt s{display:block;font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);text-decoration:none}
+.chev{color:var(--muted);font-size:16px;margin-left:8px}
+
+/* method + tip pills */
+.pills{display:flex;gap:7px}
+.pill{flex:1;height:52px;border-radius:13px;background:var(--card);border:1px solid var(--hairline);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:800;color:var(--text2)}
+.pill i{font-style:normal;font-size:15px;opacity:.85}
+.pill.on{background:var(--primary-dark);color:#fff;border-color:transparent;box-shadow:none}
+.pill.on i{color:var(--gold)}
+#stage[data-preset="clean"][data-theme="dark"] .pill.on{color:#111}
+#stage[data-preset="clean"][data-theme="dark"] .pill.on i{color:#111}
+.mini{display:flex;gap:6px}
+.mini span{flex:1;text-align:center;padding:7px 0;border-radius:10px;background:var(--card);border:1px solid var(--hairline);
+  font-size:10.5px;font-weight:800;color:var(--text2)}
+.mini span.on{background:var(--primary);color:#fff;border-color:transparent}
+#stage[data-preset="clean"][data-theme="dark"] .mini span.on{color:#111}
+
+/* tender field */
+.tender{border-radius:18px;padding:13px 14px;background:var(--card);border:1.6px solid var(--primary);box-shadow:var(--shadow)}
+.tender .row{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+.tender .cur{font-size:12px;font-weight:800;color:var(--muted)}
+.tender .val{font-family:'Marcellus',serif;font-size:34px;color:var(--ink);line-height:1.05}
+.tender .caret{width:2px;height:26px;background:var(--primary);display:inline-block;animation:blink 1.1s steps(1) infinite;border-radius:2px}
+@keyframes blink{50%{opacity:0}}
+.tender .clr{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--muted);border:1px solid var(--hairline);
+  border-radius:999px;padding:5px 11px}
+
+.quick{display:flex;gap:6px;margin-top:11px}
+.quick span{flex:1;text-align:center;padding:8px 0;border-radius:11px;font-size:11px;font-weight:800;
+  background:var(--tint);color:var(--primary);border:1px solid transparent}
+#stage[data-preset="clean"] .quick span{color:var(--ink)}
+.quick span.exact{background:var(--primary);color:#fff}
+#stage[data-preset="clean"][data-theme="dark"] .quick span.exact{color:#111}
+
+/* change band */
+.change{border-radius:16px;padding:13px 15px;display:flex;align-items:center;gap:11px;
+  background:var(--gold-tint);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+.change .ic{width:30px;height:30px;border-radius:50%;background:var(--gold);color:#fff;display:grid;place-items:center;font-size:14px;flex:none}
+#stage[data-preset="clean"] .change .ic{background:var(--ink);color:var(--card)}
+.change .t{font-size:11.5px;font-weight:800;color:var(--ink)}
+.change .d{font-size:10px;font-weight:600;color:var(--text2);margin-top:1px}
+.change .v{margin-left:auto;font-family:'Marcellus',serif;font-size:24px;color:var(--ink)}
+
+/* keypad */
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:auto}
+.pad b{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:13px 0;text-align:center;
+  font-size:19px;font-weight:700;color:var(--ink);box-shadow:var(--shadow)}
+.pad b.act{color:var(--danger)}
+
+/* totals rows */
+.sum .r{display:flex;justify-content:space-between;align-items:center;padding:9px 0}
+.sum .r+.r{border-top:1px solid var(--hairline)}
+.sum .r span{font-size:12px;font-weight:600;color:var(--text2)}
+.sum .r b{font-size:14px;font-weight:800;color:var(--ink)}
+.sum .r.big b{font-family:'Marcellus',serif;font-size:20px;font-weight:400;color:var(--primary)}
+#stage[data-preset="clean"] .sum .r.big b{color:var(--ink)}
+.sum .r.edit{background:var(--tint);margin:0 -14px;padding:10px 14px;border-radius:0}
+.sum .r.edit b{color:var(--ink);border-bottom:2px dashed var(--primary);padding-bottom:1px}
+.sum .r.gold b{color:var(--gold)}
+.sum .ribbon{margin:10px -14px -14px;padding:9px 14px;background:var(--success-tint);border-radius:0 0 17px 17px;
+  display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--success)}
+
+/* notes grid */
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.notes b{border-radius:12px;padding:11px 0;text-align:center;font-size:13px;font-weight:800;background:var(--card);
+  border:1px solid var(--hairline);box-shadow:var(--shadow);color:var(--ink);position:relative}
+.notes b em{position:absolute;top:3px;right:6px;font-style:normal;font-size:8.5px;font-weight:800;color:var(--primary)}
+.notes b.hit{background:var(--tint);border-color:var(--primary)}
+
+/* bottom bar */
+.foot{padding:10px 15px 16px;display:flex;gap:9px;background:var(--canvas)}
+.ghost{padding:14px 17px;border-radius:15px;background:var(--card);border:1.4px solid color-mix(in srgb,var(--primary) 30%,transparent);
+  font-size:13px;font-weight:800;color:var(--primary)}
+#stage[data-preset="clean"][data-theme="dark"] .ghost{color:var(--ink)}
+.cta{flex:1;padding:14px 0;border-radius:15px;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 82%,#fff),var(--gold));
+  color:#fff;text-align:center;font-size:13.5px;font-weight:800;box-shadow:0 10px 22px -14px var(--gold)}
+#stage[data-preset="clean"] .cta{background:var(--primary);color:var(--card)}
+.cta s{display:block;text-decoration:none;font-size:10px;font-weight:700;opacity:.85;margin-top:2px}
+.note{font-size:10.5px;color:var(--muted);font-weight:600;text-align:center;padding:0 15px 4px}
+</style>
+</head>
+<body>
+<div id="stage" data-preset="signature" data-theme="light">
+
+  <div class="top">
+    <div>
+      <h1>Review &amp; Pay — tender &amp; change</h1>
+      <p>Three ways to redesign the payment half of the New Sale checkout, each adding an <b>Amount received</b> field and a live
+         <b>Change to return</b> readout. The dead white space in the current screen is what each sample spends differently.
+         Numbers shown: grand total QAR&nbsp;36.00, customer hands over QAR&nbsp;50.00.</p>
+    </div>
+    <div class="switches">
+      <div class="sw" id="preset">
+        <button data-v="signature" class="on">Signature</button>
+        <button data-v="clean">Clean</button>
+      </div>
+      <div class="sw" id="theme">
+        <button data-v="light" class="on">Light</button>
+        <button data-v="dark">Dark</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- =========================== SAMPLE A =========================== -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Sample A</div>
+        <h2>Tender Pad</h2>
+        <p>The counter-POS answer. The empty space becomes an on-screen number pad, so cash is keyed with the thumb and the
+           OS keyboard never covers the totals. Change appears the instant the tendered amount passes the total.</p>
+        <ul>
+          <li><b>Ticket collapses</b> to one tappable strip — items expand on demand.</li>
+          <li><b>Quick chips</b>: Exact, and the two notes above the total.</li>
+          <li>Best when most sales are cash and speed matters.</li>
+        </ul>
+      </div>
+      <div class="phone"><div class="screen">
+        <div class="hd">
+          <div class="bk">‹</div>
+          <div><div class="ttl">Review &amp; Pay</div><div class="sub">3 items · Walk-in · Me</div></div>
+        </div>
+        <div class="body">
+          <div class="card ticket">
+            <div class="badge">3×</div>
+            <div><div class="who">Walk-in customer</div><div class="meta">Subtotal 34.29 · Tax 1.71</div></div>
+            <div class="amt"><s>Total</s><b>QAR 36.00</b></div>
+            <div class="chev">›</div>
+          </div>
+
+          <div class="pills">
+            <div class="pill on"><i>▤</i>Cash</div>
+            <div class="pill"><i>▭</i>Card</div>
+            <div class="pill"><i>▤</i>Credit</div>
+            <div class="pill"><i>⚏</i>Split</div>
+          </div>
+
+          <div class="tender">
+            <div class="lbl">Amount received</div>
+            <div class="row">
+              <span class="cur">QAR</span><span class="val">50.00</span><span class="caret"></span>
+              <span class="clr">Clear</span>
+            </div>
+            <div class="quick"><span class="exact">Exact 36</span><span>40</span><span>50</span><span>100</span></div>
+          </div>
+
+          <div class="change">
+            <div class="ic">↩</div>
+            <div><div class="t">Change to return</div><div class="d">Hand back to the customer</div></div>
+            <div class="v">QAR 14.00</div>
+          </div>
+
+          <div class="pad">
+            <b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b>
+            <b>.</b><b>0</b><b class="act">⌫</b>
+          </div>
+        </div>
+        <div class="foot">
+          <div class="ghost">Draft</div>
+          <div class="cta">Charge QAR 36.00<s>Change QAR 14.00</s></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- =========================== SAMPLE B =========================== -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Sample B</div>
+        <h2>One Ledger Card</h2>
+        <p>The least disruptive change: tip, method, totals and status stop being four floating blocks and become one card that
+           reads top to bottom like a ledger. <b>Received</b> is an inline editable row; <b>Change</b> sits directly under it and
+           the status becomes a slim ribbon at the card's foot instead of a big empty panel.</p>
+        <ul>
+          <li>Keeps the full itemised receipt visible — no collapsing.</li>
+          <li>Uses the OS keyboard; least code to build.</li>
+          <li>Best when card &amp; credit are as common as cash.</li>
+        </ul>
+      </div>
+      <div class="phone"><div class="screen">
+        <div class="hd">
+          <div class="bk">‹</div>
+          <div><div class="ttl">Review &amp; Pay</div><div class="sub">3 items on this ticket</div></div>
+        </div>
+        <div class="body">
+          <div class="card">
+            <div class="lbl" style="text-align:center">Invo · Walk-in · Me</div>
+            <div class="sum" style="margin-top:8px">
+              <div class="r"><span>2× Hair spa treatment</span><b>24.00</b></div>
+              <div class="r"><span>1× Argan serum 30ml</span><b>10.29</b></div>
+              <div class="r"><span>Tax 5%</span><b>1.71</b></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="lbl" style="margin-bottom:6px">Tip</div>
+            <div class="mini"><span class="on">None</span><span>10%</span><span>15%</span><span>20%</span></div>
+          </div>
+
+          <div class="pills">
+            <div class="pill on"><i>▤</i>Cash</div>
+            <div class="pill"><i>▭</i>Card</div>
+            <div class="pill"><i>▤</i>Credit</div>
+            <div class="pill"><i>⚏</i>Split</div>
+          </div>
+
+          <div class="card sum">
+            <div class="r big"><span>Grand Total</span><b>QAR 36.00</b></div>
+            <div class="r edit"><span>Amount received <em style="font-style:normal;opacity:.6">· tap to edit</em></span><b>QAR 50.00</b></div>
+            <div class="r gold"><span>Change to return</span><b>QAR 14.00</b></div>
+            <div class="ribbon">✓ Fully paid — ready to submit</div>
+          </div>
+        </div>
+        <div class="foot">
+          <div class="ghost">Save Draft</div>
+          <div class="cta">Charge QAR 36.00<s>Return QAR 14.00</s></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- =========================== SAMPLE C =========================== -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Sample C · chosen &amp; built</div>
+        <h2>Cash Drawer</h2>
+        <p style="background:var(--success-tint);color:var(--success);font-weight:800;border-radius:10px;padding:8px 10px;margin-bottom:8px">
+           ✓ Shipped — <b>review_pay_screen.dart</b> + <b>cash_tender_card.dart</b>. Built with a short-tendered warning the mock
+           doesn't show, and the itemised receipt folded in behind the hero.</p>
+        <p>No typing at all in the common case — the cashier taps the notes the customer actually handed over and they add up.
+           A hero panel states the amount due in one glance; the gold band underneath states what goes back in the customer's hand.</p>
+        <ul>
+          <li>Tapping <b>50</b> then <b>10</b> reads 60 received; long-press a note to subtract.</li>
+          <li>The <b>keypad ↔ notes</b> toggle keeps odd amounts possible.</li>
+          <li>Best for a busy cash counter with a fixed note set (QAR 1/5/10/50/100/500).</li>
+        </ul>
+      </div>
+      <div class="phone"><div class="screen">
+        <div class="hd">
+          <div class="bk">‹</div>
+          <div><div class="ttl">Take Payment</div><div class="sub">Cash · Walk-in</div></div>
+        </div>
+        <div class="body">
+          <div class="card" style="background:var(--hero);border:0;padding:16px 15px;color:#fff">
+            <div class="lbl" style="color:rgba(255,255,255,.7)">Amount due</div>
+            <div style="font-family:'Marcellus',serif;font-size:38px;line-height:1.1;margin-top:2px">QAR 36.00</div>
+            <div style="font-size:10.5px;font-weight:600;opacity:.8;margin-top:3px">3 items · incl. QAR 1.71 tax</div>
+          </div>
+
+          <div class="pills">
+            <div class="pill on"><i>▤</i>Cash</div>
+            <div class="pill"><i>▭</i>Card</div>
+            <div class="pill"><i>▤</i>Credit</div>
+            <div class="pill"><i>⚏</i>Split</div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;align-items:center">
+              <div class="lbl">Received</div>
+              <div style="margin-left:auto;font-size:10px;font-weight:800;color:var(--primary);border:1px solid var(--hairline);border-radius:999px;padding:4px 10px">⌨ Keypad</div>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin:5px 0 11px">
+              <span class="cur" style="font-size:12px;font-weight:800;color:var(--muted)">QAR</span>
+              <span style="font-family:'Marcellus',serif;font-size:32px;color:var(--ink)">50.00</span>
+              <span style="margin-left:auto;font-size:10.5px;font-weight:800;color:var(--muted)">1 note · reset</span>
+            </div>
+            <div class="notes">
+              <b><em>×0</em>1</b><b><em>×0</em>5</b><b><em>×0</em>10</b>
+              <b class="hit"><em>×1</em>50</b><b><em>×0</em>100</b><b><em>×0</em>500</b>
+            </div>
+          </div>
+
+          <div class="change">
+            <div class="ic">↩</div>
+            <div><div class="t">Give back</div><div class="d">QAR 50.00 received · QAR 36.00 due</div></div>
+            <div class="v">QAR 14.00</div>
+          </div>
+        </div>
+        <div class="note">Change is a counter aid — the sale still posts as fully paid QAR 36.00.</div>
+        <div class="foot">
+          <div class="ghost">Draft</div>
+          <div class="cta">Charge QAR 36.00<s>Change QAR 14.00</s></div>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const stage = document.getElementById('stage');
+for (const id of ['preset','theme']) {
+  document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    [...e.currentTarget.children].forEach(x => x.classList.toggle('on', x === b));
+    stage.dataset[id] = b.dataset.v;
+  });
+}
+</script>
+</body>
+</html>

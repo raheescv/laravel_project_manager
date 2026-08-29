@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Invo uses Face ID to sign you in securely.</string>
+	<string>QLOUD POS uses Face ID to sign you in securely.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Invo uses the camera to scan product barcodes and take your profile photo.</string>
+	<string>QLOUD POS uses the camera to scan product barcodes and take your profile photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Invo lets you choose a profile photo from your library.</string>
+	<string>QLOUD POS lets you choose a profile photo from your library.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Invo</string>
+	<string>QLOUD POS</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -21,7 +21,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>invo</string>
+	<string>QLOUD POS</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

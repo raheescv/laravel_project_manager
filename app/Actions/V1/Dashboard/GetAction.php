@@ -30,9 +30,7 @@ class GetAction
         $branchId = $request->validatedWithDefaults()['branch_id'];
 
         $user = $request->user();
-        $this->restrictToUserId = ($user && $user->type === 'employee' && ! $user->is_admin)
-            ? $user->id
-            : null;
+        $this->restrictToUserId = $user?->seesOnlyOwnRecords() ? $user->id : null;
 
         // Anchor the dashboard on the branch's current (open) day-session date
         // rather than the calendar date, so a session opened for another business

@@ -27,21 +27,30 @@ class OverviewAction
     /** How many rows the breakdown lists return (mobile shows a ranked list, not pages). */
     private const TOP_LIMIT = 10;
 
-    public function execute(?string $from, ?string $to, ?int $branchId): array
+    /**
+     * @param  int|null  $createdBy  When set, every figure is hard-scoped to the
+     *                               documents this user raised — a rank-and-file
+     *                               employee gets their own overview, not the
+     *                               shop's (see User::seesOnlyOwnRecords()).
+     */
+    public function execute(?string $from, ?string $to, ?int $branchId, ?int $createdBy = null): array
     {
-        $sales = Sale::query()->customerSearch($branchId, $from, $to);
-        $saleReturns = SaleReturn::query()->customerSearch($branchId, $from, $to);
+        $sales = Sale::query()->customerSearch($branchId, $from, $to)
+            ->when($createdBy, fn ($q) => $q->where('created_by', $createdBy));
+        $saleReturns = SaleReturn::query()->customerSearch($branchId, $from, $to)
+            ->when($createdBy, fn ($q) => $q->where('created_by', $createdBy));
         $tailoringOrders = TailoringOrder::query()
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('created_by', $createdBy))
             ->when($from, fn ($q) => $q->where('order_date', '>=', $from))
             ->when($to, fn ($q) => $q->where('order_date', '<=', $to));
 
         $salesMetrics = $this->salesMetrics($sales, $tailoringOrders);
         $returnMetrics = $this->returnMetrics($saleReturns);
-        $productStats = $this->productStats($branchId, $from, $to);
+        $productStats = $this->productStats($branchId, $from, $to, $createdBy);
 
-        $salePayments = $this->salePayments($branchId, $from, $to);
-        $returnPayments = $this->returnPayments($branchId, $from, $to);
+        $salePayments = $this->salePayments($branchId, $from, $to, $createdBy);
+        $returnPayments = $this->returnPayments($branchId, $from, $to, $createdBy);
 
         $totalPayment = (float) $salePayments->sum('total');
         $returnsPaymentTotal = (float) $returnPayments->sum('total');
@@ -87,8 +96,8 @@ class OverviewAction
                 'methods' => $this->mergeMethods($salePayments, $returnPayments, $salesMetrics, $returnMetrics),
                 'chart' => $chart,
             ],
-            'employees' => $this->employees($branchId, $from, $to),
-            'products' => $this->products($branchId, $from, $to),
+            'employees' => $this->employees($branchId, $from, $to, $createdBy),
+            'products' => $this->products($branchId, $from, $to, $createdBy),
         ];
     }
 
@@ -147,7 +156,7 @@ class OverviewAction
      *
      * @return array<string, float>
      */
-    private function productStats(?int $branchId, ?string $from, ?string $to): array
+    private function productStats(?int $branchId, ?string $from, ?string $to, ?int $createdBy = null): array
     {
         $saleItems = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
@@ -155,6 +164,7 @@ class OverviewAction
             ->where('sales.status', 'completed')
             ->whereNull('sales.deleted_at')
             ->when($branchId, fn ($q) => $q->where('sales.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('sales.created_by', $createdBy))
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to));
 
@@ -162,6 +172,7 @@ class OverviewAction
             ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_order_items.tailoring_order_id')
             ->leftJoin('products', 'products.id', '=', 'tailoring_order_items.product_id')
             ->when($branchId, fn ($q) => $q->where('tailoring_orders.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('tailoring_orders.created_by', $createdBy))
             ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to));
 
@@ -184,7 +195,7 @@ class OverviewAction
     /**
      * Per-method collected amounts (sale + tailoring payments), keyed by account name.
      */
-    private function salePayments(?int $branchId, ?string $from, ?string $to): Collection
+    private function salePayments(?int $branchId, ?string $from, ?string $to, ?int $createdBy = null): Collection
     {
         $sale = SalePayment::query()
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
@@ -192,6 +203,7 @@ class OverviewAction
             ->where('sales.status', 'completed')
             ->whereNull('sales.deleted_at')
             ->when($branchId, fn ($q) => $q->where('sales.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('sales.created_by', $createdBy))
             ->when($from, fn ($q) => $q->where('sale_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_payments.date', '<=', $to))
             ->select('accounts.name as payment_method')
@@ -204,6 +216,7 @@ class OverviewAction
             ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_payments.tailoring_order_id')
             ->join('accounts', 'accounts.id', '=', 'tailoring_payments.payment_method_id')
             ->when($branchId, fn ($q) => $q->where('tailoring_orders.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('tailoring_orders.created_by', $createdBy))
             ->when($from, fn ($q) => $q->where('tailoring_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_payments.date', '<=', $to))
             ->select('accounts.name as payment_method')
@@ -223,7 +236,7 @@ class OverviewAction
             ->values();
     }
 
-    private function returnPayments(?int $branchId, ?string $from, ?string $to): Collection
+    private function returnPayments(?int $branchId, ?string $from, ?string $to, ?int $createdBy = null): Collection
     {
         return SaleReturnPayment::query()
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_payments.sale_return_id')
@@ -231,6 +244,7 @@ class OverviewAction
             ->where('sale_returns.status', 'completed')
             ->whereNull('sale_returns.deleted_at')
             ->when($branchId, fn ($q) => $q->where('sale_returns.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('sale_returns.created_by', $createdBy))
             ->when($from, fn ($q) => $q->where('sale_return_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_return_payments.date', '<=', $to))
             ->select('accounts.name as payment_method')
@@ -288,14 +302,19 @@ class OverviewAction
      *
      * @return array<int, array<string, mixed>>
      */
-    private function employees(?int $branchId, ?string $from, ?string $to): array
+    private function employees(?int $branchId, ?string $from, ?string $to, ?int $createdBy = null): array
     {
+        // Self-scoped, this is a board of one: the rows are restricted to the
+        // employee themselves as well as to their own documents, so a colleague
+        // attributed on a ticket they rang up is not listed with their takings.
         $saleItems = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
             ->where('sales.status', 'completed')
             ->whereNull('sales.deleted_at')
             ->when($branchId, fn ($q) => $q->where('sales.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('sales.created_by', $createdBy)
+                ->where('sale_items.employee_id', $createdBy))
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to))
             ->select('users.id', 'users.name as employee')
@@ -311,6 +330,8 @@ class OverviewAction
             ->where('sale_returns.status', 'completed')
             ->whereNull('sale_returns.deleted_at')
             ->when($branchId, fn ($q) => $q->where('sale_returns.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('sale_returns.created_by', $createdBy)
+                ->where('sale_return_items.employee_id', $createdBy))
             ->when($from, fn ($q) => $q->where('sale_returns.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_returns.date', '<=', $to))
             ->select('users.id', 'users.name as employee')
@@ -344,7 +365,7 @@ class OverviewAction
      *
      * @return array<int, array<string, mixed>>
      */
-    private function products(?int $branchId, ?string $from, ?string $to): array
+    private function products(?int $branchId, ?string $from, ?string $to, ?int $createdBy = null): array
     {
         $saleItems = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
@@ -352,6 +373,7 @@ class OverviewAction
             ->where('sales.status', 'completed')
             ->whereNull('sales.deleted_at')
             ->when($branchId, fn ($q) => $q->where('sales.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('sales.created_by', $createdBy))
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to))
             ->select('products.id', 'products.name as product', 'products.type')
@@ -367,6 +389,7 @@ class OverviewAction
             ->where('sale_returns.status', 'completed')
             ->whereNull('sale_returns.deleted_at')
             ->when($branchId, fn ($q) => $q->where('sale_returns.branch_id', $branchId))
+            ->when($createdBy, fn ($q) => $q->where('sale_returns.created_by', $createdBy))
             ->when($from, fn ($q) => $q->where('sale_returns.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_returns.date', '<=', $to))
             ->select('products.id', 'products.name as product', 'products.type')

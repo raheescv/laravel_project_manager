@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
 import 'package:invo/shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
@@ -57,6 +58,32 @@ class _WithStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visible = strip != null;
+    if (context.isTablet) {
+      // Floated, not stacked: the page keeps its full height and its own status
+      // bar inset (nothing above it consumed one).
+      //
+      // Bottom-centre, not the top-right it started at — up there it sat on New
+      // Sale's ✕ and made the ticket impossible to close. Every top corner is
+      // spoken for on some screen (✕ and Charge on New Sale, Returns on Sales,
+      // Log out at the foot of the settings rail), whereas the bottom centre is
+      // the one place these screens put nothing but scrollable content. It is
+      // where a status message is expected anyway.
+      //
+      // `Center` fills the width but a plain aligning box has no `hitTestSelf`,
+      // so only the pill itself takes taps — the grid underneath stays live.
+      return Stack(
+        children: [
+          child,
+          if (visible)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: MediaQuery.viewPaddingOf(context).bottom + 18,
+              child: Center(child: strip!),
+            ),
+        ],
+      );
+    }
     return Column(
       children: [
         // Animated so the strip slides the page down rather than snapping it,
@@ -149,6 +176,60 @@ class _ProvisioningStrip extends StatelessWidget {
   }
 }
 
+/// The tablet form of every strip in this file: a floating pill.
+///
+/// A full-width bar across ~1200pt spends a whole row saying one short thing,
+/// and pushes every screen down to say it. On a tablet the message is the same
+/// but it stops being layout — [_WithStrip] floats this over the page, so an
+/// offline till loses no working area to being told it is offline.
+Widget _offlineBadge(
+  BuildContext context, {
+  required Color colour,
+  required IconData icon,
+  required String text,
+  VoidCallback? onTap,
+  double? progress,
+  Widget? trailing,
+}) {
+  return Material(
+    color: colour,
+    borderRadius: BorderRadius.circular(999),
+    elevation: 8,
+    shadowColor: Colors.black.withValues(alpha: 0.4),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(13, 8, 15, 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // While something is downloading the spinner IS the icon — a pill
+            // has no room for a progress bar under it, and a turning ring says
+            // "working" more directly than a bar that barely moves.
+            if (progress != null)
+              SizedBox(
+                width: 13,
+                height: 13,
+                child: CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 2,
+                  backgroundColor: Colors.white.withValues(alpha: 0.25),
+                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+                ),
+              )
+            else
+              Icon(icon, size: 13, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(text, style: ui(size: 11, weight: FontWeight.w700, color: Colors.white)),
+            if (trailing != null) trailing,
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 /// The shared strip chrome — a coloured full-width bar with an optional
 /// progress line under it.
 class _Banner extends StatelessWidget {
@@ -166,6 +247,9 @@ class _Banner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (context.isTablet) {
+      return _offlineBadge(context, colour: colour, icon: icon, text: text, progress: progress);
+    }
     return Material(
       color: colour,
       child: SafeArea(
@@ -244,6 +328,19 @@ class _Strip extends StatelessWidget {
         ? const Color(0xFF8A3A1F)
         : const Color(0xFF8A6A1F);
 
+    if (context.isTablet) {
+      return _offlineBadge(
+        context,
+        colour: background,
+        icon: freshness == CatalogFreshness.stale || !hasCatalog
+            ? Icons.warning_amber_rounded
+            : Icons.cloud_off_rounded,
+        text: _shortText(freshness, syncedAt, hasCatalog: hasCatalog),
+        onTap: onTapPending,
+        trailing: const _PendingCount(),
+      );
+    }
+
     return Material(
       color: background,
       child: SafeArea(
@@ -278,6 +375,19 @@ class _Strip extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// The badge form of [_text]. A pill has room for the fact, not the sentence
+  /// — so each state keeps the half a cashier has to act on and drops the rest,
+  /// which the full bar still carries on a phone. Tapping opens the queue.
+  String _shortText(CatalogFreshness freshness, DateTime? syncedAt, {required bool hasCatalog}) {
+    final connection = hasInterface ? 'Offline' : 'No network';
+    if (!hasCatalog) return '$connection · no catalog';
+    return switch (freshness) {
+      CatalogFreshness.fresh => '$connection · sales saved here',
+      CatalogFreshness.aging => '$connection · catalog ${catalogAgeLabel(syncedAt)}',
+      CatalogFreshness.stale => '$connection · check prices',
+    };
   }
 
   String _text(CatalogFreshness freshness, DateTime? syncedAt, {required bool hasCatalog}) {

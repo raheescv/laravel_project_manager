@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablet Chrome — the rail/pane corner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ───────────────────────────────────────────────────────────────────────────
+   Astra tablet chrome — four ways to resolve the corner where the side-rail
+   meets the content pane.
+
+   Tokens below are the real Emerald & Gold (signature skin) values lifted from
+   lib/shared/utils/components/theme/palette.dart, so the mock is not an
+   approximation of the app's colour — it is the app's colour.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root{
+  --primary:#15806C; --primary-dark:#0E5648; --accent:#C9A24B;
+  --canvas:#F6F1E8; --card:#FFFFFF; --sheet:#F6F1E8;
+  --hairline:#F0ECE1; --tint:#E6F0EC; --gold:#BF953F;
+  --ink:#16312A; --sec:#5D7269; --muted:#A8B3AB;
+  --rail:#0E5648; --rail-ink:#EAF3F0; --rail-muted:#7FA79B;
+  --shadow:0 14px 36px rgba(0,0,0,.30);
+  --page:#E7E0D2; --page-ink:#16312A; --page-muted:#6C7F76; --page-line:#D6CCB8;
+  --chip:#FFFFFF; --chip-line:#D6CCB8;
+}
+:root[data-theme="dark"]{
+  --canvas:#07140F; --card:#15302A; --sheet:#07140F;
+  --hairline:rgba(255,255,255,.10); --tint:rgba(21,128,108,.18); --gold:#C9A24B;
+  --ink:#F3F1EA; --sec:#A9C2BA; --muted:#7C9189;
+  --rail:#0A1B17; --rail-ink:#E7F0ED; --rail-muted:#6F8A82;
+  --shadow:0 14px 36px rgba(0,0,0,.55);
+  --page:#050D0A; --page-ink:#EAF2EF; --page-muted:#7C9189; --page-line:#1C2E28;
+  --chip:#12241F; --chip-line:#25382F;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; padding:28px 20px 56px;
+  background:var(--page); color:var(--page-ink);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1{font-family:Fraunces,Georgia,serif; font-weight:600; font-size:26px; margin:0 0 4px}
+.lede{color:var(--page-muted); font-size:13.5px; max-width:74ch; margin:0 0 22px; line-height:1.55}
+.lede b{color:var(--page-ink); font-weight:600}
+
+/* ---- controls ---------------------------------------------------------- */
+.bar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:20px}
+.seg{display:flex; gap:4px; padding:4px; background:var(--chip); border:1px solid var(--chip-line); border-radius:13px}
+.seg button{
+  font:inherit; font-size:12.5px; font-weight:600; color:var(--page-muted);
+  background:none; border:0; padding:8px 14px; border-radius:9px; cursor:pointer;
+}
+.seg button[aria-pressed="true"]{background:var(--primary); color:#fff}
+.spacer{flex:1}
+
+/* ---- the device -------------------------------------------------------- */
+.stage{display:flex; justify-content:center; margin-bottom:14px}
+.scaler{transform-origin:top center}
+.device{
+  width:1194px; height:834px; position:relative; overflow:hidden;
+  border-radius:30px; background:var(--canvas);
+  box-shadow:0 30px 70px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.10);
+  font-size:13px; color:var(--ink); display:flex;
+}
+.status{
+  position:absolute; inset:0 0 auto 0; height:34px; z-index:5;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 22px; font-size:11.5px; font-weight:600; pointer-events:none;
+  color:var(--ink);
+}
+/* On the docked directions the rail runs under the clock, so that half of the
+   status bar has to flip to the rail's own ink or it disappears. */
+.status .l{color:var(--status-l,var(--ink))}
+
+/* ---- rail -------------------------------------------------------------- */
+.rail{
+  width:92px; background:var(--rail); flex:none; z-index:3;
+  display:flex; flex-direction:column; align-items:center;
+  padding:16px 0; gap:2px; color:var(--rail-ink);
+}
+.mark{font-family:Fraunces,serif; font-size:26px; color:var(--accent); margin:6px 0 18px; line-height:1}
+.rlink{width:100%; display:flex; flex-direction:column; align-items:center; gap:5px; padding:9px 0; opacity:.72}
+.rlink .ic{width:34px; height:34px; border-radius:11px; display:grid; place-items:center; font-size:15px}
+.rlink span{font-size:9.5px; font-weight:600; letter-spacing:.02em}
+.rlink.on{opacity:1}
+.rlink.on .ic{background:rgba(201,162,75,.20); color:var(--accent)}
+.rail .grow{flex:1}
+.fab{width:52px; height:52px; border-radius:50%; background:linear-gradient(150deg,#DDBB68,var(--accent)); color:var(--primary-dark); display:grid; place-items:center; font-size:24px; font-weight:300}
+.fablabel{font-size:9.5px; font-weight:600; margin-top:6px; opacity:.8}
+
+/* ---- panes ------------------------------------------------------------- */
+.body{flex:1; display:flex; min-width:0; position:relative; z-index:2}
+.nav{
+  width:300px; flex:none; background:var(--card);
+  border-right:1px solid var(--hairline); display:flex; flex-direction:column; min-width:0;
+}
+.navhead{padding:26px 20px 14px; border-bottom:1px solid var(--hairline)}
+.navhead h2{font-family:Fraunces,serif; font-weight:400; font-size:23px; margin:0; color:var(--ink)}
+.navhead p{margin:3px 0 0; font-size:11.5px; color:var(--muted); font-weight:500}
+.navlist{padding:12px; overflow:hidden}
+.nrow{display:flex; gap:12px; align-items:center; padding:11px 12px; border-radius:13px}
+.nrow .ic{width:34px; height:34px; border-radius:10px; background:var(--tint); color:var(--primary); display:grid; place-items:center; font-size:14px; flex:none}
+.nrow b{display:block; font-size:12.5px; font-weight:700; color:var(--ink)}
+.nrow small{display:block; font-size:10.5px; color:var(--muted); font-weight:500; margin-top:1px}
+.nrow.on{background:var(--tint)}
+.nrow.on .ic{background:var(--primary); color:#fff}
+
+.detail{flex:1; padding:30px 30px 0; min-width:0; background:var(--sheet)}
+.dhead{display:flex; gap:14px; align-items:flex-start; margin-bottom:22px}
+.dhead .ic{width:44px; height:44px; border-radius:14px; background:var(--tint); color:var(--primary); display:grid; place-items:center; font-size:19px; flex:none}
+.dhead h3{font-family:Fraunces,serif; font-weight:400; font-size:24px; margin:0; color:var(--ink)}
+.dhead p{margin:3px 0 0; font-size:12px; color:var(--muted); font-weight:600}
+.card{
+  background:var(--card); border-radius:16px; padding:14px 16px; margin-bottom:12px;
+  display:flex; align-items:center; gap:12px; max-width:620px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.card .ic{width:34px; height:34px; border-radius:10px; background:var(--tint); color:var(--primary); display:grid; place-items:center; font-size:14px; flex:none}
+.card b{display:block; font-size:12.5px; font-weight:700; color:var(--ink)}
+.card small{display:block; font-size:10.5px; color:var(--muted); font-weight:500; margin-top:2px}
+.card .grow{flex:1; min-width:0}
+.sw{width:44px; height:26px; border-radius:99px; background:var(--primary); position:relative; flex:none}
+.sw::after{content:""; position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:#fff}
+.sw.off{background:var(--hairline)}
+.sw.off::after{right:21px; background:var(--card); box-shadow:0 1px 2px rgba(0,0,0,.2)}
+
+/* ═══ DIRECTION A — Docked rail ═════════════════════════════════════════════
+   The rail stops floating: no margin, no radius, no shadow. It runs corner to
+   corner and the panes dock against it. One idiom for the whole window. */
+.device[data-dir="a"]{--status-l:var(--rail-ink)}
+
+/* ═══ DIRECTION B — Inset canvas ════════════════════════════════════════════
+   Rail flush and dark to the edges; everything right of it lifts into ONE
+   rounded surface with an even gutter, so the corner reads as intended. */
+.device[data-dir="b"]{--status-l:var(--rail-ink); background:var(--rail)}
+.device[data-dir="b"] .body{
+  margin:10px 10px 10px 0; border-radius:22px; overflow:hidden;
+  box-shadow:0 2px 20px rgba(0,0,0,.18);
+}
+.device[data-dir="b"] .rail{padding-right:2px}
+
+/* ═══ DIRECTION C — Two peers ═══════════════════════════════════════════════
+   Keep the floating rail, and let the content float identically — same inset,
+   same radius, same shadow. They stop arguing because they match. */
+.device[data-dir="c"] .rail{
+  margin:14px 0 14px 14px; border-radius:26px; box-shadow:var(--shadow);
+}
+.device[data-dir="c"] .body{
+  margin:14px 14px 14px 12px; border-radius:26px; overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.device[data-dir="c"] .nav{border-right:1px solid var(--hairline)}
+
+/* ═══ DIRECTION D — Unified shell ═══════════════════════════════════════════
+   Rail and content in one card split by a hairline. Only the OUTER corners are
+   rounded, so there is no interior corner left to resolve. */
+.device[data-dir="d"]{padding:14px; background:var(--page)}
+.device[data-dir="d"] .status{padding:0 34px; height:0; overflow:hidden}
+.device[data-dir="d"] .shell{
+  flex:1; display:flex; min-width:0; border-radius:26px; overflow:hidden;
+  box-shadow:var(--shadow); background:var(--canvas);
+}
+.device:not([data-dir="d"]) .shell{flex:1; display:flex; min-width:0}
+.device[data-dir="d"] .detail{padding-top:26px}
+
+/* ---- notes ------------------------------------------------------------- */
+.notes{max-width:1194px; margin:0 auto}
+.note{
+  display:none; background:var(--chip); border:1px solid var(--chip-line);
+  border-radius:18px; padding:18px 20px;
+}
+.note.on{display:block}
+.note h4{margin:0 0 6px; font-family:Fraunces,serif; font-weight:600; font-size:18px; color:var(--page-ink)}
+.note p{margin:0 0 12px; font-size:13px; line-height:1.6; color:var(--page-muted); max-width:80ch}
+.note p b{color:var(--page-ink); font-weight:600}
+.note .tag{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--gold); margin-bottom:8px}
+.note code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;
+  background:rgba(127,127,127,.14); padding:2px 6px; border-radius:5px; color:var(--page-ink);
+}
+.tradeoff{display:flex; flex-wrap:wrap; gap:22px; font-size:12.5px; margin-top:2px}
+.tradeoff div{flex:1; min-width:220px}
+.tradeoff strong{display:block; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px; color:var(--page-muted)}
+.tradeoff ul{margin:0; padding-left:16px; color:var(--page-muted); line-height:1.65}
+.rec{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+     background:var(--primary); color:#fff; padding:3px 9px; border-radius:99px; margin-left:8px; vertical-align:2px}
+</style>
+</head>
+<body>
+
+<h1>Tablet chrome — the rail/pane corner</h1>
+<p class="lede">
+  Today the side-rail is a <b>floating rounded card</b> (14pt margin, 26pt radius, a heavy shadow) while the
+  content beside it is a <b>docked flush pane</b> with square corners. Two different idioms meeting on one edge
+  is what makes that top-left corner read as a mistake — the rail's rounded shoulder cuts into a pane that was
+  drawn as if the rail weren't there. Four ways out, all on the real Emerald&nbsp;&amp; Gold tokens.
+</p>
+
+<div class="bar">
+  <div class="seg" id="dirs">
+    <button data-dir="a" aria-pressed="true">A · Docked rail</button>
+    <button data-dir="b" aria-pressed="false">B · Inset canvas</button>
+    <button data-dir="c" aria-pressed="false">C · Two peers</button>
+    <button data-dir="d" aria-pressed="false">D · Unified shell</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="seg" id="theme">
+    <button data-theme="light" aria-pressed="true">Light</button>
+    <button data-theme="dark" aria-pressed="false">Dark</button>
+  </div>
+</div>
+
+<div class="stage"><div class="scaler" id="scaler">
+  <div class="device" id="device" data-dir="a">
+    <div class="status"><span class="l">9:41 AM&nbsp;&nbsp;Sun Aug 30</span><span>100%</span></div>
+    <div class="shell">
+      <div class="rail">
+        <div class="mark">i</div>
+        <div class="rlink"><div class="ic">▦</div><span>Home</span></div>
+        <div class="rlink"><div class="ic">▤</div><span>Sales</span></div>
+        <div class="rlink"><div class="ic">⇦</div><span>Returns</span></div>
+        <div class="rlink"><div class="ic">☑</div><span>Stock Check</span></div>
+        <div class="rlink"><div class="ic">▥</div><span>Reports</span></div>
+        <div class="rlink"><div class="ic">◷</div><span>Day Session</span></div>
+        <div class="rlink on"><div class="ic">✿</div><span>Settings</span></div>
+        <div class="grow"></div>
+        <div class="fab">+</div>
+        <div class="fablabel">New</div>
+      </div>
+      <div class="body">
+        <div class="nav">
+          <div class="navhead">
+            <h2>Settings</h2>
+            <p>Device and account preferences</p>
+          </div>
+          <div class="navlist">
+            <div class="nrow on"><div class="ic">◍</div><div><b>Appearance</b><small>System · Light</small></div></div>
+            <div class="nrow"><div class="ic">T</div><div><b>Typography</b><small>Clean</small></div></div>
+            <div class="nrow"><div class="ic">≋</div><div><b>Haptics</b><small>On</small></div></div>
+            <div class="nrow"><div class="ic">¤</div><div><b>Currency</b><small>QAR</small></div></div>
+            <div class="nrow"><div class="ic">⌂</div><div><b>Branch</b><small>Main</small></div></div>
+            <div class="nrow"><div class="ic">▤</div><div><b>Printer &amp; receipt</b><small>With Arabic · 80 mm</small></div></div>
+            <div class="nrow"><div class="ic">▩</div><div><b>New Sale</b><small>Asks for client · locks after sale</small></div></div>
+          </div>
+        </div>
+        <div class="detail">
+          <div class="dhead">
+            <div class="ic">◍</div>
+            <div><h3>Appearance</h3><p>Light, dark, or follow the system.</p></div>
+          </div>
+          <div class="card"><div class="ic">☀</div><div class="grow"><b>Light</b><small>Cream signature, always</small></div><div class="sw off"></div></div>
+          <div class="card"><div class="ic">☾</div><div class="grow"><b>Dark</b><small>For a dim counter</small></div><div class="sw off"></div></div>
+          <div class="card"><div class="ic">◐</div><div class="grow"><b>Follow system</b><small>Switches with the device</small></div><div class="sw"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<div class="notes">
+  <div class="note on" data-note="a">
+    <span class="tag">Direction A</span><span class="rec">Recommended</span>
+    <h4>Docked rail — one idiom, edge to edge</h4>
+    <p>
+      The rail stops floating. It loses its <code>margin</code>, its <code>borderRadius: 26</code> and its shadow,
+      and runs the full height of the window; the panes dock against it on a hairline. <b>There is no corner left
+      to resolve</b> — the awkward shoulder only existed because a rounded card was parked against a square pane.
+    </p>
+    <p>
+      It is also the direction the app is already moving in: New Sale's two panes were just made full-bleed for
+      exactly this reason, and the rail is the last floating thing left. As a bonus the 14pt margin and the 26pt
+      radius come back as usable content width on both sides.
+    </p>
+    <div class="tradeoff">
+      <div><strong>Gains</strong><ul><li>Corner problem disappears entirely</li><li>~28pt of width back</li><li>Matches the docked panes on New Sale</li></ul></div>
+      <div><strong>Costs</strong><ul><li>Loses the "premium floating card" flourish</li><li>Status-bar ink must flip over the rail</li></ul></div>
+      <div><strong>Code</strong><ul><li><code>AstraSideRail</code>: drop margin, radius, shadow; add a right hairline</li><li>One widget touched</li></ul></div>
+    </div>
+  </div>
+
+  <div class="note" data-note="b">
+    <span class="tag">Direction B</span>
+    <h4>Inset canvas — the rail is the backdrop</h4>
+    <p>
+      The rail is flush and dark all the way to the edges, and <b>everything to its right lifts into a single
+      rounded surface</b> floating on it with an even gutter. The corner now reads as deliberate because the
+      gutter is continuous on all four sides — nothing is cut into anything.
+    </p>
+    <p>
+      This is the most "designed" of the four and the one that looks most like a modern desktop sidebar. The cost
+      is that the dark rail colour becomes the window's backdrop, which is a stronger look than the cream canvas
+      the app has now.
+    </p>
+    <div class="tradeoff">
+      <div><strong>Gains</strong><ul><li>Most polished; corner is a feature, not a patch</li><li>Content reads as one object</li></ul></div>
+      <div><strong>Costs</strong><ul><li>Dark backdrop is a bigger visual change</li><li>Loses ~20pt to the gutter</li></ul></div>
+      <div><strong>Code</strong><ul><li>Rail flush as in A</li><li>Shell wraps the content Row in a rounded, clipped container</li></ul></div>
+    </div>
+  </div>
+
+  <div class="note" data-note="c">
+    <span class="tag">Direction C</span>
+    <h4>Two peers — make the content float too</h4>
+    <p>
+      Keep the floating rail exactly as it is, and give the content the <b>same inset, the same radius and the
+      same shadow</b>. The two shapes stop arguing because they are the same shape. This is the smallest change
+      in character — nothing about the rail moves — but it is the most expensive in screen.
+    </p>
+    <p>
+      It also pulls against the New Sale work, where the panes were just docked to the edges to win back the
+      space this direction spends on margin.
+    </p>
+    <div class="tradeoff">
+      <div><strong>Gains</strong><ul><li>Keeps the floating look the app has today</li><li>Consistent, calm</li></ul></div>
+      <div><strong>Costs</strong><ul><li>Spends the most width on margin (~40pt)</li><li>Contradicts New Sale's docked panes</li></ul></div>
+      <div><strong>Code</strong><ul><li><code>TabletPane</code> gains margin + radius + shadow</li><li>Every tablet screen inherits it</li></ul></div>
+    </div>
+  </div>
+
+  <div class="note" data-note="d">
+    <span class="tag">Direction D</span>
+    <h4>Unified shell — one card, split inside</h4>
+    <p>
+      Rail and content live in <b>one rounded card</b>, split internally by a hairline, with the canvas framing
+      the whole app. Only the outer corners are rounded, so — as with A — there is no interior corner to get
+      wrong, but the window keeps a soft, contained silhouette.
+    </p>
+    <p>
+      The catch is the frame: a uniform inset all the way round costs width on both sides and pushes the status
+      bar off the app surface, which reads oddly on a device that is genuinely full-screen.
+    </p>
+    <div class="tradeoff">
+      <div><strong>Gains</strong><ul><li>Soft silhouette, no interior corner</li><li>Reads as one object</li></ul></div>
+      <div><strong>Costs</strong><ul><li>Frame costs width on both sides</li><li>Status bar floats off the surface</li></ul></div>
+      <div><strong>Code</strong><ul><li>Shell wraps rail + panes in one clipped rounded container</li><li>Rail flush inside it</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const device = document.getElementById('device');
+const scaler = document.getElementById('scaler');
+
+function pick(groupId, apply){
+  const group = document.getElementById(groupId);
+  group.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    [...group.querySelectorAll('button')].forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+    apply(btn);
+  });
+}
+
+pick('dirs', btn => {
+  const dir = btn.dataset.dir;
+  device.dataset.dir = dir;
+  document.querySelectorAll('.note').forEach(n => n.classList.toggle('on', n.dataset.note === dir));
+});
+
+pick('theme', btn => {
+  document.documentElement.setAttribute('data-theme', btn.dataset.theme);
+});
+
+// The device is drawn at true tablet points (1194×834) and scaled to fit,
+// so every measurement in the mock is the measurement in the app.
+function fit(){
+  const avail = Math.min(document.body.clientWidth - 40, 1194);
+  const s = avail / 1194;
+  scaler.style.transform = 'scale(' + s + ')';
+  scaler.style.height = (834 * s) + 'px';
+}
+addEventListener('resize', fit);
+fit();
+</script>
+</body>
+</html>

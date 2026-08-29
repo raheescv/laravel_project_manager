@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
@@ -15,11 +16,14 @@ import 'package:invo/features/settings/logic/print_settings_cubit/print_settings
 import 'package:invo/shared/logic/haptics_cubit/haptics_cubit.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/routes.dart';
-import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/features/auth/widgets/v3/connection_sheet.dart';
+import 'package:invo/features/settings/screens/v3/offline_data_screen.dart';
+import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
+import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/settings/widgets/v3/appearance_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/branch_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/currency_sheet.dart';
@@ -28,11 +32,8 @@ import 'package:invo/features/settings/widgets/v3/theme_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/typography_sheet.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, this.onSelectTab});
+  const SettingsScreen({super.key});
 
-  /// Switches the shell to another destination when this screen is inside it —
-  /// see [_openPermissions].
-  final ValueChanged<int>? onSelectTab;
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
@@ -42,12 +43,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// Ignored on phones, which keep the single scrolling card list.
   int _sel = 0;
 
-  /// My Permissions is a shell destination on a tablet, so open it the same
-  /// instant-swap way the rail and the dashboard tiles do. Pushing the route
-  /// would slide a second copy over the shell.
-  void _openPermissions() => context.isTablet && widget.onSelectTab != null
-      ? widget.onSelectTab!(kPermissionsTab)
-      : context.push(Routes.permissions);
+  /// Phones only: the card in the list pushes the permissions page. A tablet
+  /// never gets here — the list is rendered inside the detail pane instead, so
+  /// it stays inside Settings (see [_panel] case 4).
+  void _openPermissions() => context.push(Routes.permissions);
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +76,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _branchCard(context, branch),
                         _printerCard(context),
                         _lockAfterSaleCard(context),
+                        _askClientCard(context),
+                        _tipCard(context),
                         _gridColumnsCard(context),
                         _startScreenCard(context),
                         _permissionsCard(context),
@@ -111,7 +112,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<(IconData, String, String)> _cats(BuildContext context, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
     final print = context.watch<PrintSettingsCubit>();
     final pos = context.watch<PosSettingsCubit>();
-    final haptics = context.watch<HapticsCubit>();
     final auth = context.watch<AuthCubit>();
     final user = auth.user;
     // Count only what the permissions screen lists — the app's own gates —
@@ -119,23 +119,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final permCount = mobilePermissions.where((m) => auth.hasPermission(m.slug)).length;
     final sel = branch.selected;
     return [
-      (Icons.palette_outlined, 'Colour preset', theme.preset.name),
-      (_modeIcon(theme.mode), 'Appearance', theme.mode == AstraMode.system ? 'System · ${theme.isDark ? 'Dark' : 'Light'}' : theme.mode.label),
-      (Icons.text_fields_outlined, 'Typography', theme.typeface.name),
-      (haptics.enabled ? Icons.vibration : Icons.smartphone_outlined, 'Haptics', haptics.enabled ? 'On' : 'Off'),
-      (Icons.payments_outlined, 'Currency', currency.currency.code),
-      (Icons.business, 'Branch', sel == null ? 'Not set' : sel.name),
+      // Preset, brightness and typeface are one subject — how the app looks —
+      // so they are one category with three sections in the panel, not three
+      // entries in the rail. "Appearance" is now the group; the brightness
+      // switch inside it is "Light & dark".
+      (Icons.palette_outlined, 'Appearance',
+          '${theme.preset.name} · ${theme.mode.label} · ${theme.chrome.label}'),
       (Icons.receipt_long_outlined, 'Printer & receipt', '${print.style.label} · ${print.width.label}'),
-      (pos.lockAfterSale ? Icons.lock_clock_outlined : Icons.lock_open_outlined, 'Shared till',
-          pos.lockAfterSale ? 'Locks after each sale' : 'Stays unlocked'),
-      (Icons.grid_view_rounded, 'Catalog grid', '${pos.gridColumns} products per row'),
+      (Icons.point_of_sale_outlined, 'Sale Configuration',
+          '${pos.askClientOnNewSale ? 'Asks for client' : 'No client prompt'} · ${_tipShown(context) ? 'tip on' : 'tip off'} · ${pos.lockAfterSale ? 'locks after sale' : 'stays unlocked'}'),
       (startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
           'Opens on ${_effectiveStartScreen(context).label}'),
       (Icons.verified_user_outlined, 'My permissions', (user?.isAdmin ?? false) ? 'Administrator' : '$permCount granted'),
-      // Read straight off the cubit rather than watched: this is a sub-label on
-      // a nav tile, and the panel beside it carries the live version.
-      (Icons.cloud_off_outlined, 'Offline data', _offlineSummary(_syncState)),
-      (Icons.cloud_outlined, 'Server connection', 'Base URL & tenant'),
+      // Haptics, currency, branch, offline data and the server are all "how
+      // this device is set up" — plumbing you visit once and leave alone, not
+      // five separate places. Grouped, the rail is a short list of subjects
+      // instead of a scroll of knobs.
+      (Icons.tune, 'System configuration', '${currency.currency.code} · ${sel == null ? 'No branch' : sel.name}'),
     ];
   }
 
@@ -237,49 +237,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _panel(BuildContext context, int i, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
     switch (i) {
       case 0:
-        return _panelShell(context, Icons.palette_outlined, 'Colour preset', 'The accent palette used across the app.', [
+        return _panelShell(context, Icons.palette_outlined, 'Appearance', 'Colour, brightness and type — how the app looks.', [
+          _panelSection(context, 'Colour preset', 'The accent palette used across the app.', top: 0),
           _presetCard(context, theme),
           const SizedBox(height: 12),
           AstraButton(label: 'Choose a preset', icon: Icons.palette_outlined, onTap: () => showThemeSheet(context)),
-        ]);
-      case 1:
-        return _panelShell(context, _modeIcon(theme.mode), 'Appearance', 'Light, dark, or follow the system setting.', [
+          _panelSection(context, 'Light & dark', 'Light, dark, or follow the system setting.'),
           for (final m in AstraMode.values) _modeRow(context, theme, m),
-        ]);
-      case 2:
-        return _panelShell(context, Icons.text_fields_outlined, 'Typography', 'The typeface the whole app is set in.', [
+          _panelSection(context, 'Typography', 'The typeface the whole app is set in.'),
           _typographyCard(context, theme),
           const SizedBox(height: 12),
           AstraButton(label: 'Choose a typeface', icon: Icons.text_fields_outlined, onTap: () => showTypographySheet(context)),
+          _panelSection(context, 'Window', 'Where the rail sits, and how the page is framed beside it.'),
+          for (final c in AstraChrome.values) _chromeRow(context, theme, c),
         ]);
-      case 3:
-        final haptics = context.watch<HapticsCubit>();
-        return _panelShell(context, haptics.enabled ? Icons.vibration : Icons.smartphone_outlined, 'Haptics', 'Vibration feedback on every tap.', [
-          _toggleRow(context, 'Haptic feedback', haptics.enabled ? 'On — a tick on each tap' : 'Off', haptics.enabled,
-              () => context.read<HapticsCubit>().toggle()),
+      case 1:
+        // The real screen, hosted in the pane — not a summary card behind a
+        // button that throws the whole window away to show it. Settings on a
+        // tablet is one place you stay in; a category that pushes a page reads
+        // as leaving, and losing the rail to change a paper width is a poor
+        // trade. Phones still push it: there is no second pane to host it in.
+        return _panelShell(context, Icons.receipt_long_outlined, 'Printer & receipt',
+            'Receipt style, paper width and print options.', const [
+          PrintSettingsScreen(embedded: true),
         ]);
-      case 4:
-        return _panelShell(context, Icons.payments_outlined, 'Currency', 'Base currency and the rates used for conversion.', [
-          _currencyCard(context, currency),
-          const SizedBox(height: 12),
-          AstraButton(label: 'Manage currencies', icon: Icons.tune, onTap: () => showCurrencySheet(context)),
-        ]);
-      case 5:
-        return _panelShell(context, Icons.business, 'Branch', 'The branch this device bills against.', [
-          _branchCard(context, branch),
-          const SizedBox(height: 12),
-          AstraButton(label: 'Switch branch', icon: Icons.swap_horiz, onTap: () => showBranchSheet(context)),
-        ]);
-      case 6:
-        return _panelShell(context, Icons.receipt_long_outlined, 'Printer & receipt', 'Receipt style, paper width and print options.', [
-          _printerCard(context),
-          const SizedBox(height: 12),
-          AstraButton(label: 'Open printer settings', icon: Icons.print_outlined, onTap: () => context.push(Routes.printSettings)),
-        ]);
-      case 7:
+      case 2:
         final pos = context.watch<PosSettingsCubit>();
-        return _panelShell(context, pos.lockAfterSale ? Icons.lock_clock_outlined : Icons.lock_open_outlined,
-            'Shared till', 'For a counter more than one cashier serves from.', [
+        // One category for the whole selling flow — opening the ticket, laying
+        // the catalog out, and what the till does once the sale is charged. As
+        // two they read as unrelated, and "Shared till" hid a switch every
+        // counter has an opinion about behind a name only some of them own.
+        return _panelShell(context, Icons.point_of_sale_outlined, 'Sale Configuration',
+            'How this till rings a sale — from opening the ticket to locking up after it.', [
+          _askClientCard(context),
+          const SizedBox(height: 11),
+          _tipCard(context),
+          const SizedBox(height: 11),
+          // "Products per row" is deliberately absent here — see the phone list.
+          // A tablet takes its column count from the width the catalog is given,
+          // and the preference is only ever a floor, so a picker on this screen
+          // would set a number the grid then overrides.
           _toggleRow(
               context,
               'Lock after each sale',
@@ -289,40 +286,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
               pos.lockAfterSale,
               () => context.read<PosSettingsCubit>().toggleLockAfterSale()),
         ]);
-      case 8:
-        return _panelShell(context, Icons.grid_view_rounded, 'Catalog grid',
-            'How many products New Sale fits across in grid view.', [
-          _gridColumnsCard(context),
-          const SizedBox(height: 10),
-          Text('A wider screen fits more — this is the least a row will hold.',
-              style: ui(size: 11, weight: FontWeight.w600, color: context.astra.textMuted)),
-        ]);
-      case 9:
+      case 3:
         // No `final` locals here: every case shares the switch's one scope, and
-        // case 7 already holds `pos`.
+        // case 2 already holds `pos`.
         return _panelShell(context, startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
             'Where this device opens once you sign in — and after an unlock.', [
           for (final option in StartScreen.optionsFor(canViewDashboard: _canViewDashboard(context)))
             _startScreenRow(context, option, option == _effectiveStartScreen(context)),
         ]);
-      case 10:
-        return _panelShell(context, Icons.verified_user_outlined, 'My permissions', 'What this account is allowed to do.', [
-          _permissionsCard(context),
-          const SizedBox(height: 12),
-          AstraButton(label: 'View permissions', icon: Icons.list_alt, onTap: _openPermissions),
-        ]);
-      case 11:
-        return _panelShell(context, Icons.cloud_off_outlined, 'Offline data',
-            'What this till can sell without a network.', [
-          _offlineDataCard(context),
-          const SizedBox(height: 12),
-          AstraButton(
-              label: 'Manage offline data',
-              icon: Icons.cloud_download_outlined,
-              onTap: () => context.push(Routes.offlineData)),
+      case 4:
+        // The real list, hosted in the pane — same reasoning as the printer
+        // category above. Swapping the whole shell to the permissions
+        // destination threw the settings rail away just to read a list of
+        // gates, and there was no way back to the category you came from.
+        return _panelShell(context, Icons.verified_user_outlined, 'My permissions',
+            'What this account is allowed to do.', const [
+          PermissionsScreen(embedded: true),
         ]);
       default:
-        return _panelShell(context, Icons.cloud_outlined, 'Server connection', 'The API base URL and tenant this app talks to.', [
+        final haptics = context.watch<HapticsCubit>();
+        return _panelShell(context, Icons.tune, 'System configuration',
+            'How this device is set up — feedback, money, branch, offline data and the server behind it.', [
+          _panelSection(context, 'Haptics', 'Vibration feedback on every tap.', top: 0),
+          _toggleRow(context, 'Haptic feedback', haptics.enabled ? 'On — a tick on each tap' : 'Off', haptics.enabled,
+              () => context.read<HapticsCubit>().toggle()),
+          _panelSection(context, 'Currency', 'Base currency and the rates used for conversion.'),
+          _currencyCard(context, currency),
+          const SizedBox(height: 12),
+          AstraButton(label: 'Manage currencies', icon: Icons.tune, onTap: () => showCurrencySheet(context)),
+          _panelSection(context, 'Branch', 'The branch this device bills against.'),
+          _branchCard(context, branch),
+          const SizedBox(height: 12),
+          AstraButton(label: 'Switch branch', icon: Icons.swap_horiz, onTap: () => showBranchSheet(context)),
+          // The live sync line, not a static blurb: it is the one thing on this
+          // panel that changes on its own, and the rail no longer carries it.
+          _panelSection(context, 'Offline data', _offlineSummary(_syncState)),
+          const OfflineDataScreen(embedded: true),
+          _panelSection(context, 'Server connection', 'The API base URL and tenant this app talks to.'),
           AstraButton(label: 'Connection settings', icon: Icons.cloud_outlined, onTap: () => ConnectionSheet.show(context)),
         ]);
     }
@@ -355,6 +355,124 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// A labelled divider inside a detail panel, for categories that hold more
+  /// than one setting (Appearance: preset, brightness, typeface). The first
+  /// section passes `top: 0` — [_panelShell] has already spaced it.
+  Widget _panelSection(BuildContext context, String title, String desc, {double top = 22}) {
+    final p = context.astra;
+    return Container(
+      // A rule across the panel, not just a gap: these sections used to be
+      // separate categories, and one scroll of cards runs them together — the
+      // last control of one section and the next section's label read as a pair
+      // without a line to end it on. Suppressed above the first section, which
+      // has the panel head over it already.
+      margin: EdgeInsets.only(top: top),
+      padding: EdgeInsets.only(top: top > 0 ? 18 : 0, bottom: 12),
+      decoration: top > 0
+          ? BoxDecoration(border: Border(top: BorderSide(color: p.hairline)))
+          : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title.toUpperCase(), style: ui(size: 10.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 1.1)),
+          const SizedBox(height: 3),
+          Text(desc, style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary)),
+        ],
+      ),
+    );
+  }
+
+  /// One window-chrome option, drawn as a miniature of the layout it picks:
+  /// the rail's bar on the left and the page beside it, framed the way that
+  /// chrome frames it. A one-line label cannot distinguish "docked" from
+  /// "inset canvas" — the whole choice is a shape, so the row shows the shape.
+  ///
+  /// Applies on tap, like every other picker here.
+  Widget _chromeRow(BuildContext context, ThemeCubit theme, AstraChrome c) {
+    final p = context.astra;
+    final active = theme.chrome == c;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => context.read<ThemeCubit>().setChrome(c),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: active ? p.tint : p.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: active ? p.primary : p.cardBorder, width: active ? 1.5 : 1),
+        ),
+        child: Row(
+          children: [
+            _chromeThumb(context, c),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(c.label, style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                  const SizedBox(height: 2),
+                  Text(c.tagline, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                ],
+              ),
+            ),
+            if (active) Icon(Icons.check_circle, size: 20, color: p.primary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// A 56x40 sketch of the window under [c] — same geometry as the real thing,
+  /// scaled down: rail bar, page surface, and whatever gutter sits between them.
+  Widget _chromeThumb(BuildContext context, AstraChrome c) {
+    final p = context.astra;
+    final rail = Container(
+      width: 13,
+      decoration: BoxDecoration(
+        color: p.darkSurface,
+        borderRadius: c == AstraChrome.peers ? BorderRadius.circular(4) : null,
+      ),
+    );
+    final page = Container(
+      decoration: BoxDecoration(
+        color: p.isDark ? Colors.white24 : Colors.white,
+        borderRadius: c == AstraChrome.docked || c == AstraChrome.unified
+            ? null
+            : BorderRadius.circular(4),
+      ),
+    );
+    final pad = switch (c) {
+      AstraChrome.insetCanvas => const EdgeInsets.fromLTRB(0, 3, 3, 3),
+      AstraChrome.peers => const EdgeInsets.fromLTRB(3, 0, 0, 0),
+      _ => EdgeInsets.zero,
+    };
+    final inner = Row(children: [
+      rail,
+      Expanded(child: Padding(padding: pad, child: page)),
+    ]);
+    return Container(
+      width: 56,
+      height: 40,
+      padding: switch (c) {
+        AstraChrome.peers => const EdgeInsets.all(3),
+        AstraChrome.unified => const EdgeInsets.all(4),
+        _ => EdgeInsets.zero,
+      },
+      decoration: BoxDecoration(
+        // The backdrop is what each chrome actually shows behind everything:
+        // the rail's own colour for inset canvas, the page canvas otherwise.
+        color: c == AstraChrome.insetCanvas ? p.darkSurface : p.canvas,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: p.hairline),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: c == AstraChrome.unified
+          ? ClipRRect(borderRadius: BorderRadius.circular(6), child: inner)
+          : inner,
+    );
+  }
+
   /// An inline appearance-mode option (Light / Dark / System).
   Widget _modeRow(BuildContext context, ThemeCubit theme, AstraMode m) {
     final p = context.astra;
@@ -383,6 +501,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   /// An inline labelled toggle row (used for Haptics in the detail pane).
+  /// Whether the business offers a tip at all, from the web's Sale
+  /// Configuration. The device switch below can only hide the row, never bring
+  /// it back, so this is what decides whether that switch does anything.
+  bool _tipAllowedByBusiness() =>
+      serviceLocator<LocalStorageService>().tipEnabled ?? true;
+
+  /// Whether the tip row actually appears at checkout — both answers agreeing.
+  bool _tipShown(BuildContext context) =>
+      _tipAllowedByBusiness() && context.watch<PosSettingsCubit>().showTip;
+
+  /// Show or hide the "Add a Tip" row at Review & Pay, on this device only.
+  ///
+  /// When the web has tips switched off there is nothing for the till to decide,
+  /// so the row says so and stays inert rather than offering a switch that would
+  /// change nothing.
+  Widget _tipCard(BuildContext context) {
+    final pos = context.watch<PosSettingsCubit>();
+    if (!_tipAllowedByBusiness()) {
+      return _staticRow(context, 'Ask for a tip',
+          'Turned off for the business in Sale Configuration on the web.');
+    }
+    return _toggleRow(
+      context,
+      'Ask for a tip',
+      pos.showTip
+          ? 'On — the tip row shows at Review & Pay'
+          : 'Off — hidden on this device; other tills are unaffected',
+      pos.showTip,
+      () {
+        final next = !pos.showTip;
+        pos.setShowTip(next);
+        // A tip already chosen on the open ticket would otherwise stay on the
+        // total with no row left to change it.
+        if (!next) context.read<CartCubit>().setTip(0);
+      },
+    );
+  }
+
+  /// A settings row with nothing to toggle — a state the till is told about
+  /// rather than one it chooses.
+  Widget _staticRow(BuildContext context, String title, String sub) {
+    final p = context.astra;
+    return AstraCard(
+      radius: 14,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: ui(size: 13.5, weight: FontWeight.w700, color: p.textMuted)),
+                Text(sub, style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Icon(Icons.lock_outline, size: 15, color: p.textMuted),
+        ],
+      ),
+    );
+  }
+
   Widget _toggleRow(BuildContext context, String title, String sub, bool value, VoidCallback onTap) {
     final p = context.astra;
     return GestureDetector(
@@ -517,7 +696,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _versionLine(BuildContext context) {
     final p = context.astra;
     return Center(
-      child: Text('Invo · Astra POS · v1.0.0',
+      child: Text('QLOUD POS · v1.0.0',
           style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
     );
   }
@@ -593,7 +772,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Appearance', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text('Light & dark', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
                 Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),
@@ -706,6 +885,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         : autoPrint
                             ? 'MPIN or fingerprint to carry on — no re-login'
                             : 'Locks once charged — turn on auto-print so receipts still print',
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          _switch(context, on),
+        ],
+      ),
+    );
+  }
+
+  /// Whether New Sale opens the client form the moment the screen loads, on a
+  /// ticket that is still an empty walk-in.
+  ///
+  /// A salon takes the name before anything else; a counter serving a queue
+  /// wants the catalog on screen, and pays a tap per sale dismissing a form it
+  /// never fills in. The client can still be set from the CLIENT selector at any
+  /// point, so turning this off removes a prompt, not a capability.
+  Widget _askClientCard(BuildContext context) {
+    final p = context.astra;
+    final on = context.watch<PosSettingsCubit>().askClientOnNewSale;
+    return AstraCard(
+      radius: 14,
+      onTap: () => context.read<PosSettingsCubit>().toggleAskClientOnNewSale(),
+      child: Row(
+        children: [
+          IconChip(
+            icon: on ? Icons.person_add_alt_1_outlined : Icons.person_outline,
+            size: 34,
+            radius: 9,
+            bg: p.tint,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Ask for client on new sale',
+                    style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text(
+                    on
+                        ? 'Opens the client form as New Sale loads'
+                        : 'Starts on the catalog — set the client from CLIENT',
                     style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),

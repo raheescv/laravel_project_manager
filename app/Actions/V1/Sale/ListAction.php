@@ -23,7 +23,7 @@ class ListAction
         // still honour mine_only when the app requests it.
         $scopeToSelf = $user && (
             ! empty($filters['mine_only'])
-            || ($user->type === 'employee' && ! $user->is_admin)
+            || $user->seesOnlyOwnRecords()
         );
 
         $query = Sale::query()

@@ -30,6 +30,7 @@ import 'package:invo/shared/widgets/offline_image.dart';
 import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 part 'new_sale_catalog_views.dart';
 
@@ -98,8 +99,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         }
       }
       // Prompt for the client up front so the ticket starts with who's in the
-      // chair. Only on a fresh ticket (still the default Walk-in, no items).
-      if (cart.customerName == AppStrings.walkInCustomer && cart.isEmpty) {
+      // chair. Only on a fresh ticket (still the default Walk-in, no items), and
+      // only where the till asked for it — Settings → New Sale. A counter
+      // serving a queue dismisses this form on every sale.
+      if (context.read<PosSettingsCubit>().askClientOnNewSale &&
+          cart.customerName == AppStrings.walkInCustomer &&
+          cart.isEmpty) {
         _pickClient();
       }
     });
@@ -128,12 +133,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     cart.add(product);
     if (!cat.state.servingCached || product.isService) return;
     if (product.totalStock > onTicket) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        duration: const Duration(seconds: 3),
-        content: Text('${product.name} may be out of stock — the catalog is offline'),
-      ));
+    AstraSnack.show(context, '${product.name} may be out of stock — the catalog is offline');
   }
 
   /// Infinite scroll: pull the next page in once the user nears the bottom.
@@ -198,6 +198,47 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     Widget cartPart(Widget Function(CartCubit) build) =>
         BlocBuilder<CartCubit, CartState>(builder: (context, _) => build(context.read<CartCubit>()));
 
+    // Tablet: two panes that each carry their own head, and no band across the
+    // top of the window. The phone header stretched over ~1200pt put the title
+    // and the client selector in a sea of empty space and pushed the first row
+    // of products past halfway down the screen, so on a tablet the catalog
+    // column keeps only the controls that filter it and everything about the
+    // ticket — title, sale day, client, staff, lines, total — moves into the
+    // rail on the right, where it is all one subject.
+    if (tablet) {
+      return Scaffold(
+        backgroundColor: surface,
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: BlocBuilder<CatalogCubit, CatalogState>(
+                  builder: (context, _) {
+                    final cat = context.read<CatalogCubit>();
+                    return Column(
+                      children: [
+                        _tabletToolbar(cat),
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(14, 0, 14, 2),
+                          child: _CachedCatalogNotice(),
+                        ),
+                        _pinnedCategories(cat, tablet: true),
+                        Expanded(child: _body(cat, tablet: true)),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              cartPart(_tabletCartPanel),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: surface,
       body: Column(
@@ -207,12 +248,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             child: BlocBuilder<CatalogCubit, CatalogState>(
               builder: (context, _) {
                 final cat = context.read<CatalogCubit>();
-                if (!tablet) return _body(cat);
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                return Column(
                   children: [
+                    _phoneToolbar(cat),
                     Expanded(child: _body(cat)),
-                    cartPart(_tabletCartPanel),
                   ],
                 );
               },
@@ -220,17 +259,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           ),
         ],
       ),
-      // Phone keeps the floating cart bar; tablet has the persistent panel.
-      bottomNavigationBar: tablet
-          ? null
-          : cartPart((cart) => cart.isEmpty
-              ? const SizedBox.shrink()
-              : SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                    child: _cartBar(cart),
-                  ),
-                )),
+      // The phone keeps its floating cart bar; the tablet rail is always there.
+      bottomNavigationBar: cartPart((cart) => cart.isEmpty
+          ? const SizedBox.shrink()
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                child: _cartBar(cart),
+              ),
+            )),
     );
   }
 
@@ -246,32 +283,40 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         : Colors.black.withValues(alpha: 0.04);
   }
 
-  /// Flat centered serif title framed by two borderless ghost buttons, then the
-  /// joined Client / Staff selector.
+  /// Title, sale day and the two ghost buttons on one line, then the joined
+  /// Client / Staff selector.
+  ///
+  /// The title used to be centred with the day pill on a line of its own, which
+  /// spent a whole row on a pill and left the space either side of the title
+  /// empty. Left-aligning it puts both on one line and gives the catalog the
+  /// row back — the same move the tablet rail makes.
   Widget _header(CartCubit cart) {
     final p = context.astra;
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+        padding: const EdgeInsets.fromLTRB(11, 6, 14, 8),
         child: Column(
           children: [
             Row(
               children: [
-                _ghostBtn(Icons.chevron_left, _close),
-                Expanded(
-                  child: Text(
-                    cart.isEditing ? 'Edit Sale' : 'New Sale',
-                    textAlign: TextAlign.center,
-                    style: serif(size: 23, color: p.ink),
+                _ghostBtn(Icons.chevron_left, _close, size: 38),
+                Text(cart.isEditing ? 'Edit Sale' : 'New Sale', style: serif(size: 21, color: p.ink)),
+                const SizedBox(width: 9),
+                const Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: _SessionDateLine(compact: true),
                   ),
                 ),
+                const SizedBox(width: 6),
                 const PendingSalesBadge(),
-                _ghostBtn(Icons.close, _close),
+                const SizedBox(width: 2),
+                _ghostBtn(Icons.close, _close, size: 38),
               ],
             ),
-            const _SessionDateLine(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 11),
             _whoRow(cart),
             const _CachedCatalogNotice(),
           ],
@@ -281,7 +326,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   /// Borderless header icon button (back / close).
-  Widget _ghostBtn(IconData icon, VoidCallback onTap) {
+  Widget _ghostBtn(IconData icon, VoidCallback onTap, {double size = 42}) {
     final p = context.astra;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -290,9 +335,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         onTap();
       },
       child: SizedBox(
-        width: 42,
-        height: 42,
-        child: Icon(icon, size: 23, color: p.textSecondary),
+        width: size,
+        height: size,
+        child: Icon(icon, size: size * 0.55, color: p.textSecondary),
       ),
     );
   }
@@ -386,37 +431,133 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  /// Persistent live-cart panel for the tablet split layout.
-  Widget _tabletCartPanel(CartCubit cart) {
+  /// The catalog column's own chrome: search, scanner, type filter and the
+  /// grid/list switch, on one line when there is room for it.
+  ///
+  /// This is all the tablet keeps at the top of the catalog — everything else
+  /// the phone header carries belongs to the ticket, and lives in the rail.
+  Widget _tabletToolbar(CatalogCubit cat) => Padding(
+        padding: EdgeInsets.fromLTRB(14, 8 + MediaQuery.viewPaddingOf(context).top, 14, 4),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            // Under ~660pt (a small tablet in portrait, beside the rail) the
+            // four controls can't share a line without the search field
+            // shrinking to a slot, so the filters drop to their own row.
+            if (c.maxWidth < 660) {
+              return Column(
+                children: [
+                  _searchRow(cat, height: 46),
+                  const SizedBox(height: 10),
+                  _typeFilterRow(cat),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: _searchRow(cat, height: 46)),
+                const SizedBox(width: 10),
+                _typeSegmented(cat, compact: true),
+                const SizedBox(width: 8),
+                _viewToggle(),
+              ],
+            );
+          },
+        ),
+      );
+
+  /// Client and staff stacked in one card — the rail is too narrow for the
+  /// phone's side-by-side pair, where each half would ellipsis away the name it
+  /// exists to show.
+  Widget _whoStack(CartCubit cart) {
     final p = context.astra;
     return Container(
-      width: 380,
-      margin: const EdgeInsets.fromLTRB(0, 14, 14, 14),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: p.sheet,
-        borderRadius: BorderRadius.circular(24),
+        color: p.card,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: p.hairline),
         boxShadow: context.astraTheme.softShadow,
+      ),
+      child: Column(
+        children: [
+          _whoSeg(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient),
+          Container(height: 1, color: p.hairline),
+          _whoSeg(
+            Icons.brush,
+            'STAFF',
+            cart.stylistName.isEmpty ? 'Me' : cart.stylistName,
+            _pickStylist,
+            avatarUrl: _staffAvatarUrl(cart),
+            avatarHeaders: context.read<AuthCubit>().config.assetHeaders,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The ticket rail — the whole sale in one column: what screen this is, which
+  /// day it books into, who it is for, what is on it and what it comes to.
+  ///
+  /// Width tracks the window so a 13" landscape gives the lines room to breathe
+  /// without a small tablet in portrait handing the rail half its screen.
+  Widget _tabletCartPanel(CartCubit cart) {
+    final p = context.astra;
+    final railW = (MediaQuery.sizeOf(context).width * 0.32).clamp(320.0, 430.0);
+    return Container(
+      width: railW,
+      // Docked, not floating: the rail runs to the right and bottom edges of the
+      // window so the total is at the foot of the screen instead of above a band
+      // of empty canvas. Only the left corners are rounded — that edge is the
+      // one that meets the catalog.
+      padding: EdgeInsets.fromLTRB(
+        14,
+        10 + MediaQuery.viewPaddingOf(context).top,
+        14,
+        6 + MediaQuery.viewPaddingOf(context).bottom,
+      ),
+      decoration: BoxDecoration(
+        color: p.sheet,
+        borderRadius: const BorderRadius.horizontal(left: Radius.circular(26)),
+        border: Border(left: BorderSide(color: p.hairline)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(Icons.shopping_bag_outlined, size: 18, color: p.primary),
-              const SizedBox(width: 9),
-              Flexible(
-                child: Text('Current ticket',
-                    maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 18, color: p.ink)),
+              Text(cart.isEditing ? 'Edit Sale' : 'New Sale',
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 21, color: p.ink)),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: _SessionDateLine(compact: true),
+                ),
               ),
+              const SizedBox(width: 6),
+              const PendingSalesBadge(),
+              const SizedBox(width: 2),
+              _ghostBtn(Icons.close, _close, size: 34),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _whoStack(cart),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Icon(Icons.shopping_bag_outlined, size: 16, color: p.primary),
               const SizedBox(width: 8),
-              const Spacer(),
+              Expanded(
+                child: Text('Current ticket',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 12, weight: FontWeight.w800, color: p.ink, letterSpacing: 0.5)),
+              ),
               Text('${cart.count} ${cart.count == 1 ? 'item' : 'items'}',
                   style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Expanded(
             child: cart.isEmpty
                 ? EmptyState(
@@ -426,15 +567,18 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   )
                 : ListView(
                     padding: EdgeInsets.zero,
-                    children: [
-                      for (final line in cart.lines) cartLineCard(context, line),
-                      const SizedBox(height: 3),
-                      OrderDiscountRow(cart: cart),
-                    ],
+                    children: [for (final line in cart.lines) cartLineCard(context, line)],
                   ),
           ),
+          // The discount and the total are pinned to the foot of the rail rather
+          // than riding the end of the line list: on the phone you scroll to the
+          // bottom to pay, but here the total is always on screen, and a discount
+          // parked below the fold is a discount nobody applies. It also closes
+          // the gap that was left under the Charge card.
           if (!cart.isEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 2),
+            OrderDiscountRow(cart: cart),
+            const SizedBox(height: 10),
             cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review)),
           ],
         ],
@@ -442,7 +586,42 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _body(CatalogCubit cat) {
+  /// The phone's catalog head — search, type filter and the category rail —
+  /// held above the scroll view rather than riding the top of it. They used to
+  /// be the first slivers in the list, so a couple of rows in they were gone
+  /// and switching category or typing a code cost a scroll back to the top.
+  ///
+  /// The tablet keeps its own toolbar and only pins the rail; both end at the
+  /// same hairline.
+  Widget _phoneToolbar(CatalogCubit cat) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Column(
+              children: [
+                _searchRow(cat),
+                const SizedBox(height: 16),
+                _typeFilterRow(cat),
+              ],
+            ),
+          ),
+          _pinnedCategories(cat),
+        ],
+      );
+
+  /// Category rail plus the hairline that marks where the fixed head stops and
+  /// the products start scrolling under it.
+  Widget _pinnedCategories(CatalogCubit cat, {bool tablet = false}) => Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: tablet ? 6 : 14, bottom: 10),
+            child: _categoryChips(cat, tablet: tablet),
+          ),
+          Container(height: 1, color: context.astra.hairline),
+        ],
+      );
+
+  Widget _body(CatalogCubit cat, {bool tablet = false}) {
     // Full-screen states only apply before anything has loaded; once products
     // exist we keep them on screen while a search/filter reloads in place.
     if (cat.loading && cat.isEmpty) {
@@ -462,24 +641,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         controller: _scrollCtl,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
-                children: [
-                  _searchRow(cat),
-                  const SizedBox(height: 16),
-                  _typeFilterRow(cat),
-                ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 14, bottom: 4),
-              child: _categoryChips(cat),
-            ),
-          ),
           if (cat.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
@@ -493,10 +654,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           else if (_view == _ProductView.grid)
             // Watched, so changing the density in Settings reflows the catalog
             // without the till having to leave and come back.
-            _productGrid(cat, context.watch<PosSettingsCubit>().gridColumns)
+            _productGrid(cat, context.watch<PosSettingsCubit>().gridColumns, tablet: tablet)
           else
-            _productList(cat),
-          SliverToBoxAdapter(child: _footer(cat)),
+            _productList(cat, tablet: tablet),
+          SliverToBoxAdapter(child: _footer(cat, tablet: tablet)),
         ],
       ),
     );
@@ -512,7 +673,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   /// Bottom of the list: a spinner while the next page loads, otherwise just
   /// breathing room so the floating cart bar never covers the last row.
-  Widget _footer(CatalogCubit cat) {
+  Widget _footer(CatalogCubit cat, {bool tablet = false}) {
     if (cat.loadingMore) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 22),
@@ -521,7 +682,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
       );
     }
-    return const SizedBox(height: 120);
+    // Room for the phone's floating cart bar; on a tablet the rail sits beside
+    // the grid and covers nothing, so the last row only needs breathing room —
+    // plus whatever the home indicator takes, since the column runs to the edge.
+    return SizedBox(height: tablet ? 24 + MediaQuery.viewPaddingOf(context).bottom : 120);
   }
 
   String _metaLine(Product s) => [
@@ -790,7 +954,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 /// its real date, which is the case worth seeing (a day opened yesterday and
 /// never closed still books today's sales under yesterday).
 class _SessionDateLine extends StatelessWidget {
-  const _SessionDateLine();
+  const _SessionDateLine({this.compact = false});
+
+  /// Inline beside the screen title (the tablet rail), where the word SESSION
+  /// only restates what the title already says. A closed day still shouts —
+  /// that one is the whole reason the line is on screen.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -802,8 +971,9 @@ class _SessionDateLine extends StatelessWidget {
         final date = open ? DateTime.tryParse(user?.daySessionDate ?? '') : DateTime.now();
         if (date == null) return const SizedBox.shrink();
         final accent = open ? AstraPalette.success : AstraPalette.danger;
+        final showLabel = !(compact && open);
         return Padding(
-          padding: const EdgeInsets.only(top: 2),
+          padding: EdgeInsets.only(top: compact ? 0 : 2),
           child: Container(
             padding: const EdgeInsets.fromLTRB(9, 5, 11, 5),
             decoration: BoxDecoration(
@@ -819,13 +989,15 @@ class _SessionDateLine extends StatelessWidget {
                   decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 7),
-                Text(open ? 'SESSION' : 'DAY CLOSED',
-                    style: ui(
-                        size: 9.5,
-                        weight: FontWeight.w800,
-                        color: open ? p.goldText : accent,
-                        letterSpacing: 1.2)),
-                const SizedBox(width: 7),
+                if (showLabel) ...[
+                  Text(open ? 'SESSION' : 'DAY CLOSED',
+                      style: ui(
+                          size: 9.5,
+                          weight: FontWeight.w800,
+                          color: open ? p.goldText : accent,
+                          letterSpacing: 1.2)),
+                  const SizedBox(width: 7),
+                ],
                 Text(Dates.weekday(date),
                     style: ui(size: 11.5, weight: FontWeight.w700, color: p.ink)),
               ],

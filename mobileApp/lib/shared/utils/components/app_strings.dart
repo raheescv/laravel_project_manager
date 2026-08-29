@@ -3,7 +3,7 @@
 class AppStrings {
   AppStrings._();
 
-  static const String appName = 'Invo';
+  static const String appName = 'QLOUD POS';
 
   // Generic / errors.
   static const String somethingWentWrong =
@@ -18,7 +18,7 @@ class AppStrings {
   static const String enterPin = 'Enter PIN';
   static const String username = 'Username';
   static const String password = 'Password';
-  static const String biometricReason = 'Authenticate to sign in to Invo';
+  static const String biometricReason = 'Authenticate to sign in to QLOUD POS';
 
   // Catalog / sale.
   /// Shown (and stored) as the customer name when a ticket has no named client.

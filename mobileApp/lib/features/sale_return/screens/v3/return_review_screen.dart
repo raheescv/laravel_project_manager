@@ -12,8 +12,9 @@ import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
-import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/widgets/qloud_logo.dart';
 import 'package:invo/features/sale/widgets/v3/custom_payment_sheet.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 /// Step 3 of a return: pick how the refund is issued and confirm. Mirrors the
 /// Review & Pay screen (refund-method selector, live balance, confirm CTA).
@@ -88,9 +89,7 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
 
   void _error(String m) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(m)));
+    AstraSnack.error(context, m);
   }
 
   @override
@@ -157,7 +156,7 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
         children: [
           Column(
             children: [
-              const InvoLogomark(height: 28),
+              const QloudLogomark(height: 28),
               const SizedBox(height: 6),
               Text('REFUND', style: ui(size: 11, weight: FontWeight.w700, color: p.ink, letterSpacing: 4)),
               const SizedBox(height: 3),

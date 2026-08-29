@@ -14,7 +14,12 @@ import 'package:invo/shared/widgets/tablet_widgets.dart';
 /// grouped by module; each row reflects whether the signed-in user holds that
 /// permission — the same check the router/dashboard guards use.
 class PermissionsScreen extends StatelessWidget {
-  const PermissionsScreen({super.key});
+  const PermissionsScreen({super.key, this.embedded = false});
+
+  /// Hosted inside the Settings detail pane rather than standing as its own
+  /// page — the pane already carries the head and the framing, so this hands
+  /// back the body alone. Same flag, same reasoning as [PrintSettingsScreen].
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +32,8 @@ class PermissionsScreen extends StatelessWidget {
     for (final perm in mobilePermissions) {
       groups.putIfAbsent(perm.group, () => []).add(perm);
     }
+
+    if (embedded) return _embedded(context, auth, groups, allowed, restricted);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -71,6 +78,37 @@ class PermissionsScreen extends StatelessWidget {
                 ],
               ),
       ),
+    );
+  }
+
+  /// The same list as the tablet page, laid out for the Settings detail pane:
+  /// counters across the top, then every group down one column. The page's
+  /// two-up split is deliberately not used — the pane is 620pt wide, so a
+  /// second column would only make each row narrower.
+  Widget _embedded(BuildContext context, AuthCubit auth, Map<String, List<MobilePermission>> groups,
+      int allowed, int restricted) {
+    final p = context.astra;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _kpi(context, allowed.toString(), 'Allowed', AstraPalette.success)),
+            const SizedBox(width: 10),
+            Expanded(
+                child: _kpi(context, restricted.toString(), 'Restricted',
+                    restricted == 0 ? p.textMuted : AstraPalette.danger)),
+            const SizedBox(width: 10),
+            Expanded(child: _kpi(context, mobilePermissions.length.toString(), 'Total', p.accent)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (auth.user?.isAdmin ?? false) ...[
+          _adminNote(context),
+          const SizedBox(height: 16),
+        ],
+        _groupColumn(context, auth, groups.entries),
+      ],
     );
   }
 

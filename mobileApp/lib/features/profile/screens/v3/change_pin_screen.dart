@@ -10,6 +10,7 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 /// Wired to POST /change-pin. The backend auth is PIN-based, so this is the
 /// real "Change Password" equivalent from the design.
@@ -63,7 +64,7 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
       // and for signing in offline. Retire the old one here, or it keeps
       // working on this till after the server has stopped accepting it.
       unawaited(context.read<AuthCubit>().applyChangedPin(_next.text));
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN updated')));
+      AstraSnack.success(context, 'PIN updated');
       _close();
     } else {
       _snack(_profile.state.errorMessage ?? 'Could not update PIN.');
@@ -71,9 +72,7 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
-  void _snack(String m) => ScaffoldMessenger.of(context)
-    ..clearSnackBars()
-    ..showSnackBar(SnackBar(content: Text(m)));
+  void _snack(String m) => AstraSnack.error(context, m);
 
   /// Leave the form: hand back to the host when embedded (no route to pop —
   /// the detail pane just switches), otherwise pop the route.

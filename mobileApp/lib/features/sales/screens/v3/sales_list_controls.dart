@@ -30,9 +30,9 @@ extension _SalesListControls on _SalesListScreenState {
               Expanded(child: _field('SORT', _selBox(_sortLabel, Icons.swap_vert_rounded, _openSort))),
             ],
           ),
-          // Only an admin sees the whole till's sales, so only an admin has
-          // anything to narrow by staff.
-          if (_isAdmin) ...[
+          // Only someone who sees the whole till's sales has anything to
+          // narrow by staff.
+          if (_seesAllSales) ...[
             const SizedBox(height: 13),
             _field('STAFF', _selBox(_staffLabel, Icons.badge_outlined, _openStaffSheet)),
           ],

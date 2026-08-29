@@ -225,9 +225,15 @@ class CartCubit extends Cubit<CartState> {
   /// quantity stepper's increment.
   double get defaultQty => _storage.defaultQuantity ?? 1;
 
-  /// Whether the "Add a Tip" option is shown at checkout (Settings → Sale
-  /// Configuration → Enable Tip on the web). Defaults to enabled offline.
-  bool get tipEnabled => _storage.tipEnabled ?? true;
+  /// Whether the "Add a Tip" row is shown at checkout.
+  ///
+  /// Two answers have to agree: the business's, from the web (Settings → Sale
+  /// Configuration → Enable Tip, cached by `pullAndCacheSaleSettings`), and this
+  /// device's, from Settings → Sale Configuration → Show tip. The device one is
+  /// a veto — a counter that never takes tips hides the row for itself without
+  /// changing the setting for the salon's other tills. Both default to enabled,
+  /// so an app that has never synced behaves as it always has.
+  bool get tipEnabled => (_storage.tipEnabled ?? true) && (_storage.posShowTip ?? true);
 
   /// Pulls the latest sale settings (default quantity, tip availability) from
   /// the server and caches them so the POS reflects the current web settings.
@@ -237,8 +243,11 @@ class CartCubit extends Cubit<CartState> {
     try {
       // The caching itself is shared with first-run provisioning; the only part
       // that belongs to the ticket is clearing a tip that has been switched off.
-      final settings = await pullAndCacheSaleSettings();
-      if (settings.tipEnabled == false) emit(state.copyWith(tipPercent: 0));
+      await pullAndCacheSaleSettings();
+      // Read back through [tipEnabled] rather than the response: a tip this
+      // device has vetoed must come off the ticket too, not just one the
+      // business turned off.
+      if (!tipEnabled) emit(state.copyWith(tipPercent: 0));
     } catch (_) {
       // Offline or server error — keep the cached values.
     }

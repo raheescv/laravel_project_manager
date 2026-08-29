@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/utils/components/theme/chrome.dart';
 import 'package:invo/shared/utils/components/theme/palette.dart';
 import 'package:invo/shared/utils/components/theme/typeface.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
@@ -50,6 +51,7 @@ class ThemeCubit extends Cubit<ThemeState> with WidgetsBindingObserver {
       preset: AstraPresets.byId(st.presetId),
       mode: AstraModeX.fromId(st.themeMode),
       typeface: AstraTypefaces.byId(st.typefaceId),
+      chrome: AstraChrome.byId(st.chromeId),
       platformIsDark: _platformIsDark(),
     );
   }
@@ -64,6 +66,7 @@ class ThemeCubit extends Cubit<ThemeState> with WidgetsBindingObserver {
   AstraPalette get preset => state.preset;
   AstraMode get mode => state.mode;
   AstraTypeface get typeface => state.typeface;
+  AstraChrome get chrome => state.chrome;
   bool get isDark => state.isDark;
   AstraPalette get palette => state.palette;
 
@@ -71,6 +74,12 @@ class ThemeCubit extends Cubit<ThemeState> with WidgetsBindingObserver {
     if (p.id == state.preset.id) return;
     emit(state.copyWith(preset: p));
     await _storage.setPresetId(p.id);
+  }
+
+  Future<void> setChrome(AstraChrome c) async {
+    if (c == state.chrome) return;
+    emit(state.copyWith(chrome: c));
+    await _storage.setChromeId(c.id);
   }
 
   Future<void> setTypeface(AstraTypeface t) async {

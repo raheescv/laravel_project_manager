@@ -200,6 +200,13 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
+  /// A rank-and-file employee sees only their own figures — the server hard-
+  /// scopes every dashboard and report query to them (User::seesOnlyOwnRecords)
+  /// — so the leaderboard would be a board of one, restating the revenue the
+  /// hero already shows. Skipped rather than drawn as a rank-1 medal.
+  bool get _selfScoped =>
+      serviceLocator<AuthCubit>().user?.isNonAdminEmployee ?? false;
+
   /// The business day the dashboard reports on: the branch's open day-session
   /// date, or the calendar date when no session is open — the same anchor the
   /// server uses for the KPI cards (App\Actions\V1\Dashboard\GetAction).
@@ -227,6 +234,7 @@ class AdminCubit extends Cubit<AdminState> {
   /// day-session date. Sending no range would rank them on every sale ever
   /// recorded, which puts the same names on the board whatever happened today.
   Future<void> _loadTopStylists(String date) async {
+    if (_selfScoped) return;
     try {
       final emp = await _repo.report(type: 'employeewise', startDate: date, endDate: date);
       final rows = (emp['rows'] as List?) ?? const [];

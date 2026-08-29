@@ -267,7 +267,9 @@ Widget cartSummaryCard(BuildContext context, CartCubit cart, {required VoidCallb
       children: [
         sumRow('Subtotal', Money.of(cart.subtotal), p.textSecondary),
         if (cart.totalDiscount > 0) sumRow('Discount', '− ${Money.of(cart.totalDiscount)}', p.goldText),
-        sumRow('Tax', Money.of(cart.taxTotal), p.textSecondary),
+        // A zero tax line is a row that says nothing; the ones that do carry
+        // tax still show it. Same rule the discount row already follows.
+        if (cart.taxTotal > 0) sumRow('Tax', Money.of(cart.taxTotal), p.textSecondary),
         Padding(padding: const EdgeInsets.symmetric(vertical: 9), child: Container(height: 1, color: p.hairline)),
         Row(
           children: [
@@ -276,7 +278,14 @@ Widget cartSummaryCard(BuildContext context, CartCubit cart, {required VoidCallb
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Total', style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-                  Text(Money.of(cart.total), style: serif(size: 23, color: p.ink)),
+                  // Scales down rather than running under the Charge button —
+                  // the tablet rail gives this card ~260pt, and a five-figure
+                  // total in a three-letter currency needs most of it.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(Money.of(cart.total), style: serif(size: 23, color: p.ink)),
+                  ),
                 ],
               ),
             ),

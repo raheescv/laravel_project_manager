@@ -13,5 +13,5 @@ class F {
 
   static String get name => appFlavor?.name ?? '';
 
-  static String get title => appFlavor == Flavor.dev ? 'Invo Dev' : 'Invo';
+  static String get title => appFlavor == Flavor.dev ? 'QLOUD POS Dev' : 'QLOUD POS';
 }

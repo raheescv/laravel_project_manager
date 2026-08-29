@@ -19,10 +19,12 @@ import 'package:invo/features/settings/logic/print_settings_cubit/print_settings
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
-import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/widgets/qloud_logo.dart';
 import 'package:invo/shared/widgets/receipt_printer.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/custom_payment_sheet.dart';
+import 'package:invo/features/sale/widgets/v3/cash_tender_card.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 class ReviewPayScreen extends StatefulWidget {
   const ReviewPayScreen({super.key});
@@ -39,6 +41,17 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   // spinner appears on the button that was actually pressed.
   bool _busyDraft = false;
   List<PaymentMethod> _methods = [];
+
+  /// Cash handed over the counter, as keyed on the tender pad. Display only —
+  /// see [CashTenderPanel]: cash settles the ticket in full whatever is entered
+  /// here, so this never reaches the payload. Held on the screen (not inside the
+  /// panel) because the checkout button names the change on its label.
+  double? _tendered;
+
+  /// Whether the itemised receipt is unfolded under the amount-due hero. The
+  /// ticket has already been reviewed on the cart screen, so on a phone it
+  /// starts folded and the payment controls get the height instead.
+  bool _showItems = false;
 
   @override
   void initState() {
@@ -173,7 +186,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     // Captured before we navigate: the router and the app-level messenger
     // outlive this screen, `context` does not.
     final router = GoRouter.of(context);
-    final messenger = ScaffoldMessenger.of(context);
+    final snack = AstraSnack.capture(context);
     final invoiceNo = sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo;
     // A queued sale is captured, not committed. Say so everywhere the committed
     // wording would otherwise appear, so nobody goes looking for it on the web.
@@ -198,14 +211,11 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     // a fresh login. The router's auth redirect does the navigating, so we only
     // announce what happened — printing has already finished by this point.
     if (pos.lockAfterSale) {
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(
-          content: Text(printFailed
-              ? '$invoiceNo $savedWord — couldn\'t print'
-              : '$invoiceNo $savedWord'),
-          duration: const Duration(seconds: 3),
-        ));
+      if (printFailed) {
+        snack.error('$invoiceNo $savedWord — couldn\'t print');
+      } else {
+        snack.success('$invoiceNo $savedWord');
+      }
       await auth.lock();
       return;
     }
@@ -215,26 +225,21 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     // away in the snackbar.
     if (printed && print.skipInvoice) {
       router.go(Routes.sale);
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(
-          content: Text('$invoiceNo printed'),
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'View',
-            onPressed: () => router.push(Routes.invoice, extra: sale),
-          ),
-        ));
+      snack.success(
+        '$invoiceNo printed',
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'View',
+          textColor: Colors.white,
+          onPressed: () => router.push(Routes.invoice, extra: sale),
+        ),
+      );
       return;
     }
 
     unawaited(router.pushReplacement(Routes.invoice, extra: sale));
     if (printFailed) {
-      messenger
-        ..clearSnackBars()
-        ..showSnackBar(const SnackBar(
-          content: Text('Couldn\'t reach the printer — tap Print to try again.'),
-        ));
+      snack.error('Couldn\'t reach the printer — tap Print to try again.');
     }
   }
 
@@ -256,12 +261,8 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       final saved = await _ops.createSale(ticket.payload, offlineSale: ticket.offlineSale);
       cart.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..clearSnackBars()
-          ..showSnackBar(SnackBar(
-            content: Text(saved.pending ? 'Draft held on this device' : 'Saved as draft'),
-            duration: const Duration(milliseconds: 900),
-          ));
+        AstraSnack.success(context, saved.pending ? 'Draft held on this device' : 'Saved as draft',
+            duration: const Duration(milliseconds: 900));
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) context.go(Routes.sale);
       }
@@ -296,9 +297,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
 
   void _error(String m) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(m)));
+    AstraSnack.error(context, m);
   }
 
   @override
@@ -319,19 +318,15 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
               child: MaxWidthBox(
                 maxWidth: 560,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 13, 16, 130),
+                  padding: const EdgeInsets.fromLTRB(16, 13, 16, 24),
                   children: [
-                    _receiptCard(cart),
-                    const SizedBox(height: 16),
-                    if (cart.tipEnabled) ...[
-                      _tipSelector(cart),
-                      const SizedBox(height: 16),
+                    _dueHero(cart),
+                    if (_showItems) ...[
+                      const SizedBox(height: 12),
+                      _receiptCard(cart),
                     ],
-                    _paymentSection(cart),
-                    const SizedBox(height: 16),
-                    _summaryCard(cart),
-                    const SizedBox(height: 12),
-                    _statusCard(cart),
+                    const SizedBox(height: 14),
+                    ..._moneySection(cart),
                   ],
                 ),
               ),
@@ -349,6 +344,114 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         ),
       ),
     );
+  }
+
+  // ---- Amount due + the money controls -------------------------------------
+
+  /// The number the cashier reads out, stated once and unmissably.
+  ///
+  /// Tapping it unfolds the itemised receipt underneath; [compact] drops that
+  /// affordance for the tablet rail, where the ticket is already the left pane.
+  Widget _dueHero(CartCubit cart, {bool compact = false}) {
+    final p = context.astra;
+    final n = cart.lines.length;
+    final extras = [
+      if (cart.totalDiscount > 0) '${Money.of(cart.totalDiscount)} off',
+      if (cart.taxTotal > 0) 'incl. ${Money.of(cart.taxTotal)} tax',
+    ];
+
+    return GestureDetector(
+      onTap: compact ? null : () => setState(() => _showItems = !_showItems),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
+        decoration: BoxDecoration(
+          gradient: p.heroGradient,
+          borderRadius: BorderRadius.circular(context.astraTheme.rCard),
+          boxShadow: context.astraTheme.softShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text('AMOUNT DUE',
+                    style: ui(size: 10, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 0.9)),
+                const Spacer(),
+                if (!compact)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('$n item${n == 1 ? '' : 's'}',
+                            style: ui(size: 10, weight: FontWeight.w800, color: Colors.white)),
+                        const SizedBox(width: 3),
+                        Icon(_showItems ? Icons.expand_less : Icons.expand_more, size: 13, color: Colors.white),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(Money.of(cart.total), style: serif(size: 34, color: Colors.white)),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              [cart.customerName, ...extras].join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(size: 10.5, weight: FontWeight.w600, color: Colors.white70),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The money half of the screen, shared by both layouts.
+  ///
+  /// Cash is the one mode whose handed-over amount can differ from the ticket —
+  /// the drawer takes a note and gives the difference back — so it gets the
+  /// tender pad, and the totals/status pair would only restate what the hero and
+  /// the change band already say. Every other mode settles at a value the ticket
+  /// or the split sheet decided, and that is where a partial or overpaid split
+  /// has to be explained, so those keep the pair.
+  List<Widget> _moneySection(CartCubit cart) {
+    return [
+      if (cart.tipEnabled) ...[
+        _tipSelector(cart),
+        const SizedBox(height: 14),
+      ],
+      _paymentSection(cart),
+      const SizedBox(height: 14),
+      if (cart.payMode == PayMode.cash)
+        CashTenderPanel(
+          total: cart.total,
+          onChanged: (v) => setState(() => _tendered = v),
+        )
+      else ...[
+        _summaryCard(cart),
+        const SizedBox(height: 12),
+        _statusCard(cart),
+      ],
+    ];
+  }
+
+  /// The change line under the primary button — only when there is money to
+  /// actually hand back.
+  String? _changeHint(CartCubit cart) {
+    final tendered = _tendered;
+    if (cart.payMode != PayMode.cash || tendered == null) return null;
+    final change = double.parse((tendered - cart.total).toStringAsFixed(2));
+    return change > 0 ? 'Change ${Money.of(change)}' : null;
   }
 
   /// What this screen is doing, so a parked draft doesn't look like an ordinary
@@ -384,6 +487,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           Expanded(
             child: AstraButton(
               label: settled ? 'Complete ${Money.of(cart.total)}' : 'Complete Anyway',
+              subtitle: _changeHint(cart),
               gold: true,
               busy: _busy,
               onTap: blocked ? null : _submit,
@@ -396,6 +500,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     if (cart.isEditing) {
       return AstraButton(
         label: 'Update ${Money.of(cart.total)}',
+        subtitle: _changeHint(cart),
         gold: true,
         busy: _busy,
         onTap: blocked ? null : _submit,
@@ -413,6 +518,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         Expanded(
           child: AstraButton(
             label: settled ? 'Charge ${Money.of(cart.total)}' : 'Submit Anyway',
+            subtitle: _changeHint(cart),
             gold: true,
             busy: _busy,
             onTap: blocked ? null : _submit,
@@ -473,15 +579,9 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
               children: [
-                if (cart.tipEnabled) ...[
-                  _tipSelector(cart),
-                  const SizedBox(height: 16),
-                ],
-                _paymentSection(cart),
-                const SizedBox(height: 16),
-                _summaryCard(cart),
-                const SizedBox(height: 12),
-                _statusCard(cart),
+                _dueHero(cart, compact: true),
+                const SizedBox(height: 14),
+                ..._moneySection(cart),
               ],
             ),
           ),
@@ -525,9 +625,9 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         children: [
           Column(
             children: [
-              const InvoLogomark(height: 28),
+              const QloudLogomark(height: 28),
               const SizedBox(height: 6),
-              Text('INVO', style: ui(size: 11, weight: FontWeight.w700, color: p.ink, letterSpacing: 4)),
+              Text('QLOUD POS', style: ui(size: 11, weight: FontWeight.w800, color: p.ink, letterSpacing: 2.6)),
               const SizedBox(height: 3),
               Text('${cart.customerName} · ${cart.stylistName.isEmpty ? 'Me' : cart.stylistName}',
                   style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
@@ -554,7 +654,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           _dashed(p),
           _row('Subtotal', Money.of(cart.subtotal), p.textSecondary),
           if (cart.totalDiscount > 0) _row('Discount', '− ${Money.of(cart.totalDiscount)}', p.goldText),
-          _row('Tax', Money.of(cart.taxTotal), p.textSecondary),
+          if (cart.taxTotal > 0) _row('Tax', Money.of(cart.taxTotal), p.textSecondary),
           if (cart.tipAmount > 0) _row('Tip (${cart.tipPercent.toStringAsFixed(0)}%)', Money.of(cart.tipAmount), p.textSecondary),
           const SizedBox(height: 4),
           Row(
@@ -645,7 +745,16 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => isCustom ? _openCustom() : cart.setPayMode(mode),
+        onTap: () {
+          if (isCustom) {
+            _openCustom();
+            return;
+          }
+          cart.setPayMode(mode);
+          // The tender pad unmounts with the mode, so what it reported would
+          // otherwise linger on the checkout button of a card sale.
+          if (mode != PayMode.cash) setState(() => _tendered = null);
+        },
         child: Container(
           height: 64,
           alignment: Alignment.center,

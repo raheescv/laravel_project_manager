@@ -61,7 +61,7 @@ class _HomeShellState extends State<HomeShell> {
       DashboardScreen(onSelectTab: _goToTab),
       SalesListScreen(onSelectTab: _goToTab),
       const ReportsScreen(),
-      SettingsScreen(onSelectTab: _goToTab),
+      const SettingsScreen(),
       extra(kReturnsTab, PermissionSlug.saleReturnView, () => const SalesReturnListScreen()),
       extra(kStockCheckTab, PermissionSlug.stockCheck, () => const StockCheckListScreen()),
       extra(kDaySessionTab, PermissionSlug.daySession, () => const DaySessionScreen()),
@@ -109,13 +109,12 @@ class _HomeShellState extends State<HomeShell> {
       return Scaffold(
         drawer: _drawer,
         drawerScrimColor: _drawerScrim,
-        body: SafeArea(
-          child: Row(
-            children: [
-              AstraSideRail(activeIndex: index, onSelect: _goToTab),
-              Expanded(child: IndexedStack(index: index, children: pages)),
-            ],
-          ),
+        // How the rail meets the pages is the device's own choice — see
+        // AstraRailShell and Settings → Appearance.
+        body: AstraRailShell(
+          activeIndex: index,
+          onSelect: _goToTab,
+          child: IndexedStack(index: index, children: pages),
         ),
       );
     }

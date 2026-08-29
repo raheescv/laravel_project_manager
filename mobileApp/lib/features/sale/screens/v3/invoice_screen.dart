@@ -23,10 +23,11 @@ import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
-import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/widgets/qloud_logo.dart';
 import 'package:invo/shared/widgets/receipt_pdf.dart';
 import 'package:invo/shared/widgets/receipt_printer.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 part 'invoice_receipt_sections.dart';
 
@@ -347,14 +348,15 @@ class InvoiceScreen extends StatelessWidget {
             const SizedBox(width: 11),
           ] else
             const SizedBox(width: 4),
-          const InvoLogomark(height: 32),
+          const QloudLogomark(height: 32),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Invo', style: serif(size: 16, color: p.ink)),
-                Text(sale.branch.isEmpty ? 'Astra POS' : sale.branch,
+                Text('QLOUD POS',
+                    style: ui(size: 14, weight: FontWeight.w800, letterSpacing: 1.4, color: p.ink)),
+                Text(sale.branch.isEmpty ? 'Point of sale' : sale.branch,
                     style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),
@@ -429,7 +431,7 @@ class InvoiceScreen extends StatelessWidget {
       _preview(context);
       return;
     }
-    final messenger = ScaffoldMessenger.of(context);
+    final snack = AstraSnack.capture(context);
     final result = await printReceipt(
       sale,
       print.snapshot,
@@ -437,14 +439,11 @@ class InvoiceScreen extends StatelessWidget {
       printerName: print.printerName,
     );
     if (result == ReceiptPrintResult.cancelled) return;
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text(result.ok
-            ? 'Sent to ${print.printerName}'
-            : 'Couldn\'t reach the printer — check it\'s on and paired.'),
-        duration: const Duration(milliseconds: 1400),
-      ));
+    if (result.ok) {
+      snack.success('Sent to ${print.printerName}', duration: const Duration(milliseconds: 1400));
+    } else {
+      snack.error('Couldn\'t reach the printer — check it\'s on and paired.');
+    }
   }
 
   /// Preview-before-print: a full-screen preview of the actual thermal receipt,
@@ -500,10 +499,10 @@ class InvoiceScreen extends StatelessWidget {
     ));
   }
 
-  void _toast(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  /// Most of what this screen has to say is a failure, so that is the default;
+  /// the one piece of good news passes its own kind.
+  void _toast(BuildContext context, String message, {AstraSnackKind kind = AstraSnackKind.error}) {
+    AstraSnack.show(context, message, kind: kind);
   }
 
   // ---- Return shortcut -----------------------------------------------------
@@ -590,7 +589,7 @@ class InvoiceScreen extends StatelessWidget {
       await ops.deleteSale(sale.id);
       if (!context.mounted) return;
       Navigator.pop(context); // dismiss the loader
-      _toast(context, 'Sale deleted.');
+      _toast(context, 'Sale deleted.', kind: AstraSnackKind.success);
       if (onClose != null) {
         onClose!(); // embedded: drop the row + reload the list, keep the pane
       } else if (context.canPop()) {

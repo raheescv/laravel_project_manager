@@ -14,6 +14,7 @@ import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 /// Edit Profile — the signed-in user updates their own name / phone / email and
 /// avatar. Wired to PUT /profile and POST /profile/photo; on success the cached
@@ -70,9 +71,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _snack(String m) => ScaffoldMessenger.of(context)
-    ..clearSnackBars()
-    ..showSnackBar(SnackBar(content: Text(m)));
+  /// Most of what this form has to say is a validation failure, so that is the
+  /// default; the two "saved" messages pass their own kind.
+  void _snack(String m, {AstraSnackKind kind = AstraSnackKind.error}) =>
+      AstraSnack.show(context, m, kind: kind);
 
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) {
@@ -94,7 +96,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (updated != null) {
       await context.read<AuthCubit>().applyUser(updated);
       if (!mounted) return;
-      _snack('Profile updated');
+      _snack('Profile updated', kind: AstraSnackKind.success);
       _close();
     } else {
       _snack(_profile.state.errorMessage ?? 'Could not update profile.');
@@ -130,7 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!mounted) return;
     if (updated != null) {
       await context.read<AuthCubit>().applyUser(updated);
-      if (mounted) _snack('Profile photo updated');
+      if (mounted) _snack('Profile photo updated', kind: AstraSnackKind.success);
     } else {
       setState(() => _preview = null); // roll the optimistic preview back
       _snack(_profile.state.errorMessage ?? 'Could not update photo.');

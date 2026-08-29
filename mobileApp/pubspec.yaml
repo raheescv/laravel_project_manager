@@ -1,5 +1,5 @@
 name: invo
-description: "Invo — premium salon POS & admin (mobile + tablet)."
+description: "QLOUD POS — premium point-of-sale & admin (mobile + tablet)."
 publish_to: "none"
 version: 1.0.0+1
 
@@ -82,21 +82,22 @@ flutter:
     - assets/fonts/IBMPlexSansArabic-Regular.ttf
     - assets/fonts/IBMPlexSansArabic-Bold.ttf
 
-# Invo launcher icon — gold "i" logomark on a warm-dark tile.
+# QLOUD POS launcher icon — the cloud/Q logomark on a near-white tile.
+# Source artwork: assets/brand/qloud_mark.svg
 # Regenerate with: dart run flutter_launcher_icons
 flutter_launcher_icons:
-  image_path: "assets/icon/invo_icon.png"
+  image_path: "assets/icon/qloud_icon.png"
   android: true
   min_sdk_android: 21
-  adaptive_icon_background: "assets/icon/invo_icon_bg.png"
-  adaptive_icon_foreground: "assets/icon/invo_icon_fg.png"
+  adaptive_icon_background: "assets/icon/qloud_icon_bg.png"
+  adaptive_icon_foreground: "assets/icon/qloud_icon_fg.png"
   ios: true
   remove_alpha_ios: true
   macos:
     generate: true
-    image_path: "assets/icon/invo_icon.png"
+    image_path: "assets/icon/qloud_icon.png"
   web:
     generate: true
-    image_path: "assets/icon/invo_icon.png"
-    background_color: "#121212"
-    theme_color: "#C9A24B"
+    image_path: "assets/icon/qloud_icon.png"
+    background_color: "#F7FAFF"
+    theme_color: "#0A62C8"

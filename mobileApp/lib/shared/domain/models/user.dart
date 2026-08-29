@@ -61,6 +61,16 @@ class ApiUser extends Equatable {
   /// data (their Sales list only shows sales they created).
   bool get isNonAdminEmployee => isEmployee && !isAdmin;
 
+  /// Whether the API hands this account the whole branch's figures.
+  ///
+  /// The mirror of the server's `User::seesOnlyOwnRecords()`, inverted: only a
+  /// rank-and-file *employee* is self-scoped. A back-office 'user' account is
+  /// not an employee, so it gets the full branch view even with `is_admin` off
+  /// — which is why anything asking "may I see other people's numbers?" must
+  /// ask this and not [isAdmin]. [isAdmin] stays what it says: the admin flag,
+  /// for the badge and for implicit permissions.
+  bool get seesAllRecords => !isNonAdminEmployee;
+
   factory ApiUser.fromJson(Map<String, dynamic> j) => ApiUser(
         id: asStr(j['id']),
         name: asStr(j['name']),

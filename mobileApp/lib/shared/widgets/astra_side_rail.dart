@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -8,7 +9,8 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
-import 'package:invo/shared/widgets/invo_logo.dart';
+import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
+import 'package:invo/shared/widgets/qloud_logo.dart';
 
 // Tablet-only shell destinations. Indices continue after the four phone tabs in
 // [astraNavTabs] (0–3), which are fixed — the phone bottom nav and `/home?tab=N`
@@ -65,7 +67,14 @@ class AstraSideRail extends StatelessWidget {
     required this.activeIndex,
     required this.onSelect,
     this.onNew,
+    this.flush = false,
   });
+
+  /// Painted to the window's edges — no margin, no radius, no shadow — for
+  /// every chrome except [AstraChrome.peers]. A flush rail runs under the
+  /// status bar, so it takes that inset into its own padding: the shell can no
+  /// longer hold it off, and without this the logomark sits under the clock.
+  final bool flush;
 
   /// Highlighted tab, or null when the current screen isn't one of them (a
   /// pushed destination like Stock Check).
@@ -78,16 +87,22 @@ class AstraSideRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
+    final inset = MediaQuery.viewPaddingOf(context);
     return Container(
       width: 92,
-      margin: const EdgeInsets.fromLTRB(14, 14, 0, 14),
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      margin: flush ? EdgeInsets.zero : const EdgeInsets.fromLTRB(14, 14, 0, 14),
+      padding: EdgeInsets.only(
+        top: 16 + (flush ? inset.top : 0),
+        bottom: 16 + (flush ? inset.bottom : 0),
+      ),
       decoration: BoxDecoration(
         color: p.darkSurface,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 36, offset: const Offset(0, 14)),
-        ],
+        borderRadius: flush ? null : BorderRadius.circular(26),
+        boxShadow: flush
+            ? null
+            : [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 36, offset: const Offset(0, 14)),
+              ],
       ),
       // In landscape on a phone the width can still trip `isTablet` while the
       // height collapses — so the rail must scroll when short and still push
@@ -100,7 +115,8 @@ class AstraSideRail extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: 4),
-                  const InvoLogomark(height: 38),
+                  // The rail is painted `p.darkSurface`; see [QloudLogomark.onDark].
+                  const QloudLogomark(height: 38, onDark: true),
                   const SizedBox(height: 24),
                   for (final d in railDestinations(context))
                     _link(context, p,
@@ -172,6 +188,118 @@ class AstraSideRail extends StatelessWidget {
 /// on phones, where the pushed screen keeps its own back button and bottom nav.
 ///
 /// Rail taps leave the pushed stack and land on the shell's matching tab.
+/// Rail + content, assembled the way this device's [AstraChrome] asks for.
+///
+/// The home shell and every railed route both used to inline the same
+/// `SafeArea(Row([rail, Expanded(child)]))`, which is why the two idioms could
+/// drift apart in the first place. There is now one place that decides how the
+/// window is put together, and four answers it can give.
+class AstraRailShell extends StatelessWidget {
+  const AstraRailShell({
+    super.key,
+    required this.activeIndex,
+    required this.onSelect,
+    required this.child,
+  });
+
+  final int? activeIndex;
+  final ValueChanged<int> onSelect;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final chrome = context.select<ThemeCubit, AstraChrome>((c) => c.state.chrome);
+    final rail = AstraSideRail(
+      activeIndex: activeIndex,
+      onSelect: onSelect,
+      flush: chrome.railIsFlush,
+    );
+
+    // The screens beyond this point were all written against a shell that had
+    // already taken the top inset off. A flush rail paints under the status bar
+    // itself, so the inset is re-applied to the content side only — otherwise
+    // every tablet screen would have to learn about insets at once.
+    Widget content({bool top = true}) => SafeArea(top: top, bottom: false, child: child);
+
+    final Widget body = switch (chrome) {
+      // Rail flush and dark to the edges; the content lifts off it as one
+      // rounded surface on an even gutter. The card is held below the status
+      // bar rather than sliding under it, so the clock never sits on content.
+      AstraChrome.insetCanvas => ColoredBox(
+          color: p.darkSurface,
+          child: Row(
+            children: [
+              rail,
+              Expanded(
+                // An EVEN gutter on all four sides. With no gap on the left the
+                // card butted against the rail while its rounded corner curved
+                // away from it, opening a dark wedge in the crook — the same
+                // corner this chrome exists to fix, just moved 92pt right. A
+                // card that floats has to float on every side.
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(10, MediaQuery.viewPaddingOf(context).top + 10, 10, 10),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: ColoredBox(color: p.canvas, child: content(top: false)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+      // Nothing rounded against anything: both sides run corner to corner.
+      AstraChrome.docked => Row(children: [rail, Expanded(child: content())]),
+
+      // The original look, made consistent — the content now floats on the same
+      // inset, the same radius and the same shadow as the rail.
+      AstraChrome.peers => SafeArea(
+          bottom: false,
+          child: Row(
+            children: [
+              rail,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 14, 14, 14),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(26),
+                    child: ColoredBox(color: p.canvas, child: child),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+      // One card holding both, split by the rail's own edge. Only the outer
+      // corners are rounded, so there is no interior corner left to resolve.
+      AstraChrome.unified => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(26),
+              child: ColoredBox(
+                color: p.canvas,
+                child: Row(children: [rail, Expanded(child: child)]),
+              ),
+            ),
+          ),
+        ),
+    };
+
+    // With the rail behind the clock the default dark-on-light status icons
+    // vanish into it, so the strip's own brightness decides them — not the
+    // page's.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: chrome.darkStatusStrip
+          ? SystemUiOverlayStyle.light
+          : (p.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark),
+      child: body,
+    );
+  }
+}
+
 class TabletRailScaffold extends StatelessWidget {
   const TabletRailScaffold({super.key, required this.child, this.activeTab});
 
@@ -183,20 +311,14 @@ class TabletRailScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!context.isTablet) return child;
-    // No `backgroundColor` override: the strip the rail floats on should be the
+    // No `backgroundColor` override: the strip the rail sits on should be the
     // page canvas, same as in the home shell. Transparent would show whatever
     // route is underneath.
     return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: [
-            AstraSideRail(
-              activeIndex: activeTab,
-              onSelect: (i) => context.go(Routes.homeTab(i)),
-            ),
-            Expanded(child: child),
-          ],
-        ),
+      body: AstraRailShell(
+        activeIndex: activeTab,
+        onSelect: (i) => context.go(Routes.homeTab(i)),
+        child: child,
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 /// Premium in-app avatar cropper (Astra-styled). Presents a fixed circular
 /// window over the picked photo; the user pinch-zooms and drags the image to
@@ -71,11 +72,7 @@ class _CropPhotoScreenState extends State<CropPhotoScreen> {
                           Navigator.of(context).pop(croppedImage);
                         case CropFailure():
                           setState(() => _busy = false);
-                          ScaffoldMessenger.of(context)
-                            ..clearSnackBars()
-                            ..showSnackBar(const SnackBar(
-                              content: Text('Could not crop the image. Please try again.'),
-                            ));
+                          AstraSnack.error(context, 'Could not crop the image. Please try again.');
                       }
                     },
                   ),

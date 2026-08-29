@@ -11,12 +11,17 @@ class ThemeState extends Equatable {
     required this.preset,
     required this.mode,
     required this.typeface,
+    required this.chrome,
     required this.platformIsDark,
   });
 
   final AstraPalette preset;
   final AstraMode mode;
   final AstraTypeface typeface;
+
+  /// How the tablet window is framed. Ignored on a phone, which has no rail.
+  final AstraChrome chrome;
+
   final bool platformIsDark;
 
   bool get isDark => switch (mode) {
@@ -32,17 +37,19 @@ class ThemeState extends Equatable {
     AstraPalette? preset,
     AstraMode? mode,
     AstraTypeface? typeface,
+    AstraChrome? chrome,
     bool? platformIsDark,
   }) =>
       ThemeState(
         preset: preset ?? this.preset,
         mode: mode ?? this.mode,
         typeface: typeface ?? this.typeface,
+        chrome: chrome ?? this.chrome,
         platformIsDark: platformIsDark ?? this.platformIsDark,
       );
 
   // Presets and typefaces are identified by id — comparing the palette objects
   // themselves would depend on their identity.
   @override
-  List<Object?> get props => [preset.id, mode, typeface.id, platformIsDark];
+  List<Object?> get props => [preset.id, mode, typeface.id, chrome, platformIsDark];
 }

@@ -29,7 +29,7 @@ class BootFailureApp extends StatelessWidget {
                       size: 44, color: Color(0xFFE8C36A)),
                   const SizedBox(height: 16),
                   const Text(
-                    "Invo couldn't start",
+                    "QLOUD POS couldn't start",
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 22,

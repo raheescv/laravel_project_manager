@@ -5,6 +5,8 @@ class PosSettingsState extends Equatable {
   const PosSettingsState({
     this.lockAfterSale = true,
     this.gridColumns = defaultGridColumns,
+    this.askClientOnNewSale = true,
+    this.showTip = true,
     this.startScreen = StartScreen.home,
   });
 
@@ -17,16 +19,34 @@ class PosSettingsState extends Equatable {
   final bool lockAfterSale;
   final int gridColumns;
 
+  /// Whether New Sale opens the client form on a fresh ticket. On by default —
+  /// that is how the screen has always behaved.
+  final bool askClientOnNewSale;
+
+  /// Whether this device offers the tip row at Review & Pay. On by default, and
+  /// only ever a veto — the web's "Enable Tip" still has the final say, so this
+  /// being true does not make the row appear where the business turned it off.
+  final bool showTip;
+
   /// Where sign-in — and an unlock, which is the same landing — puts the user.
   final StartScreen startScreen;
 
-  PosSettingsState copyWith({bool? lockAfterSale, int? gridColumns, StartScreen? startScreen}) =>
+  PosSettingsState copyWith({
+    bool? lockAfterSale,
+    int? gridColumns,
+    bool? askClientOnNewSale,
+    bool? showTip,
+    StartScreen? startScreen,
+  }) =>
       PosSettingsState(
         lockAfterSale: lockAfterSale ?? this.lockAfterSale,
         gridColumns: gridColumns ?? this.gridColumns,
+        askClientOnNewSale: askClientOnNewSale ?? this.askClientOnNewSale,
+        showTip: showTip ?? this.showTip,
         startScreen: startScreen ?? this.startScreen,
       );
 
   @override
-  List<Object?> get props => [lockAfterSale, gridColumns, startScreen];
+  List<Object?> get props =>
+      [lockAfterSale, gridColumns, askClientOnNewSale, showTip, startScreen];
 }

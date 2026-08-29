@@ -14,6 +14,7 @@ import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.d
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 part 'day_session_views.dart';
 
@@ -385,21 +386,17 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
     }
     final res = await c.toggle();
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
+    final snack = AstraSnack.capture(context);
     if (res != null) {
-      messenger.showSnackBar(SnackBar(
-        backgroundColor: res.isOpen ? AstraPalette.success : const Color(0xFF334155),
-        behavior: SnackBarBehavior.floating,
-        content: Text(res.message.isEmpty ? 'Day session updated.' : res.message,
-            style: ui(size: 13, weight: FontWeight.w700, color: Colors.white)),
-      ));
+      final message = res.message.isEmpty ? 'Day session updated.' : res.message;
+      // Opening is good news; closing is simply news.
+      if (res.isOpen) {
+        snack.success(message);
+      } else {
+        snack.show(message);
+      }
     } else if (c.error != null) {
-      messenger.showSnackBar(SnackBar(
-        backgroundColor: AstraPalette.danger,
-        behavior: SnackBarBehavior.floating,
-        content: Text(c.error!, style: ui(size: 13, weight: FontWeight.w700, color: Colors.white)),
-      ));
+      snack.error(c.error!);
     }
   }
 

@@ -11,12 +11,15 @@ extension _CatalogViews on _NewSaleScreenState {
   /// price. A screen wide enough for more than the preference asks for still
   /// gets more, so a tablet is never left with two enormous tiles.
   /// Lazily built so long catalogs stay smooth as pages stream in.
-  Widget _productGrid(CatalogCubit cat, int preferredCols) => SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+  Widget _productGrid(CatalogCubit cat, int preferredCols, {bool tablet = false}) => SliverPadding(
+        padding: EdgeInsets.fromLTRB(tablet ? 14 : 16, 4, tablet ? 14 : 16, 16),
         sliver: SliverLayoutBuilder(
           builder: (context, constraints) {
             const gap = 13.0;
-            final fits = (constraints.crossAxisExtent / 200).floor();
+            // A tablet is held further away and has the room, so tiles pack a
+            // little tighter there — 200pt apiece leaves a wide grid emptier
+            // than it needs to be.
+            final fits = (constraints.crossAxisExtent / (tablet ? 176 : 200)).floor();
             final cols = (fits > preferredCols ? fits : preferredCols).clamp(2, 6);
             // Actual painted tile width, so the photo is decoded to the size it
             // is drawn at rather than at full source resolution — and so the
@@ -41,17 +44,34 @@ extension _CatalogViews on _NewSaleScreenState {
 
   /// Single-column list mode — a premium row with a full-height image on the
   /// left, name + meta, and a serif price with the add button.
-  Widget _productList(CatalogCubit cat) => SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, i) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _serviceListRow(cat.products[i]),
-            ),
-            childCount: cat.products.length,
-          ),
-        ),
+  Widget _productList(CatalogCubit cat, {bool tablet = false}) => SliverPadding(
+        padding: EdgeInsets.fromLTRB(tablet ? 14 : 16, 4, tablet ? 14 : 16, 16),
+        // One row per line is a phone shape: at ~770pt the name and the price
+        // end up at opposite ends of a near-empty band. On a tablet the rows
+        // column up instead — the row keeps its height (the 84pt thumbnail
+        // sets it), the column just fits as many across as 460pt allows.
+        sliver: tablet
+            ? SliverGrid(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 460,
+                  mainAxisExtent: 84,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 10,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) => _serviceListRow(cat.products[i]),
+                  childCount: cat.products.length,
+                ),
+              )
+            : SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _serviceListRow(cat.products[i]),
+                  ),
+                  childCount: cat.products.length,
+                ),
+              ),
       );
 
   /// Compact grid / list switcher — a small segmented control pinned to the
@@ -152,10 +172,10 @@ extension _CatalogViews on _NewSaleScreenState {
   }
 
   /// Recessed soft search field with the barcode scanner tucked inside it.
-  Widget _searchRow(CatalogCubit cat) {
+  Widget _searchRow(CatalogCubit cat, {double height = 54}) {
     final p = context.astra;
     return Container(
-      height: 54,
+      height: height,
       padding: const EdgeInsets.only(left: 16, right: 8),
       decoration: BoxDecoration(
         color: _soft,
@@ -213,8 +233,10 @@ extension _CatalogViews on _NewSaleScreenState {
     );
   }
 
-  Widget _typeSegmented(CatalogCubit cat) {
-    final p = context.astra;
+  /// [compact] sizes each segment to its label instead of splitting the row
+  /// evenly, so the control can sit beside a search field on the tablet toolbar
+  /// rather than owning a line of its own.
+  Widget _typeSegmented(CatalogCubit cat, {bool compact = false}) {
     const options = <(String?, String)>[
       (null, 'All Types'),
       ('product', 'Products'),
@@ -227,46 +249,48 @@ extension _CatalogViews on _NewSaleScreenState {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
+        mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
         children: [
-          for (final (value, label) in options)
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  cat.selectType(value);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: cat.selectedType == value ? p.card : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: cat.selectedType == value ? context.astraTheme.softShadow : null,
-                  ),
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(
-                        size: 12.5,
-                        weight: FontWeight.w700,
-                        color: cat.selectedType == value ? p.primary : p.textSecondary),
-                  ),
-                ),
-              ),
-            ),
+          for (final (value, label) in options) _typeSeg(cat, value, label, compact),
         ],
       ),
     );
   }
 
-  Widget _categoryChips(CatalogCubit cat) {
+  Widget _typeSeg(CatalogCubit cat, String? value, String label, bool compact) {
+    final p = context.astra;
+    final active = cat.selectedType == value;
+    final seg = GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        cat.selectType(value);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: EdgeInsets.symmetric(vertical: 10, horizontal: compact ? 15 : 0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? p.card : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: active ? context.astraTheme.softShadow : null,
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: ui(size: 12.5, weight: FontWeight.w700, color: active ? p.primary : p.textSecondary),
+        ),
+      ),
+    );
+    return compact ? seg : Expanded(child: seg);
+  }
+
+  Widget _categoryChips(CatalogCubit cat, {bool tablet = false}) {
     return SizedBox(
       height: 36,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.symmetric(horizontal: tablet ? 14 : 16),
         children: [
           _catChip('All', cat.selectedCategoryId == null, () => cat.selectCategory(null)),
           for (final c in cat.categories) ...[

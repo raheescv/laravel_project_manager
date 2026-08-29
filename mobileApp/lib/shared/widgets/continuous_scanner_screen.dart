@@ -14,6 +14,7 @@ import 'package:mobile_scanner/src/method_channel/mobile_scanner_method_channel.
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 part 'continuous_scanner_states.dart';
 
@@ -519,9 +520,7 @@ class _ContinuousScannerScreenState extends State<ContinuousScannerScreen>
     if (!mounted) return;
     if (confirm == null) {
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not undo the last scan.')),
-      );
+      AstraSnack.error(context, 'Could not undo the last scan.');
       return;
     }
     unawaited(HapticFeedback.selectionClick());

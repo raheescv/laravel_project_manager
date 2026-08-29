@@ -23,6 +23,7 @@ import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 
 part 'sales_list_controls.dart';
 
@@ -112,9 +113,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _load();
       _loadMethods();
-      // Warm the staff list so the filter sheet opens instantly. Admin-only,
-      // like the filter itself.
-      if (mounted && _isAdmin) unawaited(context.read<StylistCubit>().loadIfNeeded());
+      // Warm the staff list so the filter sheet opens instantly — only for the
+      // accounts that get the filter at all.
+      if (mounted && _seesAllSales) unawaited(context.read<StylistCubit>().loadIfNeeded());
     });
     // The shell keeps this screen alive, so reload the list (and branch-scoped
     // payment methods) when the active branch changes.
@@ -156,7 +157,12 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
   /// Whether this user sees the whole till's sales — and so has anything to
   /// filter by staff, or any reason to be told who rang a sale up.
-  bool get _isAdmin => context.read<AuthCubit>().user?.isAdmin ?? false;
+  ///
+  /// The scope the API applies, not the admin flag: a back-office 'user'
+  /// account is handed every sale even without `is_admin`, so hiding the staff
+  /// filter from it would leave a list of everyone's sales with no way to tell
+  /// them apart. Only a rank-and-file employee is self-scoped.
+  bool get _seesAllSales => context.read<AuthCubit>().user?.seesAllRecords ?? false;
 
   /// (Re)load from page 1 for the current filters, then re-sync the tablet
   /// detail pane against the new rows.
@@ -504,7 +510,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
                 icon: Icons.swap_vert_rounded,
                 trailingIcon: Icons.keyboard_arrow_down_rounded,
                 onTap: _openSort),
-            if (_isAdmin)
+            if (_seesAllSales)
               TabletFilterChip(
                   label: _staffLabel,
                   active: _staffId != null,
@@ -577,7 +583,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     final sub = [
       d.who,
       if (d.date.isNotEmpty) d.date,
-      if (_isAdmin && d.staff.isNotEmpty) d.staff,
+      if (_seesAllSales && d.staff.isNotEmpty) d.staff,
       if (d.method.isNotEmpty) d.method,
       if (d.offlineRef.isNotEmpty) d.offlineRef,
     ].join(' · ');
@@ -798,7 +804,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
                           '$who${date.isEmpty ? '' : ' · $date'}'
                           // Only an admin is shown the cashier: everyone else is
                           // looking at a list of nothing but their own sales.
-                          '${_isAdmin && d.staff.isNotEmpty ? ' · ${d.staff}' : ''}'
+                          '${_seesAllSales && d.staff.isNotEmpty ? ' · ${d.staff}' : ''}'
                           '${d.offlineRef.isEmpty ? '' : ' · ${d.offlineRef}'}',
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                           style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
@@ -1027,7 +1033,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
       if (deleted == true && mounted) unawaited(_load());
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open invoice')));
+      if (mounted) AstraSnack.error(context, 'Could not open invoice');
     }
   }
 
@@ -1054,9 +1060,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     if (row == null) {
       // Gone from the queue between the tap and here means it synced, which is the
       // good outcome — it is an ordinary sale now. Reload so the row shows as one.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This sale has synced — reopen it to edit.')),
-      );
+      AstraSnack.show(context, 'This sale has synced — reopen it to edit.');
       unawaited(_load());
       return;
     }

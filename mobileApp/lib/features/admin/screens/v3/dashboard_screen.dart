@@ -104,8 +104,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           _tabletInsights(admin)
                         else ...[
                           _periodCards(admin),
-                          const SizedBox(height: 14),
-                          _topPerformers(admin),
+                          if (_showLeaderboard(admin)) ...[
+                            const SizedBox(height: 14),
+                            _topPerformers(admin),
+                          ],
                           const SizedBox(height: 18),
                           _paymentSplit(admin),
                         ],
@@ -454,7 +456,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _paymentSplit(admin),
           ],
         );
-    if (admin.topStylists.isEmpty) return mainColumn();
+    if (!_showLeaderboard(admin)) return mainColumn();
     return LayoutBuilder(
       builder: (ctx, c) {
         // Only go side-by-side once the narrower column still has room for the
@@ -677,13 +679,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ---- TOP PERFORMERS ----
+  /// Whether to show the leaderboard at all.
+  ///
+  /// It ranks the branch's staff against one another by revenue, which is a
+  /// manager's read of the floor — not something to put in front of the people
+  /// being ranked, who would be seeing colleagues' takings. So the gate is the
+  /// data scope, not the admin flag: anyone the API answers with the whole
+  /// branch — an admin, or a back-office 'user' account without the flag — has
+  /// a board to read. Only a rank-and-file employee is kept out, and for them
+  /// it would be a board of one anyway.
+  bool _showLeaderboard(AdminCubit admin) =>
+      (context.read<AuthCubit>().user?.seesAllRecords ?? false) && admin.topStylists.isNotEmpty;
+
   /// Ranked for the open day session's date only — the same business day the
   /// KPI cards report — so the board reads as "who is ahead today", not as an
   /// all-time honour roll that never moves.
   Widget _topPerformers(AdminCubit admin) {
     final p = context.astra;
     final top = admin.topStylists;
-    if (top.isEmpty) return const SizedBox.shrink();
+    // Guarded at both call sites; kept here so the card can never be rendered
+    // by a third one that forgets.
+    if (top.isEmpty || !_showLeaderboard(admin)) return const SizedBox.shrink();
     final day = Dates.human(admin.topStylistsDate);
     final maxRev = top.first.amount <= 0 ? 1.0 : top.first.amount;
     const medals = [Color(0xFFD9A93B), Color(0xFFB6B6C2), Color(0xFFC58B5B)];

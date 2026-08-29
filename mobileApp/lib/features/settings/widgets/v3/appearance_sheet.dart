@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 
-/// Click-and-go appearance picker: tapping Light / Dark / System applies the
+/// Click-and-go brightness picker: tapping Light / Dark / System applies the
 /// brightness instantly app-wide and closes the sheet. System follows the OS.
 Future<void> showAppearanceSheet(BuildContext context) {
   final p = context.astra;
@@ -37,7 +37,7 @@ Future<void> showAppearanceSheet(BuildContext context) {
                   children: [
                     Icon(Icons.brightness_6_outlined, size: 18, color: p.primary),
                     const SizedBox(width: 9),
-                    Expanded(child: Text('Appearance', style: serif(size: 20, color: p.ink))),
+                    Expanded(child: Text('Light & dark', style: serif(size: 20, color: p.ink))),
                     GestureDetector(
                       onTap: () => Navigator.of(sheetContext).pop(),
                       child: Icon(Icons.close, size: 20, color: p.textMuted),
