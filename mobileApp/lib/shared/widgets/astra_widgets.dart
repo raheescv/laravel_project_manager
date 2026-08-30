@@ -19,6 +19,24 @@ import 'package:invo/shared/widgets/offline_image.dart';
 int decodeWidthFor(BuildContext context, double logicalWidth) =>
     (logicalWidth * MediaQuery.devicePixelRatioOf(context)).round();
 
+/// The one confirmation shown before signing out. The phone drawer and the
+/// tablet side rail both go through it, so the two read the same and there is
+/// a single place to change the wording.
+Future<bool> confirmLogout(BuildContext context) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Log out?'),
+      content: const Text('You’ll need your MPIN to sign back in.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Log out')),
+      ],
+    ),
+  );
+  return ok == true;
+}
+
 /// Page background — skin-aware. Glass gets a soft aurora *mesh*; editorial a
 /// gold glow on near-black; clean a faint brand radial; signature the original
 /// warm cream aurora.

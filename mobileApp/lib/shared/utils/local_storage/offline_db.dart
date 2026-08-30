@@ -18,7 +18,7 @@ class OfflineDb {
   OfflineDb._();
 
   static const String _fileName = 'invo_offline.db';
-  static const int _version = 3;
+  static const int _version = 4;
 
   static const String tableProducts = 'catalog_products';
   static const String tableCategories = 'catalog_categories';
@@ -88,6 +88,7 @@ class OfflineDb {
         type TEXT NOT NULL,
         name TEXT NOT NULL,
         product_count INTEGER NOT NULL DEFAULT 0,
+        image_url TEXT NOT NULL DEFAULT '',
         PRIMARY KEY (branch_id, category_id, type)
       )
     ''');
@@ -161,6 +162,12 @@ class OfflineDb {
     if (oldVersion < 2) await _createLookups(db);
     if (oldVersion < 3) {
       await db.execute("ALTER TABLE $tableProducts ADD COLUMN thumbnail TEXT NOT NULL DEFAULT ''");
+    }
+    // v4 keeps each category's photo, for the New Sale rail's image layouts.
+    // Same reasoning as v3: a disposable copy of the server's catalog, so an
+    // ALTER with a default is safe and the next refresh fills the column in.
+    if (oldVersion < 4) {
+      await db.execute("ALTER TABLE $tableCategories ADD COLUMN image_url TEXT NOT NULL DEFAULT ''");
     }
   }
 

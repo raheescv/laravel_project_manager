@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile · Category rail · Category display options</title>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra tokens — mirrors mobileApp/lib/shared/utils/components/theme/palette.dart
+   Driven by [data-preset] + [data-theme] on #stage.
+   ============================================================ */
+#stage{ --success:#1F9D63; --danger:#D4546A; }
+
+/* --- Qloud Blue (the app default) --- */
+#stage[data-preset="qloud"]{
+  --primary:#0A62C8; --primary-dark:#01377F; --accent:#0BA8FA; --gold:#0A62C8;
+  --canvas:#F3F7FD; --card:#FFFFFF; --sheet:#FFFFFF;
+  --ink:#101426; --text2:#4E5875; --muted:#98A0B8;
+  --hairline:#E6EAF3; --tint:#E8F1FD;
+  --shadow:0 10px 24px -16px rgba(1,55,127,.30);
+}
+#stage[data-preset="qloud"][data-theme="dark"]{
+  --canvas:#0E1220; --card:#171B2B; --sheet:#141828;
+  --ink:#EDEFF7; --text2:#A3ABC2; --muted:#767E96;
+  --hairline:rgba(255,255,255,.09); --tint:rgba(10,98,200,.20);
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+/* --- Signature (emerald / cream / gold) --- */
+#stage[data-preset="signature"]{
+  --primary:#0F5C4A; --primary-dark:#0A3F33; --accent:#C8A24A; --gold:#9A7B23;
+  --canvas:#F4F2EC; --card:#FFFFFF; --sheet:#FFFFFF;
+  --ink:#16211D; --text2:#4B5B55; --muted:#8E9B95;
+  --hairline:#E5E2D8; --tint:#E9F0EC;
+  --shadow:0 10px 24px -16px rgba(15,92,74,.30);
+}
+#stage[data-preset="signature"][data-theme="dark"]{
+  --canvas:#101614; --card:#1A211E; --sheet:#161D1A;
+  --ink:#ECF0EE; --text2:#A4B2AC; --muted:#78857F;
+  --hairline:rgba(255,255,255,.09); --tint:rgba(15,92,74,.24);
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Manrope',system-ui,sans-serif;background:#EFEFEF;color:#111}
+#stage{min-height:100vh;background:var(--canvas);color:var(--ink);padding:26px 20px 70px;transition:background .2s}
+
+/* ---- page chrome ---- */
+.top{max-width:1460px;margin:0 auto 26px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.top h1{font-family:'Marcellus',serif;font-size:28px;font-weight:400;letter-spacing:.2px}
+.top p{font-size:13px;color:var(--text2);margin-top:5px;max-width:760px;line-height:1.55}
+.switches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{display:flex;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+.sw button{border:0;background:transparent;font:inherit;font-size:11.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--muted);padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+.sw button.on{background:var(--primary);color:#fff}
+
+.band{max-width:1460px;margin:34px auto 16px;display:flex;align-items:center;gap:12px}
+.band h2{font-family:'Marcellus',serif;font-size:19px;font-weight:400;white-space:nowrap}
+.band span{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--primary);
+  background:var(--tint);border-radius:999px;padding:5px 11px;white-space:nowrap}
+.band i{flex:1;height:1px;background:var(--hairline)}
+
+.grid{max-width:1460px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;align-items:start}
+.sample{display:flex;flex-direction:column;gap:13px}
+.cap{background:var(--card);border:1px solid var(--hairline);border-radius:18px;padding:15px 17px;box-shadow:var(--shadow)}
+.cap .n{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--primary);margin-bottom:5px}
+.cap h3{font-family:'Marcellus',serif;font-size:17px;font-weight:400;margin-bottom:6px}
+.cap p{font-size:12.5px;line-height:1.6;color:var(--text2)}
+.cap .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--text2);
+  border:1px solid var(--hairline);border-radius:999px;padding:4px 9px}
+.tag.good{color:var(--success);border-color:color-mix(in srgb,var(--success) 40%,transparent)}
+.tag.warn{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+
+/* ============================================================
+   Phone frame — New Sale, "Clean Boutique" flat surface
+   (surface = canvas lifted halfway to white in light, canvas in dark)
+   ============================================================ */
+.phonebox{background:var(--card);border:1px solid var(--hairline);border-radius:22px;padding:16px;box-shadow:var(--shadow);
+  display:flex;justify-content:center}
+.phone{width:352px;border-radius:30px;overflow:hidden;position:relative;
+  background:color-mix(in srgb,var(--canvas) 50%,#fff);
+  border:1px solid var(--hairline);box-shadow:0 18px 40px -22px rgba(0,0,0,.45)}
+#stage[data-theme="dark"] .phone{background:var(--canvas)}
+.phone[dir="rtl"]{direction:rtl}
+
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 0;font-size:10.5px;font-weight:700;color:var(--ink)}
+.statusbar .ic{display:flex;gap:5px;opacity:.7;font-size:9px}
+
+/* header block (ticket half — not part of the fixed catalog head) */
+.hdr{padding:6px 12px 8px}
+.hdr .line1{display:flex;align-items:center;gap:8px}
+.ghost{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;color:var(--text2);font-size:15px}
+.hdr h4{font-family:'Marcellus',serif;font-size:17px;font-weight:400;color:var(--ink)}
+.daypill{font-size:9.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.who{display:flex;margin-top:9px;background:var(--card);border:1px solid var(--hairline);border-radius:14px;overflow:hidden}
+.who > div{flex:1;padding:8px 11px}
+.who > div + div{border-inline-start:1px solid var(--hairline)}
+.who .k{font-size:8px;font-weight:800;letter-spacing:1.4px;color:var(--gold)}
+.who .v{font-size:12px;font-weight:700;color:var(--ink);margin-top:1px}
+
+/* ---- the FIXED catalog head: search + type + rail ---- */
+.fixedhead{border-bottom:1px solid var(--hairline);padding-bottom:0;position:relative}
+.fixedhead::after{content:"FIXED";position:absolute;inset-inline-end:8px;top:-1px;font-size:7.5px;font-weight:800;
+  letter-spacing:1.2px;color:var(--primary);background:var(--tint);border-radius:0 0 6px 6px;padding:2px 6px}
+.ctrl{padding:10px 14px 0}
+.searchrow{display:flex;gap:8px;align-items:center}
+.search{flex:1;height:42px;border-radius:14px;background:color-mix(in srgb,var(--ink) 4%,transparent);
+  display:flex;align-items:center;gap:9px;padding:0 12px;font-size:12.5px;color:var(--muted)}
+#stage[data-theme="dark"] .search{background:rgba(255,255,255,.06)}
+.scan{width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--hairline);
+  display:grid;place-items:center;color:var(--primary);font-size:14px}
+.typerow{display:flex;gap:8px;align-items:center;margin-top:12px}
+.seg{flex:1;display:flex;background:color-mix(in srgb,var(--ink) 4%,transparent);border-radius:12px;padding:3px}
+#stage[data-theme="dark"] .seg{background:rgba(255,255,255,.06)}
+.seg span{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--text2);padding:7px 4px;border-radius:9px}
+.seg span.on{background:var(--card);color:var(--ink);box-shadow:0 2px 6px -3px rgba(0,0,0,.3)}
+.vtoggle{display:flex;background:color-mix(in srgb,var(--ink) 4%,transparent);border-radius:12px;padding:3px}
+#stage[data-theme="dark"] .vtoggle{background:rgba(255,255,255,.06)}
+.vtoggle span{width:30px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.vtoggle span.on{background:var(--primary);color:#fff}
+
+/* the rail itself — one wrapper, four looks */
+.rail{display:flex;gap:8px;padding:14px 14px 10px;overflow:hidden}
+
+/* A · text chips (the current look = "without image") */
+.rail.chips .c{display:flex;align-items:center;height:36px;padding:0 15px;border-radius:999px;
+  border:1px solid var(--hairline);background:var(--card);font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap}
+.rail.chips .c.on{background:var(--ink);border-color:var(--ink);color:var(--canvas)}
+
+/* B · avatar pill */
+.rail.avatar .c{display:flex;align-items:center;gap:8px;height:42px;padding:0 14px 0 5px;border-radius:999px;
+  border:1px solid var(--hairline);background:var(--card);font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap}
+.rail.avatar[dir] .c{padding-inline:5px 14px}
+.rail.avatar .c .th{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:15px;overflow:hidden}
+.rail.avatar .c.on{background:var(--ink);border-color:var(--ink);color:var(--canvas)}
+.rail.avatar .c.on .th{box-shadow:0 0 0 2px color-mix(in srgb,var(--canvas) 45%,transparent)}
+
+/* C · image card */
+.rail.card{gap:11px;padding-bottom:12px}
+.rail.card .c{width:66px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.rail.card .c .th{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;font-size:27px;overflow:hidden;
+  border:1px solid var(--hairline);background:var(--card)}
+.rail.card .c .nm{font-size:10.5px;font-weight:700;color:var(--text2);text-align:center;line-height:1.15;
+  max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rail.card .c.on .th{border:2px solid var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 12%,transparent)}
+.rail.card .c.on .nm{color:var(--ink);font-weight:800}
+
+/* D · photo tile, name on a scrim */
+.rail.tile{gap:10px;padding-bottom:12px}
+.rail.tile .c{position:relative;width:104px;height:64px;border-radius:16px;overflow:hidden;flex:none;
+  border:1px solid var(--hairline);display:grid;place-items:center;font-size:24px}
+.rail.tile .c .nm{position:absolute;inset-inline:0;bottom:0;padding:12px 9px 6px;font-size:11px;font-weight:800;color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);background:linear-gradient(to top,rgba(0,0,0,.62),transparent);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail.tile .c.on{border:2px solid var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 14%,transparent)}
+
+/* photo stand-ins + the no-photo fallback panel */
+.ph{background:linear-gradient(135deg,#F6D9A8,#E2A85C)}
+.ph.b{background:linear-gradient(135deg,#CFE8F7,#8DBFE0)}
+.ph.c{background:linear-gradient(135deg,#F7D7DE,#E29BB0)}
+.ph.d{background:linear-gradient(135deg,#DCEFD6,#9BCB8A)}
+.ph.e{background:linear-gradient(135deg,#FBE3C0,#E9A96B)}
+.noph{background:var(--tint);color:var(--primary);font-size:13px!important;font-weight:800;font-family:'Marcellus',serif}
+.allico{background:var(--tint);color:var(--primary);font-size:14px!important}
+
+/* products scrolling under the fixed head */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:12px 14px 16px}
+.tile2{border:1px solid var(--hairline);border-radius:16px;overflow:hidden;background:var(--card)}
+.tile2 .im{height:82px;display:grid;place-items:center;font-size:30px}
+.tile2 .bd{padding:8px 10px 10px}
+.tile2 .bd b{display:block;font-size:11.5px;font-weight:700;color:var(--ink)}
+.tile2 .bd s{display:block;font-size:9.5px;color:var(--muted);text-decoration:none;margin-top:1px}
+.tile2 .bd .pr{font-family:'Marcellus',serif;font-size:14px;color:var(--ink);margin-top:5px}
+.fade{height:26px;background:linear-gradient(to top,color-mix(in srgb,var(--canvas) 50%,#fff),transparent)}
+#stage[data-theme="dark"] .fade{background:linear-gradient(to top,var(--canvas),transparent)}
+
+/* ---- settings mock ---- */
+.setwrap{max-width:1460px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
+.setcard{background:var(--card);border:1px solid var(--hairline);border-radius:18px;padding:18px 20px;box-shadow:var(--shadow)}
+.setcard label{font-size:12.5px;font-weight:700;color:var(--ink);display:block;margin-bottom:6px}
+.setcard select{width:100%;font:inherit;font-size:13px;padding:9px 11px;border-radius:8px;border:1px solid var(--hairline);
+  background:var(--card);color:var(--ink)}
+.setcard small{display:block;font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.55}
+.setrow{display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid var(--hairline);border-radius:14px;background:var(--card)}
+.setico{width:34px;height:34px;border-radius:9px;background:var(--tint);color:var(--primary);display:grid;place-items:center;font-size:15px}
+.setmeta{flex:1;min-width:0;line-height:1.3}
+.setmeta b{display:block;font-size:12.5px;font-weight:700;color:var(--ink)}
+.setmeta s{display:block;font-size:10px;font-weight:600;color:var(--muted);text-decoration:none}
+.setchev{color:var(--muted);font-size:17px}
+.setopt{border:1.5px solid transparent;border-radius:12px;background:var(--card);padding:9px 12px;margin-bottom:7px;
+  box-shadow:0 3px 10px -8px rgba(0,0,0,.4)}
+.setopt.on{border-color:var(--primary)}
+.setopt b{display:block;font-size:13px;font-weight:800;color:var(--ink)}
+.setopt s{display:block;font-size:10.5px;font-weight:600;color:var(--muted);text-decoration:none;margin-top:1px}
+.note{max-width:1460px;margin:22px auto 0;font-size:12.5px;line-height:1.7;color:var(--text2)}
+.note b{color:var(--ink)}
+.note ul{margin:8px 0 0 18px}
+.note li{margin-bottom:5px}
+</style>
+</head>
+<body>
+<div id="stage" data-preset="qloud" data-theme="light">
+
+  <div class="top">
+    <div>
+      <h1>Category rail · with image / without image</h1>
+      <p><b>Shipped.</b> All four are live as <b>Settings → Sale Configuration → Category display</b> in the
+         app — device-local, like “Products per row” beside it, so a photo rail on the counter tablet does not
+         force one onto a manager’s phone. “Name only” is the default and is exactly today’s rail. Everything
+         above the hairline is the fixed head, so a taller rail is a permanently taller head — that trade is
+         why each option carries its height.</p>
+    </div>
+    <div class="switches">
+      <div class="sw" id="sw-theme">
+        <button data-k="theme" data-v="light" class="on">Light</button>
+        <button data-k="theme" data-v="dark">Dark</button>
+      </div>
+      <div class="sw" id="sw-preset">
+        <button data-k="preset" data-v="qloud" class="on">Qloud Blue</button>
+        <button data-k="preset" data-v="signature">Signature</button>
+      </div>
+      <div class="sw" id="sw-dir">
+        <button data-k="dir" data-v="ltr" class="on">LTR</button>
+        <button data-k="dir" data-v="rtl">RTL</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="band"><h2>The four rails</h2><span>same screen, same data</span><i></i></div>
+  <div class="grid" id="samples"></div>
+
+  <div class="band"><h2>Where it lives</h2><span>app Settings · device-local</span><i></i></div>
+  <div class="setwrap">
+    <div class="setcard">
+      <label>Settings → Sale Configuration</label>
+      <div class="setrow">
+        <span class="setico">▤</span>
+        <span class="setmeta"><b>Category display</b><s>New Sale rail · Name only</s></span>
+        <span class="setchev">›</span>
+      </div>
+      <small>A row beside “Products per row”, on the phone list and in the tablet’s Sale Configuration pane.
+        Tapping it opens the picker. Nothing is stored on the server — the choice belongs to the device.</small>
+    </div>
+    <div class="setcard">
+      <label>The picker (click-and-go)</label>
+      <div class="setopt on"><b>Name only</b><s>Text chips — the shortest rail · 36pt</s></div>
+      <div class="setopt"><b>Name with photo</b><s>A round photo inside each chip · 42pt</s></div>
+      <div class="setopt"><b>Photo card</b><s>A large photo with the name beneath it · 84pt</s></div>
+      <div class="setopt"><b>Photo tile</b><s>A wide photo with the name over it · 66pt</s></div>
+      <small>Each row draws the rail it selects, at its real height — the list is its own preview, and
+        applies on tap with no Save button.</small>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>What it costs, per option</b>
+    <ul>
+      <li><b>Name only</b> — 36pt rail. The default, and the state the screen has always been in.</li>
+      <li><b>Name with photo</b> — 42pt rail (+6pt). Cheapest “with image”: the rail keeps its shape and a photo
+          is a hint, not the subject. Best when only some categories have photos.</li>
+      <li><b>Photo card</b> — 84pt rail (+48pt). Photos become the way you pick — good for food and retail
+          where staff recognise the picture faster than the word. Costs most of a product-tile row.</li>
+      <li><b>Photo tile</b> — 66pt rail (+30pt). Boldest. Needs consistently good, dark-enough photos or the
+          white name over a pale pastry reads badly — the scrim helps, it doesn’t save it.</li>
+    </ul>
+    <p style="margin-top:10px">Nothing changed on the server: categories already carried <b>image_path</b>
+       (migration <i>2026_08_30_120000</i>) and <b>GET /api/v1/categories</b> already returned <b>image_url</b>.
+       The app now reads it, keeps it in the offline snapshot (schema v4) and pre-downloads category photos
+       ahead of product photos, so a photo rail still draws with no network.</p>
+  </div>
+</div>
+
+<script>
+// Sample data. "Counter Combos" deliberately has no photo — that fallback is part of the design.
+const CATS = [
+  {n:'All',            all:true},
+  {n:'Bakery',         em:'🥐', ph:'ph'},
+  {n:'Counter Combos', em:'',   ph:''},      // no photo → tinted initial
+  {n:'Dairy',          em:'🥛', ph:'ph b'},
+  {n:'Desserts',       em:'🍰', ph:'ph c'},
+  {n:'Juice Station',  em:'🧃', ph:'ph d'},
+  {n:'Pizza',          em:'🍕', ph:'ph e'},
+];
+const ACTIVE = 1; // Bakery selected, so every look shows its active state
+
+const SAMPLES = [
+  {k:'A', id:'chips',  t:'Name only',              sub:'the default · today’s rail',
+   p:'The rail as it ships now: a name in a pill, ink-filled when selected. Fastest to read at a glance when category names are short and distinct, and it keeps the fixed head at its smallest — every pixel saved here is a pixel of product grid.',
+   tags:[['Rail 36pt','good'],['No new assets','good'],['Photos unused','warn']]},
+  {k:'B', id:'avatar', t:'Name with photo',        sub:'photo as a hint',
+   p:'The same pill with a 30pt round photo tucked in front of the name. The rail grows 6pt, nothing reflows, and a category with no photo just shows its initial — so it degrades gracefully while the catalogue is still being photographed.',
+   tags:[['Rail 42pt','good'],['Mixed photo coverage OK','good'],['Photo is small','']]},
+  {k:'C', id:'card',   t:'Photo card',             sub:'photo as the subject',
+   p:'A 56pt rounded photo with the name beneath it — the rail becomes a visual menu. Selection is an ink ring plus a bolder name, not a fill, so the photo keeps its own colour. Costs 48pt of permanent header height.',
+   tags:[['Rail 84pt','warn'],['Best recognition','good'],['Needs photos everywhere','']]},
+  {k:'D', id:'tile',   t:'Photo tile',             sub:'boldest',
+   p:'Wide 104×64 tiles with the name over a bottom scrim. Reads like a delivery app. It is the most dependent on photo quality: a pale image turns the white name to mush even with the gradient, and the fallback tile has nothing to sit on.',
+   tags:[['Rail 66pt','warn'],['Most striking','good'],['Photo-quality risk','warn']]},
+];
+
+function railHTML(kind){
+  return CATS.map((c,i)=>{
+    const on = i===ACTIVE ? ' on' : '';
+    const initial = c.n.slice(0,1);
+    if(kind==='chips') return `<div class="c${on}">${c.n}</div>`;
+    if(kind==='avatar'){
+      const th = c.all ? `<span class="th allico">▦</span>`
+               : c.ph  ? `<span class="th ${c.ph}">${c.em}</span>`
+                       : `<span class="th noph">${initial}</span>`;
+      return `<div class="c${on}">${th}${c.n}</div>`;
+    }
+    if(kind==='card'){
+      const th = c.all ? `<span class="th allico">▦</span>`
+               : c.ph  ? `<span class="th ${c.ph}">${c.em}</span>`
+                       : `<span class="th noph">${initial}</span>`;
+      return `<div class="c${on}">${th}<span class="nm">${c.n}</span></div>`;
+    }
+    // tile
+    const bg = c.all ? 'allico' : (c.ph || 'noph');
+    return `<div class="c${on} ${bg}">${c.all?'▦':(c.em||initial)}<span class="nm">${c.n}</span></div>`;
+  }).join('');
+}
+
+function phoneHTML(kind){
+  return `
+  <div class="phone">
+    <div class="statusbar"><span>9:41 AM &nbsp;Sun Aug 30</span><span class="ic">▮▮▮ ⌁ ▰</span></div>
+    <div class="hdr">
+      <div class="line1">
+        <span class="ghost">‹</span><h4>New Sale</h4>
+        <span class="daypill">· Sun, 30 Aug · Day open</span>
+        <span style="flex:1"></span><span class="ghost">✕</span>
+      </div>
+      <div class="who">
+        <div><div class="k">CLIENT</div><div class="v">Walk-in</div></div>
+        <div><div class="k">STAFF</div><div class="v">Me</div></div>
+      </div>
+    </div>
+    <div class="fixedhead">
+      <div class="ctrl">
+        <div class="searchrow">
+          <div class="search">⌕ &nbsp;Search name or code</div>
+          <div class="scan">▣</div>
+        </div>
+        <div class="typerow">
+          <div class="seg"><span class="on">All Types</span><span>Products</span><span>Services</span></div>
+          <div class="vtoggle"><span class="on">▦</span><span>☰</span></div>
+        </div>
+      </div>
+      <div class="rail ${kind}">${railHTML(kind)}</div>
+    </div>
+    <div class="pgrid">
+      <div class="tile2"><div class="im ph">🥐</div><div class="bd"><b>Butter Croissant</b><s>Bakery</s><div class="pr">QAR 12.00</div></div></div>
+      <div class="tile2"><div class="im ph c">🍰</div><div class="bd"><b>Basque Cheesecake</b><s>Desserts</s><div class="pr">QAR 28.00</div></div></div>
+    </div>
+    <div class="fade"></div>
+  </div>`;
+}
+
+document.getElementById('samples').innerHTML = SAMPLES.map(s=>`
+  <div class="sample">
+    <div class="cap">
+      <div class="n">Sample ${s.k} · ${s.sub}</div>
+      <h3>${s.t}</h3>
+      <p>${s.p}</p>
+      <div class="tags">${s.tags.map(t=>`<span class="tag ${t[1]}">${t[0]}</span>`).join('')}</div>
+    </div>
+    <div class="phonebox">${phoneHTML(s.id)}</div>
+  </div>`).join('');
+
+// switches
+const stage = document.getElementById('stage');
+document.querySelectorAll('.sw button').forEach(b=>{
+  b.onclick = () => {
+    b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    if(b.dataset.k==='dir'){
+      document.querySelectorAll('.phone').forEach(p=>p.setAttribute('dir', b.dataset.v));
+    } else {
+      stage.setAttribute('data-'+b.dataset.k, b.dataset.v);
+    }
+  };
+});
+</script>
+</body>
+</html>

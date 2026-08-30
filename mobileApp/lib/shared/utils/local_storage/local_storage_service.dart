@@ -161,6 +161,14 @@ class LocalStorageService {
   Future<void> setPosGridColumns(int v) =>
       _prefs.setInt(LocalStorageKeys.posGridColumns, v);
 
+  // How the New Sale category rail draws itself (a `CategoryDisplay.key`).
+  // Null until the till picks one, which keeps the plain text chips this
+  // screen has always shown.
+  String? get posCategoryDisplay =>
+      _prefs.getString(LocalStorageKeys.posCategoryDisplay);
+  Future<void> setPosCategoryDisplay(String v) =>
+      _prefs.setString(LocalStorageKeys.posCategoryDisplay, v);
+
   // Whether New Sale opens the client form before the catalog. Null until the
   // till picks a side, so the screen keeps its long-standing "ask" behaviour.
   bool? get posAskClient => _prefs.containsKey(LocalStorageKeys.posAskClient)
@@ -293,16 +301,22 @@ class LocalStorageService {
   Future<void> setPrintAuto(bool v) =>
       _prefs.setBool(LocalStorageKeys.printAuto, v);
 
-  // The paired printer: `url` is the platform's identifier, `name` is what we
-  // show. Both cleared together when the pairing is removed.
+  // The paired printer. `transport` names the link that carries the job
+  // (network / bluetooth / usb / builtin / system — see PrinterTarget), `url`
+  // is that transport's address and `name` is what we show. A pairing saved
+  // before transports existed has no `transport` key and reads back as
+  // `system`, which is exactly what it was. All three move together.
+  String? get printerTransport => _prefs.getString(LocalStorageKeys.printerTransport);
   String? get printerUrl => _prefs.getString(LocalStorageKeys.printerUrl);
   String? get printerName => _prefs.getString(LocalStorageKeys.printerName);
-  Future<void> setPrinter(String url, String name) async {
+  Future<void> setPrinter(String transport, String url, String name) async {
+    await _prefs.setString(LocalStorageKeys.printerTransport, transport);
     await _prefs.setString(LocalStorageKeys.printerUrl, url);
     await _prefs.setString(LocalStorageKeys.printerName, name);
   }
 
   Future<void> clearPrinter() async {
+    await _prefs.remove(LocalStorageKeys.printerTransport);
     await _prefs.remove(LocalStorageKeys.printerUrl);
     await _prefs.remove(LocalStorageKeys.printerName);
   }

@@ -31,7 +31,7 @@ extension _CatalogViews on _NewSaleScreenState {
                 crossAxisCount: cols,
                 crossAxisSpacing: gap,
                 mainAxisSpacing: gap,
-                childAspectRatio: tileW / (tileW * 0.75 + scale.captionHeight),
+                childAspectRatio: tileW / (tileW + scale.captionHeight),
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, i) => _serviceTile(cat.products[i], tileW, scale),
@@ -43,7 +43,7 @@ extension _CatalogViews on _NewSaleScreenState {
       );
 
   /// Single-column list mode — a premium row with a full-height image on the
-  /// left, name + meta, and a serif price with the add button.
+  /// left, name + meta, and a serif price at the end.
   Widget _productList(CatalogCubit cat, {bool tablet = false}) => SliverPadding(
         padding: EdgeInsets.fromLTRB(tablet ? 14 : 16, 4, tablet ? 14 : 16, 16),
         // One row per line is a phone shape: at ~770pt the name and the price
@@ -115,57 +115,68 @@ extension _CatalogViews on _NewSaleScreenState {
     );
   }
 
+  /// The list's row carries the same bargain as the grid tile: no add button,
+  /// because the row itself adds — and the count badge on the thumbnail is what
+  /// says the tap landed.
   Widget _serviceListRow(Product s) {
     final p = context.astra;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _addToCart(s);
-      },
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: p.hairline),
-          boxShadow: context.astraTheme.softShadow,
-        ),
-        child: Row(
-          children: [
-            SizedBox(width: 84, height: 84, child: _tileImage(s, 84)),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(s.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 13.5, weight: FontWeight.w800, color: p.ink, height: 1.2)),
-                  const SizedBox(height: 4),
-                  Text(_metaLine(s),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
-                ],
+    return BlocSelector<CartCubit, CartState, double>(
+      key: ValueKey(s.id),
+      selector: (cart) =>
+          cart.lines.where((l) => l.productId == s.id).fold(0.0, (sum, l) => sum + l.qty),
+      builder: (context, qty) => GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _addToCart(s);
+        },
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: p.card,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: p.hairline),
+            boxShadow: context.astraTheme.softShadow,
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 84,
+                height: 84,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _tileImage(s, 84),
+                    if (qty > 0) Positioned(top: 6, left: 6, child: _qtyBadge(qty, 22)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Flexible(child: _priceText(s.mrp)),
-            const SizedBox(width: 12),
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                gradient: p.primaryGradient,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: context.astraTheme.floatShadow(p.primary),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(s.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: ui(size: 13.5, weight: FontWeight.w800, color: p.ink, height: 1.2)),
+                    const SizedBox(height: 4),
+                    Text(_metaLine(s),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
+                  ],
+                ),
               ),
-              child: const Icon(Icons.add, color: Colors.white, size: 18),
-            ),
-            const SizedBox(width: 12),
-          ],
+              const SizedBox(width: 12),
+              // Sized to the amount, never flexed: as a Flexible it split the
+              // row's spare width evenly with the name column, so a two-word
+              // product wrapped while the price sat in the middle of an empty
+              // half. Inflexible, the name gets everything the price doesn't.
+              _priceText(s.mrp),
+              const SizedBox(width: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -285,116 +296,340 @@ extension _CatalogViews on _NewSaleScreenState {
     return compact ? seg : Expanded(child: seg);
   }
 
+  /// The category rail, in whichever shape this till chose (Settings →
+  /// Category display). Text chips are the default and the cheapest — the rail
+  /// is pinned above the grid, so the photo layouts buy recognition with header
+  /// height that never comes back.
+  ///
+  /// Built lazily: a catalog with fifty categories builds the handful on screen.
   Widget _categoryChips(CatalogCubit cat, {bool tablet = false}) {
+    final display = context.watch<PosSettingsCubit>().categoryDisplay;
+    final gap = switch (display) {
+      CategoryDisplay.card => 11.0,
+      CategoryDisplay.tile => 10.0,
+      _ => 8.0,
+    };
     return SizedBox(
-      height: 36,
-      child: ListView(
+      height: display.railHeight,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: tablet ? 14 : 16),
-        children: [
-          _catChip('All', cat.selectedCategoryId == null, () => cat.selectCategory(null)),
-          for (final c in cat.categories) ...[
-            const SizedBox(width: 8),
-            _catChip(c.name, cat.selectedCategoryId == c.id, () => cat.selectCategory(c.id)),
-          ],
-        ],
+        itemCount: cat.categories.length + 1,
+        separatorBuilder: (_, __) => SizedBox(width: gap),
+        itemBuilder: (_, i) {
+          // Index 0 is "All", which has no category behind it — hence the
+          // nullable [category] every builder below takes.
+          if (i == 0) {
+            return _catItem(display, null, cat.selectedCategoryId == null,
+                () => cat.selectCategory(null));
+          }
+          final c = cat.categories[i - 1];
+          return _catItem(display, c, cat.selectedCategoryId == c.id,
+              () => cat.selectCategory(c.id));
+        },
       ),
     );
   }
 
-  /// Pill category chip — filled ink when active, hairline outline otherwise.
-  Widget _catChip(String label, bool active, VoidCallback onTap) {
-    final p = context.astra;
+  /// One entry in the rail. [category] is null for "All".
+  Widget _catItem(CategoryDisplay display, Category? category, bool active, VoidCallback onTap) {
+    final label = category?.name ?? 'All';
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         onTap();
       },
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: active ? p.ink : p.card,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: active ? p.ink : p.hairline),
-        ),
-        child: Text(label,
-            style: ui(
-                size: 12.5,
-                weight: FontWeight.w700,
-                color: active ? p.canvas : p.textSecondary)),
+      behavior: HitTestBehavior.opaque,
+      child: switch (display) {
+        CategoryDisplay.nameOnly => _catChip(label, active),
+        CategoryDisplay.avatar =>
+          _catChip(label, active, leading: _catThumb(category, 30, 30, 15, iconSize: 16)),
+        CategoryDisplay.card => _catCard(category, label, active),
+        CategoryDisplay.tile => _catTile(category, label, active),
+      },
+    );
+  }
+
+  /// Pill category chip — filled ink when active, hairline outline otherwise.
+  /// [leading] is the photo puck on the "Name with photo" layout.
+  Widget _catChip(String label, bool active, {Widget? leading}) {
+    final p = context.astra;
+    return Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.fromLTRB(leading == null ? 16 : 5, 0, 16, 0),
+      decoration: BoxDecoration(
+        color: active ? p.ink : p.card,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: active ? p.ink : p.hairline),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (leading != null) ...[leading, const SizedBox(width: 8)],
+          Text(label,
+              style: ui(
+                  size: 12.5,
+                  weight: FontWeight.w700,
+                  color: active ? p.canvas : p.textSecondary)),
+        ],
       ),
     );
   }
 
-  /// Boutique product tile: a full-bleed image (or a tinted category panel when
-  /// there's no photo) crowning the card, then name, meta and a serif price with
-  /// a corner add-button. [k] trims that chrome down as the grid gets denser.
-  Widget _serviceTile(Product s, double width, _TileScale k) {
+  /// "Photo card" — the photo is the thing you tap, the name labels it.
+  /// Selection is a ring and a bolder name rather than a fill, so the photo
+  /// keeps its own colour.
+  Widget _catCard(Category? category, String label, bool active) {
     final p = context.astra;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _addToCart(s);
-      },
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(k.radius),
-          border: Border.all(color: p.hairline),
-          boxShadow: context.astraTheme.softShadow,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: _tileImage(s, width, iconSize: k.icon)),
-            Padding(
-              padding: EdgeInsets.fromLTRB(k.padH, k.padTop, k.padH - 2, k.padBottom),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(s.name,
-                      maxLines: k.nameLines,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: k.name, weight: FontWeight.w800, color: p.ink, height: 1.2)),
-                  if (k.showMeta) ...[
-                    const SizedBox(height: 3),
-                    Text(_metaLine(s),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: ui(size: k.meta, weight: FontWeight.w600, color: p.textMuted)),
-                  ],
-                  SizedBox(height: k.gapAbovePrice),
-                  // Below ~110px the price and the button can't share a row
-                  // without the amount ellipsing away — the whole tile adds to
-                  // the cart on tap anyway, so the button is what gives.
-                  if (k.showAdd)
-                    Row(
-                      children: [
-                        Flexible(child: _priceText(s.mrp, currency: k.currency, amount: k.price)),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: k.add,
-                          height: k.add,
-                          decoration: BoxDecoration(
-                            gradient: p.primaryGradient,
-                            borderRadius: BorderRadius.circular(k.add * 0.35),
-                            boxShadow: context.astraTheme.floatShadow(p.primary),
-                          ),
-                          child: Icon(Icons.add, color: Colors.white, size: k.add * 0.53),
-                        ),
-                      ],
-                    )
-                  else
-                    _priceText(s.mrp, currency: k.currency, amount: k.price),
-                ],
-              ),
+    return SizedBox(
+      width: 66,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: active ? p.ink : Colors.transparent, width: 2),
             ),
-          ],
+            child: _catThumb(category, 56, 56, 15, iconSize: 24),
+          ),
+          const SizedBox(height: 5),
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ui(
+                    size: 10.5,
+                    weight: active ? FontWeight.w800 : FontWeight.w700,
+                    color: active ? p.ink : p.textSecondary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// "Photo tile" — a wide photo with the name over a bottom scrim. The scrim
+  /// is what makes a white name legible over a pale photo; it is not optional.
+  Widget _catTile(Category? category, String label, bool active) {
+    final p = context.astra;
+    return Container(
+      width: 104,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: active ? p.ink : p.hairline, width: active ? 2 : 1),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _catThumb(category, 104, 64, 0, iconSize: 26),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(9, 14, 9, 6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.62)],
+                ),
+              ),
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ui(size: 11, weight: FontWeight.w800, color: Colors.white)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The category's photo, decoded at the size it is painted, or the tinted
+  /// fallback panel. Storage paths are resolved onto the reachable base URL the
+  /// same way product thumbnails are, and go through [OfflineImage] so a rail
+  /// with photos still draws with no network.
+  Widget _catThumb(Category? category, double w, double h, double radius, {double iconSize = 18}) {
+    if (category == null || !category.hasImage) {
+      return _catThumbFallback(category, w, h, radius, iconSize);
+    }
+    final cfg = context.read<AuthCubit>().config;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: Image(
+        image: OfflineImage.provider(
+          cfg.assetUrl(category.imageUrl),
+          headers: cfg.assetHeaders,
+          cacheWidth: decodeWidthFor(context, w),
+        ),
+        fit: BoxFit.cover,
+        width: w,
+        height: h,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => _catThumbFallback(category, w, h, radius, iconSize),
+        loadingBuilder: (context, child, progress) =>
+            progress == null ? child : _catThumbFallback(category, w, h, radius, iconSize),
+      ),
+    );
+  }
+
+  /// No photo (or one that failed): a tinted panel carrying the same
+  /// name-derived icon the product tiles fall back to, so a catalog only half
+  /// photographed still reads as one rail rather than a row of holes.
+  Widget _catThumbFallback(Category? category, double w, double h, double radius, double iconSize) {
+    final p = context.astra;
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [p.tint, p.tint.withValues(alpha: p.isDark ? 0.35 : 0.55)],
         ),
       ),
+      alignment: Alignment.center,
+      child: Icon(
+        category == null ? Icons.apps_rounded : iconForName(category.name),
+        size: iconSize,
+        color: p.primary.withValues(alpha: 0.85),
+      ),
+    );
+  }
+
+  /// Boutique product tile — the "Gallery Frame" card. A square photo (or a
+  /// tinted category panel where there's no picture) crowned by a frosted price
+  /// capsule, then a clean caption: name over code. There is no add button —
+  /// the whole tile has always added to the cart on tap, so what the button
+  /// really carried was feedback, and that now comes from a count badge on
+  /// anything already on the ticket. [k] trims the chrome down as the grid gets
+  /// denser.
+  Widget _serviceTile(Product s, double width, _TileScale k) {
+    final p = context.astra;
+    // Only the badge depends on the ticket, so a tile subscribes to its own
+    // quantity rather than to the whole cart — adding a line repaints that one
+    // tile instead of the visible catalog. Keyed by product because a selector
+    // is only re-run when the cubit emits: without the key, changing the
+    // category hands the same element a different product and the badge stays
+    // on the tile the old one used to occupy.
+    return BlocSelector<CartCubit, CartState, double>(
+      key: ValueKey(s.id),
+      selector: (cart) =>
+          cart.lines.where((l) => l.productId == s.id).fold(0.0, (sum, l) => sum + l.qty),
+      builder: (context, qty) {
+        final inCart = qty > 0;
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _addToCart(s);
+          },
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: p.card,
+              borderRadius: BorderRadius.circular(k.radius),
+              // No selected-state ring: the tile is a button, not a selection —
+              // its only job is to add. The count badge alone says what's on the
+              // ticket, and the grid stays quiet while a ticket fills up.
+              border: Border.all(color: p.hairline),
+              boxShadow: context.astraTheme.softShadow,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _tileImage(s, width, iconSize: k.icon),
+                      // Badge and capsule share one bounded row, so a long
+                      // amount on a narrow tile ellipsizes inside the capsule
+                      // instead of running off the photo.
+                      Positioned(
+                        top: k.inset,
+                        left: k.inset,
+                        right: k.inset,
+                        child: Row(
+                          children: [
+                            if (inCart) ...[_qtyBadge(qty, k.badge), SizedBox(width: k.inset)],
+                            Expanded(
+                              child: Align(alignment: Alignment.centerRight, child: _pricePill(s, k)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(k.padH, k.padTop, k.padH, k.padBottom),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(s.name,
+                          maxLines: k.nameLines,
+                          overflow: TextOverflow.ellipsis,
+                          style: ui(size: k.name, weight: FontWeight.w800, color: p.ink, height: 1.2)),
+                      if (k.showMeta) ...[
+                        const SizedBox(height: 3),
+                        Text(_metaLine(s),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: ui(size: k.meta, weight: FontWeight.w700, color: p.textMuted)),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// The price, lifted off the caption and onto the photo. Frosted-looking but
+  /// deliberately not blurred: a grid paints dozens of these at once and a
+  /// [BackdropFilter] apiece is a cost the till would pay on every scroll frame.
+  Widget _pricePill(Product s, _TileScale k) {
+    final p = context.astra;
+    return Container(
+      padding: EdgeInsets.fromLTRB(k.pillH, k.pillV, k.pillH, k.pillV + 1),
+      decoration: BoxDecoration(
+        color: p.cardSolid.withValues(alpha: p.isDark ? 0.82 : 0.92),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: p.isDark ? 0.12 : 0.6)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.16), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: _priceText(s.mrp, currency: k.currency, amount: k.price),
+    );
+  }
+
+  /// What stands in for the old add button, in both the grid and the list: how
+  /// many of this product are on the ticket, so a tap that lands is visible on
+  /// the tile itself. [size] is the badge's diameter — a capsule once the count
+  /// runs to two digits.
+  Widget _qtyBadge(double qty, double size) {
+    final p = context.astra;
+    return Container(
+      height: size,
+      constraints: BoxConstraints(minWidth: size),
+      padding: EdgeInsets.symmetric(horizontal: size * 0.24),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        gradient: p.primaryGradient,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: context.astraTheme.floatShadow(p.primary),
+      ),
+      child: Text(qtyLabel(qty),
+          style: ui(size: size * 0.47, weight: FontWeight.w800, color: Colors.white, height: 1.1)),
     );
   }
 
@@ -454,7 +689,7 @@ extension _CatalogViews on _NewSaleScreenState {
 
 /// The product tile's chrome, sized to the width it is actually painted at.
 /// A four-up grid on a phone leaves each tile barely 80px across, where the
-/// two-up type, the meta line and the 34px add button have nowhere to go.
+/// two-up type, the meta line and the price capsule have nowhere to go.
 class _TileScale {
   const _TileScale._({
     required this.padH,
@@ -466,43 +701,44 @@ class _TileScale {
     required this.meta,
     required this.currency,
     required this.price,
-    required this.add,
+    required this.inset,
+    required this.pillH,
+    required this.pillV,
+    required this.badge,
     required this.icon,
   });
 
   /// Roomy above ~150px (two-up on a phone, and most tablet grids), trimmed
-  /// through the middle band, stripped back to name + price under ~108px.
+  /// through the middle band, stripped back to a name under ~108px.
   factory _TileScale.forWidth(double w) {
     if (w >= 150) {
       return const _TileScale._(
-          padH: 12, padTop: 10, padBottom: 11, radius: 20,
-          name: 12.5, nameLines: 2, meta: 10.5, currency: 12, price: 17, add: 34, icon: 40);
+          padH: 12, padTop: 10, padBottom: 12, radius: 20,
+          name: 12.5, nameLines: 2, meta: 10.5, currency: 10, price: 15,
+          inset: 8, pillH: 9, pillV: 5, badge: 24, icon: 40);
     }
     if (w >= 108) {
       return const _TileScale._(
-          padH: 9, padTop: 8, padBottom: 9, radius: 16,
-          name: 11.5, nameLines: 2, meta: 0, currency: 10.5, price: 14, add: 26, icon: 32);
+          padH: 9, padTop: 8, padBottom: 10, radius: 16,
+          name: 11.5, nameLines: 2, meta: 9.5, currency: 9, price: 13,
+          inset: 6, pillH: 7, pillV: 4, badge: 20, icon: 32);
     }
     return const _TileScale._(
-        padH: 8, padTop: 7, padBottom: 8, radius: 13,
-        name: 10.5, nameLines: 1, meta: 0, currency: 9.5, price: 12.5, add: 0, icon: 24);
+        padH: 8, padTop: 7, padBottom: 9, radius: 13,
+        name: 10.5, nameLines: 1, meta: 0, currency: 8, price: 11.5,
+        inset: 5, pillH: 5, pillV: 3, badge: 17, icon: 24);
   }
 
-  final double padH, padTop, padBottom, radius, name, meta, currency, price, add, icon;
+  final double padH, padTop, padBottom, radius, name, meta, currency, price;
+  final double inset, pillH, pillV, badge, icon;
   final int nameLines;
 
   bool get showMeta => meta > 0;
-  bool get showAdd => add > 0;
-  double get gapAbovePrice => showMeta ? 9 : 7;
 
   /// Height of the caption under the photo. The grid takes its aspect ratio
   /// from this, so the text is always given the room it asks for and a dense
-  /// tile can't overflow.
+  /// tile can't overflow. The price no longer lives here — it sits on the
+  /// image — so this is only the name and, where it fits, the code line.
   double get captionHeight =>
-      padTop +
-      padBottom +
-      name * 1.2 * nameLines +
-      (showMeta ? meta * 1.35 + 3 : 0) +
-      gapAbovePrice +
-      (showAdd ? add : price * 1.35);
+      padTop + padBottom + name * 1.2 * nameLines + (showMeta ? meta * 1.35 + 3 : 0);
 }

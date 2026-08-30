@@ -2,6 +2,21 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- The API, and the RAW/JetDirect socket a network receipt printer listens
+         on. Only the debug manifest declared this; a release build was relying
+         on a plugin happening to merge it in. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Direct receipt printing. Android's print framework always shows its own
+         sheet, so an auto-printing till talks to the printer itself: over
+         Bluetooth SPP, over a USB bulk endpoint, or through the built-in
+         printer service. See PrinterPlugin.kt. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
     <application
         android:label="QLOUD POS"
         android:name="${applicationName}"
@@ -44,5 +59,9 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Package visibility (Android 11+): without this the built-in printer
+             service is invisible to queryIntentServices and bindService, so an
+             all-in-one POS terminal would report "no built-in printer". -->
+        <package android:name="woyou.aidlservice.jiuiv5" />
     </queries>
 </manifest>

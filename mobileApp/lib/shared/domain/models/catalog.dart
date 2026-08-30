@@ -27,15 +27,24 @@ class Branch extends Equatable {
 }
 
 class Category extends Equatable {
-  const Category({required this.id, required this.name, required this.productCount});
+  const Category({required this.id, required this.name, required this.productCount, this.imageUrl = ''});
   final int id;
   final String name;
   final int productCount;
+
+  /// Photo set on the category in the web Settings (`categories.image_path`,
+  /// served as an absolute `image_url`). Empty for a category nobody has
+  /// photographed — the rail draws a tinted initial instead, so a half-shot
+  /// catalog never leaves a gap. See `CategoryDisplay`.
+  final String imageUrl;
+
+  bool get hasImage => imageUrl.startsWith('http');
 
   factory Category.fromJson(Map<String, dynamic> j) => Category(
         id: asNum(j['id']).toInt(),
         name: asStr(j['name']),
         productCount: asNum(j['product_count']).toInt(),
+        imageUrl: asStr(j['image_url']),
       );
 
 
@@ -44,6 +53,7 @@ class Category extends Equatable {
         id,
         name,
         productCount,
+        imageUrl,
       ];
 }
 

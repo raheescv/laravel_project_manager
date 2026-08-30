@@ -46,6 +46,11 @@ class LocalStorageKeys {
   static const String posLockAfterSale = 'astra.pos.lockAfterSale';
   // How many product tiles the New Sale catalog grid fits across (2 | 3 | 4).
   static const String posGridColumns = 'astra.pos.gridColumns';
+  /// How the New Sale category rail is drawn (a `CategoryDisplay.key`).
+  /// Device-local, like the grid density beside it: whether a photo rail earns
+  /// its header height depends on the screen it is on and on how much of that
+  /// shop's catalog has actually been photographed.
+  static const String posCategoryDisplay = 'astra.pos.categoryDisplay';
   /// Whether opening New Sale asks who the ticket is for before anything else.
   /// Device-local: a salon takes the name up front, a counter selling to a queue
   /// wants the catalog the moment the screen opens.
@@ -91,6 +96,7 @@ class LocalStorageKeys {
   // Auto-print — device-local (every till is paired with its own printer, so
   // these never sync to the shared web Sale Configuration).
   static const String printAuto = 'astra.print.auto';
+  static const String printerTransport = 'astra.print.printerTransport';
   static const String printerUrl = 'astra.print.printerUrl';
   static const String printerName = 'astra.print.printerName';
   static const String printSkipInvoice = 'astra.print.skipInvoice';

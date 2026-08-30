@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile · Sidebar log-out samples</title>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra tokens — mirrors mobileApp/lib/shared/utils/components/theme/palette.dart
+   Driven by [data-preset] + [data-theme] on #stage.
+   ============================================================ */
+#stage{
+  --success:#1F9D63;
+  --danger:#D4546A;
+}
+/* --- Qloud Blue (clean skin, the app default) --- */
+#stage[data-preset="qloud"]{
+  --primary:#0A62C8; --primary-dark:#01377F; --accent:#0BA8FA;
+  --canvas:#F3F7FD; --card:#FFFFFF;
+  --ink:#101426; --text2:#4E5875; --muted:#98A0B8;
+  --hairline:#E6EAF3; --tint:#E8F1FD;
+  --rail:#01377F;                       /* p.darkSurface (light) = primaryDark */
+  --shadow:0 10px 24px -16px rgba(1,55,127,.30);
+}
+#stage[data-preset="qloud"][data-theme="dark"]{
+  --canvas:#0E1220; --card:#171B2B;
+  --ink:#EDEFF7; --text2:#A3ABC2; --muted:#767E96;
+  --hairline:rgba(255,255,255,.09); --tint:rgba(10,98,200,.20);
+  --rail:#161A28;                       /* clean skin dark surface */
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+/* --- Aurora Glass --- */
+#stage[data-preset="aurora"]{
+  --primary:#4F46E5; --primary-dark:#3730A3; --accent:#38BDF8;
+  --canvas:#EEF1F7; --card:#FFFFFF;
+  --ink:#13183A; --text2:#4C5580; --muted:#7F88B3;
+  --hairline:#E4E8F2; --tint:#EAF0FF;
+  --rail:#3730A3;
+  --shadow:0 10px 24px -16px rgba(55,48,163,.30);
+}
+#stage[data-preset="aurora"][data-theme="dark"]{
+  --canvas:#0B0E1C; --card:#161A2E;
+  --ink:#EAEDF9; --text2:#9AA3CC; --muted:#7079A6;
+  --hairline:rgba(255,255,255,.10); --tint:rgba(79,70,229,.22);
+  --rail:#14172B;
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Manrope',system-ui,sans-serif;background:#EFEFEF;color:#111}
+#stage{min-height:100vh;background:var(--canvas);color:var(--ink);padding:26px 20px 70px;transition:background .2s}
+
+/* ---- page chrome ---- */
+.top{max-width:1420px;margin:0 auto 26px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.top h1{font-family:'Marcellus',serif;font-size:28px;font-weight:400;letter-spacing:.2px}
+.top p{font-size:13px;color:var(--text2);margin-top:5px;max-width:720px;line-height:1.55}
+.switches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{display:flex;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+.sw button{border:0;background:transparent;font:inherit;font-size:11.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--muted);padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+.sw button.on{background:var(--primary);color:#fff}
+
+.band{max-width:1420px;margin:34px auto 16px;display:flex;align-items:center;gap:12px}
+.band h2{font-family:'Marcellus',serif;font-size:19px;font-weight:400}
+.band span{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--primary);
+  background:var(--tint);border-radius:999px;padding:5px 11px}
+.band i{flex:1;height:1px;background:var(--hairline)}
+
+.grid{max-width:1420px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:24px;align-items:start}
+.sample{display:flex;flex-direction:column;gap:13px}
+.cap{background:var(--card);border:1px solid var(--hairline);border-radius:18px;padding:15px 17px;box-shadow:var(--shadow)}
+.cap .n{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--primary);margin-bottom:5px}
+.cap h3{font-family:'Marcellus',serif;font-size:17px;font-weight:400;margin-bottom:6px}
+.cap p{font-size:12.5px;line-height:1.6;color:var(--text2)}
+.cap .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--text2);
+  border:1px solid var(--hairline);border-radius:999px;padding:4px 9px}
+.tag.good{color:var(--success);border-color:color-mix(in srgb,var(--success) 40%,transparent)}
+.tag.warn{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+
+/* ============================================================
+   The tablet side rail — 92pt wide, dark, radius 26 (AstraChrome.peers)
+   ============================================================ */
+.railbox{background:var(--card);border:1px solid var(--hairline);border-radius:22px;padding:16px;box-shadow:var(--shadow);
+  display:flex;justify-content:center}
+.rail{width:92px;min-height:520px;background:var(--rail);border-radius:26px;padding:18px 0;
+  display:flex;flex-direction:column;align-items:center;position:relative;
+  box-shadow:0 14px 36px -18px rgba(0,0,0,.45)}
+.logo{font-family:'Marcellus',serif;font-size:12px;letter-spacing:2.4px;color:#fff;opacity:.95;margin-bottom:20px}
+.logo b{color:var(--accent);font-weight:400}
+.lnk{display:flex;flex-direction:column;align-items:center;padding:8px 0;width:100%;cursor:pointer}
+.lnk .ic{width:46px;height:40px;border-radius:13px;display:grid;place-items:center;color:rgba(255,255,255,.55);
+  font-size:17px;transition:.15s}
+.lnk .tx{font-size:8.5px;font-weight:600;letter-spacing:.2px;color:rgba(255,255,255,.55);margin-top:4px}
+.lnk.on .ic{background:rgba(255,255,255,.12);color:var(--accent)}
+.lnk.on .tx{color:var(--accent);font-weight:700}
+.spacer{flex:1;min-height:18px}
+.fab{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:22px;color:var(--primary-dark);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,#fff),var(--accent))}
+.fabtx{font-size:9px;font-weight:700;color:rgba(255,255,255,.7);margin-top:4px}
+.rule{width:44px;height:1px;background:rgba(255,255,255,.14);margin:14px 0 4px}
+
+/* danger-tinted rail link */
+.lnk.out .ic{color:#FF9AA8;background:rgba(212,84,106,.16)}
+.lnk.out .tx{color:#FF9AA8;font-weight:700}
+
+/* avatar puck */
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:'Marcellus',serif;font-size:16px;
+  color:#fff;background:linear-gradient(135deg,rgba(255,255,255,.26),rgba(255,255,255,.10));
+  border:1px solid rgba(255,255,255,.28)}
+.av.sm{width:34px;height:34px;font-size:13px}
+.dot{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--success);
+  border:2.5px solid var(--rail);margin:-13px 0 0 30px}
+
+/* anchored popover (sample B) */
+.pop{position:absolute;left:84px;bottom:16px;width:212px;background:var(--card);border:1px solid var(--hairline);
+  border-radius:18px;padding:8px;box-shadow:0 22px 46px -20px rgba(0,0,0,.45);text-align:left;z-index:3}
+.pop .who{padding:9px 10px 11px;border-bottom:1px solid var(--hairline);margin-bottom:6px}
+.pop .who b{display:block;font-family:'Marcellus',serif;font-size:14.5px;font-weight:400}
+.pop .who span{font-size:9px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
+.pop a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;font-size:12.5px;font-weight:700;
+  color:var(--ink);text-decoration:none;cursor:pointer}
+.pop a em{width:26px;height:26px;border-radius:9px;background:var(--tint);display:grid;place-items:center;font-style:normal;font-size:13px}
+.pop a:hover{background:var(--tint)}
+.pop a.dg{color:var(--danger)}
+.pop a.dg em{background:color-mix(in srgb,var(--danger) 14%,transparent)}
+.arw{position:absolute;left:-6px;bottom:34px;width:12px;height:12px;background:var(--card);
+  border-left:1px solid var(--hairline);border-bottom:1px solid var(--hairline);transform:rotate(45deg)}
+
+/* twin circles (sample C) */
+.twin{display:flex;gap:9px;margin-top:4px}
+.cir{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:14px;
+  background:rgba(255,255,255,.10);color:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.14)}
+.cir.dg{background:rgba(212,84,106,.18);color:#FF9AA8;border-color:rgba(212,84,106,.38)}
+.twintx{display:flex;gap:9px;margin-top:5px}
+.twintx span{width:34px;text-align:center;font-size:7.5px;font-weight:700;letter-spacing:.2px;color:rgba(255,255,255,.5)}
+
+/* tap-to-confirm (sample D) */
+.confirm{width:74px;background:var(--danger);border-radius:14px;padding:9px 0;text-align:center;color:#fff}
+.confirm b{display:block;font-size:9.5px;font-weight:800;letter-spacing:.6px}
+.confirm i{display:block;font-size:7.5px;font-style:normal;font-weight:600;opacity:.82;margin-top:2px}
+.ghosttap{font-size:8.5px;color:rgba(255,255,255,.45);margin-top:7px;text-align:center;line-height:1.4;padding:0 6px}
+
+/* ============================================================
+   The phone drawer footer (AstraDrawer._footer)
+   ============================================================ */
+.phonebox{background:var(--card);border:1px solid var(--hairline);border-radius:22px;padding:16px;box-shadow:var(--shadow);
+  display:flex;justify-content:center}
+.drawer{width:270px;border-radius:0 26px 26px 0;background:color-mix(in srgb,var(--canvas) 88%,#fff);
+  border-right:1px solid var(--hairline);overflow:hidden;box-shadow:0 14px 36px -20px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;min-height:430px}
+#stage[data-theme="dark"] .drawer{background:color-mix(in srgb,var(--card) 82%,transparent)}
+.dhead{padding:16px 16px 13px;border-bottom:1px solid color-mix(in srgb,var(--accent) 55%,transparent)}
+.dhead .brand{font-family:'Marcellus',serif;font-size:10px;letter-spacing:4px;color:var(--accent)}
+.dhead .row{display:flex;align-items:center;gap:10px;margin-top:11px}
+.dhead .row .av{background:linear-gradient(135deg,var(--primary),var(--primary-dark));border:0}
+.dhead .row b{font-family:'Marcellus',serif;font-size:15px;font-weight:400;display:block}
+.dhead .row span{font-size:9px;font-weight:700;letter-spacing:.8px;color:var(--muted)}
+.pillday{display:inline-flex;align-items:center;gap:6px;margin-top:11px;padding:4px 10px;border-radius:999px;
+  background:color-mix(in srgb,var(--success) 14%,transparent);border:1px solid color-mix(in srgb,var(--success) 45%,transparent);
+  font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--success)}
+.pillday i{width:6px;height:6px;border-radius:50%;background:var(--success)}
+.dbody{flex:1;padding:8px 12px}
+.ditem{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:13px;margin-bottom:2px}
+.ditem .ic{width:32px;height:32px;border-radius:10px;background:color-mix(in srgb,var(--ink) 7%,transparent);
+  display:grid;place-items:center;font-size:14px}
+.ditem b{font-size:12.5px;font-weight:700}
+.ditem.on{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.ditem.on .ic{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,#fff),var(--accent));color:var(--primary-dark)}
+.dsec{font-size:8.5px;font-weight:800;letter-spacing:2.6px;color:var(--muted);padding:12px 6px 6px}
+.dfoot{padding:12px 16px 16px;border-top:1px solid var(--hairline)}
+
+/* current footer */
+.foot-now{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:800;color:var(--danger)}
+.foot-now .ver{margin-left:auto;font-size:9px;font-weight:600;color:var(--muted)}
+
+/* E — danger pill */
+.btn-out{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:12px;border-radius:15px;
+  background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 38%,transparent);
+  color:var(--danger);font-size:12.5px;font-weight:800;letter-spacing:.3px;cursor:pointer}
+.ver-c{text-align:center;font-size:9px;font-weight:600;color:var(--muted);margin-top:9px;letter-spacing:.4px}
+
+/* F — split footer */
+.foot-split{display:flex;gap:9px}
+.btn-lock{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:15px;
+  background:transparent;border:1px solid var(--hairline);color:var(--ink);font-size:12px;font-weight:800;cursor:pointer}
+.btn-out.half{flex:1;padding:12px 10px;font-size:12px}
+.note{font-size:11px;color:var(--muted);text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="stage" data-preset="qloud" data-theme="light">
+
+  <div class="top">
+    <div>
+      <h1>Where does “Log out” live in the sidebar?</h1>
+      <p>The phone drawer already ends in a flat red <em>Log out</em> row; the <strong>tablet side rail</strong> has none at all — on a tablet there is no other way out of the app. Four options for the rail (A–D) and two refinements for the drawer footer (E–F). Pick one from each row, or one overall.</p>
+    </div>
+    <div class="switches">
+      <div class="sw" id="preset">
+        <button data-v="qloud" class="on">Qloud Blue</button>
+        <button data-v="aurora">Aurora Glass</button>
+      </div>
+      <div class="sw" id="theme">
+        <button data-v="light" class="on">Light</button>
+        <button data-v="dark">Dark</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="band"><h2>Tablet side rail</h2><span>no log-out today</span><i></i></div>
+  <div class="grid">
+
+    <!-- A -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Option A</div>
+        <h3>Rail link, in red</h3>
+        <p>Just one more rail destination below a hairline — same icon tile and 8.5pt caption as every other link, tinted danger so it never reads as navigation. Confirm dialog on tap, exactly like the drawer does now.</p>
+        <div class="tags"><span class="tag good">Smallest change</span><span class="tag">Zero new patterns</span><span class="tag warn">Sits next to “New”</span></div>
+      </div>
+      <div class="railbox">
+        <div class="rail">
+          <div class="logo">Q<b>LOUD</b></div>
+          <div class="lnk on"><div class="ic">▦</div><div class="tx">Home</div></div>
+          <div class="lnk"><div class="ic">🧾</div><div class="tx">Sales</div></div>
+          <div class="lnk"><div class="ic">↩</div><div class="tx">Returns</div></div>
+          <div class="lnk"><div class="ic">📊</div><div class="tx">Reports</div></div>
+          <div class="lnk"><div class="ic">⚙</div><div class="tx">Settings</div></div>
+          <div class="spacer"></div>
+          <div class="fab">＋</div><div class="fabtx">New</div>
+          <div class="rule"></div>
+          <div class="lnk out"><div class="ic">⏻</div><div class="tx">Log out</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Option B · recommended</div>
+        <h3>Identity puck → menu</h3>
+        <p>The user’s avatar anchors the bottom of the rail, with the day-open dot on it. Tap opens a small popover: <em>My profile · Lock till · Log out</em>. Click-and-go — profile and lock apply on tap, only log out confirms.</p>
+        <div class="tags"><span class="tag good">Shows who is signed in</span><span class="tag good">Room for Lock</span><span class="tag">One new popover</span></div>
+      </div>
+      <div class="railbox">
+        <div class="rail">
+          <div class="logo">Q<b>LOUD</b></div>
+          <div class="lnk on"><div class="ic">▦</div><div class="tx">Home</div></div>
+          <div class="lnk"><div class="ic">🧾</div><div class="tx">Sales</div></div>
+          <div class="lnk"><div class="ic">↩</div><div class="tx">Returns</div></div>
+          <div class="lnk"><div class="ic">📊</div><div class="tx">Reports</div></div>
+          <div class="lnk"><div class="ic">⚙</div><div class="tx">Settings</div></div>
+          <div class="spacer"></div>
+          <div class="fab">＋</div><div class="fabtx">New</div>
+          <div class="rule"></div>
+          <div class="av">R</div><div class="dot"></div>
+          <div class="fabtx" style="margin-top:6px">Rahees</div>
+          <div class="pop">
+            <div class="arw"></div>
+            <div class="who"><b>Rahees</b><span>Main Branch · Day open</span></div>
+            <a><em>👤</em>My profile</a>
+            <a><em>🔒</em>Lock till</a>
+            <a class="dg"><em>⏻</em>Log out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Option C</div>
+        <h3>Lock + Log out pair</h3>
+        <p>Two small circles under “New”. Lock is the everyday action on a shared till (local PIN, no re-fetch); log out is the rarer, heavier one and is the only red thing in the rail.</p>
+        <div class="tags"><span class="tag good">Lock is one tap</span><span class="tag">Both always visible</span><span class="tag warn">Two 34pt targets</span></div>
+      </div>
+      <div class="railbox">
+        <div class="rail">
+          <div class="logo">Q<b>LOUD</b></div>
+          <div class="lnk on"><div class="ic">▦</div><div class="tx">Home</div></div>
+          <div class="lnk"><div class="ic">🧾</div><div class="tx">Sales</div></div>
+          <div class="lnk"><div class="ic">↩</div><div class="tx">Returns</div></div>
+          <div class="lnk"><div class="ic">📊</div><div class="tx">Reports</div></div>
+          <div class="lnk"><div class="ic">⚙</div><div class="tx">Settings</div></div>
+          <div class="spacer"></div>
+          <div class="fab">＋</div><div class="fabtx">New</div>
+          <div class="rule"></div>
+          <div class="twin"><div class="cir">🔒</div><div class="cir dg">⏻</div></div>
+          <div class="twintx"><span>Lock</span><span>Out</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- D -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Option D</div>
+        <h3>Tap-to-confirm, no dialog</h3>
+        <p>A quiet power glyph that expands into a red <em>Confirm</em> pill for three seconds, then collapses. Nothing covers the screen, and a stray tap on a busy counter can’t sign anyone out.</p>
+        <div class="tags"><span class="tag good">No modal</span><span class="tag good">Mis-tap safe</span><span class="tag warn">Timed state to build</span></div>
+      </div>
+      <div class="railbox">
+        <div class="rail">
+          <div class="logo">Q<b>LOUD</b></div>
+          <div class="lnk on"><div class="ic">▦</div><div class="tx">Home</div></div>
+          <div class="lnk"><div class="ic">🧾</div><div class="tx">Sales</div></div>
+          <div class="lnk"><div class="ic">↩</div><div class="tx">Returns</div></div>
+          <div class="lnk"><div class="ic">📊</div><div class="tx">Reports</div></div>
+          <div class="lnk"><div class="ic">⚙</div><div class="tx">Settings</div></div>
+          <div class="spacer"></div>
+          <div class="fab">＋</div><div class="fabtx">New</div>
+          <div class="rule"></div>
+          <div class="confirm"><b>CONFIRM</b><i>tap to log out</i></div>
+          <div class="ghosttap">↑ after the first tap</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="band"><h2>Phone drawer footer</h2><span>has a flat red row today</span><i></i></div>
+  <div class="grid">
+
+    <!-- current -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Today</div>
+        <h3>Flat text row</h3>
+        <p>A bare icon + label at the bottom of the drawer, version number pushed right. It works, but it doesn’t read as a button and the tap target is only as tall as the text.</p>
+        <div class="tags"><span class="tag">Shipping now</span></div>
+      </div>
+      <div class="phonebox">
+        <div class="drawer">
+          <div class="dhead">
+            <div class="brand">Q L O U D</div>
+            <div class="row"><div class="av">R</div><div><b>Rahees</b><span>MAIN BRANCH</span></div></div>
+            <div class="pillday"><i></i>DAY OPEN</div>
+          </div>
+          <div class="dbody">
+            <div class="dsec">OVERVIEW</div>
+            <div class="ditem on"><div class="ic">▦</div><b>Dashboard</b></div>
+            <div class="ditem"><div class="ic">📊</div><b>Reports</b></div>
+            <div class="dsec">ACCOUNT</div>
+            <div class="ditem"><div class="ic">⚙</div><b>Settings</b></div>
+          </div>
+          <div class="dfoot"><div class="foot-now"><span>⏻</span>Log out<span class="ver">invo · v3</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Option E</div>
+        <h3>Danger pill</h3>
+        <p>Same footer, but the row becomes a full-width tinted button with a proper 44pt target; the version line moves under it, centred and quiet.</p>
+        <div class="tags"><span class="tag good">Reads as a button</span><span class="tag good">Bigger target</span></div>
+      </div>
+      <div class="phonebox">
+        <div class="drawer">
+          <div class="dhead">
+            <div class="brand">Q L O U D</div>
+            <div class="row"><div class="av">R</div><div><b>Rahees</b><span>MAIN BRANCH</span></div></div>
+            <div class="pillday"><i></i>DAY OPEN</div>
+          </div>
+          <div class="dbody">
+            <div class="dsec">OVERVIEW</div>
+            <div class="ditem on"><div class="ic">▦</div><b>Dashboard</b></div>
+            <div class="ditem"><div class="ic">📊</div><b>Reports</b></div>
+            <div class="dsec">ACCOUNT</div>
+            <div class="ditem"><div class="ic">⚙</div><b>Settings</b></div>
+          </div>
+          <div class="dfoot">
+            <div class="btn-out"><span>⏻</span>Log out</div>
+            <div class="ver-c">QLOUD POS · v3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- F -->
+    <div class="sample">
+      <div class="cap">
+        <div class="n">Option F</div>
+        <h3>Lock ▸ Log out split</h3>
+        <p>The two ways to leave a till, side by side: <em>Lock</em> keeps the session (local PIN unlock, no catalogue refetch), <em>Log out</em> ends it. Pairs naturally with rail option C.</p>
+        <div class="tags"><span class="tag good">Surfaces the lock</span><span class="tag warn">Two targets in a footer</span></div>
+      </div>
+      <div class="phonebox">
+        <div class="drawer">
+          <div class="dhead">
+            <div class="brand">Q L O U D</div>
+            <div class="row"><div class="av">R</div><div><b>Rahees</b><span>MAIN BRANCH</span></div></div>
+            <div class="pillday"><i></i>DAY OPEN</div>
+          </div>
+          <div class="dbody">
+            <div class="dsec">OVERVIEW</div>
+            <div class="ditem on"><div class="ic">▦</div><b>Dashboard</b></div>
+            <div class="ditem"><div class="ic">📊</div><b>Reports</b></div>
+            <div class="dsec">ACCOUNT</div>
+            <div class="ditem"><div class="ic">⚙</div><b>Settings</b></div>
+          </div>
+          <div class="dfoot">
+            <div class="foot-split">
+              <div class="btn-lock"><span>🔒</span>Lock</div>
+              <div class="btn-out half"><span>⏻</span>Log out</div>
+            </div>
+            <div class="ver-c">QLOUD POS · v3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+for (const id of ['preset','theme']) {
+  document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    [...e.currentTarget.children].forEach(x => x.classList.toggle('on', x === b));
+    document.getElementById('stage').dataset[id] = b.dataset.v;
+  });
+}
+</script>
+</body>
+</html>

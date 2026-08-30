@@ -3,14 +3,17 @@ import 'dart:typed_data';
 
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/domain/models/printer_target.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 
 // Re-export the print value objects so screens importing the cubit also get
-// PrintStyle / PaperWidth / PrintSettings (they used to live together).
+// PrintStyle / PaperWidth / PrintSettings / PrinterTarget (they used to live
+// together).
 export 'package:invo/shared/domain/models/print_settings.dart';
+export 'package:invo/shared/domain/models/printer_target.dart';
 
 part 'print_settings_state.dart';
 
@@ -54,8 +57,11 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
       showCompanyName: st.printShowCompany ?? false,
       companyName: st.printCompanyName ?? '',
       autoPrint: st.printAuto ?? true,
-      printerUrl: st.printerUrl,
-      printerName: st.printerName,
+      printer: PrinterTarget(
+        transport: PrinterTransport.fromKey(st.printerTransport),
+        address: st.printerUrl ?? '',
+        name: st.printerName ?? '',
+      ),
       skipInvoice: st.printSkipInvoice ?? false,
     );
   }
@@ -76,10 +82,10 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
   bool get showCompanyName => state.showCompanyName;
   String get companyName => state.companyName;
   bool get autoPrint => state.autoPrint;
-  String? get printerUrl => state.printerUrl;
-  String? get printerName => state.printerName;
+  PrinterTarget get printer => state.printer;
   bool get skipInvoice => state.skipInvoice;
   bool get hasPrinter => state.hasPrinter;
+  bool get printsSilently => state.printsSilently;
   PrintSettings get snapshot => state.snapshot;
 
   // ---- device-local options (never pushed to the web config) ----
@@ -98,17 +104,25 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
     await _storage.setPrintAuto(v);
   }
 
-  /// Pair (or, with a null [url], un-pair) the printer this till prints to.
-  Future<void> setPrinter(String? url, String? name) async {
-    final u = (url ?? '').trim();
-    if (u.isEmpty) {
+  /// Pair (or, with a null [target], un-pair) the printer this till prints to.
+  /// A target that carries no address and isn't the built-in printer is the
+  /// same thing as un-pairing.
+  Future<void> setPrinter(PrinterTarget? target) async {
+    if (target == null || !target.isPaired) {
       emit(state.copyWith(clearPrinter: true));
       await _storage.clearPrinter();
       return;
     }
-    final label = (name ?? '').trim().isEmpty ? u : name!.trim();
-    emit(state.copyWith(printerUrl: u, printerName: label));
-    await _storage.setPrinter(u, label);
+    final address = target.address.trim();
+    final label = target.name.trim().isEmpty
+        ? (address.isEmpty ? target.transport.label : address)
+        : target.name.trim();
+    final next = target.copyWith(address: address, name: label);
+    emit(state.copyWith(printer: next));
+    await _storage.setPrinter(next.transport.key, next.address, next.name);
+    // A dialog-only pairing can't print silently, so the "straight back to New
+    // Sale" shortcut it enabled no longer has anything to skip ahead from.
+    if (!next.isDirect && state.skipInvoice) await setSkipInvoice(false);
   }
 
   /// After a successful auto-print, go straight back to a fresh ticket instead

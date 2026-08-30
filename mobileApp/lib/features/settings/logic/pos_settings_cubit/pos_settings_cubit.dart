@@ -23,6 +23,7 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
       askClientOnNewSale: storage.posAskClient ?? true,
       showTip: storage.posShowTip ?? true,
       startScreen: StartScreen.fromKey(storage.posStartScreen),
+      categoryDisplay: CategoryDisplay.fromKey(storage.posCategoryDisplay),
     );
   }
 
@@ -58,6 +59,10 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   /// redirect, which still has the last word on whether the account may open it.
   StartScreen get startScreen => state.startScreen;
 
+  /// How New Sale draws its category rail — text chips, or one of three photo
+  /// layouts. See [CategoryDisplay].
+  CategoryDisplay get categoryDisplay => state.categoryDisplay;
+
   Future<void> setLockAfterSale(bool v) async {
     if (v == state.lockAfterSale) return;
     emit(state.copyWith(lockAfterSale: v));
@@ -87,6 +92,12 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
     if (v == state.startScreen) return;
     emit(state.copyWith(startScreen: v));
     await _storage.setPosStartScreen(v.key);
+  }
+
+  Future<void> setCategoryDisplay(CategoryDisplay v) async {
+    if (v == state.categoryDisplay) return;
+    emit(state.copyWith(categoryDisplay: v));
+    await _storage.setPosCategoryDisplay(v.key);
   }
 
   Future<void> setGridColumns(int v) async {

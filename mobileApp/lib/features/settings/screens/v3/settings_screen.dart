@@ -26,6 +26,7 @@ import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/settings/widgets/v3/appearance_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/branch_sheet.dart';
+import 'package:invo/features/settings/widgets/v3/category_display_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/currency_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/start_screen_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/theme_sheet.dart';
@@ -79,6 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _askClientCard(context),
                         _tipCard(context),
                         _gridColumnsCard(context),
+                        _categoryDisplayCard(context),
                         _startScreenCard(context),
                         _permissionsCard(context),
                         _offlineDataCard(context),
@@ -262,7 +264,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           PrintSettingsScreen(embedded: true),
         ]);
       case 2:
-        final pos = context.watch<PosSettingsCubit>();
         // One category for the whole selling flow — opening the ticket, laying
         // the catalog out, and what the till does once the sale is charged. As
         // two they read as unrelated, and "Shared till" hid a switch every
@@ -273,22 +274,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 11),
           _tipCard(context),
           const SizedBox(height: 11),
+          // Category display *is* here, unlike "Products per row" below: the
+          // rail is drawn the same way on both, and its height costs a tablet
+          // exactly what it costs a phone.
+          _categoryDisplayCard(context),
+          const SizedBox(height: 11),
           // "Products per row" is deliberately absent here — see the phone list.
           // A tablet takes its column count from the width the catalog is given,
           // and the preference is only ever a floor, so a picker on this screen
           // would set a number the grid then overrides.
-          _toggleRow(
-              context,
-              'Lock after each sale',
-              pos.lockAfterSale
-                  ? 'On — MPIN or fingerprint to carry on; the session stays open'
-                  : 'Off — this device stays unlocked between sales',
-              pos.lockAfterSale,
-              () => context.read<PosSettingsCubit>().toggleLockAfterSale()),
+          // Same card the phone list shows: it carries the lock chip and the
+          // auto-print caveat, which a bare toggle row here did not.
+          _lockAfterSaleCard(context),
         ]);
       case 3:
-        // No `final` locals here: every case shares the switch's one scope, and
-        // case 2 already holds `pos`.
         return _panelShell(context, startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
             'Where this device opens once you sign in — and after an unlock.', [
           for (final option in StartScreen.optionsFor(canViewDashboard: _canViewDashboard(context)))
@@ -520,7 +519,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final pos = context.watch<PosSettingsCubit>();
     if (!_tipAllowedByBusiness()) {
       return _staticRow(context, 'Ask for a tip',
-          'Turned off for the business in Sale Configuration on the web.');
+          'Turned off for the business in Sale Configuration on the web.',
+          icon: Icons.volunteer_activism_outlined);
     }
     return _toggleRow(
       context,
@@ -529,6 +529,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? 'On — the tip row shows at Review & Pay'
           : 'Off — hidden on this device; other tills are unaffected',
       pos.showTip,
+      icon: Icons.volunteer_activism_outlined,
       () {
         final next = !pos.showTip;
         pos.setShowTip(next);
@@ -541,18 +542,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// A settings row with nothing to toggle — a state the till is told about
   /// rather than one it chooses.
-  Widget _staticRow(BuildContext context, String title, String sub) {
+  Widget _staticRow(BuildContext context, String title, String sub, {IconData? icon}) {
     final p = context.astra;
     return AstraCard(
       radius: 14,
       child: Row(
         children: [
+          // Given a chip, the row takes the icon-card metrics so it sits level
+          // with the cards above and below it rather than beside them.
+          if (icon != null) ...[
+            IconChip(icon: icon, size: 34, radius: 9, bg: p.tint),
+            const SizedBox(width: 11),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: ui(size: 13.5, weight: FontWeight.w700, color: p.textMuted)),
-                Text(sub, style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
+                Text(title, style: ui(size: icon == null ? 13.5 : 12.5, weight: FontWeight.w700, color: p.textMuted)),
+                Text(sub, style: ui(size: icon == null ? 11 : 10, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),
           ),
@@ -562,7 +569,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _toggleRow(BuildContext context, String title, String sub, bool value, VoidCallback onTap) {
+  Widget _toggleRow(BuildContext context, String title, String sub, bool value, VoidCallback onTap,
+      {IconData? icon}) {
     final p = context.astra;
     return GestureDetector(
       onTap: onTap,
@@ -570,12 +578,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         radius: 14,
         child: Row(
           children: [
+            if (icon != null) ...[
+              IconChip(icon: icon, size: 34, radius: 9, bg: p.tint),
+              const SizedBox(width: 11),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
-                  Text(sub, style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
+                  Text(title, style: ui(size: icon == null ? 13.5 : 12.5, weight: FontWeight.w700, color: p.ink)),
+                  Text(sub, style: ui(size: icon == null ? 11 : 10, weight: FontWeight.w600, color: p.textMuted)),
                 ],
               ),
             ),
@@ -988,6 +1000,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// How the category rail across the top of New Sale is drawn — plain chips,
+  /// or one of three layouts that show the category's photo. Opens the picker,
+  /// which previews each rail at its real height: the rail is pinned, so a
+  /// taller one is permanently less catalog on screen.
+  Widget _categoryDisplayCard(BuildContext context) {
+    final p = context.astra;
+    final display = context.watch<PosSettingsCubit>().categoryDisplay;
+    return AstraCard(
+      radius: 14,
+      onTap: () => showCategoryDisplaySheet(context),
+      child: Row(
+        children: [
+          IconChip(icon: Icons.style_outlined, size: 34, radius: 9, bg: p.tint),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Category display', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text('New Sale rail · ${display.label}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
         ],
       ),
     );

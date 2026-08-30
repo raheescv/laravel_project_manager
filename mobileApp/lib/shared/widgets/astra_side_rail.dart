@@ -11,6 +11,7 @@ import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/widgets/qloud_logo.dart';
+import 'package:invo/shared/widgets/astra_widgets.dart';
 
 // Tablet-only shell destinations. Indices continue after the four phone tabs in
 // [astraNavTabs] (0–3), which are fixed — the phone bottom nav and `/home?tab=N`
@@ -137,6 +138,22 @@ class AstraSideRail extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text('New',
                       style: ui(size: 9, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.7))),
+                  // The rail is the only chrome a tablet screen gets, so it has
+                  // to carry the way out too — there is no drawer to reach from
+                  // most destinations. Held apart by a hairline and tinted
+                  // danger so it never reads as one more place to navigate to.
+                  Container(
+                    width: 44,
+                    height: 1,
+                    margin: const EdgeInsets.fromLTRB(0, 14, 0, 2),
+                    color: Colors.white.withValues(alpha: 0.14),
+                  ),
+                  _link(context, p,
+                      icon: Icons.power_settings_new,
+                      label: 'Log out',
+                      active: false,
+                      danger: true,
+                      onTap: () => _logout(context)),
                 ],
               ),
             ),
@@ -146,6 +163,14 @@ class AstraSideRail extends StatelessWidget {
     );
   }
 
+  /// Signs out, once confirmed. Nothing to close first: unlike the drawer the
+  /// rail is part of the shell the auth redirect replaces.
+  Future<void> _logout(BuildContext context) async {
+    if (await confirmLogout(context) && context.mounted) {
+      await context.read<AuthCubit>().logout();
+    }
+  }
+
   Widget _link(
     BuildContext context,
     AstraPalette p, {
@@ -153,7 +178,11 @@ class AstraSideRail extends StatelessWidget {
     required String label,
     required bool active,
     required VoidCallback? onTap,
+    bool danger = false,
   }) {
+    // The rail is always painted dark, so the palette's danger reads muddy on
+    // it — lift it towards white for the tint and the glyph alike.
+    final red = Color.lerp(AstraPalette.danger, Colors.white, 0.42)!;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -165,17 +194,21 @@ class AstraSideRail extends StatelessWidget {
               width: 46,
               height: 40,
               decoration: BoxDecoration(
-                color: active ? Colors.white.withValues(alpha: 0.12) : Colors.transparent,
+                color: danger
+                    ? AstraPalette.danger.withValues(alpha: 0.16)
+                    : (active ? Colors.white.withValues(alpha: 0.12) : Colors.transparent),
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(icon, size: 20, color: active ? p.accent : Colors.white.withValues(alpha: 0.55)),
+              child: Icon(icon,
+                  size: 20,
+                  color: danger ? red : (active ? p.accent : Colors.white.withValues(alpha: 0.55))),
             ),
             const SizedBox(height: 4),
             Text(label,
                 style: ui(
                     size: 8.5,
-                    weight: active ? FontWeight.w700 : FontWeight.w600,
-                    color: active ? p.accent : Colors.white.withValues(alpha: 0.55))),
+                    weight: active || danger ? FontWeight.w700 : FontWeight.w600,
+                    color: danger ? red : (active ? p.accent : Colors.white.withValues(alpha: 0.55)))),
           ],
         ),
       ),

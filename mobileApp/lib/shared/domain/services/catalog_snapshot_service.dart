@@ -62,6 +62,7 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
             'type': entry.key,
             'name': category.name,
             'product_count': category.productCount,
+            'image_url': category.imageUrl,
           }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       }
@@ -179,6 +180,7 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
               id: asNum(r['category_id']).toInt(),
               name: asStr(r['name']),
               productCount: asNum(r['product_count']).toInt(),
+              imageUrl: asStr(r['image_url']),
             ))
         .toList();
   }
@@ -196,6 +198,17 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
   @override
   Future<List<String>> thumbnails(int branchId) async {
     final db = await _db;
+    // Category photos first: on the image layouts the rail is on screen the
+    // whole time a till is selling, so a budget that runs out should cost the
+    // tail of the grid, not the row of chrome above it. Cheap either way —
+    // a handful of rows against a few thousand.
+    final catRows = await db.query(
+      OfflineDb.tableCategories,
+      columns: ['image_url'],
+      where: "branch_id = ? AND image_url <> ''",
+      whereArgs: [branchId],
+      distinct: true,
+    );
     final rows = await db.query(
       OfflineDb.tableProducts,
       columns: ['thumbnail'],
@@ -205,7 +218,10 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
       // leaves the tail of the catalog without photos rather than the middle.
       orderBy: 'priority DESC, name COLLATE NOCASE ASC',
     );
-    return rows.map((r) => asStr(r['thumbnail'])).where((s) => s.isNotEmpty).toList();
+    return [
+      ...catRows.map((r) => asStr(r['image_url'])),
+      ...rows.map((r) => asStr(r['thumbnail'])),
+    ].where((s) => s.isNotEmpty).toList();
   }
 
   @override

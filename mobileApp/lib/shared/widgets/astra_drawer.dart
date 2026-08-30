@@ -310,18 +310,7 @@ class AstraDrawer extends StatelessWidget {
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Log out?'),
-        content: const Text('You’ll need your MPIN to sign back in.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Log out')),
-        ],
-      ),
-    );
-    if (ok == true && context.mounted) {
+    if (await confirmLogout(context) && context.mounted) {
       Navigator.pop(context); // close the drawer before auth redirects
       await context.read<AuthCubit>().logout();
     }

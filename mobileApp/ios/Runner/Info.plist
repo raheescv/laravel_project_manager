@@ -6,6 +6,8 @@
 	<string>QLOUD POS uses Face ID to sign you in securely.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>QLOUD POS uses the camera to scan product barcodes and take your profile photo.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>QLOUD POS needs your local network to find and print to the receipt printer at this till.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>QLOUD POS lets you choose a profile photo from your library.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

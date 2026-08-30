@@ -14,6 +14,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        // AGP 8 turns AIDL off by default. The built-in printer on an
+        // all-in-one POS terminal is only reachable over the vendor's AIDL
+        // service (src/main/aidl/woyou/...), so it has to be back on.
+        aidl = true
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.astrasalon.invo"

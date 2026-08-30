@@ -195,12 +195,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     var printed = false;
     var printFailed = false;
     if (print.autoPrint) {
-      final result = await printReceipt(
-        sale,
-        print.snapshot,
-        printerUrl: print.printerUrl,
-        printerName: print.printerName,
-      );
+      final result = await printReceipt(sale, print.snapshot, target: print.printer);
       printed = result == ReceiptPrintResult.printed;
       // A cancelled dialog was a deliberate "don't print" — not a failure.
       printFailed = !result.ok && result != ReceiptPrintResult.cancelled;

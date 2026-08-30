@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile · New Sale · product card — three directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra tokens — mirrors mobileApp/lib/shared/utils/components/theme/palette.dart
+   Driven by [data-preset] + [data-theme] on #stage.
+   ============================================================ */
+#stage{ --success:#1F9D63; --danger:#D4546A; }
+
+#stage[data-preset="signature"]{
+  --primary:#0F5C4A; --primary-dark:#0A3F33; --accent:#C8A24A; --gold:#9A7B23;
+  --canvas:#F4F2EC; --card:#FFFFFF;
+  --ink:#16211D; --text2:#4B5B55; --muted:#8E9B95;
+  --hairline:#E5E2D8; --tint:#E9F0EC; --tint2:#DCE8E1;
+  --shadow:0 10px 24px -16px rgba(15,92,74,.30);
+  --glass:rgba(255,255,255,.86); --glass-line:rgba(255,255,255,.65); --glass-ink:#16211D;
+}
+#stage[data-preset="signature"][data-theme="dark"]{
+  --canvas:#101614; --card:#1A211E;
+  --ink:#ECF0EE; --text2:#A4B2AC; --muted:#78857F;
+  --hairline:rgba(255,255,255,.09); --tint:rgba(15,92,74,.28); --tint2:rgba(15,92,74,.16);
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+  --glass:rgba(20,27,24,.74); --glass-line:rgba(255,255,255,.10); --glass-ink:#ECF0EE;
+}
+#stage[data-preset="signature"][data-theme="dark"]{ --gold:#D9B463; --accent:#D9B463; }
+
+#stage[data-preset="qloud"]{
+  --primary:#0A62C8; --primary-dark:#01377F; --accent:#0BA8FA; --gold:#0A62C8;
+  --canvas:#F3F7FD; --card:#FFFFFF;
+  --ink:#101426; --text2:#4E5875; --muted:#98A0B8;
+  --hairline:#E6EAF3; --tint:#E8F1FD; --tint2:#DCEAFB;
+  --shadow:0 10px 24px -16px rgba(1,55,127,.30);
+  --glass:rgba(255,255,255,.88); --glass-line:rgba(255,255,255,.7); --glass-ink:#101426;
+}
+#stage[data-preset="qloud"][data-theme="dark"]{
+  --canvas:#0E1220; --card:#171B2B;
+  --ink:#EDEFF7; --text2:#A3ABC2; --muted:#767E96;
+  --hairline:rgba(255,255,255,.09); --tint:rgba(10,98,200,.24); --tint2:rgba(10,98,200,.14);
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+  --glass:rgba(18,23,38,.76); --glass-line:rgba(255,255,255,.10); --glass-ink:#EDEFF7;
+  --gold:#5EB3FF; --accent:#5EB3FF;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Manrope',system-ui,sans-serif;background:#EFEFEF;color:#111}
+#stage{min-height:100vh;background:var(--canvas);color:var(--ink);padding:26px 20px 90px;transition:background .2s}
+
+/* ---- page chrome ---- */
+.top{max-width:1500px;margin:0 auto 8px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.top h1{font-family:'Marcellus',serif;font-size:28px;font-weight:400;letter-spacing:.2px}
+.top p{font-size:13px;color:var(--text2);margin-top:6px;max-width:820px;line-height:1.6}
+.switches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{display:flex;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+.sw button{border:0;background:transparent;font:inherit;font-size:11.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--muted);padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+.sw button.on{background:var(--primary);color:#fff}
+.swlab{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);align-self:center;margin-right:2px}
+
+.band{max-width:1500px;margin:44px auto 4px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.band h2{font-family:'Marcellus',serif;font-size:21px;font-weight:400;white-space:nowrap}
+.band .tag{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--primary);
+  background:var(--tint);border-radius:999px;padding:4px 10px}
+.band .rule{flex:1;height:1px;background:var(--hairline);min-width:20px}
+.note{max-width:1500px;margin:8px auto 20px;font-size:12.5px;color:var(--text2);line-height:1.65}
+.note b{color:var(--ink);font-weight:800}
+
+.panel{max-width:1500px;margin:0 auto;background:var(--card);border:1px solid var(--hairline);border-radius:24px;
+  box-shadow:var(--shadow);padding:20px 20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media (max-width:1080px){ .panel{grid-template-columns:1fr} }
+.half > h3{font-size:10.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.half > h3 em{font-style:normal;color:var(--primary)}
+.grid{display:grid;grid-template-columns:repeat(var(--cols,3),1fr);gap:13px}
+
+/* ---- simulated product photography (self-contained, no external assets) ---- */
+.ph{background:
+    radial-gradient(120% 95% at 24% 18%, var(--p1), transparent 62%),
+    radial-gradient(105% 85% at 82% 78%, var(--p2), transparent 66%),
+    linear-gradient(158deg, var(--p3), #fff 145%);}
+.ph::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(60% 45% at 30% 26%, rgba(255,255,255,.55), transparent 70%);mix-blend-mode:soft-light}
+.empty{background:linear-gradient(150deg, var(--tint), var(--tint2));}
+.empty svg{width:34%;max-width:56px;height:auto;color:var(--primary);opacity:.85}
+.mono{font-family:'Marcellus',serif;font-size:clamp(22px,4.4vw,34px);color:var(--primary);opacity:.34;letter-spacing:1px}
+.wm{position:absolute;right:-8%;bottom:-10%;width:52%;color:var(--primary);opacity:.13}
+.media{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+
+/* ============================================================
+   A — GALLERY FRAME : floating price pill on the photo
+   ============================================================ */
+.a-card{background:var(--card);border:1px solid var(--hairline);border-radius:20px;overflow:hidden;
+  box-shadow:var(--shadow);cursor:pointer;transition:transform .16s, box-shadow .16s}
+.a-card:hover{transform:translateY(-2px)}
+.a-media{aspect-ratio:1/1}
+.a-pill{position:absolute;top:8px;right:8px;z-index:2;display:flex;align-items:baseline;gap:4px;
+  background:var(--glass);border:1px solid var(--glass-line);backdrop-filter:blur(10px);
+  border-radius:999px;padding:5px 10px 6px;box-shadow:0 6px 14px -8px rgba(0,0,0,.5)}
+.a-pill i{font-style:normal;font-family:'Marcellus',serif;font-size:10px;letter-spacing:.6px;color:var(--gold)}
+.a-pill b{font-family:'Marcellus',serif;font-weight:400;font-size:15px;color:var(--glass-ink);line-height:1}
+.a-body{padding:10px 12px 12px}
+.a-name{font-size:12.5px;font-weight:800;line-height:1.25;color:var(--ink);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.a-code{margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.7px;color:var(--muted)}
+
+/* ============================================================
+   B — EDITORIAL SCRIM : price sunk into the photo's gradient
+   ============================================================ */
+.b-card{background:var(--card);border:1px solid var(--hairline);border-radius:18px;overflow:hidden;
+  box-shadow:var(--shadow);cursor:pointer;transition:transform .16s}
+.b-card:hover{transform:translateY(-2px)}
+.b-media{aspect-ratio:4/3}
+.b-scrim{position:absolute;inset:auto 0 0 0;height:64%;z-index:1;
+  background:linear-gradient(to top, rgba(6,18,14,.86) 6%, rgba(6,18,14,.42) 46%, rgba(6,18,14,0))}
+.b-price{position:absolute;left:11px;bottom:8px;z-index:2;display:flex;align-items:baseline;gap:5px}
+.b-price i{font-style:normal;font-family:'Marcellus',serif;font-size:10.5px;letter-spacing:.7px;color:var(--accent)}
+.b-price b{font-family:'Marcellus',serif;font-weight:400;font-size:20px;color:#fff;line-height:1;
+  text-shadow:0 1px 10px rgba(0,0,0,.35)}
+.b-body{padding:9px 12px 11px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.b-name{font-size:12px;font-weight:800;line-height:1.3;color:var(--ink);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.b-code{font-size:9.5px;font-weight:800;letter-spacing:.8px;color:var(--muted);white-space:nowrap}
+
+/* ============================================================
+   C — FROSTED SLAB : the tile IS the photo, one frosted caption bar
+   ============================================================ */
+.c-card{position:relative;aspect-ratio:4/5;border-radius:20px;overflow:hidden;cursor:pointer;
+  border:1px solid var(--hairline);box-shadow:var(--shadow);transition:transform .16s}
+.c-card:hover{transform:translateY(-2px)}
+.c-card .media{position:absolute;inset:0}
+.c-slab{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:9px 11px 10px;
+  background:var(--glass);border-top:1px solid var(--glass-line);backdrop-filter:blur(16px) saturate(1.3)}
+.c-name{font-size:12px;font-weight:800;line-height:1.25;color:var(--glass-ink);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.c-foot{margin-top:5px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.c-code{font-size:9.5px;font-weight:800;letter-spacing:.7px;color:var(--muted)}
+.c-price{display:flex;align-items:baseline;gap:4px}
+.c-price i{font-style:normal;font-family:'Marcellus',serif;font-size:10px;letter-spacing:.6px;color:var(--gold)}
+.c-price b{font-family:'Marcellus',serif;font-weight:400;font-size:16px;color:var(--glass-ink);line-height:1}
+
+/* ---- shared: in-cart state (what replaces the + affordance) ---- */
+.incart{position:relative}
+.incart::before{content:"";position:absolute;inset:-1px;z-index:3;border-radius:inherit;
+  border:2px solid var(--primary);pointer-events:none}
+.qty{position:absolute;top:8px;left:8px;z-index:4;min-width:24px;height:24px;padding:0 7px;border-radius:999px;
+  background:var(--primary);color:#fff;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 16px -8px rgba(0,0,0,.6)}
+.legend{max-width:1500px;margin:14px auto 0;font-size:11.5px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:3px;background:var(--primary)}
+footer{max-width:1500px;margin:56px auto 0;padding-top:18px;border-top:1px solid var(--hairline);
+  font-size:12px;color:var(--muted);line-height:1.7}
+</style>
+</head>
+<body>
+<div id="stage" data-preset="signature" data-theme="light" style="--cols:3">
+
+  <div class="top">
+    <div>
+      <h1>New Sale · product card — three directions</h1>
+      <p>Same catalog, three different card ideas. Each is shown <b>with a photo</b> and <b>without one</b>, the price now lives
+         <b>on the image</b>, and the green <b>+ button is gone</b> — the whole tile already adds to the cart, so an added item
+         announces itself with a count badge and ring instead.</p>
+    </div>
+    <div class="switches">
+      <div class="sw" id="sw-preset"><button data-preset="signature" class="on">Signature</button><button data-preset="qloud">Qloud</button></div>
+      <div class="sw" id="sw-theme"><button data-theme="light" class="on">Light</button><button data-theme="dark">Dark</button></div>
+      <div class="sw" id="sw-cols"><button data-cols="2">2-up</button><button data-cols="3" class="on">3-up</button><button data-cols="4">4-up</button></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot"></i> tap anywhere on the tile = add to cart</span>
+    <span>ring + count badge = already in the cart</span>
+  </div>
+
+  <div class="band"><h2>Sample A — Gallery Frame</h2><span class="tag">price pill floats on the photo</span><div class="rule"></div></div>
+  <div class="note">A square photo crowned by a small frosted <b>price pill</b>, then a clean caption: name over code. The pill sits in the
+    same corner whether or not there's a photo, so a mixed catalog still scans as one grid. Closest to what's on screen today — it just
+    moves the money onto the image and drops the button, which buys back a whole row of tile height.</div>
+  <div class="panel" id="sample-a"></div>
+
+  <div class="band"><h2>Sample B — Editorial Scrim</h2><span class="tag">price sunk into the image</span><div class="rule"></div></div>
+  <div class="note">The photo darkens toward its base and the price is set <b>inside that gradient</b> in serif white with a gold currency mark —
+    the way a menu prices a dish. Name and code share one tight line beneath. Without a photo the panel becomes a large
+    <b>monogram</b> with a watermark icon, so empty tiles still look deliberate rather than like missing images.</div>
+  <div class="panel" id="sample-b"></div>
+
+  <div class="band"><h2>Sample C — Frosted Slab</h2><span class="tag">the tile is the photo</span><div class="rule"></div></div>
+  <div class="note">No caption area at all: the card <b>is</b> the image, with one frosted glass slab across the bottom holding the name, the code
+    and the price. Tallest, most product-forward, and the densest at 4-up — but it leans hardest on photo quality, so the no-photo tile is the
+    one to judge carefully.</div>
+  <div class="panel" id="sample-c"></div>
+
+  <footer>
+    Preview only — nothing in <code>mobileApp/</code> has changed yet. Pick a direction (or mix: e.g. A's caption with C's slab) and I'll
+    rebuild <code>_serviceTile</code> in <code>lib/features/sale/screens/v3/new_sale_catalog_views.dart</code>, retune
+    <code>_TileScale</code> for the removed button, and apply the same price treatment to the list row.
+  </footer>
+</div>
+
+<script>
+const ICONS = {
+  leaf:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-1.6 3.2-5 4.4-5 8.2 0 2.5 2.2 4.6 5 4.6s5-2.1 5-4.6C17 6.4 13.6 5.2 12 2z"/><path d="M11.2 22h1.6v-6h-1.6z"/></svg>',
+  cup:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 4h11v3h2.5A2.5 2.5 0 0 1 21 9.5v1A3.5 3.5 0 0 1 17.5 14H16v1a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V4zm11 5v3h1.5A1.5 1.5 0 0 0 19 10.5v-1A.5.5 0 0 0 18.5 9H16zM4 21h14v2H4z"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 3 6.5v11L12 22l9-4.5v-11L12 2zm0 2.3 6.3 3.2L12 10.7 5.7 7.5 12 4.3zM5 9.3l6 3v7.2l-6-3V9.3zm8 10.2v-7.2l6-3v7.2l-6 3z"/></svg>',
+  bread:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h12a4 4 0 0 1 0 8v5a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-5a4 4 0 0 1 0-8z"/></svg>'
+};
+const PRODUCTS = [
+  {name:'Cheese Cubes',            code:'DAI005', price:'15.00', icon:'box',   p:['#F6E7B4','#E8C878','#FAF3DF'], qty:0},
+  {name:'Flavored Milk',           code:'DAI006', price:'4.00',  icon:'cup',   p:['#E8F0FA','#CBDDF2','#F5F9FE'], qty:2},
+  {name:'Fresh Yogurt Full Fat',   code:'DAI003', price:'5.00',  icon:'leaf',  p:['#FFFFFF','#E4EDE6','#F7FAF7'], qty:0},
+  {name:'Fresh Yogurt Low Fat',    code:'DAI004', price:'5.00',  icon:'leaf',  p:['#FBF8EF','#DDE7DC','#FCFCF8'], qty:0},
+  {name:'Fruits Yogurt Peach',     code:'DAI002', price:'4.00',  icon:'leaf',  p:['#FBDCC4','#F2B78C','#FDF0E5'], qty:0},
+  {name:'Fruits Yogurt Strawberry',code:'DAI001', price:'4.00',  icon:'bread', p:['#F8D2DA','#E79AAB','#FDEFF2'], qty:0},
+];
+const CUR = 'QAR';
+const photoVars = p => `--p1:${p[0]};--p2:${p[1]};--p3:${p[2]}`;
+const initials  = n => n.split(' ').filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join('');
+
+function media(pr, photo, cls, extra=''){
+  if (photo) return `<div class="media ph ${cls}" style="${photoVars(pr.p)}">${extra}</div>`;
+  return `<div class="media empty ${cls}">${extra}</div>`;
+}
+
+/* ---- A ---- */
+function cardA(pr, photo){
+  const inner = photo ? '' : ICONS[pr.icon];
+  return `<div class="a-card ${pr.qty?'incart':''}">
+    ${pr.qty?`<div class="qty">${pr.qty}</div>`:''}
+    <div class="a-media media ${photo?'ph':'empty'}" style="${photo?photoVars(pr.p):''}">
+      ${inner}
+      <div class="a-pill"><i>${CUR}</i><b>${pr.price}</b></div>
+    </div>
+    <div class="a-body"><div class="a-name">${pr.name}</div><div class="a-code">${pr.code}</div></div>
+  </div>`;
+}
+/* ---- B ---- */
+function cardB(pr, photo){
+  const face = photo ? '' : `<div class="mono">${initials(pr.name)}</div><div class="wm">${ICONS[pr.icon]}</div>`;
+  return `<div class="b-card ${pr.qty?'incart':''}">
+    ${pr.qty?`<div class="qty">${pr.qty}</div>`:''}
+    <div class="b-media media ${photo?'ph':'empty'}" style="${photo?photoVars(pr.p):''}">
+      ${face}<div class="b-scrim"></div>
+      <div class="b-price"><i>${CUR}</i><b>${pr.price}</b></div>
+    </div>
+    <div class="b-body"><div class="b-name">${pr.name}</div><div class="b-code">${pr.code}</div></div>
+  </div>`;
+}
+/* ---- C ---- */
+function cardC(pr, photo){
+  const inner = photo ? '' : ICONS[pr.icon];
+  return `<div class="c-card ${pr.qty?'incart':''}">
+    ${pr.qty?`<div class="qty">${pr.qty}</div>`:''}
+    <div class="media ${photo?'ph':'empty'}" style="${photo?photoVars(pr.p):''}">${inner}</div>
+    <div class="c-slab">
+      <div class="c-name">${pr.name}</div>
+      <div class="c-foot"><span class="c-code">${pr.code}</span>
+        <span class="c-price"><i>${CUR}</i><b>${pr.price}</b></span></div>
+    </div>
+  </div>`;
+}
+
+function render(id, fn){
+  const el = document.getElementById(id);
+  const half = (title, photo) =>
+    `<div class="half"><h3>${title}</h3><div class="grid">${PRODUCTS.map(p=>fn(p,photo)).join('')}</div></div>`;
+  el.innerHTML = half('With photo <em>— catalog has images</em>', true) +
+                 half('No photo <em>— fallback panel</em>', false);
+}
+render('sample-a', cardA); render('sample-b', cardB); render('sample-c', cardC);
+
+const stage = document.getElementById('stage');
+document.querySelectorAll('.sw').forEach(sw => sw.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  sw.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  if (b.dataset.preset) stage.dataset.preset = b.dataset.preset;
+  if (b.dataset.theme)  stage.dataset.theme  = b.dataset.theme;
+  if (b.dataset.cols)   stage.style.setProperty('--cols', b.dataset.cols);
+}));
+</script>
+</body>
+</html>

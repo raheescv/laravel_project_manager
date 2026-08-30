@@ -432,15 +432,11 @@ class InvoiceScreen extends StatelessWidget {
       return;
     }
     final snack = AstraSnack.capture(context);
-    final result = await printReceipt(
-      sale,
-      print.snapshot,
-      printerUrl: print.printerUrl,
-      printerName: print.printerName,
-    );
+    final result = await printReceipt(sale, print.snapshot, target: print.printer);
     if (result == ReceiptPrintResult.cancelled) return;
     if (result.ok) {
-      snack.success('Sent to ${print.printerName}', duration: const Duration(milliseconds: 1400));
+      snack.success('Sent to ${print.printer.displayName}',
+          duration: const Duration(milliseconds: 1400));
     } else {
       snack.error('Couldn\'t reach the printer — check it\'s on and paired.');
     }
