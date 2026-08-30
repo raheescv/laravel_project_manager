@@ -6,10 +6,14 @@ use App\Actions\Settings\Category\CreateAction;
 use App\Actions\Settings\Category\UpdateAction;
 use App\Models\Category;
 use Faker\Factory;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Page extends Component
 {
+    use WithFileUploads;
+
     protected $listeners = [
         'Category-Page-Create-Component' => 'create',
         'Category-Page-Update-Component' => 'edit',
@@ -20,6 +24,8 @@ class Page extends Component
     public $parents;
 
     public $table_id;
+
+    public $image;
 
     public function create()
     {
@@ -45,6 +51,7 @@ class Page extends Component
             $this->categories = [
                 'parent_id' => null,
                 'name' => $name,
+                'image_path' => null,
                 'sale_visibility_flag' => true,
                 'online_visibility_flag' => true,
             ];
@@ -59,6 +66,7 @@ class Page extends Component
                 $this->categories['online_visibility_flag'] = true;
             }
         }
+        $this->reset('image');
         $this->dispatch('SelectDropDownValues');
     }
 
@@ -66,19 +74,45 @@ class Page extends Component
     {
         return [
             'categories.name' => ['required', 'unique:categories,name,'.$this->table_id],
+            'image' => ['nullable', 'image', 'max:2048'],
         ];
     }
 
     protected $messages = [
         'categories.name.required' => 'The name field is required',
         'categories.name.unique' => 'The name is already Registered',
+        'image.image' => 'The file must be an image',
+        'image.max' => 'The image size must not exceed 2MB',
     ];
+
+    /**
+     * Surface a bad pick (wrong type, too large) as soon as it is chosen
+     * rather than at save time.
+     */
+    public function updatedImage()
+    {
+        $this->validateOnly('image');
+    }
+
+    /**
+     * Drop the picked/attached image. The stored file itself is only removed
+     * once the change is saved, so cancelling the modal leaves it untouched.
+     */
+    public function removeImage()
+    {
+        $this->reset('image');
+        $this->categories['image_path'] = null;
+    }
 
     public function save($close = false)
     {
         abort_unless(auth()->user()?->can($this->table_id ? 'category.edit' : 'category.create'), 403);
         $this->validate();
         try {
+            $existingImagePath = $this->table_id ? Category::find($this->table_id)?->image_path : null;
+            if ($this->image) {
+                $this->categories['image_path'] = $this->image->store('categories', 'public');
+            }
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->categories);
             } else {
@@ -86,6 +120,9 @@ class Page extends Component
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);
+            }
+            if ($existingImagePath && $existingImagePath !== ($this->categories['image_path'] ?? null)) {
+                Storage::disk('public')->delete($existingImagePath);
             }
             $this->categories['id'] = $response['data']['id'];
             $parent_id = $response['data']['parent_id'];

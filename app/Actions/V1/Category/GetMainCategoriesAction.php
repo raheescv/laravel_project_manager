@@ -46,10 +46,11 @@ class GetMainCategoriesAction
             })
             ->having('products_count', '>', 0)
             ->orderBy('name')
-            ->get(['id', 'name'])
+            ->get(['id', 'name', 'image_path'])
             ->map(fn (Category $category) => [
                 'id' => $category->id,
                 'name' => $category->name,
+                'image_url' => $category->image_url,
                 // The same figure the `having` filtered on — counting a second
                 // time per row was a query per category for an identical answer.
                 'product_count' => (int) $category->products_count,

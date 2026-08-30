@@ -24,8 +24,10 @@
                     <div class="flex-grow-1">
                         <strong>Please fix the following errors:</strong>
                         <ul class="mb-0 mt-2 ps-3">
-                            @foreach ($this->getErrorBag()->toArray() as $field => $errors)
-                                @foreach ($errors as $error)
+                            {{-- Not `$errors`: that name is Blade's shared ViewErrorBag, and
+                                 overwriting it here breaks every @error below. --}}
+                            @foreach ($this->getErrorBag()->toArray() as $field => $fieldErrors)
+                                @foreach ($fieldErrors as $error)
                                     <li>{{ $error }}</li>
                                 @endforeach
                             @endforeach
@@ -71,6 +73,55 @@
                             {{ html()->input('name')->value('')->class('form-control border-start-0')->attribute('wire:model', 'categories.name')->id('category_name')->placeholder('Enter category name') }}
                         </div>
                         @error('categories.name')
+                            <div class="text-danger small mt-1">
+                                <i class="fa fa-exclamation-circle me-1"></i>
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                    <!-- Category Image Field -->
+                    <div class="mb-4">
+                        <label for="category_image" class="form-label fw-semibold mb-2 d-flex align-items-center">
+                            <i class="fa fa-picture-o me-2 text-primary"></i>
+                            Category Image
+                            <span class="text-muted ms-2 fw-normal">(Optional)</span>
+                        </label>
+                        <div class="d-flex align-items-center gap-3 p-3 border rounded-3 bg-body-tertiary">
+                            <div class="flex-shrink-0 border rounded-3 bg-body d-flex align-items-center justify-content-center overflow-hidden"
+                                style="width: 84px; height: 84px;">
+                                @if ($image && $image->isPreviewable())
+                                    <img src="{{ $image->temporaryUrl() }}" alt="Selected image" class="w-100 h-100" style="object-fit: cover;">
+                                @elseif ($image)
+                                    {{-- Not an image: the validation message below says so, a preview would throw. --}}
+                                    <i class="fa fa-exclamation-triangle fa-2x text-warning"></i>
+                                @elseif (!empty($categories['image_path']))
+                                    <img src="{{ asset('storage/' . $categories['image_path']) }}" alt="{{ $categories['name'] ?? 'Category' }}" class="w-100 h-100" style="object-fit: cover;">
+                                @else
+                                    <i class="fa fa-picture-o fa-2x text-muted"></i>
+                                @endif
+                            </div>
+                            <div class="flex-grow-1">
+                                <input type="file" class="form-control form-control-sm" id="category_image" wire:model="image" accept="image/*">
+                                <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+                                    <small class="form-text text-muted mb-0">
+                                        <i class="fa fa-info-circle me-1"></i>
+                                        JPG or PNG up to 2MB &mdash; square images look best.
+                                    </small>
+                                    @if ($image || !empty($categories['image_path']))
+                                        <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0" wire:click="removeImage">
+                                            <i class="fa fa-trash me-1"></i>
+                                            Remove
+                                        </button>
+                                    @endif
+                                </div>
+                                <div wire:loading wire:target="image" class="text-primary small mt-2">
+                                    <i class="fa fa-spinner fa-spin me-1"></i>
+                                    Uploading image...
+                                </div>
+                            </div>
+                        </div>
+                        @error('image')
                             <div class="text-danger small mt-1">
                                 <i class="fa fa-exclamation-circle me-1"></i>
                                 {{ $message }}

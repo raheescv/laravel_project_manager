@@ -58,6 +58,7 @@
                             <input type="checkbox" wire:model.live="selectAll" />
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
                         </th>
+                        <th width="60">Image</th>
                         <th width='25%'> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="parent_id" label="parent" /> </th>
                         <th width='25%'> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sale_visibility_flag" label="Sale Visibility" /> </th>
@@ -71,6 +72,15 @@
                             <td>
                                 <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
                                 {{ $item->id }}
+                            </td>
+                            <td>
+                                <div class="border rounded-3 bg-body-tertiary d-flex align-items-center justify-content-center overflow-hidden" style="width: 42px; height: 42px;">
+                                    @if ($item->image_path)
+                                        <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" class="w-100 h-100" style="object-fit: cover;">
+                                    @else
+                                        <i class="fa fa-picture-o text-muted"></i>
+                                    @endif
+                                </div>
                             </td>
                             <td>{{ $item->parent?->name }}</td>
                             <td>{{ $item->name }}</td>

@@ -7,6 +7,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class Category extends Model
@@ -18,6 +19,7 @@ class Category extends Model
         'tenant_id',
         'parent_id',
         'name',
+        'image_path',
         'sale_visibility_flag',
         'online_visibility_flag',
     ];
@@ -33,12 +35,28 @@ class Category extends Model
 
         return array_merge([
             'name' => ['required', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
+            'image_path' => ['nullable', 'string'],
         ], $merge);
     }
 
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image_path ? asset('storage/'.$this->image_path) : null;
+    }
+
+    /**
+     * Remove the stored image file (if any) from the public disk.
+     */
+    public function deleteImage(): void
+    {
+        if ($this->image_path) {
+            Storage::disk('public')->delete($this->image_path);
+        }
     }
 
     public function parent()

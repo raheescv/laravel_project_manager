@@ -13,6 +13,7 @@ class DeleteAction
             if (! $model) {
                 throw new \Exception("Category not found with the specified ID: $id.", 1);
             }
+            $model->deleteImage();
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the Category. Please try again.', 1);
             }
