@@ -624,7 +624,10 @@
                 @if ($sale->other_discount + $sale->item_discount != 0)
                     @php
                         $total_discount = $sale->other_discount + $sale->item_discount;
-                        $discount_percentage = $sale->total > 0 ? round(($total_discount / $sale->total) * 100, 2) : 0;
+                        // Percentage is measured against the pre-discount list value (gross_amount),
+                        // not $sale->total — total is already net of item_discount.
+                        $discount_base = $sale->gross_amount;
+                        $discount_percentage = $discount_base > 0 ? round(($total_discount / $discount_base) * 100, 2) : 0;
                     @endphp
                     <tr>
                         <td class="text-left" width="39%"><b>Discount ({{ tenant_cache('currency_code', '') }})</b></td>
@@ -638,7 +641,10 @@
             @else
                 @if ($sale->other_discount != 0)
                     @php
-                        $discount_percentage = $sale->total > 0 ? round(($sale->other_discount / $sale->total) * 100, 2) : 0;
+                        // Item discounts are hidden here (line prices print net), so the base is the
+                        // printed pre-tax value: gross_amount - item_discount.
+                        $discount_base = $sale->gross_amount - $sale->item_discount;
+                        $discount_percentage = $discount_base > 0 ? round(($sale->other_discount / $discount_base) * 100, 2) : 0;
                     @endphp
                     <tr>
                         <td class="text-left" width="39%"><b>Discount ({{ tenant_cache('currency_code', '') }})</b></td>
