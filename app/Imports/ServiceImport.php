@@ -4,12 +4,14 @@ namespace App\Imports;
 
 use App\Actions\Product\ProductPrice\CreateAction;
 use App\Actions\Product\ProductPrice\UpdateAction;
+use App\Actions\Product\UpdateAction as ProductUpdateAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\ProductPrice;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -21,7 +23,7 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
     private $errors = [];
 
-    public function __construct(private $userId, private $totalRows, private $branchId = null, private array $mappings = []) {}
+    public function __construct(private $userId, private $totalRows, private $branchId = null, private array $mappings = [], private string $duplicateStrategy = 'skip') {}
 
     public function collection(Collection $rows)
     {
@@ -55,12 +57,21 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
 
                 $productName = $data['name'];
 
-                // Filter by tenant when checking for existing products
-                $exists = Product::where('name', $productName)->first();
+                // Filter by tenant and type when checking for existing services:
+                // a product may legitimately share a name with a service.
+                $exists = Product::where('type', 'service')->where('name', $productName)->first();
 
                 $model = $exists;
-                if (! $exists) {
-                    $trashedExists = Product::withTrashed()->firstWhere('name', $data['name']);
+                if ($exists) {
+                    if ($this->duplicateStrategy === 'update') {
+                        $response = (new ProductUpdateAction())->execute($data, $exists->id, $this->userId);
+                        if (! $response['success']) {
+                            throw new \Exception($response['message'], 1);
+                        }
+                        $model = $exists->refresh();
+                    }
+                } else {
+                    $trashedExists = Product::withTrashed()->where('type', 'service')->firstWhere('name', $data['name']);
                     if ($trashedExists) {
                         $trashedExists->restore();
                         $trashedExists->update($data);
@@ -87,13 +98,24 @@ class ServiceImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     }
                 }
             } catch (\Throwable $th) {
-                $data['message'] = $th->getMessage();
-                $this->errors[] = $data;
+                $this->handleError($value, $th);
             }
         }
         $this->processedRows += count($rows);
         $progress = ($this->processedRows / $this->totalRows) * 100;
         event(new FileImportProgress($this->userId, 'Product', $progress));
+    }
+
+    private function handleError($value, \Throwable $th): void
+    {
+        $errorData = $value->toArray();
+        $errorData['message'] = $th->getMessage();
+        $errorData['file'] = $th->getFile();
+        $errorData['line'] = $th->getLine();
+
+        $this->errors[] = $errorData;
+
+        Log::error('Service import error', $errorData);
     }
 
     public function batchSize(): int

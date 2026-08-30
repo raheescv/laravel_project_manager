@@ -18,7 +18,13 @@ class ImportServiceJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(protected $user_id, protected $filePath, protected $branchId = null, protected $tenantId = null, protected $mappings = []) {}
+    // Never auto-retry: a retry could re-import a partially-processed file and create duplicates.
+    public $tries = 1;
+
+    // Allow long imports; keep below the queue retry_after (DB_QUEUE_RETRY_AFTER) so a running job isn't re-picked.
+    public $timeout = 3600;
+
+    public function __construct(protected $user_id, protected $filePath, protected $branchId = null, protected $tenantId = null, protected $mappings = [], protected string $duplicateStrategy = 'skip') {}
 
     public function handle()
     {
@@ -74,7 +80,7 @@ class ImportServiceJob implements ShouldQueue
         })->count();
 
         $totalRows--;
-        Excel::import(new ServiceImport($this->user_id, $totalRows, $this->branchId, $this->mappings), $file);
+        Excel::import(new ServiceImport($this->user_id, $totalRows, $this->branchId, $this->mappings, $this->duplicateStrategy), $file);
 
         // Clean up the file after import
         if (file_exists($file)) {

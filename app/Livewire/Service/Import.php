@@ -30,6 +30,8 @@ class Import extends Component
 
     public $filePath;
 
+    public $duplicateStrategy = 'skip'; // skip | update
+
     // Available fields for mapping
     public $availableFields = [
         'name' => 'Service Name English(*)',
@@ -37,9 +39,9 @@ class Import extends Component
         'code' => 'Service Code (SKU)',
         'cost' => 'Price',
         'price' => 'Price (alternative)',
-        'department_id' => 'Department (ID or Name)',
-        'main_category_id' => 'Main Category (ID or Name)',
-        'sub_category_id' => 'Sub Category (ID or Name)',
+        'department' => 'Department (Name)',
+        'main_category' => 'Main Category (Name)',
+        'sub_category' => 'Sub Category (Name)',
         'hsn_code' => 'HSN Code',
         'description' => 'Description',
         'is_favorite' => 'Is Favorite (1/0)',
@@ -60,9 +62,9 @@ class Import extends Component
             'code' => ['code', 'sku', 'servicecode', 'service code'],
             'cost' => ['cost', 'price', 'buyingprice', 'buying price'],
             'price' => ['price', 'cost', 'sellingprice', 'selling price'],
-            'department_id' => ['department_id', 'departmentid', 'department'],
-            'main_category_id' => ['main_category_id', 'maincategoryid', 'main_category', 'maincategory', 'main category'],
-            'sub_category_id' => ['sub_category_id', 'subcategoryid', 'sub_category', 'subcategory', 'sub category'],
+            'department' => ['department', 'department_id', 'departmentid'],
+            'main_category' => ['main_category', 'maincategory', 'main category', 'main_category_id', 'maincategoryid'],
+            'sub_category' => ['sub_category', 'subcategory', 'sub category', 'sub_category_id', 'subcategoryid'],
             'hsn_code' => ['hsn_code', 'hsncode', 'hsn code'],
             'description' => ['description'],
             'is_favorite' => ['is_favorite', 'isfavorite', 'is favorite'],
@@ -135,7 +137,7 @@ class Import extends Component
 
         $totalRows = count(Excel::toArray(new \stdClass(), Storage::disk('public')->path($this->filePath))[0]) - 1;
 
-        ImportServiceJob::dispatch(Auth::id(), $this->filePath, session('branch_id'), session('tenant_id'), $this->mappings);
+        ImportServiceJob::dispatch(Auth::id(), $this->filePath, session('branch_id'), session('tenant_id'), $this->mappings, $this->duplicateStrategy);
 
         $this->dispatch('success', ['message' => 'Import started in background']);
         $this->step = 4;

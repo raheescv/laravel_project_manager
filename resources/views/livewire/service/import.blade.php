@@ -58,6 +58,30 @@
                                 <h2 class="fw-bold">Upload Your Spreadsheet</h2>
                                 <p class="text-muted mb-4 fs-5">Supported formats: XLSX, XLS, CSV. Max size: 10MB.</p>
 
+                                <div class="mx-auto mb-4" style="max-width: 600px;">
+                                    <label class="fw-semibold small text-uppercase text-muted mb-2 d-block text-start">
+                                        <i class="fa fa-cogs me-1"></i> On Duplicate Service
+                                    </label>
+                                    <div class="d-flex gap-2">
+                                        <label class="dup-card flex-fill text-center p-3 rounded-3 border {{ $duplicateStrategy === 'skip' ? 'is-skip' : '' }}">
+                                            <input type="radio" wire:model.live="duplicateStrategy" value="skip" class="d-none">
+                                            <i class="fa fa-forward d-block mb-1" style="font-size:1.5rem;"></i>
+                                            <span class="fw-semibold small d-block">Skip</span>
+                                            <span class="text-muted" style="font-size:10px;">Keep existing record</span>
+                                        </label>
+                                        <label class="dup-card flex-fill text-center p-3 rounded-3 border {{ $duplicateStrategy === 'update' ? 'is-update' : '' }}">
+                                            <input type="radio" wire:model.live="duplicateStrategy" value="update" class="d-none">
+                                            <i class="fa fa-refresh d-block mb-1" style="font-size:1.5rem;"></i>
+                                            <span class="fw-semibold small d-block">Update</span>
+                                            <span class="text-muted" style="font-size:10px;">Overwrite with new values</span>
+                                        </label>
+                                    </div>
+                                    <div class="text-muted mt-2 text-start" style="font-size: 11px;">
+                                        <i class="fa fa-info-circle me-1"></i>
+                                        Existing services are matched by <strong>Name</strong>.
+                                    </div>
+                                </div>
+
                                 <div class="upload-zone mx-auto" style="max-width: 600px;">
                                     <input type="file" wire:model="file" class="upload-input" accept=".xlsx,.xls,.csv">
                                     <div wire:loading.remove wire:target="file">
@@ -282,6 +306,24 @@
     <style>
         .bg-gradient-primary {
             background: linear-gradient(135deg, #0d6efd 0%, #004085 100%);
+        }
+
+        .dup-card {
+            cursor: pointer;
+            transition: all .18s ease;
+            background: var(--bs-body-bg);
+        }
+
+        .dup-card:hover {
+            border-color: var(--bs-primary) !important;
+        }
+
+        .dup-card.is-skip,
+        .dup-card.is-update {
+            border-color: var(--bs-primary) !important;
+            background: rgba(var(--bs-primary-rgb), .08);
+            color: var(--bs-primary);
+            box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .12);
         }
 
         .upload-zone {
