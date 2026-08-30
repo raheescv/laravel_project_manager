@@ -188,7 +188,7 @@ class Table extends Component
         $data = $this->getBaseQuery()
             ->orderBy($this->sortField, $this->sortDirection)
             ->leftJoin('designations', 'designations.id', 'users.designation_id')
-            ->with(['designation', 'roles'])
+            ->with(['designation', 'roles', 'branches'])
             ->select([
                 'users.*',
                 'designations.name as designation',

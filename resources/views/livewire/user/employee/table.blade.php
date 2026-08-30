@@ -138,6 +138,12 @@
                             </th>
                             <th class="border-0">
                                 <div class="d-flex align-items-center">
+                                    <i class="fa fa-sitemap me-2 text-secondary small"></i>
+                                    <span>Branches</span>
+                                </div>
+                            </th>
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
                                     <i class="fa fa-code me-2 text-secondary small"></i>
                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="code" label="Code" />
                                 </div>
@@ -196,6 +202,34 @@
                                     <span class="badge bg-info text-white">{{ getUserRoles($item) }}</span>
                                 </td>
                                 <td>
+                                    @php
+                                        $assignedBranchIds = $item->branches
+                                            ->pluck('branch_id')
+                                            ->unique()
+                                            ->filter(fn ($branch_id) => isset($branches[$branch_id]))
+                                            ->sortByDesc(fn ($branch_id) => $branch_id == $item->default_branch_id)
+                                            ->values();
+                                    @endphp
+                                    @if ($assignedBranchIds->isEmpty())
+                                        <span class="text-muted">-</span>
+                                    @else
+                                        <div class="d-flex flex-wrap gap-1" style="max-width: 240px;" title="{{ $assignedBranchIds->map(fn ($branch_id) => $branches[$branch_id])->implode(', ') }}">
+                                            @foreach ($assignedBranchIds->take(2) as $branch_id)
+                                                @if ($branch_id == $item->default_branch_id)
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                        <i class="fa fa-star me-1"></i>{{ $branches[$branch_id] }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-light text-dark border border-secondary-subtle">{{ $branches[$branch_id] }}</span>
+                                                @endif
+                                            @endforeach
+                                            @if ($assignedBranchIds->count() > 2)
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">+{{ $assignedBranchIds->count() - 2 }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </td>
+                                <td>
                                     <code class="bg-light rounded px-2 py-1 small">{{ $item?->code }}</code>
                                 </td>
                                 <td>
@@ -213,7 +247,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center py-5">
+                                <td colspan="11" class="text-center py-5">
                                     <div class="text-muted my-4">
                                         <i class="fa fa-exclamation-circle fs-1 d-block mb-3 text-secondary-emphasis opacity-50"></i>
                                         <h5 class="fw-semibold mb-2">No Employees Found</h5>
