@@ -88,6 +88,8 @@ class Page extends Component
                 $cost = rand(100, 900);
                 $mrp = rand(1000, 9000);
             }
+            $department = Department::first(['id', 'name']);
+            $unit = Unit::first(['id', 'name']);
             $this->products = [
                 'type' => $this->type,
                 'code' => $code,
@@ -121,12 +123,12 @@ class Page extends Component
                 'reorder_level' => '',
                 'plu' => '',
                 'opening_stock' => null,
-                'unit_id' => 1,
+                'unit_id' => $unit?->id,
                 'main_category_id' => null,
                 'sub_category_id' => null,
                 'status' => 'active',
-                'department_id' => 1,
-                'department' => Department::first(['id', 'name'])->toArray(),
+                'department_id' => $department?->id,
+                'department' => $department?->toArray() ?? [],
                 'sub_category' => [],
                 'main_category' => [],
                 'images' => [],
