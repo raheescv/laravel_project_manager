@@ -153,6 +153,7 @@ return [
                 'customer',
                 'customer kyc',
                 'customer type',
+                'appointment',
                 'sale',
                 'sales return',
                 'day session',
@@ -212,7 +213,6 @@ return [
         'saloon' => [
             'label' => 'Saloon',
             'permissions' => [
-                'appointment',
                 'package category',
                 'package',
             ],
