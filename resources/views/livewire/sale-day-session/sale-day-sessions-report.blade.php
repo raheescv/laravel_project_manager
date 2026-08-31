@@ -1,4 +1,7 @@
 <div>
+    @php
+        $canViewTailoring = auth()->user()->can('tailoring order.view');
+    @endphp
     <div class="card shadow-sm border-0">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
@@ -137,7 +140,7 @@
                                                 {{ number_format($summary['total_invoices']) }}
                                             </div>
                                             <div class="small text-muted mt-1">
-                                                Sales: {{ number_format($summary['total_sales']) }} | Tailoring: {{ number_format($summary['total_tailoring']) }}
+                                                Sales: {{ number_format($summary['total_sales']) }}@if ($canViewTailoring) | Tailoring: {{ number_format($summary['total_tailoring']) }}@endif
                                             </div>
                                         </div>
                                     </div>
@@ -157,7 +160,7 @@
                                                 {{ number_format($summary['total_collection_amount'], 2) }}
                                             </div>
                                             <div class="small text-muted mt-1">
-                                                Sales: {{ number_format($summary['total_sales_amount'], 2) }} | Tailoring: {{ number_format($summary['total_tailoring_amount'], 2) }}
+                                                Sales: {{ number_format($summary['total_sales_amount'], 2) }}@if ($canViewTailoring) | Tailoring: {{ number_format($summary['total_tailoring_amount'], 2) }}@endif
                                             </div>
                                         </div>
                                     </div>
@@ -239,12 +242,14 @@
                                     <th style="border-bottom: 2px solid #e9ecef;" class="text-end">
                                         <i class="fa fa-money me-1" style="color: #6c757d;"></i>Sales Amount
                                     </th>
-                                    <th style="border-bottom: 2px solid #e9ecef;" class="text-end">
-                                        <i class="fa fa-scissors me-1" style="color: #6c757d;"></i>Tailoring Count
-                                    </th>
-                                    <th style="border-bottom: 2px solid #e9ecef;" class="text-end">
-                                        <i class="fa fa-money me-1" style="color: #6c757d;"></i>Tailoring Amount
-                                    </th>
+                                    @if ($canViewTailoring)
+                                        <th style="border-bottom: 2px solid #e9ecef;" class="text-end">
+                                            <i class="fa fa-scissors me-1" style="color: #6c757d;"></i>Tailoring Count
+                                        </th>
+                                        <th style="border-bottom: 2px solid #e9ecef;" class="text-end">
+                                            <i class="fa fa-money me-1" style="color: #6c757d;"></i>Tailoring Amount
+                                        </th>
+                                    @endif
                                     <th wire:click="sortBy('difference_amount')" style="cursor: pointer; border-bottom: 2px solid #e9ecef;" class="text-end">
                                         <i class="fa fa-calculator me-1" style="color: #6c757d;"></i>Difference
                                         @if ($sortField === 'difference_amount')
@@ -298,16 +303,18 @@
                                                 {{ number_format($session->sales_sum_paid ?? 0, 2) }}
                                             </span>
                                         </td>
-                                        <td class="text-end">
-                                            <span class="badge" style="background-color: #17a2b8; color: white;">
-                                                {{ $session->tailoring_orders_count }}
-                                            </span>
-                                        </td>
-                                        <td class="text-end">
-                                            <span class="fw-bold" style="color: #17a2b8;">
-                                                {{ number_format($session->tailoring_orders_sum_paid ?? 0, 2) }}
-                                            </span>
-                                        </td>
+                                        @if ($canViewTailoring)
+                                            <td class="text-end">
+                                                <span class="badge" style="background-color: #17a2b8; color: white;">
+                                                    {{ $session->tailoring_orders_count }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="fw-bold" style="color: #17a2b8;">
+                                                    {{ number_format($session->tailoring_orders_sum_paid ?? 0, 2) }}
+                                                </span>
+                                            </td>
+                                        @endif
                                         <td class="text-end">
                                             @if ($session->status == 'closed')
                                                 <span class="fw-bold @if ($session->difference_amount < 0) text-danger @elseif($session->difference_amount > 0) text-success @else text-muted @endif">
@@ -331,7 +338,7 @@
 
                                 @if ($sessions->count() === 0)
                                     <tr>
-                                        <td colspan="11" class="text-center py-4" style="color: #6c757d;">
+                                        <td colspan="{{ $canViewTailoring ? 11 : 9 }}" class="text-center py-4" style="color: #6c757d;">
                                             <i class="fa fa-info-circle me-2"></i>No day sessions found matching the criteria.
                                         </td>
                                     </tr>

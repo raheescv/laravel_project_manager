@@ -1,4 +1,7 @@
 <div>
+    @php
+        $canViewTailoring = auth()->user()->can('tailoring order.view');
+    @endphp
     <div class="card border-0 shadow-sm">
         <div class="card-header" style="background: linear-gradient(135deg, #4a6fa5 0%, #357abd 100%); color: white; border-bottom: none;">
             <div class="d-flex align-items-center">
@@ -6,8 +9,8 @@
                     <i class="fa fa-shopping-cart" style="font-size: 20px;"></i>
                 </div>
                 <div>
-                    <h5 class="mb-0 text-white">Session Sales & Tailoring</h5>
-                    <small class="text-light opacity-75">All sale and tailoring entries recorded during this day session</small>
+                    <h5 class="mb-0 text-white">Session Sales @if ($canViewTailoring) & Tailoring @endif</h5>
+                    <small class="text-light opacity-75">All sale @if ($canViewTailoring) and tailoring @endif entries recorded during this day session</small>
                 </div>
             </div>
         </div>
@@ -34,7 +37,7 @@
                     <div class="d-flex align-items-center justify-content-end">
                         <small class="text-muted me-2">Total Entries:</small>
                         <span class="badge" style="background-color: #4a6fa5; font-size: 14px; padding: 8px 12px;">
-                            {{ $sales->total() + $tailoringOrders->total() }}
+                            {{ $sales->total() + ($canViewTailoring ? $tailoringOrders->total() : 0) }}
                         </span>
                     </div>
                 </div>
@@ -46,7 +49,7 @@
                     <div class="col-12">
                         <h6 class="mb-3 text-muted d-flex align-items-center">
                             <i class="fa fa-credit-card me-2"></i>
-                            Sale + @if (auth()->user()->can('tailoring order.view')) Tailoring @endif Payment Summary
+                            Sale @if ($canViewTailoring) + Tailoring @endif Payment Summary
                             <span class="badge bg-light text-dark ms-2">{{ count($paymentSummary) }} Methods</span>
                         </h6>
                     </div>
@@ -361,7 +364,7 @@
                     {{ $sales->links() }}
                 </div>
             </div>
-            @if (auth()->user()->can('tailoring order.view'))
+            @if ($canViewTailoring)
                 <div class="table-responsive mt-4">
                     <h6 class="mb-2 text-muted"><i class="fa fa-scissors me-2"></i>Tailoring Module</h6>
                     <table class="table table-sm table-hover mb-0" style="background-color: white;">
