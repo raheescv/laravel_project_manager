@@ -92,7 +92,7 @@ class ProductImageFolderMatcher
     public function summarizeMatchesFromZip(string $zipPath): array
     {
         $entries = collect($this->collectImageEntriesFromZip($zipPath));
-        [$productsByCode, $sortedProductCodes] = $this->loadProductsForMatching();
+        [$productIndex, $sortedMatchKeys] = $this->loadProductsForMatching();
 
         $matchedProducts = collect();
         $missingCodes = collect();
@@ -100,34 +100,20 @@ class ProductImageFolderMatcher
         $matchedImageFiles = 0;
 
         foreach ($entries as $entry) {
-            $matchedCode = $this->resolveMatchingCode($entry['normalized_code'], $sortedProductCodes);
+            $match = $this->resolveMatch($entry['normalized_code'], $sortedMatchKeys, $productIndex);
 
-            if ($matchedCode === null) {
+            if ($match === null) {
                 $missingCodes->push($entry['normalized_code']);
                 $detectedCodes->push($entry['normalized_code']);
 
                 continue;
             }
 
-            /** @var Collection|null $products */
-            $products = $productsByCode->get($matchedCode);
-
-            if (! $products || $products->isEmpty()) {
-                $missingCodes->push($entry['normalized_code']);
-                $detectedCodes->push($entry['normalized_code']);
-
-                continue;
+            foreach ($match['products'] as $product) {
+                $this->rememberMatchedProduct($matchedProducts, $product, $match['matched_by']);
             }
 
-            foreach ($products as $product) {
-                $matchedProducts->put($product->id, [
-                    'id' => $product->id,
-                    'code' => $product->code,
-                    'name' => $product->name,
-                ]);
-            }
-
-            $detectedCodes->push($matchedCode);
+            $detectedCodes->push($match['key']);
             $matchedImageFiles++;
         }
 
@@ -146,7 +132,7 @@ class ProductImageFolderMatcher
     public function importMatchedImagesFromZip(string $zipPath): array
     {
         $entries = collect($this->collectImageEntriesFromZip($zipPath));
-        [$productsByCode, $sortedProductCodes] = $this->loadProductsForMatching();
+        [$productIndex, $sortedMatchKeys] = $this->loadProductsForMatching();
 
         $zip = new ZipArchive();
         $openResult = $zip->open($zipPath);
@@ -173,33 +159,21 @@ class ProductImageFolderMatcher
         $detectedCodes = collect();
 
         foreach ($entries as $entry) {
-            $matchedCode = $this->resolveMatchingCode($entry['normalized_code'], $sortedProductCodes);
+            $match = $this->resolveMatch($entry['normalized_code'], $sortedMatchKeys, $productIndex);
 
-            if ($matchedCode === null) {
+            if ($match === null) {
                 $missingCodes->push($entry['normalized_code']);
                 $detectedCodes->push($entry['normalized_code']);
 
                 continue;
             }
 
-            /** @var Collection|null $products */
-            $products = $productsByCode->get($matchedCode);
-
-            if (! $products || $products->isEmpty()) {
-                $missingCodes->push($entry['normalized_code']);
-                $detectedCodes->push($entry['normalized_code']);
-
-                continue;
-            }
+            $products = $match['products'];
 
             foreach ($products as $product) {
-                $matchedProducts->put($product->id, [
-                    'id' => $product->id,
-                    'code' => $product->code,
-                    'name' => $product->name,
-                ]);
+                $this->rememberMatchedProduct($matchedProducts, $product, $match['matched_by']);
             }
-            $detectedCodes->push($matchedCode);
+            $detectedCodes->push($match['key']);
 
             $content = $zip->getFromIndex($entry['index']);
 
@@ -303,27 +277,126 @@ class ProductImageFolderMatcher
 
     public function normalizeCode(string $value): string
     {
-        return strtolower(trim($value));
+        return trim((string) preg_replace('/\s+/', ' ', strtolower(trim($value))));
     }
 
+    /**
+     * Separator-insensitive form so "blue-shirt.jpg" can still reach the product named "Blue Shirt".
+     */
+    public function normalizeLoose(string $value): string
+    {
+        return $this->normalizeCode(str_replace(['-', '_', '.'], ' ', $value));
+    }
+
+    /**
+     * Build the lookup filenames are matched against: every product contributes its code
+     * and its name (each in plain and separator-insensitive form).
+     *
+     * @return array{0: Collection, 1: Collection} [key => ['code' => products, 'name' => products], keys sorted longest-first]
+     */
     protected function loadProductsForMatching(): array
     {
-        $productsByCode = Product::query()
-            ->get(['id', 'code', 'name', 'thumbnail'])
-            ->filter(fn (Product $product) => $this->normalizeCode((string) $product->code) !== '')
-            ->groupBy(fn (Product $product) => $this->normalizeCode((string) $product->code));
+        $index = [];
 
-        $sortedProductCodes = $productsByCode
-            ->keys()
-            ->sortByDesc(fn (string $code) => strlen($code))
+        Product::query()
+            ->select(['id', 'code', 'name', 'thumbnail'])
+            ->get()
+            ->each(function (Product $product) use (&$index): void {
+                foreach ($this->matchKeysFor($product) as $source => $keys) {
+                    foreach ($keys as $key) {
+                        $index[$key][$source] ??= collect();
+                        $index[$key][$source]->put($product->id, $product);
+                    }
+                }
+            });
+
+        $sortedMatchKeys = collect(array_map('strval', array_keys($index)))
+            ->sortByDesc(fn (string $key) => strlen($key))
             ->values();
 
-        return [$productsByCode, $sortedProductCodes];
+        return [collect($index), $sortedMatchKeys];
     }
 
-    protected function resolveMatchingCode(string $filenameCode, Collection $sortedProductCodes): ?string
+    /**
+     * @return array{code: array<int, string>, name: array<int, string>}
+     */
+    protected function matchKeysFor(Product $product): array
     {
-        foreach ($sortedProductCodes as $productCode) {
+        $keys = [];
+
+        foreach (['code', 'name'] as $source) {
+            $value = (string) ($product->{$source} ?? '');
+
+            $keys[$source] = array_values(array_filter(array_unique([
+                $this->normalizeCode($value),
+                $this->normalizeLoose($value),
+            ]), fn (string $key) => $key !== ''));
+        }
+
+        return $keys;
+    }
+
+    /**
+     * A product can be reached by several filenames through different sources, so the
+     * reported "matched by" accumulates instead of being overwritten by the last file.
+     */
+    protected function rememberMatchedProduct(Collection $matchedProducts, Product $product, string $matchedBy): void
+    {
+        $sources = collect(explode(',', (string) ($matchedProducts->get($product->id)['matched_by'] ?? '')))
+            ->map(fn (string $source) => trim($source))
+            ->filter()
+            ->push($matchedBy)
+            ->unique()
+            ->sort()
+            ->values();
+
+        $matchedProducts->put($product->id, [
+            'id' => $product->id,
+            'code' => $product->code,
+            'name' => $product->name,
+            'matched_by' => $sources->implode(', '),
+        ]);
+    }
+
+    /**
+     * Resolve one image filename to its products, preferring a code hit over a name hit.
+     *
+     * @return array{key: string, products: Collection, matched_by: string}|null
+     */
+    protected function resolveMatch(string $filenameCode, Collection $sortedMatchKeys, Collection $index): ?array
+    {
+        $candidates = array_values(array_filter(array_unique([
+            $filenameCode,
+            $this->normalizeLoose($filenameCode),
+        ]), fn (string $candidate) => $candidate !== ''));
+
+        foreach ($candidates as $candidate) {
+            $matchedKey = $index->has($candidate)
+                ? $candidate
+                : $this->resolveMatchingCode($candidate, $sortedMatchKeys);
+
+            if ($matchedKey === null) {
+                continue;
+            }
+
+            $bucket = $index->get($matchedKey, []);
+
+            foreach (['code', 'name'] as $source) {
+                /** @var Collection|null $products */
+                $products = $bucket[$source] ?? null;
+
+                if ($products && $products->isNotEmpty()) {
+                    return ['key' => $matchedKey, 'products' => $products, 'matched_by' => $source];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected function resolveMatchingCode(string $filenameCode, Collection $sortedMatchKeys): ?string
+    {
+        foreach ($sortedMatchKeys as $productCode) {
             if ($filenameCode === $productCode) {
                 return $productCode;
             }

@@ -122,6 +122,7 @@ it('imports matched images and sets the first thumbnail from a zip archive', fun
             'id' => $product->id,
             'code' => 'ABC123',
             'name' => 'Product A',
+            'matched_by' => 'code',
         ],
     ]);
     expect($product->images()->count())->toBe(2);
@@ -223,4 +224,205 @@ it('matches multiple image filenames for a single product code using suffixes', 
     expect($summary['total_file_codes'])->toBe(3);
     expect($product->images()->count())->toBe(2);
     expect($summary['missing_codes'])->toContain('abc123alt');
+});
+
+it('matches image filenames against product names when no code matches', function (): void {
+    $diskRoot = sys_get_temp_dir().'/matcher-public-'.uniqid();
+    mkdir($diskRoot, 0777, true);
+    Config::set('filesystems.disks.public.root', $diskRoot);
+
+    collect(['product_images', 'products', 'jobs', 'tenants'])->each(fn (string $table) => Schema::dropIfExists($table));
+
+    Schema::create('tenants', function (Blueprint $table): void {
+        $table->id();
+        $table->string('name');
+        $table->string('code')->unique();
+        $table->string('subdomain')->unique();
+        $table->timestamps();
+        $table->softDeletes();
+    });
+
+    Schema::create('jobs', function (Blueprint $table): void {
+        $table->id();
+        $table->string('queue')->index();
+        $table->longText('payload');
+        $table->unsignedTinyInteger('attempts');
+        $table->unsignedInteger('reserved_at')->nullable();
+        $table->unsignedInteger('available_at');
+        $table->unsignedInteger('created_at');
+    });
+
+    Schema::create('products', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedBigInteger('tenant_id');
+        $table->string('type')->default('product');
+        $table->string('code');
+        $table->string('name');
+        $table->string('thumbnail')->nullable();
+        $table->softDeletes();
+        $table->timestamps();
+    });
+
+    Schema::create('product_images', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedBigInteger('product_id');
+        $table->string('method')->default('normal');
+        $table->unsignedInteger('degree')->nullable();
+        $table->unsignedInteger('sort_order')->nullable();
+        $table->string('path');
+        $table->unsignedBigInteger('size')->nullable();
+        $table->string('type')->nullable();
+        $table->string('name');
+        $table->timestamps();
+    });
+
+    $tenant = Tenant::query()->create([
+        'name' => 'Tenant',
+        'code' => 'TEN',
+        'subdomain' => 'tenant',
+    ]);
+
+    app(TenantService::class)->setCurrentTenant($tenant);
+
+    $byName = Product::query()->create([
+        'tenant_id' => $tenant->id,
+        'type' => 'product',
+        'code' => 'SKU-1',
+        'name' => 'Blue Shirt',
+    ]);
+
+    $byCode = Product::query()->create([
+        'tenant_id' => $tenant->id,
+        'type' => 'product',
+        'code' => 'ABC123',
+        'name' => 'Product A',
+    ]);
+
+    $zipPath = tempnam(sys_get_temp_dir(), 'matcher-import-');
+    $zip = new ZipArchive();
+    $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $zip->addFromString('Blue Shirt.jpg', 'image-one');
+    $zip->addFromString('blue-shirt-2.png', 'image-two');
+    $zip->addFromString('blue_shirt(3).jpeg', 'image-three');
+    $zip->addFromString('ABC123.jpg', 'image-four');
+    $zip->addFromString('Green Trousers.jpg', 'image-five');
+    $zip->close();
+
+    $matcher = new ProductImageFolderMatcher();
+    $summary = $matcher->importMatchedImagesFromZip($zipPath);
+
+    @unlink($zipPath);
+
+    expect($byName->images()->count())->toBe(3);
+    expect($byCode->images()->count())->toBe(1);
+    expect($summary['imported_images'])->toBe(4);
+    expect($summary['matched_image_files'])->toBe(4);
+    expect($summary['missing_image_files'])->toBe(1);
+    expect($summary['missing_codes'])->toContain('green trousers');
+    expect(collect($summary['matched_products'])->firstWhere('id', $byName->id)['matched_by'])->toBe('name');
+    expect(collect($summary['matched_products'])->firstWhere('id', $byCode->id)['matched_by'])->toBe('code');
+});
+
+it('accumulates every source a product was matched through', function (): void {
+    $matcher = new ProductImageFolderMatcher();
+    $matchedProducts = collect();
+
+    $product = new Product();
+    $product->forceFill(['id' => 7, 'code' => 'RED-CAP', 'name' => 'Crimson Cap']);
+
+    $remember = (new ReflectionClass($matcher))->getMethod('rememberMatchedProduct');
+    $remember->setAccessible(true);
+    $remember->invoke($matcher, $matchedProducts, $product, 'name');
+    $remember->invoke($matcher, $matchedProducts, $product, 'code');
+    $remember->invoke($matcher, $matchedProducts, $product, 'code');
+
+    expect($matchedProducts)->toHaveCount(1);
+    expect($matchedProducts->get(7)['matched_by'])->toBe('code, name');
+});
+
+it('prefers a product code match over a product name match', function (): void {
+    $diskRoot = sys_get_temp_dir().'/matcher-public-'.uniqid();
+    mkdir($diskRoot, 0777, true);
+    Config::set('filesystems.disks.public.root', $diskRoot);
+
+    collect(['product_images', 'products', 'jobs', 'tenants'])->each(fn (string $table) => Schema::dropIfExists($table));
+
+    Schema::create('tenants', function (Blueprint $table): void {
+        $table->id();
+        $table->string('name');
+        $table->string('code')->unique();
+        $table->string('subdomain')->unique();
+        $table->timestamps();
+        $table->softDeletes();
+    });
+
+    Schema::create('jobs', function (Blueprint $table): void {
+        $table->id();
+        $table->string('queue')->index();
+        $table->longText('payload');
+        $table->unsignedTinyInteger('attempts');
+        $table->unsignedInteger('reserved_at')->nullable();
+        $table->unsignedInteger('available_at');
+        $table->unsignedInteger('created_at');
+    });
+
+    Schema::create('products', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedBigInteger('tenant_id');
+        $table->string('type')->default('product');
+        $table->string('code');
+        $table->string('name');
+        $table->string('thumbnail')->nullable();
+        $table->softDeletes();
+        $table->timestamps();
+    });
+
+    Schema::create('product_images', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedBigInteger('product_id');
+        $table->string('method')->default('normal');
+        $table->unsignedInteger('degree')->nullable();
+        $table->unsignedInteger('sort_order')->nullable();
+        $table->string('path');
+        $table->unsignedBigInteger('size')->nullable();
+        $table->string('type')->nullable();
+        $table->string('name');
+        $table->timestamps();
+    });
+
+    $tenant = Tenant::query()->create([
+        'name' => 'Tenant',
+        'code' => 'TEN',
+        'subdomain' => 'tenant',
+    ]);
+
+    app(TenantService::class)->setCurrentTenant($tenant);
+
+    $codeOwner = Product::query()->create([
+        'tenant_id' => $tenant->id,
+        'type' => 'product',
+        'code' => 'RED-CAP',
+        'name' => 'Crimson Cap',
+    ]);
+
+    $nameOwner = Product::query()->create([
+        'tenant_id' => $tenant->id,
+        'type' => 'product',
+        'code' => 'SKU-2',
+        'name' => 'Red Cap',
+    ]);
+
+    $zipPath = tempnam(sys_get_temp_dir(), 'matcher-import-');
+    $zip = new ZipArchive();
+    $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $zip->addFromString('RED-CAP.jpg', 'image-one');
+    $zip->close();
+
+    $matcher = new ProductImageFolderMatcher();
+    $matcher->importMatchedImagesFromZip($zipPath);
+
+    @unlink($zipPath);
+
+    expect($codeOwner->images()->count())->toBe(1);
+    expect($nameOwner->images()->count())->toBe(0);
 });

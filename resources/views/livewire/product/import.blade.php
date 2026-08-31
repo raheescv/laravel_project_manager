@@ -61,7 +61,7 @@
                                     <i class="fa fa-dropbox"></i>
                                 </span>
                                 <h4 class="fw-bold mb-1">Import Product Images</h4>
-                                <p class="text-muted mb-0">Match Dropbox image filenames to product codes, then import in the background.</p>
+                                <p class="text-muted mb-0">Match Dropbox image filenames to product codes or names, then import in the background.</p>
                             </div>
 
                             <div class="card border shadow-none">
@@ -80,8 +80,9 @@
                                         <div class="text-danger small mt-2">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text">
-                                        We compare image filenames against existing <code>product code</code> values.
-                                        Examples: <code>ABC123.jpg</code>, <code>ABC123-1.jpg</code>, and <code>ABC123_front.png</code> all match code <code>ABC123</code>.
+                                        We compare image filenames against existing <code>product code</code> values first, then against <code>product name</code> values.
+                                        Examples: <code>ABC123.jpg</code>, <code>ABC123-1.jpg</code> and <code>ABC123_front.png</code> all match code <code>ABC123</code>;
+                                        <code>Blue Shirt.jpg</code>, <code>blue-shirt.jpg</code> and <code>blue_shirt-2.png</code> all match the product named <code>Blue Shirt</code>.
                                     </div>
 
                                     @if ($dropboxMatchSummary)
@@ -100,7 +101,7 @@
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <div class="stat-tile h-100">
-                                                    <div class="stat-label">Matched Codes</div>
+                                                    <div class="stat-label">Matched Products</div>
                                                     <div class="stat-value text-success">{{ $dropboxMatchSummary['matching_product_codes'] }}</div>
                                                 </div>
                                             </div>
@@ -130,6 +131,7 @@
                                                             <tr>
                                                                 <th style="width: 140px;">Code</th>
                                                                 <th>Name</th>
+                                                                <th style="width: 130px;">Matched By</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -137,6 +139,13 @@
                                                                 <tr>
                                                                     <td><code>{{ $product['code'] }}</code></td>
                                                                     <td>{{ $product['name'] }}</td>
+                                                                    <td>
+                                                                        @foreach (array_map('trim', explode(',', $product['matched_by'] ?? 'code')) as $matchedBy)
+                                                                            <span class="badge {{ $matchedBy === 'name' ? 'bg-info-subtle text-info' : 'bg-primary-subtle text-primary' }} border text-capitalize">
+                                                                                {{ $matchedBy }}
+                                                                            </span>
+                                                                        @endforeach
+                                                                    </td>
                                                                 </tr>
                                                             @endforeach
                                                         </tbody>
@@ -168,7 +177,7 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="stat-tile h-100">
-                                                        <div class="stat-label">Matched Codes</div>
+                                                        <div class="stat-label">Matched Products</div>
                                                         <div class="stat-value">{{ $dropboxImportSummary['matched_product_codes'] }}</div>
                                                     </div>
                                                 </div>
@@ -177,7 +186,7 @@
 
                                         @if (!empty($dropboxMatchSummary['missing_codes']))
                                             <div class="mt-4">
-                                                <h6 class="fw-bold mb-2">Missing Codes <span class="text-muted fw-normal small">(first 50)</span></h6>
+                                                <h6 class="fw-bold mb-2">Unmatched Filenames <span class="text-muted fw-normal small">(no matching product code or name &mdash; first 50)</span></h6>
                                                 <div class="d-flex flex-wrap gap-2">
                                                     @foreach ($dropboxMatchSummary['missing_codes'] as $code)
                                                         <span class="badge bg-danger-subtle text-danger border">{{ $code }}</span>
