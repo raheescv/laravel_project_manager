@@ -27,6 +27,8 @@
             $toneIcon = ['success' => 'fa-check-circle', 'danger' => 'fa-arrow-circle-down', 'warning' => 'fa-arrow-circle-up'][$tone];
             $toneSign = $variance > 0.004 ? '+' : ($variance < -0.004 ? '−' : '');
             $openedAt = \Carbon\Carbon::parse($sessionStats['opened_at']);
+            // web openDay stores the business date at midnight; only mobile-opened sessions carry a real clock time
+            $hasTime = $openedAt->format('H:i:s') !== '00:00:00';
             $invoices = (int) ($sessionStats['total_sales'] ?? 0);
             $orders = (int) ($sessionStats['total_tailoring_orders'] ?? 0);
         @endphp
@@ -41,8 +43,8 @@
                             <span class="badge rounded-pill text-bg-success fs-6 fw-normal"><i class="fa fa-bolt me-1"></i>Live</span>
                         </h3>
                         <div class="text-body-secondary">
-                            Session #{{ $currentSession->id }} · opened {{ $openedAt->format('h:i A') }} by {{ $sessionStats['opened_by'] }} ·
-                            <span title="{{ systemDateTime($sessionStats['opened_at']) }}">{{ $openedAt->diffForHumans() }}</span>
+                            Session #{{ $currentSession->id }} · <span class="fw-semibold">{{ SystemDate($currentSession->opened_at) }}</span> ·
+                            opened @if ($hasTime){{ $openedAt->format('h:i A') }} <span class="text-nowrap">({{ $openedAt->diffForHumans() }})</span> @endif by {{ $sessionStats['opened_by'] }}
                         </div>
                     </div>
                     <div>
@@ -58,7 +60,7 @@
                     <div class="col-6 col-lg-3">
                         <div class="d-flex align-items-center gap-2 p-2 rounded-3 border h-100">
                             <span class="badge rounded-pill text-bg-success"><i class="fa fa-check"></i></span>
-                            <div class="lh-sm"><div class="fw-semibold">Float counted</div><small class="text-body-secondary">{{ currency($openAmt) }} · {{ $openedAt->format('h:i A') }}</small></div>
+                            <div class="lh-sm"><div class="fw-semibold">Float counted</div><small class="text-body-secondary">{{ currency($openAmt) }} float @if ($hasTime)· {{ $openedAt->format('h:i A') }}@endif</small></div>
                         </div>
                     </div>
                     <div class="col-6 col-lg-3">
@@ -275,12 +277,12 @@
                                 <span class="badge bg-primary-subtle text-primary-emphasis rounded-3 fs-5 p-2"><i class="fa fa-building"></i></span>
                                 <div class="flex-grow-1 overflow-hidden">
                                     <div class="fw-bold text-truncate">{{ $session->branch->name }}</div>
-                                    <small class="text-body-secondary">Session #{{ $session->id }} · {{ SystemDate($session->opened_at) }}</small>
+                                    <small class="text-body-secondary">Session #{{ $session->id }}</small>
                                 </div>
                                 <span class="badge rounded-pill text-bg-success"><i class="fa fa-bolt me-1"></i>Live</span>
                             </div>
                             <div class="row g-2 mb-3">
-                                <div class="col-6"><div class="bg-body-tertiary rounded-3 p-2 small text-body-secondary">Opened<div class="fw-bold text-body">{{ $session->opened_at->format('h:i A') }}</div></div></div>
+                                <div class="col-6"><div class="bg-body-tertiary rounded-3 p-2 small text-body-secondary">Business date<div class="fw-bold text-body">{{ SystemDate($session->opened_at) }}@if ($session->opened_at->format('H:i:s') !== '00:00:00') <small class="fw-normal">{{ $session->opened_at->format('h:i A') }}</small>@endif</div></div></div>
                                 <div class="col-6"><div class="bg-body-tertiary rounded-3 p-2 small text-body-secondary">Float<div class="fw-bold text-body">{{ currency($session->opening_amount) }}</div></div></div>
                                 <div class="col-12"><div class="bg-body-tertiary rounded-3 p-2 small text-body-secondary">Opened by<div class="fw-bold text-body text-truncate">{{ $session->opener->name ?? 'Unknown' }}</div></div></div>
                             </div>
