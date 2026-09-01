@@ -1,381 +1,261 @@
 <x-app-layout>
+    @php
+        $isClosed = $stats['is_closed'];
+        $invoices = $stats['sales_count'] + $stats['tailoring_count'];
+        $grossTotal = $stats['sales_total'] + $stats['tailoring_total'];
+        $variance = $stats['variance'];
+        $vClass = ! $isClosed ? 'pending' : (abs($variance) < 0.01 ? 'ok' : ($variance < 0 ? 'short' : 'over'));
+        $vTag = match ($vClass) {
+            'ok' => 'Balanced — drawer matched expected',
+            'short' => 'Short — counted less than expected',
+            'over' => 'Over — counted more than expected',
+            default => 'Session still open — reconciled at close',
+        };
+        $vSign = $variance === null ? '' : ($variance > 0 ? '+' : '');
+        $openPct = $stats['expected'] > 0 ? max(0, min(100, ($stats['opening'] / $stats['expected']) * 100)) : 0;
+        $salesPct = $stats['expected'] > 0 ? 100 - $openPct : 0;
+        $initial = fn ($name) => mb_strtoupper(mb_substr(trim((string) $name), 0, 1) ?: '?');
+        $openerName = $session->opener->name ?? 'Unknown';
+        $closerName = $session->closer->name ?? 'Unknown';
+    @endphp
+
     <div class="content__header content__boxed overlapping">
         <div class="content__wrap">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('sale::day-sessions-report') }}">Day Sessions Report</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('sale::day-sessions-report') }}">Day Sessions</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Session #{{ $session->id }}</li>
                 </ol>
             </nav>
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="page-title mb-0 mt-2 text-white">Day Session Details</h1>
-                    <p class="lead mb-0">
-                        Detailed view of session #{{ $session->id }} for {{ $session->branch->name }}
-                    </p>
-                </div>
-                <div class="text-end">
-                    <a href="{{ route('print::sale::day-session-report-pdf', $session->id) }}" class="btn btn-info text-white me-2" target="_blank" title="Print PDF Report">
-                        <i class="fa fa-file-pdf-o me-2"></i>Print PDF
-                    </a>
-                    <a href="{{ route('print::sale::day-session-report', $session->id) }}" class="btn btn-success text-white me-2" target="_blank" title="Print Thermal Receipt">
-                        <i class="fa fa-print me-2"></i>Print
-                    </a>
-                    <a href="{{ route('sale::day-sessions-report') }}" class="btn btn-outline-secondary text-white">
-                        <i class="fa fa-arrow-left me-2"></i>Back to Report
-                    </a>
-                </div>
-            </div>
+            <h1 class="page-title mb-0 mt-2">Day Session #{{ $session->id }}</h1>
+            <p class="lead">
+                {{ $session->branch->name }} · {{ $isClosed ? 'closed' : 'open' }} session of {{ systemDate($session->opened_at) }}
+            </p>
         </div>
     </div>
+
     <div class="content__boxed">
         <div class="content__wrap">
-            <!-- Session Overview Cards -->
-            <div class="row g-4 mb-4">
-                <!-- Session Status Card -->
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="rounded-circle p-3 me-3" style="background: linear-gradient(135deg, #4a6fa5 0%, #357abd 100%);">
-                                    <i class="fa fa-calendar text-white" style="font-size: 24px;"></i>
+            <x-sale.day-session-premium />
+
+            <div class="dsv">
+                {{-- ============ HERO ============ --}}
+                <section class="hero">
+                    <div class="hero__top">
+                        <div class="hero__id">
+                            <div class="hero__glyph {{ $isClosed ? '' : 'is-open' }}">
+                                <i class="fa {{ $isClosed ? 'fa-lock' : 'fa-bolt' }}"></i>
+                            </div>
+                            <div>
+                                <div class="hero__row">
+                                    <h4 class="hero__title">{{ $session->branch->name }}</h4>
+                                    @if ($isClosed)
+                                        <span class="pill"><i class="fa fa-check"></i> Closed · Session #{{ $session->id }}</span>
+                                    @else
+                                        <span class="pill pill--green"><span class="pulse"></span> Live · Session #{{ $session->id }}</span>
+                                    @endif
                                 </div>
-                                <div>
-                                    <h6 class="mb-1 text-muted">Session Status</h6>
-                                    <h4 class="mb-0 fw-bold" style="color: #2c3e50;">
-                                        @if ($session->status == 'open')
-                                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
-                                                <i class="fa fa-circle me-1" style="font-size: 8px;"></i>Active Session
-                                            </span>
-                                        @else
-                                            <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2">
-                                                <i class="fa fa-check-circle me-1"></i>Closed Session
-                                            </span>
-                                        @endif
-                                    </h4>
+                                <div class="hero__sub">
+                                    <span title="{{ systemDateTime($session->opened_at) }}"><i class="fa fa-play-circle"></i> Opened <b>{{ $session->opened_at->format('d M, h:i A') }}</b> by {{ $openerName }}</span>
+                                    @if ($isClosed && $session->closed_at)
+                                        <span title="{{ systemDateTime($session->closed_at) }}"><i class="fa fa-lock"></i> Closed <b>{{ $session->closed_at->format('d M, h:i A') }}</b> by {{ $closerName }}</span>
+                                    @endif
+                                    <span><i class="fa fa-clock-o"></i> {{ $isClosed ? 'Duration' : 'Running for' }} <b>{{ $stats['duration'] }}</b></span>
                                 </div>
                             </div>
-                            <div class="border-top pt-3">
-                                <div class="d-flex justify-content-between align-items-center">
+                        </div>
+                        <div class="hero__actions">
+                            <a href="{{ route('sale::day-sessions-report') }}" class="hbtn" title="Back to day sessions"><i class="fa fa-arrow-left"></i> Back</a>
+                            @if (! $isClosed)
+                                @can('day session.create')
+                                    <a href="{{ route('sale::day-management') }}" class="hbtn" title="Open day management"><i class="fa fa-sliders"></i> Manage day</a>
+                                @endcan
+                            @endif
+                            @can('day session.print')
+                                <a href="{{ route('print::sale::day-session-report', $session->id) }}" class="hbtn hbtn--green" target="_blank" title="Print thermal receipt"><i class="fa fa-print"></i> Print</a>
+                                <a href="{{ route('print::sale::day-session-report-pdf', $session->id) }}" class="hbtn hbtn--accent" target="_blank" title="Open PDF report"><i class="fa fa-file-pdf-o"></i> PDF</a>
+                            @endcan
+                        </div>
+                    </div>
+
+                    <div class="kpis">
+                        <div class="kpi">
+                            <span class="kpi__rail r-accent"></span>
+                            <div class="kpi__ic i-accent"><i class="fa fa-shopping-cart"></i></div>
+                            <div class="kpi__lbl">Total sales</div>
+                            <div class="kpi__val">{{ currency($grossTotal) }}</div>
+                            <div class="kpi__foot">
+                                <i class="fa fa-file-text-o"></i> {{ $invoices }} {{ Str::plural('invoice', $invoices) }}
+                                @if ($stats['tailoring_count'] > 0)
+                                    · incl. {{ $stats['tailoring_count'] }} tailoring
+                                @endif
+                            </div>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi__rail r-green"></span>
+                            <div class="kpi__ic i-green"><i class="fa fa-money"></i></div>
+                            <div class="kpi__lbl">Collected</div>
+                            <div class="kpi__val">{{ currency($stats['collected']) }}</div>
+                            <div class="kpi__foot">
+                                @if ($stats['tailoring_paid'] > 0)
+                                    <i class="fa fa-scissors"></i> Sales {{ currency($stats['sales_paid']) }} · Tailoring {{ currency($stats['tailoring_paid']) }}
+                                @else
+                                    <i class="fa fa-arrow-up"></i> Cash + card received
+                                @endif
+                            </div>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi__rail r-deep"></span>
+                            <div class="kpi__ic i-deep"><i class="fa fa-calculator"></i></div>
+                            <div class="kpi__lbl">Expected in drawer</div>
+                            <div class="kpi__val">{{ currency($stats['expected']) }}</div>
+                            <div class="kpi__foot"><i class="fa fa-info-circle"></i> Opening {{ currency($stats['opening']) }} + collected</div>
+                        </div>
+                        @if ($isClosed)
+                            <div class="kpi">
+                                <span class="kpi__rail {{ $vClass === 'ok' ? 'r-green' : ($vClass === 'short' ? 'r-red' : 'r-amber') }}"></span>
+                                <div class="kpi__ic {{ $vClass === 'ok' ? 'i-green' : ($vClass === 'short' ? 'i-red' : 'i-amber') }}"><i class="fa fa-check-square-o"></i></div>
+                                <div class="kpi__lbl">Counted (closing)</div>
+                                <div class="kpi__val">{{ currency($stats['counted']) }}</div>
+                                <div class="kpi__foot">
+                                    @if ($vClass === 'ok')
+                                        <b class="t-green"><i class="fa fa-check"></i> Balanced</b>
+                                    @elseif ($vClass === 'short')
+                                        <b class="t-red"><i class="fa fa-arrow-down"></i> {{ currency($variance) }} short</b>
+                                    @else
+                                        <b class="t-amber"><i class="fa fa-arrow-up"></i> +{{ currency($variance) }} over</b>
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <div class="kpi">
+                                <span class="kpi__rail r-amber"></span>
+                                <div class="kpi__ic i-amber"><i class="fa fa-university"></i></div>
+                                <div class="kpi__lbl">Opening balance</div>
+                                <div class="kpi__val">{{ currency($stats['opening']) }}</div>
+                                <div class="kpi__foot"><i class="fa fa-lock"></i> Counted at open</div>
+                            </div>
+                        @endif
+                    </div>
+                </section>
+
+                {{-- ============ RECONCILIATION + LOG ============ --}}
+                <div class="grid2">
+                    <div class="panel">
+                        <div class="panel__head">
+                            <h3><i class="fa fa-tasks"></i> Cash reconciliation</h3>
+                            @if ($isClosed)
+                                <span class="pill pill--accent">Final</span>
+                            @else
+                                <span class="pill pill--green"><span class="pulse"></span> Live</span>
+                            @endif
+                        </div>
+                        <div class="panel__body">
+                            <div class="recon">
+                                <div class="recon__row"><span class="k">Opening balance</span><span class="v">{{ currency($stats['opening']) }}</span></div>
+                                <div class="recon__row"><span class="k">+ Sales collected</span><span class="v t-green">{{ currency($stats['sales_paid']) }}</span></div>
+                                @if ($stats['tailoring_paid'] > 0)
+                                    <div class="recon__row"><span class="k">+ Tailoring collected</span><span class="v t-green">{{ currency($stats['tailoring_paid']) }}</span></div>
+                                @endif
+                                <div class="recon__bar">
+                                    <span class="b-open" style="width: {{ $openPct }}%"></span>
+                                    <span class="b-sales" style="width: {{ $salesPct }}%"></span>
+                                </div>
+                                <div class="recon__legend">
+                                    <span><span class="sw" style="background: var(--acc)"></span> Opening {{ round($openPct) }}%</span>
+                                    <span><span class="sw" style="background: var(--green)"></span> Collected {{ round($salesPct) }}%</span>
+                                </div>
+                                <div class="recon__row big"><span class="k">Expected in drawer</span><span class="v">{{ currency($stats['expected']) }}</span></div>
+                                <div class="recon__row">
+                                    <span class="k">Counted (closing)</span>
+                                    @if ($isClosed)
+                                        <span class="v t-acc">{{ currency($stats['counted']) }}</span>
+                                    @else
+                                        <span class="v t-muted" style="font-weight: 500; font-size: 12.5px;">Pending close</span>
+                                    @endif
+                                </div>
+                                @if ($isClosed && (float) $session->sync_amount != 0)
+                                    <div class="recon__row"><span class="k">Sync amount</span><span class="v">{{ currency($session->sync_amount) }}</span></div>
+                                @endif
+                                <div class="variance {{ $vClass }}">
                                     <div>
-                                        <small class="text-muted d-block">Session ID</small>
-                                        <span class="fw-bold" style="color: #2c3e50;">#{{ $session->id }}</span>
+                                        <div class="lab">Variance (over / short)</div>
+                                        <div class="tag">{{ $vTag }}</div>
                                     </div>
-                                    <div class="text-end">
-                                        <small class="text-muted d-block">Branch</small>
-                                        <span class="fw-bold" style="color: #2c3e50;">{{ $session->branch->name }}</span>
-                                    </div>
+                                    <div class="amt">{{ $isClosed ? $vSign.currency($variance) : '—' }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Sales Summary Card -->
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="rounded-circle p-3 me-3" style="background: linear-gradient(135deg, #28a745 0%, #34d399 100%);">
-                                    <i class="fa fa-shopping-cart text-white" style="font-size: 24px;"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1 text-muted">Sales Summary</h6>
-                                    <h4 class="mb-0 fw-bold" style="color: #2c3e50;">{{ $session->sales->count() + $session->tailoringOrders->count() }} Invoices</h4>
-                                </div>
-                            </div>
-                            <div class="border-top pt-3">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <small class="text-muted d-block">Total Sale</small>
-                                        <span class="fw-bold" style="color: #28a745; font-size: 1.25rem;">
-                                            {{ number_format($session->sales->sum('grand_total') + $session->tailoringOrders->sum('grand_total'), 2) }}
-                                        </span>
-                                    </div>
-                                    <div class="text-end">
-                                        <small class="text-muted d-block">Duration</small>
-                                        <span class="fw-bold" style="color: #2c3e50;">
-                                            @if ($session->status == 'closed' && $session->closed_at)
-                                                {{ round($session->opened_at->diffInHours($session->closed_at), 2) }}h {{ $session->opened_at->diff($session->closed_at)->format('%im') }}
-                                            @else
-                                                {{ round($session->opened_at->diffInHours(now()), 2) }}h {{ $session->opened_at->diff(now())->format('%im') }}
-                                            @endif
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="panel">
+                        <div class="panel__head">
+                            <h3><i class="fa fa-history"></i> Session log</h3>
+                            <span class="pill"><i class="fa fa-building-o"></i> {{ $session->branch->name }}</span>
                         </div>
-                    </div>
-                </div>
+                        <div class="panel__body">
+                            <div class="tl">
+                                <div class="tl__item">
+                                    <span class="tl__dot green"><i class="fa fa-play"></i></span>
+                                    <div class="tl__head">
+                                        <span class="tl__title">Session opened</span>
+                                        <span class="tl__time">{{ systemDateTime($session->opened_at) }}</span>
+                                    </div>
+                                    <div class="tl__meta"><span class="av">{{ $initial($openerName) }}</span> {{ $openerName }}</div>
+                                    <div class="tl__chips">
+                                        <span class="chip chip--acc"><b>Float</b> {{ currency($stats['opening']) }}</span>
+                                    </div>
+                                </div>
 
-                <!-- Cash Summary Card -->
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="rounded-circle p-3 me-3" style="background: linear-gradient(135deg, #b8860b 0%, #daa520 100%);">
-                                    <i class="fa fa-money text-white" style="font-size: 24px;"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1 text-muted">Cash Summary</h6>
-                                    <h4 class="mb-0 fw-bold" style="color: #2c3e50;">
-                                        @if ($session->status == 'closed')
-                                            {{ currency($session->closing_amount) }}
-                                            @if ($session->sync_amount != 0)
-                                                <br>
-                                                {{ currency($session->sync_amount) }}
-                                            @endif
-                                        @else
-                                            {{ currency($session->opening_amount) }}
-                                        @endif
-                                    </h4>
-                                </div>
-                            </div>
-                            <div class="border-top pt-3">
-                                @if ($session->status == 'closed')
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <small class="text-muted d-block">Cash Difference</small>
-                                            <span class="fw-bold"
-                                                style="color: {{ $session->difference_amount > 0 ? '#28a745' : ($session->difference_amount < 0 ? '#dc3545' : '#6c757d') }}; font-size: 1.25rem;">
-                                                @if ($session->difference_amount > 0)
-                                                    <i class="fa fa-arrow-up me-1"></i>+{{ number_format($session->difference_amount, 2) }}
-                                                @elseif($session->difference_amount < 0)
-                                                    <i class="fa fa-arrow-down me-1"></i>{{ number_format($session->difference_amount, 2) }}
-                                                @else
-                                                    <i class="fa fa-check me-1"></i>{{ number_format($session->difference_amount, 2) }}
-                                                @endif
-                                            </span>
+                                @if ($isClosed)
+                                    <div class="tl__item">
+                                        <span class="tl__dot red"><i class="fa fa-stop"></i></span>
+                                        <div class="tl__head">
+                                            <span class="tl__title">Session closed</span>
+                                            <span class="tl__time">{{ systemDateTime($session->closed_at) }}</span>
                                         </div>
-                                        <div class="text-end">
-                                            <small class="text-muted d-block">Status</small>
-                                            <span
-                                                class="badge {{ $session->difference_amount > 0 ? 'bg-success' : ($session->difference_amount < 0 ? 'bg-danger' : 'bg-secondary') }} bg-opacity-10
-                                                              {{ $session->difference_amount > 0 ? 'text-success' : ($session->difference_amount < 0 ? 'text-danger' : 'text-secondary') }} px-3 py-2">
-                                                {{ $session->difference_amount > 0 ? 'Surplus' : ($session->difference_amount < 0 ? 'Shortage' : 'Balanced') }}
-                                            </span>
+                                        <div class="tl__meta"><span class="av">{{ $initial($closerName) }}</span> {{ $closerName }} · after {{ $stats['duration'] }}</div>
+                                        <div class="tl__chips">
+                                            <span class="chip"><b>Counted</b> {{ currency($stats['counted']) }}</span>
+                                            <span class="chip"><b>Expected</b> {{ currency($stats['expected']) }}</span>
+                                            <span class="chip {{ $vClass === 'ok' ? 'chip--green' : ($vClass === 'short' ? 'chip--red' : 'chip--amber') }}"><b>Δ</b> {{ $vSign }}{{ currency($variance) }}</span>
+                                            @if ((float) $session->sync_amount != 0)
+                                                <span class="chip"><b>Sync</b> {{ currency($session->sync_amount) }}</span>
+                                            @endif
                                         </div>
                                     </div>
                                 @else
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <small class="text-muted d-block">Opening Balance</small>
-                                            <span class="fw-bold" style="color: #b8860b; font-size: 1.25rem;">
-                                                {{ number_format($session->opening_amount, 2) }}
-                                            </span>
+                                    <div class="tl__item">
+                                        <span class="tl__dot ghost"><i class="fa fa-clock-o"></i></span>
+                                        <div class="tl__head">
+                                            <span class="tl__title t-muted">In progress</span>
+                                            <span class="tl__time">running {{ $stats['duration'] }}</span>
                                         </div>
-                                        <div class="text-end">
-                                            <small class="text-muted d-block">Expected</small>
-                                            <span class="fw-bold" style="color: #5a9fd4; font-size: 1.25rem;">
-                                                {{ number_format($session->expected_amount, 2) }}
-                                            </span>
+                                        <div class="tl__meta">Drawer is reconciled when the session is closed from Day Management.</div>
+                                        <div class="tl__chips">
+                                            <span class="chip"><b>Expected so far</b> {{ currency($stats['expected']) }}</span>
                                         </div>
+                                    </div>
+                                @endif
+
+                                @if ($session->notes)
+                                    <div class="tl__item">
+                                        <span class="tl__dot acc"><i class="fa fa-comment"></i></span>
+                                        <div class="tl__head"><span class="tl__title">Closing note</span></div>
+                                        <div class="tl__note">{{ $session->notes }}</div>
                                     </div>
                                 @endif
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Session Timeline -->
-            <div class="row g-4">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-white py-3">
-                            <h5 class="mb-0 d-flex align-items-center">
-                                <i class="fa fa-history me-2" style="color: #4a6fa5;"></i>
-                                Session Timeline
-                            </h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="timeline p-4">
-                                <!-- Opening Event -->
-                                <div class="timeline-item d-flex position-relative pb-4">
-                                    <div class="timeline-marker rounded-circle p-2 me-3" style="background: linear-gradient(135deg, #28a745 0%, #34d399 100%);">
-                                        <i class="fa fa-play text-white"></i>
-                                    </div>
-                                    <div class="timeline-content flex-grow-1">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <h6 class="mb-0 fw-bold" style="color: #2c3e50;">Session Opened</h6>
-                                            <small class="text-muted">{{ $session->opened_at->format('M d, Y g:i A') }}</small>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <div class="rounded-circle p-2 me-2" style="background-color: rgba(74, 111, 165, 0.1);">
-                                                <i class="fa fa-user" style="color: #4a6fa5;"></i>
-                                            </div>
-                                            <span class="text-muted">By {{ $session->opener->name ?? 'Unknown' }}</span>
-                                        </div>
-                                        <div class="mt-2">
-                                            <span class="badge bg-success bg-opacity-10 text-success">
-                                                Opening Balance: {{ number_format($session->opening_amount, 2) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                @if ($session->status == 'closed')
-                                    <!-- Closing Event -->
-                                    <div class="timeline-item d-flex position-relative">
-                                        <div class="timeline-marker rounded-circle p-2 me-3" style="background: linear-gradient(135deg, #dc3545 0%, #ef4444 100%);">
-                                            <i class="fa fa-stop text-white"></i>
-                                        </div>
-                                        <div class="timeline-content flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <h6 class="mb-0 fw-bold" style="color: #2c3e50;">Session Closed</h6>
-                                                <small class="text-muted">{{ $session->closed_at->format('M d, Y g:i A') }}</small>
-                                            </div>
-                                            <div class="d-flex align-items-center">
-                                                <div class="rounded-circle p-2 me-2" style="background-color: rgba(74, 111, 165, 0.1);">
-                                                    <i class="fa fa-user" style="color: #4a6fa5;"></i>
-                                                </div>
-                                                <span class="text-muted">By {{ $session->closer->name ?? 'Unknown' }}</span>
-                                            </div>
-                                            <div class="mt-2">
-                                                <div class="d-flex gap-2 flex-wrap">
-                                                    <span class="badge bg-warning bg-opacity-10 text-warning">
-                                                        Closing Balance: {{ number_format($session->closing_amount, 2) }}
-                                                    </span>
-                                                    <span class="badge bg-info bg-opacity-10 text-info">
-                                                        Expected: {{ number_format($session->expected_amount, 2) }}
-                                                    </span>
-                                                    <span
-                                                        class="badge {{ $session->difference_amount > 0 ? 'bg-success' : ($session->difference_amount < 0 ? 'bg-danger' : 'bg-secondary') }} bg-opacity-10
-                                                                  {{ $session->difference_amount > 0 ? 'text-success' : ($session->difference_amount < 0 ? 'text-danger' : 'text-secondary') }}">
-                                                        Difference: {{ number_format($session->difference_amount, 2) }}
-                                                        ({{ $session->difference_amount > 0 ? 'Surplus' : ($session->difference_amount < 0 ? 'Shortage' : 'Balanced') }})
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notes Section (if exists) -->
-            @if ($session->notes)
-                <div class="row g-4 mt-4">
-                    <div class="col-12">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body p-4">
-                                <div class="d-flex align-items-start">
-                                    <div class="rounded-circle p-3 me-3" style="background-color: rgba(108, 117, 125, 0.1);">
-                                        <i class="fa fa-sticky-note" style="color: #6c757d; font-size: 20px;"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-2 fw-bold" style="color: #2c3e50;">Session Notes</h6>
-                                        <p class="mb-0 text-muted">{{ $session->notes }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            <!-- Sales List Section -->
-            <div class="row mt-5">
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-white py-3">
-                            <h5 class="mb-0 d-flex align-items-center">
-                                <i class="fa fa-list me-2" style="color: #4a6fa5;"></i>
-                                Session Sales Details
-                            </h5>
-                        </div>
-                        <div class="card-body p-0">
-                            @livewire('sale-day-session.day-session-sales-list', ['sessionId' => $session->id])
-                        </div>
-                    </div>
+                {{-- ============ COLLECTIONS + TRANSACTIONS ============ --}}
+                <div style="margin-top: 12px;">
+                    @livewire('sale-day-session.day-session-sales-list', ['sessionId' => $session->id])
                 </div>
             </div>
         </div>
     </div>
-    @push('styles')
-        <style>
-            /* Custom styles for the timeline */
-            .timeline {
-                position: relative;
-            }
-
-            .timeline::before {
-                content: '';
-                position: absolute;
-                left: 24px;
-                top: 0;
-                bottom: 0;
-                width: 2px;
-                background: #e9ecef;
-            }
-
-            .timeline-item {
-                position: relative;
-            }
-
-            .timeline-marker {
-                width: 32px;
-                height: 32px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1;
-            }
-
-            /* Card hover effects */
-            .card {
-                transition: all 0.3s ease;
-            }
-
-            .card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
-            }
-
-            /* Badge styles */
-            .badge {
-                font-weight: 500;
-                padding: 0.5em 0.75em;
-                border-radius: 0.375rem;
-            }
-
-            /* Responsive adjustments */
-            @media (max-width: 768px) {
-                .card-body {
-                    padding: 1rem !important;
-                }
-
-                .timeline::before {
-                    left: 20px;
-                }
-
-                .timeline-marker {
-                    width: 28px;
-                    height: 28px;
-                }
-
-                .fw-bold {
-                    font-size: 1rem !important;
-                }
-            }
-
-            /* Theme colors */
-            :root {
-                --primary-color: #4a6fa5;
-                --primary-gradient: linear-gradient(135deg, #4a6fa5 0%, #357abd 100%);
-                --success-color: #28a745;
-                --success-gradient: linear-gradient(135deg, #28a745 0%, #34d399 100%);
-                --warning-color: #b8860b;
-                --warning-gradient: linear-gradient(135deg, #b8860b 0%, #daa520 100%);
-                --danger-color: #dc3545;
-                --danger-gradient: linear-gradient(135deg, #dc3545 0%, #ef4444 100%);
-                --text-primary: #2c3e50;
-                --text-secondary: #6c757d;
-            }
-        </style>
-    @endpush
 </x-app-layout>

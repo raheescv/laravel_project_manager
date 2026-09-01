@@ -9,6 +9,7 @@ use App\Models\Country;
 use App\Models\CustomerType;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
+use App\Models\TailoringPayment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -348,7 +349,51 @@ class SaleController extends Controller
     {
         $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
 
-        return view('sale.day-session-details', compact('session'));
+        return view('sale.day-session-details', [
+            'session' => $session,
+            'stats' => $this->daySessionStats($session),
+        ]);
+    }
+
+    /**
+     * Headline figures for the day-session view: counts, collections,
+     * expected vs counted cash and the running/final duration.
+     */
+    private function daySessionStats(SaleDaySession $session): array
+    {
+        $sales = $session->sales()
+            ->selectRaw('COUNT(*) as cnt, COALESCE(SUM(grand_total), 0) as sum_total, COALESCE(SUM(paid), 0) as sum_paid')
+            ->first();
+
+        $tailoring = $session->tailoringOrders()
+            ->selectRaw('COUNT(*) as cnt, COALESCE(SUM(grand_total), 0) as sum_total')
+            ->first();
+
+        $tailoringPaid = (float) TailoringPayment::whereHas('order', fn ($query) => $query->where('sale_day_session_id', $session->id))
+            ->sum('amount');
+
+        $isClosed = $session->status === 'closed';
+        $opening = (float) $session->opening_amount;
+        $collected = (float) ($sales->sum_paid ?? 0) + $tailoringPaid;
+
+        $end = $isClosed && $session->closed_at ? $session->closed_at : now();
+        $diff = $session->opened_at->diff($end);
+
+        return [
+            'is_closed' => $isClosed,
+            'sales_count' => (int) ($sales->cnt ?? 0),
+            'sales_total' => (float) ($sales->sum_total ?? 0),
+            'sales_paid' => (float) ($sales->sum_paid ?? 0),
+            'tailoring_count' => (int) ($tailoring->cnt ?? 0),
+            'tailoring_total' => (float) ($tailoring->sum_total ?? 0),
+            'tailoring_paid' => $tailoringPaid,
+            'opening' => $opening,
+            'collected' => $collected,
+            'expected' => $isClosed ? (float) $session->expected_amount : $opening + $collected,
+            'counted' => $isClosed ? (float) $session->closing_amount : null,
+            'variance' => $isClosed ? (float) $session->difference_amount : null,
+            'duration' => ($diff->days > 0 ? $diff->days.'d ' : '').$diff->h.'h '.$diff->i.'m',
+        ];
     }
 
     public function daySessionsReport()

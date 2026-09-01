@@ -1,459 +1,296 @@
 <div>
+    @use('Illuminate\Support\Str')
     @php
         $canViewTailoring = auth()->user()->can('tailoring order.view');
+        $methodLook = function ($name): array {
+            $n = strtolower((string) $name);
+
+            return match (true) {
+                str_contains($n, 'cash') => ['fa-money', 'is-cash', 'i-green'],
+                str_contains($n, 'card') || str_contains($n, 'visa') || str_contains($n, 'master') => ['fa-credit-card', 'is-card', 'i-accent'],
+                str_contains($n, 'bank') || str_contains($n, 'transfer') => ['fa-university', 'is-other', 'i-amber'],
+                default => ['fa-exchange', 'is-other', 'i-amber'],
+            };
+        };
     @endphp
-    <div class="card border-0 shadow-sm">
-        <div class="card-header" style="background: linear-gradient(135deg, #4a6fa5 0%, #357abd 100%); color: white; border-bottom: none;">
-            <div class="d-flex align-items-center">
-                <div class="rounded-circle p-2 me-3" style="background-color: rgba(255,255,255,0.2);">
-                    <i class="fa fa-shopping-cart" style="font-size: 20px;"></i>
-                </div>
-                <div>
-                    <h5 class="mb-0 text-white">Session Sales @if ($canViewTailoring) & Tailoring @endif</h5>
-                    <small class="text-light opacity-75">All sale @if ($canViewTailoring) and tailoring @endif entries recorded during this day session</small>
-                </div>
-            </div>
-        </div>
-        <div class="card-body" style="background-color: #fafafa;">
-            <!-- Search and Filter Controls -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text" style="background-color: #e9ecef; border-color: #ced4da;">
-                            <i class="fa fa-search" style="color: #6c757d;"></i>
-                        </span>
-                        <input type="text" wire:model.live="search" class="form-control" placeholder="Search by invoice/order, customer name, or mobile..." style="border-color: #ced4da;">
+
+    <x-sale.day-session-premium />
+
+    <div class="dsv stack" x-data="{ tab: 'sales' }">
+        {{-- ============ COLLECTIONS BY METHOD ============ --}}
+        @if (count($paymentSummary) > 0)
+            <div class="panel">
+                <div class="panel__head">
+                    <h3><i class="fa fa-credit-card"></i> Collections by method</h3>
+                    <div class="panel__aside">
+                        <span class="pill">{{ count($paymentSummary) }} {{ Str::plural('method', count($paymentSummary)) }}</span>
+                        <span class="pill pill--green">Total {{ currency($paymentSummaryTotal) }}</span>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <select wire:model.live="perPage" class="form-select" style="border-color: #ced4da;">
-                        <option value="10">10 per page</option>
-                        <option value="25">25 per page</option>
-                        <option value="50">50 per page</option>
-                        <option value="100">100 per page</option>
+                <div class="panel__body">
+                    <div class="methods">
+                        @foreach ($paymentSummary as $payment)
+                            @php
+                                [$icon, $kind, $tone] = $methodLook($payment->payment_method_name);
+                                $pct = $paymentSummaryTotal != 0 ? ($payment->total_paid / $paymentSummaryTotal) * 100 : 0;
+                            @endphp
+                            <div class="method {{ $kind }}">
+                                <div class="method__top">
+                                    <span class="method__ic {{ $tone }}"><i class="fa {{ $icon }}"></i></span>
+                                    <span class="method__name" title="{{ $payment->payment_method_name }}">{{ $payment->payment_method_name }}</span>
+                                    <span class="method__pct">{{ number_format($pct, 1) }}%</span>
+                                </div>
+                                <div class="method__amt">{{ currency($payment->total_paid) }}</div>
+                                <div class="method__meta">{{ $payment->count }} {{ Str::plural('transaction', $payment->count) }}</div>
+                                <div class="method__bar"><span style="width: {{ max(2, min(100, $pct)) }}%"></span></div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- ============ TRANSACTIONS ============ --}}
+        <div class="panel">
+            <div class="panel__head">
+                <div class="tabs" role="tablist">
+                    <button type="button" class="tab" :class="{ on: tab === 'sales' }" @click="tab = 'sales'" role="tab">
+                        <i class="fa fa-shopping-cart"></i> Sales <span class="n">{{ $sales->total() }}</span>
+                    </button>
+                    @if ($canViewTailoring)
+                        <button type="button" class="tab" :class="{ on: tab === 'tailoring' }" @click="tab = 'tailoring'" role="tab">
+                            <i class="fa fa-scissors"></i> Tailoring <span class="n">{{ $tailoringOrders->total() }}</span>
+                        </button>
+                    @endif
+                    <button type="button" class="tab" :class="{ on: tab === 'payments' }" @click="tab = 'payments'" role="tab">
+                        <i class="fa fa-exchange"></i> Payments <span class="n">{{ $combinedPayments->total() }}</span>
+                    </button>
+                </div>
+                <div class="tools">
+                    <label class="search">
+                        <i class="fa fa-search"></i>
+                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Invoice, order, customer or mobile…" aria-label="Search transactions">
+                    </label>
+                    <select class="sel" wire:model.live="perPage" aria-label="Rows per page">
+                        <option value="10">10 rows</option>
+                        <option value="25">25 rows</option>
+                        <option value="50">50 rows</option>
+                        <option value="100">100 rows</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center justify-content-end">
-                        <small class="text-muted me-2">Total Entries:</small>
-                        <span class="badge" style="background-color: #4a6fa5; font-size: 14px; padding: 8px 12px;">
-                            {{ $sales->total() + ($canViewTailoring ? $tailoringOrders->total() : 0) }}
-                        </span>
-                    </div>
-                </div>
             </div>
 
-            <!-- Payment Method Summary Cards -->
-            @if (count($paymentSummary) > 0)
-                <div class="row g-3 mb-4">
-                    <div class="col-12">
-                        <h6 class="mb-3 text-muted d-flex align-items-center">
-                            <i class="fa fa-credit-card me-2"></i>
-                            Sale @if ($canViewTailoring) + Tailoring @endif Payment Summary
-                            <span class="badge bg-light text-dark ms-2">{{ count($paymentSummary) }} Methods</span>
-                        </h6>
-                    </div>
-                    @foreach ($paymentSummary as $payment)
-                        <div class="col-xl-3 col-lg-4 col-md-6">
-                            <div
-                                class="card h-100 shadow-sm border-0
-                                @if (strtolower($payment->payment_method_name) === 'cash') bg-success
-                                @elseif(strtolower($payment->payment_method_name) === 'card') bg-primary
-                                @else bg-info @endif
-                                text-white">
-                                <div class="card-body p-4">
-                                    <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <div class="d-flex align-items-center">
-                                            <div class="bg-white bg-opacity-25 rounded-3 p-3 me-3 d-flex align-items-center justify-content-center">
-                                                @if (strtolower($payment->payment_method_name) === 'cash')
-                                                    <i class="fa fa-money fs-4"></i>
-                                                @elseif(strtolower($payment->payment_method_name) === 'card')
-                                                    <i class="fa fa-credit-card fs-4"></i>
-                                                @else
-                                                    <i class="fa fa-wallet fs-4"></i>
-                                                @endif
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0 fw-bold text-uppercase small">
-                                                    {{ $payment->payment_method_name }}
-                                                </h6>
-                                                <small class="opacity-75">Payment Method</small>
-                                            </div>
-                                        </div>
-                                        <span class="badge bg-white bg-opacity-25 rounded-pill px-3 py-2">
-                                            {{ $paymentSummaryTotal != 0 ? number_format(($payment->total_paid / $paymentSummaryTotal) * 100, 1) : 0 }}%
-                                        </span>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <h3 class="mb-1 fw-bold">{{ currency($payment->total_paid) }}</h3>
-                                        <small class="opacity-75">Total Collected</small>
-                                    </div>
-
-                                    <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-25">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fa fa-chart-line me-2 opacity-75"></i>
-                                            <span class="small">{{ $payment->count }} Transactions</span>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <span class="badge bg-light text-success rounded-circle me-2" style="width: 8px; height: 8px;"></span>
-                                            <span class="small opacity-75">Active</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-
-            <div class="table-responsive mb-4">
-                <h6 class="mb-2 text-muted"><i class="fa fa-exchange me-2"></i>Payments</h6>
-                <table class="table table-sm table-hover mb-0" style="background-color: white;">
-                    <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                        <tr>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Payment Date</th>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Source</th>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Reference</th>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Invoice Date</th>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Customer</th>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Mobile</th>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Payment Method</th>
-                            <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 12px;">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($combinedPayments as $payment)
-                            <tr style="border-bottom: 1px solid #f8f9fa;">
-                                <td style="vertical-align: middle;">{{ systemDate($payment->payment_date) }}</td>
-                                <td style="vertical-align: middle;">
-                                    <span class="badge {{ $payment->source === 'Sale' ? 'bg-primary' : 'bg-success' }}">{{ $payment->source }}</span>
-                                </td>
-                                <td style="vertical-align: middle;">
-                                    <span class="fw-bold" style="color: #4a6fa5;">{{ $payment->reference_no }}</span>
-                                </td>
-                                <td style="vertical-align: middle;">{{ systemDate($payment->invoice_date) }}</td>
-                                <td style="vertical-align: middle;">{{ $payment->customer_name ?: '-' }}</td>
-                                <td style="vertical-align: middle;">{{ $payment->customer_mobile ?: '-' }}</td>
-                                <td style="vertical-align: middle;">{{ $payment->payment_method_name }}</td>
-                                <td class="text-end" style="vertical-align: middle;">
-                                    <span class="fw-bold text-success">{{ currency($payment->amount) }}</span>
-                                </td>
-                            </tr>
-                        @empty
+            {{-- ---- Sales ---- --}}
+            <div x-show="tab === 'sales'" role="tabpanel">
+                <div class="tbl-wrap">
+                    <table class="sx">
+                        <thead>
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">No combined payments found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="7" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-calculator me-2" style="color: #6c757d;"></i>
-                                    Totals:
-                                </div>
-                            </td>
-                            <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">
-                                {{ currency($combinedPayments->sum('amount')) }}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-                <div class="mt-3">
-                    {{ $combinedPayments->links() }}
-                </div>
-            </div>
-
-            <!-- Enhanced Data Table -->
-            <div class="table-responsive">
-                <h6 class="mb-2 text-muted"><i class="fa fa-shopping-cart me-2"></i>Sales Module</h6>
-                <table class="table table-sm table-hover mb-0" style="background-color: white;">
-                    <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                        <tr>
-                            <th wire:click="sortBy('id')" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-tag me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    ID
-                                    @if ($sortField === 'id')
-                                        @if ($sortDirection === 'asc')
-                                            <i class="fa fa-caret-up ms-2" style="color: #4a6fa5;"></i>
-                                        @else
-                                            <i class="fa fa-caret-down ms-2" style="color: #4a6fa5;"></i>
-                                        @endif
-                                    @endif
-                                </div>
-                            </th>
-                            <th style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-file-text-o me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="Invoice No" />
-                                </div>
-                            </th>
-                            <th style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-user me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="Customer" />
-                                </div>
-                            </th>
-                            <th style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-calendar me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Created At" />
-                                </div>
-                            </th>
-                            <th style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-calendar me-2" style="color: #6c757d; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" />
-                                </div>
-                            </th>
-                            <th class="text-end" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-money me-2" style="color: #b8860b; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="Total" />
-                                </div>
-                            </th>
-                            <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-tag me-2" style="color: #dc3545; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="item_discount" label="Discount" />
-                                </div>
-                            </th>
-                            <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-calculator me-2" style="color: #5a9fd4; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="Tax" />
-                                </div>
-                            </th>
-                            <th class="text-end" style="color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-calculator me-2" style="color: #5a9fd4; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="payment_method_name" label="Payment Method" />
-                                </div>
-                            </th>
-                            <th class="text-end" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-check-circle me-2" style="color: #28a745; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="Paid" />
-                                </div>
-                            </th>
-                            <th class="text-end" style="cursor: pointer; color: #495057; font-weight: 600; border-bottom: 2px solid #dee2e6; padding: 15px 12px;">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-check-circle me-2" style="color: #28a745; font-size: 14px;"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="balance" />
-                                </div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($sales as $sale)
-                            <tr style="border-bottom: 1px solid #f8f9fa;">
-                                <td style=" vertical-align: middle;">
-                                    <span class="badge" style="background-color: #e9ecef; color: #495057; font-weight: 500;">
-                                        #{{ $sale->id }}
-                                    </span>
-                                </td>
-                                <td style=" vertical-align: middle; ">
-                                    <div class="fw-bold text-nowrap" style="color: #4a6fa5; ">
-                                        <a href="{{ route('sale::view', $sale->id) }}">
-                                            <i class="fa fa-eye me-2" style="font-size: 12px;"></i>
-                                            {{ $sale->invoice_no }}
-                                        </a>
-                                    </div>
-                                </td>
-                                <td style=" vertical-align: middle;">
-                                    <div>
-                                        <div class="fw-medium text-nowrap" style="color: #495057;">
-                                            {{ $sale->account->name ?? $sale->customer_name }}
-                                        </div>
-                                        @if ($sale->account->mobile ?? $sale->customer_mobile)
-                                            <small class="text-muted d-flex align-items-center mt-1">
-                                                <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
-                                                {{ $sale->account->mobile ?? $sale->customer_mobile }}
-                                            </small>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td style=" vertical-align: middle; text-nowrap">
-                                    <div class="d-flex align-items-center text-nowrap">
-                                        <i class="fa fa-calendar-o me-2" style="color: #6c757d; font-size: 12px;"></i>
-                                        <span style="color: #495057;">{{ systemDateTime($sale->created_at) }}</span>
-                                    </div>
-                                </td>
-                                <td style=" vertical-align: middle; text-nowrap">
-                                    <div class="d-flex align-items-center text-nowrap">
-                                        <i class="fa fa-calendar-o me-2" style="color: #6c757d; font-size: 12px;"></i>
-                                        <span style="color: #495057;">{{ systemDate($sale->date) }}</span>
-                                    </div>
-                                </td>
-                                <td class="text-end" style=" vertical-align: middle;">
-                                    <span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($sale->total) }}</span>
-                                </td>
-                                <td class="text-end" style=" vertical-align: middle;">
-                                    <span style="color: #dc3545;">{{ $sale->item_discount != 0 ? currency($sale->item_discount) : '-' }}</span>
-                                </td>
-                                <td class="text-end" style=" vertical-align: middle;">
-                                    <span style="color: #5a9fd4;">{{ $sale->tax_amount != 0 ? currency($sale->tax_amount) : '-' }}</span>
-                                </td>
-                                <td class="text-end" style=" vertical-align: middle;">
-                                    <span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ $sale->payment_method_name }}</span>
-                                </td>
-                                <td class="text-end" style=" vertical-align: middle;">
-                                    <span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ currency($sale->paid) }}</span>
-                                </td>
-                                <td class="text-end" style=" vertical-align: middle;">
-                                    <span class="fw-bold" style="color: red; font-size: 15px;">{{ $sale->balance != 0 ? currency($sale->balance) : '-' }}</span>
-                                </td>
-                            </tr>
-                        @endforeach
-
-                        @if ($sales->count() === 0)
-                            <tr>
-                                <td colspan="11" class="text-center" style="padding: 40px 20px;">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #f8f9fa;">
-                                            <i class="fa fa-shopping-cart" style="color: #6c757d; font-size: 24px;"></i>
-                                        </div>
-                                        <h6 style="color: #6c757d; margin-bottom: 8px;">No Sales Found</h6>
-                                        <p class="text-muted mb-0">No sales have been recorded for this day session yet.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endif
-                    </tbody>
-                    <tfoot style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
-                        <tr>
-                            <td colspan="5" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="fa fa-calculator me-2" style="color: #6c757d;"></i>
-                                    Session Totals:
-                                </div>
-                            </td>
-                            <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">
-                                {{ currency($totals['total']) }}
-                            </td>
-                            <td class="text-end fw-bold" style="color: #dc3545; padding: 20px 12px; font-size: 16px;">
-                                {{ currency($totals['item_discount']) }}
-                            </td>
-                            <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">
-                                {{ currency($totals['tax_amount']) }}
-                            </td>
-                            <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">
-                            </td>
-                            <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">
-                                {{ currency($totals['paid']) }}
-                            </td>
-                            <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">
-                                {{ currency($totals['balance']) }}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- Enhanced Pagination -->
-            <div class="d-flex justify-content-between align-items-center mt-4">
-                <div class="text-muted">
-                    <small>
-                        Showing {{ $sales->firstItem() ?? 0 }} to {{ $sales->lastItem() ?? 0 }}
-                        of {{ $sales->total() }} sales
-                    </small>
-                </div>
-                <div>
-                    {{ $sales->links() }}
-                </div>
-            </div>
-            @if ($canViewTailoring)
-                <div class="table-responsive mt-4">
-                    <h6 class="mb-2 text-muted"><i class="fa fa-scissors me-2"></i>Tailoring Module</h6>
-                    <table class="table table-sm table-hover mb-0" style="background-color: white;">
-                        <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                            <tr>
-                                <th>ID</th>
-                                <th>Order No</th>
-                                <th>Customer</th>
-                                <th>Created At</th>
-                                <th>Date</th>
-                                <th class="text-end">Total</th>
-                                <th class="text-end">Discount</th>
-                                <th class="text-end">Tax</th>
-                                <th class="text-end">Payment Method</th>
-                                <th class="text-end">Paid</th>
-                                <th class="text-end">Balance</th>
+                                <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="Invoice" /></th>
+                                <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="account_id" label="Customer" /></th>
+                                <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Date" /></th>
+                                <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="Total" /></th>
+                                <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="item_discount" label="Discount" /></th>
+                                <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="Tax" /></th>
+                                <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="payment_method_name" label="Method" /></th>
+                                <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="Paid" /></th>
+                                <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="Balance" /></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($tailoringOrders as $order)
-                                <tr style="border-bottom: 1px solid #f8f9fa;">
-                                    <td><span class="badge" style="background-color: #e9ecef; color: #495057;">#{{ $order->id }}</span></td>
+                            @forelse ($sales as $sale)
+                                @php $mobile = $sale->account->mobile ?? $sale->customer_mobile; @endphp
+                                <tr>
                                     <td>
-                                        <div class="fw-bold" style="color: #4a6fa5;">
-                                            <a href="{{ route('tailoring::order::show', $order->id) }}">
-                                                <i class="fa fa-eye me-2" style="font-size: 12px;"></i>
-                                                {{ $order->order_no }}
-                                            </a>
-                                        </div>
+                                        <a class="ref" href="{{ route('sale::view', $sale->id) }}">{{ $sale->invoice_no }}</a>
+                                        <span class="sub">#{{ $sale->id }}</span>
                                     </td>
                                     <td>
-                                        <div class="fw-medium" style="color: #495057;">{{ $order->account->name ?? $order->customer_name }}</div>
-                                        @if ($order->account->mobile ?? $order->customer_mobile)
-                                            <small class="text-muted d-flex align-items-center mt-1">
-                                                <i class="fa fa-phone me-1" style="font-size: 10px;"></i>
-                                                {{ $order->account->mobile ?? $order->customer_mobile }}
-                                            </small>
+                                        <span class="cust">{{ $sale->account->name ?? ($sale->customer_name ?: '—') }}</span>
+                                        @if ($mobile)
+                                            <span class="sub"><i class="fa fa-phone"></i>{{ $mobile }}</span>
                                         @endif
                                     </td>
-                                    <td><span style="color: #495057;">{{ systemDateTime($order->created_at) }}</span></td>
-                                    <td><span style="color: #495057;">{{ systemDate($order->order_date) }}</span></td>
-                                    <td class="text-end"><span class="fw-bold" style="color: #b8860b; font-size: 15px;">{{ currency($order->total) }}</span></td>
-                                    <td class="text-end"><span style="color: #dc3545;">{{ $order->item_discount != 0 ? currency($order->item_discount) : '-' }}</span></td>
-                                    <td class="text-end"><span style="color: #5a9fd4;">{{ $order->tax_amount != 0 ? currency($order->tax_amount) : '-' }}</span></td>
-                                    <td class="text-end"><span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ $order->payment_method_name ?: '-' }}</span></td>
-                                    <td class="text-end"><span class="fw-bold" style="color: #28a745; font-size: 15px;">{{ currency($order->paid) }}</span></td>
-                                    <td class="text-end"><span class="fw-bold" style="color: red; font-size: 15px;">{{ $order->balance != 0 ? currency($order->balance) : '-' }}</span></td>
+                                    <td>
+                                        <span class="num">{{ systemDate($sale->date) }}</span>
+                                        <span class="sub num"><i class="fa fa-clock-o"></i>{{ $sale->created_at?->format('h:i A') }}</span>
+                                    </td>
+                                    <td class="end num fw">{{ currency($sale->total) }}</td>
+                                    <td class="end num {{ $sale->item_discount != 0 ? 't-red' : 't-muted' }}">{{ $sale->item_discount != 0 ? currency($sale->item_discount) : '—' }}</td>
+                                    <td class="end num t-muted">{{ $sale->tax_amount != 0 ? currency($sale->tax_amount) : '—' }}</td>
+                                    <td>
+                                        @if ($sale->payment_method_name)
+                                            <span class="mth">{{ $sale->payment_method_name }}</span>
+                                        @else
+                                            <span class="t-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="end num fw t-green">{{ currency($sale->paid) }}</td>
+                                    <td class="end num {{ $sale->balance != 0 ? 'fw t-red' : 't-muted' }}">{{ $sale->balance != 0 ? currency($sale->balance) : '—' }}</td>
                                 </tr>
-                            @endforeach
-                            @if ($tailoringOrders->count() === 0)
+                            @empty
                                 <tr>
-                                    <td colspan="11" class="text-center" style="padding: 30px 20px;">
-                                        <div class="d-flex flex-column align-items-center">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; background-color: #f8f9fa;">
-                                                <i class="fa fa-scissors" style="color: #6c757d; font-size: 24px;"></i>
-                                            </div>
-                                            <h6 style="color: #6c757d; margin-bottom: 8px;">No Tailoring Orders Found</h6>
-                                            <p class="text-muted mb-0">No tailoring orders have been recorded for this day session yet.</p>
-                                        </div>
+                                    <td colspan="9" class="empty-row">
+                                        <i class="fa fa-shopping-cart"></i>
+                                        <b>No sales found</b>
+                                        {{ $search ? 'Nothing matches your search in this session.' : 'No sales have been recorded for this day session yet.' }}
                                     </td>
                                 </tr>
-                            @endif
+                            @endforelse
                         </tbody>
-                        <tfoot style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #dee2e6;">
+                        <tfoot>
                             <tr>
-                                <td colspan="5" class="text-end fw-bold" style="color: #495057; padding: 20px 12px; font-size: 16px;">Tailoring Totals:</td>
-                                <td class="text-end fw-bold" style="color: #b8860b; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['total']) }}</td>
-                                <td class="text-end fw-bold" style="color: #dc3545; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['item_discount']) }}</td>
-                                <td class="text-end fw-bold" style="color: #5a9fd4; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['tax_amount']) }}</td>
-                                <td class="text-end fw-bold" style="padding: 20px 12px; font-size: 16px;"></td>
-                                <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['paid']) }}</td>
-                                <td class="text-end fw-bold" style="color: #28a745; padding: 20px 12px; font-size: 16px;">{{ currency($tailoringTotals['balance']) }}</td>
+                                <td colspan="3"><span class="lbl">Session totals · {{ $totals['total_count'] }} {{ Str::plural('sale', $totals['total_count']) }}</span></td>
+                                <td class="end">{{ currency($totals['total']) }}</td>
+                                <td class="end t-red">{{ currency($totals['item_discount']) }}</td>
+                                <td class="end t-muted">{{ currency($totals['tax_amount']) }}</td>
+                                <td></td>
+                                <td class="end t-green">{{ currency($totals['paid']) }}</td>
+                                <td class="end {{ $totals['balance'] != 0 ? 't-red' : '' }}">{{ currency($totals['balance']) }}</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
+                <div class="pager">
+                    <div class="pager__info">Showing <b>{{ $sales->firstItem() ?? 0 }}–{{ $sales->lastItem() ?? 0 }}</b> of <b>{{ $sales->total() }}</b> sales</div>
+                    {{ $sales->links(data: ['scrollTo' => false]) }}
+                </div>
+            </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <div class="text-muted">
-                        <small>
-                            Showing {{ $tailoringOrders->firstItem() ?? 0 }} to {{ $tailoringOrders->lastItem() ?? 0 }}
-                            of {{ $tailoringOrders->total() }} tailoring orders
-                        </small>
+            {{-- ---- Tailoring ---- --}}
+            @if ($canViewTailoring)
+                <div x-show="tab === 'tailoring'" x-cloak role="tabpanel">
+                    <div class="tbl-wrap">
+                        <table class="sx">
+                            <thead>
+                                <tr>
+                                    <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="order_no" label="Order" /></th>
+                                    <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="customer_name" label="Customer" /></th>
+                                    <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="created_at" label="Date" /></th>
+                                    <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="total" label="Total" /></th>
+                                    <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="item_discount" label="Discount" /></th>
+                                    <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="tax_amount" label="Tax" /></th>
+                                    <th>Method</th>
+                                    <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="paid" label="Paid" /></th>
+                                    <th class="end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="Balance" /></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($tailoringOrders as $order)
+                                    @php $mobile = $order->account->mobile ?? $order->customer_mobile; @endphp
+                                    <tr>
+                                        <td>
+                                            <a class="ref" href="{{ route('tailoring::order::show', $order->id) }}">{{ $order->order_no }}</a>
+                                            <span class="sub">#{{ $order->id }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="cust">{{ $order->account->name ?? ($order->customer_name ?: '—') }}</span>
+                                            @if ($mobile)
+                                                <span class="sub"><i class="fa fa-phone"></i>{{ $mobile }}</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="num">{{ systemDate($order->order_date) }}</span>
+                                            <span class="sub num"><i class="fa fa-clock-o"></i>{{ $order->created_at?->format('h:i A') }}</span>
+                                        </td>
+                                        <td class="end num fw">{{ currency($order->total) }}</td>
+                                        <td class="end num {{ $order->item_discount != 0 ? 't-red' : 't-muted' }}">{{ $order->item_discount != 0 ? currency($order->item_discount) : '—' }}</td>
+                                        <td class="end num t-muted">{{ $order->tax_amount != 0 ? currency($order->tax_amount) : '—' }}</td>
+                                        <td>
+                                            @if ($order->payment_method_name)
+                                                <span class="mth">{{ $order->payment_method_name }}</span>
+                                            @else
+                                                <span class="t-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="end num fw t-green">{{ currency($order->paid) }}</td>
+                                        <td class="end num {{ $order->balance != 0 ? 'fw t-red' : 't-muted' }}">{{ $order->balance != 0 ? currency($order->balance) : '—' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="empty-row">
+                                            <i class="fa fa-scissors"></i>
+                                            <b>No tailoring orders found</b>
+                                            {{ $search ? 'Nothing matches your search in this session.' : 'No tailoring orders have been recorded for this day session yet.' }}
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3"><span class="lbl">Tailoring totals · {{ $tailoringTotals['total_count'] }} {{ Str::plural('order', $tailoringTotals['total_count']) }}</span></td>
+                                    <td class="end">{{ currency($tailoringTotals['total']) }}</td>
+                                    <td class="end t-red">{{ currency($tailoringTotals['item_discount']) }}</td>
+                                    <td class="end t-muted">{{ currency($tailoringTotals['tax_amount']) }}</td>
+                                    <td></td>
+                                    <td class="end t-green">{{ currency($tailoringTotals['paid']) }}</td>
+                                    <td class="end {{ $tailoringTotals['balance'] != 0 ? 't-red' : '' }}">{{ currency($tailoringTotals['balance']) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
-                    <div>
-                        {{ $tailoringOrders->links() }}
+                    <div class="pager">
+                        <div class="pager__info">Showing <b>{{ $tailoringOrders->firstItem() ?? 0 }}–{{ $tailoringOrders->lastItem() ?? 0 }}</b> of <b>{{ $tailoringOrders->total() }}</b> orders</div>
+                        {{ $tailoringOrders->links(data: ['scrollTo' => false]) }}
                     </div>
                 </div>
             @endif
+
+            {{-- ---- Payments ---- --}}
+            <div x-show="tab === 'payments'" x-cloak role="tabpanel">
+                <div class="tbl-wrap">
+                    <table class="sx">
+                        <thead>
+                            <tr>
+                                <th>Paid on</th>
+                                <th>Source</th>
+                                <th>Reference</th>
+                                <th>Customer</th>
+                                <th>Method</th>
+                                <th class="end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($combinedPayments as $payment)
+                                <tr>
+                                    <td class="num">{{ systemDate($payment->payment_date) }}</td>
+                                    <td><span class="src {{ $payment->source === 'Sale' ? 'src--sale' : 'src--tailoring' }}">{{ $payment->source }}</span></td>
+                                    <td>
+                                        <span class="ref">{{ $payment->reference_no }}</span>
+                                        <span class="sub num"><i class="fa fa-calendar-o"></i>{{ systemDate($payment->invoice_date) }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="cust">{{ $payment->customer_name ?: '—' }}</span>
+                                        @if ($payment->customer_mobile)
+                                            <span class="sub"><i class="fa fa-phone"></i>{{ $payment->customer_mobile }}</span>
+                                        @endif
+                                    </td>
+                                    <td><span class="mth">{{ $payment->payment_method_name }}</span></td>
+                                    <td class="end num fw t-green">{{ currency($payment->amount) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="empty-row">
+                                        <i class="fa fa-exchange"></i>
+                                        <b>No payments found</b>
+                                        {{ $search ? 'Nothing matches your search in this session.' : 'No payments were received on this session date.' }}
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5"><span class="lbl">Page total</span></td>
+                                <td class="end t-green">{{ currency($combinedPayments->sum('amount')) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="pager">
+                    <div class="pager__info">Showing <b>{{ $combinedPayments->firstItem() ?? 0 }}–{{ $combinedPayments->lastItem() ?? 0 }}</b> of <b>{{ $combinedPayments->total() }}</b> payments</div>
+                    {{ $combinedPayments->links(data: ['scrollTo' => false]) }}
+                </div>
+            </div>
         </div>
     </div>
 </div>
