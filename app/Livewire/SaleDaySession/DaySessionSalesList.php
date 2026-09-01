@@ -8,6 +8,7 @@ use App\Models\TailoringPayment;
 use App\Services\SaleDaySessionDataService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -117,6 +118,7 @@ class DaySessionSalesList extends Component
             'paymentSummary' => $paymentSummary,
             'paymentSummaryTotal' => $paymentSummary->sum('total_paid'),
             'combinedPayments' => $this->getCombinedPayments(),
+            'combinedPaymentsTotal' => $this->getCombinedPaymentsTotal(),
             'tailoringOrders' => $this->paginateTailoringOrders($tailoringQuery),
             'tailoringTotals' => $this->getTailoringTotals(),
         ]);
@@ -232,6 +234,23 @@ class DaySessionSalesList extends Component
 
     private function getCombinedPayments(): LengthAwarePaginator
     {
+        return $this->combinedPaymentsQuery()
+            ->orderBy('payment_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate($this->perPage, ['*'], 'paymentPage');
+    }
+
+    /**
+     * Total of every payment in the list across all pages (respects the search filter),
+     * so the table footer shows the session total rather than the current page's total.
+     */
+    private function getCombinedPaymentsTotal(): float
+    {
+        return (float) $this->combinedPaymentsQuery()->sum('amount');
+    }
+
+    private function combinedPaymentsQuery(): QueryBuilder
+    {
         $query = DB::query()->fromSub(
             $this->salePaymentTableUnion()->unionAll($this->tailoringPaymentTableUnion()),
             'combined_payments'
@@ -249,10 +268,7 @@ class DaySessionSalesList extends Component
             });
         }
 
-        return $query
-            ->orderBy('payment_date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate($this->perPage, ['*'], 'paymentPage');
+        return $query;
     }
 
     private function salePaymentTableUnion(): EloquentBuilder

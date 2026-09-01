@@ -280,8 +280,8 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="5"><span class="lbl">Page total</span></td>
-                                <td class="end t-green">{{ currency($combinedPayments->sum('amount')) }}</td>
+                                <td colspan="5"><span class="lbl">{{ trim($search) !== '' ? 'Matching total' : 'Session total' }} · {{ $combinedPayments->total() }} {{ Str::plural('payment', $combinedPayments->total()) }}</span></td>
+                                <td class="end t-green">{{ currency($combinedPaymentsTotal) }}</td>
                             </tr>
                         </tfoot>
                     </table>
