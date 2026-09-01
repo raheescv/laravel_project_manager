@@ -207,6 +207,7 @@ class DaySessionSalesList extends Component
             ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
             ->join('accounts', 'sale_payments.payment_method_id', '=', 'accounts.id')
             ->whereDate('sale_payments.date', date('Y-m-d', strtotime($this->session->opened_at)))
+            ->where('sales.branch_id', $this->session->branch_id)
             ->where('sales.status', 'completed')
             ->whereNull('sales.deleted_at')
             ->selectRaw('
@@ -223,6 +224,7 @@ class DaySessionSalesList extends Component
             ->join('tailoring_orders', 'tailoring_payments.tailoring_order_id', '=', 'tailoring_orders.id')
             ->join('accounts', 'tailoring_payments.payment_method_id', '=', 'accounts.id')
             ->whereDate('tailoring_payments.date', date('Y-m-d', strtotime($this->session->opened_at)))
+            ->where('tailoring_orders.branch_id', $this->session->branch_id)
             ->whereNull('tailoring_orders.deleted_at')
             ->selectRaw('
                 tailoring_payments.payment_method_id as payment_method_id,
@@ -278,6 +280,7 @@ class DaySessionSalesList extends Component
             ->leftJoin('accounts as customers', 'sales.account_id', '=', 'customers.id')
             ->join('accounts as payment_methods', 'sale_payments.payment_method_id', '=', 'payment_methods.id')
             ->whereDate('sale_payments.date', date('Y-m-d', strtotime($this->session->opened_at)))
+            ->where('sales.branch_id', $this->session->branch_id)
             ->where('sales.status', 'completed')
             ->whereNull('sales.deleted_at')
             ->selectRaw('
@@ -300,6 +303,7 @@ class DaySessionSalesList extends Component
             ->leftJoin('accounts as customers', 'tailoring_orders.account_id', '=', 'customers.id')
             ->join('accounts as payment_methods', 'tailoring_payments.payment_method_id', '=', 'payment_methods.id')
             ->whereDate('tailoring_payments.date', date('Y-m-d', strtotime($this->session->opened_at)))
+            ->where('tailoring_orders.branch_id', $this->session->branch_id)
             ->whereNull('tailoring_orders.deleted_at')
             ->selectRaw('
                 tailoring_payments.date as payment_date,
