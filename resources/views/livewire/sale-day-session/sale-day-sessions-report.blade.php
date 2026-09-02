@@ -2,7 +2,8 @@
     @php
         $canViewTailoring = auth()->user()->can('tailoring order.view');
         $canViewSession = auth()->user()->can('day session.view');
-        $colspan = 8 + ($canViewTailoring ? 1 : 0);
+        $colspan = 9 + ($canViewTailoring ? 1 : 0);
+        $initialsOf = fn (string $name) => collect(preg_split('/\s+/', trim($name)))->filter()->take(2)->map(fn ($w) => mb_substr($w, 0, 1))->implode('');
         $diff = (float) $summary['total_difference'];
         $diffTone = abs($diff) < 0.005 ? 'ok' : ($diff < 0 ? 'short' : 'over');
     @endphp
@@ -178,7 +179,7 @@
         .dsr .cnt { font-family: var(--dsr-mono); font-size: 10px; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 99px; color: var(--dsr-accent); background: rgba(var(--dsr-accent-rgb), 0.10); border: 1px solid rgba(var(--dsr-accent-rgb), 0.24); }
 
         .dsr .tbl-wrap { overflow-x: auto; }
-        .dsr table.sx { width: 100%; border-collapse: collapse; min-width: 860px; margin: 0; }
+        .dsr table.sx { width: 100%; border-collapse: collapse; min-width: 940px; margin: 0; }
         .dsr table.sx thead th {
             text-align: start; font-family: var(--dsr-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600;
             color: var(--dsr-muted); padding: 7px 12px; border-bottom: 1px solid var(--dsr-line); background: var(--dsr-card-2); white-space: nowrap;
@@ -205,6 +206,7 @@
         .dsr .dt small { color: var(--dsr-muted); font-size: 10.5px; font-family: var(--dsr-mono); }
         .dsr .who { display: inline-flex; align-items: center; gap: 7px; }
         .dsr .who .av { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--dsr-bright), var(--dsr-deep)); text-transform: uppercase; flex: none; }
+        .dsr .who--closer .av { background: var(--dsr-card-2); color: var(--dsr-ink-soft); border: 1px solid var(--dsr-line); }
         .dsr .pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--dsr-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; border: 1px solid var(--dsr-line); line-height: 1.2; white-space: nowrap; }
         .dsr .pill--green { color: var(--dsr-green); background: rgba(var(--dsr-green-rgb), 0.10); border-color: rgba(var(--dsr-green-rgb), 0.28); }
         .dsr .pill--muted { color: var(--dsr-muted); background: var(--dsr-card-2); }
@@ -389,6 +391,7 @@
                                 </button>
                             </th>
                             <th>Opened by</th>
+                            <th>Closed by</th>
                             <th>Status</th>
                             <th class="num">Sales</th>
                             @if ($canViewTailoring)
@@ -406,7 +409,7 @@
                         @forelse ($sessions as $session)
                             @php
                                 $opener = $session->opener?->name ?? 'Unknown';
-                                $initials = collect(preg_split('/\s+/', trim($opener)))->filter()->take(2)->map(fn ($w) => mb_substr($w, 0, 1))->implode('');
+                                $closer = $session->status === 'closed' ? ($session->closer?->name ?? 'Unknown') : null;
                                 $salesAmt = (float) ($session->sales_sum_paid ?? 0);
                                 $tailAmt = (float) ($session->tailoring_orders_sum_paid ?? 0);
                                 $rowDiff = (float) $session->difference_amount;
@@ -423,7 +426,14 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="who"><span class="av">{{ $initials ?: '?' }}</span>{{ $opener }}</span>
+                                    <span class="who"><span class="av">{{ $initialsOf($opener) ?: '?' }}</span>{{ $opener }}</span>
+                                </td>
+                                <td>
+                                    @if ($closer !== null)
+                                        <span class="who who--closer"><span class="av">{{ $initialsOf($closer) ?: '?' }}</span>{{ $closer }}</span>
+                                    @else
+                                        <span class="muted" title="Still open">—</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @if ($session->status == 'open')
@@ -431,7 +441,7 @@
                                     @else
                                         <span class="pill pill--muted"><i class="fa fa-check"></i>Closed</span>
                                         @if ($session->closed_at)
-                                            <div class="muted-line" title="Closed by {{ $session->closer?->name ?? 'Unknown' }}">{{ systemDate($session->closed_at) }} {{ $session->closed_at->format('h:i A') }}</div>
+                                            <div class="muted-line">{{ systemDate($session->closed_at) }} {{ $session->closed_at->format('h:i A') }}</div>
                                         @endif
                                     @endif
                                 </td>
