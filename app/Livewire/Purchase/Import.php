@@ -438,7 +438,12 @@ class Import extends Component
     {
         if ($hits->count() > 1) {
             $item['status'] = 'ambiguous';
-            $item['message'] = $hits->count().' products share this '.($matchedOn === 'code' ? 'code' : ($matchedOn === 'barcode' ? 'barcode' : 'name')).' — pick the right one.';
+            $item['message'] = $hits->count().' products '.match ($matchedOn) {
+                'code' => 'share this code',
+                'barcode' => 'share this barcode',
+                'name~' => 'start with this name',
+                default => 'share this name',
+            }.' — pick the right one.';
             $item['candidates'] = $hits->take(5)->map->only(['id', 'name', 'code'])->all();
 
             return $item;
@@ -646,6 +651,7 @@ class Import extends Component
         $this->items[$index]['unit_id'] = $product->unit_id;
         $this->items[$index]['account_id'] = $product->expense_account_id;
         $this->items[$index]['matched_on'] = 'manual';
+        $this->items[$index]['candidates'] = [];
         if (! $this->items[$index]['unit_price']) {
             $this->items[$index]['unit_price'] = (float) $product->cost;
         }
@@ -787,7 +793,9 @@ class Import extends Component
     {
         $item = $this->items[$index];
         if (! $item['product_id']) {
-            $this->items[$index]['status'] = 'unmatched';
+            // an ambiguous line keeps its own status and message: it is not
+            // "no match", it is "too many matches", and it resolves differently.
+            $this->items[$index]['status'] = $item['status'] === 'ambiguous' ? 'ambiguous' : 'unmatched';
 
             return;
         }

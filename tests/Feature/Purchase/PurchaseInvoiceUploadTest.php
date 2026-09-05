@@ -261,3 +261,132 @@ it('needs a unit price column before it will match anything', function (): void 
         ->assertHasErrors('mapping')
         ->assertSet('step', 2);
 });
+
+it('falls back to a prefix match when the sheet truncates the product name', function (): void {
+    // vendor invoices clip the description column: "…FACIAL SER" for "…FACIAL SERUM"
+    $serum = Product::create([
+        'tenant_id' => $this->world->tenant->id,
+        'type' => 'product',
+        'name' => 'LEEPOSH HYDRA FACIAL SERUM 50ML',
+        'code' => 'LEE-001',
+        'unit_id' => $this->world->product->unit_id,
+        'cost' => 700,
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+    ]);
+
+    $sheet = invoiceSheet(<<<'CSV'
+    Description,Qty,Rate
+    LEEPOSH HYDRA FACIAL SER,3,889.83
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9007')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows');
+
+    $item = $component->get('items')[0];
+
+    expect($item['product_id'])->toBe($serum->id)
+        ->and($item['status'])->toBe('ok')
+        ->and($item['matched_on'])->toBe('name~')
+        // the catalogue name wins; the sheet's wording is kept only to show
+        ->and($item['name'])->toBe('LEEPOSH HYDRA FACIAL SERUM 50ML')
+        ->and($item['raw_name'])->toBe('LEEPOSH HYDRA FACIAL SER');
+
+    $component->assertSee('LEEPOSH HYDRA FACIAL SERUM 50ML')
+        ->assertSee('LEEPOSH HYDRA FACIAL SER');
+});
+
+it('flags a line rather than guessing when the truncated name fits several products', function (): void {
+    // products.(tenant_id, name, type) is UNIQUE, so names never collide outright
+    // — but a clipped vendor description is a prefix of several real products.
+    foreach ([
+        '26288-003' => 'LEEPOSH HYDRA FACIAL SERUM 30ML',
+        '26288-004' => 'LEEPOSH HYDRA FACIAL SERUM 50ML',
+        '26288-005' => 'LEEPOSH HYDRA FACIAL SERUM 100ML',
+    ] as $code => $name) {
+        Product::create([
+            'tenant_id' => $this->world->tenant->id,
+            'type' => 'product',
+            'name' => $name,
+            'code' => $code,
+            'unit_id' => $this->world->product->unit_id,
+            'cost' => 890,
+            'created_by' => $this->world->user->id,
+            'updated_by' => $this->world->user->id,
+        ]);
+    }
+
+    $sheet = invoiceSheet(<<<'CSV'
+    Description,Qty,Rate
+    LEEPOSH HYDRA FACIAL SER,3,889.83
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9008')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows');
+
+    $item = $component->get('items')[0];
+
+    expect($item['status'])->toBe('ambiguous')
+        ->and($item['product_id'])->toBeNull()
+        ->and($item['candidates'])->toHaveCount(3)
+        ->and($item['message'])->toContain('3 products start with this name');
+
+    // editing a value must not quietly downgrade it to a plain "no match"
+    $component->set('items.0.quantity', 5)
+        ->assertSet('items.0.status', 'ambiguous');
+
+    // and picking one resolves it
+    $chosen = Product::where('code', '26288-004')->first();
+    $component->call('openResolve', 0)
+        ->call('assignProduct', $chosen->id)
+        ->assertSet('items.0.product_id', $chosen->id)
+        ->assertSet('items.0.status', 'ok')
+        ->assertSet('items.0.matched_on', 'manual');
+});
+
+it('prefers an exact name over a longer product that merely starts with it', function (): void {
+    $exact = Product::create([
+        'tenant_id' => $this->world->tenant->id,
+        'type' => 'product',
+        'name' => 'MAKEIDA TISSUE',
+        'code' => 'TIS-001',
+        'unit_id' => $this->world->product->unit_id,
+        'cost' => 22,
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+    ]);
+    Product::create([
+        'tenant_id' => $this->world->tenant->id,
+        'type' => 'product',
+        'name' => 'MAKEIDA TISSUE BOX LARGE',
+        'code' => 'TIS-002',
+        'unit_id' => $this->world->product->unit_id,
+        'cost' => 40,
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+    ]);
+
+    $sheet = invoiceSheet(<<<'CSV'
+    Description,Qty,Rate
+    MAKEIDA TISSUE,60,22.03
+    CSV);
+
+    $item = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9009')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->get('items')[0];
+
+    expect($item['product_id'])->toBe($exact->id)
+        ->and($item['matched_on'])->toBe('name');
+});

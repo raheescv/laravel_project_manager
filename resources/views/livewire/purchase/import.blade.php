@@ -424,12 +424,18 @@
                                                             <span class="pix-tbl__meta">· {{ $item['barcode'] }}</span>
                                                         @endif
                                                         @if ($item['status'] === 'ok')
-                                                            <span class="pix-chip pix-chip--ok">
+                                                            <span @class([
+                                                                'pix-chip',
+                                                                'pix-chip--ok' => $item['matched_on'] !== 'name~',
+                                                                'pix-chip--warn' => $item['matched_on'] === 'name~',
+                                                            ])>
                                                                 <i class="fa fa-check"></i>
-                                                                {{ $item['matched_on'] === 'manual' ? 'manual' : $item['matched_on'] }}
+                                                                {{ ['name~' => 'partial name', 'manual' => 'manual'][$item['matched_on']] ?? $item['matched_on'] }}
                                                             </span>
                                                         @elseif ($item['status'] === 'unmatched')
                                                             <span class="pix-chip pix-chip--bad"><i class="fa fa-question-circle"></i> no match</span>
+                                                        @elseif ($item['status'] === 'ambiguous')
+                                                            <span class="pix-chip pix-chip--bad"><i class="fa fa-files-o"></i> {{ count($item['candidates'] ?? []) }} matches</span>
                                                         @else
                                                             <span class="pix-chip pix-chip--warn"><i class="fa fa-exclamation-triangle"></i> check values</span>
                                                         @endif
@@ -437,6 +443,11 @@
                                                             <span class="pix-chip pix-chip--mut">+{{ count($item['merged_lines']) }} merged</span>
                                                         @endif
                                                     </div>
+                                                    @if ($item['raw_name'] && $item['raw_name'] !== $item['name'])
+                                                        <div class="pix-tbl__meta">
+                                                            <i class="fa fa-file-text-o"></i> sheet: “{{ $item['raw_name'] }}”
+                                                        </div>
+                                                    @endif
                                                     @if ($item['message'])
                                                         <div class="pix-err">{{ $item['message'] }}</div>
                                                     @endif
