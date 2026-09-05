@@ -458,8 +458,16 @@ class Import extends Component
                 'name~' => 'start with this name',
                 default => 'share this name',
             }.' — pick the right one.';
+            // nearest cost first: the line's own rate is the best clue to which
+            // variant it is, so the plausible candidates lead the short list.
+            $rate = (float) $item['unit_price'];
             $item['candidate_count'] = $hits->count();
-            $item['candidates'] = $hits->sortBy('name')->take(8)->map->only(['id', 'name', 'code', 'cost'])->values()->all();
+            $item['candidates'] = $hits
+                ->sortBy(fn ($p) => [abs((float) $p->cost - $rate), (string) $p->name])
+                ->take(4)
+                ->map->only(['id', 'name', 'code', 'cost'])
+                ->values()
+                ->all();
 
             return $item;
         }

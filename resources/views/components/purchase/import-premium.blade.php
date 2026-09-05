@@ -617,6 +617,7 @@
         .pix-cands {
             display: flex;
             flex-wrap: wrap;
+            align-items: center;
             gap: .3rem;
             margin-top: .3rem;
         }

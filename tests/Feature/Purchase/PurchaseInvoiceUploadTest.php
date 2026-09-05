@@ -536,3 +536,110 @@ it('ignores a rounding-sized cost gap but reports a real one', function (): void
 
     $component->assertDontSee('+0.0%');
 });
+
+/** Seven variants behind one clipped name, as a real catalogue has. */
+function pearlVariants($world): void
+{
+    $costs = [
+        '24877-028' => ['NATURES WHITENING PEARL 800', 813.56],
+        '24877-029' => ['NATURES WHITENING PEARL 900', 338.98],
+        '24877-031' => ['NATURES WHITENING PEARL 950', 474.58],
+        '24877-032' => ['NATURES WHITENING PEARL 1100', 745.76],
+        '24877-033' => ['NATURES WHITENING PEARL 1200', 813.56],
+        '24877-034' => ['NATURES WHITENING PEARL 1300', 900.00],
+        '24877-035' => ['NATURES WHITENING PEARL 1400', 1000.00],
+    ];
+
+    foreach ($costs as $code => [$name, $cost]) {
+        Product::create([
+            'tenant_id' => $world->tenant->id,
+            'type' => 'product',
+            'name' => $name,
+            'code' => $code,
+            'unit_id' => $world->product->unit_id,
+            'cost' => $cost,
+            'created_by' => $world->user->id,
+            'updated_by' => $world->user->id,
+        ]);
+    }
+}
+
+it('counts every match in the chip, not just the ones it lists', function (): void {
+    pearlVariants($this->world);
+
+    $sheet = invoiceSheet(<<<'CSV'
+    Description,Qty,Rate
+    NATURES WHITENING PEARL,1,400
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9015')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows');
+
+    $item = $component->get('items')[0];
+
+    expect($item['status'])->toBe('ambiguous')
+        ->and($item['candidate_count'])->toBe(7)
+        // the list is capped, the count is not
+        ->and($item['candidates'])->toHaveCount(4)
+        // nearest cost to the line's 400 leads: 338.98, 474.58, 745.76, then 813.56
+        ->and(collect($item['candidates'])->pluck('code')->all())
+        ->toBe(['24877-029', '24877-031', '24877-032', '24877-033']);
+
+    // the chip, the sentence and the overflow hint must all agree
+    $component->assertSee('7 matches')
+        ->assertSee('7 products start with this name')
+        ->assertSee('+3 more');
+});
+
+it('resolves an ambiguous line when the rate is corrected by hand', function (): void {
+    pearlVariants($this->world);
+
+    // the sheet carries the tax-inclusive 400.00; the real rate is 338.98
+    $sheet = invoiceSheet(<<<'CSV'
+    Description,Qty,Rate,VAT %
+    NATURES WHITENING PEARL,1,400,18
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9016')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->assertSet('items.0.status', 'ambiguous');
+
+    $component->set('items.0.unit_price', 338.98);
+
+    $item = $component->get('items')[0];
+    $expected = Product::where('code', '24877-029')->first();
+
+    expect($item['status'])->toBe('ok')
+        ->and($item['product_id'])->toBe($expected->id)
+        ->and($item['by_cost'])->toBeTrue()
+        ->and($item['candidate_count'])->toBe(0)
+        ->and($item['total'])->toBe(400.0);
+});
+
+it('leaves the line ambiguous when a corrected rate still fits two products', function (): void {
+    pearlVariants($this->world);
+
+    $sheet = invoiceSheet(<<<'CSV'
+    Description,Qty,Rate
+    NATURES WHITENING PEARL,1,400
+    CSV);
+
+    // 813.56 is the cost of both the 800 and the 1200
+    Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9017')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->set('items.0.unit_price', 813.56)
+        ->assertSet('items.0.status', 'ambiguous')
+        ->assertSet('items.0.product_id', null);
+});
