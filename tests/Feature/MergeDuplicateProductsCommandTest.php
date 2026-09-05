@@ -31,7 +31,7 @@ it('merges duplicates, repoints references and frees the name', function () {
     ]);
 
     $this->artisan("app:merge-duplicate-products {$keep} {$dupe} --name=\"MERGE TEST\" --apply")
-        ->expectsConfirmation('This permanently deletes the duplicate products. Continue?', 'yes')
+        ->expectsConfirmation('This permanently deletes the duplicate products in 1 group(s). Continue?', 'yes')
         ->assertSuccessful();
 
     expect(DB::table('inventories')->where('id', $inventory)->value('product_id'))->toBe($keep)
@@ -61,4 +61,57 @@ it('refuses to merge products of different types', function () {
     $this->artisan("app:merge-duplicate-products {$keep} {$dupe}")->assertFailed();
 
     expect(DB::table('products')->where('id', $dupe)->exists())->toBeTrue();
+});
+
+/** Insert a product, skipping the generated `barcode` column. */
+function makeProduct(string $name, float $mrp, string $type = 'product'): int
+{
+    return DB::table('products')->insertGetId([
+        'tenant_id' => Product::query()->value('tenant_id') ?? 1,
+        'name' => $name, 'type' => $type, 'mrp' => $mrp, 'cost' => $mrp,
+        'code' => 'C'.substr(md5($name), 0, 8), 'unit_id' => 1, 'status' => 'active',
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+}
+
+it('merges a bracketed-code group with --like', function () {
+    $ids = [
+        makeProduct('LIKE CHAIR AMBIANCE 95000', 95000),
+        makeProduct('LIKE CHAIR AMBIANCE [25810-005]', 25810),
+        makeProduct('LIKE CHAIR AMBIANCE [25810-002]', 25810),
+    ];
+
+    $this->artisan('app:merge-duplicate-products --like="LIKE CHAIR AMBIANCE" --name="LIKE CHAIR AMBIANCE" --apply')
+        ->expectsConfirmation('This permanently deletes the duplicate products in 1 group(s). Continue?', 'yes')
+        ->assertSuccessful();
+
+    $survivors = DB::table('products')->whereIn('id', $ids)->pluck('name', 'id');
+    expect($survivors)->toHaveCount(1)
+        ->and($survivors->first())->toBe('LIKE CHAIR AMBIANCE');
+});
+
+it('keeps size variants apart by default but merges them with --loose', function () {
+    makeProduct('AUTO PEARL CREAM 1200', 1200);
+    makeProduct('AUTO PEARL CREAM 500', 500);
+    makeProduct('AUTO PEARL CREAM 700', 700);
+
+    $this->artisan('app:merge-duplicate-products --auto')
+        ->doesntExpectOutputToContain('AUTO PEARL CREAM')
+        ->assertSuccessful();
+
+    $this->artisan('app:merge-duplicate-products --auto --loose')
+        ->expectsOutputToContain('AUTO PEARL CREAM')
+        ->assertSuccessful();
+});
+
+it('merges same-priced products whose trailing number is not the price', function () {
+    $keep = makeProduct('AUTO SCRAPER 027', 500);
+    $dupe = makeProduct('AUTO SCRAPER 028', 500);
+
+    $this->artisan('app:merge-duplicate-products --auto --apply')
+        ->expectsConfirmation('This permanently deletes the duplicate products in 1 group(s). Continue?', 'yes')
+        ->assertSuccessful();
+
+    expect(DB::table('products')->where('id', $dupe)->exists())->toBeFalse()
+        ->and(DB::table('products')->where('id', $keep)->value('name'))->toBe('AUTO SCRAPER');
 });

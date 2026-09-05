@@ -18,7 +18,7 @@ class MergeDuplicateProductsCommand extends Command
                             {merge?* : IDs of the duplicate products to merge into it}
                             {--like= : Merge every product whose name contains this text into a single product}
                             {--auto : Merge every group whose names differ only by a trailing separator (a number, a -1/-2 counter or a [code])}
-                            {--same-price : With --auto, only merge products that share the same price — keeps size variants apart}
+                            {--loose : With --auto, also strip a trailing number that equals the price, and merge across different prices}
                             {--scan : List duplicate-looking name groups and exit, changing nothing}
                             {--name= : Rename the surviving product to this name (single merge only)}
                             {--apply : Write the changes (without this flag it is a dry run)}';
@@ -188,24 +188,25 @@ class MergeDuplicateProductsCommand extends Command
     /**
      * Groups whose names are the same once the trailing separator is removed.
      *
-     * With --same-price the price also has to match and a trailing number that IS the
-     * price is never stripped, which keeps size variants such as
+     * By default the price must match too, and a trailing number that IS the price is
+     * never stripped — that keeps genuine size variants such as
      * "NATURES WHITENING PEARL 1200 / 500 / 700" as separate products.
+     * --loose drops both guards.
      */
     private function autoGroups(): array
     {
-        $samePrice = (bool) $this->option('same-price');
+        $loose = (bool) $this->option('loose');
         $products = DB::table('products')->whereNull('deleted_at')->orderBy('id')->get();
 
         return $products
             ->groupBy(fn ($p) => $p->tenant_id.'|'.$p->type
-                .'|'.($samePrice ? (float) $p->mrp : '')
-                .'|'.mb_strtoupper($this->separatorBase($p, $samePrice)))
+                .'|'.($loose ? '' : (float) $p->mrp)
+                .'|'.mb_strtoupper($this->separatorBase($p, ! $loose)))
             ->filter(fn ($group) => $group->count() > 1)
             ->map(fn ($group) => [
                 'keep' => $group->first(),
                 'duplicates' => $group->skip(1)->keyBy('id'),
-                'name' => $this->separatorBase($group->first(), $samePrice),
+                'name' => $this->separatorBase($group->first(), ! $loose),
             ])
             ->values()
             ->all();
