@@ -346,7 +346,6 @@
                 }
 
                 const chartSeriesData = event.detail[0];
-                const chartPeriod = event.detail[1] || 'daily';
                 if (!Array.isArray(chartSeriesData) || !chartSeriesData.length) {
                     console.warn('No chart data available');
                     return;
@@ -390,37 +389,10 @@
                     };
                 });
 
-                // Get all unique dates across all series
-                const allDates = [...new Set(
-                    chartSeriesData.flatMap(series =>
-                        series.dataPoints.map(dp => dp.x)
-                    )
-                )];
-
-                const labels = allDates.map(timestamp => {
-                    const date = new Date(timestamp);
-                    if (chartPeriod === 'monthly') {
-                        return date.toLocaleDateString('en-US', {
-                            month: 'short',
-                            year: 'numeric'
-                        });
-                    }
-                    if (chartPeriod === 'weekly') {
-                        const end = new Date(timestamp);
-                        end.setDate(end.getDate() + 6);
-                        return date.toLocaleDateString('en-US', {
-                            day: '2-digit',
-                            month: 'short'
-                        }) + ' - ' + end.toLocaleDateString('en-US', {
-                            day: '2-digit',
-                            month: 'short'
-                        });
-                    }
-                    return date.toLocaleDateString('en-US', {
-                        day: '2-digit',
-                        month: 'short'
-                    });
-                });
+                // Labels come straight from the server. Never rebuild them from dp.x:
+                // that epoch is midnight in the app timezone and new Date() would
+                // re-read it in the browser's, shifting every bar by a day.
+                const labels = chartSeriesData[0].dataPoints.map(dp => dp.short_label ?? dp.label);
                 salesChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -430,6 +402,10 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
                         plugins: {
                             legend: {
                                 position: 'top',
@@ -441,6 +417,10 @@
                             },
                             tooltip: {
                                 callbacks: {
+                                    title: function(tooltipItems) {
+                                        const point = chartSeriesData[tooltipItems[0].datasetIndex].dataPoints[tooltipItems[0].dataIndex];
+                                        return point.label;
+                                    },
                                     afterTitle: function(tooltipItems) {
                                         const dataIndex = tooltipItems[0].dataIndex;
                                         const originalData = chartSeriesData[tooltipItems[0].datasetIndex].dataPoints[dataIndex];
@@ -455,6 +435,9 @@
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
+                                display: function(context) {
+                                    return Number(context.dataset.data[context.dataIndex]) > 0;
+                                },
                                 formatter: function(value) {
                                     return value.toLocaleString();
                                 },

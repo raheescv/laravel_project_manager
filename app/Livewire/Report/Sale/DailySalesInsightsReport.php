@@ -128,10 +128,12 @@ class DailySalesInsightsReport extends Component
             }
         }
 
+        $multiYear = $from->format('Y') !== $to->format('Y');
+
         $chartData = $summaryCollection
             ->groupBy('branch_name')
-            ->map(function ($branchData, $branchName) use ($allBuckets) {
-                $dataPoints = $allBuckets->map(function ($bucketDate) use ($branchData) {
+            ->map(function ($branchData, $branchName) use ($allBuckets, $multiYear) {
+                $dataPoints = $allBuckets->map(function ($bucketDate) use ($branchData, $multiYear) {
                     $record = $branchData->first(function ($item) use ($bucketDate) {
                         return $item['date'] === $bucketDate;
                     });
@@ -139,6 +141,7 @@ class DailySalesInsightsReport extends Component
                     return [
                         'x' => strtotime($bucketDate) * 1000,
                         'label' => $this->periodLabel($bucketDate),
+                        'short_label' => $this->periodShortLabel($bucketDate, $multiYear),
                         'y' => $record ? floatval($record['total_sales']) : 0,
                         'net_sales' => $record ? floatval($record['net_sales']) : 0,
                         'sales_discount' => $record ? floatval($record['sales_discount']) : 0,
@@ -160,10 +163,11 @@ class DailySalesInsightsReport extends Component
                     'type' => 'column',
                     'showInLegend' => true,
                     'name' => 'No Data',
-                    'dataPoints' => $allBuckets->map(function ($bucketDate) {
+                    'dataPoints' => $allBuckets->map(function ($bucketDate) use ($multiYear) {
                         return [
                             'x' => strtotime($bucketDate) * 1000,
                             'label' => $this->periodLabel($bucketDate),
+                            'short_label' => $this->periodShortLabel($bucketDate, $multiYear),
                             'y' => 0,
                             'net_sales' => 0,
                             'sales_discount' => 0,
@@ -631,5 +635,27 @@ class DailySalesInsightsReport extends Component
         }
 
         return $carbon->format('Y-m-d');
+    }
+
+    /**
+     * Compact axis tick label. Rendered server side so the chart never re-derives
+     * a date from an epoch in the browser's timezone (which shifts the day).
+     */
+    private function periodShortLabel(string $bucketDate, bool $includeYear = false): string
+    {
+        $carbon = Carbon::parse($bucketDate);
+
+        if ($this->chart_period === 'monthly') {
+            return $carbon->format('M Y');
+        }
+
+        if ($this->chart_period === 'weekly') {
+            $start = $carbon->copy()->startOfWeek();
+            $end = $start->copy()->endOfWeek();
+
+            return $start->format('M d').' - '.$end->format('M d').($includeYear ? ', '.$end->format('y') : '');
+        }
+
+        return $carbon->format('M d').($includeYear ? ', '.$carbon->format('y') : '');
     }
 }
