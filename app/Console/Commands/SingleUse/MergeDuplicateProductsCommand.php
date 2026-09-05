@@ -17,7 +17,8 @@ class MergeDuplicateProductsCommand extends Command
                             {keep? : ID of the product to keep}
                             {merge?* : IDs of the duplicate products to merge into it}
                             {--like= : Merge every product whose name contains this text into a single product}
-                            {--auto : Merge every group whose names differ only by a trailing -1/-2 counter}
+                            {--auto : Merge every group whose names differ only by a trailing separator (a number, a -1/-2 counter or a [code])}
+                            {--same-price : With --auto, only merge products that share the same price — keeps size variants apart}
                             {--scan : List duplicate-looking name groups and exit, changing nothing}
                             {--name= : Rename the surviving product to this name (single merge only)}
                             {--apply : Write the changes (without this flag it is a dry run)}';
@@ -73,7 +74,7 @@ class MergeDuplicateProductsCommand extends Command
 
         $groups = match (true) {
             (bool) $this->option('like') => $this->groupsByLike((string) $this->option('like')),
-            (bool) $this->option('auto') => $this->groupsByCounterSuffix(),
+            (bool) $this->option('auto') => $this->autoGroups(),
             default => $this->groupFromArguments(),
         };
 
@@ -131,7 +132,7 @@ class MergeDuplicateProductsCommand extends Command
             return self::SUCCESS;
         }
 
-        $mergedByAuto = collect($this->groupsByCounterSuffix())
+        $mergedByAuto = collect($this->autoGroups())
             ->flatMap(fn ($group) => $group['duplicates']->keys()->push($group['keep']->id))
             ->flip();
 
@@ -185,20 +186,26 @@ class MergeDuplicateProductsCommand extends Command
     }
 
     /**
-     * Groups whose names are identical apart from a trailing "-1" / "-2" counter.
-     * Deliberately strict: it must not swallow shade numbers or pack sizes.
+     * Groups whose names are the same once the trailing separator is removed.
+     *
+     * With --same-price the price also has to match and a trailing number that IS the
+     * price is never stripped, which keeps size variants such as
+     * "NATURES WHITENING PEARL 1200 / 500 / 700" as separate products.
      */
-    private function groupsByCounterSuffix(): array
+    private function autoGroups(): array
     {
+        $samePrice = (bool) $this->option('same-price');
         $products = DB::table('products')->whereNull('deleted_at')->orderBy('id')->get();
 
         return $products
-            ->groupBy(fn ($p) => $p->tenant_id.'|'.$p->type.'|'.mb_strtoupper($this->stripCounter($p->name)))
-            ->filter(fn ($group) => $group->count() > 1 && $this->differOnlyByCounter($group))
+            ->groupBy(fn ($p) => $p->tenant_id.'|'.$p->type
+                .'|'.($samePrice ? (float) $p->mrp : '')
+                .'|'.mb_strtoupper($this->separatorBase($p, $samePrice)))
+            ->filter(fn ($group) => $group->count() > 1)
             ->map(fn ($group) => [
                 'keep' => $group->first(),
                 'duplicates' => $group->skip(1)->keyBy('id'),
-                'name' => $this->stripCounter($group->first()->name),
+                'name' => $this->separatorBase($group->first(), $samePrice),
             ])
             ->values()
             ->all();
@@ -389,12 +396,30 @@ class MergeDuplicateProductsCommand extends Command
     }
 
     /**
-     * "SCHWARZKOPF STRAIT GLAT 1200-1" -> "SCHWARZKOPF STRAIT GLAT 1200".
-     * Only a trailing counter is removed, never a size, shade or code.
+     * The product name with its trailing separator stripped.
+     *
+     * Removes a trailing "-1" / "-2" counter, a trailing bracketed code such as
+     * "[25810-005]", and a trailing standalone number. Parentheses are left alone:
+     * "Highlight (without prelighter)" is a different service, not a code suffix.
+     *
+     * When $keepPriceSuffix is true, a trailing number equal to the product's own
+     * price is kept, because there it identifies a real size or variant.
      */
-    private function stripCounter(string $name): string
+    private function separatorBase(object $product, bool $keepPriceSuffix = false): string
     {
-        return trim(preg_replace('/-\d{1,2}$/', '', trim($name)));
+        $name = trim((string) $product->name);
+
+        $name = trim((string) preg_replace('/-\d{1,2}$/', '', $name));
+        $name = trim((string) preg_replace('/\s*\[[^\]]*\]$/u', '', $name));
+
+        if (preg_match('/^(.*\S)[\s\-_]+(\d+)$/u', $name, $matches)) {
+            $isPrice = (float) $matches[2] === (float) $product->mrp;
+            if (! ($keepPriceSuffix && $isPrice)) {
+                $name = trim($matches[1]);
+            }
+        }
+
+        return $name !== '' ? $name : trim((string) $product->name);
     }
 
     /**
@@ -403,19 +428,9 @@ class MergeDuplicateProductsCommand extends Command
     private function baseName(string $name): string
     {
         $base = preg_replace('/[\s\-_]*(\[[^\]]*\]|\([^\)]*\)|[0-9]+([\-\/][0-9A-Za-z]+)*)\s*$/u', '', trim($name));
-        $base = trim(preg_replace('/\s+/', ' ', (string) $base));
+        $base = trim((string) preg_replace('/\s+/', ' ', (string) $base));
 
         return $base !== '' ? $base : trim($name);
-    }
-
-    /**
-     * True when every name in the group is the same string plus a trailing counter —
-     * the one shape that reliably means "the same product entered twice".
-     */
-    private function differOnlyByCounter($group): bool
-    {
-        return $group->every(fn ($p) => (bool) preg_match('/-\d{1,2}$/', trim($p->name)))
-            && $group->map(fn ($p) => mb_strtoupper($this->stripCounter($p->name)))->unique()->count() === 1;
     }
 
     /**
