@@ -458,7 +458,8 @@ class Import extends Component
                 'name~' => 'start with this name',
                 default => 'share this name',
             }.' — pick the right one.';
-            $item['candidates'] = $hits->take(5)->map->only(['id', 'name', 'code', 'cost'])->all();
+            $item['candidate_count'] = $hits->count();
+            $item['candidates'] = $hits->sortBy('name')->take(8)->map->only(['id', 'name', 'code', 'cost'])->values()->all();
 
             return $item;
         }
@@ -475,6 +476,8 @@ class Import extends Component
         $item['product_cost'] = (float) $product->cost;
         $item['status'] = 'ok';
         $item['message'] = null;
+        $item['candidates'] = [];
+        $item['candidate_count'] = 0;
 
         return $item;
     }
@@ -523,6 +526,7 @@ class Import extends Component
             'matched_on' => null,
             'by_cost' => false,
             'candidates' => [],
+            'candidate_count' => 0,
             'product_cost' => null,
             'batch' => $values['batch'] ?: null,
             'quantity' => $quantity,
@@ -611,6 +615,9 @@ class Import extends Component
                 $this->items[$index][$field] = 0;
             }
             $this->items[$index] = $this->calculate($this->items[$index]);
+            if ($field === 'unit_price' && ! $this->items[$index]['product_id']) {
+                $this->items[$index] = $this->calculate($this->rematch($this->items[$index]));
+            }
             $this->revalidate($index);
             $this->recalculateTotals();
         }
@@ -693,6 +700,7 @@ class Import extends Component
         $this->items[$index]['matched_on'] = 'manual';
         $this->items[$index]['by_cost'] = false;
         $this->items[$index]['candidates'] = [];
+        $this->items[$index]['candidate_count'] = 0;
         $this->items[$index]['product_cost'] = (float) $product->cost;
         if (! $this->items[$index]['unit_price']) {
             $this->items[$index]['unit_price'] = (float) $product->cost;
@@ -702,6 +710,60 @@ class Import extends Component
         $this->recalculateTotals();
         $this->closeResolve();
         $this->dispatch('success', ['message' => 'Line matched to '.$product->name]);
+    }
+
+    /**
+     * Re-run the identifier ladder for one line, keeping the user's edits.
+     *
+     * Correcting the rate on an ambiguous line is the natural way to say which
+     * variant it is, so the cost tie-break has to get a second chance — the
+     * first pass only ever saw the rate the sheet shipped with.
+     */
+    private function rematch(array $item): array
+    {
+        if ($item['product_id'] || (! $item['raw_code'] && ! $item['raw_barcode'] && ! $item['raw_name'])) {
+            return $item;
+        }
+
+        $catalogue = $this->lookupProducts([[
+            'product_code' => $item['raw_code'],
+            'barcode' => $item['raw_barcode'],
+            'product_name' => $item['raw_name'],
+        ]]);
+
+        $order = match ($this->matchBy) {
+            'code' => ['code'],
+            'barcode' => ['barcode'],
+            'name' => ['name'],
+            default => ['code', 'barcode', 'name'],
+        };
+
+        foreach ($order as $key) {
+            $needle = match ($key) {
+                'code' => $item['raw_code'],
+                'barcode' => $item['raw_barcode'],
+                default => $item['raw_name'],
+            };
+            if (! $needle) {
+                continue;
+            }
+            $hits = $catalogue[$key][strtolower((string) $needle)] ?? null;
+            if ($hits && $hits->isNotEmpty()) {
+                return $this->bindProduct($item, $hits, $key);
+            }
+        }
+
+        if (in_array($this->matchBy, ['auto', 'name'], true) && $item['raw_name']) {
+            $hits = Product::where('name', 'like', $this->escapeLike((string) $item['raw_name']).'%')
+                ->limit(50)
+                ->get($this->catalogueColumns());
+
+            if ($hits->isNotEmpty()) {
+                return $this->bindProduct($item, $hits, 'name~');
+            }
+        }
+
+        return $item;
     }
 
     /** Pick one of an ambiguous line's candidates without opening the overlay. */

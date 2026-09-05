@@ -440,7 +440,7 @@
                                                         @elseif ($item['status'] === 'unmatched')
                                                             <span class="pix-chip pix-chip--bad"><i class="fa fa-question-circle"></i> no match</span>
                                                         @elseif ($item['status'] === 'ambiguous')
-                                                            <span class="pix-chip pix-chip--bad"><i class="fa fa-files-o"></i> {{ count($item['candidates'] ?? []) }} matches</span>
+                                                            <span class="pix-chip pix-chip--bad"><i class="fa fa-files-o"></i> {{ $item['candidate_count'] ?? count($item['candidates'] ?? []) }} matches</span>
                                                         @else
                                                             <span class="pix-chip pix-chip--warn"><i class="fa fa-exclamation-triangle"></i> check values</span>
                                                         @endif
@@ -467,14 +467,23 @@
                                                         <div class="pix-err">{{ $item['message'] }}</div>
                                                     @endif
                                                     @if ($item['status'] === 'ambiguous' && count($item['candidates'] ?? []))
-                                                        <div class="pix-tbl__meta">
+                                                        <div class="pix-cands">
                                                             @foreach ($item['candidates'] as $candidate)
-                                                                <button type="button" class="pix-chip pix-chip--mut border-0"
+                                                                <button type="button" @class(['pix-cand', 'is-rate' => $this->sameRate($candidate['cost'], $item['unit_price'])])
                                                                     wire:click="chooseCandidate({{ $index }}, {{ $candidate['id'] }})"
                                                                     title="Use this product">
-                                                                    {{ $candidate['name'] }} · {{ currency($candidate['cost']) }}
+                                                                    <span class="pix-cand__n">{{ $candidate['name'] }}</span>
+                                                                    @if ($candidate['code'])
+                                                                        <span class="pix-cand__c">{{ $candidate['code'] }}</span>
+                                                                    @endif
+                                                                    <span class="pix-cand__p">{{ currency($candidate['cost']) }}</span>
                                                                 </button>
                                                             @endforeach
+                                                            @if (($item['candidate_count'] ?? 0) > count($item['candidates']))
+                                                                <span class="pix-tbl__meta align-self-center">
+                                                                    +{{ $item['candidate_count'] - count($item['candidates']) }} more — use search
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     @endif
                                                 </td>

@@ -499,3 +499,40 @@ it('does not flag a cost variance when the rate matches the catalogue', function
         ->call('buildRows')
         ->assertDontSee('catalogue cost');
 });
+
+it('ignores a rounding-sized cost gap but reports a real one', function (): void {
+    // 0.04 on a 21,186 line is the vendor rounding its rate, not a price change
+    $big = Product::create([
+        'tenant_id' => $this->world->tenant->id,
+        'type' => 'product',
+        'name' => 'HYDRA FACIAL 10 IN 1 WELLNESS MACHINE',
+        'code' => 'HYD-001',
+        'unit_id' => $this->world->product->unit_id,
+        'cost' => 21186.40,
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+    ]);
+
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate
+    HYD-001,HYDRA FACIAL,1,21186.44
+    WID-001,Blue Widget,10,25.5
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9014')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows');
+
+    $items = $component->get('items');
+    $instance = $component->instance();
+
+    expect($items[0]['product_id'])->toBe($big->id)
+        ->and($instance->hasCostVariance($items[0]))->toBeFalse()
+        // the widget really is 27.5% over its catalogue cost
+        ->and($instance->hasCostVariance($items[1]))->toBeTrue();
+
+    $component->assertDontSee('+0.0%');
+});

@@ -612,6 +612,60 @@
             background: color-mix(in srgb, var(--pix-bad), transparent 90%);
         }
 
+        /* ====================================================== candidates === */
+
+        .pix-cands {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .3rem;
+            margin-top: .3rem;
+        }
+
+        .pix-cand {
+            display: inline-flex;
+            align-items: baseline;
+            gap: .4rem;
+            padding: .18rem .5rem;
+            border-radius: 7px;
+            border: 1px solid var(--pix-ln);
+            background: var(--pix-sf);
+            color: var(--pix-ink2);
+            font-size: 11px;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .pix-cand:hover {
+            border-color: var(--pix-acc);
+            background: var(--pix-tint);
+            color: var(--pix-acc-ink);
+        }
+
+        /* the candidate whose cost equals the line's rate — the likely one */
+        .pix-cand.is-rate {
+            border-color: color-mix(in srgb, var(--pix-ok), transparent 55%);
+            background: color-mix(in srgb, var(--pix-ok), transparent 92%);
+        }
+
+        .pix-cand__n {
+            font-weight: 600;
+        }
+
+        .pix-cand__c {
+            font-family: var(--pix-mono);
+            font-size: 10px;
+            color: var(--pix-mut);
+        }
+
+        .pix-cand__p {
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+
+        .pix-cand.is-rate .pix-cand__p {
+            color: var(--pix-ok);
+        }
+
         /* =========================================================== rail === */
 
         .pix-rail {
