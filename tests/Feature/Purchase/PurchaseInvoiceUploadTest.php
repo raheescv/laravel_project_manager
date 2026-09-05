@@ -390,3 +390,112 @@ it('prefers an exact name over a longer product that merely starts with it', fun
     expect($item['product_id'])->toBe($exact->id)
         ->and($item['matched_on'])->toBe('name');
 });
+
+/** Three variants behind one clipped description, told apart only by price. */
+function leeposhVariants(array $costs, $world): void
+{
+    foreach ($costs as $code => [$name, $cost]) {
+        Product::create([
+            'tenant_id' => $world->tenant->id,
+            'type' => 'product',
+            'name' => $name,
+            'code' => $code,
+            'unit_id' => $world->product->unit_id,
+            'cost' => $cost,
+            'created_by' => $world->user->id,
+            'updated_by' => $world->user->id,
+        ]);
+    }
+}
+
+it('uses the sheet rate to settle which variant a clipped name means', function (): void {
+    leeposhVariants([
+        '26288-003' => ['LEEPOSH HYDRA FACIAL SERUM 30ML', 700],
+        '26288-004' => ['LEEPOSH HYDRA FACIAL SERUM 50ML', 889.83],
+        '26288-005' => ['LEEPOSH HYDRA FACIAL SERUM 100ML', 1200],
+    ], $this->world);
+
+    $sheet = invoiceSheet(<<<'CSV'
+    Description,Qty,Rate
+    LEEPOSH HYDRA FACIAL SER,3,889.83
+    CSV);
+
+    $item = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9010')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->get('items')[0];
+
+    expect($item['status'])->toBe('ok')
+        ->and($item['name'])->toBe('LEEPOSH HYDRA FACIAL SERUM 50ML')
+        ->and($item['matched_on'])->toBe('name~')
+        ->and($item['by_cost'])->toBeTrue()
+        ->and($item['product_cost'])->toBe(889.83);
+});
+
+it('stays ambiguous when the rate fits more than one candidate', function (): void {
+    leeposhVariants([
+        '26288-003' => ['LEEPOSH HYDRA FACIAL SERUM 30ML', 889.83],
+        '26288-004' => ['LEEPOSH HYDRA FACIAL SERUM 50ML', 889.83],
+        '26288-005' => ['LEEPOSH HYDRA FACIAL SERUM 100ML', 1200],
+    ], $this->world);
+
+    $sheet = invoiceSheet(<<<'CSV'
+    Description,Qty,Rate
+    LEEPOSH HYDRA FACIAL SER,3,889.83
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9011')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows');
+
+    expect($component->get('items')[0]['status'])->toBe('ambiguous')
+        ->and($component->get('items')[0]['by_cost'])->toBeFalse();
+
+    // the candidates are listed with their cost, and one click picks one
+    $chosen = Product::where('code', '26288-004')->first();
+    $component->assertSee('LEEPOSH HYDRA FACIAL SERUM 30ML')
+        ->call('chooseCandidate', 0, $chosen->id)
+        ->assertSet('items.0.product_id', $chosen->id)
+        ->assertSet('items.0.status', 'ok')
+        ->assertSet('items.0.product_cost', 889.83);
+});
+
+it('shows the catalogue cost against the invoice rate when they disagree', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate
+    WID-001,Blue Widget,10,25.5
+    CSV);
+
+    // the widget is costed at 20 in the catalogue; the vendor billed 25.50
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9012')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows');
+
+    expect($component->get('items')[0]['product_cost'])->toBe(20.0);
+
+    $component->assertSee('catalogue cost')->assertSee('+27.5%');
+});
+
+it('does not flag a cost variance when the rate matches the catalogue', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate
+    WID-001,Blue Widget,10,20
+    CSV);
+
+    Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9013')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->assertDontSee('catalogue cost');
+});

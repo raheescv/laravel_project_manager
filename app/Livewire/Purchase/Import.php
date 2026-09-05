@@ -433,9 +433,23 @@ class Import extends Component
 
     /**
      * Attach a product to a line, or flag the line when the match is not unique.
+     *
+     * When a name fits several products the sheet's own rate usually settles it:
+     * the variants of a clipped description ("…SERUM 30ML / 50ML / 100ML") are
+     * priced differently, so a rate equal to exactly one candidate's cost is a
+     * far better signal than picking the first row.
      */
     private function bindProduct(array $item, $hits, string $matchedOn): array
     {
+        $byCost = $hits->count() > 1
+            ? $hits->filter(fn ($p) => $this->sameRate($p->cost, $item['unit_price']))->values()
+            : $hits;
+
+        if ($byCost->count() === 1 && $hits->count() > 1) {
+            $hits = $byCost;
+            $item['by_cost'] = true;
+        }
+
         if ($hits->count() > 1) {
             $item['status'] = 'ambiguous';
             $item['message'] = $hits->count().' products '.match ($matchedOn) {
@@ -444,7 +458,7 @@ class Import extends Component
                 'name~' => 'start with this name',
                 default => 'share this name',
             }.' — pick the right one.';
-            $item['candidates'] = $hits->take(5)->map->only(['id', 'name', 'code'])->all();
+            $item['candidates'] = $hits->take(5)->map->only(['id', 'name', 'code', 'cost'])->all();
 
             return $item;
         }
@@ -458,10 +472,17 @@ class Import extends Component
         $item['unit_id'] = $product->unit_id;
         $item['account_id'] = $product->expense_account_id;
         $item['matched_on'] = $matchedOn;
+        $item['product_cost'] = (float) $product->cost;
         $item['status'] = 'ok';
         $item['message'] = null;
 
         return $item;
+    }
+
+    /** Two money values are the same line rate once rounded to the stored scale. */
+    public function sameRate($a, $b): bool
+    {
+        return round((float) $a, 2) === round((float) $b, 2);
     }
 
     private function makeItem(array $values, array $catalogue): array
@@ -483,7 +504,9 @@ class Import extends Component
             'raw_barcode' => $values['barcode'] ?: null,
             'raw_name' => $values['product_name'] ?: null,
             'matched_on' => null,
+            'by_cost' => false,
             'candidates' => [],
+            'product_cost' => null,
             'batch' => $values['batch'] ?: null,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
@@ -651,7 +674,9 @@ class Import extends Component
         $this->items[$index]['unit_id'] = $product->unit_id;
         $this->items[$index]['account_id'] = $product->expense_account_id;
         $this->items[$index]['matched_on'] = 'manual';
+        $this->items[$index]['by_cost'] = false;
         $this->items[$index]['candidates'] = [];
+        $this->items[$index]['product_cost'] = (float) $product->cost;
         if (! $this->items[$index]['unit_price']) {
             $this->items[$index]['unit_price'] = (float) $product->cost;
         }
@@ -660,6 +685,17 @@ class Import extends Component
         $this->recalculateTotals();
         $this->closeResolve();
         $this->dispatch('success', ['message' => 'Line matched to '.$product->name]);
+    }
+
+    /** Pick one of an ambiguous line's candidates without opening the overlay. */
+    public function chooseCandidate(int $index, int $productId): void
+    {
+        if (! isset($this->items[$index])) {
+            return;
+        }
+
+        $this->resolvingIndex = $index;
+        $this->assignProduct($productId);
     }
 
     public function getVisibleItemsProperty(): array

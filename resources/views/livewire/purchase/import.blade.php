@@ -432,6 +432,11 @@
                                                                 <i class="fa fa-check"></i>
                                                                 {{ ['name~' => 'partial name', 'manual' => 'manual'][$item['matched_on']] ?? $item['matched_on'] }}
                                                             </span>
+                                                            @if ($item['by_cost'] ?? false)
+                                                                <span class="pix-chip pix-chip--acc" title="Several products fitted the name; the sheet's rate matched this one's cost">
+                                                                    <i class="fa fa-tag"></i> by cost
+                                                                </span>
+                                                            @endif
                                                         @elseif ($item['status'] === 'unmatched')
                                                             <span class="pix-chip pix-chip--bad"><i class="fa fa-question-circle"></i> no match</span>
                                                         @elseif ($item['status'] === 'ambiguous')
@@ -443,6 +448,16 @@
                                                             <span class="pix-chip pix-chip--mut">+{{ count($item['merged_lines']) }} merged</span>
                                                         @endif
                                                     </div>
+                                                    @if ($item['status'] === 'ok' && $item['product_cost'] && !$this->sameRate($item['product_cost'], $item['unit_price']))
+                                                        @php($delta = $item['unit_price'] - $item['product_cost'])
+                                                        <div class="pix-tbl__meta">
+                                                            <i class="fa fa-exchange"></i>
+                                                            catalogue cost {{ currency($item['product_cost']) }}
+                                                            <span style="color:{{ $delta > 0 ? 'var(--pix-warn)' : 'var(--pix-ok)' }}">
+                                                                ({{ $delta > 0 ? '+' : '' }}{{ number_format($delta, 2) }}{{ $item['product_cost'] > 0 ? ', ' . ($delta > 0 ? '+' : '') . number_format($delta / $item['product_cost'] * 100, 1) . '%' : '' }})
+                                                            </span>
+                                                        </div>
+                                                    @endif
                                                     @if ($item['raw_name'] && $item['raw_name'] !== $item['name'])
                                                         <div class="pix-tbl__meta">
                                                             <i class="fa fa-file-text-o"></i> sheet: “{{ $item['raw_name'] }}”
@@ -450,6 +465,17 @@
                                                     @endif
                                                     @if ($item['message'])
                                                         <div class="pix-err">{{ $item['message'] }}</div>
+                                                    @endif
+                                                    @if ($item['status'] === 'ambiguous' && count($item['candidates'] ?? []))
+                                                        <div class="pix-tbl__meta">
+                                                            @foreach ($item['candidates'] as $candidate)
+                                                                <button type="button" class="pix-chip pix-chip--mut border-0"
+                                                                    wire:click="chooseCandidate({{ $index }}, {{ $candidate['id'] }})"
+                                                                    title="Use this product">
+                                                                    {{ $candidate['name'] }} · {{ currency($candidate['cost']) }}
+                                                                </button>
+                                                            @endforeach
+                                                        </div>
                                                     @endif
                                                 </td>
                                                 <td>
