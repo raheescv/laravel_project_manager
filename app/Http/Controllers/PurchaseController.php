@@ -20,6 +20,15 @@ class PurchaseController extends Controller
 
     public function page($id = null)
     {
+        if (! $this->inDefaultPurchaseBranch()) {
+            return redirect()->route('purchase::index')->with('error', 'You are not in the default purchase branch');
+        }
+
+        return view('purchase.page', compact('id'));
+    }
+
+    private function inDefaultPurchaseBranch(): bool
+    {
         $defaultPurchaseBranchIds = Configuration::where('key', 'default_purchase_branch_id')->value('value');
         $defaultPurchaseBranchIds = json_decode($defaultPurchaseBranchIds, true);
 
@@ -28,11 +37,16 @@ class PurchaseController extends Controller
             $defaultPurchaseBranchIds = [$defaultPurchaseBranchIds];
         }
 
-        if (! in_array(session('branch_id'), $defaultPurchaseBranchIds)) {
+        return in_array(session('branch_id'), $defaultPurchaseBranchIds);
+    }
+
+    public function import()
+    {
+        if (! $this->inDefaultPurchaseBranch()) {
             return redirect()->route('purchase::index')->with('error', 'You are not in the default purchase branch');
         }
 
-        return view('purchase.page', compact('id'));
+        return view('purchase.import');
     }
 
     public function barcodePrint($id)

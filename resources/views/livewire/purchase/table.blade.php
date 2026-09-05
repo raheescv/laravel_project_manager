@@ -13,6 +13,11 @@
                             <i class="demo-pli-recycling me-1"></i> Delete
                         </button>
                     @endcan
+                    @can('purchase.import')
+                        <a class="btn btn-sm btn-outline-success" title="Create a draft purchase from a vendor invoice sheet" href="{{ route('purchase::import') }}">
+                            <i class="demo-pli-upload-to-cloud me-1"></i> Invoice Upload
+                        </a>
+                    @endcan
                 </div>
             </div>
             <div class="col-md-8">

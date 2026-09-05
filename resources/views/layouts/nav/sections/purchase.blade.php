@@ -1,5 +1,6 @@
 @if (auth()->user()->can('purchase.view') ||
         auth()->user()->can('purchase.create') ||
+        auth()->user()->can('purchase.import') ||
         auth()->user()->can('report.purchase item') ||
         auth()->user()->can('purchase.payments') ||
         auth()->user()->can('purchase return.view') ||
@@ -8,7 +9,7 @@
         auth()->user()->can('purchase return.payments'))
     <li class="nav-item has-sub">
         <a href="#"
-            class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/edit/*', 'report/purchase_item', 'purchase/payments', 'purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'report/purchase_return_item', 'purchase_return/payments']) ? 'active' : '' }}">
+            class="mininav-toggle nav-link {{ request()->is(['purchase', 'purchase/create', 'purchase/import', 'purchase/edit/*', 'report/purchase_item', 'purchase/payments', 'purchase_return', 'purchase_return/create', 'purchase_return/edit/*', 'purchase_return/view/*', 'report/purchase_return_item', 'purchase_return/payments']) ? 'active' : '' }}">
             <i class="fa fa-cart-plus fs-5 me-2"></i>
             <span class="nav-label mininav-content ms-1 collapse show">Purchase</span>
         </a>
@@ -18,6 +19,12 @@
                 <li class="nav-item">
                     <a href="{{ route('purchase::create') }}"
                         class="nav-link {{ request()->is(['purchase/create']) ? 'active' : '' }}">Create</a>
+                </li>
+            @endcan
+            @can('purchase.import')
+                <li class="nav-item">
+                    <a href="{{ route('purchase::import') }}"
+                        class="nav-link {{ request()->is(['purchase/import']) ? 'active' : '' }}">Invoice Upload</a>
                 </li>
             @endcan
             @can('purchase.view')

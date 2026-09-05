@@ -1,0 +1,263 @@
+<?php
+
+use App\Livewire\Purchase\Import;
+use App\Models\AccountCategory;
+use App\Models\Product;
+use App\Models\Purchase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Tests\Support\PosWorld;
+
+/**
+ * /purchase/import — the three step invoice uploader.
+ *
+ * The invoice head is typed, the lines come from the vendor's own sheet, and
+ * the result is a DRAFT purchase: no stock movement, no journal entry. These
+ * pin column auto-detection, line matching, the manual fix for an unmatched
+ * line, and what actually lands in the database.
+ */
+beforeEach(function (): void {
+    $this->world = PosWorld::create();
+
+    // `permissions` carries a tenant_id, so the row has to be built with one
+    // rather than through Spatie's findOrCreate (see PermissionSeeder).
+    foreach (['purchase.create', 'purchase.import'] as $name) {
+        $this->world->user->givePermissionTo(Permission::firstOrCreate([
+            'tenant_id' => $this->world->tenant->id,
+            'name' => $name,
+            'guard_name' => 'web',
+        ]));
+    }
+
+    $this->actingAs($this->world->user);
+    session(['branch_id' => $this->world->branch->id]);
+
+    $category = AccountCategory::firstOrCreate([
+        'tenant_id' => $this->world->tenant->id,
+        'name' => 'Sundry Creditors',
+    ]);
+
+    $this->vendorId = DB::table('accounts')->insertGetId([
+        'tenant_id' => $this->world->tenant->id,
+        'account_category_id' => $category->id,
+        'name' => 'Acme Trading',
+        'slug' => 'acme_trading',
+        'account_type' => 'liability',
+        'model' => 'vendor',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->widget = Product::create([
+        'tenant_id' => $this->world->tenant->id,
+        'type' => 'product',
+        'name' => 'Blue Widget',
+        'code' => 'WID-001',
+        'unit_id' => $this->world->product->unit_id,
+        'cost' => 20,
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+    ]);
+
+    $this->gadget = Product::create([
+        'tenant_id' => $this->world->tenant->id,
+        'type' => 'product',
+        'name' => 'Red Gadget',
+        'code' => 'GAD-001',
+        'unit_id' => $this->world->product->unit_id,
+        'cost' => 8,
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+    ]);
+});
+
+function invoiceSheet(string $body): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent('vendor-invoice.csv', $body);
+}
+
+it('will not leave the invoice step without a vendor, date and invoice no', function (): void {
+    Livewire::test(Import::class)
+        ->call('goToUpload')
+        ->assertHasErrors(['account_id', 'invoice_no'])
+        ->assertSet('step', 1);
+});
+
+it('detects the sheet columns by their own headings', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate,Disc,VAT %
+    WID-001,Blue Widget,10,25.5,5,5
+    CSV);
+
+    Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9001')
+        ->call('goToUpload')
+        ->assertSet('step', 2)
+        ->set('file', $sheet)
+        ->assertSet('mapping.product_code', '0')
+        ->assertSet('mapping.product_name', '1')
+        ->assertSet('mapping.quantity', '2')
+        ->assertSet('mapping.unit_price', '3')
+        ->assertSet('mapping.discount', '4')
+        ->assertSet('mapping.tax', '5')
+        ->assertSet('mapping.barcode', '')
+        ->assertSet('mapping.batch', '');
+});
+
+it('matches every line, flags the ones it cannot, and prices them like the purchase screen', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate,Disc,VAT %
+    WID-001,Blue Widget,10,25.5,5,5
+    NOPE-999,Mystery Item,3,12,0,0
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9001')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->assertSet('step', 3);
+
+    $items = $component->get('items');
+
+    expect($items)->toHaveCount(2)
+        ->and($items[0]['product_id'])->toBe($this->widget->id)
+        ->and($items[0]['status'])->toBe('ok')
+        ->and($items[0]['matched_on'])->toBe('code')
+        // 10 x 25.50 = 255, less 5 discount = 250, +5% tax = 262.50
+        ->and($items[0]['gross_amount'])->toBe(255.0)
+        ->and($items[0]['tax_amount'])->toBe(12.5)
+        ->and($items[0]['total'])->toBe(262.5)
+        ->and($items[1]['product_id'])->toBeNull()
+        ->and($items[1]['status'])->toBe('unmatched');
+
+    expect($component->get('totals')['grand_total'])->toBe(262.5);
+    expect($component->instance()->readyCount)->toBe(1);
+    expect($component->instance()->issueCount)->toBe(1);
+});
+
+it('lets an unmatched line be pinned to a product by hand', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate
+    NOPE-999,Gadget in red,4,9
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9002')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->call('openResolve', 0)
+        ->set('productSearch', 'Red Gadget');
+
+    expect(collect($component->get('productResults'))->pluck('id'))->toContain($this->gadget->id);
+
+    $component->call('assignProduct', $this->gadget->id)
+        ->assertSet('resolvingIndex', null);
+
+    $items = $component->get('items');
+
+    expect($items[0]['product_id'])->toBe($this->gadget->id)
+        ->and($items[0]['status'])->toBe('ok')
+        ->and($items[0]['matched_on'])->toBe('manual')
+        ->and($items[0]['total'])->toBe(36.0);
+});
+
+it('folds a repeated product into one line', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate
+    WID-001,Blue Widget,10,20
+    WID-001,Blue Widget,5,20
+    CSV);
+
+    $component = Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9003')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows');
+
+    expect($component->get('items'))->toHaveCount(1)
+        ->and($component->get('items')[0]['quantity'])->toBe(15.0)
+        ->and($component->get('mergedRows'))->toBe(1);
+});
+
+it('saves a draft purchase from the ready lines and skips the flagged one', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate,Disc,VAT %
+    WID-001,Blue Widget,10,25.5,5,5
+    NOPE-999,Mystery Item,3,12,0,0
+    CSV);
+
+    Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9004')
+        ->set('date', '2026-09-01')
+        ->set('freight', 10)
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->call('save')
+        ->assertRedirect();
+
+    $purchase = Purchase::where('invoice_no', 'INV-9004')->first();
+
+    expect($purchase)->not->toBeNull()
+        ->and($purchase->status)->toBe('draft')
+        ->and($purchase->account_id)->toBe($this->vendorId)
+        ->and($purchase->date->toString ?? (string) $purchase->date)->toContain('2026-09-01')
+        ->and($purchase->branch_id)->toBe($this->world->branch->id)
+        ->and($purchase->freight)->toEqual(10)
+        ->and($purchase->items)->toHaveCount(1);
+
+    $item = $purchase->items->first();
+
+    expect($item->product_id)->toBe($this->widget->id)
+        ->and((float) $item->quantity)->toBe(10.0)
+        ->and((float) $item->unit_price)->toBe(25.5)
+        ->and((float) $item->total)->toBe(262.5)
+        ->and((float) $purchase->grand_total)->toBe(272.5);
+
+    // a draft must not touch stock or the ledger
+    expect(DB::table('journal_entries')->where('model', 'Purchase')->where('model_id', $purchase->id)->count())->toBe(0);
+});
+
+it('refuses to save while flagged lines must be resolved', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty,Rate
+    NOPE-999,Mystery Item,3,12
+    CSV);
+
+    Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9005')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->set('skipUnmatched', false)
+        ->call('save')
+        ->assertDispatched('error');
+
+    expect(Purchase::where('invoice_no', 'INV-9005')->exists())->toBeFalse();
+});
+
+it('needs a unit price column before it will match anything', function (): void {
+    $sheet = invoiceSheet(<<<'CSV'
+    Item Code,Description,Qty
+    WID-001,Blue Widget,10
+    CSV);
+
+    Livewire::test(Import::class)
+        ->set('account_id', $this->vendorId)
+        ->set('invoice_no', 'INV-9006')
+        ->call('goToUpload')
+        ->set('file', $sheet)
+        ->call('buildRows')
+        ->assertHasErrors('mapping')
+        ->assertSet('step', 2);
+});

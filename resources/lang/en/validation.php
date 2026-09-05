@@ -3,7 +3,7 @@
 return [
     'custom' => [
         'account_id' => [
-            'required' => 'Please select customer.',
+            'required' => 'Please select vendor.',
         ],
     ],
 ];
