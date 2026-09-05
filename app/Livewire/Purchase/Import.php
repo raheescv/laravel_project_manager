@@ -332,11 +332,21 @@ class Import extends Component
             $items[] = $this->makeItem($values, $catalogue);
         }
 
+        $this->applyPartialNameMatches($items);
+
+        foreach ($items as $index => $item) {
+            $items[$index] = $this->applyValueChecks($this->calculate($item));
+        }
+
         return $items;
     }
 
     /**
      * One query per identifier type, so a 500 line sheet costs three queries.
+     *
+     * Grouped, not keyed: several products can share a name (or a code), and a
+     * line that matches more than one must be flagged rather than silently
+     * bound to whichever row the database returned last.
      *
      * @return array{code: array, barcode: array, name: array}
      */
@@ -346,20 +356,140 @@ class Import extends Component
         $barcodes = collect($rows)->pluck('barcode')->filter()->map(fn ($v) => (string) $v)->unique()->values();
         $names = collect($rows)->pluck('product_name')->filter()->map(fn ($v) => (string) $v)->unique()->values();
 
-        $columns = ['id', 'code', 'barcode', 'name', 'unit_id', 'cost', 'tax', 'expense_account_id'];
+        $group = fn ($products, string $column) => $products->groupBy(fn ($p) => strtolower((string) $p->{$column}));
 
-        $byCode = $codes->isEmpty() ? collect() : Product::whereIn('code', $codes->all())->get($columns)->keyBy(fn ($p) => strtolower((string) $p->code));
-        $byBarcode = $barcodes->isEmpty() ? collect() : Product::whereIn('barcode', $barcodes->all())->get($columns)->keyBy(fn ($p) => strtolower((string) $p->barcode));
-        $byName = $names->isEmpty() ? collect() : Product::whereIn('name', $names->all())->get($columns)->keyBy(fn ($p) => strtolower((string) $p->name));
+        $byCode = $codes->isEmpty() ? collect() : $group(Product::whereIn('code', $codes->all())->get($this->catalogueColumns()), 'code');
+        $byBarcode = $barcodes->isEmpty() ? collect() : $group(Product::whereIn('barcode', $barcodes->all())->get($this->catalogueColumns()), 'barcode');
+        $byName = $names->isEmpty() ? collect() : $group(Product::whereIn('name', $names->all())->get($this->catalogueColumns()), 'name');
 
         return ['code' => $byCode, 'barcode' => $byBarcode, 'name' => $byName];
     }
 
+    private function catalogueColumns(): array
+    {
+        return ['id', 'code', 'barcode', 'name', 'unit_id', 'cost', 'tax', 'expense_account_id'];
+    }
+
+    /**
+     * Second pass for lines no exact identifier could place.
+     *
+     * Vendor invoices clip their description column, so "LEEPOSH HYDRA FACIAL
+     * SER" never equals the catalogue's "LEEPOSH HYDRA FACIAL SERUM". A prefix
+     * LIKE catches that; a name that still resolves to several products is
+     * marked ambiguous for the user to pick, never guessed at.
+     */
+    private function applyPartialNameMatches(array &$items): void
+    {
+        if ($this->matchBy !== 'auto' && $this->matchBy !== 'name') {
+            return;
+        }
+
+        $pending = collect($items)
+            ->filter(fn ($item) => ! $item['product_id'] && $item['status'] !== 'ambiguous' && $item['raw_name'])
+            ->pluck('raw_name')
+            ->map(fn ($name) => (string) $name)
+            ->unique()
+            ->values();
+
+        if ($pending->isEmpty()) {
+            return;
+        }
+
+        $candidates = collect();
+        foreach ($pending->chunk(25) as $chunk) {
+            $candidates = $candidates->merge(
+                Product::where(function ($query) use ($chunk): void {
+                    foreach ($chunk as $name) {
+                        $query->orWhere('name', 'like', $this->escapeLike($name).'%');
+                    }
+                })->limit(200)->get($this->catalogueColumns())
+            );
+        }
+
+        if ($candidates->isEmpty()) {
+            return;
+        }
+
+        foreach ($items as $index => $item) {
+            if ($item['product_id'] || $item['status'] === 'ambiguous' || ! $item['raw_name']) {
+                continue;
+            }
+
+            $needle = strtolower((string) $item['raw_name']);
+            $hits = $candidates->filter(fn ($p) => str_starts_with(strtolower((string) $p->name), $needle))->values();
+
+            if ($hits->isEmpty()) {
+                continue;
+            }
+
+            $items[$index] = $this->bindProduct($item, $hits, 'name~');
+        }
+    }
+
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
+
+    /**
+     * Attach a product to a line, or flag the line when the match is not unique.
+     */
+    private function bindProduct(array $item, $hits, string $matchedOn): array
+    {
+        if ($hits->count() > 1) {
+            $item['status'] = 'ambiguous';
+            $item['message'] = $hits->count().' products share this '.($matchedOn === 'code' ? 'code' : ($matchedOn === 'barcode' ? 'barcode' : 'name')).' — pick the right one.';
+            $item['candidates'] = $hits->take(5)->map->only(['id', 'name', 'code'])->all();
+
+            return $item;
+        }
+
+        $product = $hits->first();
+
+        $item['product_id'] = $product->id;
+        $item['name'] = $product->name;
+        $item['code'] = $product->code ?: $item['raw_code'];
+        $item['barcode'] = $product->barcode ?: $item['raw_barcode'];
+        $item['unit_id'] = $product->unit_id;
+        $item['account_id'] = $product->expense_account_id;
+        $item['matched_on'] = $matchedOn;
+        $item['status'] = 'ok';
+        $item['message'] = null;
+
+        return $item;
+    }
+
     private function makeItem(array $values, array $catalogue): array
     {
-        $product = null;
-        $matchedOn = null;
+        $quantity = $this->number($values['quantity'] ?? null, 1);
+        $unitPrice = $this->number($values['unit_price'] ?? null, 0);
+        $discount = $this->number($values['discount'] ?? null, 0);
+        $tax = $values['tax'] === null || $values['tax'] === '' ? null : $this->number($values['tax'], 0);
 
+        $item = [
+            'line' => $values['__line'],
+            'product_id' => null,
+            'name' => $values['product_name'] ?: '—',
+            'code' => $values['product_code'] ?: null,
+            'barcode' => $values['barcode'] ?: null,
+            'unit_id' => null,
+            'account_id' => null,
+            'raw_code' => $values['product_code'] ?: null,
+            'raw_barcode' => $values['barcode'] ?: null,
+            'raw_name' => $values['product_name'] ?: null,
+            'matched_on' => null,
+            'candidates' => [],
+            'batch' => $values['batch'] ?: null,
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'discount' => $discount,
+            'tax' => $tax,
+            'status' => 'unmatched',
+            'message' => 'No product matches '.collect([$values['product_code'], $values['barcode'], $values['product_name']])->filter()->first(),
+        ];
+
+        // Exact identifiers first, in the order the user chose; a partial name
+        // match is a separate pass over whatever is left (applyPartialNameMatches).
         $order = match ($this->matchBy) {
             'code' => ['code'],
             'barcode' => ['barcode'],
@@ -376,49 +506,18 @@ class Import extends Component
             if ($needle === null || $needle === '') {
                 continue;
             }
-            $found = $catalogue[$key][strtolower((string) $needle)] ?? null;
-            if ($found) {
-                $product = $found;
-                $matchedOn = $key;
+            $hits = $catalogue[$key][strtolower((string) $needle)] ?? null;
+            if ($hits && $hits->isNotEmpty()) {
+                $item = $this->bindProduct($item, $hits, $key);
                 break;
             }
         }
 
-        $quantity = $this->number($values['quantity'] ?? null, 1);
-        $unitPrice = $this->number($values['unit_price'] ?? null, 0);
-        $discount = $this->number($values['discount'] ?? null, 0);
-        $tax = $values['tax'] === null || $values['tax'] === '' ? null : $this->number($values['tax'], 0);
-
-        $item = [
-            'line' => $values['__line'],
-            'product_id' => $product?->id,
-            'name' => $product?->name ?? ($values['product_name'] ?: '—'),
-            'code' => $product?->code ?? ($values['product_code'] ?: null),
-            'barcode' => $product?->barcode ?? ($values['barcode'] ?: null),
-            'unit_id' => $product?->unit_id,
-            'account_id' => $product?->expense_account_id,
-            'raw_code' => $values['product_code'] ?: null,
-            'raw_barcode' => $values['barcode'] ?: null,
-            'raw_name' => $values['product_name'] ?: null,
-            'matched_on' => $matchedOn,
-            'batch' => $values['batch'] ?: null,
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'discount' => $discount,
-            'tax' => $tax ?? (float) ($product?->tax ?? $this->number($this->defaultTax, 0)),
-            'status' => 'ok',
-            'message' => null,
-        ];
-
-        if (! $product) {
-            $item['status'] = 'unmatched';
-            $item['message'] = 'No product matches '.collect([$values['product_code'], $values['barcode'], $values['product_name']])->filter()->first();
-        } elseif ($quantity <= 0) {
-            $item['status'] = 'invalid';
-            $item['message'] = 'Quantity must be greater than zero.';
-        } elseif ($unitPrice <= 0) {
-            $item['status'] = 'invalid';
-            $item['message'] = 'Unit price is missing or zero.';
+        // Tax falls back to the product's own rate, then the sheet-wide default.
+        if ($item['tax'] === null) {
+            $item['tax'] = $item['product_id']
+                ? (float) (Product::find($item['product_id'])?->tax ?? $this->number($this->defaultTax, 0))
+                : $this->number($this->defaultTax, 0);
         }
 
         return $this->calculate($item);
@@ -652,6 +751,23 @@ class Import extends Component
     }
 
     /* ---------------------------------------------------------- helpers --- */
+
+    /** A matched line still has to carry a sane quantity and price. */
+    private function applyValueChecks(array $item): array
+    {
+        if ($item['status'] !== 'ok') {
+            return $item;
+        }
+        if ((float) $item['quantity'] <= 0) {
+            $item['status'] = 'invalid';
+            $item['message'] = 'Quantity must be greater than zero.';
+        } elseif ((float) $item['unit_price'] <= 0) {
+            $item['status'] = 'invalid';
+            $item['message'] = 'Unit price is missing or zero.';
+        }
+
+        return $item;
+    }
 
     private function calculate(array $item): array
     {
