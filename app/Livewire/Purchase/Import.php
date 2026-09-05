@@ -485,6 +485,23 @@ class Import extends Component
         return round((float) $a, 2) === round((float) $b, 2);
     }
 
+    /**
+     * Is the gap between the catalogue cost and the invoice rate worth showing?
+     *
+     * Vendor rates are rounded to two decimals, so a few paise on a 20,000 line
+     * is arithmetic, not a price change. Half a percent is the threshold.
+     */
+    public function hasCostVariance(array $item): bool
+    {
+        if ($item['status'] !== 'ok' || ! $item['product_cost']) {
+            return false;
+        }
+
+        $delta = abs((float) $item['unit_price'] - (float) $item['product_cost']);
+
+        return $delta >= 0.01 && $delta / (float) $item['product_cost'] >= 0.005;
+    }
+
     private function makeItem(array $values, array $catalogue): array
     {
         $quantity = $this->number($values['quantity'] ?? null, 1);

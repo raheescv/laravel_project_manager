@@ -448,7 +448,7 @@
                                                             <span class="pix-chip pix-chip--mut">+{{ count($item['merged_lines']) }} merged</span>
                                                         @endif
                                                     </div>
-                                                    @if ($item['status'] === 'ok' && $item['product_cost'] && !$this->sameRate($item['product_cost'], $item['unit_price']))
+                                                    @if ($this->hasCostVariance($item))
                                                         @php($delta = $item['unit_price'] - $item['product_cost'])
                                                         <div class="pix-tbl__meta">
                                                             <i class="fa fa-exchange"></i>
