@@ -12,6 +12,8 @@ class UpdateAction
 
     public $model;
 
+    public $oldStatus;
+
     public function execute($data, $purchase_id, $userId)
     {
         try {
@@ -21,6 +23,10 @@ class UpdateAction
                 throw new Exception("Purchase not found with the specified ID: $purchase_id.", 1);
             }
 
+            // Captured before the update: every rollback below has to know what the
+            // purchase was posted as, not what it is being changed to.
+            $this->oldStatus = $model->status;
+
             if ($data['status'] == 'cancelled') {
                 $data['cancelled_by'] = $userId;
             } else {
@@ -28,10 +34,16 @@ class UpdateAction
             }
 
             validationHelper(Purchase::rules($purchase_id), $data);
-            $model->update($data);
-            if ($data['status'] != 'cancelled') {
 
+            if ($data['status'] != 'cancelled') {
+                // Reverse the posted stock and journals while the model still holds the
+                // branch and items it was posted with.
                 $this->rollbackIfCompleted();
+            }
+
+            $model->update($data);
+
+            if ($data['status'] != 'cancelled') {
 
                 foreach ($data['items'] as $value) {
                     $value['purchase_id'] = $purchase_id;
@@ -74,7 +86,9 @@ class UpdateAction
                         throw new Exception($response['message'], 1);
                     }
                 }
-            } else {
+            } elseif ($this->oldStatus == 'completed') {
+                // Only a completed purchase ever posted stock or journals, so only that
+                // one has anything to reverse on cancel.
                 $response = (new StockUpdateAction())->execute($model, $userId, 'cancel');
                 if (! $response['success']) {
                     throw new Exception($response['message'], 1);
@@ -98,8 +112,7 @@ class UpdateAction
 
     private function rollbackIfCompleted()
     {
-        $oldStatus = $this->model->status;
-        if ($oldStatus == 'completed') {
+        if ($this->oldStatus == 'completed') {
             if (! Auth::user()->can('purchase.edit completed')) {
                 throw new Exception("You don't have permission to edit it.", 1);
             }
