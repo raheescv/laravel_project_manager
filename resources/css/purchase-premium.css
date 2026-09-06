@@ -242,6 +242,97 @@
     color: var(--pcx-bad);
 }
 
+.pcx-btn:disabled,
+.pcx-btn[disabled] {
+    cursor: progress;
+    opacity: .62;
+    transform: none;
+    box-shadow: none;
+}
+
+.pcx-btn:disabled:hover,
+.pcx-btn[disabled]:hover {
+    transform: none;
+}
+
+/* ── SAVE VEIL ────────────────────────────────────────────────────────
+   Covers the deck while a save round-trip is in flight, so a slow purchase
+   post can't be double-submitted and the wait never looks like a dead click. */
+.pcx-busy {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: grid;
+    place-items: center;
+    background: rgba(11, 18, 32, .38);
+    backdrop-filter: blur(2px);
+    animation: pcx-busy-in .18s ease-out;
+}
+
+@keyframes pcx-busy-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.pcx-busy-card {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    min-width: 232px;
+    padding: 22px 26px;
+    border: 1px solid var(--pcx-ln);
+    border-radius: 14px;
+    background: var(--pcx-sf);
+    box-shadow: var(--pcx-shadow-lg);
+    text-align: center;
+}
+
+.pcx-busy-ring {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 8px;
+    border-radius: 50%;
+    border: 3px solid var(--pcx-lns);
+    border-top-color: var(--pcx-acc);
+    animation: pcx-busy-spin .7s linear infinite;
+}
+
+@keyframes pcx-busy-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.pcx-busy-t {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+    color: var(--pcx-ink);
+}
+
+.pcx-busy-s {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--pcx-mut);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .pcx-busy,
+    .pcx-busy-ring {
+        animation-duration: 2s;
+    }
+
+    .pcx-busy {
+        animation: none;
+    }
+}
+
 .pcx-strip {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

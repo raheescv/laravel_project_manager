@@ -387,17 +387,29 @@ const handleRemovePayment = () => {
 }
 
 const handleSave = async (type) => {
+    if (isBusy.value) {
+        return
+    }
+
     if (type === 'cancelled' && !confirm('Are you sure to cancel this?')) {
         return
     }
 
     errors.value = []
+    startBusy(type)
 
     try {
         await call('save', type)
         loadData()
+        // Give the validation-errors / success dispatches a beat to land.
+        await new Promise(resolve => setTimeout(resolve, 300))
+        if (errors.value && errors.value.length > 0) {
+            stopBusy()
+        }
+        // Otherwise keep the veil — the success listener reloads the page.
     } catch (error) {
         console.error('Error saving purchase:', error)
+        stopBusy()
     }
 }
 
@@ -405,6 +417,10 @@ const handleSubmit = (event) => {
     if (event) {
         event.preventDefault()
         event.stopPropagation()
+    }
+
+    if (isBusy.value) {
+        return
     }
 
     // Don't clear errors here - let them show if validation fails after confirmation
@@ -487,6 +503,8 @@ const setupEventListeners = () => {
             // Add timestamp to prevent premature clearing
             errorArray._timestamp = Date.now()
             errors.value = errorArray
+            // Nothing will navigate now, so drop the veil and give the deck back.
+            stopBusy()
         }
     }
 
@@ -564,6 +582,7 @@ const setupEventListeners = () => {
 
     // Listen for error events from Livewire
     const errorListener = on('error', (eventData) => {
+        stopBusy()
         const errorMessage = Array.isArray(eventData) ? eventData[0]?.message || eventData[0] : (eventData?.message || eventData)
         if (errorMessage) {
             errors.value = Array.isArray(errorMessage) ? errorMessage : [errorMessage]
@@ -667,6 +686,7 @@ const setupEventListeners = () => {
                 if (result.isConfirmed) {
                     // Don't clear errors here - wait for validation
                     // Call the save method with 'completed' type to actually submit to backend
+                    startBusy('completed')
                     try {
                         await call('save', 'completed')
                         // Wait a moment to ensure any events are processed
@@ -686,10 +706,12 @@ const setupEventListeners = () => {
                             errors.value = []
                         } else {
                             // Validation errors were set, don't clear them or refresh
+                            stopBusy()
                             console.log('Validation errors present, not refreshing:', errors.value)
                         }
                     } catch (error) {
                         console.error('Error submitting purchase:', error)
+                        stopBusy()
                         // Wait for validation-errors event to be processed
                         await new Promise(resolve => setTimeout(resolve, 500))
                         // If no validation errors were set, show a generic error
@@ -709,6 +731,7 @@ const setupEventListeners = () => {
         } else {
             // Fallback to native confirm if Swal is not available
             if (confirm('Are you sure you want to submit this purchase?')) {
+                startBusy('completed')
                 try {
                     await call('save', 'completed')
                     await new Promise(resolve => setTimeout(resolve, 300))
@@ -719,9 +742,12 @@ const setupEventListeners = () => {
                         if (savedPurchaseId) {
                             redirectToEditPage(savedPurchaseId)
                         }
+                    } else {
+                        stopBusy()
                     }
                 } catch (error) {
                     console.error('Error submitting purchase:', error)
+                    stopBusy()
                 }
             }
         }
@@ -827,6 +853,7 @@ onMounted(() => {
 
         onUnmounted(() => {
             clearInterval(interval)
+            clearTimeout(busyFailsafe)
             if (updateListener) updateListener()
         })
     }
