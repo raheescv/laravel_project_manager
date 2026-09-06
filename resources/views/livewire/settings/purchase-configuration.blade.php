@@ -7,18 +7,18 @@
             <div class="row g-2">
                 <div class="col-12 col-md-6">
                     <label class="form-label fw-medium small mb-1" for="enable_barcode_print_after_submit">Enable Barcode Print After Submit</label>
-                    {{ html()->select('enable_barcode_print_after_submit', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select form-select-sm')->placeholder('Select Option')->attribute('wire:model', 'enable_barcode_print_after_submit') }}
+                    {{ html()->select('enable_barcode_print_after_submit', ['yes' => 'Yes', 'no' => 'No'])->value($enable_barcode_print_after_submit)->class('form-select form-select-sm')->placeholder('Select Option')->attribute('wire:model', 'enable_barcode_print_after_submit') }}
                     <small class="form-text text-muted">If enabled, barcode print page will open automatically after submitting a purchase.</small>
                 </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label fw-medium small mb-1" for="default_quantity">Default Quantity</label>
-                    {{ html()->input('number', 'default_quantity')->value('')->class('form-control form-control-sm')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 1)')->attribute('wire:model', 'default_quantity') }}
+                    {{ html()->input('number', 'default_quantity')->value($default_quantity)->class('form-control form-control-sm')->attribute('step','0.001')->placeholder('Enter default quantity (e.g., 1)')->attribute('wire:model', 'default_quantity') }}
                     <small class="form-text text-muted">Default quantity when adding a new item to purchase.</small>
                 </div>
                 <div class="col-12 col-md-12">
-                    <label class="form-label fw-medium small mb-1" for="purchase_item_row_mode">Same Product Cart Rows</label>
-                    {{ html()->select('purchase_item_row_mode', ['merge' => 'Single Row (merge quantity)', 'separate' => 'Multiple Rows (add separately)'])->value('')->class('form-select form-select-sm')->placeholder('Choose how repeated product selection behaves')->attribute('wire:model', 'purchase_item_row_mode') }}
-                    <small class="form-text text-muted">Controls whether selecting the same product again merges quantity or adds a separate purchase row.</small>
+                    <label class="form-label fw-medium small mb-1" for="purchase_item_row_mode">Duplicate Products In One Purchase</label>
+                    {{ html()->select('purchase_item_row_mode', ['merge' => 'Prevent duplicates (merge into one row)', 'separate' => 'Allow duplicates (separate row each time)'])->value($purchase_item_row_mode)->class('form-select form-select-sm')->placeholder('Choose how repeated product selection behaves')->attribute('wire:model', 'purchase_item_row_mode') }}
+                    <small class="form-text text-muted">Allow duplicates lets you enter the same product several times at different rates. Prevent duplicates merges the quantity into the existing row and blocks a repeated product on save.</small>
                 </div>
                 <div class="col-12 col-md-12" wire:ignore>
                     <label class="form-label fw-medium small mb-1" for="default_purchase_branch_id">Default Purchase Branch</label>
