@@ -68,7 +68,7 @@ class VendorPayment extends Component
             'balance' => 0,
         ];
         if ($this->vendor_id) {
-            $data = Purchase::accepted()->where('balance', '>', 0)
+            $data = Purchase::payable()->where('balance', '>', 0)
                 ->when($this->search ?? '', function ($query, $value) {
                     return $query->where(function ($q) use ($value): void {
                         $value = trim($value);
@@ -207,7 +207,13 @@ class VendorPayment extends Component
 
     public function save()
     {
-        abort_unless(Auth::user()?->can('local purchase order.payments'), 403);
+        // The same modal is opened from /purchase/payments and from the vendor view,
+        // so either module's payment right unlocks it.
+        abort_unless(
+            Auth::user()?->hasAnyPermission(['purchase.payments', 'local purchase order.payments']),
+            403,
+            'purchase.payments or local purchase order.payments'
+        );
         $this->validate();
         if ($this->isChequeMethod) {
             $this->validate([

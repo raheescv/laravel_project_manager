@@ -63,7 +63,8 @@ class Payments extends Component
 
     public function render()
     {
-        $data = Purchase::orderBy($this->sortField, $this->sortDirection)
+        $data = Purchase::payable()
+            ->orderBy($this->sortField, $this->sortDirection)
             ->join('accounts', 'accounts.id', '=', 'purchases.account_id')
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {

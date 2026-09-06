@@ -1384,12 +1384,22 @@ if (! function_exists('extract403Details')) {
         if (! $isGeneric && $message) {
             // abort(403, 'custom message') — use the message directly
             $permission = $message;
-        } elseif ($resourceName && $action) {
+        } elseif ($resourceName && $action && ! str_starts_with((string) $controllerClass, 'Livewire\\')) {
             // Policy-based — reconstruct from resource + action
             // Convert PascalCase to snake_case with spaces: LocalPurchaseOrder → local purchase order
             $readable = strtolower(preg_replace('/(?<!^)[A-Z]/', ' $0', $resourceName));
             $permAction = $action;
             $permission = "{$readable}.{$permAction}";
+        }
+
+        // A Livewire request routes through Livewire's own HandleRequests::handleUpdate,
+        // so the resource guess above would read "handle requests.handleUpdate" instead of
+        // anything the user can act on. Name the component that actually aborted.
+        if (str_starts_with((string) $controllerClass, 'Livewire\\')) {
+            $component = $request->input('components.0.snapshot');
+            $component = is_string($component) ? (json_decode($component, true)['memo']['name'] ?? null) : null;
+            $resourceName = $component ?: null;
+            $action = null;
         }
 
         return [

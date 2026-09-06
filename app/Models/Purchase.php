@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Purchase\PurchaseStatus;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
@@ -152,6 +153,20 @@ class Purchase extends Model implements AuditableContracts
     public function scopeAccepted($query)
     {
         return $query->where('status', 'accepted');
+    }
+
+    /**
+     * Bills that are posted to the ledger and can therefore be settled: a direct
+     * purchase ends up 'completed', an LPO bill ends up 'accepted' once approved.
+     * Draft/pending/rejected/cancelled/reversed bills still carry a balance
+     * (it is a generated column) but owe the vendor nothing.
+     */
+    public function scopePayable($query)
+    {
+        return $query->whereIn('purchases.status', [
+            PurchaseStatus::COMPLETED->value,
+            PurchaseStatus::ACCEPTED->value,
+        ]);
     }
 
     public function scopeDecisionRejected($query)
