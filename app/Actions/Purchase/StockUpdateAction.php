@@ -104,7 +104,10 @@ class StockUpdateAction
     private function calculateWeightedAverageCost($oldCost, $oldQuantity, $purchasePrice, $purchaseQuantity, $newQuantity)
     {
         if ($newQuantity <= 0) {
-            return 0;
+            // The bin is oversold, so there is no balance to average over. Fall back to
+            // what this purchase actually cost instead of wiping the basis to 0 and
+            // logging a zero-cost purchase row that would later book zero COGS.
+            return $purchasePrice;
         }
 
         return (($oldCost * $oldQuantity) + ($purchasePrice * $purchaseQuantity)) / $newQuantity;
@@ -113,7 +116,10 @@ class StockUpdateAction
     private function revertCostCalculation($currentCost, $currentQuantity, $purchasePrice, $purchaseQuantity, $remainingQuantity)
     {
         if ($remainingQuantity <= 0) {
-            return 0;
+            // Nothing is left to average over. Hold the current cost rather than wiping
+            // it: with a zero balance it carries no weight in the next purchase anyway,
+            // and holding it keeps the log readable.
+            return $currentCost;
         }
 
         // Revert to cost before this purchase
