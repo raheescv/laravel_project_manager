@@ -3,6 +3,7 @@
 namespace App\Console\Commands\SingleUse;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,9 @@ class MergeDuplicateProductsCommand extends Command
                             {--loose : With --auto, also strip a trailing number that equals the price, and merge across different prices}
                             {--scan : List duplicate-looking name groups and exit, changing nothing}
                             {--name= : Rename the surviving product to this name (single merge only)}
+                            {--inventory-only : Skip the product merge and only fold duplicate inventory rows together}
+                            {--keep-inventory : Leave the inventory alone: do not fold duplicate rows and do not touch the cost}
+                            {--replay-cost : Rebuild the cost from purchase/sale history with inventory:recalculate-cost instead of averaging the rows}
                             {--apply : Write the changes (without this flag it is a dry run)}';
 
     /**
@@ -28,7 +32,7 @@ class MergeDuplicateProductsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Merge duplicate products into one: repoint every reference to the surviving product, then delete the duplicates';
+    protected $description = 'Merge duplicate products into one: repoint every reference to the surviving product, delete the duplicates, fold their inventory rows together and recalculate the cost';
 
     /**
      * Every column in the database that points at products.id.
@@ -55,6 +59,19 @@ class MergeDuplicateProductsCommand extends Command
     ];
 
     /**
+     * Every column in the database that points at inventories.id.
+     * Used when duplicate stock rows are folded into one; none of them is unique.
+     */
+    private array $inventoryRepoint = [
+        ['inventory_transfer_items', 'inventory_id'],
+        ['issue_items', 'inventory_id'],
+        ['sale_items', 'inventory_id'],
+        ['sale_return_items', 'inventory_id'],
+        ['stock_check_items', 'inventory_id'],
+        ['tailoring_order_items', 'inventory_id'],
+    ];
+
+    /**
      * Columns guarded by a unique index. A duplicate's row is repointed only when the
      * survivor has no equivalent row; otherwise the duplicate's row is dropped.
      * [table, column, other columns forming the unique key]
@@ -70,6 +87,10 @@ class MergeDuplicateProductsCommand extends Command
     {
         if ($this->option('scan')) {
             return $this->scan();
+        }
+
+        if ($this->option('inventory-only')) {
+            return $this->inventoryOnly();
         }
 
         $groups = match (true) {
@@ -107,9 +128,31 @@ class MergeDuplicateProductsCommand extends Command
             return self::SUCCESS;
         }
 
+        $survivors = [];
         foreach ($groups as $group) {
-            DB::transaction(fn () => $this->merge($group['keep']->id, $group['duplicates']->keys()->all(), $group['name']));
-            $this->info('Merged  #'.$group['keep']->id.'  '.$group['name'].'  ('.($group['duplicates']->count() + 1).' -> 1)');
+            $keepId = $group['keep']->id;
+            $mergeIds = $group['duplicates']->keys()->all();
+
+            $result = DB::transaction(function () use ($keepId, $mergeIds, $group) {
+                $this->merge($keepId, $mergeIds, $group['name']);
+
+                if ($this->option('keep-inventory')) {
+                    return;
+                }
+
+                return [
+                    'stock' => $this->foldInventory([$keepId]),
+                    'cost' => $this->recalculateProductCost($keepId),
+                ];
+            });
+
+            $this->info('Merged  #'.$keepId.'  '.$group['name'].'  ('.(count($mergeIds) + 1).' -> 1)');
+            $this->reportOutcome($result);
+            $survivors[] = $keepId;
+        }
+
+        if ($this->option('replay-cost')) {
+            $this->replayCost($survivors);
         }
 
         return self::SUCCESS;
@@ -290,6 +333,8 @@ class MergeDuplicateProductsCommand extends Command
         }
         $this->line('  moves   '.($moves ? implode(', ', $moves) : 'nothing references the duplicates'));
 
+        $this->describeInventory(array_merge([$keep->id], $mergeIds), $keep);
+
         $clash = DB::table('products')
             ->where('tenant_id', $keep->tenant_id)
             ->where('name', $group['name'])
@@ -447,5 +492,270 @@ class MergeDuplicateProductsCommand extends Command
         }
 
         return trim($prefix, " \t-_[(");
+    }
+
+    /**
+     * --inventory-only: fold duplicate stock rows of products that are already merged
+     * (or were never duplicated at all) without touching the products themselves.
+     */
+    private function inventoryOnly(): int
+    {
+        if ($this->option('keep-inventory')) {
+            $this->error('--inventory-only and --keep-inventory ask for opposite things. Drop one of them.');
+
+            return self::FAILURE;
+        }
+
+        $query = DB::table('products')->whereNull('deleted_at');
+
+        if ($like = (string) $this->option('like')) {
+            $query->where('name', 'like', '%'.$like.'%');
+        }
+
+        $ids = array_values(array_filter(array_map(
+            'intval',
+            array_merge([$this->argument('keep')], (array) $this->argument('merge'))
+        )));
+        if ($ids) {
+            $query->whereIn('id', $ids);
+        }
+
+        $products = $query->orderBy('id')->get()->keyBy('id');
+        $groups = $this->inventoryGroups($products->keys()->all());
+
+        if ($groups->isEmpty()) {
+            $this->info('No product has more than one stock row per branch, employee and batch.');
+
+            return self::SUCCESS;
+        }
+
+        $productIds = $groups->map(fn ($rows) => $rows->first()->product_id)->unique()->values()->all();
+
+        foreach ($productIds as $productId) {
+            $product = $products[$productId];
+            $this->newLine();
+            $this->line('<fg=cyan>#'.$product->id.'  '.$product->name.'</>');
+            $this->describeInventory([$productId], $product);
+        }
+
+        if (! $this->option('apply')) {
+            $this->newLine();
+            $this->comment('Dry run. Nothing was written. Re-run with --apply to fold these rows.');
+
+            return self::SUCCESS;
+        }
+
+        $this->newLine();
+        if (! $this->confirm('This permanently deletes the duplicate stock rows of '.count($productIds).' product(s). Continue?', false)) {
+            $this->comment('Aborted.');
+
+            return self::SUCCESS;
+        }
+
+        foreach ($productIds as $productId) {
+            $result = DB::transaction(fn () => [
+                'stock' => $this->foldInventory([$productId]),
+                'cost' => $this->recalculateProductCost($productId),
+            ]);
+
+            $this->info('Folded  #'.$productId.'  '.$products[$productId]->name);
+            $this->reportOutcome($result);
+        }
+
+        if ($this->option('replay-cost')) {
+            $this->replayCost($productIds);
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Print what the stock rows of these products will become, and the cost that follows.
+     * $as is the product the rows end up on — its current cost is the "before" value.
+     */
+    private function describeInventory(array $productIds, object $as): void
+    {
+        if ($this->option('keep-inventory')) {
+            $this->line('  stock   left untouched (--keep-inventory)');
+
+            return;
+        }
+
+        foreach ($this->inventoryGroups($productIds, (int) $as->id) as $rows) {
+            $first = $rows->first();
+            $this->line(sprintf(
+                '  stock   branch %s · batch %s · %d rows -> 1  (qty %s, cost %s, barcodes %s)',
+                $first->branch_id,
+                $first->batch,
+                $rows->count(),
+                round($rows->sum(fn ($row) => (float) $row->quantity), 3),
+                $this->weightedCost($rows),
+                $rows->pluck('barcode')->filter()->implode(', ')
+            ));
+        }
+
+        $all = DB::table('inventories')->whereNull('deleted_at')->whereIn('product_id', $productIds)->get();
+        if ($all->isEmpty()) {
+            return;
+        }
+
+        // Folding preserves both the total quantity and the total value, so the average
+        // over every row is already the cost the product ends up with.
+        // A cost of zero is never written back — it would only wipe what the product knows.
+        $cost = $this->weightedCost($all);
+        if ($cost > 0 && round((float) $as->cost, 2) !== $cost) {
+            $this->line('  cost    '.number_format((float) $as->cost, 2, '.', '').' -> '.number_format($cost, 2, '.', ''));
+        }
+    }
+
+    /**
+     * Stock rows of the given products that share a branch, employee and batch — the rows
+     * that a merge turns into duplicates. Pass $asProductId to group rows across products
+     * as they will sit once every row has been repointed onto the survivor.
+     *
+     * @return Collection<string, Collection<int, object>>
+     */
+    private function inventoryGroups(array $productIds, ?int $asProductId = null): Collection
+    {
+        if (! $productIds) {
+            return collect();
+        }
+
+        return DB::table('inventories')->whereNull('deleted_at')
+            ->whereIn('product_id', $productIds)->orderBy('id')->get()
+            ->groupBy(fn ($row) => implode('|', [
+                $row->tenant_id,
+                $row->branch_id,
+                $row->employee_id ?? 0,
+                $asProductId ?? $row->product_id,
+                mb_strtoupper(trim((string) $row->batch)),
+            ]))
+            ->filter(fn ($rows) => $rows->count() > 1);
+    }
+
+    /**
+     * Fold every duplicate stock row of these products into one row per branch, employee
+     * and batch: references move onto the surviving row, the quantities add up and the
+     * cost becomes the quantity-weighted average of the rows.
+     */
+    private function foldInventory(array $productIds): array
+    {
+        $summary = ['groups' => 0, 'removed' => 0, 'moved' => 0];
+        $barcodes = DB::table('products')->whereIn('id', $productIds)->pluck('barcode_number', 'id');
+
+        foreach ($this->inventoryGroups($productIds) as $rows) {
+            $keep = $this->survivingRow($rows, $barcodes[$rows->first()->product_id] ?? null);
+            $loserIds = $rows->filter(fn ($row) => $row->id != $keep->id)->pluck('id')->all();
+
+            foreach ($this->inventoryRepoint as [$table, $column]) {
+                $summary['moved'] += DB::table($table)->whereIn($column, $loserIds)->update([$column => $keep->id]);
+            }
+
+            // barcode and total are generated columns; only the raw values may be written.
+            DB::table('inventories')->where('id', $keep->id)->update([
+                'quantity' => round($rows->sum(fn ($row) => (float) $row->quantity), 3),
+                'cost' => $this->weightedCost($rows),
+                'updated_at' => now(),
+            ]);
+
+            // Hard delete: a soft-deleted row keeps holding its barcode, and the stock
+            // lists and scanners read barcodes straight off this table.
+            DB::table('inventories')->whereIn('id', $loserIds)->delete();
+
+            $summary['groups']++;
+            $summary['removed'] += count($loserIds);
+        }
+
+        return $summary;
+    }
+
+    /**
+     * The row the others fold into: the one carrying the product's own barcode if there is
+     * one, so a product-wise label keeps scanning, otherwise the oldest row.
+     */
+    private function survivingRow(Collection $rows, ?string $productBarcode): object
+    {
+        if ($productBarcode) {
+            $match = $rows->first(fn ($row) => (string) $row->barcode_number === (string) $productBarcode);
+            if ($match) {
+                return $match;
+            }
+        }
+
+        return $rows->sortBy('id')->first();
+    }
+
+    /**
+     * Quantity-weighted average cost. With no quantity left to weigh by, the plain average
+     * of the rows that do carry a cost is the best available answer.
+     */
+    private function weightedCost(Collection $rows): float
+    {
+        $quantity = $rows->sum(fn ($row) => (float) $row->quantity);
+
+        if ($quantity > 0) {
+            return round($rows->sum(fn ($row) => (float) $row->cost * (float) $row->quantity) / $quantity, 2);
+        }
+
+        $costs = $rows->map(fn ($row) => (float) $row->cost)->filter(fn ($cost) => $cost > 0);
+
+        return $costs->isEmpty() ? 0.0 : round($costs->avg(), 2);
+    }
+
+    /**
+     * Rewrite products.cost as the weighted average of what is actually in stock.
+     *
+     * @return array{0: float, 1: float}|null [old, new] when the cost changed
+     */
+    private function recalculateProductCost(int $productId): ?array
+    {
+        $rows = DB::table('inventories')->whereNull('deleted_at')->where('product_id', $productId)->get();
+        if ($rows->isEmpty()) {
+            return null;
+        }
+
+        $cost = $this->weightedCost($rows);
+        $old = (float) DB::table('products')->where('id', $productId)->value('cost');
+
+        if ($cost <= 0 || round($old, 2) === $cost) {
+            return null;
+        }
+
+        DB::table('products')->where('id', $productId)->update(['cost' => $cost, 'updated_at' => now()]);
+
+        return [$old, $cost];
+    }
+
+    /**
+     * Replay every purchase, sale and return to rebuild the cost, the inventory logs and
+     * the COGS journal entries. Needs a resolvable tenant, unlike the rest of this command.
+     */
+    private function replayCost(array $productIds): void
+    {
+        foreach ($productIds as $productId) {
+            $this->newLine();
+            $this->line('<fg=cyan>Replaying cost history for product #'.$productId.'</>');
+            $this->call('inventory:recalculate-cost', ['--product' => $productId]);
+        }
+    }
+
+    /**
+     * What one applied group actually did to the stock and the cost.
+     */
+    private function reportOutcome(?array $result): void
+    {
+        if (! $result) {
+            return;
+        }
+
+        $stock = $result['stock'];
+        if ($stock['removed']) {
+            $this->line('  stock   '.$stock['removed'].' duplicate row(s) folded into '.$stock['groups'].', '.$stock['moved'].' reference(s) moved');
+        }
+
+        if ($result['cost']) {
+            [$old, $new] = $result['cost'];
+            $this->line('  cost    '.number_format($old, 2, '.', '').' -> '.number_format($new, 2, '.', ''));
+        }
     }
 }
