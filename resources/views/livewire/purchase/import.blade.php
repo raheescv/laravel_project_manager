@@ -230,7 +230,7 @@
                                 <div class="flex-grow-1">
                                     <div class="fw-bold">{{ $fileName }}</div>
                                     <div style="color:var(--pix-mut)">
-                                        {{ count($rawRows) }} line(s) · {{ count($columns) }} column(s)
+                                        {{ $rowCount }} line(s) · {{ count($columns) }} column(s)
                                     </div>
                                 </div>
                                 <button type="button" class="pix-iconbtn pix-iconbtn--bad" wire:click="removeFile" title="Remove file">
@@ -377,7 +377,7 @@
                             @endif
                             <div class="pix-seg">
                                 <button type="button" @class(['is-on' => $rowFilter === 'all']) wire:click="$set('rowFilter', 'all')">
-                                    All {{ count($items) }}
+                                    All {{ $lineCount }}
                                 </button>
                                 <button type="button" @class(['is-on' => $rowFilter === 'ready']) wire:click="$set('rowFilter', 'ready')">
                                     Ready {{ $this->readyCount }}
@@ -389,7 +389,17 @@
                         </div>
                     </div>
                     <div class="pix-panel__bd pix-panel__bd--flush">
-                        @if (!count($items))
+                        @if ($expired)
+                            <div class="pix-empty">
+                                <i class="fa fa-clock-o"></i>
+                                This upload has expired — nothing was saved. Upload the sheet again to carry on.
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-sm btn-primary" wire:click="$set('step', 2)">
+                                        <i class="fa fa-arrow-left me-1"></i> Back to upload
+                                    </button>
+                                </div>
+                            </div>
+                        @elseif (!$lineCount)
                             <div class="pix-empty">
                                 <i class="fa fa-inbox"></i>
                                 No lines yet — upload a sheet and map its columns.
@@ -530,6 +540,33 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            @if ($this->pageCount > 1 || $lineCount > 25)
+                                <div class="pix-pager">
+                                    <span class="pix-tbl__meta">
+                                        Showing {{ count($items) ? array_key_first($items) + 1 : 0 }}–{{ count($items) ? array_key_last($items) + 1 : 0 }}
+                                        of {{ $lineCount }} line(s)
+                                    </span>
+                                    <div class="d-flex align-items-center gap-2 ms-auto">
+                                        <select class="form-select form-select-sm" style="width:auto" wire:model.live="perPage">
+                                            <option value="25">25 / page</option>
+                                            <option value="50">50 / page</option>
+                                            <option value="100">100 / page</option>
+                                        </select>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-secondary" @disabled($page <= 1)
+                                                wire:click="setPage({{ $page - 1 }})">
+                                                <i class="fa fa-chevron-left"></i>
+                                            </button>
+                                            <span class="btn btn-outline-secondary disabled">{{ $page }} / {{ $this->pageCount }}</span>
+                                            <button type="button" class="btn btn-outline-secondary" @disabled($page >= $this->pageCount)
+                                                wire:click="setPage({{ $page + 1 }})">
+                                                <i class="fa fa-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -543,7 +580,7 @@
                             <h6>Draft Summary</h6>
                         </div>
                         <div class="pix-panel__bd">
-                            <div class="pix-sum"><span>Lines ready</span><span>{{ $this->readyCount }} / {{ count($items) }}</span></div>
+                            <div class="pix-sum"><span>Lines ready</span><span>{{ $this->readyCount }} / {{ $lineCount }}</span></div>
                             <div class="pix-sum"><span>Total quantity</span><span>{{ currency($totals['quantity'] ?? 0, 3) }}</span></div>
                             <div class="pix-sum"><span>Gross</span><span>{{ currency($totals['gross_amount'] ?? 0) }}</span></div>
                             <div class="pix-sum"><span>Item discount</span><span>{{ currency($totals['item_discount'] ?? 0) }}</span></div>

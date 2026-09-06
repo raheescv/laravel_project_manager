@@ -9,7 +9,9 @@ use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
@@ -63,8 +65,8 @@ class Import extends Component
     /** First few data rows, for the on screen file preview. */
     public array $previewRows = [];
 
-    /** Every data row of the sheet, keyed by column index. */
-    public array $rawRows = [];
+    /** Number of data rows parsed out of the sheet (the rows themselves are cached). */
+    public int $rowCount = 0;
 
     /** field => column index ('' when the field is not present in the file). */
     public array $mapping = [];
@@ -81,7 +83,40 @@ class Import extends Component
 
     /* ----------------------------------------------------------- review --- */
 
+    /**
+     * The lines of the CURRENT PAGE only, keyed by their index in the full set.
+     *
+     * The full set lives in the cache: Livewire ships every public property on
+     * every round-trip, and a 400 line invoice serialised ~180KB each way,
+     * which cost the better part of a second per keystroke. Paging the wire
+     * state keeps an edit flat and fast however long the invoice is.
+     */
     public array $items = [];
+
+    /** Token for this upload's cached working set. */
+    public string $sheetToken = '';
+
+    public int $page = 1;
+
+    /**
+     * Indexes of the lines on screen.
+     *
+     * Held across edits on purpose: re-filtering after every keystroke would
+     * make a row you just fixed disappear from under the cursor. The page is
+     * re-cut only when the filter, the page or the line set itself changes.
+     */
+    public array $pageIndexes = [];
+
+    public int $perPage = 50;
+
+    public int $lineCount = 0;
+
+    public int $readyCount = 0;
+
+    public int $issueCount = 0;
+
+    /** True when the cached working set is gone (expired or cleared). */
+    public bool $expired = false;
 
     public string $rowFilter = 'all';
 
@@ -151,6 +186,7 @@ class Import extends Component
 
     public function mount(): void
     {
+        $this->sheetToken = (string) Str::uuid();
         $this->date = date('Y-m-d');
         $this->delivery_date = date('Y-m-d');
         $this->rowMode = Configuration::where('key', 'purchase_item_row_mode')->value('value') ?? 'merge';
@@ -205,7 +241,8 @@ class Import extends Component
 
     public function removeFile(): void
     {
-        $this->reset(['file', 'fileName', 'columns', 'previewRows', 'rawRows', 'truncated']);
+        Cache::forget($this->cacheKey('rows'));
+        $this->reset(['file', 'fileName', 'columns', 'previewRows', 'rowCount', 'truncated']);
         $this->mapping = array_fill_keys(array_keys($this->fields), '');
     }
 
@@ -230,8 +267,8 @@ class Import extends Component
         }
 
         $this->truncated = count($rows) >= self::MAX_ROWS;
-        $this->rawRows = array_values($rows);
-        $this->previewRows = array_slice($this->rawRows, 0, 5);
+        $this->putRawRows($rows);
+        $this->previewRows = array_slice(array_values($rows), 0, 5);
         $this->fileName = $this->file->getClientOriginalName();
         $this->autoMap();
     }
@@ -278,6 +315,118 @@ class Import extends Component
         }
     }
 
+    /* ------------------------------------------------- cached working set --- */
+
+    private function cacheKey(string $bucket): string
+    {
+        return "purchase-import:{$bucket}:".Auth::id().":{$this->sheetToken}";
+    }
+
+    /** Every resolved line, in order. Empty once the working set has expired. */
+    private function lines(): array
+    {
+        return Cache::get($this->cacheKey('lines'), []);
+    }
+
+    /**
+     * Persist the working set and refresh everything the browser needs to see:
+     * the counts, the totals and the current page of rows.
+     */
+    private function putLines(array $lines): void
+    {
+        $lines = array_values($lines);
+        Cache::put($this->cacheKey('lines'), $lines, now()->addHours(2));
+
+        $this->lineCount = count($lines);
+        $this->readyCount = count(array_filter($lines, fn ($item) => $item['status'] === 'ok'));
+        $this->issueCount = $this->lineCount - $this->readyCount;
+        $this->recalculateTotals($lines);
+        $this->showPage($lines);
+    }
+
+    private function rawRows(): array
+    {
+        return Cache::get($this->cacheKey('rows'), []);
+    }
+
+    private function putRawRows(array $rows): void
+    {
+        Cache::put($this->cacheKey('rows'), array_values($rows), now()->addHours(2));
+        $this->rowCount = count($rows);
+    }
+
+    /** Re-cut the page from the filter, then load it. */
+    private function refreshPage(?array $lines = null): void
+    {
+        $lines ??= $this->lines();
+
+        $filtered = match ($this->rowFilter) {
+            'issues' => array_filter($lines, fn ($item) => $item['status'] !== 'ok'),
+            'ready' => array_filter($lines, fn ($item) => $item['status'] === 'ok'),
+            default => $lines,
+        };
+
+        $this->page = max(1, min($this->page, (int) max(1, ceil(count($filtered) / $this->perPage))));
+        $this->pageIndexes = array_keys(array_slice($filtered, ($this->page - 1) * $this->perPage, $this->perPage, true));
+
+        $this->showPage($lines);
+    }
+
+    /** Load the rows the page already points at, keyed by their true index. */
+    private function showPage(?array $lines = null): void
+    {
+        $lines ??= $this->lines();
+
+        $this->expired = $lines === [] && $this->lineCount > 0;
+
+        $this->items = [];
+        foreach ($this->pageIndexes as $index) {
+            if (isset($lines[$index])) {
+                $this->items[$index] = $lines[$index];
+            }
+        }
+    }
+
+    /** Rewrite one line in the working set. */
+    private function putLine(int $index, array $line): void
+    {
+        $lines = $this->lines();
+        if (! isset($lines[$index])) {
+            return;
+        }
+        $lines[$index] = $line;
+        $this->putLines($lines);
+    }
+
+    public function getPageCountProperty(): int
+    {
+        $total = match ($this->rowFilter) {
+            'issues' => $this->issueCount,
+            'ready' => $this->readyCount,
+            default => $this->lineCount,
+        };
+
+        return (int) max(1, ceil($total / $this->perPage));
+    }
+
+    public function setPage(int $page): void
+    {
+        $this->page = max(1, $page);
+        $this->refreshPage();
+    }
+
+    public function updatedRowFilter(): void
+    {
+        $this->page = 1;
+        $this->refreshPage();
+    }
+
+    public function updatedPerPage(): void
+    {
+        $this->page = 1;
+        $this->refreshPage();
+    }
+
     public function getMappedCountProperty(): int
     {
         return count(array_filter($this->mapping, fn ($value) => $value !== '' && $value !== null));
@@ -300,10 +449,13 @@ class Import extends Component
         }
 
         $this->resetErrorBag('mapping');
-        $this->items = $this->resolveRows();
-        $this->mergeDuplicateRows();
-        $this->recalculateTotals();
-        $this->rowFilter = collect($this->items)->contains(fn ($item) => $item['status'] !== 'ok') ? 'issues' : 'all';
+
+        $lines = $this->mergeDuplicateRows($this->resolveRows());
+
+        $this->rowFilter = collect($lines)->contains(fn ($item) => $item['status'] !== 'ok') ? 'issues' : 'all';
+        $this->page = 1;
+        $this->putLines($lines);
+        $this->refreshPage($lines);
         $this->step = 3;
     }
 
@@ -311,7 +463,7 @@ class Import extends Component
     private function resolveRows(): array
     {
         $rows = [];
-        foreach ($this->rawRows as $offset => $row) {
+        foreach ($this->rawRows() as $offset => $row) {
             $values = [];
             foreach ($this->mapping as $field => $column) {
                 $values[$field] = $column === '' || $column === null ? null : ($row[(int) $column] ?? null);
@@ -581,16 +733,16 @@ class Import extends Component
     }
 
     /** Fold repeated products into one line when the settings ask for merged rows. */
-    private function mergeDuplicateRows(): void
+    private function mergeDuplicateRows(array $lines): array
     {
         $this->mergedRows = 0;
         if ($this->rowMode === 'separate') {
-            return;
+            return $lines;
         }
 
         $merged = [];
         $seen = [];
-        foreach ($this->items as $item) {
+        foreach ($lines as $item) {
             $key = $item['product_id'];
             if ($key && isset($seen[$key])) {
                 $target = $seen[$key];
@@ -609,25 +761,28 @@ class Import extends Component
             }
         }
 
-        $this->items = array_values($merged);
+        return array_values($merged);
     }
 
     /* =================================================== step 3 — review == */
 
     public function updated($key): void
     {
-        if (preg_match('/^items\.(\d+)\.(quantity|unit_price|discount|tax)$/', $key, $matches)) {
+        if (preg_match('/^items\.(\d+)\.(quantity|unit_price|discount|tax|batch)$/', $key, $matches)) {
             $index = (int) $matches[1];
             $field = $matches[2];
-            if (! is_numeric($this->items[$index][$field])) {
-                $this->items[$index][$field] = 0;
+            $line = $this->items[$index] ?? null;
+            if (! $line) {
+                return;
             }
-            $this->items[$index] = $this->calculate($this->items[$index]);
-            if ($field === 'unit_price' && ! $this->items[$index]['product_id']) {
-                $this->items[$index] = $this->calculate($this->rematch($this->items[$index]));
+            if ($field !== 'batch' && ! is_numeric($line[$field])) {
+                $line[$field] = 0;
             }
-            $this->revalidate($index);
-            $this->recalculateTotals();
+            $line = $this->calculate($line);
+            if ($field === 'unit_price' && ! $line['product_id']) {
+                $line = $this->calculate($this->rematch($line));
+            }
+            $this->putLine($index, $this->revalidate($line));
         }
         if (in_array($key, ['other_discount', 'freight'], true)) {
             if (! is_numeric($this->{$key})) {
@@ -639,22 +794,28 @@ class Import extends Component
 
     public function removeItem(int $index): void
     {
-        unset($this->items[$index]);
-        $this->items = array_values($this->items);
-        $this->recalculateTotals();
+        $lines = $this->lines();
+        unset($lines[$index]);
+        $this->putLines($lines);
+        $this->refreshPage();
     }
 
     public function dropUnmatched(): void
     {
-        $this->items = array_values(array_filter($this->items, fn ($item) => $item['status'] === 'ok'));
         $this->rowFilter = 'all';
-        $this->recalculateTotals();
+        $this->page = 1;
+        $this->putLines(array_filter($this->lines(), fn ($item) => $item['status'] === 'ok'));
+        $this->refreshPage();
     }
 
     public function openResolve(int $index): void
     {
+        $line = $this->lines()[$index] ?? null;
+        if (! $line) {
+            return;
+        }
         $this->resolvingIndex = $index;
-        $this->productSearch = (string) ($this->items[$index]['raw_name'] ?? $this->items[$index]['raw_code'] ?? '');
+        $this->productSearch = (string) ($line['raw_name'] ?? $line['raw_code'] ?? '');
         $this->searchProducts();
     }
 
@@ -677,20 +838,41 @@ class Import extends Component
             return;
         }
 
-        $this->productResults = Product::query()
+        $like = $this->escapeLike($term);
+        $columns = ['id', 'name', 'code', 'barcode', 'cost', 'unit_id', 'tax', 'expense_account_id'];
+
+        // Prefix first: products is indexed on (tenant_id, name), (tenant_id,
+        // code) and (tenant_id, barcode), and only a trailing wildcard can use
+        // them. The unindexed "contains" scan runs only if that came up short.
+        $hits = Product::query()
             ->where(fn ($query) => $query
-                ->where('name', 'like', "%{$term}%")
-                ->orWhere('code', 'like', "%{$term}%")
-                ->orWhere('barcode', 'like', "%{$term}%"))
+                ->where('name', 'like', "{$like}%")
+                ->orWhere('code', 'like', "{$like}%")
+                ->orWhere('barcode', 'like', "{$like}%"))
             ->limit(12)
-            ->get(['id', 'name', 'code', 'barcode', 'cost', 'unit_id', 'tax', 'expense_account_id'])
-            ->toArray();
+            ->get($columns);
+
+        if ($hits->count() < 12) {
+            $found = $hits->pluck('id')->all();
+            $hits = $hits->merge(
+                Product::query()
+                    ->whereNotIn('id', $found ?: [0])
+                    ->where(fn ($query) => $query
+                        ->where('name', 'like', "%{$like}%")
+                        ->orWhere('code', 'like', "%{$like}%"))
+                    ->limit(12 - $hits->count())
+                    ->get($columns)
+            );
+        }
+
+        $this->productResults = $hits->values()->toArray();
     }
 
     public function assignProduct(int $productId): void
     {
         $index = $this->resolvingIndex;
-        if ($index === null || ! isset($this->items[$index])) {
+        $lines = $this->lines();
+        if ($index === null || ! isset($lines[$index])) {
             return;
         }
 
@@ -699,23 +881,24 @@ class Import extends Component
             return;
         }
 
-        $this->items[$index]['product_id'] = $product->id;
-        $this->items[$index]['name'] = $product->name;
-        $this->items[$index]['code'] = $product->code;
-        $this->items[$index]['barcode'] = $product->barcode;
-        $this->items[$index]['unit_id'] = $product->unit_id;
-        $this->items[$index]['account_id'] = $product->expense_account_id;
-        $this->items[$index]['matched_on'] = 'manual';
-        $this->items[$index]['by_cost'] = false;
-        $this->items[$index]['candidates'] = [];
-        $this->items[$index]['candidate_count'] = 0;
-        $this->items[$index]['product_cost'] = (float) $product->cost;
-        if (! $this->items[$index]['unit_price']) {
-            $this->items[$index]['unit_price'] = (float) $product->cost;
+        $line = $lines[$index];
+        $line['product_id'] = $product->id;
+        $line['name'] = $product->name;
+        $line['code'] = $product->code;
+        $line['barcode'] = $product->barcode;
+        $line['unit_id'] = $product->unit_id;
+        $line['account_id'] = $product->expense_account_id;
+        $line['matched_on'] = 'manual';
+        $line['by_cost'] = false;
+        $line['candidates'] = [];
+        $line['candidate_count'] = 0;
+        $line['product_cost'] = (float) $product->cost;
+        if (! $line['unit_price']) {
+            $line['unit_price'] = (float) $product->cost;
         }
-        $this->items[$index] = $this->calculate($this->items[$index]);
-        $this->revalidate($index);
-        $this->recalculateTotals();
+
+        $lines[$index] = $this->revalidate($this->calculate($line));
+        $this->putLines($lines);
         $this->closeResolve();
         $this->dispatch('success', ['message' => 'Line matched to '.$product->name]);
     }
@@ -777,7 +960,7 @@ class Import extends Component
     /** Pick one of an ambiguous line's candidates without opening the overlay. */
     public function chooseCandidate(int $index, int $productId): void
     {
-        if (! isset($this->items[$index])) {
+        if (! isset($this->lines()[$index])) {
             return;
         }
 
@@ -785,23 +968,10 @@ class Import extends Component
         $this->assignProduct($productId);
     }
 
+    /** The page already holds exactly the rows to draw. */
     public function getVisibleItemsProperty(): array
     {
-        return match ($this->rowFilter) {
-            'issues' => array_filter($this->items, fn ($item) => $item['status'] !== 'ok'),
-            'ready' => array_filter($this->items, fn ($item) => $item['status'] === 'ok'),
-            default => $this->items,
-        };
-    }
-
-    public function getReadyCountProperty(): int
-    {
-        return count(array_filter($this->items, fn ($item) => $item['status'] === 'ok'));
-    }
-
-    public function getIssueCountProperty(): int
-    {
-        return count($this->items) - $this->readyCount;
+        return $this->items;
     }
 
     /* ======================================================= step 4 — save */
@@ -816,7 +986,14 @@ class Import extends Component
             'invoice_no' => ['required', 'string', 'max:191'],
         ], [], ['account_id' => 'vendor', 'invoice_no' => 'invoice no']);
 
-        $lines = array_filter($this->items, fn ($item) => $item['status'] === 'ok');
+        $all = $this->lines();
+        $lines = array_filter($all, fn ($item) => $item['status'] === 'ok');
+
+        if (! count($all)) {
+            $this->dispatch('error', ['message' => 'This upload has expired. Re-run the mapping step.']);
+
+            return;
+        }
 
         if (! $this->skipUnmatched && $this->issueCount) {
             $this->dispatch('error', ['message' => 'Resolve the '.$this->issueCount.' flagged line(s), or switch on "Skip unresolved lines".']);
@@ -870,6 +1047,9 @@ class Import extends Component
 
             DB::commit();
 
+            Cache::forget($this->cacheKey('lines'));
+            Cache::forget($this->cacheKey('rows'));
+
             session()->flash('success', count($lines).' line(s) imported into draft purchase '.$this->invoice_no);
 
             return redirect()->route('purchase::edit', $response['data']['id']);
@@ -912,39 +1092,41 @@ class Import extends Component
         return $item;
     }
 
-    private function revalidate(int $index): void
+    private function revalidate(array $item): array
     {
-        $item = $this->items[$index];
         if (! $item['product_id']) {
             // an ambiguous line keeps its own status and message: it is not
             // "no match", it is "too many matches", and it resolves differently.
-            $this->items[$index]['status'] = $item['status'] === 'ambiguous' ? 'ambiguous' : 'unmatched';
+            $item['status'] = $item['status'] === 'ambiguous' ? 'ambiguous' : 'unmatched';
 
-            return;
+            return $item;
         }
         if ((float) $item['quantity'] <= 0) {
-            $this->items[$index]['status'] = 'invalid';
-            $this->items[$index]['message'] = 'Quantity must be greater than zero.';
+            $item['status'] = 'invalid';
+            $item['message'] = 'Quantity must be greater than zero.';
 
-            return;
+            return $item;
         }
         if ((float) $item['unit_price'] <= 0) {
-            $this->items[$index]['status'] = 'invalid';
-            $this->items[$index]['message'] = 'Unit price is missing or zero.';
+            $item['status'] = 'invalid';
+            $item['message'] = 'Unit price is missing or zero.';
 
-            return;
+            return $item;
         }
-        $this->items[$index]['status'] = 'ok';
-        $this->items[$index]['message'] = null;
+        $item['status'] = 'ok';
+        $item['message'] = null;
+
+        return $item;
     }
 
-    private function recalculateTotals(): void
+    private function recalculateTotals(?array $all = null): void
     {
-        $lines = collect($this->items)->where('status', 'ok');
+        $all ??= $this->lines();
+        $lines = collect($all)->where('status', 'ok');
 
         $total = round($lines->sum('total'), 2);
         $this->totals = [
-            'lines' => count($this->items),
+            'lines' => count($all),
             'quantity' => round($lines->sum('quantity'), 3),
             'gross_amount' => round($lines->sum('gross_amount'), 2),
             'item_discount' => round($lines->sum('discount'), 2),

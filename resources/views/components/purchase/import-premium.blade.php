@@ -667,6 +667,16 @@
             color: var(--pix-ok);
         }
 
+        .pix-pager {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            flex-wrap: wrap;
+            padding: .5rem .85rem;
+            border-top: 1px solid var(--pix-ln);
+            background: var(--pix-sf2);
+        }
+
         /* =========================================================== rail === */
 
         .pix-rail {

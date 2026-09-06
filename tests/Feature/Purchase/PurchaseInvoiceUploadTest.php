@@ -120,7 +120,9 @@ it('matches every line, flags the ones it cannot, and prices them like the purch
         ->call('goToUpload')
         ->set('file', $sheet)
         ->call('buildRows')
-        ->assertSet('step', 3);
+        ->assertSet('step', 3)
+        // buildRows lands on the Issues filter; `items` is what is on screen
+        ->set('rowFilter', 'all');
 
     $items = $component->get('items');
 
