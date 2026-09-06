@@ -14,14 +14,16 @@ class CreateUpdateAction
 
             $lpo = LocalPurchaseOrder::findOrFail($data['local_purchase_order_id']);
 
+            $branchId = session('branch_id');
+
             $saveData = [
-                'grn_no' => $data['grn_no'] ?? generateGrnNo(),
+                'grn_no' => $data['grn_no'] ?? generateGrnNo($branchId),
                 'local_purchase_order_id' => $lpo->id,
                 'vendor_id' => $lpo->vendor_id,
                 'date' => $data['date'],
                 'remarks' => $data['remarks'] ?? null,
                 'tenant_id' => session('tenant_id'),
-                'branch_id' => session('branch_id'),
+                'branch_id' => $branchId,
                 'created_by' => $userId,
             ];
 

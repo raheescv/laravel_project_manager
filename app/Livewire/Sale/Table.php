@@ -37,6 +37,9 @@ class Table extends Component
 
     public $to_date = '';
 
+    // Which timestamp the from/to range runs on: 'date' (invoice date) or 'created_at'.
+    public $based_on = 'date';
+
     public $status = 'draft';
 
     public $limit = 50;
@@ -102,9 +105,23 @@ class Table extends Component
 
     public function updated($key, $value)
     {
-        if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key)) {
+        if (! in_array($key, ['selectAll', 'selected']) && ! preg_match('/^selected\..*/', $key)) {
             $this->resetPage();
         }
+    }
+
+    /**
+     * Shift + click on a row checkbox sends the whole run of rows between the
+     * previous click and this one, in the order they are painted on screen.
+     */
+    public function toggleRange(array $ids, bool $checked = true)
+    {
+        $ids = array_map('strval', $ids);
+        $selected = array_map('strval', $this->selected);
+
+        $this->selected = $checked
+            ? array_values(array_unique(array_merge($selected, $ids)))
+            : array_values(array_diff($selected, $ids));
     }
 
     public function updatedSelectAll($value)
@@ -120,6 +137,7 @@ class Table extends Component
             'customer_id' => $this->customer_id,
             'source' => $this->source,
             'status' => $this->status,
+            'based_on' => $this->based_on,
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
         ];
@@ -155,6 +173,7 @@ class Table extends Component
             'created_by' => $this->created_by,
             'payment_method_id' => $this->payment_method_id,
             'status' => $this->status,
+            'based_on' => $this->based_on,
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
         ];

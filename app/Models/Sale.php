@@ -161,6 +161,10 @@ class Sale extends Model implements AuditableContracts
 
     public function scopeFilter(Builder $query, array $filters): Builder
     {
+        // The date range can run on either the sale's own date or the row's
+        // creation timestamp — the list's "Based On" selector picks which.
+        $dateColumn = ($filters['based_on'] ?? '') === 'created_at' ? 'sales.created_at' : 'sales.date';
+
         return $query
             ->when($filters['search'] ?? '', function ($q, $search) {
                 $search = trim($search);
@@ -186,8 +190,8 @@ class Sale extends Model implements AuditableContracts
             })
             ->when($filters['sale_day_session_id'] ?? '', fn ($q, $value) => $q->where('sale_day_session_id', $value))
             ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('status', $value))
-            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '>=', date('Y-m-d', strtotime($value))))
-            ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('sales.date', '<=', date('Y-m-d', strtotime($value))));
+            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate($dateColumn, '>=', date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate($dateColumn, '<=', date('Y-m-d', strtotime($value))));
     }
 
     /**

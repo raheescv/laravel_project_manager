@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Branch;
 use App\Models\Country;
 use App\Services\TenantService;
 use App\Support\TenantCache;
@@ -651,6 +652,20 @@ if (! function_exists('saleSources')) {
         ];
     }
 }
+if (! function_exists('dateBasisOptions')) {
+    /**
+     * Which timestamp a list's date range should run on. "date" is the document
+     * date the user typed on the invoice; "created_at" is when the row was
+     * actually saved — the two differ on back-dated and imported entries.
+     */
+    function dateBasisOptions()
+    {
+        return [
+            'date' => 'Sale Date',
+            'created_at' => 'Created At',
+        ];
+    }
+}
 if (! function_exists('appointmentStatuses')) {
     function appointmentStatuses()
     {
@@ -859,10 +874,44 @@ if (! function_exists('packageFrequency')) {
         ];
     }
 }
-if (! function_exists('getNextSaleInvoiceNo')) {
-    function getNextSaleInvoiceNo()
+if (! function_exists('currentBranchCode')) {
+    /**
+     * Branch code used to prefix and key document numbers.
+     *
+     * Session first, because a web user can switch branch mid-visit. API
+     * requests and queued jobs carry no session at all, so fall back to the
+     * branch the caller already resolved and then to the signed-in user's own
+     * branch — without that, every mobile sale is numbered under the fallback
+     * code and draws from the wrong counter row. A null session value counts
+     * as absent too: session('branch_code', 'M') returns null rather than the
+     * default once the key has been written from a user with no branch.
+     */
+    function currentBranchCode($branchId = null): string
     {
-        $branchCode = session('branch_code', 'M');
+        if (! $branchId) {
+            $code = session('branch_code');
+            if ($code) {
+                return $code;
+            }
+            $branchId = session('branch_id') ?: auth()->user()?->default_branch_id;
+        }
+
+        if (! $branchId) {
+            return 'M';
+        }
+
+        static $resolved = [];
+        if (! array_key_exists($branchId, $resolved)) {
+            $resolved[$branchId] = Branch::withoutGlobalScopes()->whereKey($branchId)->value('code');
+        }
+
+        return $resolved[$branchId] ?: 'M';
+    }
+}
+if (! function_exists('getNextSaleInvoiceNo')) {
+    function getNextSaleInvoiceNo($branchId = null)
+    {
+        $branchCode = currentBranchCode($branchId);
         $prefix = 'INV-';
 
         if ($branchCode) {
@@ -882,7 +931,7 @@ if (! function_exists('getNextSaleInvoiceNo')) {
 
         $invoicePrefix = $prefix.$year.'-';
 
-        $number = getNextUniqueNumber('Sale');
+        $number = getNextUniqueNumber('Sale', $branchId);
 
         // Generate the invoice number
         $invoice = $invoicePrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
@@ -891,9 +940,9 @@ if (! function_exists('getNextSaleInvoiceNo')) {
     }
 }
 if (! function_exists('generateGrnNo')) {
-    function generateGrnNo()
+    function generateGrnNo($branchId = null)
     {
-        $branchCode = session('branch_code', 'M');
+        $branchCode = currentBranchCode($branchId);
         $prefix = 'GRN-';
 
         if ($branchCode) {
@@ -903,7 +952,7 @@ if (! function_exists('generateGrnNo')) {
 
         $invoicePrefix = $prefix.$year.'-';
 
-        $number = getNextUniqueNumber('Grn');
+        $number = getNextUniqueNumber('Grn', $branchId);
 
         // Generate the invoice number
         $invoice = $invoicePrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
@@ -912,9 +961,9 @@ if (! function_exists('generateGrnNo')) {
     }
 }
 if (! function_exists('getNextTailorOrderNo')) {
-    function getNextTailorOrderNo()
+    function getNextTailorOrderNo($branchId = null)
     {
-        $branchCode = session('branch_code', 'M');
+        $branchCode = currentBranchCode($branchId);
         $prefix = 'TA-';
         $prefix = '';
 
@@ -926,15 +975,15 @@ if (! function_exists('getNextTailorOrderNo')) {
 
         $orderPrefix = $prefix.$year.'-';
 
-        $number = getNextUniqueNumber('TailoringOrder');
+        $number = getNextUniqueNumber('TailoringOrder', $branchId);
 
         return $orderPrefix.str_pad($number, 4, '0', STR_PAD_LEFT);
     }
 }
 if (! function_exists('getNextUniqueNumber')) {
-    function getNextUniqueNumber($segment = 'Sale')
+    function getNextUniqueNumber($segment = 'Sale', $branchId = null)
     {
-        $branchCode = session('branch_code', 'M');
+        $branchCode = currentBranchCode($branchId);
         $country_id = tenant_cache('country_id', Country::QATAR);
 
         // Get tenant_id from session or TenantService (e.g. when running inside a job)

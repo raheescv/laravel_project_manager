@@ -72,7 +72,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
 
         // Prepare sale header data from first row
         $data = [
-            'invoice_no' => $firstRow['invoice_no'] ?? getNextSaleInvoiceNo(),
+            'invoice_no' => $firstRow['invoice_no'] ?? getNextSaleInvoiceNo($this->branchId),
             'reference_no' => $firstRow['reference_no'] ?? (str_starts_with($groupKey, 'unique_') ? null : $groupKey),
             'sale_type' => $firstRow['sale_type'] ?? 'pos',
             'branch_id' => $this->branchId,

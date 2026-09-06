@@ -18,7 +18,7 @@ class CreateAction
         try {
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             $data['created_by'] = $this->userId;
-            $data['invoice_no'] = $data['invoice_no'] ?? getNextSaleInvoiceNo();
+            $data['invoice_no'] = $data['invoice_no'] ?? getNextSaleInvoiceNo($data['branch_id']);
             $data['source'] = $this->resolveSource($data['source'] ?? null);
 
             validationHelper(Sale::rules(), $data);

@@ -20,6 +20,10 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
 
     public function query()
     {
+        // Matches the list's "Based On" selector: the invoice date or the row's
+        // creation timestamp.
+        $dateColumn = ($this->filters['based_on'] ?? '') === 'created_at' ? 'created_at' : 'date';
+
         $query = Sale::query()
             ->with([
                 'branch:id,name',
@@ -40,11 +44,11 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             ->when($this->filters['source'] ?? null, function ($query, $value) {
                 return $query->where('source', $value);
             })
-            ->when($this->filters['from_date'] ?? null, function ($query, $value) {
-                return $query->whereDate('date', '>=', $value);
+            ->when($this->filters['from_date'] ?? null, function ($query, $value) use ($dateColumn) {
+                return $query->whereDate($dateColumn, '>=', $value);
             })
-            ->when($this->filters['to_date'] ?? null, function ($query, $value) {
-                return $query->whereDate('date', '<=', $value);
+            ->when($this->filters['to_date'] ?? null, function ($query, $value) use ($dateColumn) {
+                return $query->whereDate($dateColumn, '<=', $value);
             })
             ->orderBy('date', 'desc')
             ->orderBy('id', 'desc');

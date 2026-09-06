@@ -9,13 +9,15 @@
                         </button>
                     @endcan
                     @can('sale.export')
-                        <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()">
-                            <i class="demo-pli-file-excel me-1"></i> Export
+                        <button class="btn btn-sm btn-outline-primary" title="Export as Excel" wire:click="export()" wire:loading.attr="disabled" wire:target="export">
+                            <i class="demo-pli-file-excel me-1" wire:loading.remove wire:target="export"></i>
+                            <i class="fa fa-spinner fa-spin me-1" wire:loading wire:target="export"></i> Export
                         </button>
                     @endcan
                     @can('sale.delete')
-                        <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling me-1"></i> Delete
+                        <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?" wire:loading.attr="disabled" wire:target="delete">
+                            <i class="demo-pli-recycling me-1" wire:loading.remove wire:target="delete"></i>
+                            <i class="fa fa-spinner fa-spin me-1" wire:loading wire:target="delete"></i> Delete
                         </button>
                     @endcan
                 </div>
@@ -59,6 +61,14 @@
             <div class="bg-light rounded-3 border shadow-sm">
                 <div class="p-3">
                     <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="based_on">
+                                    <i class="fa fa-clock-o me-1"></i> Based On
+                                </label>
+                                {{ html()->select('based_on', dateBasisOptions())->value($based_on)->class('form-select form-select-sm')->id('based_on')->attribute('wire:model.live', 'based_on') }}
+                            </div>
+                        </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="from_date">
@@ -136,7 +146,17 @@
             </div>
         </div>
     </div>
-    <div class="card-body px-0 pb-0">
+    <div class="card-body px-0 pb-0 position-relative">
+        {{-- Covers the table while any filter, sort or page change is in flight. --}}
+        <div wire:loading.flex
+            wire:target="search,limit,based_on,from_date,to_date,customer_id,sale_type,source,branch_id,created_by,payment_method_id,status,sortBy,gotoPage,previousPage,nextPage,selectAll,delete"
+            class="position-absolute top-0 start-0 w-100 h-100 justify-content-center align-items-start bg-body bg-opacity-75"
+            style="z-index: 5;">
+            <div class="d-flex align-items-center gap-2 mt-5 px-3 py-2 bg-body border rounded-pill shadow-sm">
+                <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                <span class="small fw-semibold text-muted">Loading sales...</span>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-striped table-hover table-sm align-middle mb-0 border-bottom table-sm">
                 <thead class="bg-light text-nowrap">
@@ -209,7 +229,7 @@
                             <td class="ps-3">
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="form-check mb-0">
-                                        <input type="checkbox" class="form-check-input" value="{{ $item->id }}" wire:model.live="selected">
+                                        <input type="checkbox" class="form-check-input sale-row-check" value="{{ $item->id }}" wire:model.live="selected">
                                     </div>
                                     <span class="text-muted">#{{ $item->id }}</span>
                                 </div>
@@ -434,6 +454,28 @@
                 $('#source').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('source', value);
+                });
+
+                // Shift + click ticks (or clears) every row between the last box
+                // clicked and this one, the way a file manager selects a range.
+                let lastCheckedValue = null;
+                $(document).on('click', 'input.sale-row-check', function(e) {
+                    const boxes = $('input.sale-row-check').toArray();
+                    if (e.shiftKey && lastCheckedValue !== null) {
+                        const start = boxes.findIndex(box => box.value === lastCheckedValue);
+                        const end = boxes.indexOf(this);
+                        if (start !== -1 && end !== -1 && start !== end) {
+                            const from = Math.min(start, end);
+                            const to = Math.max(start, end);
+                            const range = boxes.slice(from, to + 1);
+                            // Shift-clicking otherwise highlights the rows in between.
+                            window.getSelection()?.removeAllRanges();
+                            // Paint the range now; the server call below keeps it.
+                            range.forEach(box => box.checked = this.checked);
+                            @this.call('toggleRange', range.map(box => box.value), this.checked);
+                        }
+                    }
+                    lastCheckedValue = this.value;
                 });
             });
         </script>
