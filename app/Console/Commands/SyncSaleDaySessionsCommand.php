@@ -2,19 +2,23 @@
 
 namespace App\Console\Commands;
 
+use App\Actions\Sale\ChangeDaySessionAction;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\TenantScope;
 use App\Models\Tenant;
 use App\Services\TenantService;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Bulk version of the "Change Sale Day Session" modal (App\Livewire\Sale\ChangeSession).
+ * Bulk version of the "Change Sale Day Session" modal. The move itself is the
+ * modal's own App\Actions\Sale\ChangeDaySessionAction; this command only decides
+ * WHICH session each sale belongs on.
  *
  * Sales are stamped with whatever session happened to be open at the moment they
  * were created, which goes wrong whenever a session is opened late, left open
@@ -204,59 +208,15 @@ class SyncSaleDaySessionsCommand extends Command
         }
     }
 
-    /**
-     * Mirrors ChangeSession::save(): move the sale, drag the accounting dates
-     * with it, and keep the cash position of any closed session it leaves or
-     * joins in step.
-     */
     protected function applySession(Sale $sale, SaleDaySession $session): void
     {
-        $oldSession = $sale->sale_day_session_id
-            ? SaleDaySession::withoutGlobalScopes([TenantScope::class, AssignedBranchScope::class])->find($sale->sale_day_session_id)
-            : null;
+        $response = (new ChangeDaySessionAction())->execute($sale, $session, null, [
+            'sync_dates' => ! $this->option('keep-dates'),
+            'sync_amounts' => ! $this->option('keep-amounts'),
+        ]);
 
-        $data = ['sale_day_session_id' => $session->id];
-
-        if (! $this->option('keep-dates')) {
-            $data['date'] = $session->opened_at->format('Y-m-d');
-        }
-
-        $sale->update($data);
-
-        if (isset($data['date'])) {
-            $date = $data['date'];
-
-            $sale->journals()->update(['date' => $date]);
-            $sale->payments()->update(['date' => $date]);
-
-            foreach ($sale->payments as $payment) {
-                $payment->journalEntries()->update(['date' => $date]);
-            }
-
-            if ($sale->journal) {
-                $sale->journal->entries()->update(['date' => $date]);
-            }
-        }
-
-        // A closed session's closing/expected figures were frozen from the
-        // sales it held at the time, so moving a completed sale in or out has
-        // to shift them. Drafts never counted towards those totals.
-        if ($this->option('keep-amounts') || $sale->status !== 'completed' || ! $sale->paid) {
-            return;
-        }
-
-        if ($session->status === 'closed') {
-            $session->update([
-                'closing_amount' => $session->closing_amount + $sale->paid,
-                'expected_amount' => $session->expected_amount + $sale->paid,
-            ]);
-        }
-
-        if ($oldSession && $oldSession->status === 'closed') {
-            $oldSession->update([
-                'closing_amount' => $oldSession->closing_amount - $sale->paid,
-                'expected_amount' => $oldSession->expected_amount - $sale->paid,
-            ]);
+        if (! $response['success']) {
+            throw new Exception($response['message'], 1);
         }
     }
 

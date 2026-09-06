@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Sale;
 
+use App\Actions\Sale\ChangeDaySessionAction;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -42,65 +44,17 @@ class ChangeSession extends Component
     {
         abort_unless(auth()->user()?->can('sale.change day session'), 403);
         try {
-            if (! $this->selectedSessionId) {
-                throw new Exception('Please select a day session.');
-            }
-
-            $newSession = SaleDaySession::where('id', $this->selectedSessionId)
-                ->where('branch_id', $this->sale->branch_id)
-                ->first();
-
-            if (! $newSession) {
-                throw new Exception('Invalid session selected.');
-            }
-
             DB::beginTransaction();
 
-            $data = [
-                'sale_day_session_id' => $this->selectedSessionId,
-                'date' => $newSession->opened_at->format('Y-m-d'),
-            ];
-            $oldSession = $this->sale->saleDaySession;
-
-            if ($newSession->id == $oldSession->id) {
-                // throw new Exception('Please Select Different session.');
-            }
-            $this->sale->update($data);
-            $this->sale->journals()->update(['date' => $data['date']]);
-            $this->sale->payments()->update(['date' => $data['date']]);
-
-            foreach ($this->sale->payments as $payment) {
-                foreach ($payment->journalEntries as $value) {
-                    $value->update(['date' => $data['date']]);
-                }
-            }
-
-            if ($this->sale->journal) {
-                $this->sale->journal->entries()->update(['date' => $data['date']]);
-            }
-
-            if ($newSession->id != $oldSession->id) {
-                if ($newSession->status == 'closed') {
-                    $newData = [
-                        'closing_amount' => $newSession->closing_amount + $this->sale->paid,
-                        'expected_amount' => $newSession->expected_amount + $this->sale->paid,
-                    ];
-                    $newSession->update($newData);
-                }
-
-                if ($oldSession->status == 'closed') {
-                    $oldData = [
-                        'closing_amount' => $oldSession->closing_amount - $this->sale->paid,
-                        'expected_amount' => $oldSession->expected_amount - $this->sale->paid,
-                    ];
-                    $oldSession->update($oldData);
-                }
+            $response = (new ChangeDaySessionAction())->execute($this->sale, $this->selectedSessionId, Auth::id());
+            if (! $response['success']) {
+                throw new Exception($response['message'], 1);
             }
 
             DB::commit();
 
             $this->dispatch('ToggleChangeSessionModal');
-            $this->dispatch('success', ['message' => 'Sale day session updated successfully.']);
+            $this->dispatch('success', ['message' => $response['message']]);
 
             return redirect()->route('sale::view', ['id' => $this->table_id]);
 

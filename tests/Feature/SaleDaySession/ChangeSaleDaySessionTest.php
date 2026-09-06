@@ -1,9 +1,13 @@
 <?php
 
+use App\Actions\Sale\ChangeDaySessionAction;
+use App\Livewire\Sale\ChangeSession;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
 
 /**
@@ -141,4 +145,76 @@ it('ignores soft deleted sales', function (): void {
     $this->artisan('sale:sync-day-sessions', ['--force' => true])->assertExitCode(0);
 
     expect(DB::table('sales')->where('id', $saleId)->value('sale_day_session_id'))->toBe($this->sessionOne->id);
+});
+
+/**
+ * The modal and the command are the same write now (ChangeDaySessionAction), so
+ * these pin the two behaviours the shared action changed: a sale that never had
+ * a session no longer blows up, and drafts leave the frozen till figures alone.
+ */
+it('moves a sale from the Change Session modal through the shared action', function (): void {
+    // `permissions` carries a tenant_id, so the row has to be built with one.
+    $this->world->user->givePermissionTo(Permission::firstOrCreate([
+        'tenant_id' => $this->world->tenant->id,
+        'name' => 'sale.change day session',
+        'guard_name' => 'web',
+    ]));
+    $this->actingAs($this->world->user);
+
+    $saleId = ($this->makeSale)('2026-09-02 14:30:00', $this->sessionOne->id, 200);
+
+    Livewire::test(ChangeSession::class, ['table_id' => $saleId])
+        ->set('selectedSessionId', $this->sessionTwo->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $sale = Sale::withoutGlobalScopes()->find($saleId);
+
+    expect($sale->sale_day_session_id)->toBe($this->sessionTwo->id)
+        ->and((string) $sale->date)->toBe('2026-09-02')
+        ->and($sale->updated_by)->toBe($this->world->user->id)
+        ->and((float) $this->sessionOne->fresh()->closing_amount)->toBe(300.0)
+        ->and((float) $this->sessionTwo->fresh()->closing_amount)->toBe(500.0);
+});
+
+it('assigns a sale that never had a session without touching the old till', function (): void {
+    $saleId = ($this->makeSale)('2026-09-02 14:30:00', null, 200);
+
+    $this->artisan('sale:sync-day-sessions', ['--force' => true])->assertExitCode(0);
+
+    expect(Sale::withoutGlobalScopes()->find($saleId)->sale_day_session_id)->toBe($this->sessionTwo->id)
+        ->and((float) $this->sessionOne->fresh()->closing_amount)->toBe(500.0)
+        ->and((float) $this->sessionTwo->fresh()->closing_amount)->toBe(500.0);
+});
+
+it('leaves the frozen till figures alone for a draft sale', function (): void {
+    $saleId = ($this->makeSale)('2026-09-02 14:30:00', $this->sessionOne->id, 200);
+    DB::table('sales')->where('id', $saleId)->update(['status' => 'draft']);
+
+    $this->artisan('sale:sync-day-sessions', ['--force' => true])->assertExitCode(0);
+
+    expect(Sale::withoutGlobalScopes()->find($saleId)->sale_day_session_id)->toBe($this->sessionTwo->id)
+        ->and((float) $this->sessionOne->fresh()->closing_amount)->toBe(500.0)
+        ->and((float) $this->sessionTwo->fresh()->closing_amount)->toBe(300.0);
+});
+
+it('refuses a session from another branch', function (): void {
+    $branchB = $this->world->addBranch('Lusail Branch', 'LB');
+    $sessionB = SaleDaySession::create([
+        'tenant_id' => $this->world->tenant->id,
+        'branch_id' => $branchB->id,
+        'opened_by' => $this->world->user->id,
+        'opened_at' => Carbon::parse('2026-09-02 09:00'),
+        'opening_amount' => 100,
+        'status' => 'open',
+    ]);
+
+    $saleId = ($this->makeSale)('2026-09-02 14:30:00', $this->sessionOne->id, 200);
+    $sale = Sale::withoutGlobalScopes()->find($saleId);
+
+    $response = (new ChangeDaySessionAction())->execute($sale, $sessionB, $this->world->user->id);
+
+    expect($response['success'])->toBeFalse()
+        ->and($response['message'])->toContain('different branch')
+        ->and($sale->fresh()->sale_day_session_id)->toBe($this->sessionOne->id);
 });
