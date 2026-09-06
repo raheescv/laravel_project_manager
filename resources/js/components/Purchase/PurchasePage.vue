@@ -35,20 +35,24 @@
                     </template>
 
                     <template v-if="purchases.status === 'draft'">
-                        <button type="button" @click="handleSave('draft')" class="pcx-btn">
-                            <i class="fa fa-file-o"></i> Save Draft
+                        <button type="button" @click="handleSave('draft')" class="pcx-btn" :disabled="isBusy">
+                            <i class="fa" :class="busy === 'draft' ? 'fa-spinner fa-spin' : 'fa-file-o'"></i>
+                            {{ busy === 'draft' ? 'Saving…' : 'Save Draft' }}
                         </button>
-                        <button type="button" @click="handleSubmit" class="pcx-btn pcx-btn--pri">
-                            <i class="fa fa-check"></i> Submit Purchase
+                        <button type="button" @click="handleSubmit" class="pcx-btn pcx-btn--pri" :disabled="isBusy">
+                            <i class="fa" :class="busy === 'completed' ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                            {{ busy === 'completed' ? 'Submitting…' : 'Submit Purchase' }}
                         </button>
                     </template>
                     <template v-else-if="purchases.status !== 'cancelled'">
                         <button v-if="canCancel" type="button" @click="handleSave('cancelled')"
-                            class="pcx-btn pcx-btn--danger">
-                            <i class="fa fa-ban"></i> Cancel Purchase
+                            class="pcx-btn pcx-btn--danger" :disabled="isBusy">
+                            <i class="fa" :class="busy === 'cancelled' ? 'fa-spinner fa-spin' : 'fa-ban'"></i>
+                            {{ busy === 'cancelled' ? 'Cancelling…' : 'Cancel Purchase' }}
                         </button>
-                        <button type="button" @click="handleSubmit" class="pcx-btn pcx-btn--pri">
-                            <i class="fa fa-check"></i> Submit Purchase
+                        <button type="button" @click="handleSubmit" class="pcx-btn pcx-btn--pri" :disabled="isBusy">
+                            <i class="fa" :class="busy === 'completed' ? 'fa-spinner fa-spin' : 'fa-check'"></i>
+                            {{ busy === 'completed' ? 'Submitting…' : 'Submit Purchase' }}
                         </button>
                     </template>
                 </div>
@@ -155,6 +159,16 @@
                     <b>{{ purchases.cancelled_user.name }}</b></span>
             </div>
         </form>
+
+        <!-- Blocking veil while the save round-trip is in flight; it stays up
+             through the redirect/reload that follows a successful save. -->
+        <div v-if="isBusy" class="pcx-busy" role="status" aria-live="polite">
+            <div class="pcx-busy-card">
+                <span class="pcx-busy-ring"></span>
+                <div class="pcx-busy-t">{{ busyLabel }}</div>
+                <div class="pcx-busy-s">Please wait, don't close this window.</div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -214,6 +228,24 @@ const accounts = ref([])
 const errors = ref([])
 const redirecting = ref(false)
 
+// Which save is in flight: 'draft' | 'completed' | 'cancelled' | null.
+// It is NOT cleared on success — the page reloads or redirects right after,
+// so the veil has to survive until the browser navigates.
+const busy = ref(null)
+let busyFailsafe = null
+
+const startBusy = (type) => {
+    busy.value = type
+    clearTimeout(busyFailsafe)
+    // Never strand the user behind a veil if a response never arrives.
+    busyFailsafe = setTimeout(() => { busy.value = null }, 45000)
+}
+
+const stopBusy = () => {
+    clearTimeout(busyFailsafe)
+    busy.value = null
+}
+
 // Permissions (these should come from backend)
 const canPrintPurchaseNote = ref(false)
 const canPrintBarcode = ref(false)
@@ -240,6 +272,14 @@ const statusChipClass = computed(() => {
     if (status === 'completed') return 'pcx-chip--ok'
     if (status === 'cancelled') return 'pcx-chip--bad'
     return ''
+})
+
+const isBusy = computed(() => busy.value !== null)
+
+const busyLabel = computed(() => {
+    if (busy.value === 'draft') return 'Saving draft…'
+    if (busy.value === 'cancelled') return 'Cancelling purchase…'
+    return 'Submitting purchase…'
 })
 
 const vendorName = computed(() => vendorMeta.value?.name || purchases.value.account?.name || '')
