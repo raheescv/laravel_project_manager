@@ -577,6 +577,101 @@
             padding: 10px 12px;
         }
 
+        /* admin switch */
+        .empx-switch-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+            padding: 11px 13px;
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            background: var(--surface-2);
+            transition: border-color .15s ease, background .15s ease;
+        }
+
+        .empx-switch-row:has(input:checked) {
+            border-color: var(--brand);
+            background: rgba(var(--brand-rgb), .08);
+        }
+
+        .empx-switch-copy {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .empx-switch-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .empx-switch-title i {
+            color: var(--brand);
+        }
+
+        .empx-switch-sub {
+            font-size: 11px;
+            color: var(--text-2);
+            margin-top: 2px;
+        }
+
+        .empx-switch {
+            position: relative;
+            flex: 0 0 auto;
+            width: 42px;
+            height: 23px;
+            cursor: pointer;
+        }
+
+        .empx-switch input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .empx-switch-track {
+            display: block;
+            width: 42px;
+            height: 23px;
+            border-radius: 999px;
+            background: var(--border-strong);
+            transition: background .15s ease;
+        }
+
+        .empx-switch-track::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(16, 24, 40, .35);
+            transition: transform .15s ease;
+        }
+
+        .empx-switch input:checked+.empx-switch-track {
+            background: var(--brand);
+        }
+
+        .empx-switch input:checked+.empx-switch-track::after {
+            transform: translateX(19px);
+        }
+
+        .empx-switch input:disabled+.empx-switch-track {
+            opacity: .55;
+        }
+
+        .empx-switch:has(input:disabled) {
+            cursor: not-allowed;
+        }
+
         /* ═══════════  FOOTER  ═══════════ */
         .empx-footer {
             display: flex;
@@ -977,6 +1072,26 @@
                             <i class="fa fa-info-circle"></i>
                             No roles are available to assign. Please create roles first.
                         </div>
+                    @endif
+
+                    @if ($this->canManageAdminFlag())
+                        @php($isSelf = isset($users['id']) && $users['id'] == auth()->id())
+                        <label class="empx-switch-row">
+                            <span class="empx-switch-copy">
+                                <span class="empx-switch-title"><i class="fa fa-star"></i> Administrator</span>
+                                <span class="empx-switch-sub">
+                                    @if ($isSelf)
+                                        You cannot change your own administrator access.
+                                    @else
+                                        Full access across the app, and the mobile app is unrestricted to their own records.
+                                    @endif
+                                </span>
+                            </span>
+                            <span class="empx-switch">
+                                <input type="checkbox" wire:model="isAdmin" @disabled($isSelf)>
+                                <span class="empx-switch-track"></span>
+                            </span>
+                        </label>
                     @endif
                 </div>
             </div>

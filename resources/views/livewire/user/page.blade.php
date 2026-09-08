@@ -169,6 +169,28 @@
                             @endif
                         </div>
                     </div>
+
+                    @if ($this->canManageAdminFlag())
+                        @php($isSelf = isset($users['id']) && $users['id'] == auth()->id())
+                        <div class="border rounded p-2 mt-3 d-flex align-items-center justify-content-between gap-3">
+                            <div>
+                                <div class="small fw-medium">
+                                    <i class="fa fa-star me-1 text-warning"></i>
+                                    Administrator
+                                </div>
+                                <div class="text-muted" style="font-size: 0.7rem;">
+                                    @if ($isSelf)
+                                        You cannot change your own administrator access.
+                                    @else
+                                        Full access across the app, and the mobile app is unrestricted to their own records.
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="is_admin" wire:model="isAdmin" @disabled($isSelf)>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

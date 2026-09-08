@@ -27,6 +27,10 @@ class Page extends Component
 
     public $selectedRoles = [];
 
+    // Mirrors users.is_admin. Kept out of $users so it can never reach the
+    // action's mass-assignment path; applied by applyAdminFlag() instead.
+    public $isAdmin = false;
+
     // Newly-picked upload (Livewire temporary file) and the path of the avatar
     // already on record, kept so it can be deleted once a replacement is saved.
     public $photo;
@@ -68,11 +72,13 @@ class Page extends Component
                 'designation_id' => '',
                 'order_no' => '',
             ];
+            $this->isAdmin = false;
             $this->originalImage = null;
         } else {
             $user = User::with('designation')->find($this->table_id);
             $this->users = $user->toArray();
             $this->selectedRoles = $user->roles->pluck('name')->toArray();
+            $this->isAdmin = (bool) $user->is_admin;
             $this->originalImage = $this->users['image'] ?? null;
         }
         $this->dispatch('SelectDropDownValues', $this->users);
@@ -123,15 +129,19 @@ class Page extends Component
             }
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->users);
-                if ($response['success'] && ! empty($this->selectedRoles)) {
+                if ($response['success']) {
                     $user = User::find($response['data']['id']);
-                    $user->syncRoles($this->assignableRoles());
+                    if (! empty($this->selectedRoles)) {
+                        $user->syncRoles($this->assignableRoles());
+                    }
+                    $this->applyAdminFlag($user);
                 }
             } else {
                 $response = (new UpdateAction())->execute($this->users, $this->table_id);
                 if ($response['success']) {
                     $user = User::find($this->table_id);
                     $user->syncRoles($this->assignableRoles());
+                    $this->applyAdminFlag($user);
                 }
             }
             if (! $response['success']) {
@@ -168,6 +178,33 @@ class Page extends Component
         }
 
         return array_values($roles);
+    }
+
+    /**
+     * Grant or revoke the administrator flag.
+     *
+     * Create/UpdateAction strip `is_admin` so it can never ride in on
+     * mass-assigned form input; it is written here instead, as its own
+     * deliberate step. Only an existing admin may change it, and nobody may
+     * revoke it from their own account — that would lock them out.
+     */
+    private function applyAdminFlag(User $user): void
+    {
+        if (! $this->canManageAdminFlag() || $user->id === auth()->id()) {
+            return;
+        }
+        $isAdmin = (bool) $this->isAdmin;
+        if ((bool) $user->is_admin !== $isAdmin) {
+            $user->update(['is_admin' => $isAdmin]);
+        }
+    }
+
+    /**
+     * Only an administrator may hand out administrator access.
+     */
+    public function canManageAdminFlag(): bool
+    {
+        return (bool) (auth()->user()?->is_admin || auth()->user()?->is_super_admin);
     }
 
     public function render()
