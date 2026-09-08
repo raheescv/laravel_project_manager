@@ -6,9 +6,11 @@
 ///
 /// Defaults are build-time values supplied via `--dart-define-from-file=env.json`.
 class AppConfig {
-  AppConfig({required this.baseUrl, required this.tenant, this.hostHeader = ''});
+  AppConfig({required String baseUrl, required this.tenant, this.hostHeader = ''})
+      : baseUrl = normalizeBaseUrl(baseUrl);
 
-  /// e.g. http://192.168.68.106  (no trailing slash, no /api)
+  /// e.g. http://192.168.68.106  (no trailing slash, no /api) — guaranteed, the
+  /// constructor runs [normalizeBaseUrl] over whatever it is handed.
   final String baseUrl;
 
   /// Tenant subdomain, e.g. "project_manager". Sent as `X-Tenant-Subdomain` /
@@ -42,6 +44,18 @@ class AppConfig {
 
   String get apiV1 => '$baseUrl/api/v1';
 
+  /// Strips the whitespace and trailing slashes a hand-typed (or pasted) host
+  /// arrives with. `https://shop.example.com/` would otherwise build
+  /// `https://shop.example.com//api/v1` — one slash the server never routed, on
+  /// every request the app makes.
+  static String normalizeBaseUrl(String raw) {
+    var value = raw.trim();
+    while (value.endsWith('/')) {
+      value = value.substring(0, value.length - 1);
+    }
+    return value;
+  }
+
   /// Absolute URL for a server asset/attachment. The API returns storage paths
   /// relative to the site root (e.g. `/storage/…`); we point them at the
   /// reachable [baseUrl] instead of whatever host the server would bake in, so
@@ -56,9 +70,7 @@ class AppConfig {
       if (uri.hasQuery) path = '$path?${uri.query}';
     }
     if (!path.startsWith('/')) path = '/$path';
-    final base =
-        baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
-    return '$base$path';
+    return '$baseUrl$path';
   }
 
   /// Headers to attach when loading an asset over HTTP — mirrors the Dio config

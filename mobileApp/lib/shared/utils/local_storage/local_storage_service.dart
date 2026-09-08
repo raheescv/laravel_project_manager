@@ -1,6 +1,8 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../crash_reporter.dart';
+import '../friendly_error.dart';
 import 'keys.dart';
 
 /// Thin persistence layer: the auth token lives in the secure keystore, while
@@ -20,30 +22,92 @@ class LocalStorageService {
   static Future<LocalStorageService> create() async =>
       LocalStorageService._(await SharedPreferences.getInstance());
 
+  // ---- secure store access ----
+  //
+  // Touching the keystore can fail without anything in the app being wrong.
+  // Android keeps these values in an encrypted preferences file that outlives
+  // the key which opens it, so a reinstall, a device-to-device restore or a
+  // screen-lock reset leaves every read throwing `BadPaddingException:
+  // BAD_DECRYPT`. That used to escape `main()` — the first read is the auth
+  // token, on the boot path — and put a Java stack trace in front of a cashier
+  // over a token they could have replaced by signing in again.
+  //
+  // So an unreadable store is not fatal here: it reads as "nothing stored",
+  // which is the same path an expired session already takes, and the ruined
+  // entries are dropped so the next launch starts clean.
+  static Future<String?> _read(String key) async {
+    try {
+      return await _secure.read(key: key);
+    } catch (e, s) {
+      await _recover(e, s, 'read $key');
+      return null;
+    }
+  }
+
+  static Future<void> _write(String key, String value) async {
+    try {
+      await _secure.write(key: key, value: value);
+    } catch (e, s) {
+      // Signing in should repair the device rather than fail on it, so a write
+      // into a store that can't be opened gets one more go after the wipe.
+      final wiped = await _recover(e, s, 'write $key');
+      if (!wiped) return;
+      try {
+        await _secure.write(key: key, value: value);
+      } catch (_) {
+        // Nothing left to try: this session simply won't survive a restart.
+      }
+    }
+  }
+
+  static Future<void> _delete(String key) async {
+    try {
+      await _secure.delete(key: key);
+    } catch (e, s) {
+      await _recover(e, s, 'delete $key');
+    }
+  }
+
+  /// Records the fault and, when the store is unreadable for good, empties it.
+  /// Returns whether it wiped.
+  ///
+  /// Only [FriendlyError.isSecureStoreUnreadable] earns the wipe. Every value in
+  /// here is re-obtainable by signing in, but the device-account roster is what
+  /// lets an offline till authenticate anyone at all — too costly to throw away
+  /// over a fault that might just be a keystore that wasn't ready yet.
+  static Future<bool> _recover(Object e, StackTrace s, String op) async {
+    CrashReporter.report(e, s, context: 'secure storage: $op');
+    if (!FriendlyError.isSecureStoreUnreadable(e)) return false;
+    try {
+      await _secure.deleteAll();
+      return true;
+    } catch (_) {
+      // Can't even clear it. Reads keep answering null through the catch above,
+      // so the app still starts — at the sign-in screen.
+      return false;
+    }
+  }
+
   // ---- token (secure) ----
-  Future<String?> readToken() => _secure.read(key: LocalStorageKeys.token);
+  Future<String?> readToken() => _read(LocalStorageKeys.token);
   Future<void> writeToken(String token) =>
-      _secure.write(key: LocalStorageKeys.token, value: token);
-  Future<void> clearToken() => _secure.delete(key: LocalStorageKeys.token);
+      _write(LocalStorageKeys.token, token);
+  Future<void> clearToken() => _delete(LocalStorageKeys.token);
 
   // ---- device account roster (secure) ----
   // Who has signed in on this device before, so an offline till can still let them
   // back in. Secure storage because it holds their PIN / password and API token —
   // the same class of secret as the biometric credential below, kept the same way.
-  Future<String?> readDeviceAccounts() =>
-      _secure.read(key: LocalStorageKeys.deviceAccounts);
+  Future<String?> readDeviceAccounts() => _read(LocalStorageKeys.deviceAccounts);
   Future<void> writeDeviceAccounts(String json) =>
-      _secure.write(key: LocalStorageKeys.deviceAccounts, value: json);
-  Future<void> clearDeviceAccounts() =>
-      _secure.delete(key: LocalStorageKeys.deviceAccounts);
+      _write(LocalStorageKeys.deviceAccounts, json);
+  Future<void> clearDeviceAccounts() => _delete(LocalStorageKeys.deviceAccounts);
 
   // ---- biometric credential (secure) ----
-  Future<String?> readBiometric() =>
-      _secure.read(key: LocalStorageKeys.biometric);
+  Future<String?> readBiometric() => _read(LocalStorageKeys.biometric);
   Future<void> writeBiometric(String json) =>
-      _secure.write(key: LocalStorageKeys.biometric, value: json);
-  Future<void> clearBiometric() =>
-      _secure.delete(key: LocalStorageKeys.biometric);
+      _write(LocalStorageKeys.biometric, json);
+  Future<void> clearBiometric() => _delete(LocalStorageKeys.biometric);
 
   // ---- terminal lock ----
   // The session survives a lock, so this flag is what stops a force-quit and

@@ -172,4 +172,12 @@ class FakeAdminRepository implements AdminRepository {
   @override
   Future<DaySessionToggleResult> toggleDay(String dateTime) async =>
       DaySessionToggleResult(message: 'ok', status: 'open', session: null);
+
+  @override
+  Future<DayStatus> dayStatus() async => DayStatus(
+        status: 'open',
+        date: DateTime.now().toIso8601String().split('T').first,
+        openedAt: '',
+        lastClosedAt: '',
+      );
 }

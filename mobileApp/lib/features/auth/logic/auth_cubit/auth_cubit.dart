@@ -89,13 +89,19 @@ class AuthCubit extends Cubit<AuthState> {
     // device holds for the old one: a PIN remembered for one tenant must never
     // open a session against another, and the cached catalog, lookups and photos
     // are that shop's stock and staff, not this one's.
-    final changed = baseUrl.trim() != config.baseUrl || tenant.trim() != config.tenant;
+    //
+    // Normalised on both sides of the comparison: `shop.example.com/` and
+    // `shop.example.com` are the same server, and re-saving the connection with
+    // a stray trailing slash must not read as a move to a different business
+    // and wipe the till.
+    final url = AppConfig.normalizeBaseUrl(baseUrl);
+    final changed = url != config.baseUrl || tenant.trim() != config.tenant;
     if (changed) {
       await _accounts.clear();
       await _clearOfflineData();
     }
-    _http.config = AppConfig(baseUrl: baseUrl.trim(), tenant: tenant.trim());
-    await _storage.setBaseUrl(baseUrl.trim());
+    _http.config = AppConfig(baseUrl: url, tenant: tenant.trim());
+    await _storage.setBaseUrl(url);
     await _storage.setTenant(tenant.trim());
     // The connection lives on HttpService, not in the state — emit so screens
     // showing the base URL / tenant repaint.
