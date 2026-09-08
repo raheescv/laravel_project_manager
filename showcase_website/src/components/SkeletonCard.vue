@@ -1,31 +1,10 @@
 <template>
-  <div class="skel">
-    <div class="skeleton skel__media"></div>
-    <div class="skel__body">
-      <div class="skeleton" style="height: 12px; width: 40%"></div>
-      <div class="skeleton" style="height: 20px; width: 75%"></div>
-      <div class="skeleton" style="height: 16px; width: 30%"></div>
+  <div class="card" aria-hidden="true">
+    <div class="card__media skel"></div>
+    <div class="card__body">
+      <div class="skel skel--line" style="width: 34%"></div>
+      <div class="skel skel--line" style="width: 80%; height: 16px"></div>
+      <div class="skel skel--line" style="width: 46%"></div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.skel {
-  border-radius: 22px;
-  overflow: hidden;
-  background: var(--card);
-  border: 1px solid var(--line);
-}
-
-.skel__media {
-  height: 232px;
-  border-radius: 0;
-}
-
-.skel__body {
-  padding: 20px 22px 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-</style>

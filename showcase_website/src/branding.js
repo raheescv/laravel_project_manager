@@ -1,12 +1,17 @@
-import { ref } from 'vue'
+import { reactive } from 'vue'
 
 import { fetchBranding } from '@/api/resources'
 
+export const storeName = import.meta.env.VITE_STORE_NAME || 'SIZE RUN'
+
 /**
- * System logo URL (Settings → General upload), or null to keep the initial-
- * letter monogram. Reactive because branding loads in parallel with mount.
+ * Admin-configured branding (Settings → Storefront / Company Profile).
+ * `logo` replaces the inline SIZE RUN mark when the tenant uploaded one.
  */
-export const brandLogo = ref(null)
+export const branding = reactive({
+  logo: null,
+  company: { name: null, mobile: null, email: null, google_review_url: null },
+})
 
 /** Parse a #rrggbb / #rgb string to [r, g, b] (0–255), or null if invalid. */
 function hexToRgb(hex) {
@@ -18,46 +23,35 @@ function hexToRgb(hex) {
 }
 
 const clamp = (n) => Math.max(0, Math.min(255, Math.round(n)))
-const toHex = ([r, g, b]) => '#' + [r, g, b].map((c) => clamp(c).toString(16).padStart(2, '0')).join('')
+const toHex = (rgb) => '#' + rgb.map((c) => clamp(c).toString(16).padStart(2, '0')).join('')
 
-/** Mix a color toward white (amt > 0) or black (amt < 0), amt in [-1, 1]. */
+/** Mix a colour toward white (amt > 0) or black (amt < 0), amt in [-1, 1]. */
 function shade([r, g, b], amt) {
   const target = amt >= 0 ? 255 : 0
-  const t = Math.abs(amt)
-  return [r + (target - r) * t, g + (target - g) * t, b + (target - b) * t]
+  const k = Math.abs(amt)
+  return [r + (target - r) * k, g + (target - g) * k, b + (target - b) * k]
 }
 
 /**
- * Push a primary accent color into the document as the --gold* CSS variables
- * the theme is built on. Derives the lighter/darker variants and the rgb
- * triples used by rgba() color mixes.
+ * Push the accent into the --blue* tokens the stylesheet is built on: the
+ * size stage field, selected states, buttons and the bag count all follow it.
  */
 export function applyPrimaryColor(hex) {
   const base = hexToRgb(hex)
   if (!base) return
-
-  const bright = shade(base, 0.22)
-  const deep = shade(base, -0.28)
-  const rgb = (c) => c.map(clamp).join(', ')
   const root = document.documentElement.style
-
-  root.setProperty('--gold', toHex(base))
-  root.setProperty('--gold-rgb', rgb(base))
-  root.setProperty('--gold-bright', toHex(bright))
-  root.setProperty('--gold-bright-rgb', rgb(bright))
-  root.setProperty('--gold-deep', toHex(deep))
-  root.setProperty('--gold-deep-rgb', rgb(deep))
+  root.setProperty('--blue', toHex(base))
+  root.setProperty('--blue-600', toHex(shade(base, 0.14)))
+  root.setProperty('--blue-900', toHex(shade(base, -0.5)))
 }
 
-/**
- * Load branding from the API and apply it. Best-effort: on any failure the
- * static defaults in main.css (the SIZE RUN blue) stay in place.
- */
+/** Load branding from the API and apply it. Best-effort — CSS defaults stay otherwise. */
 export async function loadBranding() {
   try {
     const data = await fetchBranding()
     if (data?.primary_color) applyPrimaryColor(data.primary_color)
-    if (data?.logo) brandLogo.value = data.logo
+    branding.logo = data?.logo || null
+    Object.assign(branding.company, data?.company || {})
   } catch {
     /* keep CSS defaults */
   }

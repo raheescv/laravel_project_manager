@@ -8,57 +8,50 @@ export function fetchProducts(params = {}) {
   return client.get('/products', { params: prune(params) })
 }
 
-/** GET /products/{id} — full detail (images360, related_sizes…). */
+/** GET /products/{id} — full detail (images, images360, inventories, related_sizes…). */
 export function fetchProduct(id) {
   return client.get(`/products/${id}`)
 }
 
-/** GET /products/single?barcode= — full detail by barcode. */
-export function fetchProductByBarcode(barcode) {
-  return client.get('/products/single', { params: { barcode } })
-}
-
-/** GET /categories — [{ id, name, product_count }] */
-export function fetchCategories() {
-  return client.get('/categories')
-}
-
-/** GET /brands — [{ id, name, product_count }] */
+/**
+ * GET /brands?size= — [{ id, name, image_path, product_count }]
+ * Counts are already scoped to in-stock products (and to `size` when given);
+ * brands with nothing behind them are dropped server-side.
+ */
 export function fetchBrands(params = {}) {
   return client.get('/brands', { params: prune(params) })
 }
 
 /**
- * GET /sizes?code= — backend returns { young_sizes: [{size}], adult_sizes: [{size}] }
- * (older shapes: { kids_sizes, other_sizes } or a flat array). Normalized to
- * [{ size, group }] where group is 'young' | 'adult'.
+ * GET /sizes — backend returns { young_sizes: [...], adult_sizes: [...] } where
+ * each entry is { size, stock_total, in_stock } (older shapes: kids_sizes /
+ * other_sizes, or a flat array). Normalised to { adult: [], young: [] }.
  */
 export async function fetchSizes(params = {}) {
   const data = await client.get('/sizes', { params: prune(params) })
-  if (Array.isArray(data)) return data.map((s) => ({ ...s, group: 'adult' }))
-  const young = data?.young_sizes || data?.kids_sizes || []
-  const adult = data?.adult_sizes || data?.other_sizes || []
-  return [
-    ...young.map((s) => ({ ...s, group: 'young' })),
-    ...adult.map((s) => ({ ...s, group: 'adult' })),
-  ]
+  const norm = (list) =>
+    (Array.isArray(list) ? list : [])
+      .filter((s) => s && s.size !== null && s.size !== undefined && String(s.size) !== '')
+      .map((s) => ({
+        size: String(s.size),
+        stock_total: Number(s.stock_total) || 0,
+        in_stock: s.in_stock === undefined ? true : Boolean(s.in_stock),
+      }))
+  if (Array.isArray(data)) return { adult: norm(data), young: [] }
+  return {
+    adult: norm(data?.adult_sizes || data?.other_sizes),
+    young: norm(data?.young_sizes || data?.kids_sizes),
+  }
 }
 
-/** GET /colors?code= — [{ color, product_count }] */
-export function fetchColors(params = {}) {
-  return client.get('/colors', { params: prune(params) })
-}
-
-/** GET /branches?query= — [{ id, name, code, location, mobile }] */
+/** GET /branches — [{ id, name, code, location, mobile }] (showcase-visible shops only). */
 export function fetchBranches(params = {}) {
   return client.get('/branches', { params: prune(params) })
 }
 
 /**
- * GET /settings/branding — storefront branding configured in the admin
- * (Settings → Storefront). Returns { primary_color, logo } — a hex string and
- * an absolute logo URL (null when the tenant hasn't uploaded one). The
- * accent color drives the whole theme via CSS variables (see branding.js).
+ * GET /settings/branding — { primary_color, logo, company: { name, mobile, email } }
+ * configured in the admin (Settings → Storefront / Company Profile).
  */
 export function fetchBranding() {
   return client.get('/settings/branding')

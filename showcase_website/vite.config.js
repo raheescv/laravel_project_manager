@@ -5,6 +5,9 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [vue()],
+  // Relative asset URLs + hash routing: the built bundle works from any
+  // sub-folder (e.g. /sizerun-site/site/) with no server rewrite rules.
+  base: './',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
