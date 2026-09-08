@@ -86,3 +86,44 @@ class DaySessionToggleResult extends Equatable {
         session,
       ];
 }
+
+/// The live day-session state of the user's branch (`GET /admin/day-status`).
+///
+/// The signed-in [ApiUser] carries a copy of this, but it is only as fresh as
+/// the last sign-in or toggle *on this device* — on a shared till another
+/// device (or the web) can open or close the day underneath it. The dashboard
+/// re-reads this on every refresh and syncs it back into the cached user, so
+/// the day pill's status and date come from the database rather than whatever
+/// this device last saw.
+class DayStatus extends Equatable {
+  const DayStatus({
+    required this.status,
+    required this.date,
+    required this.openedAt,
+    required this.lastClosedAt,
+    this.session,
+  });
+
+  final String status; // open | closed
+  final String date; // 'yyyy-MM-dd' business day
+  final String openedAt; // 'Y-m-d H:i:s' while open, else ''
+  final String lastClosedAt; // 'Y-m-d H:i:s' of the most recent close, else ''
+  final DaySession? session;
+
+  bool get isOpen => status == 'open';
+
+  factory DayStatus.fromJson(Map<String, dynamic> j) => DayStatus(
+        status: asStr(j['status']).isNotEmpty
+            ? asStr(j['status'])
+            : (j['is_open'] == true ? 'open' : 'closed'),
+        date: asStr(j['date']),
+        openedAt: asStr(j['opened_at']),
+        lastClosedAt: asStr(j['last_closed_at']),
+        session: j['session'] is Map
+            ? DaySession.fromJson(Map<String, dynamic>.from(j['session']))
+            : null,
+      );
+
+  @override
+  List<Object?> get props => [status, date, openedAt, lastClosedAt, session];
+}

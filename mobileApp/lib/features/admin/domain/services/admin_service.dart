@@ -39,6 +39,12 @@ class AdminService implements AdminRepository {
   }
 
   @override
+  Future<DayStatus> dayStatus() async {
+    final data = await _http.get(EndPoints.dayStatus);
+    return DayStatus.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  @override
   Future<DaySessionToggleResult> toggleDay(String dateTime) async {
     final data = await _http.post(EndPoints.dayStatus, body: {'date': dateTime});
     return DaySessionToggleResult.fromJson(Map<String, dynamic>.from(data));

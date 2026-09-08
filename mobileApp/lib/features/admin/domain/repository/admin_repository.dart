@@ -14,4 +14,7 @@ abstract class AdminRepository {
   });
 
   Future<DaySessionToggleResult> toggleDay(String dateTime);
+
+  /// The branch's day-session state as the server holds it right now.
+  Future<DayStatus> dayStatus();
 }

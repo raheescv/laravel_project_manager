@@ -39,7 +39,9 @@ class DaySessionController extends Controller
      * Check the current day session status.
      *
      * Returns whether the authenticated user's default branch currently has an
-     * open day session, along with the open session's details when one exists.
+     * open day session, the open session's details when one exists, and the
+     * moment of the most recent close — enough for a client to refresh its
+     * cached day-session block without signing in again.
      */
     public function status(Request $request): JsonResponse
     {
@@ -57,10 +59,28 @@ class DaySessionController extends Controller
                 $session->load(['opener:id,name', 'closer:id,name', 'branch']);
             }
 
+            // The most recent close, so a client refreshing while the day is
+            // shut can still show "Last closed …" — the open session alone
+            // leaves it with nothing to render.
+            $lastClosed = SaleDaySession::where('branch_id', $branchId)
+                ->where('status', 'closed')
+                ->orderBy('closed_at', 'desc')
+                ->first();
+
             return $this->sendSuccess([
                 'is_open' => $isOpen,
                 'status' => $isOpen ? 'open' : 'closed',
-                'session' => $session ? new DaySessionResource($session) : null,
+                // Same shape as AuthUserResource's day-session block, so a
+                // client can refresh its cached user straight from this.
+                'date' => $isOpen ? $session->opened_at->format('Y-m-d') : now()->format('Y-m-d'),
+                'opened_at' => $session?->opened_at?->format('Y-m-d H:i:s'),
+                'last_closed_at' => $lastClosed?->closed_at?->format('Y-m-d H:i:s'),
+                // Opening/closing/expected float belongs to whoever runs the
+                // day, so the session block is permission-gated even though the
+                // status above it is not.
+                'session' => $session && $request->user()->can('day session.create')
+                    ? new DaySessionResource($session)
+                    : null,
             ], $isOpen ? 'Day is open' : 'Day is closed');
         } catch (\Exception $e) {
             return $this->sendServerError('Failed to check day status: '.$e->getMessage());

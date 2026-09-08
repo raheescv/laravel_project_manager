@@ -186,7 +186,8 @@ class AdminCubit extends Cubit<AdminState> {
     // close the day — so the server's answer is reconciled below.
     final assumed = _sessionDate;
     final cards = _loadCards();
-    final decoration = Future.wait([_loadTopStylists(assumed), _loadTrend()]);
+    final decoration =
+        Future.wait([_loadTopStylists(assumed), _loadTrend(), _syncDayStatus()]);
 
     await cards;
     if (!isClosed) emit(state.copyWith(loading: false));
@@ -197,6 +198,36 @@ class AdminCubit extends Cubit<AdminState> {
     final actual = state.dashboard?.date ?? '';
     if (actual.isNotEmpty && actual != assumed && !isClosed) {
       await _loadTopStylists(actual);
+    }
+  }
+
+  /// Re-reads the branch's day-session state from the server and writes it back
+  /// into the cached user, so a refresh shows the day as the *database* has it.
+  /// The user's copy is only as fresh as the last sign-in or toggle on this
+  /// device: on a shared till another device can open or close the day, and an
+  /// app left running overnight still carries yesterday's session date.
+  Future<void> _syncDayStatus() async {
+    try {
+      final live = await _repo.dayStatus();
+      final auth = serviceLocator<AuthCubit>();
+      final user = auth.user;
+      // Nothing moved — don't churn storage or rebuild every AuthCubit watcher.
+      if (user != null &&
+          user.daySessionStatus == live.status &&
+          user.daySessionDate == live.date &&
+          user.daySessionOpenedAt == live.openedAt &&
+          user.lastClosedSessionAt == live.lastClosedAt) {
+        return;
+      }
+      await auth.syncDaySession(
+        status: live.status,
+        openedAt: live.openedAt,
+        date: live.date,
+        lastClosedAt: live.lastClosedAt,
+      );
+    } catch (_) {
+      // Offline or the endpoint said no — keep the cached day state rather than
+      // blanking the pill; the KPI cards above it still render.
     }
   }
 

@@ -191,8 +191,12 @@ Route::prefix('v1')->group(function () {
                 Route::get('/reports', [ReportController::class, 'index'])
                     ->middleware(EnsureMobilePermission::class.':report.sale item')
                     ->name('api.v1.admin.reports');
+                // Readable by any signed-in user: it refreshes the same
+                // open/closed + timestamps the login response already hands
+                // every user (AuthUserResource), so the dashboard's day pill
+                // stays true for a cashier too. The till amounts inside
+                // `session` are still withheld without 'day session.create'.
                 Route::get('/day-status', [DaySessionController::class, 'status'])
-                    ->middleware(EnsureMobilePermission::class.':day session.create')
                     ->name('api.v1.admin.day-status.check');
                 Route::post('/day-status', [DaySessionController::class, 'toggle'])
                     ->middleware(EnsureMobilePermission::class.':day session.create')
