@@ -18,7 +18,7 @@ typedef OnReachability = void Function(bool reachable);
 /// There is no auth token here on purpose: every endpoint this app touches is
 /// part of the public catalog, and the showcase never signs anyone in.
 class HttpService {
-  HttpService({required this.config}) {
+  HttpService({required this.config, HttpClientAdapter? adapter}) {
     _dio = Dio(BaseOptions(
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 30),
@@ -28,6 +28,7 @@ class HttpService {
     ));
     // Local `.test` hosts serve a self-signed certificate; debug builds accept it.
     configureDevHttp(_dio);
+    if (adapter != null) _dio.httpClientAdapter = adapter;
     _dio.interceptors.add(InterceptorsWrapper(
       onResponse: (response, handler) {
         // Any response at all — including 4xx/5xx — proves the server was
@@ -60,14 +61,17 @@ class HttpService {
   static const Duration _deadline = Duration(seconds: 25);
 
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) async {
+    final cancelToken = CancelToken();
     try {
-      final res = await _dio
-          .get(
-            '${config.apiV1}$path',
-            queryParameters: _encode({..._baseQuery(), ...?query}),
-            options: Options(headers: _headers()),
-          )
-          .timeout(_deadline);
+      final res = await _getWithRetry(
+        '${config.apiV1}$path',
+        _encode({..._baseQuery(), ...?query}),
+        _headers(),
+        cancelToken,
+      ).timeout(_deadline, onTimeout: () {
+        cancelToken.cancel('Request deadline exceeded');
+        throw TimeoutException('Request deadline exceeded');
+      });
       return _unwrap(res);
     } on ApiException {
       rethrow;
@@ -75,6 +79,7 @@ class HttpService {
       if (_unreachable(e)) throw OfflineException();
       throw ApiException(e.message ?? 'Request failed');
     } on TimeoutException {
+      onReachability?.call(false);
       throw OfflineException();
     } catch (e) {
       // Anything else — a malformed body, a cast that did not hold, a bug in
@@ -82,6 +87,34 @@ class HttpService {
       // and nothing else, so an escaping exception does not surface as an
       // error: it strands the screen on its spinner with no way back.
       throw ApiException('Something went wrong loading this.');
+    }
+  }
+
+  /// Retry a transient transport failure once, within the original deadline.
+  /// The URL, tenant and branch stay fixed even if the store changes while
+  /// waiting. Cancellation stops both an active request and a pending retry.
+  Future<Response<dynamic>> _getWithRetry(
+    String url,
+    Map<String, dynamic> query,
+    Map<String, dynamic> headers,
+    CancelToken cancelToken,
+  ) async {
+    for (var attempt = 0; ; attempt++) {
+      if (cancelToken.isCancelled) throw cancelToken.cancelError!;
+      try {
+        return await _dio.get(
+          url,
+          queryParameters: query,
+          options: Options(headers: headers),
+          cancelToken: cancelToken,
+        );
+      } on DioException catch (e) {
+        final transient = e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout;
+        if (attempt > 0 || !transient || cancelToken.isCancelled) rethrow;
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      }
     }
   }
 
