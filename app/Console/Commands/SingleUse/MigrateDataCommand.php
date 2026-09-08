@@ -14,6 +14,7 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserHasBranch;
 use App\Services\TenantService;
@@ -31,6 +32,7 @@ use Spatie\Permission\PermissionRegistrar;
 class MigrateDataCommand extends Command
 {
     protected $signature = 'migrate:database-data
+        {--tenant= : Tenant id to migrate into (defaults to the resolved/TENANT_ID tenant, or the only tenant when there is just one)}
         {--force : Run even if the target database already contains migrated data}
         {--fast : Also relax global sync_binlog for maximum speed (dedicated migration DB only; restored on finish)}';
 
@@ -42,6 +44,15 @@ class MigrateDataCommand extends Command
 
     public function handle()
     {
+        // A console run has no request and no authenticated user, so nothing pins the tenant:
+        // TenantScope would leave every read unscoped, BelongsToTenant would insert null
+        // tenant_ids, and getNextUniqueNumber() (barcodes, invoice numbers) throws outright.
+        // Resolve it once, up front, and pin it on the TenantService singleton so the whole
+        // migration - including the sync jobs it dispatches - runs inside that tenant.
+        if (! $this->bindTenant()) {
+            return self::FAILURE;
+        }
+
         // This command is not idempotent: branches() truncates and every other entity uses
         // ::create(), so a second run duplicates all data. Abort if the target already looks
         // migrated, unless explicitly forced.
@@ -61,11 +72,6 @@ class MigrateDataCommand extends Command
         // throw "Inventory not found" and silently skip the row. Running sync guarantees the
         // inventory exists before any transaction is replayed.
         config(['queue.default' => 'sync']);
-
-        // branches/accounts are inserted with raw DB::table()->insertOrIgnore(), which bypasses
-        // the BelongsToTenant creating-hook. Their tenant_id columns are NOT NULL with no default,
-        // so tenant_id must be supplied explicitly or every row is silently dropped by insertOrIgnore.
-        $this->tenantId = app(TenantService::class)->getCurrentTenantId();
 
         $this->paymentModesIds = DB::connection('mysql2')->table('account_heads')->whereIn('account_category_id', [16, 17])->pluck('id', 'id')->toArray();
         Artisan::call('db:ensure-procedures');
@@ -146,6 +152,45 @@ class MigrateDataCommand extends Command
         }
 
         $this->info('Data migration completed successfully!');
+    }
+
+    /**
+     * Resolve the tenant this migration writes into and pin it for the rest of the process.
+     *
+     * $this->tenantId is also used directly by branches()/accounts()/settings(), which insert
+     * with raw DB::table()->insertOrIgnore(). That bypasses the BelongsToTenant creating-hook,
+     * and their tenant_id columns are NOT NULL with no default, so the id must be passed
+     * explicitly or every row is silently dropped by insertOrIgnore.
+     */
+    private function bindTenant(): bool
+    {
+        $tenantService = app(TenantService::class);
+
+        $tenantId = $this->option('tenant') ?: $tenantService->getCurrentTenantId();
+
+        // Nothing configured: fall back to the single tenant when the database has exactly one,
+        // which is the normal shape for this one-shot migration.
+        if (! $tenantId && Tenant::query()->count() === 1) {
+            $tenantId = Tenant::query()->value('id');
+        }
+
+        $tenant = $tenantId ? Tenant::find($tenantId) : null;
+
+        if (! $tenant) {
+            $this->error($tenantId
+                ? "Tenant {$tenantId} not found."
+                : 'No tenant could be resolved for this migration.');
+            $this->warn('Pass --tenant=<id>, or set TENANT_ID in .env, before running this command.');
+
+            return false;
+        }
+
+        $tenantService->setCurrentTenant($tenant);
+        $this->tenantId = $tenant->id;
+
+        $this->info("Migrating into tenant {$tenant->id} ({$tenant->name}).");
+
+        return true;
     }
 
     private function refreshLookupCaches(): void
@@ -359,7 +404,7 @@ class MigrateDataCommand extends Command
 
         // Old accounts DB stores settings as a key/value table: `configurations` (keys, values).
         // New project_manager DB uses `configurations` (tenant_id, key, value) unique per
-        // (tenant_id, key). We map keys->key, values->value under tenant 1.
+        // (tenant_id, key). We map keys->key, values->value under the migrating tenant.
         $configurations = DB::connection('mysql2')
             ->table('configurations')
             ->get();
@@ -379,7 +424,7 @@ class MigrateDataCommand extends Command
             // updateOrInsert on (tenant_id, key) keeps this idempotent and honours the unique
             // constraint. `value` is NOT NULL in the new schema, so coerce null -> ''.
             DB::table('configurations')->updateOrInsert(
-                ['tenant_id' => 1, 'key' => $configuration->keys],
+                ['tenant_id' => $this->tenantId, 'key' => $configuration->keys],
                 [
                     'value' => $configuration->values ?? '',
                     'created_at' => $configuration->created_at,
@@ -1040,7 +1085,7 @@ class MigrateDataCommand extends Command
                             // keeps this idempotent. Old tables carry no timestamps, so stamp now().
                             DB::table('employee_commissions')->updateOrInsert(
                                 [
-                                    'tenant_id' => 1,
+                                    'tenant_id' => $this->tenantId,
                                     'product_id' => $product_id,
                                     'employee_id' => $employee_id,
                                 ],
