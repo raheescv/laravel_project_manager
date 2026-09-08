@@ -120,6 +120,10 @@ class MigrateSalesChunkJob implements ShouldQueue
             ->get()
             ->groupBy('sale_id');
 
+        // `discount` is part of the grouping key, not a SUM: the old schema stores it PER UNIT
+        // (see buildSaleData), so adding it up across merged rows would be meaningless, and two
+        // rows of the same product at the same net price but different discounts describe
+        // different list prices and must stay apart.
         $itemsBySale = DB::connection('mysql2')
             ->table('sale_items')
             ->select(
@@ -127,12 +131,12 @@ class MigrateSalesChunkJob implements ShouldQueue
                 'product_id',
                 'employee_id',
                 'unit_price',
-                DB::raw('SUM(quantity) as total_quantity'),
-                DB::raw('SUM(discount) as total_discount')
+                'discount',
+                DB::raw('SUM(quantity) as total_quantity')
             )
             ->whereNull('deleted_at')
             ->whereIn('sale_id', $this->saleIds)
-            ->groupBy('sale_id', 'product_id', 'employee_id', 'unit_price')
+            ->groupBy('sale_id', 'product_id', 'employee_id', 'unit_price', 'discount')
             ->get()
             ->groupBy('sale_id');
 
@@ -249,6 +253,22 @@ class MigrateSalesChunkJob implements ShouldQueue
     /**
      * Build the SaleCreateAction payload for one source sale from the prefetched child rows and the
      * in-memory lookup maps. Pure (no writes); throws only for unmappable account/service inventory.
+     *
+     * Line pricing is deliberately re-expressed, because the two schemas mean opposite things by the
+     * same column names. The old one stores a PER-UNIT discount already taken off the rate:
+     *
+     *     unit_price = mrp - discount        total = unit_price * quantity
+     *
+     * The new sale_items store the GROSS rate with a LINE discount, and derive the money in stored
+     * generated columns (so any 'total'/'net_amount' passed in here would be ignored anyway):
+     *
+     *     gross_amount = unit_price * quantity      net_amount = gross_amount - discount
+     *
+     * Replaying the old numbers verbatim therefore charged every discount twice - a 1,500 service
+     * sold for 1,000 landed as 1,000 gross less 500, i.e. a 500 sale - and because sales.grand_total
+     * is generated from the items, the sale total was wrong too. Mapping the rate back up to the
+     * list price (unit_price + discount, which equals the old mrp on every source row) and scaling
+     * the discount to the line reproduces the original net exactly.
      */
     protected function buildSaleData($sale, $accountMap, $userMap, $employeeMap, $productMap, $serviceMap, $inventoryMap, $serviceItemsBySale, $itemsBySale, $journalsBySale): array
     {
@@ -268,9 +288,16 @@ class MigrateSalesChunkJob implements ShouldQueue
             'tax_amount' => 0,
             'other_discount' => $sale->other_discount ? $sale->other_discount : 0,
             'freight' => 0,
-            'grand_total' => $sale->grand_total,
+            // Sign flip, not a copy. The old schema SUBTRACTS its round_off (grand_total = total -
+            // other_discount - round_off, and every stored value is <= 0: it holds the fraction that
+            // was knocked off); the new grand_total is generated as total - other_discount + freight
+            // + round_off. Carried across verbatim - or dropped, as it was - the rounding is lost and
+            // the sale under-totals by that fraction: 275.00 less 37.50 settles at 237.50 where the
+            // original invoice was rounded to, and paid as, 238.00.
+            'round_off' => -($sale->round_off ?? 0),
+            // Not part of grand_total in either schema (it is money on top, recorded for the record).
+            'tip' => $sale->tip ?? 0,
             'paid' => $sale->paid ? $sale->paid : 0,
-            'balance' => $sale->balance,
             'address' => null,
             'status' => $sale->status == 2 ? 'completed' : 'draft',
             'source' => 'migration',
@@ -291,12 +318,10 @@ class MigrateSalesChunkJob implements ShouldQueue
                 'employee_id' => $employeeMap[$value->employee_id] ?? null,
                 'product_id' => $product_id,
                 'unit_id' => $product?->unit_id,
-                'unit_price' => $value->unit_price,
+                'unit_price' => $value->unit_price + $value->discount,
                 'quantity' => $value->quantity,
-                'gross_total' => $value->unit_price * $value->quantity,
-                'discount' => $value->discount,
+                'discount' => $value->discount * $value->quantity,
                 'tax' => 0,
-                'total' => $value->unit_price * $value->quantity,
             ];
         }
 
@@ -310,12 +335,10 @@ class MigrateSalesChunkJob implements ShouldQueue
                 'employee_id' => $employeeMap[$value->employee_id] ?? null,
                 'product_id' => $product_id,
                 'unit_id' => $product?->unit_id,
-                'unit_price' => $value->unit_price,
+                'unit_price' => $value->unit_price + $value->discount,
                 'quantity' => $value->total_quantity,
-                'net_amount' => $value->unit_price * $value->total_quantity,
-                'discount' => $value->total_discount,
+                'discount' => $value->discount * $value->total_quantity,
                 'tax' => 0,
-                'total' => ($value->unit_price * $value->total_quantity) - $value->total_discount,
             ];
         }
 
@@ -326,10 +349,12 @@ class MigrateSalesChunkJob implements ShouldQueue
 
         $data['items'] = collect($data['items']);
 
-        $data['gross_amount'] = $data['items']->sum('net_amount');
+        // Only these two are stored on the sale: total, grand_total and balance are generated from
+        // them (plus other_discount/freight/round_off), so the header's own copies are ignored.
+        // SaleCreateAction re-derives both from the created items; seeding them here just keeps the
+        // inserted row correct from the start.
+        $data['gross_amount'] = $data['items']->sum(fn ($item) => $item['unit_price'] * $item['quantity']);
         $data['item_discount'] = $data['items']->sum('discount');
-        $data['total_quantity'] = $data['items']->sum('quantity');
-        $data['total'] = $data['items']->sum('total');
 
         $data['payments'] = [];
         foreach ($journalsBySale[$sale->id] ?? [] as $value) {

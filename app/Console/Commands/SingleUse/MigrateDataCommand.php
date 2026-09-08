@@ -612,16 +612,18 @@ class MigrateDataCommand extends Command
                                 if (! $inventory_id) {
                                     throw new \Exception('Inventory not found for product ID: '.$value->product_id);
                                 }
+                                // Old rows carry a PER-UNIT discount already taken off the rate
+                                // (unit_price = mrp - discount, total = unit_price * quantity); the
+                                // new items want the gross rate and a LINE discount, and derive the
+                                // money in generated columns. See MigrateSalesChunkJob::buildSaleData().
                                 $item = [
                                     'inventory_id' => $inventory_id,
                                     'product_id' => $product_id,
                                     'batch' => $value->batch,
-                                    'unit_price' => $value->unit_price,
-                                    'net_amount' => $value->unit_price * $value->quantity,
+                                    'unit_price' => $value->unit_price + $value->discount,
                                     'quantity' => $value->quantity,
-                                    'discount' => $value->discount,
+                                    'discount' => $value->discount * $value->quantity,
                                     'tax' => 0,
-                                    'total' => ($value->unit_price * $value->quantity) - $value->discount,
                                 ];
                                 $data['items'][] = $item;
                             }
@@ -871,17 +873,17 @@ class MigrateDataCommand extends Command
                                     throw new \Exception('Inventory not found for product ID: '.$value->product_id.' for the branch ID: '.$branch_id);
                                 }
 
+                                // Per-unit discount -> gross rate + line discount, as in purchases()
+                                // and MigrateSalesChunkJob::buildSaleData().
                                 $item = [
                                     'sale_id' => $sale_id,
                                     'sale_item_id' => $sale_item_id,
                                     'inventory_id' => $inventory_id,
                                     'product_id' => $product_id,
-                                    'unit_price' => $value->unit_price,
+                                    'unit_price' => $value->unit_price + $value->discount,
                                     'quantity' => $value->quantity,
-                                    'gross_total' => $value->unit_price * $value->quantity,
-                                    'discount' => $value->discount,
+                                    'discount' => $value->discount * $value->quantity,
                                     'tax' => 0,
-                                    'total' => $value->unit_price * $value->quantity,
                                 ];
                                 $data['items'][] = $item;
                             }
