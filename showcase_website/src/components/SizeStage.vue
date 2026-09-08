@@ -48,23 +48,9 @@ async function pick(size) {
         </div>
       </div>
 
-      <template v-else>
-        <SizeRail
-          v-if="catalog.sizes.adult.length"
-          :label="`${t('euLabel')} · ${t('adultSizes')}`"
-          :sizes="catalog.sizes.adult"
-          @pick="pick"
-        />
-        <SizeRail
-          v-if="catalog.sizes.young.length"
-          :label="`${t('euLabel')} · ${t('kidsSizes')}`"
-          :sizes="catalog.sizes.young"
-          @pick="pick"
-        />
-        <p v-if="!catalog.sizes.adult.length && !catalog.sizes.young.length" class="rail__empty">
-          {{ t('noSizes') }}
-        </p>
-      </template>
+      <SizeRail v-else-if="catalog.allSizes.length" :label="t('euLabel')" :sizes="catalog.allSizes" @pick="pick" />
+
+      <p v-else class="rail__empty">{{ t('noSizes') }}</p>
     </div>
   </section>
 </template>

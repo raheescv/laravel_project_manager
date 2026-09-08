@@ -53,6 +53,21 @@ export const useCatalogStore = defineStore('catalog', () => {
     brands.value.reduce((n, b) => n + (Number(b.product_count) || 0), 0),
   )
   const productCount = computed(() => pagination.value?.total ?? products.value.length)
+  /**
+   * One ruler for the whole shop: adult and kids sizes merged into a single
+   * ascending run (numbers first, letter sizes after). A size string that the
+   * backend files under both groups collapses to one tick.
+   */
+  const allSizes = computed(() => {
+    const bySize = new Map()
+    for (const s of [...sizes.value.adult, ...sizes.value.young]) {
+      const prev = bySize.get(s.size)
+      bySize.set(s.size, prev
+        ? { size: s.size, stock_total: prev.stock_total + s.stock_total, in_stock: prev.in_stock || s.in_stock }
+        : { ...s })
+    }
+    return sortSizes([...bySize.values()], (s) => s.size)
+  })
 
   // ---- persistence ------------------------------------------------------
   function restore() {
@@ -280,6 +295,7 @@ export const useCatalogStore = defineStore('catalog', () => {
     brandLabel,
     brandsTotal,
     productCount,
+    allSizes,
     toQuery,
     hasQuery,
     applyQuery,

@@ -363,8 +363,27 @@ html[dir="rtl"] .h-sm{letter-spacing:0;text-transform:none;font-size:.95rem}
 .logo__img--foot{height:42px;max-width:200px;background:#fff;border-radius:10px;padding:5px 10px}
 @media (max-width:640px){.logo__img--head{height:28px;max-width:140px}}
 
-/* --- size rail: two runs (adult / kids) + sold-out ticks ------------------- */
-.size__rail + .size__rail{margin-block-start:22px}
+/* --- size rail: always a horizontal scroller ------------------------------- */
+/* The stage is a grid with an implicit `auto` column, and the track (min-width:
+   max-content) makes that column grow to the full run — 4000px+ with live data —
+   so the rail never overflowed and could not scroll; the stage's overflow:hidden
+   just clipped it. Pin the column to the container width instead. */
+.size__grid{grid-template-columns:minmax(0,1fr)}
+.size__rail{min-width:0}
+/* The reference hid the scrollbar and, under 640px, wrapped the ticks into a
+   tall grid. With 80+ live sizes the rail must visibly scroll everywhere. */
+.rail{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.5) rgba(255,255,255,.12);padding-block-end:8px;overscroll-behavior-x:contain}
+.rail::-webkit-scrollbar{display:block;height:4px}
+.rail::-webkit-scrollbar-track{background:rgba(255,255,255,.12);border-radius:4px}
+.rail::-webkit-scrollbar-thumb{background:rgba(255,255,255,.5);border-radius:4px}
+.rail::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.8)}
+@media (max-width:640px){
+  .rail{overflow-x:auto;overflow-y:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent);mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent);padding-inline:2px}
+  .rail__track{display:flex;gap:8px;min-width:max-content;border-block-start:0;padding-inline:14px}
+  .tick,.tick--half{width:auto;min-width:56px;flex:none;padding-inline:10px}
+  .rail__nav{display:flex}
+  .rail__arrow{width:30px;height:30px;font-size:1rem}
+}
 .tick:disabled{cursor:not-allowed}
 .tick.is-out .tick__mark{background:rgba(255,255,255,.18)}
 .tick.is-out .tick__num{color:rgba(255,255,255,.32);text-decoration:line-through;text-decoration-thickness:1px}

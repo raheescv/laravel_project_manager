@@ -23,6 +23,16 @@ function tabindexFor(s, i) {
   return on || (!anySelected() && firstUsable) ? 0 : -1
 }
 
+/** A mouse wheel over the rail scrolls it sideways instead of the page. */
+function onWheel(e) {
+  const el = rail.value
+  if (!el || el.scrollWidth <= el.clientWidth + 4) return
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    e.preventDefault()
+    el.scrollLeft += e.deltaY
+  }
+}
+
 function scrollRail(dir) {
   const rtl = i18n.dir === 'rtl' ? -1 : 1
   rail.value?.scrollBy({ left: 320 * dir * rtl, behavior: 'smooth' })
@@ -69,7 +79,7 @@ watch(() => [catalog.size, props.sizes.length], centreSelected)
         <button class="rail__arrow" aria-label="▶" @click="scrollRail(1)">&#8250;</button>
       </div>
     </div>
-    <div ref="rail" class="rail">
+    <div ref="rail" class="rail" @wheel="onWheel">
       <div ref="track" class="rail__track" role="radiogroup" :aria-label="label" @keydown="onKey">
         <button
           v-for="(s, i) in sizes"

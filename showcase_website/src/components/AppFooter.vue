@@ -23,11 +23,12 @@ const shops = useShopsStore()
         </div>
         <div>
           <p class="h-sm">{{ t('contact') }}</p>
-          <p v-if="branding.company.email" class="foot__line" dir="ltr">
-            {{ branding.company.email }}
+          <!-- bdi keeps the line right-aligned in Arabic while the value itself reads LTR -->
+          <p v-if="branding.company.email" class="foot__line">
+            <bdi dir="ltr">{{ branding.company.email }}</bdi>
           </p>
-          <p v-if="branding.company.mobile" class="foot__line" dir="ltr">
-            {{ branding.company.mobile }}
+          <p v-if="branding.company.mobile" class="foot__line">
+            <bdi dir="ltr">{{ branding.company.mobile }}</bdi>
           </p>
           <p class="foot__line">{{ t('hours') }}</p>
         </div>
