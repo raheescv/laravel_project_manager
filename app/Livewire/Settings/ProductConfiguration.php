@@ -21,7 +21,7 @@ class ProductConfiguration extends Component
         $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value') ?? '';
         $this->barcode_prefix = Configuration::where('key', 'barcode_prefix')->value('value') ?? '';
         $this->sync_barcode_to_code = Configuration::where('key', 'sync_barcode_to_code')->value('value') ?? 'no';
-        $this->hide_out_of_stock_sale_items = Configuration::where('key', 'hide_out_of_stock_sale_items')->value('value') ?? 'yes';
+        $this->hide_out_of_stock_sale_items = Configuration::where('key', 'hide_out_of_stock_sale_items')->value('value') ?? 'no';
     }
 
     public function save()
@@ -30,7 +30,7 @@ class ProductConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type ?? '']);
         Configuration::updateOrCreate(['key' => 'barcode_prefix'], ['value' => $this->barcode_prefix ?? '']);
         Configuration::updateOrCreate(['key' => 'sync_barcode_to_code'], ['value' => $this->sync_barcode_to_code ?? 'no']);
-        Configuration::updateOrCreate(['key' => 'hide_out_of_stock_sale_items'], ['value' => $this->hide_out_of_stock_sale_items ?? 'yes']);
+        Configuration::updateOrCreate(['key' => 'hide_out_of_stock_sale_items'], ['value' => $this->hide_out_of_stock_sale_items ?? 'no']);
         TenantCache::forget('barcode_prefix');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }
