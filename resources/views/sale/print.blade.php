@@ -86,6 +86,12 @@
             white-space: nowrap !important;
         }
 
+        /* Each meta row is its own table; a fixed layout + shared colgroup keeps
+           their vertical borders on the same lines. */
+        .info-table {
+            table-layout: fixed;
+        }
+
         .table th,
         .table td {
             border: 1px solid #000;
@@ -368,25 +374,40 @@
             </h3>
         </div>
         @if ($thermal_printer_style == 'with_arabic')
-            <table class="table">
+            <table class="table info-table">
+                <colgroup>
+                    <col style="width: 30%;">
+                    <col style="width: 40%;">
+                    <col style="width: 30%;">
+                </colgroup>
                 <tr>
-                    <td class="text-left"><b>Invoice No</b> <br></td>
-                    <td colspan="2" class="text-left"><b>{{ $sale->invoice_no }}</b></td>
-                    <td class="nowrap text-right"> <b>{{ __('lang.invoice_no', [], 'ar') }}</b> </td>
+                    <td class="text-left"><b>Invoice No</b></td>
+                    <td class="text-left"><b>{{ $sale->invoice_no }}</b></td>
+                    <td class="text-right"> <b>{{ __('lang.invoice_no', [], 'ar') }}</b> </td>
                 </tr>
             </table>
 
-            <table class="table">
+            <table class="table info-table">
+                <colgroup>
+                    <col style="width: 30%;">
+                    <col style="width: 40%;">
+                    <col style="width: 30%;">
+                </colgroup>
                 <tr>
-                    <td class="nowrap text-left" width="28%"><b>Date</b></td>
-                    <td colspan="2" class="text-left"><b>{{ systemDate($sale->date) }}</b></td>
-                    <td class="nowrap text-right"> <b>{{ __('lang.date', [], 'ar') }}</b> </td>
+                    <td class="text-left"><b>Date</b></td>
+                    <td class="text-left"><b>{{ systemDate($sale->date) }}</b></td>
+                    <td class="text-right"> <b>{{ __('lang.date', [], 'ar') }}</b> </td>
                 </tr>
             </table>
-            <table class="table">
+            <table class="table info-table">
+                <colgroup>
+                    <col style="width: 30%;">
+                    <col style="width: 40%;">
+                    <col style="width: 30%;">
+                </colgroup>
                 <tr>
-                    <td class="nowrap text-left" width="28%"><b>Customer</b></td>
-                    <td colspan="2" class="text-left">
+                    <td class="text-left"><b>Customer</b></td>
+                    <td class="text-left">
                         <b>
                             @if ($sale->customer_name)
                                 {{ ucFirst($sale->customer_name) }}
@@ -395,44 +416,64 @@
                             @endif
                         </b>
                     </td>
-                    <td class="nowrap text-right">
+                    <td class="text-right">
                         <b>{{ __('lang.customer', [], 'ar') }}</b>
                     </td>
                 </tr>
             </table>
             @if ($sale->account?->mobile)
-                <table class="table">
+                <table class="table info-table">
+                    <colgroup>
+                        <col style="width: 30%;">
+                        <col style="width: 40%;">
+                        <col style="width: 30%;">
+                    </colgroup>
                     <tr>
-                        <td class="nowrap text-left" width="28%"><b>Mobile</b></td>
-                        <td colspan="3" class="text-left"><b>{{ $sale->account->mobile }}</b></td>
+                        <td class="text-left"><b>Mobile</b></td>
+                        <td colspan="2" class="text-left"><b>{{ $sale->account->mobile }}</b></td>
                     </tr>
                 </table>
             @endif
             @if ($sale->account?->email)
-                <table class="table">
+                <table class="table info-table">
+                    <colgroup>
+                        <col style="width: 30%;">
+                        <col style="width: 40%;">
+                        <col style="width: 30%;">
+                    </colgroup>
                     <tr>
-                        <td class="nowrap text-left" width="28%"><b>Email</b></td>
-                        <td colspan="3" class="text-left"><b>{{ $sale->account->email }}</b></td>
+                        <td class="text-left"><b>Email</b></td>
+                        <td colspan="2" class="text-left"><b>{{ $sale->account->email }}</b></td>
                     </tr>
                 </table>
             @endif
             @if ($sale->account?->tax_no)
-                <table class="table">
+                <table class="table info-table">
+                    <colgroup>
+                        <col style="width: 30%;">
+                        <col style="width: 40%;">
+                        <col style="width: 30%;">
+                    </colgroup>
                     <tr>
-                        <td class="nowrap text-left" width="28%"><b>GST No.</b></td>
-                        <td colspan="3" class="text-left"><b>{{ $sale->account->tax_no }}</b></td>
+                        <td class="text-left"><b>GST No.</b></td>
+                        <td colspan="2" class="text-left"><b>{{ $sale->account->tax_no }}</b></td>
                     </tr>
                 </table>
             @endif
-            <table class="table">
+            <table class="table info-table">
+                <colgroup>
+                    <col style="width: 30%;">
+                    <col style="width: 40%;">
+                    <col style="width: 30%;">
+                </colgroup>
                 <tr>
-                    <td class="text-left"><b>Payment Mode</b> <br></td>
-                    <td class="nowrap text-right">
+                    <td class="text-left"><b>Payment Mode</b></td>
+                    <td colspan="2" class="text-right">
                         <b>{{ __('lang.payment_mode', [], 'ar') }}</b>
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2" class="text-center">
+                    <td colspan="3" class="text-center">
                         @if (isset($payments))
                             @foreach ($payments as $payment)
                                 <span class="payment-badge">{{ $payment['payment_method']['alias_name'] ?? $payment['payment_method']['name'] }} :
