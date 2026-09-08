@@ -18,6 +18,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserHasBranch;
 use App\Services\TenantService;
+use App\Support\Migration\BulkImport;
+use App\Support\Migration\SourceTimestamps;
 use App\Support\TenantCache;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
@@ -107,6 +109,12 @@ class MigrateDataCommand extends Command
             }
         }
 
+        // Everything below replays dated history. Sale::creating / SaleReturn::creating would
+        // otherwise bind each replayed record to whatever till session is open right now, re-dating
+        // it to that session's business date and folding its payments into that session's cash
+        // reconciliation. (MigrateSalesChunkJob sets the same flag in its own worker process.)
+        BulkImport::enableHistoricalReplay();
+
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         try {
             $this->branches();
@@ -133,6 +141,7 @@ class MigrateDataCommand extends Command
             $this->salesReturns();
         } finally {
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            BulkImport::disableHistoricalReplay();
 
             // Restore the global durability settings we relaxed, whatever happened above.
             if ($originalFlushLog !== null) {
@@ -643,7 +652,13 @@ class MigrateDataCommand extends Command
                                 $this->error('Failed to create purchase: '.$response['message']);
                                 Log::error('Failed to create purchase: '.$response['message']);
                                 Log::error($data);
+
+                                return;
                             }
+
+                            // The action stamps created_at/updated_at with now(); put the source
+                            // row's own timestamps back so the replay keeps its place in history.
+                            SourceTimestamps::apply($response['data'], $purchase);
                         });
                     } catch (\Exception $e) {
                         Log::error('Purchase migration error: '.$e->getMessage());
@@ -900,7 +915,11 @@ class MigrateDataCommand extends Command
                                 $this->error('Failed to create sale return: '.$response['message']);
                                 Log::error('Failed to create sale return: '.$response['message']);
                                 Log::error($data);
+
+                                return;
                             }
+
+                            SourceTimestamps::apply($response['data'], $saleReturn);
                         });
                     } catch (\Exception $e) {
                         $this->error('Error migrating sale return: '.$e->getMessage());

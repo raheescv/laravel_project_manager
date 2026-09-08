@@ -12,6 +12,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\TenantService;
 use App\Support\Migration\BulkImport;
+use App\Support\Migration\SourceTimestamps;
 use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -73,6 +74,11 @@ class MigrateSalesChunkJob implements ShouldQueue
         // (LogInventoryAction) and out-of-stock prevention (OutOfStockSales) so parallel workers don't
         // serialise on hot products. Stock/cost are reconciled by MigrateDataCommand after the batch.
         BulkImport::enable();
+
+        // Replayed sales carry their own historical date: keep Sale::creating from binding them to
+        // whatever till session is open right now, which would re-date them and pollute that
+        // session's cash reconciliation.
+        BulkImport::enableHistoricalReplay();
 
         // Queue workers have no request, so the tenant global scope would otherwise resolve to null
         // and every scoped read/write would target the wrong rows. Pin it explicitly for this job.
@@ -159,7 +165,7 @@ class MigrateSalesChunkJob implements ShouldQueue
                 // below mops up the residual ones.
                 $data = $this->buildSaleData($sale, $accountMap, $userMap, $employeeMap, $productMap, $serviceMap, $inventoryMap, $serviceItemsBySale, $itemsBySale, $journalsBySale);
 
-                $this->createSaleWithRetry($data, $sale->id, $created, $failed);
+                $this->createSaleWithRetry($data, $sale, $created, $failed);
             } catch (Throwable $e) {
                 $failed++;
                 Log::error('Sales migration error (sale_id '.$sale->id.'): '.$e->getMessage());
@@ -181,14 +187,16 @@ class MigrateSalesChunkJob implements ShouldQueue
      * little jittered backoff. SaleCreateAction swallows its own query exceptions, so we detect a
      * concurrency failure from the returned message and re-run the whole sale rather than relying on
      * DB::transaction's built-in retry. Increments $created / $failed (passed by reference).
+     *
+     * @param  object  $source  The mysql2 sales row being replayed (its id and original timestamps).
      */
-    protected function createSaleWithRetry(array $data, $sourceSaleId, int &$created, int &$failed): void
+    protected function createSaleWithRetry(array $data, $source, int &$created, int &$failed): void
     {
         $maxAttempts = 5;
 
         for ($attempt = 1; ; $attempt++) {
             try {
-                $ok = DB::transaction(function () use ($data): bool {
+                $ok = DB::transaction(function () use ($data, $source): bool {
                     $response = (new SaleCreateAction())->execute($data, $this->userId);
                     if (! $response['success']) {
                         // Bubble concurrency failures up to the retry loop; log the rest as final.
@@ -200,6 +208,10 @@ class MigrateSalesChunkJob implements ShouldQueue
 
                         return false;
                     }
+
+                    // The action stamps created_at/updated_at with now(); put the source sale's own
+                    // timestamps back so the replayed row keeps its place in history.
+                    SourceTimestamps::apply($response['data'], $source);
 
                     return true;
                 });
@@ -216,7 +228,7 @@ class MigrateSalesChunkJob implements ShouldQueue
                 }
 
                 $failed++;
-                Log::error('Sales migration error (sale_id '.$sourceSaleId.') after '.$attempt.' attempt(s): '.$e->getMessage());
+                Log::error('Sales migration error (sale_id '.$source->id.') after '.$attempt.' attempt(s): '.$e->getMessage());
 
                 return;
             }

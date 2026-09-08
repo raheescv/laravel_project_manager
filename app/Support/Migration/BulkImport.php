@@ -18,6 +18,19 @@ class BulkImport
 {
     protected static bool $enabled = false;
 
+    /**
+     * Separate, independently togglable flag: this process is replaying HISTORICAL records that
+     * carry their own original date (migrated sales, sale returns), rather than ringing up new
+     * ones. It gates the live till-session binding in Sale/SaleReturn::creating, which would
+     * otherwise re-date every replayed record to the branch's currently open session and fold its
+     * payments into that session's cash reconciliation.
+     *
+     * It is NOT folded into enable() because MigrateDataCommand replays purchases/returns/transfers
+     * inline and still wants the normal per-line cost bookkeeping - it only needs the session
+     * binding suppressed.
+     */
+    protected static bool $historicalReplay = false;
+
     public static function enable(): void
     {
         self::$enabled = true;
@@ -31,5 +44,20 @@ class BulkImport
     public static function enabled(): bool
     {
         return self::$enabled;
+    }
+
+    public static function enableHistoricalReplay(): void
+    {
+        self::$historicalReplay = true;
+    }
+
+    public static function disableHistoricalReplay(): void
+    {
+        self::$historicalReplay = false;
+    }
+
+    public static function replayingHistory(): bool
+    {
+        return self::$historicalReplay;
     }
 }

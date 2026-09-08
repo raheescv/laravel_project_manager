@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
+use App\Support\Migration\BulkImport;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -54,6 +55,12 @@ class SaleReturn extends Model implements AuditableContracts
         static::addGlobalScope(new AssignedBranchScope());
 
         static::creating(function ($saleReturn): void {
+            // See Sale::booted() - a replayed historical return keeps its own date instead of being
+            // re-dated to the currently open session.
+            if (BulkImport::replayingHistory()) {
+                return;
+            }
+
             if ($saleReturn->branch_id) {
                 $openSession = SaleDaySession::getOpenSessionForBranch($saleReturn->branch_id);
                 if ($openSession) {

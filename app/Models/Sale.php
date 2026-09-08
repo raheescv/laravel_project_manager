@@ -7,6 +7,7 @@ use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use App\Support\Migration\BulkImport;
 use App\Traits\BelongsToTenant;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -96,6 +97,14 @@ class Sale extends Model implements AuditableContracts
         static::addGlobalScope(new AssignedBranchScope());
 
         static::creating(function ($sale): void {
+            // A historical replay (the mysql2 -> mysql data migration) carries each sale's ORIGINAL
+            // date. Binding it to whatever session happens to be open now would re-date it to that
+            // session's business date and fold its payments into that session's cash reconciliation,
+            // so leave replayed sales unbound; sale:sync-day-sessions can attach them afterwards.
+            if (BulkImport::replayingHistory()) {
+                return;
+            }
+
             // Check if sale needs to be associated with an open day session
             if ($sale->branch_id) {
                 // If no sale_day_session_id is provided, find the open session for the branch
