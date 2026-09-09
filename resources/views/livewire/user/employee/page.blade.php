@@ -1023,7 +1023,7 @@
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-lock"></i></span>
                                 {{ html()->password('password')->value('')->class('empx-control')->attribute('wire:model', 'users.password')->placeholder('Enter password') }}
-                                <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this,'password')" aria-label="Toggle password">
+                                <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this)" aria-label="Toggle password">
                                     <i class="fa fa-eye"></i>
                                 </button>
                             </div>
@@ -1038,7 +1038,7 @@
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-shield"></i></span>
                                 {{ html()->password('pin')->value('')->class('empx-control')->attribute('wire:model', 'users.pin')->placeholder('Enter PIN') }}
-                                <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this,'pin')" aria-label="Toggle PIN">
+                                <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this)" aria-label="Toggle PIN">
                                     <i class="fa fa-eye"></i>
                                 </button>
                             </div>
@@ -1119,8 +1119,10 @@
 
     @push('scripts')
         <script>
-            function empxEye(btn, id) {
-                var el = document.getElementById(id);
+            function empxEye(btn) {
+                // Target the sibling input, not a global id: the User modal on the view page
+                // renders its own #password first, so getElementById toggled the wrong field.
+                var el = btn.parentElement ? btn.parentElement.querySelector('input') : null;
                 if (!el) return;
                 var show = el.type === 'password';
                 el.type = show ? 'text' : 'password';
