@@ -4,6 +4,17 @@ import AsyncSelect from 'react-select/async';
 import { BarcodeScanner } from '@thewirv/react-barcode-scanner';
 import { Head } from '@inertiajs/react';
 
+// The list opens on sizes small to big, 25 to a page. Both are always sent, so
+// the endpoint's own defaults (used by the POS search boxes) stay untouched.
+const DEFAULT_LIMIT = 25;
+const DEFAULT_SORT_FIELD = 'products.size';
+
+// A freshly picked column starts newest/biggest first, except size, which
+// reads the way a size run does.
+function defaultDirection(field) {
+    return field === 'products.size' ? 'asc' : 'desc';
+}
+
 export default function ProductSearch() {
     // Filters
     const [productName, setProductName] = useState('');
@@ -19,11 +30,11 @@ export default function ProductSearch() {
     const [products, setProducts] = useState([]);
     const [branchColumns, setBranchColumns] = useState([]);
     const [totalQuantity, setTotalQuantity] = useState(0);
-    const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
-    const [limit, setLimit] = useState(10);
+    const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: DEFAULT_LIMIT, total: 0 });
+    const [limit, setLimit] = useState(DEFAULT_LIMIT);
     const [page, setPage] = useState(1);
-    const [sortField, setSortField] = useState('products.code');
-    const [sortDirection, setSortDirection] = useState('desc');
+    const [sortField, setSortField] = useState(DEFAULT_SORT_FIELD);
+    const [sortDirection, setSortDirection] = useState(defaultDirection(DEFAULT_SORT_FIELD));
     const [loading, setLoading] = useState(false);
 
     // Barcode scanner
@@ -183,10 +194,10 @@ export default function ProductSearch() {
         setBranchIds([]);
         setShowNonZeroOnly(false);
         setShowBarcodeCodes(false);
-        setLimit(10);
+        setLimit(DEFAULT_LIMIT);
         setPage(1);
-        setSortField('products.code');
-        setSortDirection('desc');
+        setSortField(DEFAULT_SORT_FIELD);
+        setSortDirection(defaultDirection(DEFAULT_SORT_FIELD));
         fetchProducts(1);
     }
 
@@ -195,7 +206,7 @@ export default function ProductSearch() {
             setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
         } else {
             setSortField(field);
-            setSortDirection('desc');
+            setSortDirection(defaultDirection(field));
         }
         setPage(1);
     }

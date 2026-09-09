@@ -242,7 +242,31 @@ class GetProductAction
 
         $field = $map[$filters['sortField']] ?? 'products.code';
 
+        if ($field === 'products.size') {
+            $this->orderBySize($query, $filters['sortDirection']);
+
+            return;
+        }
+
         $query->orderBy($field, $filters['sortDirection']);
+    }
+
+    /**
+     * Sizes are stored as text, so a plain ORDER BY reads "10" before "4" and
+     * "42" before "5". Rank the numeric sizes by value (36, 36.5, 37 …), then
+     * letter sizes (S, M, L …) by text, then rows with no size at all — so
+     * "small to big" holds however the sizes were typed. A letter size casts
+     * to 0, which is what separates the two groups.
+     */
+    private function orderBySize(Builder $query, string $direction): void
+    {
+        $numeric = 'CAST(products.size AS DECIMAL(10,2))';
+
+        $query
+            ->orderByRaw("CASE WHEN products.size IS NULL OR products.size = '' THEN 2 WHEN {$numeric} > 0 THEN 0 ELSE 1 END")
+            ->orderByRaw("{$numeric} {$direction}")
+            ->orderBy('products.size', $direction)
+            ->orderBy('products.name');
     }
 
     private function calculateTotalQuantity(Builder $base, array $filters): int
