@@ -10,6 +10,8 @@
                 <div class="form-group">
                     <select wire:model.live="limit" class="form-control">
                         <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
                         <option value="100">100</option>
                         <option value="500">500</option>
                     </select>
@@ -65,7 +67,7 @@
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="purchases.invoice_no" label="invoice no" /> </th>
                         @endif
                         @if ($purchase_item_report_visible_column['product_name'] ?? true)
-                            <th> product </th>
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.name" label="product" /> </th>
                         @endif
                         @if ($purchase_item_report_visible_column['unit_name'] ?? true)
                             <th> unit </th>

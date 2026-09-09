@@ -25,7 +25,7 @@ class PurchaseItemReport extends Component
 
     public $to_date;
 
-    public $limit = 10;
+    public $limit = 50;
 
     public $selected = [];
 
@@ -117,6 +117,7 @@ class PurchaseItemReport extends Component
     {
         $data = PurchaseItem::with('purchase:id,date,invoice_no,branch_id', 'unit:id,name', 'product:id,name,unit_id')->orderBy($this->sortField, $this->sortDirection)
             ->join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
+            ->leftJoin('products', 'products.id', '=', 'purchase_items.product_id')
             ->when($this->search, function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
