@@ -52,14 +52,6 @@
                         </div>
                         <div class="col-md-3" wire:ignore>
                             <div class="form-group">
-                                <label class="form-label text-muted fw-semibold small mb-2" for="product_id">
-                                    <i class="demo-pli-tag me-1"></i> Product
-                                </label>
-                                {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', '')->id('product_id')->placeholder('All Products') }}
-                            </div>
-                        </div>
-                        <div class="col-md-3" wire:ignore>
-                            <div class="form-group">
                                 <label class="form-label text-muted fw-semibold small mb-2" for="employee_id">
                                     <i class="fa fa-user me-1"></i> Employee
                                 </label>
@@ -72,6 +64,14 @@
                                     <i class="fa fa-flag me-1"></i> Status
                                 </label>
                                 {{ html()->select('status', saleStatuses())->value('completed')->class('form-select form-select-sm')->id('status') }}
+                            </div>
+                        </div>
+                        <div class="col-md-6" wire:ignore>
+                            <div class="form-group">
+                                <label class="form-label text-muted fw-semibold small mb-2" for="product_id">
+                                    <i class="demo-pli-tag me-1"></i> Product
+                                </label>
+                                {{ html()->select('product_id', [])->value('')->class('select-product_id-list')->attribute('type', '')->id('product_id')->placeholder('All Products') }}
                             </div>
                         </div>
                     </div>
