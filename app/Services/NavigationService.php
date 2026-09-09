@@ -268,7 +268,7 @@ class NavigationService
             'leads' => ['property_management'],
             'maintenance' => ['maintenance'],
             'issue' => ['support'],
-            'appointments' => ['saloon'],
+            'appointments' => ['sales', 'saloon'],
             'tailoring' => ['tailoring'],
             'sale' => ['sales'],
             'day-session' => ['sales'],
