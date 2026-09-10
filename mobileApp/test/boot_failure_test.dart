@@ -106,6 +106,68 @@ void main() {
       expect(AppConfig.normalizeBaseUrl('  https://shop.example.com//  '),
           'https://shop.example.com');
     });
+
+    // The report: a till moved to another server from the Connection sheet
+    // came back on the build's address after "some login and logout" — every
+    // cold start re-resolved the connection with env.json winning.
+    test('a saved connection outlives the build-time address at boot', () {
+      final config = AppConfig.resolve(
+        savedBaseUrl: 'https://other-shop.example.com/',
+        savedTenant: 'other',
+        buildBaseUrl: 'https://spa.astraqatar.com',
+        buildTenant: 'spa',
+      );
+      expect(config.baseUrl, 'https://other-shop.example.com');
+      expect(config.tenant, 'other');
+    });
+
+    test('the build-time address is only the default for a device that never saved one', () {
+      final config = AppConfig.resolve(
+        buildBaseUrl: 'https://spa.astraqatar.com',
+        buildTenant: 'spa',
+      );
+      expect(config.baseUrl, 'https://spa.astraqatar.com');
+      expect(config.tenant, 'spa');
+    });
+
+    test('falls back to the dev host when neither is set', () {
+      expect(AppConfig.resolve().baseUrl, AppConfig.fallbackBaseUrl);
+      expect(AppConfig.resolve().tenant, '');
+    });
+
+    test('a tenant cleared on purpose stays cleared', () {
+      final config = AppConfig.resolve(
+        savedBaseUrl: 'https://spa.astraqatar.com',
+        savedTenant: '',
+        buildBaseUrl: 'https://spa.astraqatar.com',
+        buildTenant: 'spa',
+      );
+      expect(config.tenant, '');
+    });
+
+    test('the Host override follows the build host and nothing else', () {
+      // A LAN dev build: IP address + Host so nginx picks the right site.
+      final onBuildHost = AppConfig.resolve(
+        savedBaseUrl: 'http://192.168.1.20/',
+        buildBaseUrl: 'http://192.168.1.20',
+        buildHostHeader: 'project_manager.test',
+      );
+      expect(onBuildHost.hostHeader, 'project_manager.test');
+
+      // Pointed elsewhere, the dev site's Host would route to the wrong vhost.
+      final elsewhere = AppConfig.resolve(
+        savedBaseUrl: 'https://spa.astraqatar.com',
+        buildBaseUrl: 'http://192.168.1.20',
+        buildHostHeader: 'project_manager.test',
+      );
+      expect(elsewhere.hostHeader, '');
+
+      expect(
+          AppConfig.hostHeaderFor('http://192.168.1.20/',
+              buildBaseUrl: 'http://192.168.1.20',
+              buildHostHeader: 'project_manager.test'),
+          'project_manager.test');
+    });
   });
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 
@@ -41,6 +42,19 @@ class _ConnectionSheetBodyState extends State<_ConnectionSheetBody> {
     _tenantCtl.dispose();
     super.dispose();
   }
+
+  /// Puts the build's own server back in the fields. The saved connection now
+  /// outlives every restart, so this is the only way back to what `env.json`
+  /// compiled in — the user still taps Save, like any other edit.
+  void _useDefault() {
+    _urlCtl.text = AppConfig.defaultBaseUrl;
+    _tenantCtl.text = AppConfig.defaultTenant;
+  }
+
+  bool get _isDefault =>
+      AppConfig.normalizeBaseUrl(_urlCtl.text) ==
+          AppConfig.normalizeBaseUrl(AppConfig.defaultBaseUrl) &&
+      _tenantCtl.text.trim() == AppConfig.defaultTenant.trim();
 
   Future<void> _save() async {
     final auth = widget.auth;
@@ -86,11 +100,52 @@ class _ConnectionSheetBodyState extends State<_ConnectionSheetBody> {
                 hint: 'https://your-salon.com', keyboard: TextInputType.url),
             const SizedBox(height: 12),
             _field('Tenant subdomain', _tenantCtl, hint: 'demo (optional)'),
+            // Follows the fields live, so it disappears the moment they match the
+            // build default and reappears when the user types something else.
+            ListenableBuilder(
+              listenable: Listenable.merge([_urlCtl, _tenantCtl]),
+              builder: (_, __) => _isDefault
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _defaultRow(),
+                    ),
+            ),
             const SizedBox(height: 20),
             AstraButton(label: 'Save', icon: Icons.check, onTap: _save),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _defaultRow() {
+    final p = context.astra;
+    // Just the host reads better in a one-line row; a value `Uri` cannot make a
+    // host of (no scheme) is shown whole rather than as nothing.
+    final parsed = Uri.tryParse(AppConfig.defaultBaseUrl)?.host ?? '';
+    final host = parsed.isEmpty ? AppConfig.defaultBaseUrl : parsed;
+    return Row(
+      children: [
+        Icon(Icons.restore_rounded, size: 16, color: p.textMuted),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text('This build was made for $host',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(size: 12, weight: FontWeight.w600, color: p.textMuted)),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: _useDefault,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            child: Text('Use it',
+                style: ui(size: 12, weight: FontWeight.w800, color: p.primary)),
+          ),
+        ),
+      ],
     );
   }
 

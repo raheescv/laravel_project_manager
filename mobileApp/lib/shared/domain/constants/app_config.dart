@@ -32,15 +32,59 @@ class AppConfig {
   /// Last-resort host when there is neither an env value nor a saved override.
   static const String fallbackBaseUrl = 'https://project_manager.test';
 
-  /// Resolve the active connection. A build-time env value ALWAYS wins so a stale
-  /// saved value can never silently shadow `env.json`.
-  static AppConfig resolve({String? savedBaseUrl, String? savedTenant}) =>
-      AppConfig(
-        baseUrl:
-            envBaseUrl.isNotEmpty ? envBaseUrl : (savedBaseUrl ?? fallbackBaseUrl),
-        tenant: envTenant.isNotEmpty ? envTenant : (savedTenant ?? ''),
-        hostHeader: envHostHeader,
-      );
+  /// What this build points at until someone saves a connection.
+  static String get defaultBaseUrl =>
+      envBaseUrl.isNotEmpty ? envBaseUrl : fallbackBaseUrl;
+  static String get defaultTenant => envTenant;
+
+  /// Resolve the active connection.
+  ///
+  /// A connection saved from the Connection sheet wins. The build-time value is
+  /// only the default for a device that has never saved one. It used to win
+  /// outright — "so a stale saved value can never shadow env.json" — which meant
+  /// every cold start silently repointed a till that had been moved to another
+  /// server back at whatever `env.json` was compiled with. On a phone that is
+  /// any sign-out the OS follows by killing the backgrounded process, so it
+  /// looked like signing in and out reset the address. The sheet offers the
+  /// build default back, which is the one thing the old rule was good for.
+  ///
+  /// [buildBaseUrl] / [buildTenant] / [buildHostHeader] exist so the precedence
+  /// is testable; under `flutter test` the real `--dart-define` values are empty.
+  static AppConfig resolve({
+    String? savedBaseUrl,
+    String? savedTenant,
+    String buildBaseUrl = envBaseUrl,
+    String buildTenant = envTenant,
+    String buildHostHeader = envHostHeader,
+  }) {
+    final saved = normalizeBaseUrl(savedBaseUrl ?? '');
+    final baseUrl = saved.isNotEmpty
+        ? saved
+        : (buildBaseUrl.isNotEmpty ? buildBaseUrl : fallbackBaseUrl);
+    return AppConfig(
+      baseUrl: baseUrl,
+      // A saved tenant wins even when it is blank: the sheet writes both fields
+      // together, so a blank one was cleared on purpose, not never set.
+      tenant: (savedTenant ?? buildTenant).trim(),
+      hostHeader: hostHeaderFor(baseUrl,
+          buildBaseUrl: buildBaseUrl, buildHostHeader: buildHostHeader),
+    );
+  }
+
+  /// The `Host` override to send to [baseUrl].
+  ///
+  /// It belongs to the build's own host — it is what routes a LAN-IP request
+  /// to the right Valet/nginx site — so a device pointed at any other server
+  /// sends none. `Host: project_manager.test` against a live domain is a request
+  /// nginx routes to the wrong site, or nowhere.
+  static String hostHeaderFor(
+    String baseUrl, {
+    String buildBaseUrl = envBaseUrl,
+    String buildHostHeader = envHostHeader,
+  }) =>
+      normalizeBaseUrl(baseUrl) == normalizeBaseUrl(buildBaseUrl)
+          ? buildHostHeader
+          : '';
 
   String get apiV1 => '$baseUrl/api/v1';
 

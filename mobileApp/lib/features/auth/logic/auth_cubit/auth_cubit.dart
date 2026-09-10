@@ -100,7 +100,14 @@ class AuthCubit extends Cubit<AuthState> {
       await _accounts.clear();
       await _clearOfflineData();
     }
-    _http.config = AppConfig(baseUrl: url, tenant: tenant.trim());
+    // The Host override travels with the build's own host only; see
+    // [AppConfig.hostHeaderFor]. Re-saving that host keeps it, moving away
+    // drops it — the same answer boot gives from the saved value.
+    _http.config = AppConfig(
+      baseUrl: url,
+      tenant: tenant.trim(),
+      hostHeader: AppConfig.hostHeaderFor(url),
+    );
     await _storage.setBaseUrl(url);
     await _storage.setTenant(tenant.trim());
     // The connection lives on HttpService, not in the state — emit so screens
