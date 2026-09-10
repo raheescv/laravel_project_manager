@@ -104,9 +104,9 @@ class SaleDaySession extends Model implements AuditableContracts
             ->exists();
     }
 
-    public function close($closingAmount, $syncAmount, $closedBy, $notes = null)
+    public function close($closingAmount, $syncAmount, $closedBy, $notes = null, $closedAt = null)
     {
-        $this->closed_at = now();
+        $this->closed_at = $closedAt ?? now();
         $this->closed_by = $closedBy;
         $this->closing_amount = $closingAmount;
         $this->sync_amount = $syncAmount;

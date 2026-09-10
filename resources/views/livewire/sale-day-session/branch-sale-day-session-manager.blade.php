@@ -27,7 +27,7 @@
             $toneIcon = ['success' => 'fa-check-circle', 'danger' => 'fa-arrow-circle-down', 'warning' => 'fa-arrow-circle-up'][$tone];
             $toneSign = $variance > 0.004 ? '+' : ($variance < -0.004 ? '−' : '');
             $openedAt = \Carbon\Carbon::parse($sessionStats['opened_at']);
-            // web openDay stores the business date at midnight; only mobile-opened sessions carry a real clock time
+            // sessions opened before the time picker existed sit at midnight; newer ones (web & mobile) carry a real clock time
             $hasTime = $openedAt->format('H:i:s') !== '00:00:00';
             $invoices = (int) ($sessionStats['total_sales'] ?? 0);
             $orders = (int) ($sessionStats['total_tailoring_orders'] ?? 0);
@@ -149,6 +149,16 @@
                                 <div class="ms-auto fs-4 fw-bold">{{ $toneSign }}{{ currency(abs($variance)) }}</div>
                             </div>
 
+                            <div class="mb-3">
+                                <label for="dsj-closing-time" class="form-label">Closing time <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa fa-clock-o"></i></span>
+                                    <input id="dsj-closing-time" type="time" class="form-control fw-semibold" wire:model="closing_time">
+                                </div>
+                                <div class="form-text">Defaults to now · recorded against the business date above</div>
+                                @error('closing_time') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            </div>
+
                             @if ($currentSession?->branch?->moq_sync)
                                 @can('day close.sync amount')
                                     <div class="mb-3">
@@ -249,6 +259,13 @@
                                 <input id="dsj-opening" type="number" step="0.01" min="0" class="form-control text-center fw-bold" wire:model="opening_amount" placeholder="0.00">
                             </div>
                             @error('opening_amount') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
+                            <label for="dsj-opening-time" class="form-label fw-semibold mt-2">Opening time <span class="text-danger">*</span></label>
+                            <div class="input-group mb-1">
+                                <span class="input-group-text"><i class="fa fa-clock-o"></i></span>
+                                <input id="dsj-opening-time" type="time" class="form-control fw-semibold" wire:model="opening_time">
+                            </div>
+                            <div class="form-text">Defaults to now · pairs with the business date above</div>
+                            @error('opening_time') <div class="text-danger small mb-2">{{ $message }}</div> @enderror
                             <button type="submit" class="btn btn-success btn-lg w-100 mt-2"><i class="fa fa-unlock me-1"></i> Start session</button>
                         </form>
                         <div class="small text-body-secondary mt-3 d-flex flex-wrap justify-content-center gap-3">

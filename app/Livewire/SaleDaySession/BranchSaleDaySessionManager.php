@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\TailoringOrder;
 use App\Models\TailoringPayment;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -17,6 +18,12 @@ class BranchSaleDaySessionManager extends Component
     public $branch_id;
 
     public $date;
+
+    /** Wall-clock time (H:i) paired with $date when a session is opened. Defaults to now. */
+    public $opening_time;
+
+    /** Wall-clock time (H:i) paired with $date when a session is closed. Defaults to now. */
+    public $closing_time;
 
     public $opening_amount = 0;
 
@@ -42,8 +49,22 @@ class BranchSaleDaySessionManager extends Component
     {
         $this->branch_id = session('branch_id');
         $this->date = now()->toDateString();
+        $this->resetTimeDefaults();
         $this->loadOpenSessions();
         $this->loadCurrentSession();
+    }
+
+    /** Both time pickers start at the current clock time (the business date already starts at today). */
+    protected function resetTimeDefaults(): void
+    {
+        $this->opening_time = now()->format('H:i');
+        $this->closing_time = now()->format('H:i');
+    }
+
+    /** Combine the business date with a wall-clock time into one moment. */
+    protected function momentFor(string $time): Carbon
+    {
+        return Carbon::parse($this->date.' '.$time);
     }
 
     public function updatedClosingAmount()
@@ -104,11 +125,21 @@ class BranchSaleDaySessionManager extends Component
     public function openDay()
     {
         $this->validate([
+            'date' => 'required|date',
+            'opening_time' => 'required|date_format:H:i',
             'opening_amount' => 'required|numeric|min:0',
         ]);
 
         if (! $this->branch_id) {
             session()->flash('error', 'No branch selected.');
+
+            return;
+        }
+
+        // Same tolerance as the mobile ToggleRequest: a few minutes of latency / clock skew is fine, hours ahead is not.
+        $openedAt = $this->momentFor($this->opening_time);
+        if ($openedAt->gt(now()->addMinutes(5))) {
+            $this->addError('opening_time', 'The opening time cannot be in the future.');
 
             return;
         }
@@ -145,7 +176,7 @@ class BranchSaleDaySessionManager extends Component
             SaleDaySession::create([
                 'branch_id' => $this->branch_id,
                 'opened_by' => Auth::id(),
-                'opened_at' => date('Y-m-d H:i:s', strtotime($this->date)),
+                'opened_at' => $openedAt->toDateTimeString(),
                 'opening_amount' => $this->opening_amount,
                 'status' => 'open',
             ]);
@@ -155,29 +186,45 @@ class BranchSaleDaySessionManager extends Component
 
         // Reset the form and reload sessions
         $this->reset(['opening_amount']);
+        $this->resetTimeDefaults();
         $this->loadOpenSessions();
         $this->loadCurrentSession();
     }
 
     public function closeDay()
     {
+        if (! $this->currentSession) {
+            session()->flash('error', 'No open day session found for this branch.');
+
+            return;
+        }
+
+        $moqSync = (bool) $this->currentSession->branch?->moq_sync;
+
+        $this->validate([
+            'date' => 'required|date',
+            'closing_time' => 'required|date_format:H:i',
+            'closing_amount' => 'required|numeric|min:0',
+            'sync_amount' => $moqSync ? 'required|numeric|min:0' : 'nullable|numeric|min:0',
+        ]);
+
+        $closedAt = $this->momentFor($this->closing_time);
+        if ($closedAt->gt(now()->addMinutes(5))) {
+            $this->addError('closing_time', 'The closing time cannot be in the future.');
+
+            return;
+        }
+        if ($closedAt->lt($this->currentSession->opened_at)) {
+            $this->addError('closing_time', 'The closing time must be on or after the opening ('.$this->currentSession->opened_at->format('d M Y, g:i A').').');
+
+            return;
+        }
+
         try {
             DB::beginTransaction();
-            if (! $this->currentSession) {
-                session()->flash('error', 'No open day session found for this branch.');
 
-                return;
-            }
-
-            $moqSync = (bool) $this->currentSession->branch?->moq_sync;
-
-            $this->validate([
-                'closing_amount' => 'required|numeric|min:0',
-                'sync_amount' => $moqSync ? 'required|numeric|min:0' : 'nullable|numeric|min:0',
-            ]);
-
-            // Close the day session
-            $this->currentSession->close($this->closing_amount, $this->sync_amount, Auth::id(), $this->notes);
+            // Close the day session at the chosen moment
+            $this->currentSession->close($this->closing_amount, $this->sync_amount, Auth::id(), $this->notes, $closedAt);
 
             if ($moqSync) {
                 $syncData = [
@@ -191,8 +238,11 @@ class BranchSaleDaySessionManager extends Component
                 }
             }
 
-            // Reset the form and reload sessions
+            // Reset the form and reload sessions. The business date goes back to today so the
+            // "not started" step doesn't keep showing the date the session was just closed against.
             $this->reset(['closing_amount', 'notes']);
+            $this->date = now()->toDateString();
+            $this->resetTimeDefaults();
             $this->loadOpenSessions();
             $this->loadCurrentSession(); // code...
             DB::commit();
