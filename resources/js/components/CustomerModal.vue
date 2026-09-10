@@ -1,4 +1,8 @@
 <template>
+    <!-- Shared by Sale/POS.vue and Tailoring/Order.vue. Every class here is
+         from the `.posx` token layer (resources/css/pos-premium.css), so the
+         host page must render this under a `.posx[data-pos-preset]` ancestor
+         or the modal comes out unstyled (no panel, no header, plain buttons). -->
     <div v-if="show"
         class="posx-modal-backdrop"
         @click.self="closeModal">

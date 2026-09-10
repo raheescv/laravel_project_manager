@@ -202,9 +202,15 @@
 
 
         <!-- Modals -->
-        <CustomerModal v-if="showCustomerModal" :show="showCustomerModal" :customer-types="customerTypes"
-            :countries="countries" @close="showCustomerModal = false" @customerSaved="handleCustomerAdded"
-            @customerSelected="handleCustomerSelected" />
+        <!-- CustomerModal is shared with the POS and styled entirely by the
+             `.posx` token layer (resources/css/pos-premium.css). The tokens
+             live on a `.posx[data-pos-preset]` ancestor, so host it under one
+             here — `display: contents` keeps the wrapper out of the layout. -->
+        <div class="posx" style="display: contents" :data-pos-preset="colorPreset">
+            <CustomerModal v-if="showCustomerModal" :show="showCustomerModal" :customer-types="customerTypes"
+                :countries="countries" @close="showCustomerModal = false" @customerSaved="handleCustomerAdded"
+                @customerSelected="handleCustomerSelected" />
+        </div>
 
         <SaleConfirmationModal :show="showConfirmationModal" :sale-data="confirmationData" :loading="isSubmitting"
             :payment-method="selectedPaymentMethod" :send-to-whatsapp="sendToWhatsapp"
@@ -291,6 +297,11 @@ const props = defineProps({
     tailoringRedirectionPage: {
         type: String,
         default: 'create'
+    },
+    // POS colour preset (`pos_color_preset`); drives the shared CustomerModal.
+    colorPreset: {
+        type: String,
+        default: 'theme'
     }
 })
 

@@ -140,6 +140,10 @@ class OrderController extends Controller
             'customerTypes' => $customerTypes,
             'countries' => $countries,
             'tailoringRedirectionPage' => $tailoringRedirectionPage,
+            // The shared CustomerModal is built on the POS `.posx` token layer,
+            // so the tailoring page hosts it under the same colour preset the
+            // POS uses (Settings → Sale Settings → `pos_color_preset`).
+            'colorPreset' => Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme',
         ];
 
         return Inertia::render('Tailoring/Order', $data);
