@@ -151,6 +151,12 @@ abstract class L {
   /// **'Offline — stock figures may be out of date'**
   String get offline;
 
+  /// No description provided for @reconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting…'**
+  String get reconnecting;
+
   /// No description provided for @tryAgain.
   ///
   /// In en, this message translates to:

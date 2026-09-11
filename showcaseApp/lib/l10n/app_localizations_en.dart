@@ -37,6 +37,9 @@ class LEn extends L {
   String get offline => 'Offline — stock figures may be out of date';
 
   @override
+  String get reconnecting => 'Reconnecting…';
+
+  @override
   String get tryAgain => 'Try again';
 
   @override

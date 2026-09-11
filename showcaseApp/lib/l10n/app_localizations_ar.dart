@@ -36,6 +36,9 @@ class LAr extends L {
   String get offline => 'غير متصل — قد تكون أرقام المخزون غير محدّثة';
 
   @override
+  String get reconnecting => 'جارٍ إعادة الاتصال…';
+
+  @override
   String get tryAgain => 'حاول مرة أخرى';
 
   @override

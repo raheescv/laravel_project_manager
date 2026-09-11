@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,6 +9,7 @@ import '../../domain/models/index.dart';
 import '../../domain/repository/catalog_repository.dart';
 import '../../utils/router/http_utils/common_exception.dart';
 import '../branch_cubit/branch_cubit.dart';
+import '../connectivity_cubit/connectivity_cubit.dart';
 
 part 'funnel_state.dart';
 
@@ -27,11 +30,16 @@ part 'funnel_state.dart';
 class FunnelCubit extends Cubit<FunnelState> {
   FunnelCubit() : super(const FunnelState()) {
     loadSizes();
-    _branch.onBranchChanged.listen((_) => _reloadForBranch());
+    _branchSub = _branch.onBranchChanged.listen((_) => _reloadForBranch());
+    _reconnectSub = _connectivity.onReconnected.listen((_) => _retryFailed());
   }
 
   CatalogRepository get _repo => serviceLocator<CatalogRepository>();
   BranchCubit get _branch => serviceLocator<BranchCubit>();
+  ConnectivityCubit get _connectivity => serviceLocator<ConnectivityCubit>();
+
+  StreamSubscription<int>? _branchSub;
+  StreamSubscription<void>? _reconnectSub;
 
   /// Two taps on a size chip land before the first has loaded its brands.
   ///
@@ -174,5 +182,20 @@ class FunnelCubit extends Cubit<FunnelState> {
   Future<void> _reloadForBranch() async {
     await loadSizes();
     if (state.brands.isNotEmpty) await loadBrands();
+  }
+
+  /// The server is back. Only the steps that failed are asked again — a step
+  /// that loaded is what the customer is looking at, and reloading it would
+  /// blank their screen for an answer they already have.
+  Future<void> _retryFailed() async {
+    if (state.sizesStatus.isFailed) await loadSizes();
+    if (state.brandsStatus.isFailed) await loadBrands();
+  }
+
+  @override
+  Future<void> close() {
+    _branchSub?.cancel();
+    _reconnectSub?.cancel();
+    return super.close();
   }
 }

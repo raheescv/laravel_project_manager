@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -5,6 +7,7 @@ import '../../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../../shared/domain/constants/global_variables.dart';
 import '../../../../shared/domain/models/index.dart';
 import '../../../../shared/domain/repository/catalog_repository.dart';
+import '../../../../shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import '../../../../shared/utils/router/http_utils/common_exception.dart';
 
 part 'product_state.dart';
@@ -15,6 +18,7 @@ class ProductCubit extends Cubit<ProductState> {
   ProductCubit({required this.productId, this.inStockOnly = true})
       : super(const ProductState()) {
     load();
+    _reconnectSub = _connectivity.onReconnected.listen((_) => _retryFailed());
   }
 
   final int productId;
@@ -26,6 +30,9 @@ class ProductCubit extends Cubit<ProductState> {
   final bool inStockOnly;
 
   CatalogRepository get _repo => serviceLocator<CatalogRepository>();
+  ConnectivityCubit get _connectivity => serviceLocator<ConnectivityCubit>();
+
+  StreamSubscription<void>? _reconnectSub;
 
   /// The page can be popped while its request is in the air, and emitting into
   /// a closed cubit throws — including from the catch block, which turned an
@@ -67,6 +74,15 @@ class ProductCubit extends Cubit<ProductState> {
     }
   }
 
+  /// The server is back. A page that never loaded is asked for again; a page
+  /// that did, but lost its rail, gets the rail alone — the photo, the price
+  /// and the stock are on screen and must not blink.
+  Future<void> _retryFailed() async {
+    if (state.status.isFailed) return load();
+    final product = state.product;
+    if (state.relatedStatus.isFailed && product != null) await _loadRelated(product);
+  }
+
   void showImage(int index) => _set(state.copyWith(galleryIndex: index));
 
   /// Tapping the chosen size again clears it, which is what puts the
@@ -77,4 +93,10 @@ class ProductCubit extends Cubit<ProductState> {
   void selectSize(String size) => _set(state.selectedSize == size
       ? state.copyWith(clearSize: true)
       : state.copyWith(selectedSize: size));
+
+  @override
+  Future<void> close() {
+    _reconnectSub?.cancel();
+    return super.close();
+  }
 }

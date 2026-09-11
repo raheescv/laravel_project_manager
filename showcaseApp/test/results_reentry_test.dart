@@ -9,6 +9,7 @@ import 'package:showcase/shared/domain/constants/global_variables.dart';
 import 'package:showcase/shared/domain/models/index.dart';
 import 'package:showcase/shared/domain/repository/catalog_repository.dart';
 import 'package:showcase/shared/logic/branch_cubit/branch_cubit.dart';
+import 'package:showcase/shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'package:showcase/shared/utils/local_storage/local_storage_service.dart';
 import 'package:showcase/shared/utils/router/http_utils/http_service.dart';
 
@@ -30,6 +31,7 @@ void main() {
       ..registerSingleton<AppConfig>(config)
       ..registerSingleton<HttpService>(HttpService(config: config))
       ..registerSingleton<CatalogRepository>(repo)
+      ..registerSingleton<ConnectivityCubit>(ConnectivityCubit())
       ..registerSingleton<BranchCubit>(BranchCubit());
     await serviceLocator<BranchCubit>().ready;
   });

@@ -1,3 +1,4 @@
+import '../../../shared/api/end_points.dart';
 import '../../domain/constants/app_config.dart';
 import '../../domain/constants/global_variables.dart';
 import '../../domain/repository/catalog_repository.dart';
@@ -19,7 +20,10 @@ Future<void> setUpServiceLocator() async {
 
   // Drives the offline banner. Wired to the one HttpService so every request,
   // from every feature, reports reachability without a call site remembering to.
-  final connectivity = ConnectivityCubit();
+  // Once offline it probes on its own — the branch list, because it is the
+  // cheapest thing the public catalog answers — and the interceptor above
+  // reports what the probe found the same way it reports any other request.
+  final connectivity = ConnectivityCubit(probe: () => http.get(EndPoints.branches));
   http.onReachability = (reachable) => connectivity.reportOutcome(reachable: reachable);
 
   serviceLocator

@@ -10,6 +10,7 @@ import '../../domain/repository/catalog_repository.dart';
 import '../../utils/local_storage/local_storage_service.dart';
 import '../../utils/router/http_utils/common_exception.dart';
 import '../../utils/router/http_utils/http_service.dart';
+import '../connectivity_cubit/connectivity_cubit.dart';
 
 part 'branch_state.dart';
 
@@ -26,6 +27,7 @@ class BranchCubit extends Cubit<BranchState> {
     // http layer takes null for it, which is what makes the server answer for
     // the whole chain.
     _http.activeBranchId = saved == allBranches ? null : saved;
+    _reconnectSub = _connectivity.onReconnected.listen((_) => _reloadAfterReconnect());
     load();
   }
 
@@ -33,7 +35,8 @@ class BranchCubit extends Cubit<BranchState> {
   /// id, and a sentinel beats a second flag that can disagree with the first.
   static const int allBranches = 0;
 
-  final Completer<void> _resolved = Completer<void>();
+  Completer<void> _resolved = Completer<void>();
+  StreamSubscription<void>? _reconnectSub;
 
   /// Completes once the branch is settled.
   ///
@@ -53,6 +56,7 @@ class BranchCubit extends Cubit<BranchState> {
   HttpService get _http => serviceLocator<HttpService>();
   CatalogRepository get _repo => serviceLocator<CatalogRepository>();
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
+  ConnectivityCubit get _connectivity => serviceLocator<ConnectivityCubit>();
 
   /// Screens scoped to a branch listen here and reload, so switching shop
   /// updates what is already on screen rather than only the next request.
@@ -94,6 +98,22 @@ class BranchCubit extends Cubit<BranchState> {
     }
   }
 
+  /// The server is back and the branch list never arrived.
+  ///
+  /// A kiosk switched on before its network came up has no branches and, with
+  /// nothing saved, no `branch_id` on its requests — so every stock figure is
+  /// summed across the chain and reads as sold out. Refetching is the easy
+  /// half. The other half is that every catalog cubit reloads off the same
+  /// reconnect, and this cubit subscribed first, so [ready] is re-armed here —
+  /// synchronously, before the first await — and their reads wait for the
+  /// branch to land rather than racing it unscoped a second time.
+  Future<void> _reloadAfterReconnect() async {
+    if (state.status.isWaiting) return;
+    if (!state.status.isFailed && state.branches.isNotEmpty) return;
+    if (_resolved.isCompleted) _resolved = Completer<void>();
+    await load();
+  }
+
   Future<void> select(Branch branch) async {
     if (!state.showingAll && branch.id == state.selected?.id) return;
     _http.activeBranchId = branch.id;
@@ -118,6 +138,7 @@ class BranchCubit extends Cubit<BranchState> {
 
   @override
   Future<void> close() {
+    _reconnectSub?.cancel();
     _changed.close();
     return super.close();
   }

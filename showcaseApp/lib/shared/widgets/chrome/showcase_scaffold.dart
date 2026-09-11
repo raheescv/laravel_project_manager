@@ -56,15 +56,19 @@ class _OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final online = context.watch<ConnectivityCubit>().state;
-    if (online) return const SizedBox.shrink();
+    final net = context.watch<ConnectivityCubit>().state;
+    if (net.online) return const SizedBox.shrink();
     final p = context.pearl;
+    final l = L.of(context);
+    // "Reconnecting" only when something is actually asking — see
+    // [ConnectivityState.reconnecting].
+    final copy = net.reconnecting ? '${l.offline} · ${l.reconnecting}' : l.offline;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: PearlMetrics.pad, vertical: 9),
       color: p.ink,
       child: Text(
-        L.of(context).offline.toUpperCase(),
+        copy.toUpperCase(),
         textAlign: TextAlign.center,
         style: PearlText.micro.copyWith(color: p.bg),
       ),

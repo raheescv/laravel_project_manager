@@ -9,6 +9,7 @@ import '../../domain/models/index.dart';
 import '../../domain/repository/catalog_repository.dart';
 import '../../utils/router/http_utils/common_exception.dart';
 import '../branch_cubit/branch_cubit.dart';
+import '../connectivity_cubit/connectivity_cubit.dart';
 
 part 'product_list_state.dart';
 
@@ -26,6 +27,12 @@ class ProductListCubit extends Cubit<ProductListState> {
   ProductListCubit({ProductFilters filters = const ProductFilters()})
       : super(ProductListState(filters: filters)) {
     _branchSub = _branch.onBranchChanged.listen((_) => refresh());
+    // A grid that failed while the panel was cut off asks again when the
+    // server is back; one that loaded is left alone — it is what the customer
+    // is looking at.
+    _reconnectSub = _connectivity.onReconnected.listen((_) {
+      if (state.status.isFailed) load();
+    });
   }
 
   static const int _perPage = 24;
@@ -41,8 +48,10 @@ class ProductListCubit extends Cubit<ProductListState> {
 
   CatalogRepository get _repo => serviceLocator<CatalogRepository>();
   BranchCubit get _branch => serviceLocator<BranchCubit>();
+  ConnectivityCubit get _connectivity => serviceLocator<ConnectivityCubit>();
 
   StreamSubscription<int>? _branchSub;
+  StreamSubscription<void>? _reconnectSub;
 
   /// Guards against a stale page landing after the filters moved on and
   /// appending results that no longer match the query.
@@ -202,6 +211,7 @@ class ProductListCubit extends Cubit<ProductListState> {
   @override
   Future<void> close() {
     _branchSub?.cancel();
+    _reconnectSub?.cancel();
     return super.close();
   }
 }

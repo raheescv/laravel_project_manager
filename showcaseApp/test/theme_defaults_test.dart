@@ -7,6 +7,7 @@ import 'package:showcase/shared/domain/constants/global_variables.dart';
 import 'package:showcase/shared/domain/models/index.dart';
 import 'package:showcase/shared/domain/repository/catalog_repository.dart';
 import 'package:showcase/shared/logic/branch_cubit/branch_cubit.dart';
+import 'package:showcase/shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'package:showcase/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:showcase/shared/utils/components/theme/pearl_theme.dart';
 import 'package:showcase/shared/utils/components/theme/theme_presets.dart';
@@ -87,7 +88,9 @@ void main() {
   _sizeSteps();
 
   test('in stock is on before anyone touches it', () {
-    serviceLocator.registerSingleton<BranchCubit>(BranchCubit());
+    serviceLocator
+      ..registerSingleton<ConnectivityCubit>(ConnectivityCubit())
+      ..registerSingleton<BranchCubit>(BranchCubit());
     expect(FunnelCubit().state.inStockOnly, isTrue);
   });
 }
