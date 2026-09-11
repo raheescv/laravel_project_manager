@@ -111,6 +111,13 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
+                        <label class="form-label fw-medium" for="auto_open_day_sessions_enabled">Auto Open Day Sessions</label>
+                        {{ html()->select('auto_open_day_sessions_enabled', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Open day sessions automatically at the opening time?')->attribute('wire:model', 'auto_open_day_sessions_enabled') }}
+                        <small class="form-text text-muted">When enabled, a day session is opened for every branch at the opening time set in <a href="{{ route('settings::working_day::index') }}" target="_blank">Settings → Working Day</a>, with an opening amount of 0. Non-working days and holidays are skipped, and a branch that already has a session for the day is left alone.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
                         <label class="form-label fw-medium" for="sale_item_row_mode">Same Product Cart Rows</label>
                         {{ html()->select('sale_item_row_mode', ['merge' => 'Single Row (merge quantity)', 'separate' => 'Multiple Rows (add separately)'])->value('')->class('form-select')->placeholder('Choose how repeated product clicks behave')->attribute('wire:model', 'sale_item_row_mode') }}
                         <small class="form-text text-muted">Controls whether clicking the same product card adds quantity to the existing cart row or creates a new row.</small>

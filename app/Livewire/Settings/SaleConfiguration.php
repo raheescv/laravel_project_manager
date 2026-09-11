@@ -44,6 +44,9 @@ class SaleConfiguration extends Component
 
     public $auto_close_day_sessions_enabled;
 
+    /** Open every branch's day session at the Settings → Working Day opening time. */
+    public $auto_open_day_sessions_enabled;
+
     public $sale_item_row_mode;
 
     public $prevent_out_of_stock_sales;
@@ -78,6 +81,7 @@ class SaleConfiguration extends Component
         $this->show_colleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
         $this->branch_wise_employee_list = Configuration::where('key', 'branch_wise_employee_list')->value('value') ?? 'no';
         $this->auto_close_day_sessions_enabled = Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') ?? 'no';
+        $this->auto_open_day_sessions_enabled = Configuration::where('key', 'auto_open_day_sessions_enabled')->value('value') ?? 'no';
         $this->sale_item_row_mode = Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge';
         $this->prevent_out_of_stock_sales = Configuration::where('key', 'prevent_out_of_stock_sales')->value('value') ?? 'yes';
         $this->enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
@@ -107,6 +111,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'show_colleague'], ['value' => $this->show_colleague]);
         Configuration::updateOrCreate(['key' => 'branch_wise_employee_list'], ['value' => $this->branch_wise_employee_list]);
         Configuration::updateOrCreate(['key' => 'auto_close_day_sessions_enabled'], ['value' => $this->auto_close_day_sessions_enabled]);
+        Configuration::updateOrCreate(['key' => 'auto_open_day_sessions_enabled'], ['value' => $this->auto_open_day_sessions_enabled === 'yes' ? 'yes' : 'no']);
         Configuration::updateOrCreate(['key' => 'sale_item_row_mode'], ['value' => $this->sale_item_row_mode]);
         Configuration::updateOrCreate(['key' => 'prevent_out_of_stock_sales'], ['value' => $this->prevent_out_of_stock_sales]);
         Configuration::updateOrCreate(['key' => 'enable_company_name_in_print'], ['value' => $this->enable_company_name_in_print]);

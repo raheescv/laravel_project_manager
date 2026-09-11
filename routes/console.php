@@ -30,6 +30,12 @@ Schedule::command('sale-day-sessions:close-daily')
         return Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') === 'yes';
     });
 
+// Open a day session for every branch at the Working Day opening time (if
+// enabled). Every minute so a session starts on the configured minute; the
+// command is a cheap no-op for tenants that have not switched it on, and it
+// gates itself per tenant, so no ->when() here.
+Schedule::command('sale-day-sessions:open-daily')->everyMinute()->withoutOverlapping();
+
 Schedule::command('send:daily-sale-summary')->dailyAt('00:10');
 Schedule::command('assets:post-depreciation')->dailyAt('00:15')->withoutOverlapping();
 
