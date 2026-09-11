@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,7 @@ import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/features/admin/logic/day_session_cubit/day_session_cubit.dart';
 import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/route_observer.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
@@ -25,24 +28,71 @@ part 'day_session_views.dart';
 /// raises a confirm sheet before closing. State + the toggle live in
 /// [DaySessionCubit]; a successful toggle syncs back to the auth user.
 class DaySessionScreen extends StatefulWidget {
-  const DaySessionScreen({super.key});
+  const DaySessionScreen({super.key, this.active = true});
+
+  /// Whether the shell has this pane on show. Only a tablet passes it — there
+  /// the pane lives in the shell's IndexedStack and initState runs once, so
+  /// flipping to true is what re-reads the day. On a phone the screen is a
+  /// pushed route and is always on show.
+  final bool active;
 
   @override
   State<DaySessionScreen> createState() => _DaySessionScreenState();
 }
 
-class _DaySessionScreenState extends State<DaySessionScreen> {
+/// Every way onto this screen asks the server for the branch's day — the
+/// first build, the pane coming back on show, a page pushed over it popping,
+/// a branch switch. The cubit persists across navigations and re-logins, and
+/// the cached user is only as fresh as the last sign-in or toggle on *this*
+/// device; on a shared till the day moves underneath both.
+class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
+  StreamSubscription<int>? _branchSub;
+
   @override
   void initState() {
     super.initState();
-    // Re-seed the status from the current user each time the screen opens (the
-    // controller persists across navigations / re-logins).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      // The cached copy paints at once, with the dialled-in moment back to
+      // now; the server's answer then replaces it.
       context.read<DaySessionCubit>().seedFromUser(context.read<AuthCubit>().user);
-      setState(() {});
+      _refresh();
+    });
+    // The server answers for the branch the app is operating as, so a switch
+    // in Settings is a different day to show.
+    _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
+      if (mounted) _refresh();
     });
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) routeObserver.subscribe(this, route);
+  }
+
+  @override
+  void didUpdateWidget(DaySessionScreen old) {
+    super.didUpdateWidget(old);
+    if (widget.active && !old.active) _refresh();
+  }
+
+  /// A page pushed over this one came off — the pending-sales review the
+  /// close guard sends people to, or on a tablet anything pushed over the shell.
+  @override
+  void didPopNext() {
+    if (widget.active) _refresh();
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    _branchSub?.cancel();
+    super.dispose();
+  }
+
+  void _refresh() => context.read<DaySessionCubit>().refresh();
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +257,7 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
             label: open ? 'Close day · $stamp' : 'Open day · $stamp',
             icon: open ? Icons.lock_outline : Icons.lock_open_outlined,
             danger: open,
-            busy: c.busy,
+            busy: c.busy || c.syncing,
             onTap: () => _act(c),
           ),
           const SizedBox(height: 9),
@@ -375,7 +425,9 @@ class _DaySessionScreenState extends State<DaySessionScreen> {
   }
 
   Future<void> _act(DaySessionCubit c) async {
-    if (c.busy) return;
+    // Not while the server is still saying which way the day is: the endpoint
+    // toggles, so acting on a status it has already moved does the opposite.
+    if (c.busy || c.syncing) return;
     if (c.isOpen) {
       // Closing over a queued sale would strand it: the server stamps a sale
       // into whichever session is open when it arrives, so one synced after the

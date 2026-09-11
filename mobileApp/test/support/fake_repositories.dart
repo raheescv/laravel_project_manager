@@ -109,8 +109,23 @@ class FakeAuthRepository implements AuthRepository {
 /// An [AdminRepository] returning canned dashboard / report data so the admin
 /// screens render with realistic content offline.
 class FakeAdminRepository implements AdminRepository {
+  /// Round-trip counts — the refresh tests count loads, not pixels.
+  int dashboardCalls = 0;
+  int dayStatusCalls = 0;
+
+  /// What the server says the day is; a test moves the day underneath the
+  /// app by swapping this.
+  DayStatus dayStatusAnswer = DayStatus(
+    status: 'open',
+    date: DateTime.now().toIso8601String().split('T').first,
+    openedAt: '',
+    lastClosedAt: '',
+  );
+
   @override
-  Future<DashboardData> dashboard({int? branchId}) async => DashboardData(
+  Future<DashboardData> dashboard({int? branchId}) async {
+    dashboardCalls++;
+    return DashboardData(
         today: [
           Metric(title: "Today's Sales", value: 4200, type: 'currency'),
           Metric(title: "Today's Bills", value: 18, type: 'count'),
@@ -124,6 +139,7 @@ class FakeAdminRepository implements AdminRepository {
           Metric(title: 'Monthly sales', value: 86000, type: 'currency', percentage: '-4%'),
         ],
       );
+  }
 
   @override
   Future<Map<String, dynamic>> report({
@@ -174,10 +190,8 @@ class FakeAdminRepository implements AdminRepository {
       DaySessionToggleResult(message: 'ok', status: 'open', session: null);
 
   @override
-  Future<DayStatus> dayStatus() async => DayStatus(
-        status: 'open',
-        date: DateTime.now().toIso8601String().split('T').first,
-        openedAt: '',
-        lastClosedAt: '',
-      );
+  Future<DayStatus> dayStatus() async {
+    dayStatusCalls++;
+    return dayStatusAnswer;
+  }
 }

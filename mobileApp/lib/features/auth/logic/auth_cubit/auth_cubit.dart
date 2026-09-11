@@ -462,6 +462,30 @@ class AuthCubit extends Cubit<AuthState> {
     await _storage.setUserJson(jsonEncode(next.toJson()));
   }
 
+  /// Writes the server's live day-session state into the cached user — unless
+  /// nothing moved, in which case neither storage nor the AuthCubit watchers
+  /// are touched. The cached copy is only as fresh as the last sign-in or
+  /// toggle on *this* device: on a shared till another device (or the web) can
+  /// open or close the day underneath it, and an app left running overnight
+  /// still carries yesterday's session date. Shared by the dashboard's reload
+  /// and the Day Session screen, so both read the same server answer.
+  Future<void> applyDayStatus(DayStatus live) async {
+    final u = state.user;
+    if (u == null) return;
+    if (u.daySessionStatus == live.status &&
+        u.daySessionDate == live.date &&
+        u.daySessionOpenedAt == live.openedAt &&
+        u.lastClosedSessionAt == live.lastClosedAt) {
+      return;
+    }
+    await syncDaySession(
+      status: live.status,
+      openedAt: live.openedAt,
+      date: live.date,
+      lastClosedAt: live.lastClosedAt,
+    );
+  }
+
   Future<void> logout() async {
     try {
       await _repo.logout();

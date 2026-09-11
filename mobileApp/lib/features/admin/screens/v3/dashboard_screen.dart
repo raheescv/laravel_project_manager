@@ -12,42 +12,81 @@ import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/route_observer.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/charts.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key, this.onSelectTab});
+  const DashboardScreen({super.key, this.onSelectTab, this.active = true});
 
   /// Switches the shell to a primary tab (0=Home … 3=Settings). Injected by
   /// [HomeShell] so the Quick-actions launcher can jump to the Sales / Reports
   /// tabs, exactly the way the drawer does.
   final ValueChanged<int>? onSelectTab;
 
+  /// Whether the shell has this tab on show. [HomeShell] keeps every tab alive
+  /// in an IndexedStack, so initState runs once; flipping this to true is how
+  /// coming back to the Home tab reloads the dashboard.
+  final bool active;
+
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+/// Every way onto this screen re-reads it from the server — the cards, the
+/// leaderboard, the trend and the branch's day session: the first build, the
+/// Home tab coming back on show, a page pushed over the shell popping (New
+/// Sale, Day Session, a report), a branch switch and pull-to-refresh. The
+/// figures behind a till move with every sale and every open/close, and a
+/// dashboard showing what this device last saw read as broken.
+class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   StreamSubscription<int>? _branchSub;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => context.read<AdminCubit>().loadDashboard());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _reload();
+    });
     // The shell keeps this screen alive, so initState won't re-run on a branch
     // switch — reload the dashboard explicitly when the active branch changes.
     _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
-      if (mounted) context.read<AdminCubit>().loadDashboard();
+      if (mounted) _reload();
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribed to the *page* route this screen sits in — on a tablet that is
+    // the shell's, shared by every tab — so didPopNext fires when a page
+    // pushed over it comes off. Popup routes (dialogs, sheets) don't count.
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) routeObserver.subscribe(this, route);
+  }
+
+  @override
+  void didUpdateWidget(DashboardScreen old) {
+    super.didUpdateWidget(old);
+    if (widget.active && !old.active) _reload();
+  }
+
+  @override
+  void didPopNext() {
+    // Every tab shares the shell's route; only the one on show reloads.
+    if (widget.active) _reload();
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _branchSub?.cancel();
     super.dispose();
   }
+
+  void _reload() => context.read<AdminCubit>().loadDashboard();
 
   // ---- metric helpers ----
   Map<String, Metric> _byTitle(List<Metric>? list) => {for (final m in list ?? const <Metric>[]) m.title: m};

@@ -48,7 +48,37 @@ class _ReportCache {
 
 /// Backs the Dashboard and the Reports suite (bill-wise / employee-wise).
 class AdminCubit extends Cubit<AdminState> {
-  AdminCubit() : super(_initialState());
+  AdminCubit() : super(_initialState()) {
+    // Provided once for the life of the app (InvoApp), so the cubit outlives
+    // the session and a sign-out has to empty it by hand — or the next
+    // cashier's dashboard would open on the last one's figures while its own
+    // request was still in flight. A lock keeps everything warm on purpose.
+    _authSub = serviceLocator<AuthCubit>().stream.listen(_onAuth);
+  }
+
+  StreamSubscription<AuthState>? _authSub;
+
+  void _onAuth(AuthState s) {
+    if (s.status == AuthStatus.signedOut) reset();
+  }
+
+  /// Back to the blank slate: every cached figure dropped and every request
+  /// still in flight disowned, so nothing from the old session lands on the
+  /// new one.
+  void reset() {
+    ++_dashboardReq;
+    ++_reportReq;
+    ++_overviewReq;
+    _reportCache.clear();
+    _trendKey = null;
+    emit(_initialState());
+  }
+
+  @override
+  Future<void> close() {
+    _authSub?.cancel();
+    return super.close();
+  }
 
   static AdminState _initialState() {
     final now = DateTime.now();
@@ -64,6 +94,13 @@ class AdminCubit extends Cubit<AdminState> {
   static const int _reportPageSize = 20;
   int _reportReq = 0;
   int _overviewReq = 0;
+  int _dashboardReq = 0;
+
+  /// Whether the dashboard request stamped [req] is still the one to honour.
+  /// Every visit to the dashboard reloads it, and so does a branch switch, so
+  /// a slow answer for the previous branch — or the previous cashier — can
+  /// overlap a newer one and must not land on top of it.
+  bool _live(int req) => req == _dashboardReq && !isClosed;
 
   /// Last loaded breakdown per report type, for the filters in force when it
   /// was fetched. Only the By Item / By Stylist toggle reads it; each input
@@ -178,6 +215,7 @@ class AdminCubit extends Cubit<AdminState> {
   /// stylists list and the sparkline — and used to hold the KPI cards back for
   /// two extra round-trips they don't depend on.
   Future<void> loadDashboard() async {
+    final req = ++_dashboardReq;
     emit(state.copyWith(loading: true, clearError: true));
 
     // The leaderboard needs the business date up front to stay parallel with
@@ -185,19 +223,19 @@ class AdminCubit extends Cubit<AdminState> {
     // That copy can be stale — on a shared till another device can open or
     // close the day — so the server's answer is reconciled below.
     final assumed = _sessionDate;
-    final cards = _loadCards();
-    final decoration =
-        Future.wait([_loadTopStylists(assumed), _loadTrend(), _syncDayStatus()]);
+    final cards = _loadCards(req);
+    final decoration = Future.wait(
+        [_loadTopStylists(assumed, req), _loadTrend(req), _syncDayStatus(req)]);
 
     await cards;
-    if (!isClosed) emit(state.copyWith(loading: false));
+    if (_live(req)) emit(state.copyWith(loading: false));
 
     // Still awaited so pull-to-refresh doesn't end while these are in flight.
     await decoration;
 
     final actual = state.dashboard?.date ?? '';
-    if (actual.isNotEmpty && actual != assumed && !isClosed) {
-      await _loadTopStylists(actual);
+    if (actual.isNotEmpty && actual != assumed && _live(req)) {
+      await _loadTopStylists(actual, req);
     }
   }
 
@@ -205,26 +243,14 @@ class AdminCubit extends Cubit<AdminState> {
   /// into the cached user, so a refresh shows the day as the *database* has it.
   /// The user's copy is only as fresh as the last sign-in or toggle on this
   /// device: on a shared till another device can open or close the day, and an
-  /// app left running overnight still carries yesterday's session date.
-  Future<void> _syncDayStatus() async {
+  /// app left running overnight still carries yesterday's session date. The
+  /// server answers for the branch the app is operating as (`branch_id` rides
+  /// on every request), so the pill follows a branch switch like the cards do.
+  Future<void> _syncDayStatus(int req) async {
     try {
       final live = await _repo.dayStatus();
-      final auth = serviceLocator<AuthCubit>();
-      final user = auth.user;
-      // Nothing moved — don't churn storage or rebuild every AuthCubit watcher.
-      if (user != null &&
-          user.daySessionStatus == live.status &&
-          user.daySessionDate == live.date &&
-          user.daySessionOpenedAt == live.openedAt &&
-          user.lastClosedSessionAt == live.lastClosedAt) {
-        return;
-      }
-      await auth.syncDaySession(
-        status: live.status,
-        openedAt: live.openedAt,
-        date: live.date,
-        lastClosedAt: live.lastClosedAt,
-      );
+      if (!_live(req)) return;
+      await serviceLocator<AuthCubit>().applyDayStatus(live);
     } catch (_) {
       // Offline or the endpoint said no — keep the cached day state rather than
       // blanking the pill; the KPI cards above it still render.
@@ -247,14 +273,14 @@ class AdminCubit extends Cubit<AdminState> {
     return (user?.dayOpen ?? false) && date.isNotEmpty ? date : Dates.today();
   }
 
-  Future<void> _loadCards() async {
+  Future<void> _loadCards(int req) async {
     try {
       final data = await _repo.dashboard();
-      if (!isClosed) emit(state.copyWith(dashboard: data));
+      if (_live(req)) emit(state.copyWith(dashboard: data));
     } on ApiException catch (e) {
-      if (!isClosed) emit(state.copyWith(errorMessage: e.message));
+      if (_live(req)) emit(state.copyWith(errorMessage: e.message));
     } catch (e) {
-      if (!isClosed) {
+      if (_live(req)) {
         emit(state.copyWith(
             errorMessage: networkErrorMessage(e, 'Could not load the dashboard.')));
       }
@@ -264,7 +290,7 @@ class AdminCubit extends Cubit<AdminState> {
   /// Ranks the stylists for a single business day — [date], the branch's open
   /// day-session date. Sending no range would rank them on every sale ever
   /// recorded, which puts the same names on the board whatever happened today.
-  Future<void> _loadTopStylists(String date) async {
+  Future<void> _loadTopStylists(String date, int req) async {
     if (_selfScoped) return;
     try {
       final emp = await _repo.report(type: 'employeewise', startDate: date, endDate: date);
@@ -280,14 +306,14 @@ class AdminCubit extends Cubit<AdminState> {
         );
       }).toList()
         ..sort((a, b) => b.amount.compareTo(a.amount));
-      if (!isClosed) {
+      if (_live(req)) {
         emit(state.copyWith(
             topStylists: stylists.take(4).toList(), topStylistsDate: date));
       }
     } catch (_) {/* keep whatever we had */}
   }
 
-  Future<void> _loadTrend() async {
+  Future<void> _loadTrend(int req) async {
     try {
       final bill = await _repo.report(type: 'billwise', perPage: 100);
       final rows = (bill['rows'] as List?) ?? const [];
@@ -299,7 +325,7 @@ class AdminCubit extends Cubit<AdminState> {
       }
       final keys = byDate.keys.toList()..sort();
       final last = keys.length > 7 ? keys.sublist(keys.length - 7) : keys;
-      if (!isClosed) {
+      if (_live(req)) {
         emit(state.copyWith(
           trendPoints: last.map((k) => byDate[k]!).toList(),
           trendLabels: last,

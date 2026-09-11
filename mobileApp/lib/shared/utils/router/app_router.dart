@@ -32,12 +32,16 @@ import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/models/index.dart';
 
 import 'go_router_refresh_stream.dart';
+import 'route_observer.dart';
 import 'routes.dart';
 
 GoRouter createRouter(AuthCubit auth) {
   return GoRouter(
     initialLocation: Routes.login,
     refreshListenable: GoRouterRefreshStream(auth.stream),
+    // Lets a screen hear a page pushed over it coming off — the dashboard
+    // and Day Session re-read the server on that; see route_observer.dart.
+    observers: [routeObserver],
     redirect: (context, state) {
       final loggedIn = auth.status == AuthStatus.signedIn;
       final atLogin = state.matchedLocation == Routes.login;

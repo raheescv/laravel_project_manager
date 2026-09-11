@@ -30,6 +30,7 @@ import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/http_service.dart';
+import 'package:invo/shared/utils/router/route_observer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fake_lookup_repository.dart';
@@ -152,6 +153,8 @@ class TestHarness {
   /// the screen under test, plus catch-all stub routes for any navigation.
   Widget wrap(Widget child) {
     final router = GoRouter(
+      // As in createRouter, so a screen's didPopNext fires here too.
+      observers: [routeObserver],
       routes: [
         GoRoute(path: '/', builder: (_, __) => child),
         GoRoute(path: '/invoice', builder: (_, __) => const Scaffold()),

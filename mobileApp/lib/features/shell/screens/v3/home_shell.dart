@@ -51,6 +51,10 @@ class _HomeShellState extends State<HomeShell> {
   ///
   /// Indices must stay stable, so an unpermitted destination becomes a
   /// placeholder rather than shrinking the list. The rail never offers it.
+  ///
+  /// Home and Day Session are told whether they are on show: the stack keeps
+  /// them alive, so coming back to them is what re-reads the server, not a
+  /// fresh initState (see [DashboardScreen.active]).
   List<Widget> _pagesFor(BuildContext context) {
     final auth = context.read<AuthCubit>();
     Widget extra(int tab, String slug, Widget Function() build) =>
@@ -58,13 +62,14 @@ class _HomeShellState extends State<HomeShell> {
             ? build()
             : const SizedBox.shrink();
     return [
-      DashboardScreen(onSelectTab: _goToTab),
+      DashboardScreen(onSelectTab: _goToTab, active: _index == 0),
       SalesListScreen(onSelectTab: _goToTab),
       const ReportsScreen(),
       const SettingsScreen(),
       extra(kReturnsTab, PermissionSlug.saleReturnView, () => const SalesReturnListScreen()),
       extra(kStockCheckTab, PermissionSlug.stockCheck, () => const StockCheckListScreen()),
-      extra(kDaySessionTab, PermissionSlug.daySession, () => const DaySessionScreen()),
+      extra(kDaySessionTab, PermissionSlug.daySession,
+          () => DaySessionScreen(active: _index == kDaySessionTab)),
       // No permission gate on either — everyone has a profile and a permission
       // list of their own.
       context.isTablet && _visited.contains(kProfileTab)
