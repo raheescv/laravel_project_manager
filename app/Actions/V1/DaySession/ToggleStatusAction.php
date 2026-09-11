@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Auth;
 class ToggleStatusAction
 {
     /**
-     * Toggle the day session for the authenticated user's default branch.
+     * Toggle the day session for the branch the request names — the one the
+     * app is operating as, else the user's default branch (see StatusRequest).
      * Opens a new session if currently closed, or closes the open session.
      */
     public function execute(ToggleRequest $request): array
@@ -18,7 +19,7 @@ class ToggleStatusAction
         $branchId = $request->branchId();
 
         if (! $branchId) {
-            throw new \Exception('No default branch assigned to this user.');
+            throw new \Exception('No branch to run a day for — assign this user a default branch.');
         }
 
         $date = $request->validated('date');

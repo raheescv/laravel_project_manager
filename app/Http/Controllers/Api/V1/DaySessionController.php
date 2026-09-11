@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\V1\DaySession\ToggleStatusAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\DaySession\StatusRequest;
 use App\Http\Requests\V1\DaySession\ToggleRequest;
 use App\Http\Resources\V1\DaySession\DaySessionResource;
 use App\Models\SaleDaySession;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 #[Group('Mobile - Admin')]
 class DaySessionController extends Controller
@@ -21,8 +21,10 @@ class DaySessionController extends Controller
      * Toggle day open/close status.
      *
      * Opens a new day session if the branch is currently closed, or closes
-     * the open session if one exists. Requires a `date` field — when closing
-     * it must be on or after the session's opened_at.
+     * the open session if one exists. The branch is the one the app is
+     * operating as (`branch_id`), falling back to the user's default branch.
+     * Requires a `date` field — when closing it must be on or after the
+     * session's opened_at.
      */
     public function toggle(ToggleStatusAction $action, ToggleRequest $request): JsonResponse
     {
@@ -38,15 +40,16 @@ class DaySessionController extends Controller
     /**
      * Check the current day session status.
      *
-     * Returns whether the authenticated user's default branch currently has an
-     * open day session, the open session's details when one exists, and the
-     * moment of the most recent close — enough for a client to refresh its
-     * cached day-session block without signing in again.
+     * Returns whether the branch the app is operating as (`branch_id`, falling
+     * back to the user's default branch) currently has an open day session,
+     * the open session's details when one exists, and the moment of the most
+     * recent close — enough for a client to refresh its cached day-session
+     * block without signing in again.
      */
-    public function status(Request $request): JsonResponse
+    public function status(StatusRequest $request): JsonResponse
     {
         try {
-            $branchId = $request->user()?->default_branch_id;
+            $branchId = $request->branchId();
 
             if (! $branchId) {
                 return $this->sendError('No default branch assigned to this user.');

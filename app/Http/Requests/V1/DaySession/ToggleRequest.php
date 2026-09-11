@@ -4,18 +4,13 @@ namespace App\Http\Requests\V1\DaySession;
 
 use App\Models\SaleDaySession;
 use Carbon\Carbon;
-use Illuminate\Foundation\Http\FormRequest;
 
-class ToggleRequest extends FormRequest
+/**
+ * Open or close a branch's day. The branch comes from [StatusRequest]: the
+ * one the app is operating as, else the user's default branch.
+ */
+class ToggleRequest extends StatusRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Normalise the submitted moment into the application timezone.
      *
@@ -69,6 +64,7 @@ class ToggleRequest extends FormRequest
         }
 
         return [
+            'branch_id' => $this->branchRules(),
             'date' => $rules,
         ];
     }
@@ -82,12 +78,12 @@ class ToggleRequest extends FormRequest
     {
         $openedAt = $this->openSession()?->opened_at?->format('d M Y, g:i A');
 
-        return [
+        return array_merge(parent::messages(), [
             'date.after_or_equal' => $openedAt
                 ? 'The closing time must be on or after the opening ('.$openedAt.').'
                 : 'The closing time must be on or after the opening time.',
             'date.before_or_equal' => 'The date & time cannot be in the future.',
-        ];
+        ]);
     }
 
     public function isClosing(): bool
@@ -95,17 +91,5 @@ class ToggleRequest extends FormRequest
         $branchId = $this->branchId();
 
         return $branchId ? SaleDaySession::hasOpenSession($branchId) : false;
-    }
-
-    public function branchId(): ?int
-    {
-        return $this->user()?->default_branch_id;
-    }
-
-    public function openSession(): ?SaleDaySession
-    {
-        $branchId = $this->branchId();
-
-        return $branchId ? SaleDaySession::getOpenSessionForBranch($branchId) : null;
     }
 }
