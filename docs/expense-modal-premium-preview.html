@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Modal — Premium Redesign Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+    /* ============================================================
+       PREVIEW CHROME (not part of the app)
+       ============================================================ */
+    *{box-sizing:border-box;}
+    body{
+        margin:0;
+        font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+        padding:96px 18px 70px;
+        min-height:100vh;
+        transition:background .25s ease;
+    }
+    body[data-mode="light"]{ background:#eef1f5; background-image:radial-gradient(circle at 50% -10%, #f8fafc, #e5e9f0); }
+    body[data-mode="dark"]{ background:#0c0f15; background-image:radial-gradient(circle at 50% -10%, #171d27, #0a0c11); }
+
+    .toolbar{
+        position:fixed; top:0; left:0; right:0; z-index:80;
+        display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+        padding:10px 18px;
+        background:rgba(13,17,23,.93);
+        backdrop-filter:blur(10px);
+        border-bottom:1px solid rgba(255,255,255,.08);
+        box-shadow:0 6px 24px rgba(0,0,0,.3);
+    }
+    .toolbar .brand{ color:#fff; font-weight:700; font-size:13px; letter-spacing:.3px; }
+    .toolbar .brand small{ display:block; font-weight:400; font-size:10px; color:#9ca3af; }
+    .toolbar .group{ display:flex; gap:7px; align-items:center; }
+    .toolbar .label{ color:#8b93a1; font-size:9.5px; text-transform:uppercase; letter-spacing:1px; }
+    .toolbar .spacer{ flex:1; }
+    .swatch{ width:24px; height:24px; border-radius:7px; cursor:pointer; border:2px solid transparent; transition:transform .12s,border-color .12s; }
+    .swatch:hover{ transform:translateY(-2px); }
+    .swatch.active{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.22); }
+    .btn-toggle{ background:rgba(255,255,255,.08); color:#e5e7eb; border:1px solid rgba(255,255,255,.12); padding:6px 12px; border-radius:8px; font-size:11.5px; cursor:pointer; font-family:inherit; }
+    .btn-toggle:hover{ background:rgba(255,255,255,.16); }
+    .stage{ max-width:820px; margin:0 auto; display:grid; gap:44px; }
+    .caption{ font-size:11px; letter-spacing:.09em; text-transform:uppercase; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:10px; }
+    .caption .tag{ font-size:9.5px; letter-spacing:.06em; padding:3px 8px; border-radius:999px; background:#2563eb; color:#fff; }
+    .caption .tag.alt{ background:#64748b; }
+    body[data-mode="light"] .caption{ color:#64748b; }
+    body[data-mode="dark"] .caption{ color:#7c8693; }
+    .dirnote{ max-width:820px; margin:0 auto 26px; padding:12px 16px; border-radius:11px; font-size:12px; line-height:1.6;
+              background:rgba(37,99,235,.09); border:1px solid rgba(37,99,235,.28); }
+    .dirnote ul{ margin:6px 0 0; padding-inline-start:18px; }
+    body[data-mode="light"] .dirnote{ color:#1e3a8a; }
+    body[data-mode="dark"] .dirnote{ color:#bfdbfe; background:rgba(37,99,235,.13); }
+
+    /* ============================================================
+       EXPENSE MODAL — PREMIUM  (scope: .exx)  → becomes the blade's CSS
+       ============================================================ */
+
+        /* ════════════  Expense form — "Premium" design system (scoped under .exx)  ════════════
+           Colour derives from the active settings theme (--bs-primary) and tracks dark mode,
+           sibling of the Branch (.brx) / Employee (.empx) / General Voucher (.gvx) systems.
+           Font Awesome 4 only. Logical properties throughout so RTL needs no overrides. */
+
+        .exx-shell-wrap { max-width: 760px; margin: 0 auto; }
+        .exx-shell-wrap.narrow { max-width: 660px; }
+
+        .exx-shell {
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 28px 70px -24px rgba(16, 24, 40, .55);
+        }
+        [data-bs-theme="dark"] .exx-shell { background: #272d34; }
+
+        .exx {
+            --brand: var(--bs-primary, #2563eb);
+            --brand-rgb: var(--bs-primary-rgb, 37, 99, 235);
+            --brand-600: color-mix(in srgb, var(--brand), #000 12%);
+            --brand-700: color-mix(in srgb, var(--brand), #000 28%);
+            --brand-400: color-mix(in srgb, var(--brand), #fff 22%);
+            --brand-ink: var(--brand-700);          /* brand-tinted text on surfaces */
+            --hero-1: color-mix(in srgb, var(--brand), #000 40%);
+            --hero-2: color-mix(in srgb, var(--brand), #000 4%);
+            --hero-3: color-mix(in srgb, var(--brand), #fff 8%);
+
+            --surface: #ffffff;
+            --surface-2: #f5f7fa;
+            --surface-3: #eceff4;
+            --border: #e4e8ee;
+            --border-strong: #d3d9e1;
+            --text: #1f2937;
+            --text-2: #5b6573;
+            --text-3: #8a94a3;
+
+            --success: #059669;
+            --success-bg: #ecfdf5;
+            --success-rgb: 5, 150, 105;
+            --danger: #dc2626;
+            --danger-bg: #fef2f2;
+            --danger-rgb: 220, 38, 38;
+            --amber: #b45309;
+            --amber-bg: #fffbeb;
+            --amber-rgb: 180, 83, 9;
+
+            --r-sm: 9px;
+            --r-md: 11px;
+            --r-lg: 14px;
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .05);
+            --exx-fz: 13px;
+
+            font-size: var(--exx-fz);
+            color: var(--text);
+            line-height: 1.45;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -.003em;
+        }
+
+        [data-bs-theme="dark"] .exx {
+            --brand-ink: color-mix(in srgb, var(--brand), #fff 42%);
+            --hero-1: color-mix(in srgb, var(--brand), #000 60%);
+            --hero-2: color-mix(in srgb, var(--brand), #000 44%);
+            --hero-3: color-mix(in srgb, var(--brand), #000 26%);
+            --surface: #272d34;
+            --surface-2: #2e353d;
+            --surface-3: #353d46;
+            --border: #3a424c;
+            --border-strong: #4a535e;
+            --text: #e8ebef;
+            --text-2: #aab2bd;
+            --text-3: #7c8693;
+            --success-bg: color-mix(in srgb, var(--success), #000 72%);
+            --danger-bg: color-mix(in srgb, var(--danger), #000 72%);
+            --amber: #fbbf24;
+            --amber-bg: color-mix(in srgb, #b45309, #000 70%);
+        }
+        [data-bs-theme="dark"] .exx input[type="date"] { color-scheme: dark; }
+        .exx [hidden] { display: none !important; }
+
+        /* ═══════════  HERO  ═══════════ */
+        .exx-hero {
+            position: relative; overflow: hidden; isolation: isolate;
+            padding: 16px 20px; color: #fff;
+            background:
+                radial-gradient(120% 160% at 12% -10%, rgba(255,255,255,.20), transparent 50%),
+                radial-gradient(90% 140% at 100% 0%, var(--hero-3), transparent 55%),
+                linear-gradient(118deg, var(--hero-1) 0%, var(--hero-2) 60%, var(--hero-3) 130%);
+        }
+        .exx-hero::after {
+            content: ""; position: absolute; inset: 0; z-index: -1; opacity: .5;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.10) 1px, transparent 0);
+            background-size: 22px 22px;
+            -webkit-mask-image: linear-gradient(180deg, #000, transparent 80%);
+            mask-image: linear-gradient(180deg, #000, transparent 80%);
+        }
+        .exx-glow { position: absolute; z-index: -1; border-radius: 50%; filter: blur(34px); }
+        .exx-glow.a { width: 220px; height: 220px; top: -90px; inset-inline-end: 6%; background: rgba(255,255,255,.28); opacity: .5; }
+        .exx-glow.b { width: 170px; height: 170px; bottom: -80px; inset-inline-start: -20px; background: var(--brand-400); opacity: .4; }
+
+        .exx-hero-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .exx-hero-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .exx-hero-ic {
+            width: 42px; height: 42px; border-radius: 12px; flex: 0 0 auto;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 18px; color: #fff;
+            background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.28);
+            backdrop-filter: blur(6px); box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
+        }
+        .exx-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.78); }
+        .exx-hero-title { font-size: 17px; font-weight: 800; letter-spacing: -.02em; margin: 1px 0 0; line-height: 1.1; color: #fff; text-shadow: 0 1px 14px rgba(0,0,0,.18); }
+        .exx-hero-tools { display: flex; align-items: center; gap: 9px; }
+        .exx-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 10px; font-weight: 700; letter-spacing: .02em;
+            padding: 5px 10px; border-radius: 999px; line-height: 1;
+            color: var(--brand-700); background: rgba(255,255,255,.95);
+            box-shadow: 0 4px 12px -4px rgba(0,0,0,.3); white-space: nowrap;
+        }
+        .exx-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .2); }
+        .exx-x {
+            width: 32px; height: 32px; flex: 0 0 auto; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 14px; color: #fff; cursor: pointer;
+            background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.26);
+            backdrop-filter: blur(6px); transition: background .15s ease, transform .15s ease;
+        }
+        .exx-x:hover { background: rgba(255,255,255,.28); }
+        .exx-x:active { transform: scale(.94); }
+
+        /* ═══════════  BODY  ═══════════ */
+        .exx-body { padding: 16px; background: var(--surface-2); max-height: 68vh; overflow-y: auto; }
+
+        .exx-errors {
+            display: flex; gap: 10px; align-items: flex-start;
+            background: var(--danger-bg); border: 1px solid rgba(var(--danger-rgb), .28);
+            border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 14px;
+        }
+        .exx-errors-ic { color: var(--danger); font-size: 14px; margin-top: 1px; }
+        .exx-errors-title { font-weight: 700; color: var(--danger); font-size: 12px; }
+        .exx-errors-list { margin: 3px 0 0; padding-inline-start: 16px; color: var(--danger); font-size: 11.5px; }
+        .exx-errors-list li { margin-top: 2px; }
+
+        /* labels / inputs (shared by both layouts) */
+        .exx-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+        .exx-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); }
+        .exx-label i { margin-inline-end: 4px; opacity: .8; }
+        .exx-label .req { color: var(--danger); }
+        .exx-count { font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+        .exx-count.warn { color: var(--amber); }
+
+        .exx-input {
+            position: relative; display: flex; align-items: stretch;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--r-sm); overflow: hidden;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .exx-input:hover { border-color: var(--border-strong); }
+        .exx-input:focus-within { border-color: var(--brand-400); box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .16); }
+        .exx-input.is-invalid { border-color: var(--danger); }
+        .exx-input.is-invalid:focus-within { box-shadow: 0 0 0 3px rgba(var(--danger-rgb), .14); }
+        .exx-input-ic {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; flex: 0 0 auto; color: var(--text-3);
+            background: var(--surface-2); border-inline-end: 1px solid var(--border); font-size: 12.5px;
+        }
+        .exx-control {
+            flex: 1; min-width: 0; width: 100%; border: none; outline: none; background: transparent;
+            padding: 9px 11px; font-size: var(--exx-fz); color: var(--text); font-family: inherit; line-height: 1.4;
+        }
+        .exx-control::placeholder { color: var(--text-3); }
+        textarea.exx-control { resize: vertical; min-height: 40px; }
+        select.exx-control { appearance: none; -webkit-appearance: none; padding-inline-end: 30px; cursor: pointer; }
+        .exx-caret { position: absolute; inset-inline-end: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-3); font-size: 13px; }
+        .exx-hint { font-size: 10.5px; color: var(--text-3); margin-top: 5px; }
+        .exx-err { display: flex; gap: 5px; align-items: center; font-size: 10.5px; color: var(--danger); margin-top: 5px; font-weight: 600; }
+
+        /* the money field */
+        .exx-cur {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 12px; flex: 0 0 auto; font-size: 11px; font-weight: 800; letter-spacing: .08em;
+            color: var(--brand-ink); background: rgba(var(--brand-rgb), .10); border-inline-end: 1px solid var(--border);
+        }
+        .exx-input.amount .exx-control {
+            font-size: 22px; font-weight: 700; letter-spacing: -.02em; text-align: end;
+            padding: 6px 12px; font-variant-numeric: tabular-nums;
+        }
+        .exx-input.amount .exx-control::placeholder { font-weight: 500; }
+        .exx-input.amount input::-webkit-outer-spin-button,
+        .exx-input.amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .exx-input.amount input[type=number] { -moz-appearance: textfield; }
+
+        /* quick chips (dates, recent categories) */
+        .exx-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; align-items: center; }
+        .exx-chips-k { font-size: 10px; color: var(--text-3); font-weight: 600; margin-inline-end: 2px; }
+        .exx-chip {
+            display: inline-flex; align-items: center; gap: 5px; font-family: inherit;
+            font-size: 10.5px; font-weight: 600; padding: 4px 9px; border-radius: 999px; cursor: pointer;
+            color: var(--text-2); background: var(--surface); border: 1px solid var(--border);
+            transition: border-color .15s ease, background .15s ease, color .15s ease;
+        }
+        .exx-chip:hover { border-color: var(--border-strong); color: var(--text); }
+        .exx-chip.on { color: var(--brand-ink); background: rgba(var(--brand-rgb), .10); border-color: rgba(var(--brand-rgb), .35); }
+
+        /* ═══════════  LAYOUT A — PANELS + GRID  ═══════════ */
+        .exx-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 14px; }
+        .exx-panel:last-child { margin-bottom: 0; }
+        .exx-panel-head {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(110deg, rgba(var(--brand-rgb), .07), var(--surface) 60%);
+        }
+        .exx-panel-ic { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: rgba(var(--brand-rgb), .12); color: var(--brand-ink); font-size: 12.5px; }
+        .exx-panel-title { font-size: 12.5px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+        .exx-panel-sub { font-size: 10px; color: var(--text-3); margin-top: 1px; }
+        .exx-panel-step { margin-inline-start: auto; font-size: 9.5px; font-weight: 800; letter-spacing: .1em; color: var(--text-3); }
+        .exx-panel-body { padding: 14px; }
+        .exx-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px 12px; }
+        .exx .c4 { grid-column: span 4; }
+        .exx .c5 { grid-column: span 5; }
+        .exx .c6 { grid-column: span 6; }
+        .exx .c7 { grid-column: span 7; }
+        .exx .c8 { grid-column: span 8; }
+        .exx .c12 { grid-column: span 12; }
+
+        /* ═══════════  LAYOUT B — AMOUNT HEADLINE + FLOW ROWS  ═══════════ */
+        .exx-amount-card {
+            position: relative; overflow: hidden;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+            box-shadow: var(--shadow-sm); padding: 16px 18px 14px; margin-bottom: 14px;
+        }
+        .exx-amount-card::before {
+            content: ""; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 4px;
+            background: linear-gradient(180deg, var(--brand), var(--brand-400));
+        }
+        .exx-amount-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+        .exx-amount-top .exx-label { margin: 0; }
+        .exx-amount-line { display: flex; align-items: center; gap: 12px; }
+        .exx-amount-code {
+            flex: 0 0 auto; font-size: 12px; font-weight: 800; letter-spacing: .1em;
+            color: var(--brand-ink); background: rgba(var(--brand-rgb), .10);
+            border: 1px solid rgba(var(--brand-rgb), .22); border-radius: 8px; padding: 6px 10px;
+        }
+        .exx-amount-big {
+            flex: 1; min-width: 0; width: 100%; border: none; outline: none; background: transparent;
+            font-family: inherit; font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1;
+            color: var(--text); padding: 2px 0; font-variant-numeric: tabular-nums;
+            border-bottom: 2px solid var(--border); transition: border-color .15s ease;
+        }
+        .exx-amount-big::placeholder { color: var(--text-3); font-weight: 600; }
+        .exx-amount-big:focus { border-bottom-color: var(--brand); }
+        .exx-amount-big::-webkit-outer-spin-button, .exx-amount-big::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .exx-amount-big[type=number] { -moz-appearance: textfield; }
+        .exx-amount-card.is-invalid .exx-amount-big { border-bottom-color: var(--danger); }
+
+        .exx-rows { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 14px; }
+        .exx-row {
+            display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 8px 16px; align-items: center;
+            padding: 12px 14px; border-bottom: 1px solid var(--border);
+            transition: background .15s ease;
+        }
+        .exx-row:last-child { border-bottom: none; }
+        .exx-row:focus-within { background: rgba(var(--brand-rgb), .035); }
+        .exx-row.top { align-items: start; }
+        .exx-row.top .exx-row-l { padding-top: 6px; }
+        .exx-row-l { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .exx-row-ic { width: 32px; height: 32px; flex: 0 0 auto; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; background: var(--surface-3); color: var(--text-2); transition: background .15s ease, color .15s ease; }
+        .exx-row:focus-within .exx-row-ic { background: rgba(var(--brand-rgb), .14); color: var(--brand-ink); }
+        .exx-row-t { display: block; font-size: 12.5px; font-weight: 700; color: var(--text); line-height: 1.2; }
+        .exx-row-t .req { color: var(--danger); }
+        .exx-row-s { display: block; font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+        .exx-row-r { min-width: 0; }
+
+        /* live "what will happen" sentence */
+        .exx-sentence {
+            display: flex; align-items: flex-start; gap: 11px;
+            padding: 12px 14px; border-radius: var(--r-lg);
+            background: linear-gradient(110deg, rgba(var(--brand-rgb), .09), var(--surface) 70%);
+            border: 1px solid rgba(var(--brand-rgb), .22);
+        }
+        .exx-sentence-ic { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: rgba(var(--brand-rgb), .14); color: var(--brand-ink); font-size: 13px; }
+        .exx-sentence-t { font-size: 12.5px; color: var(--text-2); line-height: 1.55; }
+        .exx-sentence-t b { color: var(--text); font-weight: 700; }
+        .exx-sentence-t b.empty { color: var(--text-3); font-weight: 600; border-bottom: 1px dashed var(--border-strong); }
+        .exx-dc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+        .exx-dc span { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; color: var(--text-2); padding: 3px 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+        .exx-dc i { font-style: normal; font-size: 8.5px; font-weight: 800; letter-spacing: .1em; padding: 2px 5px; border-radius: 4px; color: #fff; }
+        .exx-dc i.dr { background: var(--brand); }
+        .exx-dc i.cr { background: var(--amber); }
+
+        /* ═══════════  FOOTER  ═══════════ */
+        .exx-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border); }
+        .exx-post { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; color: var(--text-3); flex-wrap: wrap; }
+        .exx-post .exx-dc { margin: 0; }
+        .exx-footer-right { display: flex; align-items: center; gap: 9px; flex: 0 0 auto; }
+        .exx-btn {
+            display: inline-flex; align-items: center; gap: 7px; font-family: inherit;
+            font-size: 12.5px; font-weight: 700; padding: 9px 16px; border-radius: 9px; cursor: pointer;
+            border: 1px solid transparent; white-space: nowrap;
+            transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .1s ease;
+        }
+        .exx-btn:active { transform: translateY(1px); }
+        .exx-btn.ghost { background: var(--surface); border-color: var(--border); color: var(--text-2); }
+        .exx-btn.ghost:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--text); }
+        .exx-btn.soft { background: var(--success-bg); color: var(--success); border-color: rgba(var(--success-rgb), .3); }
+        .exx-btn.soft:hover { background: color-mix(in srgb, var(--success-bg), var(--success) 12%); border-color: rgba(var(--success-rgb), .5); }
+        .exx-btn.primary { color: #fff; border: none; background: linear-gradient(120deg, var(--brand), var(--brand-600)); box-shadow: 0 8px 18px -7px rgba(var(--brand-rgb), .6); }
+        .exx-btn.primary:hover { background: linear-gradient(120deg, var(--brand-600), var(--brand-700)); box-shadow: 0 10px 22px -7px rgba(var(--brand-rgb), .7); }
+        .exx-btn:disabled { opacity: .65; cursor: not-allowed; }
+        .exx-kbd { font: 700 9.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 3px 5px; border-radius: 5px; background: rgba(255,255,255,.22); border: 1px solid rgba(255,255,255,.28); }
+        .exx-btn.soft .exx-kbd { background: rgba(var(--success-rgb), .10); border-color: rgba(var(--success-rgb), .3); }
+
+        /* ═══════════  RESPONSIVE  ═══════════ */
+        @media (max-width: 720px) {
+            .exx-grid { grid-template-columns: 1fr; }
+            .exx .c4, .exx .c5, .exx .c6, .exx .c7, .exx .c8, .exx .c12 { grid-column: 1 / -1; }
+            .exx-row { grid-template-columns: 1fr; }
+            .exx-row.top .exx-row-l { padding-top: 0; }
+            .exx-footer { flex-direction: column-reverse; align-items: stretch; }
+            .exx-footer-right { flex-direction: column-reverse; align-items: stretch; }
+            .exx-btn { justify-content: center; }
+            .exx-post { justify-content: center; }
+        }
+</style>
+</head>
+
+<body data-mode="light" dir="ltr">
+
+<div class="toolbar">
+    <div class="brand">Expense Modal &mdash; Premium<small>account/expense &middot; scope .exx</small></div>
+    <div class="group"><span class="label">Theme</span>
+        <span class="swatch active" style="background:#2563EB" data-brand="37, 99, 235"></span>
+        <span class="swatch" style="background:#0E8A4F" data-brand="14, 138, 79"></span>
+        <span class="swatch" style="background:#334155" data-brand="51, 65, 85"></span>
+        <span class="swatch" style="background:#9A5B1E" data-brand="154, 91, 30"></span>
+        <span class="swatch" style="background:#7C3AED" data-brand="124, 58, 237"></span>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn-toggle" id="dirBtn"><i class="fa fa-exchange"></i> LTR / RTL</button>
+    <button class="btn-toggle" id="modeBtn"><i class="fa fa-moon-o"></i> Light / Dark</button>
+</div>
+
+<div class="dirnote">
+    <b>Two body layouts, same Premium shell.</b> Both share the themed hero, footer and tokens of the Branch / Employee / Voucher modals.
+    Both are live &mdash; type an amount, pick a category, click a date chip and watch the posting preview update.
+    <ul>
+        <li><b>A &middot; Ledger</b> &mdash; three numbered panels on a 12-col grid. Closest to the existing Premium modals.</li>
+        <li><b>B &middot; Flow</b> (recommended for “ultra user-friendly”) &mdash; the amount is the headline, then one full-width row per question in the order people think: for what &rarr; paid from &rarr; when &rarr; who &rarr; reference &rarr; note. Big targets, zero clutter, reads like a receipt.</li>
+    </ul>
+    Shared upgrades: currency code on the amount, Today / Yesterday chips, recently-used category chips, live character counters (30 / 100 limits already enforced server-side), inline field errors, and a plain-English “what will be recorded” line with the Dr / Cr legs. The third card shows B in edit mode with validation errors.
+</div>
+
+<div class="stage">
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     A · LEDGER
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div><div class="caption"><span class="tag alt">A</span> Ledger &middot; panels + grid &middot; new expense</div>
+<div class="exx-shell-wrap">
+  <div class="exx-shell">
+    <div class="exx" data-exx>
+      <div class="exx-hero">
+        <span class="exx-glow a"></span><span class="exx-glow b"></span>
+        <div class="exx-hero-row">
+          <div class="exx-hero-id">
+            <span class="exx-hero-ic"><i class="fa fa-money"></i></span>
+            <div><div class="exx-eyebrow">Accounts &middot; Expense</div><h1 class="exx-hero-title">Record Expense</h1></div>
+          </div>
+          <div class="exx-hero-tools">
+            <span class="exx-pill"><span class="dot"></span>New</span>
+            <button type="button" class="exx-x"><i class="fa fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+      <form onsubmit="return false">
+        <div class="exx-body">
+
+          <div class="exx-panel">
+            <div class="exx-panel-head">
+              <span class="exx-panel-ic"><i class="fa fa-list-alt"></i></span>
+              <div><div class="exx-panel-title">What &amp; how much</div><div class="exx-panel-sub">The account this spend belongs to, and the total paid</div></div>
+              <span class="exx-panel-step">01</span>
+            </div>
+            <div class="exx-panel-body">
+              <div class="exx-grid">
+                <div class="c7">
+                  <div class="exx-label-row"><label class="exx-label"><i class="fa fa-tags"></i> Expense Category <span class="req">*</span></label></div>
+                  <div class="exx-input">
+                    <span class="exx-input-ic"><i class="fa fa-tags"></i></span>
+                    <select class="exx-control" data-f="category">
+                      <option value="">Search expense category…</option>
+                      <option>Office Supplies</option><option>Fuel &amp; Transport</option><option>Staff Meals</option><option>Utilities</option><option>Repairs &amp; Maintenance</option>
+                    </select>
+                    <i class="fa fa-angle-down exx-caret"></i>
+                  </div>
+                  <div class="exx-chips"><span class="exx-chips-k">Recent</span>
+                    <button type="button" class="exx-chip" data-pick="category">Office Supplies</button>
+                    <button type="button" class="exx-chip" data-pick="category">Fuel &amp; Transport</button>
+                    <button type="button" class="exx-chip" data-pick="category">Staff Meals</button>
+                  </div>
+                </div>
+                <div class="c5">
+                  <div class="exx-label-row"><label class="exx-label"><i class="fa fa-money"></i> Amount <span class="req">*</span></label><span class="exx-count">min 1 &middot; max 999,999</span></div>
+                  <div class="exx-input amount">
+                    <span class="exx-cur">QAR</span>
+                    <input class="exx-control" type="number" inputmode="decimal" step="0.01" placeholder="0.00" data-f="amount">
+                  </div>
+                  <div class="exx-hint">Total paid, including tax.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="exx-panel">
+            <div class="exx-panel-head">
+              <span class="exx-panel-ic"><i class="fa fa-credit-card"></i></span>
+              <div><div class="exx-panel-title">Payment</div><div class="exx-panel-sub">Where the money came from and when</div></div>
+              <span class="exx-panel-step">02</span>
+            </div>
+            <div class="exx-panel-body">
+              <div class="exx-grid">
+                <div class="c4">
+                  <div class="exx-label-row"><label class="exx-label"><i class="fa fa-credit-card"></i> Paid from <span class="req">*</span></label></div>
+                  <div class="exx-input">
+                    <span class="exx-input-ic"><i class="fa fa-credit-card"></i></span>
+                    <select class="exx-control" data-f="method"><option>Cash</option><option>Bank – QNB</option><option>Card – POS</option><option>Petty Cash</option></select>
+                    <i class="fa fa-angle-down exx-caret"></i>
+                  </div>
+                </div>
+                <div class="c4">
+                  <div class="exx-label-row"><label class="exx-label"><i class="fa fa-calendar"></i> Date <span class="req">*</span></label></div>
+                  <div class="exx-input">
+                    <span class="exx-input-ic"><i class="fa fa-calendar"></i></span>
+                    <input class="exx-control" type="date" value="2026-09-11" data-f="date">
+                  </div>
+                  <div class="exx-chips">
+                    <button type="button" class="exx-chip on" data-chip="today"><i class="fa fa-check"></i> Today</button>
+                    <button type="button" class="exx-chip" data-chip="yesterday">Yesterday</button>
+                  </div>
+                </div>
+                <div class="c4">
+                  <div class="exx-label-row"><label class="exx-label"><i class="fa fa-hashtag"></i> Reference No</label><span class="exx-count" data-count-out="ref">0 / 30</span></div>
+                  <div class="exx-input">
+                    <span class="exx-input-ic"><i class="fa fa-hashtag"></i></span>
+                    <input class="exx-control" maxlength="30" placeholder="Bill / receipt no." data-count="ref">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="exx-panel">
+            <div class="exx-panel-head">
+              <span class="exx-panel-ic"><i class="fa fa-file-text-o"></i></span>
+              <div><div class="exx-panel-title">Details</div><div class="exx-panel-sub">Who was paid and what for</div></div>
+              <span class="exx-panel-step">03</span>
+            </div>
+            <div class="exx-panel-body">
+              <div class="exx-grid">
+                <div class="c4">
+                  <div class="exx-label-row"><label class="exx-label"><i class="fa fa-user"></i> Payee</label><span class="exx-count" data-count-out="payee">0 / 30</span></div>
+                  <div class="exx-input">
+                    <span class="exx-input-ic"><i class="fa fa-user"></i></span>
+                    <input class="exx-control" maxlength="30" placeholder="Vendor or person" data-count="payee">
+                  </div>
+                </div>
+                <div class="c8">
+                  <div class="exx-label-row"><label class="exx-label"><i class="fa fa-pencil"></i> Description <span class="req">*</span></label><span class="exx-count" data-count-out="desc">0 / 100</span></div>
+                  <div class="exx-input">
+                    <span class="exx-input-ic"><i class="fa fa-pencil"></i></span>
+                    <textarea class="exx-control" rows="2" maxlength="100" placeholder="e.g. A4 paper and toner for the front desk" data-count="desc"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="exx-footer">
+          <div class="exx-post">
+            <span data-out="post-empty">Pick a category and amount to preview the entry</span>
+            <div class="exx-dc" data-out="post" hidden>
+              <span><i class="dr">DR</i> <span data-out="cat"></span></span>
+              <span><i class="cr">CR</i> <span data-out="method"></span></span>
+              <span>QAR <span data-out="amount"></span></span>
+            </div>
+          </div>
+          <div class="exx-footer-right">
+            <button type="button" class="exx-btn ghost"><i class="fa fa-times"></i> Cancel</button>
+            <button type="button" class="exx-btn soft"><i class="fa fa-plus"></i> Save &amp; Add New</button>
+            <button type="submit" class="exx-btn primary"><i class="fa fa-check"></i> Save Expense <span class="exx-kbd">⏎</span></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div></div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     B · FLOW
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div><div class="caption"><span class="tag">B</span> Flow &middot; amount headline + one row per question &middot; new expense &middot; recommended</div>
+<div class="exx-shell-wrap narrow">
+  <div class="exx-shell">
+    <div class="exx" data-exx>
+      <div class="exx-hero">
+        <span class="exx-glow a"></span><span class="exx-glow b"></span>
+        <div class="exx-hero-row">
+          <div class="exx-hero-id">
+            <span class="exx-hero-ic"><i class="fa fa-money"></i></span>
+            <div><div class="exx-eyebrow">Accounts &middot; Expense</div><h1 class="exx-hero-title">Record Expense</h1></div>
+          </div>
+          <div class="exx-hero-tools">
+            <span class="exx-pill"><span class="dot"></span>New</span>
+            <button type="button" class="exx-x"><i class="fa fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+      <form onsubmit="return false">
+        <div class="exx-body">
+
+          <div class="exx-amount-card">
+            <div class="exx-amount-top">
+              <label class="exx-label"><i class="fa fa-money"></i> Amount <span class="req">*</span></label>
+              <span class="exx-count">min 1 &middot; max 999,999</span>
+            </div>
+            <div class="exx-amount-line">
+              <span class="exx-amount-code">QAR</span>
+              <input class="exx-amount-big" type="number" inputmode="decimal" step="0.01" placeholder="0.00" data-f="amount" autofocus>
+            </div>
+            <div class="exx-hint">Total paid, including tax.</div>
+          </div>
+
+          <div class="exx-rows">
+            <div class="exx-row top">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-tags"></i></span><div><span class="exx-row-t">Category <span class="req">*</span></span><span class="exx-row-s">Which expense account</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input">
+                  <select class="exx-control" data-f="category">
+                    <option value="">Search expense category…</option>
+                    <option>Office Supplies</option><option>Fuel &amp; Transport</option><option>Staff Meals</option><option>Utilities</option><option>Repairs &amp; Maintenance</option>
+                  </select>
+                  <i class="fa fa-angle-down exx-caret"></i>
+                </div>
+                <div class="exx-chips"><span class="exx-chips-k">Recent</span>
+                  <button type="button" class="exx-chip" data-pick="category">Office Supplies</button>
+                  <button type="button" class="exx-chip" data-pick="category">Fuel &amp; Transport</button>
+                  <button type="button" class="exx-chip" data-pick="category">Staff Meals</button>
+                </div>
+              </div>
+            </div>
+            <div class="exx-row">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-credit-card"></i></span><div><span class="exx-row-t">Paid from <span class="req">*</span></span><span class="exx-row-s">Cash, bank or card</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input">
+                  <select class="exx-control" data-f="method"><option>Cash</option><option>Bank – QNB</option><option>Card – POS</option><option>Petty Cash</option></select>
+                  <i class="fa fa-angle-down exx-caret"></i>
+                </div>
+              </div>
+            </div>
+            <div class="exx-row top">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-calendar"></i></span><div><span class="exx-row-t">Date <span class="req">*</span></span><span class="exx-row-s">When it was paid</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input"><input class="exx-control" type="date" value="2026-09-11" data-f="date"></div>
+                <div class="exx-chips">
+                  <button type="button" class="exx-chip on" data-chip="today"><i class="fa fa-check"></i> Today</button>
+                  <button type="button" class="exx-chip" data-chip="yesterday">Yesterday</button>
+                </div>
+              </div>
+            </div>
+            <div class="exx-row">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-user"></i></span><div><span class="exx-row-t">Payee</span><span class="exx-row-s">Optional</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input"><input class="exx-control" maxlength="30" placeholder="Vendor or person" data-count="payee"></div>
+                <div class="exx-label-row" style="margin:5px 0 0;justify-content:flex-end"><span class="exx-count" data-count-out="payee">0 / 30</span></div>
+              </div>
+            </div>
+            <div class="exx-row">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-hashtag"></i></span><div><span class="exx-row-t">Reference No</span><span class="exx-row-s">Bill or receipt number</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input"><input class="exx-control" maxlength="30" placeholder="e.g. INV-2211" data-count="ref"></div>
+                <div class="exx-label-row" style="margin:5px 0 0;justify-content:flex-end"><span class="exx-count" data-count-out="ref">0 / 30</span></div>
+              </div>
+            </div>
+            <div class="exx-row top">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-pencil"></i></span><div><span class="exx-row-t">Description <span class="req">*</span></span><span class="exx-row-s">Shown on the voucher</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input"><textarea class="exx-control" rows="2" maxlength="100" placeholder="e.g. A4 paper and toner for the front desk" data-count="desc"></textarea></div>
+                <div class="exx-label-row" style="margin:5px 0 0;justify-content:flex-end"><span class="exx-count" data-count-out="desc">0 / 100</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="exx-sentence">
+            <span class="exx-sentence-ic"><i class="fa fa-book"></i></span>
+            <div>
+              <div class="exx-sentence-t">Recording <b data-out="amount-s" class="empty">an amount</b> for <b data-out="cat-s" class="empty">a category</b>, paid from <b data-out="method-s">Cash</b> on <b data-out="date-s">Thu, 11 Sep 2026</b>.</div>
+              <div class="exx-dc" data-out="post" hidden>
+                <span><i class="dr">DR</i> <span data-out="cat"></span></span>
+                <span><i class="cr">CR</i> <span data-out="method"></span></span>
+                <span>QAR <span data-out="amount"></span></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="exx-footer">
+          <button type="button" class="exx-btn ghost"><i class="fa fa-times"></i> Cancel</button>
+          <div class="exx-footer-right">
+            <button type="button" class="exx-btn soft"><i class="fa fa-plus"></i> Save &amp; Add New</button>
+            <button type="submit" class="exx-btn primary"><i class="fa fa-check"></i> Save Expense <span class="exx-kbd">⏎</span></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div></div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     B · FLOW — EDIT MODE WITH ERRORS
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div><div class="caption"><span class="tag">B</span> Flow &middot; edit mode &middot; validation errors</div>
+<div class="exx-shell-wrap narrow">
+  <div class="exx-shell">
+    <div class="exx" data-exx>
+      <div class="exx-hero">
+        <span class="exx-glow a"></span><span class="exx-glow b"></span>
+        <div class="exx-hero-row">
+          <div class="exx-hero-id">
+            <span class="exx-hero-ic"><i class="fa fa-pencil-square-o"></i></span>
+            <div><div class="exx-eyebrow">Accounts &middot; Expense</div><h1 class="exx-hero-title">Edit Expense</h1></div>
+          </div>
+          <div class="exx-hero-tools">
+            <span class="exx-pill"><span class="dot"></span>Editing #1042</span>
+            <button type="button" class="exx-x"><i class="fa fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+      <form onsubmit="return false">
+        <div class="exx-body">
+
+          <div class="exx-errors">
+            <i class="fa fa-exclamation-triangle exx-errors-ic"></i>
+            <div>
+              <div class="exx-errors-title">Please correct the following:</div>
+              <ul class="exx-errors-list"><li>The Amount must be at least 1.</li><li>The Description field is required.</li></ul>
+            </div>
+          </div>
+
+          <div class="exx-amount-card is-invalid">
+            <div class="exx-amount-top">
+              <label class="exx-label"><i class="fa fa-money"></i> Amount <span class="req">*</span></label>
+              <span class="exx-count">min 1 &middot; max 999,999</span>
+            </div>
+            <div class="exx-amount-line">
+              <span class="exx-amount-code">QAR</span>
+              <input class="exx-amount-big" type="number" inputmode="decimal" step="0.01" placeholder="0.00" value="0" data-f="amount">
+            </div>
+            <div class="exx-err"><i class="fa fa-exclamation-circle"></i> The Amount must be at least 1.</div>
+          </div>
+
+          <div class="exx-rows">
+            <div class="exx-row top">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-tags"></i></span><div><span class="exx-row-t">Category <span class="req">*</span></span><span class="exx-row-s">Which expense account</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input">
+                  <select class="exx-control" data-f="category">
+                    <option value="">Search expense category…</option>
+                    <option>Office Supplies</option><option selected>Fuel &amp; Transport</option><option>Staff Meals</option><option>Utilities</option>
+                  </select>
+                  <i class="fa fa-angle-down exx-caret"></i>
+                </div>
+              </div>
+            </div>
+            <div class="exx-row">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-credit-card"></i></span><div><span class="exx-row-t">Paid from <span class="req">*</span></span><span class="exx-row-s">Cash, bank or card</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input">
+                  <select class="exx-control" data-f="method"><option>Cash</option><option>Bank – QNB</option><option selected>Petty Cash</option></select>
+                  <i class="fa fa-angle-down exx-caret"></i>
+                </div>
+              </div>
+            </div>
+            <div class="exx-row top">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-calendar"></i></span><div><span class="exx-row-t">Date <span class="req">*</span></span><span class="exx-row-s">When it was paid</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input"><input class="exx-control" type="date" value="2026-09-08" data-f="date"></div>
+                <div class="exx-chips">
+                  <button type="button" class="exx-chip" data-chip="today">Today</button>
+                  <button type="button" class="exx-chip" data-chip="yesterday">Yesterday</button>
+                </div>
+              </div>
+            </div>
+            <div class="exx-row">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-user"></i></span><div><span class="exx-row-t">Payee</span><span class="exx-row-s">Optional</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input"><input class="exx-control" maxlength="30" value="Woqod Al Sadd" data-count="payee"></div>
+                <div class="exx-label-row" style="margin:5px 0 0;justify-content:flex-end"><span class="exx-count" data-count-out="payee">13 / 30</span></div>
+              </div>
+            </div>
+            <div class="exx-row">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-hashtag"></i></span><div><span class="exx-row-t">Reference No</span><span class="exx-row-s">Bill or receipt number</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input"><input class="exx-control" maxlength="30" value="FUEL-0908-17" data-count="ref"></div>
+                <div class="exx-label-row" style="margin:5px 0 0;justify-content:flex-end"><span class="exx-count" data-count-out="ref">12 / 30</span></div>
+              </div>
+            </div>
+            <div class="exx-row top">
+              <div class="exx-row-l"><span class="exx-row-ic"><i class="fa fa-pencil"></i></span><div><span class="exx-row-t">Description <span class="req">*</span></span><span class="exx-row-s">Shown on the voucher</span></div></div>
+              <div class="exx-row-r">
+                <div class="exx-input is-invalid"><textarea class="exx-control" rows="2" maxlength="100" placeholder="e.g. Diesel for the delivery van" data-count="desc"></textarea></div>
+                <div class="exx-label-row" style="margin:5px 0 0"><span class="exx-err"><i class="fa fa-exclamation-circle"></i> The Description field is required.</span><span class="exx-count" data-count-out="desc">0 / 100</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="exx-sentence">
+            <span class="exx-sentence-ic"><i class="fa fa-book"></i></span>
+            <div>
+              <div class="exx-sentence-t">Recording <b data-out="amount-s" class="empty">an amount</b> for <b data-out="cat-s">Fuel &amp; Transport</b>, paid from <b data-out="method-s">Petty Cash</b> on <b data-out="date-s">Tue, 8 Sep 2026</b>.</div>
+              <div class="exx-dc" data-out="post" hidden>
+                <span><i class="dr">DR</i> <span data-out="cat"></span></span>
+                <span><i class="cr">CR</i> <span data-out="method"></span></span>
+                <span>QAR <span data-out="amount"></span></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="exx-footer">
+          <button type="button" class="exx-btn ghost"><i class="fa fa-times"></i> Cancel</button>
+          <div class="exx-footer-right">
+            <button type="submit" class="exx-btn primary"><i class="fa fa-check"></i> Update Expense <span class="exx-kbd">⏎</span></button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div></div>
+
+</div>
+
+<script>
+    // ---------- preview chrome ----------
+    document.getElementById('modeBtn').addEventListener('click', function () {
+        var b = document.body, dark = b.dataset.mode === 'light';
+        b.dataset.mode = dark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+    });
+    document.getElementById('dirBtn').addEventListener('click', function () {
+        var d = document.body.dir === 'ltr' ? 'rtl' : 'ltr';
+        document.body.dir = d; document.documentElement.dir = d;
+    });
+    document.querySelectorAll('.swatch').forEach(function (sw) {
+        sw.addEventListener('click', function () {
+            document.querySelectorAll('.swatch').forEach(function (s) { s.classList.remove('active'); });
+            sw.classList.add('active');
+            var rgb = sw.dataset.brand;
+            document.querySelectorAll('.exx').forEach(function (el) {
+                el.style.setProperty('--brand', 'rgb(' + rgb + ')');
+                el.style.setProperty('--brand-rgb', rgb);
+            });
+        });
+    });
+
+    // ---------- live behaviour (mirrors what Alpine will do in the blade) ----------
+    var TODAY = '2026-09-11';
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        var d = new Date(iso + 'T00:00:00');
+        return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    function fmtAmt(v) { var n = parseFloat(v); return isNaN(n) ? null : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function shift(iso, days) { var d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); }
+
+    document.querySelectorAll('[data-exx]').forEach(function (root) {
+        var q = function (s) { return root.querySelector(s); };
+        var qa = function (s) { return Array.prototype.slice.call(root.querySelectorAll(s)); };
+        var f = { category: q('[data-f=category]'), method: q('[data-f=method]'), date: q('[data-f=date]'), amount: q('[data-f=amount]') };
+
+        function setOut(name, val, emptyText) {
+            qa('[data-out=' + name + ']').forEach(function (el) {
+                if (val) { el.textContent = val; el.classList.remove('empty'); }
+                else if (emptyText !== undefined) { el.textContent = emptyText; el.classList.add('empty'); }
+            });
+        }
+        function refresh() {
+            var cat = f.category && f.category.value, method = f.method && f.method.value,
+                amt = f.amount && fmtAmt(f.amount.value), date = f.date && f.date.value;
+            var ok = cat && amt && parseFloat(f.amount.value) >= 1;
+            setOut('cat', cat, ''); setOut('method', method, ''); setOut('amount', amt, '');
+            setOut('cat-s', cat, 'a category'); setOut('method-s', method, 'a method');
+            setOut('amount-s', amt && parseFloat(f.amount.value) >= 1 ? 'QAR ' + amt : null, 'an amount');
+            setOut('date-s', fmtDate(date));
+            qa('[data-out=post]').forEach(function (el) { el.hidden = !ok; });
+            qa('[data-out=post-empty]').forEach(function (el) { el.hidden = !!ok; });
+            qa('[data-chip]').forEach(function (c) {
+                var on = (c.dataset.chip === 'today' && date === TODAY) || (c.dataset.chip === 'yesterday' && date === shift(TODAY, -1));
+                c.classList.toggle('on', on);
+                var ic = c.querySelector('i'); if (on && !ic) { c.insertAdjacentHTML('afterbegin', '<i class="fa fa-check"></i> '); } if (!on && ic) { ic.remove(); }
+            });
+            qa('[data-pick=category]').forEach(function (c) { c.classList.toggle('on', c.textContent.trim() === cat); });
+        }
+        Object.keys(f).forEach(function (k) { if (f[k]) { f[k].addEventListener('input', refresh); f[k].addEventListener('change', refresh); } });
+        qa('[data-chip]').forEach(function (c) { c.addEventListener('click', function () { f.date.value = c.dataset.chip === 'today' ? TODAY : shift(TODAY, -1); refresh(); }); });
+        qa('[data-pick=category]').forEach(function (c) { c.addEventListener('click', function () { f.category.value = c.textContent.trim(); refresh(); f.amount && f.amount.focus(); }); });
+        qa('[data-count]').forEach(function (inp) {
+            var out = q('[data-count-out=' + inp.dataset.count + ']'), max = parseInt(inp.getAttribute('maxlength'), 10);
+            var upd = function () { if (!out) return; out.textContent = inp.value.length + ' / ' + max; out.classList.toggle('warn', inp.value.length >= max - 5); };
+            inp.addEventListener('input', upd); upd();
+        });
+        refresh();
+    });
+</script>
+</body>
+
+</html>

@@ -78,6 +78,73 @@
         </div>
     </div>
 
+
+    <div class="border-top bg-body-tertiary px-4 py-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa fa-pie-chart text-primary"></i>
+                <h6 class="mb-0 fw-semibold">Top {{ $chart['limit'] }} Expense Heads</h6>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal">
+                    {{ $chart['accounts'] }} {{ \Illuminate\Support\Str::plural('account', $chart['accounts']) }} in range
+                </span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small">
+                    Total <span class="fw-semibold text-body">{{ currency($chart['total']) }}</span>
+                </span>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#expenseTopAccountsChart" aria-expanded="true" aria-controls="expenseTopAccountsChart">
+                    <i class="fa fa-chevron-up"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="collapse show" id="expenseTopAccountsChart">
+            @if (count($chart['slices']))
+                <div class="row g-4 align-items-center mt-0">
+                    <div class="col-lg-5">
+                        <div wire:ignore style="position: relative; height: 300px;">
+                            <canvas id="expenseTopAccountsCanvas"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr class="text-muted small">
+                                        <th class="border-0 ps-0 fw-normal">Account Head</th>
+                                        <th class="border-0 text-end fw-normal">Amount</th>
+                                        <th class="border-0 text-end pe-0 fw-normal" style="width: 70px;">Share</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($chart['slices'] as $index => $slice)
+                                        <tr>
+                                            <td class="ps-0">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="expense-chart-swatch rounded-1 flex-shrink-0" data-slot="{{ $index }}" @if ($slice['other']) data-other="1" @endif style="width: 10px; height: 10px; display: inline-block;"></span>
+                                                    <span class="text-truncate" style="max-width: 320px;" title="{{ $slice['label'] }}">{{ $slice['label'] }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-end fw-medium" style="font-variant-numeric: tabular-nums;">{{ currency($slice['value']) }}</td>
+                                            <td class="text-end pe-0 text-muted" style="font-variant-numeric: tabular-nums;">{{ number_format($slice['percent'], 1) }}%</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="text-center text-muted py-4">
+                    <i class="fa fa-pie-chart fs-3 d-block mb-2"></i>
+                    <p class="mb-0">No expenses in the selected range</p>
+                </div>
+            @endif
+        </div>
+
+        <div id="expenseTopAccountsData" class="d-none" wire:key="expense-top-accounts-data" data-chart="{{ json_encode(['labels' => array_column($chart['slices'], 'label'), 'values' => array_column($chart['slices'], 'value'), 'others' => array_column($chart['slices'], 'other'), 'decimals' => currency_decimals()]) }}"></div>
+    </div>
+
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 border">
@@ -226,6 +293,205 @@
             </div>
             {{ $data->links() }}
         </div>
+    @push('scripts')
+        <script src="{{ asset('assets/vendors/chart.js/chart.umd.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/chart.js/chartjs-plugin-datalabels@2.min.js') }}"></script>
+        <script>
+            (function() {
+                // Categorical palette: fixed slot order, validated for colour-vision deficiency
+                // in both themes. The tail slice ("Other") is always neutral grey, never a slot.
+                const PALETTE = {
+                    light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948', '#0b8fa8', '#a0522d'],
+                    dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767', '#0f9ab5', '#b06636'],
+                };
+                const OTHER_COLOR = '#898781';
+                const LABEL_MIN_PERCENT = 5;
+
+                let chart = null;
+
+                function isDark() {
+                    return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                }
+
+                function cssVar(name, fallback) {
+                    const value = getComputedStyle(document.body).getPropertyValue(name).trim();
+                    return value || fallback;
+                }
+
+                function sliceColors(others) {
+                    const palette = isDark() ? PALETTE.dark : PALETTE.light;
+                    return others.map(function(isOther, index) {
+                        return isOther ? OTHER_COLOR : palette[index % palette.length];
+                    });
+                }
+
+                function readableInk(hex) {
+                    const value = hex.replace('#', '');
+                    const r = parseInt(value.substring(0, 2), 16);
+                    const g = parseInt(value.substring(2, 4), 16);
+                    const b = parseInt(value.substring(4, 6), 16);
+                    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                    return luminance > 0.6 ? '#0b0b0b' : '#ffffff';
+                }
+
+                function readData() {
+                    const holder = document.getElementById('expenseTopAccountsData');
+                    if (!holder) return null;
+                    try {
+                        return JSON.parse(holder.dataset.chart || 'null');
+                    } catch (error) {
+                        return null;
+                    }
+                }
+
+                function formatAmount(value, decimals) {
+                    return Number(value).toLocaleString(undefined, {
+                        minimumFractionDigits: decimals,
+                        maximumFractionDigits: decimals,
+                    });
+                }
+
+                function paintSwatches(colors) {
+                    document.querySelectorAll('.expense-chart-swatch').forEach(function(node) {
+                        const slot = parseInt(node.dataset.slot, 10);
+                        node.style.backgroundColor = colors[slot] || OTHER_COLOR;
+                    });
+                }
+
+                function destroyChart() {
+                    if (chart) {
+                        chart.destroy();
+                        chart = null;
+                    }
+                }
+
+                function buildConfig(data, colors) {
+                    const decimals = data.decimals ?? 2;
+                    const total = data.values.reduce(function(sum, value) {
+                        return sum + Number(value);
+                    }, 0);
+
+                    return {
+                        type: 'pie',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                data: data.values,
+                                backgroundColor: colors,
+                                borderColor: cssVar('--bs-tertiary-bg', '#f8f9fa'),
+                                borderWidth: 2,
+                                hoverOffset: 6,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            layout: {
+                                padding: 8
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                datalabels: {
+                                    // Label selectively: a number on every slice is unreadable.
+                                    display: function(context) {
+                                        const value = Number(context.dataset.data[context.dataIndex]);
+                                        return total > 0 && (value / total * 100) >= LABEL_MIN_PERCENT;
+                                    },
+                                    color: function(context) {
+                                        return readableInk(colors[context.dataIndex] || OTHER_COLOR);
+                                    },
+                                    font: {
+                                        size: 11,
+                                        weight: 'bold'
+                                    },
+                                    formatter: function(value) {
+                                        return total > 0 ? (value / total * 100).toFixed(1) + '%' : '';
+                                    },
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = Number(context.raw);
+                                            const share = total > 0 ? (value / total * 100).toFixed(1) : '0.0';
+                                            return ' ' + formatAmount(value, decimals) + ' (' + share + '%)';
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    };
+                }
+
+                function renderChart() {
+                    const data = readData();
+                    if (!data || !window.Chart) return;
+
+                    const colors = sliceColors(data.others || []);
+                    paintSwatches(colors);
+
+                    const canvas = document.getElementById('expenseTopAccountsCanvas');
+                    if (!canvas) {
+                        destroyChart();
+                        return;
+                    }
+
+                    if (!chart || chart.canvas !== canvas) {
+                        destroyChart();
+                        Chart.getChart(canvas)?.destroy();
+                        chart = new Chart(canvas.getContext('2d'), buildConfig(data, colors));
+                        return;
+                    }
+
+                    const config = buildConfig(data, colors);
+                    chart.data = config.data;
+                    chart.options = config.options;
+                    chart.update();
+                }
+
+                function scheduleRender() {
+                    window.requestAnimationFrame(renderChart);
+                }
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (window.Chart && window.ChartDataLabels) {
+                        Chart.register(ChartDataLabels);
+                    }
+                    scheduleRender();
+
+                    const panel = document.getElementById('expenseTopAccountsChart');
+                    if (panel) {
+                        panel.addEventListener('shown.bs.collapse', function() {
+                            if (chart) chart.resize();
+                        });
+                        ['show.bs.collapse', 'hide.bs.collapse'].forEach(function(name) {
+                            panel.addEventListener(name, function(event) {
+                                const icon = document.querySelector('[data-bs-target="#expenseTopAccountsChart"] i');
+                                if (!icon) return;
+                                const open = event.type === 'show.bs.collapse';
+                                icon.classList.toggle('fa-chevron-up', open);
+                                icon.classList.toggle('fa-chevron-down', !open);
+                            });
+                        });
+                    }
+                });
+
+                document.addEventListener('livewire:initialized', function() {
+                    Livewire.hook('morph.updated', scheduleRender);
+                    Livewire.hook('morph.removed', function() {
+                        if (!document.getElementById('expenseTopAccountsCanvas')) {
+                            destroyChart();
+                        }
+                    });
+                });
+
+                // Follow the light/dark switcher without a page reload.
+                document.addEventListener('change.nf.colormode', scheduleRender);
+            })();
+        </script>
+    @endpush
+
         @push('scripts')
             <script>
                 $(document).ready(function() {

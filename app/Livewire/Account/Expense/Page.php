@@ -6,6 +6,7 @@ use App\Actions\Journal\GeneralExpenseJournalEntryAction;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Journal;
+use App\Models\JournalEntry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -29,6 +30,9 @@ class Page extends Component
 
     public $paymentMethods = [];
 
+    /** Last few expense accounts used on this tenant, as [['id' => …, 'name' => …]] — one-tap chips under the category. */
+    public $recentCategories = [];
+
     public function create()
     {
         $this->mount();
@@ -47,6 +51,7 @@ class Page extends Component
         $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
         $this->paymentMethods = Account::where('id', $this->default_payment_method_id)->pluck('name', 'id')->toArray();
         $this->table_id = $table_id;
+        $this->recentCategories = $this->loadRecentCategories();
         if (! $this->table_id) {
             $this->journals = [
                 'branch_id' => session('branch_id'),
@@ -54,7 +59,7 @@ class Page extends Component
                 'debit_name' => null,
                 'source' => 'expense',
                 'credit' => $this->default_payment_method_id,
-                'credit_name' => $this->default_payment_method_id ? Account::find($this->default_payment_method_id)->name : null,
+                'credit_name' => $this->default_payment_method_id ? Account::find($this->default_payment_method_id)?->name : null,
                 'amount' => 0,
                 'date' => date('Y-m-d'),
                 'person_name' => null,
@@ -66,6 +71,29 @@ class Page extends Component
             $journal = Journal::find($this->table_id);
             $this->journals = $journal->toArray();
         }
+    }
+
+    private function loadRecentCategories($limit = 4)
+    {
+        $ids = JournalEntry::expense()
+            ->where('debit', '>', 0)
+            ->whereNotNull('account_id')
+            ->orderByDesc('id')
+            ->limit(60)
+            ->pluck('account_id')
+            ->unique()
+            ->take($limit)
+            ->values();
+        if ($ids->isEmpty()) {
+            return [];
+        }
+        $names = Account::whereIn('id', $ids)->pluck('name', 'id');
+
+        return $ids
+            ->filter(fn ($id) => $names->has($id))
+            ->map(fn ($id) => ['id' => $id, 'name' => $names[$id]])
+            ->values()
+            ->all();
     }
 
     public function updated($key, $value)

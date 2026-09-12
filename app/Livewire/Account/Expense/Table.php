@@ -5,9 +5,11 @@ namespace App\Livewire\Account\Expense;
 use App\Actions\Journal\DeleteAction;
 use App\Exports\ExpenseExport;
 use App\Jobs\Export\ExportExpenseJob;
+use App\Models\Account;
 use App\Models\JournalEntry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -15,6 +17,9 @@ use Maatwebsite\Excel\Facades\Excel;
 class Table extends Component
 {
     use WithPagination;
+
+    /** Number of account heads shown as individual slices on the pie chart. */
+    private const CHART_LIMIT = 10;
 
     public $filter = [
         'from_date' => null,
@@ -123,6 +128,47 @@ class Table extends Component
         return JournalEntry::expenseList($this->filter);
     }
 
+    private function topAccountsChart()
+    {
+        $rows = $this->dataFunction()
+            ->groupBy('journal_entries.account_id')
+            ->selectRaw('journal_entries.account_id as account_id, SUM(journal_entries.debit) as total')
+            ->orderByDesc('total')
+            ->get();
+
+        $names = Account::whereIn('id', $rows->pluck('account_id'))->pluck('name', 'id');
+        $grandTotal = (float) $rows->sum('total');
+
+        $slices = [];
+        foreach ($rows->take(self::CHART_LIMIT) as $row) {
+            $value = round((float) $row->total, 2);
+            $slices[] = [
+                'label' => $names[$row->account_id] ?? 'Unknown Account',
+                'value' => $value,
+                'percent' => $grandTotal > 0 ? round($value / $grandTotal * 100, 1) : 0,
+                'other' => false,
+            ];
+        }
+
+        $remaining = $rows->slice(self::CHART_LIMIT);
+        $otherTotal = round((float) $remaining->sum('total'), 2);
+        if ($otherTotal > 0) {
+            $slices[] = [
+                'label' => 'Other ('.$remaining->count().' '.Str::plural('account', $remaining->count()).')',
+                'value' => $otherTotal,
+                'percent' => $grandTotal > 0 ? round($otherTotal / $grandTotal * 100, 1) : 0,
+                'other' => true,
+            ];
+        }
+
+        return [
+            'slices' => $slices,
+            'total' => round($grandTotal, 2),
+            'accounts' => $rows->count(),
+            'limit' => self::CHART_LIMIT,
+        ];
+    }
+
     private function calculateTotals($query)
     {
         return $query->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')->first();
@@ -160,6 +206,7 @@ class Table extends Component
         return view('livewire.account.expense.table', [
             'data' => $data,
             'total' => $total,
+            'chart' => $this->topAccountsChart(),
         ]);
     }
 }
