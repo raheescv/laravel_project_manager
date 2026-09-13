@@ -19,6 +19,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="{{ route('property::lead::board') }}"
+                    class="nav-link {{ request()->is(['property/lead/board']) ? 'active' : '' }}">
+                    <i class="fa fa-columns fs-6 me-2"></i>Lead Board
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="{{ route('property::lead::calendar') }}"
                     class="nav-link {{ request()->is(['property/lead/calendar']) ? 'active' : '' }}">
                     <i class="fa fa-calendar fs-6 me-2"></i>Lead Calendar

@@ -19,12 +19,12 @@
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">To Date</label>
                     <input type="date" wire:model.live="toDate" class="form-control form-control-sm shadow-sm">
                 </div>
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Status</label>
-                    <select wire:model.live="filterStatus" class="form-select form-select-sm shadow-sm">
+                    <select id="leadFilterStatus" class="lead-filter-ts" data-property="filterStatus" aria-label="Status">
                         <option value="">All Statuses</option>
                         @foreach($statuses as $key => $label)
-                            <option value="{{ $key }}">{{ $label }}</option>
+                            <option value="{{ $key }}" @selected((string) $filterStatus === (string) $key)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -37,30 +37,30 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Source</label>
-                    <select wire:model.live="filterSource" class="form-select form-select-sm shadow-sm">
+                    <select id="leadFilterSource" class="lead-filter-ts" data-property="filterSource" aria-label="Source">
                         <option value="">All Sources</option>
                         @foreach($sources as $key => $label)
-                            <option value="{{ $key }}">{{ $label }}</option>
+                            <option value="{{ $key }}" @selected((string) $filterSource === (string) $key)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Project / Group</label>
-                    <select wire:model.live="filterPropertyGroupId" class="form-select form-select-sm shadow-sm">
+                    <select id="leadFilterGroup" class="lead-filter-ts" data-property="filterPropertyGroupId" aria-label="Project / Group">
                         <option value="">All Projects</option>
                         @foreach($groups as $id => $name)
-                            <option value="{{ $id }}">{{ $name }}</option>
+                            <option value="{{ $id }}" @selected((string) $filterPropertyGroupId === (string) $id)>{{ $name }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Assigned To</label>
-                    <select wire:model.live="filterAssignedTo" class="form-select form-select-sm shadow-sm">
+                    <select id="leadFilterAssigned" class="lead-filter-ts" data-property="filterAssignedTo" aria-label="Assigned To">
                         <option value="">All Salesman</option>
                         @foreach($users as $id => $name)
-                            <option value="{{ $id }}">{{ $name }}</option>
+                            <option value="{{ $id }}" @selected((string) $filterAssignedTo === (string) $id)>{{ $name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -384,6 +384,31 @@
                 .lead-status-summary-table .sticky-col { min-width: 150px; }
                 .lead-status-summary-table .status-head { font-size: .62rem; padding: .25rem .5rem; }
             }
+            /* === TomSelect filters (sized to match form-select-sm) === */
+            .ts-wrapper.lead-filter-ts .ts-control {
+                min-height: calc(1.5em + .5rem + 2px);
+                padding: .25rem 2rem .25rem .5rem;
+                font-size: .875rem;
+                color: var(--bs-body-color);
+                background-color: var(--bs-body-bg);
+                border: var(--bs-border-width) solid var(--bs-border-color);
+                border-radius: var(--bs-border-radius-sm);
+                box-shadow: var(--bs-box-shadow-sm);
+            }
+            .ts-wrapper.lead-filter-ts.focus .ts-control {
+                border-color: rgba(var(--bs-primary-rgb), .5);
+                box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15);
+            }
+            .ts-wrapper.lead-filter-ts .ts-control > input { font-size: .875rem; color: var(--bs-body-color); }
+            .ts-wrapper.lead-filter-ts .ts-dropdown {
+                font-size: .875rem;
+                color: var(--bs-body-color);
+                background: var(--bs-body-bg);
+                border-color: var(--bs-border-color);
+                border-radius: var(--bs-border-radius-sm);
+                box-shadow: var(--bs-box-shadow);
+            }
+            .ts-wrapper.lead-filter-ts .ts-dropdown .active { background: var(--bs-tertiary-bg); color: var(--bs-emphasis-color); }
         </style>
     @endpush
 
@@ -395,4 +420,30 @@
             });
         </script>
     @endpush
+    @script
+        <script>
+            (() => {
+                $wire.$el.querySelectorAll('select.lead-filter-ts').forEach((el) => {
+                    if (el.tomselect) return;
+                    const property = el.dataset.property;
+                    const control = new TomSelect(el, {
+                        allowEmptyOption: true,
+                        maxOptions: null,
+                        onChange(value) {
+                            if (this.syncing) return;
+                            $wire.set(property, value);
+                        },
+                    });
+
+                    $wire.$watch(property, (value) => {
+                        const next = value === null || value === undefined ? '' : String(value);
+                        if (String(control.getValue()) === next) return;
+                        control.syncing = true;
+                        control.setValue(next, true);
+                        control.syncing = false;
+                    });
+                });
+            })()
+        </script>
+    @endscript
 </div>

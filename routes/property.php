@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function (): void {
         Route::name('lead::')->prefix('lead')->controller(PropertyLeadController::class)->group(function (): void {
             Route::get('', 'index')->name('list')->can('property lead.view');
             Route::get('list', 'index')->name('index')->can('property lead.view');
+            Route::get('board', 'board')->name('board')->can('property lead.view');
             Route::get('calendar', 'calendar')->name('calendar')->can('property lead.view');
             Route::get('calendar/data', 'calendarData')->name('calendar.data')->can('property lead.view');
             Route::get('create', 'create')->name('create')->can('property lead.create');

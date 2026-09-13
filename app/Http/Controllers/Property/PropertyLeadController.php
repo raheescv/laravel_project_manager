@@ -28,6 +28,11 @@ class PropertyLeadController extends Controller
         return view('property.lead.calendar');
     }
 
+    public function board()
+    {
+        return view('property.lead.board');
+    }
+
     public function calendarData(Request $request)
     {
         return (new Calendar())->getData($request);

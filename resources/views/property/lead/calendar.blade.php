@@ -15,9 +15,9 @@
                     </h1>
                     <p class="lead mb-0">Schedule visits, follow ups and call backs at a glance.</p>
                 </div>
-                <a href="{{ route('property::lead::list') }}" class="btn btn-light shadow-sm mt-3 mt-md-0">
-                    <i class="fa fa-list me-1"></i> List View
-                </a>
+                <div class="mt-3 mt-md-0">
+                    @include('property.lead.partials.view-switch', ['active' => 'calendar'])
+                </div>
                 {{-- Lead Dashboard is integrated into the main dashboard --}}
             </div>
         </div>
