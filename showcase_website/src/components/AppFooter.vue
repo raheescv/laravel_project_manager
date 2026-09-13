@@ -2,8 +2,10 @@
 import { branding, storeName } from '@/branding'
 import BrandLogo from '@/components/BrandLogo.vue'
 import { t } from '@/i18n'
+import { useBagStore } from '@/stores/bag'
 import { useShopsStore } from '@/stores/shops'
 
+const bag = useBagStore()
 const shops = useShopsStore()
 </script>
 
@@ -13,7 +15,7 @@ const shops = useShopsStore()
       <div class="foot__grid">
         <div class="foot__brand">
           <div class="foot__logo"><BrandLogo variant="foot" /></div>
-          <p class="foot__tag">{{ t('footTag') }}</p>
+          <p class="foot__tag">{{ t(bag.config.enabled ? 'footTagLive' : 'footTag') }}</p>
         </div>
         <div>
           <p class="h-sm">{{ t('shops') }}</p>

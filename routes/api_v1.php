@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SaleSettingController;
 use App\Http\Controllers\Api\V1\SizeController;
 use App\Http\Controllers\Api\V1\StockCheckController;
+use App\Http\Controllers\Api\V1\StorefrontCheckoutController;
 use App\Http\Controllers\Api\V1\StorefrontController;
 use App\Http\Middleware\EnsureMobilePermission;
 use App\Http\Middleware\IdentifyTenant;
@@ -77,6 +78,21 @@ Route::prefix('v1')->group(function () {
 
         // Storefront branding (accent color the showcase website applies at boot)
         Route::get('settings/branding', [StorefrontController::class, 'branding'])->name('api.v1.settings.branding');
+
+        // Storefront checkout through Tap Payments (Settings → Online Payments)
+        Route::prefix('storefront/checkout')->group(function () {
+            Route::get('config', [StorefrontCheckoutController::class, 'config'])->name('api.v1.storefront.checkout.config');
+            Route::post('/', [StorefrontCheckoutController::class, 'store'])
+                ->middleware('throttle:10,1')
+                ->name('api.v1.storefront.checkout.store');
+            Route::post('tap-webhook', [StorefrontCheckoutController::class, 'webhook'])
+                ->middleware('throttle:120,1')
+                ->name('api.v1.storefront.checkout.webhook');
+            Route::get('{reference}', [StorefrontCheckoutController::class, 'show'])
+                ->where('reference', '[A-Za-z0-9]{32}')
+                ->middleware('throttle:60,1')
+                ->name('api.v1.storefront.checkout.show');
+        });
     });
 
     // Mobile routes (PIN-authenticated staff / POS app)

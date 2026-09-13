@@ -10,6 +10,7 @@
         'appointment' => ['fa-calendar', 'info'],
         'import' => ['fa-upload', 'secondary'],
         'migration' => ['fa-database', 'dark'],
+        'storefront' => ['fa-globe', 'info'],
     ][$source] ?? ['fa-question-circle', 'secondary'];
 
     [$icon, $colour] = $meta;

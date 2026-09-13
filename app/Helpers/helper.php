@@ -649,6 +649,7 @@ if (! function_exists('saleSources')) {
             'appointment' => 'Appointment',
             'import' => 'Import',
             'migration' => 'Migration',
+            'storefront' => 'Storefront',
         ];
     }
 }

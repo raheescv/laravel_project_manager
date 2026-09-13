@@ -269,6 +269,35 @@ html[dir="rtl"] .bag{transform:translateX(-102%)}
 .done__tick{width:54px;height:54px;border-radius:50%;background:var(--green-bg);color:var(--green);display:grid;place-items:center;font-size:1.5rem}
 .done__title{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1.15rem;letter-spacing:-.02em}
 .done__body{color:var(--ink-50);font-size:.9rem;max-width:34ch}
+.done__tick--bad{background:#FDE7E7;color:#B42318}
+.done__tick--wait{background:var(--amber-bg);color:var(--amber)}
+.done__ref{font-family:var(--mono);font-size:.76rem;color:var(--ink-50)}
+
+/* --- checkout (bag drawer) ------------------------------------------------ */
+.co{display:grid;gap:26px}
+.co__back{justify-self:start}
+.co__group{display:grid;gap:12px}
+.co__error{background:#FDE7E7;color:#B42318;border-radius:10px;padding:10px 14px;font-size:.84rem}
+.co__test{justify-self:center;background:var(--amber-bg);color:var(--amber);border-radius:var(--r-pill);padding:3px 11px;font-size:.7rem;font-weight:600}
+.co__spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--mist-2);border-block-start-color:var(--blue);animation:co-spin .8s linear infinite}
+@keyframes co-spin{to{transform:rotate(360deg)}}
+.fld{display:grid;gap:6px}
+.fld__label{font-size:.76rem;font-weight:600;color:var(--ink-70)}
+.fld input,.fld textarea{width:100%;font:inherit;font-size:.92rem;padding:11px 14px;background:var(--paper);border:1px solid var(--line);border-radius:10px;color:var(--ink)}
+.fld textarea{resize:vertical;min-height:84px}
+.fld input:hover,.fld textarea:hover{border-color:var(--ink-30)}
+.fld input:focus,.fld textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,46,214,.14)}
+.phone{display:flex;align-items:center;gap:8px}
+.phone__plus{font-family:var(--mono);color:var(--ink-50)}
+.phone .phone__cc{width:72px;flex:none;font-family:var(--mono)}
+.phone .phone__num{flex:1;min-width:0;font-family:var(--mono)}
+.shops{display:grid;gap:8px}
+.shop{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:11px 14px;cursor:pointer}
+.shop:hover{border-color:var(--ink-30)}
+.shop.is-on{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.shop input{accent-color:var(--blue);grid-row:span 2}
+.shop__name{font-weight:600;font-size:.9rem}
+.shop__meta{font-size:.74rem;color:var(--ink-50)}
 
 /* --- toast --------------------------------------------------------------- */
 #toast{position:fixed;z-index:80;inset-block-end:calc(26px + env(safe-area-inset-bottom));inset-inline:0;margin-inline:auto;width:max-content;max-width:calc(100% - 40px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:var(--r-pill);font-size:.85rem;opacity:0;transform:translateY(14px);pointer-events:none;transition:opacity .2s ease,transform .2s ease}

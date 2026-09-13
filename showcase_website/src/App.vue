@@ -60,6 +60,9 @@ onMounted(() => {
   document.addEventListener('keydown', onKey)
   window.addEventListener('scroll', onScroll, { passive: true })
   shops.load()
+  bag.loadConfig()
+  // Back from Tap's payment page? Confirm the payment and show the outcome.
+  bag.resumeFromRedirect()
 })
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKey)

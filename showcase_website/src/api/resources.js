@@ -57,6 +57,33 @@ export function fetchBranding() {
   return client.get('/settings/branding')
 }
 
+/**
+ * GET /storefront/checkout/config — { enabled, delivery, test_mode }
+ * `enabled` stays false until the admin completes Settings → Online Payments.
+ */
+export function fetchCheckoutConfig() {
+  return client.get('/storefront/checkout/config')
+}
+
+/**
+ * POST /storefront/checkout — prices the bag server-side and opens a Tap charge.
+ * Body: { fulfilment, branchId, customerName, customerEmail, countryCode,
+ * customerMobile, address, items: [{ productId, quantity }], returnUrl }.
+ * Returns the checkout; send the customer to its `payment_url`.
+ */
+export function startCheckout(payload) {
+  return client.post('/storefront/checkout', payload)
+}
+
+/**
+ * GET /storefront/checkout/{reference} — re-checks the charge with Tap (recording
+ * the sale once it is paid) and returns { reference, status: pending|paid|failed|review,
+ * gateway_status, fulfilment, amount, currency, payment_url, invoice_no, branch }.
+ */
+export function fetchCheckout(reference) {
+  return client.get(`/storefront/checkout/${encodeURIComponent(reference)}`)
+}
+
 /** Drop null / undefined / '' params so URLs stay clean. */
 function prune(params) {
   return Object.fromEntries(

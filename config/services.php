@@ -80,4 +80,8 @@ return [
     'openai' => [
         'image_models' => env('OPENAI_IMAGE_MODELS', 'dall-e-3'),
     ],
+    // Tap Payments (storefront checkout). Keys are per tenant, in Settings → Online Payments.
+    'tap' => [
+        'base_url' => env('TAP_BASE_URL', 'https://api.tap.company/v2'),
+    ],
 ];

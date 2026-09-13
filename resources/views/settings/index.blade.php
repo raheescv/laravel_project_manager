@@ -730,6 +730,12 @@
                                             <i class="fa fa-paint-brush"></i><span>Storefront</span>
                                         </button>
                                     </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsOnlinePayments" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="fa fa-credit-card"></i><span>Online Payments</span>
+                                        </button>
+                                    </li>
                                 @endcan
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab"
@@ -867,6 +873,9 @@
                                     </div>
                                     <div id="tabsStorefront" class="tab-pane" role="tabpanel">
                                         @livewire('settings.storefront-branding')
+                                    </div>
+                                    <div id="tabsOnlinePayments" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.online-payments')
                                     </div>
                                     <div id="tabsTheme" class="tab-pane" role="tabpanel">
                                         <div class="card">
