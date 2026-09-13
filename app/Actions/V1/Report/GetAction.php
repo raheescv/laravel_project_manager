@@ -52,9 +52,13 @@ class GetAction
 
         $productType = $request->validated('product_type');
 
+        // The ranked breakdowns follow the branch the app is operating as (the
+        // client attaches `branch_id` to every request), like the overview does.
+        // They query line items joined to their headers, which the header
+        // models' AssignedBranchScope never reaches, so the filter is explicit.
         [$rows, $summary, $total] = match ($type) {
-            'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $page, $perPage),
-            'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $page, $perPage, $sort, $productType),
+            'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage),
+            'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $productType),
             'commission' => (new CommissionAction())->execute($startDate, $endDate, $employeeId, $productId, $branchId, $page, $perPage),
             // Bills are sale-level, so self-scope means "bills I rang up" —
             // created_by, the same set the Sales list and the dashboard cards
@@ -129,7 +133,7 @@ class GetAction
     /**
      * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
      */
-    private function employeeWise(?string $startDate, ?string $endDate, ?int $employeeId, int $page, int $perPage): array
+    private function employeeWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage): array
     {
         // Net of returns (sale items − return items) using base-unit quantities —
         // mirrors the web Employee Performance table & the overview, so the figures
@@ -142,6 +146,7 @@ class GetAction
             ->when($startDate, fn ($q, $value) => $q->where('sales.date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->where('sales.date', '<=', $value))
             ->when($employeeId, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
+            ->when($branchId, fn ($q, $value) => $q->where('sales.branch_id', $value))
             ->groupBy('users.id', 'users.name')
             ->selectRaw('users.id, users.name as employee')
             ->selectRaw('SUM(sale_items.total) as sale_total')
@@ -159,6 +164,7 @@ class GetAction
             ->when($startDate, fn ($q, $value) => $q->where('sale_returns.date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->where('sale_returns.date', '<=', $value))
             ->when($employeeId, fn ($q, $value) => $q->where('sale_return_items.employee_id', $value))
+            ->when($branchId, fn ($q, $value) => $q->where('sale_returns.branch_id', $value))
             ->groupBy('users.id', 'users.name')
             ->selectRaw('users.id, users.name as employee')
             ->selectRaw('0 as sale_total')
@@ -211,7 +217,7 @@ class GetAction
      *
      * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
      */
-    private function itemWise(?string $startDate, ?string $endDate, ?int $employeeId, int $page, int $perPage, ?string $sort, ?string $productType): array
+    private function itemWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage, ?string $sort, ?string $productType): array
     {
         $saleItems = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
@@ -221,6 +227,7 @@ class GetAction
             ->when($startDate, fn ($q, $value) => $q->where('sales.date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->where('sales.date', '<=', $value))
             ->when($employeeId, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
+            ->when($branchId, fn ($q, $value) => $q->where('sales.branch_id', $value))
             ->when($productType, fn ($q, $value) => $q->where('products.type', $value))
             ->groupBy('products.id', 'products.name', 'products.code')
             ->selectRaw('products.id, products.name as item_name, products.code as item_code')
@@ -238,6 +245,7 @@ class GetAction
             ->when($startDate, fn ($q, $value) => $q->where('sale_returns.date', '>=', $value))
             ->when($endDate, fn ($q, $value) => $q->where('sale_returns.date', '<=', $value))
             ->when($employeeId, fn ($q, $value) => $q->where('sale_return_items.employee_id', $value))
+            ->when($branchId, fn ($q, $value) => $q->where('sale_returns.branch_id', $value))
             ->when($productType, fn ($q, $value) => $q->where('products.type', $value))
             ->groupBy('products.id', 'products.name', 'products.code')
             ->selectRaw('products.id, products.name as item_name, products.code as item_code')

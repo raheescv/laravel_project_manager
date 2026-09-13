@@ -21,7 +21,7 @@
                 </div>
                 <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Status</label>
-                    <select id="leadFilterStatus" class="lead-filter-ts" data-property="filterStatus" aria-label="Status">
+                    <select id="leadFilterStatus" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterStatus" aria-label="Status">
                         <option value="">All Statuses</option>
                         @foreach($statuses as $key => $label)
                             <option value="{{ $key }}" @selected((string) $filterStatus === (string) $key)>{{ $label }}</option>
@@ -39,7 +39,7 @@
                 </div>
                 <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Source</label>
-                    <select id="leadFilterSource" class="lead-filter-ts" data-property="filterSource" aria-label="Source">
+                    <select id="leadFilterSource" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterSource" aria-label="Source">
                         <option value="">All Sources</option>
                         @foreach($sources as $key => $label)
                             <option value="{{ $key }}" @selected((string) $filterSource === (string) $key)>{{ $label }}</option>
@@ -48,7 +48,7 @@
                 </div>
                 <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Project / Group</label>
-                    <select id="leadFilterGroup" class="lead-filter-ts" data-property="filterPropertyGroupId" aria-label="Project / Group">
+                    <select id="leadFilterGroup" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterPropertyGroupId" aria-label="Project / Group">
                         <option value="">All Projects</option>
                         @foreach($groups as $id => $name)
                             <option value="{{ $id }}" @selected((string) $filterPropertyGroupId === (string) $id)>{{ $name }}</option>
@@ -57,7 +57,7 @@
                 </div>
                 <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Assigned To</label>
-                    <select id="leadFilterAssigned" class="lead-filter-ts" data-property="filterAssignedTo" aria-label="Assigned To">
+                    <select id="leadFilterAssigned" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterAssignedTo" aria-label="Assigned To">
                         <option value="">All Salesman</option>
                         @foreach($users as $id => $name)
                             <option value="{{ $id }}" @selected((string) $filterAssignedTo === (string) $id)>{{ $name }}</option>
@@ -384,31 +384,45 @@
                 .lead-status-summary-table .sticky-col { min-width: 150px; }
                 .lead-status-summary-table .status-head { font-size: .62rem; padding: .25rem .5rem; }
             }
-            /* === TomSelect filters (sized to match form-select-sm) === */
-            .ts-wrapper.lead-filter-ts .ts-control {
-                min-height: calc(1.5em + .5rem + 2px);
-                padding: .25rem 2rem .25rem .5rem;
-                font-size: .875rem;
-                color: var(--bs-body-color);
-                background-color: var(--bs-body-bg);
-                border: var(--bs-border-width) solid var(--bs-border-color);
-                border-radius: var(--bs-border-radius-sm);
-                box-shadow: var(--bs-box-shadow-sm);
+            /* === TomSelect filters ===
+               The wrapper carries form-select form-select-sm (TomSelect copies the
+               select's classes onto it), so the theme paints it exactly like the
+               native selects beside it; the inner control is made transparent. */
+            .ts-wrapper.lead-filter-ts { display: flex; align-items: center; overflow: visible; }
+            .ts-wrapper.lead-filter-ts .ts-control,
+            .ts-wrapper.lead-filter-ts.input-active .ts-control {
+                padding: 0;
+                min-height: 0;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
+                color: inherit;
+                font-size: inherit;
+                line-height: inherit;
+                flex-wrap: nowrap;
+                overflow: hidden;
             }
-            .ts-wrapper.lead-filter-ts.focus .ts-control {
-                border-color: rgba(var(--bs-primary-rgb), .5);
-                box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15);
-            }
-            .ts-wrapper.lead-filter-ts .ts-control > input { font-size: .875rem; color: var(--bs-body-color); }
+            .ts-wrapper.lead-filter-ts .ts-control > input { padding: 0; margin: 0; min-height: 0; font-size: inherit; line-height: inherit; color: inherit; }
+            .ts-wrapper.lead-filter-ts .ts-control > .item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .ts-wrapper.lead-filter-ts.single .ts-control::after { display: none; }
+            .ts-wrapper.lead-filter-ts.focus { border-color: rgba(var(--bs-primary-rgb), .5); box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15); }
+            /* The list inherits the field's own colours, so it matches in light and dark. */
             .ts-wrapper.lead-filter-ts .ts-dropdown {
-                font-size: .875rem;
-                color: var(--bs-body-color);
-                background: var(--bs-body-bg);
-                border-color: var(--bs-border-color);
-                border-radius: var(--bs-border-radius-sm);
+                width: 100%;
+                margin-top: .25rem;
+                font-size: inherit;
+                color: inherit;
+                background-color: inherit;
+                border: var(--bs-border-width) solid;
+                border-color: inherit;
+                border-radius: var(--bs-border-radius);
                 box-shadow: var(--bs-box-shadow);
             }
-            .ts-wrapper.lead-filter-ts .ts-dropdown .active { background: var(--bs-tertiary-bg); color: var(--bs-emphasis-color); }
+            .ts-wrapper.lead-filter-ts .ts-dropdown .ts-dropdown-content { max-height: 280px; }
+            .ts-wrapper.lead-filter-ts .ts-dropdown .option { padding: .45rem .95rem; }
+            .ts-wrapper.lead-filter-ts .ts-dropdown .active { color: inherit; background-color: var(--bs-tertiary-bg); }
+            .ts-wrapper.lead-filter-ts .ts-dropdown .selected { font-weight: 600; }
         </style>
     @endpush
 
