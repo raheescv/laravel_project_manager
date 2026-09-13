@@ -414,6 +414,15 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
+  /// The Reports refresh button: re-pull everything for the range on screen
+  /// straight from the API. `force` drops both cached breakdown sides and the
+  /// trend key, so neither the By Item / By Stylist toggle nor the per-day
+  /// chart can hand back figures from before the tap. Unlike re-tapping a
+  /// preset it keeps the range as-is, so a custom range refreshes too.
+  Future<void> refreshReports() async {
+    await Future.wait([loadReports(force: true), loadOverview()]);
+  }
+
   Future<void> loadMoreReport() async {
     if (state.reportLoadingMore || state.reportLoading || !state.reportHasMore) {
       return;

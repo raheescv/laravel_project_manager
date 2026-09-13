@@ -250,6 +250,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Icon(Icons.edit_calendar, size: 17, color: custom ? p.primaryDark : p.primary),
           ),
         ),
+        _refreshButton(admin, size: 34, radius: 11, iconSize: 17),
       ],
     );
   }
@@ -346,6 +347,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       size: 18, color: custom ? p.primaryDark : p.primary),
                 ),
               ),
+              const SizedBox(width: 8),
+              _refreshButton(admin),
             ],
           ),
           const SizedBox(height: 11),
@@ -385,6 +388,30 @@ class _ReportsScreenState extends State<ReportsScreen> {
               overflow: TextOverflow.ellipsis,
               style: ui(size: 11, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
         ),
+      ),
+    );
+  }
+
+  /// Force refresh beside the range control: re-fetches the reports for the
+  /// range on screen from the API, bypassing the cubit's cached breakdowns.
+  /// Spins while either request is in flight and ignores taps until it settles,
+  /// so a double tap can't stack requests.
+  Widget _refreshButton(AdminCubit admin, {double size = 40, double radius = 12, double iconSize = 18}) {
+    final p = context.astra;
+    final busy = admin.reportLoading || admin.overviewLoading;
+    return GestureDetector(
+      onTap: busy ? null : () => unawaited(admin.refreshReports()),
+      child: Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(radius)),
+        child: busy
+            ? SizedBox(
+                width: iconSize - 1,
+                height: iconSize - 1,
+                child: CircularProgressIndicator(strokeWidth: 2.2, color: p.primary))
+            : Icon(Icons.refresh_rounded, size: iconSize, color: p.primary),
       ),
     );
   }

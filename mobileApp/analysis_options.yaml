@@ -3,6 +3,13 @@
 #
 # NOTE: never run `dart format` / `flutter format` here. This codebase uses a
 # compact hand-written style; formatting produces ~6000 lines of churn.
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - macos/**
 include: package:flutter_lints/flutter.yaml
 
 linter:
