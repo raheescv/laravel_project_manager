@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/widgets/app_version.dart';
 import 'package:invo/shared/widgets/qloud_logo.dart';
 import 'package:invo/features/auth/widgets/v3/connection_sheet.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
@@ -201,6 +202,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               style: ui(size: 11.5, weight: FontWeight.w700, color: Colors.white60)),
                         ),
                       ),
+                    const SizedBox(height: 14),
+                    AppVersionText(
+                        style: ui(size: 10, weight: FontWeight.w600, color: Colors.white38, letterSpacing: 1.2)),
                   ],
                 ),
               ),

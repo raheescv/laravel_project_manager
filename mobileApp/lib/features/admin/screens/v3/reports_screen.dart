@@ -15,6 +15,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
+import 'package:invo/shared/widgets/you_badge.dart';
 
 part 'reports_overview_sections.dart';
 
@@ -912,15 +913,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ],
                     if (isMe) ...[
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          gradient: p.primaryGradient,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text('YOU',
-                            style: ui(size: 8.5, weight: FontWeight.w900, color: Colors.white, letterSpacing: 0.6)),
-                      ),
+                      const YouBadge(),
                     ],
                   ],
                 ),

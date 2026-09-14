@@ -15,6 +15,8 @@ class DaySessionSummary extends Equatable {
     required this.closedBy,
     this.branchLocation = '',
     this.branchMobile = '',
+    this.openedById = '',
+    this.closedById = '',
   });
 
   final String id;
@@ -26,6 +28,11 @@ class DaySessionSummary extends Equatable {
   final String closedBy;
   final String branchLocation;
   final String branchMobile;
+
+  /// User ids behind [openedBy] / [closedBy], so the signed-in person's name
+  /// can be highlighted on the report ('' when unknown).
+  final String openedById;
+  final String closedById;
 
   bool get isOpen => status == 'open';
 
@@ -39,11 +46,13 @@ class DaySessionSummary extends Equatable {
         closedBy: asStr(j['closed_by']),
         branchLocation: asStr(j['branch_location']),
         branchMobile: asStr(j['branch_mobile']),
+        openedById: asStr(j['opened_by_id']),
+        closedById: asStr(j['closed_by_id']),
       );
 
   @override
   List<Object?> get props =>
-      [id, branch, status, openedAt, closedAt, openedBy, closedBy, branchLocation, branchMobile];
+      [id, branch, status, openedAt, closedAt, openedBy, closedBy, branchLocation, branchMobile, openedById, closedById];
 }
 
 /// A day session's "Sale Bill Report" (`GET /admin/day-sessions/{id}/report`) —

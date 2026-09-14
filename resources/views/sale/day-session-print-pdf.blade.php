@@ -69,6 +69,16 @@
             font-weight: 700;
         }
 
+        /* The signed-in person's name, marked like a highlighter pen — on the
+           web print and on the mobile app's copy of this PDF alike. */
+        .me-name {
+            background: #fff0a3;
+            padding: 1px 6px;
+            border-radius: 3px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
         .section-title {
             margin: 14px 0 6px;
             font-size: 13px;
@@ -225,11 +235,11 @@
                 </td>
                 <td>
                     <span class="meta-label">Opened By</span>
-                    <span class="meta-value">{{ $session->opener->name ?? 'N/A' }}</span>
+                    <span @class(['meta-value', 'me-name' => $session->opened_by && (int) $session->opened_by === (int) auth()->id()])>{{ $session->opener->name ?? 'N/A' }}</span>
                 </td>
                 <td>
                     <span class="meta-label">Closed By</span>
-                    <span class="meta-value">{{ $session->closer->name ?? 'N/A' }}</span>
+                    <span @class(['meta-value', 'me-name' => $session->closed_by && (int) $session->closed_by === (int) auth()->id()])>{{ $session->closer->name ?? 'N/A' }}</span>
                 </td>
             </tr>
         </table>

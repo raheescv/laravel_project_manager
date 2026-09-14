@@ -14,6 +14,7 @@ class ReportPdfBrand {
     this.companyName = '',
     this.branchName = '',
     this.preparedBy = '',
+    this.preparedById = '',
     this.logo,
     this.accent = const PdfColor.fromInt(0xFF0A62C8),
   });
@@ -22,6 +23,9 @@ class ReportPdfBrand {
   final String companyName;
   final String branchName;
   final String preparedBy;
+
+  /// The signed-in user's id — their row is highlighted in the staff tables.
+  final String preparedById;
 
   /// From the web print settings — null when the tenant prints no logo.
   final Uint8List? logo;
@@ -88,8 +92,8 @@ Future<Uint8List> buildReportPdf(ReportExport data, ReportPdfBrand brand) async 
       build: (ctx) => [
         _masthead(data, brand, tone, range),
         ...switch (data.kind) {
-          ReportExportKind.overview => _overview(data, tone),
-          ReportExportKind.items || ReportExportKind.stylists => _breakdown(data, tone),
+          ReportExportKind.overview => _overview(data, tone, brand),
+          ReportExportKind.items || ReportExportKind.stylists => _breakdown(data, tone, brand),
         },
       ],
     ),
@@ -140,7 +144,14 @@ pw.Widget _masthead(ReportExport d, ReportPdfBrand b, _Tone tone, String range) 
               pw.SizedBox(height: 3),
               _t(range, size: 10.5, bold: true),
               pw.SizedBox(height: 2),
-              _t(by.isEmpty ? 'Generated $at' : 'Generated $at by $by', size: 7.5, color: _muted),
+              pw.Row(
+                mainAxisSize: pw.MainAxisSize.min,
+                children: [
+                  _t(by.isEmpty ? 'Generated $at' : 'Generated $at by ', size: 7.5, color: _muted),
+                  // The signed-in person is picked out wherever they appear.
+                  if (by.isNotEmpty) _t(by, size: 7.5, bold: true, color: tone.accent),
+                ],
+              ),
             ],
           ),
         ],
@@ -207,7 +218,7 @@ pw.Widget _footer(pw.Context ctx) => pw.Container(
 
 // ---- Sales Overview --------------------------------------------------------
 
-List<pw.Widget> _overview(ReportExport d, _Tone tone) {
+List<pw.Widget> _overview(ReportExport d, _Tone tone, ReportPdfBrand b) {
   final ov = d.overview;
   if (ov == null) return [_section('Sales performance', tone), _note('No figures for this period.')];
   final s = ov.summary;
@@ -310,7 +321,12 @@ List<pw.Widget> _overview(ReportExport d, _Tone tone) {
           for (var i = 0; i < ov.employees.length; i++)
             ['${i + 1}', ov.employees[i].name, qtyLabel(ov.employees[i].quantity), _amt(ov.employees[i].total)],
         ],
+        highlight: {
+          for (var i = 0; i < ov.employees.length; i++)
+            if (_isMe(ov.employees[i].id, b)) i,
+        },
       ),
+      if (ov.employees.any((e) => _isMe(e.id, b))) _meNote(b),
     ],
     if (ov.products.isNotEmpty) ...[
       _section('Top items', tone, note: 'Top ${ov.products.length}'),
@@ -342,7 +358,7 @@ List<pw.Widget> _overview(ReportExport d, _Tone tone) {
 
 // ---- By Item / By Staff --------------------------------------------------
 
-List<pw.Widget> _breakdown(ReportExport d, _Tone tone) {
+List<pw.Widget> _breakdown(ReportExport d, _Tone tone, ReportPdfBrand b) {
   final items = d.kind == ReportExportKind.items;
   final lines = d.lines;
   if (lines.isEmpty) {
@@ -423,7 +439,12 @@ List<pw.Widget> _breakdown(ReportExport d, _Tone tone) {
             ],
         ],
         total: ['', 'Total', '', '$itemsSold', _amt(d.totalAmount), ''],
+        highlight: {
+          for (var i = 0; i < lines.length; i++)
+            if (_isMe(lines[i].id, b)) i,
+        },
       ),
+    if (!items && lines.any((l) => _isMe(l.id, b))) _meNote(b),
     if (d.truncated)
       _note('The list stops at the top ${lines.length} of ${d.lineCount}; the totals cover all of them. '
           'Export a shorter range to list every line.'),
@@ -566,7 +587,13 @@ class _Col {
 
 /// A striped table under an accent header row that repeats on every page the
 /// table runs onto, with an optional tinted total row.
-pw.Widget _table(_Tone tone, List<_Col> cols, List<List<String>> rows, {List<String>? total}) {
+pw.Widget _table(
+  _Tone tone,
+  List<_Col> cols,
+  List<List<String>> rows, {
+  List<String>? total,
+  Set<int> highlight = const {},
+}) {
   pw.Widget cell(String text, _Col col, {bool bold = false, PdfColor color = _ink, double size = 8.2}) => pw.Padding(
         padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4.5),
         child: _t(text,
@@ -587,8 +614,15 @@ pw.Widget _table(_Tone tone, List<_Col> cols, List<List<String>> rows, {List<Str
       ),
       for (var r = 0; r < rows.length; r++)
         pw.TableRow(
-          decoration: r.isOdd ? const pw.BoxDecoration(color: _zebra) : null,
-          children: [for (var i = 0; i < cols.length; i++) cell(rows[r][i], cols[i])],
+          decoration: highlight.contains(r)
+              ? pw.BoxDecoration(color: tone.tintStrong)
+              : (r.isOdd ? const pw.BoxDecoration(color: _zebra) : null),
+          children: [
+            for (var i = 0; i < cols.length; i++)
+              highlight.contains(r)
+                  ? cell(rows[r][i], cols[i], bold: true, color: tone.accent)
+                  : cell(rows[r][i], cols[i]),
+          ],
         ),
       if (total != null)
         pw.TableRow(
@@ -598,6 +632,13 @@ pw.Widget _table(_Tone tone, List<_Col> cols, List<List<String>> rows, {List<Str
     ],
   );
 }
+
+// ---- the signed-in person ------------------------------------------------------
+
+bool _isMe(String id, ReportPdfBrand b) => b.preparedById.isNotEmpty && id == b.preparedById;
+
+/// Says whose row is highlighted — on paper there is no "you".
+pw.Widget _meNote(ReportPdfBrand b) => _note('Highlighted: ${b.preparedBy}, who generated this report.');
 
 // ---- formatting ------------------------------------------------------------
 

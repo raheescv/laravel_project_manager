@@ -18,6 +18,7 @@ import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/routes.dart';
+import 'package:invo/shared/widgets/app_version.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/features/auth/widgets/v3/connection_sheet.dart';
@@ -708,7 +709,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _versionLine(BuildContext context) {
     final p = context.astra;
     return Center(
-      child: Text('QLOUD POS · v1.0.0',
+      child: AppVersionText(
+          prefix: 'QLOUD POS · ',
           style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
     );
   }

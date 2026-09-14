@@ -51,6 +51,9 @@ class ReportAction
             'closed_at' => $session->closed_at?->format('Y-m-d H:i:s'),
             'opened_by' => $session->opener?->name,
             'closed_by' => $session->closer?->name,
+            // So the app can pick out the signed-in person by id, not by name.
+            'opened_by_id' => $session->opened_by ? (string) $session->opened_by : null,
+            'closed_by_id' => $session->closed_by ? (string) $session->closed_by : null,
         ];
     }
 

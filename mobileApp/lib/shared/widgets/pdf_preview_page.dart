@@ -70,11 +70,13 @@ void openPdfPreview(
         maxPageWidth: maxPageWidth,
         scrollViewDecoration: BoxDecoration(color: paper),
         actions: [
-          PdfPreviewAction(
-            icon: const Icon(Icons.chat_rounded),
-            onPressed: (_, build, format) async =>
-                PdfExport.whatsApp(await build(format), fileName, caption: caption),
-          ),
+          // Only where it differs from the preview's own Share button.
+          if (PdfExport.opensWhatsAppDirectly)
+            PdfPreviewAction(
+              icon: const Icon(Icons.chat_rounded),
+              onPressed: (_, build, format) async =>
+                  PdfExport.whatsApp(await build(format), fileName, caption: caption),
+            ),
           PdfPreviewAction(
             icon: const Icon(Icons.download_rounded),
             onPressed: (ctx, build, format) async {

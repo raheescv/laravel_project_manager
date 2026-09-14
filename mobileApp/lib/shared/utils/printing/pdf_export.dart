@@ -17,6 +17,11 @@ class PdfExport {
 
   static bool get _android => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
+  /// Whether [whatsApp] opens WhatsApp itself. Only Android can; everywhere
+  /// else it is the share sheet, so a separate WhatsApp button would just
+  /// repeat Share — screens hide it there.
+  static bool get opensWhatsAppDirectly => _android;
+
   /// The platform print dialog, on A4 as the pages were built. False when the
   /// user backs out of it.
   static Future<bool> printDialog(Uint8List bytes, String name) => Printing.layoutPdf(

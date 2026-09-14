@@ -15,6 +15,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/route_observer.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/you_badge.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/charts.dart';
 
@@ -742,6 +743,7 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     final day = Dates.human(admin.topStylistsDate);
     final maxRev = top.first.amount <= 0 ? 1.0 : top.first.amount;
     const medals = [Color(0xFFD9A93B), Color(0xFFB6B6C2), Color(0xFFC58B5B)];
+    final meId = context.read<AuthCubit>().user?.id ?? '';
     return AstraCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -762,45 +764,72 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
           ),
           const SizedBox(height: 14),
           for (var i = 0; i < top.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 13),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 22,
-                    child: Text('${i + 1}',
-                        textAlign: TextAlign.center,
-                        style: serif(size: 15, color: i < 3 ? medals[i] : p.textMuted)),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(gradient: p.primaryGradient, shape: BoxShape.circle),
-                    alignment: Alignment.center,
-                    child: Text(top[i].title.isEmpty ? '?' : top[i].title[0].toUpperCase(),
-                        style: ui(size: 13, weight: FontWeight.w700, color: Colors.white)),
-                  ),
-                  const SizedBox(width: 11),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(child: Text(top[i].title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                                style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink))),
-                            Text(top[i].value, style: serif(size: 14, color: p.primaryDark)),
+            _performerRow(top[i], i, maxRev, medals, isMe: meId.isNotEmpty && top[i].id == meId),
+        ],
+      ),
+    );
+  }
+
+  /// One leaderboard line. [isMe] marks the signed-in person with the same
+  /// outlined, primary-tinted row and YOU badge as the Reports staff list.
+  Widget _performerRow(ReportRow r, int i, double maxRev, List<Color> medals, {required bool isMe}) {
+    final p = context.astra;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.fromLTRB(2, 4, 8, 4),
+      decoration: BoxDecoration(
+        color: isMe ? p.primary.withValues(alpha: p.isDark ? 0.18 : 0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isMe ? p.primary.withValues(alpha: 0.55) : Colors.transparent, width: 1.4),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22,
+            child: Text('${i + 1}',
+                textAlign: TextAlign.center, style: serif(size: 15, color: i < 3 ? medals[i] : p.textMuted)),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(gradient: p.primaryGradient, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Text(r.title.isEmpty ? '?' : r.title[0].toUpperCase(),
+                style: ui(size: 13, weight: FontWeight.w700, color: Colors.white)),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(r.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                          ),
+                          if (isMe) ...[
+                            const SizedBox(width: 6),
+                            const YouBadge(),
                           ],
-                        ),
-                        const SizedBox(height: 6),
-                        ProgressBar(fraction: top[i].amount / maxRev),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 8),
+                    Text(r.value, style: serif(size: 14, color: p.primaryDark)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ProgressBar(fraction: r.amount / maxRev),
+              ],
             ),
+          ),
         ],
       ),
     );

@@ -92,6 +92,8 @@ it('returns the figures the thermal report prints', function (): void {
         ->assertJsonPath('data.session.id', (string) $session->id)
         ->assertJsonPath('data.session.branch', $this->world->branch->name)
         ->assertJsonPath('data.session.status', 'closed')
+        ->assertJsonPath('data.session.opened_by_id', (string) $this->world->user->id)
+        ->assertJsonPath('data.session.closed_by_id', (string) $this->world->user->id)
         ->assertJsonPath('data.transactions', [])
         ->assertJsonStructure(['data' => [
             'due_transactions',
@@ -112,10 +114,14 @@ it('answers 404 for a session that does not exist', function (): void {
 
 it('renders the web A4 view the PDF is made from', function (): void {
     $session = ($this->makeSession)();
+    $this->actingAs($this->world->user);
 
     $html = app(BuildDaySessionReportAction::class)->executePdf($session->load(['branch', 'opener', 'closer']))->render();
 
-    expect($html)->toContain('SALE BILL REPORT');
+    // The signed-in user opened and closed this session, so both names carry
+    // the highlight.
+    expect($html)->toContain('SALE BILL REPORT')
+        ->and(substr_count($html, 'class="meta-value me-name"'))->toBe(2);
 });
 
 it('downloads the A4 report as a PDF', function (): void {

@@ -22,6 +22,7 @@ enum ReportExportKind {
 /// (employeewise). Fields the report type doesn't carry stay zero / empty.
 class ReportExportLine extends Equatable {
   const ReportExportLine({
+    this.id = '',
     required this.name,
     this.code = '',
     this.quantity = 0,
@@ -30,6 +31,9 @@ class ReportExportLine extends Equatable {
     this.amount = 0,
   });
 
+  /// The staff member's user id on a staff line ('' on item lines), so the
+  /// signed-in person's row can be highlighted.
+  final String id;
   final String name;
   final String code;
   final double quantity;
@@ -46,6 +50,7 @@ class ReportExportLine extends Equatable {
       );
 
   factory ReportExportLine.stylist(Map<String, dynamic> j) => ReportExportLine(
+        id: asStr(j['employee_id']),
         name: asStr(j['employee_name']),
         bills: asNum(j['bills_count']).toInt(),
         items: asNum(j['items_count']).toInt(),
@@ -53,7 +58,7 @@ class ReportExportLine extends Equatable {
       );
 
   @override
-  List<Object?> get props => [name, code, quantity, bills, items, amount];
+  List<Object?> get props => [id, name, code, quantity, bills, items, amount];
 }
 
 /// One day of the overview's day-by-day table, rolled up from bill-wise rows.

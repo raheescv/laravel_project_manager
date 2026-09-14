@@ -13,10 +13,14 @@ import 'package:invo/shared/widgets/receipt_pdf.dart';
 /// it goes through `printRollPdf`: straight to a paired printer, or the print
 /// dialog. IBM Plex Sans Arabic is the base font — branch and staff names can
 /// be Arabic, and only as the base font does Arabic shape (see receipt_pdf.dart).
+///
+/// When [highlightUserId] opened or closed the session, that name prints white
+/// on black — the one highlight a thermal roll can carry.
 Future<Uint8List> buildDaySessionThermalPdf(
   DaySessionReport report,
   PrintSettings settings, {
   DateTime? printedAt,
+  String highlightUserId = '',
 }) async {
   final (regular, bold) = await loadBundledArabicFonts();
   final theme = regular == null
@@ -33,6 +37,7 @@ Future<Uint8List> buildDaySessionThermalPdf(
   final t = report.totals;
   final logo = pdfLogo(settings.logo, width: s(70));
   final company = settings.companyName.trim();
+  bool isMe(String id) => highlightUserId.isNotEmpty && id == highlightUserId;
 
   final doc = pw.Document(title: 'Sale Bill Report #${session.id}');
   doc.addPage(
@@ -66,7 +71,10 @@ Future<Uint8List> buildDaySessionThermalPdf(
             ('Opened By', _orNa(session.openedBy)),
             if (session.closedBy.isNotEmpty) ('Closed By', session.closedBy),
             ('Printed Time', printed),
-          ], s, bordered: false, labelFlex: 0.8),
+          ], s, bordered: false, labelFlex: 0.8, highlight: {
+            if (isMe(session.openedById)) 3,
+            if (session.closedBy.isNotEmpty && isMe(session.closedById)) 4,
+          }),
           _rule(),
           // ---- transactions ----
           _heading('SALE TRANSACTIONS', s),
@@ -147,11 +155,11 @@ final _arabic = RegExp(r'[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]');
 
 /// Bold like the web slip, where every cell sits in a `<strong>`. Arabic runs
 /// are marked rtl so they shape and join.
-pw.Widget _text(String text, double size, {pw.TextAlign? align}) => pw.Text(
+pw.Widget _text(String text, double size, {pw.TextAlign? align, PdfColor color = PdfColors.black}) => pw.Text(
       text,
       textAlign: align,
       textDirection: _arabic.hasMatch(text) ? pw.TextDirection.rtl : null,
-      style: pw.TextStyle(fontSize: size, fontWeight: pw.FontWeight.bold),
+      style: pw.TextStyle(fontSize: size, fontWeight: pw.FontWeight.bold, color: color),
     );
 
 pw.Widget _centred(String text, double size) =>
@@ -165,20 +173,40 @@ pw.Widget _rule() => pw.Padding(
       child: pw.Divider(height: 0.5, thickness: 0.7, color: PdfColors.black, borderStyle: pw.BorderStyle.dashed),
     );
 
-pw.Widget _cell(String text, double size, {bool right = false}) => pw.Container(
-      alignment: right ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 2),
-      child: _text(text, size, align: right ? pw.TextAlign.right : pw.TextAlign.left),
-    );
+/// [inverted] prints the text white on a black block — the signed-in person's
+/// name.
+pw.Widget _cell(String text, double size, {bool right = false, bool inverted = false}) {
+  final align = right ? pw.TextAlign.right : pw.TextAlign.left;
+  return pw.Container(
+    alignment: right ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+    padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+    child: inverted
+        ? pw.Container(
+            color: PdfColors.black,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            child: _text(text, size, align: align, color: PdfColors.white),
+          )
+        : _text(text, size, align: align),
+  );
+}
 
 /// Label left, value right — the web's two-column tables.
-pw.Widget _pairs(List<(String, String)> rows, double Function(double) s, {bool bordered = true, double labelFlex = 1.7}) =>
+pw.Widget _pairs(
+  List<(String, String)> rows,
+  double Function(double) s, {
+  bool bordered = true,
+  double labelFlex = 1.7,
+  Set<int> highlight = const {},
+}) =>
     pw.Table(
       border: bordered ? pw.TableBorder.all(width: 0.5, color: PdfColors.black) : null,
       columnWidths: {0: pw.FlexColumnWidth(labelFlex), 1: const pw.FlexColumnWidth(1)},
       children: [
-        for (final (label, value) in rows)
-          pw.TableRow(children: [_cell(label, s(8)), _cell(value, s(8), right: true)]),
+        for (var i = 0; i < rows.length; i++)
+          pw.TableRow(children: [
+            _cell(rows[i].$1, s(8)),
+            _cell(rows[i].$2, s(8), right: true, inverted: highlight.contains(i)),
+          ]),
       ],
     );
 

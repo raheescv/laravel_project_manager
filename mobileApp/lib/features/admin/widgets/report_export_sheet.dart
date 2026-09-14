@@ -130,7 +130,8 @@ Future<void> _run(BuildContext context, _Pick pick) async {
       ].join(' · ');
     } else {
       bytes = thermal
-          ? await buildDaySessionThermalPdf(await admin.daySessionReport(session.id), settings)
+          ? await buildDaySessionThermalPdf(await admin.daySessionReport(session.id), settings,
+              highlightUserId: brand.preparedById)
           : await admin.daySessionReportPdf(session.id);
       title = 'Sale Bill Report #${session.id}';
       fileName = 'sale-bill-report_session-${session.id}${thermal ? '_roll' : ''}.pdf';
@@ -187,6 +188,7 @@ ReportPdfBrand _brand(BuildContext context) {
     companyName: print.companyName,
     branchName: context.read<BranchCubit>().selected?.name ?? '',
     preparedBy: context.read<AuthCubit>().user?.name ?? '',
+    preparedById: context.read<AuthCubit>().user?.id ?? '',
     logo: print.logo,
     accent: PdfColor.fromInt(context.astra.primary.toARGB32()),
   );
@@ -266,7 +268,10 @@ class _ExportSheetState extends State<_ExportSheet> {
                         _Action.preview),
                     action(Icons.print_outlined, p.ink, 'Print', isSession ? _thermalHint() : 'Send it to a printer',
                         _Action.print),
-                    action(Icons.chat_rounded, _whatsAppGreen, 'WhatsApp', 'Send the PDF to a chat', _Action.whatsApp),
+                    // Straight to WhatsApp on Android; on iPhone it could only
+                    // open the share sheet, which is what Share already does.
+                    if (PdfExport.opensWhatsAppDirectly)
+                      action(Icons.chat_rounded, _whatsAppGreen, 'WhatsApp', 'Send the PDF to a chat', _Action.whatsApp),
                     action(Icons.ios_share, p.ink, 'Share', 'Email, Drive or any other app', _Action.share),
                     action(
                         Icons.download_rounded,
