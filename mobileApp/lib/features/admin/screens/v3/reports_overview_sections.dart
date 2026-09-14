@@ -5,39 +5,37 @@ part of 'reports_screen.dart';
 // call site is unchanged.
 
 extension _OverviewSections on _ReportsScreenState {
-  /// Sales Performance card — success rate, per-method Sales/Returns/Net,
-  /// and the six gradient financial tiles.
+  /// Sales Performance card — direction B "Refined Tiles", picked from
+  /// docs/mobile-reports-overview-premium-preview.html: Net sales as one wide
+  /// brand tile, the other money figures as soft tiles with a colour edge and
+  /// the full amount, an Invoices / Returns strip, then the payment methods as
+  /// a share bar over a compact table.
   Widget _salesPerformance(AdminCubit admin) {
     final p = context.astra;
     final ov = admin.overview;
     if (ov == null) return _overviewPlaceholder(admin, 'Sales Performance', Icons.insights_rounded);
     final s = ov.summary;
     final busy = admin.overviewLoading;
+    final rate = s.successRate;
 
     return AstraCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _cardHeader(Icons.insights_rounded, 'Sales Performance',
               busy: busy,
-              trailing: _pill('Disc ${Money.compact(s.discount)}', p.tint, p.textSecondary)),
-          const SizedBox(height: 12),
+              trailing: _pill('${rate.toStringAsFixed(rate % 1 == 0 ? 0 : 1)}% success', p.tint, p.primary)),
+          const SizedBox(height: 13),
           _refreshing(busy, Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _miniStatsRow(s),
+              _netSalesTile(s),
+              const SizedBox(height: 8),
+              _figureTiles(s),
               const SizedBox(height: 12),
-              Container(height: 1, color: p.hairline),
-              const SizedBox(height: 12),
-              _rateBar('Sales Success Rate', s.successRate, [p.primary, p.accent]),
-              const SizedBox(height: 10),
-              for (final m in ov.payments.methods) ...[
-                _methodCard(m),
-                const SizedBox(height: 8),
-              ],
-              const SizedBox(height: 2),
-              _finTiles(s),
+              _countStrip(s),
+              _methodsSection(ov.payments.methods),
             ],
           )),
         ],
@@ -45,49 +43,45 @@ extension _OverviewSections on _ReportsScreenState {
     );
   }
 
-  Widget _methodCard(PaymentMethodStat m) {
+  /// The wide brand tile: Net sales, with Gross and Discount beside it.
+  Widget _netSalesTile(OverviewSummary s) {
     final p = context.astra;
-    final color = _methodColor(m.method, p);
+    Widget aside(String label, double value) => Text.rich(
+          TextSpan(children: [
+            TextSpan(text: '$label  '),
+            TextSpan(text: Money.plain(value), style: ui(size: 11, weight: FontWeight.w800, color: Colors.white)),
+          ]),
+          style: ui(size: 10.5, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.78)),
+        );
+
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.fromLTRB(13, 12, 13, 13),
       decoration: BoxDecoration(
-        color: p.isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: p.hairline),
+        gradient: LinearGradient(
+            begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [p.primary, p.primaryDark]),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: context.astraTheme.floatShadow(p.primary),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                child: Icon(_methodIcon(m.method), size: 17, color: color),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(m.method, style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-                    Text('${m.transactions} transactions',
-                        style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-                  ],
-                ),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _tileLabel('Net sales', Icons.account_balance_wallet_rounded, Colors.white, onBrand: true),
+                const SizedBox(height: 8),
+                _amount(s.netSales, size: 26, color: Colors.white),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              _methodCell('Sales', m.sales, _ReportsScreenState._good),
-              const SizedBox(width: 7),
-              _methodCell('Returns', m.returns, _ReportsScreenState._warn),
-              const SizedBox(width: 7),
-              _methodCell('Net', m.net, m.net < 0 ? _ReportsScreenState._bad : p.primary),
+              aside('Gross', s.grossSales),
+              const SizedBox(height: 3),
+              aside('Discount', s.discount),
             ],
           ),
         ],
@@ -95,113 +89,266 @@ extension _OverviewSections on _ReportsScreenState {
     );
   }
 
-  Widget _methodCell(String label, double value, Color color) {
+  /// The other money figures as soft tiles — two to a row on a phone, three
+  /// once the card is wide enough to keep each one readable. Plain rows rather
+  /// than a GridView: a grid picks up the screen's safe-area padding and opened
+  /// big gaps above and below the tiles.
+  Widget _figureTiles(OverviewSummary s) {
     final p = context.astra;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(9)),
-        child: Column(
-          children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(Money.plain(value), style: ui(size: 12.5, weight: FontWeight.w800, color: color)),
-            ),
-            const SizedBox(height: 2),
-            Text(label.toUpperCase(),
-                style: ui(size: 8.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.4)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _finTiles(OverviewSummary s) {
-    final p = context.astra;
-    final tiles = <Widget>[
-      _finTile(Icons.payments_rounded, 'Gross Sales', s.grossSales, [p.primary, p.primaryDark]),
-      _finTile(Icons.sell_rounded, 'Discounts', s.discount, const [Color(0xFFF59E0B), Color(0xFFD97706)]),
-      _finTile(Icons.account_balance_wallet_rounded, 'Net Sales', s.netSales, const [Color(0xFF22C55E), Color(0xFF15803D)]),
-      _finTile(Icons.inventory_2_rounded, 'Total Item', s.totalItem, const [Color(0xFF64748B), Color(0xFF334155)]),
-      _finTile(Icons.shopping_cart_rounded, 'Products', s.productSale, const [Color(0xFF06B6D4), Color(0xFF0E7490)]),
-      _finTile(Icons.star_rounded, 'Services', s.serviceSale, const [Color(0xFF8B5CF6), Color(0xFF6D28D9)]),
+    final avg = s.noOfSales > 0 ? s.netSales / s.noOfSales : 0.0;
+    final tiles = [
+      _figureTile('Gross sales', s.grossSales, Icons.payments_rounded, p.primary),
+      _figureTile('Discounts', s.discount, Icons.sell_rounded, _ReportsScreenState._warn),
+      _figureTile('Item total', s.totalItem, Icons.inventory_2_rounded, const Color(0xFF64748B)),
+      _figureTile('Products', s.productSale, Icons.shopping_cart_rounded, const Color(0xFF0891B2)),
+      _figureTile('Services', s.serviceSale, Icons.star_rounded, const Color(0xFF7C3AED)),
+      _figureTile('Avg ticket', avg, Icons.confirmation_number_rounded, _ReportsScreenState._good),
     ];
-    const spacing = 9.0;
-    if (!context.isTablet) {
-      // Phone tiles were borderline-short for the label+value at 1× and could
-      // clip once text-scale grows; a little more height gives headroom.
-      return GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: spacing,
-        crossAxisSpacing: spacing,
-        childAspectRatio: 2.3,
-        children: tiles,
-      );
-    }
-    // Tablet: derive the ratio from the ACTUAL tile width rather than a fixed
-    // value — in the two-column report layout this card is only ~half width, so
-    // a blanket 3.3 made tiles too short and they overflowed. Sizing to a target
-    // pixel height keeps them fitted whether the card is full or half width.
+
     return LayoutBuilder(
-      builder: (ctx, c) {
-        const cols = 3;
-        final tileW = (c.maxWidth - spacing * (cols - 1)) / cols;
-        // Enough height for the icon + label + value at 1× with text-scale headroom.
-        return GridView.count(
-          crossAxisCount: cols,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: spacing,
-          crossAxisSpacing: spacing,
-          childAspectRatio: tileW / 58,
-          children: tiles,
+      builder: (context, c) {
+        final cols = c.maxWidth >= 520 ? 3 : 2;
+        return Column(
+          children: [
+            for (var i = 0; i < tiles.length; i += cols)
+              Padding(
+                padding: EdgeInsets.only(top: i == 0 ? 0 : 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var j = 0; j < cols; j++) ...[
+                      if (j > 0) const SizedBox(width: 8),
+                      Expanded(child: i + j < tiles.length ? tiles[i + j] : const SizedBox()),
+                    ],
+                  ],
+                ),
+              ),
+          ],
         );
       },
     );
   }
 
-  /// Compact horizontal money tile — icon beside label/value, no stranded
-  /// whitespace (the old vertical spaceBetween left a big empty middle).
-  Widget _finTile(IconData icon, String label, double value, List<Color> gradient) {
+  Widget _figureTile(String label, double value, IconData icon, Color color) {
+    final p = context.astra;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: gradient),
+        color: p.isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.025),
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: gradient.last.withValues(alpha: 0.28), blurRadius: 12, offset: const Offset(0, 6))],
+        border: Border.all(color: p.hairline),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            width: 30,
-            height: 30,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(9)),
-            child: Icon(icon, size: 16, color: Colors.white),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(13, 11, 11, 11),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(size: 9, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.92), letterSpacing: 0.4)),
-                const SizedBox(height: 2),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(Money.compact(value), style: serif(size: 17, color: Colors.white)),
-                ),
+                _tileLabel(label, icon, color),
+                const SizedBox(height: 8),
+                _amount(value, size: 18, color: p.ink),
               ],
             ),
           ),
+          // The colour edge that tells the tiles apart at a glance.
+          Positioned(left: 0, top: 0, bottom: 0, child: Container(width: 3, color: color)),
         ],
       ),
+    );
+  }
+
+  /// Icon square + upper-case label, as every figure tile opens.
+  Widget _tileLabel(String label, IconData icon, Color color, {bool onBrand = false}) {
+    final p = context.astra;
+    return Row(
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: onBrand ? Colors.white.withValues(alpha: 0.16) : color.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Icon(icon, size: 13, color: color),
+        ),
+        const SizedBox(width: 7),
+        Flexible(
+          child: Text(label.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(
+                  size: 9.5,
+                  weight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                  color: onBrand ? Colors.white.withValues(alpha: 0.82) : p.textSecondary)),
+        ),
+      ],
+    );
+  }
+
+  /// A full amount with the currency as a small prefix — `QAR 1,322.00`, never
+  /// the compact `QAR1.32K` — shrinking to fit rather than wrapping.
+  Widget _amount(double value, {required double size, required Color color}) {
+    final symbol = Money.symbol.trim();
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text.rich(
+        TextSpan(children: [
+          if (symbol.isNotEmpty)
+            TextSpan(
+                text: '$symbol ',
+                style: ui(size: size * 0.5, weight: FontWeight.w700, color: color.withValues(alpha: 0.7))),
+          TextSpan(text: Money.plain(value)),
+        ]),
+        maxLines: 1,
+        style: ui(size: size, weight: FontWeight.w700, color: color),
+      ),
+    );
+  }
+
+  /// Invoices and Returns between hairlines.
+  Widget _countStrip(OverviewSummary s) {
+    final p = context.astra;
+    Widget cell(String value, String label, IconData icon) => Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: p.primary),
+              const SizedBox(width: 8),
+              Text(value, style: ui(size: 16, weight: FontWeight.w700, color: p.ink)),
+              const SizedBox(width: 6),
+              Text(label.toUpperCase(),
+                  style: ui(size: 9, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
+            ],
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(border: Border.symmetric(horizontal: BorderSide(color: p.hairline))),
+      child: Row(
+        children: [
+          cell('${s.noOfSales}', 'Invoices', Icons.receipt_long_rounded),
+          Container(width: 1, height: 22, color: p.hairline),
+          cell('${s.noOfSalesReturns}', 'Returns', Icons.assignment_return_rounded),
+        ],
+      ),
+    );
+  }
+
+  /// Payment methods: a stacked share bar over a Method · Txns · Sales · Net
+  /// table. A method with nothing against it stays listed, muted, instead of
+  /// taking a card of zeros.
+  Widget _methodsSection(List<PaymentMethodStat> methods) {
+    if (methods.isEmpty) return const SizedBox.shrink();
+    final p = context.astra;
+    final txns = methods.fold<int>(0, (a, m) => a + m.transactions);
+    final salesTotal = methods.fold<double>(0, (a, m) => a + (m.sales > 0 ? m.sales : 0));
+    final shares = [
+      for (final m in methods)
+        if (m.sales > 0 && salesTotal > 0) (method: m, flex: (m.sales / salesTotal * 1000).round().clamp(1, 1000)),
+    ];
+    final inset = p.isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.025);
+    final headStyle = ui(size: 9, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6);
+
+    Widget tableRow(List<Widget> cells, {Color? background}) => Container(
+          color: background,
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+          child: Row(
+            children: [
+              Expanded(flex: 15, child: cells[0]),
+              Expanded(flex: 7, child: Align(alignment: Alignment.centerRight, child: cells[1])),
+              Expanded(flex: 11, child: Align(alignment: Alignment.centerRight, child: cells[2])),
+              Expanded(flex: 11, child: Align(alignment: Alignment.centerRight, child: cells[3])),
+            ],
+          ),
+        );
+
+    Widget methodRow(PaymentMethodStat m) {
+      final muted = m.transactions == 0 && m.sales == 0 && m.returns == 0;
+      TextStyle style({FontWeight weight = FontWeight.w600, Color? color}) =>
+          ui(size: 12, weight: weight, color: muted ? p.textMuted : (color ?? p.ink));
+      return tableRow([
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: _methodColor(m.method, p), borderRadius: BorderRadius.circular(3)),
+            ),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(m.method,
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: style(weight: FontWeight.w700)),
+            ),
+          ],
+        ),
+        Text('${m.transactions}', style: style()),
+        FittedBox(fit: BoxFit.scaleDown, child: Text(Money.plain(m.sales), style: style())),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(Money.plain(m.net),
+              style: style(weight: FontWeight.w700, color: m.net < 0 ? _ReportsScreenState._bad : null)),
+        ),
+      ]);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(child: Text('Payment methods', style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink))),
+            Text('$txns transactions', style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
+          ],
+        ),
+        if (shares.isNotEmpty) ...[
+          const SizedBox(height: 9),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: SizedBox(
+              height: 8,
+              child: Row(
+                children: [
+                  for (var i = 0; i < shares.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 2),
+                    Expanded(
+                      flex: shares[i].flex,
+                      child: ColoredBox(color: _methodColor(shares[i].method.method, p)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 10),
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: p.hairline),
+          ),
+          child: Column(
+            children: [
+              tableRow([
+                Text('METHOD', style: headStyle),
+                Text('TXNS', style: headStyle),
+                Text('SALES', style: headStyle),
+                Text('NET', style: headStyle),
+              ], background: inset),
+              for (final m in methods) ...[
+                Container(height: 1, color: p.hairline),
+                methodRow(m),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -435,40 +582,6 @@ extension _OverviewSections on _ReportsScreenState {
   /// body back — the header spinner above it carries the progress.
   Widget _refreshing(bool busy, Widget child) =>
       busy ? IgnorePointer(child: Opacity(opacity: 0.4, child: child)) : child;
-
-  /// Compact 3-up stat strip (Invoices · Avg Ticket · Returns) — lives inside the
-  /// Sales Performance card header area, not a separate card, to save space.
-  Widget _miniStatsRow(OverviewSummary s) {
-    final p = context.astra;
-    final inv = s.noOfSales;
-    final avg = inv > 0 ? s.netSales / inv : 0.0;
-    Widget div() => Container(width: 1, height: 26, color: p.hairline);
-    return Row(
-      children: [
-        _miniStat(Icons.receipt_long_rounded, 'Invoices', '$inv'),
-        div(),
-        _miniStat(Icons.sell_rounded, 'Avg Ticket', inv > 0 ? Money.compact(avg) : '—'),
-        div(),
-        _miniStat(Icons.assignment_return_rounded, 'Returns', '${s.noOfSalesReturns}'),
-      ],
-    );
-  }
-
-  Widget _miniStat(IconData icon, String label, String value) {
-    final p = context.astra;
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, size: 16, color: p.primary),
-          const SizedBox(height: 5),
-          FittedBox(fit: BoxFit.scaleDown, child: Text(value, style: serif(size: 16, color: p.ink))),
-          const SizedBox(height: 2),
-          Text(label.toUpperCase(),
-              style: ui(size: 8.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6)),
-        ],
-      ),
-    );
-  }
 
   Widget _rateBar(String label, double pct, List<Color> colors) {
     final p = context.astra;
