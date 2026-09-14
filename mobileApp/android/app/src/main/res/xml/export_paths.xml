@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What FilesPlugin may hand to another app (WhatsApp) through the `.exports`
+     FileProvider: the exported-PDF cache folder, nothing else. -->
+<paths>
+    <cache-path name="exports" path="exports/" />
+</paths>

@@ -28,7 +28,7 @@ class ReportRow extends Equatable {
   List<Object?> get props => [title, subtitle, value, amount];
 }
 
-/// The loaded breakdown for one report type, held so the By Item / By Stylist
+/// The loaded breakdown for one report type, held so the By Item / By Staff
 /// toggle can restore it without another round-trip. Carries the pagination
 /// cursor too, so a list you had already scrolled comes back as you left it.
 class _ReportCache {
@@ -45,6 +45,14 @@ class _ReportCache {
   final int page;
   final int lastPage;
 }
+
+/// One report type walked page by page for the PDF export.
+typedef _ExportRows = ({
+  List<Map<String, dynamic>> rows,
+  Map<String, dynamic> summary,
+  int total,
+  bool truncated,
+});
 
 /// Backs the Dashboard and the Reports suite (bill-wise / employee-wise).
 class AdminCubit extends Cubit<AdminState> {
@@ -103,13 +111,13 @@ class AdminCubit extends Cubit<AdminState> {
   bool _live(int req) => req == _dashboardReq && !isClosed;
 
   /// Last loaded breakdown per report type, for the filters in force when it
-  /// was fetched. Only the By Item / By Stylist toggle reads it; each input
+  /// was fetched. Only the By Item / By Staff toggle reads it; each input
   /// invalidates exactly what it can have moved on the way past, so an entry
   /// can never outlive the filters behind it:
   ///
   ///  * date range, branch — both entries (every figure is range-scoped)
   ///  * Rank By, Type      — the `itemwise` entry only; neither is sent with
-  ///                         the `employeewise` request, so By Stylist stands.
+  ///                         the `employeewise` request, so By Staff stands.
   final Map<String, _ReportCache> _reportCache = {};
 
   /// Date range the per-day trend was fetched for. The trend depends on the
@@ -339,7 +347,7 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
-  /// Switch the breakdown between By Item and By Stylist. Both sides are held
+  /// Switch the breakdown between By Item and By Staff. Both sides are held
   /// in [_reportCache] for as long as the filters behind them hold, so the
   /// toggle is instant — the API is hit again only for a side that hasn't been
   /// loaded under the current Rank By / Type / date / branch selection.
@@ -416,12 +424,124 @@ class AdminCubit extends Cubit<AdminState> {
 
   /// The Reports refresh button: re-pull everything for the range on screen
   /// straight from the API. `force` drops both cached breakdown sides and the
-  /// trend key, so neither the By Item / By Stylist toggle nor the per-day
+  /// trend key, so neither the By Item / By Staff toggle nor the per-day
   /// chart can hand back figures from before the tap. Unlike re-tapping a
   /// preset it keeps the range as-is, so a custom range refreshes too.
   Future<void> refreshReports() async {
     await Future.wait([loadReports(force: true), loadOverview()]);
   }
+
+  // ---- PDF export -------------------------------------------------------------
+
+  /// The API's per_page ceiling (GetAction clamps to 100).
+  static const int _exportPerPage = 100;
+
+  /// How far an export walks: 50 × 100 = 5,000 lines or bills. Past that a
+  /// printed table is not something anyone reads, and the requests pile up.
+  static const int _exportPageCap = 50;
+
+  /// Everything the PDF for [kind] prints, fetched fresh for the range, branch
+  /// and item filters on screen. The screen pages its tables 20 rows at a time
+  /// for scrolling; a printed report has to carry every line, so this walks the
+  /// pages instead of reusing [reportRows]. Throws what the repository throws —
+  /// the caller reports it.
+  Future<ReportExport> exportReport(ReportExportKind kind) async {
+    final from = state.startDate;
+    final to = state.endDate;
+    final start = Dates.iso(from);
+    final end = Dates.iso(to);
+    final now = DateTime.now();
+
+    switch (kind) {
+      case ReportExportKind.overview:
+        final results = await Future.wait<Object>([
+          _repo.report(type: 'overview', startDate: start, endDate: end),
+          _allReportRows('billwise', start, end),
+        ]);
+        final bills = results[1] as _ExportRows;
+        final byDate = <String, ReportExportDay>{};
+        for (final bill in bills.rows) {
+          final date = asStr(bill['date']).split(' ').first;
+          byDate[date] = (byDate[date] ?? ReportExportDay(date: date)).add(bill);
+        }
+        return ReportExport(
+          kind: kind,
+          startDate: from,
+          endDate: to,
+          generatedAt: now,
+          overview: SalesOverview.fromJson(results[0] as Map<String, dynamic>),
+          days: bills.truncated
+              ? const []
+              : (byDate.values.toList()..sort((a, b) => a.date.compareTo(b.date))),
+          daysComplete: !bills.truncated,
+        );
+      case ReportExportKind.items:
+        final byQty = state.itemMetric == 'qty';
+        final productType = state.itemProductType;
+        final data = await _allReportRows('itemwise', start, end,
+            sort: byQty ? 'quantity' : 'amount', productType: productType);
+        return ReportExport(
+          kind: kind,
+          startDate: from,
+          endDate: to,
+          generatedAt: now,
+          lines: data.rows.map(ReportExportLine.item).toList(),
+          lineCount: data.total,
+          totalAmount: asNum(data.summary['total_amount']).toDouble(),
+          totalQuantity: asNum(data.summary['total_quantity']).toDouble(),
+          rankByQty: byQty,
+          productType: productType,
+        );
+      case ReportExportKind.stylists:
+        final data = await _allReportRows('employeewise', start, end);
+        return ReportExport(
+          kind: kind,
+          startDate: from,
+          endDate: to,
+          generatedAt: now,
+          lines: data.rows.map(ReportExportLine.stylist).toList(),
+          lineCount: data.total,
+          totalAmount: asNum(data.summary['total_revenue']).toDouble(),
+        );
+    }
+  }
+
+  /// Every row of one report type for the range, [_exportPerPage] a request and
+  /// four requests at a time — all at once would queue up to fifty on the
+  /// server behind a single tap.
+  Future<_ExportRows> _allReportRows(String type, String start, String end,
+      {String? sort, String? productType}) async {
+    Future<Map<String, dynamic>> page(int n) => _repo.report(
+          type: type,
+          startDate: start,
+          endDate: end,
+          page: n,
+          perPage: _exportPerPage,
+          sort: sort,
+          productType: productType,
+        );
+
+    final first = await page(1);
+    final pag = (first['pagination'] as Map?) ?? const {};
+    final lastPage = asNum(pag['last_page'] ?? 1).toInt();
+    final until = lastPage < _exportPageCap ? lastPage : _exportPageCap;
+    final rows = _rowsOf(first);
+    for (var n = 2; n <= until; n += 4) {
+      final batch = await Future.wait([for (var i = n; i < n + 4 && i <= until; i++) page(i)]);
+      for (final data in batch) {
+        rows.addAll(_rowsOf(data));
+      }
+    }
+    return (
+      rows: rows,
+      summary: Map<String, dynamic>.from((first['summary'] as Map?) ?? const {}),
+      total: asNum(pag['total'] ?? rows.length).toInt(),
+      truncated: lastPage > _exportPageCap,
+    );
+  }
+
+  static List<Map<String, dynamic>> _rowsOf(Map<String, dynamic> data) =>
+      [for (final e in (data['rows'] as List?) ?? const []) Map<String, dynamic>.from(e as Map)];
 
   Future<void> loadMoreReport() async {
     if (state.reportLoadingMore || state.reportLoading || !state.reportHasMore) {
@@ -518,7 +638,7 @@ class AdminCubit extends Cubit<AdminState> {
 
   /// Rank By and Type ride on the item request alone — [_fetchReportPage] sends
   /// `sort` and `product_type` only for `itemwise` — so they invalidate that
-  /// side and leave By Stylist's cached rows standing. Only the date range (and
+  /// side and leave By Staff's cached rows standing. Only the date range (and
   /// a branch switch) can move those.
   void setItemMetric(String metric) {
     if (state.itemMetric == metric) return;

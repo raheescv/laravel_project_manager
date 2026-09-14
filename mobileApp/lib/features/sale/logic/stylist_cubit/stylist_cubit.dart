@@ -64,7 +64,7 @@ class StylistCubit extends Cubit<ListFetchState<Employee>> {
       emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
     } catch (_) {
       emit(state.copyWith(
-          status: DataFetchStatus.failed, errorMessage: 'Could not load stylists.'));
+          status: DataFetchStatus.failed, errorMessage: 'Could not load staff.'));
     }
   }
 

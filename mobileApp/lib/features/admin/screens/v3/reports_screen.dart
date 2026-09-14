@@ -1,21 +1,30 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show Uint8List, defaultTargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart' show PdfColor;
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
+import 'package:invo/features/admin/widgets/report_pdf.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/printing/pdf_export.dart';
+import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 part 'reports_overview_sections.dart';
+part 'reports_export.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -28,7 +37,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   StreamSubscription<int>? _branchSub;
 
   /// The two reports this page holds: 0 = Sales Overview (performance,
-  /// payments, per-day trend), 1 = Breakdown (By Item / By Stylist ranking).
+  /// payments, per-day trend), 1 = Breakdown (By Item / By Staff ranking).
   /// The date range is shared, so it stays on top of both.
   int _tab = 0;
 
@@ -115,7 +124,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
             EmeraldHeader(
               title: 'Reports',
               subtitle: 'Every angle on your sales',
-              trailing: canView ? HeaderIconButton(icon: Icons.download, gold: true) : null,
+              trailing: canView
+                  ? HeaderIconButton(icon: Icons.download, gold: true, onTap: () => unawaited(_openExportSheet()))
+                  : null,
             ),
             Expanded(
               child: canView
@@ -251,6 +262,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ),
         ),
         _refreshButton(admin, size: 34, radius: 11, iconSize: 17),
+        _exportButton(size: 34, radius: 11, iconSize: 17),
       ],
     );
   }
@@ -551,9 +563,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return d == null ? '' : Dates.weekday(d);
   }
 
-  // ---- By Item / By Stylist breakdown (toggle + metric + ranked table) -------
+  // ---- By Item / By Staff breakdown (toggle + metric + ranked table) -------
 
-  /// One card: the By Item / By Stylist segmented control, the Amount/Qty metric
+  /// One card: the By Item / By Staff segmented control, the Amount/Qty metric
   /// row (items only), then the ranked, paginated table — was three stacked
   /// blocks, now a single cohesive card.
   Widget _breakdownCard(AdminCubit admin) {
@@ -615,7 +627,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(13)),
       child: Row(children: [
         seg('By Item', 'itemwise', Icons.inventory_2_rounded),
-        seg('By Stylist', 'employeewise', Icons.people_alt_rounded),
+        seg('By Staff', 'employeewise', Icons.people_alt_rounded),
       ]),
     );
   }
@@ -739,8 +751,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionLabel(
-          isItem ? 'Item breakdown' : 'Stylist breakdown',
-          trailing: _pill('${admin.reportRowCount} ${isItem ? 'items' : 'stylists'}', p.tint, p.textSecondary),
+          isItem ? 'Item breakdown' : 'Staff breakdown',
+          trailing: _pill('${admin.reportRowCount} ${isItem ? 'items' : 'staff'}', p.tint, p.textSecondary),
         ),
         const SizedBox(height: 10),
         Expanded(

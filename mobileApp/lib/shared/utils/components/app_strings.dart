@@ -34,7 +34,7 @@ class AppStrings {
   static const String noOfflineCatalog =
       'You’re offline and this device has no saved catalog yet. '
       'Reconnect once to prepare offline data.';
-  static const String couldNotLoadStylists = 'Could not load stylists.';
+  static const String couldNotLoadStylists = 'Could not load staff.';
   static const String couldNotLoadBranches = 'Could not load branches.';
 
   // Day session.

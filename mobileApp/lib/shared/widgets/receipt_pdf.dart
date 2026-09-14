@@ -53,6 +53,13 @@ Future<void> _loadArabicFonts() async {
   }
 }
 
+/// The bundled IBM Plex Sans Arabic pair for on-device PDFs other than the
+/// receipt — the A4 report export. Either is null when the asset is missing.
+Future<(pw.Font?, pw.Font?)> loadBundledArabicFonts() async {
+  await _loadArabicFonts();
+  return (_arabicFont, _arabicFontBold);
+}
+
 /// Build a printable / shareable thermal receipt for a [Sale] that mirrors the
 /// web sale-print design (resources/views/sale/print.blade.php): bordered
 /// tables, the boxed invoice header, served-by box, barcode + QR and dashed
@@ -102,7 +109,7 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
   final balance = grandTotal - sale.paid;
   final totalQty = sale.lines.fold<double>(0, (t, l) => t + l.quantity);
 
-  final logo = _logoWidget(settings.logo, s);
+  final logo = pdfLogo(settings.logo, width: s(60));
 
   final doc = pw.Document(title: 'Invoice $invoiceNo');
 
@@ -250,15 +257,15 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
 
 /// The cached company logo as a pdf widget — raster (png/jpg) via MemoryImage,
 /// svg via SvgImage; anything else (corrupt cache, unsupported format) returns
-/// null so the receipt still prints without it.
-pw.Widget? _logoWidget(Uint8List? bytes, double Function(double) s) {
+/// null so the document still prints without it. Shared with the report PDF.
+pw.Widget? pdfLogo(Uint8List? bytes, {required double width}) {
   if (bytes == null || bytes.isEmpty) return null;
   try {
     final isPng = bytes.length > 8 && bytes[0] == 0x89 && bytes[1] == 0x50;
     final isJpg = bytes.length > 3 && bytes[0] == 0xFF && bytes[1] == 0xD8;
-    if (isPng || isJpg) return pw.Image(pw.MemoryImage(bytes), width: s(60));
+    if (isPng || isJpg) return pw.Image(pw.MemoryImage(bytes), width: width);
     final text = utf8.decode(bytes, allowMalformed: true);
-    if (text.contains('<svg')) return pw.SvgImage(svg: text, width: s(60));
+    if (text.contains('<svg')) return pw.SvgImage(svg: text, width: width);
   } catch (_) {
     // Undecodable image — skip the logo.
   }

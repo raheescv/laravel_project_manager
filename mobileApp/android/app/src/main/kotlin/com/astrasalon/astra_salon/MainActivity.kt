@@ -8,6 +8,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterFragmentActivity() {
 
     private var printer: PrinterPlugin? = null
+    private var files: FilesPlugin? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -17,11 +18,19 @@ class MainActivity : FlutterFragmentActivity() {
         printer = plugin
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PrinterPlugin.CHANNEL)
             .setMethodCallHandler(plugin)
+        // Report PDFs: save to Downloads, send straight to WhatsApp. Needs the
+        // activity (not the app context) to start WhatsApp's share screen.
+        val exporter = FilesPlugin(this)
+        files = exporter
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FilesPlugin.CHANNEL)
+            .setMethodCallHandler(exporter)
     }
 
     override fun onDestroy() {
         printer?.dispose()
         printer = null
+        files?.dispose()
+        files = null
         super.onDestroy()
     }
 }

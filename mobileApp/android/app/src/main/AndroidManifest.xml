@@ -48,6 +48,18 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Hands an exported report PDF to WhatsApp (FilesPlugin.kt). Scoped to
+             the cache folder in xml/export_paths; `printing` declares its own
+             provider for the share sheet, under a different authority. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.exports"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/export_paths" />
+        </provider>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -63,5 +75,9 @@
              service is invisible to queryIntentServices and bindService, so an
              all-in-one POS terminal would report "no built-in printer". -->
         <package android:name="woyou.aidlservice.jiuiv5" />
+        <!-- WhatsApp / WhatsApp Business, so FilesPlugin can tell whether a
+             report PDF can go straight to a chat or needs the share sheet. -->
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
     </queries>
 </manifest>

@@ -131,7 +131,7 @@ class _StylistSheetState extends State<_StylistSheet> {
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
         child: EmptyState(
           icon: Icons.wifi_off,
-          title: 'Couldn’t load stylists',
+          title: 'Couldn’t load staff',
           message: stylists.error,
           action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: stylists.load),
         ),
@@ -149,7 +149,7 @@ class _StylistSheetState extends State<_StylistSheet> {
         if (list.isEmpty && (me == null))
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 26),
-            child: Center(child: Text('No stylists found', style: ui(size: 12.5, weight: FontWeight.w600, color: p.textMuted))),
+            child: Center(child: Text('No staff found', style: ui(size: 12.5, weight: FontWeight.w600, color: p.textMuted))),
           ),
       ],
     );
