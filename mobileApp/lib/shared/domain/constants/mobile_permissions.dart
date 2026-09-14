@@ -31,6 +31,7 @@ abstract final class PermissionSlug {
   static const salesOverview = 'report.sales overview';
   static const report = 'report.sale item';
   static const daySession = 'day session.create';
+  static const daySessionPrint = 'day session.print';
   static const saleCreate = 'sale.create';
   static const saleView = 'sale.view';
   static const saleEdit = 'sale.edit';
@@ -99,6 +100,13 @@ const mobilePermissions = <MobilePermission>[
     description: 'Open and close the branch day',
     group: 'Administration',
     icon: Icons.event_available_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.daySessionPrint,
+    label: 'Day Session Report',
+    description: 'Print or share a session\'s sale bill report',
+    group: 'Administration',
+    icon: Icons.receipt_long_outlined,
   ),
   MobilePermission(
     slug: PermissionSlug.saleReturnView,

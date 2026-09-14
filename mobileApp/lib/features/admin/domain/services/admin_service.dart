@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:invo/shared/api/end_points.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -49,4 +51,19 @@ class AdminService implements AdminRepository {
     final data = await _http.post(EndPoints.dayStatus, body: {'date': dateTime});
     return DaySessionToggleResult.fromJson(Map<String, dynamic>.from(data));
   }
+
+  @override
+  Future<Paginated<DaySessionSummary>> daySessions({int page = 1}) async {
+    final data = await _http.get(EndPoints.daySessions, query: {'page': page});
+    return Paginated.from(data, DaySessionSummary.fromJson);
+  }
+
+  @override
+  Future<DaySessionReport> daySessionReport(String id) async {
+    final data = await _http.get(EndPoints.daySessionReport(id));
+    return DaySessionReport.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  @override
+  Future<Uint8List> daySessionReportPdf(String id) => _http.getBytes(EndPoints.daySessionReportPdf(id));
 }

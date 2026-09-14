@@ -9,15 +9,22 @@ class BuildDaySessionReportAction
 {
     public function execute(SaleDaySession $session)
     {
-        return view('sale.day-session-print', $this->buildPayload($session));
+        return view('sale.day-session-print', $this->payload($session));
     }
 
     public function executePdf(SaleDaySession $session)
     {
-        return view('sale.day-session-print-pdf', $this->buildPayload($session));
+        return view('sale.day-session-print-pdf', $this->payload($session));
     }
 
-    private function buildPayload(SaleDaySession $session): array
+    /**
+     * The report's figures — session, transactions, dues, due payments received
+     * and totals — shared by both web views and the mobile API
+     * (App\Actions\V1\DaySession\ReportAction).
+     *
+     * @return array{session: SaleDaySession, pendingPayments: array<int, array<string, mixed>>, transactions: \Illuminate\Support\Collection, dueTransactions: \Illuminate\Support\Collection, totals: array<string, float|int>}
+     */
+    public function payload(SaleDaySession $session): array
     {
         $sessionDataService = app(SaleDaySessionDataService::class);
         $sessionDate = date('Y-m-d', strtotime($session->opened_at));

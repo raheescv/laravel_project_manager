@@ -9,7 +9,7 @@ class AdminState extends Equatable {
   const AdminState({
     required this.startDate,
     required this.endDate,
-    this.rangePreset = '7d',
+    this.rangePreset = 'today',
     // dashboard
     this.loading = false,
     this.errorMessage,

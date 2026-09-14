@@ -83,6 +83,16 @@ Future<ReceiptPrintResult> printTestReceipt(
   return _send(bytes, settings, 'Printer test', target);
 }
 
+/// Same path for any other roll document already laid out at [settings]'
+/// width — the day session Sale Bill Report. Never throws.
+Future<ReceiptPrintResult> printRollPdf(
+  Uint8List bytes,
+  PrintSettings settings, {
+  required String title,
+  required PrinterTarget target,
+}) =>
+    _send(bytes, settings, title, target);
+
 Future<ReceiptPrintResult> _send(
   Uint8List bytes,
   PrintSettings settings,

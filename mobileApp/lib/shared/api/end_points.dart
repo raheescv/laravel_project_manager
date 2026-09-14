@@ -50,6 +50,9 @@ class EndPoints {
   static const String dashboard = '/admin/dashboard';
   static const String reports = '/admin/reports';
   static const String dayStatus = '/admin/day-status';
+  static const String daySessions = '/admin/day-sessions';
+  static String daySessionReport(String id) => '/admin/day-sessions/$id/report';
+  static String daySessionReportPdf(String id) => '/admin/day-sessions/$id/report/pdf';
 
   // ---- Stock Check ----
   static const String stockCheck = '/stock-check';

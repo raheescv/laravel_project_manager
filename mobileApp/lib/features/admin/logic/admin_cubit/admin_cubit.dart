@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
+import 'package:invo/shared/logic/paginated_list_cubit/paginated_list_cubit.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
@@ -15,17 +17,22 @@ part 'admin_state.dart';
 
 class ReportRow extends Equatable {
   const ReportRow(
-      {required this.title,
+      {this.id = '',
+      required this.title,
       required this.subtitle,
       required this.value,
       this.amount = 0});
+
+  /// The staff member's user id on a staff row, so a screen can pick out the
+  /// signed-in person; '' on item rows.
+  final String id;
   final String title;
   final String subtitle;
   final String value;
   final double amount;
 
   @override
-  List<Object?> get props => [title, subtitle, value, amount];
+  List<Object?> get props => [id, title, subtitle, value, amount];
 }
 
 /// The loaded breakdown for one report type, held so the By Item / By Staff
@@ -91,9 +98,12 @@ class AdminCubit extends Cubit<AdminState> {
   static AdminState _initialState() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    // Reports open on today; the range then stays wherever it is left for the
+    // rest of the session, and a sign-out brings it back here.
     return AdminState(
-      startDate: today.subtract(const Duration(days: 6)),
+      startDate: today,
       endDate: today,
+      rangePreset: 'today',
     );
   }
 
@@ -307,6 +317,7 @@ class AdminCubit extends Cubit<AdminState> {
         final m = Map<String, dynamic>.from(e);
         final rev = asNum(m['revenue']).toDouble();
         return ReportRow(
+          id: asStr(m['employee_id']),
           title: asStr(m['employee_name']),
           subtitle: '${asNum(m['bills_count']).toInt()} bills',
           value: Money.of(rev),
@@ -543,6 +554,26 @@ class AdminCubit extends Cubit<AdminState> {
   static List<Map<String, dynamic>> _rowsOf(Map<String, dynamic> data) =>
       [for (final e in (data['rows'] as List?) ?? const []) Map<String, dynamic>.from(e as Map)];
 
+  // ---- Day session reports ----------------------------------------------------
+
+  /// One page of the operating branch's day sessions, shaped for the report
+  /// picker's PaginatedListCubit.
+  Future<PageResult> daySessionsPage(int page) async {
+    final res = await _repo.daySessions(page: page);
+    return PageResult(
+      rows: [for (final s in res.items) s.toJson()],
+      currentPage: res.currentPage,
+      lastPage: res.lastPage,
+      total: res.total,
+    );
+  }
+
+  /// A day session's Sale Bill Report figures, for the thermal roll.
+  Future<DaySessionReport> daySessionReport(String id) => _repo.daySessionReport(id);
+
+  /// The web A4 Sale Bill Report for a day session, as PDF bytes.
+  Future<Uint8List> daySessionReportPdf(String id) => _repo.daySessionReportPdf(id);
+
   Future<void> loadMoreReport() async {
     if (state.reportLoadingMore || state.reportLoading || !state.reportHasMore) {
       return;
@@ -628,6 +659,7 @@ class AdminCubit extends Cubit<AdminState> {
     final m = Map<String, dynamic>.from(e);
     final rev = asNum(m['revenue']).toDouble();
     return ReportRow(
+      id: asStr(m['employee_id']),
       title: asStr(m['employee_name']),
       subtitle:
           '${asNum(m['bills_count']).toInt()} bills · ${asNum(m['items_count']).toInt()} items',

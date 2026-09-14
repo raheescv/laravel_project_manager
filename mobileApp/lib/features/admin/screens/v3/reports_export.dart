@@ -100,6 +100,13 @@ extension _ReportExportActions on _ReportsScreenState {
                                   ? 'Save a copy to Downloads'
                                   : 'Save to Files from the share sheet',
                               _ExportAction.download),
+                          if (context.read<AuthCubit>().hasPermission(PermissionSlug.daySessionPrint)) ...[
+                            const SizedBox(height: 4),
+                            const Align(alignment: Alignment.centerLeft, child: SectionLabel('Day session')),
+                            const SizedBox(height: 8),
+                            _exportRow(sheetCtx, Icons.receipt_long_outlined, p.primary, 'Day session report',
+                                'Sale bill report — thermal roll or A4', () => unawaited(showDaySessionReports(context))),
+                          ],
                         ],
                       ),
                     ),
@@ -236,7 +243,7 @@ extension _ReportExportActions on _ReportsScreenState {
       context: context,
       useRootNavigator: true,
       barrierDismissible: false,
-      builder: (_) => const _ExportProgress(),
+      builder: (_) => const PdfProgressCard(message: 'Pulling every line for this range'),
     ));
 
     final ReportExport data;
@@ -258,7 +265,9 @@ extension _ReportExportActions on _ReportsScreenState {
     ].join(' · ');
     switch (action) {
       case _ExportAction.preview:
-        if (context.mounted) _openPreview(data, bytes, caption);
+        if (mounted) {
+          openPdfPreview(context, title: data.kind.title, bytes: bytes, fileName: data.fileName, caption: caption);
+        }
       case _ExportAction.print:
         await PdfExport.printDialog(bytes, data.fileName);
       case _ExportAction.whatsApp:
@@ -266,28 +275,8 @@ extension _ReportExportActions on _ReportsScreenState {
       case _ExportAction.share:
         await PdfExport.share(bytes, data.fileName, subject: caption);
       case _ExportAction.download:
-        await _download(bytes, data.fileName, caption, snack);
+        await downloadPdf(bytes, data.fileName, caption: caption, snack: snack);
     }
-  }
-
-  /// Saves to Downloads, then offers WhatsApp straight from the confirmation.
-  /// Where the app can't write a Downloads copy itself (iOS, Android 9 and
-  /// older) the share sheet is the download — its Save to Files / Save to
-  /// device does the job.
-  Future<void> _download(Uint8List bytes, String fileName, String caption, AstraSnackHandle snack) async {
-    final where = await PdfExport.saveToDownloads(bytes, fileName);
-    if (where == null) {
-      await PdfExport.share(bytes, fileName, subject: caption);
-      return;
-    }
-    snack.success(
-      'Saved to $where',
-      duration: const Duration(seconds: 6),
-      action: SnackBarAction(
-        label: 'WhatsApp',
-        onPressed: () => unawaited(PdfExport.whatsApp(bytes, fileName, caption: caption)),
-      ),
-    );
   }
 
   /// Letterhead from the web print settings (company name and logo, each only
@@ -301,93 +290,6 @@ extension _ReportExportActions on _ReportsScreenState {
       preparedBy: context.read<AuthCubit>().user?.name ?? '',
       logo: print.logo,
       accent: PdfColor.fromInt(context.astra.primary.toARGB32()),
-    );
-  }
-
-  /// Full-screen page preview. PdfPreview brings Print and Share; WhatsApp and
-  /// Download are added beside them so every route out is one tap from here.
-  void _openPreview(ReportExport data, Uint8List bytes, String caption) {
-    final p = context.astra;
-    final paper = p.isDark ? const Color(0xFF26282D) : const Color(0xFFE8EBF0);
-    Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
-      fullscreenDialog: true,
-      builder: (_) => Scaffold(
-        backgroundColor: paper,
-        appBar: AppBar(
-          title: Text(data.kind.title),
-          backgroundColor: p.primary,
-          foregroundColor: Colors.white,
-        ),
-        body: PdfPreview(
-          build: (_) => bytes,
-          useActions: true,
-          canChangePageFormat: false,
-          canChangeOrientation: false,
-          canDebug: false,
-          pdfFileName: data.fileName,
-          // A4 blown up to a landscape tablet's full width is soft and absurd.
-          maxPageWidth: 820,
-          scrollViewDecoration: BoxDecoration(color: paper),
-          actions: [
-            PdfPreviewAction(
-              icon: const Icon(Icons.chat_rounded),
-              onPressed: (_, build, format) async =>
-                  PdfExport.whatsApp(await build(format), data.fileName, caption: caption),
-            ),
-            PdfPreviewAction(
-              icon: const Icon(Icons.download_rounded),
-              onPressed: (ctx, build, format) async {
-                final snack = AstraSnack.capture(ctx);
-                await _download(await build(format), data.fileName, caption, snack);
-              },
-            ),
-          ],
-          actionBarTheme: PdfActionBarTheme(backgroundColor: p.primary, iconColor: Colors.white),
-        ),
-      ),
-    ));
-  }
-}
-
-/// Holds the screen while the report is pulled and laid out.
-class _ExportProgress extends StatelessWidget {
-  const _ExportProgress();
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.astra;
-    return PopScope(
-      canPop: false,
-      child: Center(
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: 230,
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
-            decoration: BoxDecoration(
-              color: p.card,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: context.astraTheme.softShadow,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 26,
-                  height: 26,
-                  child: CircularProgressIndicator(strokeWidth: 2.6, color: p.primary),
-                ),
-                const SizedBox(height: 14),
-                Text('Preparing PDF…', style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
-                const SizedBox(height: 3),
-                Text('Pulling every line for this range',
-                    textAlign: TextAlign.center,
-                    style: ui(size: 11, weight: FontWeight.w500, color: p.textMuted)),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

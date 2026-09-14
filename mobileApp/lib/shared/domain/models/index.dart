@@ -4,6 +4,7 @@ export 'catalog.dart';
 export 'currency.dart';
 export 'dashboard.dart';
 export 'day_session.dart';
+export 'day_session_report.dart';
 export 'paginated.dart';
 export 'print_settings.dart';
 export 'sale.dart';

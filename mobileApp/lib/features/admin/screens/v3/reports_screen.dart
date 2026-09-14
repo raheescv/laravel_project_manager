@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show Uint8List, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart' show PdfColor;
-import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
@@ -14,6 +13,7 @@ import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
+import 'package:invo/features/admin/widgets/day_session_reports_sheet.dart';
 import 'package:invo/features/admin/widgets/report_pdf.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/printing/pdf_export.dart';
@@ -21,6 +21,7 @@ import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
+import 'package:invo/shared/widgets/pdf_preview_page.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 part 'reports_overview_sections.dart';
@@ -747,12 +748,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
     // One trailing slot for the load-more footer while further pages remain.
     final extra = admin.reportHasMore ? 1 : 0;
 
+    // The signed-in person's row on the staff list, and their rank among the
+    // rows loaded so far (the list is server-ranked, so position is rank).
+    final meId = context.select<AuthCubit, String?>((c) => c.state.user?.id) ?? '';
+    bool isMe(ReportRow r) => !isItem && meId.isNotEmpty && r.id == meId;
+    final myIndex = isItem ? -1 : admin.reportRows.indexWhere(isMe);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionLabel(
           isItem ? 'Item breakdown' : 'Staff breakdown',
-          trailing: _pill('${admin.reportRowCount} ${isItem ? 'items' : 'staff'}', p.tint, p.textSecondary),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (myIndex >= 0) ...[
+                _pill('You · #${myIndex + 1}', p.primary.withValues(alpha: 0.12), p.primary),
+                const SizedBox(width: 6),
+              ],
+              _pill('${admin.reportRowCount} ${isItem ? 'items' : 'staff'}', p.tint, p.textSecondary),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
         Expanded(
@@ -765,7 +781,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
               // in, plus a tap-to-load fallback in case the scroll trigger is
               // missed. New pages arrive via [_onScroll].
               if (i == admin.reportRows.length) return _loadMoreFooter(admin);
-              return _reportRow(admin, admin.reportRows[i], rowIcon, maxAmount);
+              final r = admin.reportRows[i];
+              return _reportRow(admin, r, rowIcon, maxAmount, isMe: isMe(r));
             },
           ),
         ),
@@ -815,7 +832,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _reportRow(AdminCubit admin, ReportRow r, IconData icon, double maxAmount) {
+  /// [isMe] marks the signed-in person's own staff row: a primary-tinted card
+  /// with an outline, a filled avatar and a YOU badge — it stays readable next
+  /// to (or on top of) the TOP highlight.
+  Widget _reportRow(AdminCubit admin, ReportRow r, IconData icon, double maxAmount, {bool isMe = false}) {
     final p = context.astra;
     final frac = admin.reportTotal > 0 ? r.amount / admin.reportTotal : 0.0;
     final pct = frac * 100;
@@ -824,8 +844,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.all(9),
       decoration: BoxDecoration(
-        color: isTop ? p.tint : Colors.transparent,
+        color: isMe
+            ? p.primary.withValues(alpha: p.isDark ? 0.18 : 0.08)
+            : (isTop ? p.tint : Colors.transparent),
         borderRadius: BorderRadius.circular(12),
+        border: isMe ? Border.all(color: p.primary.withValues(alpha: 0.55), width: 1.4) : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,10 +858,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isTop ? p.accent.withValues(alpha: 0.18) : p.tint,
+              gradient: isMe ? p.primaryGradient : null,
+              color: isMe ? null : (isTop ? p.accent.withValues(alpha: 0.18) : p.tint),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(icon, size: 17, color: isTop ? p.goldText : p.primary),
+            child: Icon(icon, size: 17, color: isMe ? Colors.white : (isTop ? p.goldText : p.primary)),
           ),
           const SizedBox(width: 11),
           Expanded(
@@ -870,6 +894,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 style: ui(size: 8.5, weight: FontWeight.w900, color: p.goldText, letterSpacing: 0.6)),
                           ],
                         ),
+                      ),
+                    ],
+                    if (isMe) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          gradient: p.primaryGradient,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text('YOU',
+                            style: ui(size: 8.5, weight: FontWeight.w900, color: Colors.white, letterSpacing: 0.6)),
                       ),
                     ],
                   ],

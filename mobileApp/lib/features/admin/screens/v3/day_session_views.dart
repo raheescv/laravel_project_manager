@@ -94,6 +94,15 @@ extension _DaySessionViews on _DaySessionScreenState {
                             ),
                           ),
                         ),
+                      // The Sale Bill Report for this or any earlier session —
+                      // thermal roll or the web's A4 PDF.
+                      if (context.read<AuthCubit>().hasPermission(PermissionSlug.daySessionPrint)) ...[
+                        const SizedBox(width: 8),
+                        HeaderIconButton(
+                          icon: Icons.receipt_long_outlined,
+                          onTap: () => unawaited(showDaySessionReports(context)),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 18),
