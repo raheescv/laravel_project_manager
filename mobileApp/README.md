@@ -70,6 +70,7 @@ at the **LAN IP** of the machine running Valet.
 flutter devices
 flutter build apk --dart-define-from-file=env.json
 flutter run -d 1A291FDEE002SK 2>&1 --dart-define-from-file=env.json
+flutter run -d 00008120-0014609A2E44201E  --release --dart-define-from-file=env.json
 
 
 flutter build apk --dart-define-from-file=env.json --target-platform android-arm64

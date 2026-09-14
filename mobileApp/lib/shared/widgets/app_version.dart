@@ -5,11 +5,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 /// what pubspec's `version:` stamped into the binary — never hardcode it.
 /// Resolved once per launch; '' where the plugin isn't registered (widget
 /// tests) rather than throwing.
-final Future<String> _appVersion = PackageInfo.fromPlatform()
-    .then((i) => 'v${i.version} (${i.buildNumber})')
-    .onError((_, _) => '');
+///
+/// Version name only: without a `+N` in pubspec, iOS reports the version name
+/// again as the build number (`v1.1.0 (1.1.0)`) and Android reports `1`.
+final Future<String> _appVersion =
+    PackageInfo.fromPlatform().then((i) => 'v${i.version}').onError((_, _) => '');
 
-/// `v1.1.0 (2)`, with an optional [prefix] (`QLOUD POS · v1.1.0 (2)`).
+/// `v1.1.0`, with an optional [prefix] (`QLOUD POS · v1.1.0`).
 class AppVersionText extends StatelessWidget {
   const AppVersionText({super.key, required this.style, this.prefix = ''});
 
