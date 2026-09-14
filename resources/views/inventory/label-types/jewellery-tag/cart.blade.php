@@ -16,7 +16,8 @@
     </style>
 </head>
 
-<body>
+{{-- label-stack: printing to a TSC printer puts each tag on its own whole-pixel row (RendersTsplLabels). --}}
+<body class="label-stack">
     @foreach ($cartItems as $item)
         @php
             $itemType = $item['item_type'] ?? 'inventory';

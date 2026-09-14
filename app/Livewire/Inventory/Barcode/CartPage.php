@@ -55,8 +55,8 @@ class CartPage extends Component
 
     public function updatedBarcodeInput()
     {
-        if (strlen($this->barcodeInput) >= 2) {
-            $this->loadProducts();
+        if (strlen(trim($this->barcodeInput)) >= 2) {
+            $this->loadProducts(trim($this->barcodeInput), true);
         } else {
             $this->products = [];
         }
@@ -64,25 +64,30 @@ class CartPage extends Component
 
     public function updatedSearchQuery()
     {
-        if (strlen($this->searchQuery) >= 2) {
-            $this->loadProducts();
+        if (strlen(trim($this->searchQuery)) >= 2) {
+            $this->loadProducts(trim($this->searchQuery));
         } else {
             $this->products = [];
         }
     }
 
-    public function loadProducts()
+    // The scanner box matches barcodes only; the search box also matches product name and code
+    public function loadProducts(string $term, bool $barcodeOnly = false)
     {
+        $like = '%'.$term.'%';
         $products = collect();
         // Load Inventory items
         $inventories = Inventory::with('product')
-            ->whereHas('product', function ($query): void {
-                $query
-                    ->where('name', 'LIKE', '%'.$this->searchQuery.'%')
-                    ->orWhere('barcode', 'LIKE', '%'.$this->searchQuery.'%')
-                    ->orWhere('code', 'LIKE', '%'.$this->searchQuery.'%');
+            ->where(function ($query) use ($like, $barcodeOnly): void {
+                $query->where('inventories.barcode', 'LIKE', $like);
+                if (! $barcodeOnly) {
+                    $query->orWhereHas('product', function ($q) use ($like): void {
+                        $q->where('name', 'LIKE', $like)
+                            ->orWhere('barcode', 'LIKE', $like)
+                            ->orWhere('code', 'LIKE', $like);
+                    });
+                }
             })
-            ->where('barcode', $this->barcodeInput)
             ->where('quantity', '>', 0)
             ->limit(10)
             ->get()
@@ -105,12 +110,14 @@ class CartPage extends Component
 
         // Load ProductUnit items
         $productUnitsQuery = ProductUnit::with('product', 'subUnit')
-            ->where(function ($query) {
-                $query->whereHas('product', function ($q): void {
-                    $q->where('name', 'LIKE', '%'.$this->searchQuery.'%')
-                        ->orWhere('code', 'LIKE', '%'.$this->searchQuery.'%');
-                })
-                    ->orWhere('barcode', 'LIKE', '%'.$this->searchQuery.'%');
+            ->where(function ($query) use ($like, $barcodeOnly): void {
+                $query->where('product_units.barcode', 'LIKE', $like);
+                if (! $barcodeOnly) {
+                    $query->orWhereHas('product', function ($q) use ($like): void {
+                        $q->where('name', 'LIKE', $like)
+                            ->orWhere('code', 'LIKE', $like);
+                    });
+                }
             });
 
         // Apply unit filter if selected
@@ -399,8 +406,8 @@ class CartPage extends Component
         // Store cart items in session for printing
         session(['print_cart_items' => $this->cartItems]);
 
-        // Redirect to print page using the existing barcode print method
-        return redirect()->route('inventory::barcode::cart::print');
+        // The page sends the PDF to QZ Tray, or opens it when QZ Tray isn't set up
+        $this->dispatch('label-print', url: route('inventory::barcode::cart::print'));
     }
 
     public function render()

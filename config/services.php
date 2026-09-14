@@ -84,4 +84,9 @@ return [
     'tap' => [
         'base_url' => env('TAP_BASE_URL', 'https://api.tap.company/v2'),
     ],
+    // QZ Tray silent label printing. One self-signed pair for the whole app: php artisan qz:certificate
+    'qz' => [
+        'certificate' => env('QZ_CERTIFICATE_PATH', storage_path('app/private/qz/digital-certificate.txt')),
+        'private_key' => env('QZ_PRIVATE_KEY_PATH', storage_path('app/private/qz/private-key.pem')),
+    ],
 ];

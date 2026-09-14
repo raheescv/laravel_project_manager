@@ -85,6 +85,15 @@ return [
                 'height' => 30,
                 // Template wide typeface. Elements leave `font_family` empty to
                 // inherit it and only name a family when they need their own.
+                // Where the label lands on the stock when it prints straight to a
+                // TSC printer: a nudge in mm (minus = left / up), the gap between
+                // labels (null keeps the printer's own) and a 180 degree flip.
+                'print' => [
+                    'offset_x' => 0,
+                    'offset_y' => 0,
+                    'gap' => null,
+                    'flip' => false,
+                ],
                 'font' => [
                     'family' => 'plex_sans',
                     'weight' => 400,
@@ -204,10 +213,11 @@ return [
             'settings' => [
                 'type' => 'jewellery_tag',
                 // width is derived from the wings + neck on save, never edited directly.
-                'width' => 75,
+                // Sized to the shop's butterfly tag roll (20 / 20 / 20 mm, 13 mm high).
+                'width' => 60,
                 'height' => 13,
-                'wing_width' => 25,
-                'neck_width' => 25,
+                'wing_width' => 20,
+                'neck_width' => 20,
                 'neck_height' => 5,
                 'inner_padding' => 1.5,
                 'barcode_wing' => 'left',
@@ -216,6 +226,19 @@ return [
                 // this on if the shop's folded tags read upside down.
                 'rotate_text_wing' => false,
                 'show_neck_guides' => false,
+                // Where the label lands on the stock when it prints straight to a
+                // TSC printer: a nudge in mm (minus = left / up), the gap between
+                // labels (null keeps the printer's own) and a 180 degree flip.
+                // A TSC gap sensor finds the neck, not the wing edge, so the print
+                // shifts along the roll; the roll feeds upside down. Tuned on the
+                // shop's TE244 from test prints.
+                'print' => [
+                    'offset_x' => -0.3,
+                    'offset_y' => 3.6,
+                    // Without the gap the printer feeds only the tag height and each next tag creeps.
+                    'gap' => 1.5,
+                    'flip' => true,
+                ],
                 'font' => [
                     'family' => 'plex_sans',
                     'weight' => 400,
@@ -228,7 +251,8 @@ return [
                     'show_value' => true,
                     'font_size' => 6,
                     'font_family' => 'mono',
-                    'height' => 9,
+                    // Leaves room above and below, so a print a millimetre off never cuts the bars or number.
+                    'height' => 6,
                 ],
                 'fields' => [
                     'product_name' => [

@@ -5,6 +5,7 @@ use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryStockAdjustmentController;
 use App\Http\Controllers\InventoryTransferController;
+use App\Http\Controllers\QzTrayController;
 use App\Http\Controllers\StockCheckController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,11 @@ Route::middleware('auth')->group(function (): void {
             Route::name('cart::')->prefix('cart')->group(function (): void {
                 Route::get('', [BarcodeController::class, 'index'])->name('index')->can('inventory.barcode cart');
                 Route::get('print', [BarcodeController::class, 'cartPrint'])->name('print');
+            });
+            // QZ Tray silent printing: the certificate it trusts, and signatures for its requests
+            Route::name('qz::')->prefix('qz')->controller(QzTrayController::class)->group(function (): void {
+                Route::get('certificate', 'certificate')->name('certificate');
+                Route::post('sign', 'sign')->name('sign');
             });
         });
         // AI Image Generation routes

@@ -5,6 +5,7 @@
 --}}
 <x-layouts.standalone title="Barcode Template Designer">
     <x-barcode.premium />
+    <x-qz-print />
 
     @push('styles')
     <style>

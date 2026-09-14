@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-barcode.premium />
+    <x-qz-print />
 
     <div class="content__header content__boxed overlapping">
         <div class="content__wrap">

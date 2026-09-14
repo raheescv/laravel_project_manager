@@ -15,6 +15,7 @@
             @livewire('purchase.view', ['table_id' => $id])
         </div>
     </div>
+    <x-qz-print />
     @push('styles')
         <x-document-view.styles />
     @endpush

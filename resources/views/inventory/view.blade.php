@@ -22,6 +22,7 @@
     </div>
     <x-inventory.inventory-modal />
     <x-employee-inventory.transfer-modal />
+    <x-qz-print />
     @push('scripts')
         @include('components.select.branchSelect')
         @include('components.select.employeeSelect')

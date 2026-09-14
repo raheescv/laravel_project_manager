@@ -28,6 +28,9 @@
 
             <div class="bcx-sep"></div>
 
+            <button type="button" class="bcx-btn bcx-btn--sm" data-label-printer-choose wire:ignore title="Label printer (QZ Tray)">
+                <i class="fa fa-cog"></i> <span class="d-none d-md-inline" data-label-printer-name>Printer</span>
+            </button>
             <button wire:click="printBarcodes" class="bcx-btn bcx-btn--primary" {{ empty($cartItems) ? 'disabled' : '' }}>
                 <i class="fa fa-print"></i> Print
                 @if (count($cartItems))
@@ -84,7 +87,7 @@
                         @foreach ($products as $product)
                             <button type="button" class="bcx-tile"
                                 wire:click="selectProduct({{ $product['id'] }}, '{{ $product['item_type'] ?? 'inventory' }}')">
-                                <img src="{{ $product['thumbnail'] ?? tenant_cache('logo') }}" alt="{{ $product['name'] }}"
+                                <img src="{{ $product['image'] ?? tenant_cache('logo') }}" alt="{{ $product['name'] }}"
                                     class="bcx-tile__img">
                                 <div class="bcx-tile__body">
                                     <div class="bcx-tile__name" title="{{ $product['name'] }}">{{ $product['name'] }}</div>

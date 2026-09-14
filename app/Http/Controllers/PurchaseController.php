@@ -6,11 +6,13 @@ use App\Models\Configuration;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Support\BarcodeTemplateConfiguration;
+use App\Traits\RendersTsplLabels;
 use App\Traits\UsesBrowsershot;
 use Illuminate\Http\Request;
 
 class PurchaseController extends Controller
 {
+    use RendersTsplLabels;
     use UsesBrowsershot;
 
     public function index()
@@ -63,6 +65,10 @@ class PurchaseController extends Controller
 
         // Generate HTML using Blade view
         $html = view('purchase.barcode-print', compact('purchaseItems', 'settings', 'company_name', 'company_logo'))->render();
+        // TSC printers take the label as TSPL; see RendersTsplLabels.
+        if ($this->wantsTspl()) {
+            return $this->tsplResponse($html, $settings);
+        }
 
         $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
@@ -74,7 +80,10 @@ class PurchaseController extends Controller
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="barcode-'.time().'.pdf"');
+            ->header('Content-Disposition', 'inline; filename="barcode-'.time().'.pdf"')
+            // Label size in mm, so QZ Tray can print straight onto the label stock.
+            ->header('X-Label-Width', $settings['width'])
+            ->header('X-Label-Height', $settings['height']);
     }
 
     public function view($id)

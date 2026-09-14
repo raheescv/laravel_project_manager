@@ -145,6 +145,16 @@ class BarcodeTemplateConfiguration
         ];
     }
 
+    /**
+     * A fingerprint of one saved template. The designer sends back the one it
+     * loaded, so a page left open elsewhere cannot save an older copy over newer
+     * settings.
+     */
+    public static function templateVersion(array $template): string
+    {
+        return md5(json_encode($template));
+    }
+
     public static function resolveSettings(?string $templateKey = null): array
     {
         $configuration = self::getConfiguration();
@@ -170,6 +180,7 @@ class BarcodeTemplateConfiguration
         $normalized = array_replace_recursive(self::defaultSettings($type), $settings);
         $normalized['type'] = $type;
         $normalized = self::normalizeFonts($normalized);
+        $normalized = self::normalizePrintSettings($normalized);
 
         if ($type === 'jewellery_tag') {
             $normalized = self::normalizeJewelleryTagSettings($normalized);
@@ -211,6 +222,27 @@ class BarcodeTemplateConfiguration
         }
 
         return $block;
+    }
+
+    /**
+     * Print alignment, used when a label prints straight to a TSC printer. Kept
+     * inside what the printer can take whatever the designer sends: up to 10 mm
+     * sideways, up to 20 mm along the roll (SHIFT), a 0-20 mm gap or none, and
+     * the flip as a real bool.
+     */
+    protected static function normalizePrintSettings(array $settings): array
+    {
+        $print = is_array($settings['print'] ?? null) ? $settings['print'] : [];
+        $gap = $print['gap'] ?? null;
+
+        $settings['print'] = [
+            'offset_x' => round(max(-10, min(10, (float) ($print['offset_x'] ?? 0))), 1),
+            'offset_y' => round(max(-20, min(20, (float) ($print['offset_y'] ?? 0))), 1),
+            'gap' => is_numeric($gap) ? round(max(0, min(20, (float) $gap)), 1) : null,
+            'flip' => filter_var($print['flip'] ?? false, FILTER_VALIDATE_BOOLEAN),
+        ];
+
+        return $settings;
     }
 
     /**

@@ -19,4 +19,5 @@
     @push('styles')
         <x-document-view.styles />
     @endpush
+    <x-qz-print />
 </x-app-layout>

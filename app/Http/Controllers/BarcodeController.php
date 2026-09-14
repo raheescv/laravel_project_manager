@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Support\BarcodeFonts;
 use App\Support\BarcodeTemplateConfiguration;
+use App\Traits\RendersTsplLabels;
 use App\Traits\UsesBrowsershot;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 
 class BarcodeController extends Controller
 {
+    use RendersTsplLabels;
     use UsesBrowsershot;
 
     public function index()
@@ -73,6 +75,10 @@ class BarcodeController extends Controller
         $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
         $html = view('inventory.barcode', compact('settings', 'product', 'inventory', 'conversionFactor', 'barcode', 'company_name', 'company_logo'))->render();
+        // TSC printers take the label as TSPL; see RendersTsplLabels.
+        if ($this->wantsTspl()) {
+            return $this->tsplResponse($html, $settings);
+        }
         putenv('HOME=/tmp');
         $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
@@ -84,7 +90,10 @@ class BarcodeController extends Controller
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="barcode-'.time().'.pdf"');
+            ->header('Content-Disposition', 'inline; filename="barcode-'.time().'.pdf"')
+            // Label size in mm, so QZ Tray can print straight onto the label stock.
+            ->header('X-Label-Width', $settings['width'])
+            ->header('X-Label-Height', $settings['height']);
 
     }
 
@@ -101,6 +110,9 @@ class BarcodeController extends Controller
 
         // Generate HTML using Blade view
         $html = view('inventory.barcode-cart-print', compact('cartItems', 'settings', 'company_name', 'company_logo'))->render();
+        if ($this->wantsTspl()) {
+            return $this->tsplResponse($html, $settings);
+        }
         putenv('HOME=/tmp');
         $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
@@ -112,7 +124,9 @@ class BarcodeController extends Controller
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="cart-barcode-'.time().'.pdf"');
+            ->header('Content-Disposition', 'inline; filename="cart-barcode-'.time().'.pdf"')
+            ->header('X-Label-Width', $settings['width'])
+            ->header('X-Label-Height', $settings['height']);
     }
 
     public function configuration()
@@ -147,6 +161,7 @@ class BarcodeController extends Controller
             // Lets the designer render each font option in its own face.
             'fontFaceCss' => BarcodeFonts::faceCss(null, false),
             'settings' => $settings,
+            'version' => BarcodeTemplateConfiguration::templateVersion($configuration['templates'][$templateKey]),
             'previewUrl' => route('inventory::barcode::preview').'?template='.$templateKey,
             'printUrl' => route('inventory::barcode::print').'?template='.$templateKey,
             'productSearchUrl' => route('product::list'),
@@ -190,11 +205,26 @@ class BarcodeController extends Controller
         $validated = $request->validate([
             'templateName' => ['required', 'string', 'max:255'],
             'settings' => ['required', 'array'],
+            'version' => ['nullable', 'string'],
         ]);
 
         // The type is fixed when the template is created: switching it would
         // leave the settings block describing a shape nothing can render.
         $type = BarcodeTemplateConfiguration::resolveType($configuration['templates'][$templateKey]['settings']);
+
+        // A designer left open elsewhere (another tab, another PC, or loaded before a
+        // Reset) holds an older copy. Refuse it and hand back the current template for
+        // the page to show, instead of letting it undo newer settings.
+        $current = $configuration['templates'][$templateKey];
+        if (($validated['version'] ?? null) !== BarcodeTemplateConfiguration::templateVersion($current)) {
+            return response()->json([
+                'message' => 'This template was changed somewhere else, so the latest version is shown. Make your change again.',
+                'type' => $type,
+                'templateName' => $current['name'],
+                'settings' => $current['settings'],
+                'version' => BarcodeTemplateConfiguration::templateVersion($current),
+            ], 409);
+        }
 
         $configuration['templates'][$templateKey] = [
             'name' => trim($validated['templateName']),
@@ -203,11 +233,13 @@ class BarcodeController extends Controller
         ];
 
         BarcodeTemplateConfiguration::saveConfiguration($configuration);
+        $saved = BarcodeTemplateConfiguration::getConfiguration()['templates'][$templateKey];
 
         return response()->json([
             'message' => 'Barcode template saved successfully',
             'type' => $type,
-            'settings' => $configuration['templates'][$templateKey]['settings'],
+            'settings' => $saved['settings'],
+            'version' => BarcodeTemplateConfiguration::templateVersion($saved),
         ]);
     }
 
@@ -220,11 +252,13 @@ class BarcodeController extends Controller
 
         $configuration['templates'][$templateKey]['settings'] = BarcodeTemplateConfiguration::defaultSettings($type);
         BarcodeTemplateConfiguration::saveConfiguration($configuration);
+        $saved = BarcodeTemplateConfiguration::getConfiguration()['templates'][$templateKey];
 
         return response()->json([
             'message' => 'Barcode template reset successfully',
             'type' => $type,
-            'settings' => $configuration['templates'][$templateKey]['settings'],
+            'settings' => $saved['settings'],
+            'version' => BarcodeTemplateConfiguration::templateVersion($saved),
         ]);
     }
 

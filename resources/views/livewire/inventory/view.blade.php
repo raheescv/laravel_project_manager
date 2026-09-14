@@ -546,7 +546,7 @@
                             </td>
                             <td>
                                 {{ $item->barcode }}
-                                <a href="{{ route('inventory::barcode::print', ['type' => 'inventory', 'id' => $item->id]) }}" class="ms-1 text-muted"><i class="fa fa-print" style="font-size:.75rem;"></i></a>
+                                <a href="{{ route('inventory::barcode::print', ['type' => 'inventory', 'id' => $item->id]) }}" data-label-print class="ms-1 text-muted"><i class="fa fa-print" style="font-size:.75rem;"></i></a>
                             </td>
                             <td>{{ $item->batch }}</td>
                             <td class="text-end">{{ currency($item->cost) }}</td>
@@ -595,7 +595,7 @@
                                                         <td>{{ $pu->subUnit?->name ?? 'N/A' }}</td>
                                                         <td class="text-end">{{ number_format($pu->conversion_factor, 3) }}</td>
                                                         <td class="text-end">{{ $item->quantity > 0 ? number_format($item->quantity / $pu->conversion_factor, 3) : number_format(0, 3) }}</td>
-                                                        <td>{{ $pu->barcode ?? 'N/A' }} <a href="{{ route('inventory::barcode::print', ['type' => 'product_unit', 'id' => $pu->id]) }}"><i class="fa fa-print ms-1"></i></a></td>
+                                                        <td>{{ $pu->barcode ?? 'N/A' }} <a href="{{ route('inventory::barcode::print', ['type' => 'product_unit', 'id' => $pu->id]) }}" data-label-print><i class="fa fa-print ms-1"></i></a></td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>

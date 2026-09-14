@@ -36,6 +36,17 @@
                     </div>
                 </div>
                 <div class="col-md-6">
+                    {{-- Saved in this browser, not with the settings: each till picks its own printer. --}}
+                    <div class="form-group" wire:ignore>
+                        <label class="form-label fw-medium">Receipt Printer (this computer)</label>
+                        <button type="button" class="btn btn-outline-secondary w-100 d-flex align-items-center gap-2" data-receipt-printer-choose>
+                            <i class="fa fa-print"></i>
+                            <span class="flex-grow-1 text-start text-truncate" data-receipt-printer-name>Printer</span>
+                            <i class="fa fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
                     <div class="form-group">
                         <label class="form-label fw-medium" for="enable_discount_in_print">Enable Discount In Print</label>
                         {{ html()->select('enable_discount_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_discount_in_print') }}

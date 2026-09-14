@@ -12,6 +12,7 @@ use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use App\Services\CompanyLogoResolver;
+use App\Traits\RendersEscPosReceipts;
 use App\Traits\UsesBrowsershot;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -19,11 +20,19 @@ use Illuminate\Support\Str;
 
 class PrintController extends Controller
 {
+    use RendersEscPosReceipts;
     use UsesBrowsershot;
 
     public function saleInvoice($id)
     {
-        return SaleHelper::saleInvoice($id);
+        $invoice = SaleHelper::saleInvoice($id);
+
+        // Receipt printers take the invoice as ESC/POS; see RendersEscPosReceipts.
+        if ($this->wantsEscPos() && is_string($invoice)) {
+            return $this->escPosResponse($invoice);
+        }
+
+        return $invoice;
     }
 
     public function rentOutChecklist($id)

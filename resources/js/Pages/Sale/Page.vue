@@ -447,7 +447,10 @@ export default {
                 if (response.data.success) {
                     toast.success(response.data.message)
                     if (type === 'completed') {
-                        window.open(`/print/sale/invoice/${response.data.sale_id}`, '_blank')
+                        const printUrl = `/print/sale/invoice/${response.data.sale_id}`
+                        // Straight to the receipt printer through QZ Tray; navigating away would cut the job off
+                        if (window.ReceiptPrint) await window.ReceiptPrint.print(printUrl)
+                        else window.open(printUrl, '_blank')
                     }
                     window.location.href = '/sale'
                 }

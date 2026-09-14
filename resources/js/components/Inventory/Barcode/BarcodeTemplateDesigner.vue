@@ -14,7 +14,8 @@
       <button class="bcx-btn" :disabled="saving" @click="resetTemplate">
         <i class="fa fa-refresh"></i> Reset
       </button>
-      <a :href="printUrl" target="_blank" class="bcx-btn"><i class="fa fa-print"></i> Print</a>
+      <button type="button" class="bcx-btn" data-label-printer-choose title="Label printer settings"><i class="fa fa-cog"></i> Printer</button>
+      <a :href="printUrl" target="_blank" class="bcx-btn" @click.prevent="printLabel"><i class="fa fa-print"></i> Print</a>
       <button class="bcx-btn bcx-btn--primary" :disabled="saving" @click="saveTemplate">
         <i class="fa fa-check"></i> {{ saving ? 'Saving…' : 'Save' }}
       </button>
@@ -88,6 +89,7 @@
         <button class="bcx-ord" title="Zoom in" @click="nudgeZoom(0.15)"><i class="fa fa-search-plus"></i></button>
         <button class="bcx-ord" title="Fit to stage" @click="zoom = 1"><i class="fa fa-expand"></i></button>
       </span>
+      <span v-if="notice"><i class="fa fa-exclamation-triangle"></i> <b>{{ notice }}</b></span>
       <span class="bcx-spacer"></span>
       <span>
         <i class="bcx-dot" :class="{ 'bcx-dot--idle': saving }"></i>
@@ -104,6 +106,7 @@ import InspStandard from './panels/inspectors/InspStandard.vue'
 import SecJewelleryBarcode from './panels/sections/SecJewelleryBarcode.vue'
 import SecJewelleryFields from './panels/sections/SecJewelleryFields.vue'
 import SecJewellerySize from './panels/sections/SecJewellerySize.vue'
+import SecPrint from './panels/sections/SecPrint.vue'
 import SecProduct from './panels/sections/SecProduct.vue'
 import SecStandardElements from './panels/sections/SecStandardElements.vue'
 import SecStandardSize from './panels/sections/SecStandardSize.vue'
@@ -118,6 +121,7 @@ const TYPE_UI = {
       { key: 'elements', icon: 'fa-th-large', label: 'Elements', comp: SecStandardElements },
       { key: 'size', icon: 'fa-arrows-alt', label: 'Label size', comp: SecStandardSize },
       { key: 'typography', icon: 'fa-font', label: 'Typography', comp: SecTypography },
+      { key: 'print', icon: 'fa-sliders', label: 'Print alignment', comp: SecPrint },
       { key: 'product', icon: 'fa-cube', label: 'Preview product', comp: SecProduct },
     ],
     inspector: InspStandard,
@@ -129,6 +133,7 @@ const TYPE_UI = {
       { key: 'fields', icon: 'fa-list-ul', label: 'Text wing', comp: SecJewelleryFields },
       { key: 'barcode', icon: 'fa-barcode', label: 'Barcode wing', comp: SecJewelleryBarcode },
       { key: 'typography', icon: 'fa-font', label: 'Typography', comp: SecTypography },
+      { key: 'print', icon: 'fa-sliders', label: 'Print alignment', comp: SecPrint },
       { key: 'product', icon: 'fa-cube', label: 'Preview product', comp: SecProduct },
     ],
     inspector: InspJewellery,
@@ -150,6 +155,8 @@ const props = defineProps({
 
 const ready = ref(false)
 const saving = ref(false)
+const version = ref('')
+const notice = ref('')
 const settings = ref({})
 const barcodeTypes = ref({})
 const qtySources = ref({})
@@ -223,6 +230,7 @@ async function loadData() {
   const data = await response.json()
   suppressAutoSave.value = true
   settings.value = data.settings
+  version.value = data.version || ''
   barcodeTypes.value = data.barcodeTypes
   qtySources.value = data.qtySources || {}
   fonts.value = data.fonts || {}
@@ -257,8 +265,16 @@ function installFontFaces(css) {
   if (!style.parentNode) document.head.appendChild(style)
 }
 
-async function saveTemplate() {
+// Saves run one after another, so each carries the version the previous one got back.
+let saveQueue = Promise.resolve()
+
+function saveTemplate() {
   clearAutoSaveTimer()
+  saveQueue = saveQueue.then(persistTemplate, persistTemplate)
+  return saveQueue
+}
+
+async function persistTemplate() {
   saving.value = true
   try {
     suppressAutoSave.value = true
@@ -272,16 +288,36 @@ async function saveTemplate() {
       body: JSON.stringify({
         templateName: templateName.value,
         settings: settings.value,
+        version: version.value,
       }),
     })
 
     const data = await response.json()
+    if (!data.settings) return
+
+    // 409: the template was saved somewhere else since this page loaded, so the
+    // server kept that and sent it back to show instead of this older copy.
+    if (response.status === 409) {
+      templateName.value = data.templateName ?? templateName.value
+      showNotice(data.message)
+    }
     settings.value = data.settings
+    version.value = data.version || ''
     refreshPreview()
   } finally {
     suppressAutoSave.value = false
     saving.value = false
   }
+}
+
+let noticeTimer = null
+
+function showNotice(message) {
+  notice.value = message
+  window.clearTimeout(noticeTimer)
+  noticeTimer = window.setTimeout(() => {
+    notice.value = ''
+  }, 8000)
 }
 
 async function resetTemplate() {
@@ -296,6 +332,7 @@ async function resetTemplate() {
   })
   const data = await response.json()
   settings.value = data.settings
+  version.value = data.version || ''
   selectedElementKey.value = firstSelectableField()
   suppressAutoSave.value = false
   refreshPreview()
@@ -342,6 +379,25 @@ function scheduleAutoSave() {
   autoSaveTimer = window.setTimeout(() => {
     saveTemplate()
   }, 400)
+}
+
+// A test print has to use the edit just made, so flush the autosave and wait
+// out a save in flight. QZ Tray prints it when the page has it; else the PDF opens.
+async function printLabel() {
+  if (autoSaveTimer) await saveTemplate()
+  if (saving.value) {
+    await new Promise((resolve) => {
+      const stop = watch(saving, (busy) => {
+        if (!busy) {
+          stop()
+          resolve()
+        }
+      })
+    })
+  }
+
+  if (window.LabelPrint) window.LabelPrint.print(printUrl.value)
+  else window.open(printUrl.value, '_blank')
 }
 
 // The right hand inspector edits whatever is selected on the left, and the two

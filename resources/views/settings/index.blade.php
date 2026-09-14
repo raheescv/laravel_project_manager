@@ -1485,4 +1485,5 @@
             <script src="{{ asset('js/theme-settings-sync.js') }}"></script>
         @endpush
     </div>
+    <x-qz-print />
 </x-app-layout>

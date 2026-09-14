@@ -347,7 +347,7 @@
                 <i class="fa fa-print"></i>Print
             </a>
             @can('purchase.barcode print')
-                <a target="_blank" href="{{ route('purchase::barcode-print', $purchase->id) }}" class="s-btn" title="Print Barcode">
+                <a target="_blank" href="{{ route('purchase::barcode-print', $purchase->id) }}" data-label-print class="s-btn" title="Print Barcode">
                     <i class="fa fa-barcode"></i>Barcode
                 </a>
             @endcan

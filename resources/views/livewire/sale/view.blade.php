@@ -438,7 +438,7 @@
     {{-- ── ACTIONS ──────────────────────────────────────────────────────────── --}}
     @if ($sales['status'] != 'cancelled')
         <div class="s-toolbar d-print-none">
-            <a target="_blank" href="{{ route('print::sale::invoice', $sales['id']) }}" class="s-btn" title="Print Invoice">
+            <a target="_blank" href="{{ route('print::sale::invoice', $sales['id']) }}" data-receipt-print class="s-btn" title="Print Invoice">
                 <i class="fa fa-print"></i>Print
             </a>
             @can('sale.cancel')

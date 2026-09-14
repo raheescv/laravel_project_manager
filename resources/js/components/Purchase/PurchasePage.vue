@@ -758,8 +758,15 @@ const setupEventListeners = () => {
         const id = eventData?.id || eventData
         if (id) {
             redirecting.value = true
-            // Redirect to print page instead of refreshing
-            window.location.href = `/purchase/barcode-print/${id}`
+            const url = `/purchase/barcode-print/${id}`
+            // Labels go straight to the printer through QZ Tray; without it, open the PDF as before
+            if (window.LabelPrint) {
+                window.LabelPrint.print(url, { fallback: 'redirect' }).then((status) => {
+                    if (status !== 'opened') window.location.reload()
+                })
+            } else {
+                window.location.href = url
+            }
         }
     })
 

@@ -200,7 +200,7 @@
     </style>
 </head>
 
-<body>
+<body class="label-stack">
     <div class="barcode-container">
         @if (($settings['size']['visible'] ?? true) && !empty($product->size))
             <div id="product-size" class="barcode-element product-size" style="{{ getElementStyle('size', $settings) }}">

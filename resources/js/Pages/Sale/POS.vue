@@ -1221,6 +1221,7 @@ export default {
 
                 submitting.value = false;
 
+                let printing = Promise.resolve();
                 if (status === 'draft') {
                     toast.success('Sale saved as draft');
                 } else {
@@ -1228,14 +1229,19 @@ export default {
                     toast.success('Sale submitted successfully');
                     if (response.data && response.data.sale_id) {
                         const printUrl = `/print/sale/invoice/${response.data.sale_id}`;
-                        const printWindow = window.open(printUrl, '_blank');
-                        if (!printWindow) {
-                            toast.error('Popup blocked. Please allow popups for this site.');
+                        if (window.ReceiptPrint) {
+                            // Straight to the receipt printer through QZ Tray; the reset below waits for it
+                            printing = window.ReceiptPrint.print(printUrl);
+                        } else {
+                            const printWindow = window.open(printUrl, '_blank');
+                            if (!printWindow) {
+                                toast.error('Popup blocked. Please allow popups for this site.');
+                            }
                         }
                     }
                 }
                 // Reset form or redirect for completed sales (with delay to allow print window to open)
-                setTimeout(() => {
+                printing.finally(() => setTimeout(() => {
                     if (response.data && response.data.redirect) {
                         window.location.href = response.data.redirect;
                     } else {
@@ -1250,7 +1256,7 @@ export default {
                         };
                         selectedPaymentMethod.value = 1;
                     }
-                }, 1000); // 1 second delay to ensure print window opens first
+                }, 1000)); // 1 second delay to ensure print window opens first
             } catch (error) {
                 // Get detailed error message from response if available
                 let errorMessage = status === 'draft' ? 'Failed to save draft' : 'Failed to submit sale';

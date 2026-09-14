@@ -1994,7 +1994,8 @@
             document.addEventListener('DOMContentLoaded', function() {
                 window.addEventListener('print-invoice', function(event) {
                     if (event.detail[0].print) {
-                        window.open(event.detail[0].link);
+                        // Straight to the receipt printer through QZ Tray when this PC has one set up
+                        window.ReceiptPrint ? window.ReceiptPrint.print(event.detail[0].link) : window.open(event.detail[0].link);
                     } else {
                         @if ($id)
                             window.location.href = "{{ route('sale::create') }}";
@@ -2007,4 +2008,5 @@
             $('#root').attr('class', 'root mn--push');
         </script>
     @endpush
+    <x-qz-print />
 </x-app-layout>

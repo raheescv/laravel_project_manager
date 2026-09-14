@@ -338,7 +338,7 @@
 <body onload="window.print();">
     <div class="receipt-container">
         <div class="store-info">
-            @if ($enable_logo_in_print == 'yes')
+            @if ($enable_logo_in_print == 'yes' && tenant_cache('logo'))
                 <img src="{{ tenant_cache('logo') }}" alt="Logo"
                     style="display: block; width: 100%; max-width: 100%; height: auto; margin: 0 auto 3px;">
             @endif

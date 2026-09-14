@@ -20,7 +20,7 @@
     @endif
 </head>
 
-<body>
+<body class="label-stack">
     @include('inventory.label-types.jewellery-tag.label')
 </body>
 

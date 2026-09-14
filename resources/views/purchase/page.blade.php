@@ -24,6 +24,7 @@
     </div>
     </div>
     <x-account.vendor-modal />
+    <x-qz-print />
     @push('styles')
     @endpush
     @push('scripts')

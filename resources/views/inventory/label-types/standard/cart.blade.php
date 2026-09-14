@@ -180,7 +180,8 @@
 </head>
 
 <body style="margin:0;padding:0;">
-    <div class="barcode-grid">
+    {{-- label-stack: printing to a TSC printer puts each sticker on its own whole-pixel row (RendersTsplLabels). --}}
+    <div class="barcode-grid label-stack">
         @foreach ($cartItems as $item)
             @php
                 $itemType = $item['item_type'] ?? 'inventory';
