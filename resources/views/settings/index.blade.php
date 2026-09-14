@@ -665,6 +665,14 @@
                                         </button>
                                     </li>
                                 @endcan
+                                @canany(['sale.view', 'configuration.barcode'])
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsPrinters" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-printer"></i><span>Printers</span>
+                                        </button>
+                                    </li>
+                                @endcanany
                                 @can('purchase.view')
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab"
@@ -839,6 +847,11 @@
                                         @livewire('settings.sale-configuration')
                                     </div>
                                 @endcan
+                                @canany(['sale.view', 'configuration.barcode'])
+                                    <div id="tabsPrinters" class="tab-pane" role="tabpanel">
+                                        @include('settings.printers')
+                                    </div>
+                                @endcanany
                                 @can('purchase.view')
                                     <div id="tabsPurchaseSettings" class="tab-pane" role="tabpanel">
                                         @livewire('settings.purchase-configuration')

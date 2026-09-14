@@ -109,13 +109,17 @@
                         title: 'Label printer',
                         printerKey: 'qz.labelPrinter',
                         browserLabel: 'No printer, open the PDF instead',
+                        // Picked by itself on a computer's first print when a printer's name fits
+                        match: /tsc|zebra|godex|argox|label/i,
                         // TSC printers take TSPL straight; a network printer has no driver for a PDF
-                        defaults: (printer) => ({ mode: /\btsc\b/i.test(printer) || NETWORK.test(printer) ? 'tspl' : 'pdf', invert: false }),
+                        defaults: (printer) => ({ mode: /tsc/i.test(printer) || NETWORK.test(printer) ? 'tspl' : 'pdf', invert: false }),
                     },
                     receipt: {
                         title: 'Receipt printer',
                         printerKey: 'qz.receiptPrinter',
                         browserLabel: 'No printer, print from the browser',
+                        // Epson TM-T20 / TM_T82, thermal and POS printers; not an Epson inkjet like L3110
+                        match: /tm[-_ ]?[a-z]{0,2}\d|receipt|thermal|xprinter|rongta|bixolon|sunmi|(^|[^a-z])pos([^a-z]|$)/i,
                         defaults: () => ({ width: 576, cut: true, drawer: false }),
                     },
                 };
@@ -386,6 +390,44 @@
                     await sendRaw(printer, await fetchDocument(url, params, 'octet-stream'));
                 }
 
+                // A computer's first print: take the printer whose name fits the job, never the one the
+                // other role already uses, so barcodes and invoices start on different printers.
+                async function suggestPrinter(role) {
+                    let printers = [];
+                    try {
+                        printers = await qz.printers.find();
+                    } catch (e) {
+                        return null;
+                    }
+
+                    const other = storage.printer(role === 'label' ? 'receipt' : 'label');
+                    const pick = printers.find((name) => ROLES[role].match.test(name) && name !== other);
+                    if (!pick) return null;
+
+                    storage.setPrinter(role, pick);
+                    syncPrinterNames();
+                    notify('info', `${ROLES[role].title}: ${pick}. Change it in Settings, Printers.`);
+                    return pick;
+                }
+
+                // Settings, Printers tab: whether QZ Tray answers on this computer
+                async function renderConnection() {
+                    const badges = document.querySelectorAll('[data-qz-connection]');
+                    const paint = (className, text) => badges.forEach((badge) => {
+                        badge.className = `badge ${className}`;
+                        badge.textContent = text;
+                    });
+                    if (!badges.length) return;
+
+                    paint('text-bg-secondary', 'Checking…');
+                    try {
+                        await connect();
+                        paint('text-bg-success', `Connected, QZ Tray ${await qz.api.getVersion()}`);
+                    } catch (e) {
+                        paint('text-bg-danger', 'Not running on this computer');
+                    }
+                }
+
                 // Resolves 'printed' | 'opened' (shown in the browser instead) | 'cancelled' | 'busy'
                 async function print(url, { role = 'label', fallback = 'tab' } = {}) {
                     // A double click must not print twice
@@ -406,7 +448,7 @@
                         }
 
                         if (!printer) {
-                            printer = await choosePrinter(role);
+                            printer = (await suggestPrinter(role)) ?? (await choosePrinter(role));
                             if (!printer) return 'cancelled';
                         }
 
@@ -502,6 +544,14 @@
                 });
                 dialog.querySelector('[data-qz-close]').addEventListener('click', () => closePicker(null));
                 dialog.querySelector('[data-qz-refresh]').addEventListener('click', renderPrinters);
+
+                // Only check QZ Tray once the Printers tab is open, so no other page wakes it
+                document.addEventListener('shown.bs.tab', (event) => {
+                    const pane = document.querySelector(event.target.getAttribute('data-bs-target') || '#none');
+                    if (pane?.querySelector('[data-qz-connection]')) renderConnection();
+                });
+                document.querySelectorAll('[data-qz-connection-refresh]').forEach((button) => button.addEventListener('click', renderConnection));
+                if ([...document.querySelectorAll('[data-qz-connection]')].some((badge) => badge.offsetParent !== null)) renderConnection();
 
                 syncPrinterNames();
                 window.LabelPrint = {
