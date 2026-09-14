@@ -108,6 +108,7 @@
                     label: {
                         title: 'Label printer',
                         printerKey: 'qz.labelPrinter',
+                        enabledKey: 'qz.labelEnabled',
                         browserLabel: 'No printer, open the PDF instead',
                         // Picked by itself on a computer's first print when a printer's name fits
                         match: /tsc|zebra|godex|argox|label/i,
@@ -117,6 +118,7 @@
                     receipt: {
                         title: 'Receipt printer',
                         printerKey: 'qz.receiptPrinter',
+                        enabledKey: 'qz.receiptEnabled',
                         browserLabel: 'No printer, print from the browser',
                         // Epson TM-T20 / TM_T82, thermal and POS printers; not an Epson inkjet like L3110
                         match: /tm[-_ ]?[a-z]{0,2}\d|receipt|thermal|xprinter|rongta|bixolon|sunmi|(^|[^a-z])pos([^a-z]|$)/i,
@@ -147,6 +149,13 @@
                     },
                     setPrinter(role, value) {
                         this.write(ROLES[role].printerKey, value);
+                    },
+                    // On unless this computer switched it off in Settings, Printers
+                    enabled(role) {
+                        return this.read(ROLES[role].enabledKey, '1') !== '0';
+                    },
+                    setEnabled(role, on) {
+                        this.write(ROLES[role].enabledKey, on ? '1' : '0');
                     },
                     options(role, printer) {
                         return { ...ROLES[role].defaults(printer || ''), ...(this.json(OPTIONS_KEY, {})[`${role}:${printer}`] || {}) };
@@ -228,7 +237,9 @@
                 function syncPrinterNames() {
                     Object.keys(ROLES).forEach((role) => {
                         const printer = storage.printer(role);
-                        const label = !printer ? 'Printer' : (printer === OPEN_IN_BROWSER ? 'Browser' : printerName(printer));
+                        const label = !storage.enabled(role)
+                            ? 'Off, browser print window'
+                            : (!printer ? 'Printer' : (printer === OPEN_IN_BROWSER ? 'Browser' : printerName(printer)));
                         document.querySelectorAll(`[data-${role}-printer-name]`).forEach((el) => { el.textContent = label; });
                     });
                 }
@@ -355,10 +366,17 @@
                     Object.entries(params).forEach(([key, value]) => target.searchParams.set(key, value));
 
                     const response = await fetch(target, { cache: 'no-store', credentials: 'same-origin' });
-                    if (!response.ok || !(response.headers.get('Content-Type') || '').includes(type)) {
-                        throw new Error('the server could not prepare it for the printer');
+                    const contentType = response.headers.get('Content-Type') || '';
+                    if (response.ok && contentType.includes(type)) return response;
+
+                    // Say why, so a server problem is told apart from a printer problem
+                    let reason = `the server answered with error ${response.status}`;
+                    if (contentType.includes('json')) {
+                        reason = (await response.json().catch(() => ({}))).message || reason;
+                    } else if (response.ok) {
+                        reason = 'the server sent a web page instead of printer data, so it may need the latest update and a cache clear';
                     }
-                    return response;
+                    throw new Error(reason);
                 }
 
                 async function sendRaw(printer, response) {
@@ -435,6 +453,12 @@
                     busy[role] = true;
 
                     try {
+                        // Direct printing switched off on this computer: the browser print window, as before
+                        if (!storage.enabled(role)) {
+                            openInBrowser(url, fallback);
+                            return 'opened';
+                        }
+
                         let printer = storage.printer(role);
 
                         if (printer !== OPEN_IN_BROWSER) {
@@ -551,6 +575,14 @@
                     if (pane?.querySelector('[data-qz-connection]')) renderConnection();
                 });
                 document.querySelectorAll('[data-qz-connection-refresh]').forEach((button) => button.addEventListener('click', renderConnection));
+                document.querySelectorAll('[data-qz-enable]').forEach((input) => {
+                    const role = input.dataset.qzEnable;
+                    input.checked = storage.enabled(role);
+                    input.addEventListener('change', () => {
+                        storage.setEnabled(role, input.checked);
+                        syncPrinterNames();
+                    });
+                });
                 if ([...document.querySelectorAll('[data-qz-connection]')].some((badge) => badge.offsetParent !== null)) renderConnection();
 
                 syncPrinterNames();

@@ -4,7 +4,8 @@ namespace App\Traits;
 
 use App\Services\CompanyLogoResolver;
 use App\Support\EscPosReceipt;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Lets a receipt print route answer ?format=escpos: the same receipt HTML, sent
@@ -30,17 +31,24 @@ trait RendersEscPosReceipts
         }
         $html = str_replace('</head>', '<style>html, body { margin: 0 !important; }</style></head>', $html);
 
-        $png = $this->makeBrowsershot($html)
-            ->windowSize((int) ceil($paperMm / 25.4 * 96), 200)
-            ->deviceScaleFactor(EscPosReceipt::RENDER_SCALE)
-            ->fullPage()
-            ->screenshot();
+        try {
+            $png = $this->makeBrowsershot($html)
+                ->windowSize((int) ceil($paperMm / 25.4 * 96), 200)
+                ->deviceScaleFactor(EscPosReceipt::RENDER_SCALE)
+                ->fullPage()
+                ->screenshot();
 
-        $width = $request->integer('width', EscPosReceipt::WIDTHS[0]);
-        $escPos = EscPosReceipt::fromScreenshot($png, in_array($width, EscPosReceipt::WIDTHS, true) ? $width : EscPosReceipt::WIDTHS[0], [
-            'cut' => $request->boolean('cut', true),
-            'drawer' => $request->boolean('drawer'),
-        ]);
+            $width = $request->integer('width', EscPosReceipt::WIDTHS[0]);
+            $escPos = EscPosReceipt::fromScreenshot($png, in_array($width, EscPosReceipt::WIDTHS, true) ? $width : EscPosReceipt::WIDTHS[0], [
+                'cut' => $request->boolean('cut', true),
+                'drawer' => $request->boolean('drawer'),
+            ]);
+        } catch (Throwable $e) {
+            report($e);
+
+            // The page shows this message, so a server that cannot render says why.
+            return response()->json(['message' => 'the server could not render the receipt ('.$e->getMessage().')'], 500);
+        }
 
         return response($escPos)
             ->header('Content-Type', 'application/octet-stream')

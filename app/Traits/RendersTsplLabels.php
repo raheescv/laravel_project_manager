@@ -3,7 +3,8 @@
 namespace App\Traits;
 
 use App\Support\TsplLabel;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Lets a barcode print route answer ?format=tspl: the same label HTML, sent to a
@@ -27,22 +28,29 @@ trait RendersTsplLabels
         $row = TsplLabel::rowPixels($height);
         $html = str_replace('</head>', '<style>html, body { overflow: visible !important; } .label-stack { display: grid !important; grid-auto-rows: '.$row.'px; align-items: start; justify-items: start; }</style></head>', $html);
 
-        $png = $this->makeBrowsershot($html)
-            ->windowSize((int) ceil(TsplLabel::cssPixels($width)), $row)
-            ->deviceScaleFactor(TsplLabel::RENDER_SCALE)
-            ->fullPage()
-            ->screenshot();
+        try {
+            $png = $this->makeBrowsershot($html)
+                ->windowSize((int) ceil(TsplLabel::cssPixels($width)), $row)
+                ->deviceScaleFactor(TsplLabel::RENDER_SCALE)
+                ->fullPage()
+                ->screenshot();
 
-        // Position, gap and flip belong to the label stock, so they are template
-        // settings; colour polarity belongs to the printer, so the PC sends it.
-        $print = $settings['print'] ?? [];
-        $tspl = TsplLabel::fromScreenshot($png, $width, $height, [
-            'offset_x' => (float) ($print['offset_x'] ?? 0),
-            'offset_y' => (float) ($print['offset_y'] ?? 0),
-            'gap' => $print['gap'] ?? null,
-            'flip' => (bool) ($print['flip'] ?? false),
-            'invert' => request()->boolean('invert'),
-        ]);
+            // Position, gap and flip belong to the label stock, so they are template
+            // settings; colour polarity belongs to the printer, so the PC sends it.
+            $print = $settings['print'] ?? [];
+            $tspl = TsplLabel::fromScreenshot($png, $width, $height, [
+                'offset_x' => (float) ($print['offset_x'] ?? 0),
+                'offset_y' => (float) ($print['offset_y'] ?? 0),
+                'gap' => $print['gap'] ?? null,
+                'flip' => (bool) ($print['flip'] ?? false),
+                'invert' => request()->boolean('invert'),
+            ]);
+        } catch (Throwable $e) {
+            report($e);
+
+            // The page shows this message, so a server that cannot render says why.
+            return response()->json(['message' => 'the server could not render the label ('.$e->getMessage().')'], 500);
+        }
 
         return response($tspl)
             ->header('Content-Type', 'application/octet-stream')
