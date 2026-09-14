@@ -217,6 +217,20 @@ Route::prefix('v1')->group(function () {
                 Route::post('/day-status', [DaySessionController::class, 'toggle'])
                     ->middleware(EnsureMobilePermission::class.':day session.create')
                     ->name('api.v1.admin.day-status');
+                // A day session's "Sale Bill Report": listed to pick one, then as data
+                // (the app lays out the thermal roll itself) or as the web's A4 PDF.
+                // Same gate as the web print routes.
+                Route::get('/day-sessions', [DaySessionController::class, 'index'])
+                    ->middleware(EnsureMobilePermission::class.':day session.print')
+                    ->name('api.v1.admin.day-sessions');
+                Route::get('/day-sessions/{id}/report', [DaySessionController::class, 'report'])
+                    ->whereNumber('id')
+                    ->middleware(EnsureMobilePermission::class.':day session.print')
+                    ->name('api.v1.admin.day-sessions.report');
+                Route::get('/day-sessions/{id}/report/pdf', [DaySessionController::class, 'reportPdf'])
+                    ->whereNumber('id')
+                    ->middleware(EnsureMobilePermission::class.':day session.print')
+                    ->name('api.v1.admin.day-sessions.report-pdf');
             });
         });
     });
