@@ -2,8 +2,8 @@ import 'package:equatable/equatable.dart';
 
 import '../helpers/formatters.dart';
 
-/// One day session as `GET /admin/day-sessions` lists it — enough to pick a
-/// Sale Bill Report by. Times are the branch's wall clock (`Y-m-d H:i:s`).
+/// A day session as `GET /admin/day-sessions/current` names it — the head of
+/// its Sale Bill Report. Times are the branch's wall clock (`Y-m-d H:i:s`).
 class DaySessionSummary extends Equatable {
   const DaySessionSummary({
     required this.id,
@@ -28,18 +28,6 @@ class DaySessionSummary extends Equatable {
   final String branchMobile;
 
   bool get isOpen => status == 'open';
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'branch': branch,
-        'status': status,
-        'opened_at': openedAt,
-        'closed_at': closedAt,
-        'opened_by': openedBy,
-        'closed_by': closedBy,
-        'branch_location': branchLocation,
-        'branch_mobile': branchMobile,
-      };
 
   factory DaySessionSummary.fromJson(Map<String, dynamic> j) => DaySessionSummary(
         id: asStr(j['id']),

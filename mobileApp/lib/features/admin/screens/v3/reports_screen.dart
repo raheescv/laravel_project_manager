@@ -1,31 +1,22 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show Uint8List, defaultTargetPlatform;
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart' show PdfColor;
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
-import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
-import 'package:invo/features/admin/widgets/day_session_reports_sheet.dart';
-import 'package:invo/features/admin/widgets/report_pdf.dart';
+import 'package:invo/features/admin/widgets/report_export_sheet.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
-import 'package:invo/shared/utils/printing/pdf_export.dart';
-import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
-import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
-import 'package:invo/shared/widgets/pdf_preview_page.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 part 'reports_overview_sections.dart';
-part 'reports_export.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -126,7 +117,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               title: 'Reports',
               subtitle: 'Every angle on your sales',
               trailing: canView
-                  ? HeaderIconButton(icon: Icons.download, gold: true, onTap: () => unawaited(_openExportSheet()))
+                  ? HeaderIconButton(icon: Icons.download, gold: true, onTap: () => unawaited(_openExport()))
                   : null,
             ),
             Expanded(
@@ -221,6 +212,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
         tab('Overview', 0, Icons.insights_rounded),
         tab('Breakdown', 1, Icons.leaderboard_rounded),
       ]),
+    );
+  }
+
+  /// The one Export sheet, opened on the report that is on screen.
+  Future<void> _openExport() => showReportExport(context, initial: _reportOnScreen);
+
+  ExportReport get _reportOnScreen {
+    if (_tab == 0) return ExportReport.overview;
+    return context.read<AdminCubit>().reportType == 'itemwise' ? ExportReport.items : ExportReport.staff;
+  }
+
+  /// Toolbar button on tablets; phones use the header's download button.
+  Widget _exportButton({double size = 40, double radius = 12, double iconSize = 18}) {
+    final p = context.astra;
+    return GestureDetector(
+      onTap: () => unawaited(_openExport()),
+      child: Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(radius)),
+        child: Icon(Icons.download_rounded, size: iconSize, color: p.primary),
+      ),
     );
   }
 

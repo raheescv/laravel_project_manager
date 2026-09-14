@@ -5,7 +5,6 @@ import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
-import 'package:invo/shared/logic/paginated_list_cubit/paginated_list_cubit.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
@@ -556,17 +555,9 @@ class AdminCubit extends Cubit<AdminState> {
 
   // ---- Day session reports ----------------------------------------------------
 
-  /// One page of the operating branch's day sessions, shaped for the report
-  /// picker's PaginatedListCubit.
-  Future<PageResult> daySessionsPage(int page) async {
-    final res = await _repo.daySessions(page: page);
-    return PageResult(
-      rows: [for (final s in res.items) s.toJson()],
-      currentPage: res.currentPage,
-      lastPage: res.lastPage,
-      total: res.total,
-    );
-  }
+  /// The session the Sale Bill Report is for: the branch's open session, or the
+  /// one opened last once the day is shut. Null before any day was opened.
+  Future<DaySessionSummary?> currentDaySession() => _repo.currentDaySession();
 
   /// A day session's Sale Bill Report figures, for the thermal roll.
   Future<DaySessionReport> daySessionReport(String id) => _repo.daySessionReport(id);

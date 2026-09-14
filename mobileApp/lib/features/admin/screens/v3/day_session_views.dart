@@ -94,13 +94,14 @@ extension _DaySessionViews on _DaySessionScreenState {
                             ),
                           ),
                         ),
-                      // The Sale Bill Report for this or any earlier session —
-                      // thermal roll or the web's A4 PDF.
+                      // The current session's Sale Bill Report — the same Export
+                      // sheet as Reports, offering only this report.
                       if (context.read<AuthCubit>().hasPermission(PermissionSlug.daySessionPrint)) ...[
                         const SizedBox(width: 8),
                         HeaderIconButton(
                           icon: Icons.receipt_long_outlined,
-                          onTap: () => unawaited(showDaySessionReports(context)),
+                          onTap: () => unawaited(showReportExport(context,
+                              initial: ExportReport.daySession, reports: const [ExportReport.daySession])),
                         ),
                       ],
                     ],

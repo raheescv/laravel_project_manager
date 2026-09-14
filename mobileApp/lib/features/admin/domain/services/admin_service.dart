@@ -53,9 +53,10 @@ class AdminService implements AdminRepository {
   }
 
   @override
-  Future<Paginated<DaySessionSummary>> daySessions({int page = 1}) async {
-    final data = await _http.get(EndPoints.daySessions, query: {'page': page});
-    return Paginated.from(data, DaySessionSummary.fromJson);
+  Future<DaySessionSummary?> currentDaySession() async {
+    final data = await _http.get(EndPoints.currentDaySession);
+    final session = data is Map ? data['session'] : null;
+    return session is Map ? DaySessionSummary.fromJson(Map<String, dynamic>.from(session)) : null;
   }
 
   @override

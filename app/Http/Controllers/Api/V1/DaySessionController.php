@@ -95,13 +95,14 @@ class DaySessionController extends Controller
     }
 
     /**
-     * List the branch's day sessions.
+     * Current day session.
      *
-     * The operating branch's sessions (`branch_id`, falling back to the user's
-     * default branch), newest first, 20 a page — what the app lists to pick a
-     * session's Sale Bill Report from.
+     * The session a Sale Bill Report is printed for: the operating branch's open
+     * session (`branch_id`, falling back to the user's default branch) or, once
+     * the day is shut, the one opened last. `session` is null for a branch that
+     * has never opened a day.
      */
-    public function index(ReportAction $action, StatusRequest $request): JsonResponse
+    public function current(ReportAction $action, StatusRequest $request): JsonResponse
     {
         try {
             $branchId = $request->branchId();
@@ -110,23 +111,19 @@ class DaySessionController extends Controller
                 return $this->sendError('No default branch assigned to this user.');
             }
 
-            $sessions = SaleDaySession::with(['branch', 'opener:id,name', 'closer:id,name'])
+            $session = SaleDaySession::with(['branch', 'opener:id,name', 'closer:id,name'])
                 ->where('branch_id', $branchId)
+                ->orderByRaw("CASE WHEN status = 'open' THEN 0 ELSE 1 END")
                 ->orderByDesc('opened_at')
                 ->orderByDesc('id')
-                ->paginate(20);
+                ->first();
 
-            return $this->sendSuccess([
-                'data' => $sessions->getCollection()->map(fn (SaleDaySession $session) => $action->row($session))->values(),
-                'pagination' => [
-                    'current_page' => $sessions->currentPage(),
-                    'last_page' => $sessions->lastPage(),
-                    'per_page' => $sessions->perPage(),
-                    'total' => $sessions->total(),
-                ],
-            ], 'Day sessions retrieved successfully');
+            return $this->sendSuccess(
+                ['session' => $session ? $action->row($session) : null],
+                $session ? 'Current day session retrieved successfully' : 'No day session yet'
+            );
         } catch (\Exception $e) {
-            return $this->sendServerError('Failed to list day sessions: '.$e->getMessage());
+            return $this->sendServerError('Failed to find the current day session: '.$e->getMessage());
         }
     }
 

@@ -20,8 +20,9 @@ abstract class AdminRepository {
   /// The branch's day-session state as the server holds it right now.
   Future<DayStatus> dayStatus();
 
-  /// The operating branch's day sessions, newest first — to pick a report by.
-  Future<Paginated<DaySessionSummary>> daySessions({int page = 1});
+  /// The session the Sale Bill Report is for: the branch's open session, or the
+  /// one opened last once the day is shut. Null before any day was opened.
+  Future<DaySessionSummary?> currentDaySession();
 
   /// One session's Sale Bill Report figures, laid out on the thermal roll.
   Future<DaySessionReport> daySessionReport(String id);

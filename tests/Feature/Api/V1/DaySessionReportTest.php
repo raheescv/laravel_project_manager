@@ -8,8 +8,8 @@ use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
 
 /**
- * The mobile app prints the web "Sale Bill Report" for a day session: it lists
- * the operating branch's sessions to pick from, reads one session's figures to
+ * The mobile app prints the web "Sale Bill Report" for the current day session:
+ * it finds the operating branch's current session, reads its figures to
  * lay out a thermal roll, and downloads the web A4 view as a PDF. All three sit
  * behind the web print routes' own `day session.print`.
  */
@@ -39,25 +39,48 @@ beforeEach(function (): void {
 it('refuses every day session report endpoint without day session.print', function (): void {
     $session = ($this->makeSession)();
 
-    $this->getJson($this->world->url('/api/v1/admin/day-sessions'))->assertForbidden();
+    $this->getJson($this->world->url('/api/v1/admin/day-sessions/current'))->assertForbidden();
     $this->getJson($this->world->url("/api/v1/admin/day-sessions/{$session->id}/report"))->assertForbidden();
     $this->get($this->world->url("/api/v1/admin/day-sessions/{$session->id}/report/pdf"))->assertForbidden();
 });
 
-it('lists the operating branch sessions newest first', function (): void {
+it('offers the open session as the current one', function (): void {
     ($this->grantPrint)();
-    $older = ($this->makeSession)(['opened_at' => now()->subDays(2), 'closed_at' => now()->subDays(2)->addHours(8)]);
-    $newer = ($this->makeSession)(['opened_at' => now()->subHours(3), 'closed_at' => null, 'closed_by' => null, 'status' => 'open']);
-    ($this->makeSession)(['branch_id' => $this->world->addBranch()->id]);
+    ($this->makeSession)(['opened_at' => now()->subDays(2), 'closed_at' => now()->subDays(2)->addHours(8)]);
+    $open = ($this->makeSession)(['opened_at' => now()->subHours(3), 'closed_at' => null, 'closed_by' => null, 'status' => 'open']);
+    // Another branch's day, opened more recently, is not this branch's session.
+    ($this->makeSession)([
+        'branch_id' => $this->world->addBranch()->id,
+        'opened_at' => now()->subHour(),
+        'closed_at' => null,
+        'closed_by' => null,
+        'status' => 'open',
+    ]);
 
-    $this->getJson($this->world->url('/api/v1/admin/day-sessions'))
+    $this->getJson($this->world->url('/api/v1/admin/day-sessions/current'))
         ->assertSuccessful()
-        ->assertJsonPath('data.pagination.total', 2)
-        ->assertJsonPath('data.data.0.id', (string) $newer->id)
-        ->assertJsonPath('data.data.0.status', 'open')
-        ->assertJsonPath('data.data.0.closed_at', null)
-        ->assertJsonPath('data.data.1.id', (string) $older->id)
-        ->assertJsonPath('data.data.1.opened_at', $older->opened_at->format('Y-m-d H:i:s'));
+        ->assertJsonPath('data.session.id', (string) $open->id)
+        ->assertJsonPath('data.session.status', 'open')
+        ->assertJsonPath('data.session.closed_at', null);
+});
+
+it('falls back to the session opened last once the day is shut', function (): void {
+    ($this->grantPrint)();
+    ($this->makeSession)(['opened_at' => now()->subDays(2), 'closed_at' => now()->subDays(2)->addHours(8)]);
+    $last = ($this->makeSession)(['opened_at' => now()->subHours(10), 'closed_at' => now()->subHours(2)]);
+
+    $this->getJson($this->world->url('/api/v1/admin/day-sessions/current'))
+        ->assertSuccessful()
+        ->assertJsonPath('data.session.id', (string) $last->id)
+        ->assertJsonPath('data.session.opened_at', $last->opened_at->format('Y-m-d H:i:s'));
+});
+
+it('answers with no session for a branch that never opened a day', function (): void {
+    ($this->grantPrint)();
+
+    $this->getJson($this->world->url('/api/v1/admin/day-sessions/current'))
+        ->assertSuccessful()
+        ->assertJsonPath('data.session', null);
 });
 
 it('returns the figures the thermal report prints', function (): void {
