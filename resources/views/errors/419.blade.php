@@ -8,4 +8,5 @@
     colorEnd="#ef4444"
     primaryAction="refresh"
     :countdown="true"
+    :retryUrl="$retryUrl ?? null"
 />

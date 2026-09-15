@@ -163,18 +163,17 @@
             var WARN_BEFORE_MS = 30 * 1000;
             var refreshTimeout = SESSION_LIFETIME_MS - WARN_BEFORE_MS;
 
+            // Keep-alive: touching the session keeps this form's token valid. Never copy
+            // the XSRF-TOKEN cookie into _token — that cookie is encrypted and only works
+            // as the X-XSRF-TOKEN header, so the form would always 419.
             setInterval(function () {
-                fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
-                    .then(function () {
-                        var cookie = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-                        if (cookie) {
-                            var token = decodeURIComponent(cookie[1]);
-                            var tokenInput = document.querySelector('input[name="_token"]');
-                            if (tokenInput) tokenInput.value = token;
-                        }
-                    })
-                    .catch(function () {});
+                fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' }).catch(function () {});
             }, 15 * 60 * 1000);
+
+            // Timers store the delay as a 32-bit int: a longer lifetime (120000 min)
+            // overflows, fires at once and reloads the page every 30s. The keep-alive
+            // already covers lifetimes that long.
+            if (refreshTimeout <= 0 || refreshTimeout > 2147483647) return;
 
             setTimeout(function () {
                 var banner = document.getElementById('sessionBanner');

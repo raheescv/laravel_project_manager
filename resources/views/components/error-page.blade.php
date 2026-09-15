@@ -9,9 +9,13 @@
     'primaryAction' => 'back',
     'countdown' => false,
     'details' => null,
+    'retryUrl' => null,
 ])
 
 @php
+    // With a retryUrl the refresh navigates there (a GET) instead of reloading —
+    // reloading a POST response (e.g. a 419) resubmits the same failing request.
+    $retryJs = $retryUrl ? 'window.location.replace('.Js::from($retryUrl).')' : 'window.location.reload()';
     $colorEnd = $colorEnd ?? $color;
     $colorRgb = implode(', ', array_map('hexdec', str_split(ltrim($color, '#'), 2)));
     $digits = str_split($code);
@@ -130,7 +134,7 @@
 
                 <div class="d-grid gap-3">
                     @if($primaryAction === 'refresh')
-                        <button type="button" onclick="window.location.reload()" class="btn btn-primary btn-lg">
+                        <button type="button" onclick="{{ $retryJs }}" class="btn btn-primary btn-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2" style="position:relative;z-index:1;">
                                 <polyline points="23 4 23 10 17 10"/>
                                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
@@ -199,7 +203,7 @@
                     if (el) el.textContent = seconds;
                     if (seconds <= 0) {
                         clearInterval(timer);
-                        window.location.reload();
+                        {!! $retryJs !!};
                     }
                 }, 1000);
             })();

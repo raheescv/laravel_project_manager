@@ -19,11 +19,10 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(Request $request): View
+    public function create(): View
     {
-        // Regenerate session token to prevent 419 errors
-        $request->session()->regenerateToken();
-
+        // Never rotate the CSRF token here: every open tab shares one session, so
+        // loading /login in one tab would 419 the login form already open in another.
         return view('auth.login');
     }
 

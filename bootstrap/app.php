@@ -82,11 +82,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Show 419 error page when session expires or CSRF token mismatch
-        $exceptions->render(function (TokenMismatchException $e, Request $request) {
-            // Regenerate session to get a fresh CSRF token
-            if ($request->hasSession()) {
-                $request->session()->regenerateToken();
+        // Show 419 error page when session expires or CSRF token mismatch.
+        // Laravel converts TokenMismatchException into HttpException(419) before any
+        // render callback runs, so the callback must match the HttpException.
+        // Never rotate the token here: the request carried a stale token, but the
+        // session's current token is what every other open tab holds — rotating it
+        // lets one stale tab (a Livewire poll, an old form) 419 all the others.
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if (! $e->getPrevious() instanceof TokenMismatchException) {
+                return; // Let other HTTP exceptions pass through
             }
 
             // Handle API/JSON requests
@@ -99,8 +103,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 return redirect()->guest(route('login'))->with('error', 'Your session has expired. Please login again.');
             }
 
-            // Handle regular web requests - show 419 error page
-            return response()->view('errors.419', [], 419);
+            // A stale login form: straight back to a fresh login page (new token),
+            // email kept, instead of an error page.
+            if ($request->is('login')) {
+                return redirect()->route('login')
+                    ->withInput($request->only('email'))
+                    ->withErrors(['email' => 'Your session expired. Please sign in again.']);
+            }
+
+            // Handle regular web requests - show 419 error page. Its retry must GET the
+            // page the form came from: reloading this POST response would resubmit the
+            // same stale token and 419 again, forever.
+            return response()->view('errors.419', ['retryUrl' => url()->previous()], 419);
         });
 
         // Show 403 error page with denied permission details (AuthorizationException from policies/gates)
