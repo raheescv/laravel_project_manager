@@ -25,7 +25,8 @@ Schedule::command(RunHealthChecksCommand::class)->daily();
 
 // Close all open sale day sessions daily at start of day (if enabled)
 Schedule::command('sale-day-sessions:close-daily')
-    ->dailyAt('00:05')
+    ->everyFiveMinutes()
+    ->between('00:00', '01:00')
     ->when(function () {
         return Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') === 'yes';
     });
