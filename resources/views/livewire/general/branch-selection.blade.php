@@ -307,12 +307,21 @@
     <div class="bsx-head">
         <div class="bsx-head-ic"><i class="fa fa-building"></i></div>
         <div>
-            <div class="bsx-title">Branch Selection</div>
-            <div class="bsx-sub">Tap a branch to switch &mdash; applies instantly</div>
+            <div class="bsx-title">{{ $required ? 'Select a Branch' : 'Branch Selection' }}</div>
+            <div class="bsx-sub">
+                @if ($required)
+                    Choose the branch you are working in to continue
+                @else
+                    Tap a branch to switch &mdash; applies instantly
+                @endif
+            </div>
         </div>
-        <button type="button" class="bsx-x" data-bs-dismiss="modal" aria-label="Close">
-            <i class="fa fa-times"></i>
-        </button>
+        {{-- Without a branch there is nothing to go back to — only a user with no branches at all may close it. --}}
+        @if (! $required || $assigned_branches->isEmpty())
+            <button type="button" class="bsx-x" data-bs-dismiss="modal" aria-label="Close">
+                <i class="fa fa-times"></i>
+            </button>
+        @endif
     </div>
 
     <div class="bsx-body">

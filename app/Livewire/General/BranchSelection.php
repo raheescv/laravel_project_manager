@@ -13,8 +13,12 @@ class BranchSelection extends Component
 
     public $current_url;
 
-    public function mount()
+    // True when the session has no branch yet — the modal opens on load and can't be dismissed.
+    public $required = false;
+
+    public function mount($required = false)
     {
+        $this->required = (bool) $required;
         $this->branch_id = session('branch_id');
         $this->current_url = url()->current();
     }

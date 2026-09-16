@@ -150,9 +150,9 @@
                     setPrinter(role, value) {
                         this.write(ROLES[role].printerKey, value);
                     },
-                    // On unless this computer switched it off in Settings, Printers
+                    // Off until this computer switches it on in Settings, Printers
                     enabled(role) {
-                        return this.read(ROLES[role].enabledKey, '1') !== '0';
+                        return this.read(ROLES[role].enabledKey, '0') === '1';
                     },
                     setEnabled(role, on) {
                         this.write(ROLES[role].enabledKey, on ? '1' : '0');
@@ -569,10 +569,11 @@
                 dialog.querySelector('[data-qz-close]').addEventListener('click', () => closePicker(null));
                 dialog.querySelector('[data-qz-refresh]').addEventListener('click', renderPrinters);
 
-                // Only check QZ Tray once the Printers tab is open, so no other page wakes it
+                // Only check QZ Tray once the Printers tab is open and direct print is on, so nothing else wakes it
+                const anyEnabled = () => Object.keys(ROLES).some((role) => storage.enabled(role));
                 document.addEventListener('shown.bs.tab', (event) => {
                     const pane = document.querySelector(event.target.getAttribute('data-bs-target') || '#none');
-                    if (pane?.querySelector('[data-qz-connection]')) renderConnection();
+                    if (pane?.querySelector('[data-qz-connection]') && anyEnabled()) renderConnection();
                 });
                 document.querySelectorAll('[data-qz-connection-refresh]').forEach((button) => button.addEventListener('click', renderConnection));
                 document.querySelectorAll('[data-qz-enable]').forEach((input) => {
@@ -581,9 +582,10 @@
                     input.addEventListener('change', () => {
                         storage.setEnabled(role, input.checked);
                         syncPrinterNames();
+                        if (input.checked) renderConnection();
                     });
                 });
-                if ([...document.querySelectorAll('[data-qz-connection]')].some((badge) => badge.offsetParent !== null)) renderConnection();
+                if (anyEnabled() && [...document.querySelectorAll('[data-qz-connection]')].some((badge) => badge.offsetParent !== null)) renderConnection();
 
                 syncPrinterNames();
                 window.LabelPrint = {

@@ -64,7 +64,7 @@
                 <div class="d-flex align-items-center px-3 py-1 rounded bg-light border text-dark shadow-sm">
                     <i class="fa fa-code-fork me-2 text-primary"></i>
                     <span class="fw-semibold small" id="branch_selection">
-                        <span class="d-none d-sm-inline">Branch: </span>{{ session('branch_name') }}
+                        <span class="d-none d-sm-inline">Branch: </span>{{ session('branch_name') ?: 'Select' }}
                     </span>
                 </div>
             </div>

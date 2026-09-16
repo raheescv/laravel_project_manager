@@ -60,7 +60,7 @@
                                 <div class="small text-body-secondary">{{ $printer['hint'] }}</div>
                             </div>
                             <div class="form-check form-switch mb-0 flex-shrink-0" title="Off: this computer uses the normal browser print window">
-                                <input class="form-check-input" type="checkbox" role="switch" id="qz-enable-{{ $printer['role'] }}" data-qz-enable="{{ $printer['role'] }}" checked>
+                                <input class="form-check-input" type="checkbox" role="switch" id="qz-enable-{{ $printer['role'] }}" data-qz-enable="{{ $printer['role'] }}">
                                 <label class="form-check-label small" for="qz-enable-{{ $printer['role'] }}">Direct print</label>
                             </div>
                         </div>
@@ -76,7 +76,7 @@
         </div>
         <p class="small text-body-secondary mt-2 mb-4">
             On the first print, barcodes go to a label printer (TSC, Zebra) and invoices to a receipt printer (Epson TM, thermal)
-            by themselves, never the same one. Turn <em>Direct print</em> off to use the normal browser print window on this computer.
+            by themselves, never the same one. <em>Direct print</em> is off until you turn it on; while it is off, this computer uses the normal browser print window.
         </p>
 
         {{-- Setup guide --}}
@@ -104,6 +104,7 @@
                                 </ul>
                             </li>
                             <li class="mb-2"><b>Check the connection.</b> Click <i class="fa fa-refresh"></i>. The badge should turn green and say Connected.</li>
+                            <li class="mb-2"><b>Turn on Direct print.</b> Switch on <em>Direct print</em> on each card that should print through QZ Tray.</li>
                             <li class="mb-2">
                                 <b>Choose the printers.</b> Click <em>Change</em> on each card and pick the printer. A network printer can be added by
                                 typing its IP address in that window.
