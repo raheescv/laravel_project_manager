@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Tailoring\OrderController;
+use App\Http\Middleware\EnsureBranchSelected;
 use App\Http\Middleware\RequireOpenDaySession;
 use Illuminate\Support\Facades\Route;
 
@@ -63,8 +64,8 @@ Route::middleware('auth')->group(function (): void {
 
     // Job Completion Routes
     Route::name('tailoring::job-completion::')->prefix('tailoring/job-completion')->controller(OrderController::class)->group(function (): void {
-        Route::get('', 'jobCompletionPage')->name('index')->can('tailoring job completion.view');
-        Route::get('create', 'jobCompletionPage')->name('create')->can('tailoring job completion.create');
+        Route::get('', 'jobCompletionPage')->name('index')->can('tailoring job completion.view')->middleware(EnsureBranchSelected::class);
+        Route::get('create', 'jobCompletionPage')->name('create')->can('tailoring job completion.create')->middleware(EnsureBranchSelected::class);
     });
 
     // Job Completion API Routes

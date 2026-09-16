@@ -7,12 +7,13 @@ use App\Http\Controllers\InventoryStockAdjustmentController;
 use App\Http\Controllers\InventoryTransferController;
 use App\Http\Controllers\QzTrayController;
 use App\Http\Controllers\StockCheckController;
+use App\Http\Middleware\EnsureBranchSelected;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
     Route::name('inventory::')->prefix('inventory')->group(function (): void {
         Route::get('', [InventoryController::class, 'index'])->name('index')->can('inventory.view');
-        Route::get('search', [InventoryController::class, 'search'])->name('search')->can('inventory.product search');
+        Route::get('search', [InventoryController::class, 'search'])->name('search')->can('inventory.product search')->middleware(EnsureBranchSelected::class);
         Route::get('stock-adjustment', [InventoryStockAdjustmentController::class, 'index'])->name('stock-adjustment')->can('inventory.stock adjustment');
         Route::post('stock-adjustment/save', [InventoryStockAdjustmentController::class, 'save'])->name('stock-adjustment.save')->can('inventory.stock adjustment');
         Route::name('product::')->prefix('product')->group(function (): void {
@@ -34,7 +35,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('view/{id?}', [BarcodeController::class, 'print'])->name('view');
             Route::get('preview/{id?}', [BarcodeController::class, 'preview'])->name('preview');
             Route::get('configuration', [BarcodeController::class, 'configuration'])->name('configuration')->can('configuration.barcode');
-            Route::get('configuration/{templateKey}', [BarcodeController::class, 'configurationEdit'])->name('configuration.edit')->can('configuration.barcode');
+            Route::get('configuration/{templateKey}', [BarcodeController::class, 'configurationEdit'])->name('configuration.edit')->can('configuration.barcode')->middleware(EnsureBranchSelected::class);
             Route::get('configuration/{templateKey}/data', [BarcodeController::class, 'configurationData'])->name('configuration.data')->can('configuration.barcode');
             Route::post('configuration/{templateKey}/save', [BarcodeController::class, 'saveConfigurationTemplate'])->name('configuration.save')->can('configuration.barcode');
             Route::post('configuration/{templateKey}/reset', [BarcodeController::class, 'resetConfigurationTemplate'])->name('configuration.reset')->can('configuration.barcode');

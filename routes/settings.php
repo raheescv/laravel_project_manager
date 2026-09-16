@@ -26,6 +26,7 @@ use App\Http\Controllers\Settings\TailoringMeasurementOptionController;
 use App\Http\Controllers\Settings\UnitController;
 use App\Http\Controllers\Settings\WorkingDayController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Middleware\EnsureBranchSelected;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -89,7 +90,7 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('email_template::')->prefix('email-template')
             ->controller(EmailTemplateController::class)->group(function (): void {
-                Route::get('', 'index')->name('index')->can('email template.view');
+                Route::get('', 'index')->name('index')->can('email template.view')->middleware(EnsureBranchSelected::class);
             });
         Route::name('document_type::')->prefix('document-type')->controller(DocumentTypeController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('document type.view');

@@ -9,6 +9,9 @@ use Livewire\Component;
 
 class BranchSelection extends Component
 {
+    // Session key holding the page a user was sent away from to pick a branch.
+    public const RETURN_TO = 'branch_selection_return_to';
+
     public $branch_id;
 
     public $current_url;
@@ -21,6 +24,12 @@ class BranchSelection extends Component
         $this->required = (bool) $required;
         $this->branch_id = session('branch_id');
         $this->current_url = url()->current();
+    }
+
+    // No usable branch in the session (e.g. the user has no default branch).
+    public static function isRequired(): bool
+    {
+        return blank(session('branch_id')) || blank(session('branch_name'));
     }
 
     public function select($branch_id)
@@ -40,7 +49,7 @@ class BranchSelection extends Component
             Session::put('branch_name', $branch->name);
         }
 
-        return redirect($this->current_url);
+        return redirect(Session::pull(self::RETURN_TO, $this->current_url));
     }
 
     public function render()

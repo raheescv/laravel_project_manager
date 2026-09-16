@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Livewire\General\BranchSelection;
 use App\Models\SaleDaySession;
 use Closure;
 use Illuminate\Http\Request;
@@ -12,6 +13,9 @@ class RequireOpenDaySession
     {
         // Check if the user has a default branch set
         if (! session('branch_id')) {
+            // The branch popup opens there; picking a branch brings the user back here.
+            session([BranchSelection::RETURN_TO => $request->fullUrl()]);
+
             return redirect()->route('sale::day-management')
                 ->with('error', 'Please set a default branch before proceeding.');
         }

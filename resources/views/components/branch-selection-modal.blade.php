@@ -1,6 +1,6 @@
 @php
-    // No branch in the session (e.g. the user has no default branch): ask for one before anything else.
-    $branchRequired = blank(session('branch_id')) || blank(session('branch_name'));
+    // No branch in the session: ask for one before anything else.
+    $branchRequired = \App\Livewire\General\BranchSelection::isRequired();
 @endphp
 <div id="branch_selection_modal" class="modal fade" tabindex="-1" aria-hidden="true" @if ($branchRequired) data-bs-backdrop="static" data-bs-keyboard="false" @endif>
     <div class="modal-dialog modal-dialog-centered" style="max-width: 560px;">
