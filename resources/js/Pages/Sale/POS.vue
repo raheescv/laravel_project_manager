@@ -951,9 +951,23 @@ export default {
 
         // Handler for saving from EditItemModal
         const onEditItemSave = (updatedItem) => {
-            if (editItemKey.value && form.items[editItemKey.value]) {
+            const oldKey = editItemKey.value
+            if (oldKey && form.items[oldKey]) {
+                // The modal only changes the ids; the cart groups by name
+                updatedItem.employee_name = props.employees?.[updatedItem.employee_id] || updatedItem.employee_name
+                updatedItem.assistant_name = props.employees?.[updatedItem.assistant_id] || ''
+
                 // Use Object.assign to preserve reactivity
-                Object.assign(form.items[editItemKey.value], updatedItem)
+                Object.assign(form.items[oldKey], updatedItem)
+
+                // Re-key when the employee changed so later adds merge into the right row
+                // (mirrors Livewire Sale\Page::editedItem); keep row order, never clobber another row
+                const newKey = buildCartItemKey(form.items[oldKey])
+                if (newKey !== oldKey && !form.items[newKey]) {
+                    form.items = Object.fromEntries(Object.entries(form.items)
+                        .map(([key, item]) => key === oldKey ? [newKey, item] : [key, item]))
+                    editItemKey.value = newKey
+                }
                 calculateTotals()
                 showEditItemModal.value = false
                 toast.success('Item updated successfully')
