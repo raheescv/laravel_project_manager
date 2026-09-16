@@ -435,6 +435,7 @@
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
+                                clamp: true,
                                 display: function(context) {
                                     return Number(context.dataset.data[context.dataIndex]) > 0;
                                 },
@@ -462,6 +463,9 @@
                             },
                             y: {
                                 beginAtZero: true,
+                                // Headroom above the tallest bar so its value label
+                                // isn't drawn over the legend.
+                                grace: '12%',
                                 grid: {
                                     borderDash: [2, 2]
                                 },
