@@ -108,7 +108,8 @@
                     label: {
                         title: 'Label printer',
                         printerKey: 'qz.labelPrinter',
-                        enabledKey: 'qz.labelEnabled',
+                        // Renamed from qz.labelEnabled so every computer starts with direct print off
+                        enabledKey: 'qz.labelDirectPrint',
                         browserLabel: 'No printer, open the PDF instead',
                         // Picked by itself on a computer's first print when a printer's name fits
                         match: /tsc|zebra|godex|argox|label/i,
@@ -118,7 +119,8 @@
                     receipt: {
                         title: 'Receipt printer',
                         printerKey: 'qz.receiptPrinter',
-                        enabledKey: 'qz.receiptEnabled',
+                        // Renamed from qz.receiptEnabled so every computer starts with direct print off
+                        enabledKey: 'qz.receiptDirectPrint',
                         browserLabel: 'No printer, print from the browser',
                         // Epson TM-T20 / TM_T82, thermal and POS printers; not an Epson inkjet like L3110
                         match: /tm[-_ ]?[a-z]{0,2}\d|receipt|thermal|xprinter|rongta|bixolon|sunmi|(^|[^a-z])pos([^a-z]|$)/i,
