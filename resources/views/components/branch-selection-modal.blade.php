@@ -15,7 +15,13 @@
             $('#branch_selection_modal').modal('toggle');
         });
         @if ($branchRequired)
-            $('#branch_selection_modal').modal('show');
+            // Bootstrap only attaches $.fn.modal on DOMContentLoaded, so use its own API and wait for the DOM.
+            (function() {
+                var open = function() {
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('branch_selection_modal')).show();
+                };
+                document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', open) : open();
+            })();
         @endif
     </script>
 @endpush
