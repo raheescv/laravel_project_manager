@@ -348,6 +348,7 @@ return [
             'label' => 'Reports - Sales',
             'permissions' => [
                 'report.sale item',
+                'report.sale category',
                 'report.sale return item',
                 'report.daily sales insights',
                 'report.sales overview',
