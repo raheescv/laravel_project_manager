@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Configuration;
+use App\Support\ModuleAccess;
 
 class NavigationService
 {
@@ -77,11 +78,18 @@ class NavigationService
                 'children' => ['Create Order', 'Orders', 'Order Management', 'Job Completion', 'Item Wise Report', 'Tailor Wise Report', 'Non-Delivery Report'],
             ],
             [
+                'id' => 'students',
+                'label' => 'Students',
+                'icon' => 'fa fa-graduation-cap',
+                'visible' => true,
+                'children' => ['Add Student', 'Students', 'Canteen Menu', 'Wallet Report', 'QPay Recharges'],
+            ],
+            [
                 'id' => 'sale',
                 'label' => 'Sale',
                 'icon' => 'fa fa-shopping-cart',
                 'visible' => true,
-                'children' => ['Create', 'List', 'Item Wise Report', 'Receipts', 'Return Create', 'Return List', 'Return Payments'],
+                'children' => ['Create', 'List', 'Item Wise Report', 'Category Wise Report', 'Receipts', 'Return Create', 'Return List', 'Return Payments'],
             ],
             [
                 'id' => 'day-session',
@@ -231,7 +239,11 @@ class NavigationService
         $activeModule = Configuration::where('key', 'active_module')->value('value');
 
         if (! $activeModule) {
-            return $items;
+            // Opt-in modules (School) stay hidden until a system that includes them is chosen.
+            $navModuleMap = self::navItemModuleMap();
+
+            return array_values(array_filter($items, fn (array $item): bool => collect($navModuleMap[$item['id'] ?? ''] ?? ['core'])
+                ->contains(fn (string $module) => ModuleAccess::enabled($module))));
         }
 
         $enabledModuleKeys = config("modules.systems.{$activeModule}", []);
@@ -270,6 +282,7 @@ class NavigationService
             'issue' => ['support'],
             'appointments' => ['sales', 'saloon'],
             'tailoring' => ['tailoring'],
+            'students' => ['school'],
             'sale' => ['sales'],
             'day-session' => ['sales'],
             'purchase' => ['simple_purchase_management'],

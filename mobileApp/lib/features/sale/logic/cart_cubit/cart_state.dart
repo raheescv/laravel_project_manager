@@ -25,6 +25,8 @@ class CartState extends Equatable {
     this.payMode = PayMode.cash,
     this.customPayments = const [],
     this.sendToWhatsapp = false,
+    this.student,
+    this.preOrder,
   });
 
   final List<CartLine> lines;
@@ -58,6 +60,21 @@ class CartState extends Equatable {
   final PayMode payMode;
   final List<CustomPayment> customPayments;
   final bool sendToWhatsapp;
+
+  /// The student whose card was tapped for this ticket. The student is the
+  /// customer, and [PayMode.studentCard] spends their card balance.
+  final StudentCard? student;
+
+  /// The parent's pre-order whose items the till put on this ticket (from the
+  /// tapped card). Sent with the sale so it is marked collected for today.
+  final CardPreOrder? preOrder;
+
+  /// Whether this ticket spends a student card — a tapped card, or an edited
+  /// sale that was already paid by Student Card.
+  bool get paysByStudentCard =>
+      payMode == PayMode.studentCard ||
+      (payMode == PayMode.custom && student?.cardMethodId != null &&
+          customPayments.any((p) => p.methodId == student!.cardMethodId));
 
   bool get isEditing => editingSaleId != null;
 
@@ -128,6 +145,10 @@ class CartState extends Equatable {
     PayMode? payMode,
     List<CustomPayment>? customPayments,
     bool? sendToWhatsapp,
+    StudentCard? student,
+    bool clearStudent = false,
+    CardPreOrder? preOrder,
+    bool clearPreOrder = false,
     bool clearStylist = false,
     bool clearEditingSaleId = false,
   }) =>
@@ -151,6 +172,8 @@ class CartState extends Equatable {
         payMode: payMode ?? this.payMode,
         customPayments: customPayments ?? this.customPayments,
         sendToWhatsapp: sendToWhatsapp ?? this.sendToWhatsapp,
+        student: clearStudent ? null : (student ?? this.student),
+        preOrder: clearPreOrder ? null : (preOrder ?? this.preOrder),
       );
 
   @override
@@ -169,5 +192,7 @@ class CartState extends Equatable {
         payMode,
         customPayments,
         sendToWhatsapp,
+        student,
+        preOrder,
       ];
 }

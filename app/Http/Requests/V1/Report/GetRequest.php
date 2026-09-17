@@ -22,7 +22,7 @@ class GetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', 'string', 'in:billwise,employeewise,itemwise,commission,overview'],
+            'type' => ['required', 'string', 'in:billwise,employeewise,itemwise,categorywise,commission,overview'],
             'startDate' => ['nullable', 'date'],
             'endDate' => ['nullable', 'date', 'after_or_equal:startDate'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
@@ -43,7 +43,7 @@ class GetRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'type.in' => 'The report type must be billwise, employeewise, itemwise, commission or overview.',
+            'type.in' => 'The report type must be billwise, employeewise, itemwise, categorywise, commission or overview.',
             'employee_id.exists' => 'The selected employee does not exist.',
             'product_id.exists' => 'The selected product does not exist.',
         ];

@@ -68,10 +68,11 @@ Future<void> _start() async {
   // endpoint; no-ops offline and the cache is used).
   if (auth.user != null) unawaited(currency.refreshCurrencies());
 
-  // After a fresh sign-in, default the active branch to that user's home
-  // branch and pull the latest currency list to cache for offline use.
+  // After a fresh sign-in, work from that user's own branches (the router then
+  // asks which, when there is more than one) and pull the latest currency list
+  // to cache for offline use.
   auth.onAuthenticated = (user) {
-    branch.applyUserDefault(int.tryParse(user.branchId ?? ''));
+    branch.applyUser(user);
     currency.refreshCurrencies();
   };
 }

@@ -92,15 +92,15 @@ void main() {
       expect(online.posted.map((p) => p['clientUuid']), [a, b, c]);
     });
 
-    test('carries the originating cashier so a shared till files it correctly', () async {
+    test('carries the originating cashier and branch so a shared till files it correctly', () async {
       await queue(a, userId: '42');
 
       await sync.drain();
 
-      // The branch is deliberately NOT sent — the server takes it from this
-      // cashier's own assignment.
+      // The branch the sale was rung up under — the till may have moved since.
+      // The server honours it only when that cashier is assigned to it.
       expect(online.posted.single['clientUserId'], 42);
-      expect(online.posted.single.containsKey('clientBranchId'), isFalse);
+      expect(online.posted.single['clientBranchId'], 1);
     });
 
     test('stops at the first unreachable row rather than burning the queue', () async {

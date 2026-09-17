@@ -4,6 +4,9 @@ namespace App\Actions\V1\Sale;
 
 use App\Actions\Account\CreateAction as AccountCreateAction;
 use App\Actions\Sale\CreateAction as SaleCreateAction;
+use App\Actions\Student\EnsureAccountsAction;
+use App\Actions\Student\PreOrder\CollectAction as CollectPreOrderAction;
+use App\Actions\V1\Student\ResolveCardCustomerAction;
 use App\Http\Requests\V1\Sale\StoreRequest;
 use App\Models\Account;
 use App\Models\AccountCategory;
@@ -42,11 +45,13 @@ class CreateAction
             // the wrong person — and refusing to drain them instead would strand
             // real money on the device until that cashier came back.
             //
-            // The branch always follows that cashier's own assignment; it is
-            // never taken from the request, so this cannot be used to post a
-            // sale into someone else's branch.
+            // The branch is the one the till was working as when the sale was
+            // rung up (`clientBranchId` on a queued sale, the live `branch_id`
+            // otherwise) — but only when that cashier is assigned to it. Anything
+            // else falls back to their default branch, so this cannot be used to
+            // post a sale into a branch they have no business in.
             $user = $this->resolveCashier($poster, $request->validated('clientUserId'));
-            $branchId = $user->default_branch_id;
+            $branchId = $user->operatingBranchId($request->validated('clientBranchId') ?? $request->input('branch_id'));
 
             if (! $branchId) {
                 throw new RuntimeException('Your account is not assigned to a branch.');
@@ -74,13 +79,18 @@ class CreateAction
                 return $existing;
             }
 
-            $customer = $this->resolveCustomer($request->validated('customerName'), $request->validated('phoneNumber'));
+            // A tapped student card makes that student the customer (see ResolveCardCustomerAction).
+            $student = $request->validated('studentAccountId')
+                ? (new ResolveCardCustomerAction())->execute((int) $request->validated('studentAccountId'), $request->validated('cardUid'), $request->validated('offlineRef'))
+                : null;
+            $customer = $student ?? $this->resolveCustomer($request->validated('customerName'), $request->validated('phoneNumber'));
             $items = $this->buildItems($request->validated('items'), $branchId, (int) $user->id);
             $totalPayment = (float) $request->validated('totalPayment');
             $payment = $this->resolvePayments(
                 $request->validated('paymentMethod'),
                 $request->validated('payments') ?? [],
                 $totalPayment,
+                $student !== null,
             );
 
             // The heuristic guard only exists because an online sale has no
@@ -124,11 +134,18 @@ class CreateAction
                 'comboOffers' => [],
             ];
 
-            $sale = DB::transaction(function () use ($data, $user) {
+            $preOrderId = $student ? $request->validated('preOrderId') : null;
+
+            $sale = DB::transaction(function () use ($data, $user, $preOrderId) {
                 $response = (new SaleCreateAction())->execute($data, (int) $user->id);
 
                 if (! $response['success']) {
                     throw new RuntimeException($response['message']);
+                }
+
+                // The parent's pre-order is handed over: the next tap today must not add it again.
+                if ($preOrderId && $response['data']->status === 'completed') {
+                    (new CollectPreOrderAction())->execute((int) $preOrderId, (int) $response['data']->account_id, (int) $response['data']->id, (int) $user->id);
                 }
 
                 return $response['data'];
@@ -425,7 +442,7 @@ class CreateAction
      * @param  array<int, array<string, mixed>>  $customPayments
      * @return array{payments: array<int, array{payment_method_id: int, amount: float}>, paid: float, ids: string, names: string}
      */
-    private function resolvePayments(string $method, array $customPayments, float $totalPayment): array
+    private function resolvePayments(string $method, array $customPayments, float $totalPayment, bool $studentSale = false): array
     {
         $method = trim($method);
 
@@ -433,7 +450,11 @@ class CreateAction
             return ['payments' => [], 'paid' => 0.0, 'ids' => '', 'names' => 'Credit'];
         }
 
-        $configured = $this->configuredPaymentMethods();
+        $configured = $this->configuredPaymentMethods($studentSale);
+
+        if (strcasecmp($method, 'student_card') === 0) {
+            return $this->studentCardPayment($configured, $totalPayment, $studentSale);
+        }
 
         if ($configured->isEmpty()) {
             throw new RuntimeException('No payment methods are configured for this business.');
@@ -504,11 +525,39 @@ class CreateAction
      *
      * @return \Illuminate\Support\Collection<int, Account>
      */
-    private function configuredPaymentMethods()
+    private function configuredPaymentMethods(bool $studentSale = false)
     {
+        $ids = tenant_cache('payment_methods', []) ?: [];
+        // Student Card is never offered as a general method; it only pays a student's own sale.
+        if ($studentSale && $cardId = EnsureAccountsAction::cardMethodId()) {
+            $ids[] = $cardId;
+        }
+
         return Account::query()
-            ->whereIn('id', tenant_cache('payment_methods', []))
+            ->whereIn('id', $ids)
             ->get(['id', 'name']);
+    }
+
+    /**
+     * paymentMethod "student_card": the whole amount from the tapped student's card.
+     *
+     * @return array{payments: array<int, array{payment_method_id: int, amount: float}>, paid: float, ids: string, names: string}
+     */
+    private function studentCardPayment($configured, float $totalPayment, bool $studentSale): array
+    {
+        $cardId = EnsureAccountsAction::cardMethodId();
+        $account = $cardId ? $configured->firstWhere('id', $cardId) : null;
+
+        if (! $studentSale || ! $account) {
+            throw new RuntimeException('Tap the student\'s card to pay with Student Card.');
+        }
+
+        return [
+            'payments' => [['payment_method_id' => (int) $account->id, 'amount' => $totalPayment]],
+            'paid' => $totalPayment,
+            'ids' => (string) $account->id,
+            'names' => $account->name,
+        ];
     }
 
     /**

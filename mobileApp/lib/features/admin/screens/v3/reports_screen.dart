@@ -30,7 +30,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
   StreamSubscription<int>? _branchSub;
 
   /// The two reports this page holds: 0 = Sales Overview (performance,
-  /// payments, per-day trend), 1 = Breakdown (By Item / By Staff ranking).
+  /// payments, per-day trend), 1 = Breakdown (By Item / By Category / By Staff
+  /// ranking).
   /// The date range is shared, so it stays on top of both.
   int _tab = 0;
 
@@ -221,7 +222,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   ExportReport get _reportOnScreen {
     if (_tab == 0) return ExportReport.overview;
-    return context.read<AdminCubit>().reportType == 'itemwise' ? ExportReport.items : ExportReport.staff;
+    return switch (context.read<AdminCubit>().reportType) {
+      'itemwise' => ExportReport.items,
+      'categorywise' => ExportReport.categories,
+      _ => ExportReport.staff,
+    };
   }
 
   /// Toolbar button on tablets; phones use the header's download button.
@@ -579,18 +584,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return d == null ? '' : Dates.weekday(d);
   }
 
-  // ---- By Item / By Staff breakdown (toggle + metric + ranked table) -------
+  // ---- By Item / By Category / By Staff breakdown (toggle + metric + table) --
 
-  /// One card: the By Item / By Staff segmented control, the Amount/Qty metric
-  /// row (items only), then the ranked, paginated table — was three stacked
-  /// blocks, now a single cohesive card.
+  /// One card: the By Item / By Category / By Staff segmented control, the
+  /// Amount/Qty and Type rows (items and categories), then the ranked,
+  /// paginated table — was three stacked blocks, now a single cohesive card.
   Widget _breakdownCard(AdminCubit admin) {
     return AstraCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _segmentToggle(admin),
-          if (admin.reportType == 'itemwise') ...[
+          if (AdminCubit.ranksProducts(admin.reportType)) ...[
             const SizedBox(height: 10),
             _itemMetricRow(admin),
             const SizedBox(height: 10),
@@ -629,8 +634,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
               children: [
                 Icon(icon, size: 14, color: active ? Colors.white : p.textSecondary),
                 const SizedBox(width: 7),
-                Text(label,
-                    style: ui(size: 12, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
+                Flexible(
+                  child: Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 12, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
+                ),
               ],
             ),
           ),
@@ -643,6 +652,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(13)),
       child: Row(children: [
         seg('By Item', 'itemwise', Icons.inventory_2_rounded),
+        seg('By Category', 'categorywise', Icons.category_rounded),
         seg('By Staff', 'employeewise', Icons.people_alt_rounded),
       ]),
     );
@@ -689,7 +699,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  /// Item-report type filter: All / Product / Service / Asset. Passing null to
+  /// Item and category type filter: All / Product / Service. Passing null to
   /// the controller clears the filter (the server returns every type). Mirrors
   /// the web report's `product_type` filter.
   Widget _itemTypeRow(AdminCubit admin) {
@@ -757,8 +767,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
       );
     }
 
-    final isItem = admin.reportType == 'itemwise';
-    final rowIcon = isItem ? Icons.inventory_2_rounded : Icons.person_rounded;
+    final (heading, noun, rowIcon) = switch (admin.reportType) {
+      'itemwise' => ('Item breakdown', 'items', Icons.inventory_2_rounded),
+      'categorywise' => ('Category breakdown', admin.reportRowCount == 1 ? 'category' : 'categories', Icons.category_rounded),
+      _ => ('Staff breakdown', 'staff', Icons.person_rounded),
+    };
+    final isStaff = !AdminCubit.ranksProducts(admin.reportType);
     final maxAmount = admin.reportRows.fold<double>(0, (a, r) => r.amount > a ? r.amount : a);
     // One trailing slot for the load-more footer while further pages remain.
     final extra = admin.reportHasMore ? 1 : 0;
@@ -766,14 +780,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
     // The signed-in person's row on the staff list, and their rank among the
     // rows loaded so far (the list is server-ranked, so position is rank).
     final meId = context.select<AuthCubit, String?>((c) => c.state.user?.id) ?? '';
-    bool isMe(ReportRow r) => !isItem && meId.isNotEmpty && r.id == meId;
-    final myIndex = isItem ? -1 : admin.reportRows.indexWhere(isMe);
+    bool isMe(ReportRow r) => isStaff && meId.isNotEmpty && r.id == meId;
+    final myIndex = isStaff ? admin.reportRows.indexWhere(isMe) : -1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionLabel(
-          isItem ? 'Item breakdown' : 'Staff breakdown',
+          heading,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -781,7 +795,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 _pill('You · #${myIndex + 1}', p.primary.withValues(alpha: 0.12), p.primary),
                 const SizedBox(width: 6),
               ],
-              _pill('${admin.reportRowCount} ${isItem ? 'items' : 'staff'}', p.tint, p.textSecondary),
+              _pill('${admin.reportRowCount} $noun', p.tint, p.textSecondary),
             ],
           ),
         ),
@@ -807,7 +821,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(isItem && admin.itemMetric == 'qty' ? 'Total qty' : 'Grand total',
+              Text(!isStaff && admin.itemMetric == 'qty' ? 'Total qty' : 'Grand total',
                   style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
               Text(admin.reportTotalText, style: serif(size: 17, color: p.primaryDark)),
             ],

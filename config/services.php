@@ -84,6 +84,19 @@ return [
     'tap' => [
         'base_url' => env('TAP_BASE_URL', 'https://api.tap.company/v2'),
     ],
+    // QCB QPay EZ-Connect (student card top-ups). Payment, inquiry and refund share one URL.
+    // Merchant credentials are per tenant, encrypted, in Settings -> Student Cards.
+    'qpay' => [
+        'staging_url' => env('QPAY_STAGING_URL', 'https://pguat.qcb.gov.qa/qcb-pg/api/gateway/2.0'),
+        'production_url' => env('QPAY_PRODUCTION_URL', 'https://pg-api.qpay.gov.qa/qcb-pg/api/gateway/2.0'),
+        // QPay dates (ddMMyyyyHHmmss) are Qatar time whatever the app timezone is.
+        'timezone' => 'Asia/Qatar',
+    ],
+    // The standalone parent_portal app. Used for invite links and the way back from
+    // QPay when a school has not set its own address in Settings -> Student Settings.
+    'parent_portal' => [
+        'url' => env('PARENT_PORTAL_URL'),
+    ],
     // QZ Tray silent label printing. One self-signed pair for the whole app: php artisan qz:certificate
     'qz' => [
         'certificate' => env('QZ_CERTIFICATE_PATH', storage_path('app/private/qz/digital-certificate.txt')),

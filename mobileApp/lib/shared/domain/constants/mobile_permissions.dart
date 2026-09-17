@@ -40,6 +40,7 @@ abstract final class PermissionSlug {
   static const saleReturnCreate = 'sales return.create';
   static const saleReturnEdit = 'sales return.edit';
   static const stockCheck = 'inventory.stock check';
+  static const studentCardAssign = 'student card.assign';
   // Same gate as the web Settings page — editing the shared Sale
   // Configuration (printer & receipt options) from the app.
   static const settings = 'configuration.settings';

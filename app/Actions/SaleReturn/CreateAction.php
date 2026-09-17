@@ -2,6 +2,7 @@
 
 namespace App\Actions\SaleReturn;
 
+use App\Actions\Student\Card\GuardCardPaymentAction;
 use App\Models\SaleReturn;
 
 class CreateAction
@@ -35,6 +36,10 @@ class CreateAction
                     throw new \Exception($response['message'], 1);
                 }
                 $model->refresh();
+                $response = (new GuardCardPaymentAction())->execute($model);
+                if (! $response['success']) {
+                    throw new \Exception($response['message'], 1);
+                }
                 $response = (new JournalEntryAction())->execute($model, $user_id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);

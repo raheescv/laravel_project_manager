@@ -14,6 +14,7 @@ import 'package:invo/shared/domain/helpers/icons.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
+import 'package:invo/features/admin/logic/day_session_cubit/day_session_cubit.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/logic/catalog_cubit/catalog_cubit.dart';
@@ -23,6 +24,8 @@ import 'package:invo/shared/utils/camera_permission.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/day_gate.dart';
+import 'package:invo/shared/utils/router/route_observer.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
@@ -30,6 +33,7 @@ import 'package:invo/shared/widgets/offline_image.dart';
 import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
+import 'package:invo/features/student_card/widgets/tap_card_sheet.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
 
 part 'new_sale_catalog_views.dart';
@@ -53,9 +57,13 @@ class NewSaleScreen extends StatefulWidget {
   State<NewSaleScreen> createState() => _NewSaleScreenState();
 }
 
-class _NewSaleScreenState extends State<NewSaleScreen> {
+class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   final _searchCtl = TextEditingController();
   final _scrollCtl = ScrollController();
+
+  /// Follows the branch day while the POS is up — see [_watchDay].
+  StreamSubscription<AuthState>? _daySub;
+  late final AppLifecycleListener _lifecycle;
 
   /// Grid (image tiles) vs list — restored from the last choice on this device.
   _ProductView _view = serviceLocator<LocalStorageService>().saleView == 'list'
@@ -66,7 +74,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   void initState() {
     super.initState();
     _scrollCtl.addListener(_onScroll);
+    _watchDay();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkDay();
       final cat = context.read<CatalogCubit>();
       cat.loadIfNeeded();
       // Warm the stylist list so the STAFF selector can show the assigned
@@ -111,10 +121,59 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) routeObserver.subscribe(this, route);
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
+    _daySub?.cancel();
+    _lifecycle.dispose();
     _searchCtl.dispose();
     _scrollCtl.dispose();
     super.dispose();
+  }
+
+  // ─── Day gate ──────────────────────────────────────────────────────────────
+
+  /// The router only lets New Sale open on a day the cached user says is open
+  /// ([DayGate]). That copy can be stale — the day opened for the default
+  /// branch at sign-in, or closed since from the web or another till — so the
+  /// POS asks the server on the way in and whenever the app comes back to the
+  /// foreground, and leaves for the gate if the day turns out to be closed.
+  void _watchDay() {
+    final auth = context.read<AuthCubit>();
+    var open = auth.user?.dayOpen ?? false;
+    _daySub = auth.stream.listen((s) {
+      final was = open;
+      open = s.user?.dayOpen ?? false;
+      if (was && !open && s.status == AuthStatus.signedIn) _leaveClosedDay();
+    });
+    _lifecycle = AppLifecycleListener(onResume: _checkDay);
+  }
+
+  void _checkDay() {
+    if (mounted) unawaited(context.read<DaySessionCubit>().refresh(statusOnly: true));
+  }
+
+  /// A page pushed over the POS came off — the day may have closed (or the
+  /// branch changed) while it was covered, when leaving was not this screen's
+  /// call to make.
+  @override
+  void didPopNext() {
+    final auth = context.read<AuthCubit>();
+    if (auth.status == AuthStatus.signedIn && !(auth.user?.dayOpen ?? false)) _leaveClosedDay();
+  }
+
+  /// Hands over to the gate. The ticket stays in the cart for when the day is
+  /// open again. Only from the top of the stack: navigating from under the cart
+  /// or Review & Pay would yank the page the cashier is actually looking at.
+  void _leaveClosedDay() {
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+    DayGate.toSale(context);
   }
 
   /// Add [product] to the ticket, warning when the cached catalog says there is
@@ -318,6 +377,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ),
             const SizedBox(height: 11),
             _whoRow(cart),
+            _preOrderBanner(cart),
             const _CachedCatalogNotice(),
           ],
         ),
@@ -355,7 +415,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       ),
       child: Row(
         children: [
-          Expanded(child: _whoSeg(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient)),
+          Expanded(child: _clientSeg(cart)),
           Container(width: 1, height: 46, color: p.hairline),
           Expanded(
             child: _whoSeg(
@@ -368,6 +428,76 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// The client half of the selector. A tapped student card shows the student
+  /// and what the card can spend, so the cashier sees it before charging.
+  Widget _clientSeg(CartCubit cart) {
+    final student = cart.student;
+    if (student == null) return _whoSeg(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient);
+    return _whoSeg(Icons.school_outlined, 'STUDENT · ${Money.of(student.available)}', student.name, _pickClient,
+        avatarUrl: student.imageUrl, avatarHeaders: context.read<AuthCubit>().config.assetHeaders);
+  }
+
+  /// Tap a student card: the student becomes the client and the card pays. A
+  /// pre-order the parent set up for today goes straight into the cart; the
+  /// cashier still checks it before charging.
+  Future<void> _tapStudentCard() async {
+    final card = await showTapCardSheet(context);
+    if (card == null || !mounted) return;
+    final cart = context.read<CartCubit>();
+    cart.setStudent(card);
+    final order = card.preOrder;
+    if (order != null && order.items.isNotEmpty && cart.preOrder?.id != order.id) {
+      cart.applyPreOrder(order);
+      AstraSnack.success(context, '${card.name} · pre-order added (${order.count} ${order.count == 1 ? 'item' : 'items'})');
+      return;
+    }
+    AstraSnack.success(context, '${card.name} · card ready', duration: const Duration(milliseconds: 1200));
+  }
+
+  /// The parent's pre-order on the ticket — why these items are here, the
+  /// parent's note for the canteen, and a one-tap way to take them off.
+  Widget _preOrderBanner(CartCubit cart) {
+    final order = cart.preOrder;
+    if (order == null) return const SizedBox.shrink();
+    final p = context.astra;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+        decoration: BoxDecoration(
+          color: p.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: p.primary.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.restaurant_menu, size: 18, color: p.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(order.isWeekly ? 'WEEKLY PRE-ORDER FROM PARENT' : 'PRE-ORDER FROM PARENT',
+                      style: ui(size: 9.5, weight: FontWeight.w800, color: p.primary, letterSpacing: 0.8)),
+                  const SizedBox(height: 2),
+                  Text(order.summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                  if (order.note.isNotEmpty)
+                    Text('Note: ${order.note}', maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary)),
+                  if (order.missing > 0)
+                    Text('${order.missing} ordered ${order.missing == 1 ? 'item is' : 'items are'} no longer sold',
+                        style: ui(size: 11.5, weight: FontWeight.w600, color: AstraPalette.danger)),
+                ],
+              ),
+            ),
+            TextButton(onPressed: cart.removePreOrder, child: const Text('Remove')),
+          ],
+        ),
       ),
     );
   }
@@ -479,7 +609,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       ),
       child: Column(
         children: [
-          _whoSeg(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient),
+          _clientSeg(cart),
           Container(height: 1, color: p.hairline),
           _whoSeg(
             Icons.brush,
@@ -542,6 +672,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           ),
           const SizedBox(height: 12),
           _whoStack(cart),
+          _preOrderBanner(cart),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -842,6 +973,37 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               const SectionLabel('Client'),
               const SizedBox(height: 4),
               Text('Client Details?', style: serif(size: 22, color: p.ink)),
+              const SizedBox(height: 12),
+              // Student card: tap the card instead of typing a name.
+              if (cart.student != null)
+                AstraCard(
+                  child: Row(
+                    children: [
+                      Icon(Icons.school_outlined, color: p.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text('${cart.student!.name} · ${Money.of(cart.student!.available)} available',
+                            style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          cart.clearStudent();
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Remove card'),
+                      ),
+                    ],
+                  ),
+                )
+              else if (cart.schoolEnabled)
+                AstraButton(
+                  label: 'Tap student card',
+                  icon: Icons.nfc,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _tapStudentCard();
+                  },
+                ),
               const SizedBox(height: 16),
               _sheetField(ctx, 'Name', nameCtl, hint: AppStrings.walkInCustomer),
               const SizedBox(height: 12),

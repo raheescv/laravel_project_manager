@@ -40,4 +40,7 @@ class AppStrings {
   // Day session.
   static const String couldNotUpdateDaySession =
       'Could not update the day session. Check your connection and try again.';
+  // Same words as the web's RequireOpenDaySession.
+  static const String dayNotOpenForSales =
+      'Please open a day session for this branch before adding sales.';
 }

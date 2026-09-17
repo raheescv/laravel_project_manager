@@ -100,6 +100,7 @@ return [
         'income vs expense dashboard pie chart',
         'income vs expense dashboard bar chart',
         'sale item',
+        'sale category',
         'sale return item',
         'purchase return item',
         'day book',
@@ -131,6 +132,9 @@ return [
         'tailoring order item',
         'tailoring non delivery',
         'tailoring order item tailor',
+        // School module (see App\Support\ModuleAccess)
+        'student wallet',
+        'student recharge',
     ],
     'log' => ['inventory', 'log viewer', 'email'],
     'day close' => ['sync amount'],
@@ -143,6 +147,14 @@ return [
     'tailoring measurement option' => ['create', 'view', 'edit', 'delete', 'quick add'],
     'tailoring order' => ['view', 'create', 'edit', 'delete', 'export', 'view journal entries', 'receipts'],
     'tailoring job completion' => ['view', 'create', 'edit', 'delete'],
+
+    // School: student cards & parent portal
+    'student' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
+    'student card' => ['assign', 'block', 'unblock'],
+    'student topup' => ['view', 'create', 'refund'],
+    'student guardian' => ['invite'],
+    'student settings' => ['edit'],
+    'student menu' => ['view', 'edit'],
 
     // Property Management
     'property' => ['create', 'view', 'edit', 'delete', 'export', 'dashboard overview'],

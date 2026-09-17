@@ -54,6 +54,11 @@ class EndPoints {
   static String daySessionReport(String id) => '/admin/day-sessions/$id/report';
   static String daySessionReportPdf(String id) => '/admin/day-sessions/$id/report/pdf';
 
+  // ---- Student cards ----
+  static String studentCard(String uid) => '/students/card/${Uri.encodeComponent(uid)}';
+  static const String students = '/students';
+  static String studentCardLink(int accountId) => '/students/$accountId/card';
+
   // ---- Stock Check ----
   static const String stockCheck = '/stock-check';
   static String stockCheckById(int id) => '/stock-check/$id';

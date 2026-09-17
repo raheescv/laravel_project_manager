@@ -53,7 +53,7 @@ abstract class LookupRepository {
 
   Future<({String? baseCode, List<Currency> currencies})> currencies();
 
-  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, RemotePrintConfig? print})> saleSettings();
+  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, bool? schoolEnabled, RemotePrintConfig? print})> saleSettings();
 
   /// Company logo bytes (png/jpg/svg) for the receipt header; cached by the
   /// print cubit keyed on `RemotePrintConfig.logoVersion`.

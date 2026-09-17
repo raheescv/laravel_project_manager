@@ -59,6 +59,7 @@ class GetAction
         [$rows, $summary, $total] = match ($type) {
             'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage),
             'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $productType),
+            'categorywise' => $this->categoryWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $productType),
             'commission' => (new CommissionAction())->execute($startDate, $endDate, $employeeId, $productId, $branchId, $page, $perPage),
             // Bills are sale-level, so self-scope means "bills I rang up" —
             // created_by, the same set the Sales list and the dashboard cards
@@ -287,6 +288,98 @@ class GetAction
 
         $summary = [
             'items' => $total,
+            'total_quantity' => round((float) $sums->total_quantity, 3),
+            'total_amount' => round((float) $sums->total_amount, 2),
+        ];
+
+        return [$rows, $summary, $total];
+    }
+
+    /**
+     * Category-wise net totals: the item-wise figures rolled up to each
+     * product's main category (sale items − return items, base-unit
+     * quantities), with how many distinct products sold under it. Takes the
+     * same Rank By and Type filters as the item report. A product whose
+     * category has since been deleted still counts, under "Uncategorised".
+     *
+     * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
+     */
+    private function categoryWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage, ?string $sort, ?string $productType): array
+    {
+        $saleItems = SaleItem::query()
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->leftJoin('categories', 'categories.id', '=', 'products.main_category_id')
+            ->where('sales.status', 'completed')
+            ->whereNull('sales.deleted_at')
+            ->when($startDate, fn ($q, $value) => $q->where('sales.date', '>=', $value))
+            ->when($endDate, fn ($q, $value) => $q->where('sales.date', '<=', $value))
+            ->when($employeeId, fn ($q, $value) => $q->where('sale_items.employee_id', $value))
+            ->when($branchId, fn ($q, $value) => $q->where('sales.branch_id', $value))
+            ->when($productType, fn ($q, $value) => $q->where('products.type', $value))
+            ->groupBy('categories.id', 'categories.name')
+            ->selectRaw('categories.id, categories.name as category_name')
+            ->selectRaw('SUM(sale_items.total) as sale_total')
+            ->selectRaw('0 as return_total')
+            ->selectRaw('SUM(sale_items.base_unit_quantity) as sale_qty')
+            ->selectRaw('0 as return_qty')
+            ->selectRaw('COUNT(DISTINCT sale_items.sale_id) as bills_count')
+            ->selectRaw('COUNT(DISTINCT sale_items.product_id) as products_count');
+
+        $returnItems = SaleReturnItem::query()
+            ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_items.sale_return_id')
+            ->join('products', 'products.id', '=', 'sale_return_items.product_id')
+            ->leftJoin('categories', 'categories.id', '=', 'products.main_category_id')
+            ->where('sale_returns.status', 'completed')
+            ->whereNull('sale_returns.deleted_at')
+            ->when($startDate, fn ($q, $value) => $q->where('sale_returns.date', '>=', $value))
+            ->when($endDate, fn ($q, $value) => $q->where('sale_returns.date', '<=', $value))
+            ->when($employeeId, fn ($q, $value) => $q->where('sale_return_items.employee_id', $value))
+            ->when($branchId, fn ($q, $value) => $q->where('sale_returns.branch_id', $value))
+            ->when($productType, fn ($q, $value) => $q->where('products.type', $value))
+            ->groupBy('categories.id', 'categories.name')
+            ->selectRaw('categories.id, categories.name as category_name')
+            ->selectRaw('0 as sale_total')
+            ->selectRaw('SUM(sale_return_items.total) as return_total')
+            ->selectRaw('0 as sale_qty')
+            ->selectRaw('SUM(sale_return_items.base_unit_quantity) as return_qty')
+            ->selectRaw('0 as bills_count')
+            ->selectRaw('0 as products_count');
+
+        $net = DB::query()
+            ->fromSub($saleItems->unionAll($returnItems), 'u')
+            ->groupBy('id', 'category_name')
+            ->selectRaw('id, category_name')
+            ->selectRaw('SUM(sale_total) - SUM(return_total) as total')
+            ->selectRaw('SUM(sale_qty) - SUM(return_qty) as quantity')
+            ->selectRaw('SUM(bills_count) as bills_count')
+            ->selectRaw('SUM(products_count) as products_count');
+
+        $wrapped = DB::query()->fromSub($net, 'n');
+        $total = (clone $wrapped)->count();
+        $sums = (clone $wrapped)
+            ->selectRaw('COALESCE(SUM(total), 0) as total_amount, COALESCE(SUM(quantity), 0) as total_quantity')
+            ->first();
+
+        $orderColumn = $sort === 'quantity' ? 'quantity' : 'total';
+
+        $rows = (clone $wrapped)
+            ->orderByDesc($orderColumn)
+            ->orderBy('category_name')
+            ->forPage($page, $perPage)
+            ->get()
+            ->map(fn ($row) => [
+                'category_id' => $row->id === null ? null : (string) $row->id,
+                'category_name' => $row->category_name ?? 'Uncategorised',
+                'products_count' => (int) $row->products_count,
+                'bills_count' => (int) $row->bills_count,
+                'quantity' => round((float) $row->quantity, 3),
+                'total' => round((float) $row->total, 2),
+            ])
+            ->all();
+
+        $summary = [
+            'categories' => $total,
             'total_quantity' => round((float) $sums->total_quantity, 3),
             'total_amount' => round((float) $sums->total_amount, 2),
         ];

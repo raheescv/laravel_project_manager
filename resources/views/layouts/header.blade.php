@@ -94,7 +94,7 @@
                                         <h5 class="flex-grow-1 m-0">Report</h5>
                                     </div>
                                     <div class="header-mega-grid">
-                                        @canany(['report.daily sales insights', 'report.monthly sale', 'report.sales overview', 'report.sale and sales return items', 'report.sale calendar', 'report.day wise sale'])
+                                        @canany(['report.daily sales insights', 'report.monthly sale', 'report.sales overview', 'report.sale and sales return items', 'report.sale calendar', 'report.day wise sale', 'report.sale category'])
                                         <div class="header-mega-section">
                                             <div class="header-mega-title">
                                                 <i class="fa fa-line-chart"></i>
@@ -128,6 +128,11 @@
                                             @can('report.day wise sale')
                                                 <a href="{{ route('report::day_wise_sale') }}" class="list-group-item list-group-item-action header-mega-child">
                                                     <i class="fa fa-calendar fs-5 me-2"></i>Day Wise Sale Report
+                                                </a>
+                                            @endcan
+                                            @can('report.sale category')
+                                                <a href="{{ route('report::sale_category') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                    <i class="fa fa-th-large fs-5 me-2"></i>Category Wise Sale Report
                                                 </a>
                                             @endcan
                                         </div>

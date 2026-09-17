@@ -37,6 +37,9 @@ Schedule::command('sale-day-sessions:close-daily')
 // gates itself per tenant, so no ->when() here.
 Schedule::command('sale-day-sessions:open-daily')->everyMinute()->withoutOverlapping();
 
+// QPay certification: student card top-ups with no result are inquired after 20 minutes.
+Schedule::command('qpay:inquire-pending')->everyFiveMinutes()->withoutOverlapping();
+
 Schedule::command('send:daily-sale-summary')->dailyAt('00:10');
 Schedule::command('assets:post-depreciation')->dailyAt('00:15')->withoutOverlapping();
 

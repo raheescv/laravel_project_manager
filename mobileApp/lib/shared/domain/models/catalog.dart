@@ -16,6 +16,9 @@ class Branch extends Equatable {
         code: asStr(j['code']),
       );
 
+  /// Round-trips through [Branch.fromJson] — the signed-in user's branches are
+  /// cached with the user, so the sign-in branch choice works offline too.
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'code': code, 'location': location};
 
   @override
   List<Object?> get props => [

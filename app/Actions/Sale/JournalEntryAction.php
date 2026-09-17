@@ -96,7 +96,13 @@ class JournalEntryAction
                 $entries[] = $this->makeEntryPair($accounts['round_off'], $sale->account_id, $debit, $credit, $remarks, 'Sale', $sale->id);
             }
             // Payments
+            // A Student Card payment moves no money: the sale's own debit to the
+            // student account above already spends the card balance, so it has no leg.
+            $studentCardId = Account::slugIdMap()['student_card'] ?? null;
             foreach ($sale->payments as $payment) {
+                if ($studentCardId && $payment->payment_method_id == $studentCardId) {
+                    continue;
+                }
                 $remarks = $payment->paymentMethod->name.' payment made by '.$sale->account->name;
                 $debit = $payment->amount;
                 $credit = 0;

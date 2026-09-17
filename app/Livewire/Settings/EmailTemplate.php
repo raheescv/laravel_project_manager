@@ -203,7 +203,8 @@ class EmailTemplate extends Component
     {
         $class = config("email_templates.{$this->module}.sample");
         if ($class && method_exists($class, 'sample')) {
-            return app($class)->sample();
+            // The type lets one module preview event-specific values.
+            return app($class)->sample($this->type);
         }
 
         $values = [];

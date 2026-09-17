@@ -41,6 +41,11 @@ class UpdateRequest extends FormRequest
             // The payment "mode": a method name (e.g. "Cash"), "credit" (no payment),
             // or "custom" (one or more methods supplied in `payments`).
             'paymentMethod' => ['required', 'string', 'max:50'],
+            // A student card sale: the tapped card's student is the customer, and
+            // paymentMethod "student_card" (or a custom row on the Student Card
+            // method) spends their card balance. cardUid is what was tapped.
+            'studentAccountId' => ['nullable', 'integer'],
+            'cardUid' => ['nullable', 'string', 'max:40'],
             'totalPayment' => ['required', 'numeric', 'min:0'],
             // Custom payment breakdown — required when paymentMethod is "custom".
             'payments' => ['nullable', 'array', 'required_if:paymentMethod,custom'],

@@ -74,6 +74,7 @@ class SendAppointmentEmailJob implements ShouldQueue
                 replyToAddress: $rendered['reply_to'],
                 companyName: tenant_cache('company_name', '') ?? '',
                 logId: $log->id,
+                footerNote: $rendered['footer_note'],
             ));
 
             // The row is flipped to "sent" by LogSentEmail, which reads the

@@ -9,6 +9,7 @@ typedef RemoteSaleSettings = ({
   double? defaultQuantity,
   bool? tipEnabled,
   String? defaultProductType,
+  bool? schoolEnabled,
   RemotePrintConfig? print,
 });
 
@@ -38,6 +39,10 @@ Future<RemoteSaleSettings> pullAndCacheSaleSettings() async {
   if (type != null && type != storage.defaultProductType) {
     await storage.setDefaultProductType(type);
   }
+
+  // School module: whether the till offers student cards at all.
+  final school = settings.schoolEnabled;
+  if (school != null && school != storage.schoolEnabled) await storage.setSchoolEnabled(school);
 
   // Thermal-print options ride along on the same response.
   await serviceLocator<PrintSettingsCubit>().applyRemote(settings.print);

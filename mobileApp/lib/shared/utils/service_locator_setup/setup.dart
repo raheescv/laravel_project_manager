@@ -14,6 +14,9 @@ import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.d
 import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
 import 'package:invo/features/sale_return/domain/services/sale_return_service.dart';
 import 'package:invo/features/stock_check/domain/repository/stock_check_repository.dart';
+import 'package:invo/features/student_card/domain/repository/student_card_repository.dart';
+import 'package:invo/features/student_card/domain/services/student_card_service.dart';
+import 'package:invo/features/student_card/logic/student_card_cubit/student_card_cubit.dart';
 import 'package:invo/features/stock_check/domain/services/stock_check_service.dart';
 import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
@@ -74,6 +77,7 @@ Future<void> setUpServiceLocator() async {
     ..registerLazySingleton<SaleReturnRepository>(SaleReturnService.new)
     ..registerLazySingleton<StockCheckRepository>(StockCheckService.new)
     ..registerLazySingleton<AdminRepository>(AdminService.new)
+    ..registerLazySingleton<StudentCardRepository>(StudentCardService.new)
     // ---- App-wide cubits (survive the whole session) ----
     ..registerLazySingleton<AuthCubit>(AuthCubit.new)
     ..registerLazySingleton<ThemeCubit>(ThemeCubit.new)
@@ -82,8 +86,11 @@ Future<void> setUpServiceLocator() async {
     ..registerLazySingleton<BranchCubit>(() => BranchCubit(
           userBranchId:
               int.tryParse(serviceLocator<AuthCubit>().user?.branchId ?? ''),
+          userBranches: serviceLocator<AuthCubit>().user?.branches ?? const [],
         ))
     ..registerLazySingleton<PrintSettingsCubit>(PrintSettingsCubit.new)
     ..registerLazySingleton<PosSettingsCubit>(PosSettingsCubit.new)
-    ..registerLazySingleton<OfflineSyncCubit>(() => OfflineSyncCubit(onlineSales));
+    ..registerLazySingleton<OfflineSyncCubit>(() => OfflineSyncCubit(onlineSales))
+    // One per tap sheet / Link Card screen; the owner closes it.
+    ..registerFactory<StudentCardCubit>(() => StudentCardCubit(serviceLocator()));
 }

@@ -194,4 +194,15 @@ class FakeAdminRepository implements AdminRepository {
     dayStatusCalls++;
     return dayStatusAnswer;
   }
+
+  // The Sale Bill Report is not exercised by these tests; the stubs only keep
+  // the fake in step with the contract.
+  @override
+  Future<DaySessionSummary?> currentDaySession() async => null;
+
+  @override
+  Future<DaySessionReport> daySessionReport(String id) async => throw UnimplementedError();
+
+  @override
+  Future<Uint8List> daySessionReportPdf(String id) async => Uint8List(0);
 }

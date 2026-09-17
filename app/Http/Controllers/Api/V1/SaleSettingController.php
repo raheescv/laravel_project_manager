@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Configuration;
 use App\Services\CompanyLogoResolver;
+use App\Support\ModuleAccess;
 use App\Traits\ApiResponseTrait;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
@@ -39,6 +40,8 @@ class SaleSettingController extends Controller
                 'default_quantity' => $defaultQuantity,
                 'tip_enabled' => $tipEnabled,
                 'default_product_type' => $defaultProductType,
+                // School module: the till offers "Tap student card" only when this is true.
+                'school_enabled' => ModuleAccess::school(),
                 'print' => $this->printBlock(),
             ], 'Sale settings retrieved successfully');
         } catch (\Exception $e) {

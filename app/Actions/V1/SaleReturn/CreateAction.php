@@ -3,6 +3,7 @@
 namespace App\Actions\V1\SaleReturn;
 
 use App\Actions\SaleReturn\CreateAction as SaleReturnCreateAction;
+use App\Actions\Student\EnsureAccountsAction;
 use App\Http\Requests\V1\SaleReturn\StoreRequest;
 use App\Models\Account;
 use App\Models\ApiLog;
@@ -33,7 +34,8 @@ class CreateAction
 
         try {
             $user = $request->user();
-            $branchId = $user->default_branch_id;
+            // The branch the app is working as, when the user is assigned to it.
+            $branchId = $user->operatingBranchId($request->input('branch_id'));
 
             if (! $branchId) {
                 throw new RuntimeException('Your account is not assigned to a branch.');
@@ -50,10 +52,13 @@ class CreateAction
             $items = $this->buildItems($request->validated('items'), $sale);
             $totals = $this->totals($items, (float) ($request->validated('other_discount') ?? 0));
 
+            // A student's return may be refunded to their card (Student Card).
+            $studentReturn = Account::student()->whereKey($accountId)->exists();
             $payment = $this->resolvePayments(
                 $request->validated('paymentMethod'),
                 $request->validated('payments') ?? [],
                 (float) $request->validated('totalPayment'),
+                $studentReturn,
             );
 
             if ($payment['paid'] - $totals['grand_total'] > 0.01) {
@@ -290,7 +295,7 @@ class CreateAction
      * @param  array<int, array<string, mixed>>  $customPayments
      * @return array{payments: array<int, array{payment_method_id: int, amount: float}>, paid: float}
      */
-    private function resolvePayments(string $method, array $customPayments, float $totalPayment): array
+    private function resolvePayments(string $method, array $customPayments, float $totalPayment, bool $studentReturn = false): array
     {
         $method = trim($method);
 
@@ -298,7 +303,16 @@ class CreateAction
             return ['payments' => [], 'paid' => 0.0];
         }
 
-        $configured = $this->configuredPaymentMethods();
+        $configured = $this->configuredPaymentMethods($studentReturn);
+
+        if (strcasecmp($method, 'student_card') === 0) {
+            $cardId = EnsureAccountsAction::cardMethodId();
+            if (! $studentReturn || ! $cardId) {
+                throw new RuntimeException('Only a student\'s return can be refunded to Student Card.');
+            }
+
+            return ['payments' => [['payment_method_id' => $cardId, 'amount' => $totalPayment]], 'paid' => $totalPayment];
+        }
 
         if ($configured->isEmpty()) {
             throw new RuntimeException('No payment methods are configured for this business.');
@@ -345,10 +359,15 @@ class CreateAction
      *
      * @return \Illuminate\Support\Collection<int, Account>
      */
-    private function configuredPaymentMethods()
+    private function configuredPaymentMethods(bool $studentReturn = false)
     {
+        $ids = tenant_cache('payment_methods', []) ?: [];
+        if ($studentReturn && $cardId = EnsureAccountsAction::cardMethodId()) {
+            $ids[] = $cardId;
+        }
+
         return Account::query()
-            ->whereIn('id', tenant_cache('payment_methods', []))
+            ->whereIn('id', $ids)
             ->get(['id', 'name']);
     }
 

@@ -31,6 +31,7 @@ const _ar = {
   'total': 'المجموع',
   'paid': 'المدفوع',
   'balance': 'الرصيد',
+  'card_balance': 'رصيد البطاقة',
   'served_by': 'خدم بواسطة',
   'provisional': 'إيصال مؤقت — رقم الفاتورة الضريبية لاحقاً',
 };
@@ -214,6 +215,7 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
             grandTotal: grandTotal,
             paid: sale.paid,
             balance: balance,
+            cardBalance: sale.student?.cardBalance,
           ),
           // ---- barcode + qr ----
           if (settings.showBarcode) ...[
@@ -379,6 +381,7 @@ pw.Widget _totalsTable({
   required double grandTotal,
   required double paid,
   required double balance,
+  double? cardBalance,
 }) {
   // (english label, value, arabic label, bold)
   final rows = <List<dynamic>>[
@@ -389,6 +392,8 @@ pw.Widget _totalsTable({
     ['Total', Money.of(grandTotal), _ar['total'], true],
     ['Paid', Money.of(paid), _ar['paid'], false],
     if (balance.abs() >= 0.005) ['Balance', Money.of(balance), _ar['balance'], false],
+    // A student's purchase: what is left on the card.
+    if (cardBalance != null) ['Card Balance', Money.of(cardBalance), _ar['card_balance'], false],
   ];
 
   return pw.Table(

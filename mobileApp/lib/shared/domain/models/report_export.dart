@@ -3,10 +3,11 @@ import 'package:equatable/equatable.dart';
 import '../helpers/formatters.dart';
 import 'dashboard.dart';
 
-/// The three reports the Reports screen can hand over as a PDF.
+/// The reports the Reports screen can hand over as a PDF.
 enum ReportExportKind {
   overview('Sales Overview', 'sales-overview'),
   items('Item Sales', 'item-sales'),
+  categories('Category Sales', 'category-sales'),
   stylists('Staff Sales', 'staff-sales');
 
   const ReportExportKind(this.title, this.slug);
@@ -18,8 +19,9 @@ enum ReportExportKind {
   final String slug;
 }
 
-/// One ranked line of a breakdown export — an item (itemwise) or a staff member
-/// (employeewise). Fields the report type doesn't carry stay zero / empty.
+/// One ranked line of a breakdown export — an item (itemwise), a category
+/// (categorywise) or a staff member (employeewise). Fields the report type
+/// doesn't carry stay zero / empty.
 class ReportExportLine extends Equatable {
   const ReportExportLine({
     this.id = '',
@@ -38,6 +40,8 @@ class ReportExportLine extends Equatable {
   final String code;
   final double quantity;
   final int bills;
+
+  /// Items a staff member sold, or distinct products sold under a category.
   final int items;
   final double amount;
 
@@ -46,6 +50,14 @@ class ReportExportLine extends Equatable {
         code: asStr(j['item_code']),
         quantity: asNum(j['quantity']).toDouble(),
         bills: asNum(j['bills_count']).toInt(),
+        amount: asNum(j['total']).toDouble(),
+      );
+
+  factory ReportExportLine.category(Map<String, dynamic> j) => ReportExportLine(
+        name: asStr(j['category_name']),
+        quantity: asNum(j['quantity']).toDouble(),
+        bills: asNum(j['bills_count']).toInt(),
+        items: asNum(j['products_count']).toInt(),
         amount: asNum(j['total']).toDouble(),
       );
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\V1\Auth;
 
+use App\Models\Branch;
 use App\Models\SaleDaySession;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -40,6 +41,20 @@ class AuthUserResource extends JsonResource
             'role' => $this->getRoleNames()->implode(', '),
             'designation' => $this->designation?->name,
             'branch_id' => $default_branch_id,
+            // What the app offers at sign-in: more than one and it asks which
+            // branch this session works as. Cached with the user, so the choice is
+            // offered on an offline sign-in too.
+            'branches' => Branch::query()
+                ->whereIn('id', $this->operableBranchIds())
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'location'])
+                ->map(fn (Branch $branch) => [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'code' => (string) $branch->code,
+                    'location' => (string) $branch->location,
+                ])
+                ->values(),
             'sale_day_session_date' => $date,
             'sale_day_session_status' => $openingSession ? 'open' : 'closed',
             'sale_day_session_opened_at' => $openingSession?->opened_at?->format('Y-m-d H:i:s'),

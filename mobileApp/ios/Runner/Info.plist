@@ -4,6 +4,8 @@
 <dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>QLOUD POS uses Face ID to sign you in securely.</string>
+	<key>NFCReaderUsageDescription</key>
+	<string>QLOUD POS reads student cards to charge purchases to the student's card balance.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>QLOUD POS uses the camera to scan product barcodes and take your profile photo.</string>
 	<key>NSLocalNetworkUsageDescription</key>

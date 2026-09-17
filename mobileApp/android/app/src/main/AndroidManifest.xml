@@ -17,6 +17,10 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+    <!-- Student cards: the till reads the card UID over NFC. Optional, so tills
+         without NFC still install and take cards through a reader or typed number. -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <application
         android:label="QLOUD POS"
         android:name="${applicationName}"

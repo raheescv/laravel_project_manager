@@ -12,6 +12,8 @@ import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 
 /// "Frosted Glass" navigation drawer — the single place that lists every
 /// module in the app (the bottom nav keeps only the four primary tabs).
@@ -127,6 +129,15 @@ class AstraDrawer extends StatelessWidget {
                             onTap: () => context.isTablet
                                 ? _toTab(context, kStockCheckTab)
                                 : _toRoute(context, Routes.stockCheck)),
+                      ],
+                      if (serviceLocator<LocalStorageService>().schoolEnabled &&
+                          auth.hasPermission(PermissionSlug.studentCardAssign)) ...[
+                        _section(p, 'STUDENTS'),
+                        _item(context, p,
+                            icon: Icons.nfc,
+                            label: 'Link Student Card',
+                            subtitle: 'Tap a new or replacement card',
+                            onTap: () => _toRoute(context, Routes.linkStudentCard)),
                       ],
                       _section(p, 'ACCOUNT'),
                       _item(context, p,

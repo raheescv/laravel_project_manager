@@ -13,7 +13,7 @@ class GetAction
      */
     public function execute(int $productId): Product
     {
-        $branchId = auth()->user()?->default_branch_id;
+        $branchId = auth()->user()?->operatingBranchId(request()->input('branch_id'));
 
         return Product::query()
             ->product()

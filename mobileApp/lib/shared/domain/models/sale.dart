@@ -123,6 +123,27 @@ class SalePayment extends Equatable {
       ];
 }
 
+/// The student a sale was charged to (`student` on SaleResource), with the card
+/// balance after the sale — printed on the receipt.
+class SaleStudent extends Equatable {
+  const SaleStudent({required this.accountId, this.admissionNo = '', this.className = '', this.cardBalance = 0});
+
+  factory SaleStudent.fromJson(Map<String, dynamic> j) => SaleStudent(
+        accountId: asNum(j['account_id']).toInt(),
+        admissionNo: asStr(j['admission_no']),
+        className: asStr(j['class']),
+        cardBalance: asNum(j['card_balance']).toDouble(),
+      );
+
+  final int accountId;
+  final String admissionNo;
+  final String className;
+  final double cardBalance;
+
+  @override
+  List<Object?> get props => [accountId, admissionNo, className, cardBalance];
+}
+
 class Sale extends Equatable {
   const Sale({
     required this.id,
@@ -146,6 +167,7 @@ class Sale extends Equatable {
     this.clientUuid = '',
     this.referenceNo = '',
     this.pending = false,
+    this.student,
   });
 
   final String id;
@@ -180,6 +202,9 @@ class Sale extends Equatable {
   // real invoice number yet, so Edit/Return are unavailable and the receipt
   // prints as provisional.
   final bool pending;
+
+  /// Set when the customer is a student (paid from their card).
+  final SaleStudent? student;
 
   double get discount => itemDiscount + otherDiscount;
 
@@ -227,6 +252,7 @@ class Sale extends Equatable {
       // The server never sends this key, so a sale off the wire is never
       // pending — only one rebuilt from the outbox is.
       pending: j['pending'] == true,
+      student: j['student'] is Map ? SaleStudent.fromJson(Map<String, dynamic>.from(j['student'] as Map)) : null,
     );
   }
 
@@ -254,5 +280,6 @@ class Sale extends Equatable {
         clientUuid,
         referenceNo,
         pending,
+        student,
       ];
 }

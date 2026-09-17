@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/domain/models/pending_sale.dart';
+import 'package:invo/features/student_card/domain/models/card_pre_order.dart';
+import 'package:invo/features/student_card/domain/models/student_card.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -151,7 +153,7 @@ class CartLine extends Equatable {
 }
 
 /// How the ticket is being settled. Mirrors the web POS "Confirm Sale" modes.
-enum PayMode { cash, card, credit, custom }
+enum PayMode { cash, card, credit, custom, studentCard }
 
 extension PayModeX on PayMode {
   /// The `paymentMethod` string the Sale API expects for this mode.
@@ -160,6 +162,7 @@ extension PayModeX on PayMode {
         PayMode.card => 'Card',
         PayMode.credit => 'credit',
         PayMode.custom => 'custom',
+        PayMode.studentCard => 'student_card',
       };
 
   String get label => switch (this) {
@@ -167,6 +170,9 @@ extension PayModeX on PayMode {
         PayMode.card => 'Card',
         PayMode.credit => 'Credit',
         PayMode.custom => 'Custom',
+        // Matches the server's locked payment method (never "…Card": reports
+        // bucket any method whose name contains "card" as bank-card takings).
+        PayMode.studentCard => 'Student Wallet',
       };
 }
 
@@ -207,6 +213,8 @@ class CartCubit extends Cubit<CartState> {
   PayMode get payMode => state.payMode;
   List<CustomPayment> get customPayments => state.customPayments;
   bool get sendToWhatsapp => state.sendToWhatsapp;
+  StudentCard? get student => state.student;
+  CardPreOrder? get preOrder => state.preOrder;
   bool get isEmpty => state.isEmpty;
   int get count => state.count;
   double get subtotal => state.subtotal;
@@ -235,6 +243,10 @@ class CartCubit extends Cubit<CartState> {
   /// so an app that has never synced behaves as it always has.
   bool get tipEnabled => (_storage.tipEnabled ?? true) && (_storage.posShowTip ?? true);
 
+  /// Whether this business runs the School module, so the till offers "Tap
+  /// student card". Cached from `/settings/sale` by [syncSaleSettings].
+  bool get schoolEnabled => _storage.schoolEnabled;
+
   /// Pulls the latest sale settings (default quantity, tip availability) from
   /// the server and caches them so the POS reflects the current web settings.
   /// Called when the New Sale screen opens; no-ops offline (cached values are
@@ -253,10 +265,80 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
+  /// A typed client replaces any tapped student card — and takes that student's
+  /// pre-order items back off the ticket.
   void setClient(String name, String mobile) => emit(state.copyWith(
         customerName: name.isEmpty ? AppStrings.walkInCustomer : name,
         customerMobile: mobile,
+        clearStudent: true,
+        lines: state.preOrder == null ? null : _withoutPreOrderLines(),
+        clearPreOrder: true,
+        payMode: state.paysByStudentCard ? PayMode.cash : null,
+        customPayments: state.paysByStudentCard ? const [] : null,
       ));
+
+  /// A tapped student card: the student becomes the customer and the card pays.
+  /// A different student's card takes the previous student's pre-order off.
+  void setStudent(StudentCard card) {
+    final otherStudent = state.preOrder != null && state.student?.accountId != card.accountId;
+    emit(state.copyWith(
+      student: card,
+      customerName: card.name,
+      customerMobile: '',
+      lines: otherStudent ? _withoutPreOrderLines() : null,
+      clearPreOrder: otherStudent,
+      payMode: PayMode.studentCard,
+      customPayments: const [],
+    ));
+  }
+
+  /// Take the tapped card off the ticket; it goes back to a walk-in cash sale.
+  void clearStudent() => emit(state.copyWith(
+        clearStudent: true,
+        customerName: AppStrings.walkInCustomer,
+        customerMobile: '',
+        lines: state.preOrder == null ? null : _withoutPreOrderLines(),
+        clearPreOrder: true,
+        payMode: state.paysByStudentCard ? PayMode.cash : null,
+        customPayments: state.paysByStudentCard ? const [] : null,
+      ));
+
+  /// Put the parent's pre-order on the ticket: each item at its ordered quantity,
+  /// added to what is already there. Applying it again (a second tap) is a no-op;
+  /// another order replaces the previous one's items.
+  void applyPreOrder(CardPreOrder order) {
+    if (state.preOrder?.id == order.id) return;
+    final rows = _withoutPreOrderLines();
+    for (final item in order.items) {
+      _addProduct(rows, item.product, item.quantity.toDouble());
+    }
+    emit(state.copyWith(lines: rows, preOrder: order));
+  }
+
+  /// Take the pre-order's items back off; anything the cashier added on top stays.
+  void removePreOrder() {
+    if (state.preOrder == null) return;
+    emit(state.copyWith(lines: _withoutPreOrderLines(), clearPreOrder: true));
+  }
+
+  /// The ticket's lines minus the applied pre-order's quantities.
+  List<CartLine> _withoutPreOrderLines() {
+    final order = state.preOrder;
+    if (order == null) return [...state.lines];
+    final left = {for (final i in order.items) i.product.id: i.quantity.toDouble()};
+    final rows = <CartLine>[];
+    for (final line in state.lines) {
+      final take = left[line.productId] ?? 0;
+      if (take <= 0) {
+        rows.add(line);
+        continue;
+      }
+      left[line.productId] = take > line.qty ? take - line.qty : 0;
+      final qty = line.qty - take;
+      if (qty > 0) rows.add(line.copyWith(qty: qty));
+    }
+    return rows;
+  }
 
   void setStylist(int? id, String name, {bool applyToLines = true}) {
     emit(state.copyWith(
@@ -270,25 +352,30 @@ class CartCubit extends Cubit<CartState> {
   }
 
   void add(Product p) {
-    final index = state.lines.indexWhere((l) => l.productId == p.id);
     final next = [...state.lines];
+    _addProduct(next, p, defaultQty);
+    emit(state.copyWith(lines: next));
+  }
+
+  /// Add [qty] of [p] to [rows]: onto its existing line, or as a new one.
+  void _addProduct(List<CartLine> rows, Product p, double qty) {
+    final index = rows.indexWhere((l) => l.productId == p.id);
     if (index != -1) {
-      next[index] = next[index].copyWith(qty: next[index].qty + defaultQty);
+      rows[index] = rows[index].copyWith(qty: rows[index].qty + qty);
     } else {
-      next.add(CartLine(
+      rows.add(CartLine(
         productId: p.id,
         name: p.name,
         code: p.code,
         type: p.type,
         unitPrice: p.mrp,
-        qty: defaultQty,
+        qty: qty,
         taxPercent: p.tax,
         thumbnail: p.thumbnail,
         employeeId: state.stylistId,
         employeeName: state.stylistName,
       ));
     }
-    emit(state.copyWith(lines: next));
   }
 
   /// Replace [line] with [next], or drop it when [next] is null. Lines carry
@@ -450,6 +537,8 @@ class CartCubit extends Cubit<CartState> {
     final ticket = sale.grandTotal + sale.tip;
     if (payments.length == 1 && (paid - ticket).abs() < 0.005) {
       final name = payments.first.method.toLowerCase();
+      // The student card's payment method, read back as the button that paid it.
+      if (name == PayMode.studentCard.label.toLowerCase()) return (mode: PayMode.studentCard, rows: const []);
       if (name.contains('cash')) return (mode: PayMode.cash, rows: const []);
       if (name.contains('card')) return (mode: PayMode.card, rows: const []);
     }
@@ -595,6 +684,14 @@ class CartCubit extends Cubit<CartState> {
         if (clientCreatedAt != null) 'clientCreatedAt': clientCreatedAt.toIso8601String(),
         'customerName': state.customerName,
         if (state.customerMobile.isNotEmpty) 'phoneNumber': state.customerMobile,
+        // The tapped card. On an edit of a card sale no card is re-tapped and the
+        // server keeps the sale's student.
+        if (state.student != null && state.student!.cardUid.isNotEmpty) ...{
+          'studentAccountId': state.student!.accountId,
+          'cardUid': state.student!.cardUid,
+          // The parent's pre-order on this ticket; the completed sale marks it collected.
+          if (state.preOrder != null) 'preOrderId': state.preOrder!.id,
+        },
         'items': state.lines
             .map((l) => {
                   if (l.saleItemId != null) 'id': l.saleItemId,

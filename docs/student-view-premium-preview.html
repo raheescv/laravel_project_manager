@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student View — 3 Design Directions</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/css/tom-select.bootstrap5.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   HARNESS — toolbar, fake Nifty shell, theme accent. Not part of any design.
+   The accent is fed into Bootstrap's own --bs-primary tokens, the same way
+   the tenant's Settings theme colour reaches the real admin pages.
+   Icons: only names that exist in Font Awesome 4.3 (the app's version).
+   ═══════════════════════════════════════════════════════════════════════ */
+:root { --p: #25476a; --p-rgb: 37, 71, 106; --page: #eef1f6; }
+:root, [data-bs-theme="light"] {
+  --bs-primary: var(--p); --bs-primary-rgb: var(--p-rgb);
+  --bs-primary-bg-subtle: color-mix(in srgb, var(--p) 12%, #fff);
+  --bs-primary-border-subtle: color-mix(in srgb, var(--p) 35%, #fff);
+  --bs-primary-text-emphasis: color-mix(in srgb, var(--p) 70%, #000);
+  --bs-link-color: var(--p); --bs-link-color-rgb: var(--p-rgb); --bs-link-hover-color: color-mix(in srgb, var(--p) 80%, #000);
+  --bs-body-font-family: Poppins, system-ui, sans-serif; --bs-body-font-size: .8125rem;
+}
+[data-bs-theme="dark"] {
+  --page: #15181c; --bs-body-bg: #1f2328; --bs-tertiary-bg: #272c32; --bs-border-color: #353b43;
+  --bs-primary-bg-subtle: color-mix(in srgb, var(--p) 26%, #1f2328);
+  --bs-primary-border-subtle: color-mix(in srgb, var(--p) 55%, #1f2328);
+  --bs-primary-text-emphasis: color-mix(in srgb, var(--p) 45%, #fff);
+  --bs-link-color: color-mix(in srgb, var(--p) 45%, #fff); --bs-link-hover-color: color-mix(in srgb, var(--p) 25%, #fff);
+}
+.btn-primary { --bs-btn-bg: var(--p); --bs-btn-border-color: var(--p); --bs-btn-hover-bg: color-mix(in srgb, var(--p), #000 14%); --bs-btn-hover-border-color: color-mix(in srgb, var(--p), #000 14%); --bs-btn-active-bg: color-mix(in srgb, var(--p), #000 22%); --bs-btn-active-border-color: color-mix(in srgb, var(--p), #000 22%); }
+.btn-outline-primary { --bs-btn-color: var(--bs-link-color); --bs-btn-border-color: var(--bs-primary-border-subtle); --bs-btn-hover-bg: var(--p); --bs-btn-hover-border-color: var(--p); --bs-btn-active-bg: var(--p); --bs-btn-active-border-color: var(--p); }
+.nav-pills { --bs-nav-pills-link-active-bg: var(--p); }
+body { background: var(--page); min-height: 100vh; padding-bottom: 80px; }
+h1, h2, h3, h4, h5, h6 { font-family: Poppins, sans-serif; }
+
+.hx-bar { position: sticky; top: 0; z-index: 1030; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; padding: 9px 14px;
+  background: color-mix(in srgb, var(--bs-body-bg) 88%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--bs-border-color); font-family: Ubuntu, sans-serif; }
+.hx-grp { display: flex; align-items: center; gap: 4px; }
+.hx-grp > span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--bs-secondary-color); margin-inline-end: 4px; }
+.hx-bar button { border: 1px solid var(--bs-border-color); background: var(--bs-body-bg); color: var(--bs-body-color); padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 500; }
+.hx-bar button.on { background: var(--bs-emphasis-color); color: var(--bs-body-bg); border-color: var(--bs-emphasis-color); }
+.hx-bar .sw { width: 22px; height: 22px; padding: 0; border-radius: 7px; border: 2px solid transparent; }
+.hx-bar .sw.on { outline: 2px solid var(--bs-emphasis-color); outline-offset: 1px; background-clip: padding-box; }
+.hx-note { max-width: 1240px; margin: 14px auto 0; padding: 0 16px; font-size: 12px; color: var(--bs-secondary-color); }
+.hx-note b { color: var(--bs-emphasis-color); font-weight: 600; }
+
+/* Fake Nifty chrome: the tenant-coloured, elliptical, overlapping header band. */
+.nf-band { background: var(--bs-primary); color: #fff; padding: 22px 0 120px; border-radius: 0 0 50% 50% / 0 0 38px 38px; }
+[data-bs-theme="dark"] .nf-band { background: color-mix(in srgb, var(--p), #000 40%); }
+.nf-wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px; }
+.nf-band .breadcrumb { --bs-breadcrumb-divider-color: rgba(255,255,255,.55); --bs-breadcrumb-item-active-color: rgba(255,255,255,.75); margin: 0; font-size: 12px; }
+.nf-band .breadcrumb a { color: rgba(255,255,255,.9); text-decoration: none; }
+.nf-band h1 { font-size: 1.6rem; font-weight: 600; margin: 8px 0 0; }
+.nf-band .lead { font-size: .95rem; color: rgba(255,255,255,.75); margin: 0; }
+.nf-content { margin-top: -96px; }
+
+@keyframes svRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes svPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--bs-warning-rgb), .45); } 50% { box-shadow: 0 0 0 5px rgba(var(--bs-warning-rgb), 0); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DIRECTION A — "CAMPUS ID"
+   Opaque identity card with a physical student card on the right, KPI tiles,
+   underline tab rail. Scoped stylesheet (.sva) — layout is Bootstrap grid.
+   ═══════════════════════════════════════════════════════════════════════ */
+.sva { --acc: var(--bs-primary); --acc-rgb: var(--bs-primary-rgb); --ln: var(--bs-border-color); --mut: var(--bs-secondary-color); --ink: var(--bs-emphasis-color); --soft: var(--bs-tertiary-bg);
+  --sh: 0 1px 2px rgba(15,23,42,.05), 0 14px 34px -18px rgba(15,23,42,.22); font-variant-numeric: tabular-nums; }
+[data-bs-theme="dark"] .sva { --sh: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -20px rgba(0,0,0,.7); }
+.sva .min-w-0, .svb .min-w-0 { min-width: 0; }
+.sva .rise { animation: svRise .55s cubic-bezier(.2,.75,.25,1) both; animation-delay: calc(var(--i, 0) * 55ms); }
+.sva .sheet { background: var(--bs-body-bg); border-radius: 18px; box-shadow: var(--sh); border: 1px solid color-mix(in srgb, var(--ln) 60%, transparent); }
+
+.sva .hero { padding: 22px 24px; position: relative; overflow: hidden;
+  background: radial-gradient(70% 140% at 0% 0%, rgba(var(--acc-rgb), .07), transparent 60%), var(--bs-body-bg); }
+.sva .av { width: 96px; height: 96px; border-radius: 28px; flex: none; position: relative; display: grid; place-items: center;
+  font: 600 32px/1 Poppins, sans-serif; letter-spacing: .02em; color: var(--bs-primary-text-emphasis);
+  background: linear-gradient(145deg, var(--bs-primary-bg-subtle), color-mix(in srgb, var(--acc) 22%, var(--bs-body-bg)));
+  box-shadow: 0 0 0 4px var(--bs-body-bg), 0 0 0 5.5px rgba(var(--acc-rgb), .22); }
+.sva .av .dot { position: absolute; inset-inline-end: -3px; bottom: -3px; width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--bs-body-bg); display: grid; place-items: center; color: #fff; font-size: 10px; }
+.sva .eyebrow { font: 600 10.5px/1 Ubuntu, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--bs-link-color); }
+.sva .eyebrow b { color: var(--mut); font-weight: 500; letter-spacing: .08em; }
+.sva .nm { font: 600 26px/1.15 Poppins, sans-serif; letter-spacing: -.02em; color: var(--ink); margin: 6px 0 10px; }
+.sva .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; background: var(--soft); border: 1px solid var(--ln); font-size: 12px; color: var(--bs-body-color); white-space: nowrap; }
+.sva .chip i { color: var(--mut); }
+.sva .chip.ok { background: var(--bs-success-bg-subtle); border-color: var(--bs-success-border-subtle); color: var(--bs-success-text-emphasis); }
+.sva .chip.ok i { color: inherit; }
+.sva .pline { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--ln); font-size: 12.5px; color: var(--mut); flex-wrap: wrap; }
+.sva .pline b { color: var(--ink); font-weight: 500; }
+.sva .pline a { color: var(--bs-link-color); text-decoration: none; }
+.sva .hbtn { border-radius: 11px; font-weight: 500; padding: 7px 14px; font-size: 12.5px; }
+
+/* the physical card */
+.sva .idc { position: relative; aspect-ratio: 1.586; width: 100%; max-width: 360px; margin-inline-start: auto; border-radius: 18px; color: #fff; transform: rotate(-2.5deg); transition: transform .45s cubic-bezier(.2,.75,.25,1); }
+.sva .idc:hover { transform: rotate(0) translateY(-3px); }
+.sva .idc-face { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; padding: 18px 20px; display: flex; flex-direction: column;
+  background:
+    radial-gradient(90% 80% at 100% 0%, rgba(255,255,255,.26), transparent 55%),
+    repeating-linear-gradient(118deg, rgba(255,255,255,.05) 0 2px, transparent 2px 10px),
+    radial-gradient(120% 120% at 0% 100%, color-mix(in srgb, var(--acc), #000 45%), transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--acc), #000 30%), var(--acc) 55%, color-mix(in srgb, var(--acc), #fff 22%));
+  box-shadow: 0 22px 44px -18px rgba(var(--acc-rgb), .75), inset 0 1px 0 rgba(255,255,255,.25); transition: filter .3s; }
+.sva .idc-face::after { content: ""; position: absolute; inset: -40%; background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.28) 50%, transparent 58%); transform: translateX(-60%); transition: transform .9s ease; }
+.sva .idc:hover .idc-face::after { transform: translateX(60%); }
+.sva .idc-top { display: flex; justify-content: space-between; align-items: center; font: 500 10.5px/1 Ubuntu, sans-serif; letter-spacing: .18em; text-transform: uppercase; opacity: .92; }
+.sva .idc-top .fa-wifi { transform: rotate(90deg); font-size: 17px; opacity: .9; }
+.sva .idc-chip { width: 42px; height: 31px; border-radius: 7px; margin-top: 14px; position: relative;
+  background: linear-gradient(90deg, transparent 32%, rgba(90,60,10,.35) 32% 34%, transparent 34% 66%, rgba(90,60,10,.35) 66% 68%, transparent 68%),
+    linear-gradient(0deg, transparent 46%, rgba(90,60,10,.35) 46% 54%, transparent 54%), linear-gradient(135deg, #f7e2a3, #c9a14a 55%, #f3d98b); box-shadow: inset 0 0 0 1px rgba(90,60,10,.25); }
+.sva .idc-bal { margin-top: auto; }
+.sva .idc-bal small { display: block; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; opacity: .75; }
+.sva .idc-bal strong { font: 600 25px/1.1 Poppins, sans-serif; letter-spacing: -.01em; }
+.sva .idc-bal strong em { font-style: normal; font-size: 12px; font-weight: 500; opacity: .75; margin-inline-start: 4px; }
+.sva .idc-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin-top: 10px; font-size: 11px; }
+.sva .idc-foot .who { font-weight: 600; letter-spacing: .12em; text-transform: uppercase; line-height: 1.3; }
+.sva .idc-foot .who span { display: block; font-weight: 400; letter-spacing: .06em; opacity: .75; }
+.sva .idc-foot .uid { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; opacity: .9; text-align: end; }
+.sva .idc.is-blocked .idc-face { filter: grayscale(1) brightness(.78); }
+.sva .idc-stamp { position: absolute; top: 44%; inset-inline: -8px; transform: rotate(-9deg); background: var(--bs-danger); color: #fff; text-align: center; font: 600 12px/1 Ubuntu, sans-serif; letter-spacing: .3em; padding: 9px 0; box-shadow: 0 10px 22px -10px rgba(var(--bs-danger-rgb), .9); }
+.sva .idc.is-empty { transform: none; border: 2px dashed var(--ln); background: var(--soft); color: var(--mut); display: grid; place-items: center; text-align: center; }
+.sva .idc.is-empty i.big { font-size: 30px; opacity: .5; display: block; margin-bottom: 8px; }
+
+/* KPI tiles */
+.sva .kpi { padding: 16px 18px; height: 100%; }
+.sva .kpi .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 15px; flex: none; }
+.sva .kpi .lab { font: 500 10.5px/1.2 Ubuntu, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--mut); }
+.sva .kpi .val { font: 600 23px/1.15 Poppins, sans-serif; letter-spacing: -.02em; color: var(--ink); margin-top: 12px; }
+.sva .kpi .val small { font-size: 11px; font-weight: 500; color: var(--mut); margin-inline-start: 3px; letter-spacing: 0; }
+.sva .kpi .ft { font-size: 11.5px; color: var(--mut); margin-top: 6px; }
+.sva .meter { height: 6px; border-radius: 99px; background: var(--soft); overflow: hidden; margin-top: 10px; display: flex; gap: 2px; }
+.sva .meter i { display: block; height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.2,.75,.25,1); }
+
+/* tab rail + panes */
+.sva .rail { display: flex; gap: 2px; overflow-x: auto; padding: 0 14px; border-bottom: 1px solid var(--ln); scrollbar-width: none; }
+.sva .rail button { position: relative; border: 0; background: none; padding: 15px 14px 13px; font-size: 13px; font-weight: 500; color: var(--mut); white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; transition: color .2s; }
+.sva .rail button:hover { color: var(--ink); }
+.sva .rail button.on { color: var(--ink); }
+.sva .rail button.on::after { content: ""; position: absolute; inset-inline: 10px; bottom: -1px; height: 2.5px; border-radius: 3px 3px 0 0; background: var(--acc); }
+[data-bs-theme="dark"] .sva .rail button.on::after { background: var(--bs-link-color); }
+.sva .rail button.on i { color: var(--bs-link-color); }
+.sva .rail .cnt { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; background: var(--soft); color: var(--mut); font-weight: 500; }
+.sva .rail button.on .cnt { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.sva .pane { padding: 22px 24px 24px; animation: svRise .4s cubic-bezier(.2,.75,.25,1) both; }
+.sva .ph { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.sva .ph .pi { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); font-size: 13px; }
+.sva .ph h6 { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.sva .ph .hint { font-size: 11.5px; color: var(--mut); }
+.sva .fld { background: var(--soft); border-radius: 12px; padding: 10px 13px; height: 100%; }
+.sva .fld .k { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); display: flex; align-items: center; gap: 6px; }
+.sva .fld .v { font-size: 13.5px; font-weight: 500; color: var(--ink); margin-top: 3px; overflow-wrap: anywhere; }
+.sva .fld .v.none { color: var(--mut); font-weight: 400; }
+.sva .fld.note { background: var(--bs-warning-bg-subtle); }
+.sva .fld.note .k, .sva .fld.note .v { color: var(--bs-warning-text-emphasis); }
+
+.sva .gd { border: 1px solid var(--ln); border-radius: 15px; padding: 14px 16px; transition: border-color .2s, box-shadow .2s; }
+.sva .gd:hover { border-color: var(--bs-primary-border-subtle); box-shadow: 0 10px 24px -18px rgba(var(--acc-rgb), .6); }
+.sva .gd + .gd, .sva .lnk + .gd { margin-top: 10px; }
+.sva .gav { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 14px; flex: none; background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.sva .gd .gn { font-weight: 600; font-size: 14px; color: var(--ink); }
+.sva .gd .rel { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--soft); color: var(--mut); margin-inline-start: 6px; }
+.sva .gd .pri { font-size: 10.5px; padding: 2px 8px; border-radius: 99px; background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); margin-inline-start: 4px; }
+.sva .gd .ct { font-size: 12px; color: var(--mut); margin-top: 3px; display: flex; gap: 14px; flex-wrap: wrap; }
+.sva .trk { display: flex; align-items: center; gap: 0; margin-top: 12px; font-size: 11px; color: var(--mut); flex-wrap: wrap; row-gap: 6px; }
+.sva .trk .st { display: inline-flex; align-items: center; gap: 6px; }
+.sva .trk .st i { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: 8px; background: var(--soft); border: 1.5px solid var(--ln); color: transparent; }
+.sva .trk .st.done { color: var(--bs-success-text-emphasis); }
+.sva .trk .st.done i { background: var(--bs-success); border-color: var(--bs-success); color: #fff; }
+.sva .trk .st.now { color: var(--bs-warning-text-emphasis); font-weight: 500; }
+.sva .trk .st.now i { border-color: var(--bs-warning); background: var(--bs-warning-bg-subtle); animation: svPulse 1.8s infinite; }
+.sva .trk .bar { width: 26px; height: 1.5px; background: var(--ln); margin: 0 7px; }
+.sva .trk .bar.done { background: var(--bs-success); }
+.sva .trk .meta { margin-inline-start: 10px; }
+.sva .lnk { margin-top: 8px; border-radius: 12px; background: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); padding: 10px 12px; font-size: 12px; }
+
+.sva .tl { position: relative; padding-inline-start: 26px; }
+.sva .tl::before { content: ""; position: absolute; inset-inline-start: 7px; top: 6px; bottom: 6px; width: 2px; background: var(--ln); border-radius: 2px; }
+.sva .tl .it { position: relative; padding: 0 0 16px; }
+.sva .tl .it:last-child { padding-bottom: 0; }
+.sva .tl .it::before { content: ""; position: absolute; inset-inline-start: -25px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--bs-body-bg); border: 3px solid var(--tc, var(--mut)); }
+.sva .tl .t { font-size: 13px; font-weight: 500; color: var(--ink); }
+.sva .tl .m { font-size: 11.5px; color: var(--mut); margin-top: 2px; }
+.sva .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .95em; letter-spacing: .02em; }
+.sva .act { border: 1px solid var(--ln); border-radius: 15px; padding: 16px; }
+.sva .act + .act { margin-top: 12px; }
+.sva .act h6 { font-size: 13px; font-weight: 600; margin: 0 0 3px; color: var(--ink); }
+.sva .act p { font-size: 12px; color: var(--mut); margin: 0 0 12px; }
+.sva .form-control, .sva .btn { border-radius: 10px; }
+.sva .input-group > .form-control { border-radius: 10px 0 0 10px; }
+.sva .input-group > .btn { border-radius: 0 10px 10px 0; }
+
+.sva .eq { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
+.sva .eq .c { flex: 1 1 130px; border-radius: 14px; padding: 12px 14px; background: var(--soft); }
+.sva .eq .c .k { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); }
+.sva .eq .c .v { font: 600 18px/1.2 Poppins, sans-serif; color: var(--ink); margin-top: 4px; }
+.sva .eq .c.in .v { color: var(--bs-success-text-emphasis); }
+.sva .eq .c.out .v { color: var(--bs-danger-text-emphasis); }
+.sva .eq .c.close { background: var(--bs-primary-bg-subtle); }
+.sva .eq .c.close .k, .sva .eq .c.close .v { color: var(--bs-primary-text-emphasis); }
+.sva .eq .op { align-self: center; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--ln); display: grid; place-items: center; font-size: 11px; color: var(--mut); flex: none; }
+@media (max-width: 575.98px) { .sva .eq .op { display: none; } .sva .eq .c { flex-basis: calc(50% - 4px); } }
+.sva .presets { display: inline-flex; gap: 4px; padding: 3px; border-radius: 11px; background: var(--soft); }
+.sva .presets button { border: 0; background: none; border-radius: 8px; padding: 5px 11px; font-size: 12px; color: var(--mut); }
+.sva .presets button.on { background: var(--bs-body-bg); color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.12); }
+
+.sva .tblw { border: 1px solid var(--ln); border-radius: 14px; overflow: hidden; }
+.sva .tbl { margin: 0; --bs-table-bg: transparent; font-size: 12.5px; }
+.sva .tbl thead th { background: var(--soft); font: 500 10.5px/1 Ubuntu, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--mut); padding: 11px 14px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+.sva .tbl td { padding: 11px 14px; border-color: var(--ln); vertical-align: middle; }
+.sva .tbl tbody tr:last-child td { border-bottom: 0; }
+.sva .tbl tbody tr { transition: background .15s; }
+.sva .tbl tbody tr:hover { background: color-mix(in srgb, var(--acc) 4%, transparent); }
+.sva .tbl .bf td { background: color-mix(in srgb, var(--soft) 60%, transparent); color: var(--mut); font-style: italic; }
+.sva .tbl tfoot td { background: var(--soft); font-weight: 600; color: var(--ink); padding: 11px 14px; border: 0; }
+.sva .tc { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 99px; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.sva .tc i { width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; color: #fff; }
+.sva .tc.topup { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); } .sva .tc.topup i { background: var(--bs-success); }
+.sva .tc.purchase { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); } .sva .tc.purchase i { background: var(--acc); }
+.sva .tc.return { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); } .sva .tc.return i { background: var(--bs-warning); }
+.sva .sp { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
+.sva .sp::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.sva .sp.success { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.sva .sp.failed { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.sva .sp.pending { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.sva .sp.pending::before { animation: svPulse 1.8s infinite; }
+.sva .sp.refunded { background: var(--soft); color: var(--mut); }
+.sva .mini { border-radius: 14px; padding: 12px 14px; background: var(--soft); height: 100%; }
+.sva .mini .k { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); }
+.sva .mini .v { font: 600 17px/1.2 Poppins, sans-serif; color: var(--ink); margin-top: 3px; }
+.sva .mini .v small { font-size: 11px; font-weight: 400; color: var(--mut); }
+.sva a.inv { color: var(--bs-link-color); text-decoration: none; font-weight: 500; }
+.sva a.inv:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DIRECTION B — "WALLET"
+   Sticky left rail = the student (identity, ink balance panel, parents,
+   details). Right = workspace with a segmented control; the statement is a
+   day-grouped activity feed. Scoped stylesheet (.svb).
+   ═══════════════════════════════════════════════════════════════════════ */
+.svb { --acc: var(--bs-primary); --acc-rgb: var(--bs-primary-rgb); --ln: var(--bs-border-color); --mut: var(--bs-secondary-color); --ink: var(--bs-emphasis-color); --soft: var(--bs-tertiary-bg);
+  --lift: 0 1px 2px rgba(15,23,42,.05), 0 16px 36px -20px rgba(15,23,42,.25); --inkpanel: #10151d; font-variant-numeric: tabular-nums; }
+[data-bs-theme="dark"] .svb { --lift: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -20px rgba(0,0,0,.7); --inkpanel: #0c0f13; }
+.svb .rise { animation: svRise .55s cubic-bezier(.2,.75,.25,1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.svb .box { background: var(--bs-body-bg); border-radius: 20px; box-shadow: var(--lift); border: 1px solid color-mix(in srgb, var(--ln) 60%, transparent); }
+@media (min-width: 1200px) { .svb .stick { position: sticky; top: 64px; } }
+.svb .sec { padding: 18px 20px; }
+.svb .sec + .sec { border-top: 1px solid var(--ln); }
+.svb .sec-t { font: 500 10.5px/1 Ubuntu, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--mut); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.svb .av { width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; flex: none; font: 600 21px/1 Poppins, sans-serif; color: var(--bs-primary-text-emphasis); background: var(--bs-primary-bg-subtle); }
+.svb .nm { font: 600 18px/1.2 Poppins, sans-serif; letter-spacing: -.01em; color: var(--ink); }
+.svb .sub { font-size: 12px; color: var(--mut); margin-top: 3px; }
+.svb .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 99px; background: var(--soft); color: var(--mut); }
+.svb .tag.ok { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.svb .tag.bad { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.svb .ibtn { width: 34px; height: 34px; border-radius: 11px; border: 1px solid var(--ln); background: var(--bs-body-bg); color: var(--mut); display: grid; place-items: center; flex: none; transition: all .2s; }
+.svb .ibtn:hover { color: var(--bs-link-color); border-color: var(--bs-primary-border-subtle); }
+
+.svb .ink { position: relative; overflow: hidden; margin: 0 14px; border-radius: 18px; padding: 18px 18px 14px; color: #fff; background:
+    radial-gradient(90% 70% at 100% 0%, rgba(var(--acc-rgb), .55), transparent 60%),
+    radial-gradient(60% 60% at 0% 100%, rgba(var(--acc-rgb), .25), transparent 70%), var(--inkpanel); }
+.svb .ink::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.4px); background-size: 14px 14px; mask-image: linear-gradient(200deg, #000, transparent 65%); }
+.svb .ink > * { position: relative; }
+.svb .ink .k { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.6); display: flex; justify-content: space-between; }
+.svb .ink .big { font: 600 36px/1.1 Poppins, sans-serif; letter-spacing: -.03em; margin-top: 6px; }
+.svb .ink .big em { font-style: normal; font-size: 13px; font-weight: 400; color: rgba(255,255,255,.55); margin-inline-start: 6px; letter-spacing: 0; }
+.svb .ink .big.neg { color: #ff9b9b; }
+.svb .ink .spend { font-size: 12px; color: rgba(255,255,255,.72); margin-top: 2px; }
+.svb .ink .spend b { color: #fff; font-weight: 600; }
+.svb .pw { display: flex; height: 8px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; margin-top: 14px; gap: 2px; }
+.svb .pw i { height: 100%; transition: width .6s cubic-bezier(.2,.75,.25,1); }
+.svb .pw .bal { background: linear-gradient(90deg, #34d399, #6ee7b7); border-radius: 99px; }
+.svb .pw .od { background: repeating-linear-gradient(135deg, rgba(251,191,36,.9) 0 4px, rgba(251,191,36,.45) 4px 8px); border-radius: 99px; }
+.svb .pw .used { background: linear-gradient(90deg, #f87171, #fca5a5); border-radius: 99px; }
+.svb .pw-leg { display: flex; gap: 14px; font-size: 10.5px; color: rgba(255,255,255,.6); margin-top: 7px; flex-wrap: wrap; }
+.svb .pw-leg span::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-inline-end: 5px; background: var(--c); }
+.svb .strip { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); font-size: 12px; }
+.svb .strip .fa-wifi { transform: rotate(90deg); color: rgba(255,255,255,.7); }
+.svb .strip .uid { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; color: rgba(255,255,255,.85); }
+.svb .strip .pill { margin-inline-start: auto; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 9px; border-radius: 99px; }
+.svb .strip .pill.on { background: rgba(52,211,153,.18); color: #6ee7b7; }
+.svb .strip .pill.off { background: rgba(248,113,113,.2); color: #fca5a5; }
+.svb .strip .pill.none { background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); }
+.svb .trio { display: flex; }
+.svb .trio > div { flex: 1; padding: 0 12px; }
+.svb .trio > div + div { border-inline-start: 1px solid var(--ln); }
+.svb .trio > div:first-child { padding-inline-start: 0; }
+.svb .trio .k { font-size: 10.5px; color: var(--mut); }
+.svb .trio .v { font: 600 15px/1.2 Poppins, sans-serif; color: var(--ink); margin-top: 3px; }
+.svb .gr { display: flex; align-items: center; gap: 11px; padding: 9px 0; }
+.svb .gr + .gr { border-top: 1px dashed var(--ln); }
+.svb .gav { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; flex: none; background: var(--soft); color: var(--ink); position: relative; }
+.svb .gav::after { content: ""; position: absolute; inset-inline-end: -1px; bottom: -1px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--bs-body-bg); background: var(--c, var(--mut)); }
+.svb .gr .n { font-size: 13px; font-weight: 500; color: var(--ink); line-height: 1.25; }
+.svb .gr .n small { font-weight: 400; color: var(--mut); }
+.svb .gr .s { font-size: 11px; color: var(--mut); }
+.svb .lnk { border-radius: 12px; background: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); padding: 9px 11px; font-size: 11.5px; margin: 2px 0 8px; }
+.svb dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 12.5px; }
+.svb dt { font-weight: 400; color: var(--mut); display: flex; align-items: center; gap: 7px; }
+.svb dt i { width: 14px; text-align: center; }
+.svb dd { margin: 0; text-align: end; color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.svb dd.none { color: var(--mut); font-weight: 400; }
+.svb .note { margin-top: 12px; border-radius: 12px; padding: 9px 12px; font-size: 12px; background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); display: flex; gap: 8px; }
+
+.svb .ws-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--ln); flex-wrap: wrap; }
+.svb .ws-h h5 { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
+.svb .ws-h .hint { font-size: 12px; color: var(--mut); }
+.svb .seg { display: inline-flex; padding: 4px; gap: 2px; border-radius: 13px; background: var(--soft); overflow-x: auto; max-width: 100%; }
+.svb .seg button { border: 0; background: none; border-radius: 10px; padding: 7px 13px; font-size: 12.5px; font-weight: 500; color: var(--mut); white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; transition: all .2s; }
+.svb .seg button.on { background: var(--bs-body-bg); color: var(--ink); box-shadow: 0 1px 2px rgba(15,23,42,.08), 0 4px 10px -4px rgba(15,23,42,.18); }
+.svb .seg button.on i { color: var(--bs-link-color); }
+.svb .pane { padding: 18px 20px 22px; animation: svRise .4s cubic-bezier(.2,.75,.25,1) both; }
+.svb .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.svb .chips button { border: 1px solid var(--ln); background: var(--bs-body-bg); color: var(--bs-body-color); border-radius: 99px; padding: 5px 12px; font-size: 12px; }
+.svb .chips button.on { border-color: var(--bs-primary-border-subtle); background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); font-weight: 500; }
+.svb .chips .form-control { border-radius: 99px; width: auto; }
+.svb .flow { display: flex; gap: 20px; flex-wrap: wrap; margin: 16px 0 6px; padding: 12px 16px; border-radius: 14px; background: var(--soft); font-size: 12px; color: var(--mut); align-items: center; }
+.svb .flow b { display: block; font: 600 15px/1.2 Poppins, sans-serif; color: var(--ink); margin-top: 2px; }
+.svb .flow .in b { color: var(--bs-success-text-emphasis); }
+.svb .flow .out b { color: var(--bs-danger-text-emphasis); }
+.svb .flow .arrow { margin-inline-start: auto; text-align: end; }
+.svb .fday { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 2px 6px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--mut); font-family: Ubuntu, sans-serif; }
+.svb .fday b { color: var(--ink); font-weight: 500; }
+.svb .fi { display: flex; align-items: center; gap: 13px; padding: 10px 10px; margin: 0 -10px; border-radius: 13px; transition: background .15s; }
+.svb .fi:hover { background: var(--soft); }
+.svb .fi .fic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; flex: none; font-size: 14px; }
+.svb .fi .fic.topup { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.svb .fi .fic.purchase { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.svb .fi .fic.return { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.svb .fi .t { font-size: 13px; font-weight: 500; color: var(--ink); }
+.svb .fi .d { font-size: 11.5px; color: var(--mut); }
+.svb .fi .d a { color: var(--bs-link-color); text-decoration: none; }
+.svb .fi .amt { margin-inline-start: auto; text-align: end; }
+.svb .fi .amt b { display: block; font: 600 14px/1.2 Poppins, sans-serif; color: var(--ink); }
+.svb .fi .amt b.pos { color: var(--bs-success-text-emphasis); }
+.svb .fi .amt small { font-size: 11px; color: var(--mut); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.svb .bfwd { margin-top: 14px; border-top: 1px dashed var(--ln); padding-top: 12px; font-size: 12px; color: var(--mut); display: flex; justify-content: space-between; }
+.svb .bfwd b { color: var(--ink); font-weight: 600; }
+.svb .row-i { display: flex; align-items: center; gap: 13px; padding: 12px 0; flex-wrap: wrap; }
+.svb .row-i + .row-i { border-top: 1px solid var(--ln); }
+.svb .row-i .inv { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; padding: 3px 8px; border-radius: 7px; background: var(--soft); color: var(--ink); text-decoration: none; }
+.svb .row-i .t { font-size: 13px; font-weight: 500; color: var(--ink); }
+.svb .row-i .d { font-size: 11.5px; color: var(--mut); }
+.svb .row-i .end { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; }
+.svb .row-i .amt { font: 600 14px/1 Poppins, sans-serif; color: var(--ink); min-width: 70px; text-align: end; }
+.svb .sp { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+.svb .sp::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.svb .sp.success { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.svb .sp.failed { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.svb .sp.pending { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.svb .sp.refunded { background: var(--soft); color: var(--mut); }
+.svb .btn { border-radius: 10px; }
+.svb .form-control { border-radius: 10px; }
+.svb .input-group > .form-control { border-radius: 10px 0 0 10px; }
+.svb .input-group > .btn { border-radius: 0 10px 10px 0; }
+.svb .cardx { position: relative; border-radius: 18px; padding: 20px; color: #fff; overflow: hidden; aspect-ratio: 1.586; max-width: 340px; display: flex; flex-direction: column;
+  background: radial-gradient(100% 90% at 100% 0%, rgba(var(--acc-rgb), .75), transparent 60%), var(--inkpanel); box-shadow: 0 24px 44px -24px rgba(0,0,0,.6); }
+.svb .cardx::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.08) 1px, transparent 1.4px); background-size: 12px 12px; mask-image: linear-gradient(210deg, #000, transparent 70%); }
+.svb .cardx > * { position: relative; }
+.svb .cardx .top { display: flex; justify-content: space-between; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+.svb .cardx .top .fa-wifi { transform: rotate(90deg); font-size: 16px; }
+.svb .cardx .uid { margin-top: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 17px; letter-spacing: .14em; }
+.svb .cardx .who { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,.7); margin-top: 8px; letter-spacing: .08em; text-transform: uppercase; }
+.svb .cardx.blocked { background: repeating-linear-gradient(135deg, rgba(248,113,113,.12) 0 10px, transparent 10px 20px), #2a1215; }
+.svb .cardx.empty { background: var(--soft); color: var(--mut); border: 2px dashed var(--ln); box-shadow: none; align-items: center; justify-content: center; text-align: center; }
+.svb .cardx.empty::before { display: none; }
+.svb .hist .h { display: flex; gap: 12px; padding: 10px 0; }
+.svb .hist .h + .h { border-top: 1px dashed var(--ln); }
+.svb .hist .hi { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; font-size: 12px; }
+.svb .hist .t { font-size: 13px; font-weight: 500; color: var(--ink); }
+.svb .hist .m { font-size: 11.5px; color: var(--mut); }
+.svb .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ADD / EDIT STUDENT — premium form (.sfx), shared by directions A and B.
+   Built for non-technical staff: numbered sections that say what they are
+   for, tap cards instead of dropdowns, "Required"/"Optional" words instead of
+   asterisks, a live preview and a "Before you save" checklist.
+   Choices are real radio inputs (Bootstrap .btn-check) so wire:model works.
+   ═══════════════════════════════════════════════════════════════════════ */
+.sfx { --acc: var(--bs-primary); --acc-rgb: var(--bs-primary-rgb); --ln: var(--bs-border-color); --mut: var(--bs-secondary-color); --ink: var(--bs-emphasis-color); --soft: var(--bs-tertiary-bg);
+  --sh: 0 1px 2px rgba(15,23,42,.05), 0 14px 34px -18px rgba(15,23,42,.22); }
+[data-bs-theme="dark"] .sfx { --sh: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -20px rgba(0,0,0,.7); }
+.sfx .rise { animation: svRise .55s cubic-bezier(.2,.75,.25,1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.sfx .sheet { background: var(--bs-body-bg); border-radius: 18px; box-shadow: var(--sh); border: 1px solid color-mix(in srgb, var(--ln) 60%, transparent); }
+.sfx .top { padding: 18px 22px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.sfx .top h4 { margin: 0; font-size: 18px; font-weight: 600; color: var(--ink); }
+.sfx .top p { margin: 2px 0 0; font-size: 12.5px; color: var(--mut); }
+.sfx .steps { display: flex; gap: 6px; flex-wrap: wrap; margin-inline-start: auto; }
+.sfx .steps button { border: 1px solid var(--ln); background: var(--bs-body-bg); border-radius: 99px; padding: 5px 12px 5px 5px; font-size: 12px; color: var(--bs-body-color); display: inline-flex; align-items: center; gap: 7px; }
+.sfx .steps button .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--soft); font-size: 11px; font-weight: 600; color: var(--mut); }
+.sfx .steps button.done { border-color: var(--bs-success-border-subtle); background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.sfx .steps button.done .n { background: var(--bs-success); color: #fff; }
+.sfx .steps button .o { font-size: 10.5px; color: var(--mut); }
+.sfx .fsec { padding: 22px 24px 24px; scroll-margin-top: 70px; }
+.sfx .fsec + .fsec { margin-top: 16px; }
+.sfx .sec-h { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+.sfx .sec-h .num { width: 36px; height: 36px; border-radius: 12px; flex: none; display: grid; place-items: center; font: 600 15px/1 Poppins, sans-serif; background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.sfx .sec-h h5 { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
+.sfx .sec-h p { margin: 2px 0 0; font-size: 12.5px; color: var(--mut); }
+.sfx .form-label { font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.sfx .req, .sfx .opt { font-size: 10px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; }
+.sfx .req { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.sfx .opt { background: var(--soft); color: var(--mut); }
+.sfx .form-control, .sfx .form-select { min-height: 44px; border-radius: 12px; border-color: var(--ln); font-size: 13.5px; padding: 9px 13px; }
+.sfx textarea.form-control { min-height: 72px; }
+.sfx .form-control::placeholder { color: color-mix(in srgb, var(--mut) 70%, transparent); }
+.sfx .form-control:focus, .sfx .form-select:focus { border-color: var(--bs-primary-border-subtle); box-shadow: 0 0 0 4px rgba(var(--acc-rgb), .14); }
+.sfx .input-group > .form-control { border-radius: 12px 0 0 12px; }
+.sfx .input-group > .input-group-text:last-child { border-radius: 0 12px 12px 0; }
+.sfx .input-group-text { border-color: var(--ln); background: var(--soft); font-size: 12.5px; color: var(--mut); }
+.sfx .hint { font-size: 11.5px; color: var(--mut); margin-top: 6px; display: flex; gap: 6px; line-height: 1.45; }
+.sfx .hint i { margin-top: 2px; opacity: .7; }
+.sfx .tapc { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1.5px solid var(--ln); border-radius: 14px; cursor: pointer; background: var(--bs-body-bg); height: 100%; transition: border-color .2s, background .2s, box-shadow .2s; user-select: none; }
+.sfx .tapc:hover { border-color: var(--bs-primary-border-subtle); }
+.sfx .tapc .ti { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex: none; background: var(--soft); color: var(--mut); font-size: 16px; transition: all .2s; }
+.sfx .tapc .tt { flex: 1; min-width: 0; line-height: 1.3; }
+.sfx .tapc .tt b { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.sfx .tapc .tt small { display: block; font-size: 11.5px; color: var(--mut); margin-top: 2px; }
+.sfx .tapc .tk { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ln); display: grid; place-items: center; color: transparent; font-size: 10px; flex: none; transition: all .2s; }
+.sfx .btn-check:checked + .tapc { border-color: var(--acc); background: var(--bs-primary-bg-subtle); box-shadow: 0 8px 20px -14px rgba(var(--acc-rgb), .8); }
+[data-bs-theme="dark"] .sfx .btn-check:checked + .tapc { border-color: var(--bs-primary-border-subtle); }
+.sfx .btn-check:checked + .tapc .ti { background: var(--acc); color: #fff; }
+.sfx .btn-check:checked + .tapc .tk { background: var(--acc); border-color: var(--acc); color: #fff; }
+.sfx .btn-check:focus-visible + .tapc { outline: 3px solid rgba(var(--acc-rgb), .35); outline-offset: 2px; }
+.sfx .tapc.bad .ti { color: var(--bs-danger-text-emphasis); }
+.sfx .btn-check:checked + .tapc.bad { border-color: var(--bs-danger); background: var(--bs-danger-bg-subtle); }
+.sfx .btn-check:checked + .tapc.bad .ti, .sfx .btn-check:checked + .tapc.bad .tk { background: var(--bs-danger); border-color: var(--bs-danger); color: #fff; }
+.sfx .qch { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+.sfx .qch > span { font-size: 11px; color: var(--mut); margin-inline-end: 2px; }
+.sfx .qch button { border: 1px solid var(--ln); background: var(--bs-body-bg); border-radius: 99px; padding: 3px 11px; font-size: 12px; color: var(--bs-body-color); transition: all .15s; }
+.sfx .qch button:hover { border-color: var(--bs-primary-border-subtle); }
+.sfx .qch button.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+.sfx .subbox { background: var(--soft); border-radius: 14px; padding: 14px 16px; }
+.sfx .subbox .form-control { background: var(--bs-body-bg); }
+.sfx .explain { display: flex; gap: 12px; border-radius: 14px; padding: 12px 14px; background: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); font-size: 12.5px; margin-bottom: 16px; line-height: 1.5; }
+.sfx .explain i { font-size: 16px; margin-top: 1px; }
+.sfx .pcard { border: 1.5px solid var(--ln); border-radius: 16px; overflow: hidden; transition: border-color .2s; }
+.sfx .pcard + .pcard { margin-top: 12px; }
+.sfx .pcard.main { border-color: color-mix(in srgb, var(--bs-warning) 55%, var(--ln)); }
+.sfx .pc-h { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--soft); flex-wrap: wrap; }
+.sfx .pc-h .pn { font-weight: 600; font-size: 13px; color: var(--ink); }
+.sfx .mainb { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 500; padding: 3px 10px; border-radius: 99px; background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.sfx .linkb { border: 0; background: none; font-size: 12px; color: var(--bs-link-color); padding: 3px 6px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px; }
+.sfx .linkb:hover { background: var(--bs-body-bg); }
+.sfx .linkb.danger { color: var(--bs-danger-text-emphasis); }
+.sfx .pc-b { padding: 14px; }
+.sfx .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.sfx .seg label { border: 1.5px solid var(--ln); border-radius: 11px; padding: 7px 14px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; color: var(--bs-body-color); transition: all .15s; }
+.sfx .seg label i { color: var(--mut); }
+.sfx .seg .btn-check:checked + label { border-color: var(--acc); background: var(--acc); color: #fff; }
+.sfx .seg .btn-check:checked + label i { color: #fff; }
+.sfx .addp { margin-top: 12px; width: 100%; border: 1.5px dashed var(--ln); border-radius: 16px; background: none; padding: 14px; font-size: 13.5px; font-weight: 500; color: var(--bs-link-color); transition: all .2s; }
+.sfx .addp:hover { border-color: var(--acc); background: var(--bs-primary-bg-subtle); }
+.sfx .empty { text-align: center; padding: 18px; border-radius: 14px; background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); font-size: 12.5px; }
+@media (min-width: 992px) { .sfx .side { position: sticky; top: 64px; } }
+.sfx .side .sheet + .sheet { margin-top: 14px; }
+.sfx .lbl { font: 500 10.5px/1 Ubuntu, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--mut); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.sfx .live { padding: 18px; }
+.sfx .lv { display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 16px; background: linear-gradient(135deg, var(--bs-primary-bg-subtle), var(--soft)); }
+.sfx .lv-av { width: 72px; height: 72px; border-radius: 22px; flex: none; position: relative; display: grid; place-items: center; font: 600 24px/1 Poppins, sans-serif; color: var(--bs-primary-text-emphasis); background: var(--bs-body-bg); box-shadow: 0 0 0 3px var(--bs-body-bg); background-size: cover; background-position: center; }
+.sfx .lv-av .cam { position: absolute; inset-inline-end: -6px; bottom: -6px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--acc); color: #fff; font-size: 12px; border: 2.5px solid var(--bs-body-bg); cursor: pointer; }
+.sfx .lv .nm { font: 600 16px/1.25 Poppins, sans-serif; color: var(--ink); overflow-wrap: anywhere; }
+.sfx .lv .nm.ph, .sfx .lv .sm.ph { color: var(--mut); font-weight: 400; font-style: italic; }
+.sfx .lv .sm { font-size: 12px; color: var(--mut); margin-top: 2px; }
+.sfx .photo-act { display: flex; gap: 8px; margin-top: 12px; }
+.sfx .photo-act .btn { border-radius: 10px; font-size: 12.5px; }
+.sfx .tapzone { padding: 18px; }
+.sfx .tz { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; border: 1.5px dashed var(--ln); margin-bottom: 12px; transition: all .2s; }
+.sfx .tz .ic { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); flex: none; position: relative; }
+.sfx .tz .ic i { transform: rotate(90deg); font-size: 16px; }
+.sfx .tz .ic::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--acc); opacity: 0; }
+.sfx .tapzone:focus-within .tz { border-color: var(--acc); background: var(--bs-primary-bg-subtle); }
+.sfx .tapzone:focus-within .tz .ic::after { animation: svRing 1.4s infinite; }
+@keyframes svRing { from { transform: scale(1); opacity: .7; } to { transform: scale(1.7); opacity: 0; } }
+.sfx .tz b { display: block; font-size: 13px; font-weight: 500; color: var(--ink); }
+.sfx .tz small { font-size: 11.5px; color: var(--mut); }
+.sfx .uidf { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+.sfx .chk { list-style: none; margin: 0 0 16px; padding: 0; }
+.sfx .chk li { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; font-size: 12.5px; color: var(--bs-body-color); }
+.sfx .chk li + li { border-top: 1px dashed var(--ln); }
+.sfx .chk .ck { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 9px; border: 1.5px solid var(--ln); color: transparent; margin-top: 1px; }
+.sfx .chk .ok .ck { background: var(--bs-success); border-color: var(--bs-success); color: #fff; }
+.sfx .chk .warn .ck { background: var(--bs-warning-bg-subtle); border-color: var(--bs-warning); color: var(--bs-warning-text-emphasis); }
+.sfx .chk .bad .ck { background: var(--bs-danger-bg-subtle); border-color: var(--bs-danger); color: var(--bs-danger-text-emphasis); }
+.sfx .chk small { display: block; color: var(--mut); font-size: 11.5px; }
+.sfx .chkbox { padding: 18px; }
+.sfx .save { border-radius: 13px; padding: 12px; font-size: 14.5px; font-weight: 500; }
+.sfx .savebar { position: fixed; inset-inline: 0; bottom: 0; z-index: 1020; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--bs-body-bg) 92%, transparent); backdrop-filter: blur(12px); border-top: 1px solid var(--ln); display: flex; gap: 10px; align-items: center; }
+.sfx .savebar .st { font-size: 12px; color: var(--mut); flex: 1; }
+.sfx .savebar .st b { color: var(--ink); font-weight: 500; }
+/* Tom Select inside the premium form */
+.sfx .ts-wrapper.single .ts-control, .sfx .ts-wrapper .ts-control { min-height: 44px; border-radius: 12px; border-color: var(--ln); background: var(--bs-body-bg); color: var(--bs-body-color); padding: 10px 13px; font-size: 13.5px; box-shadow: none; }
+.sfx .ts-wrapper.focus .ts-control { border-color: var(--bs-primary-border-subtle); box-shadow: 0 0 0 4px rgba(var(--acc-rgb), .14); }
+.sfx .ts-dropdown { border-radius: 12px; border-color: var(--ln); background: var(--bs-body-bg); color: var(--bs-body-color); box-shadow: var(--sh); overflow: hidden; margin-top: 6px; font-size: 13px; }
+.sfx .ts-dropdown .option { padding: 8px 13px; }
+.sfx .ts-dropdown .active { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.sfx .ts-control input { color: var(--bs-body-color); }
+.sfx .ts-control input::placeholder { color: color-mix(in srgb, var(--mut) 70%, transparent); }
+
+/* HARNESS — Tom Select dark colours for the Bootstrap-native form (the app's vendored Tom Select theme needs the same). */
+[data-bs-theme="dark"] .ts-control, [data-bs-theme="dark"] .ts-dropdown, [data-bs-theme="dark"] .ts-control input { background: var(--bs-body-bg) !important; color: var(--bs-body-color) !important; border-color: var(--bs-border-color) !important; }
+[data-bs-theme="dark"] .ts-dropdown .active { background: var(--bs-primary-bg-subtle) !important; color: var(--bs-primary-text-emphasis) !important; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.1/dist/js/tom-select.complete.min.js"></script>
+</head>
+<body>
+
+<div class="hx-bar">
+  <div class="hx-grp" id="hxDir"><span>Direction</span>
+    <button data-dir="a" class="on">A · Campus ID</button><button data-dir="b">B · Wallet</button><button data-dir="c">C · Bootstrap native</button>
+  </div>
+  <div class="hx-grp" id="hxPage"><span>Page</span>
+    <button data-page="view" class="on">Student view</button><button data-page="add">Add student</button><button data-page="edit">Edit student</button>
+  </div>
+  <div class="hx-grp" id="hxCard"><span>Card</span>
+    <button data-card="active" class="on">Active</button><button data-card="blocked">Blocked</button><button data-card="none">No card</button>
+  </div>
+  <div class="hx-grp" id="hxBal"><span>Balance</span>
+    <button data-bal="credit" class="on">In credit</button><button data-bal="overdraft">Overdraft</button>
+  </div>
+  <div class="hx-grp" id="hxAcc"><span>Theme</span>
+    <button class="sw on" data-acc="#25476a" style="background:#25476a" title="Navy"></button>
+    <button class="sw" data-acc="#0f766e" style="background:#0f766e" title="Teal"></button>
+    <button class="sw" data-acc="#b45309" style="background:#b45309" title="Amber"></button>
+    <button class="sw" data-acc="#be185d" style="background:#be185d" title="Rose"></button>
+  </div>
+  <div class="hx-grp" id="hxMode"><button data-mode="light" class="on"><i class="fa fa-sun-o"></i> Light</button><button data-mode="dark"><i class="fa fa-moon-o"></i> Dark</button></div>
+</div>
+<div class="hx-note" id="hxNote"></div>
+
+<div class="nf-band">
+  <div class="nf-wrap">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Home</a></li><li class="breadcrumb-item"><a href="#">Students</a></li><li class="breadcrumb-item active" id="nfCrumb">Student</li></ol></nav>
+    <h1 id="nfTitle">Student</h1>
+    <p class="lead" id="nfLead">Card, statement, purchases and parents</p>
+  </div>
+</div>
+<main class="nf-wrap nf-content" id="stage"></main>
+
+<script>
+(function () {
+  /* ─────────────────────────────── sample data ─────────────────────────────── */
+  var S = { name: 'Aisha Rahman', initials: 'AR', adm: 'ADM-2024-0187', klass: 'Grade 6 - B', status: 'Active', gender: 'Female', dob: '14-03-2014', age: 12,
+    qid: '28463401234', nationality: 'Qatari', mobile: '', email: '', notes: 'Allergic to peanuts. Canteen staff informed.', uid: '04A21B9C3F5E80', limit: 20, school: 'Al Noor School' };
+  var G = [
+    { id: 1, name: 'Mohammed Rahman', ini: 'MR', rel: 'Father', primary: true, mobile: '+974 5512 3344', email: 'm.rahman@example.com', portal: 'active', meta: 'Last login 2 hours ago' },
+    { id: 2, name: 'Fatima Noor', ini: 'FN', rel: 'Mother', primary: false, mobile: '+974 6678 9012', email: '', portal: 'invited', meta: 'Invited 3 days ago, no password yet' }
+  ];
+  var MOVES = [
+    ['2026-09-01', 'topup', 'QPay top-up by Mohammed Rahman', 'QP2609011910C4', 100, 0],
+    ['2026-09-02', 'purchase', 'Sale', 'INV-10231', 0, 12.50],
+    ['2026-09-03', 'purchase', 'Sale', 'INV-10262', 0, 8.00],
+    ['2026-09-07', 'purchase', 'Sale', 'INV-10340', 0, 15.75],
+    ['2026-09-08', 'return', 'Return against INV-10340', 'SR-0412', 4.00, 0],
+    ['2026-09-10', 'purchase', 'Sale', 'INV-10415', 0, 22.25],
+    ['2026-09-14', 'purchase', 'Sale', 'INV-10507', 0, 9.50],
+    ['2026-09-15', 'topup', 'QPay top-up by Mohammed Rahman', 'QP2609150742A1', 50, 0],
+    ['2026-09-16', 'purchase', 'Sale', 'INV-10588', 0, 18.00],
+    ['2026-09-17', 'purchase', 'Sale', 'INV-10611', 0, 6.75]
+  ];
+  var SALES = [
+    ['2026-09-17', 'INV-10611', 'Main Canteen', 2, 6.75, ''], ['2026-09-16', 'INV-10588', 'Main Canteen', 3, 18.00, ''], ['2026-09-14', 'INV-10507', 'Sports Kiosk', 1, 9.50, ''],
+    ['2026-09-10', 'INV-10415', 'Main Canteen', 4, 22.25, ''], ['2026-09-07', 'INV-10340', 'Main Canteen', 3, 15.75, 'Part returned'], ['2026-09-03', 'INV-10262', 'Book Shop', 1, 8.00, ''],
+    ['2026-09-02', 'INV-10231', 'Main Canteen', 2, 12.50, '']
+  ];
+  var TOPUPS = [
+    { at: '15-09-2026 07:42', pun: 'QP2609150742A1', type: 'Payment', by: 'Mohammed Rahman', card: '484783******1234', amt: 50, st: 'success', lab: 'Successful', resp: '000 Transaction approved' },
+    { at: '01-09-2026 19:10', pun: 'QP2609011910C4', type: 'Payment', by: 'Mohammed Rahman', card: '484783******1234', amt: 100, st: 'success', lab: 'Successful', resp: '000 Transaction approved' },
+    { at: '28-08-2026 12:03', pun: 'QP2608281203B9', type: 'Refund', by: '-', card: '552244******9087', amt: 30, st: 'refunded', lab: 'Refunded', resp: '000 Refund processed' },
+    { at: '20-08-2026 18:25', pun: 'QP2608201825D2', type: 'Payment', by: 'Fatima Noor', card: '552244******9087', amt: 40, st: 'pending', lab: 'Pending', resp: 'No response from QPay yet' },
+    { at: '12-08-2026 21:47', pun: 'QP2608122147E6', type: 'Payment', by: 'Fatima Noor', card: '552244******9087', amt: 40, st: 'failed', lab: 'Failed', resp: '051 Insufficient funds' }
+  ];
+
+  var st = { dir: 'a', card: 'active', bal: 'credit', tabA: 'profile', tabB: 'activity', tabC: 'profile', invite: 0, preset: 'month', rise: true };
+  try { var saved = JSON.parse(localStorage.getItem('student-view-preview') || '{}'); Object.assign(st, saved, { invite: 0, rise: true }); } catch (e) {}
+
+  /* ─────────────────────────────── helpers ─────────────────────────────── */
+  function money(n) { return Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function signed(n) { return (n < 0 ? '-' : '') + money(n); }
+  function dmy(iso) { var p = iso.split('-'); return p[2] + '-' + p[1] + '-' + p[0]; }
+  function dayName(iso) { return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }); }
+  function uidGroups(u) { return u.replace(/(.{4})/g, '$1 ').trim(); }
+  function opening() { return st.bal === 'credit' ? 84.25 : -74.00; }
+  function statement() {
+    var run = opening(), rows = [], inn = 0, out = 0;
+    MOVES.forEach(function (m, i) { run = Math.round((run + m[4] - m[5]) * 100) / 100; inn += m[4]; out += m[5]; rows.push({ i: i, date: m[0], type: m[1], desc: m[2], ref: m[3], cr: m[4], dr: m[5], bal: run }); });
+    return { opening: opening(), closing: run, inn: inn, out: out, rows: rows };
+  }
+  function balance() { return statement().closing; }
+  function spendable() { return Math.max(0, balance() + S.limit); }
+  var TYPE = { topup: ['Top-up', 'fa-arrow-down'], purchase: ['Purchase', 'fa-shopping-cart'], return: ['Return', 'fa-undo'] };
+  function history() {
+    var base = [
+      { ev: 'Unblocked', by: 'Admin User', at: '12-09-2026 09:02', kind: 'unblock' },
+      { ev: 'Blocked: left at home, reported lost', by: 'Fatima Noor (parent)', at: '11-09-2026 16:40', kind: 'block' },
+      { ev: 'Card linked 04A21B9C3F5E80', by: 'Admin User', at: '02-09-2026 08:14', kind: 'link' },
+      { ev: 'Card linked 047F33D2A1C4', by: 'Admin User', at: '18-08-2025 10:05', kind: 'link' }
+    ];
+    if (st.card === 'blocked') base.unshift({ ev: 'Blocked: reported lost', by: 'Fatima Noor (parent)', at: '17-09-2026 07:55', kind: 'block' });
+    if (st.card === 'none') base.unshift({ ev: 'Card unlinked', by: 'Admin User', at: '17-09-2026 08:00', kind: 'unlink' });
+    return base;
+  }
+  var HK = { link: ['var(--bs-primary)', 'fa-link', 'primary'], block: ['var(--bs-danger)', 'fa-lock', 'danger'], unblock: ['var(--bs-success)', 'fa-unlock', 'success'], unlink: ['var(--bs-secondary)', 'fa-chain-broken', 'secondary'] };
+  function tabs(dir) {
+    if (dir === 'b') return [['activity', 'fa-exchange', 'Activity'], ['purchases', 'fa-shopping-cart', 'Purchases', SALES.length], ['topups', 'fa-plus-circle', 'Top-ups', TOPUPS.length], ['card', 'fa-credit-card', 'Card']];
+    return [['profile', 'fa-user', 'Profile & Parents', G.length], ['card', 'fa-credit-card', 'Card'], ['statement', 'fa-list-alt', 'Statement'], ['purchases', 'fa-shopping-cart', 'Purchases', SALES.length], ['topups', 'fa-plus-circle', 'Top-ups', TOPUPS.length]];
+  }
+
+  /* ═══════════════════════════════ A · CAMPUS ID ═══════════════════════════════ */
+  function aCard(big) {
+    if (st.card === 'none') {
+      return '<div class="idc is-empty"><div><i class="fa fa-credit-card big"></i><div class="fw-medium" style="color:var(--ink)">No card linked</div>' +
+        '<div class="small mb-2">The student cannot pay with a card yet.</div><button class="btn btn-sm btn-primary" data-a-tab="card"><i class="fa fa-link me-1"></i>Link a card</button></div></div>';
+    }
+    var b = balance();
+    return '<div class="idc ' + (st.card === 'blocked' ? 'is-blocked' : '') + '"' + (big ? ' style="max-width:420px;margin-inline:auto"' : '') + '><div class="idc-face">' +
+      '<div class="idc-top"><span>' + S.school + ' · Student</span><i class="fa fa-wifi"></i></div>' +
+      '<div class="idc-chip"></div>' +
+      '<div class="idc-bal"><small>Card balance</small><strong>' + signed(b) + '<em>QAR</em></strong></div>' +
+      '<div class="idc-foot"><div class="who">' + S.name + '<span>' + S.klass + ' · ' + S.adm + '</span></div><div class="uid">' + uidGroups(S.uid) + '</div></div>' +
+      '</div>' + (st.card === 'blocked' ? '<div class="idc-stamp"><i class="fa fa-lock me-2"></i>BLOCKED</div>' : '') + '</div>';
+  }
+  function aKpis() {
+    var b = balance(), sp = spendable(), used = b < 0 ? Math.min(100, Math.abs(b) / S.limit * 100) : 0, i = 1;
+    function tile(icon, tone, lab, val, foot, extra) {
+      return '<div class="col-6 col-xl-3"><div class="sheet kpi rise" style="--i:' + (i++) + '"><div class="d-flex justify-content-between align-items-start gap-2"><div class="lab">' + lab + '</div>' +
+        '<div class="ic bg-' + tone + '-subtle text-' + tone + '-emphasis"><i class="fa ' + icon + '"></i></div></div>' +
+        '<div class="val" style="margin-top:4px">' + val + '</div>' + (extra || '') + '<div class="ft">' + foot + '</div></div></div>';
+    }
+    return '<div class="row g-3 mb-3">' +
+      tile('fa-credit-card', b < 0 ? 'danger' : 'success', 'Card balance', '<span class="' + (b < 0 ? 'text-danger-emphasis' : '') + '">' + signed(b) + '</span><small>QAR</small>',
+        b < 0 ? '<span class="text-danger-emphasis fw-medium"><i class="fa fa-exclamation-triangle me-1"></i>In overdraft</span>' : 'All branches, from the ledger') +
+      tile('fa-bolt', 'primary', 'Can spend now', money(sp) + '<small>QAR</small>', b < 0 ? 'Overdraft ' + Math.round(used) + '% used of ' + money(S.limit) : 'Includes ' + money(S.limit) + ' overdraft',
+        (b < 0 ? '<div class="meter"><i style="width:' + used + '%;background:var(--bs-danger)"></i><i style="width:' + (100 - used) + '%;background:var(--bs-warning);opacity:.55"></i></div>'
+          : '<div class="meter"><i style="width:' + (b / sp * 100) + '%;background:var(--bs-success)"></i><i style="width:' + (S.limit / sp * 100) + '%;background:var(--bs-warning);opacity:.55"></i></div>')) +
+      tile('fa-shopping-cart', 'info', 'This month', money(92.75) + '<small>QAR</small>', '7 purchases · avg ' + money(92.75 / 7)) +
+      tile('fa-plus-circle', 'warning', 'Last top-up', money(50) + '<small>QAR</small>', '15-09-2026 · Mohammed Rahman') +
+      '</div>';
+  }
+  function aHero() {
+    var p = G[0];
+    return '<div class="sheet hero mb-3 rise" style="--i:0"><div class="row g-4 align-items-center">' +
+      '<div class="col-lg-7"><div class="d-flex gap-4 align-items-start flex-wrap flex-sm-nowrap">' +
+        '<div class="av">' + S.initials + '<span class="dot bg-success"><i class="fa fa-check"></i></span></div>' +
+        '<div class="flex-grow-1 min-w-0"><div class="eyebrow">Student <b>· ' + S.adm + '</b></div><div class="nm">' + S.name + '</div>' +
+          '<div class="d-flex flex-wrap gap-2"><span class="chip ok"><i class="fa fa-circle" style="font-size:7px"></i>' + S.status + '</span><span class="chip"><i class="fa fa-graduation-cap"></i>' + S.klass + '</span>' +
+          '<span class="chip"><i class="fa fa-venus"></i>' + S.gender + '</span><span class="chip"><i class="fa fa-birthday-cake"></i>' + S.dob + ' · ' + S.age + ' yrs</span></div>' +
+          '<div class="pline"><i class="fa fa-users"></i><span><b>' + p.name + '</b> (' + p.rel + ', primary)</span><a href="#"><i class="fa fa-phone me-1"></i>' + p.mobile + '</a>' +
+          '<span class="ms-auto d-flex gap-2"><button class="btn btn-light hbtn border" data-a-tab="statement"><i class="fa fa-list-alt me-1"></i>Statement</button><button class="btn btn-primary hbtn"><i class="fa fa-pencil me-1"></i>Edit</button></span></div>' +
+        '</div></div></div>' +
+      '<div class="col-lg-5 d-flex justify-content-center justify-content-lg-end">' + aCard(false) + '</div>' +
+      '</div></div>';
+  }
+  function aProfile() {
+    function fld(icon, k, v, cls) { return '<div class="col-sm-6"><div class="fld ' + (cls || '') + '"><div class="k"><i class="fa ' + icon + '"></i>' + k + '</div><div class="v ' + (v ? '' : 'none') + '">' + (v || 'Not recorded') + '</div></div></div>'; }
+    var guardians = G.map(function (g) {
+      var steps = g.portal === 'active' ? ['done', 'done', 'done'] : ['done', 'now', ''];
+      var trk = '<div class="trk"><span class="st ' + steps[0] + '"><i class="fa fa-check"></i>Invited</span><span class="bar ' + (steps[1] === 'done' ? 'done' : '') + '"></span>' +
+        '<span class="st ' + steps[1] + '"><i class="fa fa-check"></i>Password set</span><span class="bar ' + (steps[2] === 'done' ? 'done' : '') + '"></span>' +
+        '<span class="st ' + steps[2] + '"><i class="fa fa-check"></i>Signed in</span><span class="meta">' + g.meta + '</span></div>';
+      var link = st.invite === g.id ? '<div class="lnk"><i class="fa fa-info-circle me-1"></i>Set-password link (valid 7 days), if the parent did not receive the message:' +
+        '<div class="input-group input-group-sm mt-2"><input class="form-control font-monospace" readonly value="https://school.qloud.test/parent/invite/9f2c1e7a…"><button class="btn btn-outline-primary bg-body"><i class="fa fa-files-o me-1"></i>Copy</button></div></div>' : '';
+      return '<div class="gd"><div class="d-flex gap-3 align-items-start flex-wrap"><div class="gav">' + g.ini + '</div><div class="flex-grow-1">' +
+        '<div><span class="gn">' + g.name + '</span><span class="rel">' + g.rel + '</span>' + (g.primary ? '<span class="pri"><i class="fa fa-star me-1"></i>Primary</span>' : '') + '</div>' +
+        '<div class="ct"><span><i class="fa fa-phone me-1"></i>' + g.mobile + '</span>' + (g.email ? '<span><i class="fa fa-envelope-o me-1"></i>' + g.email + '</span>' : '') + '</div>' + trk + '</div>' +
+        '<button class="btn btn-sm btn-outline-primary" data-invite="' + g.id + '"><i class="fa fa-paper-plane me-1"></i>' + (g.portal === 'active' ? 'Send password reset' : 'Send invite') + '</button></div></div>' + link;
+    }).join('');
+    return '<div class="row g-4"><div class="col-lg-5"><div class="ph"><span class="pi"><i class="fa fa-user"></i></span><div><h6>Details</h6><div class="hint">School record</div></div></div>' +
+      '<div class="row g-2">' + fld('fa-venus', 'Gender', S.gender) + fld('fa-birthday-cake', 'Date of birth', S.dob) + fld('fa-credit-card', 'QID', '<span class="mono">' + S.qid + '</span>') +
+      fld('fa-globe', 'Nationality', S.nationality) + fld('fa-mobile', 'Mobile', S.mobile) + fld('fa-envelope-o', 'Email', S.email) +
+      '<div class="col-12"><div class="fld note"><div class="k"><i class="fa fa-exclamation-triangle"></i>Notes</div><div class="v">' + S.notes + '</div></div></div></div></div>' +
+      '<div class="col-lg-7"><div class="ph"><span class="pi"><i class="fa fa-users"></i></span><div><h6>Parents</h6><div class="hint">Portal access and contact</div></div></div>' + guardians + '</div></div>';
+  }
+  function aCardTab() {
+    var actions = '';
+    if (st.card === 'active') actions += '<div class="act"><h6><i class="fa fa-lock me-1 text-danger"></i>Block card</h6><p>Use when a card is lost or stolen. It is refused at the canteen straight away.</p>' +
+      '<div class="input-group input-group-sm"><input class="form-control" placeholder="Reason (e.g. reported lost)"><button class="btn btn-danger" data-card-set="blocked"><i class="fa fa-lock me-1"></i>Block card</button></div></div>';
+    if (st.card === 'blocked') actions += '<div class="act" style="border-color:var(--bs-danger-border-subtle);background:var(--bs-danger-bg-subtle)"><h6 class="text-danger-emphasis"><i class="fa fa-lock me-1"></i>Blocked 2 hours ago by Fatima Noor (parent)</h6>' +
+      '<p class="text-danger-emphasis">Reason: reported lost. QLOUD POS refuses this card until it is unblocked or replaced.</p><button class="btn btn-sm btn-success" data-card-set="active"><i class="fa fa-unlock me-1"></i>Unblock card</button></div>';
+    actions += '<div class="act"><h6><i class="fa fa-link me-1 text-primary"></i>' + (st.card === 'none' ? 'Link a card' : 'Replace card') + '</h6><p>The balance belongs to the student, not the card, so a replacement card spends the same money straight away.</p>' +
+      '<div class="input-group input-group-sm"><span class="input-group-text bg-body"><i class="fa fa-wifi" style="transform:rotate(90deg)"></i></span><input class="form-control font-monospace" placeholder="Tap the card on a USB reader or type its UID"><button class="btn btn-primary" data-card-set="active"><i class="fa fa-link me-1"></i>' + (st.card === 'none' ? 'Link' : 'Replace') + '</button></div>' +
+      '<div class="form-text">For an exact match with the till, link cards from QLOUD POS → Link card.</div></div>';
+    var tl = history().map(function (h) { return '<div class="it" style="--tc:' + HK[h.kind][0] + '"><div class="t">' + h.ev + '</div><div class="m">' + h.by + ' · ' + h.at + '</div></div>'; }).join('');
+    return '<div class="row g-4"><div class="col-lg-6"><div class="py-2 mb-3">' + aCard(true) + '</div>' + actions + '</div>' +
+      '<div class="col-lg-6"><div class="ph"><span class="pi"><i class="fa fa-history"></i></span><div><h6>Card history</h6><div class="hint">From the audit trail</div></div></div><div class="tl">' + tl + '</div></div></div>';
+  }
+  function aStatement() {
+    var s = statement();
+    var rows = s.rows.map(function (r) {
+      var t = TYPE[r.type];
+      var desc = r.type === 'purchase' ? 'Sale <a class="inv" href="#">' + r.ref + '</a>' : r.desc + ' <span class="text-body-secondary small mono">' + r.ref + '</span>';
+      return '<tr><td class="text-nowrap">' + dmy(r.date) + '</td><td><span class="tc ' + r.type + '"><i class="fa ' + t[1] + '"></i>' + t[0] + '</span></td><td>' + desc + '</td>' +
+        '<td class="text-end text-success-emphasis">' + (r.cr ? money(r.cr) : '') + '</td><td class="text-end text-danger-emphasis">' + (r.dr ? money(r.dr) : '') + '</td>' +
+        '<td class="text-end fw-semibold ' + (r.bal < 0 ? 'text-danger-emphasis' : '') + '">' + signed(r.bal) + '</td></tr>';
+    }).join('');
+    function preset(k, l) { return '<button class="' + (st.preset === k ? 'on' : '') + '" data-preset="' + k + '">' + l + '</button>'; }
+    return '<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3"><div class="presets">' + preset('month', 'This month') + preset('last', 'Last month') + preset('3m', '3 months') + preset('year', 'This year') + '</div>' +
+      '<div class="d-flex gap-2 align-items-center"><input type="date" class="form-control form-control-sm" value="2026-09-01" style="width:150px"><span class="text-body-secondary">→</span><input type="date" class="form-control form-control-sm" value="2026-09-17" style="width:150px">' +
+      '<button class="btn btn-sm btn-light border" title="Print statement"><i class="fa fa-print"></i></button></div></div>' +
+      '<div class="eq mb-3"><div class="c"><div class="k">Brought forward</div><div class="v">' + signed(s.opening) + '</div></div><span class="op">+</span>' +
+      '<div class="c in"><div class="k"><i class="fa fa-arrow-down me-1"></i>Money in</div><div class="v">' + money(s.inn) + '</div></div><span class="op">−</span>' +
+      '<div class="c out"><div class="k"><i class="fa fa-arrow-up me-1"></i>Money out</div><div class="v">' + money(s.out) + '</div></div><span class="op">=</span>' +
+      '<div class="c close"><div class="k">Closing balance</div><div class="v">' + signed(s.closing) + '</div></div></div>' +
+      '<div class="tblw"><div class="table-responsive"><table class="table tbl"><thead><tr><th>Date</th><th>Type</th><th>Details</th><th class="text-end">In</th><th class="text-end">Out</th><th class="text-end">Balance</th></tr></thead><tbody>' +
+      '<tr class="bf"><td colspan="5">Balance brought forward</td><td class="text-end fw-semibold">' + signed(s.opening) + '</td></tr>' + rows + '</tbody>' +
+      '<tfoot><tr><td colspan="3">Closing balance</td><td class="text-end text-success-emphasis">' + money(s.inn) + '</td><td class="text-end text-danger-emphasis">' + money(s.out) + '</td><td class="text-end">' + signed(s.closing) + '</td></tr></tfoot></table></div></div>';
+  }
+  function aPurchases() {
+    var rows = SALES.map(function (x) {
+      return '<tr><td class="text-nowrap">' + dmy(x[0]) + '</td><td><a class="inv mono" href="#">' + x[1] + '</a></td><td>' + x[2] + '</td><td>' + x[3] + ' item' + (x[3] > 1 ? 's' : '') + '</td>' +
+        '<td><span class="tc purchase" style="padding-left:10px">Student Wallet</span></td><td>' + (x[5] ? '<span class="sp pending">' + x[5] + '</span>' : '<span class="sp success">Completed</span>') + '</td><td class="text-end fw-semibold">' + money(x[4]) + '</td></tr>';
+    }).join('');
+    return '<div class="row g-2 mb-3"><div class="col-6 col-md-3"><div class="mini"><div class="k">Purchases</div><div class="v">7 <small>bills</small></div></div></div>' +
+      '<div class="col-6 col-md-3"><div class="mini"><div class="k">Spent</div><div class="v">92.75 <small>QAR</small></div></div></div>' +
+      '<div class="col-6 col-md-3"><div class="mini"><div class="k">Average bill</div><div class="v">13.25 <small>QAR</small></div></div></div>' +
+      '<div class="col-6 col-md-3"><div class="mini"><div class="k">Top spot</div><div class="v">Main Canteen <small>· 5</small></div></div></div></div>' +
+      '<div class="tblw"><div class="table-responsive"><table class="table tbl"><thead><tr><th>Date</th><th>Invoice</th><th>Counter</th><th>Items</th><th>Paid with</th><th>Status</th><th class="text-end">Amount</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  }
+  function aTopups() {
+    var rows = TOPUPS.map(function (t) {
+      var btn = '';
+      if (t.st === 'pending') btn = '<button class="btn btn-sm btn-light border"><i class="fa fa-refresh me-1"></i>Check</button>';
+      if (t.st === 'success') btn = '<button class="btn btn-sm btn-outline-danger"><i class="fa fa-undo me-1"></i>Refund</button>';
+      return '<tr><td class="text-nowrap">' + t.at + '</td><td class="mono small">' + t.pun + '</td><td>' + t.type + '</td><td>' + t.by + '</td><td class="mono small text-body-secondary">' + t.card + '</td>' +
+        '<td class="text-end fw-semibold">' + money(t.amt) + '</td><td><span class="sp ' + t.st + '">' + t.lab + '</span></td><td class="small text-body-secondary">' + t.resp + '</td><td class="text-end text-nowrap">' + btn + '</td></tr>';
+    }).join('');
+    return '<div class="row g-2 mb-3"><div class="col-6 col-md-3"><div class="mini"><div class="k">Topped up</div><div class="v">150.00 <small>QAR</small></div></div></div>' +
+      '<div class="col-6 col-md-3"><div class="mini"><div class="k">Pending</div><div class="v text-warning-emphasis">1</div></div></div>' +
+      '<div class="col-6 col-md-3"><div class="mini"><div class="k">Refunded</div><div class="v">30.00 <small>QAR</small></div></div></div>' +
+      '<div class="col-6 col-md-3"><div class="mini"><div class="k">Failed</div><div class="v">1</div></div></div></div>' +
+      '<div class="tblw"><div class="table-responsive"><table class="table tbl"><thead><tr><th>Date</th><th>PUN</th><th>Type</th><th>By</th><th>Card</th><th class="text-end">Amount</th><th>Status</th><th>QPay response</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  }
+  function renderA() {
+    var rail = tabs('a').map(function (t) { return '<button class="' + (st.tabA === t[0] ? 'on' : '') + '" data-a-tab="' + t[0] + '"><i class="fa ' + t[1] + '"></i>' + t[2] + (t[3] ? '<span class="cnt">' + t[3] + '</span>' : '') + '</button>'; }).join('');
+    var body = { profile: aProfile, card: aCardTab, statement: aStatement, purchases: aPurchases, topups: aTopups }[st.tabA]();
+    return '<div class="sva">' + aHero() + aKpis() + '<div class="sheet rise" style="--i:5"><div class="rail">' + rail + '</div><div class="pane" key="' + st.tabA + '">' + body + '</div></div></div>';
+  }
+
+  /* ═══════════════════════════════ B · WALLET ═══════════════════════════════ */
+  function bRail() {
+    var b = balance(), neg = b < 0, total = Math.max(b, 0) + S.limit, bars, legend;
+    if (!neg) {
+      bars = '<i class="bal" style="width:' + (b / total * 100) + '%"></i><i class="od" style="width:' + (S.limit / total * 100) + '%"></i>';
+      legend = '<span style="--c:#34d399">Balance ' + money(b) + '</span><span style="--c:#fbbf24">Overdraft allowance ' + money(S.limit) + '</span>';
+    } else {
+      var used = Math.min(100, Math.abs(b) / S.limit * 100);
+      bars = '<i class="used" style="width:' + used + '%"></i><i class="od" style="width:' + (100 - used) + '%"></i>';
+      legend = '<span style="--c:#f87171">Overdraft used ' + money(b) + '</span><span style="--c:#fbbf24">Left ' + money(S.limit + b) + '</span>';
+    }
+    var pill = st.card === 'active' ? '<span class="pill on">Active</span>' : st.card === 'blocked' ? '<span class="pill off"><i class="fa fa-lock me-1"></i>Blocked</span>' : '<span class="pill none">No card</span>';
+    var parents = G.map(function (g) {
+      var c = g.portal === 'active' ? 'var(--bs-success)' : 'var(--bs-warning)';
+      var link = st.invite === g.id ? '<div class="lnk">Set-password link, valid 7 days<div class="input-group input-group-sm mt-1"><input class="form-control font-monospace" readonly value="https://school.qloud.test/parent/invite/9f2c…"><button class="btn btn-outline-primary bg-body"><i class="fa fa-files-o"></i></button></div></div>' : '';
+      return '<div class="gr"><div class="gav" style="--c:' + c + '">' + g.ini + '</div><div class="flex-grow-1 min-w-0"><div class="n">' + g.name + ' <small>· ' + g.rel + '</small>' + (g.primary ? ' <i class="fa fa-star text-warning" title="Primary"></i>' : '') + '</div>' +
+        '<div class="s">' + g.mobile + ' · ' + (g.portal === 'active' ? 'Portal active' : 'Invite pending') + '</div></div>' +
+        '<button class="ibtn" data-invite="' + g.id + '" title="' + (g.portal === 'active' ? 'Send password reset' : 'Send invite') + '"><i class="fa fa-paper-plane"></i></button></div>' + link;
+    }).join('');
+    function dd(icon, k, v) { return '<dt><i class="fa ' + icon + '"></i>' + k + '</dt><dd class="' + (v ? '' : 'none') + '">' + (v || '—') + '</dd>'; }
+    return '<div class="box stick rise" style="--i:0">' +
+      '<div class="sec"><div class="d-flex gap-3 align-items-center"><div class="av">' + S.initials + '</div><div class="flex-grow-1 min-w-0"><div class="nm">' + S.name + '</div>' +
+        '<div class="sub"><span class="mono">' + S.adm + '</span> · ' + S.klass + '</div><div class="d-flex gap-1 mt-2"><span class="tag ok"><i class="fa fa-circle" style="font-size:6px"></i>' + S.status + '</span><span class="tag"><i class="fa fa-venus"></i>' + S.gender + '</span></div></div>' +
+        '<button class="ibtn" title="Edit"><i class="fa fa-pencil"></i></button></div></div>' +
+      '<div class="ink"><div class="k"><span>Card balance</span><span>QAR</span></div><div class="big ' + (neg ? 'neg' : '') + '">' + signed(b) + '</div>' +
+        '<div class="spend">Can spend now <b>' + money(spendable()) + '</b></div><div class="pw">' + bars + '</div><div class="pw-leg">' + legend + '</div>' +
+        '<div class="strip"><i class="fa fa-wifi"></i><span class="uid">' + (st.card === 'none' ? 'No card linked' : '•••• ' + S.uid.slice(-6).replace(/(.{4})/, '$1 ')) + '</span>' + pill + '</div></div>' +
+      '<div class="sec" style="border-top:0"><div class="sec-t"><span>This month</span></div><div class="trio"><div><div class="k">Spent</div><div class="v">92.75</div></div><div><div class="k">Purchases</div><div class="v">7</div></div><div><div class="k">Topped up</div><div class="v">150.00</div></div></div></div>' +
+      '<div class="sec"><div class="sec-t"><span>Parents</span><span>' + G.length + '</span></div>' + parents + '</div>' +
+      '<div class="sec"><div class="sec-t"><span>Details</span></div><dl>' + dd('fa-birthday-cake', 'Born', S.dob + ' · ' + S.age + ' yrs') + dd('fa-credit-card', 'QID', '<span class="mono">' + S.qid + '</span>') +
+        dd('fa-globe', 'Nationality', S.nationality) + dd('fa-mobile', 'Mobile', S.mobile) + dd('fa-envelope-o', 'Email', S.email) + '</dl>' +
+        '<div class="note"><i class="fa fa-exclamation-triangle mt-1"></i><span>' + S.notes + '</span></div></div>' +
+      '</div>';
+  }
+  function bActivity() {
+    var s = statement(), groups = {}, order = [];
+    s.rows.slice().reverse().forEach(function (r) { if (!groups[r.date]) { groups[r.date] = []; order.push(r.date); } groups[r.date].push(r); });
+    var feed = order.map(function (d) {
+      var net = groups[d].reduce(function (a, r) { return a + r.cr - r.dr; }, 0);
+      return '<div class="fday"><span><b>' + dayName(d) + '</b></span><span>' + (net > 0 ? '+' : '−') + money(net) + '</span></div>' + groups[d].map(function (r) {
+        var t = TYPE[r.type];
+        var title = r.type === 'topup' ? 'Top-up via QPay' : r.type === 'return' ? 'Return credited' : 'Canteen purchase';
+        var sub = r.type === 'purchase' ? '<a href="#">' + r.ref + '</a> · Main Canteen' : r.desc + ' · <span class="mono">' + r.ref + '</span>';
+        return '<div class="fi"><div class="fic ' + r.type + '"><i class="fa ' + t[1] + '"></i></div><div class="min-w-0"><div class="t">' + title + '</div><div class="d text-truncate">' + sub + '</div></div>' +
+          '<div class="amt"><b class="' + (r.cr ? 'pos' : '') + '">' + (r.cr ? '+' + money(r.cr) : '−' + money(r.dr)) + '</b><small>bal ' + signed(r.bal) + '</small></div></div>';
+      }).join('');
+    }).join('');
+    function chip(k, l) { return '<button class="' + (st.preset === k ? 'on' : '') + '" data-preset="' + k + '">' + l + '</button>'; }
+    return '<div class="chips">' + chip('month', 'This month') + chip('last', 'Last month') + chip('3m', '3 months') + chip('year', 'This year') +
+      '<span class="ms-auto d-flex gap-2 align-items-center"><input type="date" class="form-control form-control-sm" value="2026-09-01"><input type="date" class="form-control form-control-sm" value="2026-09-17"></span></div>' +
+      '<div class="flow"><div>Opening<b>' + signed(s.opening) + '</b></div><div class="in">In<b>+' + money(s.inn) + '</b></div><div class="out">Out<b>−' + money(s.out) + '</b></div>' +
+      '<div class="arrow">Closing<b>' + signed(s.closing) + '</b></div></div>' + feed +
+      '<div class="bfwd"><span>Balance brought forward · 01-09-2026</span><b>' + signed(s.opening) + '</b></div>';
+  }
+  function bPurchases() {
+    return '<div class="flow mt-0"><div>Purchases<b>7</b></div><div>Spent<b>92.75</b></div><div>Average<b>13.25</b></div><div class="arrow">Top spot<b>Main Canteen</b></div></div>' + SALES.map(function (x) {
+      return '<div class="row-i"><div class="fi p-0 m-0" style="background:none"><div class="fic purchase"><i class="fa fa-shopping-cart"></i></div></div><div><div class="t">' + x[2] + '</div>' +
+        '<div class="d">' + dmy(x[0]) + ' · ' + x[3] + ' item' + (x[3] > 1 ? 's' : '') + ' · Student Wallet</div></div>' +
+        '<div class="end">' + (x[5] ? '<span class="sp pending">' + x[5] + '</span>' : '') + '<a class="inv" href="#">' + x[1] + '</a><span class="amt">' + money(x[4]) + '</span></div></div>';
+    }).join('');
+  }
+  function bTopups() {
+    return TOPUPS.map(function (t) {
+      var btn = t.st === 'pending' ? '<button class="btn btn-sm btn-light border"><i class="fa fa-refresh me-1"></i>Check</button>' : t.st === 'success' ? '<button class="btn btn-sm btn-outline-danger"><i class="fa fa-undo me-1"></i>Refund</button>' : '';
+      var ic = { success: ['topup', 'fa-arrow-down'], pending: ['return', 'fa-clock-o'], failed: ['', 'fa-times'], refunded: ['', 'fa-undo'] }[t.st];
+      return '<div class="row-i"><div class="fi p-0 m-0" style="background:none"><div class="fic ' + ic[0] + '" style="' + (ic[0] ? '' : 'background:var(--soft);color:var(--mut)') + '"><i class="fa ' + ic[1] + '"></i></div></div>' +
+        '<div class="min-w-0"><div class="t">QPay ' + t.type.toLowerCase() + ' <span class="sp ' + t.st + ' ms-1">' + t.lab + '</span></div><div class="d">' + t.at + ' · ' + (t.by !== '-' ? t.by + ' · ' : '') + '<span class="mono">' + t.card + '</span></div>' +
+        '<div class="d">PUN <span class="mono">' + t.pun + '</span> · ' + t.resp + '</div></div><div class="end"><span class="amt">' + money(t.amt) + '</span>' + btn + '</div></div>';
+    }).join('');
+  }
+  function bCard() {
+    var visual;
+    if (st.card === 'none') visual = '<div class="cardx empty"><div><i class="fa fa-credit-card fs-2 d-block mb-2 opacity-50"></i><div class="fw-medium">No card linked</div><div class="small">Link one below</div></div></div>';
+    else visual = '<div class="cardx ' + (st.card === 'blocked' ? 'blocked' : '') + '"><div class="top"><span>' + S.school + '</span><i class="fa fa-wifi"></i></div><div class="uid">' + uidGroups(S.uid) + '</div>' +
+      '<div class="who"><span>' + S.name + '</span><span>' + (st.card === 'blocked' ? '<i class="fa fa-lock me-1"></i>Blocked' : 'Active') + '</span></div></div>';
+    var actions = st.card === 'active'
+      ? '<label class="form-label small fw-medium mt-3 mb-1">Block card</label><div class="input-group input-group-sm"><input class="form-control" placeholder="Reason (e.g. reported lost)"><button class="btn btn-danger" data-card-set="blocked"><i class="fa fa-lock me-1"></i>Block</button></div>'
+      : st.card === 'blocked' ? '<div class="alert alert-danger small py-2 mt-3 mb-2">Blocked 2 hours ago by Fatima Noor (parent): reported lost. QLOUD POS refuses this card until it is unblocked or replaced.</div><button class="btn btn-sm btn-success" data-card-set="active"><i class="fa fa-unlock me-1"></i>Unblock card</button>' : '';
+    actions += '<label class="form-label small fw-medium mt-3 mb-1">' + (st.card === 'none' ? 'Link a card' : 'Replace card') + '</label><div class="input-group input-group-sm"><input class="form-control font-monospace" placeholder="Tap the card on a USB reader or type its UID"><button class="btn btn-primary" data-card-set="active"><i class="fa fa-link me-1"></i>' + (st.card === 'none' ? 'Link' : 'Replace') + '</button></div>' +
+      '<div class="form-text">The balance stays with the student, so a new card spends the same money straight away.</div>';
+    var hist = history().map(function (h) { var k = HK[h.kind]; return '<div class="h"><div class="hi bg-' + k[2] + '-subtle text-' + k[2] + '-emphasis"><i class="fa ' + k[1] + '"></i></div><div><div class="t">' + h.ev + '</div><div class="m">' + h.by + ' · ' + h.at + '</div></div></div>'; }).join('');
+    return '<div class="row g-4"><div class="col-md-6">' + visual + actions + '</div><div class="col-md-6"><div class="sec-t" style="font:500 10.5px/1 Ubuntu,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:6px">Card history</div><div class="hist">' + hist + '</div></div></div>';
+  }
+  function renderB() {
+    var t = tabs('b'), cur = t.filter(function (x) { return x[0] === st.tabB; })[0] || t[0];
+    var hints = { activity: 'Every ledger line on the card, newest first', purchases: 'Bills paid with the Student Wallet', topups: 'QPay payments and refunds', card: 'Link, replace, block and unblock' };
+    var seg = t.map(function (x) { return '<button class="' + (st.tabB === x[0] ? 'on' : '') + '" data-b-tab="' + x[0] + '"><i class="fa ' + x[1] + '"></i>' + x[2] + '</button>'; }).join('');
+    var body = { activity: bActivity, purchases: bPurchases, topups: bTopups, card: bCard }[cur[0]]();
+    return '<div class="svb"><div class="row g-3 align-items-start"><div class="col-xl-4">' + bRail() + '</div>' +
+      '<div class="col-xl-8"><div class="box rise" style="--i:2"><div class="ws-h"><div><h5>' + cur[2] + '</h5><div class="hint">' + hints[cur[0]] + '</div></div><div class="seg">' + seg + '</div></div><div class="pane">' + body + '</div></div></div></div></div>';
+  }
+
+  /* ═══════════════════════ C · BOOTSTRAP NATIVE (no custom CSS) ═══════════════════════ */
+  function cHero() {
+    var b = balance(), used = b < 0 ? Math.min(100, Math.abs(b) / S.limit * 100) : 0;
+    var card = st.card === 'active' ? '<span class="badge text-bg-success"><i class="fa fa-credit-card me-1"></i>Card active</span>' : st.card === 'blocked' ? '<span class="badge text-bg-danger"><i class="fa fa-lock me-1"></i>Card blocked</span>' : '<span class="badge bg-body-tertiary text-body-secondary border">No card</span>';
+    return '<div class="card shadow-sm mb-3"><div class="card-body p-4"><div class="d-flex flex-wrap gap-3 align-items-center">' +
+      '<div class="rounded-circle bg-primary-subtle text-primary-emphasis d-flex align-items-center justify-content-center fs-3 fw-semibold border border-4 border-body flex-shrink-0 shadow-sm" style="width:84px;height:84px">' + S.initials + '</div>' +
+      '<div class="flex-grow-1"><div class="small text-primary fw-medium text-uppercase">Student · ' + S.adm + '</div><h4 class="mb-1 mt-1">' + S.name + '</h4>' +
+        '<div class="d-flex flex-wrap gap-2 align-items-center small text-body-secondary"><span class="badge bg-primary-subtle text-primary-emphasis">' + S.status + '</span>' + card +
+        '<span><i class="fa fa-graduation-cap me-1"></i>' + S.klass + '</span><span><i class="fa fa-users me-1"></i>' + G[0].name + ' · ' + G[0].mobile + '</span></div></div>' +
+      '<div class="d-flex gap-2"><button class="btn btn-light border" data-c-tab="statement"><i class="fa fa-list-alt me-1"></i>Statement</button><button class="btn btn-primary"><i class="fa fa-pencil me-1"></i>Edit</button></div>' +
+      '</div></div>' +
+      '<div class="card-footer bg-body-tertiary p-2"><div class="row g-2 text-center">' +
+        '<div class="col-6 col-md-3"><div class="bg-body border rounded-3 p-3 h-100"><div class="small text-body-secondary text-uppercase">Card balance</div><div class="fs-4 fw-semibold ' + (b < 0 ? 'text-danger' : 'text-success') + '">' + signed(b) + '</div><div class="small ' + (b < 0 ? 'text-danger' : 'text-body-secondary') + '">' + (b < 0 ? 'In overdraft' : 'QAR · all branches') + '</div></div></div>' +
+        '<div class="col-6 col-md-3"><div class="bg-body border rounded-3 p-3 h-100"><div class="small text-body-secondary text-uppercase">Can spend now</div><div class="fs-4 fw-semibold">' + money(spendable()) + '</div>' +
+          '<div class="progress mx-auto mt-1" style="height:5px;max-width:140px" title="Overdraft used"><div class="progress-bar bg-danger" style="width:' + used + '%"></div></div><div class="small text-body-secondary mt-1">limit ' + money(S.limit) + '</div></div></div>' +
+        '<div class="col-6 col-md-3"><div class="bg-body border rounded-3 p-3 h-100"><div class="small text-body-secondary text-uppercase">This month</div><div class="fs-4 fw-semibold">92.75</div><div class="small text-body-secondary">7 bills</div></div></div>' +
+        '<div class="col-6 col-md-3"><div class="bg-body border rounded-3 p-3 h-100"><div class="small text-body-secondary text-uppercase">Last top-up</div><div class="fs-4 fw-semibold">50.00</div><div class="small text-body-secondary">15-09-2026</div></div></div>' +
+      '</div></div></div>';
+  }
+  function cProfile() {
+    function li(icon, k, v) { return '<li class="list-group-item d-flex justify-content-between gap-3"><span class="text-body-secondary"><i class="fa ' + icon + ' me-2"></i>' + k + '</span><span class="fw-medium text-end">' + (v || '<span class="text-body-secondary fw-normal">-</span>') + '</span></li>'; }
+    var g = G.map(function (x) {
+      var status = x.portal === 'active' ? '<span class="badge bg-success-subtle text-success-emphasis"><i class="fa fa-check me-1"></i>Portal active</span>' : '<span class="badge bg-warning-subtle text-warning-emphasis"><i class="fa fa-clock-o me-1"></i>Invite pending</span>';
+      var link = st.invite === x.id ? '<div class="alert alert-info small py-2 mt-2 mb-0">Set-password link (valid 7 days):<div class="input-group input-group-sm mt-1"><input class="form-control font-monospace" readonly value="https://school.qloud.test/parent/invite/9f2c1e7a…"><button class="btn btn-outline-secondary"><i class="fa fa-files-o"></i></button></div></div>' : '';
+      return '<div class="list-group-item p-3"><div class="d-flex flex-wrap gap-3 align-items-center"><div class="rounded-circle bg-body-tertiary border d-flex align-items-center justify-content-center fw-semibold flex-shrink-0" style="width:44px;height:44px">' + x.ini + '</div>' +
+        '<div class="flex-grow-1"><div class="fw-semibold">' + x.name + ' <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal">' + x.rel + '</span>' + (x.primary ? ' <span class="badge bg-warning-subtle text-warning-emphasis fw-normal"><i class="fa fa-star me-1"></i>Primary</span>' : '') + '</div>' +
+        '<div class="small text-body-secondary"><i class="fa fa-phone me-1"></i>' + x.mobile + (x.email ? ' <i class="fa fa-envelope-o ms-2 me-1"></i>' + x.email : '') + '</div><div class="small mt-1">' + status + ' <span class="text-body-secondary ms-1">' + x.meta + '</span></div></div>' +
+        '<button class="btn btn-sm btn-outline-primary" data-invite="' + x.id + '"><i class="fa fa-paper-plane me-1"></i>' + (x.portal === 'active' ? 'Send password reset' : 'Send invite') + '</button></div>' + link + '</div>';
+    }).join('');
+    return '<div class="row g-3"><div class="col-lg-5"><div class="card border h-100 shadow-none"><div class="card-header bg-body-tertiary fw-semibold"><i class="fa fa-user me-2 text-primary"></i>Details</div><ul class="list-group list-group-flush">' +
+      li('fa-venus', 'Gender', S.gender) + li('fa-birthday-cake', 'Date of birth', S.dob) + li('fa-credit-card', 'QID', '<span class="font-monospace">' + S.qid + '</span>') + li('fa-globe', 'Nationality', S.nationality) + li('fa-mobile', 'Mobile', S.mobile) + li('fa-envelope-o', 'Email', S.email) +
+      '</ul><div class="card-body pt-2"><div class="alert alert-warning small mb-0 py-2"><i class="fa fa-exclamation-triangle me-1"></i>' + S.notes + '</div></div></div></div>' +
+      '<div class="col-lg-7"><div class="card border h-100 shadow-none"><div class="card-header bg-body-tertiary fw-semibold d-flex justify-content-between"><span><i class="fa fa-users me-2 text-primary"></i>Parents</span><span class="badge rounded-pill text-bg-light border">' + G.length + '</span></div><div class="list-group list-group-flush">' + g + '</div></div></div></div>';
+  }
+  function cCard() {
+    var cur;
+    if (st.card === 'none') cur = '<div class="alert alert-secondary small">No card is linked. The student cannot pay at the canteen with a card.</div>';
+    else cur = '<div class="card border ' + (st.card === 'blocked' ? 'border-danger' : 'border-success') + ' shadow-none mb-3"><div class="card-body d-flex justify-content-between align-items-center"><div><div class="small text-body-secondary">Card number (UID)</div><div class="fs-4 font-monospace">' + uidGroups(S.uid) + '</div></div>' +
+      (st.card === 'blocked' ? '<span class="badge text-bg-danger fs-6"><i class="fa fa-lock me-1"></i>Blocked</span>' : '<span class="badge text-bg-success fs-6"><i class="fa fa-check me-1"></i>Active</span>') + '</div>' +
+      (st.card === 'blocked' ? '<div class="card-footer bg-danger-subtle text-danger-emphasis small">Blocked 2 hours ago by Fatima Noor (parent): reported lost. QLOUD POS refuses this card until it is unblocked or replaced.</div>' : '') + '</div>';
+    var act = st.card === 'active' ? '<div class="input-group input-group-sm mb-3"><input class="form-control" placeholder="Reason (e.g. reported lost)"><button class="btn btn-danger" data-card-set="blocked"><i class="fa fa-lock me-1"></i>Block card</button></div>'
+      : st.card === 'blocked' ? '<button class="btn btn-outline-success btn-sm mb-3" data-card-set="active"><i class="fa fa-unlock me-1"></i>Unblock card</button>' : '';
+    var hist = history().map(function (h) { var k = HK[h.kind]; return '<li class="list-group-item d-flex gap-3 align-items-start"><span class="badge bg-' + k[2] + '-subtle text-' + k[2] + '-emphasis p-2"><i class="fa ' + k[1] + '"></i></span><div class="flex-grow-1"><div class="fw-medium">' + h.ev + '</div><div class="small text-body-secondary">' + h.by + ' · ' + h.at + '</div></div></li>'; }).join('');
+    return '<div class="row g-3"><div class="col-lg-6"><h6 class="fw-semibold mb-2">Current card</h6>' + cur + act +
+      '<h6 class="fw-semibold mb-2">' + (st.card === 'none' ? 'Link a card' : 'Replace card') + '</h6><div class="input-group"><span class="input-group-text"><i class="fa fa-credit-card"></i></span><input class="form-control font-monospace" placeholder="Tap the card on a USB reader or type its UID"><button class="btn btn-primary" data-card-set="active"><i class="fa fa-link me-1"></i>' + (st.card === 'none' ? 'Link' : 'Replace') + '</button></div>' +
+      '<div class="form-text">The balance belongs to the student, not the card, so a replacement card spends the same money straight away.</div></div>' +
+      '<div class="col-lg-6"><div class="card border shadow-none"><div class="card-header bg-body-tertiary fw-semibold"><i class="fa fa-history me-2 text-primary"></i>Card history</div><ul class="list-group list-group-flush">' + hist + '</ul></div></div></div>';
+  }
+  function cStatement() {
+    var s = statement();
+    var tone = { topup: 'success', purchase: 'primary', return: 'warning' };
+    var rows = s.rows.map(function (r) {
+      return '<tr><td class="text-nowrap">' + dmy(r.date) + '</td><td><span class="badge bg-' + tone[r.type] + '-subtle text-' + tone[r.type] + '-emphasis"><i class="fa ' + TYPE[r.type][1] + ' me-1"></i>' + TYPE[r.type][0] + '</span></td>' +
+        '<td class="small">' + (r.type === 'purchase' ? '<a href="#" class="text-decoration-none">Sale ' + r.ref + '</a>' : r.desc) + '</td><td class="text-end text-success">' + (r.cr ? money(r.cr) : '') + '</td><td class="text-end text-danger">' + (r.dr ? money(r.dr) : '') + '</td><td class="text-end fw-semibold ' + (r.bal < 0 ? 'text-danger' : '') + '">' + signed(r.bal) + '</td></tr>';
+    }).join('');
+    function box(lab, val, cls) { return '<div class="col-6 col-md-3"><div class="card border-0 bg-body-tertiary shadow-none h-100 ' + (cls || '') + '"><div class="card-body py-2 px-3"><div class="small text-body-secondary">' + lab + '</div><div class="fs-5 fw-semibold">' + val + '</div></div></div></div>'; }
+    return '<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3"><div class="btn-group btn-group-sm"><button class="btn btn-primary">This month</button><button class="btn btn-outline-primary">Last month</button><button class="btn btn-outline-primary">3 months</button></div>' +
+      '<div class="input-group input-group-sm" style="max-width:340px"><span class="input-group-text">From</span><input type="date" class="form-control" value="2026-09-01"><span class="input-group-text">To</span><input type="date" class="form-control" value="2026-09-17"></div></div>' +
+      '<div class="row g-2 mb-3">' + box('Brought forward', signed(s.opening)) + box('<i class="fa fa-arrow-down me-1 text-success"></i>In', '<span class="text-success">' + money(s.inn) + '</span>') + box('<i class="fa fa-arrow-up me-1 text-danger"></i>Out', '<span class="text-danger">' + money(s.out) + '</span>') +
+      '<div class="col-6 col-md-3"><div class="card border-0 bg-primary-subtle shadow-none h-100"><div class="card-body py-2 px-3"><div class="small text-primary-emphasis">Closing</div><div class="fs-5 fw-semibold text-primary-emphasis">' + signed(s.closing) + '</div></div></div></div></div>' +
+      '<div class="table-responsive border rounded"><table class="table table-hover align-middle mb-0"><thead class="table-light small text-uppercase"><tr><th>Date</th><th>Type</th><th>Details</th><th class="text-end">In</th><th class="text-end">Out</th><th class="text-end">Balance</th></tr></thead><tbody>' +
+      '<tr class="table-light"><td colspan="5" class="small text-body-secondary fst-italic">Balance brought forward</td><td class="text-end fw-semibold">' + signed(s.opening) + '</td></tr>' + rows + '</tbody></table></div>';
+  }
+  function cPurchases() {
+    return '<div class="table-responsive border rounded"><table class="table table-hover align-middle mb-0"><thead class="table-light small text-uppercase"><tr><th>Date</th><th>Invoice</th><th>Counter</th><th class="text-center">Items</th><th>Status</th><th class="text-end">Amount</th></tr></thead><tbody>' +
+      SALES.map(function (x) { return '<tr><td>' + dmy(x[0]) + '</td><td><a href="#" class="text-decoration-none font-monospace">' + x[1] + '</a></td><td>' + x[2] + '</td><td class="text-center"><span class="badge rounded-pill text-bg-light border">' + x[3] + '</span></td><td>' + (x[5] ? '<span class="badge bg-warning-subtle text-warning-emphasis">' + x[5] + '</span>' : '<span class="badge bg-success-subtle text-success-emphasis">Completed</span>') + '</td><td class="text-end fw-semibold">' + money(x[4]) + '</td></tr>'; }).join('') +
+      '</tbody><tfoot class="table-light"><tr><td colspan="5" class="fw-semibold">7 bills</td><td class="text-end fw-semibold">92.75</td></tr></tfoot></table></div>';
+  }
+  function cTopups() {
+    var tone = { success: 'success', failed: 'danger', pending: 'warning', refunded: 'secondary' };
+    return '<div class="table-responsive border rounded"><table class="table table-hover align-middle mb-0"><thead class="table-light small text-uppercase"><tr><th>Date</th><th>PUN</th><th>Type</th><th>By</th><th>Card</th><th class="text-end">Amount</th><th>Status</th><th>QPay response</th><th></th></tr></thead><tbody>' +
+      TOPUPS.map(function (t) {
+        var btn = t.st === 'pending' ? '<button class="btn btn-sm btn-light border"><i class="fa fa-refresh"></i> Check</button>' : t.st === 'success' ? '<button class="btn btn-sm btn-outline-danger"><i class="fa fa-undo"></i> Refund</button>' : '';
+        return '<tr><td class="text-nowrap">' + t.at + '</td><td class="font-monospace small">' + t.pun + '</td><td>' + t.type + '</td><td class="small">' + t.by + '</td><td class="small font-monospace">' + t.card + '</td><td class="text-end fw-semibold">' + money(t.amt) + '</td>' +
+          '<td><span class="badge bg-' + tone[t.st] + '-subtle text-' + tone[t.st] + '-emphasis">' + t.lab + '</span></td><td class="small text-body-secondary">' + t.resp + '</td><td class="text-end text-nowrap">' + btn + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  function renderC() {
+    var nav = tabs('c').map(function (t) { return '<li class="nav-item"><button class="nav-link ' + (st.tabC === t[0] ? 'active' : '') + '" data-c-tab="' + t[0] + '"><i class="fa ' + t[1] + ' me-1"></i>' + t[2] + (t[3] ? ' <span class="badge rounded-pill ' + (st.tabC === t[0] ? 'text-bg-light' : 'bg-body-tertiary text-body-secondary') + ' ms-1">' + t[3] + '</span>' : '') + '</button></li>'; }).join('');
+    var body = { profile: cProfile, card: cCard, statement: cStatement, purchases: cPurchases, topups: cTopups }[st.tabC]();
+    return cHero() + '<div class="card shadow-sm"><div class="card-header bg-body py-2"><ul class="nav nav-pills flex-nowrap overflow-auto">' + nav + '</ul></div><div class="card-body p-4">' + body + '</div></div>';
+  }
+
+  /* ═══════════════════════════ ADD / EDIT STUDENT FORM ═══════════════════════════ */
+  var COUNTRIES = ['Afghanistan', 'Algeria', 'Australia', 'Bahrain', 'Bangladesh', 'Canada', 'China', 'Egypt', 'Eritrea', 'Ethiopia', 'France', 'Germany', 'India', 'Indonesia', 'Iran', 'Iraq', 'Jordan', 'Kenya', 'Kuwait', 'Lebanon', 'Libya', 'Malaysia', 'Morocco', 'Nepal', 'Nigeria', 'Oman', 'Pakistan', 'Palestine', 'Philippines', 'Qatar', 'Saudi Arabia', 'Somalia', 'Sri Lanka', 'Sudan', 'Syria', 'Tunisia', 'Turkey', 'United Arab Emirates', 'United Kingdom', 'United States', 'Yemen'];
+  var GRADES = ['KG 1', 'KG 2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
+  var SECTIONS = ['A', 'B', 'C', 'D'];
+  function blankForm() { return { name: '', adm: '', grade: '', section: '', gender: '', status: 'active', dob: '', qid: '', nationality: '', mobile: '', email: '', notes: '', card: '', photo: '', parents: [{ name: '', mobile: '', email: '', relation: 'father', primary: true }] }; }
+  function editForm() {
+    return { name: S.name, adm: S.adm, grade: 'Grade 6', section: 'B', gender: 'female', status: 'active', dob: '2014-03-14', qid: S.qid, nationality: 'Qatar', mobile: '', email: '', notes: S.notes, card: S.uid, photo: '',
+      parents: [{ name: G[0].name, mobile: G[0].mobile, email: G[0].email, relation: 'father', primary: true }, { name: G[1].name, mobile: G[1].mobile, email: '', relation: 'mother', primary: false }] };
+  }
+  function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+  function initialsOf(n) { var p = n.trim().split(/\s+/).filter(Boolean); return p.length ? (p[0][0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase() : ''; }
+  function ageOf(iso) { if (!iso) return ''; var b = new Date(iso + 'T00:00:00'), t = new Date('2026-09-17T00:00:00'); var a = t.getFullYear() - b.getFullYear(); if (t < new Date(t.getFullYear(), b.getMonth(), b.getDate())) a--; return a >= 0 && a < 40 ? a + ' years old' : ''; }
+  function klassOf(f) { return [f.grade, f.section].filter(Boolean).join(' - '); }
+  function parentOk(p) { return p.name.trim() && p.mobile.trim(); }
+  function checks() {
+    var f = st.form, out = [];
+    out.push(f.name.trim() ? ['ok', 'Full name', ''] : ['', 'Full name', 'Required']);
+    out.push(f.adm.trim() ? ['ok', 'Admission number', ''] : ['', 'Admission number', 'Required']);
+    var half = f.parents.map(function (p, i) { return (p.name.trim() || p.mobile.trim()) && !parentOk(p) ? i + 1 : 0; }).filter(Boolean);
+    if (half.length) out.push(['bad', 'Parent ' + half.join(', ') + ' needs a name and a mobile', 'Fill both in, or remove the parent']);
+    else if (f.parents.some(parentOk)) out.push(['ok', f.parents.filter(parentOk).length + ' parent' + (f.parents.filter(parentOk).length > 1 ? 's' : '') + ' can top up online', '']);
+    else out.push(['warn', 'No parent yet', 'Recommended, so the card can be topped up online']);
+    if (st.page === 'add') out.push(f.card.trim() ? ['ok', 'Card linked', ''] : ['warn', 'No card yet', 'Fine. You can link it later']);
+    out.push(f.photo ? ['ok', 'Photo added', ''] : ['warn', 'No photo', 'Helps the cashier check the card owner']);
+    return out;
+  }
+  function requiredLeft() { var f = st.form; return (f.name.trim() ? 0 : 1) + (f.adm.trim() ? 0 : 1); }
+  function stepState() {
+    var f = st.form;
+    return [
+      ['s-student', 'Student', f.name.trim() && f.adm.trim()],
+      ['s-class', 'Class', !!f.grade],
+      ['s-parents', 'Parents', f.parents.some(parentOk)],
+      ['s-card', st.page === 'add' ? 'Card & photo' : 'Photo', st.page === 'add' ? !!(f.card || f.photo) : !!f.photo, true]
+    ];
+  }
+
+  function renderForm(pm) {
+    var f = st.form, edit = st.page === 'edit';
+    var REQ = pm ? '<span class="req">Required</span>' : '<span class="badge bg-danger-subtle text-danger-emphasis fw-normal">Required</span>';
+    var OPT = pm ? '<span class="opt">Optional</span>' : '<span class="text-body-secondary fw-normal small">(optional)</span>';
+    function lab(forId, text, tag) { return '<label class="form-label' + (pm ? '' : ' fw-medium d-flex gap-2 align-items-center') + '" for="' + forId + '">' + text + (tag || '') + '</label>'; }
+    function hint(t) { return pm ? '<div class="hint"><i class="fa fa-info-circle"></i><span>' + t + '</span></div>' : '<div class="form-text">' + t + '</div>'; }
+    function input(id, attr, val, ph, extra) { return '<input id="' + id + '" class="form-control' + (extra || '') + '" ' + attr + ' value="' + esc(val) + '" placeholder="' + esc(ph) + '" autocomplete="off">'; }
+    function tap(group, value, icon, title, desc, checked, dataAttr, cls) {
+      var id = group + '_' + value;
+      var radio = '<input type="radio" class="btn-check" name="' + group + '" id="' + id + '" value="' + value + '" ' + dataAttr + (checked ? ' checked' : '') + '>';
+      if (pm) return radio + '<label class="tapc ' + (cls || '') + '" for="' + id + '"><span class="ti"><i class="fa ' + icon + '"></i></span><span class="tt"><b>' + title + '</b>' + (desc ? '<small>' + desc + '</small>' : '') + '</span><span class="tk"><i class="fa fa-check"></i></span></label>';
+      return radio + '<label class="btn btn-outline-primary w-100 h-100 text-start px-3 py-2" for="' + id + '"><i class="fa ' + icon + ' me-2"></i><span class="fw-medium">' + title + '</span>' + (desc ? '<div class="small opacity-75 fw-normal">' + desc + '</div>' : '') + '</label>';
+    }
+    function quick(kind, list, cur) {
+      var b = list.map(function (v) { return '<button type="button" class="' + (pm ? (cur === v ? 'on' : '') : 'btn btn-sm rounded-pill ' + (cur === v ? 'btn-primary' : 'btn-outline-secondary')) + '" data-' + kind + '="' + esc(v) + '">' + v + '</button>'; }).join('');
+      return '<div class="' + (pm ? 'qch' : 'd-flex flex-wrap gap-1 mt-2 align-items-center') + '"><span class="' + (pm ? '' : 'small text-body-secondary me-1') + '">Tap to pick:</span>' + b + '</div>';
+    }
+    function section(n, id, title, sub, body) {
+      if (pm) return '<section class="sheet fsec rise" id="' + id + '" style="--i:' + n + '"><div class="sec-h"><span class="num">' + n + '</span><div><h5>' + title + '</h5><p>' + sub + '</p></div></div>' + body + '</section>';
+      return '<div class="card shadow-sm mb-3" id="' + id + '"><div class="card-header bg-body d-flex align-items-center gap-3 py-3"><span class="badge rounded-pill text-bg-primary fs-6">' + n + '</span><div><h5 class="card-title mb-0 fs-6">' + title + '</h5><div class="small text-body-secondary">' + sub + '</div></div></div><div class="card-body">' + body + '</div></div>';
+    }
+
+    /* 1 · Student */
+    var s1 = '<div class="row g-3">' +
+      '<div class="col-md-7">' + lab('f_name', 'Full name', REQ) + input('f_name', 'data-f="name" maxlength="100"', f.name, 'e.g. Aisha Rahman') + hint('As on the school register. The cashier sees this name when the card is tapped.') + '</div>' +
+      '<div class="col-md-5">' + lab('f_adm', 'Admission number', REQ) + input('f_adm', 'data-f="adm" maxlength="30"', f.adm, 'e.g. ADM-2024-0187') + hint('From the school register. Two students cannot share one.') + '</div>' +
+      '<div class="col-12"><div class="form-label' + (pm ? '' : ' fw-medium d-flex gap-2') + '">Gender ' + OPT + '</div><div class="row g-2" role="radiogroup" aria-label="Gender">' +
+        '<div class="col-6 col-md-4">' + tap('g', 'male', 'fa-mars', 'Male', '', f.gender === 'male', 'data-f="gender"') + '</div>' +
+        '<div class="col-6 col-md-4">' + tap('g', 'female', 'fa-venus', 'Female', '', f.gender === 'female', 'data-f="gender"') + '</div></div></div>' +
+      '<div class="col-md-6">' + lab('f_dob', 'Date of birth', OPT) + '<div class="input-group"><input type="date" id="f_dob" class="form-control" data-f="dob" value="' + esc(f.dob) + '" max="2026-09-17"><span class="input-group-text" data-live="age" style="min-width:118px;justify-content:center">' + (ageOf(f.dob) || 'Age') + '</span></div></div>' +
+      '<div class="col-md-6">' + lab('f_nat', 'Nationality', OPT) + '<select id="f_nat" data-ts data-f="nationality"><option value="">Search a country…</option>' + COUNTRIES.map(function (c) { return '<option' + (f.nationality === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select>' + hint('Start typing to search, e.g. "Qat".') + '</div>' +
+      '<div class="col-md-6">' + lab('f_qid', 'QID number', OPT) + input('f_qid', 'data-f="qid" maxlength="30" inputmode="numeric"', f.qid, 'e.g. 28463401234') + hint('The number on the student\'s Qatar ID card.') + '</div>' +
+      '<div class="col-md-6">' + lab('f_notes', 'Notes for staff', OPT) + '<textarea id="f_notes" class="form-control" rows="2" data-f="notes" maxlength="255" placeholder="e.g. Allergic to peanuts">' + esc(f.notes) + '</textarea></div>' +
+      '<div class="col-12"><div class="' + (pm ? 'subbox' : 'bg-body-tertiary rounded-3 p-3') + '"><div class="' + (pm ? 'form-label' : 'fw-medium d-flex gap-2 align-items-center') + ' mb-0">Student\'s own phone and email ' + OPT + '</div>' +
+        '<div class="' + (pm ? 'hint mt-1 mb-2' : 'form-text mt-0 mb-2') + '">' + (pm ? '<i class="fa fa-info-circle"></i>' : '') + '<span>Only if the student has their own. Leave empty for most students; parents are added in step 3.</span></div>' +
+        '<div class="row g-2"><div class="col-md-6">' + input('f_mob', 'data-f="mobile" maxlength="15" inputmode="tel" aria-label="Student mobile"', f.mobile, 'Mobile') + '</div><div class="col-md-6">' + input('f_mail', 'data-f="email" maxlength="50" type="email" aria-label="Student email"', f.email, 'Email') + '</div></div></div></div>' +
+      '</div>';
+
+    /* 2 · Class */
+    var s2 = '<div class="row g-3">' +
+      '<div class="col-md-6">' + lab('f_grade', 'Grade', OPT) + input('f_grade', 'data-f="grade" maxlength="30"', f.grade, 'e.g. Grade 5') + quick('grade', GRADES, f.grade) + '</div>' +
+      '<div class="col-md-6">' + lab('f_section', 'Section', OPT) + input('f_section', 'data-f="section" maxlength="30"', f.section, 'e.g. B') + quick('section', SECTIONS, f.section) + '</div>' +
+      '<div class="col-12"><div class="form-label' + (pm ? '' : ' fw-medium') + '">Is the student at school now?</div><div class="row g-2" role="radiogroup" aria-label="Status">' +
+        '<div class="col-md-4">' + tap('stt', 'active', 'fa-check-circle', 'Active', 'Studying here. The card works at the canteen.', f.status === 'active', 'data-f="status"') + '</div>' +
+        '<div class="col-md-4">' + tap('stt', 'inactive', 'fa-pause', 'Inactive', 'Away for now. The till refuses the card.', f.status === 'inactive', 'data-f="status"', 'bad') + '</div>' +
+        '<div class="col-md-4">' + tap('stt', 'graduated', 'fa-graduation-cap', 'Graduated', 'Left the school. The till refuses the card.', f.status === 'graduated', 'data-f="status"', 'bad') + '</div></div></div>' +
+      '</div>';
+
+    /* 3 · Parents */
+    var REL = [['father', 'fa-male', 'Father'], ['mother', 'fa-female', 'Mother'], ['guardian', 'fa-user', 'Guardian']];
+    var cards = f.parents.map(function (p, i) {
+      var rel = REL.map(function (r) {
+        var id = 'rel' + i + '_' + r[0], radio = '<input type="radio" class="btn-check" name="rel' + i + '" id="' + id + '" value="' + r[0] + '" data-pf="' + i + '.relation"' + (p.relation === r[0] ? ' checked' : '') + '>';
+        return radio + '<label ' + (pm ? '' : 'class="btn btn-sm btn-outline-primary"') + ' for="' + id + '"><i class="fa ' + r[1] + (pm ? '' : ' me-1') + '"></i>' + r[2] + '</label>';
+      }).join('');
+      var main = p.primary ? (pm ? '<span class="mainb"><i class="fa fa-star"></i>Main contact</span>' : '<span class="badge bg-warning-subtle text-warning-emphasis"><i class="fa fa-star me-1"></i>Main contact</span>')
+        : '<button type="button" class="' + (pm ? 'linkb' : 'btn btn-sm btn-link text-decoration-none') + '" data-primary="' + i + '"><i class="fa fa-star-o' + (pm ? '' : ' me-1') + '"></i>Make main contact</button>';
+      var remove = '<button type="button" class="' + (pm ? 'linkb danger ms-auto' : 'btn btn-sm btn-link text-danger text-decoration-none ms-auto') + '" data-remove="' + i + '"><i class="fa fa-trash-o' + (pm ? '' : ' me-1') + '"></i>Remove</button>';
+      var body = '<div class="row g-3"><div class="col-12"><div class="' + (pm ? 'seg' : 'd-flex flex-wrap gap-2') + '" role="radiogroup" aria-label="Relation">' + rel + '</div></div>' +
+        '<div class="col-md-6">' + lab('p_name' + i, 'Name', REQ) + input('p_name' + i, 'data-pf="' + i + '.name" maxlength="100"', p.name, 'e.g. Mohammed Rahman') + '</div>' +
+        '<div class="col-md-6">' + lab('p_mob' + i, 'Mobile number', REQ) + input('p_mob' + i, 'data-pf="' + i + '.mobile" maxlength="20" inputmode="tel"', p.mobile, 'e.g. +974 5512 3344') + hint('They log in to the Parent Portal with this number.') + '</div>' +
+        '<div class="col-12">' + lab('p_mail' + i, 'Email', OPT) + input('p_mail' + i, 'data-pf="' + i + '.email" maxlength="150" type="email"', p.email, 'e.g. parent@example.com') + '</div></div>';
+      if (pm) return '<div class="pcard ' + (p.primary ? 'main' : '') + '"><div class="pc-h"><span class="pn">Parent ' + (i + 1) + '</span>' + main + remove + '</div><div class="pc-b">' + body + '</div></div>';
+      return '<div class="card border shadow-none mb-3 ' + (p.primary ? 'border-warning' : '') + '"><div class="card-header bg-body-tertiary d-flex align-items-center gap-2 flex-wrap py-2"><span class="fw-semibold">Parent ' + (i + 1) + '</span>' + main + remove + '</div><div class="card-body">' + body + '</div></div>';
+    }).join('');
+    var explain = 'Each parent logs in to the <b>Parent Portal</b> with their mobile number to see the card, bills and statement, and to top up. A parent who already has a child at the school is recognised by the same number and sees all their children in one login.';
+    var s3 = (pm ? '<div class="explain"><i class="fa fa-lightbulb-o"></i><div>' + explain + '</div></div>' : '<div class="alert alert-info small d-flex gap-2"><i class="fa fa-lightbulb-o mt-1"></i><div>' + explain + '</div></div>') +
+      (cards || (pm ? '<div class="empty"><i class="fa fa-exclamation-triangle me-1"></i>No parents added. The card still works at the canteen, but nobody can top it up online.</div>' : '<div class="alert alert-warning small">No parents added. The card still works at the canteen, but nobody can top it up online.</div>')) +
+      (pm ? '<button type="button" class="addp" data-addp="1"><i class="fa fa-plus-circle me-2"></i>Add ' + (f.parents.length ? 'another parent' : 'a parent') + '</button>' : '<button type="button" class="btn btn-outline-primary w-100 border-2 border-dashed" style="border-style:dashed" data-addp="1"><i class="fa fa-plus-circle me-1"></i>Add ' + (f.parents.length ? 'another parent' : 'a parent') + '</button>');
+
+    /* side: live preview + photo, card, checklist, save */
+    var ini = initialsOf(f.name);
+    var avStyle = f.photo ? ' style="background-image:url(' + f.photo + ')"' : '';
+    var avInner = f.photo ? '' : (ini || '<i class="fa fa-user" style="opacity:.45"></i>');
+    var photoBtns = '<label for="f_photo" class="btn btn-sm btn-outline-primary mb-0"><i class="fa fa-camera me-1"></i>' + (f.photo ? 'Change photo' : 'Add photo') + '</label>' + (f.photo ? '<button type="button" class="btn btn-sm btn-light border text-danger" data-photo-remove="1">Remove</button>' : '');
+    var fileInput = '<input type="file" id="f_photo" accept="image/*" hidden data-photo-input>';
+    var uidTxt = f.card ? uidGroups(f.card.replace(/[^0-9a-fA-F]/g, '').toUpperCase()) : '';
+    var chipCard = edit ? '<span class="badge text-bg-success"><i class="fa fa-credit-card me-1"></i>Card active</span>' : '<span data-live="cardchip">' + (uidTxt ? '<span class="badge text-bg-success"><i class="fa fa-credit-card me-1"></i>Card ' + uidTxt.slice(-7) + '</span>' : '<span class="badge bg-body-tertiary text-body-secondary border">No card yet</span>') + '</span>';
+    var saveLabel = edit ? 'Save changes' : 'Save student';
+    var chkHtml = checkHtml(pm);
+    var side, steps = stepHtml(pm);
+    if (pm) {
+      side = '<div class="side">' +
+        '<div class="sheet live rise" style="--i:1"><div class="lbl"><i class="fa fa-eye"></i>What staff will see</div>' +
+          '<div class="lv"><div class="lv-av" data-live="av"' + avStyle + '>' + avInner + '<label for="f_photo" class="cam" title="Add photo"><i class="fa fa-camera"></i></label></div>' +
+          '<div class="min-w-0"><div class="nm ' + (f.name ? '' : 'ph') + '" data-live="name">' + (esc(f.name) || 'Student name') + '</div><div class="sm ' + (klassOf(f) ? '' : 'ph') + '" data-live="klass">' + (esc(klassOf(f)) || 'Class not set') + '</div>' +
+          '<div class="sm" data-live="adm">' + (esc(f.adm) || '') + '</div><div class="mt-1">' + chipCard + '</div></div></div>' +
+          '<div class="photo-act">' + photoBtns + '</div>' + fileInput +
+          '<div class="hint"><i class="fa fa-info-circle"></i><span>The photo pops up on the till when the card is tapped, so the cashier can check it is the right child.</span></div></div>' +
+        (edit
+          ? '<div class="sheet tapzone" id="s-card"><div class="lbl"><i class="fa fa-credit-card"></i>Canteen card</div><div class="tz" style="border-style:solid"><div class="ic"><i class="fa fa-wifi"></i></div><div><b class="uidf">' + uidGroups(S.uid) + '</b><small>Active. To replace or block it, open the student\'s Card tab.</small></div></div><button type="button" class="btn btn-sm btn-outline-secondary w-100"><i class="fa fa-credit-card me-1"></i>Open Card tab</button></div>'
+          : '<div class="sheet tapzone" id="s-card"><div class="lbl"><i class="fa fa-credit-card"></i>Canteen card ' + OPT + '</div>' +
+            '<div class="tz"><div class="ic"><i class="fa fa-wifi"></i></div><div><b>Tap the card on the USB reader</b><small>Click the box below first. The number fills in by itself.</small></div></div>' +
+            '<input id="f_card" class="form-control uidf" data-f="card" maxlength="40" autocomplete="off" value="' + esc(f.card) + '" placeholder="Card number" aria-label="Card number">' +
+            '<div class="hint"><i class="fa fa-info-circle"></i><span>No card yet? Leave it empty. You can link it later from the student\'s page or QLOUD POS.</span></div></div>') +
+        '<div class="sheet chkbox d-none d-lg-block"><div class="lbl"><i class="fa fa-check-square-o"></i>Before you save</div><ul class="chk" data-live="chk">' + chkHtml + '</ul>' +
+          '<button type="button" class="btn btn-primary w-100 save"><i class="fa fa-check me-2"></i>' + saveLabel + '</button><button type="button" class="btn btn-link w-100 text-body-secondary text-decoration-none mt-1">Cancel</button></div>' +
+        '</div>';
+      return '<div class="sfx">' +
+        '<div class="sheet top mb-3 rise" style="--i:0"><div><h4>' + (edit ? 'Edit ' + esc(S.name) : 'Add a new student') + '</h4><p>' + (edit ? 'Change what you need and press Save changes.' : 'Four short steps. Only the name and admission number are required.') + '</p></div><div class="steps" data-live="steps">' + steps + '</div></div>' +
+        '<div class="row g-3 align-items-start"><div class="col-lg-8">' +
+          section(1, 's-student', 'Who is the student?', 'Name, admission number and personal details', s1) +
+          section(2, 's-class', 'Which class are they in?', 'Grade, section and whether they are at school now', s2) +
+          section(3, 's-parents', 'Parents', 'Who can see the card and top it up', s3) +
+        '</div><div class="col-lg-4">' + side + '</div></div>' +
+        '<div class="savebar d-lg-none"><div class="st" data-live="barst">' + barText() + '</div><button type="button" class="btn btn-light border">Cancel</button><button type="button" class="btn btn-primary px-4"><i class="fa fa-check me-1"></i>' + saveLabel + '</button></div>' +
+        '</div>';
+    }
+    side = '<div class="card shadow-sm mb-3"><div class="card-header bg-body fw-semibold"><i class="fa fa-eye me-2 text-primary"></i>What staff will see</div><div class="card-body">' +
+        '<div class="d-flex gap-3 align-items-center p-3 rounded-3 bg-primary-subtle"><div class="rounded-circle bg-body d-flex align-items-center justify-content-center fs-4 fw-semibold text-primary-emphasis flex-shrink-0 border border-3 border-body" data-live="av" style="width:72px;height:72px;background-size:cover;background-position:center;' + (f.photo ? 'background-image:url(' + f.photo + ')' : '') + '">' + avInner + '</div>' +
+        '<div class="min-w-0"><div class="fw-semibold fs-6 ' + (f.name ? '' : 'text-body-secondary fst-italic fw-normal') + '" data-live="name">' + (esc(f.name) || 'Student name') + '</div><div class="small text-body-secondary" data-live="klass">' + (esc(klassOf(f)) || 'Class not set') + '</div><div class="small text-body-secondary" data-live="adm">' + esc(f.adm) + '</div><div class="mt-1">' + chipCard + '</div></div></div>' +
+        '<div class="d-flex gap-2 mt-3">' + photoBtns + '</div>' + fileInput + '<div class="form-text">The photo pops up on the till when the card is tapped, so the cashier can check it is the right child.</div></div></div>' +
+      (edit ? '<div class="card shadow-sm mb-3" id="s-card"><div class="card-header bg-body fw-semibold"><i class="fa fa-credit-card me-2 text-primary"></i>Canteen card</div><div class="card-body"><div class="font-monospace fs-5">' + uidGroups(S.uid) + '</div><div class="form-text mt-0 mb-2">Active. To replace or block it, open the student\'s Card tab.</div><button type="button" class="btn btn-sm btn-outline-secondary w-100"><i class="fa fa-credit-card me-1"></i>Open Card tab</button></div></div>'
+        : '<div class="card shadow-sm mb-3" id="s-card"><div class="card-header bg-body fw-semibold d-flex gap-2 align-items-center"><i class="fa fa-credit-card text-primary"></i>Canteen card ' + OPT + '</div><div class="card-body">' +
+          '<div class="alert alert-primary small py-2 d-flex gap-2"><i class="fa fa-wifi mt-1" style="transform:rotate(90deg)"></i><div><b>Tap the card on the USB reader.</b> Click the box below first; the number fills in by itself.</div></div>' +
+          '<input id="f_card" class="form-control font-monospace" data-f="card" maxlength="40" autocomplete="off" value="' + esc(f.card) + '" placeholder="Card number" aria-label="Card number">' +
+          '<div class="form-text">No card yet? Leave it empty. You can link it later from the student\'s page or QLOUD POS.</div></div></div>') +
+      '<div class="card shadow-sm d-none d-lg-block"><div class="card-header bg-body fw-semibold"><i class="fa fa-check-square-o me-2 text-primary"></i>Before you save</div><ul class="list-group list-group-flush" data-live="chk">' + chkHtml + '</ul>' +
+        '<div class="card-body d-grid gap-2"><button type="button" class="btn btn-primary btn-lg fs-6"><i class="fa fa-check me-2"></i>' + saveLabel + '</button><button type="button" class="btn btn-light">Cancel</button></div></div>';
+    return '<div class="card shadow-sm mb-3"><div class="card-body d-flex flex-wrap gap-3 align-items-center"><div><h5 class="mb-0">' + (edit ? 'Edit ' + esc(S.name) : 'Add a new student') + '</h5><div class="small text-body-secondary">' + (edit ? 'Change what you need and press Save changes.' : 'Four short steps. Only the name and admission number are required.') + '</div></div>' +
+        '<div class="d-flex flex-wrap gap-2 ms-lg-auto" data-live="steps">' + steps + '</div></div></div>' +
+      '<div class="row g-3 align-items-start"><div class="col-lg-8">' +
+        section(1, 's-student', 'Who is the student?', 'Name, admission number and personal details', s1) +
+        section(2, 's-class', 'Which class are they in?', 'Grade, section and whether they are at school now', s2) +
+        section(3, 's-parents', 'Parents', 'Who can see the card and top it up', s3) +
+      '</div><div class="col-lg-4"><div style="position:sticky;top:64px">' + side + '</div></div></div>' +
+      '<div class="d-lg-none position-fixed bottom-0 start-0 end-0 bg-body border-top p-2 d-flex gap-2 align-items-center" style="z-index:1020"><div class="small text-body-secondary flex-grow-1 ps-2" data-live="barst">' + barText() + '</div><button type="button" class="btn btn-light">Cancel</button><button type="button" class="btn btn-primary"><i class="fa fa-check me-1"></i>' + saveLabel + '</button></div>';
+  }
+  function checkHtml(pm) {
+    return checks().map(function (c) {
+      var icon = c[0] === 'ok' ? 'fa-check' : c[0] === 'bad' ? 'fa-times' : c[0] === 'warn' ? 'fa-exclamation' : '';
+      if (pm) return '<li class="' + c[0] + '"><span class="ck"><i class="fa ' + icon + '"></i></span><div>' + c[1] + (c[2] ? '<small>' + c[2] + '</small>' : '') + '</div></li>';
+      var tone = { ok: 'success', bad: 'danger', warn: 'warning', '': 'secondary' }[c[0]];
+      return '<li class="list-group-item d-flex gap-2 align-items-start small"><span class="badge rounded-pill bg-' + tone + '-subtle text-' + tone + '-emphasis border border-' + tone + '-subtle mt-1" style="width:20px;height:20px;padding:4px 0"><i class="fa ' + (icon || 'fa-circle-o') + '"></i></span><div>' + c[1] + (c[2] ? '<div class="text-body-secondary">' + c[2] + '</div>' : '') + '</div></li>';
+    }).join('');
+  }
+  function stepHtml(pm) {
+    return stepState().map(function (s, i) {
+      if (pm) return '<button type="button" class="' + (s[2] ? 'done' : '') + '" data-step="' + s[0] + '"><span class="n">' + (s[2] ? '<i class="fa fa-check"></i>' : i + 1) + '</span>' + s[1] + (s[3] && !s[2] ? ' <span class="o">optional</span>' : '') + '</button>';
+      return '<button type="button" class="btn btn-sm rounded-pill ' + (s[2] ? 'btn-success' : 'btn-outline-secondary') + '" data-step="' + s[0] + '">' + (s[2] ? '<i class="fa fa-check me-1"></i>' : '<span class="me-1">' + (i + 1) + '.</span>') + s[1] + '</button>';
+    }).join('');
+  }
+  function barText() { var n = requiredLeft(); return n ? '<b>' + n + ' required</b> field' + (n > 1 ? 's' : '') + ' left' : '<b><i class="fa fa-check text-success me-1"></i>Ready to save</b>'; }
+  function refreshLive() {
+    var f = st.form, pm = st.dir !== 'c';
+    function set(key, html, cls) { stage.querySelectorAll('[data-live="' + key + '"]').forEach(function (el) { el.innerHTML = html; if (cls) Object.keys(cls).forEach(function (c) { el.classList.toggle(c, cls[c]); }); }); }
+    set('name', esc(f.name) || 'Student name', pm ? { ph: !f.name } : { 'text-body-secondary': !f.name, 'fst-italic': !f.name, 'fw-normal': !f.name });
+    set('klass', esc(klassOf(f)) || 'Class not set', pm ? { ph: !klassOf(f) } : null);
+    set('adm', esc(f.adm));
+    set('age', ageOf(f.dob) || 'Age');
+    if (!f.photo) set('av', (initialsOf(f.name) || '<i class="fa fa-user" style="opacity:.45"></i>') + (pm ? '<label for="f_photo" class="cam" title="Add photo"><i class="fa fa-camera"></i></label>' : ''));
+    var uid = f.card ? uidGroups(f.card.replace(/[^0-9a-fA-F]/g, '').toUpperCase()) : '';
+    set('cardchip', uid ? '<span class="badge text-bg-success"><i class="fa fa-credit-card me-1"></i>Card ' + uid.slice(-7) + '</span>' : '<span class="badge bg-body-tertiary text-body-secondary border">No card yet</span>');
+    set('chk', checkHtml(pm));
+    set('steps', stepHtml(pm));
+    set('barst', barText());
+    stage.querySelectorAll('[data-grade]').forEach(function (b) { toggleQuick(b, b.dataset.grade === f.grade, pm); });
+    stage.querySelectorAll('[data-section]').forEach(function (b) { toggleQuick(b, b.dataset.section === f.section, pm); });
+  }
+  function toggleQuick(b, on, pm) { if (pm) b.classList.toggle('on', on); else { b.classList.toggle('btn-primary', on); b.classList.toggle('btn-outline-secondary', !on); } }
+  function initTomSelect() {
+    if (typeof TomSelect === 'undefined') return;
+    stage.querySelectorAll('select[data-ts]').forEach(function (el) {
+      new TomSelect(el, { allowEmptyOption: false, placeholder: 'Search a country…', maxOptions: 300, plugins: ['clear_button'],
+        onChange: function (v) { st.form.nationality = v || ''; refreshLive(); } });
+    });
+  }
+
+  /* ─────────────────────────────── wiring ─────────────────────────────── */
+  var NOTES = {
+    a: '<b>A · Campus ID</b>: identity card with a physical student card (balance, UID, BLOCKED stamp) + 4 KPI tiles + underline tab rail. Same 5 tabs as today. Needs a scoped stylesheet, like the customer and user view pages.',
+    b: '<b>B · Wallet</b>: the student lives in a sticky left rail (dark balance panel with spend-power bar, parents, details). Tabs become Activity / Purchases / Top-ups / Card, and the statement is a day-grouped feed. Needs a scoped stylesheet.',
+    c: '<b>C · Bootstrap native</b>: no custom CSS at all, only Bootstrap 5.3 / Nifty classes, so it follows the theme colour and dark mode for free. Same 5 tabs.'
+  };
+  var FORM_NOTE = { a: '<b>Add / Edit form, premium</b> (A and B share it): numbered steps, tap cards for gender, status and relation, searchable nationality, a live "What staff will see" preview and a "Before you save" checklist. Try typing, tapping and adding a photo.',
+    c: '<b>Add / Edit form, Bootstrap native</b>: same steps and wording, built only from Bootstrap classes (outline buttons for gender, status and relation).' };
+  FORM_NOTE.b = FORM_NOTE.a;
+  var HEAD = { view: ['Student', 'Student', 'Card, statement, purchases and parents'], add: ['Add', 'Add Student', 'Student details, class, parents and card'], edit: ['Edit', 'Edit Student', 'Student details, class, parents and card'] };
+  var stage = document.getElementById('stage');
+  if (!st.page) st.page = 'view';
+  st.form = st.page === 'edit' ? editForm() : blankForm();
+  function save() { try { localStorage.setItem('student-view-preview', JSON.stringify({ dir: st.dir, page: st.page, card: st.card, bal: st.bal, tabA: st.tabA, tabB: st.tabB, tabC: st.tabC, acc: st.acc, mode: st.mode })); } catch (e) {} }
+  function render() {
+    var isForm = st.page !== 'view';
+    stage.innerHTML = isForm ? renderForm(st.dir !== 'c') : st.dir === 'a' ? renderA() : st.dir === 'b' ? renderB() : renderC();
+    if (!st.rise) stage.querySelectorAll('.rise').forEach(function (el) { el.style.animation = 'none'; });
+    st.rise = false;
+    if (isForm) initTomSelect();
+    document.getElementById('hxNote').innerHTML = isForm ? FORM_NOTE[st.dir] : NOTES[st.dir];
+    document.getElementById('nfCrumb').textContent = HEAD[st.page][0];
+    document.getElementById('nfTitle').textContent = HEAD[st.page][1];
+    document.getElementById('nfLead').textContent = HEAD[st.page][2];
+    document.getElementById('hxCard').style.display = document.getElementById('hxBal').style.display = isForm ? 'none' : '';
+    [['hxDir', 'dir'], ['hxPage', 'page'], ['hxCard', 'card'], ['hxBal', 'bal']].forEach(function (g) {
+      document.querySelectorAll('#' + g[0] + ' button').forEach(function (b) { b.classList.toggle('on', b.dataset[g[1]] === st[g[1]]); });
+    });
+    save();
+  }
+  function hexRgb(h) { var n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(','); }
+  function setAcc(hex) { st.acc = hex; document.documentElement.style.setProperty('--p', hex); document.documentElement.style.setProperty('--p-rgb', hexRgb(hex));
+    document.querySelectorAll('#hxAcc .sw').forEach(function (b) { b.classList.toggle('on', b.dataset.acc === hex); }); }
+  function setMode(m) { st.mode = m; document.documentElement.setAttribute('data-bs-theme', m); document.querySelectorAll('#hxMode button').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === m); }); }
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('button, a');
+    if (!el) return;
+    if (el.tagName === 'A') { e.preventDefault(); return; }
+    var d = el.dataset, f = st.form;
+    if (d.dir) { st.dir = d.dir; st.rise = true; }
+    else if (d.page) { st.page = d.page; st.form = d.page === 'edit' ? editForm() : blankForm(); st.rise = true; window.scrollTo(0, 0); }
+    else if (d.card) st.card = d.card;
+    else if (d.bal) st.bal = d.bal;
+    else if (d.acc) { setAcc(d.acc); save(); return; }
+    else if (d.mode) { setMode(d.mode); save(); return; }
+    else if (d.aTab) st.tabA = d.aTab;
+    else if (d.bTab) st.tabB = d.bTab;
+    else if (d.cTab) st.tabC = d.cTab;
+    else if (d.invite) st.invite = st.invite === +d.invite ? 0 : +d.invite;
+    else if (d.cardSet) st.card = d.cardSet;
+    else if (d.preset) st.preset = d.preset;
+    else if (d.step) { var t = document.getElementById(d.step); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    else if (d.grade !== undefined) { f.grade = f.grade === d.grade ? '' : d.grade; var gi = document.getElementById('f_grade'); if (gi) gi.value = f.grade; refreshLive(); return; }
+    else if (d.section !== undefined) { f.section = f.section === d.section ? '' : d.section; var si = document.getElementById('f_section'); if (si) si.value = f.section; refreshLive(); return; }
+    else if (d.primary) f.parents.forEach(function (p, i) { p.primary = i === +d.primary; });
+    else if (d.remove) { var wasMain = f.parents[+d.remove].primary; f.parents.splice(+d.remove, 1); if (wasMain && f.parents.length) f.parents[0].primary = true; }
+    else if (d.addp) f.parents.push({ name: '', mobile: '', email: '', relation: f.parents.some(function (p) { return p.relation === 'father'; }) ? 'mother' : 'father', primary: !f.parents.length });
+    else if (d.photoRemove) f.photo = '';
+    else return;
+    render();
+  });
+  function fieldChanged(e) {
+    var t = e.target, f = st.form;
+    if (t.dataset.f && t.tagName !== 'SELECT') { f[t.dataset.f] = t.value; refreshLive(); }
+    else if (t.dataset.pf) { var k = t.dataset.pf.split('.'); f.parents[+k[0]][k[1]] = t.value; refreshLive(); }
+  }
+  document.addEventListener('input', fieldChanged);
+  document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-photo-input]') && e.target.files[0]) { st.form.photo = URL.createObjectURL(e.target.files[0]); render(); return; }
+    if (e.target.type === 'radio') fieldChanged(e);
+  });
+
+  setAcc(st.acc || '#25476a');
+  setMode(st.mode || 'light');
+  render();
+})();
+</script>
+</body>
+</html>

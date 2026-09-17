@@ -22,6 +22,8 @@ class LocalStorageKeys {
   static const String baseCurrency = 'astra.baseCurrency';
   static const String defaultQuantity = 'astra.defaultQuantity';
   static const String tipEnabled = 'astra.tipEnabled';
+  /// Whether the business runs the School module (student cards). From the web.
+  static const String schoolEnabled = 'astra.schoolEnabled';
   static const String defaultProductType = 'astra.defaultProductType';
   static const String haptics = 'astra.haptics';
   static const String branch = 'astra.branch';
@@ -42,8 +44,15 @@ class LocalStorageKeys {
   // force-quit can't walk back in past the lock screen.
   static const String authLocked = 'astra.auth.locked';
 
+  // Set from a sign-in (or unlock) until the user picks the branch they are
+  // working as, so a force-quit can't walk past the branch picker either.
+  static const String authBranchPending = 'astra.auth.branchPending';
+
   // Point-of-sale flow — device-local.
   static const String posLockAfterSale = 'astra.pos.lockAfterSale';
+  /// Whether unlocking the till asks a multi-branch user which branch again.
+  /// Off keeps the last chosen branch. A sign-in always asks.
+  static const String posAskBranchOnUnlock = 'astra.pos.askBranchOnUnlock';
   // How many product tiles the New Sale catalog grid fits across (2 | 3 | 4).
   static const String posGridColumns = 'astra.pos.gridColumns';
   /// How the New Sale category rail is drawn (a `CategoryDisplay.key`).
@@ -64,6 +73,10 @@ class LocalStorageKeys {
   /// local: a counter till opens straight on the POS while the manager's own
   /// phone keeps the dashboard, on the same build and the same account.
   static const String posStartScreen = 'astra.pos.startScreen';
+
+  /// Whether closing the day also prints its Sale Bill Report on the thermal
+  /// roll. Device-local: the close sheet remembers the last answer on this till.
+  static const String daySessionPrintOnClose = 'astra.daySession.printOnClose';
 
   // Offline selling — device-local. The tag identifies this till in the
   // provisional references it prints; the sequence numbers them.

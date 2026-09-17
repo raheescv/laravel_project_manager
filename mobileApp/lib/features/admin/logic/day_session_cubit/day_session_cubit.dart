@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 
 import '../../domain/repository/admin_repository.dart';
@@ -28,9 +30,11 @@ class DaySessionCubit extends Cubit<DaySessionState> {
 
   AdminRepository get _repo => serviceLocator<AdminRepository>();
   AuthCubit get _auth => serviceLocator<AuthCubit>();
+  LocalStorageService get _storage => serviceLocator<LocalStorageService>();
 
   StreamSubscription<AuthState>? _authSub;
   int _refreshReq = 0;
+  int _reportReq = 0;
 
   // Read facade over `state`.
   String get status => state.status;
@@ -40,15 +44,25 @@ class DaySessionCubit extends Cubit<DaySessionState> {
   bool get syncing => state.syncing;
   String? get error => state.errorMessage;
   bool get isOpen => state.isOpen;
+  DaySessionSummary? get report => state.report;
 
+  /// Whether closing the day also prints its Sale Bill Report — this till's
+  /// last answer on the close sheet, printing until it is first answered.
+  bool get printOnClose => _storage.daySessionPrintOnClose ?? true;
+  Future<void> setPrintOnClose(bool v) => _storage.setDaySessionPrintOnClose(v);
+
+  // The report's session is kept: [refresh] replaces it straight after, and
+  // dropping it here would blink the report card off and on.
   void seedFromUser(ApiUser? user) => emit(DaySessionState(
         status: user?.daySessionStatus == 'open' ? 'open' : 'closed',
         selected: _nowToMinute(),
+        report: state.report,
       ));
 
   void _onAuth(AuthState s) {
     if (s.status == AuthStatus.signedOut) {
       ++_refreshReq;
+      ++_reportReq;
       emit(DaySessionState(selected: _nowToMinute()));
       return;
     }
@@ -71,24 +85,45 @@ class DaySessionCubit extends Cubit<DaySessionState> {
   /// Keeps the dialled-in moment. Offline, or refused, the cached status
   /// stands: it is still the best answer there is, and the toggle keeps
   /// working on it.
-  Future<void> refresh() async {
-    if (state.busy) return;
+  ///
+  /// True when the server answered — the closed-day gate says "still closed"
+  /// only then, and "couldn't reach the server" otherwise. [statusOnly] skips
+  /// the report lookup, for the sale flow's checks (New Sale re-reads the day
+  /// on every visit, and the report card isn't on show there).
+  Future<bool> refresh({bool statusOnly = false}) async {
+    if (state.busy) return false;
     final req = ++_refreshReq;
     emit(state.copyWith(syncing: true, clearError: true));
+    if (!statusOnly) unawaited(_loadReport());
     try {
       final live = await _repo.dayStatus();
-      if (req != _refreshReq || isClosed) return;
+      if (req != _refreshReq || isClosed) return false;
       await _auth.applyDayStatus(live);
-      if (req != _refreshReq || isClosed) return;
+      if (req != _refreshReq || isClosed) return false;
       emit(state.copyWith(
         status: live.status,
         session: live.session,
         clearSession: live.session == null,
         syncing: false,
       ));
+      return true;
     } catch (_) {
       if (req == _refreshReq && !isClosed) emit(state.copyWith(syncing: false));
+      return false;
     }
+  }
+
+  /// Looks up the session the Sale Bill Report is for. Only for those who may
+  /// print it; a failure keeps the last answer, as printing re-reads the
+  /// figures anyway.
+  Future<void> _loadReport() async {
+    if (!_auth.hasPermission(PermissionSlug.daySessionPrint)) return;
+    final req = ++_reportReq;
+    try {
+      final found = await _repo.currentDaySession();
+      if (req != _reportReq || isClosed) return;
+      emit(state.copyWith(report: found, clearReport: found == null));
+    } catch (_) {}
   }
 
   void setDate(DateTime date) => emit(state.copyWith(
@@ -121,6 +156,8 @@ class DaySessionCubit extends Cubit<DaySessionState> {
             next == 'closed' ? (res.session?.closedAt ?? Dates.isoDateTime(at)) : null,
       );
       emit(state.copyWith(status: next, session: res.session, busy: false));
+      // A close turns the open report into the final one; an open starts a new one.
+      unawaited(_loadReport());
       return res;
     } on ApiException catch (e) {
       emit(state.copyWith(busy: false, errorMessage: e.message));

@@ -56,6 +56,7 @@ return [
             'accounting',
             'hr_management',
             'reports_accounting',
+            'email_templates',
         ],
 
         'POS Module' => [
@@ -71,6 +72,23 @@ return [
             'reports_inventory',
             'reports_purchase',
             'reports_accounting',
+        ],
+
+        'School Module' => [
+            'core',
+            'product_management',
+            'inventory_management',
+            'sales',
+            'reports_sales',
+            'simple_purchase_management',
+            'school',
+            'accounting',
+            'hr_management',
+            'reports_hr',
+            'reports_inventory',
+            'reports_purchase',
+            'reports_accounting',
+            'email_templates',
         ],
 
         'Issues Module' => [
@@ -197,6 +215,32 @@ return [
             ],
         ],
 
+        // ── School ────────────────────────────────────────────────────────────
+        'school' => [
+            'label' => 'School (Student Cards & Parent Portal)',
+            'permissions' => [
+                'student',
+                'student card',
+                'student topup',
+                'student guardian',
+                'student settings',
+                'student menu',
+                // Reports are declared one by one (dot notation), like every other
+                // report module — without this the role screen filters them out.
+                'report.student wallet',
+                'report.student recharge',
+            ],
+        ],
+
+        // ── Email Templates ───────────────────────────────────────────────────
+        // Shared by every system that sends templated mail (appointments, parent invites).
+        'email_templates' => [
+            'label' => 'Email Templates',
+            'permissions' => [
+                'email template',
+            ],
+        ],
+
         // ── HR ────────────────────────────────────────────────────────────────
         'hr_management' => [
             'label' => 'HR Management',
@@ -248,7 +292,6 @@ return [
                 'complaint',
                 'tenant detail',
                 'property lead',
-                'email template',
             ],
         ],
 

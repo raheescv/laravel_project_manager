@@ -94,16 +94,6 @@ extension _DaySessionViews on _DaySessionScreenState {
                             ),
                           ),
                         ),
-                      // The current session's Sale Bill Report — the same Export
-                      // sheet as Reports, offering only this report.
-                      if (context.read<AuthCubit>().hasPermission(PermissionSlug.daySessionPrint)) ...[
-                        const SizedBox(width: 8),
-                        HeaderIconButton(
-                          icon: Icons.receipt_long_outlined,
-                          onTap: () => unawaited(showReportExport(context,
-                              initial: ExportReport.daySession, reports: const [ExportReport.daySession])),
-                        ),
-                      ],
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -371,6 +361,224 @@ extension _DaySessionViews on _DaySessionScreenState {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------ SESSION REPORT
+  /// The Sale Bill Report of [s] — the open session, or the one just closed:
+  /// the thermal roll in one tap, and the Export sheet for the A4 PDF and
+  /// sending it on.
+  Widget _reportCard(DaySessionSummary s) {
+    final p = context.astra;
+    final printer = context.watch<PrintSettingsCubit>();
+    final when = s.isOpen
+        ? 'Open since ${Dates.humanDateTime(s.openedAt)} · figures so far'
+        : 'Closed ${Dates.humanDateTime(s.closedAt)}${s.closedBy.isEmpty ? '' : ' by ${s.closedBy}'}';
+    return AstraCard(
+      radius: 18,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionLabel('Session report'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const IconChip(icon: Icons.receipt_long_outlined, size: 42, radius: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Sale Bill Report #${s.id}',
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 16, color: p.ink)),
+                    const SizedBox(height: 2),
+                    Text(when,
+                        maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary, height: 1.4)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: _reportButton(Icons.print_outlined, 'Print thermal', primary: true,
+                    onTap: () => unawaited(printDaySessionRoll(context, s.id))),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: _reportButton(Icons.ios_share, 'PDF & share',
+                    onTap: () => unawaited(showReportExport(context,
+                        initial: ExportReport.daySession, reports: const [ExportReport.daySession]))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(printer.hasPrinter ? Icons.print_outlined : Icons.info_outline, size: 13, color: p.textMuted),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                    printer.hasPrinter
+                        ? 'Prints straight to ${printer.printer.displayName}'
+                        : 'No printer paired — the preview opens to print',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A report-card action. Tinted for the main one and outlined for the other,
+  /// so the dock's gradient stays the one call to action on the page.
+  Widget _reportButton(IconData icon, String label, {required VoidCallback onTap, bool primary = false}) {
+    final p = context.astra;
+    final fg = primary ? p.primary : p.ink;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: primary ? p.tint : Colors.transparent,
+          borderRadius: BorderRadius.circular(13),
+          border: primary ? null : Border.all(color: p.hairline),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: fg),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(label,
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: ui(size: 13, weight: FontWeight.w800, color: fg)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The close sheet's "print the report too" row: the whole row toggles.
+  Widget _printToggle(bool on, String hint, VoidCallback onTap) {
+    final p = context.astra;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: on ? p.tint : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: on ? p.primary.withValues(alpha: 0.28) : p.hairline),
+        ),
+        child: Row(
+          children: [
+            IconChip(icon: Icons.print_outlined, size: 34, radius: 10, bg: on ? p.cardSolid : null),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Print the Sale Bill Report', style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+                  const SizedBox(height: 1),
+                  Text(hint,
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              width: 44,
+              height: 26,
+              padding: const EdgeInsets.all(3),
+              alignment: on ? Alignment.centerRight : Alignment.centerLeft,
+              decoration: BoxDecoration(
+                gradient: on ? p.primaryGradient : null,
+                color: on ? null : p.hairline,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------- SALE GATE
+  /// Why New Sale sent them here, first thing on the page. At the top rather
+  /// than a toast: a toast lands on the dock and hides the very button that
+  /// lets them sell. Slides in on arrival so it reads as the redirect's message.
+  Widget _saleGateCard() {
+    final p = context.astra;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (_, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(offset: Offset(0, (1 - t) * -14), child: child),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: p.warnTint,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: p.warnText.withValues(alpha: 0.28)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IconChip(
+                icon: Icons.point_of_sale_outlined,
+                size: 42,
+                radius: 12,
+                bg: p.warnText.withValues(alpha: 0.14),
+                fg: p.warnText),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Open the day to start selling', style: ui(size: 14.5, weight: FontWeight.w800, color: p.ink)),
+                  const SizedBox(height: 3),
+                  Text(AppStrings.dayNotOpenForSales,
+                      style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary, height: 1.45)),
+                  const SizedBox(height: 9),
+                  Row(
+                    children: [
+                      Icon(Icons.south_rounded, size: 13, color: p.warnText),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text('Open the day below — New Sale opens straight after.',
+                            style: ui(size: 11, weight: FontWeight.w800, color: p.warnText)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

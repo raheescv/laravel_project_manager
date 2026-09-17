@@ -114,6 +114,38 @@ class User extends Authenticatable implements AuditableContracts
         return $this->belongsTo(Branch::class, 'default_branch_id');
     }
 
+    /**
+     * The branches this user may work as — their assigned branches, the same
+     * list the web branch popup offers. An account with none assigned keeps its
+     * default branch, which is where it has always posted.
+     *
+     * @return array<int, int>
+     */
+    public function operableBranchIds(): array
+    {
+        $assigned = $this->branches()->pluck('branch_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+
+        if ($assigned !== []) {
+            return $assigned;
+        }
+
+        return $this->default_branch_id ? [(int) $this->default_branch_id] : [];
+    }
+
+    /**
+     * The branch a mobile request acts on: the one it asks for when this user may
+     * work there, otherwise their default branch. A branch the user has no
+     * assignment to is never honoured, so a request cannot post into it.
+     */
+    public function operatingBranchId(mixed $requested): ?int
+    {
+        if (is_numeric($requested) && in_array((int) $requested, $this->operableBranchIds(), true)) {
+            return (int) $requested;
+        }
+
+        return $this->default_branch_id ? (int) $this->default_branch_id : null;
+    }
+
     public function attendances()
     {
         return $this->hasMany(UserAttendance::class, 'employee_id');

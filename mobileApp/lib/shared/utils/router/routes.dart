@@ -7,6 +7,10 @@ class Routes {
 
   // ---- Auth / shell ----
   static const String login = '/login';
+
+  /// Which branch this session works as — held here after a sign-in (or an
+  /// unlock) by a user with more than one branch. See `AuthState.branchPending`.
+  static const String selectBranch = '/select-branch';
   static const String home = '/home';
 
   /// The shell with a specific destination selected (tablet side rail / bottom
@@ -17,6 +21,14 @@ class Routes {
   static const String sale = '/sale';
   static const String cart = '/cart';
   static const String review = '/review';
+
+  /// Where the sale flow sends someone who can't open the day themselves while
+  /// it is closed — "ask your admin". See `DayGate`.
+  static const String dayClosed = '/day-closed';
+
+  /// Day Session opened *on the way to* New Sale: it says why they are there and
+  /// carries on to the POS once the day is open. See `DayGate`.
+  static const String daySessionForSale = '$daySession?for=sale';
 
   /// Requires a `Sale` in `extra`; guarded by the route's redirect.
   static const String invoice = '/invoice';
@@ -35,6 +47,8 @@ class Routes {
   static const String returnReceipt = '/return-receipt';
 
   // ---- Stock check ----
+  /// Link / replace a student's NFC card (`student card.assign`).
+  static const String linkStudentCard = '/student-card/link';
   static const String stockCheck = '/stock-check';
   static const String stockCheckNew = '/stock-check/new';
 

@@ -1,12 +1,14 @@
 import 'package:go_router/go_router.dart';
 import 'package:invo/features/admin/screens/v3/day_session_screen.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/auth/screens/v3/branch_select_screen.dart';
 import 'package:invo/features/auth/screens/v3/login_screen.dart';
 import 'package:invo/features/profile/screens/v3/change_password_screen.dart';
 import 'package:invo/features/profile/screens/v3/change_pin_screen.dart';
 import 'package:invo/features/profile/screens/v3/edit_profile_screen.dart';
 import 'package:invo/features/profile/screens/v3/profile_screen.dart';
 import 'package:invo/features/sale/screens/v3/cart_screen.dart';
+import 'package:invo/features/sale/screens/v3/day_closed_screen.dart';
 import 'package:invo/features/sale/screens/v3/invoice_screen.dart';
 import 'package:invo/features/sale/screens/v3/new_sale_screen.dart';
 import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
@@ -31,9 +33,12 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/models/index.dart';
 
+import 'day_gate.dart';
 import 'go_router_refresh_stream.dart';
 import 'route_observer.dart';
 import 'routes.dart';
+import 'package:invo/features/student_card/screens/link_card_screen.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 
 GoRouter createRouter(AuthCubit auth) {
   return GoRouter(
@@ -47,12 +52,16 @@ GoRouter createRouter(AuthCubit auth) {
       final atLogin = state.matchedLocation == Routes.login;
       if (auth.status == AuthStatus.unknown) return null;
       if (!loggedIn) return atLogin ? null : Routes.login;
+      // Nothing else opens until a multi-branch user has said which branch
+      // this session works as.
+      final atBranchPicker = state.matchedLocation == Routes.selectBranch;
+      if (auth.state.branchPending) return atBranchPicker ? null : Routes.selectBranch;
       final canViewAdmin = auth.hasPermission(PermissionSlug.salesOverview);
       // Landing after sign-in (and after an unlock, which comes back through
       // the login route the same way) is the till's own choice — see
       // [StartScreen]; `resolve` keeps an account that can't open the dashboard
       // off it whatever the device is set to.
-      if (atLogin) {
+      if (atLogin || atBranchPicker) {
         return serviceLocator<PosSettingsCubit>()
             .startScreen
             .resolve(canViewDashboard: canViewAdmin);
@@ -62,9 +71,16 @@ GoRouter createRouter(AuthCubit auth) {
           !auth.hasPermission(PermissionSlug.daySession)) {
         return Routes.sale;
       }
+      final loc = state.matchedLocation;
+      // A closed day holds the whole sale flow — see [DayGate]. Every fallback
+      // above lands on `/sale`, so they all come through here too.
+      if (DayGate.guards(loc)) {
+        final gate = DayGate.redirectFor(auth);
+        if (gate != null) return gate;
+      }
+      if (loc == Routes.dayClosed && (auth.user?.dayOpen ?? false)) return Routes.sale;
       // Sale-return module: viewing the list needs `.view`; the authoring flow
       // (pick/compose/review, shared by create AND edit) needs create OR edit.
-      final loc = state.matchedLocation;
       if (loc == Routes.salesReturns && !auth.hasPermission(PermissionSlug.saleReturnView)) {
         return Routes.sale;
       }
@@ -77,10 +93,16 @@ GoRouter createRouter(AuthCubit auth) {
       if (loc.startsWith(Routes.stockCheck) && !auth.hasPermission(PermissionSlug.stockCheck)) {
         return Routes.sale;
       }
+      if (loc == Routes.linkStudentCard &&
+          (!serviceLocator<LocalStorageService>().schoolEnabled ||
+              !auth.hasPermission(PermissionSlug.studentCardAssign))) {
+        return Routes.sale;
+      }
       return null;
     },
     routes: [
       GoRoute(path: Routes.login, builder: (_, __) => const LoginScreen()),
+      GoRoute(path: Routes.selectBranch, builder: (_, __) => const BranchSelectScreen()),
       GoRoute(
         path: Routes.home,
         builder: (_, state) => HomeShell(
@@ -131,6 +153,7 @@ GoRouter createRouter(AuthCubit auth) {
           builder: (_, state) => TabletRailScaffold(
               activeTab: kStockCheckTab,
               child: StockCheckCountScreen(detail: state.extra as StockCheckDetail))),
+      GoRoute(path: Routes.linkStudentCard, builder: (_, __) => const LinkCardScreen()),
       GoRoute(
           path: Routes.saleReturn, builder: (_, __) => const NewSaleReturnScreen()),
       GoRoute(
@@ -155,8 +178,12 @@ GoRouter createRouter(AuthCubit auth) {
           builder: (_, __) => const TabletRailScaffold(child: ProfileScreen())),
       GoRoute(
           path: Routes.daySession,
-          builder: (_, __) => const TabletRailScaffold(
-              activeTab: kDaySessionTab, child: DaySessionScreen())),
+          builder: (_, state) => TabletRailScaffold(
+              activeTab: kDaySessionTab,
+              child: DaySessionScreen(forSale: state.uri.queryParameters['for'] == 'sale'))),
+      GoRoute(
+          path: Routes.dayClosed,
+          builder: (_, __) => const TabletRailScaffold(child: DayClosedScreen())),
       GoRoute(
           path: Routes.changePin,
           builder: (_, __) => const TabletRailScaffold(child: ChangePinScreen())),

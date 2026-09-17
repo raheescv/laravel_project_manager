@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\V1\Sale;
 
+use App\Actions\Student\GetBalanceAction;
+use App\Models\StudentDetail;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -66,6 +68,23 @@ class SaleResource extends JsonResource
                 'balance' => (float) $this->balance,
             ],
             'created_by' => $this->createdUser?->name,
+            // Present for a student's sale: the card balance after it, for the receipt.
+            'student' => $this->studentCard(),
+        ];
+    }
+
+    private function studentCard(): ?array
+    {
+        $detail = $this->account_id ? StudentDetail::where('account_id', $this->account_id)->first(['account_id', 'admission_no', 'grade', 'section']) : null;
+        if (! $detail) {
+            return null;
+        }
+
+        return [
+            'account_id' => (int) $detail->account_id,
+            'admission_no' => $detail->admission_no,
+            'class' => $detail->classLabel(),
+            'card_balance' => (new GetBalanceAction())->execute((int) $detail->account_id),
         ];
     }
 }

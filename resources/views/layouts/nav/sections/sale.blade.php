@@ -1,6 +1,7 @@
 @if (auth()->user()->can('sale.view') ||
         auth()->user()->can('sale.create') ||
         auth()->user()->can('report.sale item') ||
+        auth()->user()->can('report.sale category') ||
         auth()->user()->can('sale.receipts') ||
         auth()->user()->can('sales return.view') ||
         auth()->user()->can('sales return.create') ||
@@ -17,6 +18,7 @@
                 'sale/edit/*',
                 'sale/view/*',
                 'report/sale_item',
+                'report/sale_category',
                 'sale/receipts',
                 'sale_return',
                 'sale_return/create',
@@ -47,6 +49,12 @@
                 <li class="nav-item">
                     <a href="{{ route('report::sale_item') }}"
                         class="nav-link {{ request()->is(['report/sale_item']) ? 'active' : '' }}">Item Wise Report</a>
+                </li>
+            @endcan
+            @can('report.sale category')
+                <li class="nav-item">
+                    <a href="{{ route('report::sale_category') }}"
+                        class="nav-link {{ request()->is(['report/sale_category']) ? 'active' : '' }}">Category Wise Report</a>
                 </li>
             @endcan
             @can('sale.receipts')

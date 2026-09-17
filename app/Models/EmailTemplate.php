@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ModuleAccess;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -61,7 +62,11 @@ class EmailTemplate extends Model implements AuditableContracts
     /** @return array<string, array> */
     public static function modules(): array
     {
-        return config('email_templates', []);
+        // A module tied to a feature module the tenant does not run is not offered.
+        return array_filter(
+            config('email_templates', []),
+            fn (array $module) => ! isset($module['requires_module']) || ModuleAccess::enabled($module['requires_module']),
+        );
     }
 
     /** @return array<string, array> */
@@ -83,6 +88,12 @@ class EmailTemplate extends Model implements AuditableContracts
         $default = config("email_templates.{$module}.types.{$type}.default");
 
         return filled($default['subject'] ?? null) ? $default : null;
+    }
+
+    /** Why the recipient got an email from this module, shown in the footer. */
+    public static function footerNoteFor(string $module): ?string
+    {
+        return config("email_templates.{$module}.footer_note");
     }
 
     public static function moduleLabel(string $module): string

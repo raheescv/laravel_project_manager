@@ -23,7 +23,7 @@ class ReportRow extends Equatable {
       this.amount = 0});
 
   /// The staff member's user id on a staff row, so a screen can pick out the
-  /// signed-in person; '' on item rows.
+  /// signed-in person; '' on item and category rows.
   final String id;
   final String title;
   final String subtitle;
@@ -34,9 +34,10 @@ class ReportRow extends Equatable {
   List<Object?> get props => [id, title, subtitle, value, amount];
 }
 
-/// The loaded breakdown for one report type, held so the By Item / By Staff
-/// toggle can restore it without another round-trip. Carries the pagination
-/// cursor too, so a list you had already scrolled comes back as you left it.
+/// The loaded breakdown for one report type, held so the By Item / By Category /
+/// By Staff toggle can restore it without another round-trip. Carries the
+/// pagination cursor too, so a list you had already scrolled comes back as you
+/// left it.
 class _ReportCache {
   const _ReportCache({
     required this.rows,
@@ -120,13 +121,13 @@ class AdminCubit extends Cubit<AdminState> {
   bool _live(int req) => req == _dashboardReq && !isClosed;
 
   /// Last loaded breakdown per report type, for the filters in force when it
-  /// was fetched. Only the By Item / By Staff toggle reads it; each input
-  /// invalidates exactly what it can have moved on the way past, so an entry
-  /// can never outlive the filters behind it:
+  /// was fetched. Only the By Item / By Category / By Staff toggle reads it;
+  /// each input invalidates exactly what it can have moved on the way past, so
+  /// an entry can never outlive the filters behind it:
   ///
-  ///  * date range, branch — both entries (every figure is range-scoped)
-  ///  * Rank By, Type      — the `itemwise` entry only; neither is sent with
-  ///                         the `employeewise` request, so By Staff stands.
+  ///  * date range, branch — every entry (every figure is range-scoped)
+  ///  * Rank By, Type      — the `itemwise` and `categorywise` entries; neither
+  ///                         is sent with `employeewise`, so By Staff stands.
   final Map<String, _ReportCache> _reportCache = {};
 
   /// Date range the per-day trend was fetched for. The trend depends on the
@@ -357,8 +358,8 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
-  /// Switch the breakdown between By Item and By Staff. Both sides are held
-  /// in [_reportCache] for as long as the filters behind them hold, so the
+  /// Switch the breakdown between By Item, By Category and By Staff. Each side
+  /// is held in [_reportCache] for as long as the filters behind it hold, so the
   /// toggle is instant — the API is hit again only for a side that hasn't been
   /// loaded under the current Rank By / Type / date / branch selection.
   void setReportType(String type) {
@@ -502,6 +503,23 @@ class AdminCubit extends Cubit<AdminState> {
           rankByQty: byQty,
           productType: productType,
         );
+      case ReportExportKind.categories:
+        final byQty = state.itemMetric == 'qty';
+        final productType = state.itemProductType;
+        final data = await _allReportRows('categorywise', start, end,
+            sort: byQty ? 'quantity' : 'amount', productType: productType);
+        return ReportExport(
+          kind: kind,
+          startDate: from,
+          endDate: to,
+          generatedAt: now,
+          lines: data.rows.map(ReportExportLine.category).toList(),
+          lineCount: data.total,
+          totalAmount: asNum(data.summary['total_amount']).toDouble(),
+          totalQuantity: asNum(data.summary['total_quantity']).toDouble(),
+          rankByQty: byQty,
+          productType: productType,
+        );
       case ReportExportKind.stylists:
         final data = await _allReportRows('employeewise', start, end);
         return ReportExport(
@@ -584,32 +602,38 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
+  /// The breakdowns built from product lines — By Item and By Category. Only
+  /// these take the Rank By and Type filters; By Staff ranks by revenue alone.
+  static bool ranksProducts(String type) => type == 'itemwise' || type == 'categorywise';
+
   Future<Map<String, dynamic>> _fetchReportPage(int page) => _repo.report(
         type: state.reportType,
         startDate: Dates.iso(state.startDate),
         endDate: Dates.iso(state.endDate),
         page: page,
         perPage: _reportPageSize,
-        sort: state.reportType == 'itemwise'
+        sort: ranksProducts(state.reportType)
             ? (state.itemMetric == 'qty' ? 'quantity' : 'amount')
             : null,
-        productType: state.reportType == 'itemwise' ? state.itemProductType : null,
+        productType: ranksProducts(state.reportType) ? state.itemProductType : null,
       );
 
   void _applyReportPage(Map<String, dynamic> data, {required bool append}) {
     final rows = (data['rows'] as List?) ?? const [];
     final pag = (data['pagination'] as Map?) ?? const {};
     final summary = (data['summary'] as Map?) ?? const {};
-    final total = state.reportType == 'itemwise'
+    final total = ranksProducts(state.reportType)
         ? asNum(state.itemMetric == 'qty'
                 ? summary['total_quantity']
                 : summary['total_amount'])
             .toDouble()
         : asNum(summary['total_revenue']).toDouble();
 
-    final mapped = state.reportType == 'itemwise'
-        ? rows.map(_itemRow).toList()
-        : rows.map(_employeeRow).toList();
+    final mapped = switch (state.reportType) {
+      'itemwise' => rows.map(_itemRow).toList(),
+      'categorywise' => rows.map(_categoryRow).toList(),
+      _ => rows.map(_employeeRow).toList(),
+    };
 
     emit(state.copyWith(
       reportPage: asNum(pag['current_page'] ?? 1).toInt(),
@@ -646,6 +670,23 @@ class AdminCubit extends Cubit<AdminState> {
     );
   }
 
+  ReportRow _categoryRow(dynamic e) {
+    final m = Map<String, dynamic>.from(e);
+    final total = asNum(m['total']).toDouble();
+    final qty = asNum(m['quantity']).toDouble();
+    final products = asNum(m['products_count']).toInt();
+    final byQty = state.itemMetric == 'qty';
+    final productLabel = '$products item${products == 1 ? '' : 's'}';
+    return ReportRow(
+      title: asStr(m['category_name']),
+      subtitle: byQty
+          ? '${Money.of(total)} · $productLabel'
+          : '${_qty(qty)} sold · $productLabel',
+      value: byQty ? '${_qty(qty)} sold' : Money.of(total),
+      amount: byQty ? qty : total,
+    );
+  }
+
   ReportRow _employeeRow(dynamic e) {
     final m = Map<String, dynamic>.from(e);
     final rev = asNum(m['revenue']).toDouble();
@@ -659,13 +700,13 @@ class AdminCubit extends Cubit<AdminState> {
     );
   }
 
-  /// Rank By and Type ride on the item request alone — [_fetchReportPage] sends
-  /// `sort` and `product_type` only for `itemwise` — so they invalidate that
-  /// side and leave By Staff's cached rows standing. Only the date range (and
-  /// a branch switch) can move those.
+  /// Rank By and Type ride on the item and category requests alone —
+  /// [_fetchReportPage] sends `sort` and `product_type` only for those — so
+  /// they invalidate those two sides and leave By Staff's cached rows
+  /// standing. Only the date range (and a branch switch) can move those.
   void setItemMetric(String metric) {
     if (state.itemMetric == metric) return;
-    _reportCache.remove('itemwise');
+    _dropProductCaches();
     unawaited(loadReports(metric: metric));
   }
 
@@ -673,12 +714,16 @@ class AdminCubit extends Cubit<AdminState> {
     if (state.itemProductType == productType) return;
     emit(state.copyWith(
         itemProductType: productType, clearItemProductType: productType == null));
-    _reportCache.remove('itemwise');
+    _dropProductCaches();
     unawaited(loadReports());
   }
 
+  void _dropProductCaches() => _reportCache
+    ..remove('itemwise')
+    ..remove('categorywise');
+
   String get reportTotalText =>
-      (state.reportType == 'itemwise' && state.itemMetric == 'qty')
+      (ranksProducts(state.reportType) && state.itemMetric == 'qty')
           ? '${_qty(state.reportTotal)} sold'
           : Money.of(state.reportTotal);
 

@@ -35,11 +35,13 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/tenant_route.php',
             __DIR__.'/../routes/tailoring.php',
             __DIR__.'/../routes/property.php',
+            __DIR__.'/../routes/student.php',
         ],
         api: [
             __DIR__.'/../routes/api.php',
             __DIR__.'/../routes/api_v1.php',
             __DIR__.'/../routes/api_v1_technician.php',
+            __DIR__.'/../routes/api_v1_parent.php',
         ],
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',

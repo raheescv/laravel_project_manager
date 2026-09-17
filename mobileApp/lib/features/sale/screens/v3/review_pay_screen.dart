@@ -25,6 +25,9 @@ import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/custom_payment_sheet.dart';
 import 'package:invo/features/sale/widgets/v3/cash_tender_card.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
+import 'package:invo/shared/logic/connectivity_cubit/connectivity_cubit.dart';
+import 'package:invo/features/student_card/widgets/student_card_tile.dart';
+import 'package:invo/features/student_card/widgets/tap_card_sheet.dart';
 
 class ReviewPayScreen extends StatefulWidget {
   const ReviewPayScreen({super.key});
@@ -87,6 +90,12 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     if (_busy || _busyDraft) return;
     final cart = context.read<CartCubit>();
     final editingId = cart.editingSaleId;
+    if (cart.state.paysByStudentCard &&
+        serviceLocator.isRegistered<ConnectivityCubit>() &&
+        serviceLocator<ConnectivityCubit>().state.isOffline) {
+      _error('Student card payments need a connection. Reconnect, or take cash.');
+      return;
+    }
     setState(() {
       if (secondary) {
         _busyDraft = true;
@@ -105,7 +114,12 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         // One call mints the idempotency key and both shapes of the ticket, so
         // what is queued offline is exactly what would have been posted.
         final ticket = cart.beginCharge();
-        saved = await _ops.createSale(ticket.payload, offlineSale: ticket.offlineSale);
+        // A student card sale is never queued: the balance and whether the card
+        // is blocked are only known to the server, so an unreachable server is
+        // an error the cashier sees, not a sale charged blind.
+        saved = cart.state.paysByStudentCard
+            ? await _ops.createSale(ticket.payload)
+            : await _ops.createSale(ticket.payload, offlineSale: ticket.offlineSale);
       } else {
         // Editing a committed sale needs a server id on both ends, so it stays
         // online-only.
@@ -279,15 +293,41 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       }
     }
     if (!mounted) return;
+    final cardMethodId = cart.student?.cardMethodId;
     final result = await showCustomPaymentSheet(
       context,
       total: cart.total,
-      methods: _methods,
+      // A tapped student card can take part of a split (card + cash). Without
+      // one the wallet has nothing to spend, so it stays out of the list — and
+      // with one it is listed once, whether or not Payment Methods has it too.
+      methods: [
+        if (cardMethodId != null) PaymentMethod(id: cardMethodId, name: PayMode.studentCard.label),
+        ..._methods.where((m) => !_isWallet(m, cart)),
+      ],
       initial: cart.customPayments,
     );
     if (result != null && result.isNotEmpty) {
       cart.setCustomPayments(result);
     }
+  }
+
+  /// Card pays what it can spend, cash the rest.
+  Future<void> _splitCardAndCash(CartCubit cart) async {
+    final student = cart.student;
+    final cardMethodId = student?.cardMethodId;
+    if (student == null || cardMethodId == null) return;
+    if (_methods.isEmpty) await _loadMethods();
+    final cash = _methods.where((m) => m.name.toLowerCase().contains('cash')).firstOrNull;
+    if (cash == null) {
+      _error('No Cash payment method is configured — use Custom to split.');
+      return;
+    }
+    final onCard = student.available.clamp(0, cart.total).toDouble();
+    cart.setCustomPayments([
+      if (onCard > 0) CustomPayment(methodId: cardMethodId, methodName: PayMode.studentCard.label, amount: round2(onCard)),
+      CustomPayment(methodId: cash.id, methodName: cash.name, amount: round2(cart.total - onCard)),
+    ]);
+    setState(() => _tendered = null);
   }
 
   void _error(String m) {
@@ -421,6 +461,10 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   /// has to be explained, so those keep the pair.
   List<Widget> _moneySection(CartCubit cart) {
     return [
+      if (cart.student != null) ...[
+        _StudentCardPanel(cart: cart, onSplit: () => _splitCardAndCash(cart)),
+        const SizedBox(height: 14),
+      ],
       if (cart.tipEnabled) ...[
         _tipSelector(cart),
         const SizedBox(height: 14),
@@ -700,10 +744,45 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  // ---- Payment method (Cash / Card / Credit / Custom) + WhatsApp toggle ----
+  // ---- Payment method (Student Wallet / Cash / Card / Credit / Custom) ----
+
+  /// Whether [m] is the Student Wallet account — by id once a tapped card has
+  /// named it, otherwise by the account's locked name.
+  bool _isWallet(PaymentMethod m, CartCubit cart) =>
+      m.id == cart.student?.cardMethodId ||
+      m.name.trim().toLowerCase() == PayMode.studentCard.label.toLowerCase();
+
+  /// Student Wallet joins the row only when the business lists it under Payment
+  /// Methods (and runs the School module, which the card tap needs). A ticket
+  /// already paying by wallet keeps its tile, so the selection can never vanish
+  /// from under the cashier.
+  bool _offersWallet(CartCubit cart) =>
+      cart.payMode == PayMode.studentCard ||
+      (cart.schoolEnabled && _methods.any((m) => _isWallet(m, cart)));
+
+  /// The wallet spends a tapped card. With none on the ticket yet, picking it
+  /// asks for the tap — the student then becomes the customer, as on New Sale.
+  Future<void> _selectWallet(CartCubit cart) async {
+    if (cart.student == null) {
+      final card = await showTapCardSheet(context);
+      if (card == null || !mounted) return;
+      cart.setStudent(card);
+    } else {
+      cart.setPayMode(PayMode.studentCard);
+    }
+    setState(() => _tendered = null);
+  }
 
   Widget _paymentSection(CartCubit cart) {
     final p = context.astra;
+    final modes = <(PayMode, IconData)>[
+      if (_offersWallet(cart)) (PayMode.studentCard, Icons.school_outlined),
+      (PayMode.cash, Icons.payments_outlined),
+      (PayMode.card, Icons.credit_card),
+      // Credit makes no sense on a prepaid card, so a student's ticket drops it.
+      if (cart.student == null && cart.payMode != PayMode.studentCard) (PayMode.credit, Icons.description_outlined),
+      (PayMode.custom, Icons.tune),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -717,16 +796,20 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            _method(cart, PayMode.cash, Icons.payments_outlined),
-            const SizedBox(width: 8),
-            _method(cart, PayMode.card, Icons.credit_card),
-            const SizedBox(width: 8),
-            _method(cart, PayMode.credit, Icons.description_outlined),
-            const SizedBox(width: 8),
-            _method(cart, PayMode.custom, Icons.tune),
-          ],
+        // One recessed track with the chosen method raised out of it — the same
+        // segmented language as New Sale's type switch, so a fifth option still
+        // reads as one row of choices rather than five loose buttons.
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: p.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              for (final (mode, icon) in modes) Expanded(child: _method(cart, mode, icon)),
+            ],
+          ),
         ),
       ],
     );
@@ -735,69 +818,91 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   Widget _method(CartCubit cart, PayMode mode, IconData icon) {
     final p = context.astra;
     final active = cart.payMode == mode;
-    final isCustom = mode == PayMode.custom;
-    final count = cart.customPayments.length;
+    final count = mode == PayMode.custom ? cart.customPayments.length : 0;
+    final label = switch (mode) {
+      // "Student Wallet" can't fit a fifth of a phone row; the cap says whose.
+      PayMode.studentCard => 'Wallet',
+      PayMode.custom when count > 0 => '$count method${count == 1 ? '' : 's'}',
+      _ => mode.label,
+    };
+    const motion = Duration(milliseconds: 160);
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          if (isCustom) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        switch (mode) {
+          case PayMode.custom:
             _openCustom();
-            return;
-          }
-          cart.setPayMode(mode);
-          // The tender pad unmounts with the mode, so what it reported would
-          // otherwise linger on the checkout button of a card sale.
-          if (mode != PayMode.cash) setState(() => _tendered = null);
-        },
-        child: Container(
-          height: 64,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: active ? p.primaryDark : p.card,
-            borderRadius: BorderRadius.circular(13),
-            boxShadow: active ? null : context.astraTheme.softShadow,
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
+          case PayMode.studentCard:
+            _selectWallet(cart);
+          case PayMode.cash || PayMode.card || PayMode.credit:
+            cart.setPayMode(mode);
+            // The tender pad unmounts with the mode, so what it reported would
+            // otherwise linger on the checkout button of a card sale.
+            if (mode != PayMode.cash) setState(() => _tendered = null);
+        }
+      },
+      child: AnimatedContainer(
+        duration: motion,
+        curve: Curves.easeOut,
+        height: 66,
+        decoration: BoxDecoration(
+          color: active ? p.card : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: active ? p.primary.withValues(alpha: 0.35) : Colors.transparent, width: 1.2),
+          boxShadow: active ? context.astraTheme.softShadow : null,
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 18, color: active ? p.accent : p.textSecondary),
-                  const SizedBox(height: 5),
+                  // The filled chip is the selection mark — no corner tick to
+                  // collide with the icon.
+                  AnimatedContainer(
+                    duration: motion,
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: active ? p.primary : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 16, color: active ? Colors.white : p.textSecondary),
+                  ),
+                  const SizedBox(height: 4),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      isCustom && count > 0 ? '$count method${count == 1 ? '' : 's'}' : mode.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: ui(size: 10.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: ui(
+                          size: 11,
+                          weight: active ? FontWeight.w800 : FontWeight.w700,
+                          color: active ? p.primary : p.textSecondary,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              if (active)
-                Positioned(
-                  top: 4,
-                  right: 5,
-                  child: Icon(Icons.check_circle, size: 13, color: p.accent),
+            ),
+            // A split that is set up but not the chosen mode still says so.
+            if (count > 0 && !active)
+              Positioned(
+                top: 5,
+                right: 5,
+                child: Container(
+                  width: 15,
+                  height: 15,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(color: AstraPalette.success, shape: BoxShape.circle),
+                  child: Text('$count', style: ui(size: 8.5, weight: FontWeight.w800, color: Colors.white)),
                 ),
-              if (isCustom && !active && count > 0)
-                Positioned(
-                  top: 4,
-                  right: 5,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(color: AstraPalette.success, shape: BoxShape.circle),
-                    child: Text('$count', style: ui(size: 8, weight: FontWeight.w800, color: Colors.white)),
-                  ),
-                ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
@@ -920,4 +1025,72 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           },
         ),
       );
+}
+
+/// The tapped student card on the payment screen: who it is, what the card can
+/// spend, and what this sale leaves on it. Offers a card + cash split when the
+/// card cannot cover the ticket.
+class _StudentCardPanel extends StatelessWidget {
+  const _StudentCardPanel({required this.cart, required this.onSplit});
+
+  final CartCubit cart;
+  final VoidCallback onSplit;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final student = cart.student!;
+    final onCard = switch (cart.payMode) {
+      PayMode.studentCard => cart.total,
+      PayMode.custom => round2(cart.customPayments
+          .where((x) => x.methodId == student.cardMethodId)
+          .fold(0.0, (a, x) => a + x.amount)),
+      _ => 0.0,
+    };
+    final after = round2(student.balance - onCard);
+    final short = round2(onCard - student.available);
+
+    return AstraCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          StudentCardTile(card: student),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Can spend', style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary)),
+              Text(Money.of(student.available), style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+            ],
+          ),
+          if (onCard > 0) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Card balance after', style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary)),
+                Text(Money.of(after), style: ui(size: 13, weight: FontWeight.w800, color: after < 0 ? AstraPalette.danger : p.ink)),
+              ],
+            ),
+          ],
+          if (short > 0.004) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: p.warnTint, borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text('The card is ${Money.of(short)} short.',
+                        style: ui(size: 12, weight: FontWeight.w700, color: p.warnText)),
+                  ),
+                  TextButton(onPressed: onSplit, child: const Text('Card + cash')),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }

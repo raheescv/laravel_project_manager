@@ -78,6 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _branchCard(context, branch),
                         _printerCard(context),
                         _lockAfterSaleCard(context),
+                        _askBranchOnUnlockCard(context),
                         _askClientCard(context),
                         _tipCard(context),
                         _gridColumnsCard(context),
@@ -287,6 +288,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Same card the phone list shows: it carries the lock chip and the
           // auto-print caveat, which a bare toggle row here did not.
           _lockAfterSaleCard(context),
+          const SizedBox(height: 11),
+          _askBranchOnUnlockCard(context),
         ]);
       case 3:
         return _panelShell(context, startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
@@ -899,6 +902,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         : autoPrint
                             ? 'MPIN or fingerprint to carry on — no re-login'
                             : 'Locks once charged — turn on auto-print so receipts still print',
+                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          _switch(context, on),
+        ],
+      ),
+    );
+  }
+
+  /// Whether unlocking the till asks a user with more than one branch which
+  /// branch again. Off keeps the last chosen branch for every request; signing
+  /// in always asks.
+  Widget _askBranchOnUnlockCard(BuildContext context) {
+    final p = context.astra;
+    final on = context.watch<PosSettingsCubit>().askBranchOnUnlock;
+    return AstraCard(
+      radius: 14,
+      onTap: () => context.read<PosSettingsCubit>().toggleAskBranchOnUnlock(),
+      child: Row(
+        children: [
+          IconChip(
+            icon: on ? Icons.storefront_outlined : Icons.store_mall_directory_outlined,
+            size: 34,
+            radius: 9,
+            bg: p.tint,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Ask for branch on unlock',
+                    style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text(
+                    on
+                        ? 'Multi-branch staff pick a branch after each unlock'
+                        : 'Unlock keeps the last chosen branch — sign-in still asks',
                     style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),

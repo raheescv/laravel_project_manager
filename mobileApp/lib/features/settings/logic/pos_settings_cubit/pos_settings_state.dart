@@ -35,6 +35,7 @@ enum CategoryDisplay {
 class PosSettingsState extends Equatable {
   const PosSettingsState({
     this.lockAfterSale = true,
+    this.askBranchOnUnlock = true,
     this.gridColumns = defaultGridColumns,
     this.askClientOnNewSale = true,
     this.showTip = true,
@@ -49,6 +50,10 @@ class PosSettingsState extends Equatable {
   static const int defaultGridColumns = 2;
 
   final bool lockAfterSale;
+
+  /// Whether unlocking asks a user with more than one branch which one again.
+  /// Off carries the last chosen branch on. A sign-in always asks.
+  final bool askBranchOnUnlock;
   final int gridColumns;
 
   /// Whether New Sale opens the client form on a fresh ticket. On by default —
@@ -70,6 +75,7 @@ class PosSettingsState extends Equatable {
 
   PosSettingsState copyWith({
     bool? lockAfterSale,
+    bool? askBranchOnUnlock,
     int? gridColumns,
     bool? askClientOnNewSale,
     bool? showTip,
@@ -78,6 +84,7 @@ class PosSettingsState extends Equatable {
   }) =>
       PosSettingsState(
         lockAfterSale: lockAfterSale ?? this.lockAfterSale,
+        askBranchOnUnlock: askBranchOnUnlock ?? this.askBranchOnUnlock,
         gridColumns: gridColumns ?? this.gridColumns,
         askClientOnNewSale: askClientOnNewSale ?? this.askClientOnNewSale,
         showTip: showTip ?? this.showTip,
@@ -88,6 +95,7 @@ class PosSettingsState extends Equatable {
   @override
   List<Object?> get props => [
         lockAfterSale,
+        askBranchOnUnlock,
         gridColumns,
         askClientOnNewSale,
         showTip,

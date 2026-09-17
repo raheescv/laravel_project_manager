@@ -95,8 +95,10 @@
                             @if (filled($companyEmail))
                                 &nbsp;&middot;&nbsp;<a href="mailto:{{ $companyEmail }}" style="color:#a89880;text-decoration:none;">{{ $companyEmail }}</a>
                             @endif
-                            <br>
-                            You received this because you enquired about a property with us.
+                            @if (filled($footerNote ?? null))
+                                <br>
+                                {{ $footerNote }}
+                            @endif
                         </td>
                     </tr>
 

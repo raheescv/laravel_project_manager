@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings\Role;
 
 use App\Models\Configuration;
+use App\Support\ModuleAccess;
 use Database\Seeders\PermissionSeeder;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -166,6 +167,16 @@ class Permissions extends Component
                     $q->orWhereIn('name', $allowedExact);
                 }
             });
+        })->when(! $activeModule, function ($query) {
+            // Without a chosen system every permission is listed, except those of
+            // opt-in modules (School) the tenant does not run.
+            [$groups, $exact] = ModuleAccess::disabledOptInPermissions();
+            foreach ($groups as $group) {
+                $query->where('name', 'NOT LIKE', $group.'.%');
+            }
+            if ($exact) {
+                $query->whereNotIn('name', $exact);
+            }
         })->pluck('name', 'id');
 
         $list = $scoped;

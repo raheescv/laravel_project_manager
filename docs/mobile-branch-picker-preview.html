@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Branch Picker — sign-in branch choice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ───────────────────────────────────────────────────────────────────────────
+   QLOUD POS — the "which branch are you working at?" screen shown after every
+   sign-in (and unlock) to a user with more than one assigned branch.
+
+   Four directions on the same data. Every layout is drawn once and adapts with
+   container queries, so the tablet (landscape + portrait) and phone frames are
+   the same markup the Flutter screen would branch on `context.isTablet` for.
+   Colours are the real preset tokens from theme/palette.dart.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root{
+  --primary:#15806C; --primary-dark:#0E5648; --accent:#C9A24B;
+  --canvas:#F6F1E8; --card:#FFFFFF; --hairline:#EDE6D8; --tint:#E6F0EC;
+  --ink:#16312A; --sec:#5D7269; --muted:#9DAAA3;
+  --shadow:0 1px 2px rgba(22,49,42,.05), 0 8px 24px rgba(22,49,42,.06);
+  --page:#E7E0D2; --page-ink:#16312A; --page-muted:#6C7F76; --chip:#FFFFFF; --chip-line:#D6CCB8;
+  --display:Inter, -apple-system, sans-serif;
+}
+:root[data-theme="dark"]{
+  --canvas:#07140F; --card:#122A24; --hairline:rgba(255,255,255,.08); --tint:rgba(21,128,108,.20);
+  --ink:#F3F1EA; --sec:#A9C2BA; --muted:#6F877F;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+  --page:#050D0A; --page-ink:#EAF2EF; --page-muted:#7C9189; --chip:#12241F; --chip-line:#25382F;
+}
+:root[data-preset="blue"]{
+  --primary:#0A62C8; --primary-dark:#01377F; --accent:#0BA8FA;
+  --canvas:#F3F7FD; --hairline:#E3EAF4; --tint:#E8F1FD;
+  --ink:#0E1F36; --sec:#52657F; --muted:#97A6BA;
+  --shadow:0 1px 2px rgba(14,31,54,.05), 0 8px 24px rgba(14,31,54,.07);
+  --page:#DCE5F1; --page-ink:#0E1F36; --page-muted:#5C6E86; --chip-line:#C5D2E4;
+}
+:root[data-preset="blue"][data-theme="dark"]{
+  --canvas:#06101E; --card:#0F1D31; --hairline:rgba(255,255,255,.08); --tint:rgba(10,98,200,.22);
+  --ink:#EEF3FA; --sec:#9FB2CB; --muted:#6A7C95;
+  --page:#030912; --page-ink:#EEF3FA; --page-muted:#6A7C95; --chip:#0C1829; --chip-line:#1C2B40;
+}
+:root[data-display="serif"]{ --display:Fraunces, Georgia, serif; }
+
+*{box-sizing:border-box}
+body{
+  margin:0; padding:28px 20px 56px; background:var(--page); color:var(--page-ink);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased;
+}
+h1.title{font-family:Fraunces,Georgia,serif; font-weight:600; font-size:26px; margin:0 0 4px}
+.lede{color:var(--page-muted); font-size:13.5px; max-width:80ch; margin:0 0 20px; line-height:1.55}
+.lede b{color:var(--page-ink); font-weight:600}
+
+/* ---- controls ---------------------------------------------------------- */
+.bar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:12px}
+.lbl{font-size:10.5px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--page-muted); margin-right:2px}
+.seg{display:flex; gap:4px; padding:4px; background:var(--chip); border:1px solid var(--chip-line); border-radius:13px}
+.seg button{font:inherit; font-size:12.5px; font-weight:600; color:var(--page-muted); background:none; border:0; padding:8px 13px; border-radius:9px; cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--primary); color:#fff}
+
+/* ---- device ------------------------------------------------------------ */
+.stage{display:flex; justify-content:center; margin:18px 0 16px}
+.scaler{transform-origin:top center}
+.device{
+  position:relative; overflow:hidden; background:var(--canvas); color:var(--ink);
+  box-shadow:0 30px 70px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.10); font-size:13px;
+}
+.device.land{width:1194px; height:834px; border-radius:30px}
+.device.port{width:834px; height:1194px; border-radius:30px}
+.device.phone{width:390px; height:844px; border-radius:46px}
+.status{position:absolute; inset:0 0 auto 0; height:34px; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:0 26px; font-size:11.5px; font-weight:600; pointer-events:none; color:var(--status,var(--ink))}
+.screen{position:absolute; inset:0; container-type:size; overflow:hidden}
+
+/* ---- shared atoms ------------------------------------------------------ */
+svg{display:block}
+.ic{width:1em; height:1em}
+.mono{
+  flex:none; display:grid; place-items:center; color:#fff; font-weight:800; letter-spacing:.02em;
+  background:linear-gradient(145deg,var(--primary),var(--primary-dark));
+  box-shadow:0 6px 16px -6px color-mix(in srgb,var(--primary) 60%,transparent);
+}
+.code{display:inline-flex; align-items:center; font:700 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.04em; color:var(--primary-dark); background:var(--tint); padding:4px 8px; border-radius:999px}
+:root[data-theme="dark"] .code{color:color-mix(in srgb,var(--primary) 55%,#fff)}
+.loc{display:flex; gap:5px; align-items:flex-start; color:var(--sec); font-size:12px; font-weight:500; line-height:1.35}
+.loc svg{width:13px; height:13px; flex:none; margin-top:1px; color:var(--muted)}
+.loc span{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.last{display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#fff; background:var(--accent); padding:4px 8px; border-radius:999px}
+:root[data-preset="emerald"] .last, :root:not([data-preset]) .last{color:#3A2A06}
+.spin{width:22px; height:22px; border-radius:50%; border:2.5px solid color-mix(in srgb,var(--primary) 25%,transparent); border-top-color:var(--primary); animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.go{flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:var(--primary); background:var(--tint); transition:transform .2s ease, background .2s}
+.go svg{width:16px; height:16px}
+.is-active .go{background:linear-gradient(145deg,var(--primary),var(--primary-dark)); color:#fff}
+.pick{cursor:pointer; transition:transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s, border-color .18s, background .18s}
+.pick:hover .go{transform:translateX(2px)}
+.avatar{flex:none; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:15px; color:#fff; background:linear-gradient(145deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#000))}
+.search{display:flex; align-items:center; gap:9px; background:var(--card); border:1px solid var(--hairline); border-radius:14px; padding:0 14px; height:44px; color:var(--muted); font-size:13px; font-weight:500; box-shadow:var(--shadow)}
+.search svg{width:16px; height:16px}
+.qmark{color:currentColor}
+.toast{position:absolute; left:50%; bottom:34px; transform:translate(-50%,20px); opacity:0; z-index:30; background:#0B1411; color:#fff; font-size:12.5px; font-weight:600; padding:11px 16px; border-radius:999px; display:flex; gap:8px; align-items:center; transition:.25s; pointer-events:none; white-space:nowrap}
+.toast.on{opacity:1; transform:translate(-50%,0)}
+.toast svg{width:15px; height:15px; color:var(--accent)}
+
+/* ══ A · WELCOME SPLIT ═══════════════════════════════════════════════════ */
+.A{display:grid; grid-template-columns:38% 1fr; height:100%}
+.A-hero{
+  position:relative; overflow:hidden; color:#fff; display:flex; flex-direction:column; padding:62px 44px 36px;
+  background:radial-gradient(120% 80% at 0% 0%,rgba(255,255,255,.14),transparent 55%),
+             linear-gradient(160deg,var(--primary) 0%,var(--primary-dark) 62%,color-mix(in srgb,var(--primary-dark) 78%,#000) 100%);
+}
+.A-hero .glow{position:absolute; right:-90px; top:-70px; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle,color-mix(in srgb,var(--accent) 45%,transparent),transparent 70%)}
+.A-hero .bigq{position:absolute; right:-60px; bottom:-40px; width:340px; opacity:.06}
+.A-brand{display:flex; align-items:center; gap:10px; font-size:12px; font-weight:800; letter-spacing:.28em; position:relative}
+.A-brand svg{width:30px; height:30px}
+.A-brand small{color:rgba(255,255,255,.55); letter-spacing:.24em; font-weight:700}
+.A-copy{margin:auto 0; position:relative}
+.eyebrow{font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--accent)}
+.A-copy h1{font-family:var(--display); font-weight:600; font-size:44px; line-height:1.08; letter-spacing:-.02em; margin:12px 0 14px}
+.A-copy p{font-size:14.5px; line-height:1.55; color:rgba(255,255,255,.74); margin:0; max-width:34ch}
+.A-user{position:relative; display:flex; align-items:center; gap:12px; padding:12px; border-radius:18px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); backdrop-filter:blur(8px)}
+.A-user b{display:block; font-size:14px}
+.A-user small{display:block; font-size:11.5px; color:rgba(255,255,255,.6); font-weight:500}
+.A-user .out{margin-left:auto; display:flex; gap:6px; align-items:center; font-size:12px; font-weight:700; color:#fff; padding:9px 12px; border-radius:11px; background:rgba(255,255,255,.1)}
+.A-user .out svg{width:14px; height:14px}
+.A-pane{display:flex; flex-direction:column; padding:58px 40px 32px; min-height:0}
+.A-head{display:flex; align-items:flex-end; gap:16px; margin-bottom:20px}
+.A-head h2{font-family:var(--display); font-weight:600; font-size:26px; letter-spacing:-.01em; margin:0}
+.A-head p{margin:4px 0 0; color:var(--sec); font-size:13px; font-weight:500}
+.A-head .search{margin-left:auto; width:260px}
+.A-grid{flex:1; min-height:0; overflow:auto; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:minmax(118px,240px); gap:14px; padding:2px 4px 6px 2px; align-content:center}
+.A-card{position:relative; display:flex; flex-direction:column; justify-content:center; padding:18px 64px 18px 18px; border-radius:20px; background:var(--card); border:1.5px solid transparent; box-shadow:var(--shadow)}
+.A-card:hover{transform:translateY(-2px); border-color:color-mix(in srgb,var(--primary) 30%,transparent)}
+.A-card.is-active{border-color:var(--primary); background:color-mix(in srgb,var(--card) 92%,var(--primary))}
+.A-top{display:flex; align-items:center; gap:16px}
+.A-top .mono{width:56px; height:56px; border-radius:17px; font-size:14.5px}
+.A-top b{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:17px; font-weight:700; letter-spacing:-.01em}
+.A-top .meta{min-width:0; flex:1}
+.A-top .meta .loc{margin-top:6px}
+.A-card .go{position:absolute; right:16px; top:50%; margin-top:-17px}
+
+@container (max-width:900px){           /* tablet portrait */
+  .A{grid-template-columns:1fr; grid-template-rows:auto 1fr}
+  .A-hero{padding:58px 40px 30px; display:grid; grid-template-columns:1fr auto; grid-template-rows:auto auto; column-gap:24px; row-gap:22px}
+  .A-brand{grid-column:1 / -1}
+  .A-copy{margin:0}
+  .A-copy h1{font-size:38px; margin:10px 0 8px}
+  .A-user{align-self:end; min-width:280px}
+  .A-pane{padding:28px 32px 28px}
+}
+@container (max-width:600px){           /* phone */
+  .A-hero{display:flex; padding:54px 22px 58px; row-gap:0}
+  .A-hero .bigq{width:220px; right:-50px; bottom:-30px}
+  .A-copy{margin:22px 0 0}
+  .A-copy h1{font-size:30px}
+  .A-copy p{font-size:13px}
+  .A-user{display:none}
+  .A-pane{margin-top:-30px; background:var(--canvas); border-radius:28px 28px 0 0; padding:22px 16px 16px; position:relative}
+  .A-head{margin-bottom:12px}
+  .A-head h2{font-size:19px}
+  .A-head .search{display:none}
+  .A-grid{grid-template-columns:1fr; grid-auto-rows:max-content; gap:10px}
+  .A-card{padding:13px 52px 13px 13px; border-radius:18px}
+  .A-top{gap:12px}
+  .A-top .mono{width:46px; height:46px; border-radius:14px; font-size:12.5px}
+  .A-top b{font-size:14.5px}
+  .A-top .meta .loc{font-size:11.5px; margin-top:3px}
+  .A-card .go{width:30px; height:30px; margin-top:-15px; right:12px}
+  .A-card .last{font-size:8.5px; padding:3px 6px}
+  .A-foot{display:block}
+}
+.A-foot{display:none; text-align:center; font-size:12px; font-weight:700; color:var(--sec); padding:12px 0 0}
+
+/* ══ B · TILE WALL ═══════════════════════════════════════════════════════ */
+.B{height:100%; display:flex; flex-direction:column; padding:50px 40px 30px; background:
+  radial-gradient(90% 60% at 50% -10%,color-mix(in srgb,var(--primary) 14%,transparent),transparent 70%), var(--canvas)}
+.B-top{display:flex; align-items:center; gap:12px}
+.B-top .brand{display:flex; align-items:center; gap:9px; color:var(--primary); font-size:11.5px; font-weight:800; letter-spacing:.26em}
+.B-top .brand svg{width:26px; height:26px}
+.B-top .who{margin-left:auto; display:flex; align-items:center; gap:10px; padding:6px 6px 6px 6px; border-radius:999px; background:var(--card); box-shadow:var(--shadow)}
+.B-top .who .avatar{width:32px; height:32px; font-size:13px}
+.B-top .who b{font-size:13px; padding-right:4px}
+.B-top .who .out{display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--sec); padding:7px 12px; border-radius:999px; background:var(--tint)}
+.B-top .who .out svg{width:14px; height:14px}
+.B-hero{text-align:center; margin:30px auto 26px; max-width:640px}
+.B-hero h1{font-family:var(--display); font-weight:600; font-size:38px; letter-spacing:-.02em; margin:10px 0 8px; line-height:1.1}
+.B-hero p{margin:0; color:var(--sec); font-size:14px; font-weight:500}
+.B-hero .search{margin:18px auto 0; max-width:380px}
+.B-grid{flex:1; min-height:0; overflow:auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:minmax(170px,280px); gap:16px; padding:4px; align-content:center}
+.B-tile{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px; padding:20px 18px; border-radius:24px; background:var(--card); box-shadow:var(--shadow); border:1.5px solid transparent}
+.B-tile:hover{transform:translateY(-3px); border-color:color-mix(in srgb,var(--primary) 30%,transparent)}
+.B-tile .mono{width:62px; height:62px; border-radius:50%; font-size:15px}
+.B-tile b{font-size:17px; font-weight:700; letter-spacing:-.01em}
+.B-tile .loc{justify-content:center; max-width:30ch; text-align:center}
+.B-tile .loc svg{display:none}
+.B-tile .last{position:absolute; top:14px; right:14px}
+.B-tile .st{position:absolute; top:14px; left:14px}
+.B-tile.is-active{background:linear-gradient(155deg,var(--primary),var(--primary-dark)); color:#fff}
+.B-tile.is-active .loc{color:rgba(255,255,255,.75)} .B-tile.is-active .loc svg{color:rgba(255,255,255,.6)}
+.B-tile.is-active .mono{background:rgba(255,255,255,.16); box-shadow:none; border:1.5px solid rgba(255,255,255,.35)}
+.B-tile.is-active .code{background:rgba(255,255,255,.16); color:#fff}
+@container (max-width:900px){ .B{padding:50px 30px 26px} .B-grid{grid-template-columns:repeat(2,minmax(0,1fr))} .B-hero h1{font-size:34px} }
+@container (max-width:600px){
+  .B{padding:48px 16px 16px}
+  .B-top .who b{display:none}
+  .B-hero{margin:18px auto 16px}
+  .B-hero h1{font-size:25px}
+  .B-hero p{font-size:12.5px}
+  .B-grid{gap:10px; grid-auto-rows:minmax(150px,1fr)}
+  .B-tile{padding:16px 10px; border-radius:20px; gap:7px}
+  .B-tile .mono{width:48px; height:48px; font-size:12.5px}
+  .B-tile b{font-size:14px}
+  .B-tile .loc{font-size:11px}
+  .B-tile .last{top:9px; right:9px; font-size:8.5px; padding:3px 6px}
+}
+
+/* ══ C · GLASS DECK ══════════════════════════════════════════════════════ */
+.C{height:100%; position:relative; overflow:hidden; color:#fff; display:flex; flex-direction:column; padding:52px 44px 26px;
+  background:linear-gradient(165deg,var(--primary) 0%,var(--primary-dark) 55%,color-mix(in srgb,var(--primary-dark) 70%,#000) 100%)}
+.C::before{content:""; position:absolute; right:-140px; top:-160px; width:520px; height:520px; border-radius:50%; background:radial-gradient(circle,color-mix(in srgb,var(--accent) 40%,transparent),transparent 68%)}
+.C::after{content:""; position:absolute; left:-160px; bottom:-200px; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.10),transparent 65%)}
+.C > *{position:relative; z-index:1}
+.C-head{display:flex; align-items:center; gap:18px}
+.C-head svg.q{width:46px; height:46px; flex:none}
+.C-head h1{font-family:var(--display); font-weight:600; font-size:34px; letter-spacing:-.02em; margin:0; line-height:1.1}
+.C-head p{margin:5px 0 0; font-size:14px; color:rgba(255,255,255,.7)}
+.C-head .date{margin-left:auto; text-align:right; font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--accent)}
+.C-head .date small{display:block; color:rgba(255,255,255,.55); letter-spacing:.06em; font-size:11.5px; text-transform:none; font-weight:600; margin-top:3px}
+.C .search{margin:22px 0 0; max-width:360px; background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.14); color:rgba(255,255,255,.6); box-shadow:none}
+.C-grid{flex:1; min-height:0; overflow:auto; margin-top:24px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:minmax(150px,320px); gap:16px; padding:3px; align-content:center}
+.C-card{position:relative; display:flex; flex-direction:column; justify-content:center; gap:14px; padding:20px 22px; border-radius:22px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.13); backdrop-filter:blur(14px)}
+.C-card:hover{background:rgba(255,255,255,.11); transform:translateY(-2px)}
+.C-card .mono{width:52px; height:52px; border-radius:50%; font-size:13.5px; background:transparent; color:var(--accent); border:1.5px solid color-mix(in srgb,var(--accent) 70%,transparent); box-shadow:none}
+.C-card b{font-size:17px; letter-spacing:-.01em}
+.C-card .loc{color:rgba(255,255,255,.66)} .C-card .loc svg{color:rgba(255,255,255,.45)}
+.C-card .mono{width:58px; height:58px}
+.C-card .code{background:rgba(255,255,255,.1); color:#fff}
+.C-card .corner{position:absolute; top:18px; right:18px}
+.C-card .go{background:rgba(255,255,255,.1); color:#fff}
+.C-card.is-active{background:rgba(255,255,255,.14); border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset, 0 18px 40px -18px rgba(0,0,0,.6)}
+.C-card.is-active .go{background:var(--accent); color:var(--primary-dark)}
+.C-foot{display:flex; justify-content:center; align-items:center; gap:8px; margin-top:16px; font-size:12.5px; font-weight:700; color:rgba(255,255,255,.65)}
+.C-foot .avatar{width:26px; height:26px; font-size:11px}
+@container (max-width:900px){ .C{padding:54px 32px 24px} .C-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@container (max-width:600px){
+  .C{padding:52px 16px 18px}
+  .C-head{flex-direction:column; text-align:center; gap:10px}
+  .C-head .date{display:none}
+  .C-head h1{font-size:26px}
+  .C-head p{font-size:12.5px}
+  .C .search{display:none}
+  .C-grid{grid-template-columns:1fr; grid-auto-rows:auto; gap:10px; margin-top:18px}
+  .C-card{flex-direction:row; align-items:center; padding:14px; gap:12px; border-radius:18px}
+  .C-card .mono{font-size:12px}
+  .C-card .body{flex:1; min-width:0}
+  .C-card b{font-size:14.5px}
+  .C-card .loc{font-size:11.5px; margin-top:3px}
+  .C-card .corner{position:static}
+  .C-card .ctop{display:none}
+}
+.C-card .body{display:flex; flex-direction:column; gap:6px}
+@container (max-width:600px){ .C-card .body{flex:1; min-width:0} .C-card .mono{width:44px; height:44px} }
+
+/* ══ D · CONCIERGE LIST ══════════════════════════════════════════════════ */
+.D{height:100%; display:grid; grid-template-columns:40% 1fr; gap:0; padding:0}
+.D-intro{display:flex; flex-direction:column; padding:64px 44px 36px}
+.D-intro .brand{display:flex; align-items:center; gap:10px; color:var(--primary); font-size:11.5px; font-weight:800; letter-spacing:.26em}
+.D-intro .brand svg{width:28px; height:28px}
+.D-intro .copy{margin:auto 0}
+.D-intro h1{font-family:var(--display); font-weight:600; font-size:46px; line-height:1.06; letter-spacing:-.025em; margin:14px 0 16px}
+.D-intro h1 em{font-style:normal; color:var(--primary)}
+.D-intro p{margin:0; font-size:14.5px; line-height:1.6; color:var(--sec); max-width:34ch}
+.D-intro .who{display:flex; align-items:center; gap:12px; padding-top:18px; border-top:1px solid var(--hairline)}
+.D-intro .who b{display:block; font-size:14px} .D-intro .who small{display:block; font-size:11.5px; color:var(--muted); font-weight:500}
+.D-intro .who .out{margin-left:auto; font-size:12.5px; font-weight:700; color:var(--primary); display:flex; gap:6px; align-items:center}
+.D-intro .who .out svg{width:14px; height:14px}
+.D-panel{margin:40px 40px 36px 0; background:var(--card); border-radius:28px; box-shadow:var(--shadow); display:flex; flex-direction:column; min-height:0; overflow:hidden}
+.D-ph{display:flex; align-items:center; gap:12px; padding:22px 26px 16px; border-bottom:1px solid var(--hairline)}
+.D-ph h2{margin:0; font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.D-ph .n{font-size:11px; font-weight:800; color:var(--primary); background:var(--tint); padding:3px 8px; border-radius:999px}
+.D-ph .search{margin-left:auto; height:38px; width:230px; box-shadow:none; background:var(--canvas)}
+.D-list{flex:1; min-height:0; overflow:auto; display:flex; flex-direction:column}
+.D-row{position:relative; flex:1 0 auto; min-height:84px; max-height:160px; display:flex; align-items:center; gap:18px; padding:14px 26px; border-bottom:1px solid var(--hairline)}
+.D-row:last-child{border-bottom:0}
+.D-row:hover{background:color-mix(in srgb,var(--tint) 55%,transparent)}
+.D-row .idx{font-family:Fraunces,Georgia,serif; font-size:15px; color:var(--muted); width:24px; flex:none}
+.D-row .meta{flex:1; min-width:0}
+.D-row b{display:flex; align-items:center; gap:10px; font-family:var(--display); font-weight:600; font-size:19px; letter-spacing:-.01em}
+.D-row .loc{margin-top:4px}
+.D-row.is-active{background:color-mix(in srgb,var(--tint) 80%,transparent)}
+.D-row.is-active::before{content:""; position:absolute; left:0; top:14px; bottom:14px; width:4px; border-radius:0 4px 4px 0; background:var(--accent)}
+@container (max-width:900px){
+  .D{grid-template-columns:1fr; grid-template-rows:auto 1fr}
+  .D-intro{padding:58px 36px 8px}
+  .D-intro .copy{margin:18px 0 0}
+  .D-intro h1{font-size:36px; margin:10px 0 8px}
+  .D-intro .who{display:none}
+  .D-panel{margin:18px 32px 30px}
+}
+@container (max-width:600px){
+  .D-intro{padding:54px 20px 4px}
+  .D-intro h1{font-size:28px}
+  .D-intro p{font-size:13px}
+  .D-panel{margin:14px 12px 12px; border-radius:22px}
+  .D-ph{padding:16px 18px 12px}
+  .D-ph .search{display:none}
+  .D-row{min-height:0; flex:0 0 auto; padding:14px 18px; gap:12px}
+  .D-row .idx{display:none}
+  .D-row b{font-size:15.5px}
+  .D-row .code{display:none}
+  .D-row .go{width:30px; height:30px}
+}
+
+/* ---- notes ------------------------------------------------------------- */
+.notes{max-width:1194px; margin:0 auto; display:grid; grid-template-columns:1.2fr 1fr; gap:14px}
+.note{background:var(--chip); border:1px solid var(--chip-line); border-radius:16px; padding:16px 18px; font-size:13px; line-height:1.55; color:var(--page-muted)}
+.note h3{margin:0 0 6px; font-family:Fraunces,Georgia,serif; font-weight:600; font-size:18px; color:var(--page-ink)}
+.note b{color:var(--page-ink)}
+.note ul{margin:6px 0 0; padding-left:18px}
+.rec{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#fff; background:var(--primary); padding:3px 8px; border-radius:999px; margin-left:8px; vertical-align:middle}
+@media (max-width:900px){ .notes{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<h1 class="title">Branch picker — “Which branch are you working at?”</h1>
+<p class="lede">Shown after <b>every sign-in</b> (and unlock, unless switched off) to someone with <b>more than one assigned branch</b>. Tapping a branch applies it — click-and-go, no Save. Four directions on the same data; tablets <b>fill the whole screen</b>. Try <b>12 branches</b> to see how each one scrolls and grows a search field when the list outgrows the screen.</p>
+
+<div class="bar">
+  <span class="lbl">Direction</span>
+  <div class="seg" id="dir">
+    <button data-v="A" aria-pressed="true">A · Welcome split</button>
+    <button data-v="B" aria-pressed="false">B · Tile wall</button>
+    <button data-v="C" aria-pressed="false">C · Glass deck</button>
+    <button data-v="D" aria-pressed="false">D · Concierge list</button>
+  </div>
+</div>
+<div class="bar">
+  <span class="lbl">Device</span>
+  <div class="seg" id="dev">
+    <button data-v="land" aria-pressed="true">Tablet · landscape</button>
+    <button data-v="port" aria-pressed="false">Tablet · portrait</button>
+    <button data-v="phone" aria-pressed="false">Phone</button>
+  </div>
+  <span class="lbl" style="margin-left:8px">Branches</span>
+  <div class="seg" id="count">
+    <button data-v="3" aria-pressed="false">3</button>
+    <button data-v="6" aria-pressed="true">6</button>
+    <button data-v="12" aria-pressed="false">12 (sample)</button>
+  </div>
+</div>
+<div class="bar">
+  <span class="lbl">Theme</span>
+  <div class="seg" id="theme">
+    <button data-v="light" aria-pressed="true">Light</button>
+    <button data-v="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="lbl" style="margin-left:8px">Preset</span>
+  <div class="seg" id="preset">
+    <button data-v="emerald" aria-pressed="true">Emerald &amp; Gold</button>
+    <button data-v="blue" aria-pressed="false">QLOUD Blue</button>
+  </div>
+  <span class="lbl" style="margin-left:8px">Typeface</span>
+  <div class="seg" id="display">
+    <button data-v="sans" aria-pressed="true">Clean (Inter)</button>
+    <button data-v="serif" aria-pressed="false">Signature (serif)</button>
+  </div>
+</div>
+
+<div class="stage"><div class="scaler" id="scaler">
+  <div class="device land" id="device">
+    <div class="status"><span class="l">9:41</span><span>● ● ▮</span></div>
+    <div class="screen" id="screen"></div>
+    <div class="toast" id="toast"></div>
+  </div>
+</div></div>
+
+<div class="notes">
+  <div class="note" id="note"></div>
+  <div class="note">
+    <h3>Same in every direction</h3>
+    <ul>
+      <li>Only the user's <b>assigned</b> branches. <b>Last used</b> is marked, so the usual pick is one glance away.</li>
+      <li>The monogram is the <b>branch code</b> (HM, MC, TVM) — “Main Store” and “Market City” would both be “M” as initials.</li>
+      <li>Tap applies instantly: spinner on the tapped card, then straight to the start screen.</li>
+      <li>Search appears only when the list is longer than a screen (more than 6 on a tablet).</li>
+      <li>“Not Rahees? Sign out” is always reachable — a shared till gets handed over.</li>
+      <li>Theme-token driven: follows the preset, light/dark and the Typography setting.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const ICON = {
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  arrow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  out:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>',
+  q:'<svg class="qmark q" viewBox="0 0 48 48" fill="none"><circle cx="22" cy="22" r="14.5" stroke="currentColor" stroke-width="6"/><path d="M31 31l10 10" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>',
+};
+
+// The branches from the tenant in the screenshot; the extra six are sample rows.
+const REAL = [
+  {code:'HM',  name:'Hi lite Mall',    loc:'1st Floor, Hi Lite Mall, Kozhikode, 673014'},
+  {code:'M',   name:'Main Store',      loc:'Pulparambu'},
+  {code:'MC',  name:'Market City',     loc:'V K Mall (Market City Mall), Perinthalmanna, 679322'},
+  {code:'SC',  name:'Sobha City',      loc:'Ground Floor, Sobha City Mall, Thrissur, 680553'},
+  {code:'SB',  name:'SULTHAN BATTERY', loc:'WAYANAD'},
+  {code:'TVM', name:'TRAVANCORE',      loc:'GROUND FLOOR, MALL OF TRAVANCORE, THIRUVANANTHAPURAM'},
+];
+const SAMPLE = [
+  {code:'KNR', name:'Kannur Central', loc:'Fort Road, Kannur'},
+  {code:'CLT', name:'Calicut Beach',  loc:'Beach Road, Kozhikode'},
+  {code:'EKM', name:'Lulu Kochi',     loc:'Edappally, Ernakulam'},
+  {code:'PKD', name:'Palakkad Town',  loc:'Stadium Bypass, Palakkad'},
+  {code:'KTM', name:'Kottayam',       loc:'MC Road, Kottayam'},
+  {code:'WH',  name:'Warehouse',      loc:'Industrial Estate, Malappuram'},
+];
+
+const S = { dir:'A', dev:'land', count:6, active:'M', busy:null };
+const screen = document.getElementById('screen');
+const device = document.getElementById('device');
+const scaler = document.getElementById('scaler');
+const toast = document.getElementById('toast');
+
+function branches(){ return [...REAL, ...SAMPLE].slice(0, S.count); }
+function greeting(){ const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
+function today(){ return new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'}); }
+function needsSearch(){ return S.count > 6; }
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const loc = b => `<div class="loc">${ICON.pin}<span>${esc(b.loc)}</span></div>`;
+const trail = b => S.busy === b.code ? '<span class="spin"></span>' : `<span class="go">${S.active === b.code ? ICON.check : ICON.arrow}</span>`;
+const lastTag = b => S.active === b.code ? '<span class="last">Last used</span>' : '';
+const cls = b => (S.active === b.code ? ' is-active' : '');
+
+const RENDER = {
+  A(){
+    return `<div class="A">
+      <aside class="A-hero">
+        <div class="glow"></div><div class="bigq">${ICON.q}</div>
+        <div class="A-brand">${ICON.q}<span>QLOUD <small>POS</small></span></div>
+        <div class="A-copy">
+          <div class="eyebrow">${today()}</div>
+          <h1>${greeting()},<br>Rahees</h1>
+          <p>Which branch are you working at? Your stock, prices and the sales you ring up all follow it.</p>
+        </div>
+        <div class="A-user"><span class="avatar">R</span><div><b>Rahees</b><small>Signed in with MPIN</small></div><span class="out">${ICON.out}Sign out</span></div>
+      </aside>
+      <section class="A-pane">
+        <div class="A-head"><div><h2>Your branches</h2><p>${S.count} assigned to you · tap one to start</p></div>${needsSearch() ? `<div class="search">${ICON.search}Search branches</div>` : ''}</div>
+        <div class="A-grid">${branches().map(b => `
+          <div class="A-card pick${cls(b)}" data-code="${b.code}">
+            <div class="A-top"><span class="mono">${b.code}</span><div class="meta"><b>${esc(b.name)} ${lastTag(b)}</b>${loc(b)}</div></div>
+            ${trail(b)}
+          </div>`).join('')}</div>
+        <div class="A-foot">Not Rahees? Sign out</div>
+      </section>
+    </div>`;
+  },
+  B(){
+    return `<div class="B">
+      <div class="B-top"><div class="brand">${ICON.q}QLOUD POS</div><div class="who"><span class="avatar">R</span><b>Rahees</b><span class="out">${ICON.out}Sign out</span></div></div>
+      <div class="B-hero"><div class="eyebrow">${greeting()}, Rahees</div><h1>Where are you working today?</h1><p>${S.count} branches assigned to you · ${today()}</p>${needsSearch() ? `<div class="search">${ICON.search}Search branches</div>` : ''}</div>
+      <div class="B-grid">${branches().map(b => `
+        <div class="B-tile pick${cls(b)}" data-code="${b.code}">
+          ${lastTag(b)}${S.busy === b.code ? '<span class="st spin"></span>' : ''}
+          <span class="mono">${b.code}</span><b>${esc(b.name)}</b>${loc(b)}
+        </div>`).join('')}</div>
+    </div>`;
+  },
+  C(){
+    return `<div class="C">
+      <div class="C-head">${ICON.q}<div><h1>${greeting()}, Rahees</h1><p>Choose the branch you’re working at to open the till.</p></div><div class="date">${today().split(' ')[0]}<small>${today().split(' ').slice(1).join(' ')}</small></div></div>
+      ${needsSearch() ? `<div class="search">${ICON.search}Search branches</div>` : ''}
+      <div class="C-grid">${branches().map(b => `
+        <div class="C-card pick${cls(b)}" data-code="${b.code}">
+          <span class="mono">${b.code}</span>
+          <div class="body"><b>${esc(b.name)}</b>${loc(b)}</div>
+          <span class="corner">${trail(b)}</span>
+        </div>`).join('')}</div>
+      <div class="C-foot"><span class="avatar">R</span>Not Rahees? Sign out</div>
+    </div>`;
+  },
+  D(){
+    return `<div class="D">
+      <div class="D-intro">
+        <div class="brand">${ICON.q}QLOUD POS</div>
+        <div class="copy"><div class="eyebrow">${today()}</div><h1>${greeting()},<br><em>Rahees.</em></h1><p>Which branch are you working at? Your stock, prices and the sales you ring up all follow it.</p></div>
+        <div class="who"><span class="avatar">R</span><div><b>Rahees</b><small>Signed in with MPIN</small></div><span class="out">${ICON.out}Sign out</span></div>
+      </div>
+      <div class="D-panel">
+        <div class="D-ph"><h2>Your branches</h2><span class="n">${S.count}</span>${needsSearch() ? `<div class="search">${ICON.search}Search</div>` : ''}</div>
+        <div class="D-list">${branches().map((b, i) => `
+          <div class="D-row pick${cls(b)}" data-code="${b.code}">
+            <span class="idx">${String(i + 1).padStart(2, '0')}</span>
+            <div class="meta"><b>${esc(b.name)} ${lastTag(b)}</b>${loc(b)}</div>
+            <span class="code">${b.code}</span>${trail(b)}
+          </div>`).join('')}</div>
+      </div>
+    </div>`;
+  },
+};
+
+const NOTES = {
+  A:`<h3>A · Welcome split <span class="rec">Recommended</span></h3>
+     The login gradient carries on as a <b>brand panel</b> (greeting, date, who's signed in, Sign out) and the branches sit on the canvas as a <b>two-column card grid that fills the height</b>. Portrait stacks the panel as a header; phone keeps the gradient top with the list as a rising sheet.<br><b>Why:</b> reads as the next step of signing in, and the cards have room for long mall addresses.`,
+  B:`<h3>B · Tile wall</h3>
+     Light canvas, one big question in the middle, and <b>large centred tiles</b> — three across in landscape — stretched to fill the screen. Last used is a filled gradient tile.<br><b>Why:</b> the most “app launcher” feel and the biggest touch targets; long addresses wrap to two centred lines.`,
+  C:`<h3>C · Glass deck</h3>
+     Stays fully on the <b>login gradient</b> with frosted glass cards and gold outlined monograms; the selected card gets a gold ring. Looks the same in light and dark.<br><b>Why:</b> the most premium, brand-moment look; trade-off is less contrast for long addresses than a solid card.`,
+  D:`<h3>D · Concierge list</h3>
+     Editorial: a large greeting on the left, and a <b>single panel of numbered rows</b> on the right that share the height evenly. Last used gets a gold edge. Best with the Signature (serif) typeface.<br><b>Why:</b> calm and very scannable for a list; the densest when a tenant has many branches.`,
+};
+
+function render(){
+  device.className = 'device ' + S.dev;
+  screen.innerHTML = RENDER[S.dir]();
+  document.getElementById('note').innerHTML = NOTES[S.dir];
+  // Status-bar ink follows what is behind it.
+  const onGradient = S.dir === 'C' || (S.dir === 'A');
+  device.style.setProperty('--status', onGradient ? '#fff' : 'var(--ink)');
+  fit();
+}
+
+screen.addEventListener('click', e => {
+  const card = e.target.closest('.pick');
+  if (!card || S.busy) return;
+  S.busy = card.dataset.code;
+  render();
+  setTimeout(() => {
+    S.active = S.busy; S.busy = null;
+    const b = branches().find(x => x.code === S.active);
+    toast.innerHTML = `${ICON.check}Working at ${esc(b.name)}`;
+    toast.classList.add('on');
+    render();
+    setTimeout(() => toast.classList.remove('on'), 1600);
+  }, 750);
+});
+
+function pick(id, apply){
+  const group = document.getElementById(id);
+  group.addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    group.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+    apply(btn.dataset.v); render();
+  });
+}
+pick('dir', v => S.dir = v);
+pick('dev', v => S.dev = v);
+pick('count', v => { S.count = +v; if (!branches().some(b => b.code === S.active)) S.active = branches()[0].code; });
+pick('theme', v => document.documentElement.setAttribute('data-theme', v));
+pick('preset', v => document.documentElement.setAttribute('data-preset', v));
+pick('display', v => document.documentElement.setAttribute('data-display', v));
+
+// Drawn at true device points and scaled to fit the window.
+function fit(){
+  const w = {land:1194, port:834, phone:390}[S.dev];
+  const h = {land:834, port:1194, phone:844}[S.dev];
+  const s = Math.min(1, (window.innerWidth - 40) / w);
+  scaler.style.transform = 'scale(' + s + ')';
+  scaler.style.height = (h * s) + 'px';
+  scaler.style.width = w + 'px';
+}
+addEventListener('resize', fit);
+render();
+</script>
+</body>
+</html>

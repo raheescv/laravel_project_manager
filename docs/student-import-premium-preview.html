@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Student Import — 3 directions</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* =====================================================================
+   HOST — simulates the Nifty page: body + the --bs-primary overlapping band
+   Icons used below are all in Font Awesome 4.3 (the app's vendored build).
+   ===================================================================== */
+:root {
+  --bs-primary: #2f4d8a;
+  --page: #eef1f5;
+  --band-ink: #fff;
+}
+html[data-theme="dark"] { --page: #10141c; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Poppins', -apple-system, 'Segoe UI', sans-serif; background: var(--page); color: #1f2937; }
+html[data-theme="dark"] body { color: #e5e9f0; }
+
+.harness {
+  position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center;
+  padding: .55rem 1rem; background: #0b1220; color: #cbd5e1; font-size: 12px;
+}
+.harness b { color: #fff; font-weight: 600; margin-inline-end: .35rem; }
+.harness .grp { display: inline-flex; align-items: center; gap: .25rem; }
+.harness button {
+  font: inherit; font-size: 11.5px; color: #cbd5e1; background: #1e293b; border: 1px solid #334155;
+  border-radius: 6px; padding: .2rem .55rem; cursor: pointer;
+}
+.harness button.on { background: #f8fafc; color: #0b1220; border-color: #f8fafc; }
+.harness .sw { width: 18px; height: 18px; padding: 0; border-radius: 50%; }
+
+.band { background: var(--bs-primary); color: var(--band-ink); height: 37.5vh; min-height: 230px; border-radius: 0 0 50% 50% / 0 0 34px 34px; }
+.band__wrap { max-width: 1280px; margin: 0 auto; padding: 1.4rem 1.5rem; }
+.band nav { font-size: 12px; opacity: .8; }
+.band h1 { margin: .45rem 0 0; font-size: 1.6rem; font-weight: 600; }
+.band p { margin: .2rem 0 0; opacity: .85; font-size: .95rem; }
+.content { max-width: 1280px; margin: calc(-37.5vh + 150px) auto 3rem; padding: 0 1.5rem; }
+@media (max-width: 640px) { .band__wrap, .content { padding-inline: 16px; } .band h1 { font-size: 1.3rem; } }
+
+.note {
+  max-width: 1280px; margin: 0 auto 2rem; padding: 0 1.5rem; font-size: 12px; color: #64748b;
+}
+.note code { background: rgba(100,116,139,.15); padding: 0 .3rem; border-radius: 4px; }
+
+/* =====================================================================
+   .sx — shared tokens (every direction derives colour from --bs-primary)
+   ===================================================================== */
+.sx {
+  --acc: var(--bs-primary);
+  --acc-ink: color-mix(in srgb, var(--acc), #000 16%);
+  --acc-on: #fff;
+  --tint: color-mix(in srgb, var(--acc), transparent 90%);
+  --tint2: color-mix(in srgb, var(--acc), transparent 95%);
+  --line-acc: color-mix(in srgb, var(--acc), transparent 70%);
+  --ok: #15803d;  --ok-t: rgba(22,163,74,.11);  --ok-l: rgba(22,163,74,.28);
+  --bad: #b91c1c; --bad-t: rgba(220,38,38,.09); --bad-l: rgba(220,38,38,.26);
+  --warn: #b45309; --warn-t: rgba(217,119,6,.11); --warn-l: rgba(217,119,6,.28);
+  --sf: #fff; --sf2: #f7f9fc; --sf3: #eef2f7;
+  --ink: #0f172a; --ink2: #334155; --mut: #6b7a90;
+  --ln: #e2e7ee; --lns: #eef1f6;
+  --mono: ui-monospace, Menlo, Consolas, monospace;
+  --r: 8px; --r-sm: 6px;
+  --sh: none;
+  font-size: 13px; color: var(--ink);
+}
+html[data-theme="dark"] .sx {
+  --acc-ink: color-mix(in srgb, var(--acc), #fff 42%);
+  --tint: color-mix(in srgb, var(--acc), transparent 80%);
+  --tint2: color-mix(in srgb, var(--acc), transparent 90%);
+  --line-acc: color-mix(in srgb, var(--acc), #fff 10%);
+  --ok: #4ade80;  --ok-t: rgba(74,222,128,.12);  --ok-l: rgba(74,222,128,.3);
+  --bad: #f87171; --bad-t: rgba(248,113,113,.12); --bad-l: rgba(248,113,113,.3);
+  --warn: #fbbf24; --warn-t: rgba(251,191,36,.12); --warn-l: rgba(251,191,36,.3);
+  --sf: #161b26; --sf2: #1b2130; --sf3: #222a3b;
+  --ink: #e8edf5; --ink2: #b9c3d3; --mut: #8793a8;
+  --ln: #2a3243; --lns: #212838;
+}
+
+.sx h2, .sx h3, .sx p { margin: 0; }
+.sx small { font-size: .86em; color: var(--mut); }
+.sx code { font-family: var(--mono); font-size: .92em; color: var(--ink2); }
+
+/* ---------- frame ---------- */
+.sx-head { display: flex; align-items: center; gap: .75rem 1rem; flex-wrap: wrap; }
+.sx-title { display: flex; align-items: center; gap: .7rem; min-width: 0; flex: 1 1 260px; }
+.sx-title__ico { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--tint); color: var(--acc-ink); font-size: 15px; }
+.sx-title h2 { font-size: 15px; font-weight: 600; color: var(--ink); }
+.sx-title p { font-size: 12px; color: var(--mut); margin-top: 1px; }
+.sx-title .t { display: none; }
+.sx[data-step="1"] .sx-title .t1, .sx[data-step="2"] .sx-title .t2,
+.sx[data-step="3"] .sx-title .t3, .sx[data-step="4"] .sx-title .t4 { display: block; }
+.sx-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+.sx-steps { display: flex; list-style: none; margin: 0; padding: 0; }
+.sx-step { display: flex; align-items: center; gap: .55rem; background: none; border: 0; padding: 0; font: inherit; color: var(--mut); cursor: pointer; text-align: start; }
+.sx-step__n { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--ln); background: var(--sf); font-weight: 600; font-size: 12px; color: var(--mut); }
+.sx-step__n .fa { display: none; }
+.sx-step.is-done .sx-step__n { background: var(--ok); border-color: var(--ok); color: #fff; }
+html[data-theme="dark"] .sx-step.is-done .sx-step__n { color: #0b1220; }
+.sx-step.is-done .sx-step__n b { display: none; }
+.sx-step.is-done .sx-step__n .fa { display: inline; }
+.sx-step.is-active .sx-step__n { background: var(--acc); border-color: var(--acc); color: var(--acc-on); box-shadow: 0 0 0 4px var(--tint); }
+.sx-step__t b { display: block; font-weight: 600; font-size: 12.5px; color: var(--ink2); }
+.sx-step.is-active .sx-step__t b { color: var(--ink); }
+.sx-step__t small { display: block; font-size: 11px; white-space: nowrap; }
+
+.sx-pane { display: none; }
+.sx[data-step="1"] [data-pane="1"], .sx[data-step="2"] [data-pane="2"],
+.sx[data-step="3"] [data-pane="3"], .sx[data-step="4"] [data-pane="4"] { display: block; }
+
+.sx-split { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1rem; align-items: start; }
+.sx-col { display: grid; gap: 1rem; min-width: 0; }
+@media (max-width: 991px) { .sx-split { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- atoms ---------- */
+.sx-card { background: var(--sf); border: 1px solid var(--ln); border-radius: var(--r); box-shadow: var(--sh); min-width: 0; }
+.sx-card__head { display: flex; align-items: center; gap: .5rem; padding: .7rem .9rem; border-bottom: 1px solid var(--ln); }
+.sx-card__head h3 { font-size: 12.5px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: .45rem; flex: 1; }
+.sx-card__head h3 .fa { color: var(--acc-ink); }
+.sx-card__body { padding: .9rem; }
+
+.sx-btn { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; font: inherit; font-size: 12.5px; font-weight: 500; padding: .42rem .8rem; border-radius: var(--r-sm); border: 1px solid transparent; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.sx-btn--primary { background: var(--acc); color: var(--acc-on); border-color: var(--acc); }
+.sx-btn--primary:hover { background: color-mix(in srgb, var(--acc), #000 10%); }
+.sx-btn--soft { background: var(--tint); color: var(--acc-ink); border-color: var(--line-acc); }
+.sx-btn--ghost { background: var(--sf); color: var(--ink2); border-color: var(--ln); }
+.sx-btn--ghost:hover { background: var(--sf2); }
+.sx-btn--block { width: 100%; }
+[dir="rtl"] .sx .fa-arrow-right, [dir="rtl"] .sx .fa-arrow-left, [dir="rtl"] .sx .fa-long-arrow-left { transform: scaleX(-1); }
+
+.sx-chip { display: inline-flex; align-items: center; gap: .3rem; font-size: 11px; font-weight: 500; padding: .12rem .5rem; border-radius: 999px; background: var(--sf3); color: var(--ink2); white-space: nowrap; }
+.sx-pill { display: inline-flex; align-items: center; gap: .3rem; font-size: 11px; font-weight: 600; padding: .14rem .5rem; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
+.sx-pill--new { background: var(--ok-t); color: var(--ok); border-color: var(--ok-l); }
+.sx-pill--upd { background: var(--tint); color: var(--acc-ink); border-color: var(--line-acc); }
+.sx-pill--skip { background: var(--sf3); color: var(--mut); border-color: var(--ln); }
+.sx-pill--bad { background: var(--bad-t); color: var(--bad); border-color: var(--bad-l); }
+
+.sx-seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--sf3); border-radius: 999px; }
+.sx-seg button { font: inherit; font-size: 12px; font-weight: 500; border: 0; background: none; color: var(--mut); padding: .3rem .75rem; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.sx-seg button em { font-style: normal; font-size: 11px; opacity: .75; margin-inline-start: .2rem; }
+.sx-seg button.is-on { background: var(--sf); color: var(--ink); box-shadow: 0 1px 2px rgba(15,23,42,.12); }
+.sx-seg--block { display: flex; }
+.sx-seg--block button { flex: 1; }
+
+/* ---------- step 1 ---------- */
+.sx-choice { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+@media (max-width: 560px) { .sx-choice { grid-template-columns: 1fr; } }
+.sx-opt { display: flex; gap: .65rem; align-items: flex-start; padding: .75rem; border: 1px solid var(--ln); border-radius: var(--r); cursor: pointer; background: var(--sf); }
+.sx-opt input { display: none; }
+.sx-opt__ico { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: var(--sf3); color: var(--mut); }
+.sx-opt b { display: block; font-weight: 600; font-size: 13px; color: var(--ink); }
+.sx-opt.is-on { border-color: var(--acc); background: var(--tint2); box-shadow: 0 0 0 1px var(--acc) inset; }
+.sx-opt.is-on .sx-opt__ico { background: var(--acc); color: var(--acc-on); }
+
+.sx-drop { display: grid; place-items: center; text-align: center; gap: .35rem; padding: 2.2rem 1rem; border: 2px dashed var(--ln); border-radius: var(--r); background: var(--sf2); cursor: pointer; }
+.sx-drop:hover { border-color: var(--acc); background: var(--tint2); }
+.sx-drop__ico { width: 56px; height: 56px; display: grid; place-items: center; border-radius: 16px; background: var(--tint); color: var(--acc-ink); font-size: 24px; margin-bottom: .3rem; }
+.sx-drop b { font-weight: 600; font-size: 14px; }
+.sx-drop u { color: var(--acc-ink); text-decoration: none; }
+
+.sx-tpl { display: flex; align-items: center; gap: .75rem; padding: .7rem .9rem; }
+.sx-tpl > .fa { font-size: 22px; color: var(--ok); }
+.sx-tpl div { flex: 1; min-width: 0; }
+.sx-tpl b { display: block; font-weight: 600; }
+
+.sx-how { list-style: none; margin: 0; padding: .35rem .9rem .8rem; }
+.sx-how li { display: flex; gap: .7rem; padding: .6rem 0; border-bottom: 1px dashed var(--ln); }
+.sx-how li:last-child { border-bottom: 0; }
+.sx-how__ico { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: var(--tint); color: var(--acc-ink); font-size: 13px; }
+.sx-how b { display: block; font-weight: 600; font-size: 12.5px; }
+.sx-how small { line-height: 1.45; display: block; }
+.sx-how em { font-style: normal; font-family: var(--mono); font-size: 11px; background: var(--sf3); padding: 0 .25rem; border-radius: 4px; color: var(--ink2); }
+
+/* ---------- step 2 ---------- */
+.sx-map__row { display: grid; grid-template-columns: minmax(130px, 1.05fr) 18px minmax(150px, 1.1fr) minmax(120px, 1fr); gap: .6rem; align-items: center; padding: .5rem .9rem; border-bottom: 1px solid var(--lns); }
+.sx-map__row:last-child { border-bottom: 0; }
+.sx-map__field { display: flex; align-items: center; gap: .45rem; min-width: 0; }
+.sx-map__field .fa { color: var(--ln); font-size: 14px; }
+.sx-map__row.is-mapped .sx-map__field .fa { color: var(--ok); }
+.sx-map__field b { font-weight: 500; font-size: 12.5px; color: var(--ink); }
+.sx-req { font-size: 10px; font-weight: 600; color: var(--bad); text-transform: uppercase; letter-spacing: .03em; }
+.sx-map__arrow { color: var(--mut); text-align: center; }
+.sx-input { width: 100%; font: inherit; font-size: 12.5px; color: var(--ink); background: var(--sf); border: 1px solid var(--ln); border-radius: var(--r-sm); padding: .34rem .5rem; min-height: 32px; }
+.sx-map__row.is-mapped .sx-input { border-color: var(--ok-l); }
+.sx-map__sample { display: flex; align-items: center; gap: .4rem; min-width: 0; font-size: 12px; color: var(--ink2); }
+.sx-map__sample span.v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sx-map__sample .none { color: var(--mut); font-style: italic; }
+.sx-auto { flex: none; font-size: 10px; font-weight: 600; color: var(--acc-ink); background: var(--tint); padding: .05rem .4rem; border-radius: 999px; }
+@media (max-width: 720px) {
+  .sx-map__row { grid-template-columns: 1fr 1fr; }
+  .sx-map__arrow { display: none; }
+  .sx-map__sample { grid-column: 1 / -1; }
+}
+
+.sx-meter { display: flex; align-items: center; gap: .8rem; padding: .9rem; }
+.sx-ring { --p: 70; flex: none; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--acc) calc(var(--p) * 1%), var(--sf3) 0); position: relative; }
+.sx-ring::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: var(--sf); }
+.sx-ring span { position: relative; text-align: center; line-height: 1.05; }
+.sx-ring b { display: block; font-size: 16px; font-weight: 700; }
+.sx-ring small { font-size: 10px; }
+.sx-meter > div b { display: block; font-weight: 600; }
+.sx-checks { list-style: none; margin: 0; padding: 0 .9rem .6rem; display: grid; gap: .4rem; }
+.sx-checks li { display: flex; gap: .45rem; align-items: baseline; font-size: 12px; color: var(--ink2); }
+.sx-checks .ok .fa { color: var(--ok); }
+.sx-checks .bad .fa { color: var(--bad); }
+.sx-checks .info .fa { color: var(--acc-ink); }
+.sx-unused { padding: .6rem .9rem; border-top: 1px solid var(--ln); display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+.sx-unused small { width: 100%; margin-bottom: .1rem; }
+.sx-foot { display: flex; gap: .5rem; padding: .8rem .9rem; border-top: 1px solid var(--ln); }
+.sx-foot .sx-btn--primary { flex: 1; }
+
+/* ---------- step 3 ---------- */
+.sx-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.4fr); gap: .6rem; margin-bottom: 1rem; }
+@media (max-width: 991px) { .sx-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.sx-kpi { background: var(--sf); border: 1px solid var(--ln); border-radius: var(--r); padding: .6rem .8rem; min-width: 0; }
+.sx-kpi small { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.sx-kpi b { display: block; font-size: 20px; font-weight: 700; line-height: 1.25; color: var(--ink); }
+.sx-kpi b em { font-style: normal; font-size: 11px; font-weight: 500; color: var(--mut); }
+.sx-kpi span { font-size: 11px; color: var(--mut); }
+.sx-kpi--new b { color: var(--ok); }
+.sx-kpi--upd b { color: var(--acc-ink); }
+.sx-kpi--bad b { color: var(--bad); }
+
+.sx-toolbar { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; padding: .6rem .9rem; border-bottom: 1px solid var(--ln); }
+.sx-search { margin-inline-start: auto; display: flex; align-items: center; gap: .4rem; border: 1px solid var(--ln); border-radius: 999px; padding: .2rem .7rem; background: var(--sf); min-width: 200px; }
+.sx-search .fa { color: var(--mut); }
+.sx-search input { border: 0; outline: 0; background: none; font: inherit; font-size: 12px; color: var(--ink); width: 100%; }
+
+.sx-table-wrap { overflow-x: auto; }
+.sx-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.sx-table th { text-align: start; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--mut); font-weight: 600; padding: .5rem .7rem; background: var(--sf2); border-bottom: 1px solid var(--ln); white-space: nowrap; }
+.sx-table td { padding: .55rem .7rem; border-bottom: 1px solid var(--lns); vertical-align: top; }
+.sx-table tr:last-child td { border-bottom: 0; }
+.sx-table .ln { color: var(--mut); font-family: var(--mono); font-size: 11px; }
+.sx-table .who { min-width: 140px; }
+.sx-table .who b { display: block; font-weight: 500; color: var(--ink); white-space: nowrap; }
+.sx-table td.chk { min-width: 220px; }
+.sx-table .par { display: block; white-space: nowrap; color: var(--ink2); }
+.sx-table .par small { margin-inline-start: .2rem; }
+.sx-table tr.is-bad td { background: color-mix(in srgb, var(--bad-t), transparent 40%); }
+.sx-msg { display: flex; gap: .35rem; align-items: baseline; font-size: 12px; line-height: 1.4; }
+.sx-msg + .sx-msg { margin-top: .15rem; }
+.sx-msg--bad { color: var(--bad); }
+.sx-msg--note { color: var(--warn); }
+.sx-msg--ok { color: var(--ok); }
+.sx-pager { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; padding: .6rem .9rem; border-top: 1px solid var(--ln); font-size: 12px; color: var(--mut); }
+.sx-pages { display: flex; gap: 3px; }
+.sx-pages span { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--r-sm); border: 1px solid var(--ln); color: var(--ink2); background: var(--sf); padding: 0 .4rem; }
+.sx-pages span.on { background: var(--acc); color: var(--acc-on); border-color: var(--acc); }
+
+.sx-ready { padding: .9rem; }
+.sx-ready b.big { display: block; font-size: 26px; font-weight: 700; line-height: 1.1; color: var(--ink); }
+.sx-ready p { font-size: 12px; color: var(--mut); margin-top: .35rem; line-height: 1.5; }
+.sx-field { padding: 0 .9rem .9rem; }
+.sx-field small { display: block; margin-bottom: .35rem; font-weight: 500; }
+
+/* ---------- step 4 ---------- */
+.sx-run { text-align: center; padding: 2.4rem 1.2rem; }
+.sx-run .sx-ring { width: 104px; height: 104px; margin: 0 auto 1rem; }
+.sx-run .sx-ring::before { inset: 9px; }
+.sx-run .sx-ring b { font-size: 24px; }
+.sx-run .sx-ring.is-ok { background: var(--ok); }
+.sx-run .sx-ring.is-ok::before { background: var(--ok); }
+.sx-run .sx-ring.is-ok .fa { color: #fff; font-size: 38px; position: relative; }
+html[data-theme="dark"] .sx-run .sx-ring.is-ok .fa { color: #0b1220; }
+.sx-run h3 { font-size: 18px; font-weight: 600; }
+.sx-run p { color: var(--mut); margin: .35rem auto 0; max-width: 460px; font-size: 13px; line-height: 1.5; }
+.sx-bar { height: 10px; border-radius: 999px; background: var(--sf3); overflow: hidden; max-width: 460px; margin: 1.1rem auto 0; }
+.sx-bar span { display: block; height: 100%; background: repeating-linear-gradient(45deg, var(--acc) 0 12px, color-mix(in srgb, var(--acc), #fff 16%) 12px 24px); border-radius: inherit; }
+.sx-run__meta { display: flex; justify-content: center; flex-wrap: wrap; gap: .5rem; margin-top: 1.1rem; }
+.sx-run__acts { display: flex; justify-content: center; gap: .5rem; margin-top: 1.4rem; flex-wrap: wrap; }
+.sx-run .done { display: none; }
+.sx[data-run="done"] .sx-run .done { display: block; }
+.sx[data-run="done"] .sx-run .busy { display: none; }
+
+/* =====================================================================
+   A · NATIVE — Bootstrap/Nifty theme only (card, card-header, subtle badges)
+   ===================================================================== */
+.sx[data-skin="a"] { background: var(--sf); border: 1px solid var(--ln); border-radius: 8px; box-shadow: 0 1px 2px rgba(15,23,42,.06); overflow: hidden; }
+.sx[data-skin="a"] .sx-head { padding: .8rem 1.1rem; background: var(--sf2); }
+.sx[data-skin="a"] .sx-title__ico { display: none; }
+.sx[data-skin="a"] .sx-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--sf2); border-bottom: 1px solid var(--ln); padding: .3rem 1.1rem 1rem; }
+.sx[data-skin="a"] .sx-steps li { position: relative; display: flex; justify-content: center; }
+.sx[data-skin="a"] .sx-steps li + li::before { content: ""; position: absolute; top: 15px; height: 2px; inset-inline-end: calc(50% + 24px); width: calc(100% - 48px); background: var(--ln); }
+.sx[data-skin="a"] .sx-steps li.is-done-line::before { background: var(--ok); }
+.sx[data-skin="a"] .sx-step { flex-direction: column; gap: .3rem; text-align: center; }
+.sx[data-skin="a"] .sx-step__t small { display: none; }
+.sx[data-skin="a"] .sx-stage { padding: 1.1rem; }
+.sx[data-skin="a"] .sx-card__head { background: var(--sf2); }
+.sx[data-skin="a"] .sx-card__head h3 { text-transform: uppercase; font-size: 11px; letter-spacing: .04em; color: var(--mut); }
+.sx[data-skin="a"] .sx-card__head h3 .fa { color: var(--mut); }
+.sx[data-skin="a"] .sx-kpi { background: var(--sf2); }
+.sx[data-skin="a"] .sx-seg { border-radius: 6px; }
+.sx[data-skin="a"] .sx-seg button { border-radius: 4px; }
+.sx[data-skin="a"] .sx-pill { border-radius: 6px; }
+.sx[data-skin="a"] .sx-drop__ico { background: none; font-size: 40px; width: auto; height: auto; }
+@media (max-width: 767px) { .sx[data-skin="a"] .sx-step__t { display: none; } }
+
+/* =====================================================================
+   B · COMMAND DECK — sibling of the purchase uploader (.pix): sticky deck,
+   step pills inline, dense stat strip, sticky summary rail
+   ===================================================================== */
+.sx[data-skin="b"] { --r: 12px; --r-sm: 8px; --sh: 0 1px 2px rgba(16,24,40,.04), 0 10px 24px -18px rgba(16,24,40,.3); font-size: 12.5px; }
+html[data-theme="dark"] .sx[data-skin="b"] { --sh: 0 1px 2px rgba(0,0,0,.4), 0 10px 26px -18px rgba(0,0,0,.8); }
+.sx[data-skin="b"] { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "title steps actions" "stage stage stage"; column-gap: 1rem; }
+.sx[data-skin="b"]::before { content: ""; grid-area: 1 / 1 / 2 / -1; background: linear-gradient(180deg, var(--sf), var(--sf2)); border: 1px solid var(--ln); border-radius: 12px; box-shadow: 0 1px 2px rgba(16,24,40,.05), 0 16px 34px -22px rgba(16,24,40,.38); margin: 0 -0rem; }
+.sx[data-skin="b"] .sx-head { display: contents; }
+.sx[data-skin="b"] .sx-title { grid-area: title; padding: .7rem 0 .7rem .9rem; flex: none; }
+[dir="rtl"] .sx[data-skin="b"] .sx-title { padding: .7rem .9rem .7rem 0; }
+.sx[data-skin="b"] .sx-title__ico { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--line-acc); font-size: 13px; }
+.sx[data-skin="b"] .sx-title h2 { font-size: 14.5px; font-weight: 700; letter-spacing: -.01em; }
+.sx[data-skin="b"] .sx-title p { font-size: 11.5px; }
+.sx[data-skin="b"] .sx-actions { grid-area: actions; align-self: center; padding-inline-end: .9rem; }
+.sx[data-skin="b"] .sx-steps { grid-area: steps; align-self: center; justify-content: center; gap: .3rem; flex-wrap: wrap; padding: .5rem 0; }
+.sx[data-skin="b"] .sx-step { gap: .4rem; padding: .28rem .7rem .28rem .3rem; border-radius: 999px; border: 1px solid var(--ln); background: var(--sf); }
+[dir="rtl"] .sx[data-skin="b"] .sx-step { padding: .28rem .3rem .28rem .7rem; }
+.sx[data-skin="b"] .sx-step__n { width: 22px; height: 22px; font-size: 11px; border-width: 1px; background: var(--sf3); border-color: var(--sf3); }
+.sx[data-skin="b"] .sx-step.is-active { background: var(--tint); border-color: var(--line-acc); }
+.sx[data-skin="b"] .sx-step.is-active .sx-step__n { background: var(--acc); border-color: var(--acc); color: var(--acc-on); box-shadow: none; }
+.sx[data-skin="b"] .sx-step.is-done .sx-step__n { background: var(--ok); border-color: var(--ok); color: #fff; }
+html[data-theme="dark"] .sx[data-skin="b"] .sx-step.is-done .sx-step__n { color: #0b1220; }
+.sx[data-skin="b"] .sx-step__t b { font-size: 12px; }
+.sx[data-skin="b"] .sx-step__t small { display: none; }
+.sx[data-skin="b"] .sx-stage { grid-area: stage; margin-top: .9rem; }
+.sx[data-skin="b"] .sx-card__head { padding: .6rem .85rem; }
+.sx[data-skin="b"] .sx-card__head h3 { font-weight: 700; font-size: 12.5px; }
+.sx[data-skin="b"] .sx-card__head h3 .fa { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; background: var(--tint); font-size: 11px; }
+.sx[data-skin="b"] .sx-split { grid-template-columns: minmax(0, 1fr) 300px; gap: .9rem; }
+.sx[data-skin="b"] .sx-split > aside { position: sticky; top: 3.4rem; }
+.sx[data-skin="b"] .sx-kpis { gap: 0; background: var(--sf); border: 1px solid var(--ln); border-radius: 12px; box-shadow: var(--sh); overflow: hidden; margin-bottom: .9rem; }
+.sx[data-skin="b"] .sx-kpi { border: 0; border-radius: 0; border-inline-start: 1px solid var(--ln); padding: .55rem .85rem; }
+.sx[data-skin="b"] .sx-kpi:first-child { border-inline-start: 0; }
+.sx[data-skin="b"] .sx-kpi b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.sx[data-skin="b"] .sx-table { font-size: 12px; }
+.sx[data-skin="b"] .sx-table td { padding: .42rem .65rem; }
+.sx[data-skin="b"] .sx-table tbody tr:nth-child(even):not(.is-bad) td { background: var(--sf2); }
+.sx[data-skin="b"] .sx-table code, .sx[data-skin="b"] .sx-map__sample span.v { font-family: var(--mono); font-size: 11.5px; }
+.sx[data-skin="b"] .sx-map__row { padding: .4rem .85rem; }
+@media (max-width: 991px) {
+  .sx[data-skin="b"] { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title actions" "steps steps" "stage stage"; }
+  .sx[data-skin="b"]::before { grid-area: 1 / 1 / 3 / -1; }
+  .sx[data-skin="b"] .sx-steps { padding: 0 .9rem .7rem; justify-content: flex-start; }
+  .sx[data-skin="b"] .sx-split > aside { position: static; }
+}
+@media (max-width: 560px) { .sx[data-skin="b"] .sx-step__t { display: none; } .sx[data-skin="b"] .sx-step { padding: .25rem; } }
+
+/* =====================================================================
+   C · STUDIO — vertical step rail on the left, roomy stage, soft surfaces
+   ===================================================================== */
+.sx[data-skin="c"] { --r: 14px; --r-sm: 10px; --sh: 0 1px 2px rgba(15,23,42,.04); display: grid; grid-template-columns: 250px minmax(0, 1fr); grid-template-areas: "steps head" "steps stage"; grid-template-rows: auto 1fr; background: var(--sf); border: 1px solid var(--ln); border-radius: 18px; box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 24px 50px -30px rgba(15,23,42,.35); overflow: hidden; }
+html[data-theme="dark"] .sx[data-skin="c"] { box-shadow: 0 24px 50px -30px rgba(0,0,0,.8); }
+.sx[data-skin="c"] .sx-steps { grid-area: steps; flex-direction: column; gap: 0; padding: 1.4rem 1.1rem; background: var(--sf2); border-inline-end: 1px solid var(--ln); }
+.sx[data-skin="c"] .sx-steps::before { content: "Import students"; display: block; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--mut); margin-bottom: 1rem; padding-inline-start: .2rem; }
+.sx[data-skin="c"] .sx-steps li { position: relative; padding-bottom: 1.35rem; }
+.sx[data-skin="c"] .sx-steps li:last-child { padding-bottom: 0; }
+.sx[data-skin="c"] .sx-steps li:not(:last-child)::after { content: ""; position: absolute; inset-inline-start: 16px; top: 38px; bottom: 4px; width: 2px; background: var(--ln); border-radius: 2px; }
+.sx[data-skin="c"] .sx-steps li.is-done-line::after { background: var(--ok); }
+.sx[data-skin="c"] .sx-step { width: 100%; align-items: flex-start; gap: .75rem; padding: .15rem; border-radius: 12px; }
+.sx[data-skin="c"] .sx-step__n { width: 34px; height: 34px; font-size: 13px; }
+.sx[data-skin="c"] .sx-step__t { padding-top: .1rem; }
+.sx[data-skin="c"] .sx-step__t b { font-size: 13px; }
+.sx[data-skin="c"] .sx-step__t small { white-space: normal; margin-top: 1px; }
+.sx[data-skin="c"] .sx-step.is-active .sx-step__t small { color: var(--acc-ink); font-weight: 500; }
+.sx[data-skin="c"] .sx-head { grid-area: head; padding: 1.25rem 1.5rem 1.1rem; border-bottom: 1px solid var(--ln); }
+.sx[data-skin="c"] .sx-title__ico { width: 44px; height: 44px; border-radius: 13px; font-size: 18px; }
+.sx[data-skin="c"] .sx-title h2 { font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
+.sx[data-skin="c"] .sx-title p { font-size: 12.5px; }
+.sx[data-skin="c"] .sx-stage { grid-area: stage; padding: 1.4rem 1.5rem 1.6rem; background: linear-gradient(180deg, var(--sf), var(--sf) 60%, var(--sf2)); }
+.sx[data-skin="c"] .sx-card { border-color: var(--lns); background: var(--sf); box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 6px 18px -12px rgba(15,23,42,.18); }
+.sx[data-skin="c"] .sx-card__head { border-bottom-color: var(--lns); padding: .85rem 1rem; }
+.sx[data-skin="c"] .sx-card__head h3 { font-size: 13px; }
+.sx[data-skin="c"] .sx-kpi { border-color: var(--lns); background: var(--sf2); border-radius: 14px; padding: .75rem .9rem; }
+.sx[data-skin="c"] .sx-kpi b { font-size: 22px; }
+.sx[data-skin="c"] .sx-kpi--new { background: var(--ok-t); border-color: transparent; }
+.sx[data-skin="c"] .sx-kpi--upd { background: var(--tint); border-color: transparent; }
+.sx[data-skin="c"] .sx-kpi--bad { background: var(--bad-t); border-color: transparent; }
+.sx[data-skin="c"] .sx-drop { padding: 2.8rem 1rem; border-radius: 16px; }
+.sx[data-skin="c"] .sx-drop__ico { width: 68px; height: 68px; border-radius: 20px; font-size: 28px; background: var(--acc); color: var(--acc-on); box-shadow: 0 12px 24px -12px var(--acc); }
+.sx[data-skin="c"] .sx-table th { background: transparent; }
+.sx[data-skin="c"] .sx-btn { border-radius: 10px; padding: .5rem .95rem; }
+.sx[data-skin="c"] [data-pane="3"] .sx-split { grid-template-columns: minmax(0, 1fr); }
+.sx[data-skin="c"] [data-pane="3"] .sx-split > aside { order: -1; }
+.sx[data-skin="c"] .sx-readycard { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: .8rem 1rem; }
+.sx[data-skin="c"] .sx-readycard .sx-ready { padding: 0; flex: 1 1 260px; display: grid; grid-template-columns: auto 1fr; column-gap: .75rem; align-items: center; }
+.sx[data-skin="c"] .sx-readycard .sx-ready b.big { grid-row: span 2; }
+.sx[data-skin="c"] .sx-readycard .sx-ready p { margin-top: 0; }
+.sx[data-skin="c"] .sx-readycard .sx-field { padding: 0; }
+.sx[data-skin="c"] .sx-readycard .sx-field small { display: none; }
+.sx[data-skin="c"] .sx-readycard .sx-foot { border: 0; padding: 0; }
+@media (max-width: 991px) {
+  .sx[data-skin="c"] { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "steps" "stage"; }
+  .sx[data-skin="c"] .sx-steps { flex-direction: row; padding: .8rem 1rem; border-inline-end: 0; border-bottom: 1px solid var(--ln); overflow-x: auto; gap: 1rem; }
+  .sx[data-skin="c"] .sx-steps::before { display: none; }
+  .sx[data-skin="c"] .sx-steps li { padding-bottom: 0; }
+  .sx[data-skin="c"] .sx-steps li::after { display: none; }
+  .sx[data-skin="c"] .sx-step__t small { display: none; }
+  .sx[data-skin="c"] .sx-head, .sx[data-skin="c"] .sx-stage { padding-inline: 1rem; }
+}
+@media (max-width: 560px) { .sx[data-skin="c"] .sx-step__t { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="harness">
+  <span class="grp"><b>Direction</b>
+    <button data-skin="a" class="on">A · Native</button>
+    <button data-skin="b">B · Command Deck</button>
+    <button data-skin="c">C · Studio</button>
+  </span>
+  <span class="grp"><b>Step</b>
+    <button data-step="1" class="on">1 Upload</button>
+    <button data-step="2">2 Match</button>
+    <button data-step="3">3 Check</button>
+    <button data-step="4">4 Import</button>
+    <button data-run>finished?</button>
+  </span>
+  <span class="grp"><b>Theme</b><button data-theme="light" class="on">Light</button><button data-theme="dark">Dark</button></span>
+  <span class="grp"><b>Dir</b><button data-dir="ltr" class="on">LTR</button><button data-dir="rtl">RTL</button></span>
+  <span class="grp"><b>Accent</b>
+    <button class="sw on" data-acc="#2f4d8a" style="background:#2f4d8a"></button>
+    <button class="sw" data-acc="#0f766e" style="background:#0f766e"></button>
+    <button class="sw" data-acc="#7c3aed" style="background:#7c3aed"></button>
+  </span>
+</div>
+
+<header class="band">
+  <div class="band__wrap">
+    <nav>Home &nbsp;/&nbsp; Students &nbsp;/&nbsp; Import</nav>
+    <h1>Import Students</h1>
+    <p>Students, their cards and up to two parents from one spreadsheet</p>
+  </div>
+</header>
+
+<main class="content">
+<div class="sx" id="sx" data-skin="a" data-step="1" data-run="busy">
+
+  <header class="sx-head">
+    <div class="sx-title">
+      <span class="sx-title__ico"><i class="fa fa-graduation-cap"></i></span>
+      <div class="t t1"><h2>Upload the student sheet</h2><p>One row per student, with the card and up to two parents</p></div>
+      <div class="t t2"><h2>Match your columns</h2><p>12 were matched from your headers — check the rest</p></div>
+      <div class="t t3"><h2>Check the rows</h2><p>Nothing has been saved yet</p></div>
+      <div class="t t4"><h2>Importing students</h2><p>Runs in the background — you can leave this page</p></div>
+    </div>
+    <div class="sx-actions">
+      <a class="sx-btn sx-btn--ghost" href="#"><i class="fa fa-arrow-left"></i> Students</a>
+      <a class="sx-btn sx-btn--soft" href="#"><i class="fa fa-download"></i> Template</a>
+    </div>
+  </header>
+
+  <ol class="sx-steps">
+    <li><button class="sx-step" data-go="1"><span class="sx-step__n"><b>1</b><i class="fa fa-check"></i></span><span class="sx-step__t"><b>Upload</b><small>students-2026.xlsx · 412 rows</small></span></button></li>
+    <li><button class="sx-step" data-go="2"><span class="sx-step__n"><b>2</b><i class="fa fa-check"></i></span><span class="sx-step__t"><b>Match columns</b><small>14 of 20 fields</small></span></button></li>
+    <li><button class="sx-step" data-go="3"><span class="sx-step__n"><b>3</b><i class="fa fa-check"></i></span><span class="sx-step__t"><b>Check rows</b><small>401 ready · 11 issues</small></span></button></li>
+    <li><button class="sx-step" data-go="4"><span class="sx-step__n"><b>4</b><i class="fa fa-check"></i></span><span class="sx-step__t"><b>Import</b><small>In the background</small></span></button></li>
+  </ol>
+
+  <div class="sx-stage">
+
+    <!-- ================= STEP 1 ================= -->
+    <section class="sx-pane" data-pane="1">
+      <div class="sx-split">
+        <div class="sx-col">
+          <div class="sx-card">
+            <div class="sx-card__head"><h3><i class="fa fa-refresh"></i> When the admission number already exists</h3></div>
+            <div class="sx-card__body">
+              <div class="sx-choice">
+                <label class="sx-opt is-on"><input type="radio" name="dup" checked><span class="sx-opt__ico"><i class="fa fa-forward"></i></span><span><b>Skip the row</b><small>Leave the student as it is</small></span></label>
+                <label class="sx-opt"><input type="radio" name="dup"><span class="sx-opt__ico"><i class="fa fa-refresh"></i></span><span><b>Update the student</b><small>Refresh details and parents — the linked card is kept</small></span></label>
+              </div>
+            </div>
+          </div>
+          <label class="sx-drop">
+            <span class="sx-drop__ico"><i class="fa fa-cloud-upload"></i></span>
+            <b>Drop the student sheet here, or <u>browse</u></b>
+            <small>XLSX, XLS or CSV · up to 10 MB · 10,000 rows</small>
+          </label>
+          <div class="sx-card sx-tpl">
+            <i class="fa fa-file-excel-o"></i>
+            <div><b>Start from the template</b><small>20 columns — student, card and two parents, with a sample row</small></div>
+            <a class="sx-btn sx-btn--ghost" href="#"><i class="fa fa-download"></i> Download</a>
+          </div>
+        </div>
+        <aside class="sx-col">
+          <div class="sx-card">
+            <div class="sx-card__head"><h3><i class="fa fa-info-circle"></i> How it works</h3></div>
+            <ul class="sx-how">
+              <li><span class="sx-how__ico"><i class="fa fa-magic"></i></span><div><b>Your headers, understood</b><small>Columns like <em>Adm No</em>, <em>Class</em> and <em>Father Mobile</em> are matched for you.</small></div></li>
+              <li><span class="sx-how__ico"><i class="fa fa-shield"></i></span><div><b>Every row checked first</b><small>Missing names, repeated admission numbers and cards already in use are shown before anything is saved.</small></div></li>
+              <li><span class="sx-how__ico"><i class="fa fa-users"></i></span><div><b>One login per family</b><small>Parents are matched by mobile, so brothers and sisters share one parent account.</small></div></li>
+              <li><span class="sx-how__ico"><i class="fa fa-tasks"></i></span><div><b>Runs in the background</b><small>Watch the progress here or leave the page. Rows that fail are sent to your notifications.</small></div></li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================= STEP 2 ================= -->
+    <section class="sx-pane" data-pane="2">
+      <div class="sx-split">
+        <div class="sx-col">
+          <div class="sx-card">
+            <div class="sx-card__head"><h3><i class="fa fa-child"></i> Student</h3><span class="sx-chip">9 of 12</span></div>
+            <div class="sx-map">
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Admission No</b><span class="sx-req">Required</span></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Adm No</option></select><div class="sx-map__sample"><span class="v"><code>ADM-2401</code></span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Student name</b><span class="sx-req">Required</span></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Student Name</option></select><div class="sx-map__sample"><span class="v">Aisha Khalid</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Grade</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Class</option></select><div class="sx-map__sample"><span class="v">Grade 5</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Section</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Division</option></select><div class="sx-map__sample"><span class="v">B</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Gender</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Sex</option></select><div class="sx-map__sample"><span class="v">F</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Date of birth</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>DOB</option></select><div class="sx-map__sample"><span class="v">14/03/2015</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row"><div class="sx-map__field"><i class="fa fa-circle-o"></i><b>QID</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>— Do not import —</option></select><div class="sx-map__sample"><span class="none">not imported</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Nationality</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Nationality</option></select><div class="sx-map__sample"><span class="v">Qatar</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row"><div class="sx-map__field"><i class="fa fa-circle-o"></i><b>Student mobile</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>— Do not import —</option></select><div class="sx-map__sample"><span class="none">not imported</span></div></div>
+              <div class="sx-map__row"><div class="sx-map__field"><i class="fa fa-circle-o"></i><b>Status</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>— Do not import —</option></select><div class="sx-map__sample"><span class="none">everyone Active</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Card UID</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>RFID</option></select><div class="sx-map__sample"><span class="v"><code>04:A2:1B:9C</code></span><span class="sx-auto">auto</span></div></div>
+            </div>
+          </div>
+          <div class="sx-card">
+            <div class="sx-card__head"><h3><i class="fa fa-male"></i> First parent</h3><span class="sx-chip">Father · from header</span></div>
+            <div class="sx-map">
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Name</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Father Name</option></select><div class="sx-map__sample"><span class="v">Khalid Mansour</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Mobile</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Father Mobile</option></select><div class="sx-map__sample"><span class="v">5512 3456</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Email</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Father Email</option></select><div class="sx-map__sample"><span class="v">khalid@mail.qa</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row"><div class="sx-map__field"><i class="fa fa-circle-o"></i><b>Relation</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>— Do not import —</option></select><div class="sx-map__sample"><span class="none">Father, from the header</span></div></div>
+            </div>
+          </div>
+          <div class="sx-card">
+            <div class="sx-card__head"><h3><i class="fa fa-female"></i> Second parent</h3><span class="sx-chip">Mother · from header</span></div>
+            <div class="sx-map">
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Name</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Mother Name</option></select><div class="sx-map__sample"><span class="v">Noor Hassan</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row is-mapped"><div class="sx-map__field"><i class="fa fa-check-circle"></i><b>Mobile</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>Mother Mobile</option></select><div class="sx-map__sample"><span class="v">6698 7766</span><span class="sx-auto">auto</span></div></div>
+              <div class="sx-map__row"><div class="sx-map__field"><i class="fa fa-circle-o"></i><b>Email</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>— Do not import —</option></select><div class="sx-map__sample"><span class="none">not imported</span></div></div>
+              <div class="sx-map__row"><div class="sx-map__field"><i class="fa fa-circle-o"></i><b>Relation</b></div><span class="sx-map__arrow"><i class="fa fa-long-arrow-left"></i></span><select class="sx-input"><option>— Do not import —</option></select><div class="sx-map__sample"><span class="none">Mother, from the header</span></div></div>
+            </div>
+          </div>
+        </div>
+        <aside class="sx-col">
+          <div class="sx-card">
+            <div class="sx-meter">
+              <div class="sx-ring" style="--p:70"><span><b>14</b><small>of 20</small></span></div>
+              <div><b>Fields matched</b><small>12 found from your headers, 2 picked by hand</small></div>
+            </div>
+            <ul class="sx-checks">
+              <li class="ok"><i class="fa fa-check-circle"></i> Admission No is matched</li>
+              <li class="ok"><i class="fa fa-check-circle"></i> Student name is matched</li>
+              <li class="info"><i class="fa fa-info-circle"></i> Relations come from the headers — Father, Mother</li>
+            </ul>
+            <div class="sx-unused"><small>Columns left out</small><span class="sx-chip">Bus Route</span><span class="sx-chip">Remarks</span><span class="sx-chip">Fee Plan</span></div>
+            <div class="sx-foot">
+              <button class="sx-btn sx-btn--ghost" data-go="1"><i class="fa fa-arrow-left"></i></button>
+              <button class="sx-btn sx-btn--primary" data-go="3">Check 412 rows <i class="fa fa-arrow-right"></i></button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================= STEP 3 ================= -->
+    <section class="sx-pane" data-pane="3">
+      <div class="sx-kpis">
+        <div class="sx-kpi"><small>Rows</small><b>412</b></div>
+        <div class="sx-kpi sx-kpi--new"><small>New</small><b>380</b></div>
+        <div class="sx-kpi sx-kpi--upd"><small>Update</small><b>21</b></div>
+        <div class="sx-kpi"><small>Skip</small><b>0</b></div>
+        <div class="sx-kpi sx-kpi--bad"><small>Issues</small><b>11</b></div>
+        <div class="sx-kpi"><small>Parent logins</small><b>296 <em>new</em></b><span>58 families already have one</span></div>
+      </div>
+      <div class="sx-split">
+        <div class="sx-card">
+          <div class="sx-toolbar">
+            <div class="sx-seg">
+              <button class="is-on">All<em>412</em></button>
+              <button>New<em>380</em></button>
+              <button>Update<em>21</em></button>
+              <button>Issues<em>11</em></button>
+            </div>
+            <label class="sx-search"><i class="fa fa-search"></i><input placeholder="Admission no or name"></label>
+          </div>
+          <div class="sx-table-wrap">
+            <table class="sx-table">
+              <thead><tr><th>Row</th><th>Result</th><th>Admission</th><th>Student</th><th>Parents</th><th>Card</th><th>Check</th></tr></thead>
+              <tbody>
+                <tr><td class="ln">2</td><td><span class="sx-pill sx-pill--new">New</span></td><td><code>ADM-2401</code></td><td class="who"><b>Aisha Khalid</b><small>Grade 5 - B · Female</small></td><td><span class="par">Khalid Mansour <small>Father</small></span><span class="par">Noor Hassan <small>Mother</small></span></td><td><code>04A21B9C</code></td><td class="chk"><div class="sx-msg sx-msg--ok"><i class="fa fa-check"></i> Ready</div></td></tr>
+                <tr><td class="ln">3</td><td><span class="sx-pill sx-pill--upd">Update</span></td><td><code>ADM-1187</code></td><td class="who"><b>Omar Faisal</b><small>Grade 6 - A · Male</small></td><td><span class="par">Faisal Omar <small>Father</small></span></td><td><code>7F3C0A11</code></td><td class="chk"><div class="sx-msg sx-msg--note"><i class="fa fa-info-circle"></i> Card left as it is — change cards from the student's Card tab</div></td></tr>
+                <tr class="is-bad"><td class="ln">4</td><td><span class="sx-pill sx-pill--bad">Issue</span></td><td><code>ADM-2402</code></td><td class="who"><b>—</b><small>Grade 5 - B</small></td><td><span class="par">Hamad Saleh <small>Father</small></span></td><td></td><td class="chk"><div class="sx-msg sx-msg--bad"><i class="fa fa-exclamation-circle"></i> Student name is required</div></td></tr>
+                <tr class="is-bad"><td class="ln">5</td><td><span class="sx-pill sx-pill--bad">Issue</span></td><td><code>ADM-2401</code></td><td class="who"><b>Maryam Khalid</b><small>Grade 2 - A · Female</small></td><td><span class="par">Khalid Mansour <small>Father</small></span></td><td></td><td class="chk"><div class="sx-msg sx-msg--bad"><i class="fa fa-exclamation-circle"></i> Admission No ADM-2401 is already used on row 2</div></td></tr>
+                <tr><td class="ln">6</td><td><span class="sx-pill sx-pill--new">New</span></td><td><code>ADM-2403</code></td><td class="who"><b>Yousef Ali</b><small>Grade 9 - C · Male</small></td><td><small>—</small></td><td></td><td class="chk"><div class="sx-msg sx-msg--note"><i class="fa fa-info-circle"></i> No parent — nobody can log in for this student</div></td></tr>
+                <tr class="is-bad"><td class="ln">7</td><td><span class="sx-pill sx-pill--bad">Issue</span></td><td><code>ADM-2404</code></td><td class="who"><b>Fatima Nasser</b><small>Grade 4 - A · Female</small></td><td><span class="par">Nasser Rashid <small>Father</small></span></td><td><code>04A21B9C</code></td><td class="chk"><div class="sx-msg sx-msg--bad"><i class="fa fa-exclamation-circle"></i> Card 04A21B9C is already on row 2</div></td></tr>
+                <tr class="is-bad"><td class="ln">8</td><td><span class="sx-pill sx-pill--bad">Issue</span></td><td><code>ADM-2405</code></td><td class="who"><b>Salem Jaber</b><small>Grade 7 - B · Male</small></td><td><span class="par">Jaber Salem <small>Father</small></span></td><td></td><td class="chk"><div class="sx-msg sx-msg--bad"><i class="fa fa-exclamation-circle"></i> First parent: mobile is required</div></td></tr>
+                <tr><td class="ln">9</td><td><span class="sx-pill sx-pill--new">New</span></td><td><code>ADM-2406</code></td><td class="who"><b>Layla Ibrahim</b><small>Grade 1 - A · Female</small></td><td><span class="par">Ibrahim Adel <small>Father</small></span><span class="par">Sara Adel <small>Mother</small></span></td><td></td><td class="chk"><div class="sx-msg sx-msg--note"><i class="fa fa-info-circle"></i> Date of birth "31/31/2019" not understood — left blank</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="sx-pager"><span>Showing 1–25 of 412</span><span class="sx-pages"><span>‹</span><span class="on">1</span><span>2</span><span>3</span><span>…</span><span>17</span><span>›</span></span></div>
+        </div>
+        <aside class="sx-col">
+          <div class="sx-card sx-readycard">
+            <div class="sx-ready">
+              <b class="big">401</b>
+              <small>students ready to import</small>
+              <p>11 rows with issues will not be imported. Download them, fix the sheet and upload it again.</p>
+            </div>
+            <div class="sx-field"><a class="sx-btn sx-btn--soft sx-btn--block" href="#"><i class="fa fa-download"></i> Rows with issues (.xlsx)</a></div>
+            <div class="sx-field">
+              <small>Admission number already exists</small>
+              <div class="sx-seg sx-seg--block"><button>Skip</button><button class="is-on">Update</button></div>
+            </div>
+            <div class="sx-foot">
+              <button class="sx-btn sx-btn--ghost" data-go="2"><i class="fa fa-arrow-left"></i></button>
+              <button class="sx-btn sx-btn--primary" data-go="4"><i class="fa fa-check-circle"></i> Import 401 students</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================= STEP 4 ================= -->
+    <section class="sx-pane" data-pane="4">
+      <div class="sx-card sx-run">
+        <div class="busy">
+          <div class="sx-ring" style="--p:64"><span><b>64%</b></span></div>
+          <h3>Importing 401 students</h3>
+          <p>This runs in the background, so you can leave the page. Any row that fails is sent to your notifications.</p>
+          <div class="sx-bar"><span style="width:64%"></span></div>
+          <div class="sx-run__meta"><span class="sx-pill sx-pill--new"><i class="fa fa-user-plus"></i> 380 new</span><span class="sx-pill sx-pill--upd"><i class="fa fa-refresh"></i> 21 to update</span><span class="sx-pill sx-pill--skip"><i class="fa fa-ban"></i> 11 left out</span></div>
+          <div class="sx-run__acts"><a class="sx-btn sx-btn--ghost" href="#"><i class="fa fa-arrow-left"></i> Go to Students</a></div>
+        </div>
+        <div class="done">
+          <div class="sx-ring is-ok"><i class="fa fa-check"></i></div>
+          <h3>Import finished</h3>
+          <p>379 added, 21 updated, 0 skipped, 1 failed. The failed row is in your notifications.</p>
+          <div class="sx-run__acts">
+            <a class="sx-btn sx-btn--primary" href="#"><i class="fa fa-users"></i> Go to Students</a>
+            <button class="sx-btn sx-btn--ghost" data-go="1"><i class="fa fa-cloud-upload"></i> Import another file</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</main>
+
+<p class="note">
+  A = Bootstrap/Nifty classes only (no custom stylesheet, like product import). B = sibling of the purchase uploader's <code>.pix</code> deck.
+  C = a new scoped layer with a vertical step rail. All three take the accent from Settings → theme colour and follow dark mode.
+</p>
+
+<script>
+(function () {
+  const sx = document.getElementById('sx');
+  const html = document.documentElement;
+  const pick = (sel, btn) => document.querySelectorAll(sel).forEach(b => b.classList.toggle('on', b === btn));
+
+  function go(step) {
+    sx.dataset.step = step;
+    document.querySelectorAll('.sx-steps li').forEach((li, i) => {
+      const n = i + 1, btn = li.querySelector('.sx-step');
+      btn.classList.toggle('is-done', n < step);
+      btn.classList.toggle('is-active', n === +step);
+      li.classList.toggle('is-done-line', n <= step && n > 1 ? n - 1 < step : false);
+      if (sx.dataset.skin === 'c') li.classList.toggle('is-done-line', n < step);
+    });
+    pick('.harness [data-step]', document.querySelector('.harness [data-step="' + step + '"]'));
+  }
+
+  document.querySelectorAll('[data-skin]').forEach(b => b.addEventListener('click', () => {
+    if (b.closest('.harness')) { sx.dataset.skin = b.dataset.skin; pick('.harness [data-skin]', b); go(+sx.dataset.step); }
+  }));
+  document.querySelectorAll('.harness [data-step]').forEach(b => b.addEventListener('click', () => go(+b.dataset.step)));
+  document.addEventListener('click', e => { const g = e.target.closest('.sx [data-go]'); if (g) { e.preventDefault(); go(+g.dataset.go); } });
+  document.querySelector('[data-run]').addEventListener('click', e => {
+    sx.dataset.run = sx.dataset.run === 'done' ? 'busy' : 'done';
+    e.currentTarget.classList.toggle('on', sx.dataset.run === 'done');
+    go(4);
+  });
+  document.querySelectorAll('[data-theme]').forEach(b => b.addEventListener('click', () => { if (!b.closest('.harness')) return; html.dataset.theme = b.dataset.theme; pick('.harness [data-theme]', b); }));
+  document.querySelectorAll('[data-dir]').forEach(b => b.addEventListener('click', () => { html.dir = b.dataset.dir; pick('.harness [data-dir]', b); }));
+  document.querySelectorAll('[data-acc]').forEach(b => b.addEventListener('click', () => { html.style.setProperty('--bs-primary', b.dataset.acc); pick('.harness [data-acc]', b); }));
+  document.querySelectorAll('.sx-opt').forEach(o => o.addEventListener('click', () => document.querySelectorAll('.sx-opt').forEach(x => x.classList.toggle('is-on', x === o))));
+  go(1);
+})();
+</script>
+</body>
+</html>

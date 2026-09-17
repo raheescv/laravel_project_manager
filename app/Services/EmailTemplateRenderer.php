@@ -35,7 +35,7 @@ class EmailTemplateRenderer
 
     /**
      * @param  array<string, string>  $variables
-     * @return array{subject: string, body: string, reply_to: ?string, template: EmailTemplate}
+     * @return array{subject: string, body: string, reply_to: ?string, footer_note: ?string, template: EmailTemplate}
      */
     public function render(string $module, string $type, array $variables): array
     {
@@ -45,6 +45,7 @@ class EmailTemplateRenderer
             'subject' => $this->replace($template->subject, $variables, false),
             'body' => $this->body($template->body, $variables),
             'reply_to' => $template->reply_to,
+            'footer_note' => EmailTemplate::footerNoteFor($template->module),
             'template' => $template,
         ];
     }
@@ -56,6 +57,7 @@ class EmailTemplateRenderer
             'subject' => $this->replace($template->subject, $variables, false),
             'body' => $this->body($template->body, $variables),
             'reply_to' => $template->reply_to,
+            'footer_note' => EmailTemplate::footerNoteFor($template->module),
             'template' => $template,
         ];
     }
@@ -65,7 +67,7 @@ class EmailTemplateRenderer
      * customer input. These are injected raw; everything else is escaped.
      * Public so the Settings live preview applies the same escaping rule.
      */
-    public const RAW_HTML = ['appointment_button'];
+    public const RAW_HTML = ['appointment_button', 'set_password_button'];
 
     /**
      * Sanitise, merge, then inline the Editorial typography.

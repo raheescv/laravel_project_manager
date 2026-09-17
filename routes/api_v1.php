@@ -22,8 +22,11 @@ use App\Http\Controllers\Api\V1\SizeController;
 use App\Http\Controllers\Api\V1\StockCheckController;
 use App\Http\Controllers\Api\V1\StorefrontCheckoutController;
 use App\Http\Controllers\Api\V1\StorefrontController;
+use App\Http\Controllers\Api\V1\StudentCardController;
 use App\Http\Middleware\EnsureMobilePermission;
+use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\IdentifyTenant;
+use App\Support\ModuleAccess;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -146,6 +149,19 @@ Route::prefix('v1')->group(function () {
                 Route::match(['put', 'patch'], '/{saleReturn}', [SaleReturnController::class, 'update'])->whereNumber('saleReturn')
                     ->middleware(EnsureMobilePermission::class.':sales return.edit')
                     ->name('api.v1.sale-return.update');
+            });
+
+            // Student cards (School module only; QLOUD POS reads the NFC card). Looking a card up is part
+            // of ringing a sale, so it is open to any cashier; searching students and
+            // linking a card is gated like the web Card tab.
+            Route::prefix('students')->middleware(EnsureModuleEnabled::class.':'.ModuleAccess::SCHOOL)->group(function () {
+                Route::get('card/{uid}', [StudentCardController::class, 'show'])->name('api.v1.students.card');
+                Route::get('/', [StudentCardController::class, 'index'])
+                    ->middleware(EnsureMobilePermission::class.':student card.assign')
+                    ->name('api.v1.students.index');
+                Route::post('{account}/card', [StudentCardController::class, 'link'])->whereNumber('account')
+                    ->middleware(EnsureMobilePermission::class.':student card.assign')
+                    ->name('api.v1.students.card.link');
             });
 
             // Customer routes

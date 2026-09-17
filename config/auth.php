@@ -40,6 +40,17 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Parent portal API (routes/api_v1_parent.php), used by the standalone
+        // parent_portal app. Only a Guardian's token passes. The default `sanctum`
+        // guard is deliberately NOT pinned to the users provider: Spatie resolves a
+        // User's permission guard from the guards naming its provider, so staff
+        // checks would look for `sanctum` permissions and fail. Parent tokens are
+        // kept off staff routes in AppServiceProvider instead.
+        'parent' => [
+            'driver' => 'sanctum',
+            'provider' => 'guardians',
+        ],
     ],
 
     /*
@@ -63,6 +74,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
+        ],
+
+        'guardians' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Guardian::class,
         ],
 
         // 'users' => [

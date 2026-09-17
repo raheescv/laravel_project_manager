@@ -11,6 +11,7 @@ class AuthState extends Equatable {
     this.user,
     this.errorMessage,
     this.busy = false,
+    this.branchPending = false,
   });
 
   final AuthStatus status;
@@ -19,6 +20,10 @@ class AuthState extends Equatable {
 
   /// A sign-in / unlock is in flight.
   final bool busy;
+
+  /// Signed in, but this user works more than one branch and has not said which
+  /// one this session is for yet. The router holds them on the branch picker.
+  final bool branchPending;
 
   bool get isSignedIn => status == AuthStatus.signedIn;
 
@@ -30,6 +35,7 @@ class AuthState extends Equatable {
     ApiUser? user,
     String? errorMessage,
     bool? busy,
+    bool? branchPending,
     bool clearError = false,
     bool clearUser = false,
   }) =>
@@ -38,8 +44,9 @@ class AuthState extends Equatable {
         user: clearUser ? null : (user ?? this.user),
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
         busy: busy ?? this.busy,
+        branchPending: branchPending ?? this.branchPending,
       );
 
   @override
-  List<Object?> get props => [status, user, errorMessage, busy];
+  List<Object?> get props => [status, user, errorMessage, busy, branchPending];
 }

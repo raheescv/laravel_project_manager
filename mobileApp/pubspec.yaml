@@ -67,6 +67,7 @@ dependencies:
   # App version (login screen + Settings) via AppVersionText, read from the
   # installed build so it never drifts from `version:` above.
   package_info_plus: ^9.0.1
+  nfc_manager: ^4.2.1
 
 dev_dependencies:
   flutter_test:

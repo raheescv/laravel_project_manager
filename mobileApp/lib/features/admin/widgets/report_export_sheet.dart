@@ -26,6 +26,7 @@ import 'package:invo/shared/widgets/receipt_printer.dart';
 enum ExportReport {
   overview('Overview', Icons.insights_rounded),
   items('By Item', Icons.inventory_2_rounded),
+  categories('By Category', Icons.category_rounded),
   staff('By Staff', Icons.people_alt_rounded),
   daySession('Session', Icons.receipt_long_rounded);
 
@@ -38,6 +39,7 @@ enum ExportReport {
   ReportExportKind? get kind => switch (this) {
         ExportReport.overview => ReportExportKind.overview,
         ExportReport.items => ReportExportKind.items,
+        ExportReport.categories => ReportExportKind.categories,
         ExportReport.staff => ReportExportKind.stylists,
         ExportReport.daySession => null,
       };
@@ -90,26 +92,83 @@ Future<void> showReportExport(
   await _run(context, pick);
 }
 
-// ---- running an action --------------------------------------------------------
-
-Future<void> _run(BuildContext context, _Pick pick) async {
+/// A day session's Sale Bill Report on the thermal roll, laid out on the device:
+/// straight to the paired printer, or — with none paired — the preview, the
+/// only way to pick a printer on this device (a receipt's Print follows the
+/// same rule). The Export sheet's session Print, and the Day Session screen's
+/// report card and print-on-close, all come through here. Never throws.
+Future<void> printDaySessionRoll(BuildContext context, String sessionId) async {
   final admin = context.read<AdminCubit>();
   final printer = context.read<PrintSettingsCubit>();
   final settings = printer.snapshot;
   final snack = AstraSnack.capture(context);
   final navigator = Navigator.of(context, rootNavigator: true);
-  final brand = _brand(context);
+  final me = context.read<AuthCubit>().user?.id ?? '';
+
+  unawaited(showDialog<void>(
+    context: context,
+    useRootNavigator: true,
+    barrierDismissible: false,
+    builder: (_) => const PdfProgressCard(message: 'Laying out the roll'),
+  ));
+
+  final DaySessionSummary session;
+  final Uint8List bytes;
+  try {
+    final report = await admin.daySessionReport(sessionId);
+    session = report.session;
+    bytes = await buildDaySessionThermalPdf(report, settings, highlightUserId: me);
+  } catch (e) {
+    navigator.pop();
+    snack.error(e is ApiException ? e.message : 'Could not prepare the PDF. Check the connection and try again.');
+    return;
+  }
+  navigator.pop();
+  if (!context.mounted) return;
+
+  final title = 'Sale Bill Report #$sessionId';
+  if (!printer.hasPrinter) {
+    openPdfPreview(context,
+        title: title,
+        bytes: bytes,
+        fileName: 'sale-bill-report_session-${sessionId}_roll.pdf',
+        caption: _sessionCaption(title, session),
+        maxPageWidth: 420);
+    return;
+  }
+  final result = await printRollPdf(bytes, settings, title: title, target: printer.printer);
+  if (result == ReceiptPrintResult.cancelled) return;
+  if (result.ok) {
+    snack.success('Sent to ${printer.printer.displayName}');
+  } else {
+    snack.error('Couldn\'t reach the printer — check it\'s on and paired.');
+  }
+}
+
+String _sessionCaption(String title, DaySessionSummary session) => [
+      title,
+      Dates.human(session.openedAt),
+      if (session.branch.isNotEmpty) session.branch,
+    ].join(' · ');
+
+// ---- running an action --------------------------------------------------------
+
+Future<void> _run(BuildContext context, _Pick pick) async {
   final session = pick.session;
-  final thermal = session != null && pick.action == _Action.print;
+  // The roll is built on the device and has its own path.
+  if (session != null && pick.action == _Action.print) return printDaySessionRoll(context, session.id);
+
+  final admin = context.read<AdminCubit>();
+  final snack = AstraSnack.capture(context);
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final brand = _brand(context);
 
   unawaited(showDialog<void>(
     context: context,
     useRootNavigator: true,
     barrierDismissible: false,
     builder: (_) => PdfProgressCard(
-      message: session == null
-          ? 'Pulling every line for this range'
-          : (thermal ? 'Laying out the roll' : 'Rendering the A4 report'),
+      message: session == null ? 'Pulling every line for this range' : 'Rendering the A4 report',
     ),
   ));
 
@@ -129,17 +188,10 @@ Future<void> _run(BuildContext context, _Pick pick) async {
         if (brand.branchName.isNotEmpty) brand.branchName,
       ].join(' · ');
     } else {
-      bytes = thermal
-          ? await buildDaySessionThermalPdf(await admin.daySessionReport(session.id), settings,
-              highlightUserId: brand.preparedById)
-          : await admin.daySessionReportPdf(session.id);
+      bytes = await admin.daySessionReportPdf(session.id);
       title = 'Sale Bill Report #${session.id}';
-      fileName = 'sale-bill-report_session-${session.id}${thermal ? '_roll' : ''}.pdf';
-      caption = [
-        title,
-        Dates.human(session.openedAt),
-        if (session.branch.isNotEmpty) session.branch,
-      ].join(' · ');
+      fileName = 'sale-bill-report_session-${session.id}.pdf';
+      caption = _sessionCaption(title, session);
     }
   } catch (e) {
     navigator.pop();
@@ -153,23 +205,7 @@ Future<void> _run(BuildContext context, _Pick pick) async {
     case _Action.preview:
       openPdfPreview(context, title: title, bytes: bytes, fileName: fileName, caption: caption);
     case _Action.print:
-      if (!thermal) {
-        await PdfExport.printDialog(bytes, fileName);
-        return;
-      }
-      // Unpaired, the preview is the only way to pick a printer on this device
-      // — the same rule as a receipt's Print button.
-      if (!printer.hasPrinter) {
-        openPdfPreview(context, title: title, bytes: bytes, fileName: fileName, caption: caption, maxPageWidth: 420);
-        return;
-      }
-      final result = await printRollPdf(bytes, settings, title: title, target: printer.printer);
-      if (result == ReceiptPrintResult.cancelled) return;
-      if (result.ok) {
-        snack.success('Sent to ${printer.printer.displayName}');
-      } else {
-        snack.error('Couldn\'t reach the printer — check it\'s on and paired.');
-      }
+      await PdfExport.printDialog(bytes, fileName);
     case _Action.whatsApp:
       await PdfExport.whatsApp(bytes, fileName, caption: caption);
     case _Action.share:
@@ -298,7 +334,7 @@ class _ExportSheetState extends State<_ExportSheet> {
   String _scope() {
     final admin = context.read<AdminCubit>();
     final range = Dates.range(admin.startDate, admin.endDate);
-    if (_report != ExportReport.items) return range;
+    if (_report != ExportReport.items && _report != ExportReport.categories) return range;
     final type = switch (admin.itemProductType) {
       'product' => 'Products',
       'service' => 'Services',
@@ -332,7 +368,7 @@ class _ExportSheetState extends State<_ExportSheet> {
   }
 
   /// The report choice, in the same segmented look as the Reports screen's own
-  /// toggles; icon over label so four fit a phone.
+  /// toggles; icon over label so all five fit a phone.
   Widget _picker() {
     final p = context.astra;
     Widget seg(ExportReport r) {

@@ -3,7 +3,7 @@ part of 'admin_cubit.dart';
 /// State for [AdminCubit] — the §5 shape.
 ///
 /// Covers three independently-loaded areas: the dashboard KPIs, the paginated
-/// report (item-wise / employee-wise) and the sales overview. They share the
+/// report (item-wise / category-wise / employee-wise) and the sales overview. They share the
 /// date range but nothing else, so each carries its own loading/error pair.
 class AdminState extends Equatable {
   const AdminState({

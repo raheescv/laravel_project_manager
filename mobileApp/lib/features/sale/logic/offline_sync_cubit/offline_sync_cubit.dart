@@ -337,8 +337,9 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
       // says who), and a queued one may well be drained by a different cashier
       // on a shared till.
       //
-      // Only the cashier. The branch follows their own assignment server-side —
-      // the row's `branchId` stays local, where it scopes the cached stock.
+      // The branch too: it is the one the till was working as when the sale was
+      // rung up, and the till may have moved branch since. The server books it
+      // there only when that cashier is assigned to it.
       // The provisional reference goes with it for the same reason, and it is
       // read off the row rather than the payload so a corrected sale still
       // carries the number already printed for the customer.
@@ -349,6 +350,7 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
       final saved = await _online.createSale({
         ...row.payload,
         if (row.userId.isNotEmpty) 'clientUserId': int.tryParse(row.userId),
+        if (row.branchId != null) 'clientBranchId': row.branchId,
         if (row.provisionalRef.isNotEmpty) 'offlineRef': row.provisionalRef,
       });
 

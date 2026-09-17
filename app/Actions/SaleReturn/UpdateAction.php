@@ -7,6 +7,7 @@ use App\Actions\SaleReturn\Item\CreateAction as ItemCreateAction;
 use App\Actions\SaleReturn\Item\UpdateAction as ItemUpdateAction;
 use App\Actions\SaleReturn\Payment\CreateAction as PaymentCreateAction;
 use App\Actions\SaleReturn\Payment\UpdateAction as PaymentUpdateAction;
+use App\Actions\Student\Card\GuardCardPaymentAction;
 use App\Models\SaleReturn;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -77,6 +78,10 @@ class UpdateAction
                         throw new Exception($response['message'], 1);
                     }
                     $model->refresh();
+                    $response = (new GuardCardPaymentAction())->execute($model);
+                    if (! $response['success']) {
+                        throw new \Exception($response['message'], 1);
+                    }
                     $response = (new JournalEntryAction())->execute($model, $user_id);
                     if (! $response['success']) {
                         throw new Exception($response['message'], 1);

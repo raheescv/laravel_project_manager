@@ -10,6 +10,7 @@ import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/settings/widgets/v3/branch_sheet.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/route_observer.dart';
@@ -241,8 +242,18 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                             Text('${_greeting().toUpperCase()},',
                                 style: ui(size: 10, weight: FontWeight.w700, color: p.accent, letterSpacing: 2)),
                             const SizedBox(height: 3),
-                            Text(user?.name.split(' ').first ?? 'there',
-                                style: serif(size: 24, color: Colors.white)),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(user?.name.split(' ').first ?? 'there',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: serif(size: 24, color: Colors.white)),
+                                ),
+                                const SizedBox(width: 8),
+                                const Flexible(child: _HeroBranchChip()),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -317,7 +328,16 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                   Text('${_greeting().toUpperCase()},',
                       style: ui(size: 10, weight: FontWeight.w700, color: p.accent, letterSpacing: 2)),
                   const SizedBox(height: 3),
-                  Text(user?.name.split(' ').first ?? 'there', style: serif(size: 24, color: Colors.white)),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(user?.name.split(' ').first ?? 'there',
+                            maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 24, color: Colors.white)),
+                      ),
+                      const SizedBox(width: 12),
+                      const Flexible(child: _HeroBranchChip(large: true)),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -924,6 +944,52 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
         const SizedBox(height: 7),
         ProgressBar(fraction: frac, color: color),
       ],
+    );
+  }
+}
+
+/// The branch this session works as, beside the name in the hero — the stock
+/// on sale and where sales are booked. Opens the branch switcher when the user
+/// has more than one branch; otherwise it is a plain label.
+class _HeroBranchChip extends StatelessWidget {
+  const _HeroBranchChip({this.large = false});
+
+  final bool large;
+
+  @override
+  Widget build(BuildContext context) {
+    final branch = context.watch<BranchCubit>();
+    final selected = branch.selected;
+    if (selected == null) return const SizedBox.shrink();
+    final switchable = branch.branches.length > 1;
+    final chip = Container(
+      padding: EdgeInsets.symmetric(horizontal: large ? 11 : 9, vertical: large ? 6 : 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.storefront_outlined, size: large ? 15 : 13, color: Colors.white),
+          SizedBox(width: large ? 6 : 5),
+          Flexible(
+            child: Text(selected.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ui(size: large ? 12.5 : 11, weight: FontWeight.w700, color: Colors.white)),
+          ),
+          if (switchable) ...[
+            const SizedBox(width: 2),
+            Icon(Icons.expand_more, size: large ? 16 : 14, color: Colors.white70),
+          ],
+        ],
+      ),
+    );
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: switchable ? GestureDetector(onTap: () => showBranchSheet(context), child: chip) : chip,
     );
   }
 }

@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Ai\Providers\FixedOpenAiProvider;
+use App\Http\Middleware\AuthenticateParent;
+use App\Models\Guardian;
 use App\Notifications\DatabaseChannel;
 use App\Services\TenantService;
 use Dedoc\Scramble\Scramble;
@@ -17,6 +19,7 @@ use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 use Laravel\Ai\Ai;
 use Laravel\Ai\Gateway\Prism\PrismGateway;
+use Laravel\Sanctum\Sanctum;
 use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
@@ -36,6 +39,15 @@ class AppServiceProvider extends ServiceProvider
     {
 
         Inertia::setRootView('app-react');
+
+        // A parent's portal token is valid only on the parent portal API, and only a
+        // parent's token is valid there. Sanctum's default guard accepts any model's
+        // token, so without this a parent could call staff endpoints (see config/auth.php
+        // for why the guard itself is not pinned to users).
+        Sanctum::authenticateAccessTokensUsing(
+            fn ($accessToken, bool $isValid) => $isValid
+                && ($accessToken->tokenable instanceof Guardian) === request()->is(AuthenticateParent::PATH)
+        );
 
         // Configure Scramble for Bearer Token Authentication
         Scramble::configure()

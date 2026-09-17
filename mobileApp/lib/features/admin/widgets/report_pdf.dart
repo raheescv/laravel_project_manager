@@ -93,7 +93,8 @@ Future<Uint8List> buildReportPdf(ReportExport data, ReportPdfBrand brand) async 
         _masthead(data, brand, tone, range),
         ...switch (data.kind) {
           ReportExportKind.overview => _overview(data, tone, brand),
-          ReportExportKind.items || ReportExportKind.stylists => _breakdown(data, tone, brand),
+          ReportExportKind.items || ReportExportKind.categories || ReportExportKind.stylists =>
+            _breakdown(data, tone, brand),
         },
       ],
     ),
@@ -168,7 +169,7 @@ pw.Widget _masthead(ReportExport d, ReportPdfBrand b, _Tone tone, String range) 
 
 /// The item filters that shaped the list, so the paper says how it was ranked.
 String _filterLine(ReportExport d) {
-  if (d.kind != ReportExportKind.items) return '';
+  if (d.kind != ReportExportKind.items && d.kind != ReportExportKind.categories) return '';
   final type = switch (d.productType) {
     'product' => 'Products only',
     'service' => 'Services only',
@@ -356,98 +357,212 @@ List<pw.Widget> _overview(ReportExport d, _Tone tone, ReportPdfBrand b) {
   ];
 }
 
-// ---- By Item / By Staff --------------------------------------------------
+// ---- By Item / By Category / By Staff ----------------------------------------
 
 List<pw.Widget> _breakdown(ReportExport d, _Tone tone, ReportPdfBrand b) {
-  final items = d.kind == ReportExportKind.items;
+  final kind = d.kind;
+  final heading = switch (kind) {
+    ReportExportKind.items => 'Item breakdown',
+    ReportExportKind.categories => 'Category breakdown',
+    _ => 'Staff breakdown',
+  };
   final lines = d.lines;
-  if (lines.isEmpty) {
-    return [_section(items ? 'Item breakdown' : 'Staff breakdown', tone), _note('No sales in this period.')];
-  }
+  if (lines.isEmpty) return [_section(heading, tone), _note('No sales in this period.')];
   // Share of the metric the list is ranked by, like the bars on screen.
-  final byQty = items && d.rankByQty;
+  final byQty = kind != ReportExportKind.stylists && d.rankByQty;
   final whole = byQty ? d.totalQuantity : d.totalAmount;
   final itemsSold = lines.fold<int>(0, (a, l) => a + l.items);
+  final shareOf = [for (final l in lines) byQty ? l.quantity : l.amount];
 
   return [
     _section('Summary', tone),
     _kpiGrid(
-      items
-          ? [
-              _Kpi('Items', '${d.lineCount}'),
-              _Kpi('Quantity sold', qtyLabel(d.totalQuantity)),
-              _Kpi('Net amount', Money.of(d.totalAmount), color: tone.accent),
-            ]
-          : [
-              _Kpi('Staff', '${d.lineCount}'),
-              _Kpi('Items sold', '$itemsSold'),
-              _Kpi('Net revenue', Money.of(d.totalAmount), color: tone.accent),
-            ],
+      switch (kind) {
+        ReportExportKind.items => [
+            _Kpi('Items', '${d.lineCount}'),
+            _Kpi('Quantity sold', qtyLabel(d.totalQuantity)),
+            _Kpi('Net amount', Money.of(d.totalAmount), color: tone.accent),
+          ],
+        ReportExportKind.categories => [
+            _Kpi('Categories', '${d.lineCount}'),
+            _Kpi('Quantity sold', qtyLabel(d.totalQuantity)),
+            _Kpi('Net amount', Money.of(d.totalAmount), color: tone.accent),
+          ],
+        _ => [
+            _Kpi('Staff', '${d.lineCount}'),
+            _Kpi('Items sold', '$itemsSold'),
+            _Kpi('Net revenue', Money.of(d.totalAmount), color: tone.accent),
+          ],
+      },
       tone,
     ),
+    if (kind == ReportExportKind.categories) ..._mix(d, shareOf, whole, byQty, tone),
     _section(
-      items ? 'Item breakdown' : 'Staff breakdown',
+      heading,
       tone,
-      note: d.truncated ? 'Top ${lines.length} of ${d.lineCount}' : items ? _count(lines.length, 'item') : '${lines.length} staff',
+      note: d.truncated
+          ? 'Top ${lines.length} of ${d.lineCount}'
+          : switch (kind) {
+              ReportExportKind.items => _count(lines.length, 'item'),
+              ReportExportKind.categories => lines.length == 1 ? '1 category' : '${lines.length} categories',
+              _ => '${lines.length} staff',
+            },
     ),
-    if (items)
-      _table(
-        tone,
-        [
-          const _Col('#', 0.6),
-          const _Col('Item', 4),
-          const _Col('Code', 1.6),
-          const _Col('Qty', 1.1, right: true),
-          const _Col('Bills', 1, right: true),
-          _Col(_withCurrency('Amount'), 2, right: true),
-          const _Col('Share', 1.1, right: true),
-        ],
-        [
-          for (var i = 0; i < lines.length; i++)
-            [
-              '${i + 1}',
-              lines[i].name,
-              lines[i].code,
-              qtyLabel(lines[i].quantity),
-              '${lines[i].bills}',
-              _amt(lines[i].amount),
-              _share(byQty ? lines[i].quantity : lines[i].amount, whole),
-            ],
-        ],
-        total: ['', 'Total', '', qtyLabel(d.totalQuantity), '', _amt(d.totalAmount), ''],
-      )
-    else
-      _table(
-        tone,
-        [
-          const _Col('#', 0.6),
-          const _Col('Staff', 4.4),
-          const _Col('Bills', 1.2, right: true),
-          const _Col('Items', 1.2, right: true),
-          _Col(_withCurrency('Revenue'), 2.2, right: true),
-          const _Col('Share', 1.2, right: true),
-        ],
-        [
-          for (var i = 0; i < lines.length; i++)
-            [
-              '${i + 1}',
-              lines[i].name,
-              '${lines[i].bills}',
-              '${lines[i].items}',
-              _amt(lines[i].amount),
-              _share(lines[i].amount, whole),
-            ],
-        ],
-        total: ['', 'Total', '', '$itemsSold', _amt(d.totalAmount), ''],
-        highlight: {
-          for (var i = 0; i < lines.length; i++)
-            if (_isMe(lines[i].id, b)) i,
-        },
-      ),
-    if (!items && lines.any((l) => _isMe(l.id, b))) _meNote(b),
+    switch (kind) {
+      ReportExportKind.items => _table(
+          tone,
+          [
+            const _Col('#', 0.6),
+            const _Col('Item', 4),
+            const _Col('Code', 1.6),
+            const _Col('Qty', 1.1, right: true),
+            const _Col('Bills', 1, right: true),
+            _Col(_withCurrency('Amount'), 2, right: true),
+            const _Col('Share', 1.1, right: true),
+          ],
+          [
+            for (var i = 0; i < lines.length; i++)
+              [
+                '${i + 1}',
+                lines[i].name,
+                lines[i].code,
+                qtyLabel(lines[i].quantity),
+                '${lines[i].bills}',
+                _amt(lines[i].amount),
+                _share(shareOf[i], whole),
+              ],
+          ],
+          total: ['', 'Total', '', qtyLabel(d.totalQuantity), '', _amt(d.totalAmount), ''],
+        ),
+      // A bill can span categories, so its Bills column has no total.
+      ReportExportKind.categories => _table(
+          tone,
+          [
+            const _Col('#', 0.6),
+            const _Col('Category', 4),
+            const _Col('Items', 1.1, right: true),
+            const _Col('Qty', 1.1, right: true),
+            const _Col('Bills', 1, right: true),
+            _Col(_withCurrency('Amount'), 2, right: true),
+            const _Col('Share', 1.1, right: true),
+          ],
+          [
+            for (var i = 0; i < lines.length; i++)
+              [
+                '${i + 1}',
+                lines[i].name,
+                '${lines[i].items}',
+                qtyLabel(lines[i].quantity),
+                '${lines[i].bills}',
+                _amt(lines[i].amount),
+                _share(shareOf[i], whole),
+              ],
+          ],
+          total: ['', 'Total', d.truncated ? '' : '$itemsSold', qtyLabel(d.totalQuantity), '', _amt(d.totalAmount), ''],
+        ),
+      _ => _table(
+          tone,
+          [
+            const _Col('#', 0.6),
+            const _Col('Staff', 4.4),
+            const _Col('Bills', 1.2, right: true),
+            const _Col('Items', 1.2, right: true),
+            _Col(_withCurrency('Revenue'), 2.2, right: true),
+            const _Col('Share', 1.2, right: true),
+          ],
+          [
+            for (var i = 0; i < lines.length; i++)
+              [
+                '${i + 1}',
+                lines[i].name,
+                '${lines[i].bills}',
+                '${lines[i].items}',
+                _amt(lines[i].amount),
+                _share(shareOf[i], whole),
+              ],
+          ],
+          total: ['', 'Total', '', '$itemsSold', _amt(d.totalAmount), ''],
+          highlight: {
+            for (var i = 0; i < lines.length; i++)
+              if (_isMe(lines[i].id, b)) i,
+          },
+        ),
+    },
+    if (kind == ReportExportKind.stylists && lines.any((l) => _isMe(l.id, b))) _meNote(b),
     if (d.truncated)
       _note('The list stops at the top ${lines.length} of ${d.lineCount}; the totals cover all of them. '
           'Export a shorter range to list every line.'),
+  ];
+}
+
+/// Slice colours for the category mix, the accent first.
+List<PdfColor> _mixColors(_Tone tone) => [
+      tone.accent,
+      _good,
+      _warn,
+      _bad,
+      const PdfColor.fromInt(0xFF7C5CC4),
+      const PdfColor.fromInt(0xFF2A9BB5),
+    ];
+
+/// The category mix at a glance: one stacked bar of each category's share of
+/// the ranked metric, the top five named and the rest folded into "Others",
+/// with a legend under it. Left out when there is no mix to show — a single
+/// category, or a period whose returns outweigh its sales.
+List<pw.Widget> _mix(ReportExport d, List<double> values, double whole, bool byQty, _Tone tone) {
+  if (whole <= 0 || values.where((v) => v > 0).length < 2) return const [];
+  const named = 5;
+  final colors = _mixColors(tone);
+  final slices = <(String, double)>[
+    for (var i = 0; i < d.lines.length && i < named; i++)
+      if (values[i] > 0) (d.lines[i].name, values[i]),
+  ];
+  // Everything past the top five, plus lines the export cap left off.
+  final rest = whole - slices.fold<double>(0, (a, s) => a + s.$2);
+  if (rest / whole >= 0.001) slices.add(('Others', rest));
+
+  final flexes = [for (final s in slices) (s.$2 / whole * 1000).round().clamp(1, 1000)];
+
+  pw.Widget legend(int i) => pw.Row(
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          pw.Container(
+            width: 7,
+            height: 7,
+            decoration: pw.BoxDecoration(color: colors[i % colors.length], borderRadius: pw.BorderRadius.circular(2)),
+          ),
+          pw.SizedBox(width: 4),
+          pw.ConstrainedBox(
+            constraints: const pw.BoxConstraints(maxWidth: 130),
+            child: _t(slices[i].$1, size: 7.6, bold: true),
+          ),
+          pw.SizedBox(width: 3),
+          _t(_share(slices[i].$2, whole), size: 7.6, color: _muted),
+        ],
+      );
+
+  return [
+    _section('Sales mix', tone, note: byQty ? 'Share of quantity sold' : 'Share of net amount'),
+    pw.ClipRRect(
+      horizontalRadius: 3,
+      verticalRadius: 3,
+      child: pw.SizedBox(
+        height: 12,
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < slices.length; i++)
+              pw.Expanded(flex: flexes[i], child: pw.Container(color: colors[i % colors.length])),
+          ],
+        ),
+      ),
+    ),
+    pw.SizedBox(height: 7),
+    pw.Wrap(
+      spacing: 14,
+      runSpacing: 5,
+      children: [for (var i = 0; i < slices.length; i++) legend(i)],
+    ),
   ];
 }
 

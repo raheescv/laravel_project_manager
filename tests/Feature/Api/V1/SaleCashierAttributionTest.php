@@ -84,10 +84,10 @@ it('ignores a claimed cashier id that does not exist', function (): void {
     expect(Sale::withoutGlobalScopes()->value('created_by'))->toBe($this->world->user->id);
 });
 
-it('takes the branch from the claimed cashier, never from the request', function (): void {
-    // The branch is not a claim at all — it follows whoever the sale is filed
-    // under. That is what stops this being a way to post a sale into a branch
-    // you have no business in.
+it('never books a sale into a branch the claimed cashier is not assigned to', function (): void {
+    // A requested branch is honoured only when the cashier the sale is filed
+    // under works there (see OperatingBranchTest). That is what stops this being
+    // a way to post a sale into a branch you have no business in.
     $second = $this->world->addBranch();
     $cashierAtSecond = User::factory()->create([
         'tenant_id' => $this->world->tenant->id,
@@ -97,7 +97,7 @@ it('takes the branch from the claimed cashier, never from the request', function
     $this->postJson($this->world->url('/api/v1/sale'), $this->world->salePayload([
         'clientUuid' => (string) Str::uuid(),
         'clientUserId' => $cashierAtSecond->id,
-        // Ignored outright — the request has no say in the branch.
+        // Ignored — this cashier has no assignment to it.
         'clientBranchId' => $this->world->branch->id,
     ]))->assertSuccessful();
 

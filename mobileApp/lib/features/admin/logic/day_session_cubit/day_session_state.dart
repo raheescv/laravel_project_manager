@@ -6,6 +6,7 @@ class DaySessionState extends Equatable {
     required this.selected,
     this.status = 'closed',
     this.session,
+    this.report,
     this.busy = false,
     this.syncing = false,
     this.errorMessage,
@@ -17,6 +18,11 @@ class DaySessionState extends Equatable {
   /// The open/close moment the user has dialled in, to the minute.
   final DateTime selected;
   final DaySession? session;
+
+  /// The session the Sale Bill Report prints for: the open one, or the one
+  /// opened last once the day is shut. Null until looked up, and for a branch
+  /// that has never opened a day.
+  final DaySessionSummary? report;
 
   /// The toggle is in flight.
   final bool busy;
@@ -34,6 +40,8 @@ class DaySessionState extends Equatable {
     DateTime? selected,
     DaySession? session,
     bool clearSession = false,
+    DaySessionSummary? report,
+    bool clearReport = false,
     bool? busy,
     bool? syncing,
     String? errorMessage,
@@ -43,11 +51,12 @@ class DaySessionState extends Equatable {
         status: status ?? this.status,
         selected: selected ?? this.selected,
         session: clearSession ? null : (session ?? this.session),
+        report: clearReport ? null : (report ?? this.report),
         busy: busy ?? this.busy,
         syncing: syncing ?? this.syncing,
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       );
 
   @override
-  List<Object?> get props => [status, selected, session, busy, syncing, errorMessage];
+  List<Object?> get props => [status, selected, session, report, busy, syncing, errorMessage];
 }

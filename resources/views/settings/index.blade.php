@@ -629,12 +629,12 @@
                         <div class="col-12 col-md-4 col-lg-3 border-end settings-tabs-column">
                             <h6 class="settings-tabs-heading d-none d-md-block">Categories</h6>
                             <ul class="nav flex-row flex-md-column nav-pills settings-tabs" role="tablist">
-                                <li class="nav-item" role="presentation">
+                                {{-- <li class="nav-item" role="presentation">
                                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsMyPermissions" type="button" role="tab"
                                         aria-selected="false" tabindex="-1">
                                         <i class="fa fa-key"></i><span>My Permissions</span>
                                     </button>
-                                </li>
+                                </li> --}}
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab"
@@ -745,6 +745,14 @@
                                         </button>
                                     </li>
                                 @endcan
+                                @if (\App\Support\ModuleAccess::school() && auth()->user()->can('student settings.edit'))
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsStudentCards" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="fa fa-graduation-cap"></i><span>Student Cards</span>
+                                        </button>
+                                    </li>
+                                @endif
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab"
                                         aria-selected="false" tabindex="-1">
@@ -867,6 +875,12 @@
                                         @livewire('settings.rent-out-configuration')
                                     </div>
                                 @endcan
+                                @if (\App\Support\ModuleAccess::school() && auth()->user()->can('student settings.edit'))
+                                    <div id="tabsStudentCards" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.student-configuration')
+                                        @livewire('settings.q-pay-payments')
+                                    </div>
+                                @endif
                                 @can('configuration.settings')
                                     <div id="tabsUniversalUom" class="tab-pane" role="tabpanel">
                                         @livewire('settings.universal-uom-configuration')

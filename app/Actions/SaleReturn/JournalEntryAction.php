@@ -71,7 +71,13 @@ class JournalEntryAction
                 $entries[] = $this->makeEntryPair($accounts['discount'], $model->account_id, $debit, $credit, $remarks, 'SaleReturn', $model->id);
             }
 
+            // A refund to a Student Card moves no money: the return's credit to the
+            // student account above already puts the amount back on the card.
+            $studentCardId = $accounts['student_card'] ?? null;
             foreach ($model->payments as $payment) {
+                if ($studentCardId && $payment->payment_method_id == $studentCardId) {
+                    continue;
+                }
                 $remarks = $payment->paymentMethod->name.' payment made by '.$model->account->name;
                 $debit = 0;
                 $credit = $payment->amount;

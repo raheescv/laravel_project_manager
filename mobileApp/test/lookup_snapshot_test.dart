@@ -237,9 +237,9 @@ class _StubLookup implements LookupRepository {
       (baseCode: null, currencies: const <Currency>[]);
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, RemotePrintConfig? print})>
+  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, bool? schoolEnabled, RemotePrintConfig? print})>
       saleSettings() async =>
-          (defaultQuantity: null, tipEnabled: null, defaultProductType: null, print: null);
+          (defaultQuantity: null, tipEnabled: null, defaultProductType: null, schoolEnabled: null, print: null);
 
   @override
   Future<Uint8List> logo() => throw UnimplementedError();

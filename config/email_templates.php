@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\PropertyAppointment\AppointmentMailData;
+use App\Services\Student\ParentMailData;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,9 @@ use App\Services\PropertyAppointment\AppointmentMailData;
 |
 | Adding a module here is all it takes for its templates to appear in
 | Settings -> Email Templates.
+|
+| Each module may set a `footer_note`: the line under the company details in
+| the email footer that tells the recipient why they got it.
 |
 | Each type may carry a `default` subject/body. That is STARTER wording only:
 | it is never sent on its own and never overrides anything. A tenant explicitly
@@ -49,9 +53,52 @@ $appointmentScheduled = array_merge($appointmentBase, [
 
 return [
 
+    'student_portal' => [
+        'label' => 'Parent Portal',
+        // Listed only for tenants running the School module (App\Support\ModuleAccess).
+        'requires_module' => 'school',
+        'icon' => 'fa-graduation-cap',
+        'footer_note' => 'You received this because the school has you on record as a parent.',
+        'sample' => ParentMailData::class,
+        // Unlike other modules, these starters are created the first time a link
+        // is sent (see SendInviteAction): a parent cannot sign in without the
+        // email, so a school that never opened Settings must still get one out.
+        // Once created the tenant owns the wording like any other template.
+        'types' => [
+            'parent_invite' => [
+                'label' => 'Parent Portal Invite',
+                'description' => 'Sent when staff invite a parent who has not set a password yet. The subject is also the WhatsApp message.',
+                'default' => [
+                    'subject' => 'Your {{ company_name }} parent portal login',
+                    'body' => '<p>Hello {{ parent_name }},</p>'.
+                    '<p>You can now see {{ student_names }}\'s canteen card balance and bills, and top up the card online.</p>'.
+                    '{{ set_password_button }}'.
+                    '<p>Sign in with your mobile number {{ parent_mobile }}. This link works until {{ link_expires_at }}.</p>'.
+                    '<p>Kind regards,<br>{{ company_name }}</p>',
+                ],
+                'variables' => array_merge($common, ['parent_name', 'parent_mobile', 'student_names', 'set_password_link', 'set_password_button', 'link_expires_at']),
+            ],
+            'parent_password_reset' => [
+                'label' => 'Parent Password Reset',
+                'description' => 'Sent when staff send a password reset to a parent who already signed in, or the parent uses Forgot password. The subject is also the WhatsApp message.',
+                'default' => [
+                    'subject' => 'Reset your {{ company_name }} parent portal password',
+                    'body' => '<p>Hello {{ parent_name }},</p>'.
+                    '<p>A link to choose a new password for your parent portal login has been requested.</p>'.
+                    '{{ set_password_button }}'.
+                    '<p>Sign in with your mobile number {{ parent_mobile }}. This link works once, until {{ link_expires_at }}.</p>'.
+                    '<p>If you did not ask for this, you can ignore this email. Your current password still works.</p>'.
+                    '<p>Kind regards,<br>{{ company_name }}</p>',
+                ],
+                'variables' => array_merge($common, ['parent_name', 'parent_mobile', 'student_names', 'set_password_link', 'set_password_button', 'link_expires_at']),
+            ],
+        ],
+    ],
+
     'property_appointment' => [
         'label' => 'Property Appointment',
         'icon' => 'fa-calendar-check-o',
+        'footer_note' => 'You received this because you enquired about a property with us.',
         // Supplies realistic values for the Settings live preview (->sample()).
         'sample' => AppointmentMailData::class,
         'types' => [

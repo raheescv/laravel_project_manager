@@ -6,6 +6,8 @@ use App\Actions\Account\CreateAction as AccountCreateAction;
 use App\Actions\Sale\Item\DeleteAction as SaleItemDeleteAction;
 use App\Actions\Sale\Payment\DeleteAction as SalePaymentDeleteAction;
 use App\Actions\Sale\UpdateAction as SaleUpdateAction;
+use App\Actions\Student\EnsureAccountsAction;
+use App\Actions\V1\Student\ResolveCardCustomerAction;
 use App\Http\Requests\V1\Sale\UpdateRequest;
 use App\Models\Account;
 use App\Models\AccountCategory;
@@ -50,7 +52,13 @@ class UpdateAction
             }
             $branchId = (int) $sale->branch_id;
 
-            $customer = $this->resolveCustomer($request->validated('customerName'), $request->validated('phoneNumber'));
+            // A newly tapped card makes that student the customer. Editing a sale that
+            // is already a student's keeps the student without a fresh tap — the
+            // balance is still re-checked by the web action when the sale re-posts.
+            $student = $request->validated('studentAccountId')
+                ? (new ResolveCardCustomerAction())->execute((int) $request->validated('studentAccountId'), $request->validated('cardUid'))
+                : Account::student()->find($sale->account_id);
+            $customer = $student ?? $this->resolveCustomer($request->validated('customerName'), $request->validated('phoneNumber'));
             $items = $this->buildItems($request->validated('items'), $sale, $branchId, (int) $user->id);
             $totalPayment = (float) $request->validated('totalPayment');
             $payment = $this->resolvePayments(
@@ -60,6 +68,7 @@ class UpdateAction
                 // Read before the transaction replaces the rows, so a re-save can
                 // keep the exact account the sale is settled against.
                 $sale->payments->pluck('payment_method_id')->filter()->map(fn ($id) => (int) $id)->all(),
+                $student !== null,
             );
 
             $totals = $this->totals($items, (float) ($request->validated('discount') ?? 0));
@@ -315,7 +324,7 @@ class UpdateAction
      * @param  array<int, int>  $currentIds  Accounts this sale is already settled against.
      * @return array{payments: array<int, array{payment_method_id: int, amount: float}>, paid: float, ids: string, names: string}
      */
-    private function resolvePayments(string $method, array $customPayments, float $totalPayment, array $currentIds = []): array
+    private function resolvePayments(string $method, array $customPayments, float $totalPayment, array $currentIds = [], bool $studentSale = false): array
     {
         $method = trim($method);
 
@@ -323,7 +332,22 @@ class UpdateAction
             return ['payments' => [], 'paid' => 0.0, 'ids' => '', 'names' => 'Credit'];
         }
 
-        $configured = $this->configuredPaymentMethods();
+        $configured = $this->configuredPaymentMethods($studentSale);
+
+        if (strcasecmp($method, 'student_card') === 0) {
+            $cardId = EnsureAccountsAction::cardMethodId();
+            $account = $cardId ? $configured->firstWhere('id', $cardId) : null;
+            if (! $studentSale || ! $account) {
+                throw new RuntimeException('Only a student\'s own sale can be paid with Student Card.');
+            }
+
+            return [
+                'payments' => [['payment_method_id' => (int) $account->id, 'amount' => $totalPayment]],
+                'paid' => $totalPayment,
+                'ids' => (string) $account->id,
+                'names' => $account->name,
+            ];
+        }
 
         if ($configured->isEmpty()) {
             throw new RuntimeException('No payment methods are configured for this business.');
@@ -404,10 +428,16 @@ class UpdateAction
      *
      * @return \Illuminate\Support\Collection<int, Account>
      */
-    private function configuredPaymentMethods()
+    private function configuredPaymentMethods(bool $studentSale = false)
     {
+        $ids = tenant_cache('payment_methods', []) ?: [];
+        // Student Card is never offered as a general method; it only pays a student's own sale.
+        if ($studentSale && $cardId = EnsureAccountsAction::cardMethodId()) {
+            $ids[] = $cardId;
+        }
+
         return Account::query()
-            ->whereIn('id', tenant_cache('payment_methods', []))
+            ->whereIn('id', $ids)
             ->get(['id', 'name']);
     }
 

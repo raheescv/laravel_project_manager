@@ -15,7 +15,10 @@ import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/features/admin/logic/day_session_cubit/day_session_cubit.dart';
 import 'package:invo/features/admin/widgets/report_export_sheet.dart';
 import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
+import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
+import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/day_gate.dart';
 import 'package:invo/shared/utils/router/route_observer.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
@@ -26,17 +29,23 @@ part 'day_session_views.dart';
 /// Day Session — open / close the branch sale day for a chosen date & time.
 ///
 /// Hybrid layout: a Signature status hero, a Date + Time picker pair, a
-/// lifecycle timeline (Opened → In session → Close), and a sticky action that
-/// raises a confirm sheet before closing. State + the toggle live in
+/// lifecycle timeline (Opened → In session → Close), the session's Sale Bill
+/// Report, and a sticky action that raises a confirm sheet before closing —
+/// which also asks whether to print that report. State + the toggle live in
 /// [DaySessionCubit]; a successful toggle syncs back to the auth user.
 class DaySessionScreen extends StatefulWidget {
-  const DaySessionScreen({super.key, this.active = true});
+  const DaySessionScreen({super.key, this.active = true, this.forSale = false});
 
   /// Whether the shell has this pane on show. Only a tablet passes it — there
   /// the pane lives in the shell's IndexedStack and initState runs once, so
   /// flipping to true is what re-reads the day. On a phone the screen is a
   /// pushed route and is always on show.
   final bool active;
+
+  /// Sent here by the closed-day gate on the way to New Sale ([DayGate]): the
+  /// screen says why, and carries on to the POS as soon as the day is open —
+  /// opened here, or found already open by the server re-read.
+  final bool forSale;
 
   @override
   State<DaySessionScreen> createState() => _DaySessionScreenState();
@@ -49,6 +58,7 @@ class DaySessionScreen extends StatefulWidget {
 /// device; on a shared till the day moves underneath both.
 class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
   StreamSubscription<int>? _branchSub;
+  StreamSubscription<DaySessionState>? _daySub;
 
   @override
   void initState() {
@@ -65,6 +75,20 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
     _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
       if (mounted) _refresh();
     });
+    // On the way to a sale, a re-read that finds the day already open (another
+    // till, the web) has nothing left to ask of this screen. A toggle is not
+    // counted here — it is busy while it moves the day, and [_act] carries on
+    // itself once it has said so.
+    if (widget.forSale) {
+      var last = context.read<DaySessionCubit>().state;
+      _daySub = context.read<DaySessionCubit>().stream.listen((next) {
+        final foundOpen = !last.isOpen && next.isOpen && !last.busy && !next.busy;
+        last = next;
+        if (!foundOpen || !mounted) return;
+        AstraSnack.success(context, 'The day is already open.');
+        DayGate.toSale(context);
+      });
+    }
   }
 
   @override
@@ -91,6 +115,7 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
   void dispose() {
     routeObserver.unsubscribe(this);
     _branchSub?.cancel();
+    _daySub?.cancel();
     super.dispose();
   }
 
@@ -101,6 +126,7 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
     final c = context.watch<DaySessionCubit>();
     final user = context.select<AuthCubit, ApiUser?>((c) => c.state.user);
     final branchCtrl = context.watch<BranchCubit>();
+    final report = context.read<AuthCubit>().hasPermission(PermissionSlug.daySessionPrint) ? c.report : null;
     final branchName = c.session?.branch.isNotEmpty == true
         ? c.session!.branch
         : (branchCtrl.selected?.name ?? '');
@@ -109,6 +135,8 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
     // card stack. On a tablet the hero joins that stack as an inset card instead
     // of a full-bleed band stretched across the whole sheet.
     final tablet = context.isTablet;
+    // Sent here from New Sale, why they can't sell yet leads the page.
+    final noticeFirst = widget.forSale && !c.isOpen;
     final body = Stack(
       children: [
         ListView(
@@ -118,11 +146,23 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
               _hero(c, user, branchName),
               const SizedBox(height: 14),
             ],
+            if (noticeFirst) ...[
+              _saleGateCard(),
+              const SizedBox(height: 14),
+            ],
             _dateTimeCard(c),
             const SizedBox(height: 14),
             _timelineCard(c, user),
-            const SizedBox(height: 14),
-            _notice(c),
+            // The session's Sale Bill Report — not on the way to a sale, where
+            // the only thing left to do here is open the day.
+            if (report != null && !noticeFirst) ...[
+              const SizedBox(height: 14),
+              _reportCard(report),
+            ],
+            if (!noticeFirst) ...[
+              const SizedBox(height: 14),
+              _notice(c),
+            ],
           ],
         ),
         Positioned(left: 0, right: 0, bottom: 0, child: _dock(c)),
@@ -264,7 +304,11 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
           ),
           const SizedBox(height: 9),
           Text(
-            open ? 'You\'ll confirm before the day is closed' : 'Starts a new sale session for this branch',
+            open
+                ? 'You\'ll confirm before the day is closed'
+                : widget.forSale
+                    ? 'Opens the day, then takes you to New Sale'
+                    : 'Starts a new sale session for this branch',
             style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
           ),
         ],
@@ -430,13 +474,14 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
     // Not while the server is still saying which way the day is: the endpoint
     // toggles, so acting on a status it has already moved does the opposite.
     if (c.busy || c.syncing) return;
+    _CloseChoice? choice;
     if (c.isOpen) {
       // Closing over a queued sale would strand it: the server stamps a sale
       // into whichever session is open when it arrives, so one synced after the
       // close lands in tomorrow's takings and this day's cash-up is wrong.
       if (!await _guardPendingSales()) return;
-      final ok = await _confirmClose(c);
-      if (ok != true) return;
+      choice = await _confirmClose(c);
+      if (choice == null) return;
     }
     final res = await c.toggle();
     if (!mounted) return;
@@ -446,8 +491,15 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
       // Opening is good news; closing is simply news.
       if (res.isOpen) {
         snack.success(message);
+        if (widget.forSale) DayGate.toSale(context);
       } else {
         snack.show(message);
+        // Only once the close has landed, so the roll carries the final
+        // figures and who closed the day.
+        final closedId = res.session?.id ?? '';
+        if (choice == _CloseChoice.closeAndPrint && closedId.isNotEmpty) {
+          await printDaySessionRoll(context, closedId);
+        }
       }
     } else if (c.error != null) {
       snack.error(c.error!);
@@ -499,14 +551,23 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
   }
 
 
-  Future<bool?> _confirmClose(DaySessionCubit c) {
+  /// Confirms the close and, for those who may print it, asks whether the day's
+  /// Sale Bill Report goes to the thermal roll straight after — an answer this
+  /// till remembers. Null when the close is called off.
+  Future<_CloseChoice?> _confirmClose(DaySessionCubit c) async {
     final p = context.astra;
     final t = context.astraTheme;
-    return showModalBottomSheet<bool>(
+    final canPrint = context.read<AuthCubit>().hasPermission(PermissionSlug.daySessionPrint);
+    final printer = context.read<PrintSettingsCubit>();
+    final printHint = printer.hasPrinter
+        ? 'Thermal roll · straight to ${printer.printer.displayName}'
+        : 'Thermal roll · opens the preview to print';
+    var printIt = canPrint && c.printOnClose;
+    final choice = await showModalBottomSheet<_CloseChoice>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (sheetCtx) => Container(
+      builder: (_) => StatefulBuilder(builder: (sheetCtx, setSheet) => Container(
         decoration: BoxDecoration(
           color: p.cardSolid,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -559,12 +620,16 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
                 ],
               ),
             ),
+            if (canPrint) ...[
+              const SizedBox(height: 10),
+              _printToggle(printIt, printHint, () => setSheet(() => printIt = !printIt)),
+            ],
             const SizedBox(height: 18),
             Row(
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => Navigator.of(sheetCtx).pop(false),
+                    onTap: () => Navigator.of(sheetCtx).pop(),
                     child: Container(
                       height: 52,
                       alignment: Alignment.center,
@@ -576,7 +641,8 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
                 const SizedBox(width: 11),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => Navigator.of(sheetCtx).pop(true),
+                    onTap: () => Navigator.of(sheetCtx)
+                        .pop(printIt ? _CloseChoice.closeAndPrint : _CloseChoice.close),
                     child: Container(
                       height: 52,
                       alignment: Alignment.center,
@@ -588,7 +654,17 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: t.floatShadow(const Color(0xFFC0405A)),
                       ),
-                      child: Text('Close day', style: ui(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (printIt) ...[
+                            const Icon(Icons.print_outlined, size: 17, color: Colors.white),
+                            const SizedBox(width: 7),
+                          ],
+                          Text(printIt ? 'Close & print' : 'Close day',
+                              style: ui(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -596,9 +672,14 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
             ),
           ],
         ),
-      ),
+      )),
     );
+    if (choice != null && canPrint) unawaited(c.setPrintOnClose(choice == _CloseChoice.closeAndPrint));
+    return choice;
   }
 }
 
 enum _NodeState { done, live, pending }
+
+/// How the close sheet was answered.
+enum _CloseChoice { close, closeAndPrint }

@@ -60,8 +60,9 @@ class AuthCubit extends Cubit<AuthState> {
   /// Test seam: establish a session without a round-trip. Production code goes
   /// through [bootstrap] or [login] — the state is otherwise read-only.
   @visibleForTesting
-  void seedSession(ApiUser user, {AuthStatus status = AuthStatus.signedIn}) =>
-      emit(state.copyWith(user: user, status: status));
+  void seedSession(ApiUser user,
+          {AuthStatus status = AuthStatus.signedIn, bool branchPending = false}) =>
+      emit(state.copyWith(user: user, status: status, branchPending: branchPending));
 
   Future<void> bootstrap() async {
     _http.onUnauthorized = _forceSignOut;
@@ -74,6 +75,8 @@ class AuthCubit extends Cubit<AuthState> {
           // A till locked when the app was last closed comes back locked —
           // otherwise force-quitting would be a way around the lock screen.
           status: _storage.authLocked ? AuthStatus.locked : AuthStatus.signedIn,
+          // Same for the branch picker: quitting on it must not skip the choice.
+          branchPending: !_storage.authLocked && _storage.authBranchPending,
         ));
       } catch (_) {
         emit(state.copyWith(status: AuthStatus.signedOut, clearUser: true));
@@ -165,8 +168,9 @@ class AuthCubit extends Cubit<AuthState> {
       // Remember them as a user of this till, so the next outage does not lock
       // them out of it.
       await _remember(res, biometric);
+      final pending = await _holdForBranch(res.user.hasBranchChoice);
       emit(state.copyWith(
-          user: res.user, status: AuthStatus.signedIn, busy: false));
+          user: res.user, status: AuthStatus.signedIn, busy: false, branchPending: pending));
       onAuthenticated?.call(res.user);
       return true;
     } on ApiException catch (e) {
@@ -229,7 +233,9 @@ class AuthCubit extends Cubit<AuthState> {
       // session — and would have signed them in again on the biometric tap.
       await _storage.writeBiometric(jsonEncode(account.credential));
       await _storage.setAuthLocked(false);
-      emit(state.copyWith(user: user, status: AuthStatus.signedIn, busy: false));
+      final pending = await _holdForBranch(user.hasBranchChoice);
+      emit(state.copyWith(
+          user: user, status: AuthStatus.signedIn, busy: false, branchPending: pending));
       // Best-effort: an offline sign-in still counts as using this till.
       try {
         await _accounts.touch(account, DateTime.now());
@@ -272,6 +278,28 @@ class AuthCubit extends Cubit<AuthState> {
   /// for tests.
   Future<List<DeviceAccount>> deviceAccounts() => _accounts.all();
 
+  // ---- Branch choice ----
+  //
+  // Someone assigned to more than one branch says which one they are working
+  // as on every sign-in: the branch decides the stock they sell from and where
+  // their sales are booked. Persisted, so quitting on the picker brings it back.
+
+  Future<bool> _holdForBranch(bool pending) async {
+    await _storage.setAuthBranchPending(pending);
+    return pending;
+  }
+
+  /// An unlock asks again too, unless the till has turned that off (Settings →
+  /// Sale Configuration), in which case the last chosen branch carries on.
+  Future<bool> _holdForBranchOnUnlock() => _holdForBranch(
+      (user?.hasBranchChoice ?? false) && (_storage.posAskBranchOnUnlock ?? true));
+
+  /// The branch picker is done — let the session through to the app.
+  Future<void> confirmBranch() async {
+    await _storage.setAuthBranchPending(false);
+    emit(state.copyWith(branchPending: false));
+  }
+
   // ---- Terminal lock ----
   //
   // A shared till hands over between cashiers constantly, so the handover has
@@ -302,7 +330,8 @@ class AuthCubit extends Cubit<AuthState> {
   /// reason the roster keeps every user's PIN rather than just the last one's.
   Future<bool> unlock(String pin) async {
     if (await _isCurrentUsersPin(pin)) {
-      emit(state.copyWith(status: AuthStatus.signedIn, clearError: true));
+      final pending = await _holdForBranchOnUnlock();
+      emit(state.copyWith(status: AuthStatus.signedIn, clearError: true, branchPending: pending));
       await _storage.setAuthLocked(false);
       return true;
     }
@@ -403,7 +432,8 @@ class AuthCubit extends Cubit<AuthState> {
       return 'Biometric authentication is unavailable on this device.';
     }
     if (!ok) return null; // cancelled — no error toast
-    emit(state.copyWith(status: AuthStatus.signedIn, clearError: true));
+    final pending = await _holdForBranchOnUnlock();
+    emit(state.copyWith(status: AuthStatus.signedIn, clearError: true, branchPending: pending));
     await _storage.setAuthLocked(false);
     return null;
   }
@@ -522,6 +552,7 @@ class AuthCubit extends Cubit<AuthState> {
     await _storage.clearToken();
     await _storage.clearUser();
     await _storage.setAuthLocked(false);
-    emit(state.copyWith(status: AuthStatus.signedOut, clearUser: true));
+    await _storage.setAuthBranchPending(false);
+    emit(state.copyWith(status: AuthStatus.signedOut, clearUser: true, branchPending: false));
   }
 }

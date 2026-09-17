@@ -26,6 +26,7 @@ class AppointmentMail extends Mailable
         public ?string $companyName = null,
         public ?int $logId = null,
         public ?string $preheader = null,
+        public ?string $footerNote = null,
     ) {}
 
     /**
@@ -64,6 +65,7 @@ class AppointmentMail extends Mailable
                 'companyEmail' => tenant_cache('email', '') ?: '',
                 'accent' => \App\Services\EmailTemplateRenderer::accent(),
                 'preheader' => $this->preheader,
+                'footerNote' => $this->footerNote,
             ],
         );
     }

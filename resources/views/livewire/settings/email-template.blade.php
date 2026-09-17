@@ -129,7 +129,9 @@
                             <b>{{ $companyName }}</b>
                             @if (filled($companyPhone)) &middot; {{ $companyPhone }} @endif
                             @if (filled($companyEmail)) &middot; {{ $companyEmail }} @endif
-                            <br>You received this because you enquired about a property with us.
+                            @if (filled($footerNote = \App\Models\EmailTemplate::footerNoteFor($module)))
+                                <br>{{ $footerNote }}
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -16,7 +16,9 @@ part 'branch_state.dart';
 /// selected branch id is pushed onto [HttpService.activeBranchId] so every
 /// request carries `branch_id` app-wide.
 class BranchCubit extends Cubit<BranchState> {
-  BranchCubit({this.userBranchId}) : super(const BranchState()) {
+  BranchCubit({this.userBranchId, List<Branch> userBranches = const []})
+      : _assigned = userBranches,
+        super(const BranchState()) {
     // Apply the persisted (or the user's home) branch immediately so requests
     // made before the branch list returns already carry branch_id.
     //
@@ -32,6 +34,12 @@ class BranchCubit extends Cubit<BranchState> {
   }
 
   final int? userBranchId;
+
+  /// The signed-in user's own branches, from their sign-in. When known the app
+  /// offers exactly these — nothing to fetch, so an offline launch has them too.
+  /// Empty for a session cached by a build that predates them, which keeps the
+  /// server's branch list.
+  List<Branch> _assigned;
 
   HttpService get _http => serviceLocator<HttpService>();
   LookupRepository get _repo => serviceLocator<LookupRepository>();
@@ -54,29 +62,67 @@ class BranchCubit extends Cubit<BranchState> {
   int? get selectedId => state.selected?.id ?? _http.activeBranchId;
 
   Future<void> _load() async {
+    if (_assigned.isNotEmpty) return _adopt(_assigned);
     emit(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
     try {
       final rows = await _repo.branches();
-      Branch? pick = state.selected;
-      if (rows.isNotEmpty) {
-        final targetId = _storage.branchId ?? _storage.lastBranchId ?? userBranchId;
-        pick = rows.firstWhere((b) => b.id == targetId, orElse: () => rows.first);
-        _http.activeBranchId = pick.id;
-        // Remember what we actually landed on, so the next launch resolves the
-        // same branch with no network to ask.
-        await _storage.setLastBranchId(pick.id);
-      }
-      emit(state.copyWith(
-          status: DataFetchStatus.success, branches: rows, selected: pick));
+      // A sign-in can hand over the user's own branches while this was in
+      // flight — the server's full list must not land on top of them.
+      if (_assigned.isNotEmpty) return;
+      await _adopt(rows);
     } on ApiException catch (e) {
+      if (_assigned.isNotEmpty) return;
       emit(state.copyWith(status: DataFetchStatus.failed, errorMessage: e.message));
     } catch (_) {
+      if (_assigned.isNotEmpty) return;
       emit(state.copyWith(
           status: DataFetchStatus.failed, errorMessage: 'Could not load branches.'));
     }
   }
 
+  /// Lands on the explicit pick, else the last branch used, else the home
+  /// branch — whichever is actually in [rows] — or the first of them.
+  Future<void> _adopt(List<Branch> rows) async {
+    Branch? pick = state.selected;
+    if (rows.isNotEmpty) {
+      pick = _find(rows, _storage.branchId) ??
+          _find(rows, _storage.lastBranchId) ??
+          _find(rows, userBranchId) ??
+          rows.first;
+      _http.activeBranchId = pick.id;
+    }
+    emit(state.copyWith(
+        status: DataFetchStatus.success, branches: rows, selected: pick));
+    // Remember what we actually landed on, so the next launch resolves the
+    // same branch with no network to ask.
+    if (pick != null) await _storage.setLastBranchId(pick.id);
+  }
+
+  static Branch? _find(List<Branch> rows, int? id) {
+    for (final b in rows) {
+      if (b.id == id) return b;
+    }
+    return null;
+  }
+
   Future<void> refreshBranches() => _load();
+
+  /// A sign-in — or another cashier taking over the till: work from that
+  /// user's own branches. Stays on the current branch when they work there too
+  /// (no catalog reload), else lands on their home branch. A user with more
+  /// than one is then asked which, on the branch picker.
+  Future<void> applyUser(ApiUser user) async {
+    final home = int.tryParse(user.branchId ?? '');
+    if (user.branches.isEmpty) return applyUserDefault(home);
+    _assigned = user.branches;
+    final previous = selectedId;
+    final pick = _find(_assigned, previous) ?? _find(_assigned, home) ?? _assigned.first;
+    _http.activeBranchId = pick.id;
+    emit(state.copyWith(
+        status: DataFetchStatus.success, branches: _assigned, selected: pick, clearError: true));
+    await _storage.setLastBranchId(pick.id);
+    if (pick.id != previous) _branchChanged.add(pick.id);
+  }
 
   Future<void> applyUserDefault(int? homeBranchId) async {
     if (_storage.branchId != null) return; // respect an explicit pick
@@ -90,13 +136,18 @@ class BranchCubit extends Cubit<BranchState> {
   }
 
   Future<void> setBranch(Branch b) async {
-    if (state.selected?.id == b.id) return;
-    _http.activeBranchId = b.id;
-    emit(state.copyWith(selected: b));
+    final changed = state.selected?.id != b.id;
+    if (changed) {
+      _http.activeBranchId = b.id;
+      emit(state.copyWith(selected: b));
+    }
+    // Saved even when unchanged: picking the branch already in use still has to
+    // replace an earlier explicit pick — possibly another cashier's — or the
+    // next launch would resolve that one.
     await _storage.setBranchId(b.id);
     await _storage.setLastBranchId(b.id);
     // Fan out to every branch-scoped screen/cubit so they reload for this branch.
-    _branchChanged.add(b.id);
+    if (changed) _branchChanged.add(b.id);
   }
 
   @override

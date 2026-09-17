@@ -149,13 +149,14 @@ class LookupService implements LookupRepository {
   }
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, RemotePrintConfig? print})> saleSettings() async {
+  Future<({double? defaultQuantity, bool? tipEnabled, String? defaultProductType, bool? schoolEnabled, RemotePrintConfig? print})> saleSettings() async {
     final data = await _http.get(EndPoints.saleSettings);
     final map = Map<String, dynamic>.from(data as Map);
     return (
       defaultQuantity: double.tryParse(map['default_quantity']?.toString() ?? ''),
       tipEnabled: map['tip_enabled'] is bool ? map['tip_enabled'] as bool : null,
       defaultProductType: map['default_product_type']?.toString(),
+      schoolEnabled: map['school_enabled'] is bool ? map['school_enabled'] as bool : null,
       print: map['print'] is Map ? RemotePrintConfig.fromJson(Map<String, dynamic>.from(map['print'] as Map)) : null,
     );
   }

@@ -116,6 +116,10 @@ class LocalStorageService {
   Future<void> setAuthLocked(bool v) =>
       _prefs.setBool(LocalStorageKeys.authLocked, v);
 
+  bool get authBranchPending => _prefs.getBool(LocalStorageKeys.authBranchPending) ?? false;
+  Future<void> setAuthBranchPending(bool v) =>
+      _prefs.setBool(LocalStorageKeys.authBranchPending, v);
+
   // ---- config ----
   String? get baseUrl => _prefs.getString(LocalStorageKeys.baseUrl);
   Future<void> setBaseUrl(String v) =>
@@ -166,6 +170,12 @@ class LocalStorageService {
   bool? get tipEnabled => _prefs.getBool(LocalStorageKeys.tipEnabled);
   Future<void> setTipEnabled(bool v) =>
       _prefs.setBool(LocalStorageKeys.tipEnabled, v);
+
+  // Whether the business runs the School module — student cards at the till
+  // (Settings → Module Configuration on the web). Off until the server says so.
+  bool get schoolEnabled => _prefs.getBool(LocalStorageKeys.schoolEnabled) ?? false;
+  Future<void> setSchoolEnabled(bool v) =>
+      _prefs.setBool(LocalStorageKeys.schoolEnabled, v);
 
   // Default POS Product/Service filter (Settings → Sale Configuration).
   // 'product' / 'service' narrow the catalog; '' means All Types.
@@ -219,6 +229,12 @@ class LocalStorageService {
   Future<void> setPosLockAfterSale(bool v) =>
       _prefs.setBool(LocalStorageKeys.posLockAfterSale, v);
 
+  // Whether an unlock asks a multi-branch user for the branch again. Null until
+  // the till chooses, which means ask.
+  bool? get posAskBranchOnUnlock => _prefs.getBool(LocalStorageKeys.posAskBranchOnUnlock);
+  Future<void> setPosAskBranchOnUnlock(bool v) =>
+      _prefs.setBool(LocalStorageKeys.posAskBranchOnUnlock, v);
+
   // How many product tiles New Sale fits across in grid view. Null until the
   // till picks one, so the screen keeps its own default.
   int? get posGridColumns => _prefs.getInt(LocalStorageKeys.posGridColumns);
@@ -255,6 +271,12 @@ class LocalStorageService {
       _prefs.getString(LocalStorageKeys.posStartScreen);
   Future<void> setPosStartScreen(String v) =>
       _prefs.setString(LocalStorageKeys.posStartScreen, v);
+
+  // Whether closing the day prints its Sale Bill Report. Null until the close
+  // sheet is first answered, which means print.
+  bool? get daySessionPrintOnClose => _prefs.getBool(LocalStorageKeys.daySessionPrintOnClose);
+  Future<void> setDaySessionPrintOnClose(bool v) =>
+      _prefs.setBool(LocalStorageKeys.daySessionPrintOnClose, v);
 
   // ---- offline selling (device-local) ----
   // Short tag identifying this till inside the provisional references it prints,

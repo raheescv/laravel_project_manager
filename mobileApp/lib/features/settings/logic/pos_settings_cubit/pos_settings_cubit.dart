@@ -19,6 +19,7 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
     final storage = serviceLocator<LocalStorageService>();
     return PosSettingsState(
       lockAfterSale: storage.posLockAfterSale ?? true,
+      askBranchOnUnlock: storage.posAskBranchOnUnlock ?? true,
       gridColumns: _sanitize(storage.posGridColumns),
       askClientOnNewSale: storage.posAskClient ?? true,
       showTip: storage.posShowTip ?? true,
@@ -40,6 +41,10 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   /// ticket can be rung under the last cashier's name on a counter nobody
   /// locked. The session itself survives — see `AuthCubit.lock`.
   bool get lockAfterSale => state.lockAfterSale;
+
+  /// Whether an unlock asks a multi-branch user for the branch again. Read by
+  /// `AuthCubit` straight from storage, so it applies from the next unlock.
+  bool get askBranchOnUnlock => state.askBranchOnUnlock;
 
   /// Product tiles across the New Sale grid on a phone. A wider screen still
   /// fits more — see `_productGrid`.
@@ -70,6 +75,14 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   }
 
   Future<void> toggleLockAfterSale() => setLockAfterSale(!state.lockAfterSale);
+
+  Future<void> setAskBranchOnUnlock(bool v) async {
+    if (v == state.askBranchOnUnlock) return;
+    emit(state.copyWith(askBranchOnUnlock: v));
+    await _storage.setPosAskBranchOnUnlock(v);
+  }
+
+  Future<void> toggleAskBranchOnUnlock() => setAskBranchOnUnlock(!state.askBranchOnUnlock);
 
   Future<void> setAskClientOnNewSale(bool v) async {
     if (v == state.askClientOnNewSale) return;

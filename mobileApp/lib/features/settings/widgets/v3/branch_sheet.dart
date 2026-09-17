@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/widgets/branch_tile.dart';
 
 /// Click-and-go branch picker: tapping a row sets the active branch instantly
 /// (so every API call now carries its branch_id) and closes the sheet. Premium,
@@ -67,7 +67,14 @@ Future<void> showBranchSheet(BuildContext context) {
                     padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
                     children: [
                       for (final b in controller.branches)
-                        _row(sheetContext, b, b.id == current?.id),
+                        BranchTile(
+                          branch: b,
+                          active: b.id == current?.id,
+                          onTap: () {
+                            sheetContext.read<BranchCubit>().setBranch(b);
+                            Navigator.of(sheetContext).pop();
+                          },
+                        ),
                     ],
                   ),
                 ),
@@ -76,60 +83,5 @@ Future<void> showBranchSheet(BuildContext context) {
         ),
       );
     },
-  );
-}
-
-Widget _row(BuildContext context, Branch b, bool active) {
-  final p = context.astra;
-  return GestureDetector(
-    onTap: () {
-      context.read<BranchCubit>().setBranch(b);
-      Navigator.of(context).pop();
-    },
-    behavior: HitTestBehavior.opaque,
-    child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-      decoration: BoxDecoration(
-        color: p.card,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: context.astraTheme.softShadow,
-        border: Border.all(color: active ? p.primary : Colors.transparent, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(12)),
-            child: Icon(Icons.storefront_outlined, size: 20, color: p.primaryDark),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(b.name, style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
-                Text(
-                  b.location.isEmpty ? b.code : b.location,
-                  style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted, letterSpacing: 0.3),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: active ? p.primaryGradient : null,
-              border: active ? null : Border.all(color: p.hairline, width: 1.5),
-            ),
-            child: active ? const Icon(Icons.check, size: 13, color: Colors.white) : null,
-          ),
-        ],
-      ),
-    ),
   );
 }

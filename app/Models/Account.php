@@ -193,6 +193,33 @@ class Account extends Model implements AuditableContracts
         return $query->where('model', 'Customer');
     }
 
+    /**
+     * Student accounts. A student's card balance is this account's own ledger
+     * balance; the school-only fields live in student_details.
+     */
+    public function scopeStudent($query)
+    {
+        return $query->where('accounts.model', 'student');
+    }
+
+    public function isStudent(): bool
+    {
+        return strtolower((string) $this->model) === 'student';
+    }
+
+    public function studentDetail()
+    {
+        return $this->hasOne(StudentDetail::class);
+    }
+
+    /** Parent portal logins that may see this student. */
+    public function guardians()
+    {
+        return $this->belongsToMany(Guardian::class, 'guardian_student', 'account_id', 'guardian_id')
+            ->withPivot(['relation', 'is_primary'])
+            ->withTimestamps();
+    }
+
     public function notes()
     {
         return $this->hasMany(AccountNote::class);

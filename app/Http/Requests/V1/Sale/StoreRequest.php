@@ -36,6 +36,14 @@ class StoreRequest extends FormRequest
             // The payment "mode": a method name (e.g. "Cash"), "credit" (no payment),
             // or "custom" (one or more methods supplied in `payments`).
             'paymentMethod' => ['required', 'string', 'max:50'],
+            // A student card sale: the tapped card's student is the customer, and
+            // paymentMethod "student_card" (or a custom row on the Student Card
+            // method) spends their card balance. cardUid is what was tapped.
+            'studentAccountId' => ['nullable', 'integer'],
+            'cardUid' => ['nullable', 'string', 'max:40'],
+            // The parent's pre-order the till put in the cart (from the card lookup's
+            // pre_order.id). A completed sale marks it collected for today.
+            'preOrderId' => ['nullable', 'integer'],
             'totalPayment' => ['required', 'numeric', 'min:0'],
             // Custom payment breakdown — required when paymentMethod is "custom".
             'payments' => ['nullable', 'array', 'required_if:paymentMethod,custom'],
@@ -67,10 +75,11 @@ class StoreRequest extends FormRequest
             // drains, and the sale belongs to whoever served the customer — not
             // to whoever happened to be standing there later.
             //
-            // Only the cashier is claimed. The branch is never sent: it follows
-            // that cashier's own assigned branch, which removes any way to post
-            // a sale into a branch you have no business in.
             'clientUserId' => ['nullable', 'integer'],
+            // The branch the till was working as when a queued sale was rung up;
+            // the live `branch_id` has moved on by the time it drains. Honoured
+            // only when that cashier is assigned to it — see User::operatingBranchId.
+            'clientBranchId' => ['nullable', 'integer'],
         ];
     }
 

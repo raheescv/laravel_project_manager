@@ -4,6 +4,7 @@ namespace App\Actions\V1\SaleReturn;
 
 use App\Actions\SaleReturn\Item\DeleteAction as SaleReturnItemDeleteAction;
 use App\Actions\SaleReturn\UpdateAction as SaleReturnUpdateAction;
+use App\Actions\Student\EnsureAccountsAction;
 use App\Http\Requests\V1\SaleReturn\UpdateRequest;
 use App\Models\Account;
 use App\Models\ApiLog;
@@ -40,15 +41,17 @@ class UpdateAction
             // and stamp Auth::id(); make sure the guard resolves to the API user.
             Auth::setUser($user);
 
-            $branchId = $user->default_branch_id;
+            $saleReturn = SaleReturn::query()
+                ->with(['items:id,sale_return_id,sale_item_id', 'payments:id,sale_return_id'])
+                ->findOrFail($saleReturnId);
+
+            // An edit keeps the return in the branch it was booked to — its stock
+            // came back there — whatever branch the app is working as now.
+            $branchId = $saleReturn->branch_id ?: $user->operatingBranchId($request->input('branch_id'));
 
             if (! $branchId) {
                 throw new RuntimeException('Your account is not assigned to a branch.');
             }
-
-            $saleReturn = SaleReturn::query()
-                ->with(['items:id,sale_return_id,sale_item_id', 'payments:id,sale_return_id'])
-                ->findOrFail($saleReturnId);
 
             if ($saleReturn->status === 'cancelled') {
                 throw new RuntimeException('A cancelled sale return can no longer be edited.');
@@ -65,10 +68,13 @@ class UpdateAction
             $items = $this->buildItems($request->validated('items'), $sale, $saleReturn);
             $totals = $this->totals($items, (float) ($request->validated('other_discount') ?? 0));
 
+            // A student's return may be refunded to their card (Student Card).
+            $studentReturn = Account::student()->whereKey($accountId)->exists();
             $payment = $this->resolvePayments(
                 $request->validated('paymentMethod'),
                 $request->validated('payments') ?? [],
                 (float) $request->validated('totalPayment'),
+                $studentReturn,
             );
 
             if ($payment['paid'] - $totals['grand_total'] > 0.01) {
@@ -278,7 +284,7 @@ class UpdateAction
      * @param  array<int, array<string, mixed>>  $customPayments
      * @return array{payments: array<int, array{payment_method_id: int, amount: float}>, paid: float}
      */
-    private function resolvePayments(string $method, array $customPayments, float $totalPayment): array
+    private function resolvePayments(string $method, array $customPayments, float $totalPayment, bool $studentReturn = false): array
     {
         $method = trim($method);
 
@@ -286,7 +292,16 @@ class UpdateAction
             return ['payments' => [], 'paid' => 0.0];
         }
 
-        $configured = $this->configuredPaymentMethods();
+        $configured = $this->configuredPaymentMethods($studentReturn);
+
+        if (strcasecmp($method, 'student_card') === 0) {
+            $cardId = EnsureAccountsAction::cardMethodId();
+            if (! $studentReturn || ! $cardId) {
+                throw new RuntimeException('Only a student\'s return can be refunded to Student Card.');
+            }
+
+            return ['payments' => [['payment_method_id' => $cardId, 'amount' => $totalPayment]], 'paid' => $totalPayment];
+        }
 
         if ($configured->isEmpty()) {
             throw new RuntimeException('No payment methods are configured for this business.');
@@ -333,10 +348,15 @@ class UpdateAction
      *
      * @return \Illuminate\Support\Collection<int, Account>
      */
-    private function configuredPaymentMethods()
+    private function configuredPaymentMethods(bool $studentReturn = false)
     {
+        $ids = tenant_cache('payment_methods', []) ?: [];
+        if ($studentReturn && $cardId = EnsureAccountsAction::cardMethodId()) {
+            $ids[] = $cardId;
+        }
+
         return Account::query()
-            ->whereIn('id', tenant_cache('payment_methods', []))
+            ->whereIn('id', $ids)
             ->get(['id', 'name']);
     }
 

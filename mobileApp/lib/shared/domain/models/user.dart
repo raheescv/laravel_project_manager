@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../helpers/formatters.dart';
+import 'catalog.dart';
 
 /// Authenticated user (Laravel AuthUserResource).
 class ApiUser extends Equatable {
@@ -21,6 +22,7 @@ class ApiUser extends Equatable {
     this.daySessionOpenedAt = '',
     this.lastClosedSessionAt = '',
     this.permissions = const [],
+    this.branches = const [],
   });
 
   final String id;
@@ -44,6 +46,12 @@ class ApiUser extends Equatable {
   final String daySessionOpenedAt; // 'Y-m-d H:i:s' while a day is open, else ''
   final String lastClosedSessionAt; // 'Y-m-d H:i:s' of the most recent close, else ''
   final List<String> permissions; // Spatie permission slugs granted to this user
+  // The branches this user may work as (their web assignments). More than one
+  // and every sign-in asks which — see `AuthState.branchPending`.
+  final List<Branch> branches;
+
+  /// Whether a sign-in has to ask which branch this session works as.
+  bool get hasBranchChoice => branches.length > 1;
 
   bool get dayOpen => daySessionStatus == 'open';
 
@@ -90,6 +98,9 @@ class ApiUser extends Equatable {
         permissions: (j['permissions'] as List<dynamic>? ?? [])
             .map((e) => asStr(e))
             .toList(),
+        branches: (j['branches'] as List<dynamic>? ?? [])
+            .map((e) => Branch.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -109,6 +120,7 @@ class ApiUser extends Equatable {
         'sale_day_session_opened_at': daySessionOpenedAt,
         'last_closed_session_at': lastClosedSessionAt,
         'permissions': permissions,
+        'branches': [for (final b in branches) b.toJson()],
       };
 
   /// Returns a copy with selected fields replaced. Covers the day-session fields
@@ -141,6 +153,7 @@ class ApiUser extends Equatable {
         daySessionOpenedAt: daySessionOpenedAt ?? this.daySessionOpenedAt,
         lastClosedSessionAt: lastClosedSessionAt ?? this.lastClosedSessionAt,
         permissions: permissions,
+        branches: branches,
       );
 
   String get initial => name.isNotEmpty ? name[0].toUpperCase() : '?';
@@ -164,5 +177,6 @@ class ApiUser extends Equatable {
         daySessionOpenedAt,
         lastClosedSessionAt,
         permissions,
+        branches,
       ];
 }
