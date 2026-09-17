@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canteen Menu — 3 Design Directions + Auto-fill presets</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   HARNESS — toolbar, fake Nifty shell, theme accent. Not part of any design.
+   Icons: only names that exist in Font Awesome 4.3 (the app's version).
+   ═══════════════════════════════════════════════════════════════════════ */
+:root { --p: #25476a; --p-rgb: 37, 71, 106; --page: #eef1f6; }
+:root, [data-bs-theme="light"] {
+  --bs-primary: var(--p); --bs-primary-rgb: var(--p-rgb);
+  --bs-primary-bg-subtle: color-mix(in srgb, var(--p) 12%, #fff);
+  --bs-primary-border-subtle: color-mix(in srgb, var(--p) 35%, #fff);
+  --bs-primary-text-emphasis: color-mix(in srgb, var(--p) 70%, #000);
+  --bs-link-color: var(--p); --bs-link-color-rgb: var(--p-rgb); --bs-link-hover-color: color-mix(in srgb, var(--p) 80%, #000);
+  --bs-body-font-family: Poppins, system-ui, sans-serif; --bs-body-font-size: .8125rem;
+}
+[data-bs-theme="dark"] {
+  --page: #15181c; --bs-body-bg: #1f2328; --bs-tertiary-bg: #272c32; --bs-border-color: #353b43;
+  --bs-primary-bg-subtle: color-mix(in srgb, var(--p) 26%, #1f2328);
+  --bs-primary-border-subtle: color-mix(in srgb, var(--p) 55%, #1f2328);
+  --bs-primary-text-emphasis: color-mix(in srgb, var(--p) 45%, #fff);
+  --bs-link-color: color-mix(in srgb, var(--p) 45%, #fff); --bs-link-hover-color: color-mix(in srgb, var(--p) 25%, #fff);
+}
+.btn-primary { --bs-btn-bg: var(--p); --bs-btn-border-color: var(--p); --bs-btn-hover-bg: color-mix(in srgb, var(--p), #000 14%); --bs-btn-hover-border-color: color-mix(in srgb, var(--p), #000 14%); --bs-btn-active-bg: color-mix(in srgb, var(--p), #000 22%); --bs-btn-active-border-color: color-mix(in srgb, var(--p), #000 22%); }
+.btn-outline-primary { --bs-btn-color: var(--bs-link-color); --bs-btn-border-color: var(--bs-primary-border-subtle); --bs-btn-hover-bg: var(--p); --bs-btn-hover-border-color: var(--p); --bs-btn-active-bg: var(--p); --bs-btn-active-border-color: var(--p); }
+body { background: var(--page); min-height: 100vh; padding-bottom: 90px; }
+h1, h2, h3, h4, h5, h6 { font-family: Poppins, sans-serif; }
+
+.hx-bar { position: sticky; top: 0; z-index: 1030; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; padding: 9px 14px;
+  background: color-mix(in srgb, var(--bs-body-bg) 88%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--bs-border-color); font-family: Ubuntu, sans-serif; }
+.hx-grp { display: flex; align-items: center; gap: 4px; }
+.hx-grp > span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--bs-secondary-color); margin-inline-end: 4px; }
+.hx-bar button { border: 1px solid var(--bs-border-color); background: var(--bs-body-bg); color: var(--bs-body-color); padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 500; }
+.hx-bar button.on { background: var(--bs-emphasis-color); color: var(--bs-body-bg); border-color: var(--bs-emphasis-color); }
+.hx-bar .sw { width: 22px; height: 22px; padding: 0; border-radius: 7px; border: 2px solid transparent; }
+.hx-bar .sw.on { outline: 2px solid var(--bs-emphasis-color); outline-offset: 1px; background-clip: padding-box; }
+.hx-note { max-width: 1320px; margin: 14px auto 0; padding: 0 16px; font-size: 12px; color: var(--bs-secondary-color); }
+.hx-note b { color: var(--bs-emphasis-color); font-weight: 600; }
+
+/* Fake Nifty chrome: the tenant-coloured, elliptical, overlapping header band. */
+.nf-band { background: var(--bs-primary); color: #fff; padding: 22px 0 120px; border-radius: 0 0 50% 50% / 0 0 38px 38px; }
+[data-bs-theme="dark"] .nf-band { background: color-mix(in srgb, var(--p), #000 40%); }
+.nf-wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+.nf-band .breadcrumb { --bs-breadcrumb-divider-color: rgba(255,255,255,.55); --bs-breadcrumb-item-active-color: rgba(255,255,255,.75); margin: 0; font-size: 12px; }
+.nf-band .breadcrumb a { color: rgba(255,255,255,.9); text-decoration: none; }
+.nf-band h1 { font-size: 1.6rem; font-weight: 600; margin: 8px 0 0; }
+.nf-band .lead { font-size: .95rem; color: rgba(255,255,255,.75); margin: 0; }
+.nf-content { margin-top: -96px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SHARED  ·  .cmx — the canteen-menu premium layer
+   Sibling of the student form (.sfx) and student view (.svx): same white
+   sheets, same theme-gradient hero, same tap-chip language. Every colour
+   comes from --bs-primary / Bootstrap subtle tokens, so the tenant's
+   Settings colour and dark mode drive it for free.
+   ═══════════════════════════════════════════════════════════════════════ */
+.cmx {
+  --acc: var(--bs-primary); --acc-rgb: var(--bs-primary-rgb);
+  --sf: #ffffff; --ln: #e4e8ee; --soft: #f5f7fa;
+  --mut: var(--bs-secondary-color); --ink: var(--bs-emphasis-color);
+  --sh: 0 1px 2px rgba(15,23,42,.05), 0 14px 34px -18px rgba(15,23,42,.22);
+  --hero-1: color-mix(in srgb, var(--bs-primary), #000 42%);
+  --hero-2: color-mix(in srgb, var(--bs-primary), #000 4%);
+  --hero-3: color-mix(in srgb, var(--bs-primary), #fff 10%);
+}
+[data-bs-theme="dark"] .cmx { --sf: #272d34; --soft: #2e353d; --ln: #3a424c;
+  --sh: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -20px rgba(0,0,0,.7);
+  --hero-1: color-mix(in srgb, var(--bs-primary), #000 64%); --hero-2: color-mix(in srgb, var(--bs-primary), #000 48%); --hero-3: color-mix(in srgb, var(--bs-primary), #000 30%); }
+
+@keyframes cmRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes cmFlash { from { background: rgba(var(--bs-success-rgb), .28); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .cmx *, .cmx *::before, .cmx *::after { animation: none !important; transition: none !important; } }
+
+.cmx .rise { animation: cmRise .5s cubic-bezier(.2,.75,.25,1) both; animation-delay: calc(var(--i,0) * 55ms); }
+.cmx .just { animation: cmFlash .9s ease-out both; }
+.cmx .sheet { background: var(--sf); border-radius: 18px; box-shadow: var(--sh); border: 1px solid color-mix(in srgb, var(--ln) 60%, transparent); }
+.cmx .min-w-0 { min-width: 0; }
+
+/* hero — theme gradient + fading dot grid, identical language to .sfx .top */
+.cmx .top { padding: 15px 20px; display: flex; gap: 12px 18px; align-items: center; flex-wrap: wrap; position: relative; overflow: hidden; isolation: isolate; color: #fff; border-color: transparent;
+  box-shadow: 0 16px 38px -16px rgba(16,24,40,.28), 0 7px 16px -10px rgba(16,24,40,.16);
+  background: radial-gradient(120% 160% at 12% -10%, rgba(255,255,255,.20), transparent 50%),
+              radial-gradient(90% 140% at 100% 0%, var(--hero-3), transparent 55%),
+              linear-gradient(118deg, var(--hero-1) 0%, var(--hero-2) 58%, var(--hero-3) 130%); }
+.cmx .top::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.5; pointer-events:none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.10) 1px, transparent 0); background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(180deg,#000,transparent 70%); mask-image: linear-gradient(180deg,#000,transparent 70%); }
+.cmx .top .eyebrow { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; font-size:10px; font-weight:700; line-height:1; letter-spacing:.1em; text-transform:uppercase; text-decoration:none; color:#fff; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.28); margin-bottom:8px; }
+.cmx .top h4 { margin:0; font-size: clamp(17px,1.8vw,20px); font-weight:700; line-height:1.15; letter-spacing:-.02em; color:#fff; }
+.cmx .top p { margin:4px 0 0; font-size:12.5px; color:rgba(255,255,255,.84); }
+.cmx .top .stat { display:flex; gap:18px; margin-inline-start:auto; flex-wrap:wrap; }
+.cmx .top .stat div { text-align:center; }
+.cmx .top .stat b { display:block; font-size:19px; font-weight:700; line-height:1.1; }
+.cmx .top .stat span { font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:rgba(255,255,255,.72); }
+
+/* meal picker — real .btn-check radios dressed as tap cards */
+.cmx .meals { display:flex; gap:8px; flex-wrap:wrap; }
+.cmx .mealc { display:flex; align-items:center; gap:9px; padding:8px 13px 8px 9px; border:1.5px solid var(--ln); border-radius:12px; cursor:pointer; background:var(--sf); margin:0; transition: all .18s; }
+.cmx .mealc:hover { border-color: var(--bs-primary-border-subtle); }
+.cmx .mealc .mi { width:30px; height:30px; border-radius:9px; display:grid; place-items:center; background:var(--soft); color:var(--mut); font-size:14px; flex:none; transition: all .18s; }
+.cmx .mealc b { display:block; font-size:13px; font-weight:500; color:var(--ink); line-height:1.2; }
+.cmx .mealc small { display:block; font-size:11px; color:var(--mut); }
+.cmx .btn-check:checked + .mealc { border-color:var(--acc); background:var(--bs-primary-bg-subtle); box-shadow:0 8px 20px -14px rgba(var(--acc-rgb),.8); }
+.cmx .btn-check:checked + .mealc .mi { background:var(--acc); color:#fff; }
+.cmx .btn-check:focus-visible + .mealc { outline:3px solid rgba(var(--acc-rgb),.35); outline-offset:2px; }
+
+/* fields */
+.cmx .form-control { border-radius:10px; border-color:var(--ln); font-size:13px; padding:6px 10px; min-height:34px; background:var(--sf); color:var(--ink); }
+.cmx .form-control:focus { border-color:var(--bs-primary-border-subtle); box-shadow:0 0 0 3px rgba(var(--acc-rgb),.14); background:var(--sf); }
+.cmx .form-control::placeholder { color: color-mix(in srgb, var(--mut) 65%, transparent); }
+.cmx .dishn { font-weight:600; }
+.cmx .dishd { font-size:12px; min-height:30px; resize:none; color:var(--mut); }
+.cmx .lbl { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--mut); }
+
+/* chips — the auto-fill language, shared by every direction */
+.cmx .chips { display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+.cmx .chip { border:1px solid var(--ln); background:var(--soft); color:var(--ink); border-radius:999px; padding:3px 10px; font-size:11.5px; font-weight:500; line-height:1.5; display:inline-flex; align-items:center; gap:5px; transition:all .15s; white-space:nowrap; }
+.cmx .chip:hover { border-color:var(--acc); background:var(--bs-primary-bg-subtle); color:var(--bs-primary-text-emphasis); }
+.cmx .chip i { font-size:10px; opacity:.65; }
+.cmx .chip.on { border-color:var(--acc); background:var(--bs-primary-bg-subtle); color:var(--bs-primary-text-emphasis); }
+.cmx .chip.tmpl { padding:5px 12px; font-size:12px; }
+.cmx .chipgrp { font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--mut); margin-inline-end:2px; }
+
+/* suggestion drawer under a focused dish field */
+.cmx .sug { display:none; margin-top:6px; padding:8px; border-radius:11px; background:var(--soft); border:1px dashed var(--ln); }
+.cmx .cell.focused .sug, .cmx .slot.focused .sug { display:block; animation: cmRise .18s ease-out both; }
+.cmx .sug .chip { background:var(--sf); }
+
+/* tools that appear on hover / focus */
+.cmx .tool { border:1px solid transparent; background:transparent; color:var(--mut); width:26px; height:26px; border-radius:8px; display:inline-grid; place-items:center; font-size:12px; transition:all .15s; }
+.cmx .tool:hover { background:var(--soft); color:var(--ink); border-color:var(--ln); }
+.cmx .tool.danger:hover { background:var(--bs-danger-bg-subtle); color:var(--bs-danger-text-emphasis); border-color:var(--bs-danger-border-subtle); }
+
+/* footer bar */
+.cmx .foot { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; padding:12px 18px; }
+.cmx .foot .note { font-size:12px; color:var(--mut); }
+.cmx .pill { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:600; }
+.cmx .pill.ok { background:var(--bs-success-bg-subtle); color:var(--bs-success-text-emphasis); }
+.cmx .pill.off { background:var(--soft); color:var(--mut); }
+.cmx .pill.warn { background:var(--bs-warning-bg-subtle); color:var(--bs-warning-text-emphasis); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DIRECTION A — "MENU SHEET"
+   The caterer's sheet, refined. Courses run down, school days across, the
+   course column frozen. Each cell is a soft dish card; hovering a row or a
+   day head reveals its fill tools. Closest to what is there today.
+   ═══════════════════════════════════════════════════════════════════════ */
+.cma .grid { overflow:auto; border-radius:0 0 18px 18px; }
+.cma table { border-collapse:separate; border-spacing:0; margin:0; width:100%; }
+.cma th, .cma td { padding:10px; vertical-align:top; border-bottom:1px solid var(--ln); }
+.cma thead th { position:sticky; top:0; z-index:3; background:var(--soft); border-bottom:1px solid var(--ln); padding:9px 12px; }
+.cma .cx { position:sticky; left:0; z-index:2; background:var(--sf); border-inline-end:1px solid var(--ln); width:206px; min-width:206px; }
+.cma thead .cx { z-index:4; background:var(--soft); }
+.cma tbody tr:last-child td { border-bottom:0; }
+.cma tbody tr:hover .cx { background: color-mix(in srgb, var(--bs-primary-bg-subtle) 45%, var(--sf)); }
+.cma .dayh { display:flex; align-items:center; gap:8px; }
+.cma .dayh .dn { font-size:13px; font-weight:600; color:var(--ink); line-height:1.15; }
+.cma .dayh .dc { font-size:10.5px; color:var(--mut); }
+.cma .dayh .dt { margin-inline-start:auto; display:flex; gap:2px; opacity:0; transition:opacity .15s; }
+.cma thead th:hover .dt { opacity:1; }
+.cma .idx { width:22px; height:22px; border-radius:7px; display:grid; place-items:center; font-size:11px; font-weight:600; background:var(--bs-primary-bg-subtle); color:var(--bs-primary-text-emphasis); flex:none; }
+.cma .ctools { display:flex; gap:2px; margin-top:7px; opacity:.25; transition:opacity .15s; }
+.cma tr:hover .ctools, .cma .cx:focus-within .ctools { opacity:1; }
+.cma .cell { border-radius:12px; padding:7px; background: color-mix(in srgb, var(--soft) 55%, transparent); border:1px solid transparent; transition: all .15s; }
+.cma .cell:hover { border-color:var(--ln); }
+.cma .cell.focused { border-color:var(--bs-primary-border-subtle); background:var(--sf); box-shadow:0 10px 26px -18px rgba(var(--acc-rgb),.9); }
+.cma .cell .form-control { border-color:transparent; background:transparent; }
+.cma .cell .form-control:focus { background:var(--sf); border-color:var(--bs-primary-border-subtle); }
+.cma .cell.empty { background: repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in srgb, var(--ln) 45%, transparent) 7px 8px); }
+.cma td.off { background: color-mix(in srgb, var(--soft) 40%, transparent); }
+.cma .sugbar { display:none; padding:10px 18px; border-top:1px dashed var(--ln); background: color-mix(in srgb, var(--soft) 60%, transparent); }
+.cma .sugbar.on { display:block; animation: cmRise .18s ease-out both; }
+.cma .sugbar .who { font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--mut); margin-bottom:6px; }
+.cma .sugbar .chip { background:var(--sf); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DIRECTION B — "DAY BOARD"
+   Courses are defined once in a rail at the top; then every school day is
+   its own card in a board you scroll across, filled slot by slot. Reads
+   like the week on a wall, and each card is a comfortable phone-width form.
+   ═══════════════════════════════════════════════════════════════════════ */
+.cmb .rail { display:flex; gap:8px; flex-wrap:wrap; padding:14px 18px; }
+.cmb .crs { display:flex; align-items:center; gap:7px; padding:6px 8px 6px 10px; border:1.5px solid var(--ln); border-radius:12px; background:var(--sf); min-width:200px; }
+.cmb .crs .form-control { border:0; padding:2px 0; min-height:0; height:auto; box-shadow:none !important; }
+.cmb .crs .nm { font-size:13px; font-weight:600; }
+.cmb .crs .nt { font-size:11px; color:var(--mut); }
+.cmb .board { display:flex; gap:12px; overflow-x:auto; padding:0 18px 18px; scroll-snap-type:x proximity; }
+.cmb .day { flex:0 0 268px; scroll-snap-align:start; border:1px solid var(--ln); border-radius:16px; background: color-mix(in srgb, var(--soft) 50%, var(--sf)); display:flex; flex-direction:column; }
+.cmb .day.done { border-color: color-mix(in srgb, var(--bs-success) 40%, var(--ln)); }
+.cmb .dhead { display:flex; align-items:center; gap:8px; padding:11px 12px; border-bottom:1px solid var(--ln); }
+.cmb .dhead .dn { font-size:13.5px; font-weight:600; color:var(--ink); }
+.cmb .dhead .dm { font-size:10.5px; color:var(--mut); }
+.cmb .dhead .bdg { margin-inline-start:auto; font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--soft); color:var(--mut); }
+.cmb .day.done .dhead .bdg { background:var(--bs-success-bg-subtle); color:var(--bs-success-text-emphasis); }
+.cmb .slots { padding:10px; display:grid; gap:9px; }
+.cmb .slot { border-radius:12px; background:var(--sf); border:1px solid var(--ln); padding:8px; }
+.cmb .slot.focused { border-color:var(--bs-primary-border-subtle); box-shadow:0 10px 26px -18px rgba(var(--acc-rgb),.9); }
+.cmb .slot .cn { display:flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--mut); margin-bottom:5px; }
+.cmb .slot .cn .dot { width:6px; height:6px; border-radius:50%; background:var(--bs-primary-border-subtle); }
+.cmb .dfoot { margin-top:auto; padding:8px 10px; border-top:1px dashed var(--ln); display:flex; gap:4px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DIRECTION C — "ONE DAY AT A TIME"
+   A day rail on the left with its fill state, one roomy day on the right.
+   The least to look at, the easiest on a tablet — you write Sunday, press
+   next, write Monday. A week strip keeps the whole picture in view.
+   ═══════════════════════════════════════════════════════════════════════ */
+.cmc .wrapc { display:grid; grid-template-columns: 216px minmax(0,1fr); }
+@media (max-width: 767.98px) { .cmc .wrapc { grid-template-columns: minmax(0,1fr); } }
+.cmc .drail { border-inline-end:1px solid var(--ln); padding:12px; display:flex; flex-direction:column; gap:6px; }
+@media (max-width: 767.98px) { .cmc .drail { flex-direction:row; overflow-x:auto; border-inline-end:0; border-bottom:1px solid var(--ln); } }
+.cmc .dbtn { display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:12px; border:1.5px solid transparent; background:transparent; text-align:start; width:100%; transition:all .15s; }
+.cmc .dbtn:hover { background:var(--soft); }
+.cmc .dbtn.on { border-color:var(--acc); background:var(--bs-primary-bg-subtle); }
+.cmc .dbtn .ring { width:28px; height:28px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:11px; font-weight:700; color:var(--mut); background:var(--soft); border:1.5px solid var(--ln); }
+.cmc .dbtn.full .ring { background:var(--bs-success); border-color:var(--bs-success); color:#fff; }
+.cmc .dbtn b { display:block; font-size:13px; font-weight:600; color:var(--ink); line-height:1.2; }
+.cmc .dbtn small { font-size:11px; color:var(--mut); }
+.cmc .pane { padding:16px 18px 18px; }
+.cmc .phead { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.cmc .phead h5 { margin:0; font-size:16px; font-weight:700; color:var(--ink); }
+.cmc .slot { border:1px solid var(--ln); border-radius:14px; padding:11px 12px; background: color-mix(in srgb, var(--soft) 40%, var(--sf)); }
+.cmc .slot + .slot { margin-top:10px; }
+.cmc .slot.focused { border-color:var(--bs-primary-border-subtle); background:var(--sf); box-shadow:0 12px 30px -20px rgba(var(--acc-rgb),.9); }
+.cmc .slot .cn { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+.cmc .slot .cn .idx { width:24px; height:24px; border-radius:8px; display:grid; place-items:center; font-size:11px; font-weight:600; background:var(--bs-primary-bg-subtle); color:var(--bs-primary-text-emphasis); }
+.cmc .slot .cn b { font-size:13px; font-weight:600; color:var(--ink); }
+.cmc .slot .cn small { font-size:11px; color:var(--mut); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SHARED  ·  QUICK FILL deck + WHAT PARENTS SEE
+   ═══════════════════════════════════════════════════════════════════════ */
+.cmx .qf { padding:13px 18px; display:grid; gap:10px; }
+.cmx .qfrow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.cmx .qfrow .ttl { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--ink); min-width:132px; }
+.cmx .qfrow .ttl i { width:22px; height:22px; border-radius:7px; display:grid; place-items:center; background:var(--bs-primary-bg-subtle); color:var(--bs-primary-text-emphasis); font-size:11px; }
+.cmx .qfrow .hint { font-size:11px; color:var(--mut); }
+.cmx .sel { border:1px solid var(--ln); border-radius:10px; background:var(--sf); color:var(--ink); font-size:12.5px; padding:5px 9px; min-height:32px; }
+.cmx .phones { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
+.cmx .phone { border:1px solid var(--ln); border-radius:20px; background:var(--soft); padding:12px; flex:0 0 238px; }
+.cmx .phone.dim { opacity:.62; }
+.cmx .phone .ph { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+.cmx .phone .ph b { font-size:13px; color:var(--ink); }
+.cmx .phone .ph small { font-size:11px; color:var(--mut); }
+.cmx .phone .prow { background:var(--sf); border-radius:12px; padding:8px 10px; margin-bottom:6px; }
+.cmx .phone .prow .pc { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--mut); }
+.cmx .phone .prow .pn { font-size:13px; font-weight:600; color:var(--ink); }
+.cmx .phone .prow .pd { font-size:11.5px; color:var(--mut); }
+.cmx .phone .pempty { font-size:12px; color:var(--mut); text-align:center; padding:14px 6px; }
+.cmx .secline { display:flex; align-items:center; gap:9px; padding:12px 18px 0; }
+.cmx .secline .n { width:26px; height:26px; border-radius:8px; display:grid; place-items:center; font-size:12px; background:var(--bs-primary-bg-subtle); color:var(--bs-primary-text-emphasis); flex:none; }
+.cmx .secline h5 { margin:0; font-size:14px; font-weight:600; color:var(--ink); }
+.cmx .secline p { margin:0; font-size:11.5px; color:var(--mut); }
+.cmx .secline .r { margin-inline-start:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+
+<div class="hx-bar">
+  <div class="hx-grp"><span>Theme</span>
+    <button data-theme="light" class="on">Light</button>
+    <button data-theme="dark">Dark</button>
+  </div>
+  <div class="hx-grp"><span>Accent</span>
+    <button class="sw on" data-accent="#25476a" style="background:#25476a"></button>
+    <button class="sw" data-accent="#0f766e" style="background:#0f766e"></button>
+    <button class="sw" data-accent="#7c3aed" style="background:#7c3aed"></button>
+    <button class="sw" data-accent="#b45309" style="background:#b45309"></button>
+    <button class="sw" data-accent="#be123c" style="background:#be123c"></button>
+  </div>
+  <div class="hx-grp"><span>Direction</span>
+    <button data-dir="a" class="on">A · Menu sheet</button>
+    <button data-dir="b">B · Day board</button>
+    <button data-dir="c">C · One day</button>
+  </div>
+</div>
+
+<p class="hx-note">
+  <b>Students → Canteen Menu.</b> Three ways to write the week, all on the student module's premium layer (the same white sheets, theme-gradient hero and tap chips as
+  <b>.sfx</b> Add student / <b>.svx</b> Student view). Every direction shares the same <b>auto-fill presets</b>: start from a course template, copy another meal's menu,
+  pick a dish from what the school has typed before or from its canteen items, repeat one dish across the week, or fill every empty day in one press.
+  Type in any field — the counters and the parent preview follow. Try a template, then <b>Fill empty days</b>.
+</p>
+
+<div class="nf-band">
+  <div class="nf-wrap">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Home</a></li><li class="breadcrumb-item"><a href="#">Students</a></li><li class="breadcrumb-item active">Canteen Menu</li></ol>
+    </nav>
+    <h1>Canteen Menu</h1>
+    <p class="lead">What each meal serves on each school day — parents see it when they pre-order</p>
+  </div>
+</div>
+
+<div class="nf-wrap nf-content"><div id="app" class="cmx cma"></div></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   Sample data. In the real page: meals = the selling products in the
+   pre-order categories, days = Settings → Student Settings school days,
+   courses = CanteenMenu.courses for the chosen product.
+   ═══════════════════════════════════════════════════════════════════════ */
+const DAYS = [
+  { iso: 7, l: 'Sunday',    s: 'Sun' }, { iso: 1, l: 'Monday',   s: 'Mon' }, { iso: 2, l: 'Tuesday', s: 'Tue' },
+  { iso: 3, l: 'Wednesday', s: 'Wed' }, { iso: 4, l: 'Thursday', s: 'Thu' },
+];
+const MEALS = [
+  { id: 11, name: 'Hot Lunch',      price: 'QR 12.00', icon: 'fa-cutlery' },
+  { id: 12, name: 'Sandwich Box',   price: 'QR 8.00',  icon: 'fa-archive' },
+  { id: 13, name: 'Breakfast',      price: 'QR 6.00',  icon: 'fa-coffee' },
+  { id: 14, name: 'Snack & Juice',  price: 'QR 4.00',  icon: 'fa-glass' },
+];
+
+/* Course scaffolds — structure only, no dish wording. */
+const TEMPLATES = [
+  { key: 'hot',   label: 'Hot lunch',     icon: 'fa-cutlery', courses: [['Main dish', '1 portion'], ['Side', 'Small bowl'], ['Fruit', 'Seasonal'], ['Drink', '200 ml']] },
+  { key: 'box',   label: 'Lunch box',     icon: 'fa-archive', courses: [['Sandwich', '1 piece'], ['Snack', 'Small pack'], ['Fruit', 'Seasonal'], ['Drink', '200 ml']] },
+  { key: 'bfast', label: 'Breakfast',     icon: 'fa-coffee',  courses: [['Main', '1 portion'], ['Fruit', 'Seasonal'], ['Drink', '200 ml']] },
+  { key: 'snack', label: 'Snack & drink', icon: 'fa-glass',   courses: [['Snack', '1 pack'], ['Drink', '200 ml']] },
+];
+const COURSE_PRESETS = [
+  ['Main dish', '1 portion'], ['Side', 'Small bowl'], ['Salad', 'Small bowl'], ['Soup', '1 cup'],
+  ['Sandwich', '1 piece'], ['Snack', 'Small pack'], ['Dessert', '1 piece'], ['Fruit', 'Seasonal'], ['Drink', '200 ml'],
+];
+
+/* Dish suggestions. "Used before" = distinct dish names already saved in this
+   school's menus; "Canteen items" = the selling products in the canteen
+   categories. Nothing here is written into the code in the real page. */
+const DISHES = {
+  main:     { used: ['Chicken biryani', 'Grilled chicken & rice', 'Pasta bolognese', 'Beef burger & wedges', 'Fish fingers & mash', 'Vegetable curry'], items: ['Chicken Biryani', 'Butter Chicken Meal', 'Pizza Slice'] },
+  sandwich: { used: ['Cheese & tomato', 'Chicken mayo', 'Tuna sandwich', 'Labneh & cucumber'], items: ['Zaatar Manakish', 'Cheese Sandwich'] },
+  side:     { used: ['Garden salad', 'Corn cup', 'Garlic bread', 'Coleslaw', 'Steamed broccoli'], items: ['French Fries', 'Potato Wedges'] },
+  salad:    { used: ['Garden salad', 'Fattoush', 'Cucumber & yoghurt'], items: ['Caesar Salad'] },
+  soup:     { used: ['Lentil soup', 'Chicken noodle soup', 'Tomato soup'], items: ['Lentil Soup Cup'] },
+  snack:    { used: ['Popcorn cup', 'Pretzels', 'Cheese crackers', 'Granola bar'], items: ['Croissant', 'Chocolate Muffin'] },
+  dessert:  { used: ['Chocolate muffin', 'Fruit jelly', 'Vanilla pudding'], items: ['Chocolate Muffin', 'Date Cake'] },
+  fruit:    { used: ['Apple slices', 'Banana', 'Orange', 'Grapes', 'Watermelon'], items: ['Fruit Cup'] },
+  drink:    { used: ['Fresh orange juice', 'Laban', 'Apple juice', 'Water'], items: ['Orange Juice 200ml', 'Laban 180ml', 'Water 330ml'] },
+  fallback: { used: ['Chef’s choice', 'Same as Sunday'], items: ['Fruit Cup', 'Water 330ml'] },
+};
+const poolFor = (courseName) => {
+  const n = String(courseName || '').toLowerCase();
+  for (const key of ['sandwich', 'salad', 'soup', 'snack', 'dessert', 'fruit', 'drink', 'side', 'main'])
+    if (n.includes(key)) return DISHES[key];
+  return DISHES.fallback;
+};
+
+const blank = () => ({ name: '', note: '', dishes: Object.fromEntries(DAYS.map(d => [d.iso, { name: '', description: '' }])) });
+const seed = () => ([
+  { name: 'Main dish', note: '1 portion', dishes: { 7: { name: 'Chicken biryani', description: 'Basmati rice, mild spices' }, 1: { name: 'Grilled chicken & rice', description: '' }, 2: { name: 'Pasta bolognese', description: 'Beef, tomato sauce' }, 3: { name: 'Beef burger & wedges', description: '' }, 4: { name: '', description: '' } } },
+  { name: 'Side', note: 'Small bowl', dishes: { 7: { name: 'Garden salad', description: '' }, 1: { name: 'Corn cup', description: '' }, 2: { name: 'Garlic bread', description: '' }, 3: { name: '', description: '' }, 4: { name: '', description: '' } } },
+  { name: 'Fruit', note: 'Seasonal', dishes: { 7: { name: 'Apple slices', description: '' }, 1: { name: 'Banana', description: '' }, 2: { name: '', description: '' }, 3: { name: '', description: '' }, 4: { name: '', description: '' } } },
+  { name: 'Drink', note: '200 ml', dishes: { 7: { name: 'Fresh orange juice', description: '' }, 1: { name: 'Laban', description: '' }, 2: { name: 'Water', description: '' }, 3: { name: '', description: '' }, 4: { name: '', description: '' } } },
+]);
+const OTHER_MENUS = { 12: [['Sandwich', '1 piece', ['Cheese & tomato', 'Chicken mayo', 'Tuna sandwich', 'Labneh & cucumber', 'Cheese & tomato']], ['Fruit', 'Seasonal', ['Apple slices', 'Banana', 'Orange', 'Grapes', 'Watermelon']], ['Drink', '200 ml', ['Water', 'Laban', 'Apple juice', 'Water', 'Fresh orange juice']]] };
+
+let dir = 'a', mealId = 11, courses = seed(), day = 7, refocus = null, flash = null;
+const MAX = 8;
+const app = document.getElementById('app');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const dish = (c, iso) => (courses[c].dishes[iso] ||= { name: '', description: '' });
+const filledCells = () => courses.reduce((n, c) => n + DAYS.filter(d => (c.dishes[d.iso]?.name || '').trim()).length, 0);
+const dayCount = (iso) => courses.filter(c => (c.dishes[iso]?.name || '').trim()).length;
+const servedDays = () => DAYS.filter(d => dayCount(d.iso) > 0).length;
+
+/* ── shared pieces ────────────────────────────────────────────────────── */
+let just = new Set();
+const isJust = (c, iso) => just.has(c + ':' + iso) ? ' just' : '';
+
+function sugChips(c, iso, wide) {
+  const pool = poolFor(courses[c].name);
+  const grp = (arr, label, icon) => arr.length ? `<div class="chips mb-1"><span class="chipgrp">${label}</span>` +
+    arr.map(v => `<button type="button" class="chip" data-act="pick" data-c="${c}" data-d="${iso}" data-v="${esc(v)}"><i class="fa ${icon}"></i>${esc(v)}</button>`).join('') + `</div>` : '';
+  return `${grp(pool.used.slice(0, wide ? 6 : 4), 'Used before', 'fa-history')}${grp(pool.items.slice(0, wide ? 4 : 2), 'Canteen items', 'fa-tag')}
+    <div class="chips"><button type="button" class="chip" data-act="across" data-c="${c}" data-d="${iso}"><i class="fa fa-arrows-h"></i>Repeat all week</button>
+      <button type="button" class="chip" data-act="clearcell" data-c="${c}" data-d="${iso}"><i class="fa fa-eraser"></i>Clear</button></div>`;
+}
+/* In the sheet the chips live in one strip at the foot, so opening them never
+   pushes a row taller; the day board and the one-day pane show them in place. */
+function sug(c, iso) { return dir === 'a' ? '' : `<div class="sug">${sugChips(c, iso, true)}</div>`; }
+function fields(c, iso, rows) {
+  const d = dish(c, iso);
+  return `<input class="form-control dishn mb-1" placeholder="Dish" maxlength="80" value="${esc(d.name)}" data-f="dn" data-c="${c}" data-d="${iso}" aria-label="dish">
+    <textarea class="form-control dishd" rows="${rows}" placeholder="Short description (optional)" maxlength="200" data-f="dd" data-c="${c}" data-d="${iso}" aria-label="description">${esc(d.description)}</textarea>${sug(c, iso)}`;
+}
+function coursePresetChips(c) {
+  return `<div class="chips mt-1">${COURSE_PRESETS.map((p, i) => `<button type="button" class="chip" data-act="cpreset" data-c="${c}" data-i="${i}">${esc(p[0])}</button>`).join('')}</div>`;
+}
+const tool = (act, icon, title, extra = '') => `<button type="button" class="tool ${extra}" data-act="${act}" title="${title}"><i class="fa ${icon}"></i></button>`;
+
+/* ── 1 · hero ─────────────────────────────────────────────────────────── */
+function hero() {
+  const meal = MEALS.find(m => m.id === mealId);
+  const total = courses.length * DAYS.length;
+  return `<div class="sheet top mb-3 rise" style="--i:0">
+    <div class="min-w-0">
+      <a href="#" class="eyebrow"><i class="fa fa-graduation-cap"></i>Students · Canteen menu</a>
+      <h4>${esc(meal.name)} — what it serves each week</h4>
+      <p>The same menu every week. Leave a day empty and the meal simply is not served that day.</p>
+    </div>
+    <div class="stat">
+      <div><b>${courses.length}</b><span>Courses</span></div>
+      <div><b>${servedDays()}/${DAYS.length}</b><span>Days served</span></div>
+      <div><b>${filledCells()}/${total}</b><span>Dishes written</span></div>
+    </div>
+  </div>`;
+}
+
+/* ── 2 · meal + quick fill ────────────────────────────────────────────── */
+function mealSheet() {
+  return `<div class="sheet mb-3 rise" style="--i:1">
+    <div class="secline"><span class="n">1</span><div><h5>Which meal</h5><p>Every meal parents can pre-order has its own weekly menu.</p></div></div>
+    <div class="p-3 pt-2"><div class="meals">${MEALS.map(m => `
+      <input type="radio" class="btn-check" name="meal" id="meal${m.id}" ${m.id === mealId ? 'checked' : ''} data-act="setmeal" data-i="${m.id}">
+      <label class="mealc" for="meal${m.id}"><span class="mi"><i class="fa ${m.icon}"></i></span><span><b>${esc(m.name)}</b><small>${m.price}</small></span></label>`).join('')}
+    </div></div>
+  </div>`;
+}
+function quickFill() {
+  const others = MEALS.filter(m => m.id !== mealId);
+  const empties = courses.length * DAYS.length - filledCells();
+  return `<div class="sheet mb-3 rise" style="--i:2">
+    <div class="secline"><span class="n">2</span><div><h5>Quick fill</h5><p>Start from a ready set of courses, borrow another meal's menu, or let the school's own dishes fill the gaps.</p></div></div>
+    <div class="qf">
+      <div class="qfrow">
+        <span class="ttl"><i class="fa fa-th-list"></i>Course template</span>
+        <div class="chips">${TEMPLATES.map(t => `<button type="button" class="chip tmpl" data-act="tmpl" data-k="${t.key}"><i class="fa ${t.icon}"></i>${t.label}</button>`).join('')}</div>
+        <span class="hint">Sets the course names and portions — your dishes stay.</span>
+      </div>
+      <div class="qfrow">
+        <span class="ttl"><i class="fa fa-clone"></i>Copy a menu</span>
+        <select class="sel" id="cpfrom">${others.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select>
+        <button type="button" class="chip tmpl" data-act="copymeal"><i class="fa fa-arrow-down"></i>Copy into ${esc(MEALS.find(m => m.id === mealId).name)}</button>
+        <span class="hint">Brings its courses and dishes over, then edit what differs.</span>
+      </div>
+      <div class="qfrow">
+        <span class="ttl"><i class="fa fa-magic"></i>Fill the gaps</span>
+        <button type="button" class="chip tmpl" data-act="fillempty"><i class="fa fa-bolt"></i>Fill ${empties} empty ${empties === 1 ? 'day' : 'days'}</button>
+        <button type="button" class="chip tmpl" data-act="clearall"><i class="fa fa-eraser"></i>Clear the week</button>
+        <span class="hint">Writes a draft from dishes the school has used before — change any of them after.</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── 3 · the week — one body per direction ────────────────────────────── */
+function editorHead() {
+  return `<div class="secline"><span class="n">3</span><div><h5>The week</h5><p>${dir === 'a' ? 'Courses down, school days across.' : dir === 'b' ? 'Name the courses once, then fill each day card.' : 'One day at a time — write it, then press the next day.'}</p></div>
+    <div class="r">${courses.length < MAX ? `<button type="button" class="chip" data-act="addc"><i class="fa fa-plus"></i>Add course</button>` : ''}</div></div>`;
+}
+function bodyA() {
+  return `<div class="grid"><table>
+    <thead><tr><th class="cx"><span class="lbl">Course</span></th>${DAYS.map(d => {
+      const n = dayCount(d.iso);
+      return `<th style="min-width:208px"><div class="dayh"><div><div class="dn">${d.l}</div><div class="dc">${n ? n + ' of ' + courses.length + ' written' : 'not served'}</div></div>
+        <div class="dt">${tool('copyday', 'fa-clone', 'Copy this day to the rest of the week')}${tool('clearday', 'fa-eraser', 'Clear this day', 'danger')}</div></div></th>`;
+    }).join('')}</tr></thead>
+    <tbody>${courses.map((c, i) => `<tr>
+      <td class="cx">
+        <div class="d-flex align-items-center gap-2"><span class="idx">${i + 1}</span>
+          <input class="form-control" placeholder="e.g. Main dish" maxlength="60" value="${esc(c.name)}" data-f="cn" data-c="${i}" aria-label="course name"></div>
+        <input class="form-control mt-1" placeholder="Portion (optional)" maxlength="80" value="${esc(c.note)}" data-f="cnt" data-c="${i}" aria-label="portion">
+        ${c.name.trim() ? '' : coursePresetChips(i)}
+        <div class="ctools">${tool('rowfill', 'fa-magic', 'Fill this course’s empty days')}${tool('up', 'fa-arrow-up', 'Move up')}${tool('down', 'fa-arrow-down', 'Move down')}${tool('delc', 'fa-trash', 'Remove course', 'danger')}</div>
+      </td>
+      ${DAYS.map(d => `<td class="${(c.dishes[d.iso]?.name || '').trim() ? '' : 'off'}"><div class="cell${(c.dishes[d.iso]?.name || '').trim() ? '' : ' empty'}${isJust(i, d.iso)}" data-c="${i}" data-d="${d.iso}">${fields(i, d.iso, 2)}</div></td>`).join('')}
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+function bodyB() {
+  return `<div class="rail">${courses.map((c, i) => `<div class="crs">
+      <span class="idx" style="width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:600;background:var(--bs-primary-bg-subtle);color:var(--bs-primary-text-emphasis)">${i + 1}</span>
+      <div class="min-w-0 flex-grow-1">
+        <input class="form-control nm" placeholder="Course name" maxlength="60" value="${esc(c.name)}" data-f="cn" data-c="${i}">
+        <input class="form-control nt" placeholder="Portion (optional)" maxlength="80" value="${esc(c.note)}" data-f="cnt" data-c="${i}">
+      </div>
+      ${tool('rowfill', 'fa-magic', 'Fill this course’s empty days')}${tool('delc', 'fa-trash', 'Remove course', 'danger')}
+    </div>`).join('')}
+    ${courses.length < MAX ? `<button type="button" class="chip tmpl" data-act="addc" style="align-self:center"><i class="fa fa-plus"></i>Add course</button>` : ''}
+  </div>
+  <div class="board">${DAYS.map(d => {
+    const n = dayCount(d.iso);
+    return `<div class="day${n === courses.length && n ? ' done' : ''}">
+      <div class="dhead"><div><div class="dn">${d.l}</div><div class="dm">every week</div></div><span class="bdg">${n}/${courses.length}</span></div>
+      <div class="slots">${courses.map((c, i) => `<div class="slot${isJust(i, d.iso)}" data-c="${i}" data-d="${d.iso}">
+        <div class="cn"><span class="dot"></span>${esc(c.name || 'Course ' + (i + 1))}${c.note ? ' · ' + esc(c.note) : ''}</div>${fields(i, d.iso, 2)}</div>`).join('')}</div>
+      <div class="dfoot">${tool('copyday', 'fa-clone', 'Copy this day to the rest of the week')}${tool('fillday', 'fa-magic', 'Fill this day’s gaps')}${tool('clearday', 'fa-eraser', 'Clear this day', 'danger')}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+function bodyC() {
+  const cur = DAYS.find(d => d.iso === day) || DAYS[0];
+  return `<div class="wrapc">
+    <div class="drail">${DAYS.map(d => {
+      const n = dayCount(d.iso);
+      return `<button type="button" class="dbtn${d.iso === day ? ' on' : ''}${n === courses.length && n ? ' full' : ''}" data-act="setday" data-d="${d.iso}">
+        <span class="ring">${n === courses.length && n ? '<i class="fa fa-check"></i>' : n}</span><span><b>${d.l}</b><small>${n ? n + ' of ' + courses.length + ' dishes' : 'not served'}</small></span></button>`;
+    }).join('')}</div>
+    <div class="pane">
+      <div class="phead"><h5>${cur.l}</h5><span class="pill ${dayCount(cur.iso) ? 'ok' : 'off'}">${dayCount(cur.iso) ? dayCount(cur.iso) + ' of ' + courses.length + ' written' : 'nothing yet'}</span>
+        <div class="r ms-auto chips">${tool('fillday', 'fa-magic', 'Fill this day’s gaps')}${tool('copyday', 'fa-clone', 'Copy this day to the rest of the week')}${tool('clearday', 'fa-eraser', 'Clear this day', 'danger')}
+          ${courses.length < MAX ? `<button type="button" class="chip" data-act="addc"><i class="fa fa-plus"></i>Course</button>` : ''}</div></div>
+      ${courses.map((c, i) => `<div class="slot${isJust(i, cur.iso)}" data-c="${i}" data-d="${cur.iso}">
+        <div class="cn"><span class="idx">${i + 1}</span><div class="min-w-0 flex-grow-1"><input class="form-control" style="border:0;padding:0;min-height:0;font-weight:600" placeholder="Course name" maxlength="60" value="${esc(c.name)}" data-f="cn" data-c="${i}">
+          <input class="form-control" style="border:0;padding:0;min-height:0;font-size:11.5px;color:var(--mut)" placeholder="Portion (optional)" maxlength="80" value="${esc(c.note)}" data-f="cnt" data-c="${i}"></div>
+          ${tool('rowfill', 'fa-magic', 'Fill this course’s empty days')}${tool('delc', 'fa-trash', 'Remove course', 'danger')}</div>
+        ${fields(i, cur.iso, 2)}</div>`).join('')}
+      <div class="d-flex justify-content-between mt-3">
+        <button type="button" class="chip tmpl" data-act="prevday"><i class="fa fa-arrow-left"></i>Previous day</button>
+        <button type="button" class="chip tmpl" data-act="nextday">Next day<i class="fa fa-arrow-right"></i></button>
+      </div>
+    </div></div>`;
+}
+function editor() {
+  const body = dir === 'a' ? bodyA() : dir === 'b' ? bodyB() : bodyC();
+  return `<div class="sheet mb-3 rise" style="--i:3">${editorHead()}${dir === 'a' ? '<div class="pt-2"></div>' : ''}${body}
+    ${dir === 'a' ? '<div class="sugbar" id="sugbar"></div>' : ''}
+    <div class="foot" style="border-top:1px solid var(--ln)">
+      <span class="note"><i class="fa fa-info-circle me-1"></i>An empty day means the meal is not served that day. Parents see the change straight away.</span>
+      <div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-light">Cancel</button><button type="button" class="btn btn-sm btn-primary"><i class="fa fa-save me-1"></i>Save menu</button></div>
+    </div></div>`;
+}
+
+/* ── 4 · what parents see ─────────────────────────────────────────────── */
+function parentPreview() {
+  const card = (d) => {
+    const rows = courses.filter(c => (c.dishes[d.iso]?.name || '').trim());
+    return `<div class="phone${rows.length ? '' : ' dim'}">
+      <div class="ph"><i class="fa fa-cutlery" style="color:var(--acc)"></i><div><b>${d.l}</b><small class="d-block">order before 07:30</small></div></div>
+      ${rows.length ? rows.map(c => `<div class="prow"><div class="pc">${esc(c.name)}${c.note ? ' · ' + esc(c.note) : ''}</div><div class="pn">${esc(c.dishes[d.iso].name)}</div>${c.dishes[d.iso].description ? `<div class="pd">${esc(c.dishes[d.iso].description)}</div>` : ''}</div>`).join('')
+        : `<div class="pempty"><i class="fa fa-moon-o d-block mb-1" style="font-size:18px"></i>Not served</div>`}
+    </div>`;
+  };
+  return `<div class="sheet mb-3 rise" style="--i:4">
+    <div class="secline"><span class="n"><i class="fa fa-mobile"></i></span><div><h5>What parents see</h5><p>${esc(MEALS.find(m => m.id === mealId).name)} in the parent portal, day by day.</p></div>
+      <div class="r"><span class="pill ${servedDays() ? 'ok' : 'warn'}"><i class="fa fa-calendar"></i>${servedDays() ? 'Served on ' + servedDays() + ' of ' + DAYS.length + ' school days' : 'Not on the menu yet'}</span></div></div>
+    <div class="p-3 pt-2"><div class="phones">${DAYS.map(card).join('')}</div></div></div>`;
+}
+
+/* ── render ───────────────────────────────────────────────────────────── */
+function render() {
+  app.className = 'cmx cm' + dir;
+  app.innerHTML = hero() + mealSheet() + quickFill() + editor() + parentPreview();
+  just = new Set();
+  if (refocus) {
+    const el = app.querySelector(refocus);
+    if (el) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch (_) {} }
+    refocus = null;
+  }
+}
+/* typing must not re-render (the caret would jump) — refresh only what counts */
+function softSync() {
+  const stat = app.querySelectorAll('.top .stat b');
+  if (stat[1]) stat[1].textContent = servedDays() + '/' + DAYS.length;
+  if (stat[2]) stat[2].textContent = filledCells() + '/' + (courses.length * DAYS.length);
+  DAYS.forEach((d, i) => {
+    const n = dayCount(d.iso);
+    const a = app.querySelectorAll('.cma thead .dc')[i];
+    if (a) a.textContent = n ? n + ' of ' + courses.length + ' written' : 'not served';
+    const b = app.querySelectorAll('.cmb .day .bdg')[i];
+    if (b) { b.textContent = n + '/' + courses.length; b.closest('.day').classList.toggle('done', n === courses.length && !!n); }
+    const c = app.querySelectorAll('.cmc .dbtn')[i];
+    if (c) { c.querySelector('.ring').innerHTML = (n === courses.length && n) ? '<i class="fa fa-check"></i>' : n; c.classList.toggle('full', n === courses.length && !!n); c.querySelector('small').textContent = n ? n + ' of ' + courses.length + ' dishes' : 'not served'; }
+  });
+  const box = app.querySelector('.phones')?.closest('.sheet');
+  if (box) box.outerHTML = parentPreview();
+}
+
+/* ── auto-fill engine ─────────────────────────────────────────────────── */
+function menuFor(id) {
+  if (id === 11) return seed();
+  if (OTHER_MENUS[id]) return OTHER_MENUS[id].map(([name, note, list]) => ({
+    name, note, dishes: Object.fromEntries(DAYS.map((d, j) => [d.iso, { name: list[j] || '', description: '' }])),
+  }));
+  const t = TEMPLATES.find(t => t.key === (id === 13 ? 'bfast' : 'snack'));
+  return t.courses.map(([name, note], i) => {
+    const pool = poolFor(name);
+    return { name, note, dishes: Object.fromEntries(DAYS.map((d, j) => [d.iso, { name: pool.used[(i + j) % pool.used.length], description: '' }])) };
+  });
+}
+/* a draft should not serve the same dish twice in one course's week */
+function suggestFor(c, iso) {
+  const pool = poolFor(courses[c].name), j = DAYS.findIndex(d => d.iso === iso);
+  const taken = new Set(DAYS.map(d => (courses[c].dishes[d.iso]?.name || '').trim().toLowerCase()).filter(Boolean));
+  const free = pool.used.filter(v => !taken.has(v.toLowerCase()));
+  const list = free.length ? free : pool.used;
+  return list[(c + j) % list.length];
+}
+function fill(pairs) { pairs.forEach(([c, iso]) => { if (!dish(c, iso).name.trim()) { dish(c, iso).name = suggestFor(c, iso); just.add(c + ':' + iso); } }); }
+
+const ACTIONS = {
+  setmeal: (el) => { mealId = +el.dataset.i; courses = menuFor(mealId); },
+  setday: (el) => { day = +el.dataset.d; },
+  prevday: () => { const i = DAYS.findIndex(d => d.iso === day); day = DAYS[(i - 1 + DAYS.length) % DAYS.length].iso; },
+  nextday: () => { const i = DAYS.findIndex(d => d.iso === day); day = DAYS[(i + 1) % DAYS.length].iso; },
+  addc: () => { if (courses.length < MAX) courses.push(blank()); },
+  delc: (el, c) => { courses.splice(c, 1); if (!courses.length) courses.push(blank()); },
+  up: (el, c) => { if (c > 0) [courses[c - 1], courses[c]] = [courses[c], courses[c - 1]]; },
+  down: (el, c) => { if (c < courses.length - 1) [courses[c + 1], courses[c]] = [courses[c], courses[c + 1]]; },
+  cpreset: (el, c) => { const p = COURSE_PRESETS[+el.dataset.i]; courses[c].name = p[0]; if (!courses[c].note) courses[c].note = p[1]; },
+  tmpl: (el) => {
+    const t = TEMPLATES.find(t => t.key === el.dataset.k);
+    t.courses.forEach(([name, note], i) => { if (!courses[i]) courses[i] = blank(); courses[i].name = name; courses[i].note = note; });
+  },
+  copymeal: () => { const id = +app.querySelector('#cpfrom').value; courses = menuFor(id); DAYS.forEach(d => courses.forEach((c, i) => just.add(i + ':' + d.iso))); },
+  fillempty: () => fill(courses.flatMap((c, i) => DAYS.map(d => [i, d.iso]))),
+  rowfill: (el, c) => fill(DAYS.map(d => [c, d.iso])),
+  fillday: (el, c, iso) => fill(courses.map((_, i) => [i, iso])),
+  clearall: () => courses.forEach(c => DAYS.forEach(d => { c.dishes[d.iso] = { name: '', description: '' }; })),
+  clearday: (el, c, iso) => courses.forEach(c2 => { c2.dishes[iso] = { name: '', description: '' }; }),
+  clearcell: (el, c, iso) => { courses[c].dishes[iso] = { name: '', description: '' }; refocus = `[data-f="dn"][data-c="${c}"][data-d="${iso}"]`; },
+  pick: (el, c, iso) => { dish(c, iso).name = el.dataset.v; just.add(c + ':' + iso); refocus = `[data-f="dn"][data-c="${c}"][data-d="${iso}"]`; },
+  across: (el, c, iso) => {
+    const v = dish(c, iso).name.trim(), note = dish(c, iso).description;
+    if (!v) return;
+    const empty = DAYS.filter(d => !dish(c, d.iso).name.trim());
+    (empty.length ? empty : DAYS).forEach(d => { dish(c, d.iso).name = v; dish(c, d.iso).description = note; just.add(c + ':' + d.iso); });
+    refocus = `[data-f="dn"][data-c="${c}"][data-d="${iso}"]`;
+  },
+  copyday: (el, c, iso) => {
+    DAYS.filter(d => d.iso !== iso).forEach(d => courses.forEach((c2, i) => {
+      if (!dish(i, d.iso).name.trim() && dish(i, iso).name.trim()) { c2.dishes[d.iso] = { ...c2.dishes[iso] }; just.add(i + ':' + d.iso); }
+    }));
+  },
+};
+
+/* ── events ───────────────────────────────────────────────────────────── */
+app.addEventListener('input', (e) => {
+  const f = e.target.dataset.f; if (!f) return;
+  const c = +e.target.dataset.c, iso = +e.target.dataset.d;
+  if (f === 'cn') courses[c].name = e.target.value;
+  else if (f === 'cnt') courses[c].note = e.target.value;
+  else if (f === 'dn') dish(c, iso).name = e.target.value;
+  else if (f === 'dd') dish(c, iso).description = e.target.value;
+  if (f === 'dn') e.target.closest('.cell')?.classList.toggle('empty', !e.target.value.trim());
+  softSync();
+});
+app.addEventListener('focusin', (e) => {
+  const box = e.target.closest('.cell, .slot');
+  app.querySelectorAll('.cell.focused, .slot.focused').forEach(el => { if (el !== box) el.classList.remove('focused'); });
+  if (box) box.classList.add('focused');
+  const bar = app.querySelector('#sugbar');
+  if (!bar) return;
+  if (box && e.target.dataset.f) {
+    const c = +box.dataset.c, iso = +box.dataset.d, d = DAYS.find(x => x.iso === iso);
+    bar.innerHTML = `<div class="who"><i class="fa fa-lightbulb-o me-1"></i>${esc(courses[c].name || 'Course ' + (c + 1))} · ${d.l}</div>${sugChips(c, iso, true)}`;
+    bar.classList.add('on');
+  }
+});
+app.addEventListener('focusout', (e) => {
+  const bar = app.querySelector('#sugbar'); if (!bar) return;
+  setTimeout(() => { if (!app.contains(document.activeElement) || !document.activeElement.dataset.f) { bar.classList.remove('on'); app.querySelectorAll('.cell.focused').forEach(el => el.classList.remove('focused')); } }, 120);
+});
+app.addEventListener('change', (e) => {
+  if (e.target.dataset.act === 'setmeal') { ACTIONS.setmeal(e.target); render(); }
+});
+app.addEventListener('mousedown', (e) => { if (e.target.closest('.chip, .tool')) e.preventDefault(); });
+app.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]'); if (!el || el.tagName === 'INPUT') return;
+  const act = el.dataset.act; if (!ACTIONS[act]) return;
+  const box = el.closest('[data-c]'), head = el.closest('th, .day, .pane, .dbtn');
+  const c = el.dataset.c !== undefined ? +el.dataset.c : (box ? +box.dataset.c : 0);
+  let iso = el.dataset.d !== undefined ? +el.dataset.d : (box ? +box.dataset.d : day);
+  if ((act === 'copyday' || act === 'clearday' || act === 'fillday') && head) {
+    if (head.tagName === 'TH') iso = DAYS[[...head.parentElement.children].indexOf(head) - 1].iso;
+    else if (head.classList.contains('day')) iso = DAYS[[...head.parentElement.children].indexOf(head)].iso;
+    else iso = day;
+  }
+  ACTIONS[act](el, c, iso);
+  render();
+});
+
+/* ── harness ──────────────────────────────────────────────────────────── */
+document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => {
+  document.documentElement.dataset.bsTheme = b.dataset.theme;
+  document.querySelectorAll('[data-theme]').forEach(x => x.classList.toggle('on', x === b));
+});
+document.querySelectorAll('[data-accent]').forEach(b => b.onclick = () => {
+  const hex = b.dataset.accent, n = parseInt(hex.slice(1), 16);
+  document.documentElement.style.setProperty('--p', hex);
+  document.documentElement.style.setProperty('--p-rgb', [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(', '));
+  document.querySelectorAll('[data-accent]').forEach(x => x.classList.toggle('on', x === b));
+});
+document.querySelectorAll('[data-dir]').forEach(b => b.onclick = () => {
+  dir = b.dataset.dir;
+  document.querySelectorAll('[data-dir]').forEach(x => x.classList.toggle('on', x === b));
+  render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+render();
+</script>
+</body>
+</html>

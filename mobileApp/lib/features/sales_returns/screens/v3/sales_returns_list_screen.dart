@@ -17,6 +17,7 @@ import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
+import 'package:invo/shared/widgets/nav_hide.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
@@ -246,7 +247,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     final st = _list.state;
     final sub = st.isLoading && st.items.isEmpty ? 'Loading…' : '${st.total} return${st.total == 1 ? '' : 's'} found';
     final canCreate = context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnCreate);
-    return Scaffold(
+    final body = Scaffold(
       backgroundColor: Colors.transparent,
       extendBody: true,
       body: AstraBackground(
@@ -275,6 +276,8 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       floatingActionButton: (canCreate && !context.isTablet) ? AstraNavFab(onTap: () => context.push(Routes.saleReturnPick)) : null,
       bottomNavigationBar: context.isTablet ? null : AstraNavBar(activeIndex: 1, onTap: _onNavTap),
     );
+    // Phone only — the tablet has no bottom bar to get out of the way.
+    return context.isTablet ? body : NavHide(child: body);
   }
 
   Widget _body(bool canCreate) {

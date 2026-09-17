@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:go_router/go_router.dart';
 
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/widgets/astra_drawer.dart';
+import 'package:invo/shared/widgets/nav_hide.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/features/admin/screens/v3/dashboard_screen.dart';
 import 'package:invo/features/admin/screens/v3/reports_screen.dart';
@@ -21,7 +21,8 @@ import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:provider/provider.dart';
 
 /// Adaptive admin shell: a glossy floating bottom nav on phones (Instagram-style:
-/// hides on scroll-down, returns on scroll-up), a left side-rail on tablets.
+/// hides on scroll-down, returns on scroll-up, and can be pushed away by
+/// dragging the bar itself downwards), a left side-rail on tablets.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, this.initialTab = 0});
 
@@ -34,7 +35,6 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   late int _index = widget.initialTab;
-  bool _navVisible = true;
 
   /// Tablet-only destinations that have actually been opened. They stay in the
   /// stack afterwards (so their state survives switching away), but an unvisited
@@ -92,17 +92,6 @@ class _HomeShellState extends State<HomeShell> {
 
   static const _drawerScrim = Color(0x85040C09);
 
-  bool _onScroll(UserScrollNotification n) {
-    if (n.metrics.axis != Axis.vertical) return false;
-    // Don't hide when the content is too short to scroll meaningfully.
-    if (n.direction == ScrollDirection.reverse && _navVisible && n.metrics.maxScrollExtent > 60) {
-      setState(() => _navVisible = false);
-    } else if (n.direction == ScrollDirection.forward && !_navVisible) {
-      setState(() => _navVisible = true);
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final pages = _pagesFor(context);
@@ -124,32 +113,19 @@ class _HomeShellState extends State<HomeShell> {
       );
     }
 
-    return Scaffold(
-      extendBody: true,
-      drawer: _drawer,
-      drawerScrimColor: _drawerScrim,
-      body: NotificationListener<UserScrollNotification>(
-        onNotification: _onScroll,
-        child: IndexedStack(index: index, children: pages),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: AnimatedSlide(
-        offset: _navVisible ? Offset.zero : const Offset(0, 2.4),
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-        child: AnimatedOpacity(
-          opacity: _navVisible ? 1 : 0,
-          duration: const Duration(milliseconds: 200),
-          // Centred square "+" that docks into the gap in the middle of the bar
-          // (matches the preview). Tap = New Sale.
-          child: AstraNavFab(onTap: () => context.push(Routes.sale)),
-        ),
-      ),
-      bottomNavigationBar: AnimatedSlide(
-        offset: _navVisible ? Offset.zero : const Offset(0, 1.8),
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-        child: AstraNavBar(activeIndex: index, onTap: _goToTab),
+    // NavHide has to sit above the Scaffold: the pages' scroll notifications
+    // bubble up to it, and the bar and the "+" read the answer from inside.
+    return NavHide(
+      child: Scaffold(
+        extendBody: true,
+        drawer: _drawer,
+        drawerScrimColor: _drawerScrim,
+        body: IndexedStack(index: index, children: pages),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        // Centred square "+" that docks into the gap in the middle of the bar
+        // (matches the preview). Tap = New Sale.
+        floatingActionButton: AstraNavFab(onTap: () => context.push(Routes.sale)),
+        bottomNavigationBar: AstraNavBar(activeIndex: index, onTap: _goToTab),
       ),
     );
   }

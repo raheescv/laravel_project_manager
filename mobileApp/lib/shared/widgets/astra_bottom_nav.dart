@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/widgets/nav_hide.dart';
 
 /// The four primary destinations, shared by the bottom nav and the tablet rail.
 const astraNavTabs = [
@@ -17,6 +18,12 @@ const astraNavTabs = [
 /// glowing gradient underline glides beneath the active tab while its icon
 /// lifts. [activeIndex] highlights a tab (pass -1 for none); [onTap] reports
 /// the tapped index. Leaves a centre gap for [AstraNavFab].
+///
+/// Inside a [NavHide] (and with `extendBody: true`) the bar slides off the
+/// bottom while the reader scrolls down the page, so the rows it would
+/// otherwise cover are readable, and returns on the first upward drag. The bar
+/// is also a handle: drag it downwards and it follows the finger off the
+/// screen.
 class AstraNavBar extends StatelessWidget {
   const AstraNavBar({super.key, required this.activeIndex, required this.onTap});
 
@@ -49,88 +56,91 @@ class AstraNavBar extends StatelessWidget {
             BoxShadow(color: accent.withValues(alpha: 0.10), blurRadius: 24, spreadRadius: -12, offset: const Offset(0, 6)),
           ];
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-            child: Container(
-              height: navHeight,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: navColors,
+    return NavHideSlide(
+      drag: true,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+              child: Container(
+                height: navHeight,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: navColors,
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: navBorder),
+                  boxShadow: navShadow,
                 ),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: navBorder),
-                boxShadow: navShadow,
-              ),
-              child: LayoutBuilder(
-                builder: (context, c) {
-                  const gap = 66.0; // centre slot the docked "+" button sits in
-                  final tabW = (c.maxWidth - hPad * 2 - gap) / astraNavTabs.length;
-                  // Tabs 2 & 3 sit after the centre gap.
-                  double tabLeft(int i) => hPad + i * tabW + (i >= 2 ? gap : 0);
-                  final hasActive = activeIndex >= 0 && activeIndex < astraNavTabs.length;
-                  final indLeft = tabLeft(hasActive ? activeIndex : 0) + (tabW - indWidth) / 2;
-                  return Stack(
-                    children: [
-                      // Glass sheen along the top edge.
-                      Positioned(
-                        left: 28,
-                        right: 28,
-                        top: 0,
-                        child: Container(
-                          height: 1,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [Colors.transparent, sheen, Colors.transparent]),
-                          ),
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: hPad),
-                          child: Row(children: [
-                            _navItem(p, 0),
-                            _navItem(p, 1),
-                            const SizedBox(width: gap),
-                            _navItem(p, 2),
-                            _navItem(p, 3),
-                          ]),
-                        ),
-                      ),
-                      // Aurora underline — glides under the active tab.
-                      if (hasActive)
-                        AnimatedPositioned(
-                          duration: const Duration(milliseconds: 380),
-                          curve: Curves.easeOutCubic,
-                          left: indLeft,
-                          bottom: 8,
-                          width: indWidth,
-                          height: 4,
-                          child: DecoratedBox(
+                child: LayoutBuilder(
+                  builder: (context, c) {
+                    const gap = 66.0; // centre slot the docked "+" button sits in
+                    final tabW = (c.maxWidth - hPad * 2 - gap) / astraNavTabs.length;
+                    // Tabs 2 & 3 sit after the centre gap.
+                    double tabLeft(int i) => hPad + i * tabW + (i >= 2 ? gap : 0);
+                    final hasActive = activeIndex >= 0 && activeIndex < astraNavTabs.length;
+                    final indLeft = tabLeft(hasActive ? activeIndex : 0) + (tabW - indWidth) / 2;
+                    return Stack(
+                      children: [
+                        // Glass sheen along the top edge.
+                        Positioned(
+                          left: 28,
+                          right: 28,
+                          top: 0,
+                          child: Container(
+                            height: 1,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(4),
-                              gradient: LinearGradient(
-                                colors: [
-                                  accent.withValues(alpha: 0.0),
-                                  accent,
-                                  Color.lerp(accent, Colors.white, 0.4)!,
-                                  accent,
-                                  accent.withValues(alpha: 0.0),
-                                ],
-                                stops: const [0, 0.2, 0.5, 0.8, 1],
-                              ),
-                              boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.6), blurRadius: 14, spreadRadius: 0.5)],
+                              gradient: LinearGradient(colors: [Colors.transparent, sheen, Colors.transparent]),
                             ),
                           ),
                         ),
-                    ],
-                  );
-                },
+                        Positioned.fill(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: hPad),
+                            child: Row(children: [
+                              _navItem(p, 0),
+                              _navItem(p, 1),
+                              const SizedBox(width: gap),
+                              _navItem(p, 2),
+                              _navItem(p, 3),
+                            ]),
+                          ),
+                        ),
+                        // Aurora underline — glides under the active tab.
+                        if (hasActive)
+                          AnimatedPositioned(
+                            duration: const Duration(milliseconds: 380),
+                            curve: Curves.easeOutCubic,
+                            left: indLeft,
+                            bottom: 8,
+                            width: indWidth,
+                            height: 4,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    accent.withValues(alpha: 0.0),
+                                    accent,
+                                    Color.lerp(accent, Colors.white, 0.4)!,
+                                    accent,
+                                    accent.withValues(alpha: 0.0),
+                                  ],
+                                  stops: const [0, 0.2, 0.5, 0.8, 1],
+                                ),
+                                boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.6), blurRadius: 14, spreadRadius: 0.5)],
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -181,7 +191,8 @@ class AstraNavBar extends StatelessWidget {
 }
 
 /// The docked accent "+" button that nests in the centre gap of [AstraNavBar].
-/// Pair it with `FloatingActionButtonLocation.centerDocked`.
+/// Pair it with `FloatingActionButtonLocation.centerDocked`. Leaves with the
+/// bar when the screen is wrapped in a [NavHide].
 class AstraNavFab extends StatelessWidget {
   const AstraNavFab({super.key, required this.onTap});
 
@@ -190,19 +201,23 @@ class AstraNavFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 58,
-        height: 58,
-        decoration: BoxDecoration(
-          gradient: p.accentGradient,
-          borderRadius: BorderRadius.circular(19),
-          boxShadow: [
-            BoxShadow(color: p.accent.withValues(alpha: 0.45), blurRadius: 20, spreadRadius: -2, offset: const Offset(0, 10)),
-          ],
+    return NavHideSlide(
+      offscreen: 2.4,
+      fade: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 58,
+          height: 58,
+          decoration: BoxDecoration(
+            gradient: p.accentGradient,
+            borderRadius: BorderRadius.circular(19),
+            boxShadow: [
+              BoxShadow(color: p.accent.withValues(alpha: 0.45), blurRadius: 20, spreadRadius: -2, offset: const Offset(0, 10)),
+            ],
+          ),
+          child: const Icon(Icons.add, color: Colors.white, size: 28),
         ),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
   }

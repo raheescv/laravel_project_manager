@@ -250,3 +250,67 @@ it('keeps the canteen menu read-only without the edit permission', function (): 
 
     Livewire::test(CanteenMenu::class)->call('save')->assertForbidden();
 });
+
+it('writes the week with the quick-fill presets', function (): void {
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'student menu.edit', 'guard_name' => 'web']));
+    $this->actingAs($this->world->user);
+
+    Livewire::test(CanteenMenu::class)
+        ->call('applyTemplate', 'hot')
+        ->assertSet('courses.0.name', 'Main dish')
+        ->assertSet('courses.0.note', '1 portion')
+        ->assertSet('courses.3.name', 'Drink')
+        // one dish, repeated across the week, then Monday cleared and drafted again
+        ->set('courses.0.dishes.7.name', 'Cheesy Pasta Twirls')
+        ->call('repeatAcross', 0, 7)
+        ->assertSet('courses.0.dishes.1.name', 'Cheesy Pasta Twirls')
+        ->assertSet('courses.0.dishes.4.name', 'Cheesy Pasta Twirls')
+        ->call('clearDay', 1)
+        ->assertSet('courses.0.dishes.1.name', '')
+        ->call('fillEmptyDays', 0)
+        // drafted from a canteen product, never from the meal itself, and no repeat in the week
+        ->assertSet('courses.0.dishes.1.name', $this->offMenu->name)
+        ->assertSet('courses.1.dishes.7.name', '')
+        // a second course is filled from its own column
+        ->set('courses.1.dishes.7.name', 'Garden salad')
+        ->call('copyDay', 7)
+        ->assertSet('courses.1.dishes.2.name', 'Garden salad')
+        ->call('clearWeek')
+        ->assertSet('courses.0.dishes.7.name', '')
+        ->assertSet('courses.1.dishes.7.name', '');
+});
+
+it('copies another meal\'s menu without saving it', function (): void {
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'student menu.edit', 'guard_name' => 'web']));
+    $this->actingAs($this->world->user);
+
+    $other = Product::create([
+        'tenant_id' => $this->world->tenant->id, 'type' => 'product', 'name' => 'Breakfast Box', 'code' => 'BFAST1',
+        'unit_id' => $this->world->product->unit_id, 'department_id' => $this->world->product->department_id,
+        'main_category_id' => $this->menuCategory, 'mrp' => 6,
+        'created_by' => $this->world->user->id, 'updated_by' => $this->world->user->id,
+    ]);
+    App\Models\CanteenMenu::create([
+        'tenant_id' => $this->world->tenant->id, 'product_id' => $other->id, 'updated_by' => $this->world->user->id,
+        'courses' => [['name' => 'Main dish', 'note' => '1 portion', 'dishes' => ['7' => ['name' => 'Pancakes', 'description' => 'With honey']]]],
+    ]);
+
+    Livewire::test(CanteenMenu::class)
+        ->set('product_id', $this->world->product->id)
+        ->set('copy_from', $other->id)
+        ->call('copyFromMeal')
+        ->assertSet('courses.0.name', 'Main dish')
+        ->assertSet('courses.0.dishes.7.name', 'Pancakes')
+        ->assertDispatched('success');
+
+    // nothing is written until Save
+    expect(App\Models\CanteenMenu::where('product_id', $this->world->product->id)->exists())->toBeFalse();
+});
+
+it('refuses the quick-fill presets without the edit permission', function (): void {
+    $this->actingAs($this->world->user);
+
+    Livewire::test(CanteenMenu::class)->call('applyTemplate', 'hot')->assertForbidden();
+    Livewire::test(CanteenMenu::class)->call('fillEmptyDays')->assertForbidden();
+    Livewire::test(CanteenMenu::class)->call('clearWeek')->assertForbidden();
+});

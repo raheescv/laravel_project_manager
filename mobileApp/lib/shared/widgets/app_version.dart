@@ -7,11 +7,11 @@ import 'package:package_info_plus/package_info_plus.dart';
 /// tests) rather than throwing.
 ///
 /// Version name only: without a `+N` in pubspec, iOS reports the version name
-/// again as the build number (`v1.1.0 (1.1.0)`) and Android reports `1`.
+/// again as the build number (`v1.2.0`) and Android reports `1`.
 final Future<String> _appVersion =
     PackageInfo.fromPlatform().then((i) => 'v${i.version}').onError((_, _) => '');
 
-/// `v1.1.0`, with an optional [prefix] (`QLOUD POS · v1.1.0`).
+/// `v1.2.0`, with an optional [prefix] (`QLOUD POS · v1.2.0`).
 class AppVersionText extends StatelessWidget {
   const AppVersionText({super.key, required this.style, this.prefix = ''});
 
