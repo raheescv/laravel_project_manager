@@ -6,6 +6,7 @@ use App\Models\Configuration;
 use App\Models\Holiday;
 use App\Models\SaleDaySession;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Models\WorkingDay;
 use Carbon\Carbon;
 use Tests\Support\PosWorld;
@@ -64,6 +65,7 @@ function aoOtherTenant(): array
 }
 
 it('opens a session for every branch once the opening time has passed, stamped with that time', function (): void {
+    $system = User::factory()->create(['tenant_id' => $this->world->tenant->id, 'name' => 'System']);
     Carbon::setTestNow($this->monday->copy()->setTime(9, 3));
 
     $this->artisan('sale-day-sessions:open-daily')->assertSuccessful();
@@ -76,9 +78,21 @@ it('opens a session for every branch once the opening time has passed, stamped w
     foreach ($sessions as $session) {
         expect($session->status)->toBe('open')
             ->and($session->opened_at->format('Y-m-d H:i:s'))->toBe('2026-09-14 09:00:00')
-            ->and($session->opened_by)->toBeNull()
+            ->and($session->opened_by)->toBe($system->id)
+            ->and($session->opened_by_name)->toBe('System')
             ->and((float) $session->opening_amount)->toBe(0.0);
     }
+});
+
+it('still reads as System when the tenant has no System user', function (): void {
+    Carbon::setTestNow($this->monday->copy()->setTime(9, 3));
+
+    $this->artisan('sale-day-sessions:open-daily')->assertSuccessful();
+
+    $session = aoSessions($this->world->tenant)->first();
+
+    expect($session->opened_by)->toBeNull()
+        ->and($session->opened_by_name)->toBe('System');
 });
 
 it('waits for the opening time', function (): void {

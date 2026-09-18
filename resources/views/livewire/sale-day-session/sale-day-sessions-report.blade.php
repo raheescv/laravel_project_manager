@@ -408,8 +408,8 @@
                     <tbody>
                         @forelse ($sessions as $session)
                             @php
-                                $opener = $session->opener?->name ?? 'Unknown';
-                                $closer = $session->status === 'closed' ? ($session->closer?->name ?? 'Unknown') : null;
+                                $opener = $session->opened_by_name;
+                                $closer = $session->closed_by_name;
                                 $salesAmt = (float) ($session->sales_sum_paid ?? 0);
                                 $tailAmt = (float) ($session->tailoring_orders_sum_paid ?? 0);
                                 $rowDiff = (float) $session->difference_amount;

@@ -15,8 +15,8 @@
         $openPct = $stats['expected'] > 0 ? max(0, min(100, ($stats['opening'] / $stats['expected']) * 100)) : 0;
         $salesPct = $stats['expected'] > 0 ? 100 - $openPct : 0;
         $initial = fn ($name) => mb_strtoupper(mb_substr(trim((string) $name), 0, 1) ?: '?');
-        $openerName = $session->opener->name ?? 'Unknown';
-        $closerName = $session->closer->name ?? 'Unknown';
+        $openerName = $session->opened_by_name;
+        $closerName = $session->closed_by_name ?? 'Unknown';
     @endphp
 
     <div class="content__header content__boxed overlapping">

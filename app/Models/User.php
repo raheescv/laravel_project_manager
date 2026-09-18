@@ -237,6 +237,20 @@ class User extends Authenticatable implements AuditableContracts
         return $this->type === 'employee' && ! $this->is_admin;
     }
 
+    /**
+     * The tenant's "System" account (seeded as the first user) that unattended
+     * work - the scheduled day-session open/close - is stamped with. Null when a
+     * tenant never got one; callers store null then, which still reads "System".
+     */
+    public static function systemUserId(int $tenantId): ?int
+    {
+        return static::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->where('name', 'System')
+            ->orderBy('id')
+            ->value('id');
+    }
+
     public function scopeEmployee($query)
     {
         return $query->where('type', 'employee');

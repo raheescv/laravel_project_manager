@@ -64,6 +64,26 @@ class SaleDaySession extends Model implements AuditableContracts
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    /**
+     * Who opened the day, for display. The scheduler stamps the tenant's System
+     * user (User::systemUserId); a null opened_by - sessions auto-opened before
+     * that, or a tenant with no System user - reads "System" too.
+     */
+    public function getOpenedByNameAttribute(): string
+    {
+        return $this->opened_by ? ($this->opener?->name ?? 'Unknown') : 'System';
+    }
+
+    /** Who closed the day, for display: null while open, "System" for an auto-close. */
+    public function getClosedByNameAttribute(): ?string
+    {
+        if ($this->status !== 'closed') {
+            return null;
+        }
+
+        return $this->closed_by ? ($this->closer?->name ?? 'Unknown') : 'System';
+    }
+
     public function sales()
     {
         return $this->hasMany(Sale::class, 'sale_day_session_id')->where('status', 'completed');

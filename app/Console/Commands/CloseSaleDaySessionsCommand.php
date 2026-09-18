@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Configuration;
 use App\Models\SaleDaySession;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\TenantService;
 use Exception;
 use Illuminate\Console\Command;
@@ -72,9 +73,11 @@ class CloseSaleDaySessionsCommand extends Command
 
             $this->info("{$tenant->name}: {$openSessions->count()} session(s) to close.");
 
+            $systemUserId = User::systemUserId($tenantId);
+
             foreach ($openSessions as $session) {
                 try {
-                    $this->closeSession($session);
+                    $this->closeSession($session, $systemUserId);
 
                     $closedCount++;
                     $this->info("✓ Closed session ID {$session->id} for branch ID {$session->branch_id} (Expected: {$session->expected_amount})");
@@ -110,10 +113,10 @@ class CloseSaleDaySessionsCommand extends Command
             ->get();
     }
 
-    /** Close one session at its expected amount. */
-    protected function closeSession(SaleDaySession $session): void
+    /** Close one session at its expected amount, as the tenant's System user. */
+    protected function closeSession(SaleDaySession $session, ?int $systemUserId): void
     {
-        DB::transaction(function () use ($session) {
+        DB::transaction(function () use ($session, $systemUserId) {
             // Expected amount: opening_amount + completed sales (the sales()
             // relationship already filters those). close() recomputes it, and
             // adds tailoring payments on top.
@@ -122,7 +125,7 @@ class CloseSaleDaySessionsCommand extends Command
             $session->close(
                 $expectedAmount, // closing_amount = expected_amount
                 0, // sync_amount (nothing to reconcile on an unattended close)
-                null, // closed_by: nobody closed this, the scheduler did
+                $systemUserId, // closed_by: nobody closed this, the scheduler did
                 'Auto-closed by daily scheduled command',
             );
         });

@@ -57,12 +57,12 @@
             </tr>
             <tr>
                 <td><strong>Opened By</strong></td>
-                <td align="right"><strong>{{ $session->opener->name ?? 'N/A' }}</strong></td>
+                <td align="right"><strong>{{ $session->opened_by_name }}</strong></td>
             </tr>
-            @if ($session->closer)
+            @if ($session->closed_by_name)
                 <tr>
                     <td><strong>Closed By</strong></td>
-                    <td align="right"><strong>{{ $session->closer->name }}</strong></td>
+                    <td align="right"><strong>{{ $session->closed_by_name }}</strong></td>
                 </tr>
             @endif
             <tr>

@@ -235,11 +235,11 @@
                 </td>
                 <td>
                     <span class="meta-label">Opened By</span>
-                    <span @class(['meta-value', 'me-name' => $session->opened_by && (int) $session->opened_by === (int) auth()->id()])>{{ $session->opener->name ?? 'N/A' }}</span>
+                    <span @class(['meta-value', 'me-name' => $session->opened_by && (int) $session->opened_by === (int) auth()->id()])>{{ $session->opened_by_name }}</span>
                 </td>
                 <td>
                     <span class="meta-label">Closed By</span>
-                    <span @class(['meta-value', 'me-name' => $session->closed_by && (int) $session->closed_by === (int) auth()->id()])>{{ $session->closer->name ?? 'N/A' }}</span>
+                    <span @class(['meta-value', 'me-name' => $session->closed_by && (int) $session->closed_by === (int) auth()->id()])>{{ $session->closed_by_name ?? 'N/A' }}</span>
                 </td>
             </tr>
         </table>

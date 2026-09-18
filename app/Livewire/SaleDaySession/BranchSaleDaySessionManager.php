@@ -111,7 +111,7 @@ class BranchSaleDaySessionManager extends Component
             'total_tailoring_amount' => $tailoringPaymentsAmount,
             'total_amount' => $totalAmount,
             'opened_at' => $this->currentSession->opened_at->format('Y-m-d H:i:s'),
-            'opened_by' => $this->currentSession->opener->name ?? 'Unknown',
+            'opened_by' => $this->currentSession->opened_by_name,
             'opening_amount' => $this->currentSession->opening_amount,
             'expected_amount' => $this->currentSession->opening_amount + $totalAmount,
         ];

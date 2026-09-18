@@ -301,7 +301,7 @@
                             <div class="row g-2 mb-3">
                                 <div class="col-6"><div class="bg-body-tertiary rounded-3 p-2 small text-body-secondary">Business date<div class="fw-bold text-body">{{ SystemDate($session->opened_at) }}@if ($session->opened_at->format('H:i:s') !== '00:00:00') <small class="fw-normal">{{ $session->opened_at->format('h:i A') }}</small>@endif</div></div></div>
                                 <div class="col-6"><div class="bg-body-tertiary rounded-3 p-2 small text-body-secondary">Float<div class="fw-bold text-body">{{ currency($session->opening_amount) }}</div></div></div>
-                                <div class="col-12"><div class="bg-body-tertiary rounded-3 p-2 small text-body-secondary">Opened by<div class="fw-bold text-body text-truncate">{{ $session->opener->name ?? 'Unknown' }}</div></div></div>
+                                <div class="col-12"><div class="bg-body-tertiary rounded-3 p-2 small text-body-secondary">Opened by<div class="fw-bold text-body text-truncate">{{ $session->opened_by_name }}</div></div></div>
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" wire:click="changeBranch({{ $session->branch_id }})"><i class="fa fa-cog me-1"></i> Manage</button>

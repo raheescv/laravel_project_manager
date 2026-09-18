@@ -7,6 +7,7 @@ use App\Models\Configuration;
 use App\Models\Holiday;
 use App\Models\SaleDaySession;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Models\WorkingDay;
 use App\Services\TenantService;
 use Illuminate\Console\Command;
@@ -76,9 +77,11 @@ class OpenSaleDaySessionsCommand extends Command
                 continue;
             }
 
+            $systemUserId = User::systemUserId($tenantId);
+
             foreach (Branch::query()->orderBy('id')->get() as $branch) {
                 try {
-                    if ($this->openFor($branch, $openingAt)) {
+                    if ($this->openFor($branch, $openingAt, $systemUserId)) {
                         $opened++;
                         $this->info("✓ {$tenant->name} / {$branch->name}: opened at {$openingAt->format('d-m-Y H:i')}");
                     }
@@ -115,8 +118,8 @@ class OpenSaleDaySessionsCommand extends Command
         return $openingAt->lte($now) ? $openingAt : null;
     }
 
-    /** Open today's session for one branch. False when the branch needs nothing. */
-    protected function openFor(Branch $branch, Carbon $openingAt): bool
+    /** Open today's session for one branch, as the tenant's System user. False when the branch needs nothing. */
+    protected function openFor(Branch $branch, Carbon $openingAt, ?int $systemUserId): bool
     {
         // Nothing still open from an earlier day: a branch can only ever have
         // one open session, and auto-close being off (or having failed) is no
@@ -139,7 +142,7 @@ class OpenSaleDaySessionsCommand extends Command
         SaleDaySession::create([
             'tenant_id' => $branch->tenant_id,
             'branch_id' => $branch->id,
-            'opened_by' => null,
+            'opened_by' => $systemUserId,
             'opened_at' => $openingAt->toDateTimeString(),
             'opening_amount' => 0,
             'status' => 'open',
