@@ -8,6 +8,7 @@ use App\Exceptions\ParentPortalException;
 use App\Http\Requests\V1\Parent\StartTopupRequest;
 use App\Http\Resources\V1\Parent\TopupResource;
 use App\Models\Guardian;
+use App\Services\Payment\QPayApiLog;
 use App\Services\Payment\QPayClient;
 use App\Services\TenantService;
 use App\Support\Payment\QPaySettings;
@@ -37,20 +38,24 @@ class StartTopupAction
 
         $transaction = $response['data'];
         $settings = QPaySettings::current();
+        $fields = (new QPayClient($settings))->paymentFields(
+            pun: $transaction->pun,
+            amount: (float) $transaction->amount,
+            returnUrl: $this->returnUrl($request),
+            description: 'CardTopup'.$transaction->account_id,
+            lang: $transaction->lang ?: 'En',
+            requestDate: $transaction->request_date,
+        );
+
+        // The browser posts it, so the row stays pending until QPay's result comes back (HandleReturnAction).
+        QPayApiLog::start(QPayApiLog::PAYMENT, $settings->gatewayUrl(), $fields, $settings->merchantId);
 
         return [
             'topup' => new TopupResource($transaction->setRelation('account', $student)),
             'payment' => [
                 'url' => $settings->gatewayUrl(),
                 'method' => 'POST',
-                'fields' => (new QPayClient($settings))->paymentFields(
-                    pun: $transaction->pun,
-                    amount: (float) $transaction->amount,
-                    returnUrl: $this->returnUrl($request),
-                    description: 'CardTopup'.$transaction->account_id,
-                    lang: $transaction->lang ?: 'En',
-                    requestDate: $transaction->request_date,
-                ),
+                'fields' => $fields,
             ],
         ];
     }

@@ -1,11 +1,14 @@
 <?php
 
+use App\Actions\QPay\InquireAction;
 use App\Actions\QPay\RefundAction;
 use App\Actions\QPay\StartPaymentAction;
 use App\Actions\Student\GetBalanceAction;
+use App\Models\ApiLog;
 use App\Models\Configuration;
 use App\Models\JournalEntry;
 use App\Models\QpayTransaction;
+use App\Services\Payment\QPayApiLog;
 use App\Services\Payment\QPayClient;
 use App\Support\Payment\QPaySettings;
 use Illuminate\Http\Client\Request;
@@ -305,4 +308,105 @@ it('rejects a top-up outside the school\'s limits', function (): void {
 
     expect($response['success'])->toBeFalse()
         ->and(QpayTransaction::count())->toBe(0);
+});
+
+it('logs the payment form and closes the same row with QPay\'s result', function (): void {
+    $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->postJson($this->world->url("/api/v1/parent/students/{$this->student->id}/topups"), ['amount' => 100])
+        ->assertCreated();
+    $transaction = QpayTransaction::sole();
+
+    $log = ApiLog::where('service_name', QPayApiLog::PAYMENT)->sole();
+    $sent = json_decode($log->request, true);
+    expect($log->status)->toBe('pending')
+        ->and($log->endpoint)->toBe('https://pguat.qcb.gov.qa/qcb-pg/api/gateway/2.0')
+        ->and($log->username)->toBe('MERCH01')
+        ->and($log->user_id)->toBeNull()
+        ->and($log->user_name)->toBe($this->guardian->name)
+        ->and($sent['PUN'])->toBe($transaction->pun)
+        ->and($sent['SecureHash'])->toBe(QPayClient::hash(QPAY_TEST_SECRET, $sent))
+        ->and($log->request)->not->toContain(QPAY_TEST_SECRET);
+
+    $body = qpaySigned(qpayPaymentResponse($transaction));
+    qpayPostReturn($this, $body);
+
+    expect($log->refresh()->status)->toBe('success')
+        ->and($log->description)->toBeNull()
+        ->and(json_decode($log->response, true))->toMatchArray(['PUN' => $transaction->pun, 'Status' => '0000', 'SecureHash' => QPayClient::parseResponse($body)['hash']]);
+
+    // A repeat post has no open payment row left to close, so it gets its own.
+    qpayPostReturn($this, $body);
+    expect(ApiLog::where('service_name', QPayApiLog::RETURN)->sole()->status)->toBe('success')
+        ->and(ApiLog::count())->toBe(2);
+});
+
+it('logs a declined payment with QPay\'s code', function (): void {
+    $transaction = qpayStart($this, 100);
+
+    qpayPostReturn($this, qpaySigned(qpayPaymentResponse($transaction, ['Status' => 'EZConnect-0008', 'StatusMessage' => 'Merchant IP is not supported'])));
+
+    $log = ApiLog::where('service_name', QPayApiLog::RETURN)->sole();
+    expect($log->status)->toBe('failed')
+        ->and($log->description)->toBe('EZConnect-0008: Merchant IP is not supported')
+        ->and($transaction->refresh()->status)->toBe('failed');
+});
+
+it('logs a result it cannot match, or cannot verify, as failed', function (): void {
+    qpayPostReturn($this, qpaySigned(['PUN' => 'NOTAPAYMENT000000000', 'Status' => '0000']));
+
+    expect(ApiLog::where('service_name', QPayApiLog::RETURN)->sole())
+        ->status->toBe('failed')
+        ->description->toBe('No top-up has this PUN.');
+
+    $transaction = qpayStart($this, 100);
+    Http::fake(fn () => Http::response(qpayInquiryResponse($transaction)));
+    qpayPostReturn($this, qpaySigned(qpayPaymentResponse($transaction), str_repeat('a', 64)));
+
+    expect(ApiLog::where('service_name', QPayApiLog::RETURN)->latest('id')->first())
+        ->status->toBe('failed')
+        ->description->toContain('secure hash check');
+});
+
+it('logs every inquiry with what was sent and what QPay answered', function (): void {
+    $transaction = qpayStart($this, 100);
+    Http::fake(fn () => Http::response(qpayInquiryResponse($transaction)));
+    $this->travel(21)->minutes();
+
+    $this->artisan('qpay:inquire-pending')->assertSuccessful();
+
+    $log = ApiLog::where('service_name', QPayApiLog::INQUIRY)->sole();
+    expect($log->status)->toBe('success')
+        ->and($log->user_name)->toBeNull()
+        ->and(json_decode($log->request, true))->toMatchArray(['Action' => '14', 'OriginalPUN' => $transaction->pun, 'MerchantID' => 'MERCH01'])
+        ->and(json_decode($log->response, true))->toMatchArray(['OriginalStatus' => '0000', 'OriginalPUN' => $transaction->pun]);
+});
+
+it('logs an inquiry QPay could not be reached for', function (): void {
+    $transaction = qpayStart($this, 100);
+    Http::fake(['*' => Http::failedConnection('cURL error 28: Operation timed out')]);
+
+    expect((new InquireAction())->execute($transaction)['success'])->toBeFalse();
+
+    expect(ApiLog::where('service_name', QPayApiLog::INQUIRY)->sole())
+        ->status->toBe('failed')
+        ->response->toBeNull()
+        ->description->toContain('Operation timed out');
+});
+
+it('logs a refund QPay refused, under the staff member who asked', function (): void {
+    $transaction = qpayStart($this, 100);
+    qpayPostReturn($this, qpaySigned(qpayPaymentResponse($transaction)));
+    Http::fake(fn () => Http::response(qpaySigned([
+        'EZConnectRequestStatus' => 'EZConnect-0008', 'EZConnectStatusMessage' => 'Merchant IP is not supported', 'EZConnectResponseDate' => '17092026162003',
+    ])));
+    $this->actingAs($this->world->user);
+
+    $response = (new RefundAction())->execute($transaction->id, $this->world->user->id);
+
+    $log = ApiLog::where('service_name', QPayApiLog::REFUND)->sole();
+    expect($response['success'])->toBeFalse()
+        ->and($log->status)->toBe('failed')
+        ->and($log->description)->toBe('EZConnect-0008: Merchant IP is not supported')
+        ->and($log->user_id)->toBe($this->world->user->id)
+        ->and(json_decode($log->request, true))->toMatchArray(['Action' => '6', 'OriginalTransactionPaymentUniqueNumber_1' => $transaction->pun]);
 });

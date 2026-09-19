@@ -214,16 +214,21 @@ class QPayClient
     /** @return array<string, string> */
     private function backToBack(array $fields, string $operation): array
     {
+        $url = $this->settings->gatewayUrl();
+        $log = QPayApiLog::start($operation === 'refund' ? QPayApiLog::REFUND : QPayApiLog::INQUIRY, $url, $fields, $this->settings->merchantId);
+
         try {
-            $response = Http::asForm()->timeout(30)->post($this->settings->gatewayUrl(), $fields);
+            $response = Http::asForm()->timeout(30)->post($url, $fields);
         } catch (ConnectionException $e) {
             Log::warning('QPay unreachable', ['operation' => $operation, 'error' => $e->getMessage()]);
+            QPayApiLog::finish($log, 'failed', null, 'QPay could not be reached: '.$e->getMessage());
 
             throw new QPayException('The payment service could not be reached. Please try again.', 0, $e);
         }
 
         if (! $response->successful()) {
             Log::error('QPay request failed', ['operation' => $operation, 'status' => $response->status(), 'body' => $response->body()]);
+            QPayApiLog::finish($log, 'failed', ['http_status' => $response->status(), 'body' => $response->body()], 'QPay answered HTTP '.$response->status().'.');
 
             throw new QPayException('The payment service rejected the request.', $response->status());
         }
@@ -231,9 +236,12 @@ class QPayClient
         $parsed = self::parseResponse(trim($response->body()));
         if (! $this->verify($parsed)) {
             Log::error('QPay response failed the secure hash check', ['operation' => $operation, 'body' => $response->body()]);
+            QPayApiLog::answered($log, $parsed, 'The response failed the secure hash check and was not believed.');
 
             throw new QPayException('The payment service response could not be verified.');
         }
+
+        QPayApiLog::answered($log, $parsed);
 
         return $parsed['values'];
     }
