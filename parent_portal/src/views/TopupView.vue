@@ -5,9 +5,11 @@ import { useRoute } from 'vue-router'
 import { fetchStudent, startTopup } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import LoadError from '@/components/LoadError.vue'
+import { refreshChild } from '@/children'
 import { school } from '@/school'
 import { amount as plainAmount, firstName, money } from '@/utils/format'
 import { goToQPay } from '@/utils/qpay'
+import { desktop } from '@/utils/viewport'
 
 const route = useRoute()
 const id = Number(route.params.id)
@@ -30,6 +32,7 @@ const value = computed(() => {
 const valid = computed(() => value.value !== null && value.value >= limits.value.min && value.value <= limits.value.max)
 const newBalance = computed(() => Number(student.value?.balance || 0) + (value.value || 0))
 const cardState = computed(() => (!student.value?.has_card ? 'none' : student.value.card_blocked ? 'blocked' : 'active'))
+const payLabel = computed(() => (paying.value ? 'Opening QPay…' : valid.value ? `Pay ${money(value.value)} with QPay` : 'Pay with QPay'))
 
 const hint = computed(() => {
   if (touched.value && input.value !== '' && !valid.value) {
@@ -48,6 +51,7 @@ async function load() {
   status.value = 'loading'
   try {
     student.value = await fetchStudent(id)
+    refreshChild(student.value)
     const suggestions = student.value.topup.suggestions
     if (!input.value && suggestions.length) input.value = plainAmount(suggestions[Math.min(1, suggestions.length - 1)])
     status.value = 'ready'
@@ -88,7 +92,7 @@ onMounted(load)
         <span v-else class="pp-skel pp-skel--title"></span>
       </div>
 
-      <div class="pp-topup-card">
+      <div v-if="!desktop" class="pp-topup-card">
         <span class="pp-minicard" aria-hidden="true"></span>
         <span class="pp-row__main">
           <span class="pp-row__sub">Current balance</span>
@@ -106,59 +110,81 @@ onMounted(load)
         </span>
       </div>
 
-      <form v-else-if="student" id="topup-form" novalidate @submit.prevent="pay">
-        <div v-if="payError" class="pp-alert" role="alert">
-          <i class="fa fa-exclamation-circle"></i><span class="pp-alert__main">{{ payError }}</span>
-        </div>
-
-        <section class="pp-group">
-          <h2 class="pp-group__head">Amount</h2>
-          <div v-if="limits.suggestions.length" class="pp-chips" role="group" aria-label="Quick amounts">
-            <button
-              v-for="suggestion in limits.suggestions"
-              :key="suggestion"
-              class="pp-chip"
-              type="button"
-              :aria-pressed="value === suggestion"
-              @click="pick(suggestion)"
-            >
-              {{ suggestion }}
-            </button>
+      <div v-else-if="student" class="pp-checkout">
+        <form id="topup-form" novalidate @submit.prevent="pay">
+          <div v-if="payError" class="pp-alert" role="alert">
+            <i class="fa fa-exclamation-circle"></i><span class="pp-alert__main">{{ payError }}</span>
           </div>
-          <div class="pp-group__body">
-            <label class="pp-amount-field">
-              <span class="pp-amount-field__cur">{{ school.currency.code }}</span>
-              <input
-                v-model="input"
-                type="text"
-                inputmode="decimal"
-                autocomplete="off"
-                placeholder="0.00"
-                :aria-label="`Amount in ${school.currency.code}`"
-                :aria-invalid="hint.error || undefined"
-                @input="payError = ''"
-                @blur="touched = true"
-              />
-            </label>
-          </div>
-          <p class="pp-group__foot" :class="{ 'is-error': hint.error }" aria-live="polite">{{ hint.text }}</p>
-        </section>
 
-        <section class="pp-group">
-          <div class="pp-group__body">
-            <div class="pp-row">
-              <span class="pp-row__main"><span class="pp-row__title">New balance after top-up</span></span>
-              <b class="pp-row__value">{{ valid ? money(newBalance) : '—' }}</b>
+          <section class="pp-group">
+            <h2 class="pp-group__head">Amount</h2>
+            <div v-if="limits.suggestions.length" class="pp-chips" role="group" aria-label="Quick amounts">
+              <button
+                v-for="suggestion in limits.suggestions"
+                :key="suggestion"
+                class="pp-chip"
+                type="button"
+                :aria-pressed="value === suggestion"
+                @click="pick(suggestion)"
+              >
+                {{ suggestion }}
+              </button>
             </div>
+            <div class="pp-group__body">
+              <label class="pp-amount-field">
+                <span class="pp-amount-field__cur">{{ school.currency.code }}</span>
+                <input
+                  v-model="input"
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  placeholder="0.00"
+                  :aria-label="`Amount in ${school.currency.code}`"
+                  :aria-invalid="hint.error || undefined"
+                  @input="payError = ''"
+                  @blur="touched = true"
+                />
+              </label>
+            </div>
+            <p class="pp-group__foot" :class="{ 'is-error': hint.error }" aria-live="polite">{{ hint.text }}</p>
+          </section>
+
+          <section v-if="!desktop" class="pp-group">
+            <div class="pp-group__body">
+              <div class="pp-row">
+                <span class="pp-row__main"><span class="pp-row__title">New balance after top-up</span></span>
+                <b class="pp-row__value">{{ valid ? money(newBalance) : '—' }}</b>
+              </div>
+            </div>
+          </section>
+        </form>
+
+        <!-- Desktop: the phone's pay bar becomes a summary beside the form -->
+        <aside v-if="desktop" class="pp-panel pp-summary">
+          <div class="pp-summary__who">
+            <span class="pp-minicard" :class="{ 'pp-minicard--none': cardState === 'none', 'pp-minicard--blocked': cardState === 'blocked' }" aria-hidden="true"></span>
+            <span class="pp-row__main"><b>{{ student.name }}</b><small v-if="student.class">{{ student.class }}</small></span>
+            <span v-if="cardState === 'active'" class="pp-status pp-status--soft pp-status--active">Card active</span>
+            <span v-else-if="cardState === 'blocked'" class="pp-tag pp-tag--neg">Card blocked</span>
           </div>
-        </section>
-      </form>
+          <dl class="pp-summary__rows">
+            <div><dt>Current balance</dt><dd :class="{ 'pp-text-neg': student.balance < 0 }">{{ money(student.balance) }}</dd></div>
+            <div><dt>Top-up</dt><dd>{{ valid ? money(value, { sign: true }) : '—' }}</dd></div>
+            <div class="is-total"><dt>New balance</dt><dd>{{ valid ? money(newBalance) : '—' }}</dd></div>
+          </dl>
+          <button class="pp-btn pp-btn--pay" :class="{ 'is-busy': paying }" type="submit" form="topup-form" :disabled="paying">
+            <span v-if="paying" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa fa-lock"></i>
+            {{ payLabel }}
+          </button>
+          <p class="pp-trust"><i class="fa fa-shield"></i>You'll pay on QPay's secure page, not in this app.</p>
+        </aside>
+      </div>
     </main>
 
-    <footer v-if="student && limits.enabled" class="pp-actionbar">
+    <footer v-if="!desktop && student && limits.enabled" class="pp-actionbar">
       <button class="pp-btn pp-btn--pay" :class="{ 'is-busy': paying }" type="submit" form="topup-form" :disabled="paying">
         <span v-if="paying" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa fa-lock"></i>
-        {{ paying ? 'Opening QPay…' : valid ? `Pay ${money(value)} with QPay` : 'Pay with QPay' }}
+        {{ payLabel }}
       </button>
       <p class="pp-trust"><i class="fa fa-shield"></i>You'll pay on QPay's secure page, not in this app.</p>
     </footer>

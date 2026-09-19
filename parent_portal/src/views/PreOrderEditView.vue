@@ -18,6 +18,7 @@ import AppBar from '@/components/AppBar.vue'
 import DayMenu from '@/components/DayMenu.vue'
 import LoadError from '@/components/LoadError.vue'
 import MealOption from '@/components/MealOption.vue'
+import { refreshChild } from '@/children'
 import { toast } from '@/toast'
 import { date as longDate, dayName, firstName, isToday, money, shortDate, sortWeekdays, time, weekdayName, weekdaysLabel } from '@/utils/format'
 import { dishesOn, flattenMenu, isoWeekday, servedOn } from '@/utils/meals'
@@ -73,6 +74,7 @@ async function load() {
   try {
     const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id), fetchPreOrderMenu()])
     ;[student.value, schedule.value, meals.value] = [s, sch, flattenMenu(menu)]
+    refreshChild(s)
 
     if (!weekly && !day.value) {
       loadError.value = 'You can only order for the coming school days.'
@@ -161,7 +163,7 @@ onMounted(load)
   </main>
 
   <template v-else>
-    <main>
+    <main class="pp-narrow">
       <div class="pp-largetitle">
         <h1>{{ weekly ? 'Every week' : dayName(date) }}</h1>
         <p v-if="weekly">Pick {{ first }}'s meal and the days. It's ordered automatically until you pause it.</p>

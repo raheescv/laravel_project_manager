@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { checkPasswordLink, setPassword } from '@/api/parent'
+import AuthFrame from '@/components/AuthFrame.vue'
 import LoadError from '@/components/LoadError.vue'
 import PasswordField from '@/components/PasswordField.vue'
 import { school } from '@/school'
@@ -64,54 +65,56 @@ onMounted(check)
 </script>
 
 <template>
-  <LoadError v-if="status === 'error'" title="We couldn't open this link" :message="loadError" @retry="check" />
+  <AuthFrame>
+    <LoadError v-if="status === 'error'" title="We couldn't open this link" :message="loadError" @retry="check" />
 
-  <main v-else class="pp-auth">
-    <div v-if="status === 'loading'" class="pp-lede" aria-busy="true">
-      <div class="pp-hero-icon"><span class="pp-spinner pp-spinner--sm"></span></div>
-      <h1>Checking your link…</h1>
-    </div>
+    <main v-else class="pp-auth">
+      <div v-if="status === 'loading'" class="pp-lede" aria-busy="true">
+        <div class="pp-hero-icon"><span class="pp-spinner pp-spinner--sm"></span></div>
+        <h1>Checking your link…</h1>
+      </div>
 
-    <form v-else-if="status === 'form'" novalidate @submit.prevent="submit">
-      <div class="pp-lede">
-        <div class="pp-hero-icon"><i class="fa fa-lock"></i></div>
-        <h1>Set a new password</h1>
-        <p v-if="link?.name">For {{ link.name }}</p>
-      </div>
-      <div v-if="error" class="pp-alert" role="alert">
-        <i class="fa fa-exclamation-circle"></i><span class="pp-alert__main">{{ error }}</span>
-      </div>
-      <div class="pp-group">
-        <div class="pp-group__body">
-          <PasswordField v-model="form.password" label="New password" autocomplete="new-password" :invalid="submitted && !longEnough" />
-          <PasswordField v-model="form.confirm" label="Confirm new password" autocomplete="new-password" :invalid="submitted && longEnough && !matches" />
+      <form v-else-if="status === 'form'" novalidate @submit.prevent="submit">
+        <div class="pp-lede">
+          <div class="pp-hero-icon"><i class="fa fa-lock"></i></div>
+          <h1>Set a new password</h1>
+          <p v-if="link?.name">For {{ link.name }}</p>
         </div>
-        <p class="pp-group__foot" :class="hint.tone" aria-live="polite"><i class="fa" :class="hint.icon"></i>{{ hint.text }}</p>
-      </div>
-      <div class="pp-auth__actions">
-        <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy }" type="submit" :disabled="busy">
-          <span v-if="busy" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy ? 'Saving…' : 'Save and sign in' }}
-        </button>
-      </div>
-    </form>
+        <div v-if="error" class="pp-alert" role="alert">
+          <i class="fa fa-exclamation-circle"></i><span class="pp-alert__main">{{ error }}</span>
+        </div>
+        <div class="pp-group">
+          <div class="pp-group__body">
+            <PasswordField v-model="form.password" label="New password" autocomplete="new-password" :invalid="submitted && !longEnough" />
+            <PasswordField v-model="form.confirm" label="Confirm new password" autocomplete="new-password" :invalid="submitted && longEnough && !matches" />
+          </div>
+          <p class="pp-group__foot" :class="hint.tone" aria-live="polite"><i class="fa" :class="hint.icon"></i>{{ hint.text }}</p>
+        </div>
+        <div class="pp-auth__actions">
+          <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy }" type="submit" :disabled="busy">
+            <span v-if="busy" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy ? 'Saving…' : 'Save and sign in' }}
+          </button>
+        </div>
+      </form>
 
-    <div v-else>
-      <div class="pp-lede">
-        <div class="pp-hero-icon pp-hero-icon--warn"><i class="fa fa-clock-o"></i></div>
-        <h1>This link has expired</h1>
-        <p>
-          For your safety, a link to set a password works once and for {{ link?.valid_days || 7 }} days. We can send you a new one
-          straight away.
-        </p>
+      <div v-else>
+        <div class="pp-lede">
+          <div class="pp-hero-icon pp-hero-icon--warn"><i class="fa fa-clock-o"></i></div>
+          <h1>This link has expired</h1>
+          <p>
+            For your safety, a link to set a password works once and for {{ link?.valid_days || 7 }} days. We can send you a new one
+            straight away.
+          </p>
+        </div>
+        <div class="pp-auth__actions">
+          <RouterLink class="pp-btn pp-btn--primary" :to="{ name: 'forgot' }">Send me a new link</RouterLink>
+          <RouterLink class="pp-link" :to="session.signedIn ? { name: 'home' } : { name: 'login' }">
+            {{ session.signedIn ? 'Go to my children' : 'Back to sign in' }}
+          </RouterLink>
+        </div>
       </div>
-      <div class="pp-auth__actions">
-        <RouterLink class="pp-btn pp-btn--primary" :to="{ name: 'forgot' }">Send me a new link</RouterLink>
-        <RouterLink class="pp-link" :to="session.signedIn ? { name: 'home' } : { name: 'login' }">
-          {{ session.signedIn ? 'Go to my children' : 'Back to sign in' }}
-        </RouterLink>
-      </div>
-    </div>
 
-    <p class="pp-auth__foot">{{ school.name || 'School' }} · Parent Portal</p>
-  </main>
+      <p class="pp-auth__foot">{{ school.name || 'School' }} · Parent Portal</p>
+    </main>
+  </AuthFrame>
 </template>

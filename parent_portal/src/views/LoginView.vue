@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { login } from '@/api/parent'
+import AuthFrame from '@/components/AuthFrame.vue'
 import PasswordField from '@/components/PasswordField.vue'
 import { safeRedirect } from '@/router'
 import { school } from '@/school'
@@ -43,58 +44,60 @@ async function submit() {
 </script>
 
 <template>
-  <main class="pp-auth">
-    <div class="pp-auth__brand">
-      <div v-if="school.logo" class="pp-logo pp-logo--image"><img :src="school.logo" :alt="`${school.name} logo`" /></div>
-      <div v-else class="pp-logo" role="img" aria-hidden="true"><i class="fa fa-graduation-cap"></i></div>
-      <h1 class="pp-auth__school">{{ school.name || 'Parent Portal' }}</h1>
-      <span class="pp-auth__tag"><i class="fa fa-lock"></i>Parent Portal</span>
-    </div>
+  <AuthFrame>
+    <main class="pp-auth">
+      <div class="pp-auth__brand">
+        <div v-if="school.logo" class="pp-logo pp-logo--image"><img :src="school.logo" :alt="`${school.name} logo`" /></div>
+        <div v-else class="pp-logo" role="img" aria-hidden="true"><i class="fa fa-graduation-cap"></i></div>
+        <h1 class="pp-auth__school">{{ school.name || 'Parent Portal' }}</h1>
+        <span class="pp-auth__tag"><i class="fa fa-lock"></i>Parent Portal</span>
+      </div>
 
-    <div v-if="error || schoolError" class="pp-alert" role="alert">
-      <i class="fa fa-exclamation-circle"></i>
-      <span class="pp-alert__main">{{ error || schoolError }}</span>
-    </div>
+      <div v-if="error || schoolError" class="pp-alert" role="alert">
+        <i class="fa fa-exclamation-circle"></i>
+        <span class="pp-alert__main">{{ error || schoolError }}</span>
+      </div>
 
-    <form novalidate @submit.prevent="submit">
-      <div class="pp-group">
-        <div class="pp-group__body">
-          <div class="pp-field" :class="{ 'is-invalid': errors.login }">
-            <label class="pp-field__body">
-              <span class="pp-field__label">Mobile number or email</span>
-              <input
-                v-model="form.login"
-                class="pp-input"
-                type="text"
-                inputmode="email"
-                autocomplete="username"
-                autocapitalize="off"
-                spellcheck="false"
-                maxlength="150"
-              />
+      <form novalidate @submit.prevent="submit">
+        <div class="pp-group">
+          <div class="pp-group__body">
+            <div class="pp-field" :class="{ 'is-invalid': errors.login }">
+              <label class="pp-field__body">
+                <span class="pp-field__label">Mobile number or email</span>
+                <input
+                  v-model="form.login"
+                  class="pp-input"
+                  type="text"
+                  inputmode="email"
+                  autocomplete="username"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  maxlength="150"
+                />
+              </label>
+            </div>
+            <PasswordField v-model="form.password" label="Password" autocomplete="current-password" :invalid="Boolean(errors.password)" />
+            <label class="pp-row">
+              <span class="pp-row__main"><span class="pp-row__title">Keep me signed in</span></span>
+              <span class="pp-switch"><input v-model="form.remember" type="checkbox" /><span class="pp-switch__track"></span></span>
             </label>
           </div>
-          <PasswordField v-model="form.password" label="Password" autocomplete="current-password" :invalid="Boolean(errors.password)" />
-          <label class="pp-row">
-            <span class="pp-row__main"><span class="pp-row__title">Keep me signed in</span></span>
-            <span class="pp-switch"><input v-model="form.remember" type="checkbox" /><span class="pp-switch__track"></span></span>
-          </label>
+          <p v-if="!form.remember" class="pp-group__foot">You'll be signed out when you close this page.</p>
         </div>
-        <p v-if="!form.remember" class="pp-group__foot">You'll be signed out when you close this page.</p>
-      </div>
 
-      <div class="pp-auth__actions">
-        <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy }" type="submit" :disabled="busy">
-          <span v-if="busy" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy ? 'Signing in…' : 'Sign in' }}
-        </button>
-        <RouterLink class="pp-link" :to="{ name: 'forgot' }">Forgot password?</RouterLink>
-      </div>
-    </form>
+        <div class="pp-auth__actions">
+          <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy }" type="submit" :disabled="busy">
+            <span v-if="busy" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy ? 'Signing in…' : 'Sign in' }}
+          </button>
+          <RouterLink class="pp-link" :to="{ name: 'forgot' }">Forgot password?</RouterLink>
+        </div>
+      </form>
 
-    <p class="pp-auth__foot">
-      Trouble signing in? Please contact the school office<template v-if="school.contact.mobile">
-        on <a class="pp-num" :href="`tel:${school.contact.mobile}`">{{ school.contact.mobile }}</a></template
-      >.
-    </p>
-  </main>
+      <p class="pp-auth__foot">
+        Trouble signing in? Please contact the school office<template v-if="school.contact.mobile">
+          on <a class="pp-num" :href="`tel:${school.contact.mobile}`">{{ school.contact.mobile }}</a></template
+        >.
+      </p>
+    </main>
+  </AuthFrame>
 </template>

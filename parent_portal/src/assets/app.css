@@ -462,3 +462,230 @@ a.pp-child-card:active{transform:translateY(-8px)}
   .pp-date{background:var(--surface-2)}
   .pp-paidby{background:var(--surface-2)}
 }
+
+/* ---- Sign-in frame: phones show the form alone ---- */
+.pp-signin{display:flex; flex:1 0 auto; flex-direction:column}
+.pp-signin__art{display:none}
+.pp-signin__form{display:flex; flex:1 0 auto; flex-direction:column}
+
+/* =====================================================================
+   Computers: the "Wallet split" (docs/parent-portal-web-preview.html, C).
+   The children's cards stay on the left; the page opens on the right.
+   Everything above is the phone app and stays as it is.
+   ===================================================================== */
+@media (min-width:1024px){
+  .pp-app--full{max-width:none; box-shadow:none}
+
+  /* Shared pieces */
+  .pp-btn--auto{width:auto; min-height:44px; padding:0 18px; border-radius:12px; font-size:15px}
+  .pp-btn--sm{width:auto; min-height:36px; padding:0 14px; border-radius:10px; font-size:14px}
+  .pp-btn--ghost{background:var(--surface); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line)}
+  .pp-logo-tile{display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; border-radius:12px; background:var(--card-face); color:#FFFFFF; font-size:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 18px -10px color-mix(in oklab,var(--accent) 80%,transparent)}
+  .pp-logo-tile--image{background:#FFFFFF; box-shadow:inset 0 0 0 1px var(--line)}
+  .pp-logo-tile--image img{width:100%; height:100%; padding:5px; object-fit:contain}
+  .pp-brandname{min-width:0}
+  .pp-brandname b{display:block; overflow:hidden; font-size:15px; font-weight:700; line-height:1.2; letter-spacing:-.01em; white-space:nowrap; text-overflow:ellipsis}
+  .pp-brandname small{display:block; margin-top:4px; font:500 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+  .pp-panel{overflow:hidden; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(0,0,0,.03)}
+  .pp-panel__head{display:flex; align-items:center; gap:12px; min-height:56px; padding:10px 20px; border-bottom:1px solid var(--line)}
+  .pp-panel__title{font-size:16px; font-weight:650; letter-spacing:-.01em}
+  .pp-panel__body{padding:18px 20px}
+  .pp-panel__text{margin-top:6px; font-size:14px; line-height:1.45; color:var(--ink-2)}
+  .pp-panel .pp-group__body{border-radius:0; box-shadow:none}
+  .pp-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:24px}
+  .pp-stat{min-width:0; padding:16px 18px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+  .pp-stat small{display:flex; align-items:center; gap:7px; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+  .pp-stat b{display:block; margin-top:10px; overflow:hidden; font-size:24px; font-weight:750; letter-spacing:-.02em; white-space:nowrap; text-overflow:ellipsis; font-variant-numeric:tabular-nums}
+  .pp-stat span{display:block; margin-top:3px; overflow:hidden; font-size:13px; color:var(--ink-2); white-space:nowrap; text-overflow:ellipsis}
+  .pp-stat--neg b{color:var(--neg)}
+  .pp-stat--text b{margin-top:12px; font-size:17px; line-height:1.3}
+  .pp-minicard--none{background:var(--surface-2); box-shadow:inset 0 0 0 1px var(--line)}
+  .pp-minicard--none::after{display:none}
+  .pp-minicard--blocked{background:linear-gradient(152deg,#6B6F79,#1E2025)}
+  .pp-back{display:inline-flex; align-self:flex-start; align-items:center; gap:8px; min-height:36px; margin:-6px 0 12px; padding:0 10px 0 2px; border:0; background:none; color:var(--accent-ink); font-size:15px; font-weight:600}
+  .pp-back .fa{font-size:22px; line-height:0}
+
+  /* Account menu (the phone's action sheet) */
+  .pp-menu-anchor{position:relative}
+  .pp-menu{position:absolute; top:calc(100% + 8px); right:0; z-index:60; width:290px; overflow:hidden; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line),0 24px 50px -20px rgba(0,0,0,.45); animation:pp-toast-in .25s var(--ease) both}
+  .pp-menu__who{display:flex; align-items:center; gap:12px; padding:16px}
+  .pp-menu__id{min-width:0}
+  .pp-menu__id b{display:block; font-weight:650}
+  .pp-menu__id small{display:block; overflow:hidden; font-size:13px; color:var(--ink-2); white-space:nowrap; text-overflow:ellipsis}
+  .pp-menu__item{display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:0 16px; border:0; border-top:1px solid var(--line); background:none; color:var(--neg); font-size:15px; font-weight:600}
+
+  /* Sheets become centred dialogs */
+  .pp-sheet__panel{top:50%; bottom:auto; max-width:460px; max-height:86dvh; padding:8px 0 22px; border-radius:22px; opacity:0; transform:translateY(-46%) scale(.97); transition:transform .3s var(--ease),opacity .2s ease; box-shadow:0 40px 90px -30px rgba(0,0,0,.55),0 0 0 1px var(--line)}
+  .pp-sheet.is-open .pp-sheet__panel{opacity:1; transform:translateY(-50%)}
+  .pp-sheet__grabber{display:none}
+
+  /* ---- The two panes ---- */
+  .pp-web{display:grid; grid-template-columns:420px minmax(0,1fr); min-height:100dvh; background:var(--bg)}
+  .pp-wallet{
+    --wallet-bg:color-mix(in oklab,var(--bg),var(--ink) 4%);
+    position:sticky; top:0; display:flex; flex-direction:column; height:100dvh; overflow-y:auto; overscroll-behavior:contain;
+    padding:20px 26px 22px; background:var(--wallet-bg); box-shadow:inset -1px 0 0 var(--line);
+  }
+  .pp-wallet__top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:26px}
+  .pp-wallet__brand{display:flex; align-items:center; gap:12px; min-width:0}
+  .pp-wallet__top .pp-avatar-btn{margin-right:-6px}
+  .pp-wallet__title{padding-bottom:18px}
+  .pp-wallet__title h1{font-size:30px; font-weight:750; line-height:1.1; letter-spacing:-.025em}
+  .pp-wallet__title p{margin-top:4px; font-size:15px; color:var(--ink-2)}
+  .pp-wallet .pp-wallet-stack{padding:0}
+  .pp-wallet-stack.has-selected .pp-child-card.is-selected{margin-bottom:22px}
+  .pp-wallet-stack.has-selected .pp-child-card.is-selected + .pp-child-card{margin-top:0}
+  .pp-child-card.is-selected{box-shadow:0 0 0 3px var(--wallet-bg),0 0 0 5.5px var(--accent),0 22px 40px -24px rgba(0,0,0,.6)}
+  .pp-wallet-move{transition:transform .5s var(--ease)}
+  .pp-wallet-enter-active{transition:opacity .3s ease,transform .45s var(--ease)}
+  .pp-wallet-enter-from{opacity:0; transform:translateY(14px)}
+  .pp-wallet__note{margin-top:auto; padding-top:24px; font-size:13px; line-height:1.4; color:var(--ink-2)}
+  .pp-wallet__error{display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; padding:14px 16px; border-radius:14px; background:var(--neg-soft); font-size:14px}
+  .pp-wallet__error .pp-link{min-height:0; padding:0; font-size:14px}
+
+  .pp-detail{display:flex; flex-direction:column; min-width:0; min-height:100dvh; padding:30px 40px 48px}
+  .pp-detail > *{flex-shrink:0; max-width:1040px}
+  .pp-detail .pp-narrow{width:100%; max-width:640px}
+
+  /* The phone pages inside the right pane: no phone gutters */
+  .pp-detail .pp-largetitle{padding:0 0 22px}
+  .pp-detail .pp-largetitle h1{font-size:30px}
+  .pp-detail .pp-largetitle p{max-width:640px}
+  .pp-detail .pp-group{margin:0 0 24px}
+  .pp-detail .pp-group__head{padding:0 4px 8px}
+  .pp-detail .pp-group__foot{padding:8px 4px 0}
+  .pp-detail .pp-group__body{box-shadow:0 0 0 1px var(--line)}
+  .pp-detail .pp-alert{margin:0 0 16px}
+  .pp-detail :is(.pp-inline-actions,.pp-result-actions){padding-left:0; padding-right:0}
+  .pp-detail .pp-inline-actions{justify-items:start}
+  .pp-detail .pp-pass{margin:0}
+  .pp-detail .pp-actionbar{position:sticky; bottom:20px; width:100%; max-width:640px; margin-top:auto; padding:14px 16px; border-radius:18px; box-shadow:0 0 0 1px var(--line),0 20px 40px -20px rgba(0,0,0,.35)}
+  .pp-detail .pp-narrow + .pp-actionbar{margin-top:8px}
+
+  /* Home: the overview (the cards themselves are in the wallet) */
+  .pp-kid-row{gap:14px; min-height:68px; padding:12px 16px 12px 20px}
+  .pp-kid-row .pp-minicard{width:48px; height:31px; border-radius:6px}
+  .pp-kid-row .pp-minicard::after{left:6px; bottom:6px; width:10px; height:8px; border-radius:2px}
+  .pp-kid-row .pp-amt{min-width:110px; text-align:right}
+  .pp-kid-row__actions{display:flex; flex:none; justify-content:flex-end; gap:8px; min-width:152px}
+
+  /* A child: who, the numbers, then bills beside the card and meals */
+  .pp-detail__head{display:flex; align-items:center; gap:16px 20px; margin-bottom:22px}
+  .pp-detail__head .pp-avatar{width:56px; height:56px; font-size:19px}
+  .pp-detail__id{flex:1; min-width:0}
+  .pp-detail__id h1{font-size:30px; font-weight:750; line-height:1.1; letter-spacing:-.025em}
+  .pp-detail__id p{margin-top:5px; font-size:15px; color:var(--ink-2)}
+  .pp-cta__note--start{justify-content:flex-start; margin:-8px 0 18px; text-align:left}
+  .pp-student-grid{display:grid; grid-template-columns:minmax(0,1fr) 320px; grid-template-areas:"activity aside"; gap:24px; align-items:start}
+  .pp-student-grid__aside{grid-area:aside}
+  .pp-activity{grid-area:activity; overflow:hidden; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+  .pp-activity__head{display:flex; align-items:center; gap:12px; min-height:60px; padding:10px 12px 10px 16px; border-bottom:1px solid var(--line)}
+  .pp-activity__head .pp-seg{width:240px; margin:0}
+  .pp-activity__head .pp-seg__tab{min-height:36px; font-size:14px}
+  .pp-activity__head .pp-month{margin:0 0 0 auto}
+  .pp-activity__head .pp-month__label{min-width:150px; font-size:15px; text-align:center}
+  .pp-activity__head .pp-month__btn{width:38px; height:38px}
+  .pp-detail .pp-activity .pp-group{margin:0}
+  .pp-detail .pp-activity .pp-group__body{border-radius:0; box-shadow:none}
+  .pp-detail .pp-activity .pp-group__foot{padding:13px 20px; border-top:1px solid var(--line)}
+
+  /* A bill: the pass with the school's contact beside it */
+  .pp-bill-layout{display:grid; grid-template-columns:minmax(0,540px) minmax(0,300px); gap:24px; align-items:start}
+
+  /* Top up: the form, and the phone's pay bar as a summary beside it */
+  .pp-checkout{display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; max-width:900px}
+  .pp-checkout .pp-group{margin:0; padding:18px 20px 20px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+  .pp-checkout .pp-group__head{padding:0 0 12px}
+  .pp-checkout .pp-group__body{background:var(--bg); box-shadow:none}
+  .pp-checkout .pp-group__foot{padding:10px 2px 0}
+  .pp-checkout .pp-chips{margin-bottom:12px}
+  .pp-checkout .pp-chip{background:var(--bg); box-shadow:inset 0 0 0 1px var(--line)}
+  .pp-checkout .pp-chip[aria-pressed="true"]{background:var(--accent); box-shadow:0 8px 16px -10px var(--accent)}
+  .pp-summary{position:sticky; top:28px; padding:18px}
+  .pp-summary__who{display:flex; align-items:center; gap:12px; padding-bottom:16px; border-bottom:1px solid var(--line)}
+  .pp-summary__who b{display:block; overflow:hidden; font-weight:650; white-space:nowrap; text-overflow:ellipsis}
+  .pp-summary__who small{display:block; font-size:13px; color:var(--ink-2)}
+  .pp-summary__rows{padding:10px 0 16px}
+  .pp-summary__rows > div{display:flex; justify-content:space-between; gap:12px; padding:7px 0; font-size:15px}
+  .pp-summary__rows dt{color:var(--ink-2)}
+  .pp-summary__rows dd{font-weight:600; font-variant-numeric:tabular-nums}
+  .pp-summary__rows .is-total{margin-top:6px; padding-top:13px; border-top:1px solid var(--line)}
+  .pp-summary__rows .is-total :is(dt,dd){color:var(--ink); font-size:18px; font-weight:750}
+
+  /* Meals: the weekly order, then the next school days as a board */
+  .pp-weekly{display:flex; align-items:center; gap:16px; margin-bottom:28px; padding:18px 20px}
+  .pp-weekly .pp-row__icon{width:44px; height:44px; border-radius:12px; font-size:19px}
+  .pp-weekly__main{flex:1; min-width:0}
+  .pp-weekly__main small{display:block; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+  .pp-weekly__main b{display:block; margin-top:6px; font-size:19px; font-weight:700; letter-spacing:-.01em}
+  .pp-weekly__main span{display:block; margin-top:2px; font-size:14px; color:var(--ink-2)}
+  .pp-week{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:12px}
+  .pp-dayc{display:flex; flex-direction:column; min-height:204px; padding:14px 14px 12px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line); transition:transform .25s var(--ease),box-shadow .2s ease}
+  .pp-dayc.is-today{box-shadow:0 0 0 2px var(--accent)}
+  .pp-dayc__head{display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px}
+  .pp-dayc__wd{display:block; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink)}
+  .pp-dayc__num{display:block; margin-top:6px; font-size:30px; font-weight:750; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+  .pp-dayc__num small{margin-left:4px; font-size:13px; font-weight:600; letter-spacing:0; color:var(--ink-2)}
+  .pp-dayc__meal{margin-top:auto; padding-top:16px; font-size:15px; font-weight:650; line-height:1.25}
+  .pp-dayc__sub{margin-top:3px; font-size:13px; color:var(--ink-2)}
+  .pp-dayc__foot{display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:33px; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); font-size:12.5px; font-weight:600; color:var(--accent-ink)}
+  .pp-dayc__foot span{color:var(--ink); white-space:nowrap}
+  .pp-dayc__foot.is-muted{color:var(--ink-3)}
+  .pp-dayc--skipped{background:transparent; box-shadow:inset 0 0 0 1.5px var(--line)}
+  .pp-dayc--skipped .pp-dayc__meal,.pp-dayc--empty .pp-dayc__meal{color:var(--ink-2)}
+  .pp-dayc--empty .pp-dayc__meal{font-weight:550}
+
+  /* Sign in: the school's colour beside the form */
+  .pp-signin{display:grid; grid-template-columns:minmax(0,1.08fr) minmax(460px,1fr); min-height:100dvh}
+  .pp-signin__art{position:relative; isolation:isolate; display:flex; flex-direction:column; overflow:hidden; padding:40px 52px 48px; background:linear-gradient(160deg,var(--accent-lo) 0%,color-mix(in oklab,var(--accent),black 68%) 100%); color:#FFFFFF}
+  .pp-signin__art::before{content:""; position:absolute; z-index:-1; right:-300px; top:-300px; width:620px; height:620px; border-radius:50%; box-shadow:-70px 70px 0 0 rgba(255,255,255,.045)}
+  .pp-signin__art::after{content:""; position:absolute; inset:0; z-index:-1; background:repeating-radial-gradient(circle at 110% 110%,rgba(255,255,255,.035) 0 1px,transparent 1.6px 12px)}
+  .pp-signin__brand{display:flex; align-items:center; gap:12px; font:500 11px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase}
+  .pp-signin__brand .pp-logo-tile{background:#FFFFFF; color:var(--accent); box-shadow:none}
+  .pp-signin__pitch{max-width:440px; margin-top:auto}
+  .pp-signin__pitch h2{font-size:40px; font-weight:750; line-height:1.06; letter-spacing:-.03em}
+  .pp-signin__pitch p{margin-top:14px; font-size:17px; line-height:1.45; opacity:.78}
+  .pp-signin__cards{position:relative; height:250px; margin-top:40px}
+  .pp-signin__cards .pp-child-card{position:absolute; width:320px}
+  .pp-signin__cards .pp-child-card:first-child{left:0; top:28px; transform:rotate(-7deg)}
+  .pp-signin__cards .pp-child-card:last-child{left:190px; top:0; transform:rotate(5deg)}
+  .pp-signin__form{align-items:center; justify-content:center; padding:48px}
+  .pp-signin__form > *{width:100%; max-width:420px}
+  .pp-signin__form > .pp-back{margin:0 0 20px}
+  .pp-signin__form :is(.pp-auth,.pp-state){flex:0 0 auto; padding:0}
+  .pp-signin__form :is(.pp-group,.pp-alert){margin-left:0; margin-right:0}
+  .pp-signin__form .pp-group__body{box-shadow:0 0 0 1px var(--line)}
+  .pp-signin__form .pp-lede{padding-left:0; padding-right:0}
+  .pp-signin__form .pp-auth__brand{padding:0 0 30px}
+  .pp-signin__form .pp-auth__actions{padding:0}
+  .pp-signin__form .pp-auth__foot{margin-top:0; padding:28px 0 0}
+}
+
+/* Mouse and trackpad: hover feedback */
+@media (min-width:1024px) and (hover:hover){
+  :is(a,button).pp-row:not(:disabled):hover{background:var(--fill)}
+  .pp-btn:not(:disabled):hover{filter:brightness(1.07)}
+  .pp-btn--ghost:not(:disabled):hover{filter:none; background:color-mix(in oklab,var(--surface),var(--ink) 5%)}
+  .pp-link:not(:disabled):hover{text-decoration:underline; text-underline-offset:3px}
+  .pp-menu__item:hover{background:var(--fill)}
+  a.pp-child-card:hover{transform:translateY(-6px)}
+  a.pp-dayc:hover{transform:translateY(-3px); box-shadow:0 0 0 1.5px var(--accent-ring),0 18px 30px -22px rgba(0,0,0,.45)}
+  .pp-checkout .pp-chip:not([aria-pressed="true"]):hover{box-shadow:inset 0 0 0 1.5px var(--accent-ring)}
+  .pp-back:hover{text-decoration:underline; text-underline-offset:3px}
+}
+
+/* Smaller laptops and iPads in landscape */
+@media (min-width:1024px) and (max-width:1199.98px){
+  .pp-web{grid-template-columns:360px minmax(0,1fr)}
+  .pp-wallet{padding-left:20px; padding-right:20px}
+  .pp-detail{padding-left:32px; padding-right:32px}
+  .pp-student-grid{grid-template-columns:minmax(0,1fr); grid-template-areas:"aside" "activity"}
+  .pp-student-grid__aside{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); column-gap:18px}
+  .pp-checkout,.pp-bill-layout{grid-template-columns:minmax(0,1fr)}
+  .pp-bill-layout > *{max-width:540px}
+  .pp-summary{position:static}
+  .pp-signin{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}
+  .pp-signin__art{padding:36px 40px 44px}
+  .pp-signin__cards .pp-child-card{width:270px}
+  .pp-signin__cards .pp-child-card:last-child{left:140px}
+}

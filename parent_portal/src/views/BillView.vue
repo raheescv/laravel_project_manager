@@ -5,8 +5,10 @@ import { useRoute } from 'vue-router'
 import { fetchBill, fetchStudent } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import LoadError from '@/components/LoadError.vue'
+import { refreshChild } from '@/children'
 import { school } from '@/school'
 import { date, firstName, money, quantity, time } from '@/utils/format'
+import { desktop } from '@/utils/viewport'
 
 const route = useRoute()
 const id = Number(route.params.id)
@@ -24,6 +26,7 @@ async function load() {
   status.value = 'loading'
   try {
     ;[bill.value, student.value] = await Promise.all([fetchBill(id, route.params.saleId), fetchStudent(id)])
+    refreshChild(student.value)
     status.value = 'ready'
   } catch (e) {
     error.value = e.status === 404 ? 'This bill could not be found.' : e.message
@@ -41,7 +44,7 @@ onMounted(load)
 
   <LoadError v-if="status === 'error'" title="We couldn't open this bill" :message="error" @retry="load" />
 
-  <main v-else>
+  <main v-else class="pp-bill-layout">
     <div v-if="status === 'loading'" class="pp-pass" aria-busy="true">
       <div class="pp-pass__head" style="height: 150px"></div>
       <div style="padding: 18px">
@@ -88,6 +91,22 @@ onMounted(load)
         <span class="pp-amt">{{ money(payment.amount) }}</span>
       </div>
     </article>
-    <p class="pp-hint">Something wrong with this bill? Please speak to the school office.</p>
+    <aside v-if="desktop" class="pp-panel">
+      <div class="pp-panel__body">
+        <h2 class="pp-panel__title">Something wrong with this bill?</h2>
+        <p class="pp-panel__text">Please speak to the school office.</p>
+      </div>
+      <div v-if="school.contact.mobile || school.contact.email" class="pp-group__body">
+        <a v-if="school.contact.mobile" class="pp-row pp-row--icon" :href="`tel:${school.contact.mobile}`">
+          <span class="pp-row__icon pp-row__icon--accent"><i class="fa fa-phone"></i></span>
+          <span class="pp-row__main"><span class="pp-row__title pp-num">{{ school.contact.mobile }}</span><span class="pp-row__sub">School office</span></span>
+        </a>
+        <a v-if="school.contact.email" class="pp-row pp-row--icon" :href="`mailto:${school.contact.email}`">
+          <span class="pp-row__icon pp-row__icon--accent"><i class="fa fa-envelope"></i></span>
+          <span class="pp-row__main"><span class="pp-row__title">{{ school.contact.email }}</span><span class="pp-row__sub">Email</span></span>
+        </a>
+      </div>
+    </aside>
+    <p v-else class="pp-hint">Something wrong with this bill? Please speak to the school office.</p>
   </main>
 </template>

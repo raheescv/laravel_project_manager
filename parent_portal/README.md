@@ -5,7 +5,8 @@ card statement, "lost card" blocking and online top-up through QPay. It is fully
 independent of the `project_manager` Laravel backend — no code is shared; the
 `/api/v1/parent` REST API is the only integration surface.
 
-Phone-first, installs as a home-screen web app, and works from any folder or host.
+Phone-first, installs as a home-screen web app, and works from any folder or host. On a
+computer it becomes a web page (see [On a computer](#on-a-computer)).
 
 ## The screens
 
@@ -22,6 +23,25 @@ Phone-first, installs as a home-screen web app, and works from any folder or hos
 | `#/students/:id/pre-orders` | Canteen meals — the weekly order and the next school days  |
 | `#/students/:id/pre-orders/weekly` | Every week: the meal and the days                   |
 | `#/students/:id/pre-orders/days/:date` | One day: that day's dishes, order or skip it    |
+
+## On a computer
+
+From 1024px wide (laptops, desktops, an iPad in landscape) the portal switches to the
+**Wallet split** layout: the children's cards stay on the left, and the page opens on the right.
+The open child's card moves to the top of the stack. The routes and API calls are the same
+as on a phone; only the layout changes. Phones keep the app layout exactly as it is.
+
+- Sign-in pages get a panel in the school's colour beside the form (`AuthFrame.vue`).
+- Home becomes an overview: the total on the cards, which cards work, and who needs a top-up.
+- A child's page leads with the numbers, with the bills/statement beside the card and meals.
+- Meals show the next school days as a board; top-up shows a summary with the pay button.
+- Sheets become centred dialogs, and the account sheet becomes a menu (`AccountMenu.vue`).
+
+The breakpoint lives in two places that must match: `src/utils/viewport.js` (`desktop`, for
+markup that differs) and the `@media (min-width:1024px)` block at the end of `app.css`.
+The wallet and the home page share one list of children (`src/children.js`). Each page that
+loads a child also updates that child in the list, so the wallet's balances stay current.
+The design was picked from `docs/parent-portal-web-preview.html` in the main repo (direction C).
 
 ## Canteen meals (pre-orders)
 
@@ -127,8 +147,9 @@ src/
 ├── api/          client.js (axios + token + tenant + envelope), parent.js (per-endpoint fns)
 ├── session.js    the parent's token on this device
 ├── school.js     school branding → --accent, currency
+├── children.js   the parent's children, shared by home and the desktop wallet
 ├── router/       hash routes + sign-in guard
-├── utils/        format.js (money, dates, months), qpay.js (post to QPay)
+├── utils/        format.js (money, dates, months), qpay.js (post to QPay), viewport.js (desktop)
 ├── components/   shared UI pieces
 └── views/        one file per screen
 ```

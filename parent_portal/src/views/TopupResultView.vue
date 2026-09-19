@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { fetchTopup } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import LoadError from '@/components/LoadError.vue'
+import { loadChildren } from '@/children'
 import { dateTime, firstName, money } from '@/utils/format'
 
 /**
@@ -48,8 +49,11 @@ const view = computed(() => {
 
 async function load() {
   try {
+    const before = topup.value?.status
     topup.value = await fetchTopup(pun)
     status.value = 'ready'
+    // The money reached the card: the balances in the wallet are out of date.
+    if (topup.value.status === 'success' && before !== 'success') loadChildren()
     schedule()
   } catch (e) {
     if (topup.value) {
@@ -87,7 +91,7 @@ onBeforeUnmount(() => clearTimeout(timer))
     </section>
   </main>
 
-  <main v-else>
+  <main v-else class="pp-narrow">
     <section class="pp-result" :class="`pp-result--${view.tone}`" aria-live="polite">
       <div class="pp-result__icon">
         <span v-if="view.spinner" class="pp-spinner" aria-hidden="true"></span><i v-else class="fa" :class="view.icon"></i>
