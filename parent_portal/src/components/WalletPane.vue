@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 
 import AccountMenu from '@/components/AccountMenu.vue'
 import ChildCard from '@/components/ChildCard.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { children, loadChildren } from '@/children'
 import { school } from '@/school'
 import { session } from '@/session'
@@ -41,7 +42,10 @@ onMounted(() => {
         <span v-else class="pp-logo-tile"><i class="fa fa-graduation-cap"></i></span>
         <span class="pp-brandname"><b>{{ school.name || 'Parent Portal' }}</b><small v-if="school.name">Parent Portal</small></span>
       </RouterLink>
-      <AccountMenu />
+      <div class="pp-wallet__tools">
+        <ThemeToggle />
+        <AccountMenu />
+      </div>
     </div>
 
     <div class="pp-wallet__title">

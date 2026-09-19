@@ -62,7 +62,7 @@ onMounted(() => {
       <span class="pp-appbar__school">
         <img v-if="school.logo" class="pp-appbar__logo" :src="school.logo" alt="" />
         <i v-else class="fa fa-graduation-cap pp-mark"></i>
-        {{ school.name || 'Parent Portal' }}
+        <span>{{ school.name || 'Parent Portal' }}</span>
       </span>
     </template>
     <template #end>

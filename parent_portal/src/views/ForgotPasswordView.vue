@@ -30,7 +30,7 @@ async function submit() {
 </script>
 
 <template>
-  <AuthFrame>
+  <AuthFrame bar>
     <AppBar :back="{ name: 'login' }" back-label="Sign in" />
     <main class="pp-auth pp-auth--inner">
       <form v-if="!sent" novalidate @submit.prevent="submit">

@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { goBackOr } from '@/utils/nav'
 import { desktop } from '@/utils/viewport'
 
@@ -32,6 +33,6 @@ const goBack = () => goBackOr(router, props.back)
       <slot name="start" />
     </div>
     <div v-if="title" class="pp-appbar__title">{{ title }}</div>
-    <div class="pp-appbar__end"><slot name="end" /></div>
+    <div class="pp-appbar__end"><ThemeToggle /><slot name="end" /></div>
   </header>
 </template>
