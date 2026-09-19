@@ -6,6 +6,7 @@ use App\Actions\Purchase\CreateAction;
 use App\Actions\Purchase\Item\DeleteAction as ItemDeleteAction;
 use App\Actions\Purchase\Payment\DeleteAction as PaymentDeleteAction;
 use App\Actions\Purchase\UpdateAction;
+use App\Livewire\Purchase\Concerns\ScansInvoice;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Product;
@@ -14,9 +15,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Page extends Component
 {
+    use ScansInvoice;
+    use WithFileUploads;
+
     public $product_id;
 
     public $barcode_key;

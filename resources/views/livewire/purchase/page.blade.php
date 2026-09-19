@@ -4,6 +4,11 @@
         <!-- Vue components will be mounted here -->
     </div>
 
+    {{-- Reads the vendor's own PDF or a photo of it into the cart above.
+         Deliberately Livewire and outside the wire:ignore container: it is the
+         one part of this page Vue does not own. --}}
+    @include('livewire.purchase.partials.scan-invoice')
+
     @push('scripts')
         @vite(['resources/js/purchase-page.js'])
 
@@ -26,7 +31,8 @@
                 table_id: {{ $table_id ?? 'null' }},
                 canPrintPurchaseNote: @json(auth()->user()->can('purchase.purchase note print')),
                 canPrintBarcode: @json(auth()->user()->can('purchase.barcode print')),
-                canCancel: @json(auth()->user()->can('purchase.cancel'))
+                canCancel: @json(auth()->user()->can('purchase.cancel')),
+                canScanInvoice: @json(auth()->user()->can('purchase.scan invoice'))
             }
             // Listen for Livewire updates and sync to Vue
             document.addEventListener('livewire:update', () => {

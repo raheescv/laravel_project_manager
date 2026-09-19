@@ -34,6 +34,11 @@
                         </a>
                     </template>
 
+                    <button v-if="canScanInvoice && purchases.status !== 'cancelled'" type="button"
+                        @click="openInvoiceScan" class="pcx-btn pcx-btn--ghost" :disabled="isBusy">
+                        <i class="fa fa-file-pdf-o"></i> Scan Invoice
+                    </button>
+
                     <template v-if="purchases.status === 'draft'">
                         <button type="button" @click="handleSave('draft')" class="pcx-btn" :disabled="isBusy">
                             <i class="fa" :class="busy === 'draft' ? 'fa-spinner fa-spin' : 'fa-file-o'"></i>
@@ -250,6 +255,7 @@ const stopBusy = () => {
 const canPrintPurchaseNote = ref(false)
 const canPrintBarcode = ref(false)
 const canCancel = ref(false)
+const canScanInvoice = ref(false)
 
 // Vendor label for the deck strip — TomSelect knows the name, Livewire only the id
 const vendorMeta = ref(null)
@@ -368,6 +374,16 @@ const getComponent = () => {
 const handleVendorChanged = (vendorId, meta = null) => {
     purchases.value.account_id = vendorId
     vendorMeta.value = meta
+}
+
+// The scan dialog itself is Livewire markup under this component, so opening it
+// is just a call into the same Livewire instance the rest of the page binds to.
+const openInvoiceScan = async () => {
+    try {
+        await call('openInvoiceScan')
+    } catch (error) {
+        console.error('Could not open the invoice scanner:', error)
+    }
 }
 
 const handleItemRemoved = () => {
@@ -840,6 +856,9 @@ onMounted(() => {
         }
         if (props.initialData.canCancel !== undefined) {
             canCancel.value = props.initialData.canCancel
+        }
+        if (props.initialData.canScanInvoice !== undefined) {
+            canScanInvoice.value = props.initialData.canScanInvoice
         }
     }
 

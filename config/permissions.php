@@ -88,6 +88,7 @@ return [
         'barcode print',
         'purchase note print',
         'import',
+        'scan invoice',
     ],
     'purchase return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'view journal entries'],
     'unit' => ['create', 'view', 'edit', 'delete'],

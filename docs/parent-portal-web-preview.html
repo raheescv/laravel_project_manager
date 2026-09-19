@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parent Portal Web</title>
+<meta name="description" content="Three desktop (web) layouts for the Parent Portal — Sidebar, Website and Wallet split — on the existing Wallet design, with light/dark and the school's colour.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<!-- Font Awesome 4.3 — the version the portal ships -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+
+<style>
+/* =====================================================================
+   HARNESS — preview chrome only (toolbar, browser frame). Not ported.
+   ===================================================================== */
+:root{
+  --hx-bg:#E6E4DF; --hx-ink:#1B1A18; --hx-ink-2:#6B675F; --hx-line:rgba(27,26,24,.12);
+  --hx-bar:rgba(242,240,236,.88); --hx-chip:#FFFFFF; --hx-dot:rgba(27,26,24,.09);
+  --hx-chrome:#ECEAE6; --hx-url:#FFFFFF;
+  --hx-font:"IBM Plex Sans",system-ui,sans-serif; --hx-mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+html[data-theme="dark"]{
+  --hx-bg:#111113; --hx-ink:#ECEBE8; --hx-ink-2:#8F8C86; --hx-line:rgba(236,235,232,.11);
+  --hx-bar:rgba(19,19,21,.88); --hx-chip:#26262A; --hx-dot:rgba(236,235,232,.05);
+  --hx-chrome:#232327; --hx-url:#16161A;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh; overflow-x:hidden; color:var(--hx-ink); font:14px/1.45 var(--hx-font);
+  background-color:var(--hx-bg); background-image:radial-gradient(var(--hx-dot) 1px,transparent 1.3px); background-size:18px 18px;
+  -webkit-font-smoothing:antialiased;
+}
+.hx-toolbar{
+  position:sticky; top:0; z-index:100; display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px;
+  padding:10px 24px; background:var(--hx-bar); -webkit-backdrop-filter:blur(16px) saturate(140%); backdrop-filter:blur(16px) saturate(140%);
+  border-bottom:1px solid var(--hx-line);
+}
+.hx-brand{display:flex; flex-direction:column; margin-right:auto; line-height:1.25}
+.hx-brand strong{font-size:15px; font-weight:600; letter-spacing:-.01em}
+.hx-brand span{font:500 10.5px var(--hx-mono); color:var(--hx-ink-2); text-transform:uppercase; letter-spacing:.09em}
+.hx-seg{display:inline-flex; flex-wrap:wrap; gap:2px; padding:3px; border-radius:12px; background:var(--hx-line)}
+.hx-seg button{
+  display:inline-flex; align-items:center; gap:8px; min-height:36px; padding:0 12px; border:0; border-radius:9px;
+  background:transparent; color:var(--hx-ink-2); font:500 13px var(--hx-font); white-space:nowrap; cursor:pointer;
+}
+.hx-seg button b{display:grid; place-items:center; width:20px; height:20px; border-radius:6px; background:var(--hx-line); color:var(--hx-ink); font:600 11px var(--hx-mono)}
+.hx-seg button[aria-pressed="true"]{background:var(--hx-chip); color:var(--hx-ink); box-shadow:0 1px 2px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.06)}
+.hx-seg button[aria-pressed="true"] b{background:var(--hx-ink); color:var(--hx-bg)}
+.hx-swatches{display:inline-flex; align-items:center; gap:7px}
+.hx-swatches > span{margin-right:3px; font:500 10.5px var(--hx-mono); color:var(--hx-ink-2); text-transform:uppercase; letter-spacing:.09em}
+.hx-swatch{position:relative; width:30px; height:30px; padding:0; border:0; border-radius:50%; background:var(--sw); cursor:pointer; box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+.hx-swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--hx-bg),0 0 0 4px var(--sw)}
+.hx-swatch[aria-pressed="true"]::after{content:""; position:absolute; inset:10px; border-radius:50%; background:#fff}
+.hx-theme{display:inline-flex; align-items:center; gap:8px; min-height:36px; padding:0 12px; border:0; border-radius:10px; background:var(--hx-line); color:var(--hx-ink); font:500 13px var(--hx-font); cursor:pointer}
+.hx-row2{display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; width:100%}
+.hx-row2 .hx-label{font:500 10.5px var(--hx-mono); color:var(--hx-ink-2); text-transform:uppercase; letter-spacing:.09em}
+.hx-intro{display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:12px 32px; max-width:1520px; margin:0 auto; padding:26px 32px 0}
+.hx-intro h1{margin:0; font-size:26px; font-weight:600; letter-spacing:-.02em; line-height:1.15}
+.hx-intro p{margin:6px 0 0; max-width:620px; color:var(--hx-ink-2)}
+.hx-dirnote{max-width:560px; margin:0; padding:12px 14px; border-radius:12px; background:var(--hx-chip); box-shadow:inset 0 0 0 1px var(--hx-line); font-size:13px}
+.hx-dirnote b{font-weight:600}
+.hx-stage{max-width:1520px; margin:0 auto; padding:22px 32px 80px}
+.hx-scaler{position:relative; margin:0 auto}
+.hx-browser{position:absolute; top:0; left:0; overflow:hidden; border-radius:14px; background:var(--hx-chrome); box-shadow:0 0 0 1px var(--hx-line),0 40px 90px -40px rgba(0,0,0,.45); transform-origin:0 0}
+.hx-chrome{display:flex; align-items:center; gap:14px; height:44px; padding:0 16px}
+.hx-dots{display:flex; gap:7px}
+.hx-dots i{width:12px; height:12px; border-radius:50%; background:#FF5F57}
+.hx-dots i:nth-child(2){background:#FEBC2E} .hx-dots i:nth-child(3){background:#28C840}
+.hx-url{flex:1; max-width:560px; margin:0 auto; display:flex; align-items:center; gap:8px; height:28px; padding:0 12px; border-radius:8px; background:var(--hx-url); color:var(--hx-ink-2); font:500 12.5px var(--hx-mono)}
+.hx-url .fa{font-size:11px}
+.hx-url b{font-weight:500; color:var(--hx-ink)}
+.hx-spacer{width:52px}
+.hx-screen{position:relative; overflow:hidden}
+.hx-vp{height:100%; overflow-y:auto; overflow-x:hidden; container-type:inline-size; container-name:vp}
+/* position:fixed inside a scaled frame would cover the browser chrome too */
+.hx-screen .pp-sheet{position:absolute}
+.hx-foot{max-width:1520px; margin:0 auto; padding:0 32px 60px; color:var(--hx-ink-2); font-size:13px}
+
+/* =====================================================================
+   APP — parent_portal/src/assets/app.css as it is today (Wallet design),
+   scoped to .pp-root so the harness can switch light/dark and the accent.
+   ===================================================================== */
+.pp-root{
+  --accent:#1D4ED8;
+  --safe-top:0px; --safe-bottom:0px;
+  --bg:#F2F2F7; --surface:#FFFFFF; --surface-2:#E5E5EA; --fill:rgba(118,118,128,.12);
+  --ink:#0B0B0F; --ink-2:#6E6E76; --ink-3:#B0B0B6; --line:rgba(60,60,67,.15);
+  --pos:#1E9A53; --neg:#E0352B; --warn:#C46A00;
+  --pos-soft:color-mix(in oklab,var(--pos) 13%,var(--surface));
+  --neg-soft:color-mix(in oklab,var(--neg) 10%,var(--surface));
+  --warn-soft:color-mix(in oklab,var(--warn) 13%,var(--surface));
+  --accent-hi:color-mix(in oklab,var(--accent),white 24%);
+  --accent-lo:color-mix(in oklab,var(--accent),black 42%);
+  --accent-ink:color-mix(in oklab,var(--accent),black 4%);
+  --accent-soft:color-mix(in oklab,var(--accent) 12%,var(--surface));
+  --accent-ring:color-mix(in oklab,var(--accent) 55%,transparent);
+  --on-accent:#FFFFFF;
+  --card-face:linear-gradient(152deg,var(--accent-hi) 0%,var(--accent) 46%,var(--accent-lo) 100%);
+  --bar:rgba(242,242,247,.8);
+  --pay-bg:#000000; --pay-ink:#FFFFFF;
+  --font:"Figtree","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono","IBM Plex Sans Arabic",ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --column:520px;
+  color-scheme:light;
+  background:var(--bg); color:var(--ink); font:400 16px/1.35 var(--font);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+html[data-theme="dark"] .pp-root{
+  --bg:#000000; --surface:#1C1C1E; --surface-2:#2C2C2E; --fill:rgba(118,118,128,.24);
+  --ink:#F5F5F7; --ink-2:#98989F; --ink-3:#5C5C62; --line:rgba(84,84,88,.55);
+  --pos:#30D158; --neg:#FF453A; --warn:#FF9F0A;
+  --accent-hi:color-mix(in oklab,var(--accent),white 30%);
+  --accent-ink:color-mix(in oklab,var(--accent),white 45%);
+  --bar:rgba(16,16,18,.78);
+  --pay-bg:#FFFFFF; --pay-ink:#000000;
+  color-scheme:dark;
+}
+:where(.pp-root) :is(h1,h2,h3,p,dl,dd,ul,ol,figure,blockquote){margin:0}
+:where(.pp-root) :is(ul,ol){padding:0; list-style:none}
+:where(.pp-root) :is(button,input,textarea,select){font:inherit; color:inherit; letter-spacing:inherit}
+:where(.pp-root) button{cursor:pointer; -webkit-appearance:none; appearance:none}
+:where(.pp-root) a{color:inherit; text-decoration:none}
+:where(.pp-root) :focus-visible{outline:2px solid var(--accent-ring,var(--accent)); outline-offset:2px}
+:where(.pp-root) input:focus-visible{outline:none}
+.pp-num{font-variant-numeric:tabular-nums}
+.pp-text-neg{color:var(--neg)}
+.pp-text-pos{color:var(--pos)}
+
+.pp-sheet{position:fixed; inset:0; z-index:200; visibility:hidden; pointer-events:none}
+.pp-sheet.is-open{visibility:visible; pointer-events:auto}
+.pp-sheet__backdrop{position:absolute; inset:0; width:100%; padding:0; border:0; background:rgba(0,0,0,.4); cursor:default}
+.pp-sheet__panel{position:absolute; left:0; right:0; bottom:0; max-width:var(--column); max-height:92%; margin:0 auto; overflow-y:auto}
+
+@keyframes pp-spin{to{transform:rotate(360deg)}}
+
+.pp-navbtn{display:inline-flex; align-items:center; gap:4px; min-width:44px; min-height:44px; padding:0 10px 0 6px; border:0; background:none; color:var(--accent-ink); font-size:17px; font-weight:500}
+.pp-avatar-btn{display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:50%; background:none}
+.pp-avatar-btn .pp-avatar{width:34px; height:34px; font-size:13px}
+.pp-mark{flex:none; font-size:12px; line-height:1; letter-spacing:0}
+
+.pp-largetitle{padding:4px 20px 18px}
+.pp-largetitle h1{font-size:34px; font-weight:750; line-height:1.08; letter-spacing:-.025em}
+.pp-largetitle p{margin-top:4px; font-size:15px; color:var(--ink-2)}
+.pp-lede{padding:0 28px 26px; text-align:center}
+.pp-lede :is(h1,h2){font-size:28px; font-weight:750; line-height:1.12; letter-spacing:-.02em}
+.pp-lede p{margin-top:8px; font-size:16px; line-height:1.45; color:var(--ink-2)}
+.pp-hero-icon{display:grid; place-items:center; width:72px; height:72px; margin:0 auto 18px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); font-size:30px}
+.pp-hero-icon--neg{background:var(--neg-soft); color:var(--neg)}
+.pp-hint{padding:14px 32px 28px; text-align:center; font-size:13px; line-height:1.4; color:var(--ink-2)}
+
+.pp-avatar{display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; border-radius:50%; background:var(--accent-soft) center/cover no-repeat; color:var(--accent-ink); font-size:15px; font-weight:700}
+
+.pp-btn{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:52px; padding:0 20px; border:0; border-radius:14px; font-size:17px; font-weight:650; letter-spacing:-.005em; transition:transform .12s ease,filter .12s ease}
+.pp-btn:active{transform:scale(.985); filter:brightness(.93)}
+.pp-btn--primary{background:var(--accent); color:var(--on-accent)}
+.pp-btn--tinted{background:var(--accent-soft); color:var(--accent-ink)}
+.pp-btn--danger{background:var(--neg); color:#FFFFFF}
+.pp-btn--pay{min-height:54px; background:var(--pay-bg); color:var(--pay-ink)}
+.pp-link{display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 10px; border:0; background:none; color:var(--accent-ink); font-size:16px; font-weight:500}
+
+.pp-group{margin:0 16px 26px}
+.pp-group__head{display:flex; align-items:baseline; justify-content:space-between; padding:0 16px 7px; font-size:13px; font-weight:500; color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em}
+.pp-group__body{overflow:hidden; border-radius:14px; background:var(--surface)}
+.pp-group__foot{display:flex; gap:6px; padding:8px 16px 0; font-size:13px; line-height:1.4; color:var(--ink-2)}
+.pp-row{position:relative; display:flex; align-items:center; gap:12px; width:100%; min-height:50px; padding:10px 16px; border:0; background:none; color:inherit; text-align:left}
+:is(button,a,label).pp-row:active{background:var(--fill)}
+:is(.pp-row,.pp-field) + :is(.pp-row,.pp-field)::before{content:""; position:absolute; top:0; right:0; left:var(--sep,16px); height:1px; background:var(--line)}
+.pp-row--icon{--sep:58px}
+.pp-row__icon{display:grid; place-items:center; flex:none; width:30px; height:30px; border-radius:8px; background:var(--accent); color:#FFFFFF; font-size:15px}
+.pp-row__icon--pos{background:var(--pos)}
+.pp-row__icon--neg{background:var(--neg)}
+.pp-row__icon--warn{background:var(--warn)}
+.pp-row__icon--muted{background:var(--surface-2); color:var(--ink-2)}
+.pp-row__icon--accent{background:var(--accent-soft); color:var(--accent-ink)}
+.pp-row__main{flex:1; min-width:0}
+.pp-row__title{display:block; overflow:hidden; font-size:16px; font-weight:500; white-space:nowrap; text-overflow:ellipsis}
+.pp-row__sub{display:block; margin-top:1px; overflow:hidden; font-size:13px; color:var(--ink-2); white-space:nowrap; text-overflow:ellipsis}
+.pp-row__end{display:flex; flex:none; align-items:center; gap:6px; text-align:right}
+.pp-row__value{font-size:16px; font-weight:600; font-variant-numeric:tabular-nums}
+.pp-chev{margin-right:-4px; color:var(--ink-3); font-size:22px; line-height:1}
+.pp-row--quiet{background:color-mix(in oklab,var(--fill) 45%,transparent)}
+.pp-row--quiet .pp-row__title{color:var(--ink-2)}
+.pp-row--total .pp-row__title{font-weight:700}
+.pp-row--total .pp-amt{font-size:18px; font-weight:750}
+
+.pp-field{position:relative; display:flex; align-items:center; gap:8px; min-height:60px; padding:8px 8px 8px 16px}
+.pp-field__body{display:flex; flex:1; flex-direction:column; min-width:0; cursor:text}
+.pp-field__label{font-size:12.5px; font-weight:500; color:var(--ink-2)}
+.pp-input{width:100%; min-height:26px; padding:2px 0 0; border:0; outline:none; background:transparent; color:var(--ink); font-size:17px}
+.pp-eye{flex:none; width:44px; height:44px; border:0; border-radius:50%; background:none; color:var(--ink-3); font-size:17px}
+.pp-switch{position:relative; flex:none; width:51px; height:31px}
+.pp-switch input{position:absolute; inset:-7px; z-index:1; margin:0; opacity:0; cursor:pointer}
+.pp-switch__track{position:absolute; inset:0; border-radius:999px; background:var(--surface-2)}
+.pp-switch__track::after{content:""; position:absolute; top:2px; left:2px; width:27px; height:27px; border-radius:50%; background:#FFFFFF; box-shadow:0 3px 8px rgba(0,0,0,.15),0 1px 1px rgba(0,0,0,.16); transition:transform .28s var(--ease)}
+.pp-switch input:checked + .pp-switch__track{background:var(--accent)}
+.pp-switch input:checked + .pp-switch__track::after{transform:translateX(20px)}
+
+.pp-alert{display:flex; align-items:flex-start; gap:12px; margin:0 16px 18px; padding:12px 14px; border-radius:14px; background:var(--neg-soft); font-size:15px; line-height:1.35}
+.pp-alert > .fa{margin-top:1px; color:var(--neg); font-size:18px}
+.pp-alert--warn{background:var(--warn-soft)}
+.pp-alert--warn > .fa{color:var(--warn)}
+.pp-alert__main{flex:1; min-width:0}
+.pp-alert__title{display:block; font-weight:650}
+.pp-alert__btn{position:relative; display:inline-flex; align-items:center; align-self:center; flex:none; min-height:36px; padding:0 14px; border:0; border-radius:999px; background:var(--surface); color:var(--ink); font-size:14px; font-weight:650; box-shadow:0 0 0 1px var(--line)}
+
+.pp-auth__tag{display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:999px; background:var(--fill); color:var(--ink-2); font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase}
+.pp-auth__actions{display:flex; flex-direction:column; align-items:center; gap:6px; padding:0 16px}
+
+/* Child card */
+.pp-wallet-stack{padding:4px 16px 0}
+.pp-child-card{
+  position:relative; isolation:isolate; display:block; width:100%; aspect-ratio:1.586/1; overflow:hidden;
+  padding:16px 18px; border:0; border-radius:20px; color:#FFFFFF; text-align:left;
+  background:var(--card-face);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 .5px rgba(255,255,255,.14),0 -8px 20px -10px rgba(0,0,0,.3),0 16px 30px -20px rgba(0,0,0,.55);
+  transition:transform .4s var(--ease),box-shadow .3s ease;
+}
+.pp-wallet-stack .pp-child-card + .pp-child-card{margin-top:-100px}
+.pp-child-card::before{content:""; position:absolute; z-index:-1; right:-96px; bottom:-128px; width:250px; height:250px; border-radius:50%; box-shadow:-46px -30px 0 0 rgba(255,255,255,.1)}
+.pp-child-card::after{content:""; position:absolute; inset:0; z-index:-1; background:radial-gradient(90% 70% at 0% 0%,rgba(255,255,255,.2),transparent 60%),repeating-radial-gradient(circle at 112% -18%,rgba(255,255,255,.05) 0 1px,transparent 1.6px 9px)}
+.pp-card__top{display:flex; align-items:center; justify-content:space-between; gap:8px; height:24px}
+.pp-card__school{display:flex; align-items:center; gap:8px; font:500 10.5px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; opacity:.92; white-space:nowrap}
+.pp-card__who{display:flex; align-items:center; gap:12px; margin-top:16px}
+.pp-card__who .pp-avatar{width:42px; height:42px; background-color:rgba(255,255,255,.2); color:#FFFFFF; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.pp-card__id{min-width:0}
+.pp-card__name{display:block; font-size:18px; font-weight:700; line-height:1.15; letter-spacing:-.01em}
+.pp-card__class{display:block; margin-top:2px; font-size:13px; opacity:.8}
+.pp-card__bal{margin-left:auto; text-align:right; white-space:nowrap}
+.pp-card__bal small{display:block; margin-bottom:5px; font:500 9.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; opacity:.75}
+.pp-card__bal b{font-size:20px; font-weight:700; letter-spacing:-.01em; font-variant-numeric:tabular-nums}
+.pp-card__bal--neg b{padding:2px 8px; border-radius:8px; background:rgba(255,69,58,.95)}
+.pp-card__bottom{position:absolute; left:18px; right:18px; bottom:16px; display:flex; align-items:flex-end; gap:12px}
+.pp-card__chip{position:relative; flex:none; width:40px; height:30px; overflow:hidden; border-radius:6px; background:linear-gradient(135deg,#F4DC9B,#C9A24C 45%,#EACD85 70%,#B38B3A); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.25)}
+.pp-card__chip::before{content:""; position:absolute; inset:9px 0; border-top:1px solid rgba(90,64,20,.45); border-bottom:1px solid rgba(90,64,20,.45)}
+.pp-card__chip::after{content:""; position:absolute; inset:0 13px; border-right:1px solid rgba(90,64,20,.45); border-left:1px solid rgba(90,64,20,.45)}
+.pp-card__label{flex:1; padding-bottom:3px; font:500 10px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase; opacity:.72}
+.pp-card__holder{flex:1; min-width:0; line-height:1.2}
+.pp-card__holder b{display:block; font:500 12.5px/1.2 var(--mono); letter-spacing:.12em; text-transform:uppercase}
+.pp-card__holder small{display:block; margin-top:3px; font-size:12px; opacity:.75}
+.pp-card__nfc{flex:none; padding-bottom:2px; font-size:20px; opacity:.85; transform:rotate(90deg)}
+.pp-card__balance{display:block; margin-top:22px}
+.pp-card__balance small{display:block; font:500 10px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; opacity:.8}
+.pp-card__balance b{display:block; margin-top:8px; font-size:40px; font-weight:750; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.pp-card__balance b span{margin-right:6px; font-size:17px; font-weight:600; letter-spacing:0; opacity:.8; vertical-align:.8em}
+.pp-status{display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:650; white-space:nowrap}
+.pp-status::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+.pp-child-card .pp-status{background:rgba(255,255,255,.2); color:#FFFFFF}
+.pp-child-card .pp-status--active::before{background:#7CF2A9; box-shadow:0 0 0 3px rgba(124,242,169,.25)}
+.pp-status--soft.pp-status--active{background:var(--pos-soft); color:var(--pos)}
+.pp-child-card--none{background:var(--surface); color:var(--ink); box-shadow:0 -8px 20px -12px rgba(0,0,0,.22),inset 0 0 0 1px var(--line)}
+.pp-child-card--none::before{box-shadow:-46px -30px 0 0 var(--fill)}
+.pp-child-card--none::after{inset:8px; border:1.5px dashed var(--ink-3); border-radius:14px; background:none; opacity:.55}
+.pp-child-card--none .pp-card__who .pp-avatar{background-color:var(--fill); color:var(--ink-2); box-shadow:none}
+.pp-child-card--none .pp-status{background:var(--fill); color:var(--ink-2)}
+.pp-child-card--none .pp-status::before{background:transparent; box-shadow:inset 0 0 0 1.5px currentColor}
+.pp-child-card--none .pp-card__bal b{color:var(--ink-2)}
+.pp-card__empty{position:absolute; left:18px; right:18px; bottom:18px; display:flex; align-items:center; gap:10px; font-size:14px; line-height:1.3; color:var(--ink-2)}
+
+.pp-spend{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; background:var(--surface); font-size:15px}
+.pp-spend > .fa{color:var(--accent-ink); font-size:18px}
+.pp-spend b{display:block; font-weight:650; font-variant-numeric:tabular-nums}
+.pp-spend small{display:block; margin-top:1px; font-size:13px; color:var(--ink-2)}
+
+.pp-seg{display:grid; grid-template-columns:1fr 1fr; gap:2px; margin:0 16px; padding:2px; border-radius:11px; background:var(--fill)}
+.pp-seg__tab{min-height:40px; border:0; border-radius:9px; background:none; color:var(--ink); font-size:15px; font-weight:600; transition:background-color .2s,box-shadow .2s}
+.pp-seg__tab[aria-selected="true"]{background:var(--surface); box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+.pp-month{display:flex; align-items:center; justify-content:space-between; margin:8px 10px 6px}
+.pp-month__label{font-size:17px; font-weight:650}
+.pp-month__btn{width:44px; height:44px; border:0; border-radius:50%; background:none; color:var(--accent-ink); font-size:15px}
+.pp-month__btn:disabled{color:var(--ink-3)}
+
+.pp-bill-row{--sep:72px}
+.pp-date{display:flex; flex:none; flex-direction:column; align-items:center; justify-content:center; width:44px; height:44px; border-radius:10px; background:var(--bg); line-height:1}
+.pp-date small{font:500 9.5px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--accent-ink)}
+.pp-date b{margin-top:3px; font-size:17px; font-weight:700; font-variant-numeric:tabular-nums}
+.pp-amt{font-size:16px; font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums}
+.pp-amt--in{color:var(--pos)}
+.pp-run{display:block; margin-top:2px; font-size:12px; color:var(--ink-2); font-variant-numeric:tabular-nums}
+.pp-stmt-row .pp-row__end{flex-direction:column; align-items:flex-end; gap:0}
+
+.pp-pass{overflow:hidden; border-radius:18px; background:var(--surface); box-shadow:0 1px 2px rgba(0,0,0,.04),0 14px 34px -22px rgba(0,0,0,.3)}
+.pp-pass__head{position:relative; isolation:isolate; overflow:hidden; padding:16px 18px 20px; background:var(--card-face); color:#FFFFFF}
+.pp-pass__head::before{content:""; position:absolute; z-index:-1; right:-70px; bottom:-120px; width:200px; height:200px; border-radius:50%; box-shadow:-38px -26px 0 0 rgba(255,255,255,.1)}
+.pp-pass__brand{display:flex; align-items:center; justify-content:space-between; font:500 10.5px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; opacity:.9}
+.pp-pass__brand > span{display:flex; align-items:center; gap:8px}
+.pp-pass__title{margin-top:20px; font-size:26px; font-weight:750; letter-spacing:-.02em}
+.pp-pass__sub{margin-top:2px; font-size:15px; opacity:.85}
+.pp-pass__fields{display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; padding:16px 18px 4px}
+.pp-pass__fields dt{margin-bottom:4px; font:500 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+.pp-pass__fields dd{font-size:15px; font-weight:600}
+.pp-pass__total{display:flex; align-items:baseline; justify-content:space-between; padding:14px 18px}
+.pp-pass__total span{font:500 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+.pp-pass__total b{font-size:34px; font-weight:750; letter-spacing:-.025em; font-variant-numeric:tabular-nums}
+.pp-tear{position:relative; height:24px; background:radial-gradient(circle at 0 50%,var(--bg) 11px,transparent 11.5px),radial-gradient(circle at 100% 50%,var(--bg) 11px,transparent 11.5px)}
+.pp-tear::before{content:""; position:absolute; top:50%; left:20px; right:20px; border-top:1.5px dashed var(--line)}
+.pp-lines{padding:0 18px}
+.pp-line{display:flex; align-items:center; gap:12px; padding:11px 0}
+.pp-line + .pp-line{border-top:1px solid var(--line)}
+.pp-line__name{display:block; font-size:15px; font-weight:600}
+.pp-line__qty{display:block; margin-top:1px; font-size:13px; color:var(--ink-2); font-variant-numeric:tabular-nums}
+.pp-line__total{margin-left:auto; font-weight:600; font-variant-numeric:tabular-nums}
+.pp-sum{margin:4px 18px 0; padding:10px 0 14px; border-top:1px solid var(--line)}
+.pp-sum__row{display:flex; justify-content:space-between; padding:4px 0; font-size:15px; color:var(--ink-2); font-variant-numeric:tabular-nums}
+.pp-sum__row--total{margin-top:6px; padding-top:10px; border-top:1px solid var(--line); color:var(--ink); font-size:18px; font-weight:750}
+.pp-paidby{display:flex; align-items:center; gap:12px; margin:0 12px 12px; padding:12px; border-radius:12px; background:var(--bg)}
+.pp-paidby b{font-weight:650}
+
+.pp-minicard{position:relative; flex:none; width:62px; height:40px; overflow:hidden; border-radius:7px; background:var(--card-face); box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.pp-minicard::after{content:""; position:absolute; left:8px; bottom:8px; width:13px; height:10px; border-radius:2.5px; background:linear-gradient(135deg,#F4DC9B,#C9A24C)}
+.pp-chips{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px}
+.pp-chip{min-height:48px; border:0; border-radius:12px; background:var(--surface); color:var(--ink); font-size:17px; font-weight:650; font-variant-numeric:tabular-nums; transition:background-color .18s,color .18s,transform .12s}
+.pp-chip[aria-pressed="true"]{background:var(--accent); color:var(--on-accent); box-shadow:0 8px 16px -10px var(--accent)}
+.pp-amount-field{display:flex; align-items:center; gap:10px; min-height:66px; padding:0 16px; cursor:text}
+.pp-amount-field__cur{font-size:22px; font-weight:600; color:var(--ink-2)}
+.pp-amount-field input{flex:1; min-width:0; padding:0; border:0; outline:none; background:none; color:var(--ink); font-size:34px; font-weight:750; letter-spacing:-.02em; text-align:right; font-variant-numeric:tabular-nums}
+.pp-trust{display:flex; align-items:center; justify-content:center; gap:7px; margin-top:10px; font-size:12.5px; color:var(--ink-2); text-align:center}
+.pp-mono{font-family:var(--mono); font-size:13px; font-weight:500; letter-spacing:.02em; word-break:break-all}
+.pp-tag{display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px; border-radius:999px; font-size:13px; font-weight:650; white-space:nowrap}
+.pp-tag--pos{background:var(--pos-soft); color:var(--pos)}
+.pp-tag--warn{background:var(--warn-soft); color:var(--warn)}
+.pp-tag--neg{background:var(--neg-soft); color:var(--neg)}
+.pp-tag--accent{background:var(--accent-soft); color:var(--accent-ink)}
+.pp-tag--muted{background:var(--fill); color:var(--ink-2)}
+
+.pp-sheet__panel{padding-bottom:16px; border-radius:14px 14px 0 0; background:var(--bg); box-shadow:0 -10px 40px rgba(0,0,0,.2)}
+.pp-sheet__grabber{width:36px; height:5px; margin:6px auto 0; border-radius:3px; background:var(--ink-3); opacity:.6}
+.pp-sheet__bar{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; min-height:50px; padding:0 6px; margin-bottom:6px}
+.pp-sheet__bar .pp-navbtn{justify-self:start; padding-left:10px}
+.pp-sheet__title{font-size:17px; font-weight:650}
+.pp-sheet__actions{padding:0 16px}
+.pp-lede--sheet{padding-bottom:22px}
+.pp-lede--sheet h2{font-size:24px}
+.pp-lede--sheet p{font-size:15px}
+.pp-hint--left{padding:0; text-align:left}
+html[data-theme="dark"] .pp-root .pp-seg__tab[aria-selected="true"]{background:#5A5A5F}
+html[data-theme="dark"] .pp-root .pp-date,
+html[data-theme="dark"] .pp-root .pp-paidby{background:var(--surface-2)}
+/* =====================================================================
+   DESKTOP LAYER — the part that gets ported into app.css, wrapped in
+   @media (min-width:1024px). Phones keep today's layout untouched.
+   In the app --vh is 100dvh; here it is the frame's height.
+   ===================================================================== */
+
+/* ---- Shared desktop pieces ---- */
+.pp-web{min-height:var(--vh); background:var(--bg); color:var(--ink); font-size:15px}
+.pp-web .pp-group{margin:0}
+.pp-web .pp-group__head{padding:0 4px 8px}
+.pp-web .pp-alert{margin:0}
+.pp-web .pp-wallet-stack{padding:0}
+:is(a,button).pp-row:not(:disabled):hover{background:var(--fill)}
+.pp-btn:hover{filter:brightness(1.07)}
+.pp-btn--auto{width:auto; min-height:44px; padding:0 18px; border-radius:12px; font-size:15px}
+.pp-btn--ghost{background:var(--surface); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line)}
+.pp-btn--ghost:hover{filter:none; background:color-mix(in oklab,var(--surface),var(--ink) 5%)}
+.pp-link:hover{text-decoration:underline; text-underline-offset:3px}
+a.pp-child-card:hover{transform:translateY(-5px)}
+a.pp-child-card:hover:not(.pp-child-card--none){box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 26px 40px -24px color-mix(in oklab,var(--accent) 70%,black)}
+
+.pp-logo-tile{display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:12px; background:var(--card-face); color:#FFFFFF; font-size:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 18px -10px color-mix(in oklab,var(--accent) 80%,transparent)}
+.pp-brandname b{display:block; font-size:15px; font-weight:700; line-height:1.2; letter-spacing:-.01em; white-space:nowrap}
+.pp-brandname small{display:block; margin-top:4px; font:500 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+
+.pp-pagehead{display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px 24px; padding:32px 40px 24px}
+.pp-pagehead__main{flex:1; min-width:0}
+.pp-crumbs{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:10px; font:500 11px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--ink-2)}
+.pp-crumbs a:hover{color:var(--accent-ink)}
+.pp-crumbs .fa{color:var(--ink-3); font-size:12px}
+.pp-pagehead h1{font-size:32px; font-weight:750; line-height:1.1; letter-spacing:-.025em}
+.pp-pagehead p{margin-top:6px; font-size:15px; color:var(--ink-2)}
+.pp-pagehead__actions{display:flex; gap:10px}
+.pp-web-body{display:grid; gap:24px; padding:0 40px 48px}
+
+.pp-panel{overflow:hidden; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(0,0,0,.03)}
+.pp-panel__head{display:flex; align-items:center; gap:12px; min-height:60px; padding:10px 12px 10px 16px; border-bottom:1px solid var(--line)}
+.pp-panel__head .pp-seg{width:240px; margin:0}
+.pp-panel__head .pp-seg__tab{min-height:36px; font-size:14px}
+.pp-panel__head .pp-month{margin:0 0 0 auto}
+.pp-panel__head .pp-month__label{min-width:140px; font-size:15px; text-align:center}
+.pp-panel__head .pp-month__btn{width:38px; height:38px}
+.pp-panel__title{font-size:16px; font-weight:650; letter-spacing:-.01em}
+.pp-panel__foot{padding:13px 20px; border-top:1px solid var(--line); font-size:13px; color:var(--ink-2)}
+.pp-panel__body{padding:18px 20px}
+
+.pp-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+.pp-stat{min-width:0; padding:16px 18px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+.pp-stat small{display:flex; align-items:center; gap:7px; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+.pp-stat b{display:block; margin-top:10px; overflow:hidden; font-size:24px; font-weight:750; letter-spacing:-.02em; white-space:nowrap; text-overflow:ellipsis; font-variant-numeric:tabular-nums}
+.pp-stat span{display:block; margin-top:3px; overflow:hidden; font-size:13px; color:var(--ink-2); white-space:nowrap; text-overflow:ellipsis}
+.pp-stat--neg b{color:var(--neg)}
+.pp-stat--text b{font-size:17px; line-height:1.3; margin-top:12px}
+
+.pp-cardgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:22px}
+.pp-cardgrid > .pp-child-card{max-width:420px}
+
+/* Tables: bills and statement */
+.pp-table{width:100%; border-collapse:collapse; font-size:15px}
+.pp-table th{padding:11px 16px; border-bottom:1px solid var(--line); font:500 10.5px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--ink-2); text-align:left; white-space:nowrap}
+.pp-table td{padding:12px 16px; border-bottom:1px solid var(--line); vertical-align:middle; white-space:nowrap}
+.pp-table .pp-mono{word-break:normal}
+.pp-table__sub{display:none; margin-top:2px; font-size:13px; color:var(--ink-2)}
+/* the table drops a column when its panel is narrow, not when the window is */
+.pp-activity{container-type:inline-size; container-name:activity}
+@container activity (max-width:640px){ .pp-table .is-wide{display:none} .pp-table__sub{display:block} }
+.pp-table tbody tr:last-child td{border-bottom:0}
+.pp-table :is(th,td):first-child{padding-left:20px}
+.pp-table :is(th,td):last-child{padding-right:14px}
+.pp-table .is-num{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
+.pp-table .is-muted{color:var(--ink-2)}
+.pp-table .is-chev{width:28px; color:var(--ink-3); font-size:20px; line-height:1}
+.pp-table tr.is-link{cursor:pointer}
+.pp-table tr.is-link:hover td{background:var(--fill)}
+.pp-table tr.is-quiet td{background:color-mix(in oklab,var(--fill) 45%,transparent); color:var(--ink-2)}
+.pp-table tr.is-total td{font-weight:700}
+.pp-table tr.is-total .is-num{font-size:17px; font-weight:750}
+.pp-table__what{display:flex; align-items:center; gap:12px}
+.pp-table__what .pp-row__icon{width:28px; height:28px; font-size:13px}
+.pp-table__what b{display:block; font-weight:550}
+.pp-table__what small{display:block; margin-top:1px; font-size:13px; color:var(--ink-2)}
+.pp-panel .pp-group__body{border-radius:0}
+
+/* Top-up: form + summary, the phone's sticky bar becomes the summary card */
+.pp-checkout{display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:24px; align-items:start}
+.pp-checkout .pp-chips{margin-bottom:12px}
+.pp-checkout .pp-chip{background:var(--bg); box-shadow:inset 0 0 0 1px var(--line)}
+.pp-checkout .pp-chip:hover{box-shadow:inset 0 0 0 1.5px var(--accent-ring)}
+.pp-checkout .pp-chip[aria-pressed="true"]{background:var(--accent); box-shadow:0 8px 16px -10px var(--accent)}
+.pp-checkout .pp-amount-field{border-radius:14px; background:var(--bg)}
+.pp-summary{position:sticky; top:24px; padding:18px}
+.pp-summary__who{display:flex; align-items:center; gap:12px; padding-bottom:16px; border-bottom:1px solid var(--line)}
+.pp-summary__who b{display:block; font-weight:650}
+.pp-summary__who small{display:block; font-size:13px; color:var(--ink-2)}
+.pp-summary__rows{padding:10px 0 16px}
+.pp-summary__rows > div{display:flex; justify-content:space-between; padding:7px 0; font-size:15px}
+.pp-summary__rows dt{color:var(--ink-2)}
+.pp-summary__rows dd{font-weight:600; font-variant-numeric:tabular-nums}
+.pp-summary__rows .is-total{margin-top:6px; padding-top:13px; border-top:1px solid var(--line)}
+.pp-summary__rows .is-total :is(dt,dd){color:var(--ink); font-size:18px; font-weight:750}
+
+/* Meals: the next school days become a week board */
+.pp-weekly{display:flex; align-items:center; gap:16px; padding:18px 20px}
+.pp-weekly .pp-row__icon{width:44px; height:44px; border-radius:12px; font-size:19px}
+.pp-weekly__main{flex:1; min-width:0}
+.pp-weekly__main small{display:block; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+.pp-weekly__main b{display:block; margin-top:6px; font-size:19px; font-weight:700; letter-spacing:-.01em}
+.pp-weekly__main span{display:block; margin-top:2px; font-size:14px; color:var(--ink-2)}
+.pp-week{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px}
+.pp-dayc{display:flex; flex-direction:column; min-height:212px; padding:14px 14px 12px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line); transition:transform .25s var(--ease),box-shadow .2s}
+a.pp-dayc:hover{transform:translateY(-3px); box-shadow:0 0 0 1.5px var(--accent-ring),0 18px 30px -22px rgba(0,0,0,.45)}
+.pp-dayc__head{display:flex; align-items:flex-start; justify-content:space-between; gap:8px}
+.pp-dayc__wd{display:block; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink)}
+.pp-dayc__num{display:block; margin-top:6px; font-size:30px; font-weight:750; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.pp-dayc__num small{margin-left:4px; font-size:13px; font-weight:600; letter-spacing:0; color:var(--ink-2)}
+.pp-dayc__meal{margin-top:auto; padding-top:16px; font-size:15px; font-weight:650; line-height:1.25}
+.pp-dayc__sub{margin-top:3px; font-size:13px; color:var(--ink-2)}
+.pp-dayc__foot{display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); font-size:13px; font-weight:600; color:var(--accent-ink)}
+.pp-dayc__foot span{color:var(--ink); font-variant-numeric:tabular-nums}
+.pp-dayc--skipped{background:transparent; box-shadow:inset 0 0 0 1.5px var(--line)}
+.pp-dayc--skipped .pp-dayc__meal{color:var(--ink-2)}
+.pp-dayc--empty .pp-dayc__meal{color:var(--ink-2); font-weight:550}
+.pp-foot-note{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-2)}
+
+/* Sheets become centred dialogs; the account action sheet becomes a menu */
+.pp-sheet__panel{top:50%; bottom:auto; max-width:460px; max-height:calc(var(--vh) * .86); padding:8px 0 22px; border-radius:22px; transform:translateY(-50%); box-shadow:0 40px 90px -30px rgba(0,0,0,.55),0 0 0 1px var(--line)}
+.pp-sheet__grabber{display:none}
+.pp-menu-anchor{position:relative}
+.pp-menu{position:absolute; z-index:60; width:280px; overflow:hidden; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line),0 24px 50px -20px rgba(0,0,0,.45)}
+.pp-menu--up{bottom:calc(100% + 8px); left:0}
+.pp-menu--down{top:calc(100% + 8px); right:0}
+.pp-menu__who{display:flex; align-items:center; gap:12px; padding:16px}
+.pp-menu__who b{display:block; font-weight:650}
+.pp-menu__who small{display:block; font-size:13px; color:var(--ink-2)}
+.pp-menu__item{display:flex; align-items:center; gap:10px; width:100%; min-height:46px; padding:0 16px; border:0; border-top:1px solid var(--line); background:none; color:var(--neg); font-size:15px; font-weight:600}
+.pp-menu__item:hover{background:var(--fill)}
+
+/* Sign in: brand panel + form */
+.pp-signin{display:grid; grid-template-columns:minmax(0,1.08fr) minmax(440px,1fr); min-height:var(--vh)}
+.pp-signin__art{position:relative; isolation:isolate; display:flex; flex-direction:column; overflow:hidden; padding:40px 52px; background:linear-gradient(160deg,var(--accent-lo) 0%,color-mix(in oklab,var(--accent),black 68%) 100%); color:#FFFFFF}
+.pp-signin__art::before{content:""; position:absolute; z-index:-1; right:-300px; top:-300px; width:620px; height:620px; border-radius:50%; box-shadow:-70px 70px 0 0 rgba(255,255,255,.045)}
+.pp-signin__art::after{content:""; position:absolute; inset:0; z-index:-1; background:repeating-radial-gradient(circle at 110% 110%,rgba(255,255,255,.035) 0 1px,transparent 1.6px 12px)}
+.pp-signin__brand{display:flex; align-items:center; gap:12px; font:500 11px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase}
+.pp-signin__brand .pp-logo-tile{background:#FFFFFF; color:var(--accent); box-shadow:none}
+.pp-signin__pitch{max-width:440px; margin-top:auto}
+.pp-signin__pitch h2{font-size:40px; font-weight:750; line-height:1.06; letter-spacing:-.03em}
+.pp-signin__pitch p{margin-top:14px; font-size:17px; line-height:1.45; opacity:.78}
+.pp-signin__cards{position:relative; height:250px; margin:34px 0 30px}
+.pp-signin__cards .pp-child-card{position:absolute; width:320px}
+.pp-signin__cards .pp-child-card:first-child{left:0; top:26px; transform:rotate(-7deg)}
+.pp-signin__cards .pp-child-card:last-child{left:190px; top:0; transform:rotate(5deg)}
+.pp-signin__points{display:flex; flex-wrap:wrap; gap:10px 22px; font-size:14px; opacity:.85}
+.pp-signin__points li{display:flex; align-items:center; gap:8px}
+.pp-signin__form{display:flex; align-items:center; justify-content:center; padding:48px}
+.pp-signin__inner{width:100%; max-width:400px}
+.pp-signin__inner h1{margin-top:18px; font-size:34px; font-weight:750; letter-spacing:-.025em}
+.pp-signin__inner > p{margin:6px 0 26px; font-size:15px; color:var(--ink-2)}
+.pp-signin__inner .pp-group{margin-bottom:20px}
+.pp-signin__inner .pp-group__body{box-shadow:0 0 0 1px var(--line)}
+.pp-signin__inner .pp-auth__actions{padding:0}
+.pp-signin__help{margin-top:26px; padding-top:18px; border-top:1px solid var(--line); font-size:13px; color:var(--ink-2)}
+
+/* ---- A · Sidebar ---- */
+.pp-web--side{display:grid; grid-template-columns:280px minmax(0,1fr)}
+.pp-side{position:sticky; top:0; align-self:start; display:flex; flex-direction:column; height:var(--vh); padding:22px 14px 12px; background:var(--surface); box-shadow:1px 0 0 var(--line)}
+.pp-side__brand{display:flex; align-items:center; gap:12px; padding:0 8px 24px}
+.pp-side__nav{flex:1; min-height:0; overflow-y:auto}
+.pp-side__link{display:flex; align-items:center; gap:12px; min-height:42px; padding:0 10px; border-radius:10px; font-size:15px; font-weight:600}
+.pp-side__link .fa{width:20px; color:var(--ink-2); text-align:center}
+.pp-side__link:hover{background:var(--fill)}
+.pp-side__link.is-active{background:var(--accent-soft); color:var(--accent-ink)}
+.pp-side__link.is-active .fa{color:inherit}
+.pp-side__label{display:block; padding:22px 10px 8px; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+.pp-side__kid{border-radius:12px}
+.pp-side__kid + .pp-side__kid{margin-top:2px}
+.pp-side__kid.is-active{padding-bottom:6px; background:var(--bg)}
+.pp-side__child{display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:12px}
+.pp-side__kid:not(.is-active) .pp-side__child:hover{background:var(--fill)}
+.pp-side__child .pp-minicard{width:40px; height:26px; border-radius:5px}
+.pp-side__child .pp-minicard::after{left:5px; bottom:5px; width:9px; height:7px; border-radius:2px}
+.pp-minicard--none{background:var(--surface-2); box-shadow:inset 0 0 0 1px var(--line)}
+.pp-minicard--none::after{display:none}
+.pp-side__who{flex:1; min-width:0}
+.pp-side__who b{display:block; overflow:hidden; font-size:14.5px; font-weight:650; white-space:nowrap; text-overflow:ellipsis}
+.pp-side__who small{display:block; font-size:12.5px; color:var(--ink-2)}
+.pp-side__bal{font-size:13.5px; font-weight:650; font-variant-numeric:tabular-nums}
+.pp-side__bal.is-none{color:var(--ink-3); font-weight:500}
+.pp-side__sub{display:grid; padding:0 6px}
+.pp-side__sublink{display:flex; align-items:center; gap:10px; min-height:36px; padding:0 10px 0 56px; border-radius:9px; font-size:14px; font-weight:550; color:var(--ink-2)}
+.pp-side__sublink:hover{color:var(--ink); background:var(--fill)}
+.pp-side__sublink.is-active{color:var(--accent-ink); background:var(--surface); box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.pp-side__foot{padding-top:12px; border-top:1px solid var(--line)}
+.pp-side__me{display:flex; align-items:center; gap:10px; width:100%; padding:6px 8px; border:0; border-radius:12px; background:none; text-align:left}
+.pp-side__me:hover{background:var(--fill)}
+.pp-side__me .pp-avatar{width:36px; height:36px; font-size:13px}
+.pp-side__me > span:not(.pp-avatar){flex:1; min-width:0}
+.pp-side__me b{display:block; font-size:14px; font-weight:650}
+.pp-side__me small{display:block; font-size:12.5px; color:var(--ink-2)}
+.pp-side__me .fa{color:var(--ink-3)}
+.pp-side-main{min-width:0}
+.pp-cols{display:grid; grid-template-columns:360px minmax(0,1fr); gap:24px; align-items:start}
+.pp-cols__aside{position:sticky; top:24px; display:grid; gap:18px}
+.pp-bill-layout{display:grid; grid-template-columns:minmax(0,540px) minmax(0,300px); gap:24px; align-items:start}
+
+/* ---- B · Website ---- */
+.pp-web--top{display:flex; flex-direction:column}
+.pp-wrap{width:100%; max-width:1200px; margin:0 auto; padding:0 40px}
+.pp-top{position:sticky; top:0; z-index:40; background:var(--bar); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); box-shadow:0 1px 0 var(--line)}
+.pp-top__in{display:flex; align-items:center; gap:28px; height:70px}
+.pp-top__brand{display:flex; align-items:center; gap:12px}
+.pp-top__nav{display:flex; flex:1; align-items:center; gap:4px; min-width:0}
+.pp-top__link{display:inline-flex; align-items:center; gap:9px; height:40px; padding:0 14px; border-radius:999px; font-size:14.5px; font-weight:600; color:var(--ink-2); white-space:nowrap}
+.pp-top__link .pp-avatar{width:28px; height:28px; margin-left:-8px; font-size:11px}
+.pp-top__link:hover{background:var(--fill); color:var(--ink)}
+.pp-top__link.is-active{background:var(--surface); color:var(--ink); box-shadow:0 0 0 1px var(--line),0 2px 8px rgba(0,0,0,.06)}
+.pp-top__me{display:flex; align-items:center; gap:10px; height:44px; padding:0 14px 0 4px; border:0; border-radius:999px; background:none; font-size:14.5px; font-weight:600}
+.pp-top__me:hover{background:var(--fill)}
+.pp-top__me .pp-avatar{width:36px; height:36px; font-size:13px}
+.pp-top__me .fa{color:var(--ink-3)}
+.pp-band{padding:34px 0 0; background:linear-gradient(180deg,color-mix(in oklab,var(--accent) 11%,var(--bg)) 0%,var(--bg) 100%)}
+.pp-band--plain{padding-bottom:26px}
+.pp-band__grid{display:grid; grid-template-columns:330px minmax(0,1fr); gap:36px; align-items:center}
+.pp-band__head{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px 24px}
+.pp-band h1{font-size:34px; font-weight:750; line-height:1.08; letter-spacing:-.025em}
+.pp-band__head p{margin-top:6px; font-size:15px; color:var(--ink-2)}
+.pp-band .pp-stats{margin-top:22px}
+.pp-band__mini{display:flex; align-items:center; gap:16px}
+.pp-band__mini .pp-minicard{width:74px; height:48px; border-radius:8px}
+.pp-subnav{display:flex; gap:28px; margin-top:28px; box-shadow:inset 0 -1px 0 var(--line)}
+.pp-subnav a{display:inline-flex; align-items:center; gap:8px; height:50px; font-size:15px; font-weight:600; color:var(--ink-2); box-shadow:inset 0 -2px 0 transparent}
+.pp-subnav a .fa{font-size:14px}
+.pp-subnav a:hover{color:var(--ink)}
+.pp-subnav a.is-active{color:var(--ink); box-shadow:inset 0 -2.5px 0 var(--accent)}
+.pp-top-main{flex:1; padding:28px 0 56px}
+.pp-top-main .pp-wrap{display:grid; gap:24px}
+.pp-split2{display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:24px; align-items:start}
+.pp-split2__aside{display:grid; gap:18px}
+.pp-narrow{width:100%; max-width:560px; margin:0 auto}
+.pp-foot{padding:22px 0 26px; border-top:1px solid var(--line); font-size:13px; color:var(--ink-2)}
+.pp-foot__in{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 24px}
+.pp-foot__in span{display:inline-flex; align-items:center; gap:7px}
+
+/* ---- C · Wallet split ---- */
+.pp-web--split{display:grid; grid-template-columns:420px minmax(0,1fr); height:var(--vh); min-height:0}
+.pp-wallet{display:flex; flex-direction:column; min-height:0; overflow-y:auto; padding:20px 26px 22px; background:color-mix(in oklab,var(--bg),var(--ink) 4%); box-shadow:inset -1px 0 0 var(--line)}
+.pp-wallet__top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:28px}
+.pp-wallet__brand{display:flex; align-items:center; gap:12px; min-width:0}
+.pp-wallet__title{padding:0 0 18px}
+.pp-wallet__title h1{font-size:30px; font-weight:750; line-height:1.1; letter-spacing:-.025em}
+.pp-wallet__title p{margin-top:4px; font-size:15px; color:var(--ink-2)}
+.pp-wallet-stack.has-selected .pp-child-card.is-selected{margin-bottom:22px}
+.pp-wallet-stack.has-selected .pp-child-card.is-selected + .pp-child-card{margin-top:0}
+.pp-child-card.is-selected{box-shadow:0 0 0 3px color-mix(in oklab,var(--bg),var(--ink) 4%),0 0 0 5.5px var(--accent),0 22px 40px -24px rgba(0,0,0,.6)}
+.pp-child-card.is-selected.pp-child-card--none{box-shadow:0 0 0 3px color-mix(in oklab,var(--bg),var(--ink) 4%),0 0 0 5.5px var(--accent)}
+.pp-wallet__hint{margin-top:auto; padding-top:24px; font-size:13px; line-height:1.4; color:var(--ink-2)}
+.pp-detail{min-width:0; min-height:0; overflow-y:auto}
+.pp-detail__in{display:grid; gap:24px; max-width:1000px; padding:30px 40px 48px}
+.pp-detail__head{display:flex; flex-wrap:wrap; align-items:center; gap:16px 20px}
+.pp-detail__head .pp-avatar{width:56px; height:56px; font-size:19px}
+.pp-detail__head h1{font-size:30px; font-weight:750; line-height:1.1; letter-spacing:-.025em}
+.pp-detail__head p{display:flex; align-items:center; gap:10px; margin-top:5px; font-size:15px; color:var(--ink-2)}
+.pp-detail__head > div{flex:1; min-width:0}
+.pp-back{display:inline-flex; align-items:center; gap:8px; justify-self:start; font-size:15px; font-weight:600; color:var(--accent-ink)}
+.pp-back .fa{font-size:20px; line-height:0}
+.pp-kidlist .pp-row{min-height:66px; padding:12px 20px}
+.pp-kidlist .pp-row__actions{display:flex; gap:8px}
+.pp-kidlist .pp-btn--auto{min-height:36px; padding:0 14px; font-size:14px; border-radius:10px}
+
+/* ---- Narrower desktops (1024–1200px) ---- */
+@container vp (max-width:1200px){
+  .pp-web--side{grid-template-columns:248px minmax(0,1fr)}
+  .pp-pagehead,.pp-web-body{padding-left:32px; padding-right:32px}
+  .pp-cols{grid-template-columns:minmax(0,1fr)}
+  .pp-cols__aside{position:static; grid-template-columns:minmax(0,320px) minmax(0,1fr); align-items:start}
+  .pp-cols__aside > .pp-child-card{grid-row:span 3}
+  .pp-web--split{grid-template-columns:360px minmax(0,1fr)}
+  .pp-wallet{padding-left:20px; padding-right:20px}
+  .pp-detail__in{padding-left:32px; padding-right:32px}
+  .pp-split2{grid-template-columns:minmax(0,1fr)}
+  .pp-split2__aside{grid-template-columns:1fr 1fr}
+  .pp-checkout{grid-template-columns:minmax(0,1fr) 320px}
+  .pp-band__grid{grid-template-columns:280px minmax(0,1fr); gap:28px}
+  .pp-wrap{padding:0 32px}
+  .pp-signin{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}
+  .pp-signin__art{padding:36px 40px}
+  .pp-signin__cards .pp-child-card{width:280px}
+  .pp-signin__cards .pp-child-card:last-child{left:130px}
+}
+@container vp (max-width:1100px){
+  .pp-web--split .pp-checkout{grid-template-columns:minmax(0,1fr)}
+  .pp-web--split .pp-summary{position:static}
+  .pp-web--split .pp-week{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+</style>
+</head>
+<body>
+<header class="hx-toolbar">
+  <div class="hx-brand"><strong>Parent Portal · Web layout</strong><span>Desktop / laptop · pick a direction</span></div>
+  <div class="hx-seg" role="group" aria-label="Direction">
+    <button type="button" data-dir="side" aria-pressed="true"><b>A</b>Sidebar</button>
+    <button type="button" data-dir="top" aria-pressed="false"><b>B</b>Website</button>
+    <button type="button" data-dir="split" aria-pressed="false"><b>C</b>Wallet split</button>
+  </div>
+  <button class="hx-theme" type="button" id="hx-theme"><i class="fa fa-moon-o"></i><span>Dark</span></button>
+  <div class="hx-row2">
+    <span class="hx-label">Screen</span>
+    <div class="hx-seg" role="group" aria-label="Screen">
+      <button type="button" data-screen="signin">Sign in</button>
+      <button type="button" data-screen="home">Children</button>
+      <button type="button" data-screen="child">Child</button>
+      <button type="button" data-screen="bill">Bill</button>
+      <button type="button" data-screen="topup">Top up</button>
+      <button type="button" data-screen="meals">Meals</button>
+      <button type="button" data-screen="dialog">Lost card</button>
+    </div>
+    <span class="hx-label">Width</span>
+    <div class="hx-seg" role="group" aria-label="Width">
+      <button type="button" data-width="1440">1440</button>
+      <button type="button" data-width="1280">1280</button>
+      <button type="button" data-width="1024">1024</button>
+    </div>
+    <div class="hx-swatches" role="group" aria-label="School colour">
+      <span>School colour</span>
+      <button class="hx-swatch" type="button" style="--sw:#1D4ED8" data-accent="#1D4ED8" aria-label="Blue"></button>
+      <button class="hx-swatch" type="button" style="--sw:#0F766E" data-accent="#0F766E" aria-label="Teal"></button>
+      <button class="hx-swatch" type="button" style="--sw:#9F1239" data-accent="#9F1239" aria-label="Maroon"></button>
+      <button class="hx-swatch" type="button" style="--sw:#6D28D9" data-accent="#6D28D9" aria-label="Violet"></button>
+      <button class="hx-swatch" type="button" style="--sw:#B45309" data-accent="#B45309" aria-label="Amber"></button>
+    </div>
+  </div>
+</header>
+
+<section class="hx-intro">
+  <div>
+    <h1>The portal on a computer</h1>
+    <p>Phones keep today's app exactly as it is. From 1024px wide (laptops, desktops, iPad in landscape) the portal switches to a web layout: same routes, same data, same school colour and dark mode. Click around inside the frame. Cards, rows, tabs and amounts all work.</p>
+  </div>
+  <p class="hx-dirnote" id="hx-dirnote"></p>
+</section>
+
+<main class="hx-stage">
+  <div class="hx-scaler" id="hx-scaler">
+    <div class="hx-browser" id="hx-browser">
+      <div class="hx-chrome">
+        <span class="hx-dots"><i></i><i></i><i></i></span>
+        <span class="hx-url"><i class="fa fa-lock"></i><span>parents.alnoor.qa/<b id="hx-path">#/</b></span></span>
+        <span class="hx-spacer"></span>
+      </div>
+      <div class="hx-screen pp-root" id="hx-screen">
+        <div class="hx-vp" id="hx-vp"></div>
+      </div>
+    </div>
+  </div>
+</main>
+<p class="hx-foot">Sample data: one parent, three children (active card, overdraft, no card yet). Sign in is the same in all three directions. Sheets become centred dialogs and the account sheet becomes a menu in every direction.</p>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Sample data (shapes follow /api/v1/parent) ---------- */
+  var SCHOOL = 'Al Noor Academy';
+  var PARENT = { name: 'Fatima Rahman', first: 'Fatima', ini: 'FR', mobile: '+974 5512 3456', email: 'fatima.r@example.com' };
+  var KIDS = {
+    12: { id: 12, name: 'Aisha Rahman', first: 'Aisha', ini: 'AR', cls: 'Grade 5 · B', adm: 'ADM 2023-1045', state: 'active', bal: 142.5, od: 50, meals: 'Nothing ordered for today · weekly on' },
+    13: { id: 13, name: 'Omar Rahman', first: 'Omar', ini: 'OR', cls: 'Grade 2 · A', adm: 'ADM 2024-0311', state: 'active', bal: -12, od: 50, meals: 'Nothing ordered for today' },
+    14: { id: 14, name: 'Maryam Rahman', first: 'Maryam', ini: 'MR', cls: 'KG 2', adm: 'ADM 2026-0077', state: 'none', bal: 0, od: 0, meals: 'Nothing ordered for today' }
+  };
+  var ORDER = [12, 13, 14];
+  var BILLS = [
+    ['2026-09-17', 'S-10482', 3, 'Main canteen', 18.5],
+    ['2026-09-16', 'S-10455', 2, 'Main canteen', 12],
+    ['2026-09-15', 'S-10419', 4, 'Juice bar', 23.75],
+    ['2026-09-14', 'S-10390', 1, 'Main canteen', 6],
+    ['2026-09-13', 'S-10352', 3, 'Main canteen', 16.25],
+    ['2026-09-10', 'S-10301', 2, 'Main canteen', 14],
+    ['2026-09-09', 'S-10276', 2, 'Juice bar', 9.5],
+    ['2026-09-08', 'S-10240', 3, 'Main canteen', 17]
+  ];
+  var STMT = [
+    ['2026-09-06', 'Card top-up', 'QPay · 400612', 200, 0, 259.5, 'topup'],
+    ['2026-09-08', 'Canteen purchase', '#S-10240', 0, 17, 242.5, 'sale'],
+    ['2026-09-09', 'Canteen purchase', '#S-10276', 0, 9.5, 233, 'sale'],
+    ['2026-09-10', 'Canteen purchase', '#S-10301', 0, 14, 219, 'sale'],
+    ['2026-09-13', 'Canteen purchase', '#S-10352', 0, 16.25, 202.75, 'sale'],
+    ['2026-09-14', 'Canteen purchase', '#S-10390', 0, 6, 196.75, 'sale'],
+    ['2026-09-15', 'Canteen purchase', '#S-10419', 0, 23.75, 173, 'sale'],
+    ['2026-09-16', 'Canteen purchase', '#S-10455', 0, 12, 161, 'sale'],
+    ['2026-09-17', 'Canteen purchase', '#S-10482', 0, 18.5, 142.5, 'sale']
+  ];
+  var LINES = [['Chicken shawarma wrap', 1, 9], ['Fresh orange juice', 1, 5.5], ['Chocolate chip cookie', 2, 2]];
+  var DAYS = [
+    { d: '2026-09-20', kind: 'ordered', meal: 'Chicken rice box', sub: 'Weekly', amt: 14 },
+    { d: '2026-09-21', kind: 'skipped', meal: 'No meal this day', sub: 'Skipped' },
+    { d: '2026-09-22', kind: 'ordered', meal: 'Pasta bolognese', sub: 'This day only', amt: 15 },
+    { d: '2026-09-23', kind: 'ordered', meal: 'Chicken rice box', sub: 'Weekly', amt: 14 },
+    { d: '2026-09-24', kind: 'empty', meal: 'Not ordered', sub: 'Ordering open' }
+  ];
+  var SUGGEST = [50, 100, 200, 500];
+
+  /* ---------- Formatting (mirrors src/utils/format.js) ---------- */
+  var nf = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var WD = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  function amount(v) { return nf.format(Math.abs(v)); }
+  function money(v, sign) { var t = 'QAR ' + amount(v); return v < 0 ? '−' + t : (sign && v > 0 ? '+' + t : t); }
+  function toDate(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function shortDate(s) { var d = toDate(s); return WD[d.getDay()].slice(0, 3) + ', ' + d.getDate() + ' ' + MON[d.getMonth()]; }
+  function dayMonth(s) { var d = toDate(s); return String(d.getDate()).padStart(2, '0') + ' ' + MON[d.getMonth()]; }
+  function tile(s) { var d = toDate(s); return { m: MON[d.getMonth()], d: String(d.getDate()).padStart(2, '0'), wd: WD[d.getDay()] }; }
+
+  /* ---------- State ---------- */
+  var HEIGHTS = { 1440: 900, 1280: 800, 1024: 768 };
+  var CHROME = 44;
+  var state = { dir: 'side', screen: 'child', width: 1280, accent: '#1D4ED8', theme: 'light', kid: 12, tab: 'bills', amt: 100, menu: false };
+  var NOTES = {
+    side: '<b>A · Sidebar.</b> A classic web app. The school and every child stay in the left rail, and the open child expands into Card &amp; bills · Meals · Top up. Bills and the statement become tables; the card sits beside them.',
+    top: '<b>B · Website.</b> Reads like the school\'s own website: a top bar with a tab per child, a colour band holding the card and its numbers, tables below and a footer with the school\'s contact.',
+    split: '<b>C · Wallet split.</b> Closest to the phone. The Wallet stack stays on the left the whole time; the chosen card moves to the top and everything about it opens on the right.'
+  };
+
+  function kid() { return KIDS[state.kid]; }
+  function go(screen, extra) { return ' href="#" data-go="' + screen + '"' + (extra ? ' data-kid="' + extra + '"' : ''); }
+
+  /* ---------- Shared pieces (the app's own components) ---------- */
+  function logo() { return '<span class="pp-logo-tile"><i class="fa fa-graduation-cap"></i></span>'; }
+  function brand() { return logo() + '<span class="pp-brandname"><b>' + SCHOOL + '</b><small>Parent Portal</small></span>'; }
+  function mini(k) { return '<span class="pp-minicard' + (k.state === 'none' ? ' pp-minicard--none' : '') + '"></span>'; }
+  function crumbs(items) {
+    return '<nav class="pp-crumbs" aria-label="Breadcrumb">' + items.map(function (it, i) {
+      var sep = i ? '<i class="fa fa-angle-right"></i>' : '';
+      return sep + (it[1] ? '<a' + go(it[1]) + '>' + it[0] + '</a>' : '<span>' + it[0] + '</span>');
+    }).join('') + '</nav>';
+  }
+
+  function card(k, o) {
+    o = o || {};
+    var st = k.state, neg = k.bal < 0;
+    var cls = 'pp-child-card' + (st === 'none' ? ' pp-child-card--none' : '') + (o.selected ? ' is-selected' : '');
+    var label = { none: 'No card yet', blocked: 'Card blocked', active: 'Card active' }[st];
+    var open = o.link ? '<a class="' + cls + '"' + go('child', k.id) + '>' : '<div class="' + cls + '">';
+    var close = o.link ? '</a>' : '</div>';
+    var top = '<span class="pp-card__top"><span class="pp-card__school"><i class="fa fa-graduation-cap pp-mark"></i>' + SCHOOL + '</span><span class="pp-status pp-status--' + st + '">' + label + '</span></span>';
+    if (o.hero) {
+      return open + top +
+        '<span class="pp-card__balance"><small>Card balance</small><b class="pp-num"><span>QAR</span>' + (neg ? '−' : '') + amount(k.bal) + '</b></span>' +
+        '<span class="pp-card__bottom">' + (st !== 'none' ? '<span class="pp-card__chip"></span>' : '') +
+        '<span class="pp-card__holder"><b>' + k.name + '</b><small>' + k.cls + '</small></span>' +
+        (st !== 'none' ? '<i class="fa fa-wifi pp-card__nfc"></i>' : '') + '</span>' + close;
+    }
+    return open + top +
+      '<span class="pp-card__who"><span class="pp-avatar">' + k.ini + '</span><span class="pp-card__id"><span class="pp-card__name">' + k.name + '</span><span class="pp-card__class">' + k.cls + '</span></span>' +
+      '<span class="pp-card__bal' + (neg && st !== 'none' ? ' pp-card__bal--neg' : '') + '"><small>' + (neg ? 'Overdraft' : 'Balance') + '</small><b>' + money(k.bal) + '</b></span></span>' +
+      (st === 'none'
+        ? '<span class="pp-card__empty"><i class="fa fa-info-circle"></i>Ask the school office about a card for ' + k.first + '.</span>'
+        : '<span class="pp-card__bottom"><span class="pp-card__chip"></span><span class="pp-card__label">Student card</span><i class="fa fa-wifi pp-card__nfc"></i></span>') + close;
+  }
+
+  function spend(k) {
+    if (k.state === 'active' && k.bal < 0) return '<p class="pp-spend"><i class="fa fa-exclamation-triangle pp-text-neg"></i><span><b>The card is in overdraft</b><small>Please top up so ' + k.first + ' can keep paying.</small></span></p>';
+    if (k.state === 'active' && k.od > 0) return '<p class="pp-spend"><i class="fa fa-info-circle"></i><span><b>Can spend ' + money(k.bal + k.od) + '</b><small>Includes an overdraft of ' + money(k.od) + '</small></span></p>';
+    return '';
+  }
+
+  function cardGroups(k) {
+    var rows = k.state === 'none'
+      ? '<div class="pp-row pp-row--icon"><span class="pp-row__icon pp-row__icon--muted"><i class="fa fa-credit-card"></i></span><span class="pp-row__main"><span class="pp-row__title">No card yet</span><span class="pp-row__sub">Ask the school office about a card</span></span></div>'
+      : '<div class="pp-row pp-row--icon"><span class="pp-row__icon pp-row__icon--pos"><i class="fa fa-credit-card"></i></span><span class="pp-row__main"><span class="pp-row__title">Card active</span><span class="pp-row__sub">' + k.first + ' can pay at the canteen</span></span></div>' +
+        '<a class="pp-row pp-row--icon"' + go('dialog') + '><span class="pp-row__icon pp-row__icon--neg"><i class="fa fa-ban"></i></span><span class="pp-row__main"><span class="pp-row__title pp-text-neg">Lost card?</span><span class="pp-row__sub">Block it straight away</span></span><i class="fa fa-angle-right pp-chev"></i></a>';
+    return '<section class="pp-group"><h2 class="pp-group__head">Card</h2><div class="pp-group__body">' + rows + '</div></section>' +
+      '<section class="pp-group"><h2 class="pp-group__head">Canteen</h2><div class="pp-group__body"><a class="pp-row pp-row--icon"' + go('meals') + '><span class="pp-row__icon pp-row__icon--accent"><i class="fa fa-cutlery"></i></span><span class="pp-row__main"><span class="pp-row__title">Meals</span><span class="pp-row__sub">' + k.meals + '</span></span><i class="fa fa-angle-right pp-chev"></i></a></div></section>';
+  }
+
+  function topupButton(k, label) {
+    return '<a class="pp-btn pp-btn--primary pp-btn--auto"' + go('topup') + '><i class="fa fa-plus-circle"></i>' + (label || 'Top up card') + '</a>';
+  }
+
+  /* Bills + statement: a table on wide layouts, the phone's rows in the split pane */
+  function activity(kind) {
+    var bills = state.tab === 'bills';
+    var head = '<header class="pp-panel__head"><div class="pp-seg" role="tablist" aria-label="Bills or statement">' +
+      '<button class="pp-seg__tab" type="button" role="tab" data-tab="bills" aria-selected="' + bills + '">Bills</button>' +
+      '<button class="pp-seg__tab" type="button" role="tab" data-tab="statement" aria-selected="' + !bills + '">Statement</button></div>' +
+      '<div class="pp-month"><button class="pp-month__btn" type="button" aria-label="Previous month"><i class="fa fa-chevron-left"></i></button><span class="pp-month__label">September 2026</span><button class="pp-month__btn" type="button" aria-label="Next month" disabled><i class="fa fa-chevron-right"></i></button></div></header>';
+    var body = bills ? (kind === 'rows' ? billRows() : billTable()) : (kind === 'rows' ? stmtRows() : stmtTable());
+    var foot = bills ? '<footer class="pp-panel__foot">8 bills · QAR 117.00 spent in September</footer>' : '';
+    return '<section class="pp-panel pp-activity">' + head + body + foot + '</section>';
+  }
+  function billTable() {
+    return '<table class="pp-table"><thead><tr><th>Date</th><th>Bill</th><th class="is-wide">Canteen</th><th class="is-num">Items</th><th class="is-num">Amount</th><th></th></tr></thead><tbody>' +
+      BILLS.map(function (b) {
+        return '<tr class="is-link" data-go="bill"><td>' + shortDate(b[0]) + '</td><td><span class="pp-mono">#' + b[1] + '</span><small class="pp-table__sub">' + b[3] + '</small></td><td class="is-wide is-muted">' + b[3] + '</td><td class="is-num">' + b[2] + '</td><td class="is-num"><b>' + money(b[4]) + '</b></td><td class="is-chev"><i class="fa fa-angle-right"></i></td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  function billRows() {
+    return '<div class="pp-group__body">' + BILLS.map(function (b) {
+      var t = tile(b[0]);
+      return '<a class="pp-row pp-bill-row"' + go('bill') + '><span class="pp-date"><small>' + t.m + '</small><b>' + t.d + '</b></span><span class="pp-row__main"><span class="pp-row__title">' + b[2] + ' ' + (b[2] === 1 ? 'item' : 'items') + '</span><span class="pp-row__sub">#' + b[1] + ' · ' + b[3] + '</span></span><span class="pp-row__end"><span class="pp-amt">' + money(b[4]) + '</span><i class="fa fa-angle-right pp-chev"></i></span></a>';
+    }).join('') + '</div>';
+  }
+  var ICON = { topup: ['fa-plus', 'pos'], sale: ['fa-cutlery', ''] };
+  function stmtTable() {
+    return '<table class="pp-table"><thead><tr><th>Date</th><th>Details</th><th class="is-num">In</th><th class="is-num">Out</th><th class="is-num">Balance</th></tr></thead><tbody>' +
+      '<tr class="is-quiet"><td>01 Sep</td><td>Brought forward from August</td><td></td><td></td><td class="is-num">' + money(59.5) + '</td></tr>' +
+      STMT.map(function (r) {
+        var ic = ICON[r[6]];
+        return '<tr><td>' + dayMonth(r[0]) + '</td><td><span class="pp-table__what"><span class="pp-row__icon' + (ic[1] ? ' pp-row__icon--' + ic[1] : '') + '"><i class="fa ' + ic[0] + '"></i></span><span><b>' + r[1] + '</b><small>' + r[2] + '</small></span></span></td>' +
+          '<td class="is-num pp-text-pos">' + (r[3] ? money(r[3], true) : '') + '</td><td class="is-num">' + (r[4] ? money(r[4]) : '') + '</td><td class="is-num is-muted">' + money(r[5]) + '</td></tr>';
+      }).join('') +
+      '<tr class="is-total"><td>19 Sep</td><td>Closing balance</td><td></td><td></td><td class="is-num">' + money(142.5) + '</td></tr></tbody></table>';
+  }
+  function stmtRows() {
+    return '<div class="pp-group__body"><div class="pp-row pp-row--quiet"><span class="pp-row__main"><span class="pp-row__title">Brought forward</span><span class="pp-row__sub">From August</span></span><span class="pp-row__end"><span class="pp-amt">' + money(59.5) + '</span></span></div>' +
+      STMT.map(function (r) {
+        var ic = ICON[r[6]];
+        return '<div class="pp-row pp-row--icon pp-stmt-row"><span class="pp-row__icon' + (ic[1] ? ' pp-row__icon--' + ic[1] : '') + '"><i class="fa ' + ic[0] + '"></i></span><span class="pp-row__main"><span class="pp-row__title">' + r[1] + '</span><span class="pp-row__sub">' + dayMonth(r[0]) + ' · ' + r[2] + '</span></span><span class="pp-row__end">' +
+          (r[3] ? '<span class="pp-amt pp-amt--in">' + money(r[3], true) + '</span>' : '<span class="pp-amt">' + money(-r[4]) + '</span>') + '<span class="pp-run">' + money(r[5]) + '</span></span></div>';
+      }).join('') +
+      '<div class="pp-row pp-row--total"><span class="pp-row__main"><span class="pp-row__title">Closing balance</span><span class="pp-row__sub">As of 19 Sep</span></span><span class="pp-row__end"><span class="pp-amt">' + money(142.5) + '</span></span></div></div>';
+  }
+
+  function pass() {
+    var k = kid();
+    return '<article class="pp-pass"><header class="pp-pass__head"><div class="pp-pass__brand"><span><i class="fa fa-graduation-cap pp-mark"></i>' + SCHOOL + '</span><span>Canteen bill</span></div>' +
+      '<h1 class="pp-pass__title">Bill #S-10482</h1><p class="pp-pass__sub">' + k.name + '</p></header>' +
+      '<dl class="pp-pass__fields"><div><dt>Date</dt><dd>17 Sep 2026</dd></div><div><dt>Time</dt><dd>12:41 PM</dd></div><div><dt>Canteen</dt><dd>Main canteen</dd></div><div><dt>Items</dt><dd class="pp-num">3</dd></div></dl>' +
+      '<div class="pp-pass__total"><span>Total</span><b>' + money(18.5) + '</b></div><div class="pp-tear" aria-hidden="true"></div>' +
+      '<ul class="pp-lines">' + LINES.map(function (l) {
+        return '<li class="pp-line"><span><span class="pp-line__name">' + l[0] + '</span><span class="pp-line__qty">' + l[1] + ' × ' + money(l[2]) + '</span></span><span class="pp-line__total">' + money(l[1] * l[2]) + '</span></li>';
+      }).join('') + '</ul>' +
+      '<dl class="pp-sum"><div class="pp-sum__row pp-sum__row--total"><dt>Total</dt><dd>' + money(18.5) + '</dd></div></dl>' +
+      '<div class="pp-paidby"><span class="pp-row__icon"><i class="fa fa-credit-card"></i></span><span class="pp-row__main"><b>Paid by Student Wallet</b><span class="pp-row__sub">' + k.first + '\'s card</span></span><span class="pp-amt">' + money(18.5) + '</span></div></article>';
+  }
+  function billHelp() {
+    return '<section class="pp-panel"><div class="pp-panel__body"><p class="pp-panel__title">Something wrong with this bill?</p><p class="pp-hint pp-hint--left" style="margin-top:6px">Please speak to the school office. Refunds go back onto ' + kid().first + '\'s card.</p></div>' +
+      '<div class="pp-group__body"><div class="pp-row pp-row--icon"><span class="pp-row__icon pp-row__icon--accent"><i class="fa fa-phone"></i></span><span class="pp-row__main"><span class="pp-row__title">4444 1234</span><span class="pp-row__sub">School office</span></span></div>' +
+      '<div class="pp-row pp-row--icon"><span class="pp-row__icon pp-row__icon--accent"><i class="fa fa-envelope"></i></span><span class="pp-row__main"><span class="pp-row__title">office@alnoor.qa</span><span class="pp-row__sub">Email</span></span></div></div></section>';
+  }
+
+  function checkout() {
+    var k = kid(), a = state.amt;
+    var form = '<section class="pp-panel"><header class="pp-panel__head"><h2 class="pp-panel__title">Amount</h2></header><div class="pp-panel__body">' +
+      '<div class="pp-chips" role="group" aria-label="Quick amounts">' + SUGGEST.map(function (s) {
+        return '<button class="pp-chip" type="button" data-amt="' + s + '" aria-pressed="' + (a === s) + '">' + s + '</button>';
+      }).join('') + '</div>' +
+      '<label class="pp-amount-field"><span class="pp-amount-field__cur">QAR</span><input type="text" inputmode="decimal" value="' + amount(a) + '" aria-label="Amount in QAR" readonly></label>' +
+      '<p class="pp-group__foot">Between QAR 10.00 and QAR 1,000.00. Paid with a Qatar debit card through QPay.</p></div></section>';
+    var summary = '<aside class="pp-panel pp-summary"><div class="pp-summary__who">' + mini(k) + '<span style="flex:1"><b>' + k.name + '</b><small>' + k.cls + '</small></span><span class="pp-status pp-status--soft pp-status--active">Card active</span></div>' +
+      '<dl class="pp-summary__rows"><div><dt>Current balance</dt><dd class="' + (k.bal < 0 ? 'pp-text-neg' : '') + '">' + money(k.bal) + '</dd></div><div><dt>Top-up</dt><dd>' + money(a, true) + '</dd></div>' +
+      '<div class="is-total"><dt>New balance</dt><dd>' + money(k.bal + a) + '</dd></div></dl>' +
+      '<button class="pp-btn pp-btn--pay" type="button"><i class="fa fa-lock"></i>Pay ' + money(a) + ' with QPay</button>' +
+      '<p class="pp-trust"><i class="fa fa-shield"></i>You\'ll pay on QPay\'s secure page, not in this app.</p></aside>';
+    return '<div class="pp-checkout">' + form + summary + '</div>';
+  }
+
+  function meals() {
+    var k = kid();
+    var weekly = '<section class="pp-panel pp-weekly"><span class="pp-row__icon pp-row__icon--pos"><i class="fa fa-refresh"></i></span>' +
+      '<div class="pp-weekly__main"><small>Every week</small><b>Chicken rice box</b><span>Sun – Wed · QAR 14.00 a day · paid from the card at the canteen</span></div>' +
+      '<span class="pp-tag pp-tag--pos">On</span><a class="pp-btn pp-btn--ghost pp-btn--auto" href="#">Change</a></section>';
+    var board = '<section><h2 class="pp-group__head">Next school days</h2><div class="pp-week">' + DAYS.map(function (day) {
+      var t = tile(day.d);
+      var tag = day.kind === 'ordered' ? '<span class="pp-tag pp-tag--pos">Ordered</span>' : day.kind === 'skipped' ? '<span class="pp-tag pp-tag--muted">Skipped</span>' : '';
+      var foot = day.kind === 'ordered' ? 'Change <span>' + money(day.amt) + '</span>' : day.kind === 'skipped' ? 'Order this day' : 'Order a meal <i class="fa fa-plus"></i>';
+      return '<a class="pp-dayc pp-dayc--' + day.kind + '" href="#"><span class="pp-dayc__head"><span><span class="pp-dayc__wd">' + t.wd.slice(0, 3) + '</span><span class="pp-dayc__num">' + t.d + '<small>' + t.m + '</small></span></span>' + tag + '</span>' +
+        '<span class="pp-dayc__meal">' + day.meal + '</span><span class="pp-dayc__sub">' + day.sub + '</span><span class="pp-dayc__foot">' + foot + '</span></a>';
+    }).join('') + '</div></section>';
+    var note = '<p class="pp-foot-note"><i class="fa fa-clock-o"></i>Orders for a day close at 9:00 AM that day. Balance today: ' + money(k.bal) + '.</p>';
+    return weekly + board + note;
+  }
+
+  function dialog() {
+    var k = kid();
+    return '<div class="pp-sheet is-open"><button class="pp-sheet__backdrop" type="button" tabindex="-1" aria-label="Close" data-go="child"></button>' +
+      '<div class="pp-sheet__panel" role="dialog" aria-modal="true" aria-label="Block card"><div class="pp-sheet__grabber"></div>' +
+      '<div class="pp-sheet__bar"><button class="pp-navbtn" type="button" data-go="child">Cancel</button><div class="pp-sheet__title">Lost card</div></div>' +
+      '<div class="pp-lede pp-lede--sheet"><div class="pp-hero-icon pp-hero-icon--neg"><i class="fa fa-ban"></i></div><h2>Block ' + k.first + '\'s card?</h2><p>Blocking stops the card at the canteen straight away. Only the school office can switch it back on or issue a new card; the balance stays with your child.</p></div>' +
+      '<div class="pp-group"><div class="pp-group__body"><div class="pp-field"><label class="pp-field__body"><span class="pp-field__label">Reason (optional)</span><input class="pp-input" type="text" placeholder="For example, lost on the school bus"></label></div></div></div>' +
+      '<div class="pp-sheet__actions"><button class="pp-btn pp-btn--danger" type="button" data-go="child"><i class="fa fa-ban"></i>Block card</button></div></div></div>';
+  }
+
+  function menu(where) {
+    return '<div class="pp-menu pp-menu--' + where + '" role="menu"><div class="pp-menu__who"><span class="pp-avatar">' + PARENT.ini + '</span><span><b>' + PARENT.name + '</b><small>' + PARENT.mobile + '</small><small>' + PARENT.email + '</small></span></div>' +
+      '<button class="pp-menu__item" type="button" data-go="signin"><i class="fa fa-sign-out"></i>Sign out</button></div>';
+  }
+
+  function homeStats() {
+    return '<div class="pp-stats">' +
+      '<div class="pp-stat"><small><i class="fa fa-credit-card"></i>On the cards</small><b>' + money(130.5) + '</b><span>Across 3 children</span></div>' +
+      '<div class="pp-stat"><small><i class="fa fa-check-circle"></i>Cards active</small><b>2 of 3</b><span>Maryam has no card yet</span></div>' +
+      '<div class="pp-stat pp-stat--neg"><small><i class="fa fa-exclamation-triangle"></i>Needs a top-up</small><b>1</b><span>Omar is in overdraft</span></div></div>';
+  }
+  function overdraftAlert() {
+    return '<div class="pp-alert pp-alert--warn"><i class="fa fa-exclamation-triangle"></i><span class="pp-alert__main"><span class="pp-alert__title">Omar Rahman</span>The card is in overdraft. Please top up.</span><a class="pp-alert__btn"' + go('topup', 13) + '>Top up</a></div>';
+  }
+  function kidStats(k, withBalance) {
+    var s = '<div class="pp-stats">';
+    if (withBalance) s += '<div class="pp-stat' + (k.bal < 0 ? ' pp-stat--neg' : '') + '"><small>Card balance</small><b>' + money(k.bal) + '</b><span>' + (k.state === 'none' ? 'No card yet' : 'Card active') + '</span></div>';
+    s += '<div class="pp-stat"><small>Can spend</small><b>' + money(k.state === 'none' ? 0 : Math.max(0, k.bal + k.od)) + '</b><span>' + (k.od ? 'Includes ' + money(k.od) + ' overdraft' : 'No overdraft') + '</span></div>';
+    s += '<div class="pp-stat pp-stat--text"><small><i class="fa fa-cutlery"></i>Meals</small><b>' + (k.id === 12 ? 'Weekly · Sun – Wed' : 'No weekly order') + '</b><span>' + (k.id === 12 ? 'Next: Sun, Chicken rice box' : 'Order from the Meals tab') + '</span></div>';
+    return s + '</div>';
+  }
+
+  /* ---------- Sign in (same in every direction) ---------- */
+  function signin() {
+    return '<div class="pp-signin"><section class="pp-signin__art"><div class="pp-signin__brand">' + logo() + SCHOOL + '</div>' +
+      '<div class="pp-signin__pitch"><h2>Your child\'s canteen card, on every screen.</h2><p>Balance, bills, meals and top-ups. The same portal on your phone and on the web.</p></div>' +
+      '<div class="pp-signin__cards" aria-hidden="true">' + card(KIDS[14]) + card(KIDS[12]) + '</div>' +
+      '<ul class="pp-signin__points"><li><i class="fa fa-lock"></i>Top up securely with QPay</li><li><i class="fa fa-cutlery"></i>Order meals ahead</li><li><i class="fa fa-ban"></i>Block a lost card at once</li></ul></section>' +
+      '<section class="pp-signin__form"><div class="pp-signin__inner"><span class="pp-auth__tag"><i class="fa fa-lock"></i>Parent Portal</span><h1>Sign in</h1><p>Use the mobile number or email the school has for you.</p>' +
+      '<div class="pp-group"><div class="pp-group__body"><div class="pp-field"><label class="pp-field__body"><span class="pp-field__label">Mobile number or email</span><input class="pp-input" type="text" value="5512 3456"></label></div>' +
+      '<div class="pp-field"><label class="pp-field__body"><span class="pp-field__label">Password</span><input class="pp-input" type="password" value="password1"></label><button class="pp-eye" type="button" aria-label="Show password"><i class="fa fa-eye"></i></button></div>' +
+      '<label class="pp-row"><span class="pp-row__main"><span class="pp-row__title">Keep me signed in</span></span><span class="pp-switch"><input type="checkbox" checked><span class="pp-switch__track"></span></span></label></div></div>' +
+      '<div class="pp-auth__actions"><button class="pp-btn pp-btn--primary" type="button" data-go="home">Sign in</button><a class="pp-link" href="#">Forgot password?</a></div>' +
+      '<p class="pp-signin__help">Trouble signing in? Please contact the school office on <a class="pp-num" href="#">4444 1234</a>.</p></div></section></div>';
+  }
+
+  function pagehead(cr, h1, p, actions) {
+    return '<header class="pp-pagehead"><div class="pp-pagehead__main">' + (cr ? crumbs(cr) : '') + '<h1>' + h1 + '</h1>' + (p ? '<p>' + p + '</p>' : '') + '</div>' +
+      (actions ? '<div class="pp-pagehead__actions">' + actions + '</div>' : '') + '</header>';
+  }
+  function subOf(screen) { return { child: 'child', bill: 'child', dialog: 'child', meals: 'meals', topup: 'topup' }[screen]; }
+  var MEALS_P = function (k) { return 'Order ' + k.first + '\'s meal ahead. It\'s added when ' + k.first + ' taps the card at the canteen, and paid from the card then.'; };
+
+  /* ---------- A · Sidebar ---------- */
+  function renderSide(screen) {
+    var k = kid(), home = screen === 'home', sub = subOf(screen);
+    var kids = ORDER.map(function (id) {
+      var c = KIDS[id], on = !home && state.kid === id;
+      var bal = c.state === 'none' ? '<span class="pp-side__bal is-none">No card</span>' : '<span class="pp-side__bal' + (c.bal < 0 ? ' pp-text-neg' : '') + '">' + (c.bal < 0 ? '−' : '') + amount(c.bal) + '</span>';
+      var links = on ? '<div class="pp-side__sub">' + [['child', 'Card &amp; bills'], ['meals', 'Meals'], ['topup', 'Top up']].map(function (s) {
+        return '<a class="pp-side__sublink' + (sub === s[0] ? ' is-active' : '') + '"' + go(s[0]) + '>' + s[1] + '</a>';
+      }).join('') + '</div>' : '';
+      return '<div class="pp-side__kid' + (on ? ' is-active' : '') + '"><a class="pp-side__child"' + go('child', id) + '>' + mini(c) + '<span class="pp-side__who"><b>' + c.name + '</b><small>' + c.cls + '</small></span>' + bal + '</a>' + links + '</div>';
+    }).join('');
+    var side = '<aside class="pp-side"><div class="pp-side__brand">' + brand() + '</div><nav class="pp-side__nav" aria-label="Portal">' +
+      '<a class="pp-side__link' + (home ? ' is-active' : '') + '"' + go('home') + '><i class="fa fa-th-large"></i>My children</a><span class="pp-side__label">Cards</span>' + kids + '</nav>' +
+      '<div class="pp-side__foot pp-menu-anchor">' + (state.menu ? menu('up') : '') + '<button class="pp-side__me" type="button" data-menu><span class="pp-avatar">' + PARENT.ini + '</span><span><b>' + PARENT.name + '</b><small>' + PARENT.mobile + '</small></span><i class="fa fa-angle-up"></i></button></div></aside>';
+
+    var here = [['My children', 'home'], [k.first, 'child']];
+    var main;
+    if (home) {
+      main = pagehead(null, 'Hello, ' + PARENT.first, 'Your 3 children. Click a card to open it.') +
+        '<div class="pp-web-body">' + homeStats() + overdraftAlert() + '<section class="pp-cardgrid" aria-label="Your children">' + ORDER.map(function (id) { return card(KIDS[id], { link: true }); }).join('') + '</section>' +
+        '<p class="pp-hint pp-hint--left">Balances change each time your child pays at the canteen.</p></div>';
+    } else if (screen === 'child' || screen === 'dialog') {
+      main = pagehead([here[0], [k.first]], k.name, k.cls + ' · ' + k.adm, topupButton(k)) +
+        '<div class="pp-web-body"><div class="pp-cols"><div class="pp-cols__aside">' + card(k, { hero: true }) + spend(k) + cardGroups(k) + '</div><div>' + activity('table') + '</div></div></div>';
+    } else if (screen === 'bill') {
+      main = pagehead(here.concat([['Bill']]), 'Bill #S-10482', '17 Sep 2026 · Main canteen') +
+        '<div class="pp-web-body"><div class="pp-bill-layout">' + pass() + billHelp() + '</div></div>';
+    } else if (screen === 'topup') {
+      main = pagehead(here.concat([['Top up']]), 'Top up ' + k.first + '\'s card', 'Pick an amount, then pay on QPay\'s secure page.') + '<div class="pp-web-body">' + checkout() + '</div>';
+    } else {
+      main = pagehead(here.concat([['Meals']]), 'Canteen meals', MEALS_P(k)) + '<div class="pp-web-body">' + meals() + '</div>';
+    }
+    return '<div class="pp-web pp-web--side">' + side + '<main class="pp-side-main">' + main + '</main></div>';
+  }
+
+  /* ---------- B · Website ---------- */
+  function renderTop(screen) {
+    var k = kid(), home = screen === 'home', sub = subOf(screen);
+    var top = '<header class="pp-top"><div class="pp-wrap pp-top__in"><a class="pp-top__brand"' + go('home') + '>' + brand() + '</a>' +
+      '<nav class="pp-top__nav" aria-label="Children"><a class="pp-top__link' + (home ? ' is-active' : '') + '"' + go('home') + '><i class="fa fa-th-large"></i>All children</a>' +
+      ORDER.map(function (id) { return '<a class="pp-top__link' + (!home && state.kid === id ? ' is-active' : '') + '"' + go('child', id) + '><span class="pp-avatar">' + KIDS[id].ini + '</span>' + KIDS[id].first + '</a>'; }).join('') + '</nav>' +
+      '<div class="pp-menu-anchor"><button class="pp-top__me" type="button" data-menu><span class="pp-avatar">' + PARENT.ini + '</span>' + PARENT.first + '<i class="fa fa-angle-down"></i></button>' + (state.menu ? menu('down') : '') + '</div></div></header>';
+    var subnav = '<nav class="pp-subnav">' + [['child', 'fa-credit-card', 'Card &amp; bills'], ['meals', 'fa-cutlery', 'Meals'], ['topup', 'fa-plus-circle', 'Top up']].map(function (s) {
+      return '<a class="' + (sub === s[0] ? 'is-active' : '') + '"' + go(s[0]) + '><i class="fa ' + s[1] + '"></i>' + s[2] + '</a>';
+    }).join('') + '</nav>';
+    var headK = function (h1, p, actions) {
+      return '<div class="pp-band__head"><div>' + crumbs([['My children', 'home'], [k.first]]) + '<h1>' + h1 + '</h1><p>' + p + '</p></div>' + (actions || '') + '</div>';
+    };
+    var band, main;
+    if (home) {
+      band = '<section class="pp-band pp-band--plain"><div class="pp-wrap"><div class="pp-band__head"><div><h1>Hello, ' + PARENT.first + '</h1><p>Your 3 children. Click a card to open it.</p></div></div>' + homeStats() + '</div></section>';
+      main = overdraftAlert() + '<section class="pp-cardgrid">' + ORDER.map(function (id) { return card(KIDS[id], { link: true }); }).join('') + '</section><p class="pp-hint pp-hint--left">Balances change each time your child pays at the canteen.</p>';
+    } else if (screen === 'child' || screen === 'dialog') {
+      band = '<section class="pp-band"><div class="pp-wrap"><div class="pp-band__grid">' + card(k, { hero: true }) + '<div>' + headK(k.name, k.cls + ' · ' + k.adm, topupButton(k)) + kidStats(k, false) + '</div></div>' + subnav + '</div></section>';
+      main = '<div class="pp-split2">' + activity('table') + '<div class="pp-split2__aside">' + cardGroups(k) + '</div></div>';
+    } else if (screen === 'bill') {
+      band = '<section class="pp-band pp-band--plain"><div class="pp-wrap"><div class="pp-band__head"><div>' + crumbs([['My children', 'home'], [k.first, 'child'], ['Bill']]) + '<h1>Bill #S-10482</h1><p>17 Sep 2026 · Main canteen</p></div></div></div></section>';
+      main = '<div class="pp-bill-layout" style="justify-content:center">' + pass() + billHelp() + '</div>';
+    } else {
+      band = '<section class="pp-band"><div class="pp-wrap">' + headK(screen === 'topup' ? 'Top up ' + k.first + '\'s card' : 'Canteen meals', screen === 'topup' ? 'Pick an amount, then pay on QPay\'s secure page.' : MEALS_P(k)) + subnav + '</div></section>';
+      main = screen === 'topup' ? checkout() : meals();
+    }
+    var foot = '<footer class="pp-foot"><div class="pp-wrap pp-foot__in"><span>' + SCHOOL + ' · Parent Portal</span><span><i class="fa fa-phone"></i>4444 1234 · <i class="fa fa-envelope"></i>office@alnoor.qa</span><span><i class="fa fa-lock"></i>Top-ups are paid on QPay\'s secure page</span></div></footer>';
+    return '<div class="pp-web pp-web--top">' + top + band + '<main class="pp-top-main"><div class="pp-wrap">' + main + '</div></main>' + foot + '</div>';
+  }
+
+  /* ---------- C · Wallet split ---------- */
+  function renderSplit(screen) {
+    var k = kid(), home = screen === 'home';
+    var ids = home ? ORDER : [state.kid].concat(ORDER.filter(function (id) { return id !== state.kid; }));
+    var wallet = '<aside class="pp-wallet"><div class="pp-wallet__top"><a class="pp-wallet__brand"' + go('home') + '>' + brand() + '</a>' +
+      '<div class="pp-menu-anchor"><button class="pp-avatar-btn" type="button" data-menu aria-label="Account menu"><span class="pp-avatar">' + PARENT.ini + '</span></button>' + (state.menu ? menu('down') : '') + '</div></div>' +
+      '<div class="pp-wallet__title"><h1>Hello, ' + PARENT.first + '</h1><p>' + (home ? 'Your 3 children. Click a card to open it.' : 'Click another card to switch.') + '</p></div>' +
+      '<section class="pp-wallet-stack' + (home ? '' : ' has-selected') + '" aria-label="Your children">' + ids.map(function (id) { return card(KIDS[id], { link: true, selected: !home && id === state.kid }); }).join('') + '</section>' +
+      '<p class="pp-wallet__hint">Balances change each time your child pays at the canteen.</p></aside>';
+    var back = '<a class="pp-back"' + go('child') + '><i class="fa fa-angle-left"></i>' + k.first + '</a>';
+    var head = function (h1, p) { return '<div class="pp-detail__head"><div><h1>' + h1 + '</h1><p>' + p + '</p></div></div>'; };
+    var detail;
+    if (home) {
+      detail = head('Your children', 'Saturday, 19 September') + homeStats() + overdraftAlert() +
+        '<section class="pp-panel pp-kidlist"><header class="pp-panel__head"><h2 class="pp-panel__title">Quick actions</h2></header><div class="pp-group__body">' + ORDER.map(function (id) {
+          var c = KIDS[id];
+          return '<div class="pp-row">' + mini(c) + '<span class="pp-row__main"><span class="pp-row__title">' + c.name + '</span><span class="pp-row__sub">' + c.cls + ' · ' + (c.state === 'none' ? 'No card yet' : money(c.bal)) + '</span></span><span class="pp-row__actions">' +
+            (c.state !== 'none' ? '<a class="pp-btn pp-btn--ghost pp-btn--auto"' + go('topup', id) + '>Top up</a>' : '') + '<a class="pp-btn pp-btn--ghost pp-btn--auto"' + go('meals', id) + '>Meals</a><a class="pp-btn pp-btn--tinted pp-btn--auto"' + go('child', id) + '>Open</a></span></div>';
+        }).join('') + '</div></section>';
+    } else if (screen === 'child' || screen === 'dialog') {
+      detail = '<div class="pp-detail__head"><span class="pp-avatar">' + k.ini + '</span><div><h1>' + k.name + '</h1><p>' + k.cls + ' · ' + k.adm + '</p></div>' + topupButton(k) + '</div>' +
+        kidStats(k, true) + '<div class="pp-split2">' + activity('rows') + '<div class="pp-split2__aside" style="grid-template-columns:1fr">' + cardGroups(k) + '</div></div>';
+    } else if (screen === 'bill') {
+      detail = back + '<div class="pp-bill-layout">' + pass() + billHelp() + '</div>';
+    } else if (screen === 'topup') {
+      detail = back + head('Top up ' + k.first + '\'s card', 'Pick an amount, then pay on QPay\'s secure page.') + checkout();
+    } else {
+      detail = back + head('Canteen meals', MEALS_P(k)) + meals();
+    }
+    return '<div class="pp-web pp-web--split">' + wallet + '<main class="pp-detail"><div class="pp-detail__in">' + detail + '</div></main></div>';
+  }
+
+  /* ---------- Harness wiring ---------- */
+  var PATHS = { signin: '#/login', home: '#/', child: '#/students/{id}', dialog: '#/students/{id}', bill: '#/students/{id}/bills/10482', topup: '#/students/{id}/topup', meals: '#/students/{id}/pre-orders' };
+  var screenEl = document.getElementById('hx-screen');
+  var vp = document.getElementById('hx-vp');
+  var overlay = document.createElement('div');
+  screenEl.appendChild(overlay);
+  var browser = document.getElementById('hx-browser');
+  var scaler = document.getElementById('hx-scaler');
+
+  function save() {
+    try { localStorage.setItem('pp-web-preview', JSON.stringify({ dir: state.dir, screen: state.screen, width: state.width, accent: state.accent, theme: state.theme })); } catch (e) { /* storage blocked */ }
+  }
+  function load() {
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem('pp-web-preview') || 'null'); } catch (e) { saved = null; }
+    if (saved) Object.keys(saved).forEach(function (key) { if (saved[key] != null) state[key] = saved[key]; });
+    else if (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) state.theme = 'dark';
+  }
+
+  function scrollers() { return [vp].concat([].slice.call(vp.querySelectorAll('.pp-detail'))); }
+
+  function render(keepScroll) {
+    var kept = keepScroll ? scrollers().map(function (el) { return el.scrollTop; }) : null;
+    var screen = state.screen;
+    vp.innerHTML = screen === 'signin' ? signin() : { side: renderSide, top: renderTop, split: renderSplit }[state.dir](screen);
+    overlay.innerHTML = screen === 'dialog' ? dialog() : '';
+    if (kept) scrollers().forEach(function (el, i) { el.scrollTop = kept[i] || 0; });
+    document.getElementById('hx-path').textContent = PATHS[screen].replace('{id}', state.kid);
+    document.getElementById('hx-dirnote').innerHTML = NOTES[state.dir];
+    document.querySelectorAll('[data-dir]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.dir === state.dir)); });
+    document.querySelectorAll('[data-screen]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.screen === screen)); });
+    document.querySelectorAll('[data-width]').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.width === state.width)); });
+    document.querySelectorAll('[data-accent]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.accent === state.accent)); });
+    document.documentElement.setAttribute('data-theme', state.theme);
+    document.getElementById('hx-theme').innerHTML = state.theme === 'dark' ? '<i class="fa fa-sun-o"></i><span>Light</span>' : '<i class="fa fa-moon-o"></i><span>Dark</span>';
+    screenEl.style.setProperty('--accent', state.accent);
+    save();
+  }
+
+  function fit() {
+    var W = state.width, H = HEIGHTS[W];
+    var avail = document.querySelector('.hx-stage').clientWidth - 64;
+    var s = Math.min(1, avail / W);
+    browser.style.width = W + 'px';
+    browser.style.height = (H + CHROME) + 'px';
+    screenEl.style.height = H + 'px';
+    screenEl.style.setProperty('--vh', H + 'px');
+    browser.style.transform = 'scale(' + s + ')';
+    scaler.style.width = (W * s) + 'px';
+    scaler.style.height = ((H + CHROME) * s) + 'px';
+  }
+
+  screenEl.addEventListener('click', function (e) {
+    var t = e.target;
+    var goEl = t.closest('[data-go]');
+    var tab = t.closest('[data-tab]');
+    var amt = t.closest('[data-amt]');
+    var menuBtn = t.closest('[data-menu]');
+    if (t.closest('a')) e.preventDefault();
+    if (menuBtn) { state.menu = !state.menu; render(true); return; }
+    if (tab) { state.tab = tab.dataset.tab; render(true); return; }
+    if (amt) { state.amt = +amt.dataset.amt; render(true); return; }
+    if (goEl) {
+      if (goEl.dataset.kid) state.kid = +goEl.dataset.kid;
+      var same = goEl.dataset.go === state.screen || (goEl.dataset.go === 'child' && state.screen === 'dialog');
+      state.screen = goEl.dataset.go;
+      state.menu = false;
+      render(same || state.screen === 'dialog');
+      return;
+    }
+    if (state.menu && !t.closest('.pp-menu')) { state.menu = false; render(true); }
+  });
+  document.querySelectorAll('[data-dir]').forEach(function (b) { b.addEventListener('click', function () { state.dir = b.dataset.dir; state.menu = false; render(); }); });
+  document.querySelectorAll('[data-screen]').forEach(function (b) { b.addEventListener('click', function () { state.screen = b.dataset.screen; state.menu = false; render(); }); });
+  document.querySelectorAll('[data-width]').forEach(function (b) { b.addEventListener('click', function () { state.width = +b.dataset.width; fit(); render(true); }); });
+  document.querySelectorAll('[data-accent]').forEach(function (b) { b.addEventListener('click', function () { state.accent = b.dataset.accent; render(true); }); });
+  document.getElementById('hx-theme').addEventListener('click', function () { state.theme = state.theme === 'dark' ? 'light' : 'dark'; render(true); });
+  document.addEventListener('keydown', function (e) {
+    if (e.target.closest && e.target.closest('input')) return;
+    var order = ['signin', 'home', 'child', 'bill', 'topup', 'meals', 'dialog'];
+    var i = order.indexOf(state.screen);
+    if (e.key === 'ArrowRight') { state.screen = order[(i + 1) % order.length]; render(); }
+    if (e.key === 'ArrowLeft') { state.screen = order[(i + order.length - 1) % order.length]; render(); }
+  });
+  window.addEventListener('resize', fit);
+
+  load();
+  if (!HEIGHTS[state.width]) state.width = 1280;
+  fit();
+  render();
+})();
+</script>
+
+</body>
+</html>
