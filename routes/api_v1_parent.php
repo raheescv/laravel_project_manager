@@ -39,6 +39,7 @@ Route::prefix('v1/parent')
 
         Route::middleware(AuthenticateParent::class)->group(function (): void {
             Route::get('me', 'me')->name('me');
+            Route::post('password', 'changePassword')->middleware('throttle:10,1')->name('password.change');
             Route::post('logout', 'logout')->name('logout');
 
             Route::get('students', 'students')->name('students.index');

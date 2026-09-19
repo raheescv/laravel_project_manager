@@ -11,7 +11,8 @@ export const fetchSchool = () => client.get('/school')
 /** { token, token_type, expires_at, parent } */
 export const login = (payload) => client.post('/login', payload)
 
-export const forgotPassword = (mobile) => client.post('/forgot-password', { mobile })
+/** `login` is the mobile number or the email the school has for the parent. */
+export const forgotPassword = (login) => client.post('/forgot-password', { login })
 
 /** { valid, name, valid_days } */
 export const checkPasswordLink = (token) => client.get(`/set-password/${encodeURIComponent(token)}`)
@@ -22,6 +23,9 @@ export const setPassword = (payload) => client.post('/set-password', payload)
 export const fetchMe = () => client.get('/me')
 
 export const logout = () => client.post('/logout')
+
+/** { current_password, password, password_confirmation } — other sign-ins end, this one stays. */
+export const changePassword = (payload) => client.post('/password', payload)
 
 /** [{ account_id, name, image_url, class, has_card, card_blocked, balance, available, … }] */
 export const fetchStudents = () => client.get('/students')

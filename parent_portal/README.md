@@ -13,13 +13,15 @@ computer it becomes a web page (see [On a computer](#on-a-computer)).
 | Route (hash)             | Screen                                                        |
 | ------------------------ | ------------------------------------------------------------- |
 | `#/login`                | Sign in with mobile number (or email) + password              |
-| `#/forgot-password`      | Ask for a new set-password link                               |
+| `#/forgot-password`      | Ask for a new set-password link (mobile number or email)      |
 | `#/set-password/:token`  | The link from the invite / reset email — choose a password    |
 | `#/`                     | My children — balance and card status for each child          |
 | `#/students/:id`         | One child — balance, top up, block a lost card, bills, statement |
 | `#/students/:id/bills/:saleId` | One bill — lines, discount, tax, how it was paid        |
 | `#/students/:id/topup`   | Choose an amount → QPay's payment page                        |
 | `#/topups/:pun`          | The payment result QPay returns to (polls while confirming)   |
+| `#/profile`              | The parent's details (read-only), children, password, sign out |
+| `#/profile/password`     | Change password (current + new); other sign-ins end           |
 | `#/students/:id/pre-orders` | Canteen meals — the weekly order and the next school days  |
 | `#/students/:id/pre-orders/weekly` | Every week: the meal and the days                   |
 | `#/students/:id/pre-orders/days/:date` | One day: that day's dishes, order or skip it    |
@@ -112,7 +114,10 @@ portal's origin for `api/*` (the default `config/cors.php` allows all).
 - The token only works on `/api/v1/parent/*`, and staff tokens never work there.
 - A 401 from the API (token expired, signed out, or the parent disabled by the school)
   clears the session and returns to sign-in, remembering the page the parent was on.
-- Setting a new password from a link ends the parent's other sign-ins.
+- Setting a new password from a link ends the parent's other sign-ins; changing it on the
+  Profile page (which asks for the current one) ends every sign-in but the current one.
+- The parent's name, mobile and email are read-only in the portal. The school office owns
+  them: the mobile links brothers and sisters to one login, and the email is a sign-in name.
 
 ## API endpoints consumed
 
@@ -123,10 +128,11 @@ client unwraps it).
 | ---------------------------------------- | ----------------------------------------- |
 | `GET  /school`                           | Name, logo, theme colour (`--accent`), currency |
 | `POST /login`                            | Sign in → token                           |
-| `POST /forgot-password`                  | Send a new set-password link              |
+| `POST /forgot-password`                  | Send a new set-password link (`login` = mobile or email) |
 | `GET  /set-password/{token}`             | Is the link still valid?                  |
 | `POST /set-password`                     | Choose a password → token                 |
 | `GET  /me` · `POST /logout`              | The signed-in parent · sign out           |
+| `POST /password`                         | Change password; ends the other sign-ins  |
 | `GET  /students`                         | Home                                      |
 | `GET  /students/{id}`                    | Child page header, top-up limits          |
 | `GET  /students/{id}/bills?month=&page=` | Bills tab                                 |

@@ -1,12 +1,13 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { session } from '@/session'
 import { signOut } from '@/utils/account'
 import { initials } from '@/utils/format'
 
-/** The desktop account button: who is signed in, and sign out. Phones use the action sheet on the home page. */
+/** The desktop account button: who is signed in, their profile and password, sign out. Phones use the action sheet on the home page. */
+const route = useRoute()
 const router = useRouter()
 const root = ref(null)
 const open = ref(false)
@@ -27,6 +28,7 @@ function listen(on) {
 }
 
 watch(open, listen)
+watch(() => route.fullPath, () => (open.value = false))
 onBeforeUnmount(() => listen(false))
 
 async function leave() {
@@ -49,7 +51,9 @@ async function leave() {
           <small v-if="parent.email">{{ parent.email }}</small>
         </span>
       </div>
-      <button class="pp-menu__item" type="button" role="menuitem" :disabled="busy" @click="leave">
+      <RouterLink class="pp-menu__item" :to="{ name: 'profile' }" role="menuitem"><i class="fa fa-user"></i>Profile</RouterLink>
+      <RouterLink class="pp-menu__item" :to="{ name: 'change-password' }" role="menuitem"><i class="fa fa-lock"></i>Change password</RouterLink>
+      <button class="pp-menu__item pp-menu__item--neg" type="button" role="menuitem" :disabled="busy" @click="leave">
         <i class="fa fa-sign-out"></i>{{ busy ? 'Signing out…' : 'Sign out' }}
       </button>
     </div>

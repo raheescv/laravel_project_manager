@@ -17,12 +17,15 @@ class ForgotPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'mobile' => ['required', 'string', 'max:20'],
+            // The mobile number or the email the school has for the parent.
+            'login' => ['required_without:mobile', 'nullable', 'string', 'max:150'],
+            // Portal builds from before email was accepted send the number here.
+            'mobile' => ['required_without:login', 'nullable', 'string', 'max:20'],
         ];
     }
 
     public function attributes(): array
     {
-        return ['mobile' => 'mobile number'];
+        return ['login' => 'mobile number or email', 'mobile' => 'mobile number'];
     }
 }

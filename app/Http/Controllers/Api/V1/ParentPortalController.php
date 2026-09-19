@@ -11,6 +11,7 @@ use App\Actions\Student\GetStatementAction;
 use App\Actions\Student\Guardian\SendInviteAction;
 use App\Actions\Student\Guardian\SetPasswordAction as GuardianSetPasswordAction;
 use App\Actions\V1\Parent\BlockCardAction;
+use App\Actions\V1\Parent\ChangePasswordAction;
 use App\Actions\V1\Parent\ForgotPasswordAction;
 use App\Actions\V1\Parent\GetStudentAction;
 use App\Actions\V1\Parent\GetTopupAction;
@@ -20,6 +21,7 @@ use App\Actions\V1\Parent\StartTopupAction;
 use App\Exceptions\ParentPortalException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\Parent\BlockCardRequest;
+use App\Http\Requests\V1\Parent\ChangePasswordRequest;
 use App\Http\Requests\V1\Parent\ForgotPasswordRequest;
 use App\Http\Requests\V1\Parent\LoginRequest;
 use App\Http\Requests\V1\Parent\PeriodRequest;
@@ -99,15 +101,16 @@ class ParentPortalController extends Controller
     /**
      * Forgot password.
      *
-     * Sends a new set-password link by email / WhatsApp when the number belongs to
-     * an active parent. The answer never says whether it does.
+     * `login` is the parent's mobile number or email (`mobile` is still accepted).
+     * Sends a new set-password link by email / WhatsApp when it belongs to an
+     * active parent. The answer never says whether it does.
      */
     public function forgotPassword(ForgotPasswordRequest $request, ForgotPasswordAction $action): JsonResponse
     {
         try {
             $action->execute($request);
 
-            return $this->sendSuccess(null, 'If this mobile number is registered with the school, a link to set a new password is on its way by email or WhatsApp.');
+            return $this->sendSuccess(null, 'If this mobile number or email is registered with the school, a link to set a new password is on its way by email or WhatsApp.');
         } catch (ValidationException $e) {
             return $this->validationFailure($e);
         } catch (\Throwable $e) {
@@ -155,6 +158,26 @@ class ParentPortalController extends Controller
     public function me(Request $request): JsonResponse
     {
         return $this->sendSuccess(new GuardianResource($this->guardian($request)), 'Parent retrieved successfully');
+    }
+
+    /**
+     * Change password.
+     *
+     * The current password and the new one (twice). The parent stays signed in on
+     * this device; every other sign-in ends. 422 for a wrong current password,
+     * 429 after five wrong tries.
+     */
+    public function changePassword(ChangePasswordRequest $request, ChangePasswordAction $action): JsonResponse
+    {
+        try {
+            $action->execute($request);
+
+            return $this->sendSuccess(null, 'Your password is changed. Other phones and computers were signed out.');
+        } catch (ValidationException $e) {
+            return $this->validationFailure($e);
+        } catch (\Throwable $e) {
+            return $this->failure($e, 'We could not change your password. Please try again.');
+        }
     }
 
     /**

@@ -33,6 +33,8 @@ const router = createRouter({
       component: () => import('@/views/PreOrderEditView.vue'),
     },
     { path: '/topups/:pun', name: 'topup-result', component: () => import('@/views/TopupResultView.vue') },
+    { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
+    { path: '/profile/password', name: 'change-password', component: () => import('@/views/ChangePasswordView.vue') },
 
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

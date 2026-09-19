@@ -162,6 +162,8 @@ onMounted(() => {
         <span v-if="parent.mobile">{{ parent.mobile }}</span>
         <span v-if="parent.email">{{ parent.email }}</span>
       </div>
+      <RouterLink class="pp-action" :to="{ name: 'profile' }"><i class="fa fa-user"></i>Profile</RouterLink>
+      <RouterLink class="pp-action" :to="{ name: 'change-password' }"><i class="fa fa-lock"></i>Change password</RouterLink>
       <button class="pp-action pp-action--danger" type="button" :disabled="signingOut" @click="leave">
         <i class="fa fa-sign-out"></i>{{ signingOut ? 'Signing out…' : 'Sign out' }}
       </button>

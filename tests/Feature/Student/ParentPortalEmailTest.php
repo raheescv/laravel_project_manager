@@ -124,10 +124,23 @@ it('emails the reset when a parent uses Forgot password', function (): void {
         && str_contains($mail->subjectLine, 'Reset your'));
 });
 
-it('answers Forgot password the same way for a number that is not registered', function (): void {
-    $this->postJson($this->world->url('/api/v1/parent/forgot-password'), ['mobile' => '99999999'])
+it('emails the reset when a parent gives their email instead of the number', function (): void {
+    $this->guardian->forceFill(['password' => 'secret-pass'])->save();
+
+    $this->postJson($this->world->url('/api/v1/parent/forgot-password'), ['login' => 'parent@example.com'])
         ->assertOk()
-        ->assertJsonPath('message', 'If this mobile number is registered with the school, a link to set a new password is on its way by email or WhatsApp.');
+        ->assertJsonPath('success', true);
+
+    Mail::assertSent(AppointmentMail::class, fn (AppointmentMail $mail) => $mail->hasTo('parent@example.com')
+        && str_contains($mail->subjectLine, 'Reset your'));
+});
+
+it('answers Forgot password the same way for a number or email that is not registered', function (): void {
+    foreach ([['mobile' => '99999999'], ['login' => '99999999'], ['login' => 'nobody@example.com']] as $payload) {
+        $this->postJson($this->world->url('/api/v1/parent/forgot-password'), $payload)
+            ->assertOk()
+            ->assertJsonPath('message', 'If this mobile number or email is registered with the school, a link to set a new password is on its way by email or WhatsApp.');
+    }
 
     Mail::assertNothingSent();
 });

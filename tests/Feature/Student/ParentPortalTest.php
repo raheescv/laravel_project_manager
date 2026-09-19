@@ -6,6 +6,7 @@ use App\Models\Guardian;
 use App\Models\StudentDetail;
 use App\Models\Tenant;
 use App\Services\TenantService;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
 use Tests\Support\PosWorld;
 use Tests\Support\StudentWorld;
@@ -104,6 +105,36 @@ it('locks out a parent the school disables and a signed-out token', function ():
     $token = StudentWorld::parentToken($this->guardian);
     $this->guardian->forceFill(['status' => 'disabled'])->save();
     portalJson($this, 'GET', 'students', $token)->assertUnauthorized();
+});
+
+it('lets a parent change the password, staying signed in here and signed out elsewhere', function (): void {
+    $here = StudentWorld::parentToken($this->guardian);
+    $elsewhere = StudentWorld::parentToken($this->guardian);
+
+    portalJson($this, 'POST', 'password', $here, ['current_password' => 'secret-pass', 'password' => 'new-secret-1', 'password_confirmation' => 'new-secret-1'])
+        ->assertOk()
+        ->assertJsonPath('success', true);
+
+    expect(Hash::check('new-secret-1', $this->guardian->fresh()->password))->toBeTrue();
+    portalJson($this, 'GET', 'me', $here)->assertOk();
+    portalJson($this, 'GET', 'me', $elsewhere)->assertUnauthorized();
+    portalJson($this, 'POST', 'login', data: ['login' => '55123456', 'password' => 'new-secret-1'])->assertOk();
+});
+
+it('will not change the password without the current one, or to a weak one', function (): void {
+    $token = StudentWorld::parentToken($this->guardian);
+
+    portalJson($this, 'POST', 'password', $token, ['current_password' => 'wrong-pass', 'password' => 'new-secret-1', 'password_confirmation' => 'new-secret-1'])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Your current password is not correct.');
+    portalJson($this, 'POST', 'password', $token, ['current_password' => 'secret-pass', 'password' => 'short', 'password_confirmation' => 'short'])
+        ->assertStatus(422);
+    portalJson($this, 'POST', 'password', $token, ['current_password' => 'secret-pass', 'password' => 'secret-pass', 'password_confirmation' => 'secret-pass'])
+        ->assertStatus(422);
+    portalJson($this, 'POST', 'password', null, ['current_password' => 'secret-pass', 'password' => 'new-secret-1', 'password_confirmation' => 'new-secret-1'])
+        ->assertUnauthorized();
+
+    expect(Hash::check('secret-pass', $this->guardian->fresh()->password))->toBeTrue();
 });
 
 it('shows a parent their own children with the card balance', function (): void {

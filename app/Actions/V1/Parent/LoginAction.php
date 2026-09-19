@@ -24,9 +24,7 @@ class LoginAction
             throw ValidationException::withMessages(['login' => 'Too many attempts. Try again in '.RateLimiter::availableIn($key).' seconds.'])->status(429);
         }
 
-        $guardian = str_contains($login, '@')
-            ? Guardian::where('email', $login)->first()
-            : Guardian::where('mobile', SyncAction::normalizeMobile($login))->first();
+        $guardian = self::findGuardian($login);
 
         if (! $guardian || ! $guardian->password || ! $guardian->isActive() || ! Hash::check((string) $request->validated('password'), $guardian->password)) {
             RateLimiter::hit($key, 60);
@@ -39,5 +37,18 @@ class LoginAction
         RateLimiter::clear($key);
 
         return (new IssueTokenAction())->execute($guardian, (bool) $request->validated('remember', true));
+    }
+
+    /**
+     * The parent a sign-in name belongs to: an email when it has an @, otherwise
+     * a mobile number in any spacing ("5512 3456" = "55123456").
+     */
+    public static function findGuardian(string $login): ?Guardian
+    {
+        $login = trim($login);
+
+        return str_contains($login, '@')
+            ? Guardian::where('email', $login)->first()
+            : Guardian::where('mobile', SyncAction::normalizeMobile($login))->first();
     }
 }

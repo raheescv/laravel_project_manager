@@ -463,6 +463,16 @@ a.pp-child-card:active{transform:translateY(-8px)}
   .pp-paidby{background:var(--surface-2)}
 }
 
+/* ---- Profile ---- */
+.pp-profile{display:flex; flex-direction:column; align-items:center; padding:8px 24px 26px; text-align:center}
+.pp-profile .pp-avatar{width:84px; height:84px; margin-bottom:14px; font-size:30px}
+.pp-profile h1{font-size:26px; font-weight:750; line-height:1.15; letter-spacing:-.02em}
+.pp-profile p{margin-top:4px; font-size:15px; color:var(--ink-2)}
+.pp-text-muted{color:var(--ink-2)}
+dl.pp-group__body dd.pp-text-muted{font-weight:500}
+.pp-kid-link{--sep:68px}
+.pp-action + .pp-action{border-top:1px solid var(--line)}
+
 /* ---- Sign-in frame: phones show the form alone ---- */
 .pp-signin{display:flex; flex:1 0 auto; flex-direction:column}
 .pp-signin__art{display:none}
@@ -512,7 +522,9 @@ a.pp-child-card:active{transform:translateY(-8px)}
   .pp-menu__id{min-width:0}
   .pp-menu__id b{display:block; font-weight:650}
   .pp-menu__id small{display:block; overflow:hidden; font-size:13px; color:var(--ink-2); white-space:nowrap; text-overflow:ellipsis}
-  .pp-menu__item{display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:0 16px; border:0; border-top:1px solid var(--line); background:none; color:var(--neg); font-size:15px; font-weight:600}
+  .pp-menu__item{display:flex; align-items:center; gap:10px; width:100%; min-height:46px; padding:0 16px; border:0; border-top:1px solid var(--line); background:none; color:var(--ink); font-size:15px; font-weight:600}
+  .pp-menu__item .fa{width:16px; color:var(--ink-2); text-align:center}
+  .pp-menu__item--neg,.pp-menu__item--neg .fa{color:var(--neg)}
 
   /* Sheets become centred dialogs */
   .pp-sheet__panel{top:50%; bottom:auto; max-width:460px; max-height:86dvh; padding:8px 0 22px; border-radius:22px; opacity:0; transform:translateY(-46%) scale(.97); transition:transform .3s var(--ease),opacity .2s ease; box-shadow:0 40px 90px -30px rgba(0,0,0,.55),0 0 0 1px var(--line)}
@@ -558,9 +570,15 @@ a.pp-child-card:active{transform:translateY(-8px)}
   .pp-detail .pp-alert{margin:0 0 16px}
   .pp-detail :is(.pp-inline-actions,.pp-result-actions){padding-left:0; padding-right:0}
   .pp-detail .pp-inline-actions{justify-items:start}
+  .pp-detail .pp-auth__actions{padding:0}
   .pp-detail .pp-pass{margin:0}
   .pp-detail .pp-actionbar{position:sticky; bottom:20px; width:100%; max-width:640px; margin-top:auto; padding:14px 16px; border-radius:18px; box-shadow:0 0 0 1px var(--line),0 20px 40px -20px rgba(0,0,0,.35)}
   .pp-detail .pp-narrow + .pp-actionbar{margin-top:8px}
+
+  /* Profile: the avatar beside the name */
+  .pp-detail .pp-profile{flex-direction:row; gap:18px; padding:0 0 26px; text-align:left}
+  .pp-detail .pp-profile .pp-avatar{width:72px; height:72px; margin:0; font-size:26px}
+  .pp-detail .pp-profile h1{font-size:30px}
 
   /* Home: the overview (the cards themselves are in the wallet) */
   .pp-kid-row{gap:14px; min-height:68px; padding:12px 16px 12px 20px}

@@ -6,20 +6,20 @@ import AppBar from '@/components/AppBar.vue'
 import AuthFrame from '@/components/AuthFrame.vue'
 import { school } from '@/school'
 
-const mobile = ref('')
+const login = ref('')
 const busy = ref(false)
 const sent = ref(false)
 const error = ref('')
 
 async function submit() {
-  if (!mobile.value.trim()) {
-    error.value = 'Enter the mobile number the school has for you.'
+  if (!login.value.trim()) {
+    error.value = 'Enter the mobile number or email the school has for you.'
     return
   }
   busy.value = true
   error.value = ''
   try {
-    await forgotPassword(mobile.value.trim())
+    await forgotPassword(login.value.trim())
     sent.value = true
   } catch (e) {
     error.value = e.message
@@ -37,19 +37,28 @@ async function submit() {
         <div class="pp-lede">
           <div class="pp-hero-icon"><i class="fa fa-key"></i></div>
           <h1>Forgot your password?</h1>
-          <p>Enter the mobile number you gave the school. We'll send you a link to set a new password.</p>
+          <p>Enter the mobile number or email you gave the school. We'll send you a link to set a new password.</p>
         </div>
         <div class="pp-group">
           <div class="pp-group__body">
             <div class="pp-field" :class="{ 'is-invalid': error }">
               <label class="pp-field__body">
-                <span class="pp-field__label">Mobile number</span>
-                <input v-model="mobile" class="pp-input" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" />
+                <span class="pp-field__label">Mobile number or email</span>
+                <input
+                  v-model="login"
+                  class="pp-input"
+                  type="text"
+                  inputmode="email"
+                  autocomplete="username"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  maxlength="150"
+                />
               </label>
             </div>
           </div>
           <p class="pp-group__foot" :class="{ 'is-error': error }" :role="error ? 'alert' : undefined">
-            {{ error || 'Use the number the school has for you.' }}
+            {{ error || 'Use the number or email the school has for you.' }}
           </p>
         </div>
         <div class="pp-auth__actions">
@@ -63,7 +72,7 @@ async function submit() {
         <div class="pp-lede">
           <div class="pp-hero-icon pp-hero-icon--pos"><i class="fa fa-paper-plane"></i></div>
           <h1>Check your messages</h1>
-          <p>If this mobile number is registered with the school, a link to set a new password is on its way by email or WhatsApp.</p>
+          <p>If this mobile number or email is registered with the school, a link to set a new password is on its way by email or WhatsApp.</p>
         </div>
         <div class="pp-group">
           <div class="pp-group__body">
