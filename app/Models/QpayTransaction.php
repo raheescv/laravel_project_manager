@@ -35,6 +35,17 @@ class QpayTransaction extends Model
     /** A payment that has been refunded in full. */
     public const STATUS_REFUNDED = 'refunded';
 
+    /**
+     * QPay never gave a final answer and the office released the payment so the
+     * parent could use the card again. Not `failed`: failed means QPay confirmed
+     * no money was taken, this means nobody knows. The row is still chased by
+     * qpay:inquire-pending and is credited if the answer finally arrives.
+     */
+    public const STATUS_UNRESOLVED = 'unresolved';
+
+    /** Statuses that may still receive a final answer from QPay. */
+    public const STATUSES_AWAITING_RESULT = [self::STATUS_PENDING, self::STATUS_UNRESOLVED];
+
     protected $fillable = [
         'tenant_id',
         'type',
@@ -89,6 +100,15 @@ class QpayTransaction extends Model
         return $this->status === self::STATUS_PENDING;
     }
 
+    /**
+     * Whether QPay could still tell us what happened to this payment — either it
+     * has no outcome yet, or the office released it without one.
+     */
+    public function awaitsResult(): bool
+    {
+        return in_array($this->status, self::STATUSES_AWAITING_RESULT, true);
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {
@@ -97,6 +117,7 @@ class QpayTransaction extends Model
             self::STATUS_REFUND_PENDING => 'Refund pending',
             self::STATUS_REFUNDED => 'Refunded',
             self::STATUS_REVIEW => 'Needs review',
+            self::STATUS_UNRESOLVED => 'Unresolved',
             default => 'Pending',
         };
     }

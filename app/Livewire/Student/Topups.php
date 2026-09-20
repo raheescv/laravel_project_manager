@@ -4,6 +4,7 @@ namespace App\Livewire\Student;
 
 use App\Actions\QPay\InquireAction;
 use App\Actions\QPay\RefundAction;
+use App\Actions\QPay\ReleaseAction;
 use App\Actions\Student\ListTopupsAction;
 use App\Actions\Student\ManualEntryAction;
 use App\Models\Account;
@@ -82,6 +83,17 @@ class Topups extends Component
         $transaction = QpayTransaction::where('account_id', $this->account_id)->findOrFail($id);
 
         $response = (new InquireAction())->execute($transaction);
+        $this->dispatch($response['success'] ? 'success' : 'error', ['message' => $response['message']]);
+        $this->dispatch('Student-View-Refresh');
+    }
+
+    /** Free the card from a payment QPay will not answer for, so the parent can top up again. */
+    public function release($id)
+    {
+        abort_unless(auth()->user()?->can('student topup.release'), 403);
+        $transaction = QpayTransaction::where('account_id', $this->account_id)->findOrFail($id);
+
+        $response = (new ReleaseAction())->execute($transaction, Auth::id());
         $this->dispatch($response['success'] ? 'success' : 'error', ['message' => $response['message']]);
         $this->dispatch('Student-View-Refresh');
     }

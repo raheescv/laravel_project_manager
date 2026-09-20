@@ -24,11 +24,32 @@ use Illuminate\Support\Str;
  * student has no result, a new one is refused — a parent who closed the QPay page
  * must not pay twice. After 20 minutes the earlier payment is inquired first, and
  * only a confirmed outcome frees the student for another top-up.
+ *
+ * That block is bounded. An inquiry can come back with no answer at all — QPay
+ * unreachable, a response that fails the hash check, a status that is neither
+ * "paid" nor "not found" — and nothing about repeating it a day later makes it
+ * more likely to answer. Left unbounded, one such payment would lock the student
+ * out of their card for good, which is a worse outcome than the double payment
+ * the block exists to prevent. See [BLOCK_EXPIRES_AFTER_HOURS].
  */
 class StartPaymentAction
 {
     /** QPay certification: a payment without a result blocks new ones for this long before it is inquired. */
     public const BROKEN_AFTER_MINUTES = 20;
+
+    /**
+     * How long a payment QPay has never answered for may go on blocking the student.
+     *
+     * The row itself stays pending — qpay:inquire-pending keeps asking, and the card
+     * is still credited if the answer finally says paid — but after this it no longer
+     * stands in the way of a new top-up. A day is long enough that a payment still in
+     * flight would have landed, and short enough that a parent is not left unable to
+     * feed their child. The office can lift it sooner with ReleaseAction.
+     */
+    public const BLOCK_EXPIRES_AFTER_HOURS = 24;
+
+    /** How long the portal asks the parent to wait after an inquiry that answered nothing. */
+    public const RETRY_AFTER_INQUIRY_MINUTES = 2;
 
     public function execute(Guardian $guardian, Account $student, float $amount, string $lang = 'En'): array
     {
@@ -78,6 +99,9 @@ class StartPaymentAction
         $pending = QpayTransaction::where('account_id', $student->id)
             ->where('type', QpayTransaction::TYPE_PAYMENT)
             ->where('status', QpayTransaction::STATUS_PENDING)
+            // Older than this and QPay is never going to answer; the payment is
+            // left pending to be chased, but it stops holding the card hostage.
+            ->where('created_at', '>', now()->subHours(self::BLOCK_EXPIRES_AFTER_HOURS))
             ->oldest('id')
             ->get();
 
@@ -91,7 +115,18 @@ class StartPaymentAction
             (new InquireAction())->execute($transaction);
 
             if ($transaction->refresh()->isPending()) {
-                throw new Exception('We are still confirming an earlier top-up with QPay. Please try again in a few minutes.', 1);
+                // QPay was asked and said nothing useful. Carry a moment to count
+                // down to anyway: without one the portal leaves the Pay button live,
+                // and the parent taps it into the same sentence over and over with
+                // nothing telling them this has a way out. Never past the point the
+                // block lifts by itself.
+                $freeAt = $transaction->created_at->copy()->addHours(self::BLOCK_EXPIRES_AFTER_HOURS);
+                $retryAt = now()->addMinutes(self::RETRY_AFTER_INQUIRY_MINUTES)->min($freeAt);
+
+                throw new TopupInProgressException(
+                    'We are still confirming an earlier top-up with QPay. Please try again in a few minutes — if it still will not go through, the school office can release it for you.',
+                    $retryAt,
+                );
             }
         }
     }

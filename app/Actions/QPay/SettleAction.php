@@ -29,7 +29,9 @@ class SettleAction
     {
         return DB::transaction(function () use ($transaction, $outcome, $payload) {
             $locked = QpayTransaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
-            if (! $locked->isPending()) {
+            // `unresolved` counts as still open: the office released it to free the
+            // card, not because it knew the outcome, so QPay's answer still decides.
+            if (! $locked->awaitsResult()) {
                 return $locked;
             }
 

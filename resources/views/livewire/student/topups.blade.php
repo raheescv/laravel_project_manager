@@ -99,18 +99,29 @@
                                 'bg-success' => $row['status'] === 'success',
                                 'bg-danger' => $row['status'] === 'failed',
                                 'bg-warning text-dark' => in_array($row['status'], ['pending', 'refund_pending', 'review']),
-                                'bg-secondary' => $row['status'] === 'refunded',
+                                'bg-secondary' => in_array($row['status'], ['refunded', 'unresolved']),
                             ])>{{ $row['status_label'] }}</span>
                             @if ($transaction?->tampered_at)
                                 <span class="badge bg-danger" title="The response failed the secure hash check and was verified by inquiry">Tampered</span>
                             @endif
                         </td>
                         <td class="text-nowrap text-end">
-                            @if ($transaction?->isPending() && $transaction->type === 'payment')
+                            @if ($transaction?->awaitsResult() && $transaction->type === 'payment')
                                 <button type="button" class="btn btn-sm btn-light" wire:click="inquire({{ $transaction->id }})" wire:loading.attr="disabled" title="Ask QPay for the result">
                                     <i class="fa fa-refresh"></i> Check
                                 </button>
                             @endif
+                            {{-- A payment QPay will not answer for blocks the parent from topping up again.
+                                 Releasing frees the card without claiming the money was never taken. --}}
+                            @can('student topup.release')
+                                @if ($transaction?->isPending() && $transaction->type === 'payment')
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="release({{ $transaction->id }})" wire:loading.attr="disabled"
+                                        wire:confirm="Release this {{ currency($transaction->amount) }} top-up so the parent can pay again?&#10;&#10;QPay is asked once more first. If it still has no answer the top-up is marked Unresolved — not failed — and we keep asking; the card is credited if it turns out to have been paid."
+                                        title="Free the card from this unanswered payment">
+                                        <i class="fa fa-unlock"></i> Release
+                                    </button>
+                                @endif
+                            @endcan
                             @can('student topup.refund')
                                 @if ($transaction && $transaction->status === 'success' && $transaction->type === 'payment')
                                     <button type="button" class="btn btn-sm btn-outline-danger" wire:click="refund({{ $transaction->id }})"

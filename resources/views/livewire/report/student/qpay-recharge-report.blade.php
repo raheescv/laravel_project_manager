@@ -17,6 +17,7 @@
                     <option value="pending">Pending</option>
                     <option value="failed">Failed</option>
                     <option value="review">Needs review</option>
+                    <option value="unresolved">Unresolved</option>
                     <option value="refunded">Refunded</option>
                     <option value="refund_pending">Refund pending</option>
                 </select>
@@ -120,7 +121,7 @@
                                     'bg-success' => $row->status === 'success',
                                     'bg-danger' => $row->status === 'failed',
                                     'bg-warning text-dark' => in_array($row->status, ['pending', 'refund_pending', 'review']),
-                                    'bg-secondary' => $row->status === 'refunded',
+                                    'bg-secondary' => in_array($row->status, ['refunded', 'unresolved']),
                                 ])>{{ $row->statusLabel() }}</span>
                                 @if ($row->tampered_at)
                                     <span class="badge bg-danger" title="The response failed the secure hash check and was verified by inquiry">Tampered</span>
@@ -133,7 +134,8 @@
                                 @endif
                             </td>
                             <td class="text-end pe-3">
-                                @if ($row->isPending())
+                                {{-- Released payments are still asked about, so they keep the Check button. --}}
+                                @if ($row->awaitsResult())
                                     <button type="button" class="btn btn-sm btn-light text-nowrap" wire:click="inquire({{ $row->id }})" wire:loading.attr="disabled" title="Ask QPay for the result">
                                         <i class="fa fa-refresh"></i> Check
                                     </button>

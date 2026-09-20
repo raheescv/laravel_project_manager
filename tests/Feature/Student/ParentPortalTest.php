@@ -2,6 +2,7 @@
 
 use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Actions\Student\Guardian\SendInviteAction;
+use App\Actions\Student\PostTopupJournalAction;
 use App\Models\Guardian;
 use App\Models\StudentDetail;
 use App\Models\Tenant;
@@ -204,34 +205,50 @@ it('lists a month of bills and opens one of them', function (): void {
 
 it('shows the card statement a parent can read: one netted row per purchase, in plain words', function (): void {
     StudentWorld::topUp($this->world, $this->student, 50);
-    // Half the bill is handed over in cash, so only QAR 15 of it comes off the card —
+
+    // An online top-up as QPay's SettleAction writes it — gateway reference and all.
+    (new PostTopupJournalAction())->execute($this->student->id, 100, $this->world->cashAccountId, [
+        'branch_id' => $this->world->branch->id,
+        'reference_no' => 'KNJYTXO18M0NCUJDTP7R',
+        'model' => 'QpayTransaction',
+        'model_id' => 1,
+        'remarks' => 'QPay top-up KNJYTXO18M0NCUJDTP7R (confirmation 202609190657488)',
+    ], $this->world->user->id);
+
+    // Half this bill is handed over in cash, so only QAR 15 of it comes off the card —
     // and the sale's own gross and cash-payment lines must fold into that one row.
     $sale = (new SaleCreateAction())->execute(StudentWorld::salePayload($this->world, $this->student->id, 20, card: 15, cash: 5), $this->world->user->id)['data'];
 
     $response = portalJson($this, 'GET', "students/{$this->student->id}/statement", StudentWorld::parentToken($this->guardian))->assertOk();
 
     expect($response->json('data.opening'))->toEqual(0)
-        ->and($response->json('data.closing'))->toEqual(35)
-        ->and($response->json('data.added'))->toEqual(50)
+        ->and($response->json('data.closing'))->toEqual(135)
+        ->and($response->json('data.added'))->toEqual(150)
         ->and($response->json('data.spent'))->toEqual(15)
-        ->and($response->json('data.rows'))->toHaveCount(2);
+        ->and($response->json('data.rows'))->toHaveCount(3)
+        // Nothing a parent cannot read: no gateway reference, no confirmation id.
+        ->and($response->getContent())->not->toContain('KNJYTXO18M0NCUJDTP7R')
+        ->and($response->getContent())->not->toContain('202609190657488');
 
-    $topup = $response->json('data.rows.0');
-    expect($topup['kind'])->toBe('topup')
-        ->and($topup['title'])->toBe('Money added')
-        ->and($topup['detail'])->toBe('Added at the school office')
-        ->and($topup['amount'])->toEqual(50)
-        ->and($topup['balance'])->toEqual(50)
-        ->and($topup['sale_id'])->toBeNull();
+    $office = $response->json('data.rows.0');
+    expect($office['kind'])->toBe('topup')
+        ->and($office['title'])->toBe('Money added')
+        ->and($office['detail'])->toBe('Added at the school office')
+        ->and($office['amount'])->toEqual(50)
+        ->and($office['balance'])->toEqual(50)
+        ->and($office['sale_id'])->toBeNull();
 
-    $purchase = $response->json('data.rows.1');
+    expect($response->json('data.rows.1.detail'))->toBe('Paid online')
+        ->and($response->json('data.rows.1.balance'))->toEqual(150);
+
+    $purchase = $response->json('data.rows.2');
     expect($purchase['kind'])->toBe('purchase')
         ->and($purchase['title'])->toBe('Canteen purchase')
         ->and($purchase['detail'])->toStartWith('1 item')
         ->and($purchase['amount'])->toEqual(-15)
-        ->and($purchase['balance'])->toEqual(35)
+        ->and($purchase['balance'])->toEqual(135)
         ->and($purchase['sale_id'])->toBe($sale->id)
-        // Nothing from the books: no gateway reference, no accounting remark, no ids.
+        // The books stay in the books: no journal, model or source leaks out.
         ->and($purchase)->not->toHaveKeys(['journal_id', 'model', 'model_id', 'source', 'description', 'reference']);
 });
 

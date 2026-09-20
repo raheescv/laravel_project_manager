@@ -137,7 +137,7 @@ client unwraps it).
 | `GET  /students/{id}`                    | Child page header, top-up limits          |
 | `GET  /students/{id}/bills?month=&page=` | Bills tab                                 |
 | `GET  /students/{id}/bills/{sale}`       | Bill page                                 |
-| `GET  /students/{id}/statement?month=`   | Statement tab                             |
+| `GET  /students/{id}/statement?month=`   | Statement tab — already worded for parents (see below) |
 | `POST /students/{id}/card/block`         | "Lost card?"                              |
 | `POST /students/{id}/topups`             | Start a QPay top-up                       |
 | `GET  /topups/{pun}`                     | Top-up result                             |
@@ -145,6 +145,20 @@ client unwraps it).
 | `GET  /students/{id}/pre-orders`         | Weekly order + next school days           |
 | `PUT  /students/{id}/pre-orders/weekly` · `POST …/weekly/pause` · `POST …/weekly/resume` · `DELETE …/weekly` | Weekly order |
 | `PUT  /students/{id}/pre-orders/days/{date}` · `POST …/days/{date}/skip` · `DELETE …/days/{date}` | One day |
+
+## The statement tab
+
+The API sends the statement ready to read: `App\Actions\Parent\GetStatementAction` folds the
+ledger (which is written for the school office) into what moved on the card. One row per
+journal, netted — a purchase is one row, not its gross, tax, discount and payment lines —
+and a row that nets to zero is left out, because nothing left the card. Each row carries
+`kind` (the icon), `title` and `detail` in plain words, `amount` (signed), the running
+`balance`, and `sale_id` when the row is a purchase, which makes it a link to the bill.
+`added` and `spent` are the month's two totals under the list.
+
+Gateway references, confirmation ids and accounting remarks never reach the portal; the only
+free text a parent sees is the reason a clerk typed for an office entry. So the wording lives
+in that action, not in this app — the portal only picks each row's icon and colour.
 
 ## Structure
 

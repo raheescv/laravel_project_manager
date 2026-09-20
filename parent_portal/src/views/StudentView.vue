@@ -10,7 +10,7 @@ import LoadError from '@/components/LoadError.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { refreshChild } from '@/children'
 import { toast } from '@/toast'
-import { currentMonth, date, dateTile, dayMonth, firstName, isMonth, money, monthLabel, shiftMonth, weekdaysLabel } from '@/utils/format'
+import { amount, currentMonth, date, dateTile, dayMonth, firstName, isMonth, money, monthLabel, shiftMonth, weekdaysLabel } from '@/utils/format'
 import { desktop } from '@/utils/viewport'
 
 const route = useRoute()
@@ -113,6 +113,9 @@ async function loadStatement() {
     statementLoading.value = false
   }
 }
+
+/** The running balance under a row's amount — no currency code, the amount above carries it. */
+const runningBalance = (value) => `${value < 0 ? '−' : ''}${amount(value)}`
 
 // The API words every row; the portal only picks its face.
 const statementIcon = (row) =>
@@ -370,7 +373,7 @@ onMounted(() => {
                 </span>
                 <span class="pp-row__end">
                   <span class="pp-amt" :class="{ 'pp-amt--in': row.amount > 0 }">{{ money(row.amount, { sign: true }) }}</span>
-                  <span class="pp-run">Balance {{ money(row.balance) }}</span>
+                  <span class="pp-run">Balance {{ runningBalance(row.balance) }}</span>
                 </span>
                 <i v-if="row.sale_id" class="fa fa-angle-right pp-chev"></i>
               </component>

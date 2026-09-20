@@ -152,7 +152,7 @@ return [
     // School: student cards & parent portal
     'student' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'student card' => ['assign', 'block', 'unblock'],
-    'student topup' => ['view', 'create', 'refund'],
+    'student topup' => ['view', 'create', 'refund', 'release'],
     'student guardian' => ['invite'],
     'student settings' => ['edit'],
     'student menu' => ['view', 'edit'],

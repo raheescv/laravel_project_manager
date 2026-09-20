@@ -43,6 +43,16 @@ const view = computed(() => {
       failed: { tone: 'failed', icon: 'fa-times', title: 'Payment failed', tag: ['neg', 'Failed'], msg: t.message ? `${t.message} No money was taken.` : 'No money was taken. You can try again.' },
       refund_pending: { tone: 'review', icon: 'fa-reply', title: 'Refund in progress', tag: ['warn', 'Refund pending'], msg: 'The school is refunding this payment to your bank card.' },
       refunded: { tone: 'review', icon: 'fa-reply', title: 'Payment refunded', tag: ['warn', 'Refunded'], msg: 'This payment was refunded to your bank card.' },
+      // QPay never said what happened and the school released it so the card could
+      // be used again. Nothing was added, but we cannot promise nothing was taken —
+      // which is exactly why this points at the bank statement and the office.
+      unresolved: {
+        tone: 'review',
+        icon: 'fa-question-circle',
+        title: 'Payment not confirmed',
+        tag: ['warn', 'Not confirmed'],
+        msg: `QPay never confirmed this payment, so nothing was added to ${who} card. If your bank shows the amount was taken, contact the school office with the reference below.`,
+      },
     }[t.status] || { tone: 'review', icon: 'fa-clock-o', title: t.status_label, tag: ['warn', t.status_label] }
   )
 })
@@ -117,7 +127,7 @@ onBeforeUnmount(() => clearTimeout(timer))
         <div v-if="topup.student?.name" class="pp-row"><dt>Card</dt><dd>{{ topup.student.name }}</dd></div>
         <div class="pp-row">
           <dt>New card balance</dt>
-          <dd>{{ topup.status === 'success' ? money(topup.balance) : ['pending', 'review'].includes(topup.status) ? 'Not added yet' : 'No change' }}</dd>
+          <dd>{{ topup.status === 'success' ? money(topup.balance) : ['pending', 'review', 'unresolved'].includes(topup.status) ? 'Not added yet' : 'No change' }}</dd>
         </div>
       </dl>
     </section>

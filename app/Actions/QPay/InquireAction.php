@@ -12,13 +12,17 @@ use App\Support\Payment\QPaySettings;
  * Used for broken transactions (no result reached us) and for tampered returns
  * (the posted status is dropped and QPay is asked instead). A gateway that cannot
  * be reached leaves the payment pending for the next attempt.
+ *
+ * A payment the office released without an answer (`unresolved`) is still asked
+ * about: releasing it only frees the card, it does not decide what happened, and
+ * if QPay eventually says the money was taken it is credited then.
  */
 class InquireAction
 {
     public function execute(QpayTransaction $transaction): array
     {
         try {
-            if (! $transaction->isPending()) {
+            if (! $transaction->awaitsResult()) {
                 return ['success' => true, 'message' => 'Payment already settled', 'data' => $transaction];
             }
 
@@ -53,7 +57,7 @@ class InquireAction
             }
 
             $return['success'] = true;
-            $return['message'] = $transaction->isPending() ? 'QPay has no final result yet.' : 'Payment '.strtolower($transaction->statusLabel());
+            $return['message'] = $transaction->awaitsResult() ? 'QPay has no final result yet.' : 'Payment '.strtolower($transaction->statusLabel());
             $return['data'] = $transaction;
         } catch (\Throwable $th) {
             $transaction->forceFill(['last_inquired_at' => now()])->save();

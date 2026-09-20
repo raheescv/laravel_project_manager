@@ -2,8 +2,10 @@
 
 use App\Actions\QPay\InquireAction;
 use App\Actions\QPay\RefundAction;
+use App\Actions\QPay\ReleaseAction;
 use App\Actions\QPay\StartPaymentAction;
 use App\Actions\Student\GetBalanceAction;
+use App\Console\Commands\Student\QPayInquirePendingCommand;
 use App\Models\ApiLog;
 use App\Models\Configuration;
 use App\Models\JournalEntry;
@@ -275,6 +277,124 @@ it('settles a broken transaction from the scheduled inquiry', function (): void 
 
     expect($transaction->refresh()->status)->toBe('success')
         ->and(qpayBalance($this))->toBe(80.0);
+});
+
+/** QPay answers, verifiably, but says nothing that settles the payment either way. */
+function qpayAnswersNothing(): void
+{
+    Http::fake(fn () => Http::response(qpaySigned(['Status' => '1220', 'StatusMessage' => 'Transaction is in progress'])));
+}
+
+it('counts the parent down instead of leaving them tapping an unanswerable block', function (): void {
+    qpayStart($this, 100);
+    $this->travel(22)->minutes();
+    qpayAnswersNothing();
+
+    $blocked = (new StartPaymentAction())->execute($this->guardian, $this->student, 50);
+
+    // The old behaviour threw a bare message with no retry_at, so the portal left
+    // the Pay button live and the parent looped on the same sentence for ever.
+    expect($blocked['success'])->toBeFalse()
+        ->and($blocked['message'])->toContain('the school office can release it')
+        ->and($blocked['retry_at'])->toBe(now()->addMinutes(StartPaymentAction::RETRY_AFTER_INQUIRY_MINUTES)->toIso8601String());
+
+    $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->postJson($this->world->url("/api/v1/parent/students/{$this->student->id}/topups"), ['amount' => 50])
+        ->assertStatus(422)
+        ->assertJsonPath('data.retry_at', now()->addMinutes(StartPaymentAction::RETRY_AFTER_INQUIRY_MINUTES)->toIso8601String());
+});
+
+it('stops a payment QPay never answers for from blocking the card for ever', function (): void {
+    $stuck = qpayStart($this, 100);
+    qpayAnswersNothing();
+
+    $this->travel(22)->minutes();
+    expect((new StartPaymentAction())->execute($this->guardian, $this->student, 50)['success'])->toBeFalse();
+
+    $this->travel(StartPaymentAction::BLOCK_EXPIRES_AFTER_HOURS)->hours();
+    $freed = (new StartPaymentAction())->execute($this->guardian, $this->student, 50);
+
+    // Freed, but nothing was decided about the money: the row is still pending and
+    // still being chased, because we never learned what happened to it.
+    expect($freed['success'])->toBeTrue($freed['message'])
+        ->and($stuck->refresh()->status)->toBe('pending');
+});
+
+it('releases a payment QPay will not answer for so the parent can pay again', function (): void {
+    $stuck = qpayStart($this, 100);
+    $this->travel(21)->minutes();
+    qpayAnswersNothing();
+
+    $response = (new ReleaseAction())->execute($stuck, $this->world->user->id);
+
+    expect($response['success'])->toBeTrue($response['message'])
+        // Never "failed" — failed means QPay confirmed no money was taken.
+        ->and($stuck->refresh()->status)->toBe('unresolved')
+        ->and($stuck->failure_reason)->toContain('Released by')
+        ->and(qpayBalance($this))->toBe(0.0);
+
+    expect((new StartPaymentAction())->execute($this->guardian, $this->student, 50)['success'])->toBeTrue();
+});
+
+it('settles a payment rather than releasing it when QPay finally answers', function (): void {
+    $stuck = qpayStart($this, 100);
+    $this->travel(21)->minutes();
+    Http::fake(fn () => Http::response(qpayInquiryResponse($stuck)));
+
+    $response = (new ReleaseAction())->execute($stuck, $this->world->user->id);
+
+    expect($response['success'])->toBeTrue()
+        ->and($response['message'])->toContain('Nothing needed releasing')
+        ->and($stuck->refresh()->status)->toBe('success')
+        ->and(qpayBalance($this))->toBe(100.0);
+});
+
+it('will not release a payment the parent may still be making', function (): void {
+    $fresh = qpayStart($this, 100);
+
+    $response = (new ReleaseAction())->execute($fresh, $this->world->user->id);
+
+    expect($response['success'])->toBeFalse()
+        ->and($response['message'])->toContain('may still be in progress')
+        ->and($fresh->refresh()->status)->toBe('pending');
+    Http::assertNothingSent();
+});
+
+it('credits a released payment that turns out to have been paid', function (): void {
+    $stuck = qpayStart($this, 100);
+
+    // One stub for the whole test: a second Http::fake() would never be reached,
+    // because the first registered closure answers every request.
+    $paid = false;
+    Http::fake(function () use (&$paid, $stuck) {
+        return Http::response($paid
+            ? qpayInquiryResponse($stuck)
+            : qpaySigned(['Status' => '1220', 'StatusMessage' => 'Transaction is in progress']));
+    });
+
+    $this->travel(21)->minutes();
+    (new ReleaseAction())->execute($stuck, $this->world->user->id);
+    expect($stuck->refresh()->status)->toBe('unresolved');
+
+    // Releasing only freed the card. The scheduled chase goes on, and QPay comes
+    // back later to say the money was taken after all.
+    $paid = true;
+    $this->travel(21)->minutes();
+    $this->artisan('qpay:inquire-pending')->assertSuccessful();
+
+    expect($stuck->refresh()->status)->toBe('success')
+        ->and(qpayBalance($this))->toBe(100.0);
+});
+
+it('gives up chasing a payment no answer ever came for', function (): void {
+    $stuck = qpayStart($this, 100);
+    $this->travel(QPayInquirePendingCommand::CHASE_FOR_DAYS + 1)->days();
+    Http::fake(fn () => Http::response(qpayInquiryResponse($stuck)));
+
+    $this->artisan('qpay:inquire-pending')->assertSuccessful();
+
+    Http::assertNothingSent();
+    expect($stuck->refresh()->status)->toBe('pending');
 });
 
 it('refunds a top-up in full and takes it off the card', function (): void {
