@@ -50,19 +50,22 @@
             <table class="table tbl">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Details</th>
-                        <th class="text-end">In</th>
-                        <th class="text-end">Out</th>
-                        <th class="text-end">Balance</th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="type" label="Type" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="description" label="Details" /></th>
+                        <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit" label="In" /></th>
+                        <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="debit" label="Out" /></th>
+                        <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="balance" label="Balance" /></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="bf">
-                        <td colspan="5">Balance brought forward</td>
-                        <td class="text-end fw-semibold">{{ currency($statement['opening']) }}</td>
-                    </tr>
+                    {{-- Only a line the rows actually run on from: hidden once the table is ordered some other way. --}}
+                    @if ($chronological)
+                        <tr class="bf">
+                            <td colspan="5">Balance brought forward</td>
+                            <td class="text-end fw-semibold">{{ currency($statement['opening']) }}</td>
+                        </tr>
+                    @endif
                     @forelse ($statement['rows'] as $row)
                         @php
                             [$tone, $icon] = $types[$row['source']] ?? ['plain', null];

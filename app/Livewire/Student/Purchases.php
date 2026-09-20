@@ -21,7 +21,14 @@ class Purchases extends Component
     /** The quick period button that matches the dates, or null once the dates are typed by hand. */
     public $preset = 'month';
 
+    public $sortField = 'date';
+
+    public $sortDirection = 'desc';
+
     protected $paginationTheme = 'bootstrap';
+
+    /** Sortable columns, so a crafted sortBy() cannot reach the query. */
+    private const SORTABLE = ['date', 'invoice_no', 'branch', 'items', 'status', 'grand_total'];
 
     public function mount($account_id)
     {
@@ -44,6 +51,21 @@ class Purchases extends Component
         $this->resetPage('purchases_page');
     }
 
+    public function sortBy($field)
+    {
+        if (! in_array($field, self::SORTABLE, true)) {
+            return;
+        }
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            // Money and dates read best biggest/newest first; names and statuses A-Z.
+            $this->sortDirection = in_array($field, ['date', 'grand_total', 'items'], true) ? 'desc' : 'asc';
+        }
+        $this->resetPage('purchases_page');
+    }
+
     public function updatedFromDate()
     {
         $this->preset = null;
@@ -63,6 +85,21 @@ class Purchases extends Component
             ->when($this->to_date, fn ($q, $value) => $q->where('date', '<=', date('Y-m-d', strtotime($value))));
     }
 
+    /** Order the bills by the column the user clicked, always breaking ties on the bill's own order. */
+    protected function sorted($query)
+    {
+        $direction = $this->sortDirection === 'asc' ? 'asc' : 'desc';
+
+        match ($this->sortField) {
+            'branch' => $query->orderBy(Branch::select('name')->whereColumn('branches.id', 'sales.branch_id'), $direction),
+            'items' => $query->orderBy('items_count', $direction),
+            'invoice_no', 'status', 'grand_total' => $query->orderBy($this->sortField, $direction),
+            default => $query->orderBy('date', $direction),
+        };
+
+        return $query->orderBy('id', $this->sortField === 'date' ? $direction : 'desc');
+    }
+
     public function render()
     {
         $totals = $this->baseQuery()
@@ -77,12 +114,11 @@ class Purchases extends Component
             ->orderByDesc('bills')
             ->first();
 
-        $sales = $this->baseQuery()
-            ->with(['branch:id,name', 'payments:id,sale_id,payment_method_id', 'payments.paymentMethod:id,name'])
-            ->withCount('items')
-            ->latest('date')
-            ->latest('id')
-            ->paginate(15, ['id', 'date', 'invoice_no', 'branch_id', 'status', 'grand_total'], 'purchases_page');
+        $sales = $this->sorted(
+            $this->baseQuery()
+                ->with(['branch:id,name', 'payments:id,sale_id,payment_method_id', 'payments.paymentMethod:id,name'])
+                ->withCount('items')
+        )->paginate(15, ['id', 'date', 'invoice_no', 'branch_id', 'status', 'grand_total'], 'purchases_page');
 
         return view('livewire.student.purchases', [
             'sales' => $sales,

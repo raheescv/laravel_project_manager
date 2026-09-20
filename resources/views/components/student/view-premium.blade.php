@@ -266,6 +266,77 @@
             .svx a.inv { color: var(--bs-link-color); text-decoration: none; font-weight: 500; }
             .svx a.inv:hover { text-decoration: underline; }
             .svx .pagination { margin: 14px 0 0; }
+            .svx [x-cloak] { display: none !important; }
+
+            /* ── Sortable column headers ──────────────────────────────────
+               The shared x-sortable-header link, wearing the table head's own
+               ink instead of .text-dark (which is !important, hence the override). */
+            .svx thead th a { color: inherit !important; text-decoration: none; display: inline-flex; align-items: baseline; gap: 5px; transition: color .15s; }
+            .svx thead th a:hover { color: var(--acc) !important; }
+            .svx thead th a small { font-size: 10px; line-height: 1; }
+            .svx thead th a .fa { font-size: 10px !important; line-height: 1; }
+            .svx .tbl thead th:has(a) { padding-block: 8px; }
+
+            /* ── Record top-up modal (.tpm) ───────────────────────────────
+               Premium "Flow" sheet: a coloured head that follows the entry
+               direction, the amount as the headline, then one row per question. */
+            .svx .tpm .modal-dialog { max-width: 560px; }
+            .svx .tpm .modal-content { border: 0; border-radius: 18px; overflow: hidden; background: var(--sf); box-shadow: 0 30px 70px -26px rgba(15, 23, 42, .55); }
+            .svx .tpm .mh { display: flex; gap: 14px; align-items: center; padding: 18px 20px; color: #fff; }
+            .svx .tpm .mh.in { background: linear-gradient(120deg, var(--hero-1), var(--hero-2) 58%, var(--hero-3)); }
+            .svx .tpm .mh.out { background: linear-gradient(120deg, color-mix(in srgb, var(--bs-danger), #000 46%), color-mix(in srgb, var(--bs-danger), #000 10%) 58%, color-mix(in srgb, var(--bs-danger), #fff 8%)); }
+            .svx .tpm .mh .mi { width: 42px; height: 42px; border-radius: 14px; background: rgba(255, 255, 255, .18); display: grid; place-items: center; font-size: 16px; flex: none; }
+            .svx .tpm .mh h5 { margin: 0; font-size: 16px; font-weight: 600; }
+            .svx .tpm .mh p { margin: 2px 0 0; font-size: 12px; opacity: .85; }
+            .svx .tpm .mh .btn-close { margin-inline-start: auto; filter: invert(1) grayscale(100%) brightness(200%); opacity: .75; }
+            .svx .tpm .modal-body { padding: 20px; }
+            .svx .tpm .fl { margin-bottom: 16px; }
+            .svx .tpm .row .fl { margin-bottom: 0; }
+            .svx .tpm .lb { display: block; font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; font-weight: 600; color: var(--mut); margin-bottom: 7px; }
+            .svx .tpm .form-control, .svx .tpm .form-select { border-radius: 12px; padding: 9px 12px; border-color: var(--ln); background-color: var(--sf); color: var(--ink); }
+            .svx .tpm .form-control:focus, .svx .tpm .form-select:focus { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(var(--acc-rgb), .16); }
+
+            /* Entry: two tap targets, not a dropdown — the office clerk picks a side. */
+            .svx .tpm .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .svx .tpm .seg:has(.opt:only-child) { grid-template-columns: 1fr; }
+            .svx .tpm .opt { position: relative; display: flex; gap: 10px; align-items: center; padding: 12px; margin: 0; border: 1px solid var(--ln); border-radius: 14px; background: var(--sf); cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s; }
+            .svx .tpm .opt:hover { border-color: color-mix(in srgb, var(--acc) 45%, var(--ln)); }
+            .svx .tpm .opt .ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--soft); color: var(--mut); font-size: 13px; flex: none; transition: background .15s, color .15s; }
+            .svx .tpm .opt .tx b { display: block; font-size: 13px; font-weight: 600; line-height: 1.2; color: var(--ink); }
+            .svx .tpm .opt .tx small { display: block; margin-top: 2px; font-size: 10.5px; color: var(--mut); }
+            .svx .tpm .opt .tk { position: absolute; inset-block-start: 9px; inset-inline-end: 10px; font-size: 13px; opacity: 0; transition: opacity .15s; }
+            .svx .tpm .opt:has(input:focus-visible) { box-shadow: 0 0 0 3px rgba(var(--acc-rgb), .2); }
+            .svx .tpm .opt.in.on { border-color: var(--bs-success); background: var(--bs-success-bg-subtle); }
+            .svx .tpm .opt.in.on .ic { background: var(--bs-success); color: #fff; }
+            .svx .tpm .opt.in.on .tk { opacity: 1; color: var(--bs-success); }
+            .svx .tpm .opt.out.on { border-color: var(--bs-danger); background: var(--bs-danger-bg-subtle); }
+            .svx .tpm .opt.out.on .ic { background: var(--bs-danger); color: #fff; }
+            .svx .tpm .opt.out.on .tk { opacity: 1; color: var(--bs-danger); }
+
+            /* Amount: the headline of the form. */
+            .svx .tpm .amt { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border: 1px solid var(--ln); border-radius: 14px; background: var(--soft); transition: border-color .15s, box-shadow .15s; }
+            .svx .tpm .amt:focus-within { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(var(--acc-rgb), .16); }
+            .svx .tpm .amt.bad, .svx .tpm .amt.bad:focus-within { border-color: var(--bs-danger); box-shadow: 0 0 0 3px rgba(var(--bs-danger-rgb), .16); }
+            .svx .tpm .amt input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 24px; font-weight: 600; color: var(--ink); appearance: textfield; }
+            .svx .tpm .amt input::-webkit-outer-spin-button, .svx .tpm .amt input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+            .svx .tpm .qk { display: flex; gap: 6px; flex: none; }
+            .svx .tpm .qk button { border: 1px solid var(--ln); background: var(--sf); color: var(--mut); border-radius: 9px; padding: 5px 10px; font-size: 12px; font-weight: 600; transition: border-color .15s, color .15s; }
+            .svx .tpm .qk button:hover { border-color: var(--acc); color: var(--acc); }
+            .svx .tpm .hint { margin-top: 7px; font-size: 11.5px; color: var(--mut); }
+            .svx .tpm .hint b { color: var(--ink); }
+            .svx .tpm .hint .bad, .svx .tpm .hint .bad b { color: var(--bs-danger-text-emphasis); }
+            .svx .tpm .sug { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+            .svx .tpm .sug button { border: 1px dashed var(--ln); background: transparent; color: var(--mut); border-radius: 99px; padding: 3px 10px; font-size: 11px; transition: border-color .15s, color .15s; }
+            .svx .tpm .sug button:hover { border-style: solid; border-color: var(--acc); color: var(--acc); }
+            .svx .tpm .note { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--soft); color: var(--mut); font-size: 11.5px; }
+            .svx .tpm .mf { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--ln); background: var(--soft); }
+            .svx .tpm .mf .btn { border-radius: 11px; padding: 8px 18px; font-size: 13px; font-weight: 500; }
+            .svx .tpm .mf .btn-light { background: var(--sf); border: 1px solid var(--ln); color: var(--ink); }
+            @media (max-width: 575.98px) {
+                .svx .tpm .seg { grid-template-columns: 1fr; }
+                .svx .tpm .amt { flex-wrap: wrap; }
+                .svx .tpm .amt input { font-size: 20px; }
+            }
         </style>
     @endpush
 @endonce

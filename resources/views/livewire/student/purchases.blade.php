@@ -49,13 +49,13 @@
             <table class="table tbl">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Invoice</th>
-                        <th>Branch</th>
-                        <th>Items</th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="Date" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="Invoice" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="branch" label="Branch" /></th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="items" label="Items" /></th>
                         <th>Paid with</th>
-                        <th>Status</th>
-                        <th class="text-end">Amount</th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="status" label="Status" /></th>
+                        <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="grand_total" label="Amount" /></th>
                     </tr>
                 </thead>
                 <tbody>

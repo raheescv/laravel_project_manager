@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Actions\Student\GetBalanceAction;
 use App\Actions\Student\ListTopupsAction;
 use App\Exports\StudentExport;
@@ -136,6 +137,51 @@ it('moves the statement period with the quick buttons and clears the button when
         ->assertSet('preset', null);
 });
 
+it('sorts the statement, purchases and top-ups tables by any column', function (): void {
+    StudentWorld::topUp($this->world, $this->student, 30);
+    StudentWorld::topUp($this->world, $this->student, 120);
+
+    // The ledger opens oldest first; a click on an amount column re-reads it biggest first.
+    Livewire::test(Statement::class, ['account_id' => $this->student->id])
+        ->assertSet('sortField', 'date')
+        ->assertSet('sortDirection', 'asc')
+        ->assertSeeInOrder(['30.00', '120.00'])
+        ->call('sortBy', 'credit')
+        ->assertSet('sortDirection', 'desc')
+        ->assertSeeInOrder(['120.00', '30.00'])
+        ->call('sortBy', 'credit')
+        ->assertSet('sortDirection', 'asc')
+        ->assertSeeInOrder(['30.00', '120.00'])
+        // Anything outside the whitelist leaves the order alone.
+        ->call('sortBy', 'remarks')
+        ->assertSet('sortField', 'credit');
+
+    Livewire::test(Topups::class, ['account_id' => $this->student->id])
+        ->assertSet('sortField', 'date')
+        ->call('sortBy', 'amount')
+        ->assertSet('sortDirection', 'desc')
+        ->assertSeeInOrder(['120.00', '30.00'])
+        ->call('sortBy', 'amount')
+        ->assertSeeInOrder(['30.00', '120.00'])
+        ->call('sortBy', 'journal_id')
+        ->assertSet('sortField', 'amount');
+
+    (new SaleCreateAction())->execute(StudentWorld::salePayload($this->world, $this->student->id, 20, card: 20), $this->world->user->id);
+    (new SaleCreateAction())->execute(StudentWorld::salePayload($this->world, $this->student->id, 85, card: 85), $this->world->user->id);
+
+    // Every sortable column has to survive the query, the branch one being a subquery.
+    $purchases = Livewire::test(Purchases::class, ['account_id' => $this->student->id])
+        ->assertSet('sortField', 'date')
+        ->call('sortBy', 'grand_total')
+        ->assertSeeInOrder(['85.00', '20.00'])
+        ->call('sortBy', 'grand_total')
+        ->assertSeeInOrder(['20.00', '85.00']);
+
+    foreach (['branch', 'items', 'invoice_no', 'status', 'date'] as $column) {
+        $purchases->call('sortBy', $column)->assertOk()->assertSet('sortField', $column);
+    }
+});
+
 it('blocks, unblocks and replaces a card from the card tab', function (): void {
     Livewire::test(CardTab::class, ['account_id' => $this->student->id])
         ->set('block_reason', 'Lost')
@@ -183,13 +229,15 @@ it('records an office top-up and a deduction on the card', function (): void {
     $balance = fn () => (new GetBalanceAction())->execute($this->student->id);
 
     Livewire::test(Topups::class, ['account_id' => $this->student->id])
-        ->call('toggleForm')
         ->set('amount', '75')
         ->set('payment_account_id', (string) $this->world->cashAccountId)
         ->set('reason', 'Cash from parent at the office')
         ->call('record')
         ->assertDispatched('success')
-        ->assertSet('show_form', false);
+        // The modal closes on this event, and the form is ready for the next entry.
+        ->assertDispatched('student-topup-saved')
+        ->assertSet('amount', '')
+        ->assertSet('direction', 'add');
 
     expect($balance())->toBe(75.0)
         // The money is in the till account, and the card's statement says why.
@@ -197,7 +245,6 @@ it('records an office top-up and a deduction on the card', function (): void {
         ->and(JournalEntry::where('account_id', $this->student->id)->value('remarks'))->toContain('Cash from parent at the office');
 
     Livewire::test(Topups::class, ['account_id' => $this->student->id])
-        ->call('toggleForm')
         ->set('direction', 'deduct')
         ->set('amount', '25')
         ->set('payment_account_id', (string) $this->world->cashAccountId)
@@ -216,7 +263,6 @@ it('records an office top-up and a deduction on the card', function (): void {
 
 it('will not deduct more than the card holds, or accept a blank reason', function (): void {
     Livewire::test(Topups::class, ['account_id' => $this->student->id])
-        ->call('toggleForm')
         ->set('direction', 'deduct')
         ->set('amount', '10')
         ->set('payment_account_id', (string) $this->world->cashAccountId)
@@ -225,7 +271,6 @@ it('will not deduct more than the card holds, or accept a blank reason', functio
         ->assertDispatched('error');
 
     Livewire::test(Topups::class, ['account_id' => $this->student->id])
-        ->call('toggleForm')
         ->set('amount', '10')
         ->set('payment_account_id', (string) $this->world->cashAccountId)
         ->set('reason', '  ')
