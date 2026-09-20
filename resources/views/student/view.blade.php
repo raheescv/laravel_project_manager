@@ -5,7 +5,7 @@
 
     {{-- Outside the view component on purpose: a modal rendered inside a tab is
          laid out against that panel and gets clipped by it. --}}
-    @can('student topup.view')
+    @canany(['student topup.create', 'student topup.refund'])
         @livewire('student.topup-modal', ['account_id' => $id])
-    @endcan
+    @endcanany
 </x-app-layout>

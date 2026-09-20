@@ -286,7 +286,8 @@
             .svx .tpm .mh.in { background: linear-gradient(120deg, var(--hero-1), var(--hero-2) 58%, var(--hero-3)); }
             .svx .tpm .mh.out { background: linear-gradient(120deg, color-mix(in srgb, var(--bs-danger), #000 46%), color-mix(in srgb, var(--bs-danger), #000 10%) 58%, color-mix(in srgb, var(--bs-danger), #fff 8%)); }
             .svx .tpm .mh .mi { width: 42px; height: 42px; border-radius: 14px; background: rgba(255, 255, 255, .18); display: grid; place-items: center; font-size: 16px; flex: none; }
-            .svx .tpm .mh h5 { margin: 0; font-size: 16px; font-weight: 600; }
+            /* #fff explicitly: a bare h5 otherwise takes --bs-heading-color, which is ink on the light theme. */
+            .svx .tpm .mh h5 { margin: 0; font-size: 16px; font-weight: 600; color: #fff; }
             .svx .tpm .mh p { margin: 2px 0 0; font-size: 12px; opacity: .85; }
             .svx .tpm .mh .btn-close { margin-inline-start: auto; filter: invert(1) grayscale(100%) brightness(200%); opacity: .75; }
             .svx .tpm .modal-body { padding: 20px; }
