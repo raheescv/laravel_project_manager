@@ -240,9 +240,18 @@ it('parks a payment whose captured amount differs for review', function (): void
 it('blocks a second top-up while the first has no result, then inquires it after 20 minutes', function (): void {
     $first = qpayStart($this, 100);
 
+    // A minute past the inquiry cutoff: the portal counts the parent down to it.
+    $retryAt = $first->created_at->copy()->addMinutes(StartPaymentAction::BROKEN_AFTER_MINUTES + 1);
+
     $blocked = (new StartPaymentAction())->execute($this->guardian, $this->student, 50);
     expect($blocked['success'])->toBeFalse()
-        ->and($blocked['message'])->toContain('still being confirmed');
+        ->and($blocked['message'])->toContain('still being confirmed')
+        ->and($blocked['retry_at'])->toBe($retryAt->toIso8601String());
+
+    $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->postJson($this->world->url("/api/v1/parent/students/{$this->student->id}/topups"), ['amount' => 50])
+        ->assertStatus(422)
+        ->assertJsonPath('data.retry_at', $retryAt->toIso8601String());
 
     Http::fake(fn () => Http::response(qpaySigned(['Status' => QPayClient::NOT_FOUND, 'StatusMessage' => 'Try to Inquiry about unfounded transaction'])));
     $this->travel(22)->minutes();

@@ -215,6 +215,17 @@ dl.pp-group__body dd.pp-mono{font-weight:500}
 .pp-alert__btn{position:relative; display:inline-flex; align-items:center; align-self:center; flex:none; min-height:36px; padding:0 14px; border:0; border-radius:999px; background:var(--surface); color:var(--ink); font-size:14px; font-weight:650; box-shadow:0 0 0 1px var(--line)}
 .pp-alert__btn::after{content:""; position:absolute; inset:-4px}
 
+/* A wait the parent can watch run down, inside an alert */
+.pp-countdown{display:flex; align-items:center; gap:8px; margin-top:9px; font-size:13.5px; color:var(--ink-2)}
+.pp-countdown__pulse{flex:none; width:7px; height:7px; border-radius:50%; background:var(--warn); animation:pp-pulse 2s var(--ease) infinite}
+.pp-countdown__time{
+  display:inline-flex; align-items:center; justify-content:center; flex:none; min-width:60px; padding:3px 9px;
+  border-radius:9px; background:var(--surface); color:var(--ink);
+  font:650 15px/1.25 var(--mono); font-variant-numeric:tabular-nums; box-shadow:0 0 0 1px var(--line);
+}
+@keyframes pp-pulse{0%,100%{opacity:1; transform:scale(1)} 50%{opacity:.35; transform:scale(.8)}}
+@media (prefers-reduced-motion:reduce){.pp-countdown__pulse{animation:none}}
+
 /* Auth screens */
 .pp-auth{display:flex; flex:1 0 auto; flex-direction:column; padding:calc(var(--safe-top) + 40px) 0 calc(var(--safe-bottom) + 18px)}
 .pp-auth--inner{padding-top:18px}

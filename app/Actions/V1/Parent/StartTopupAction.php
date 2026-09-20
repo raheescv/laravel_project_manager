@@ -33,7 +33,8 @@ class StartTopupAction
         $lang = $request->validated('lang') === 'Ar' ? 'Ar' : 'En';
         $response = (new StartPaymentAction())->execute($guardian, $student, (float) $request->validated('amount'), $lang);
         if (! $response['success']) {
-            throw new ParentPortalException($response['message']);
+            // A block on an unfinished top-up carries the moment it lifts, so the portal can count down to it.
+            throw new ParentPortalException($response['message'], array_filter(['retry_at' => $response['retry_at'] ?? null]));
         }
 
         $transaction = $response['data'];

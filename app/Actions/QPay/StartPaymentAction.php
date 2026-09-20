@@ -2,6 +2,7 @@
 
 namespace App\Actions\QPay;
 
+use App\Exceptions\TopupInProgressException;
 use App\Models\Account;
 use App\Models\Guardian;
 use App\Models\QpayTransaction;
@@ -63,6 +64,10 @@ class StartPaymentAction
         } catch (\Throwable $th) {
             $return['success'] = false;
             $return['message'] = $th->getMessage();
+            // The caller can count the parent down to it rather than repeat the clock time.
+            if ($th instanceof TopupInProgressException) {
+                $return['retry_at'] = $th->retryAt->toIso8601String();
+            }
         }
 
         return $return;
@@ -77,10 +82,10 @@ class StartPaymentAction
             ->get();
 
         foreach ($pending as $transaction) {
-            $brokenAt = $transaction->created_at->copy()->addMinutes(self::BROKEN_AFTER_MINUTES);
+            $retryAt = $transaction->created_at->copy()->addMinutes(self::BROKEN_AFTER_MINUTES)->addMinute();
 
-            if (now()->lt($brokenAt->copy()->addMinute())) {
-                throw new Exception('A top-up started at '.$transaction->created_at->format('h:i A').' is still being confirmed. You can try again after '.$brokenAt->copy()->addMinute()->format('h:i A').'.', 1);
+            if (now()->lt($retryAt)) {
+                throw new TopupInProgressException('A top-up started at '.$transaction->created_at->format('h:i A').' is still being confirmed. You can try again after '.$retryAt->format('h:i A').'.', $retryAt);
             }
 
             (new InquireAction())->execute($transaction);

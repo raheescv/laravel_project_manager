@@ -146,7 +146,7 @@ class ParentPortalController extends Controller
         try {
             return $this->sendSuccess($action->execute($request), 'Your password is set. Welcome!');
         } catch (ParentPortalException $e) {
-            return $this->sendError($e->getMessage(), [], 422);
+            return $this->sendError($e->getMessage(), $e->data, 422);
         } catch (\Throwable $e) {
             return $this->failure($e, 'We could not save your password. Please try again.');
         }
@@ -326,7 +326,7 @@ class ParentPortalController extends Controller
         } catch (NotFoundHttpException) {
             return $this->sendNotFoundError('Student not found');
         } catch (ParentPortalException $e) {
-            return $this->sendError($e->getMessage(), [], 422);
+            return $this->sendError($e->getMessage(), $e->data, 422);
         } catch (\Throwable $e) {
             return $this->failure($e, 'We could not block the card. Please call the school office.');
         }
@@ -338,7 +338,9 @@ class ParentPortalController extends Controller
      * Opens a QPay payment and returns the form to post to QPay (`payment.url` +
      * `payment.fields`). QPay returns the parent to the portal's `#/topups/{pun}`.
      * 422 when the amount is outside the school's range, an earlier top-up is still
-     * being confirmed, or online top-up is not set up.
+     * being confirmed, or online top-up is not set up. While an earlier top-up is
+     * still being confirmed the error carries `data.retry_at` (ISO 8601), the moment
+     * paying becomes possible again — the portal counts down to it.
      */
     public function startTopup(StartTopupRequest $request, int $account, StartTopupAction $action): JsonResponse
     {
@@ -347,7 +349,7 @@ class ParentPortalController extends Controller
         } catch (NotFoundHttpException) {
             return $this->sendNotFoundError('Student not found');
         } catch (ParentPortalException $e) {
-            return $this->sendError($e->getMessage(), [], 422);
+            return $this->sendError($e->getMessage(), $e->data, 422);
         } catch (\Throwable $e) {
             return $this->failure($e, 'We could not start the payment. Please try again.');
         }
