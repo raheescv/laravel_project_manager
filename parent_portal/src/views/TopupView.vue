@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { fetchStudent, startTopup } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import LoadError from '@/components/LoadError.vue'
+import StudentAvatar from '@/components/StudentAvatar.vue'
 import { refreshChild } from '@/children'
 import { school } from '@/school'
 import { amount as plainAmount, firstName, money } from '@/utils/format'
@@ -144,7 +145,8 @@ onUnmounted(stopTicker)
       </div>
 
       <div v-if="!desktop" class="pp-topup-card">
-        <span class="pp-minicard" aria-hidden="true"></span>
+        <StudentAvatar v-if="student" :name="student.name" :image="student.image_url" />
+        <span v-else class="pp-skel pp-avatar" aria-hidden="true"></span>
         <span class="pp-row__main">
           <span class="pp-row__sub">Current balance</span>
           <b v-if="student" :class="{ 'pp-text-neg': student.balance < 0 }">{{ money(student.balance) }}</b>
@@ -226,7 +228,7 @@ onUnmounted(stopTicker)
         <!-- Desktop: the phone's pay bar becomes a summary beside the form -->
         <aside v-if="desktop" class="pp-panel pp-summary">
           <div class="pp-summary__who">
-            <span class="pp-minicard" :class="{ 'pp-minicard--none': cardState === 'none', 'pp-minicard--blocked': cardState === 'blocked' }" aria-hidden="true"></span>
+            <StudentAvatar :name="student.name" :image="student.image_url" />
             <span class="pp-row__main"><b>{{ student.name }}</b><small v-if="student.class">{{ student.class }}</small></span>
             <span v-if="cardState === 'active'" class="pp-status pp-status--soft pp-status--active">Card active</span>
             <span v-else-if="cardState === 'blocked'" class="pp-tag pp-tag--neg">Card blocked</span>

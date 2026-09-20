@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Parent Portal · Sign-in backgrounds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   The real portal tokens, copied from parent_portal/src/assets/app.css
+   so every direction below is painted in the app's own colours.
+   ============================================================ */
+:root{
+  --accent:#B94421; --accent-hover:#9E371B;
+  --amber:#FFE2AE; --amber-2:#FFF0DB; --amber-ink:#8A5700;
+  --bg:#FFFCF5; --surface:#FFFFFF; --surface-2:#FFF0DB; --fill:rgba(46,57,45,.07);
+  --ink:#2E392D; --ink-2:#666C60; --ink-3:#A7A99D; --line:#E9E4D7;
+  --accent-hi:color-mix(in oklab,var(--accent),white 24%);
+  --accent-lo:color-mix(in oklab,var(--accent),black 42%);
+  --accent-soft:color-mix(in oklab,var(--accent) 11%,var(--surface));
+  --on-accent:#FFFFFF;
+  --card-face:linear-gradient(152deg,var(--accent-hi) 0%,var(--accent) 46%,var(--accent-lo) 100%);
+  --forest:#26332A; --forest-2:#1B241D; --gold:#D8A44B;
+  --font:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --radius:16px; --radius-control:10px;
+  color-scheme:light;
+}
+html[data-theme="dark"]{
+  --bg:#14160F; --surface:#1E211A; --surface-2:#2A2E24; --fill:rgba(244,241,230,.09);
+  --ink:#F4F1E6; --ink-2:#A8AC9E; --ink-3:#6C7064; --line:rgba(244,241,230,.15);
+  --amber:#E8CE97; --amber-2:#33301F; --amber-ink:#F0D9A8;
+  --accent-hi:color-mix(in oklab,var(--accent),white 30%);
+  --accent-soft:color-mix(in oklab,var(--accent) 17%,var(--surface));
+  --forest:#1B241D; --forest-2:#121814;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box; margin:0; padding:0}
+body{background:#0E100C; color:#F4F1E6; font-family:var(--font); -webkit-font-smoothing:antialiased}
+html[data-theme="light"] body{background:#EDEAE1; color:#2E392D}
+
+/* ---- Preview chrome ---- */
+.chrome{position:sticky; top:0; z-index:50; display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px;
+  padding:14px 20px; background:rgba(14,16,12,.86); backdrop-filter:blur(14px); border-bottom:1px solid rgba(255,255,255,.1)}
+html[data-theme="light"] .chrome{background:rgba(237,234,225,.88); border-bottom-color:rgba(46,57,45,.14)}
+.chrome h1{font-size:15px; font-weight:800; letter-spacing:-.01em; margin-right:auto}
+.chrome h1 small{display:block; font:500 11px/1.4 var(--mono); opacity:.6; letter-spacing:.1em; text-transform:uppercase}
+.seg{display:flex; gap:2px; padding:3px; border-radius:999px; background:rgba(255,255,255,.09)}
+html[data-theme="light"] .seg{background:rgba(46,57,45,.09)}
+.seg button{padding:7px 14px; border:0; border-radius:999px; background:none; color:inherit; font:600 13px var(--font); cursor:pointer; opacity:.6}
+.seg button[aria-pressed="true"]{background:var(--accent); color:#fff; opacity:1}
+.note{max-width:1180px; margin:26px auto 0; padding:0 20px; font-size:14.5px; line-height:1.6; opacity:.75}
+
+.deck{max-width:1180px; margin:0 auto; padding:26px 20px 90px; display:flex; flex-direction:column; gap:54px}
+.dir{display:none}
+.dir.is-on{display:block}
+.dir__head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px}
+.dir__head h2{font-size:22px; font-weight:800; letter-spacing:-.02em}
+.dir__head span{font:500 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; opacity:.55}
+.dir__why{margin-bottom:20px; font-size:14.5px; line-height:1.6; opacity:.72; max-width:70ch}
+
+.frames{display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start}
+.frame{border-radius:20px; overflow:hidden; box-shadow:0 30px 60px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08)}
+html[data-theme="light"] .frame{box-shadow:0 30px 60px -34px rgba(46,57,45,.45), 0 0 0 1px rgba(46,57,45,.12)}
+.frame__cap{padding:9px 14px; background:rgba(255,255,255,.07); font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; opacity:.62}
+html[data-theme="light"] .frame__cap{background:rgba(46,57,45,.07)}
+.frame--desk{flex:1 1 640px; min-width:320px}
+.frame--desk .stage{height:520px}
+.frame--phone{flex:0 0 300px}
+.frame--phone .stage{height:600px}
+.stage{position:relative; overflow:hidden; background:var(--bg); container-type:inline-size}
+
+/* ============================================================
+   Shared sign-in furniture (a faithful trace of the real markup)
+   ============================================================ */
+.pp{position:absolute; inset:0; display:flex; flex-direction:column; color:var(--ink); font-size:13px}
+.pp *{font-family:var(--font)}
+.card{width:100%; max-width:330px; border-radius:var(--radius); background:var(--surface); box-shadow:0 1px 0 var(--line), 0 20px 40px -28px rgba(0,0,0,.45)}
+.logo{width:52px; height:52px; border-radius:15px; display:grid; place-items:center; background:var(--card-face); color:#fff; font-size:22px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 12px 24px -12px color-mix(in oklab,var(--accent) 80%,transparent)}
+.h{font-size:24px; font-weight:800; letter-spacing:-.03em; line-height:1.05}
+.lede{margin-top:6px; font-size:13px; line-height:1.45; color:var(--ink-2)}
+.fld{padding:11px 13px; border-bottom:1px solid var(--line)}
+.fld:last-of-type{border-bottom:0}
+.fld b{display:block; font-size:10.5px; font-weight:600; color:var(--ink-2); letter-spacing:.01em}
+.fld i{display:block; margin-top:3px; font-style:normal; font-size:13.5px; color:var(--ink-3)}
+.btn{display:block; width:100%; padding:13px; border:0; border-radius:var(--radius-control); background:var(--accent); color:#fff; font:700 14px var(--font); text-align:center; letter-spacing:-.01em}
+.link{margin-top:14px; text-align:center; font-size:12.5px; font-weight:650; color:var(--accent)}
+.sig{margin-top:auto; padding-top:18px; text-align:center; font:500 9px/1.5 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3)}
+.moon{position:absolute; top:14px; right:14px; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font-size:13px; color:var(--ink-2); z-index:4}
+.brand{display:flex; flex-direction:column; align-items:center; text-align:center; gap:12px}
+
+/* ============================================================
+   A · WARM BLOOM — the flat apricot becomes a lit gradient field
+   ============================================================ */
+.a .pp{padding:26px; gap:22px; flex-direction:row; align-items:stretch}
+.a .panel{flex:1.02; position:relative; overflow:hidden; border-radius:22px; display:flex; flex-direction:column; justify-content:space-between; padding:30px;
+  background:
+    radial-gradient(120% 90% at 8% 4%, #FFF3D8 0%, transparent 58%),
+    radial-gradient(90% 80% at 96% 96%, color-mix(in oklab,var(--accent) 34%,transparent) 0%, transparent 62%),
+    linear-gradient(152deg,#FFE9BF 0%, #FFD79C 52%, #F7BE86 100%);
+  color:#2E392D}
+html[data-theme="dark"] .a .panel{
+  background:
+    radial-gradient(120% 90% at 8% 4%, #4A3A22 0%, transparent 58%),
+    radial-gradient(90% 80% at 96% 96%, color-mix(in oklab,var(--accent) 46%,transparent) 0%, transparent 62%),
+    linear-gradient(152deg,#3A3021 0%, #2A2418 55%, #1E1B14 100%);
+  color:#F4E9D2}
+/* The grain is what stops a gradient looking like a cheap CSS gradient. */
+.a .panel::after{content:""; position:absolute; inset:0; pointer-events:none; opacity:.34; mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.a .panel h2{font-size:clamp(20px,3.4cqw,34px); font-weight:800; letter-spacing:-.035em; line-height:1.06; position:relative; z-index:2}
+.a .panel .foot{font-size:13px; font-weight:550; position:relative; z-index:2}
+.a .plate{position:relative; z-index:2; align-self:center; width:min(64%,230px); filter:drop-shadow(0 26px 34px rgba(90,50,10,.28))}
+.a .side{flex:0 0 46%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px}
+
+/* ============================================================
+   B · ATELIER — deep forest field, gold rule, plate in a porthole
+   ============================================================ */
+.b .pp{flex-direction:row}
+.b .panel{flex:1; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:center; gap:22px; padding:34px;
+  background:radial-gradient(120% 100% at 20% 0%, #33422F 0%, transparent 60%), linear-gradient(168deg,var(--forest) 0%, var(--forest-2) 100%); color:#F3EEE0}
+.b .panel::before{content:""; position:absolute; inset:0;
+  background-image:linear-gradient(rgba(216,164,75,.14) 1px, transparent 1px);
+  background-size:100% 46px; opacity:.5}
+.b .porthole{position:relative; z-index:2; align-self:center; width:min(62%,210px); aspect-ratio:1; border-radius:50%; display:grid; place-items:center;
+  background:radial-gradient(circle at 50% 42%, #FFF6E4 0%, #F6E7C8 74%, #E9D3A8 100%);
+  box-shadow:0 0 0 1px rgba(216,164,75,.5), 0 0 0 9px rgba(216,164,75,.12), 0 34px 50px -24px rgba(0,0,0,.6)}
+.b .porthole svg{width:82%}
+.b .kicker{position:relative; z-index:2; font:500 9.5px/1 var(--mono); letter-spacing:.24em; text-transform:uppercase; color:var(--gold)}
+.b .panel h2{position:relative; z-index:2; font-size:clamp(20px,3.2cqw,32px); font-weight:800; letter-spacing:-.03em; line-height:1.08}
+.b .rule{position:relative; z-index:2; width:52px; height:2px; background:var(--gold)}
+.b .side{flex:0 0 44%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:26px; background:var(--bg)}
+
+/* ============================================================
+   C · FROSTED CANVAS — one wash, one glass card, no split to break
+   ============================================================ */
+.c .pp{align-items:center; justify-content:center; padding:24px; overflow:hidden}
+.c .pp::before{content:""; position:absolute; inset:0;
+  background:
+    radial-gradient(52% 44% at 14% 8%, color-mix(in oklab,var(--amber) 92%,transparent) 0%, transparent 70%),
+    radial-gradient(48% 46% at 88% 92%, color-mix(in oklab,var(--accent) 30%,transparent) 0%, transparent 72%),
+    radial-gradient(40% 38% at 92% 6%, color-mix(in oklab,#7FA36B 26%,transparent) 0%, transparent 70%),
+    var(--bg)}
+/* The plate is a watermark, not a picture: it belongs to the paint. */
+.c .wash{position:absolute; z-index:1; width:min(78%,420px); left:-9%; bottom:-16%; opacity:.16; transform:rotate(-8deg)}
+.c .wash-2{position:absolute; z-index:1; width:min(46%,230px); right:-6%; top:-8%; opacity:.12; transform:rotate(14deg)}
+.c .glass{position:relative; z-index:3; width:100%; max-width:340px; padding:26px 22px; border-radius:24px;
+  background:color-mix(in oklab,var(--surface) 74%,transparent); backdrop-filter:blur(26px) saturate(1.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 0 0 1px color-mix(in oklab,var(--ink) 9%,transparent), 0 40px 70px -34px rgba(60,40,10,.5)}
+html[data-theme="dark"] .c .glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px rgba(255,255,255,.1), 0 40px 70px -34px rgba(0,0,0,.8)}
+.c .glass .card{max-width:none; background:none; box-shadow:none}
+.c .glass .fld{background:color-mix(in oklab,var(--surface) 70%,transparent); border:1px solid var(--line); border-radius:var(--radius-control); margin-bottom:8px}
+.c .glass .fld:last-of-type{margin-bottom:0}
+
+/* ---- Phones: the panel is gone (as agreed), so each direction has to survive
+   on its background alone. This is what a parent actually lands on. ---- */
+@container (max-width:420px){
+  .h{font-size:21px}
+  .a .pp,.b .pp{flex-direction:column; padding:0}
+  .a .panel,.b .panel{display:none}
+
+  /* A: the bloom stops being a panel and becomes the page. */
+  .a .side{flex:1; padding:26px 22px; justify-content:center;
+    background:
+      radial-gradient(74% 42% at 12% 0%, #FFF3D8 0%, transparent 64%),
+      radial-gradient(70% 40% at 96% 100%, color-mix(in oklab,var(--accent) 22%,transparent) 0%, transparent 66%),
+      var(--bg)}
+  html[data-theme="dark"] .a .side{
+    background:
+      radial-gradient(74% 42% at 12% 0%, #3A3021 0%, transparent 64%),
+      radial-gradient(70% 40% at 96% 100%, color-mix(in oklab,var(--accent) 34%,transparent) 0%, transparent 66%),
+      var(--bg)}
+
+  /* B: the forest takes the whole screen and the form floats on it in cream. */
+  .b .side{flex:1; padding:22px; justify-content:center;
+    background:radial-gradient(110% 70% at 24% 0%, #33422F 0%, transparent 62%), linear-gradient(168deg,var(--forest) 0%, var(--forest-2) 100%)}
+  .b .side .brand{color:#F3EEE0}
+  .b .side .lede{color:#BFC7B4}
+  .b .side .card{background:var(--surface); padding:4px; box-shadow:0 26px 44px -26px rgba(0,0,0,.7)}
+  .b .side .sig{color:#8D9584}
+
+  .c .glass{max-width:none}
+}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <h1>Parent Portal · Sign-in<small>Pick a background</small></h1>
+  <div class="seg" id="dirs">
+    <button data-dir="a" aria-pressed="true">A · Warm Bloom</button>
+    <button data-dir="b" aria-pressed="false">B · Atelier</button>
+    <button data-dir="c" aria-pressed="false">C · Frosted Canvas</button>
+  </div>
+  <div class="seg" id="theme">
+    <button data-theme="light" aria-pressed="true">Light</button>
+    <button data-theme="dark" aria-pressed="false">Dark</button>
+  </div>
+</div>
+
+<p class="note">
+  Three ways to repaint the sign-in background. Everything else — the logo, the fields, the brick button, the footer —
+  is the portal you already have, so you are judging the paint, not the page. Each direction is shown at a computer
+  width and at phone width. On a phone the canteen panel is gone — as you asked — so what you see there is the
+  direction surviving on its background alone.
+</p>
+
+<div class="deck" id="deck">
+
+  <!-- ================= A ================= -->
+  <section class="dir is-on a" data-dir="a">
+    <div class="dir__head"><h2>Warm Bloom</h2><span>the apricot, lit</span></div>
+    <p class="dir__why">The flat apricot block becomes a field with light in it: a cream bloom top-left, a terracotta
+      bloom bottom-right, and a fine grain over the top so it reads as paper rather than as a CSS gradient. The plate
+      picks up a soft drop shadow and floats. Closest to what you have — nothing to relearn, it just stops looking flat.</p>
+    <div class="frames">
+      <div class="frame frame--desk"><div class="frame__cap">Computer · 1440</div><div class="stage"><div class="pp" data-slot="a-desk"></div></div></div>
+      <div class="frame frame--phone"><div class="frame__cap">Phone · 390</div><div class="stage"><div class="pp" data-slot="a-phone"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ================= B ================= -->
+  <section class="dir b" data-dir="b">
+    <div class="dir__head"><h2>Atelier</h2><span>dark, gold, restaurant</span></div>
+    <p class="dir__why">A deep forest field with a faint ruled grid, a gold hairline, and the plate set in a cream
+      porthole like a dish under a light. The most premium of the three and the biggest departure: the sign-in stops
+      looking like a school portal and starts looking like the canteen's own brand.</p>
+    <div class="frames">
+      <div class="frame frame--desk"><div class="frame__cap">Computer · 1440</div><div class="stage"><div class="pp" data-slot="b-desk"></div></div></div>
+      <div class="frame frame--phone"><div class="frame__cap">Phone · 390</div><div class="stage"><div class="pp" data-slot="b-phone"></div></div></div>
+    </div>
+  </section>
+
+  <!-- ================= C ================= -->
+  <section class="dir c" data-dir="c">
+    <div class="dir__head"><h2>Frosted Canvas</h2><span>one wash, one card</span></div>
+    <p class="dir__why">No split at all: the whole page is one soft wash — amber bloom, terracotta bloom, a green
+      breath — with the plate sunk into it as a watermark, and the form floating in a frosted glass card. Because there
+      is no panel beside anything, it is identical from 320px to an ultrawide: the most responsive of the three, and
+      nothing left to break at an awkward width.</p>
+    <div class="frames">
+      <div class="frame frame--desk"><div class="frame__cap">Computer · 1440</div><div class="stage"><div class="pp" data-slot="c-desk"></div></div></div>
+      <div class="frame frame--phone"><div class="frame__cap">Phone · 390</div><div class="stage"><div class="pp" data-slot="c-phone"></div></div></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* The real plate, inlined from parent_portal/src/components/CanteenArt.vue */
+const PLATE = `<svg viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="125" cy="173" fill="#233d3112" rx="82" ry="13"/>
+  <circle cx="121" cy="101" fill="#fffdf5" r="81"/>
+  <circle cx="121" cy="101" r="64" stroke="#e9e2ce" stroke-width="2"/>
+  <g transform="rotate(-24 120 100)">
+    <path d="M78 71 Q73 46 98 45 L147 45 Q170 49 165 72 L147 155 Q123 170 100 150Z" fill="#edbd75"/>
+    <path d="M86 70 Q73 55 91 49 Q89 34 108 45 Q119 26 130 45 Q151 31 153 51 Q171 50 160 70" fill="#3c8c4d"/>
+    <path d="M94 61 Q104 40 111 62 M133 61 Q144 40 153 60" stroke="#ed714d" stroke-width="12"/>
+    <path d="M82 76 L163 75 L146 151 Q125 165 101 150Z" fill="#ffe0a0"/>
+    <path d="M94 100 L149 92 M101 119 L140 113 M111 139 L132 135" stroke="#cc9750" stroke-linecap="round" stroke-width="5"/>
+    <path d="M78 89 L161 110 L147 156 Q127 171 99 150Z" fill="#fff8df"/>
+    <path d="M87 111 L147 127" stroke="#e8dcbc" stroke-width="2"/>
+  </g>
+  <path d="M35 28 V44 M27 36 H43 M199 135 V149 M192 142 H206" stroke="#eaa134" stroke-linecap="round" stroke-width="3"/>
+  <path d="M190 49 Q203 30 210 46 Q208 58 190 49Z" fill="#5a9764"/>
+</svg>`
+
+/* The form, identical in every direction — you are comparing paint, not layout. */
+const FORM = `
+  <div class="brand">
+    <div class="logo">&#127860;</div>
+    <div>
+      <div class="h">Welcome back</div>
+      <div class="lede">Use the mobile number or email registered with your school.</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div class="fld"><b>Mobile number or email</b><i>parent@example.com</i></div>
+    <div class="fld"><b>Password</b><i>••••••••</i></div>
+  </div>
+  <div style="margin-top:14px"><div class="btn">Sign in</div></div>
+  <div class="link">Forgot password?</div>
+  <div class="sig">Newrest School Canteen · Parent access</div>`
+
+const A = `<div class="moon">&#9790;</div>
+  <div class="panel">
+    <h2>Their canteen.<br/>All in one place.</h2>
+    <div class="plate">${PLATE}</div>
+    <div class="foot">A little care, every school day.</div>
+  </div>
+  <div class="side">${FORM}</div>`
+
+const B = `<div class="moon">&#9790;</div>
+  <div class="panel">
+    <div class="kicker">Newrest · Parent access</div>
+    <h2>Their canteen.<br/>All in one place.</h2>
+    <div class="rule"></div>
+    <div class="porthole">${PLATE}</div>
+  </div>
+  <div class="side">${FORM}</div>`
+
+const C = `<div class="moon">&#9790;</div>
+  <div class="wash">${PLATE}</div>
+  <div class="wash-2">${PLATE}</div>
+  <div class="glass">${FORM}</div>`
+
+const MARKUP = { a: A, b: B, c: C }
+document.querySelectorAll('[data-slot]').forEach((el) => {
+  el.innerHTML = MARKUP[el.dataset.slot.split('-')[0]]
+})
+
+function pick(group, attr, apply) {
+  const box = document.getElementById(group)
+  box.addEventListener('click', (e) => {
+    const btn = e.target.closest('button')
+    if (!btn) return
+    box.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)))
+    apply(btn.dataset[attr])
+  })
+}
+pick('dirs', 'dir', (dir) => {
+  document.querySelectorAll('.dir').forEach((s) => s.classList.toggle('is-on', s.dataset.dir === dir))
+})
+pick('theme', 'theme', (theme) => document.documentElement.setAttribute('data-theme', theme))
+</script>
+</body>
+</html>

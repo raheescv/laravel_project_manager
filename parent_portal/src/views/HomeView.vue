@@ -7,6 +7,7 @@ import AppBar from '@/components/AppBar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import ChildCard from '@/components/ChildCard.vue'
 import LoadError from '@/components/LoadError.vue'
+import StudentAvatar from '@/components/StudentAvatar.vue'
 import { children, loadChildren } from '@/children'
 import { school } from '@/school'
 import { session } from '@/session'
@@ -129,7 +130,7 @@ onMounted(() => {
       <h2 class="pp-panel__head pp-panel__title">Children</h2>
       <div class="pp-group__body">
         <div v-for="student in students" :key="student.account_id" class="pp-row pp-kid-row">
-          <span class="pp-minicard" :class="{ 'pp-minicard--none': !student.has_card, 'pp-minicard--blocked': student.has_card && student.card_blocked }"></span>
+          <StudentAvatar :name="student.name" :image="student.image_url" />
           <span class="pp-row__main">
             <span class="pp-row__title">{{ student.name }}</span>
             <span class="pp-row__sub">{{ [student.class || student.admission_no, cardNote(student)].filter(Boolean).join(' · ') }}</span>

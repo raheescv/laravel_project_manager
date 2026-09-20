@@ -48,9 +48,9 @@ async function submit() {
     <main class="pp-auth">
       <div class="pp-auth__brand">
         <div v-if="school.logo" class="pp-logo pp-logo--image"><img :src="school.logo" :alt="`${school.name} logo`" /></div>
-        <div v-else class="pp-logo" role="img" aria-hidden="true"><i class="fa fa-graduation-cap"></i></div>
-        <h1 class="pp-auth__school">{{ school.name || 'Parent Portal' }}</h1>
-        <span class="pp-auth__tag"><i class="fa fa-lock"></i>Parent Portal</span>
+        <div v-else class="pp-logo" role="img" aria-hidden="true"><i class="fa fa-cutlery"></i></div>
+        <h1 class="pp-auth__school">Welcome back</h1>
+        <p class="pp-auth__lede">Use the mobile number or email registered with your school.</p>
       </div>
 
       <div v-if="error || schoolError" class="pp-alert" role="alert">
@@ -59,7 +59,7 @@ async function submit() {
       </div>
 
       <form novalidate @submit.prevent="submit">
-        <div class="pp-group">
+        <div class="pp-group pp-group--form">
           <div class="pp-group__body">
             <div class="pp-field" :class="{ 'is-invalid': errors.login }">
               <label class="pp-field__body">
@@ -73,6 +73,7 @@ async function submit() {
                   autocapitalize="off"
                   spellcheck="false"
                   maxlength="150"
+                  placeholder="parent@example.com"
                 />
               </label>
             </div>
@@ -81,14 +82,15 @@ async function submit() {
               <span class="pp-row__main"><span class="pp-row__title">Keep me signed in</span></span>
               <span class="pp-switch"><input v-model="form.remember" type="checkbox" /><span class="pp-switch__track"></span></span>
             </label>
+            <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy }" type="submit" :disabled="busy">
+              <span v-if="busy" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>
+              <i v-else class="fa fa-sign-in"></i>{{ busy ? 'Signing in…' : 'Sign in' }}
+            </button>
           </div>
           <p v-if="!form.remember" class="pp-group__foot">You'll be signed out when you close this page.</p>
         </div>
 
         <div class="pp-auth__actions">
-          <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy }" type="submit" :disabled="busy">
-            <span v-if="busy" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy ? 'Signing in…' : 'Sign in' }}
-          </button>
           <RouterLink class="pp-link" :to="{ name: 'forgot' }">Forgot password?</RouterLink>
         </div>
       </form>
@@ -98,6 +100,7 @@ async function submit() {
           on <a class="pp-num" :href="`tel:${school.contact.mobile}`">{{ school.contact.mobile }}</a></template
         >.
       </p>
+      <p class="pp-auth__sig">{{ school.name || 'School canteen' }} · Parent access</p>
     </main>
   </AuthFrame>
 </template>

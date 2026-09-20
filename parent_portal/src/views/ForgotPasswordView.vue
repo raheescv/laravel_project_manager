@@ -41,7 +41,7 @@ async function submit() {
           <h1>Forgot your password?</h1>
           <p>Enter the mobile number or email you gave the school. We'll send you a link to set a new password.</p>
         </div>
-        <div class="pp-group">
+        <div class="pp-group pp-group--form">
           <div class="pp-group__body">
             <div class="pp-field" :class="{ 'is-invalid': error }">
               <label class="pp-field__body">

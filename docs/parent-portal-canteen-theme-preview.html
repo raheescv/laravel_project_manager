@@ -7,7 +7,7 @@
 <meta name="description" content="The warm 'Canteen' theme (cream, amber, brick) applied to the Parent Portal: sign in, children, a child and top up, on a computer and on a phone, in light and dark.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Figtree:wght@400..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
 
 <style>
@@ -94,14 +94,15 @@ body{
    Everything else in the portal already reads these.
    ===================================================================== */
 .pp-root{
-  --accent:#B94420;            /* brick — the sign-in button, every primary action */
-  --amber:#FFE3AF;             /* the canteen panel */
-  --amber-2:#FFF4DE;
-  --amber-ink:#8A4A16;
+  --accent:#B94421;            /* brick — the sign-in button, every primary action */
+  --amber:#FFE2AE;             /* the canteen panel */
+  --amber-2:#FFF0DB;
+  --amber-ink:#8A5700;
+  --avatar:#F5D987; --avatar-ink:#574721;
   --safe-top:0px; --safe-bottom:0px;
-  --bg:#FFFDF5; --surface:#FFFFFF; --surface-2:#F6EEDC; --fill:rgba(38,49,34,.07);
-  --ink:#263122; --ink-2:#65645B; --ink-3:#A9A79B; --line:rgba(38,49,34,.13);
-  --pos:#3F7D4E; --neg:#C0392B; --warn:#B87514;
+  --bg:#FFFCF5; --surface:#FFFFFF; --surface-2:#FFF0DB; --fill:rgba(46,57,45,.07);
+  --ink:#2E392D; --ink-2:#666C60; --ink-3:#A7A99D; --line:#E9E4D7;
+  --pos:#167A55; --neg:#A33A2B; --warn:#8A5700;
   --pos-soft:color-mix(in oklab,var(--pos) 13%,var(--surface));
   --neg-soft:color-mix(in oklab,var(--neg) 10%,var(--surface));
   --warn-soft:color-mix(in oklab,var(--warn) 13%,var(--surface));
@@ -115,19 +116,18 @@ body{
   --card-ink:#FFFFFF;          /* NEW — the card face is not always dark now */
   --card-gloss:rgba(255,255,255,.22);
   --bar:rgba(255,253,245,.82);
-  --pay-bg:#263122; --pay-ink:#FFFDF5;
-  --font:"Figtree","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --pay-bg:#304D3C; --pay-ink:#FFFCF5;
+  --font:"Manrope","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"DM Mono","IBM Plex Sans Arabic",ui-monospace,monospace;
   --ease:cubic-bezier(.2,.9,.25,1);
   --column:520px; --radius:16px;
   color-scheme:light;
 }
 html[data-theme="dark"] .pp-root{
-  --bg:#141310; --surface:#1E1D18; --surface-2:#2B2921; --fill:rgba(255,244,222,.09);
-  --ink:#F6F1E4; --ink-2:#A9A296; --ink-3:#6E6960; --line:rgba(246,241,228,.15);
-  --accent:#DD5E36;
-  --amber:#E9CC91; --amber-2:#33301F; --amber-ink:#F0D9A8;
-  --pos:#6DBC7C; --neg:#F0705C; --warn:#E0A63C;
+  --bg:#14160F; --surface:#1E211A; --surface-2:#2A2E24; --fill:rgba(244,241,230,.09);
+  --ink:#F4F1E6; --ink-2:#A8AC9E; --ink-3:#6C7064; --line:rgba(244,241,230,.15);
+  --amber:#E8CE97; --amber-2:#33301F; --amber-ink:#F0D9A8;
+  --pos:#5FB489; --neg:#E8766A; --warn:#D9A445;
   --accent-hi:color-mix(in oklab,var(--accent),white 22%);
   --accent-ink:color-mix(in oklab,var(--accent),white 26%);
   --accent-soft:color-mix(in oklab,var(--accent) 16%,var(--surface));
@@ -197,7 +197,7 @@ html[data-card="forest"] .pp-root{
 .pp-hero-icon{display:grid; place-items:center; width:72px; height:72px; margin:0 auto 18px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); font-size:30px}
 .pp-hint{padding:14px 24px 28px; font-size:13px; line-height:1.4; color:var(--ink-2)}
 
-.pp-avatar{display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; border-radius:50%; background:var(--accent-soft) center/cover no-repeat; color:var(--accent-ink); font-size:15px; font-weight:700}
+.pp-avatar{display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; border-radius:50%; background:var(--avatar) center/cover no-repeat; color:var(--avatar-ink); font-size:15px; font-weight:700}
 
 /* Buttons — CHANGED: 12px radius, 700 weight */
 .pp-btn{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:54px; padding:0 20px; border:0; border-radius:13px; font-size:17px; font-weight:700; letter-spacing:-.01em; transition:transform .12s ease,filter .12s ease}
@@ -345,12 +345,12 @@ html[data-card="forest"] .pp-root{
 .pp-topup-card small{color:var(--ink-2); font-size:13px}
 
 /* NEW — the canteen panel and its illustration (sign-in art, phone hero) */
-.pp-art{position:relative; display:flex; flex-direction:column; overflow:hidden; border-radius:26px; background:var(--amber); color:#263122}
+.pp-art{position:relative; display:flex; flex-direction:column; overflow:hidden; border-radius:16px; background:var(--amber); color:#2E392D}
 .pp-art__pitch{padding:44px 44px 0}
 .pp-art__pitch h2{font-size:52px; font-weight:800; line-height:1.02; letter-spacing:-.04em}
 .pp-art__img{display:block; width:min(100%,430px); height:auto; margin:auto auto 0}
 .pp-art__foot{padding:0 44px 34px; font-size:16px; font-weight:550}
-html[data-theme="dark"] .pp-art{color:#22301F}
+html[data-theme="dark"] .pp-art{color:#2E392D}
 
 /* =====================================================================
    DESKTOP (app.css @media (min-width:1024px) — here a container query)
@@ -432,8 +432,8 @@ html[data-theme="dark"] .pp-art{color:#22301F}
 </header>
 
 <section class="hx-intro">
-  <h1>Your mockup, applied to the whole portal</h1>
-  <p>Cream page (<code>#FFFDF5</code>), the amber canteen panel (<code>#FFE3AF</code>), deep-green ink (<code>#263122</code>) and the brick button (<code>#B94420</code>). Nothing moved: same screens, same routes, same data — only the paint, the type weight and the form fields changed. Try the card faces, the accent swatches and dark mode above.</p>
+  <h1>Your sign-in page, applied to the whole portal</h1>
+  <p>The tokens are the ones the Newrest parent site itself declares: cream page (<code>#FFFCF5</code>), the apricot panel (<code>#FFE2AE</code>), deep-green ink (<code>#2E392D</code>), the brick button (<code>#B94421</code>), Manrope, 16px cards and 9–10px controls. The plate is their own <code>svg.canteen-illustration</code>. Nothing moved: same screens, same routes, same data — only the paint, the type weight and the form fields changed. Try the card faces, the accent swatches and dark mode above.</p>
 </section>
 
 <main class="hx-stage">
@@ -452,28 +452,21 @@ html[data-theme="dark"] .pp-art{color:#22301F}
               <aside class="pp-signin__art" aria-hidden="true">
                 <div class="pp-art">
                   <div class="pp-art__pitch"><h2>Their canteen.<br>All in one place.</h2></div>
-                  <svg class="pp-art__img" viewBox="0 0 340 300" xmlns="http://www.w3.org/2000/svg">
-                    <g fill="#EBA138">
-                      <rect x="26" y="108" width="12" height="40" rx="6"/><rect x="12" y="122" width="40" height="12" rx="6"/>
-                      <rect x="300" y="190" width="12" height="40" rx="6"/><rect x="286" y="204" width="40" height="12" rx="6"/>
+                  <svg class="pp-art__img" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="125" cy="173" fill="#233d3112" rx="82" ry="13" />
+                    <circle cx="121" cy="101" fill="#fffdf5" r="81" />
+                    <circle cx="121" cy="101" r="64" stroke="#e9e2ce" stroke-width="2" />
+                    <g transform="rotate(-24 120 100)">
+                      <path d="M78 71 Q73 46 98 45 L147 45 Q170 49 165 72 L147 155 Q123 170 100 150Z" fill="#edbd75" />
+                      <path d="M86 70 Q73 55 91 49 Q89 34 108 45 Q119 26 130 45 Q151 31 153 51 Q171 50 160 70" fill="#3c8c4d" />
+                      <path d="M94 61 Q104 40 111 62 M133 61 Q144 40 153 60" stroke="#ed714d" stroke-width="12" />
+                      <path d="M82 76 L163 75 L146 151 Q125 165 101 150Z" fill="#ffe0a0" />
+                      <path d="M94 100 L149 92 M101 119 L140 113 M111 139 L132 135" stroke="#cc9750" stroke-linecap="round" stroke-width="5" />
+                      <path d="M78 89 L161 110 L147 156 Q127 171 99 150Z" fill="#fff8df" />
+                      <path d="M87 111 L147 127" stroke="#e8dcbc" stroke-width="2" />
                     </g>
-                    <path d="M314 88c-16-9-34-1-36 13 13 8 32 3 36-13z" fill="#5E9A5F"/>
-                    <ellipse cx="170" cy="274" rx="108" ry="15" fill="#F1CD8D"/>
-                    <circle cx="170" cy="158" r="118" fill="#FFFFFF"/>
-                    <circle cx="170" cy="158" r="97" fill="none" stroke="#F5EDDE" stroke-width="2"/>
-                    <g transform="rotate(-34 170 158)">
-                      <path d="M132 70C118 44 132 16 154 18c14 1 22 13 22 24 8-16 21-23 33-14 15 11 12 29-1 42z" fill="#4E8A52"/>
-                      <circle cx="150" cy="40" r="14" fill="#E8734E"/>
-                      <circle cx="196" cy="48" r="11" fill="#E8734E"/>
-                      <path d="M141 70c-8-19 2-32 15-32 10 0 16 8 16 17 5-12 13-18 22-11 11 8 9 20 2 28z" fill="#79B471"/>
-                      <path d="M128 66h84v136a42 42 0 0 1-84 0z" fill="#F0C489"/>
-                      <ellipse cx="170" cy="66" rx="42" ry="12" fill="#E7BB7E"/>
-                      <path d="M170 78v66" stroke="#E0AC6C" stroke-width="4" stroke-linecap="round" opacity=".55"/>
-                      <path d="M152 64c-9-15-2-27 8-28 9-1 13 8 13 16 0 8-5 13-5 13z" fill="#5E9A5F"/>
-                      <path d="M128 158l84-22v66a42 42 0 0 1-84 0z" fill="#FCF5E7"/>
-                      <path d="M128 158l84-22" stroke="#EADCBE" stroke-width="4" stroke-linecap="round" fill="none"/>
-                      <path d="M170 150v86" stroke="#EFE4CD" stroke-width="4" stroke-linecap="round"/>
-                    </g>
+                    <path d="M35 28 V44 M27 36 H43 M199 135 V149 M192 142 H206" stroke="#eaa134" stroke-linecap="round" stroke-width="3" />
+                    <path d="M190 49 Q203 30 210 46 Q208 58 190 49Z" fill="#5a9764" />
                   </svg>
                   <p class="pp-art__foot">A little care, every school day.</p>
                 </div>
@@ -618,28 +611,21 @@ html[data-theme="dark"] .pp-art{color:#22301F}
             <main class="pp-auth" style="padding-top:0">
               <div class="pp-art" style="border-radius:0 0 26px 26px; margin-bottom:26px">
                 <div class="pp-art__pitch" style="padding:52px 24px 0"><h2 style="font-size:32px">Their canteen.<br>All in one place.</h2></div>
-                <svg class="pp-art__img" viewBox="0 0 340 300" style="width:74%; margin-top:-6px" xmlns="http://www.w3.org/2000/svg">
-                    <g fill="#EBA138">
-                      <rect x="26" y="108" width="12" height="40" rx="6"/><rect x="12" y="122" width="40" height="12" rx="6"/>
-                      <rect x="300" y="190" width="12" height="40" rx="6"/><rect x="286" y="204" width="40" height="12" rx="6"/>
+                <svg class="pp-art__img" viewBox="0 0 240 200" style="width:74%; margin-top:-6px" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="125" cy="173" fill="#233d3112" rx="82" ry="13" />
+                    <circle cx="121" cy="101" fill="#fffdf5" r="81" />
+                    <circle cx="121" cy="101" r="64" stroke="#e9e2ce" stroke-width="2" />
+                    <g transform="rotate(-24 120 100)">
+                      <path d="M78 71 Q73 46 98 45 L147 45 Q170 49 165 72 L147 155 Q123 170 100 150Z" fill="#edbd75" />
+                      <path d="M86 70 Q73 55 91 49 Q89 34 108 45 Q119 26 130 45 Q151 31 153 51 Q171 50 160 70" fill="#3c8c4d" />
+                      <path d="M94 61 Q104 40 111 62 M133 61 Q144 40 153 60" stroke="#ed714d" stroke-width="12" />
+                      <path d="M82 76 L163 75 L146 151 Q125 165 101 150Z" fill="#ffe0a0" />
+                      <path d="M94 100 L149 92 M101 119 L140 113 M111 139 L132 135" stroke="#cc9750" stroke-linecap="round" stroke-width="5" />
+                      <path d="M78 89 L161 110 L147 156 Q127 171 99 150Z" fill="#fff8df" />
+                      <path d="M87 111 L147 127" stroke="#e8dcbc" stroke-width="2" />
                     </g>
-                    <path d="M314 88c-16-9-34-1-36 13 13 8 32 3 36-13z" fill="#5E9A5F"/>
-                    <ellipse cx="170" cy="274" rx="108" ry="15" fill="#F1CD8D"/>
-                    <circle cx="170" cy="158" r="118" fill="#FFFFFF"/>
-                    <circle cx="170" cy="158" r="97" fill="none" stroke="#F5EDDE" stroke-width="2"/>
-                    <g transform="rotate(-34 170 158)">
-                      <path d="M132 70C118 44 132 16 154 18c14 1 22 13 22 24 8-16 21-23 33-14 15 11 12 29-1 42z" fill="#4E8A52"/>
-                      <circle cx="150" cy="40" r="14" fill="#E8734E"/>
-                      <circle cx="196" cy="48" r="11" fill="#E8734E"/>
-                      <path d="M141 70c-8-19 2-32 15-32 10 0 16 8 16 17 5-12 13-18 22-11 11 8 9 20 2 28z" fill="#79B471"/>
-                      <path d="M128 66h84v136a42 42 0 0 1-84 0z" fill="#F0C489"/>
-                      <ellipse cx="170" cy="66" rx="42" ry="12" fill="#E7BB7E"/>
-                      <path d="M170 78v66" stroke="#E0AC6C" stroke-width="4" stroke-linecap="round" opacity=".55"/>
-                      <path d="M152 64c-9-15-2-27 8-28 9-1 13 8 13 16 0 8-5 13-5 13z" fill="#5E9A5F"/>
-                      <path d="M128 158l84-22v66a42 42 0 0 1-84 0z" fill="#FCF5E7"/>
-                      <path d="M128 158l84-22" stroke="#EADCBE" stroke-width="4" stroke-linecap="round" fill="none"/>
-                      <path d="M170 150v86" stroke="#EFE4CD" stroke-width="4" stroke-linecap="round"/>
-                    </g>
+                    <path d="M35 28 V44 M27 36 H43 M199 135 V149 M192 142 H206" stroke="#eaa134" stroke-linecap="round" stroke-width="3" />
+                    <path d="M190 49 Q203 30 210 46 Q208 58 190 49Z" fill="#5a9764" />
                   </svg>
               </div>
               <div class="pp-auth__brand" style="padding-bottom:18px">
@@ -738,15 +724,15 @@ html[data-theme="dark"] .pp-art{color:#22301F}
   <section class="hx-sec">
     <h2>The palette <em>lifted from your image</em></h2>
     <div class="hx-tokens">
-      <div class="hx-token"><i style="--sw:#FFFDF5"></i><span><b>Page</b><small>#FFFDF5 · --bg</small></span></div>
-      <div class="hx-token"><i style="--sw:#FFE3AF"></i><span><b>Canteen panel</b><small>#FFE3AF · --amber</small></span></div>
+      <div class="hx-token"><i style="--sw:#FFFCF5"></i><span><b>Page</b><small>#FFFCF5 · --bg</small></span></div>
+      <div class="hx-token"><i style="--sw:#FFE2AE"></i><span><b>Canteen panel</b><small>#FFE2AE · --amber</small></span></div>
       <div class="hx-token"><i style="--sw:#FFFFFF"></i><span><b>Cards &amp; rows</b><small>#FFFFFF · --surface</small></span></div>
-      <div class="hx-token"><i style="--sw:#263122"></i><span><b>Ink</b><small>#263122 · --ink</small></span></div>
-      <div class="hx-token"><i style="--sw:#65645B"></i><span><b>Quiet ink</b><small>#65645B · --ink-2</small></span></div>
-      <div class="hx-token"><i style="--sw:#B94420"></i><span><b>Brick</b><small>#B94420 · --accent</small></span></div>
-      <div class="hx-token"><i style="--sw:#EBA138"></i><span><b>Amber detail</b><small>#EBA138</small></span></div>
-      <div class="hx-token"><i style="--sw:#3F7D4E"></i><span><b>Money in</b><small>#3F7D4E · --pos</small></span></div>
-      <div class="hx-token"><i style="--sw:#C0392B"></i><span><b>Money out</b><small>#C0392B · --neg</small></span></div>
+      <div class="hx-token"><i style="--sw:#2E392D"></i><span><b>Ink</b><small>#2E392D · --ink</small></span></div>
+      <div class="hx-token"><i style="--sw:#666C60"></i><span><b>Quiet ink</b><small>#666C60 · --ink-2</small></span></div>
+      <div class="hx-token"><i style="--sw:#B94421"></i><span><b>Brick</b><small>#B94421 · --accent</small></span></div>
+      <div class="hx-token"><i style="--sw:#F5D987"></i><span><b>Avatar</b><small>#F5D987 · --avatar</small></span></div>
+      <div class="hx-token"><i style="--sw:#167A55"></i><span><b>Money in</b><small>#167A55 · --pos</small></span></div>
+      <div class="hx-token"><i style="--sw:#A33A2B"></i><span><b>Money out</b><small>#A33A2B · --neg</small></span></div>
     </div>
     <div class="hx-note">
       <b>What the port actually changes</b>
@@ -755,7 +741,7 @@ html[data-theme="dark"] .pp-art{color:#22301F}
         <li><b>Two new tokens</b> — <code>--card-ink</code> / <code>--card-gloss</code>, so a light card face (Amber) is possible; today the card text is a hard-coded white.</li>
         <li><b>Boxed fields</b> — <code>.pp-form</code> + <code>.pp-boxed</code> for the four form screens (sign in, forgot, set password, change password). Data rows keep the grouped-list look.</li>
         <li><b>The canteen panel</b> — <code>.pp-art</code> with the inline illustration replaces today's dark gradient sign-in panel, and becomes the phone sign-in header.</li>
-        <li><b>Type</b> — headings go to Figtree 800 at −.035em. Same font, already loaded.</li>
+        <li><b>Type</b> — Manrope (their typeface) replaces Figtree; headings at 800 and −.035em.</li>
       </ul>
     </div>
     <div class="hx-note">

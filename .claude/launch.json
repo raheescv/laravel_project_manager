@@ -4,8 +4,25 @@
     {
       "name": "docs-preview",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4599", "--directory", "docs"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4599",
+        "--directory",
+        "docs"
+      ],
       "port": 4599
+    },
+    {
+      "name": "parent-portal",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "parent_portal"
+      ],
+      "port": 5190
     }
   ]
 }

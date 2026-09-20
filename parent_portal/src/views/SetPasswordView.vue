@@ -83,7 +83,7 @@ onMounted(check)
         <div v-if="error" class="pp-alert" role="alert">
           <i class="fa fa-exclamation-circle"></i><span class="pp-alert__main">{{ error }}</span>
         </div>
-        <div class="pp-group">
+        <div class="pp-group pp-group--form">
           <div class="pp-group__body">
             <PasswordField v-model="form.password" label="New password" autocomplete="new-password" :invalid="submitted && !longEnough" />
             <PasswordField v-model="form.confirm" label="Confirm new password" autocomplete="new-password" :invalid="submitted && longEnough && !matches" />

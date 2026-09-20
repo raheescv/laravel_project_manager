@@ -126,7 +126,7 @@ client unwraps it).
 
 | Endpoint                                 | Used for                                  |
 | ---------------------------------------- | ----------------------------------------- |
-| `GET  /school`                           | Name, logo, theme colour (`--accent`), currency |
+| `GET  /school`                           | Name, logo, currency (the palette is the portal's own) |
 | `POST /login`                            | Sign in → token                           |
 | `POST /forgot-password`                  | Send a new set-password link (`login` = mobile or email) |
 | `GET  /set-password/{token}`             | Is the link still valid?                  |
@@ -152,7 +152,7 @@ client unwraps it).
 src/
 ├── api/          client.js (axios + token + tenant + envelope), parent.js (per-endpoint fns)
 ├── session.js    the parent's token on this device
-├── school.js     school branding → --accent, currency
+├── school.js     school name, logo, currency
 ├── children.js   the parent's children, shared by home and the desktop wallet
 ├── router/       hash routes + sign-in guard
 ├── utils/        format.js (money, dates, months), qpay.js (post to QPay), viewport.js (desktop)

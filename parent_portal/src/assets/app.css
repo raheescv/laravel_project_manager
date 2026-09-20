@@ -1,34 +1,42 @@
 /*
- * Parent Portal — "Wallet" design (docs/parent-portal-premium-preview.html, direction A).
+ * Parent Portal — the "Wallet" layout in the "Canteen" theme
+ * (docs/parent-portal-canteen-theme-preview.html).
  * Each child is a physical student card; everything else is an iOS inset-grouped
- * list. Every accent shade derives from --accent, which school.js sets from the
- * school's theme colour. Dark mode follows the device, until the header
- * switch picks a side (theme.js).
+ * list. The paint is a school canteen: cream page, an amber panel, deep-green ink
+ * and a brick button. Every accent shade derives from --accent, which school.js
+ * sets from the school's theme colour (brick when the school has not picked one).
+ * Dark mode follows the device, until the header switch picks a side (theme.js).
  */
 
 /* ---- Tokens ---- */
 :root{
-  --accent:#1D4ED8;
+  --accent:#B94421; --accent-hover:#9E371B;
+  /* The canteen panel: what the sign-in art and the small date chips are painted in. */
+  --amber:#FFE2AE; --amber-2:#FFF0DB; --amber-ink:#8A5700;
   --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
-  --bg:#F2F2F7; --surface:#FFFFFF; --surface-2:#E5E5EA; --fill:rgba(118,118,128,.12);
-  --ink:#0B0B0F; --ink-2:#6E6E76; --ink-3:#B0B0B6; --line:rgba(60,60,67,.15);
-  --pos:#1E9A53; --neg:#E0352B; --warn:#C46A00;
+  --bg:#FFFCF5; --surface:#FFFFFF; --surface-2:#FFF0DB; --fill:rgba(46,57,45,.07);
+  --ink:#2E392D; --ink-2:#666C60; --ink-3:#A7A99D; --line:#E9E4D7;
+  --pos:#167A55; --neg:#A33A2B; --warn:#8A5700;
   --pos-soft:color-mix(in oklab,var(--pos) 13%,var(--surface));
   --neg-soft:color-mix(in oklab,var(--neg) 10%,var(--surface));
   --warn-soft:color-mix(in oklab,var(--warn) 13%,var(--surface));
   --accent-hi:color-mix(in oklab,var(--accent),white 24%);
   --accent-lo:color-mix(in oklab,var(--accent),black 42%);
-  --accent-ink:color-mix(in oklab,var(--accent),black 4%);
-  --accent-soft:color-mix(in oklab,var(--accent) 12%,var(--surface));
+  --accent-ink:color-mix(in oklab,var(--accent),black 8%);
+  --accent-soft:color-mix(in oklab,var(--accent) 11%,var(--surface));
   --accent-ring:color-mix(in oklab,var(--accent) 55%,transparent);
   --on-accent:#FFFFFF;
   --card-face:linear-gradient(152deg,var(--accent-hi) 0%,var(--accent) 46%,var(--accent-lo) 100%);
-  --bar:rgba(242,242,247,.8);
-  --pay-bg:#000000; --pay-ink:#FFFFFF;
-  --font:"Figtree","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* A card face is not always dark: --card-ink and --card-gloss let a light face
+     (amber, cream) keep its text and its highlights readable. */
+  --card-ink:#FFFFFF; --card-gloss:rgba(255,255,255,.22);
+  --avatar:#F5D987; --avatar-ink:#574721;
+  --bar:rgba(255,253,245,.82);
+  --pay-bg:#304D3C; --pay-ink:#FFFCF5;
+  --font:"Manrope","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"DM Mono","IBM Plex Sans Arabic",ui-monospace,monospace;
   --ease:cubic-bezier(.2,.9,.25,1);
-  --column:520px;
+  --column:520px; --radius:16px; --radius-control:10px;
   color-scheme:light;
 }
 /*
@@ -39,24 +47,28 @@
  */
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#000000; --surface:#1C1C1E; --surface-2:#2C2C2E; --fill:rgba(118,118,128,.24);
-    --ink:#F5F5F7; --ink-2:#98989F; --ink-3:#5C5C62; --line:rgba(84,84,88,.55);
-    --pos:#30D158; --neg:#FF453A; --warn:#FF9F0A;
+    --bg:#14160F; --surface:#1E211A; --surface-2:#2A2E24; --fill:rgba(244,241,230,.09);
+    --ink:#F4F1E6; --ink-2:#A8AC9E; --ink-3:#6C7064; --line:rgba(244,241,230,.15);
+    --amber:#E8CE97; --amber-2:#33301F; --amber-ink:#F0D9A8;
+    --pos:#5FB489; --neg:#E8766A; --warn:#D9A445;
     --accent-hi:color-mix(in oklab,var(--accent),white 30%);
     --accent-ink:color-mix(in oklab,var(--accent),white 45%);
-    --bar:rgba(16,16,18,.78);
-    --pay-bg:#FFFFFF; --pay-ink:#000000;
+    --accent-soft:color-mix(in oklab,var(--accent) 17%,var(--surface));
+    --bar:rgba(20,19,16,.84);
+    --pay-bg:#FFE3AF; --pay-ink:#263122;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#000000; --surface:#1C1C1E; --surface-2:#2C2C2E; --fill:rgba(118,118,128,.24);
-  --ink:#F5F5F7; --ink-2:#98989F; --ink-3:#5C5C62; --line:rgba(84,84,88,.55);
-  --pos:#30D158; --neg:#FF453A; --warn:#FF9F0A;
+  --bg:#14160F; --surface:#1E211A; --surface-2:#2A2E24; --fill:rgba(244,241,230,.09);
+  --ink:#F4F1E6; --ink-2:#A8AC9E; --ink-3:#6C7064; --line:rgba(244,241,230,.15);
+  --amber:#E8CE97; --amber-2:#33301F; --amber-ink:#F0D9A8;
+  --pos:#5FB489; --neg:#E8766A; --warn:#D9A445;
   --accent-hi:color-mix(in oklab,var(--accent),white 30%);
   --accent-ink:color-mix(in oklab,var(--accent),white 45%);
-  --bar:rgba(16,16,18,.78);
-  --pay-bg:#FFFFFF; --pay-ink:#000000;
+  --accent-soft:color-mix(in oklab,var(--accent) 17%,var(--surface));
+  --bar:rgba(20,19,16,.84);
+  --pay-bg:#FFE3AF; --pay-ink:#263122;
   color-scheme:dark;
 }
 
@@ -124,17 +136,17 @@ input:focus-visible{outline:none}
 /* Crescent mark (stand-in for the school logo image) */
 .pp-mark{flex:none; font-size:12px; line-height:1; letter-spacing:0}
 .pp-appbar__logo{flex:none; width:auto; max-width:72px; height:22px; object-fit:contain}
-.pp-logo{position:relative; display:grid; place-items:center; width:84px; height:84px; overflow:hidden; border-radius:22px; background:var(--card-face); box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 14px 28px -14px color-mix(in oklab,var(--accent) 80%,transparent)}
-.pp-logo > .fa{color:#FFFFFF; font-size:38px}
+.pp-logo{position:relative; display:grid; place-items:center; width:84px; height:84px; overflow:hidden; border-radius:24px; background:var(--card-face); color:var(--card-ink); box-shadow:inset 0 1px 0 var(--card-gloss),0 14px 28px -14px color-mix(in oklab,var(--accent) 80%,transparent)}
+.pp-logo > .fa{font-size:38px}
 .pp-logo--image{background:#FFFFFF; box-shadow:inset 0 0 0 1px var(--line),0 14px 28px -16px rgba(0,0,0,.35)}
 .pp-logo--image img{width:100%; height:100%; padding:12px; object-fit:contain}
 
 /* Headings */
 .pp-largetitle{padding:4px 20px 18px}
-.pp-largetitle h1{font-size:34px; font-weight:750; line-height:1.08; letter-spacing:-.025em}
+.pp-largetitle h1{font-size:34px; font-weight:800; line-height:1.05; letter-spacing:-.035em}
 .pp-largetitle p{margin-top:4px; font-size:15px; color:var(--ink-2)}
 .pp-lede{padding:0 28px 26px; text-align:center}
-.pp-lede :is(h1,h2){font-size:28px; font-weight:750; line-height:1.12; letter-spacing:-.02em}
+.pp-lede :is(h1,h2){font-size:30px; font-weight:800; line-height:1.06; letter-spacing:-.032em}
 .pp-lede p{margin-top:8px; font-size:16px; line-height:1.45; color:var(--ink-2)}
 .pp-hero-icon{display:grid; place-items:center; width:72px; height:72px; margin:0 auto 18px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); font-size:30px}
 .pp-hero-icon--pos{background:var(--pos-soft); color:var(--pos)}
@@ -143,23 +155,23 @@ input:focus-visible{outline:none}
 .pp-hint{padding:14px 32px 28px; text-align:center; font-size:13px; line-height:1.4; color:var(--ink-2)}
 
 /* Avatar */
-.pp-avatar{display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; border-radius:50%; background:var(--accent-soft) center/cover no-repeat; color:var(--accent-ink); font-size:15px; font-weight:700}
+.pp-avatar{display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; border-radius:50%; background:var(--avatar) center/cover no-repeat; color:var(--avatar-ink); font-size:15px; font-weight:700}
 
 /* Buttons */
-.pp-btn{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:52px; padding:0 20px; border:0; border-radius:14px; font-size:17px; font-weight:650; letter-spacing:-.005em; transition:transform .12s ease,filter .12s ease}
+.pp-btn{display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:54px; padding:0 20px; border:0; border-radius:var(--radius-control); font-size:17px; font-weight:700; letter-spacing:-.01em; transition:transform .12s ease,filter .12s ease}
 .pp-btn:active{transform:scale(.985); filter:brightness(.93)}
-.pp-btn--primary{background:var(--accent); color:var(--on-accent)}
+.pp-btn--primary{background:var(--accent); color:var(--on-accent); box-shadow:0 10px 22px -14px var(--accent)}
 .pp-btn--tinted{background:var(--accent-soft); color:var(--accent-ink)}
 .pp-btn--danger{background:var(--neg); color:#FFFFFF}
 .pp-btn--pay{min-height:54px; background:var(--pay-bg); color:var(--pay-ink)}
 .pp-btn:disabled{opacity:.38; pointer-events:none}
-.pp-link{display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 10px; border:0; background:none; color:var(--accent-ink); font-size:16px; font-weight:500}
+.pp-link{display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 10px; border:0; background:none; color:var(--accent-ink); font-size:16px; font-weight:600}
 .pp-cta{padding:0 16px 26px}
 
 /* Inset grouped list */
 .pp-group{margin:0 16px 26px}
-.pp-group__head{display:flex; align-items:baseline; justify-content:space-between; padding:0 16px 7px; font-size:13px; font-weight:500; color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em}
-.pp-group__body{overflow:hidden; border-radius:14px; background:var(--surface)}
+.pp-group__head{display:flex; align-items:baseline; justify-content:space-between; padding:0 16px 8px; font:500 11px/1 var(--mono); color:var(--ink-2); text-transform:uppercase; letter-spacing:.14em}
+.pp-group__body{overflow:hidden; border-radius:var(--radius); background:var(--surface); box-shadow:0 0 0 1px var(--line)}
 .pp-group__foot{display:flex; gap:6px; padding:8px 16px 0; font-size:13px; line-height:1.4; color:var(--ink-2)}
 .pp-group__foot.is-error{color:var(--neg)}
 .pp-group__foot.is-ok .fa{color:var(--pos)}
@@ -167,7 +179,7 @@ input:focus-visible{outline:none}
 :is(button,a,label).pp-row:active{background:var(--fill)}
 :is(.pp-row,.pp-field) + :is(.pp-row,.pp-field)::before{content:""; position:absolute; top:0; right:0; left:var(--sep,16px); height:1px; background:var(--line)}
 .pp-row--icon{--sep:58px}
-.pp-row__icon{display:grid; place-items:center; flex:none; width:30px; height:30px; border-radius:8px; background:var(--accent); color:#FFFFFF; font-size:15px}
+.pp-row__icon{display:grid; place-items:center; flex:none; width:30px; height:30px; border-radius:9px; background:var(--accent); color:var(--on-accent); font-size:15px}
 .pp-row__icon--pos{background:var(--pos)}
 .pp-row__icon--neg{background:var(--neg)}
 .pp-row__icon--warn{background:var(--warn)}
@@ -199,9 +211,9 @@ dl.pp-group__body dd.pp-mono{font-weight:500}
 .pp-eye{flex:none; width:44px; height:44px; border:0; border-radius:50%; background:none; color:var(--ink-3); font-size:17px}
 .pp-switch{position:relative; flex:none; width:51px; height:31px}
 .pp-switch input{position:absolute; inset:-7px; z-index:1; margin:0; opacity:0; cursor:pointer}
-.pp-switch__track{position:absolute; inset:0; border-radius:999px; background:var(--surface-2); transition:background-color .2s}
+.pp-switch__track{position:absolute; inset:0; border-radius:999px; background:var(--surface-2); box-shadow:inset 0 0 0 1px var(--line); transition:background-color .2s,box-shadow .2s}
 .pp-switch__track::after{content:""; position:absolute; top:2px; left:2px; width:27px; height:27px; border-radius:50%; background:#FFFFFF; box-shadow:0 3px 8px rgba(0,0,0,.15),0 1px 1px rgba(0,0,0,.16); transition:transform .28s var(--ease)}
-.pp-switch input:checked + .pp-switch__track{background:var(--accent)}
+.pp-switch input:checked + .pp-switch__track{background:var(--accent); box-shadow:none}
 .pp-switch input:checked + .pp-switch__track::after{transform:translateX(20px)}
 .pp-switch input:focus-visible + .pp-switch__track{outline:2px solid var(--accent-ring); outline-offset:2px}
 
@@ -229,20 +241,60 @@ dl.pp-group__body dd.pp-mono{font-weight:500}
 /* Auth screens */
 .pp-auth{display:flex; flex:1 0 auto; flex-direction:column; padding:calc(var(--safe-top) + 40px) 0 calc(var(--safe-bottom) + 18px)}
 .pp-auth--inner{padding-top:18px}
-.pp-auth__brand{display:flex; flex-direction:column; align-items:center; padding:0 24px 30px; text-align:center}
-.pp-auth__school{margin-top:18px; font-size:26px; font-weight:750; letter-spacing:-.02em}
+.pp-auth__brand{display:flex; flex-direction:column; align-items:flex-start; padding:0 20px 24px}
+.pp-auth__school{margin-top:18px; font-size:32px; font-weight:800; line-height:1.05; letter-spacing:-.035em}
 .pp-auth__arabic{margin-top:2px; font-size:15px; color:var(--ink-2)}
 .pp-auth__tag{display:inline-flex; align-items:center; gap:7px; margin-top:12px; padding:6px 11px; border-radius:999px; background:var(--fill); color:var(--ink-2); font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase}
 .pp-auth__actions{display:flex; flex-direction:column; align-items:center; gap:6px; padding:0 16px}
 .pp-auth__foot{margin-top:auto; padding:28px 24px 0; text-align:center; font-size:13px; color:var(--ink-2)}
+.pp-auth__lede{margin-top:8px; font-size:16px; line-height:1.45; color:var(--ink-2)}
+.pp-auth__sig{padding:24px 24px 0; text-align:center; font:500 11px/1.5 var(--mono); color:var(--ink-3); text-transform:uppercase; letter-spacing:.14em}
+
+/*
+ * A form, not a list: .pp-group--form turns an inset-grouped list into the
+ * theme's form card — one padded white card, each field a box with its label
+ * above it. The markup is the same .pp-group / .pp-field, so every auth screen
+ * gets it by adding the one class.
+ */
+.pp-group--form .pp-group__body{display:grid; gap:14px; overflow:visible; padding:18px}
+.pp-group--form :is(.pp-row,.pp-field) + .pp-row::before{display:none}
+.pp-group--form .pp-field{
+  position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+  row-gap:7px; min-height:0; padding:0; background:none;
+}
+/* The field's box. The second selector carries the same weight as the list
+   separator it replaces, so a field that follows another field keeps its box. */
+.pp-group--form .pp-field::before,
+.pp-group--form :is(.pp-row,.pp-field) + .pp-field::before{
+  content:""; position:absolute; top:auto; right:0; bottom:0; left:0; height:54px; border-radius:var(--radius-control);
+  background:var(--surface); box-shadow:inset 0 0 0 1.5px var(--line); transition:box-shadow .15s; pointer-events:none;
+}
+.pp-group--form .pp-field:focus-within::before{box-shadow:inset 0 0 0 2px var(--accent)}
+.pp-group--form .pp-field.is-invalid::before{box-shadow:inset 0 0 0 1.5px var(--neg)}
+.pp-group--form .pp-field__body{display:contents}
+.pp-group--form .pp-field__label{grid-column:1/-1; font-size:14px; font-weight:600; color:var(--ink)}
+.pp-group--form .pp-field:focus-within .pp-field__label{color:var(--ink)}
+.pp-group--form .pp-field.is-invalid .pp-field__label{color:var(--neg)}
+.pp-group--form .pp-input{position:relative; height:54px; padding:0 0 0 16px; font-size:16px}
+.pp-group--form .pp-eye{position:relative; width:52px; height:54px; border-radius:0 var(--radius-control) var(--radius-control) 0}
+.pp-group--form .pp-row{min-height:54px; padding:0 4px; font-weight:550}
+.pp-group--form .pp-btn{margin-top:2px}
+
+/*
+ * The canteen panel: the amber block the sign-in page is built around. It is the
+ * one painted surface in the portal, so its ink stays the deep green whatever
+ * the device's light/dark setting says.
+ */
+/* The plate. On the sign-in canvas it is paint, not a picture — see .pp-signin__plate. */
+.pp-plate{display:block; height:auto}
 
 /* ---- Child card: the physical student card ---- */
 .pp-wallet-stack{padding:4px 16px 0}
 .pp-child-card{
   position:relative; isolation:isolate; display:block; width:100%; aspect-ratio:1.586/1; overflow:hidden;
-  padding:16px 18px; border:0; border-radius:20px; color:#FFFFFF; text-align:left;
+  padding:16px 18px; border:0; border-radius:20px; color:var(--card-ink); text-align:left;
   background:var(--card-face);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 .5px rgba(255,255,255,.14),0 -8px 20px -10px rgba(0,0,0,.3),0 16px 30px -20px rgba(0,0,0,.55);
+  box-shadow:inset 0 1px 0 var(--card-gloss),inset 0 0 0 .5px rgba(255,255,255,.14),0 -8px 20px -10px rgba(38,49,34,.28),0 16px 30px -20px rgba(38,49,34,.5);
   transition:transform .4s var(--ease);
 }
 .pp-wallet-stack .pp-child-card + .pp-child-card{margin-top:-100px}
@@ -252,14 +304,14 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-card__top{display:flex; align-items:center; justify-content:space-between; gap:8px; height:24px}
 .pp-card__school{display:flex; align-items:center; gap:8px; font:500 10.5px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; opacity:.92}
 .pp-card__who{display:flex; align-items:center; gap:12px; margin-top:16px}
-.pp-card__who .pp-avatar{width:42px; height:42px; background-color:rgba(255,255,255,.2); color:#FFFFFF; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.pp-card__who .pp-avatar{width:42px; height:42px; background-color:var(--card-gloss); color:var(--card-ink); box-shadow:inset 0 0 0 1.5px var(--card-gloss)}
 .pp-card__id{min-width:0}
 .pp-card__name{display:block; font-size:18px; font-weight:700; line-height:1.15; letter-spacing:-.01em}
 .pp-card__class{display:block; margin-top:2px; font-size:13px; opacity:.8}
 .pp-card__bal{margin-left:auto; text-align:right; white-space:nowrap}
 .pp-card__bal small{display:block; margin-bottom:5px; font:500 9.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; opacity:.75}
 .pp-card__bal b{font-size:20px; font-weight:700; letter-spacing:-.01em; font-variant-numeric:tabular-nums}
-.pp-card__bal--neg b{padding:2px 8px; border-radius:8px; background:rgba(255,69,58,.95)}
+.pp-card__bal--neg b{padding:2px 8px; border-radius:8px; background:#FFF1EC; color:#A33A2B}
 .pp-card__bottom{position:absolute; left:18px; right:18px; bottom:16px; display:flex; align-items:flex-end; gap:12px}
 .pp-card__chip{position:relative; flex:none; width:40px; height:30px; overflow:hidden; border-radius:6px; background:linear-gradient(135deg,#F4DC9B,#C9A24C 45%,#EACD85 70%,#B38B3A); box-shadow:inset 0 0 0 .5px rgba(0,0,0,.25)}
 .pp-card__chip::before{content:""; position:absolute; inset:9px 0; border-top:1px solid rgba(90,64,20,.45); border-bottom:1px solid rgba(90,64,20,.45)}
@@ -271,17 +323,17 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-card__nfc{flex:none; padding-bottom:2px; font-size:20px; opacity:.85; transform:rotate(90deg)}
 .pp-card__balance{display:block; margin-top:22px}
 .pp-card__balance small{display:block; font:500 10px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; opacity:.8}
-.pp-card__balance b{display:block; margin-top:8px; font-size:40px; font-weight:750; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.pp-card__balance b{display:block; margin-top:8px; font-size:40px; font-weight:800; line-height:1; letter-spacing:-.035em; font-variant-numeric:tabular-nums}
 .pp-card__balance b span{margin-right:6px; font-size:17px; font-weight:600; letter-spacing:0; opacity:.8; vertical-align:.8em}
 .pp-status{display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px; border-radius:999px; font-size:12px; font-weight:650; white-space:nowrap}
 .pp-status::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
 .pp-status--blocked::before{display:none}
-.pp-child-card .pp-status{background:rgba(255,255,255,.2); color:#FFFFFF}
+.pp-child-card .pp-status{background:var(--card-gloss); color:var(--card-ink)}
 .pp-child-card .pp-status--active::before{background:#7CF2A9; box-shadow:0 0 0 3px rgba(124,242,169,.25)}
 .pp-child-card .pp-status--blocked{background:rgba(255,69,58,.95)}
 .pp-status--soft.pp-status--active{background:var(--pos-soft); color:var(--pos)}
 /* blocked card: graphite face */
-.pp-child-card--blocked{--card-face:repeating-linear-gradient(-45deg,rgba(255,255,255,.035) 0 6px,transparent 6px 12px),linear-gradient(152deg,#6B6F79 0%,#3B3E46 52%,#1E2025 100%)}
+.pp-child-card--blocked{--card-face:repeating-linear-gradient(-45deg,rgba(255,255,255,.035) 0 6px,transparent 6px 12px),linear-gradient(152deg,#6B6F79 0%,#3B3E46 52%,#1E2025 100%); --card-ink:#FFFFFF; --card-gloss:rgba(255,255,255,.2)}
 /* no card yet: blank outline card */
 .pp-child-card--none{background:var(--surface); color:var(--ink); box-shadow:0 -8px 20px -12px rgba(0,0,0,.22),inset 0 0 0 1px var(--line)}
 .pp-child-card--none::before{box-shadow:-46px -30px 0 0 var(--fill)}
@@ -294,7 +346,7 @@ a.pp-child-card:active{transform:translateY(-8px)}
 
 /* Child view: balance hero = the card itself */
 .pp-balance-hero{padding:6px 16px 0}
-.pp-spend{display:flex; align-items:center; gap:12px; margin:14px 0 18px; padding:12px 14px; border-radius:14px; background:var(--surface); font-size:15px}
+.pp-spend{display:flex; align-items:center; gap:12px; margin:14px 0 18px; padding:12px 14px; border-radius:14px; background:var(--surface); box-shadow:0 0 0 1px var(--line); font-size:15px}
 .pp-spend > .fa{color:var(--accent-ink); font-size:18px}
 .pp-spend b{display:block; font-weight:650; font-variant-numeric:tabular-nums}
 .pp-spend small{display:block; margin-top:1px; font-size:13px; color:var(--ink-2)}
@@ -312,8 +364,8 @@ a.pp-child-card:active{transform:translateY(-8px)}
 
 /* Bills + statement rows */
 .pp-bill-row{--sep:72px}
-.pp-date{display:flex; flex:none; flex-direction:column; align-items:center; justify-content:center; width:44px; height:44px; border-radius:10px; background:var(--bg); line-height:1}
-.pp-date small{font:500 9.5px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--accent-ink)}
+.pp-date{display:flex; flex:none; flex-direction:column; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; background:var(--surface-2); line-height:1}
+.pp-date small{font:500 9.5px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--amber-ink)}
 .pp-date b{margin-top:3px; font-size:17px; font-weight:700; font-variant-numeric:tabular-nums}
 .pp-amt{font-size:16px; font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums}
 .pp-amt--in{color:var(--pos)}
@@ -322,18 +374,18 @@ a.pp-child-card:active{transform:translateY(-8px)}
 
 /* Bill detail: a Wallet pass */
 .pp-pass{margin:6px 16px 8px; overflow:hidden; border-radius:18px; background:var(--surface); box-shadow:0 1px 2px rgba(0,0,0,.04),0 14px 34px -22px rgba(0,0,0,.3)}
-.pp-pass__head{position:relative; isolation:isolate; overflow:hidden; padding:16px 18px 20px; background:var(--card-face); color:#FFFFFF}
+.pp-pass__head{position:relative; isolation:isolate; overflow:hidden; padding:16px 18px 20px; background:var(--card-face); color:var(--card-ink)}
 .pp-pass__head::before{content:""; position:absolute; z-index:-1; right:-70px; bottom:-120px; width:200px; height:200px; border-radius:50%; box-shadow:-38px -26px 0 0 rgba(255,255,255,.1)}
 .pp-pass__brand{display:flex; align-items:center; justify-content:space-between; font:500 10.5px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; opacity:.9}
 .pp-pass__brand > span{display:flex; align-items:center; gap:8px}
-.pp-pass__title{margin-top:20px; font-size:26px; font-weight:750; letter-spacing:-.02em}
+.pp-pass__title{margin-top:20px; font-size:28px; font-weight:800; letter-spacing:-.032em}
 .pp-pass__sub{margin-top:2px; font-size:15px; opacity:.85}
 .pp-pass__fields{display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; padding:16px 18px 4px}
 .pp-pass__fields dt{margin-bottom:4px; font:500 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
 .pp-pass__fields dd{font-size:15px; font-weight:600}
 .pp-pass__total{display:flex; align-items:baseline; justify-content:space-between; padding:14px 18px 14px}
 .pp-pass__total span{font:500 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
-.pp-pass__total b{font-size:34px; font-weight:750; letter-spacing:-.025em; font-variant-numeric:tabular-nums}
+.pp-pass__total b{font-size:34px; font-weight:800; letter-spacing:-.035em; font-variant-numeric:tabular-nums}
 .pp-tear{position:relative; height:24px; background:radial-gradient(circle at 0 50%,var(--bg) 11px,transparent 11.5px),radial-gradient(circle at 100% 50%,var(--bg) 11px,transparent 11.5px)}
 .pp-tear::before{content:""; position:absolute; top:50%; left:20px; right:20px; border-top:1.5px dashed var(--line)}
 .pp-lines{padding:0 18px}
@@ -349,14 +401,14 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-paidby b{font-weight:650}
 
 /* Top up */
-.pp-topup-card{display:flex; align-items:center; gap:14px; margin:0 16px 26px; padding:12px 14px; border-radius:14px; background:var(--surface)}
-.pp-minicard{position:relative; flex:none; width:62px; height:40px; overflow:hidden; border-radius:7px; background:var(--card-face); box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.pp-topup-card{display:flex; align-items:center; gap:14px; margin:0 16px 26px; padding:12px 14px; border-radius:14px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+.pp-minicard{position:relative; flex:none; width:62px; height:40px; overflow:hidden; border-radius:8px; background:var(--card-face); box-shadow:inset 0 1px 0 var(--card-gloss)}
 .pp-minicard::after{content:""; position:absolute; left:8px; bottom:8px; width:13px; height:10px; border-radius:2.5px; background:linear-gradient(135deg,#F4DC9B,#C9A24C)}
 .pp-topup-card b{display:block; font-size:20px; font-weight:700; font-variant-numeric:tabular-nums}
 .pp-chips{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px}
-.pp-chip{min-height:48px; border:0; border-radius:12px; background:var(--surface); color:var(--ink); font-size:17px; font-weight:650; font-variant-numeric:tabular-nums; transition:background-color .18s,color .18s,transform .12s}
+.pp-chip{min-height:50px; border:0; border-radius:var(--radius-control); background:var(--surface); box-shadow:0 0 0 1px var(--line); color:var(--ink); font-size:17px; font-weight:700; font-variant-numeric:tabular-nums; transition:background-color .18s,color .18s,transform .12s}
 .pp-chip:active{transform:scale(.96)}
-.pp-chip[aria-pressed="true"]{background:var(--accent); color:var(--on-accent); box-shadow:0 8px 16px -10px var(--accent)}
+.pp-chip[aria-pressed="true"]{background:var(--accent); color:var(--on-accent); box-shadow:0 10px 18px -12px var(--accent)}
 .pp-amount-field{display:flex; align-items:center; gap:10px; min-height:66px; padding:0 16px; cursor:text}
 .pp-amount-field__cur{font-size:22px; font-weight:600; color:var(--ink-2)}
 .pp-amount-field input{flex:1; min-width:0; padding:0; border:0; outline:none; background:none; color:var(--ink); font-size:34px; font-weight:750; letter-spacing:-.02em; text-align:right; font-variant-numeric:tabular-nums}
@@ -371,7 +423,7 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-result--failed{--tone:var(--neg)}
 .pp-result__icon{position:relative; display:grid; place-items:center; width:92px; height:92px; border-radius:50%; background:var(--tone); color:#FFFFFF; font-size:40px; box-shadow:0 16px 30px -16px var(--tone); animation:pp-pop .55s var(--ease) both}
 .pp-result__icon::before{content:""; position:absolute; inset:-12px; border:2px solid var(--tone); border-radius:50%; animation:pp-ring 2.4s ease-out infinite}
-.pp-result__title{margin-top:24px; font-size:26px; font-weight:750; line-height:1.15; letter-spacing:-.02em}
+.pp-result__title{margin-top:24px; font-size:28px; font-weight:800; line-height:1.08; letter-spacing:-.032em}
 .pp-result__msg{max-width:300px; margin-top:8px; font-size:16px; line-height:1.45; color:var(--ink-2)}
 .pp-result__msg b{color:var(--ink); font-weight:650}
 .pp-spinner{width:42px; height:42px; border:4px solid rgba(255,255,255,.35); border-top-color:#FFFFFF; border-radius:50%; animation:pp-spin .9s linear infinite}
@@ -406,8 +458,11 @@ a.pp-child-card:active{transform:translateY(-8px)}
 
 /* ---- Live-app additions (states the preview did not need) ---- */
 
-/* Avatars with a real photo */
-.pp-avatar--photo{background-size:cover; background-position:center; color:transparent !important}
+/* Avatars with a real photo. The <img> covers the initials underneath it; when the
+   photo fails to load StudentAvatar drops it and the initials show through. */
+.pp-avatar img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.pp-avatar--photo{position:relative; background-size:cover; background-position:center}
+.pp-avatar .fa{font-size:.95em; opacity:.7}
 
 /* Buttons that are working */
 .pp-btn.is-busy{pointer-events:none}
@@ -498,18 +553,142 @@ a.pp-child-card:active{transform:translateY(-8px)}
 /* ---- Profile ---- */
 .pp-profile{display:flex; flex-direction:column; align-items:center; padding:8px 24px 26px; text-align:center}
 .pp-profile .pp-avatar{width:84px; height:84px; margin-bottom:14px; font-size:30px}
-.pp-profile h1{font-size:26px; font-weight:750; line-height:1.15; letter-spacing:-.02em}
+.pp-profile h1{font-size:28px; font-weight:800; line-height:1.08; letter-spacing:-.032em}
 .pp-profile p{margin-top:4px; font-size:15px; color:var(--ink-2)}
 .pp-text-muted{color:var(--ink-2)}
 dl.pp-group__body dd.pp-text-muted{font-weight:500}
 .pp-kid-link{--sep:68px}
 .pp-action + .pp-action{border-top:1px solid var(--line)}
 
-/* ---- Sign-in frame: phones show the form alone ---- */
-.pp-signin{position:relative; display:flex; flex:1 0 auto; flex-direction:column}
-.pp-signin__theme{position:absolute; top:calc(var(--safe-top) + 6px); right:8px; z-index:5}
-.pp-signin__art{display:none}
-.pp-signin__form{display:flex; flex:1 0 auto; flex-direction:column}
+/* =====================================================================
+   SIGN IN — one washed canvas, the form floating on it in frosted glass.
+   There is no panel beside anything, so this same layout holds from a 320px
+   phone to an ultrawide; only the card's measure grows (see the computer block).
+   ===================================================================== */
+.pp-signin{
+  position:relative; display:flex; flex:1 0 auto; flex-direction:column; overflow:hidden;
+  padding:calc(var(--safe-top) + 20px) 16px calc(var(--safe-bottom) + 20px);
+  background:
+    radial-gradient(52% 44% at 14% 8%, color-mix(in oklab,var(--amber) 92%,transparent) 0%, transparent 70%),
+    radial-gradient(48% 46% at 88% 92%, color-mix(in oklab,var(--accent) 30%,transparent) 0%, transparent 72%),
+    radial-gradient(40% 38% at 92% 6%, color-mix(in oklab,#7FA36B 26%,transparent) 0%, transparent 70%),
+    var(--bg);
+}
+.pp-signin__theme{position:absolute; top:calc(var(--safe-top) + 6px); right:8px; z-index:5; color:var(--ink-2)}
+
+/* The plate, sunk into the wash. Decoration: it must never compete with the form. */
+.pp-signin__wash{position:absolute; inset:0; z-index:1; overflow:hidden; pointer-events:none}
+.pp-signin__plate{position:absolute}
+.pp-signin__plate--lead{width:min(78%,420px); left:-9%; bottom:-16%; opacity:.16; transform:rotate(-8deg)}
+.pp-signin__plate--trail{width:min(46%,230px); right:-6%; top:-8%; opacity:.12; transform:rotate(14deg)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .pp-signin__plate{opacity:.09}
+}
+:root[data-theme="dark"] .pp-signin__plate{opacity:.09}
+
+.pp-signin__form{position:relative; z-index:3; display:flex; flex:1 0 auto; flex-direction:column}
+/* An app bar (forgot / set password) rides above the card, not inside it. */
+.pp-signin__form > .pp-appbar{margin:calc(var(--safe-top) * -1 - 20px) -16px 0; background:none; backdrop-filter:none}
+
+/* The card itself. `margin:auto` is what centres it in the wash at every height. */
+.pp-signin__form :is(.pp-auth,.pp-state){
+  flex:0 0 auto; width:100%; max-width:380px; margin:auto; padding:22px 20px;
+  border-radius:24px; background:color-mix(in oklab,var(--surface) 74%,transparent);
+  backdrop-filter:blur(26px) saturate(1.5); -webkit-backdrop-filter:blur(26px) saturate(1.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 0 0 1px color-mix(in oklab,var(--ink) 9%,transparent), 0 40px 70px -34px rgba(60,40,10,.5);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .pp-signin__form :is(.pp-auth,.pp-state){
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px rgba(255,255,255,.1), 0 40px 70px -34px rgba(0,0,0,.8)}
+}
+:root[data-theme="dark"] .pp-signin__form :is(.pp-auth,.pp-state){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 1px rgba(255,255,255,.1), 0 40px 70px -34px rgba(0,0,0,.8)}
+
+/* Inside the card the page's own gutters would double up, so they go. */
+.pp-signin__form :is(.pp-group,.pp-alert){margin-left:0; margin-right:0}
+.pp-signin__form .pp-group:last-of-type{margin-bottom:0}
+.pp-signin__form .pp-group__body{box-shadow:0 0 0 1px var(--line)}
+
+/* ---- Compact scale ----
+   A sign-in card is one glance, so the whole of it has to fit the window — a short
+   laptop (1280x800) and a 320px phone included. Everything below is one notch down
+   from the app's own sizing, and scoped to the card so lists elsewhere keep theirs.
+   Controls stay at 46px+, above the 44px touch target. */
+.pp-signin__form .pp-logo{width:60px; height:60px; border-radius:18px}
+.pp-signin__form .pp-logo > .fa{font-size:27px}
+.pp-signin__form .pp-auth__brand{align-items:center; text-align:center; padding:0 0 18px}
+.pp-signin__form .pp-auth__school{margin-top:12px; font-size:clamp(22px,5.4vw,27px)}
+.pp-signin__form .pp-auth__lede{margin-top:5px; font-size:14.5px}
+.pp-signin__form .pp-lede{padding:0 0 16px}
+.pp-signin__form .pp-hero-icon{width:56px; height:56px; font-size:23px}
+.pp-signin__form .pp-group--form .pp-group__body{gap:11px; padding:15px}
+.pp-signin__form .pp-group--form .pp-field__label{font-size:13.5px}
+.pp-signin__form .pp-group--form :is(.pp-input,.pp-eye){height:48px}
+.pp-signin__form .pp-group--form .pp-row{min-height:46px}
+.pp-signin__form .pp-auth__actions{padding:12px 0 0}
+.pp-signin__form .pp-auth__foot{margin-top:0; padding:16px 0 0; font-size:12.5px}
+.pp-signin__form .pp-auth__sig{padding:14px 0 0}
+/* "Keep me signed in" is a label, not a list row: it wraps rather than clipping to an ellipsis. */
+.pp-signin__form .pp-row__title{overflow:visible; font-size:15px; line-height:1.3; white-space:normal; text-overflow:clip}
+
+/* =====================================================================
+   BETWEEN A PHONE AND A COMPUTER
+   Phones are the base above; computers are the block below. This is everything
+   in between — tablets, a phone on its side, a very small phone — plus the
+   handful of rules that keep any one screen from running out of room.
+   ===================================================================== */
+
+/* The app column grows with the screen before the computer layout takes over. */
+@media (min-width:600px){ :root{--column:560px} }
+@media (min-width:820px){ :root{--column:620px} }
+
+/* The sign-in pages carry no wallet, so they are full-bleed at every size and
+   .pp-signin lays them out itself. */
+.pp-app--full{max-width:none; box-shadow:none}
+
+/* A tablet: the form keeps a comfortable measure instead of stretching. */
+@media (min-width:600px) and (max-width:1023.98px){
+  .pp-signin__form > *{width:100%; max-width:520px; margin-inline:auto}
+}
+
+/* A short screen — a phone on its side, a netbook: give the form back its height. */
+@media (max-height:700px) and (max-width:1023.98px){
+  .pp-auth{padding-top:calc(var(--safe-top) + 20px)}
+}
+
+/* A short window at ANY width (a docked browser, a netbook, a phone on its side):
+   the sign-in card takes one more notch off so it still fits in one glance. */
+@media (max-height:760px){
+  .pp-signin{padding-top:calc(var(--safe-top) + 12px); padding-bottom:calc(var(--safe-bottom) + 12px)}
+  .pp-signin__form :is(.pp-auth,.pp-state){padding:18px 20px}
+  .pp-signin__form .pp-logo{width:48px; height:48px; border-radius:15px}
+  .pp-signin__form .pp-logo > .fa{font-size:22px}
+  .pp-signin__form .pp-auth__brand{padding:0 0 13px}
+  .pp-signin__form .pp-auth__school{margin-top:9px; font-size:22px}
+  .pp-signin__form .pp-auth__lede{margin-top:4px; font-size:13.5px}
+  .pp-signin__form .pp-hero-icon{width:46px; height:46px; font-size:19px}
+  .pp-signin__form .pp-lede{padding:0 0 12px}
+  .pp-signin__form .pp-group--form .pp-group__body{gap:9px; padding:13px}
+  .pp-signin__form .pp-group--form :is(.pp-input,.pp-eye){height:45px}
+  .pp-signin__form .pp-group--form .pp-row{min-height:44px}
+  .pp-signin__form .pp-auth__actions{padding:10px 0 0}
+  .pp-signin__form .pp-auth__foot{padding:12px 0 0; font-size:12px}
+  .pp-signin__form .pp-auth__sig{padding:10px 0 0}
+}
+
+/* A small phone (an SE, a Mini): tighter gutters, nothing clipped. */
+@media (max-width:370px){
+  .pp-group,.pp-alert,.pp-topup-card{margin-left:12px; margin-right:12px}
+  .pp-group--form .pp-group__body{padding:14px}
+  .pp-largetitle,.pp-auth__brand{padding-left:16px; padding-right:16px}
+  .pp-cta,.pp-actionbar,.pp-auth__actions,.pp-wallet-stack{padding-left:12px; padding-right:12px}
+  .pp-card__balance b{font-size:34px}
+  .pp-row{gap:10px}
+}
+
+/* Nothing overflows sideways: long names, long emails, long amounts. */
+.pp-row__title,.pp-row__sub,.pp-card__name,.pp-brandname b{overflow-wrap:anywhere}
+.pp-largetitle h1,.pp-lede :is(h1,h2),.pp-auth__school{overflow-wrap:break-word}
 
 /* =====================================================================
    Computers: the "Wallet split" (docs/parent-portal-web-preview.html, C).
@@ -523,22 +702,22 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-btn--auto{width:auto; min-height:44px; padding:0 18px; border-radius:12px; font-size:15px}
   .pp-btn--sm{width:auto; min-height:36px; padding:0 14px; border-radius:10px; font-size:14px}
   .pp-btn--ghost{background:var(--surface); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line)}
-  .pp-logo-tile{display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; border-radius:12px; background:var(--card-face); color:#FFFFFF; font-size:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 18px -10px color-mix(in oklab,var(--accent) 80%,transparent)}
+  .pp-logo-tile{display:grid; place-items:center; flex:none; width:40px; height:40px; overflow:hidden; border-radius:13px; background:var(--card-face); color:var(--card-ink); font-size:18px; box-shadow:inset 0 1px 0 var(--card-gloss),0 8px 18px -10px color-mix(in oklab,var(--accent) 80%,transparent)}
   .pp-logo-tile--image{background:#FFFFFF; box-shadow:inset 0 0 0 1px var(--line)}
   .pp-logo-tile--image img{width:100%; height:100%; padding:5px; object-fit:contain}
   .pp-brandname{min-width:0}
   .pp-brandname b{display:block; overflow:hidden; font-size:15px; font-weight:700; line-height:1.2; letter-spacing:-.01em; white-space:nowrap; text-overflow:ellipsis}
   .pp-brandname small{display:block; margin-top:4px; font:500 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
-  .pp-panel{overflow:hidden; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(0,0,0,.03)}
+  .pp-panel{overflow:hidden; border-radius:var(--radius); background:var(--surface); box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(38,49,34,.03)}
   .pp-panel__head{display:flex; align-items:center; gap:12px; min-height:56px; padding:10px 20px; border-bottom:1px solid var(--line)}
   .pp-panel__title{font-size:16px; font-weight:650; letter-spacing:-.01em}
   .pp-panel__body{padding:18px 20px}
   .pp-panel__text{margin-top:6px; font-size:14px; line-height:1.45; color:var(--ink-2)}
   .pp-panel .pp-group__body{border-radius:0; box-shadow:none}
   .pp-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:24px}
-  .pp-stat{min-width:0; padding:16px 18px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+  .pp-stat{min-width:0; padding:16px 18px; border-radius:var(--radius); background:var(--surface); box-shadow:0 0 0 1px var(--line)}
   .pp-stat small{display:flex; align-items:center; gap:7px; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
-  .pp-stat b{display:block; margin-top:10px; overflow:hidden; font-size:24px; font-weight:750; letter-spacing:-.02em; white-space:nowrap; text-overflow:ellipsis; font-variant-numeric:tabular-nums}
+  .pp-stat b{display:block; margin-top:10px; overflow:hidden; font-size:25px; font-weight:800; letter-spacing:-.03em; white-space:nowrap; text-overflow:ellipsis; font-variant-numeric:tabular-nums}
   .pp-stat span{display:block; margin-top:3px; overflow:hidden; font-size:13px; color:var(--ink-2); white-space:nowrap; text-overflow:ellipsis}
   .pp-stat--neg b{color:var(--neg)}
   .pp-stat--text b{margin-top:12px; font-size:17px; line-height:1.3}
@@ -576,7 +755,7 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-wallet__tools{display:flex; flex:none; align-items:center; gap:2px}
   .pp-wallet__top .pp-avatar-btn{margin-right:-6px}
   .pp-wallet__title{padding-bottom:18px}
-  .pp-wallet__title h1{font-size:30px; font-weight:750; line-height:1.1; letter-spacing:-.025em}
+  .pp-wallet__title h1{font-size:30px; font-weight:800; line-height:1.05; letter-spacing:-.035em}
   .pp-wallet__title p{margin-top:4px; font-size:15px; color:var(--ink-2)}
   .pp-wallet .pp-wallet-stack{padding:0}
   .pp-wallet-stack.has-selected .pp-child-card.is-selected{margin-bottom:22px}
@@ -625,7 +804,7 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-detail__head{display:flex; align-items:center; gap:16px 20px; margin-bottom:22px}
   .pp-detail__head .pp-avatar{width:56px; height:56px; font-size:19px}
   .pp-detail__id{flex:1; min-width:0}
-  .pp-detail__id h1{font-size:30px; font-weight:750; line-height:1.1; letter-spacing:-.025em}
+  .pp-detail__id h1{font-size:30px; font-weight:800; line-height:1.05; letter-spacing:-.035em}
   .pp-detail__id p{margin-top:5px; font-size:15px; color:var(--ink-2)}
   .pp-cta__note--start{justify-content:flex-start; margin:-8px 0 18px; text-align:left}
   .pp-student-grid{display:grid; grid-template-columns:minmax(0,1fr) 320px; grid-template-areas:"activity aside"; gap:24px; align-items:start}
@@ -687,30 +866,12 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-dayc--skipped .pp-dayc__meal,.pp-dayc--empty .pp-dayc__meal{color:var(--ink-2)}
   .pp-dayc--empty .pp-dayc__meal{font-weight:550}
 
-  /* Sign in: the school's colour beside the form */
-  .pp-signin{display:grid; grid-template-columns:minmax(0,1.08fr) minmax(460px,1fr); min-height:100dvh}
-  .pp-signin__art{position:relative; isolation:isolate; display:flex; flex-direction:column; overflow:hidden; padding:40px 52px 48px; background:linear-gradient(160deg,var(--accent-lo) 0%,color-mix(in oklab,var(--accent),black 68%) 100%); color:#FFFFFF}
-  .pp-signin__art::before{content:""; position:absolute; z-index:-1; right:-300px; top:-300px; width:620px; height:620px; border-radius:50%; box-shadow:-70px 70px 0 0 rgba(255,255,255,.045)}
-  .pp-signin__art::after{content:""; position:absolute; inset:0; z-index:-1; background:repeating-radial-gradient(circle at 110% 110%,rgba(255,255,255,.035) 0 1px,transparent 1.6px 12px)}
-  .pp-signin__brand{display:flex; align-items:center; gap:12px; font:500 11px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase}
-  .pp-signin__brand .pp-logo-tile{background:#FFFFFF; color:var(--accent); box-shadow:none}
-  .pp-signin__pitch{max-width:440px; margin-top:auto}
-  .pp-signin__pitch h2{font-size:40px; font-weight:750; line-height:1.06; letter-spacing:-.03em}
-  .pp-signin__pitch p{margin-top:14px; font-size:17px; line-height:1.45; opacity:.78}
-  .pp-signin__cards{position:relative; height:250px; margin-top:40px}
-  .pp-signin__cards .pp-child-card{position:absolute; width:320px}
-  .pp-signin__cards .pp-child-card:first-child{left:0; top:28px; transform:rotate(-7deg)}
-  .pp-signin__cards .pp-child-card:last-child{left:190px; top:0; transform:rotate(5deg)}
-  .pp-signin__form{align-items:center; justify-content:center; padding:48px}
-  .pp-signin__form > *{width:100%; max-width:420px}
-  .pp-signin__form > .pp-back{margin:0 0 20px}
-  .pp-signin__form :is(.pp-auth,.pp-state){flex:0 0 auto; padding:0}
-  .pp-signin__form :is(.pp-group,.pp-alert){margin-left:0; margin-right:0}
-  .pp-signin__form .pp-group__body{box-shadow:0 0 0 1px var(--line)}
-  .pp-signin__form .pp-lede{padding-left:0; padding-right:0}
-  .pp-signin__form .pp-auth__brand{padding:0 0 30px}
-  .pp-signin__form .pp-auth__actions{padding:0}
-  .pp-signin__form .pp-auth__foot{margin-top:0; padding:28px 0 0}
+  /* Sign in: the same canvas, with room for a wider card and a bigger wash. */
+  .pp-signin{min-height:100dvh; padding:40px}
+  .pp-signin__plate--lead{width:min(46%,520px); left:-5%; bottom:-20%}
+  .pp-signin__plate--trail{width:min(24%,280px); right:-3%; top:-10%}
+  .pp-signin__form :is(.pp-auth,.pp-state){max-width:410px; padding:26px 26px}
+  .pp-signin__form > .pp-back{align-self:center; width:100%; max-width:420px; margin:0 auto 16px}
 }
 
 /* Mouse and trackpad: hover feedback */
@@ -726,6 +887,12 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-back:hover{text-decoration:underline; text-underline-offset:3px}
 }
 
+/* A very wide screen: the wallet takes a little more of it. */
+@media (min-width:1600px){
+  .pp-web{grid-template-columns:480px minmax(0,1fr)}
+  .pp-detail{padding-left:56px; padding-right:56px}
+}
+
 /* Smaller laptops and iPads in landscape */
 @media (min-width:1024px) and (max-width:1199.98px){
   .pp-web{grid-template-columns:360px minmax(0,1fr)}
@@ -736,8 +903,5 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-checkout,.pp-bill-layout{grid-template-columns:minmax(0,1fr)}
   .pp-bill-layout > *{max-width:540px}
   .pp-summary{position:static}
-  .pp-signin{grid-template-columns:minmax(0,1fr) minmax(420px,1fr)}
-  .pp-signin__art{padding:36px 40px 44px}
-  .pp-signin__cards .pp-child-card{width:270px}
-  .pp-signin__cards .pp-child-card:last-child{left:140px}
+  .pp-signin{padding:28px}
 }
