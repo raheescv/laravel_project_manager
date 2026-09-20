@@ -1,5 +1,5 @@
 {{-- Student view → Top-ups. Styled by the parent .svx system (components/student/view-premium).
-     The office entry form lives in <x-student.topup-modal />. --}}
+     The office entry form is the page-level student.topup-modal component, opened by the button below. --}}
 @php
     $channelTone = ['QPay' => ['topup', 'fa-globe'], 'Office' => ['purchase', 'fa-building-o']];
     $statusTone = [
@@ -99,8 +99,4 @@
             </table>
         </div>
     </div>
-
-    @canany(['student topup.create', 'student topup.refund'])
-        <x-student.topup-modal :direction="$direction" :payment-methods="$paymentMethods" :balance="$balance" />
-    @endcanany
 </div>

@@ -12,6 +12,7 @@ use App\Livewire\Student\Page;
 use App\Livewire\Student\Purchases;
 use App\Livewire\Student\Statement;
 use App\Livewire\Student\Table;
+use App\Livewire\Student\TopupModal;
 use App\Livewire\Student\Topups;
 use App\Livewire\Student\View;
 use App\Mail\AppointmentMail;
@@ -107,6 +108,7 @@ it('renders the student view and every tab', function (): void {
     Livewire::test(Statement::class, ['account_id' => $this->student->id])->assertOk();
     Livewire::test(Purchases::class, ['account_id' => $this->student->id])->assertOk()->assertSee('No purchases in this period');
     Livewire::test(Topups::class, ['account_id' => $this->student->id])->assertOk()->assertSee('Nothing on the card yet');
+    Livewire::test(TopupModal::class, ['account_id' => $this->student->id])->assertOk()->assertSee('Add to card');
 
     $this->get($this->world->url("/student/view/{$this->student->id}"))->assertOk();
     $this->get($this->world->url('/student'))->assertOk();
@@ -228,7 +230,7 @@ it('warns staff and still shows the link when the parent has no email', function
 it('records an office top-up and a deduction on the card', function (): void {
     $balance = fn () => (new GetBalanceAction())->execute($this->student->id);
 
-    Livewire::test(Topups::class, ['account_id' => $this->student->id])
+    Livewire::test(TopupModal::class, ['account_id' => $this->student->id])
         ->set('amount', '75')
         ->set('payment_account_id', (string) $this->world->cashAccountId)
         ->set('reason', 'Cash from parent at the office')
@@ -244,7 +246,7 @@ it('records an office top-up and a deduction on the card', function (): void {
         ->and(JournalEntry::where('account_id', $this->world->cashAccountId)->where('source', 'student_topup')->sum('debit'))->toEqual(75)
         ->and(JournalEntry::where('account_id', $this->student->id)->value('remarks'))->toContain('Cash from parent at the office');
 
-    Livewire::test(Topups::class, ['account_id' => $this->student->id])
+    Livewire::test(TopupModal::class, ['account_id' => $this->student->id])
         ->set('direction', 'deduct')
         ->set('amount', '25')
         ->set('payment_account_id', (string) $this->world->cashAccountId)
@@ -262,7 +264,7 @@ it('records an office top-up and a deduction on the card', function (): void {
 });
 
 it('will not deduct more than the card holds, or accept a blank reason', function (): void {
-    Livewire::test(Topups::class, ['account_id' => $this->student->id])
+    Livewire::test(TopupModal::class, ['account_id' => $this->student->id])
         ->set('direction', 'deduct')
         ->set('amount', '10')
         ->set('payment_account_id', (string) $this->world->cashAccountId)
@@ -270,7 +272,7 @@ it('will not deduct more than the card holds, or accept a blank reason', functio
         ->call('record')
         ->assertDispatched('error');
 
-    Livewire::test(Topups::class, ['account_id' => $this->student->id])
+    Livewire::test(TopupModal::class, ['account_id' => $this->student->id])
         ->set('amount', '10')
         ->set('payment_account_id', (string) $this->world->cashAccountId)
         ->set('reason', '  ')

@@ -5,32 +5,18 @@ namespace App\Livewire\Student;
 use App\Actions\QPay\InquireAction;
 use App\Actions\QPay\RefundAction;
 use App\Actions\QPay\ReleaseAction;
-use App\Actions\Student\GetBalanceAction;
 use App\Actions\Student\ListTopupsAction;
-use App\Actions\Student\ManualEntryAction;
-use App\Models\Account;
 use App\Models\QpayTransaction;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 /**
  * Student view → Top-ups: money on and off the card outside a purchase — office
- * entries recorded here, and QPay payments and refunds.
+ * entries (recorded in the TopupModal beside the page) and QPay payments and refunds.
  */
 class Topups extends Component
 {
     public $account_id;
-
-    /** The office entry form. */
-    public $direction = ManualEntryAction::ADD;
-
-    public $amount = '';
-
-    public $payment_account_id = '';
-
-    public $date;
-
-    public $reason = '';
 
     public $sortField = 'date';
 
@@ -39,11 +25,14 @@ class Topups extends Component
     /** Sortable columns, so a crafted sortBy() cannot reach the rows. */
     private const SORTABLE = ['date', 'channel', 'method', 'note', 'by', 'amount', 'status'];
 
+    protected $listeners = [
+        'Student-View-Refresh' => '$refresh',
+    ];
+
     public function mount($account_id)
     {
         abort_unless(auth()->user()?->can('student topup.view'), 403);
         $this->account_id = $account_id;
-        $this->date = date('Y-m-d');
     }
 
     public function sortBy($field)
@@ -80,36 +69,6 @@ class Topups extends Component
             }, SORT_REGULAR, $this->sortDirection === 'desc')
             ->values()
             ->all();
-    }
-
-    /** Record money taken at (or paid out from) the office. */
-    public function record()
-    {
-        $deducting = $this->direction === ManualEntryAction::DEDUCT;
-        abort_unless(auth()->user()?->can($deducting ? 'student topup.refund' : 'student topup.create'), 403);
-
-        $response = (new ManualEntryAction())->execute(
-            (int) $this->account_id,
-            (float) $this->amount,
-            (int) $this->payment_account_id,
-            $this->direction,
-            (string) $this->reason,
-            $this->date,
-            Auth::id(),
-        );
-
-        if (! $response['success']) {
-            $this->dispatch('error', ['message' => $response['message']]);
-
-            return;
-        }
-
-        $this->reset(['amount', 'reason']);
-        $this->direction = ManualEntryAction::ADD;
-        $this->date = date('Y-m-d');
-        $this->dispatch('student-topup-saved');
-        $this->dispatch('success', ['message' => $response['message']]);
-        $this->dispatch('Student-View-Refresh');
     }
 
     /** Ask QPay now for a payment that is still pending (a broken transaction). */
@@ -149,11 +108,6 @@ class Topups extends Component
     {
         return view('livewire.student.topups', [
             'rows' => $this->sorted((new ListTopupsAction())->execute((int) $this->account_id)),
-            'balance' => (new GetBalanceAction())->execute((int) $this->account_id),
-            'paymentMethods' => Account::query()
-                ->whereIn('id', tenant_cache('payment_methods', []) ?: [])
-                ->orderBy('name')
-                ->get(['id', 'name']),
         ]);
     }
 }
