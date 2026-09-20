@@ -40,25 +40,37 @@
             <hr class="my-3">
 
             <div class="row g-3">
-                <div class="col-lg-3 col-md-6">
+                <div class="col-xl col-lg-4 col-md-6">
                     <label for="from_date" class="form-label small fw-medium text-muted mb-1">
                         <i class="fa fa-calendar me-1"></i> From Date
                     </label>
                     <input type="date" wire:model.live="from_date" class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
 
-                <div class="col-lg-3 col-md-6">
+                <div class="col-xl col-lg-4 col-md-6">
                     <label for="to_date" class="form-label small fw-medium text-muted mb-1">
                         <i class="fa fa-calendar me-1"></i> To Date
                     </label>
                     <input type="date" wire:model.live="to_date" class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
 
-                <div class="col-lg-3 col-md-6">
+                <div class="col-xl col-lg-4 col-md-6">
+                    <label for="service_name" class="form-label small fw-medium text-muted mb-1">
+                        <i class="fa fa-cogs me-1"></i> Service
+                    </label>
+                    <select id="service_name" wire:model.live="service_name" class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                        <option value="">All Services</option>
+                        @foreach ($serviceNames as $service)
+                            <option value="{{ $service }}">{{ $service }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-xl col-lg-4 col-md-6">
                     <label for="status" class="form-label small fw-medium text-muted mb-1">
                         <i class="fa fa-tag me-1"></i> Status
                     </label>
-                    <select wire:model.live="status" class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                    <select id="status" wire:model.live="status" class="form-select form-select-sm border-secondary-subtle shadow-sm">
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="success">Success</option>
@@ -66,11 +78,11 @@
                     </select>
                 </div>
 
-                <div class="col-lg-3 col-md-6">
+                <div class="col-xl col-lg-4 col-md-6">
                     <label for="endpoint" class="form-label small fw-medium text-muted mb-1">
                         <i class="fa fa-link me-1"></i> Endpoint
                     </label>
-                    <input type="text" wire:model.live="endpoint" placeholder="Filter by endpoint..." class="form-control form-control-sm border-secondary-subtle shadow-sm">
+                    <input type="text" id="endpoint" wire:model.live="endpoint" placeholder="Filter by endpoint..." class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
             </div>
         </div>
@@ -145,8 +157,11 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if ($item->response)
-                                        <span class="badge bg-light text-dark border">{{ Str::limit($item->response, 20) }}</span>
+                                    @php
+                                        $responsePreview = is_array($item->response) ? json_encode($item->response) : (string) ($item->response ?? '');
+                                    @endphp
+                                    @if ($responsePreview !== '')
+                                        <span class="badge bg-light text-dark border" title="{{ Str::limit($responsePreview, 200) }}">{{ Str::limit($responsePreview, 20) }}</span>
                                     @else
                                         <span class="text-muted small">-</span>
                                     @endif

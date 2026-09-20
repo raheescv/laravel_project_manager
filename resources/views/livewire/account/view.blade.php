@@ -151,19 +151,19 @@
                                 <td class="py-1 small text-muted">{{ $item->person_name }}</td>
                                 <td class="py-1 small text-muted">{{ $item->reference_number }}</td>
                                 <td class="py-1 small">
-                                    @switch($item->model)
-                                        @case('Sale')
-                                            <a href="{{ route('sale::view', $item->model_id) }}" class="text-decoration-none">{{ $item->description }}</a>
-                                            @break
-                                        @case('SaleReturn')
-                                            <a href="{{ route('sale_return::view', $item->model_id) }}" class="text-decoration-none">{{ $item->description }}</a>
-                                            @break
-                                        @case('SalePayment')
-                                            <a href="{{ route('sale::view', $item->journal?->model_id) }}" class="text-decoration-none">{{ $item->description }}</a>
-                                            @break
-                                        @default
-                                            {{ $item->description }}
-                                    @endswitch
+                                    @php
+                                        [$documentRoute, $documentId] = match ($item->model) {
+                                            'Sale' => ['sale::view', $item->model_id],
+                                            'SaleReturn' => ['sale_return::view', $item->model_id],
+                                            'SalePayment' => ['sale::view', $item->journal?->model_id],
+                                            default => [null, null],
+                                        };
+                                    @endphp
+                                    @if ($documentRoute && $documentId)
+                                        <a href="{{ route($documentRoute, $documentId) }}" class="text-decoration-none">{{ $item->description }}</a>
+                                    @else
+                                        {{ $item->description }}
+                                    @endif
                                 </td>
                                 <td class="text-end py-1 text-nowrap small {{ $item->debit > 0 ? 'text-danger' : '' }}">{{ $item->debit != 0 ? currency($item->debit) : '-' }}</td>
                                 <td class="text-end py-1 text-nowrap small {{ $item->credit > 0 ? 'text-success' : '' }}">{{ $item->credit != 0 ? currency($item->credit) : '-' }}</td>

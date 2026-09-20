@@ -131,26 +131,20 @@
                                     @if ($item->journal_model)
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ $item->journal_model }}</span>
                                     @endif
-                                    @switch($item->model)
-                                        @case('Sale')
-                                            <a target="_blank" href="{{ route('sale::view', $item->model_id) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
-                                        @break
-
-                                        @case('SalePayment')
-                                            <a target="_blank" href="{{ route('sale::view', $item->journal?->model_id) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
-                                        @break
-
-                                        @case('SaleReturn')
-                                            <a target="_blank" href="{{ route('sale_return::view', $item->model_id) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
-                                        @break
-
-                                        @case('SaleReturnPayment')
-                                            <a target="_blank" href="{{ route('sale_return::view', $item->journal?->model_id) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
-                                        @break
-
-                                        @default
-                                            <span>{{ $item->description }}</span>
-                                    @endswitch
+                                    @php
+                                        [$documentRoute, $documentId] = match ($item->model) {
+                                            'Sale' => ['sale::view', $item->model_id],
+                                            'SalePayment' => ['sale::view', $item->journal?->model_id],
+                                            'SaleReturn' => ['sale_return::view', $item->model_id],
+                                            'SaleReturnPayment' => ['sale_return::view', $item->journal?->model_id],
+                                            default => [null, null],
+                                        };
+                                    @endphp
+                                    @if ($documentRoute && $documentId)
+                                        <a target="_blank" href="{{ route($documentRoute, $documentId) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
+                                    @else
+                                        <span>{{ $item->description }}</span>
+                                    @endif
                                 </div>
                             </td>
                             <td class="text-nowrap">

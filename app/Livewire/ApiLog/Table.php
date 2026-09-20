@@ -17,6 +17,8 @@ class Table extends Component
 
     public $endpoint = '';
 
+    public $service_name = '';
+
     public $from_date = '';
 
     public $to_date = '';
@@ -37,6 +39,15 @@ class Table extends Component
     {
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
+    }
+
+    public function updated($propertyName)
+    {
+        $filters = ['search', 'status', 'endpoint', 'service_name', 'from_date', 'to_date', 'limit'];
+
+        if (in_array($propertyName, $filters)) {
+            $this->resetPage();
+        }
     }
 
     public function sortBy($field)
@@ -68,6 +79,16 @@ class Table extends Component
         }
     }
 
+    public function getServiceNamesProperty()
+    {
+        return ApiLog::query()
+            ->whereNotNull('service_name')
+            ->where('service_name', '!=', '')
+            ->distinct()
+            ->orderBy('service_name')
+            ->pluck('service_name');
+    }
+
     public function render()
     {
         $data = ApiLog::orderBy($this->sortField, $this->sortDirection)
@@ -89,6 +110,9 @@ class Table extends Component
             ->when($this->endpoint ?? '', function ($query, $value) {
                 return $query->where('endpoint', 'like', "%{$value}%");
             })
+            ->when($this->service_name ?? '', function ($query, $value) {
+                return $query->where('service_name', $value);
+            })
             ->when($this->from_date ?? '', function ($query, $value) {
                 return $query->where('created_at', '>=', $value.' 00:00:00');
             })
@@ -100,6 +124,7 @@ class Table extends Component
 
         return view('livewire.api-log.table', [
             'data' => $data,
+            'serviceNames' => $this->serviceNames,
         ]);
     }
 }

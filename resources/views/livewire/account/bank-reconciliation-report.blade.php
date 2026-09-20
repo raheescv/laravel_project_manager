@@ -283,20 +283,24 @@
                                     <span class="text-secondary">{{ $item->account_name }}</span>
                                 </td>
                                 <td>
-                                    @if ($item->model == 'SalePayment')
-                                        <a href="{{ route('sale::view', $item->journal?->model_id) }}" target="_blank">
-                                            {{ $item->description ?? ($item->journal_remarks ?? '-') }}
+                                    @php
+                                        $documentRoute = match ($item->model) {
+                                            'SalePayment' => 'sale::view',
+                                            'PurchasePayment' => 'purchase::view',
+                                            'SaleReturnPayment' => 'sale_return::view',
+                                            default => null,
+                                        };
+                                        $documentId = $documentRoute ? $item->journal?->model_id : null;
+                                        $documentLabel = $item->description ?? ($item->journal_remarks ?? '-');
+                                    @endphp
+                                    @if ($documentId)
+                                        <a href="{{ route($documentRoute, $documentId) }}" target="_blank">
+                                            {{ $documentLabel }}
                                         </a>
-                                    @elseif ($item->model == 'PurchasePayment')
-                                        <a href="{{ route('purchase::view', $item->journal?->model_id) }}" target="_blank">
-                                            {{ $item->description ?? ($item->journal_remarks ?? '-') }}
-                                        </a>
-                                    @elseif ($item->model == 'SaleReturnPayment')
-                                        <a href="{{ route('sale_return::view', $item->journal?->model_id) }}" target="_blank">
-                                            {{ $item->description ?? ($item->journal_remarks ?? '-') }}
-                                        </a>
+                                    @elseif ($documentRoute)
+                                        <span class="text-secondary">{{ $documentLabel }}</span>
                                     @else
-                                        <span class="text-secondary">{{ $item->description ?? ($item->journal_remarks ?? '-') }} {{ $item->model }}</span>
+                                        <span class="text-secondary">{{ $documentLabel }} {{ $item->model }}</span>
                                     @endif
                                 </td>
                                 <td>
