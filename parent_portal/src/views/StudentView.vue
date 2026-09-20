@@ -114,14 +114,14 @@ async function loadStatement() {
   }
 }
 
+// The API words every row; the portal only picks its face.
 const statementIcon = (row) =>
   ({
-    student_topup: { icon: 'fa-plus', tone: 'pos' },
-    student_topup_refund: { icon: 'fa-reply', tone: 'neg' },
-    sale: { icon: 'fa-cutlery', tone: '' },
-    sale_return: { icon: 'fa-undo', tone: 'warn' },
-    saleReturn: { icon: 'fa-undo', tone: 'warn' },
-  })[row.source] || { icon: 'fa-exchange', tone: 'muted' }
+    topup: { icon: 'fa-plus', tone: 'pos' },
+    refund: { icon: 'fa-reply', tone: 'neg' },
+    purchase: { icon: 'fa-cutlery', tone: 'accent' },
+    return: { icon: 'fa-undo', tone: 'warn' },
+  })[row.kind] || { icon: row.amount > 0 ? 'fa-plus' : 'fa-minus', tone: 'muted' }
 
 function loadTab() {
   if (tab.value === 'bills') loadBills()
@@ -350,33 +350,42 @@ onMounted(() => {
             <template v-else-if="statement">
               <div class="pp-row pp-row--quiet">
                 <span class="pp-row__main">
-                  <span class="pp-row__title">Brought forward</span>
-                  <span class="pp-row__sub">From {{ monthLabel(shiftMonth(month, -1)).split(' ')[0] }}</span>
+                  <span class="pp-row__title">Starting balance</span>
+                  <span class="pp-row__sub">Brought forward from {{ monthLabel(shiftMonth(month, -1)).split(' ')[0] }}</span>
                 </span>
                 <span class="pp-row__end"><span class="pp-amt">{{ money(statement.opening) }}</span></span>
               </div>
-              <div v-if="!statement.rows.length" class="pp-row pp-row--empty">No card activity in {{ monthLabel(month) }}</div>
-              <div v-for="row in statement.rows" :key="row.id" class="pp-row pp-row--icon pp-stmt-row">
-                <span class="pp-row__icon" :class="statementIcon(row).tone && `pp-row__icon--${statementIcon(row).tone}`"><i class="fa" :class="statementIcon(row).icon"></i></span>
+              <div v-if="!statement.rows.length" class="pp-row pp-row--empty">Nothing moved on the card in {{ monthLabel(month) }}</div>
+              <component
+                :is="row.sale_id ? 'RouterLink' : 'div'"
+                v-for="row in statement.rows"
+                :key="row.id"
+                class="pp-row pp-row--icon pp-stmt-row"
+                :to="row.sale_id ? { name: 'bill', params: { id, saleId: row.sale_id } } : undefined"
+              >
+                <span class="pp-row__icon" :class="`pp-row__icon--${statementIcon(row).tone}`"><i class="fa" :class="statementIcon(row).icon"></i></span>
                 <span class="pp-row__main">
-                  <span class="pp-row__title">{{ row.type }}</span>
-                  <span class="pp-row__sub">{{ dayMonth(row.date) }}{{ row.description ? ` · ${row.description}` : '' }}</span>
+                  <span class="pp-row__title">{{ row.title }}</span>
+                  <span class="pp-row__sub">{{ dayMonth(row.date) }}{{ row.detail ? ` · ${row.detail}` : '' }}</span>
                 </span>
                 <span class="pp-row__end">
-                  <span v-if="row.credit > 0" class="pp-amt pp-amt--in">{{ money(row.credit, { sign: true }) }}</span>
-                  <span v-else class="pp-amt">{{ money(-row.debit) }}</span>
-                  <span class="pp-run">{{ money(row.balance) }}</span>
+                  <span class="pp-amt" :class="{ 'pp-amt--in': row.amount > 0 }">{{ money(row.amount, { sign: true }) }}</span>
+                  <span class="pp-run">Balance {{ money(row.balance) }}</span>
                 </span>
-              </div>
+                <i v-if="row.sale_id" class="fa fa-angle-right pp-chev"></i>
+              </component>
               <div class="pp-row pp-row--total">
                 <span class="pp-row__main">
-                  <span class="pp-row__title">Closing balance</span>
+                  <span class="pp-row__title">{{ isCurrentMonth ? 'On the card now' : 'Closing balance' }}</span>
                   <span class="pp-row__sub">{{ isCurrentMonth ? `As of ${dayMonth(new Date())}` : `End of ${monthLabel(month).split(' ')[0]}` }}</span>
                 </span>
                 <span class="pp-row__end"><span class="pp-amt">{{ money(statement.closing) }}</span></span>
               </div>
             </template>
           </div>
+          <p v-if="statement?.rows.length" class="pp-group__foot">
+            {{ money(statement.added) }} added · {{ money(statement.spent) }} spent in {{ monthLabel(month).split(' ')[0] }}
+          </p>
         </div>
       </section>
     </div>

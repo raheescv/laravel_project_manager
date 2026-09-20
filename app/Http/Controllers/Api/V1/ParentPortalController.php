@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Parent\FindStudentAction;
 use App\Actions\Parent\GetBillAction;
+use App\Actions\Parent\GetStatementAction;
 use App\Actions\Parent\ListBillsAction;
 use App\Actions\Parent\ListStudentsAction;
 use App\Actions\QPay\HandleReturnAction;
-use App\Actions\Student\GetStatementAction;
 use App\Actions\Student\Guardian\SendInviteAction;
 use App\Actions\Student\Guardian\SetPasswordAction as GuardianSetPasswordAction;
 use App\Actions\V1\Parent\BlockCardAction;
@@ -276,8 +276,12 @@ class ParentPortalController extends Controller
     /**
      * Card statement.
      *
-     * The balance brought forward, every top-up, purchase, return and refund in the
-     * month with a running balance, and the closing balance.
+     * The balance brought forward, then one row for every move of the card's money
+     * in the month with a running balance, and the closing balance. Written for a
+     * parent: a purchase is one row (not its gross, tax and discount lines), each
+     * row says in plain words what happened and carries its bill when there is one,
+     * and `added` / `spent` are the month's two totals. Gateway references and
+     * accounting remarks stay in the books.
      */
     public function statement(PeriodRequest $request, int $account): JsonResponse
     {
@@ -289,18 +293,9 @@ class ParentPortalController extends Controller
             return $this->sendSuccess([
                 'opening' => $statement['opening'],
                 'closing' => $statement['closing'],
-                'credit' => $statement['credit'],
-                'debit' => $statement['debit'],
-                'rows' => array_map(fn (array $row) => [
-                    'id' => $row['id'],
-                    'date' => $row['date'],
-                    'type' => $row['type'],
-                    'source' => $row['source'],
-                    'description' => $row['description'],
-                    'credit' => $row['credit'],
-                    'debit' => $row['debit'],
-                    'balance' => $row['balance'],
-                ], $statement['rows']),
+                'added' => $statement['added'],
+                'spent' => $statement['spent'],
+                'rows' => $statement['rows'],
                 'period' => ['from' => $from, 'to' => $to],
             ], 'Statement retrieved successfully');
         } catch (NotFoundHttpException) {

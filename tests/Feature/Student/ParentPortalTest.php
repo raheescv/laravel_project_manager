@@ -202,16 +202,37 @@ it('lists a month of bills and opens one of them', function (): void {
         ->assertJsonPath('data.payments.0.amount', 20);
 });
 
-it('shows the card statement with a running balance', function (): void {
+it('shows the card statement a parent can read: one netted row per purchase, in plain words', function (): void {
     StudentWorld::topUp($this->world, $this->student, 50);
-    (new SaleCreateAction())->execute(StudentWorld::salePayload($this->world, $this->student->id, 20, card: 20), $this->world->user->id);
+    // Half the bill is handed over in cash, so only QAR 15 of it comes off the card —
+    // and the sale's own gross and cash-payment lines must fold into that one row.
+    $sale = (new SaleCreateAction())->execute(StudentWorld::salePayload($this->world, $this->student->id, 20, card: 15, cash: 5), $this->world->user->id)['data'];
 
     $response = portalJson($this, 'GET', "students/{$this->student->id}/statement", StudentWorld::parentToken($this->guardian))->assertOk();
 
     expect($response->json('data.opening'))->toEqual(0)
-        ->and($response->json('data.closing'))->toEqual(30)
-        ->and(collect($response->json('data.rows'))->pluck('balance')->last())->toEqual(30)
-        ->and($response->json('data.rows.0'))->not->toHaveKeys(['journal_id', 'model', 'model_id']);
+        ->and($response->json('data.closing'))->toEqual(35)
+        ->and($response->json('data.added'))->toEqual(50)
+        ->and($response->json('data.spent'))->toEqual(15)
+        ->and($response->json('data.rows'))->toHaveCount(2);
+
+    $topup = $response->json('data.rows.0');
+    expect($topup['kind'])->toBe('topup')
+        ->and($topup['title'])->toBe('Money added')
+        ->and($topup['detail'])->toBe('Added at the school office')
+        ->and($topup['amount'])->toEqual(50)
+        ->and($topup['balance'])->toEqual(50)
+        ->and($topup['sale_id'])->toBeNull();
+
+    $purchase = $response->json('data.rows.1');
+    expect($purchase['kind'])->toBe('purchase')
+        ->and($purchase['title'])->toBe('Canteen purchase')
+        ->and($purchase['detail'])->toStartWith('1 item')
+        ->and($purchase['amount'])->toEqual(-15)
+        ->and($purchase['balance'])->toEqual(35)
+        ->and($purchase['sale_id'])->toBe($sale->id)
+        // Nothing from the books: no gateway reference, no accounting remark, no ids.
+        ->and($purchase)->not->toHaveKeys(['journal_id', 'model', 'model_id', 'source', 'description', 'reference']);
 });
 
 it('lets a parent block a lost card but not unblock it', function (): void {
