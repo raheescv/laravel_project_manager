@@ -11,8 +11,11 @@ export const fetchSchool = () => client.get('/school')
 /** { token, token_type, expires_at, parent } */
 export const login = (payload) => client.post('/login', payload)
 
-/** `login` is the mobile number or the email the school has for the parent. */
-export const forgotPassword = (login) => client.post('/forgot-password', { login })
+/**
+ * `login` is the mobile number or the email the school has for the parent. A number
+ * also goes as `mobile`, the only key a server from before email was accepted reads.
+ */
+export const forgotPassword = (login) => client.post('/forgot-password', login.includes('@') ? { login } : { login, mobile: login })
 
 /** { valid, name, valid_days } */
 export const checkPasswordLink = (token) => client.get(`/set-password/${encodeURIComponent(token)}`)

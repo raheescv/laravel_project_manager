@@ -22,7 +22,9 @@ async function submit() {
     await forgotPassword(login.value.trim())
     sent.value = true
   } catch (e) {
-    error.value = e.message
+    // A school server not yet updated to accept an email here asks for `mobile` only.
+    const onlyMobile = e.status === 422 && e.field?.('mobile') && !e.field?.('login')
+    error.value = onlyMobile && login.value.includes('@') ? "The school's server doesn't accept an email here yet. Please use your mobile number." : e.message
   } finally {
     busy.value = false
   }
