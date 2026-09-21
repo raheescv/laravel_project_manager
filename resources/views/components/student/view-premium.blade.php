@@ -60,7 +60,7 @@
             /* ── Hero ─────────────────────────────────────────────────────── */
             /* Dark theme-colour gradient with a fading dot grid, matching the .apx hero on the
                Email log; everything inside it is re-inked white/glass below. */
-            .svx .hero { padding: 22px 24px; position: relative; overflow: hidden; isolation: isolate; color: #fff; border-color: transparent;
+            .svx .hero { padding: 16px 20px; position: relative; overflow: hidden; isolation: isolate; color: #fff; border-color: transparent;
                 box-shadow: 0 16px 38px -16px rgba(16, 24, 40, .28), 0 7px 16px -10px rgba(16, 24, 40, .16);
                 background:
                     radial-gradient(120% 160% at 12% -10%, rgba(255, 255, 255, .20), transparent 50%),
@@ -69,13 +69,13 @@
             .svx .hero::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .5; pointer-events: none;
                 background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .10) 1px, transparent 0); background-size: 22px 22px;
                 -webkit-mask-image: linear-gradient(180deg, #000, transparent 70%); mask-image: linear-gradient(180deg, #000, transparent 70%); }
-            .svx .av { width: 96px; height: 96px; border-radius: 28px; flex: none; position: relative; display: grid; place-items: center; font-size: 32px; font-weight: 600; line-height: 1; letter-spacing: .02em; color: #fff; background: linear-gradient(145deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .08)); box-shadow: 0 0 0 4px rgba(255, 255, 255, .10), 0 0 0 5.5px rgba(255, 255, 255, .22); }
+            .svx .av { width: 64px; height: 64px; border-radius: 19px; flex: none; position: relative; display: grid; place-items: center; font-size: 23px; font-weight: 600; line-height: 1; letter-spacing: .02em; color: #fff; background: linear-gradient(145deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .08)); box-shadow: 0 0 0 3px rgba(255, 255, 255, .10), 0 0 0 4.5px rgba(255, 255, 255, .22); }
             .svx .av img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
-            .svx .av .dot { position: absolute; inset-inline-end: -3px; bottom: -3px; width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--hero-1); display: grid; place-items: center; color: #fff; font-size: 10px; }
+            .svx .av .dot { position: absolute; inset-inline-end: -4px; bottom: -4px; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--hero-1); display: grid; place-items: center; color: #fff; font-size: 8.5px; }
             .svx .eyebrow { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; color: #fff; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .28); transition: background .15s; }
             .svx .eyebrow:hover { background: rgba(255, 255, 255, .24); color: #fff; }
             .svx .eyebrow b { color: rgba(255, 255, 255, .78); font-weight: 500; letter-spacing: .06em; }
-            .svx .nm { font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -.02em; color: #fff; margin: 8px 0 10px; overflow-wrap: anywhere; }
+            .svx .nm { font-size: 21px; font-weight: 700; line-height: 1.15; letter-spacing: -.02em; color: #fff; margin: 6px 0 8px; overflow-wrap: anywhere; }
             .svx .hero .chip { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .22); color: #fff; }
             .svx .hero .chip i { color: rgba(255, 255, 255, .7); }
             .svx .hero .chip.ok { background: rgba(var(--bs-success-rgb), .28); border-color: rgba(var(--bs-success-rgb), .55); color: #fff; }
@@ -87,19 +87,29 @@
             .svx .chip.ok { background: var(--bs-success-bg-subtle); border-color: var(--bs-success-border-subtle); color: var(--bs-success-text-emphasis); }
             .svx .chip.off { background: var(--bs-secondary-bg-subtle); border-color: var(--bs-secondary-border-subtle); color: var(--bs-secondary-text-emphasis); }
             .svx .chip.ok i, .svx .chip.off i { color: inherit; }
-            .svx .pline { display: flex; align-items: center; gap: 8px 10px; margin-top: 16px; padding-top: 14px; border-top: 1px dashed rgba(255, 255, 255, .22); font-size: 12.5px; color: rgba(255, 255, 255, .8); flex-wrap: wrap; }
+            .svx .pline { display: flex; align-items: center; gap: 6px 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255, 255, 255, .22); font-size: 12.5px; color: rgba(255, 255, 255, .8); flex-wrap: wrap; }
             .svx .pline b { color: #fff; font-weight: 600; }
             .svx .pline a:not(.btn) { color: #fff; text-decoration: none; }
             .svx .pline a:not(.btn):hover { text-decoration: underline; }
-            .svx .hbtn { border-radius: 11px; font-weight: 500; padding: 7px 14px; font-size: 12.5px; }
-            .svx .hbtn.soft { background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .28); color: #fff; }
-            .svx .hbtn.soft:hover { background: rgba(255, 255, 255, .24); color: #fff; }
+            .svx .hbtn { border-radius: 9px; font-weight: 500; padding: 4px 12px; font-size: 12px; }
             /* A theme-coloured button disappears on the theme-coloured hero: flip it to white. */
             .svx .hero .btn-primary { background: #fff; border-color: #fff; color: var(--hero-1); font-weight: 600; }
             .svx .hero .btn-primary:hover, .svx .hero .btn-primary:focus-visible { background: rgba(255, 255, 255, .88); border-color: transparent; color: var(--hero-1); }
             .svx .hero .idc-face { box-shadow: 0 22px 44px -18px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .25); }
             .svx .hero .idc.is-empty { border-color: rgba(255, 255, 255, .32); background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .78); }
             .svx .hero .idc.is-empty b { color: #fff; }
+            /* The hero carries a pocket-size card so the header stays short; the Card tab keeps the large one. */
+            .svx .hero .idc { width: 250px; max-width: 100%; border-radius: 14px; }
+            .svx .hero .idc-face { padding: 12px 15px; }
+            .svx .hero .idc-top { font-size: 9px; letter-spacing: .16em; }
+            .svx .hero .idc-top .fa-wifi { font-size: 13px; }
+            .svx .hero .idc-chip { width: 32px; height: 24px; border-radius: 5px; margin-top: 8px; }
+            .svx .hero .idc-bal small { font-size: 8.5px; }
+            .svx .hero .idc-bal strong { font-size: 19px; }
+            .svx .hero .idc-foot { margin-top: 6px; font-size: 9.5px; }
+            .svx .hero .idc-stamp { font-size: 10px; padding: 7px 0; }
+            .svx .hero .idc.is-empty { padding: 10px; font-size: 12px; }
+            .svx .hero .idc.is-empty .big { font-size: 22px; margin-bottom: 4px; }
 
             /* ── The physical student card (components/student/id-card) ───── */
             .svx .idc { position: relative; aspect-ratio: 1.586; width: 100%; max-width: 360px; border-radius: 18px; color: #fff; transform: rotate(-2.5deg); transition: transform .45s cubic-bezier(.2, .75, .25, 1); }
@@ -155,7 +165,7 @@
             .svx .rail .cnt { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; background: var(--soft); color: var(--mut); font-weight: 500; }
             .svx .rail button.on .cnt { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
             .svx .pane { padding: 22px 24px 24px; animation: svxRise .4s cubic-bezier(.2, .75, .25, 1) both; }
-            @media (max-width: 575.98px) { .svx .hero, .svx .pane { padding: 18px 16px; } }
+            @media (max-width: 575.98px) { .svx .hero { padding: 14px 14px; } .svx .pane { padding: 18px 16px; } }
             .svx .ph { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
             .svx .ph .pi { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); font-size: 13px; flex: none; }
             .svx .ph h6 { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }

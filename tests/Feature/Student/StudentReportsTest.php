@@ -117,12 +117,12 @@ it('exports both reports', function (): void {
     Excel::assertDownloaded('student_wallet_'.now()->timestamp.'.xlsx');
 
     Livewire::test(QPayRechargeReport::class)->call('export');
-    Excel::assertDownloaded('qpay_recharges_'.now()->timestamp.'.xlsx');
+    Excel::assertDownloaded('online_recharges_'.now()->timestamp.'.xlsx');
 });
 
 it('opens both report pages, and hides them outside the School module', function (): void {
     $this->get($this->world->url('/student/report/wallet'))->assertOk()->assertSee('Student Wallet Report');
-    $this->get($this->world->url('/student/report/recharges'))->assertOk()->assertSee('QPay Recharge Report');
+    $this->get($this->world->url('/student/report/recharges'))->assertOk()->assertSee('Online Recharge Report');
 
     \App\Models\Configuration::updateOrCreate(
         ['tenant_id' => $this->world->tenant->id, 'key' => 'active_module'],

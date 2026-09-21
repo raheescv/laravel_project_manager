@@ -1,18 +1,18 @@
 <div class="card shadow-sm border-0 mt-3">
     <div class="card-header bg-primary text-white py-2 d-flex align-items-center justify-content-between">
-        <h5 class="mb-0 text-white"><i class="fa fa-credit-card me-1"></i> QPay Top-ups</h5>
+        <h5 class="mb-0 text-white"><i class="fa fa-globe me-1"></i> Debit card top-ups <span class="fw-normal opacity-75">· QPay</span></h5>
         <span class="badge {{ $environment === 'production' ? 'bg-success' : 'bg-warning text-dark' }}">{{ $environment === 'production' ? 'Production' : 'Staging' }}</span>
     </div>
     <form wire:submit="save">
         <div class="card-body p-3">
             <p class="small text-body-secondary mb-3">
-                Parents top up student cards in the parent portal with a Qatar debit card through QPay (QCB EZ-Connect).
+                Parents who choose <strong>Debit card</strong> on the top-up page pay with a Qatar debit card through QPay (QCB EZ-Connect).
                 Your acquiring bank provides the Bank ID and Merchant ID; the secret key comes from the QPay merchant portal.
                 The server's public IP must be whitelisted by QPay.
             </p>
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" type="checkbox" role="switch" id="qp_enabled" wire:model="enabled">
-                <label class="form-check-label fw-medium" for="qp_enabled">Allow parents to top up online</label>
+                <label class="form-check-label fw-medium" for="qp_enabled">Offer debit card top-ups to parents</label>
             </div>
             <div class="row g-3">
                 <div class="col-md-4">
@@ -37,7 +37,7 @@
                     <div class="form-text">Stored encrypted. If you regenerate the key in the merchant portal, paste the new one here straight away.</div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-medium small mb-1" for="qp_payment_account_id">Top-ups are paid into</label>
+                    <label class="form-label fw-medium small mb-1" for="qp_payment_account_id">Debit card top-ups are paid into</label>
                     <select id="qp_payment_account_id" class="form-select form-select-sm" wire:model="payment_account_id">
                         <option value="">Choose a payment method…</option>
                         @foreach ($paymentAccounts as $account)

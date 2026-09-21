@@ -27,9 +27,9 @@
 
     {{-- Hero: who the student is, and their card --}}
     <div class="sheet hero mb-3 rise" style="--i:0">
-        <div class="row g-4 align-items-center">
-            <div class="col-lg-7">
-                <div class="d-flex gap-4 align-items-start flex-wrap flex-sm-nowrap">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg">
+                <div class="d-flex gap-3 align-items-start">
                     <div class="av">
                         @if ($account->image)
                             <img src="{{ $account->image_url }}" alt="">
@@ -65,20 +65,14 @@
                             @else
                                 <i class="fa fa-users"></i><span>No parents linked yet</span>
                             @endif
-                            <span class="ms-auto d-flex gap-2">
-                                <button type="button" class="btn hbtn soft" wire:click="selectTab('statement')"><i class="fa fa-list-alt me-1"></i>Statement</button>
-                                @can('student topup.create')
-                                    <button type="button" class="btn hbtn soft" wire:click="selectTab('topups')"><i class="fa fa-plus-circle me-1"></i>Top up</button>
-                                @endcan
-                                @can('student.edit')
-                                    <a href="{{ route('student::edit', $account->id) }}" class="btn btn-primary hbtn"><i class="fa fa-pencil me-1"></i>Edit</a>
-                                @endcan
-                            </span>
+                            @can('student.edit')
+                                <a href="{{ route('student::edit', $account->id) }}" class="btn btn-primary btn-sm hbtn ms-auto"><i class="fa fa-pencil me-1"></i>Edit</a>
+                            @endcan
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-5 d-flex justify-content-center justify-content-lg-end">
+            <div class="col-lg-auto d-flex justify-content-center justify-content-lg-end">
                 <x-student.id-card :account="$account" :detail="$detail" :balance="$balance">
                     <button type="button" class="btn btn-sm btn-primary" wire:click="selectTab('card')"><i class="fa fa-link me-1"></i>Link a card</button>
                 </x-student.id-card>

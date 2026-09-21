@@ -1,7 +1,8 @@
 # Parent Portal
 
 Standalone Vue 3 app for a school's parents: their children's canteen card balance, bills,
-card statement, "lost card" blocking and online top-up through QPay. It is fully
+card statement, "lost card" blocking and online top-up by debit card (QPay) or credit
+card (Mastercard Gateway). It is fully
 independent of the `project_manager` Laravel backend — no code is shared; the
 `/api/v1/parent` REST API is the only integration surface.
 
@@ -18,8 +19,8 @@ computer it becomes a web page (see [On a computer](#on-a-computer)).
 | `#/`                     | My children — balance and card status for each child          |
 | `#/students/:id`         | One child — balance, top up, block a lost card, bills, statement |
 | `#/students/:id/bills/:saleId` | One bill — lines, discount, tax, how it was paid        |
-| `#/students/:id/topup`   | Choose an amount → QPay's payment page                        |
-| `#/topups/:pun`          | The payment result QPay returns to (polls while confirming)   |
+| `#/students/:id/topup`   | Amount + debit/credit card → the gateway's payment page       |
+| `#/topups/:pun`          | The payment result the gateway returns to (polls while pending) |
 | `#/profile`              | The parent's details (read-only), children, password, sign out |
 | `#/profile/password`     | Change password (current + new); other sign-ins end           |
 | `#/students/:id/pre-orders` | Canteen meals — the weekly order and the next school days  |
@@ -57,20 +58,33 @@ charged when ordering. When the child's card is tapped, QLOUD POS puts the meal 
 cart (with the parent's note); the cashier charges it to the card as usual, and the
 completed sale marks that day's order collected.
 
-## Online top-up (QPay)
+## Online top-up (debit card · QPay, credit card · Mastercard Gateway)
 
-1. The parent picks an amount. `POST /students/{id}/topups` opens the payment and returns
-   QPay's gateway URL plus the **signed** form fields (the secret key never leaves the
-   server).
-2. The app posts that form, taking the browser to QPay's page.
-3. QPay posts the result to the API (`POST /api/v1/parent/qpay/return`). The API checks
-   QPay's secure hash (or asks QPay's inquiry API when the hash is wrong), credits the card
-   through the ledger exactly once, and redirects the browser to this app at
-   `#/topups/{pun}`.
-4. The result page shows reference (PUN), amount, status, date & time — polling every few
-   seconds while the payment is still being confirmed.
+The school switches each card type on separately (Settings → Student Cards: "Debit card
+top-ups · QPay" and "Credit card top-ups · MPGS"). `GET /students/{id}` lists the ones it
+offers in `topup.methods`; with both, the parent picks under **Pay with** (the choice is
+remembered on the device), with one it is simply shown.
 
-For step 3 the API must know where this app lives: set **Settings → Student Settings →
+1. The parent picks an amount and a card type. `POST /students/{id}/topups` with
+   `method: debit|credit` opens the payment and returns `payment`:
+   - **debit** — `{ type: 'qpay', url, fields }`: QPay's gateway URL plus the **signed**
+     form fields (the secret key never leaves the server). The app posts that form.
+   - **credit** — `{ type: 'mpgs', script, session_id }`: a Hosted Checkout session. The app
+     loads the bank's `checkout.min.js` and calls `Checkout.showPaymentPage()`
+     (`utils/checkout.js`). The API password never leaves the server.
+2. The gateway sends the parent back through the API:
+   - QPay posts its signed result to `POST /api/v1/parent/qpay/return` (hash checked, or
+     QPay's inquiry API asked when it is wrong);
+   - the Mastercard Gateway redirects to `/api/v1/parent/mpgs/return/{pun}` (or
+     `/mpgs/cancel/{pun}`); nothing the browser brings is believed — the API reads the
+     order back with Retrieve Order.
+   Either way the card is credited through the ledger exactly once and the browser is sent
+   to this app at `#/topups/{pun}`.
+3. The result page shows reference (PUN), amount, status, date & time and the card used —
+   polling every few seconds while the payment is still being confirmed. A credit card
+   payment the parent cancelled shows as **Cancelled** and blocks nothing.
+
+For step 2 the API must know where this app lives: set **Settings → Student Settings →
 Parent portal address** in the school's admin (or `PARENT_PORTAL_URL` in the API's `.env`).
 The same address is used for the links in invite and password-reset emails.
 
@@ -139,7 +153,7 @@ client unwraps it).
 | `GET  /students/{id}/bills/{sale}`       | Bill page                                 |
 | `GET  /students/{id}/statement?month=`   | Statement tab — already worded for parents (see below) |
 | `POST /students/{id}/card/block`         | "Lost card?"                              |
-| `POST /students/{id}/topups`             | Start a QPay top-up                       |
+| `POST /students/{id}/topups`             | Start a top-up (`method`: debit / credit) |
 | `GET  /topups/{pun}`                     | Top-up result                             |
 | `GET  /pre-order-menu`                   | Meals with their weekly dishes            |
 | `GET  /students/{id}/pre-orders`         | Weekly order + next school days           |
@@ -169,7 +183,7 @@ src/
 ├── school.js     school name, logo, currency
 ├── children.js   the parent's children, shared by home and the desktop wallet
 ├── router/       hash routes + sign-in guard
-├── utils/        format.js (money, dates, months), qpay.js (post to QPay), viewport.js (desktop)
+├── utils/        format.js (money, dates, months), qpay.js (post to QPay), checkout.js (open either payment page), viewport.js (desktop)
 ├── components/   shared UI pieces
 └── views/        one file per screen
 ```

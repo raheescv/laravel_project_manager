@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-/** The QPay recharge report as filtered on screen (QPayRechargeReport::filteredQuery). */
+/** The online recharge report (debit + credit card) as filtered on screen (QPayRechargeReport::filteredQuery). */
 class QPayRechargeReportExport implements FromQuery, WithHeadings, WithMapping
 {
     use Exportable;
@@ -23,7 +23,7 @@ class QPayRechargeReportExport implements FromQuery, WithHeadings, WithMapping
 
     public function headings(): array
     {
-        return ['Date', 'PUN', 'Type', 'Student', 'Admission No', 'Class', 'Parent', 'Parent Mobile', 'Card', 'Amount', 'Status', 'QPay Code', 'QPay Message', 'Confirmation'];
+        return ['Date', 'PUN', 'Type', 'Card Type', 'Gateway', 'Student', 'Admission No', 'Class', 'Parent', 'Parent Mobile', 'Card', 'Funding', 'Amount', 'Status', 'Gateway Code', 'Gateway Message', 'Confirmation'];
     }
 
     public function map($row): array
@@ -32,12 +32,15 @@ class QPayRechargeReportExport implements FromQuery, WithHeadings, WithMapping
             $row->created_at?->format('Y-m-d H:i'),
             $row->pun,
             ucfirst($row->type),
+            $row->methodLabel(),
+            $row->gatewayLabel(),
             $row->student_name,
             $row->admission_no,
             trim(implode(' - ', array_filter([$row->grade, $row->section]))),
             $row->guardian_name,
             $row->guardian_mobile,
-            $row->masked_card,
+            $row->cardLabel(),
+            $row->funding_method ? ucfirst(strtolower($row->funding_method)) : null,
             round((float) $row->amount * ($row->type === QpayTransaction::TYPE_REFUND ? -1 : 1), 2),
             $row->statusLabel(),
             $row->gateway_status,

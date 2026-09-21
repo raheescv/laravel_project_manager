@@ -11,9 +11,10 @@ import { school } from '@/school'
 import { amount, dateTime, firstName, money } from '@/utils/format'
 
 /**
- * Where QPay brings the parent back. Shows what QPay certification asks for —
- * reference, amount, status, date and time — and keeps checking while the
- * payment is still being confirmed.
+ * Where the payment page brings the parent back — QPay for a debit card, the
+ * bank's Mastercard Gateway page for a credit card. Shows what QPay certification
+ * asks for — reference, amount, status, date and time — and keeps checking while
+ * the payment is still being confirmed.
  */
 const route = useRoute()
 const pun = String(route.params.pun || '')
@@ -28,6 +29,9 @@ const first = computed(() => firstName(topup.value?.student?.name))
 const studentRoute = computed(() => ({ name: 'student', params: { id: topup.value?.student?.account_id } }))
 // The top-up answer carries no photo; the wallet list has it.
 const child = computed(() => children.list.find((student) => student.account_id === topup.value?.student?.account_id) || null)
+const credit = computed(() => topup.value?.method === 'credit')
+// "Credit card · Visa ····0008" once the gateway has said which card was used.
+const paidWith = computed(() => [topup.value?.method_label || 'Debit card', topup.value?.card].filter(Boolean).join(' · '))
 const newBalance = computed(() => {
   const status = topup.value?.status
   if (status === 'success') return money(topup.value.balance)
@@ -47,9 +51,10 @@ const view = computed(() => {
         icon: 'fa-clock-o',
         title: 'Payment received, being checked',
         tag: ['warn', 'Being checked'],
-        msg: `QPay has your payment. The school is checking it, and the money will reach ${who} card once it's confirmed. Please don't pay again.`,
+        msg: `${credit.value ? 'Your card was charged' : 'QPay has your payment'}. The school is checking it, and the money will reach ${who} card once it's confirmed. Please don't pay again.`,
       },
       failed: { tone: 'failed', icon: 'fa-times', title: 'Payment failed', tag: ['neg', 'Failed'], msg: t.message ? `${t.message} No money was taken.` : 'No money was taken. You can try again.' },
+      cancelled: { tone: 'failed', icon: 'fa-times', title: 'Payment cancelled', tag: ['muted', 'Cancelled'], msg: 'You left the card payment page, so no money was taken. You can try again.' },
       refund_pending: { tone: 'review', icon: 'fa-reply', title: 'Refund in progress', tag: ['warn', 'Refund pending'], msg: 'The school is refunding this payment to your bank card.' },
       refunded: { tone: 'review', icon: 'fa-reply', title: 'Payment refunded', tag: ['warn', 'Refunded'], msg: 'This payment was refunded to your bank card.' },
       // QPay never said what happened and the school released it so the card could
@@ -134,9 +139,10 @@ onBeforeUnmount(() => clearTimeout(timer))
           <dt>Status</dt>
           <dd><span class="pp-tag" :class="`pp-tag--${view.tag[0]}`">{{ view.tag[1] }}</span></dd>
         </div>
+        <div class="is-wide"><dt>Payment method</dt><dd>{{ paidWith }}</dd></div>
         <div class="is-wide"><dt>Payment reference</dt><dd class="pp-receipt__code">{{ topup.pun }}</dd></div>
         <div class="is-wide">
-          <dt>QPay confirmation</dt>
+          <dt>{{ credit ? 'Card receipt' : 'QPay confirmation' }}</dt>
           <dd :class="topup.confirmation_id ? 'pp-receipt__code' : 'pp-text-muted'">{{ topup.confirmation_id || 'Not received yet' }}</dd>
         </div>
       </dl>
@@ -152,7 +158,7 @@ onBeforeUnmount(() => clearTimeout(timer))
     </article>
 
     <div class="pp-receipt__actions">
-      <template v-if="topup.status === 'failed'">
+      <template v-if="['failed', 'cancelled'].includes(topup.status)">
         <RouterLink class="pp-btn pp-btn--primary" :to="{ name: 'topup', params: { id: topup.student.account_id } }">Try again</RouterLink>
         <RouterLink class="pp-btn pp-btn--tinted" :to="studentRoute">Back to {{ first || 'my child' }}</RouterLink>
       </template>

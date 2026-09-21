@@ -29,7 +29,7 @@
             @endcan
             @can('report.student recharge')
                 <li class="nav-item">
-                    <a href="{{ route('student::report::recharges') }}" class="nav-link {{ request()->is(['student/report/recharges']) ? 'active' : '' }}">QPay Recharges</a>
+                    <a href="{{ route('student::report::recharges') }}" class="nav-link {{ request()->is(['student/report/recharges']) ? 'active' : '' }}">Online Recharges</a>
                 </li>
             @endcan
         </ul>

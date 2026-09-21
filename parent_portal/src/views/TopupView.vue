@@ -9,7 +9,7 @@ import StudentAvatar from '@/components/StudentAvatar.vue'
 import { refreshChild } from '@/children'
 import { school } from '@/school'
 import { amount as plainAmount, classLabel, firstName, money } from '@/utils/format'
-import { goToQPay } from '@/utils/qpay'
+import { goToPayment } from '@/utils/checkout'
 import { desktop } from '@/utils/viewport'
 
 const route = useRoute()
@@ -21,6 +21,8 @@ const loadError = ref('')
 
 const input = ref('')
 const touched = ref(false)
+// 'debit' (QPay) or 'credit' (Mastercard Gateway) — whichever the school offers.
+const method = ref('')
 const paying = ref(false)
 const payError = ref('')
 
@@ -39,7 +41,15 @@ const countdown = computed(() => {
 })
 
 const first = computed(() => firstName(student.value?.name))
-const limits = computed(() => student.value?.topup || { min: 0, max: 0, suggestions: [], enabled: false })
+const limits = computed(() => student.value?.topup || { min: 0, max: 0, suggestions: [], methods: [], enabled: false })
+const methods = computed(() => limits.value.methods || [])
+const chosen = computed(() => methods.value.find((option) => option.key === method.value) || methods.value[0] || null)
+const methodIcon = { debit: 'fa-university', credit: 'fa-credit-card' }
+const trust = computed(() =>
+  chosen.value?.key === 'credit'
+    ? "You'll pay on your bank's secure Mastercard Gateway page, not in this app."
+    : "You'll pay on QPay's secure page, not in this app.",
+)
 const value = computed(() => {
   const cleaned = String(input.value).replace(/,/g, '').trim()
   return /^\d+(\.\d{0,2})?$/.test(cleaned) ? Number(cleaned) : null
@@ -49,15 +59,16 @@ const newBalance = computed(() => Number(student.value?.balance || 0) + (value.v
 const cardState = computed(() => (!student.value?.has_card ? 'none' : student.value.card_blocked ? 'blocked' : 'active'))
 const payLabel = computed(() => {
   if (blocked.value) return `Try again in ${countdown.value}`
-  if (paying.value) return 'Opening QPay…'
-  return valid.value ? `Pay ${money(value.value)} with QPay` : 'Pay with QPay'
+  if (paying.value) return 'Opening the payment page…'
+  const by = chosen.value ? ` by ${chosen.value.label.toLowerCase()}` : ''
+  return valid.value ? `Pay ${money(value.value)}${by}` : `Pay${by}`
 })
 
 const hint = computed(() => {
   if (touched.value && input.value !== '' && !valid.value) {
     return { text: `Enter an amount between ${money(limits.value.min)} and ${money(limits.value.max)}.`, error: true }
   }
-  return { text: `Between ${money(limits.value.min)} and ${money(limits.value.max)}. Paid with a Qatar debit card through QPay.`, error: false }
+  return { text: `Between ${money(limits.value.min)} and ${money(limits.value.max)}.`, error: false }
 })
 
 function stopTicker() {
@@ -91,6 +102,29 @@ function dismiss() {
   if (!blocked.value) payError.value = ''
 }
 
+const METHOD_KEY = 'pp.topupMethod'
+
+/** The card type chosen last time on this device, if the school still offers it. */
+function rememberedMethod(options) {
+  let saved = ''
+  try {
+    saved = localStorage.getItem(METHOD_KEY) || ''
+  } catch {
+    saved = ''
+  }
+  return (options.find((option) => option.key === saved) || options[0])?.key || ''
+}
+
+function chooseMethod(key) {
+  method.value = key
+  dismiss()
+  try {
+    localStorage.setItem(METHOD_KEY, key)
+  } catch {
+    // Remembering the choice is a convenience only.
+  }
+}
+
 function pick(suggestion) {
   input.value = plainAmount(suggestion)
   touched.value = true
@@ -104,6 +138,7 @@ async function load() {
     refreshChild(student.value)
     const suggestions = student.value.topup.suggestions
     if (!input.value && suggestions.length) input.value = plainAmount(suggestions[Math.min(1, suggestions.length - 1)])
+    if (!methods.value.some((option) => option.key === method.value)) method.value = rememberedMethod(methods.value)
     status.value = 'ready'
   } catch (e) {
     loadError.value = e.status === 404 ? "This child isn't linked to your login." : e.message
@@ -118,9 +153,9 @@ async function pay() {
 
   paying.value = true
   try {
-    const { payment } = await startTopup(id, value.value)
-    // Leaves the portal for QPay's page; QPay brings the parent back to #/topups/{pun}.
-    goToQPay(payment)
+    const { payment } = await startTopup(id, value.value, chosen.value?.key)
+    // Leaves the portal for the gateway's page; it brings the parent back to #/topups/{pun}.
+    await goToPayment(payment)
   } catch (e) {
     payError.value = e.message
     holdUntil(e.errors?.retry_at)
@@ -215,6 +250,38 @@ onUnmounted(stopTicker)
             <p class="pp-group__foot" :class="{ 'is-error': hint.error }" aria-live="polite">{{ hint.text }}</p>
           </section>
 
+          <!-- Debit (QPay) or credit (Mastercard Gateway): shown as a choice only when the school offers both. -->
+          <section v-if="methods.length" class="pp-group">
+            <h2 class="pp-group__head">Pay with</h2>
+            <div class="pp-group__body" :role="methods.length > 1 ? 'radiogroup' : null" aria-label="Card type">
+              <template v-if="methods.length > 1">
+                <button
+                  v-for="option in methods"
+                  :key="option.key"
+                  class="pp-row pp-row--icon pp-method-row"
+                  type="button"
+                  role="radio"
+                  :aria-checked="chosen?.key === option.key"
+                  @click="chooseMethod(option.key)"
+                >
+                  <span class="pp-row__icon"><i class="fa" :class="methodIcon[option.key] || 'fa-credit-card'"></i></span>
+                  <span class="pp-row__main">
+                    <span class="pp-row__title">{{ option.label }}</span>
+                    <span class="pp-row__sub">{{ option.detail }}</span>
+                  </span>
+                  <span class="pp-check" aria-hidden="true"><i class="fa fa-check"></i></span>
+                </button>
+              </template>
+              <div v-else class="pp-row pp-row--icon">
+                <span class="pp-row__icon"><i class="fa" :class="methodIcon[chosen.key] || 'fa-credit-card'"></i></span>
+                <span class="pp-row__main">
+                  <span class="pp-row__title">{{ chosen.label }}</span>
+                  <span class="pp-row__sub">{{ chosen.detail }}</span>
+                </span>
+              </div>
+            </div>
+          </section>
+
           <section v-if="!desktop" class="pp-group">
             <div class="pp-group__body">
               <div class="pp-row">
@@ -242,7 +309,7 @@ onUnmounted(stopTicker)
             <span v-if="paying" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa" :class="blocked ? 'fa-clock-o' : 'fa-lock'"></i>
             {{ payLabel }}
           </button>
-          <p class="pp-trust"><i class="fa fa-shield"></i>You'll pay on QPay's secure page, not in this app.</p>
+          <p class="pp-trust"><i class="fa fa-shield"></i>{{ trust }}</p>
         </aside>
       </div>
     </main>
@@ -252,7 +319,7 @@ onUnmounted(stopTicker)
         <span v-if="paying" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa" :class="blocked ? 'fa-clock-o' : 'fa-lock'"></i>
         {{ payLabel }}
       </button>
-      <p class="pp-trust"><i class="fa fa-shield"></i>You'll pay on QPay's secure page, not in this app.</p>
+      <p class="pp-trust"><i class="fa fa-shield"></i>{{ trust }}</p>
     </footer>
   </template>
 </template>

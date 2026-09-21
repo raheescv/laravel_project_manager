@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\Guardian;
 use App\Models\QpayTransaction;
 use App\Services\Payment\QPayClient;
+use App\Support\Payment\MpgsSettings;
 use App\Support\Payment\QPaySettings;
 use App\Support\Student\StudentSettings;
 use Exception;
@@ -14,11 +15,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * Open a QPay payment to top up a student's card.
+ * Open an online payment to top up a student's card — by Qatar debit card
+ * through QPay, or by credit card through the Mastercard Gateway ($gateway).
  *
  * Nothing is credited here: the row is the record of a payment the parent is
- * about to make on QPay's page. The caller has already resolved the student
- * through the signed-in parent.
+ * about to make on the gateway's page. The caller has already resolved the
+ * student through the signed-in parent.
  *
  * Broken transactions (QPay certification): while an earlier payment for the same
  * student has no result, a new one is refused — a parent who closed the QPay page
@@ -31,6 +33,10 @@ use Illuminate\Support\Str;
  * more likely to answer. Left unbounded, one such payment would lock the student
  * out of their card for good, which is a worse outcome than the double payment
  * the block exists to prevent. See [BLOCK_EXPIRES_AFTER_HOURS].
+ *
+ * Only QPay payments block. The rule is QPay's certification, and a credit card
+ * payment is always read back from the gateway (Retrieve Order), so one left
+ * open on the card page is simply credited if it turns out to have been paid.
  */
 class StartPaymentAction
 {
@@ -51,12 +57,14 @@ class StartPaymentAction
     /** How long the portal asks the parent to wait after an inquiry that answered nothing. */
     public const RETRY_AFTER_INQUIRY_MINUTES = 2;
 
-    public function execute(Guardian $guardian, Account $student, float $amount, string $lang = 'En'): array
+    public function execute(Guardian $guardian, Account $student, float $amount, string $lang = 'En', string $gateway = QpayTransaction::GATEWAY_QPAY): array
     {
         try {
-            $settings = QPaySettings::current();
-            if (! $settings->isReady()) {
-                throw new Exception('Online top-up is not available right now. Please contact the school office.', 1);
+            $creditCard = $gateway === QpayTransaction::GATEWAY_MPGS;
+            if (! ($creditCard ? MpgsSettings::current() : QPaySettings::current())->isReady()) {
+                throw new Exception($creditCard
+                    ? 'Credit card top-up is not available right now. Please pay by debit card or contact the school office.'
+                    : 'Online top-up is not available right now. Please contact the school office.', 1);
             }
 
             $limits = StudentSettings::current();
@@ -69,6 +77,7 @@ class StartPaymentAction
 
             $transaction = DB::transaction(fn () => QpayTransaction::create([
                 'type' => QpayTransaction::TYPE_PAYMENT,
+                'gateway' => $creditCard ? QpayTransaction::GATEWAY_MPGS : QpayTransaction::GATEWAY_QPAY,
                 'pun' => self::newPun(),
                 'account_id' => $student->id,
                 'guardian_id' => $guardian->id,
@@ -98,6 +107,7 @@ class StartPaymentAction
     {
         $pending = QpayTransaction::where('account_id', $student->id)
             ->where('type', QpayTransaction::TYPE_PAYMENT)
+            ->where('gateway', QpayTransaction::GATEWAY_QPAY)
             ->where('status', QpayTransaction::STATUS_PENDING)
             // Older than this and QPay is never going to answer; the payment is
             // left pending to be chased, but it stops holding the card hostage.

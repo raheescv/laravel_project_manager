@@ -31,6 +31,11 @@ class ReleaseAction
                 throw new Exception('Only a payment can be released.', 1);
             }
 
+            // Only QPay payments hold the card; a credit card one is simply checked with the gateway.
+            if ($transaction->isCreditCard()) {
+                throw new Exception('A credit card top-up never blocks the card, so there is nothing to release. Use Check to ask the gateway for its result.', 1);
+            }
+
             if (! $transaction->isPending()) {
                 throw new Exception('This top-up already has an outcome — there is nothing to release.', 1);
             }

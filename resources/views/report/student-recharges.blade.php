@@ -5,10 +5,10 @@
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item"><a href="{{ route('student::index') }}">Students</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">QPay Recharges</li>
+                    <li class="breadcrumb-item active" aria-current="page">Online Recharges</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">QPay Recharge Report</h1>
+            <h1 class="page-title mb-0 mt-2">Online Recharge Report</h1>
             <p class="lead">Every online top-up and refund parents made through QPay, with what QPay said about each one</p>
         </div>
     </div>

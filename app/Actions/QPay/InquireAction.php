@@ -21,6 +21,11 @@ class InquireAction
 {
     public function execute(QpayTransaction $transaction): array
     {
+        // A credit card top-up is asked of the Mastercard Gateway instead.
+        if ($transaction->isCreditCard()) {
+            return (new \App\Actions\Mpgs\InquireAction())->execute($transaction);
+        }
+
         try {
             if (! $transaction->awaitsResult()) {
                 return ['success' => true, 'message' => 'Payment already settled', 'data' => $transaction];

@@ -879,6 +879,7 @@
                                     <div id="tabsStudentCards" class="tab-pane" role="tabpanel">
                                         @livewire('settings.student-configuration')
                                         @livewire('settings.q-pay-payments')
+                                        @livewire('settings.mpgs-payments')
                                     </div>
                                 @endif
                                 @can('configuration.settings')

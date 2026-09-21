@@ -540,6 +540,9 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-meal-row .pp-check{flex:none; display:grid; place-items:center; width:26px; height:26px; border-radius:50%; box-shadow:inset 0 0 0 2px var(--ink-3); color:transparent; font-size:13px; transition:background-color .15s,box-shadow .15s}
 .pp-meal-row[aria-checked="true"] .pp-check{background:var(--accent); box-shadow:none; color:var(--on-accent)}
 .pp-meal-row[aria-disabled="true"]{opacity:.45; pointer-events:none}
+/* Top-up: debit / credit card, a radio row with the same round check as a meal */
+.pp-method-row .pp-check{flex:none; display:grid; place-items:center; width:26px; height:26px; border-radius:50%; box-shadow:inset 0 0 0 2px var(--ink-3); color:transparent; font-size:13px; transition:background-color .15s,box-shadow .15s}
+.pp-method-row[aria-checked="true"] .pp-check{background:var(--accent); box-shadow:none; color:var(--on-accent)}
 .pp-dish{position:relative; padding:12px 16px}
 .pp-dish + .pp-dish::before{content:""; position:absolute; top:0; right:0; left:16px; height:1px; background:var(--line)}
 .pp-dish__course{display:block; font:500 10px/1.2 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink)}
@@ -883,6 +886,7 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   /* Top up: the form, and the phone's pay bar as a summary beside it */
   .pp-checkout{display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; max-width:900px}
   .pp-checkout .pp-group{margin:0; padding:18px 20px 20px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+  .pp-checkout .pp-group + .pp-group{margin-top:16px}
   .pp-checkout .pp-group__head{padding:0 0 12px}
   .pp-checkout .pp-group__body{background:var(--bg); box-shadow:none}
   .pp-checkout .pp-group__foot{padding:10px 2px 0}

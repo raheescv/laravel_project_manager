@@ -10,8 +10,9 @@ use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
- * Every QPay top-up and refund, across all students — what parents actually paid
- * online, and what QPay said about each one.
+ * Every online top-up and refund, across all students — debit card (QPay) and
+ * credit card (Mastercard Gateway) — what parents actually paid online, and what
+ * the gateway said about each one.
  *
  * Reads qpay_transactions rather than the ledger on purpose: a payment that
  * failed, is still pending or is under review never reaches the books, and those
@@ -26,6 +27,9 @@ class QPayRechargeReport extends Component
     public $status = '';
 
     public $type = '';
+
+    /** '' · qpay (debit card) · mpgs (credit card) */
+    public $gateway = '';
 
     public $from_date;
 
@@ -65,7 +69,7 @@ class QPayRechargeReport extends Component
         $this->sortField = $field;
     }
 
-    /** Ask QPay for the result of a payment that never came back. */
+    /** Ask the gateway for the result of a payment that never came back. */
     public function inquire($id)
     {
         abort_unless(auth()->user()?->can('report.student recharge'), 403);
@@ -78,7 +82,7 @@ class QPayRechargeReport extends Component
     {
         abort_unless(auth()->user()?->can('report.student recharge'), 403);
 
-        return Excel::download(new QPayRechargeReportExport($this->filters()), 'qpay_recharges_'.now()->timestamp.'.xlsx');
+        return Excel::download(new QPayRechargeReportExport($this->filters()), 'online_recharges_'.now()->timestamp.'.xlsx');
     }
 
     public function filters(): array
@@ -87,6 +91,7 @@ class QPayRechargeReport extends Component
             'search' => $this->search,
             'status' => $this->status,
             'type' => $this->type,
+            'gateway' => in_array($this->gateway, [QpayTransaction::GATEWAY_QPAY, QpayTransaction::GATEWAY_MPGS], true) ? $this->gateway : '',
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
             'sort_field' => in_array($this->sortField, self::SORTABLE, true) ? $this->sortField : 'qpay_transactions.id',
@@ -116,6 +121,7 @@ class QPayRechargeReport extends Component
             })
             ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('qpay_transactions.status', $value))
             ->when($filters['type'] ?? '', fn ($q, $value) => $q->where('qpay_transactions.type', $value))
+            ->when($filters['gateway'] ?? '', fn ($q, $value) => $q->where('qpay_transactions.gateway', $value))
             ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('qpay_transactions.created_at', '>=', $value))
             ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate('qpay_transactions.created_at', '<=', $value))
             ->orderBy($filters['sort_field'] ?? 'qpay_transactions.id', $filters['sort_direction'] ?? 'desc');

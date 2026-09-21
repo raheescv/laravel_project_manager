@@ -33,7 +33,7 @@ export const changePassword = (payload) => client.post('/password', payload)
 /** [{ account_id, name, image_url, class, has_card, card_blocked, balance, available, … }] */
 export const fetchStudents = () => client.get('/students')
 
-/** One child + overdraft_limit, card_blocked_at, topup: { enabled, min, max, suggestions } */
+/** One child + overdraft_limit, card_blocked_at, topup: { enabled, methods: [{ key, label, detail }], min, max, suggestions } */
 export const fetchStudent = (id) => client.get(`/students/${id}`)
 
 /** { data: Bill[], pagination, period } — month = 'YYYY-MM' */
@@ -46,8 +46,11 @@ export const fetchStatement = (id, month) => client.get(`/students/${id}/stateme
 
 export const blockCard = (id, reason) => client.post(`/students/${id}/card/block`, { reason })
 
-/** { topup, payment: { url, method, fields } } */
-export const startTopup = (id, amount) => client.post(`/students/${id}/topups`, { amount, lang: 'En' })
+/**
+ * `method`: 'debit' (QPay) or 'credit' (Mastercard Gateway).
+ * → { topup, payment } where payment is { type: 'qpay', url, method, fields } or { type: 'mpgs', script, session_id }.
+ */
+export const startTopup = (id, amount, method) => client.post(`/students/${id}/topups`, { amount, lang: 'En', method })
 
 export const fetchTopup = (pun) => client.get(`/topups/${encodeURIComponent(pun)}`)
 

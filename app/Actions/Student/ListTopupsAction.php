@@ -7,11 +7,11 @@ use App\Models\QpayTransaction;
 
 /**
  * Everything that put money on a student's card or took it off outside a
- * purchase: office entries (ManualEntryAction) and QPay payments/refunds,
- * newest first.
+ * purchase: office entries (ManualEntryAction) and online payments/refunds —
+ * debit card through QPay, credit card through the Mastercard Gateway — newest first.
  *
  * Office entries are read from the ledger — the journal IS the record, there is
- * no second table — while QPay rows come from qpay_transactions so a pending,
+ * no second table — while online rows come from qpay_transactions so a pending,
  * failed or under-review payment (which has no journal) is still listed.
  *
  * Read-only, so it returns the rows directly.
@@ -52,8 +52,8 @@ class ListTopupsAction
             ->map(fn (QpayTransaction $transaction) => [
                 'at' => $transaction->created_at,
                 'date' => $transaction->created_at?->toDateString(),
-                'channel' => 'QPay',
-                'method' => $transaction->masked_card ?: ucfirst($transaction->type),
+                'channel' => $transaction->methodLabel(),
+                'method' => $transaction->gatewayLabel().' · '.($transaction->cardLabel() ?: ucfirst($transaction->type)),
                 'reference' => $transaction->pun,
                 'amount' => round((float) $transaction->amount * ($transaction->type === QpayTransaction::TYPE_REFUND ? -1 : 1), 2),
                 'status' => $transaction->status,

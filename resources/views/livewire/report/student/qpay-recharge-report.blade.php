@@ -16,6 +16,7 @@
                     <option value="success">Successful</option>
                     <option value="pending">Pending</option>
                     <option value="failed">Failed</option>
+                    <option value="cancelled">Cancelled</option>
                     <option value="review">Needs review</option>
                     <option value="unresolved">Unresolved</option>
                     <option value="refunded">Refunded</option>
@@ -42,6 +43,12 @@
                 <option value="100">100</option>
                 <option value="500">500</option>
             </select>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Card type">
+                @foreach (['' => 'All cards', 'qpay' => 'Debit · QPay', 'mpgs' => 'Credit · MPGS'] as $value => $label)
+                    <input type="radio" class="btn-check" name="qr_gateway" id="qr_gateway_{{ $value ?: 'all' }}" value="{{ $value }}" wire:model.live="gateway" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="qr_gateway_{{ $value ?: 'all' }}">{{ $label }}</label>
+                @endforeach
+            </div>
             @can('report.student recharge')
                 <button class="btn btn-success btn-sm ms-auto" wire:click="export">
                     <i class="fa fa-file-excel-o me-1"></i> Export
@@ -70,8 +77,8 @@
             @endforeach
         </div>
         <p class="small text-muted mt-2 mb-0">
-            "Collected" counts only payments QPay confirmed — those are the ones on the students' cards and in the books.
-            A payment left pending can be checked with QPay from its row.
+            "Collected" counts only payments the gateway confirmed — those are the ones on the students' cards and in the books.
+            A payment left pending can be checked with its gateway (QPay for debit cards, MPGS for credit cards) from its row.
         </p>
     </div>
 
@@ -87,7 +94,7 @@
                         <th>Card</th>
                         <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="qpay_transactions.amount" label="Amount" /></th>
                         <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="qpay_transactions.status" label="Status" /></th>
-                        <th>QPay response</th>
+                        <th>Gateway response</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -111,7 +118,12 @@
                                     <div class="text-muted">{{ $row->confirmation_id }}</div>
                                 @endif
                             </td>
-                            <td class="small font-monospace">{{ $row->masked_card ?: '-' }}</td>
+                            <td class="small text-nowrap">
+                                <span class="badge {{ $row->isCreditCard() ? 'bg-primary-subtle text-primary-emphasis' : 'bg-info-subtle text-info-emphasis' }}">
+                                    <i class="fa {{ $row->isCreditCard() ? 'fa-credit-card' : 'fa-globe' }} me-1"></i>{{ $row->methodLabel() }}
+                                </span>
+                                <div class="font-monospace text-muted">{{ $row->cardLabel() ?: '-' }}</div>
+                            </td>
                             <td class="text-end fw-semibold text-nowrap {{ $row->type === 'refund' ? 'text-danger' : '' }}">
                                 {{ $row->type === 'refund' ? '-' : '' }}{{ currency($row->amount) }}
                             </td>
@@ -121,7 +133,7 @@
                                     'bg-success' => $row->status === 'success',
                                     'bg-danger' => $row->status === 'failed',
                                     'bg-warning text-dark' => in_array($row->status, ['pending', 'refund_pending', 'review']),
-                                    'bg-secondary' => in_array($row->status, ['refunded', 'unresolved']),
+                                    'bg-secondary' => in_array($row->status, ['refunded', 'unresolved', 'cancelled']),
                                 ])>{{ $row->statusLabel() }}</span>
                                 @if ($row->tampered_at)
                                     <span class="badge bg-danger" title="The response failed the secure hash check and was verified by inquiry">Tampered</span>
@@ -136,7 +148,7 @@
                             <td class="text-end pe-3">
                                 {{-- Released payments are still asked about, so they keep the Check button. --}}
                                 @if ($row->awaitsResult())
-                                    <button type="button" class="btn btn-sm btn-light text-nowrap" wire:click="inquire({{ $row->id }})" wire:loading.attr="disabled" title="Ask QPay for the result">
+                                    <button type="button" class="btn btn-sm btn-light text-nowrap" wire:click="inquire({{ $row->id }})" wire:loading.attr="disabled" title="Ask {{ $row->gatewayLabel() }} for the result">
                                         <i class="fa fa-refresh"></i> Check
                                     </button>
                                 @endif
@@ -144,7 +156,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-4">No QPay recharges match these filters.</td>
+                            <td colspan="9" class="text-center text-muted py-4">No online recharges match these filters.</td>
                         </tr>
                     @endforelse
                 </tbody>

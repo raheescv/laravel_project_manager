@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Mpgs\HandleReturnAction as MpgsHandleReturnAction;
 use App\Actions\Parent\FindStudentAction;
 use App\Actions\Parent\GetBillAction;
 use App\Actions\Parent\GetStatementAction;
@@ -32,6 +33,7 @@ use App\Http\Resources\V1\Parent\BillResource;
 use App\Http\Resources\V1\Parent\GuardianResource;
 use App\Http\Resources\V1\Parent\TopupResource;
 use App\Models\Guardian;
+use App\Models\QpayTransaction;
 use App\Services\EmailTemplateRenderer;
 use App\Services\Payment\QPayClient;
 use App\Support\Student\StudentSettings;
@@ -398,6 +400,50 @@ class ParentPortalController extends Controller
 
         if (! $link) {
             Log::warning('QPay return with no parent portal address to send the parent to', ['pun' => $pun]);
+
+            return response('Payment received. Open the parent portal to see the result.', 200)->header('Content-Type', 'text/plain');
+        }
+
+        return redirect()->away($link);
+    }
+
+    /**
+     * Credit card return.
+     *
+     * The Mastercard Gateway sends the parent's browser here from its payment page
+     * (after paying, or `final=1` after their last declined try). The order is read
+     * back from the gateway and settled, and the browser is sent on to the portal's
+     * result page.
+     */
+    public function mpgsReturn(Request $request, string $pun): Response
+    {
+        return $this->backFromCardPage($pun, cancelled: false, final: $request->boolean('final'));
+    }
+
+    /**
+     * Credit card cancel.
+     *
+     * The parent pressed Cancel on the card payment page, or it timed out. Settled
+     * like a return; a payment the gateway holds no money for becomes `cancelled`.
+     */
+    public function mpgsCancel(string $pun): Response
+    {
+        return $this->backFromCardPage($pun, cancelled: true);
+    }
+
+    private function backFromCardPage(string $pun, bool $cancelled, bool $final = false): Response
+    {
+        try {
+            $transaction = (new MpgsHandleReturnAction())->execute($pun, $cancelled, $final);
+        } catch (\Throwable $e) {
+            // Left pending: the scheduled inquiry settles it, and the result page keeps checking.
+            report($e);
+            $transaction = QpayTransaction::where('pun', $pun)->first();
+        }
+
+        $link = StudentSettings::current()->portalLink($transaction ? 'topups/'.$transaction->pun : '?payment=unmatched');
+        if (! $link) {
+            Log::warning('Card payment return with no parent portal address to send the parent to', ['pun' => $pun]);
 
             return response('Payment received. Open the parent portal to see the result.', 200)->header('Content-Type', 'text/plain');
         }

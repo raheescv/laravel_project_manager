@@ -1,10 +1,11 @@
 {{-- Student view → Top-ups. Styled by the parent .svx system (components/student/view-premium).
      The office entry form is the page-level student.topup-modal component, opened by the button below. --}}
 @php
-    $channelTone = ['QPay' => ['topup', 'fa-globe'], 'Office' => ['purchase', 'fa-building-o']];
+    $channelTone = ['Debit card' => ['topup', 'fa-globe'], 'Credit card' => ['topup', 'fa-credit-card'], 'Office' => ['purchase', 'fa-building-o']];
     $statusTone = [
         'success' => 'success',
         'failed' => 'failed',
+        'cancelled' => 'failed',
         'pending' => 'pending',
         'refund_pending' => 'pending',
         'review' => 'pending',
@@ -13,7 +14,7 @@
 <div>
     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
         <p class="small text-body-secondary mb-0" style="max-width: 62ch">
-            Money on and off the card outside a purchase: what the office takes at the counter, and what parents pay online through QPay.
+            Money on and off the card outside a purchase: what the office takes at the counter, and what parents pay online — by debit card through QPay or by credit card through the Mastercard Gateway.
         </p>
         @canany(['student topup.create', 'student topup.refund'])
             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#StudentTopupModal">
@@ -65,14 +66,14 @@
                             </td>
                             <td class="text-nowrap text-end">
                                 @if ($transaction?->awaitsResult() && $transaction->type === 'payment')
-                                    <button type="button" class="btn btn-sm btn-light" wire:click="inquire({{ $transaction->id }})" wire:loading.attr="disabled" title="Ask QPay for the result">
+                                    <button type="button" class="btn btn-sm btn-light" wire:click="inquire({{ $transaction->id }})" wire:loading.attr="disabled" title="Ask {{ $transaction->gatewayLabel() }} for the result">
                                         <i class="fa fa-refresh"></i> Check
                                     </button>
                                 @endif
                                 {{-- A payment QPay will not answer for blocks the parent from topping up again.
                                      Releasing frees the card without claiming the money was never taken. --}}
                                 @can('student topup.release')
-                                    @if ($transaction?->isPending() && $transaction->type === 'payment')
+                                    @if ($transaction?->isPending() && $transaction->type === 'payment' && ! $transaction->isCreditCard())
                                         <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="release({{ $transaction->id }})" wire:loading.attr="disabled"
                                             wire:confirm="Release this {{ currency($transaction->amount) }} top-up so the parent can pay again?&#10;&#10;QPay is asked once more first. If it still has no answer the top-up is marked Unresolved — not failed — and we keep asking; the card is credited if it turns out to have been paid."
                                             title="Free the card from this unanswered payment">
@@ -83,7 +84,7 @@
                                 @can('student topup.refund')
                                     @if ($transaction && $transaction->status === 'success' && $transaction->type === 'payment')
                                         <button type="button" class="btn btn-sm btn-outline-danger" wire:click="refund({{ $transaction->id }})"
-                                            wire:confirm="Refund {{ currency($transaction->amount) }} to the parent's card through QPay? The amount is taken off the student's card.">
+                                            wire:confirm="Refund {{ currency($transaction->amount) }} to the parent's {{ strtolower($transaction->methodLabel()) }} through {{ $transaction->gatewayLabel() }}? The amount is taken off the student's card.">
                                             <i class="fa fa-undo"></i> Refund
                                         </button>
                                     @endif

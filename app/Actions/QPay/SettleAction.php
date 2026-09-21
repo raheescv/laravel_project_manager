@@ -7,21 +7,26 @@ use App\Models\Branch;
 use App\Models\QpayTransaction;
 use App\Models\User;
 use App\Services\Payment\QPayClient;
-use App\Support\Payment\QPaySettings;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Record QPay's verified outcome for a top-up payment — and, when paid, put the
- * money on the card through the ledger.
+ * Record a gateway's verified outcome for a top-up payment — and, when paid, put
+ * the money on the card through the ledger. Shared by both gateways: QPay (debit)
+ * and the Mastercard Gateway (credit).
  *
- * Only ever called with an outcome that has passed the secure hash check (a
- * signed return, or an inquiry response). Idempotent: the row is locked, and a
- * payment that already has an outcome is left exactly as it is, so the browser
- * return and the inquiry command can race without crediting a card twice.
+ * Only ever called with an outcome the gateway itself vouched for (a QPay result
+ * that passed the secure hash check, a QPay inquiry, an MPGS Retrieve Order).
+ * Idempotent: the row is locked, and a payment that already has an outcome is left
+ * exactly as it is, so the browser return and the inquiry command can race without
+ * crediting a card twice.
  *
- * @param  array{status: string, message?: ?string, amount?: ?string, confirmation_id?: ?string, masked_card?: ?string, response_date?: ?string}  $outcome
+ * QPay outcomes carry its status code and minor-unit `amount`; MPGS outcomes say
+ * `paid` outright and give `paid_amount` in QAR. `review` parks a payment for a
+ * person (money moved in a way the card should not follow blindly).
+ *
+ * @param  array{status: string, message?: ?string, paid?: bool, amount?: ?string, paid_amount?: float|string|null, review?: ?string, confirmation_id?: ?string, masked_card?: ?string, card_brand?: ?string, funding_method?: ?string, response_date?: ?string}  $outcome
  */
 class SettleAction
 {
@@ -40,11 +45,19 @@ class SettleAction
                 'gateway_status_message' => $outcome['message'] ?? null,
                 'confirmation_id' => $outcome['confirmation_id'] ?? $locked->confirmation_id,
                 'masked_card' => $outcome['masked_card'] ?? $locked->masked_card,
+                'card_brand' => $outcome['card_brand'] ?? $locked->card_brand,
+                'funding_method' => $outcome['funding_method'] ?? $locked->funding_method,
                 'response_date' => $outcome['response_date'] ?? $locked->response_date,
                 'payload' => $payload ?: $locked->payload,
             ]);
 
-            if ($outcome['status'] !== QPayClient::SUCCESS) {
+            if (filled($outcome['review'] ?? null)) {
+                $this->review($locked, $outcome['review']);
+
+                return $locked;
+            }
+
+            if (! ($outcome['paid'] ?? $outcome['status'] === QPayClient::SUCCESS)) {
                 $locked->fill([
                     'status' => QpayTransaction::STATUS_FAILED,
                     'failure_reason' => $outcome['message'] ?? 'Payment was not completed.',
@@ -54,8 +67,11 @@ class SettleAction
                 return $locked;
             }
 
-            if (($outcome['amount'] ?? null) !== QPayClient::minorUnits($locked->amount)) {
-                $this->review($locked, 'QPay reports '.QPayClient::fromMinorUnits($outcome['amount'] ?? '0').' paid for a top-up of '.$locked->amount.'.');
+            $paid = array_key_exists('paid_amount', $outcome)
+                ? QPayClient::minorUnits($outcome['paid_amount'] ?? 0)
+                : ($outcome['amount'] ?? null);
+            if ($paid !== QPayClient::minorUnits($locked->amount)) {
+                $this->review($locked, $locked->gatewayLabel().' reports '.QPayClient::fromMinorUnits($paid ?? '0').' paid for a top-up of '.$locked->amount.'.');
 
                 return $locked;
             }
@@ -82,10 +98,10 @@ class SettleAction
 
     private function credit(QpayTransaction $transaction)
     {
-        $settings = QPaySettings::current();
+        $settings = $transaction->gatewaySettings();
         $user = User::find($settings->userId);
         if (! $user || ! $settings->paymentAccountId) {
-            throw new Exception('QPay top-ups are not fully set up (payment account or recording user missing).');
+            throw new Exception($transaction->methodLabel().' top-ups are not fully set up (payment account or recording user missing).');
         }
 
         $response = (new PostTopupJournalAction())->execute($transaction->account_id, (float) $transaction->amount, $settings->paymentAccountId, [
@@ -94,7 +110,9 @@ class SettleAction
             'reference_no' => $transaction->pun,
             'model' => 'QpayTransaction',
             'model_id' => $transaction->id,
-            'remarks' => 'QPay top-up '.$transaction->pun.($transaction->confirmation_id ? ' (confirmation '.$transaction->confirmation_id.')' : ''),
+            'remarks' => $transaction->isCreditCard()
+                ? 'Credit card top-up '.$transaction->pun.($transaction->confirmation_id ? ' (receipt '.$transaction->confirmation_id.')' : '')
+                : 'QPay top-up '.$transaction->pun.($transaction->confirmation_id ? ' (confirmation '.$transaction->confirmation_id.')' : ''),
         ], $user->id);
 
         if (! $response['success']) {
@@ -106,7 +124,7 @@ class SettleAction
 
     private function review(QpayTransaction $transaction, string $reason): void
     {
-        Log::error('QPay top-up paid but not credited', ['pun' => $transaction->pun, 'reason' => $reason]);
+        Log::error('Online top-up paid but not credited', ['gateway' => $transaction->gateway, 'pun' => $transaction->pun, 'reason' => $reason]);
 
         $transaction->fill([
             'status' => QpayTransaction::STATUS_REVIEW,

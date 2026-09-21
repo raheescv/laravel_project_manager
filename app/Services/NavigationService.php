@@ -82,7 +82,7 @@ class NavigationService
                 'label' => 'Students',
                 'icon' => 'fa fa-graduation-cap',
                 'visible' => true,
-                'children' => ['Add Student', 'Students', 'Canteen Menu', 'Wallet Report', 'QPay Recharges'],
+                'children' => ['Add Student', 'Students', 'Canteen Menu', 'Wallet Report', 'Online Recharges'],
             ],
             [
                 'id' => 'sale',

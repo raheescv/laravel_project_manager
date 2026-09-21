@@ -37,6 +37,12 @@ Route::prefix('v1/parent')
         // Authenticated by QPay's secure hash and re-checked with its inquiry API.
         Route::post('qpay/return', 'qpayReturn')->middleware('throttle:60,1')->name('qpay.return');
 
+        // The Mastercard Gateway sends the parent's browser back here from the credit
+        // card page — paid, declined for the last time, or cancelled. No token: the
+        // browser's word is never taken, the order is read back from the gateway.
+        Route::match(['get', 'post'], 'mpgs/return/{pun}', 'mpgsReturn')->where('pun', '[A-Za-z0-9]{1,40}')->middleware('throttle:60,1')->name('mpgs.return');
+        Route::match(['get', 'post'], 'mpgs/cancel/{pun}', 'mpgsCancel')->where('pun', '[A-Za-z0-9]{1,40}')->middleware('throttle:60,1')->name('mpgs.cancel');
+
         Route::middleware(AuthenticateParent::class)->group(function (): void {
             Route::get('me', 'me')->name('me');
             Route::post('password', 'changePassword')->middleware('throttle:10,1')->name('password.change');
